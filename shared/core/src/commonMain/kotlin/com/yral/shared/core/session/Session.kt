@@ -17,4 +17,6 @@ data class SessionProperties(
     val emailId: String? = null,
     val isFirebaseLoggedIn: Boolean = false,
     val dailyRank: Long? = null,
+    val followedPrincipals: Set<String> = setOf(),
+    val unFollowedPrincipals: Set<String> = setOf(),
 )

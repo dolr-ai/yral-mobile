@@ -144,7 +144,6 @@ dependencies {
     implementation(projects.shared.rust.service)
     implementation(projects.shared.libs.routing.deeplinkEngine)
     implementation(projects.shared.features.wallet)
-    implementation(projects.shared.libs.formatters)
     implementation(projects.shared.libs.designsystem)
     implementation(projects.shared.features.reportVideo)
     implementation(compose.components.resources)

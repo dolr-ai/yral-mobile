@@ -17,6 +17,7 @@ kotlin {
                 implementation(compose.components.resources)
                 implementation(projects.shared.libs.koin)
                 api(projects.shared.libs.crashlytics)
+                api(projects.shared.libs.formatters)
                 implementation(projects.shared.core)
                 implementation(libs.koin.compose)
                 implementation(libs.coil.compose)

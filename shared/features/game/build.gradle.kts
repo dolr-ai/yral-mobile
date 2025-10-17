@@ -29,7 +29,6 @@ kotlin {
             implementation(projects.shared.libs.http)
             implementation(projects.shared.rust.service)
             implementation(projects.shared.libs.designsystem)
-            implementation(projects.shared.libs.formatters)
         }
     }
 }

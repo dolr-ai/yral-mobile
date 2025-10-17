@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.shared.core.session.AccountInfo
@@ -28,16 +29,25 @@ import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.libs.designsystem.generated.resources.Res
 import yral_mobile.shared.libs.designsystem.generated.resources.anonymous_account_setup
 import yral_mobile.shared.libs.designsystem.generated.resources.edit_profile
+import yral_mobile.shared.libs.designsystem.generated.resources.follow
+import yral_mobile.shared.libs.designsystem.generated.resources.followers
+import yral_mobile.shared.libs.designsystem.generated.resources.following
 import yral_mobile.shared.libs.designsystem.generated.resources.login
 
 @Suppress("LongMethod")
 @Composable
 fun AccountInfoView(
     accountInfo: AccountInfo,
+    totalFollowers: Long? = null,
+    totalFollowing: Long? = null,
     isSocialSignIn: Boolean,
     showEditProfile: Boolean,
+    showFollow: Boolean = false,
+    isFollowing: Boolean = false,
+    isFollowInProgress: Boolean = false,
     onLoginClicked: () -> Unit,
     onEditProfileClicked: () -> Unit,
+    onFollowClicked: () -> Unit = {},
 ) {
     Column(
         modifier =
@@ -47,7 +57,6 @@ fun AccountInfoView(
                     start = 16.dp,
                     top = YralDimens.paddingLg,
                     end = 16.dp,
-                    bottom = YralDimens.paddingLg,
                 ),
         verticalArrangement = Arrangement.spacedBy(30.dp, Alignment.Top),
         horizontalAlignment = Alignment.Start,
@@ -59,19 +68,60 @@ fun AccountInfoView(
         ) {
             YralAsyncImage(
                 imageUrl = accountInfo.profilePic,
-                modifier = Modifier.size(60.dp),
+                modifier = Modifier.size(76.dp),
             )
-            Text(
-                text = accountInfo.displayName,
-                style = LocalAppTopography.current.baseMedium,
-                color = YralColors.NeutralTextSecondary,
-            )
+            Column(
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Text(
+                    text = accountInfo.displayName,
+                    style = LocalAppTopography.current.baseMedium,
+                    color = YralColors.NeutralTextSecondary,
+                )
+                Row {
+                    totalFollowers?.let {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Top),
+                            horizontalAlignment = Alignment.Start,
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text(
+                                text = formatAbbreviation(totalFollowers, 0),
+                                style = LocalAppTopography.current.mdSemiBold,
+                                color = YralColors.NeutralTextPrimary,
+                            )
+                            Text(
+                                text = stringResource(Res.string.followers),
+                                style = LocalAppTopography.current.baseRegular,
+                                color = YralColors.NeutralTextPrimary,
+                            )
+                        }
+                    }
+                    totalFollowing?.let {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Top),
+                            horizontalAlignment = Alignment.Start,
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text(
+                                text = formatAbbreviation(totalFollowing, 0),
+                                style = LocalAppTopography.current.mdSemiBold,
+                                color = YralColors.NeutralTextPrimary,
+                            )
+                            Text(
+                                text = stringResource(Res.string.following),
+                                style = LocalAppTopography.current.baseRegular,
+                                color = YralColors.NeutralTextPrimary,
+                            )
+                        }
+                    }
+                }
+            }
         }
         if (showEditProfile) {
-            EditProfileButton(
-                modifier =
-                    Modifier
-                        .fillMaxWidth(),
+            ProfileButton(
+                text = stringResource(Res.string.edit_profile),
+                modifier = Modifier.fillMaxWidth(),
                 onClick = onEditProfileClicked,
             )
         }
@@ -93,18 +143,43 @@ fun AccountInfoView(
                 )
             }
         }
+        if (showFollow) {
+            YralButton(
+                modifier = Modifier.fillMaxWidth(),
+                text =
+                    stringResource(
+                        resource =
+                            if (isFollowing) {
+                                Res.string.following
+                            } else {
+                                Res.string.follow
+                            },
+                    ),
+                borderColor = YralColors.Neutral700,
+                borderWidth = 1.dp,
+                backgroundColor = YralColors.Neutral800,
+                textStyle =
+                    TextStyle(
+                        color = YralColors.NeutralTextPrimary,
+                    ),
+                onClick = onFollowClicked,
+                buttonState = if (isFollowInProgress) YralButtonState.Loading else YralButtonState.Enabled,
+            )
+        }
         Spacer(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .height(1.dp)
-                    .background(YralColors.Divider),
+                    .background(YralColors.Divider)
+                    .padding(bottom = YralDimens.paddingLg),
         )
     }
 }
 
 @Composable
-private fun EditProfileButton(
+private fun ProfileButton(
+    text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -121,7 +196,7 @@ private fun EditProfileButton(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = stringResource(Res.string.edit_profile),
+                text = text,
                 style = LocalAppTopography.current.baseSemiBold,
                 color = YralColors.NeutralTextPrimary,
                 textAlign = TextAlign.Center,

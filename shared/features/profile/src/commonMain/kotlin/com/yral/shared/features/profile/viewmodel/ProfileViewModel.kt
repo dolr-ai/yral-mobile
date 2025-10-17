@@ -39,28 +39,42 @@ import com.yral.shared.reportVideo.domain.ReportRequestParams
 import com.yral.shared.reportVideo.domain.ReportVideoUseCase
 import com.yral.shared.reportVideo.domain.models.ReportSheetState
 import com.yral.shared.reportVideo.domain.models.ReportVideoData
+import com.yral.shared.rust.service.domain.models.PagedFollowerItem
+import com.yral.shared.rust.service.domain.pagedDataSource.UserInfoPagingSourceFactory
+import com.yral.shared.rust.service.domain.usecases.FollowUserParams
+import com.yral.shared.rust.service.domain.usecases.FollowUserUseCase
+import com.yral.shared.rust.service.domain.usecases.UnfollowUserParams
+import com.yral.shared.rust.service.domain.usecases.UnfollowUserUseCase
+import com.yral.shared.rust.service.utils.CanisterData
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @Suppress("LongParameterList")
 class ProfileViewModel(
+    private val canisterData: CanisterData,
     private val sessionManager: SessionManager,
     private val profileRepository: ProfileRepository,
     private val deleteVideoUseCase: DeleteVideoUseCase,
     private val reportVideoUseCase: ReportVideoUseCase,
+    private val followUserUseCase: FollowUserUseCase,
+    private val unfollowUserUseCase: UnfollowUserUseCase,
     private val profileTelemetry: ProfileTelemetry,
     private val shareService: ShareService,
     private val urlBuilder: UrlBuilder,
     private val linkGenerator: LinkGenerator,
     private val crashlyticsManager: CrashlyticsManager,
     private val flagManager: FeatureFlagManager,
+    private val userInfoPagingSourceFactory: UserInfoPagingSourceFactory,
 ) : ViewModel() {
     companion object {
         private const val POSTS_PER_PAGE = 20
@@ -75,51 +89,122 @@ class ProfileViewModel(
         )
     val state: StateFlow<ViewState> = _state.asStateFlow()
 
+    private val profileEventsChannel = Channel<ProfileEvents>(Channel.CONFLATED)
+    val profileEvents = profileEventsChannel.receiveAsFlow()
+
     private val deletedVideoIds = MutableStateFlow<Set<String>>(emptySet())
     val profileVideos: Flow<PagingData<FeedDetails>> =
-        Pager(
-            config =
-                PagingConfig(
-                    pageSize = POSTS_PER_PAGE,
-                    initialLoadSize = POSTS_PER_PAGE,
-                    prefetchDistance = POSTS_PREFETCH_DISTANCE,
-                    enablePlaceholders = false,
-                ),
-            pagingSourceFactory = {
-                ProfileVideosPagingSource(
-                    profileRepository = profileRepository,
-                )
-            },
-        ).flow
-            .cachedIn(viewModelScope)
-            .combine(deletedVideoIds) { pagingData, deletedIds ->
-                val videoIds = mutableSetOf<String>()
-                pagingData
-                    .filter { video ->
-                        video.videoID.isNotEmpty() &&
-                            videoIds.add(video.videoID) &&
-                            video.videoID !in deletedIds
-                    }
-            }.distinctUntilChanged()
+        if (canisterData.userPrincipalId.isNotEmpty()) {
+            Pager(
+                config =
+                    PagingConfig(
+                        pageSize = POSTS_PER_PAGE,
+                        initialLoadSize = POSTS_PER_PAGE,
+                        prefetchDistance = POSTS_PREFETCH_DISTANCE,
+                        enablePlaceholders = false,
+                    ),
+                pagingSourceFactory = {
+                    ProfileVideosPagingSource(
+                        profileRepository = profileRepository,
+                        canisterId = canisterData.canisterId,
+                        userPrincipal = canisterData.userPrincipalId,
+                        isFromServiceCanister = canisterData.isCreatedFromServiceCanister,
+                    )
+                },
+            ).flow
+                .cachedIn(viewModelScope)
+                .combine(deletedVideoIds) { pagingData, deletedIds ->
+                    val videoIds = mutableSetOf<String>()
+                    pagingData
+                        .filter { video ->
+                            video.videoID.isNotEmpty() &&
+                                videoIds.add(video.videoID) &&
+                                video.videoID !in deletedIds
+                        }
+                }.distinctUntilChanged()
+        } else {
+            flowOf()
+        }
+
+    val followers: Flow<PagingData<PagedFollowerItem>> =
+        if (canisterData.userPrincipalId.isNotEmpty()) {
+            Pager(
+                config =
+                    PagingConfig(
+                        pageSize = POSTS_PER_PAGE,
+                        initialLoadSize = POSTS_PER_PAGE,
+                        prefetchDistance = POSTS_PREFETCH_DISTANCE,
+                        enablePlaceholders = false,
+                    ),
+                pagingSourceFactory = {
+                    userInfoPagingSourceFactory.createFollowersPagingSource(
+                        principal = canisterData.userPrincipalId,
+                        targetPrincipal = canisterData.userPrincipalId,
+                        withCallerFollows = true,
+                    )
+                },
+            ).flow.cachedIn(viewModelScope)
+        } else {
+            emptyFlow()
+        }
+
+    val following: Flow<PagingData<PagedFollowerItem>> =
+        if (canisterData.userPrincipalId.isNotEmpty()) {
+            Pager(
+                config =
+                    PagingConfig(
+                        pageSize = POSTS_PER_PAGE,
+                        initialLoadSize = POSTS_PER_PAGE,
+                        prefetchDistance = POSTS_PREFETCH_DISTANCE,
+                        enablePlaceholders = false,
+                    ),
+                pagingSourceFactory = {
+                    userInfoPagingSourceFactory.createFollowingPagingSource(
+                        principal = canisterData.userPrincipalId,
+                        targetPrincipal = canisterData.userPrincipalId,
+                        withCallerFollows = true,
+                    )
+                },
+            ).flow.cachedIn(viewModelScope)
+        } else {
+            emptyFlow()
+        }
+
+    val followStatus = sessionManager.observeSessionProperty { it.followedPrincipals to it.unFollowedPrincipals }
 
     init {
-        _state.update { it.copy(accountInfo = sessionManager.getAccountInfo()) }
-        viewModelScope.launch {
-            sessionManager
-                .observeSessionProperties()
-                .map { it.isSocialSignIn }
-                .distinctUntilChanged()
-                .collect { isSocialSignIn ->
-                    _state.update { it.copy(isLoggedIn = isSocialSignIn == true) }
-                }
+        _state.update {
+            it.copy(
+                accountInfo =
+                    AccountInfo(
+                        userPrincipal = canisterData.userPrincipalId,
+                        profilePic = canisterData.profilePic,
+                        username = canisterData.username,
+                    ),
+            )
+        }
+        if (canisterData.userPrincipalId != sessionManager.userPrincipal) {
+            _state.update {
+                it.copy(
+                    isOwnProfile = false,
+                    isWalletEnabled = false,
+                    isFollowing = canisterData.isFollowing,
+                )
+            }
+        } else {
+            viewModelScope.launch {
+                sessionManager
+                    .observeSessionState(transform = { sessionManager.getAccountInfo() })
+                    .collect { info -> _state.update { it.copy(accountInfo = info) } }
+            }
         }
         viewModelScope.launch {
             sessionManager
-                .state
-                .map { sessionManager.getAccountInfo() }
-                .distinctUntilChanged()
-                .collect { info ->
-                    _state.update { it.copy(accountInfo = info) }
+                .observeSessionPropertyWithDefault(
+                    selector = { it.isSocialSignIn },
+                    defaultValue = false,
+                ).collect { isSocialSignIn ->
+                    _state.update { it.copy(isLoggedIn = isSocialSignIn) }
                 }
         }
     }
@@ -166,7 +251,7 @@ class ProfileViewModel(
                     deletedVideoIds.update { it + deleteRequest.feedDetails.videoID }
 
                     // Update session manager with new video count
-                    val currentCount = sessionManager.profileVideosCount()
+                    val currentCount = sessionManager.profileVideosCount
                     sessionManager.updateProfileVideosCount(
                         count = (currentCount - 1).coerceAtLeast(0),
                     )
@@ -226,7 +311,7 @@ class ProfileViewModel(
 
     fun setManualRefreshTriggered(isTriggered: Boolean) {
         _state.update { it.copy(manualRefreshTriggered = isTriggered) }
-        if (isTriggered) {
+        if (isTriggered && _state.value.isOwnProfile) {
             sessionManager.updateProfileVideosCount(null)
         }
     }
@@ -322,6 +407,67 @@ class ProfileViewModel(
                 }
         }
     }
+
+    fun followUnfollow() {
+        viewModelScope.launch {
+            sessionManager.userPrincipal?.let { userPrincipal ->
+                with(_state.value) {
+                    Logger.d("Follow") { "Follow unfollow request $isFollowing" }
+                    if (isLoggedIn) {
+                        if (isFollowing) {
+                            unFollow()
+                        } else {
+                            follow()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun follow() {
+        sessionManager.userPrincipal?.let { userPrincipal ->
+            _state.update { it.copy(isFollowInProgress = true) }
+            followUserUseCase(
+                parameter =
+                    FollowUserParams(
+                        principal = userPrincipal,
+                        targetPrincipal = canisterData.userPrincipalId,
+                    ),
+            ).onSuccess {
+                _state.update { it.copy(isFollowing = true, isFollowInProgress = false) }
+                profileEventsChannel.trySend(ProfileEvents.FollowedSuccessfully)
+                sessionManager.addPrincipalToFollow(canisterData.userPrincipalId)
+                Logger.d("Follow") { "Started following" }
+            }.onFailure { e ->
+                _state.update { it.copy(isFollowInProgress = false) }
+                profileEventsChannel.trySend(ProfileEvents.Failed(e.message ?: "Follow failed"))
+                Logger.d("Follow") { "Follow request failed $e" }
+            }
+        }
+    }
+
+    private suspend fun unFollow() {
+        sessionManager.userPrincipal?.let { userPrincipal ->
+            _state.update { it.copy(isFollowInProgress = true) }
+            unfollowUserUseCase(
+                parameter =
+                    UnfollowUserParams(
+                        principal = userPrincipal,
+                        targetPrincipal = canisterData.userPrincipalId,
+                    ),
+            ).onSuccess {
+                _state.update { it.copy(isFollowing = false, isFollowInProgress = false) }
+                profileEventsChannel.trySend(ProfileEvents.UnfollowedSuccessfully)
+                sessionManager.removePrincipalFromFollow(canisterData.userPrincipalId)
+                Logger.d("Follow") { "Discontinued following" }
+            }.onFailure { e ->
+                _state.update { it.copy(isFollowInProgress = false) }
+                profileEventsChannel.trySend(ProfileEvents.Failed(e.message ?: "Unfollow failed"))
+                Logger.d("Follow") { "UnFollow request failed $e" }
+            }
+        }
+    }
 }
 
 data class ViewState(
@@ -334,6 +480,9 @@ data class ViewState(
     val isReporting: Boolean = false,
     val reportSheetState: ReportSheetState = ReportSheetState.Closed,
     val isLoggedIn: Boolean = false,
+    val isOwnProfile: Boolean = true,
+    val isFollowing: Boolean = false,
+    val isFollowInProgress: Boolean = false,
 )
 
 sealed interface ProfileBottomSheet {
@@ -362,4 +511,12 @@ sealed class VideoViewState {
     data class ViewingReels(
         val initialPage: Int = 0,
     ) : VideoViewState()
+}
+
+sealed class ProfileEvents {
+    data object FollowedSuccessfully : ProfileEvents()
+    data object UnfollowedSuccessfully : ProfileEvents()
+    data class Failed(
+        val message: String,
+    ) : ProfileEvents()
 }

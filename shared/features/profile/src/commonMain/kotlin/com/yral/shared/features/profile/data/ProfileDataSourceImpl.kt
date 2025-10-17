@@ -24,18 +24,12 @@ class ProfileDataSourceImpl(
     private val json: Json,
 ) : ProfileDataSource {
     override suspend fun getProfileVideos(
+        canisterId: String,
+        userPrincipal: String,
+        isFromServiceCanister: Boolean,
         startIndex: ULong,
         pageSize: ULong,
     ): ProfileVideosPageResult {
-        val canisterId =
-            sessionManager.canisterID
-                ?: throw YralException("No canister found")
-        val userPrincipal =
-            sessionManager.userPrincipal
-                ?: throw YralException("No user principal found")
-        val isFromServiceCanister =
-            sessionManager.isCreatedFromServiceCanister
-                ?: throw YralException("UserType not found")
         val result =
             individualUserRepository.getPostsOfThisUserProfileWithPaginationCursor(
                 canisterId = canisterId,

@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import com.yral.shared.analytics.events.VideoDeleteCTA
@@ -63,10 +64,10 @@ import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
 import com.yral.shared.features.profile.viewmodel.ProfileBottomSheet
+import com.yral.shared.features.profile.viewmodel.ProfileEvents
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.profile.viewmodel.VideoViewState
 import com.yral.shared.features.profile.viewmodel.ViewState
-import com.yral.shared.libs.NumberFormatter
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.AccountInfoView
 import com.yral.shared.libs.designsystem.component.DeleteConfirmationSheet
@@ -78,12 +79,17 @@ import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
+import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
+import com.yral.shared.libs.designsystem.component.toast.ToastManager
+import com.yral.shared.libs.designsystem.component.toast.ToastType
+import com.yral.shared.libs.designsystem.component.toast.showError
+import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
-import com.yral.shared.libs.formatAbbreviation
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
+import com.yral.shared.rust.service.domain.models.PagedFollowerItem
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -100,6 +106,7 @@ import yral_mobile.shared.features.profile.generated.resources.video_will_be_del
 import yral_mobile.shared.features.profile.generated.resources.white_heart
 import yral_mobile.shared.features.profile.generated.resources.you_have_not_uploaded_any_video_yet
 import yral_mobile.shared.libs.designsystem.generated.resources.account_nav
+import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.cancel
 import yral_mobile.shared.libs.designsystem.generated.resources.delete
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_views
@@ -108,11 +115,12 @@ import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_s
 import yral_mobile.shared.libs.designsystem.generated.resources.my_profile
 import yral_mobile.shared.libs.designsystem.generated.resources.oops
 import yral_mobile.shared.libs.designsystem.generated.resources.something_went_wrong
+import yral_mobile.shared.libs.designsystem.generated.resources.started_following
 import yral_mobile.shared.libs.designsystem.generated.resources.try_again
 import yral_mobile.shared.libs.designsystem.generated.resources.upload_video
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun ProfileMainScreen(
@@ -125,6 +133,37 @@ fun ProfileMainScreen(
     getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    val followers = viewModel.followers.collectAsLazyPagingItems()
+    val following = viewModel.following.collectAsLazyPagingItems()
+
+    val followedSuccessfully = stringResource(DesignRes.string.started_following, state.accountInfo?.displayName ?: "")
+    LaunchedEffect(Unit) {
+        viewModel.profileEvents.collect { event ->
+            when (event) {
+                is ProfileEvents.FollowedSuccessfully -> {
+                    ToastManager.showSuccess(type = ToastType.Small(message = followedSuccessfully))
+                    followers.refresh()
+                }
+                is ProfileEvents.UnfollowedSuccessfully -> {
+                    followers.refresh()
+                }
+                is ProfileEvents.Failed -> {
+                    ToastManager.showError(type = ToastType.Small(message = event.message))
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.followStatus.collect {
+            if (state.isOwnProfile) {
+                followers.refresh()
+                following.refresh()
+            }
+        }
+    }
+
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     LaunchedEffect(loginState) {
         if (loginState is UiState.Failure) {
@@ -189,6 +228,8 @@ fun ProfileMainScreen(
                         initialPage =
                             videoViewState.initialPage
                                 .coerceAtMost(profileVideos.itemCount - 1),
+                        isOwnProfile = state.isOwnProfile,
+                        userName = state.accountInfo?.displayName,
                         deletingVideoId = deletingVideoId,
                         onBack = { viewModel.closeVideoReel() },
                         isReporting = state.isReporting,
@@ -242,6 +283,8 @@ fun ProfileMainScreen(
                     viewModel = viewModel,
                     gridState = gridState,
                     profileVideos = profileVideos,
+                    followers = followers,
+                    following = following,
                     deletingVideoId = deletingVideoId,
                     uploadVideo = {
                         viewModel.uploadVideoClicked()
@@ -249,6 +292,7 @@ fun ProfileMainScreen(
                     },
                     openAccount = { component.openAccount() },
                     openEditProfile = { component.openEditProfile() },
+                    onBackClicked = { component.onBackClicked() },
                     loginBottomSheet = loginBottomSheet,
                 )
             }
@@ -290,7 +334,7 @@ typealias LoginBottomSheetComposable = @Composable (
     openTerms: () -> Unit,
 ) -> Unit
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MainContent(
@@ -300,26 +344,53 @@ private fun MainContent(
     viewModel: ProfileViewModel,
     gridState: LazyGridState,
     profileVideos: LazyPagingItems<FeedDetails>,
+    followers: LazyPagingItems<PagedFollowerItem>?,
+    following: LazyPagingItems<PagedFollowerItem>?,
     deletingVideoId: String,
     uploadVideo: () -> Unit,
     openAccount: () -> Unit,
     openEditProfile: () -> Unit,
+    onBackClicked: () -> Unit,
     loginBottomSheet: LoginBottomSheetComposable,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader(
+            isOwnProfile = state.isOwnProfile,
+            userName = state.accountInfo?.displayName,
             isWalletEnabled = state.isWalletEnabled,
             openAccount = openAccount,
+            onBack = { onBackClicked() },
         )
         state.accountInfo?.let { info ->
+            val followersCount =
+                followers?.let { pagingItems ->
+                    if (pagingItems.itemCount > 0) {
+                        pagingItems[0]?.totalCount?.toLong() ?: 0
+                    } else {
+                        0
+                    }
+                } ?: 0
+            val followingCount =
+                following?.let { pagingItems ->
+                    if (pagingItems.itemCount > 0) {
+                        pagingItems[0]?.totalCount?.toLong() ?: 0
+                    } else {
+                        0
+                    }
+                } ?: 0
             AccountInfoView(
                 accountInfo = info,
-                isSocialSignIn = state.isLoggedIn,
-                showEditProfile = state.isLoggedIn,
+                totalFollowers = followersCount,
+                totalFollowing = followingCount,
+                isSocialSignIn = state.isLoggedIn || !state.isOwnProfile,
+                showEditProfile = state.isLoggedIn && state.isOwnProfile,
+                showFollow = !state.isOwnProfile && state.isLoggedIn,
+                isFollowing = state.isFollowing,
+                isFollowInProgress = state.isFollowInProgress,
                 onLoginClicked = { viewModel.setBottomSheetType(ProfileBottomSheet.SignUp) },
                 onEditProfileClicked = openEditProfile,
+                onFollowClicked = { viewModel.followUnfollow() },
             )
-            Spacer(modifier = Modifier.height(16.dp))
         }
         when (profileVideos.loadState.refresh) {
             is LoadState.Loading -> {
@@ -337,6 +408,7 @@ private fun MainContent(
                 SuccessContent(
                     gridState = gridState,
                     profileVideos = profileVideos,
+                    isOwnProfile = state.isOwnProfile,
                     deletingVideoId = deletingVideoId,
                     uploadVideo = uploadVideo,
                     openVideoReel = { viewModel.openVideoReel(it) },
@@ -375,8 +447,11 @@ private fun MainContent(
 
 @Composable
 private fun ProfileHeader(
+    isOwnProfile: Boolean,
+    userName: String?,
     isWalletEnabled: Boolean,
     openAccount: () -> Unit,
+    onBack: () -> Unit,
 ) {
     Row(
         modifier =
@@ -391,8 +466,24 @@ private fun ProfileHeader(
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            if (!isOwnProfile) {
+                Icon(
+                    painter = painterResource(DesignRes.drawable.arrow_left),
+                    contentDescription = "back",
+                    tint = Color.White,
+                    modifier =
+                        Modifier
+                            .size(24.dp)
+                            .clickable { onBack() },
+                )
+            }
             Text(
-                text = stringResource(DesignRes.string.my_profile),
+                text =
+                    if (isOwnProfile) {
+                        stringResource(DesignRes.string.my_profile)
+                    } else {
+                        userName ?: ""
+                    },
                 style = LocalAppTopography.current.xlBold,
                 color = YralColors.NeutralTextPrimary,
             )
@@ -446,6 +537,7 @@ private fun ErrorContent(message: String) {
 private fun SuccessContent(
     gridState: LazyGridState,
     profileVideos: LazyPagingItems<FeedDetails>,
+    isOwnProfile: Boolean,
     deletingVideoId: String,
     uploadVideo: () -> Unit,
     openVideoReel: (Int) -> Unit,
@@ -498,6 +590,7 @@ private fun SuccessContent(
                     gridState = gridState,
                     profileVideos = profileVideos,
                     offset = offset,
+                    isOwnProfile = isOwnProfile,
                     deletingVideoId = deletingVideoId,
                     openVideoReel = openVideoReel,
                     onDeleteVideo = onDeleteVideo,
@@ -550,6 +643,7 @@ private fun VideoGridContent(
     gridState: LazyGridState,
     profileVideos: LazyPagingItems<FeedDetails>,
     offset: Float,
+    isOwnProfile: Boolean,
     deletingVideoId: String,
     openVideoReel: (Int) -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
@@ -574,6 +668,7 @@ private fun VideoGridContent(
             if (video != null) {
                 VideoGridItem(
                     video = video,
+                    isOwnProfile = isOwnProfile,
                     isDeleting = deletingVideoId == video.videoID,
                     openVideoReel = { openVideoReel(index) },
                     onDeleteClick = { onDeleteVideo(video) },
@@ -671,6 +766,7 @@ private fun PagingErrorIndicator(
 @Composable
 private fun VideoGridItem(
     video: FeedDetails,
+    isOwnProfile: Boolean,
     isDeleting: Boolean,
     openVideoReel: () -> Unit,
     onDeleteClick: () -> Unit,
@@ -693,7 +789,7 @@ private fun VideoGridItem(
                     .clickable { openVideoReel() },
         ) {
             YralAsyncImage(
-                imageUrl = video.thumbnail.toString(),
+                imageUrl = video.thumbnail,
                 loaderSize = LoaderSize.Fixed,
                 modifier = Modifier.fillMaxSize(),
                 shape = RoundedCornerShape(8.dp),
@@ -703,6 +799,7 @@ private fun VideoGridItem(
                 isLiked = video.isLiked,
                 likeCount = video.likeCount,
                 viewCount = video.viewCount,
+                isOwnProfile = isOwnProfile,
                 onDeleteVideo = onDeleteClick,
             )
         }
@@ -752,6 +849,7 @@ private fun BoxScope.VideoGridItemActions(
     likeCount: ULong,
     viewCount: ULong,
     isLikeVisible: Boolean = false,
+    isOwnProfile: Boolean,
     onDeleteVideo: () -> Unit,
 ) {
     Row(
@@ -795,19 +893,21 @@ private fun BoxScope.VideoGridItemActions(
                 modifier = Modifier.size(24.dp),
             )
             Text(
-                text = NumberFormatter().formatAbbreviation(iconCount.toLong()),
+                text = formatAbbreviation(iconCount.toLong()),
                 style = LocalAppTopography.current.baseMedium,
                 color = YralColors.NeutralTextPrimary,
             )
         }
-        Image(
-            painter = painterResource(DesignRes.drawable.delete),
-            contentDescription = "Delete video",
-            modifier =
-                Modifier
-                    .size(24.dp)
-                    .clickable { onDeleteVideo() },
-        )
+        if (isOwnProfile) {
+            Image(
+                painter = painterResource(DesignRes.drawable.delete),
+                contentDescription = "Delete video",
+                modifier =
+                    Modifier
+                        .size(24.dp)
+                        .clickable { onDeleteVideo() },
+            )
+        }
     }
 }
 

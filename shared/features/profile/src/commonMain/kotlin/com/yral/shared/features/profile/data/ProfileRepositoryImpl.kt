@@ -8,11 +8,14 @@ class ProfileRepositoryImpl(
     private val dataSource: ProfileDataSource,
 ) : ProfileRepository {
     override suspend fun getProfileVideos(
+        canisterId: String,
+        userPrincipal: String,
+        isFromServiceCanister: Boolean,
         startIndex: ULong,
         pageSize: ULong,
     ): ProfileVideosPageResult =
         dataSource
-            .getProfileVideos(startIndex, pageSize)
+            .getProfileVideos(canisterId, userPrincipal, isFromServiceCanister, startIndex, pageSize)
 
     override suspend fun deleteVideo(request: DeleteVideoRequest) =
         dataSource
