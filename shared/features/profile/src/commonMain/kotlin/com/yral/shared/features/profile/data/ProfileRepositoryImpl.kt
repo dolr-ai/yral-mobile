@@ -17,7 +17,7 @@ class ProfileRepositoryImpl(
         dataSource
             .getProfileVideos(canisterId, userPrincipal, isFromServiceCanister, startIndex, pageSize)
 
-    override suspend fun deleteVideo(request: DeleteVideoRequest) =
-        dataSource
-            .deleteVideo(request)
+    override suspend fun deleteVideo(request: DeleteVideoRequest) = dataSource.deleteVideo(request)
+
+    override suspend fun uploadProfileImage(imageBase64: String): String = dataSource.uploadProfileImage(imageBase64)
 }
