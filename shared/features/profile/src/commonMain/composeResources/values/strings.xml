@@ -7,5 +7,6 @@
     <string name="error_loading_videos">Error loading videos</string>
     <string name="you_have_not_uploaded_any_video_yet">You have not uploaded any videos yet.</string>
     <string name="error_loading_more_videos">Error loading more videos</string>
+    <string name="profile_picture_updated">Your profile picture has been updated!</string>
 
 </resources>

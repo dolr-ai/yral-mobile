@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -58,18 +59,24 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.viewmodel.EditProfileViewModel
 import com.yral.shared.features.profile.viewmodel.EditProfileViewState
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
-import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralLoader
+import com.yral.shared.libs.designsystem.component.toast.ToastManager
+import com.yral.shared.libs.designsystem.component.toast.ToastType
+import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
@@ -84,12 +91,16 @@ import yral_mobile.shared.libs.designsystem.generated.resources.profile_placehol
 import yral_mobile.shared.libs.designsystem.generated.resources.save_changes
 import yral_mobile.shared.libs.designsystem.generated.resources.take_photo
 import yral_mobile.shared.libs.designsystem.generated.resources.unique_id
+import yral_mobile.shared.libs.designsystem.generated.resources.upload_camera_profile
 import yral_mobile.shared.libs.designsystem.generated.resources.upload_photo
+import yral_mobile.shared.libs.designsystem.generated.resources.upload_profile_image
 import yral_mobile.shared.libs.designsystem.generated.resources.uploading_profile_picture
 import yral_mobile.shared.libs.designsystem.generated.resources.username
 import yral_mobile.shared.libs.designsystem.generated.resources.username_error_text
 import yral_mobile.shared.libs.designsystem.generated.resources.username_helper_text
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
+
+private const val DRAG_HANDLE_CORNER_PERCENT = 50
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
@@ -123,6 +134,15 @@ fun EditProfileScreen(
                 component.onBack()
             }
         }
+
+    val profileImageToast = state.profileImageToastMessage
+    if (profileImageToast != null) {
+        val message = stringResource(profileImageToast)
+        LaunchedEffect(message) {
+            ToastManager.showSuccess(type = ToastType.Small(message = message))
+            viewModel.consumeProfileImageToast()
+        }
+    }
 
     BackHandler(onBack = handleBack)
 
@@ -224,6 +244,8 @@ fun EditProfileScreen(
                 BioSection(
                     bio = state.bioInput,
                     onBioChange = viewModel::onBioChanged,
+                    onFocusChanged = viewModel::onBioFocusChanged,
+                    isFocused = state.isBioFocused,
                     onBoundsChanged = { bioBounds = it },
                 )
                 Spacer(modifier = Modifier.height(24.dp))
@@ -301,39 +323,50 @@ fun EditProfileScreen(
                 sheetState = bottomSheetState,
                 onDismissRequest = { showPickerSheet = false },
                 containerColor = YralColors.Neutral900,
+                dragHandle = {
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(top = 12.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Box(
+                            modifier =
+                                Modifier
+                                    .width(32.dp)
+                                    .height(4.dp)
+                                    .clip(RoundedCornerShape(DRAG_HANDLE_CORNER_PERCENT))
+                                    .background(YralColors.Neutral500),
+                        )
+                    }
+                },
             ) {
                 Column(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                            .padding(start = 16.dp, end = 16.dp, top = 28.dp, bottom = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(28.dp),
                 ) {
-                    YralButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        text = stringResource(DesignRes.string.upload_photo),
-                        backgroundColor = YralColors.Neutral900,
-                        borderColor = YralColors.Neutral700,
-                        textStyle = LocalAppTopography.current.baseSemiBold.copy(color = YralColors.NeutralTextPrimary),
+                    EditProfileActionButton(
+                        textRes = DesignRes.string.upload_photo,
+                        iconRes = DesignRes.drawable.upload_profile_image,
                         onClick = {
                             focusManager.clearFocus()
                             showPickerSheet = false
                             galleryPicker()
                         },
                     )
-                    YralButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        text = stringResource(DesignRes.string.take_photo),
-                        backgroundColor = YralColors.Neutral900,
-                        borderColor = YralColors.Neutral700,
-                        textStyle = LocalAppTopography.current.baseSemiBold.copy(color = YralColors.NeutralTextPrimary),
+                    EditProfileActionButton(
+                        textRes = DesignRes.string.take_photo,
+                        iconRes = DesignRes.drawable.upload_camera_profile,
                         onClick = {
                             focusManager.clearFocus()
                             showPickerSheet = false
                             photoCapture()
                         },
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
         }
@@ -419,6 +452,47 @@ private fun ProfileImage(
                 colorFilter = ColorFilter.tint(YralColors.Neutral900),
             )
         }
+    }
+}
+
+@Composable
+private fun EditProfileActionButton(
+    textRes: StringResource,
+    iconRes: DrawableResource,
+    onClick: () -> Unit,
+) {
+    val shape = RoundedCornerShape(12.dp)
+    val textStyle =
+        LocalAppTopography.current.baseSemiBold.copy(
+            fontSize = 14.sp,
+            color = YralColors.NeutralTextPrimary,
+        )
+
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(42.dp)
+                .clip(shape)
+                .background(YralColors.Neutral800)
+                .border(1.dp, YralColors.Neutral700, shape)
+                .clickable(onClick = onClick)
+                .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Image(
+            painter = painterResource(iconRes),
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = stringResource(textRes),
+            style = textStyle,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -540,6 +614,8 @@ private fun UsernameTextField(
 private fun BioSection(
     bio: String,
     onBioChange: (String) -> Unit,
+    onFocusChanged: (Boolean) -> Unit,
+    isFocused: Boolean,
     onBoundsChanged: (Rect) -> Unit,
 ) {
     Column(
@@ -564,7 +640,7 @@ private fun BioSection(
                     .defaultMinSize(minHeight = 44.dp)
                     .onGloballyPositioned { coordinates ->
                         onBoundsChanged(coordinates.boundsInRoot())
-                    },
+                    }.onFocusChanged { focusState -> onFocusChanged(focusState.isFocused) },
             decorationBox = { innerTextField ->
                 Box(
                     modifier =
@@ -572,8 +648,11 @@ private fun BioSection(
                             .fillMaxWidth()
                             .clip(shape)
                             .background(YralColors.Neutral900)
-                            .border(1.dp, YralColors.Neutral700, shape)
-                            .padding(horizontal = 10.dp, vertical = 12.dp),
+                            .border(
+                                width = 1.dp,
+                                color = if (isFocused) YralColors.Pink300 else YralColors.Neutral700,
+                                shape = shape,
+                            ).padding(horizontal = 10.dp, vertical = 12.dp),
                 ) {
                     if (bio.isEmpty()) {
                         Text(
