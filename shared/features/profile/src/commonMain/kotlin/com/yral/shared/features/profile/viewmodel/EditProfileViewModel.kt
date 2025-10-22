@@ -6,6 +6,7 @@ import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.profile.domain.UploadProfileImageParams
 import com.yral.shared.features.profile.domain.UploadProfileImageUseCase
 import com.yral.shared.preferences.PrefKeys
@@ -30,6 +31,7 @@ class EditProfileViewModel(
     private val getProfileDetailsV4UseCase: GetProfileDetailsV4UseCase,
     private val updateProfileDetailsUseCase: UpdateProfileDetailsUseCase,
     private val uploadProfileImageUseCase: UploadProfileImageUseCase,
+    private val crashlyticsManager: CrashlyticsManager,
 ) : ViewModel() {
     private val logger = Logger.withTag("EditProfileViewModel")
     companion object {
@@ -119,6 +121,7 @@ class EditProfileViewModel(
                     encodeToBase64(imageBytes)
                 } catch (error: Throwable) {
                     logger.e { "Failed to encode profile image: ${error.message}" }
+                    crashlyticsManager.recordException(error as? Exception ?: Exception(error))
                     _state.update { current ->
                         current.copy(
                             isUploadingProfileImage = false,
@@ -238,7 +241,7 @@ class EditProfileViewModel(
         return isValid
     }
 
-    @Suppress("LongMethod", "CyclomaticComplexMethod", "ReturnCount")
+    @Suppress("LongMethod", "CyclomaticComplexMethod", "ReturnCount", "TooGenericExceptionCaught")
     fun saveProfileChanges() {
         val sanitizedUsername = sanitizeInput(_state.value.usernameInput)
         val sanitizedBio = sanitizeBio(_state.value.bioInput)
@@ -276,103 +279,118 @@ class EditProfileViewModel(
             return
         }
 
+        _state.update { current ->
+            current.copy(isSavingProfile = true)
+        }
+
         viewModelScope.launch {
-            if (shouldUpdateUsername) {
-                val identityData = identity
-                val canisterId = userCanisterId
-                if (identityData == null || canisterId == null) {
-                    logger.e { "Cannot update username without identity data or canister id" }
-                    _state.update { current ->
-                        current.copy(usernameInput = previousUsername)
+            try {
+                if (shouldUpdateUsername) {
+                    val identityData = identity
+                    val canisterId = userCanisterId
+                    if (identityData == null || canisterId == null) {
+                        logger.e { "Cannot update username without identity data or canister id" }
+                        _state.update { current ->
+                            current.copy(usernameInput = previousUsername)
+                        }
+                        return@launch
                     }
-                    return@launch
+                    HelperService
+                        .updateUserMetadata(
+                            identityData,
+                            canisterId,
+                            sanitizedUsername,
+                        ).onFailure { error ->
+                            when (error) {
+                                is MetadataUpdateError.UsernameTaken -> {
+                                    _state.update { current ->
+                                        current.copy(
+                                            isUsernameValid = false,
+                                            usernameErrorMessage = error.message,
+                                            shouldFocusUsername = true,
+                                            isUsernameFocused = true,
+                                        )
+                                    }
+                                }
+
+                                is MetadataUpdateError.InvalidUsername -> {
+                                    _state.update { current ->
+                                        current.copy(
+                                            isUsernameValid = false,
+                                            usernameErrorMessage = error.message,
+                                            shouldFocusUsername = true,
+                                            isUsernameFocused = true,
+                                        )
+                                    }
+                                }
+
+                                else -> {
+                                    _state.update { current ->
+                                        current.copy(
+                                            usernameInput = previousUsername,
+                                            initialUsername = previousUsername,
+                                            isUsernameFocused = true,
+                                            isUsernameValid = false,
+                                            usernameErrorMessage = error.message,
+                                            shouldFocusUsername = true,
+                                        )
+                                    }
+                                }
+                            }
+                            return@launch
+                        }.onSuccess {
+                            sessionManager.updateUsername(sanitizedUsername)
+                            preferences.putString(PrefKeys.USERNAME.name, sanitizedUsername)
+                            _state.update { current ->
+                                current.copy(
+                                    usernameInput = sanitizedUsername,
+                                    initialUsername = sanitizedUsername,
+                                    isUsernameFocused = false,
+                                    isUsernameValid = true,
+                                    usernameErrorMessage = null,
+                                    shouldFocusUsername = false,
+                                )
+                            }
+                        }
                 }
-                HelperService
-                    .updateUserMetadata(
-                        identityData,
-                        canisterId,
-                        sanitizedUsername,
+
+                if (!shouldUpdateUsername) {
+                    _state.update { current ->
+                        current.copy(
+                            usernameInput = sanitizedUsername,
+                            initialUsername = sanitizedUsername,
+                            isUsernameFocused = false,
+                            isUsernameValid = true,
+                            usernameErrorMessage = null,
+                            shouldFocusUsername = false,
+                        )
+                    }
+                }
+
+                if (shouldUpdateBio) {
+                    updateProfileDetailsUseCase(
+                        UpdateProfileDetailsParams(
+                            principal = principal,
+                            bio = sanitizedBio.takeUnless { it.isEmpty() },
+                        ),
                     ).onFailure { error ->
-                        when (error) {
-                            is MetadataUpdateError.UsernameTaken -> {
-                                _state.update { current ->
-                                    current.copy(
-                                        isUsernameValid = false,
-                                        usernameErrorMessage = error.message,
-                                        shouldFocusUsername = true,
-                                        isUsernameFocused = true,
-                                    )
-                                }
-                            }
-
-                            is MetadataUpdateError.InvalidUsername -> {
-                                _state.update { current ->
-                                    current.copy(
-                                        isUsernameValid = false,
-                                        usernameErrorMessage = error.message,
-                                        shouldFocusUsername = true,
-                                        isUsernameFocused = true,
-                                    )
-                                }
-                            }
-
-                            else -> {
-                                _state.update { current ->
-                                    current.copy(
-                                        usernameInput = previousUsername,
-                                        initialUsername = previousUsername,
-                                        isUsernameFocused = true,
-                                        isUsernameValid = false,
-                                        usernameErrorMessage = error.message,
-                                        shouldFocusUsername = true,
-                                    )
-                                }
-                            }
+                        logger.e { "Failed to update bio: ${error.message}" }
+                        _state.update { current ->
+                            current.copy(
+                                bioInput = previousBio,
+                                initialBio = previousBio,
+                            )
                         }
                         return@launch
                     }.onSuccess {
-                        sessionManager.updateUsername(sanitizedUsername)
-                        preferences.putString(PrefKeys.USERNAME.name, sanitizedUsername)
                         _state.update { current ->
                             current.copy(
-                                usernameInput = sanitizedUsername,
-                                initialUsername = sanitizedUsername,
-                                isUsernameFocused = false,
-                                isUsernameValid = true,
-                                usernameErrorMessage = null,
-                                shouldFocusUsername = false,
+                                bioInput = sanitizedBio,
+                                initialBio = sanitizedBio,
                             )
                         }
                     }
-            } else {
-                _state.update { current ->
-                    current.copy(
-                        usernameInput = sanitizedUsername,
-                        initialUsername = sanitizedUsername,
-                        isUsernameFocused = false,
-                        isUsernameValid = true,
-                        usernameErrorMessage = null,
-                        shouldFocusUsername = false,
-                    )
-                }
-            }
-
-            if (shouldUpdateBio) {
-                updateProfileDetailsUseCase(
-                    UpdateProfileDetailsParams(
-                        principal = principal,
-                        bio = sanitizedBio.takeUnless { it.isEmpty() },
-                    ),
-                ).onFailure { error ->
-                    logger.e { "Failed to update bio: ${error.message}" }
-                    _state.update { current ->
-                        current.copy(
-                            bioInput = previousBio,
-                            initialBio = previousBio,
-                        )
-                    }
-                    return@launch
-                }.onSuccess {
+                } else {
                     _state.update { current ->
                         current.copy(
                             bioInput = sanitizedBio,
@@ -380,12 +398,23 @@ class EditProfileViewModel(
                         )
                     }
                 }
-            } else {
-                _state.update { current ->
-                    current.copy(
-                        bioInput = sanitizedBio,
-                        initialBio = sanitizedBio,
+            } catch (error: Throwable) {
+                logger.e { "Unexpected failure saving profile: ${error.message}" }
+                _state.update {
+                    it.copy(
+                        usernameInput = previousUsername,
+                        initialUsername = previousUsername,
+                        bioInput = previousBio,
+                        initialBio = previousBio,
+                        isUsernameFocused = false,
+                        isUsernameValid = true,
+                        usernameErrorMessage = null,
+                        shouldFocusUsername = false,
                     )
+                }
+            } finally {
+                _state.update { current ->
+                    current.copy(isSavingProfile = false)
                 }
             }
         }
@@ -401,6 +430,21 @@ class EditProfileViewModel(
                 isUsernameValid = true,
                 usernameErrorMessage = null,
                 shouldFocusUsername = false,
+            )
+        }
+    }
+
+    fun discardUnsavedProfileEdits() {
+        _state.update { current ->
+            val fallbackUsername = sanitizedSessionUsername()
+            current.copy(
+                usernameInput = current.initialUsername.ifEmpty { fallbackUsername },
+                bioInput = current.initialBio,
+                isUsernameFocused = false,
+                isUsernameValid = true,
+                usernameErrorMessage = null,
+                shouldFocusUsername = false,
+                isSavingProfile = false,
             )
         }
     }
@@ -434,4 +478,5 @@ data class EditProfileViewState(
     val isUsernameValid: Boolean = true,
     val usernameErrorMessage: String? = null,
     val shouldFocusUsername: Boolean = false,
+    val isSavingProfile: Boolean = false,
 )

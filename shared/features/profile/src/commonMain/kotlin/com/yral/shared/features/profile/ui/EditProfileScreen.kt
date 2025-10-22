@@ -31,19 +31,23 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -61,6 +65,7 @@ import com.yral.shared.features.profile.viewmodel.EditProfileViewModel
 import com.yral.shared.features.profile.viewmodel.EditProfileViewState
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralButton
+import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
@@ -87,7 +92,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.username_helper_
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun EditProfileScreen(
     component: EditProfileComponent,
@@ -109,6 +114,21 @@ fun EditProfileScreen(
         if (isValid) {
             focusManager.clearFocus()
             viewModel.saveProfileChanges()
+        }
+    }
+    val handleBack =
+        remember(viewModel, component) {
+            {
+                viewModel.discardUnsavedProfileEdits()
+                component.onBack()
+            }
+        }
+
+    BackHandler(onBack = handleBack)
+
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.discardUnsavedProfileEdits()
         }
     }
 
@@ -145,7 +165,7 @@ fun EditProfileScreen(
                         }
                     },
         ) {
-            EditProfileHeader(onBack = component::onBack)
+            EditProfileHeader(onBack = handleBack)
             Column(
                 modifier =
                     Modifier
@@ -224,31 +244,51 @@ fun EditProfileScreen(
                 YralGradientButton(
                     modifier = Modifier.fillMaxWidth(),
                     text = stringResource(DesignRes.string.save_changes),
+                    buttonState =
+                        if (state.isSavingProfile || state.isUploadingProfileImage) {
+                            YralButtonState.Loading
+                        } else {
+                            YralButtonState.Enabled
+                        },
                     onClick = handleSave,
                 )
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
 
-        if (state.isUploadingProfileImage) {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .background(YralColors.Neutral950.copy(alpha = 0.85f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+        when {
+            state.isUploadingProfileImage -> {
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .background(YralColors.Neutral950.copy(alpha = 0.85f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        YralLoader(size = 100.dp)
+                        Text(
+                            text = stringResource(DesignRes.string.uploading_profile_picture),
+                            style = LocalAppTopography.current.baseSemiBold,
+                            color = YralColors.NeutralTextPrimary,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                }
+            }
+
+            state.isSavingProfile -> {
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .background(YralColors.Neutral950.copy(alpha = 0.85f)),
+                    contentAlignment = Alignment.Center,
                 ) {
                     YralLoader(size = 100.dp)
-                    Text(
-                        text = stringResource(DesignRes.string.uploading_profile_picture),
-                        style = LocalAppTopography.current.baseSemiBold,
-                        color = YralColors.NeutralTextPrimary,
-                        textAlign = TextAlign.Center,
-                    )
                 }
             }
         }
@@ -334,7 +374,7 @@ private fun ProfileImage(
     onEditClick: () -> Unit,
 ) {
     val imageSize = 114.dp
-    val editIconSize = 36.dp
+    val editIconSize = 32.dp
 
     Box(
         modifier = Modifier.size(imageSize),
@@ -357,16 +397,28 @@ private fun ProfileImage(
             )
         }
 
-        Image(
-            painter = painterResource(DesignRes.drawable.edit_profile_icon),
-            contentDescription = stringResource(DesignRes.string.edit_profile),
+        Box(
             modifier =
                 Modifier
                     .size(editIconSize)
                     .align(Alignment.BottomEnd)
-                    .offset(x = editIconSize * 0.3f, y = editIconSize * 0.3f)
+                    .offset(x = editIconSize * 0.05f, y = editIconSize * 0.05f)
+                    .clip(CircleShape)
+                    .background(YralColors.Grey0)
+                    .border(width = 1.dp, color = YralColors.Neutral700, shape = CircleShape)
                     .clickable(enabled = !isUploading, onClick = onEditClick),
-        )
+            contentAlignment = Alignment.Center,
+        ) {
+            Image(
+                painter = painterResource(DesignRes.drawable.edit_profile_icon),
+                contentDescription = stringResource(DesignRes.string.edit_profile),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(6.dp),
+                colorFilter = ColorFilter.tint(YralColors.Neutral900),
+            )
+        }
     }
 }
 
