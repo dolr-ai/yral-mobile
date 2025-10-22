@@ -22,6 +22,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
+import yral_mobile.shared.features.profile.generated.resources.Res
+import yral_mobile.shared.features.profile.generated.resources.profile_picture_updated
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -113,7 +116,11 @@ class EditProfileViewModel(
         }
         viewModelScope.launch {
             _state.update { current ->
-                current.copy(isUploadingProfileImage = true, profileImageUploadError = null)
+                current.copy(
+                    isUploadingProfileImage = true,
+                    profileImageUploadError = null,
+                    profileImageToastMessage = null,
+                )
             }
 
             val base64 =
@@ -126,6 +133,7 @@ class EditProfileViewModel(
                         current.copy(
                             isUploadingProfileImage = false,
                             profileImageUploadError = error.message ?: "Unable to process image",
+                            profileImageToastMessage = null,
                         )
                     }
                     return@launch
@@ -140,6 +148,7 @@ class EditProfileViewModel(
                             profileImageUrl = imageUrl,
                             isUploadingProfileImage = false,
                             profileImageUploadError = null,
+                            profileImageToastMessage = Res.string.profile_picture_updated,
                         )
                     }
                 }.onFailure { error ->
@@ -148,6 +157,7 @@ class EditProfileViewModel(
                         current.copy(
                             isUploadingProfileImage = false,
                             profileImageUploadError = error.message ?: "Failed to upload profile picture",
+                            profileImageToastMessage = null,
                         )
                     }
                 }
@@ -214,6 +224,18 @@ class EditProfileViewModel(
     fun onBioChanged(value: String) {
         _state.update { current ->
             current.copy(bioInput = value)
+        }
+    }
+
+    fun onBioFocusChanged(isFocused: Boolean) {
+        _state.update { current ->
+            current.copy(isBioFocused = isFocused)
+        }
+    }
+
+    fun consumeProfileImageToast() {
+        _state.update { current ->
+            current.copy(profileImageToastMessage = null)
         }
     }
 
@@ -430,6 +452,7 @@ class EditProfileViewModel(
                 isUsernameValid = true,
                 usernameErrorMessage = null,
                 shouldFocusUsername = false,
+                isBioFocused = false,
             )
         }
     }
@@ -445,6 +468,8 @@ class EditProfileViewModel(
                 usernameErrorMessage = null,
                 shouldFocusUsername = false,
                 isSavingProfile = false,
+                isBioFocused = false,
+                profileImageToastMessage = null,
             )
         }
     }
@@ -479,4 +504,6 @@ data class EditProfileViewState(
     val usernameErrorMessage: String? = null,
     val shouldFocusUsername: Boolean = false,
     val isSavingProfile: Boolean = false,
+    val isBioFocused: Boolean = false,
+    val profileImageToastMessage: StringResource? = null,
 )
