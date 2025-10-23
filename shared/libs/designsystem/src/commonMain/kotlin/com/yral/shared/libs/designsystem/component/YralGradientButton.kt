@@ -53,24 +53,26 @@ fun YralGradientButton(
         horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AnimatedVisibility(
-            visible = buttonState != YralButtonState.Loading,
-            enter = fadeIn(),
-            exit = fadeOut(),
-        ) {
-            YralMaskedVectorTextV2(
-                text = text,
-                drawableRes = getButtonTextBackground(buttonType, buttonState),
-                textStyle =
-                    LocalAppTopography
-                        .current
-                        .mdBold
-                        .plus(
-                            TextStyle(
-                                textAlign = TextAlign.Center,
+        if (text.isNotEmpty()) {
+            AnimatedVisibility(
+                visible = buttonState != YralButtonState.Loading,
+                enter = fadeIn(),
+                exit = fadeOut(),
+            ) {
+                YralMaskedVectorTextV2(
+                    text = text,
+                    drawableRes = getButtonTextBackground(buttonType, buttonState),
+                    textStyle =
+                        LocalAppTopography
+                            .current
+                            .mdBold
+                            .plus(
+                                TextStyle(
+                                    textAlign = TextAlign.Center,
+                                ),
                             ),
-                        ),
-            )
+                )
+            }
         }
         AnimatedVisibility(
             visible = buttonState == YralButtonState.Loading,
