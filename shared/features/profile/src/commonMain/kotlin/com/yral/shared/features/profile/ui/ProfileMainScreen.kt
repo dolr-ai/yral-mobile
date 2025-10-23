@@ -429,6 +429,7 @@ fun ProfileMainScreen(
                 following = following,
                 minSheetHeight = minSheetHeight,
                 maxSheetHeight = maxSheetHeight,
+                followLoading = state.followLoading,
                 onTabSelected = { followerSheetTab = it },
                 onFollowToggle = viewModel::toggleFollowForPrincipal,
             )
@@ -794,6 +795,7 @@ private fun FollowersBottomSheetContent(
     following: LazyPagingItems<PagedFollowerItem>,
     minSheetHeight: Dp,
     maxSheetHeight: Dp,
+    followLoading: Map<String, Boolean>,
     onTabSelected: (FollowersSheetTab) -> Unit,
     onFollowToggle: (String, Boolean) -> Unit,
 ) {
@@ -865,6 +867,7 @@ private fun FollowersBottomSheetContent(
                                     follower ->
                                         FollowerRow(
                                             follower = follower,
+                                            followLoading = followLoading,
                                             onFollowToggle = onFollowToggle,
                                         )
                                 }
@@ -1030,9 +1033,11 @@ private fun FollowersTabItem(
 @Composable
 private fun FollowerRow(
     follower: FollowerItem,
+    followLoading: Map<String, Boolean>,
     onFollowToggle: (String, Boolean) -> Unit,
 ) {
     val principalText = remember(follower.principalId) { toReadablePrincipalText(follower.principalId.toString()) }
+    val isLoading = followLoading[principalText] == true
     val displayName = remember(principalText) { resolveUsername(null, principalText) ?: principalText }
     val initial = remember(displayName) { displayName.firstOrNull()?.uppercaseChar()?.toString() ?: "?" }
     val isFollowing = follower.callerFollows
@@ -1083,7 +1088,8 @@ private fun FollowerRow(
                 textStyle = LocalAppTopography.current.baseSemiBold.copy(fontSize = 14.sp, color = YralColors.Neutral50),
                 buttonHeight = FollowersSheetUi.ActionButtonHeight,
                 fillMaxWidth = false,
-                onClick = { onFollowToggle(principalText, true) },
+                buttonState = if (isLoading) YralButtonState.Loading else YralButtonState.Enabled,
+                onClick = { if (!isLoading) onFollowToggle(principalText, true) },
             )
         } else {
             YralGradientButton(
@@ -1094,7 +1100,8 @@ private fun FollowerRow(
                 buttonHeight = FollowersSheetUi.ActionButtonHeight,
                 fillMaxWidth = false,
                 text = stringResource(DesignRes.string.follow),
-                onClick = { onFollowToggle(principalText, false) },
+                buttonState = if (isLoading) YralButtonState.Loading else YralButtonState.Enabled,
+                onClick = { if (!isLoading) onFollowToggle(principalText, false) },
             )
         }
     }

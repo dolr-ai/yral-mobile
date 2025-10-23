@@ -456,6 +456,18 @@ class ProfileViewModel(
         }
     }
 
+    private fun setFollowLoading(principal: String, loading: Boolean) {
+        _state.update { current ->
+            val updated =
+                if (loading) {
+                    current.followLoading + (principal to true)
+                } else {
+                    current.followLoading - principal
+                }
+            current.copy(followLoading = updated)
+        }
+    }
+
     fun followUnfollow() {
         viewModelScope.launch {
             sessionManager.userPrincipal?.let {
@@ -474,32 +486,43 @@ class ProfileViewModel(
     fun toggleFollowForPrincipal(targetPrincipal: String, currentlyFollowing: Boolean) {
         viewModelScope.launch {
             val callerPrincipal = sessionManager.userPrincipal ?: return@launch
-            if (currentlyFollowing) {
-                unfollowUserUseCase(
-                    parameter =
-                        UnfollowUserParams(
-                            principal = callerPrincipal,
-                            targetPrincipal = targetPrincipal,
-                        ),
-                ).onSuccess {
-                    profileEventsChannel.trySend(ProfileEvents.UnfollowedSuccessfully)
-                    sessionManager.removePrincipalFromFollow(targetPrincipal)
-                }.onFailure { error ->
-                    profileEventsChannel.trySend(ProfileEvents.Failed(error.message ?: "Unfollow failed"))
+            setFollowLoading(targetPrincipal, true)
+            try {
+                if (currentlyFollowing) {
+                    val result =
+                        unfollowUserUseCase(
+                            parameter =
+                                UnfollowUserParams(
+                                    principal = callerPrincipal,
+                                    targetPrincipal = targetPrincipal,
+                                ),
+                        )
+                    result.onSuccess {
+                        profileEventsChannel.trySend(ProfileEvents.UnfollowedSuccessfully)
+                        sessionManager.removePrincipalFromFollow(targetPrincipal)
+                    }
+                    result.onFailure { error ->
+                        profileEventsChannel.trySend(ProfileEvents.Failed(error.message ?: "Unfollow failed"))
+                    }
+                } else {
+                    val result =
+                        followUserUseCase(
+                            parameter =
+                                FollowUserParams(
+                                    principal = callerPrincipal,
+                                    targetPrincipal = targetPrincipal,
+                                ),
+                        )
+                    result.onSuccess {
+                        profileEventsChannel.trySend(ProfileEvents.FollowedSuccessfully)
+                        sessionManager.addPrincipalToFollow(targetPrincipal)
+                    }
+                    result.onFailure { error ->
+                        profileEventsChannel.trySend(ProfileEvents.Failed(error.message ?: "Follow failed"))
+                    }
                 }
-            } else {
-                followUserUseCase(
-                    parameter =
-                        FollowUserParams(
-                            principal = callerPrincipal,
-                            targetPrincipal = targetPrincipal,
-                        ),
-                ).onSuccess {
-                    profileEventsChannel.trySend(ProfileEvents.FollowedSuccessfully)
-                    sessionManager.addPrincipalToFollow(targetPrincipal)
-                }.onFailure { error ->
-                    profileEventsChannel.trySend(ProfileEvents.Failed(error.message ?: "Follow failed"))
-                }
+            } finally {
+                setFollowLoading(targetPrincipal, false)
             }
         }
     }
@@ -562,7 +585,9 @@ data class ViewState(
     val isOwnProfile: Boolean = true,
     val isFollowing: Boolean = false,
     val isFollowInProgress: Boolean = false,
+    val followLoading: Map<String, Boolean> = emptyMap(),
 )
+
 
 sealed interface ProfileBottomSheet {
     data object None : ProfileBottomSheet
