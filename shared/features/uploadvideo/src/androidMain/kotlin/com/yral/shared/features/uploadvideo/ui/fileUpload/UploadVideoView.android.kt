@@ -24,9 +24,9 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.MultiplePermissionsState
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.shouldShowRationale
+import com.yral.shared.features.uploadvideo.utils.AndroidVideoValidator
 import com.yral.shared.features.uploadvideo.utils.VideoFileManager
 import com.yral.shared.features.uploadvideo.utils.VideoPermissionUtils
-import com.yral.shared.features.uploadvideo.utils.VideoValidator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -103,7 +103,7 @@ private fun rememberVideoPickerLauncher(
     onError: (VideoPickerError) -> Unit,
 ): ActivityResultLauncher<String> {
     val context = LocalContext.current
-    val videoValidator: VideoValidator = koinInject()
+    val videoValidator: AndroidVideoValidator = koinInject()
     val videoFileManager: VideoFileManager = koinInject()
     val coroutineScope = rememberCoroutineScope()
 
