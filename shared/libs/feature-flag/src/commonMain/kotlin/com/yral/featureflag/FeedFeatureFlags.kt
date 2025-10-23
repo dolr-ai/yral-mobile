@@ -15,4 +15,14 @@ object FeedFeatureFlags {
                 defaultValue = false,
             )
     }
+    object FeedTypes :
+        FlagGroup(keyPrefix = "feed", defaultAudience = FlagAudience.INTERNAL_QA) {
+        val AvailableTypes: FeatureFlag<String> =
+            string(
+                keySuffix = "availableTypes",
+                name = "Feed Type",
+                description = "Available feed types for users",
+                defaultValue = "default",
+            )
+    }
 }

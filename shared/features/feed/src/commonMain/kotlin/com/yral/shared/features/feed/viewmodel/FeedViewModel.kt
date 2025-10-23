@@ -8,6 +8,7 @@ import com.github.michaelbull.result.map
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.featureflag.FeatureFlagManager
+import com.yral.featureflag.FeedFeatureFlags
 import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.shared.analytics.events.CtaType
 import com.yral.shared.core.exceptions.YralException
@@ -88,14 +89,16 @@ class FeedViewModel(
     val state: StateFlow<FeedState> = _state.asStateFlow()
 
     init {
-        if (_state.value.feedType == FeedType.AI) {
-            fetchAIFeed(
-                currentBatchSize = FEEDS_PAGE_SIZE_AI_FEED,
-                totalNotVotedCount = 0,
-                recursionDepth = 0,
-            )
-        } else {
-            initialFeedData()
+        initAvailableFeeds()
+        when (_state.value.feedType) {
+            FeedType.AI -> {
+                fetchAIFeed(
+                    currentBatchSize = FEEDS_PAGE_SIZE_AI_FEED,
+                    totalNotVotedCount = 0,
+                    recursionDepth = 0,
+                )
+            }
+            else -> initialFeedData()
         }
         viewModelScope.launch {
             sessionManager
@@ -123,6 +126,21 @@ class FeedViewModel(
                 ).collect { isSocialSignIn ->
                     _state.update { it.copy(isLoggedIn = isSocialSignIn) }
                 }
+        }
+    }
+
+    private fun initAvailableFeeds() {
+        val availableFeedTypes =
+            flagManager
+                .get(FeedFeatureFlags.FeedTypes.AvailableTypes)
+                .split(",")
+                .mapNotNull { name -> FeedType.entries.firstOrNull { it.name.equals(name.trim(), ignoreCase = true) } }
+        val selectedType = availableFeedTypes.firstOrNull() ?: FeedType.DEFAULT
+        _state.update {
+            it.copy(
+                availableFeedTypes = availableFeedTypes,
+                feedType = selectedType,
+            )
         }
     }
 
@@ -753,7 +771,8 @@ data class FeedState(
     val showSignupFailedSheet: Boolean = false,
     val overlayType: OverlayType = OverlayType.DAILY_RANK,
     val isLoggedIn: Boolean = false,
-    val feedType: FeedType = FeedType.AI,
+    val availableFeedTypes: List<FeedType> = listOf(FeedType.DEFAULT),
+    val feedType: FeedType = FeedType.DEFAULT,
 )
 
 enum class OverlayType {
