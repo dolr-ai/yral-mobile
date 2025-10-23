@@ -2,6 +2,7 @@ package com.yral.shared.app.di
 
 import com.yral.shared.analytics.di.IS_DEBUG
 import com.yral.shared.analytics.di.MIXPANEL_TOKEN
+import com.yral.shared.analytics.di.ONESIGNAL_APP_ID
 import com.yral.shared.features.auth.utils.IosOAuthUtils
 import com.yral.shared.features.auth.utils.IosOAuthUtilsHelper
 import com.yral.shared.features.auth.utils.OAuthUtils
@@ -16,6 +17,10 @@ actual val platformModule =
         single<String>(MIXPANEL_TOKEN) {
             (NSBundle.mainBundle.objectForInfoDictionaryKey("MIXPANEL_TOKEN") as? String)
                 ?: error("MIXPANEL_TOKEN missing from Info.plist")
+        }
+        single<String>(ONESIGNAL_APP_ID) {
+            (NSBundle.mainBundle.objectForInfoDictionaryKey("ONESIGNAL_APP_ID") as? String)
+                ?: error("ONESIGNAL_APP_ID missing from Info.plist")
         }
         single<Boolean>(IS_DEBUG) {
             NSBundle.mainBundle.bundleIdentifier != "com.yral.iosApp"
