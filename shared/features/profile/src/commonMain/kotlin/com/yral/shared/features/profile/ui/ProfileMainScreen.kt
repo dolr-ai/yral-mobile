@@ -269,6 +269,7 @@ fun ProfileMainScreen(
                                 msgFeedVideoShareDesc,
                             )
                         },
+                        onViewsClick = { video -> viewModel.showVideoViews(video) },
                         getPrefetchListener = getPrefetchListener,
                         modifier = Modifier.fillMaxSize(),
                     )
@@ -423,6 +424,7 @@ private fun MainContent(
                                 ctaType = VideoDeleteCTA.PROFILE_THUMBNAIL,
                             )
                         },
+                        onViewsClick = { viewModel.showVideoViews(it) },
                         onManualRefreshTriggered = { viewModel.setManualRefreshTriggered(it) },
                     )
                 }
@@ -441,6 +443,8 @@ private fun MainContent(
                 { extraSheetLink = viewModel.getTncLink() },
             )
         }
+
+        is ProfileBottomSheet.VideoView -> Unit
     }
     if (extraSheetLink.isNotEmpty()) {
         YralWebViewBottomSheet(
@@ -548,6 +552,7 @@ private fun SuccessContent(
     uploadVideo: () -> Unit,
     openVideoReel: (Int) -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
+    onViewsClick: (FeedDetails) -> Unit,
     onManualRefreshTriggered: (Boolean) -> Unit,
 ) {
     Column(
@@ -600,6 +605,7 @@ private fun SuccessContent(
                     deletingVideoId = deletingVideoId,
                     openVideoReel = openVideoReel,
                     onDeleteVideo = onDeleteVideo,
+                    onViewsClick = onViewsClick,
                 )
             }
         }
@@ -653,6 +659,7 @@ private fun VideoGridContent(
     deletingVideoId: String,
     openVideoReel: (Int) -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
+    onViewsClick: (FeedDetails) -> Unit,
 ) {
     LazyVerticalGrid(
         state = gridState,
@@ -678,6 +685,7 @@ private fun VideoGridContent(
                     isDeleting = deletingVideoId == video.videoID,
                     openVideoReel = { openVideoReel(index) },
                     onDeleteClick = { onDeleteVideo(video) },
+                    onViewsClick = { onViewsClick(video) },
                 )
             }
         }
@@ -776,6 +784,7 @@ private fun VideoGridItem(
     isDeleting: Boolean,
     openVideoReel: () -> Unit,
     onDeleteClick: () -> Unit,
+    onViewsClick: () -> Unit,
 ) {
     Box(
         modifier =
@@ -807,6 +816,7 @@ private fun VideoGridItem(
                 viewCount = video.viewCount,
                 isOwnProfile = isOwnProfile,
                 onDeleteVideo = onDeleteClick,
+                onViewsClick = onViewsClick,
             )
         }
         DeletingOverLay(
@@ -849,6 +859,7 @@ private fun DeletingOverLay(
     }
 }
 
+@Suppress("LongMethod")
 @Composable
 private fun BoxScope.VideoGridItemActions(
     isLiked: Boolean,
@@ -857,7 +868,40 @@ private fun BoxScope.VideoGridItemActions(
     isLikeVisible: Boolean = false,
     isOwnProfile: Boolean,
     onDeleteVideo: () -> Unit,
+    onViewsClick: () -> Unit,
 ) {
+    val leftIcon =
+        if (isLikeVisible) {
+            if (likeCount > 0U && isLiked) {
+                Res.drawable.pink_heart
+            } else {
+                Res.drawable.white_heart
+            }
+        } else {
+            DesignRes.drawable.ic_views
+        }
+    val leftIconDescription =
+        if (isLikeVisible) {
+            "likes"
+        } else {
+            "views"
+        }
+    val leftText =
+        if (isLikeVisible) {
+            likeCount
+        } else {
+            viewCount
+        }
+    val leftIconModifier =
+        if (isLikeVisible) {
+            Modifier
+        } else {
+            Modifier.clickable {
+                if (!isLikeVisible) {
+                    onViewsClick()
+                }
+            }
+        }
     Row(
         modifier =
             Modifier
@@ -870,36 +914,15 @@ private fun BoxScope.VideoGridItemActions(
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = leftIconModifier,
         ) {
-            val icon =
-                if (isLikeVisible) {
-                    if (likeCount > 0U && isLiked) {
-                        Res.drawable.pink_heart
-                    } else {
-                        Res.drawable.white_heart
-                    }
-                } else {
-                    DesignRes.drawable.ic_views
-                }
-            val iconDescription =
-                if (isLikeVisible) {
-                    "likes"
-                } else {
-                    "views"
-                }
-            val iconCount =
-                if (isLikeVisible) {
-                    likeCount
-                } else {
-                    viewCount
-                }
             Image(
-                painter = painterResource(icon),
-                contentDescription = iconDescription,
+                painter = painterResource(leftIcon),
+                contentDescription = leftIconDescription,
                 modifier = Modifier.size(24.dp),
             )
             Text(
-                text = formatAbbreviation(iconCount.toLong()),
+                text = formatAbbreviation(leftText.toLong()),
                 style = LocalAppTopography.current.baseMedium,
                 color = YralColors.NeutralTextPrimary,
             )
