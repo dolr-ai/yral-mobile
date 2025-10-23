@@ -27,6 +27,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
 import com.yral.shared.features.uploadvideo.utils.VideoValidationError
+import com.yral.shared.features.uploadvideo.utils.VideoValidator
 import com.yral.shared.features.uploadvideo.utils.formatFileSize
 import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.component.YralButtonState
@@ -109,7 +110,7 @@ fun UploadVideo(
 
 @Composable
 internal expect fun SelectVideoView(
-    maxSeconds: Int = 60,
+    maxSeconds: Int = VideoValidator.VIDEO_MAX_DURATION_SECONDS.toInt(),
     onVideoSelected: (String) -> Unit,
     onCTAClicked: () -> Unit,
 )
