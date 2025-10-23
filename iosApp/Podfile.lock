@@ -1498,6 +1498,35 @@ PODS:
     - nanopb/encode (= 3.30910.0)
   - nanopb/decode (3.30910.0)
   - nanopb/encode (3.30910.0)
+  - OneSignal/OneSignal (5.2.14):
+    - OneSignal/OneSignalCore
+    - OneSignal/OneSignalExtension
+    - OneSignal/OneSignalLiveActivities
+    - OneSignal/OneSignalNotifications
+    - OneSignal/OneSignalOSCore
+    - OneSignal/OneSignalOutcomes
+    - OneSignal/OneSignalUser
+  - OneSignal/OneSignalCore (5.2.14)
+  - OneSignal/OneSignalExtension (5.2.14):
+    - OneSignal/OneSignalCore
+    - OneSignal/OneSignalOutcomes
+  - OneSignal/OneSignalLiveActivities (5.2.14):
+    - OneSignal/OneSignalCore
+    - OneSignal/OneSignalOSCore
+    - OneSignal/OneSignalUser
+  - OneSignal/OneSignalNotifications (5.2.14):
+    - OneSignal/OneSignalCore
+    - OneSignal/OneSignalExtension
+    - OneSignal/OneSignalOutcomes
+  - OneSignal/OneSignalOSCore (5.2.14):
+    - OneSignal/OneSignalCore
+  - OneSignal/OneSignalOutcomes (5.2.14):
+    - OneSignal/OneSignalCore
+  - OneSignal/OneSignalUser (5.2.14):
+    - OneSignal/OneSignalCore
+    - OneSignal/OneSignalNotifications
+    - OneSignal/OneSignalOSCore
+    - OneSignal/OneSignalOutcomes
   - PromisesObjC (2.4.0)
   - PromisesSwift (2.4.0):
     - PromisesObjC (= 2.4.0)
@@ -1520,6 +1549,7 @@ DEPENDENCIES:
   - iosSharedUmbrella (from `../iosSharedUmbrella`)
   - Mixpanel (= 5.0.8)
   - nanopb (= 3.30910.0)
+  - OneSignal/OneSignal (= 5.2.14)
 
 SPEC REPOS:
   trunk:
@@ -1559,6 +1589,7 @@ SPEC REPOS:
     - leveldb-library
     - Mixpanel
     - nanopb
+    - OneSignal
     - PromisesObjC
     - PromisesSwift
     - RecaptchaInterop
@@ -1605,10 +1636,11 @@ SPEC CHECKSUMS:
   leveldb-library: cc8b8f8e013647a295ad3f8cd2ddf49a6f19be19
   Mixpanel: 9337782610693ef36b8f6ab531493201825f1dd6
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
+  OneSignal: 6ff272c3d1775fb7eec3a2ffed9dc7e01963aacc
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   PromisesSwift: 9d77319bbe72ebf6d872900551f7eeba9bce2851
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
 
-PODFILE CHECKSUM: b5fcb1397e165ed7b2003554c6382d1448f48a1d
+PODFILE CHECKSUM: b61bd37c808fc822d54bb5a3ea0039fdbe66f930
 
 COCOAPODS: 1.16.2

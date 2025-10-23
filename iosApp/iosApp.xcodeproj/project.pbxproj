@@ -470,6 +470,10 @@
 		ACB09FDE2D92F87E00EE3239 /* MyVideosFeedViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FDC2D92F87000EE3239 /* MyVideosFeedViewModel.swift */; };
 		ACB09FE72D93289000EE3239 /* MyVideosFeedInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FE62D93288400EE3239 /* MyVideosFeedInfo.swift */; };
 		ACB09FE82D93289000EE3239 /* MyVideosFeedInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FE62D93288400EE3239 /* MyVideosFeedInfo.swift */; };
+		ACB117462E9EADE20064677F /* IosOneSignalKMP.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB117452E9EADD10064677F /* IosOneSignalKMP.swift */; };
+		ACB117472E9EADE20064677F /* IosOneSignalKMP.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB117452E9EADD10064677F /* IosOneSignalKMP.swift */; };
+		ACB117492E9EAEEE0064677F /* IosDependencyProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB117482E9EAEEE0064677F /* IosDependencyProvider.swift */; };
+		ACB1174A2E9EAEEE0064677F /* IosDependencyProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB117482E9EAEEE0064677F /* IosDependencyProvider.swift */; };
 		ACB3439A2E4357A800EC74A0 /* sats_claim_loading.json in Resources */ = {isa = PBXBuildFile; fileRef = ACB343982E4357A800EC74A0 /* sats_claim_loading.json */; };
 		ACB3439B2E4357A800EC74A0 /* sats_claim_success.json in Resources */ = {isa = PBXBuildFile; fileRef = ACB343992E4357A800EC74A0 /* sats_claim_success.json */; };
 		ACB3439C2E4357A800EC74A0 /* sats_claim_failure.json in Resources */ = {isa = PBXBuildFile; fileRef = ACB343972E4357A800EC74A0 /* sats_claim_failure.json */; };
@@ -1015,6 +1019,8 @@
 		ACB09FD92D92D6E400EE3239 /* MoreFeedsRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoreFeedsRequest.swift; sourceTree = "<group>"; };
 		ACB09FDC2D92F87000EE3239 /* MyVideosFeedViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyVideosFeedViewModel.swift; sourceTree = "<group>"; };
 		ACB09FE62D93288400EE3239 /* MyVideosFeedInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyVideosFeedInfo.swift; sourceTree = "<group>"; };
+		ACB117452E9EADD10064677F /* IosOneSignalKMP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IosOneSignalKMP.swift; sourceTree = "<group>"; };
+		ACB117482E9EAEEE0064677F /* IosDependencyProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IosDependencyProvider.swift; sourceTree = "<group>"; };
 		ACB343972E4357A800EC74A0 /* sats_claim_failure.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = sats_claim_failure.json; sourceTree = "<group>"; };
 		ACB343982E4357A800EC74A0 /* sats_claim_loading.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = sats_claim_loading.json; sourceTree = "<group>"; };
 		ACB343992E4357A800EC74A0 /* sats_claim_success.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = sats_claim_success.json; sourceTree = "<group>"; };
@@ -1155,8 +1161,6 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AC9B77DE2D58C7E300270FC9 /* YralTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = YralTests;
 			sourceTree = "<group>";
 		};
@@ -1795,6 +1799,8 @@
 		AC26CA662D806501006ADA75 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				ACB117452E9EADD10064677F /* IosOneSignalKMP.swift */,
+				ACB117482E9EAEEE0064677F /* IosDependencyProvider.swift */,
 				AC1912A62E79855400BA5D78 /* CustomRoundedRectangle.swift */,
 				AC9461F32E780D3E002B37C2 /* AccountDetails */,
 				ACE77F1C2E74412B00896DD2 /* AppUpdate */,
@@ -3342,9 +3348,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3359,9 +3369,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3376,9 +3390,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3393,9 +3411,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3557,9 +3579,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3574,9 +3600,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3744,6 +3774,7 @@
 				ACC0D4522D8DDB97006DCF5C /* ProfileRepositoryProtocol.swift in Sources */,
 				105034BA2DD6332C00571B4E /* CastVoteError.swift in Sources */,
 				AC6BECBD2D09F68C002E2021 /* Endpoint.swift in Sources */,
+				ACB117492E9EAEEE0064677F /* IosDependencyProvider.swift in Sources */,
 				AC09A9B32CDB775C009A39A4 /* SwiftBridgeCore.swift in Sources */,
 				ACC1C3942D9AF854005A7539 /* LottieLoaderView.swift in Sources */,
 				AC99BBC12D86FF81008012C2 /* ProfileEmptyState.swift in Sources */,
@@ -3853,6 +3884,7 @@
 				10C1B38B2E5375D500CFC41B /* AppDIContainerKey.swift in Sources */,
 				ACC0D45D2D91785B006DCF5C /* SwiftDelegatedIdentityWire.swift in Sources */,
 				AC1912A12E796F3200BA5D78 /* YralTabbar.swift in Sources */,
+				ACB117472E9EADE20064677F /* IosOneSignalKMP.swift in Sources */,
 				ACB09FC92D92CB6400EE3239 /* ProfileRouter.swift in Sources */,
 				ACAA4D602DDC75CB001092A6 /* Notifications.swift in Sources */,
 				ACB46A812D106034002E200C /* FeedsCell.swift in Sources */,
@@ -4075,6 +4107,7 @@
 				ACC0D4532D8DDB97006DCF5C /* ProfileRepositoryProtocol.swift in Sources */,
 				105034B92DD6332C00571B4E /* CastVoteError.swift in Sources */,
 				AC6BECBC2D09F68C002E2021 /* Endpoint.swift in Sources */,
+				ACB1174A2E9EAEEE0064677F /* IosDependencyProvider.swift in Sources */,
 				ACD941892CFF575C0038FCB6 /* SwiftBridgeCore.swift in Sources */,
 				ACC1C3952D9AF854005A7539 /* LottieLoaderView.swift in Sources */,
 				AC99BBC22D86FF81008012C2 /* ProfileEmptyState.swift in Sources */,
@@ -4184,6 +4217,7 @@
 				10C1B38C2E5375D500CFC41B /* AppDIContainerKey.swift in Sources */,
 				ACC0D45E2D91785B006DCF5C /* SwiftDelegatedIdentityWire.swift in Sources */,
 				AC1912A02E796F3200BA5D78 /* YralTabbar.swift in Sources */,
+				ACB117462E9EADE20064677F /* IosOneSignalKMP.swift in Sources */,
 				ACB09FCA2D92CB6400EE3239 /* ProfileRouter.swift in Sources */,
 				ACAA4D5F2DDC75CB001092A6 /* Notifications.swift in Sources */,
 				ACB46A802D106034002E200C /* FeedsCell.swift in Sources */,

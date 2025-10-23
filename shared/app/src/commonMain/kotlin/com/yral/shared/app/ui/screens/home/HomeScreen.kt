@@ -73,7 +73,7 @@ import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.wallet.ui.WalletScreen
 import com.yral.shared.features.wallet.ui.btcRewards.VideoViewsRewardsBottomSheet
 import com.yral.shared.libs.designsystem.component.YralFeedback
-import com.yral.shared.libs.designsystem.component.popPressedSoundId
+import com.yral.shared.libs.designsystem.component.popPressedSoundUri
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.launch
@@ -372,7 +372,7 @@ private fun HomeNavigationBar(
     }
     if (playSound) {
         YralFeedback(
-            sound = popPressedSoundId(),
+            soundUri = popPressedSoundUri(),
             withHapticFeedback = true,
         ) { playSound = false }
     }

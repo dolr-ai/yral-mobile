@@ -196,7 +196,9 @@ struct IosApp: App {
     _eventBus = StateObject(
       wrappedValue: container.eventBus
     )
-      AppDIKt.doInitKoin()
+    AppDIKt.doInitKoin { coreApplication in
+      coreApplication.installExternalDependencyModule(provider: IosDependencyProvider())
+    }
   }
 
   var body: some Scene {

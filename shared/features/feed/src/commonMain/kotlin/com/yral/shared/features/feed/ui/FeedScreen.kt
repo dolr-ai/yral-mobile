@@ -73,7 +73,7 @@ fun FeedScreen(
     bottomOverlay: @Composable (pageNo: Int) -> Unit,
     onPageChanged: (pageNo: Int, currentPage: Int) -> Unit,
     onEdgeScrollAttempt: (pageNo: Int) -> Unit,
-    limitReelCount: () -> Int,
+    limitReelCount: Int,
     getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
     getVideoListener: (reel: Reels) -> VideoListener?,
 ) {
@@ -133,7 +133,7 @@ fun FeedScreen(
             YRALReelPlayer(
                 modifier = Modifier.weight(1f),
                 reels = getReels(state),
-                maxReelsInPager = limitReelCount(),
+                maxReelsInPager = limitReelCount,
                 initialPage = state.currentPageOfFeed,
                 onPageLoaded = { page ->
                     // call onPageChanged before changing page in FeedViewModel
