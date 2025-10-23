@@ -336,12 +336,14 @@ private fun ActionsRight(
             modifier = Modifier.weight(1f).padding(top = 65.dp, end = 10.dp),
             verticalArrangement = Arrangement.Top,
         ) {
-            FeedToggle(
-                feedType = state.feedType,
-                isLoadingMore = state.isLoadingMore,
-                onSelectFeed = { feedViewModel.updateFeedType(it) },
-                modifier = Modifier.offset(y = 16.dp),
-            )
+            if (state.availableFeedTypes.size > 1) {
+                FeedToggle(
+                    feedType = state.feedType,
+                    isLoadingMore = state.isLoadingMore,
+                    onSelectFeed = { feedViewModel.updateFeedType(it) },
+                    modifier = Modifier.offset(y = 16.dp),
+                )
+            }
         }
         val feedDetails = state.feedDetails[pageNo]
         if (state.overlayType in listOf(OverlayType.GAME_TOGGLE, OverlayType.DAILY_RANK)) {
