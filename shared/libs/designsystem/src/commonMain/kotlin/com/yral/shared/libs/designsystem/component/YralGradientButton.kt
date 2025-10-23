@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.paint
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
@@ -35,13 +36,15 @@ fun YralGradientButton(
     buttonState: YralButtonState = YralButtonState.Enabled,
     buttonType: YralButtonType = YralButtonType.Pink,
     text: String,
+    buttonHeight: Dp = 45.dp,
+    fillMaxWidth: Boolean = true,
     onClick: () -> Unit,
 ) {
     Row(
         modifier =
             modifier
-                .fillMaxWidth()
-                .height(45.dp)
+                .then(if (fillMaxWidth) Modifier.fillMaxWidth() else Modifier)
+                .height(buttonHeight)
                 .paint(
                     painter = painterResource(getButtonBackground(buttonType, buttonState)),
                     contentScale = ContentScale.FillBounds,

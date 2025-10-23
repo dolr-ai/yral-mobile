@@ -46,6 +46,8 @@ import com.yral.shared.rust.service.domain.usecases.FollowUserParams
 import com.yral.shared.rust.service.domain.usecases.FollowUserUseCase
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserParams
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserUseCase
+import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4Params
+import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4UseCase
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -76,6 +78,7 @@ class ProfileViewModel(
     private val crashlyticsManager: CrashlyticsManager,
     private val flagManager: FeatureFlagManager,
     private val userInfoPagingSourceFactory: UserInfoPagingSourceFactory,
+    private val getProfileDetailsV4UseCase: GetProfileDetailsV4UseCase,
 ) : ViewModel() {
     companion object {
         private const val POSTS_PER_PAGE = 20
@@ -184,7 +187,8 @@ class ProfileViewModel(
                     ),
             )
         }
-        if (canisterData.userPrincipalId != sessionManager.userPrincipal) {
+        val isOwnProfile = canisterData.userPrincipalId == sessionManager.userPrincipal
+        if (!isOwnProfile) {
             _state.update {
                 it.copy(
                     isOwnProfile = false,
@@ -196,7 +200,7 @@ class ProfileViewModel(
             viewModelScope.launch {
                 sessionManager
                     .observeSessionState(transform = { sessionManager.getAccountInfo() })
-                    .collect { info -> _state.update { it.copy(accountInfo = info) } }
+                    .collect { info -> _state.update { current -> current.copy(accountInfo = info) } }
             }
             viewModelScope.launch {
                 sessionManager
@@ -207,23 +211,39 @@ class ProfileViewModel(
                             null
                         }
                     }.collect { updatedPic ->
-                        if (updatedPic != null) {
+                        if (!updatedPic.isNullOrBlank()) {
                             _state.update { current ->
-                                if (!current.isOwnProfile) {
-                                    current
-                                } else {
-                                    val updatedInfo =
-                                        current.accountInfo?.copy(profilePic = updatedPic)
-                                            ?: AccountInfo(
-                                                userPrincipal = sessionManager.userPrincipal.orEmpty(),
-                                                profilePic = updatedPic,
-                                                username = sessionManager.username,
-                                            )
-                                    current.copy(accountInfo = updatedInfo)
-                                }
+                                val updatedInfo =
+                                    current.accountInfo?.copy(profilePic = updatedPic)
+                                        ?: AccountInfo(
+                                            userPrincipal = sessionManager.userPrincipal.orEmpty(),
+                                            profilePic = updatedPic,
+                                            username = sessionManager.username,
+                                        )
+                                current.copy(accountInfo = updatedInfo)
                             }
                         }
                     }
+            }
+            viewModelScope.launch {
+                val principal = sessionManager.userPrincipal ?: return@launch
+                getProfileDetailsV4UseCase(
+                    GetProfileDetailsV4Params(
+                        principal = principal,
+                        targetPrincipal = principal,
+                    ),
+                ).onSuccess { details ->
+                    val updatedPic = details.profilePictureUrl
+                    if (!updatedPic.isNullOrBlank()) {
+                        sessionManager.updateProfilePicture(updatedPic)
+                        _state.update { current ->
+                            current.accountInfo?.let { current.copy(accountInfo = it.copy(profilePic = updatedPic)) }
+                                ?: current
+                        }
+                    }
+                }.onFailure { error ->
+                    crashlyticsManager.recordException(Exception(error))
+                }
             }
         }
         viewModelScope.launch {
@@ -438,16 +458,47 @@ class ProfileViewModel(
 
     fun followUnfollow() {
         viewModelScope.launch {
-            sessionManager.userPrincipal?.let { userPrincipal ->
-                with(_state.value) {
-                    Logger.d("Follow") { "Follow unfollow request $isFollowing" }
-                    if (isLoggedIn) {
-                        if (isFollowing) {
-                            unFollow()
-                        } else {
-                            follow()
-                        }
+            sessionManager.userPrincipal?.let {
+                val currentState = _state.value
+                if (currentState.isLoggedIn) {
+                    if (currentState.isFollowing) {
+                        unFollow()
+                    } else {
+                        follow()
                     }
+                }
+            }
+        }
+    }
+
+    fun toggleFollowForPrincipal(targetPrincipal: String, currentlyFollowing: Boolean) {
+        viewModelScope.launch {
+            val callerPrincipal = sessionManager.userPrincipal ?: return@launch
+            if (currentlyFollowing) {
+                unfollowUserUseCase(
+                    parameter =
+                        UnfollowUserParams(
+                            principal = callerPrincipal,
+                            targetPrincipal = targetPrincipal,
+                        ),
+                ).onSuccess {
+                    profileEventsChannel.trySend(ProfileEvents.UnfollowedSuccessfully)
+                    sessionManager.removePrincipalFromFollow(targetPrincipal)
+                }.onFailure { error ->
+                    profileEventsChannel.trySend(ProfileEvents.Failed(error.message ?: "Unfollow failed"))
+                }
+            } else {
+                followUserUseCase(
+                    parameter =
+                        FollowUserParams(
+                            principal = callerPrincipal,
+                            targetPrincipal = targetPrincipal,
+                        ),
+                ).onSuccess {
+                    profileEventsChannel.trySend(ProfileEvents.FollowedSuccessfully)
+                    sessionManager.addPrincipalToFollow(targetPrincipal)
+                }.onFailure { error ->
+                    profileEventsChannel.trySend(ProfileEvents.Failed(error.message ?: "Follow failed"))
                 }
             }
         }

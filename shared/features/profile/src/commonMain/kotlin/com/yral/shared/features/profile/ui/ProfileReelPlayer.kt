@@ -232,8 +232,7 @@ private fun Caption(
         if (isPostDescriptionExpanded) {
             val scrollState = rememberScrollState()
             val maxHeight =
-                LocalAppTopography.current.feedDescription.lineHeight.value *
-                    ProfileMainScreenConstants.MAX_LINES_FOR_POST_DESCRIPTION
+                LocalAppTopography.current.feedDescription.lineHeight.value * MAX_LINES_FOR_POST_DESCRIPTION
             Text(
                 modifier = Modifier.heightIn(max = maxHeight.dp).verticalScroll(scrollState),
                 text = caption,

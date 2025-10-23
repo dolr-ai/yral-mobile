@@ -14,23 +14,31 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.pullToRefreshIndicator
@@ -49,10 +57,14 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
@@ -60,6 +72,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import com.yral.shared.analytics.events.VideoDeleteCTA
+import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
@@ -73,6 +86,7 @@ import com.yral.shared.libs.designsystem.component.AccountInfoView
 import com.yral.shared.libs.designsystem.component.DeleteConfirmationSheet
 import com.yral.shared.libs.designsystem.component.LoaderSize
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
+import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralButtonType
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
@@ -89,7 +103,9 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
+import com.yral.shared.rust.service.domain.models.FollowerItem
 import com.yral.shared.rust.service.domain.models.PagedFollowerItem
+import com.yral.shared.rust.service.utils.propicFromPrincipal
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -101,6 +117,9 @@ import yral_mobile.shared.features.profile.generated.resources.deleting
 import yral_mobile.shared.features.profile.generated.resources.error_loading_more_videos
 import yral_mobile.shared.features.profile.generated.resources.error_loading_videos
 import yral_mobile.shared.features.profile.generated.resources.failed_to_delete_video
+import yral_mobile.shared.features.profile.generated.resources.followers_empty_list
+import yral_mobile.shared.features.profile.generated.resources.followers_load_error
+import yral_mobile.shared.features.profile.generated.resources.following_empty_list
 import yral_mobile.shared.features.profile.generated.resources.pink_heart
 import yral_mobile.shared.features.profile.generated.resources.video_will_be_deleted_permanently
 import yral_mobile.shared.features.profile.generated.resources.white_heart
@@ -109,6 +128,9 @@ import yral_mobile.shared.libs.designsystem.generated.resources.account_nav
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.cancel
 import yral_mobile.shared.libs.designsystem.generated.resources.delete
+import yral_mobile.shared.libs.designsystem.generated.resources.follow
+import yral_mobile.shared.libs.designsystem.generated.resources.followers
+import yral_mobile.shared.libs.designsystem.generated.resources.following
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_views
 import yral_mobile.shared.libs.designsystem.generated.resources.login_to_follow_subtext
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share
@@ -120,6 +142,21 @@ import yral_mobile.shared.libs.designsystem.generated.resources.started_followin
 import yral_mobile.shared.libs.designsystem.generated.resources.try_again
 import yral_mobile.shared.libs.designsystem.generated.resources.upload_video
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
+
+internal const val GRID_ITEM_ASPECT_RATIO = 0.75f
+internal const val PULL_TO_REFRESH_INDICATOR_SIZE = 34f
+internal const val PULL_TO_REFRESH_INDICATOR_THRESHOLD = 36f
+internal const val PULL_TO_REFRESH_OFFSET_MULTIPLIER = 1.5f
+internal const val MAX_LINES_FOR_POST_DESCRIPTION = 5
+internal const val PADDING_BOTTOM_ACCOUNT_INFO = 20
+
+private fun calculateSheetFraction(itemCount: Int): Float {
+    val base = FollowersSheetUi.MIN_HEIGHT_FRACTION
+    val increment = 0.05f
+    return (base + itemCount * increment).coerceIn(base, FollowersSheetUi.EXPANDED_HEIGHT_FRACTION)
+}
+
+private fun LazyPagingItems<PagedFollowerItem>.snapshotCount(): Int = itemSnapshotList.items.sumOf { it.items.size }
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
@@ -145,9 +182,11 @@ fun ProfileMainScreen(
                 is ProfileEvents.FollowedSuccessfully -> {
                     ToastManager.showSuccess(type = ToastType.Small(message = followedSuccessfully))
                     followers.refresh()
+                    following.refresh()
                 }
                 is ProfileEvents.UnfollowedSuccessfully -> {
                     followers.refresh()
+                    following.refresh()
                 }
                 is ProfileEvents.Failed -> {
                     ToastManager.showError(type = ToastType.Small(message = event.message))
@@ -166,6 +205,8 @@ fun ProfileMainScreen(
     }
 
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val followersSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+    var followerSheetTab by remember { mutableStateOf<FollowersSheetTab?>(null) }
     LaunchedEffect(loginState) {
         if (loginState is UiState.Failure) {
             viewModel.setBottomSheetType(ProfileBottomSheet.SignUp)
@@ -287,14 +328,18 @@ fun ProfileMainScreen(
                     followers = followers,
                     following = following,
                     deletingVideoId = deletingVideoId,
-                    uploadVideo = {
-                        viewModel.uploadVideoClicked()
-                        component.onUploadVideoClick()
-                    },
-                    openAccount = { component.openAccount() },
-                    openEditProfile = { component.openEditProfile() },
-                    onBackClicked = { component.onBackClicked() },
                     loginBottomSheet = loginBottomSheet,
+                    callbacks =
+                        MainContentCallbacks(
+                            uploadVideo = {
+                                viewModel.uploadVideoClicked()
+                                component.onUploadVideoClick()
+                            },
+                            openAccount = { component.openAccount() },
+                            openEditProfile = { component.openEditProfile() },
+                            onBackClicked = { component.onBackClicked() },
+                            onFollowersSectionClick = { followerSheetTab = it },
+                        ),
                 )
             }
         }
@@ -325,6 +370,70 @@ fun ProfileMainScreen(
         }
         DeleteConfirmationState.None, is DeleteConfirmationState.InProgress -> Unit
     }
+
+    val accountInfo = state.accountInfo
+    if (followerSheetTab != null && accountInfo != null) {
+        val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+        val maxSheetHeight = screenHeight * FollowersSheetUi.EXPANDED_HEIGHT_FRACTION
+        val currentListSize =
+            when (followerSheetTab!!) {
+                FollowersSheetTab.Followers -> followers.snapshotCount()
+                FollowersSheetTab.Following -> following.snapshotCount()
+            }
+        val minSheetHeight =
+            (screenHeight * calculateSheetFraction(currentListSize)).coerceAtMost(maxSheetHeight)
+        LaunchedEffect(followerSheetTab) {
+            if (followerSheetTab != null) {
+                if (!followersSheetState.isVisible) {
+                    followersSheetState.show()
+                }
+                if (followersSheetState.hasPartiallyExpandedState &&
+                    followersSheetState.currentValue != SheetValue.PartiallyExpanded
+                ) {
+                    followersSheetState.partialExpand()
+                }
+            }
+        }
+        ModalBottomSheet(
+            sheetState = followersSheetState,
+            onDismissRequest = { followerSheetTab = null },
+            containerColor = YralColors.Neutral900,
+            modifier =
+                Modifier.heightIn(
+                    min = minSheetHeight,
+                    max = maxSheetHeight,
+                ),
+            dragHandle = {
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = FollowersSheetUi.DragHandleTopSpacing),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .width(FollowersSheetUi.DragHandleWidth)
+                                .height(FollowersSheetUi.DragHandleHeight)
+                                .clip(RoundedCornerShape(FollowersSheetUi.DragHandleCornerRadius))
+                                .background(YralColors.Neutral500),
+                    )
+                }
+            },
+        ) {
+            FollowersBottomSheetContent(
+                username = accountInfo.displayName,
+                initialTab = followerSheetTab!!,
+                followers = followers,
+                following = following,
+                minSheetHeight = minSheetHeight,
+                maxSheetHeight = maxSheetHeight,
+                onTabSelected = { followerSheetTab = it },
+                onFollowToggle = viewModel::toggleFollowForPrincipal,
+            )
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -334,6 +443,15 @@ typealias LoginBottomSheetComposable = @Composable (
     termsLink: String,
     openTerms: () -> Unit,
 ) -> Unit
+
+@Suppress("LongMethod", "CyclomaticComplexMethod")
+private data class MainContentCallbacks(
+    val uploadVideo: () -> Unit,
+    val openAccount: () -> Unit,
+    val openEditProfile: () -> Unit,
+    val onBackClicked: () -> Unit,
+    val onFollowersSectionClick: (FollowersSheetTab) -> Unit,
+)
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -348,19 +466,16 @@ private fun MainContent(
     followers: LazyPagingItems<PagedFollowerItem>?,
     following: LazyPagingItems<PagedFollowerItem>?,
     deletingVideoId: String,
-    uploadVideo: () -> Unit,
-    openAccount: () -> Unit,
-    openEditProfile: () -> Unit,
-    onBackClicked: () -> Unit,
     loginBottomSheet: LoginBottomSheetComposable,
+    callbacks: MainContentCallbacks,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader(
             isOwnProfile = state.isOwnProfile,
             userName = state.accountInfo?.displayName,
             isWalletEnabled = state.isWalletEnabled,
-            openAccount = openAccount,
-            onBack = { onBackClicked() },
+            openAccount = callbacks.openAccount,
+            onBack = callbacks.onBackClicked,
         )
         state.accountInfo?.let { info ->
             val followersCount =
@@ -387,11 +502,13 @@ private fun MainContent(
                 loginSubText = stringResource(DesignRes.string.login_to_follow_subtext),
                 onLoginClicked = { viewModel.setBottomSheetType(ProfileBottomSheet.SignUp) },
                 showEditProfile = state.isOwnProfile,
-                onEditProfileClicked = openEditProfile,
+                onEditProfileClicked = callbacks.openEditProfile,
                 showFollow = !state.isOwnProfile,
                 isFollowing = state.isFollowing,
                 isFollowInProgress = state.isFollowInProgress,
                 onFollowClicked = { viewModel.followUnfollow() },
+                onFollowersClick = { callbacks.onFollowersSectionClick(FollowersSheetTab.Followers) },
+                onFollowingClick = { callbacks.onFollowersSectionClick(FollowersSheetTab.Following) },
             )
         }
         when (profileVideos.loadState.refresh) {
@@ -415,7 +532,7 @@ private fun MainContent(
                         profileVideos = profileVideos,
                         isOwnProfile = state.isOwnProfile,
                         deletingVideoId = deletingVideoId,
-                        uploadVideo = uploadVideo,
+                        uploadVideo = callbacks.uploadVideo,
                         openVideoReel = { viewModel.openVideoReel(it) },
                         onDeleteVideo = {
                             viewModel.confirmDelete(
@@ -464,11 +581,10 @@ private fun ProfileHeader(
             Modifier
                 .fillMaxWidth()
                 .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp),
-        horizontalArrangement = Arrangement.End,
-        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
-            modifier = Modifier.Companion.weight(1f),
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -511,7 +627,7 @@ private fun LoadingContent() {
         modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
         contentAlignment = Alignment.Center,
     ) {
-        YralLoader(size = ProfileMainScreenConstants.PULL_TO_REFRESH_INDICATOR_SIZE.dp)
+        YralLoader(size = PULL_TO_REFRESH_INDICATOR_SIZE.dp)
     }
 }
 
@@ -519,7 +635,7 @@ private fun LoadingContent() {
 private fun ErrorContent(message: String) {
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Center,
     ) {
         Text(
@@ -554,13 +670,13 @@ private fun SuccessContent(
         modifier =
             Modifier
                 .fillMaxSize()
-                .padding(top = ProfileMainScreenConstants.PADDING_BOTTOM_ACCOUNT_INFO.dp),
+                .padding(top = PADDING_BOTTOM_ACCOUNT_INFO.dp),
     ) {
         val pullRefreshState = rememberPullToRefreshState()
         val offset =
             pullRefreshState.distanceFraction *
-                ProfileMainScreenConstants.PULL_TO_REFRESH_INDICATOR_SIZE *
-                ProfileMainScreenConstants.PULL_TO_REFRESH_OFFSET_MULTIPLIER
+                PULL_TO_REFRESH_INDICATOR_SIZE *
+                PULL_TO_REFRESH_OFFSET_MULTIPLIER
 
         val isRefreshing = profileVideos.loadState.refresh is LoadState.Loading
 
@@ -580,12 +696,12 @@ private fun SuccessContent(
                                 state = pullRefreshState,
                                 isRefreshing = isRefreshing,
                                 containerColor = Color.Transparent,
-                                threshold = ProfileMainScreenConstants.PULL_TO_REFRESH_INDICATOR_THRESHOLD.dp,
+                                threshold = PULL_TO_REFRESH_INDICATOR_THRESHOLD.dp,
                                 elevation = 0.dp,
                             ),
                     contentAlignment = Alignment.Center,
                 ) {
-                    YralLoader(ProfileMainScreenConstants.PULL_TO_REFRESH_INDICATOR_SIZE.dp)
+                    YralLoader(PULL_TO_REFRESH_INDICATOR_SIZE.dp)
                 }
             },
         ) {
@@ -616,9 +732,9 @@ private fun EmptyStateContent(
             Modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp)
-                .offset(y = (offset - ProfileMainScreenConstants.PADDING_BOTTOM_ACCOUNT_INFO).dp)
+                .offset(y = (offset - PADDING_BOTTOM_ACCOUNT_INFO).dp)
                 .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Center,
     ) {
         Image(
@@ -642,6 +758,353 @@ private fun EmptyStateContent(
         )
     }
 }
+
+private enum class FollowersSheetTab { Followers, Following }
+
+private object FollowersSheetUi {
+    const val MIN_HEIGHT_FRACTION = 0.35f
+    const val EXPANDED_HEIGHT_FRACTION = 0.9f
+    const val TAB_UNSELECTED_ALPHA = 0.6f
+    val DragHandleTopSpacing = 12.dp
+    val DragHandleWidth = 32.dp
+    val DragHandleHeight = 2.dp
+    val DragHandleCornerRadius = 50.dp
+    val HorizontalPadding = 16.dp
+    val NameTopSpacing = 28.dp
+    val TabsTopSpacing = 28.dp
+    val SeparatorTopSpacing = 12.dp
+    val SeparatorHeight = 1.dp
+    val ListTopSpacing = 36.dp
+    val ListItemSpacing = 16.dp
+    val AvatarSize = 42.dp
+    val AvatarInitialFontSize = 16.sp
+    val ItemPaddingHorizontal = 16.dp
+    val ItemPaddingVertical = 12.dp
+    val ActionButtonWidth = 118.dp
+    val ActionButtonHeight = 36.dp
+    val RowCornerRadius = 12.dp
+}
+
+@Suppress("LongMethod")
+@Composable
+private fun FollowersBottomSheetContent(
+    username: String,
+    initialTab: FollowersSheetTab,
+    followers: LazyPagingItems<PagedFollowerItem>,
+    following: LazyPagingItems<PagedFollowerItem>,
+    minSheetHeight: Dp,
+    maxSheetHeight: Dp,
+    onTabSelected: (FollowersSheetTab) -> Unit,
+    onFollowToggle: (String, Boolean) -> Unit,
+) {
+    var selectedTab by remember(initialTab) { mutableStateOf(initialTab) }
+    val pagingItems = if (selectedTab == FollowersSheetTab.Followers) followers else following
+
+    LaunchedEffect(selectedTab) {
+        if (selectedTab == FollowersSheetTab.Followers) {
+            followers.refresh()
+        } else {
+            following.refresh()
+        }
+    }
+
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .fillMaxHeight()
+                .heightIn(min = minSheetHeight, max = maxSheetHeight)
+                .padding(horizontal = FollowersSheetUi.HorizontalPadding),
+        horizontalAlignment = Alignment.Start,
+    ) {
+        Spacer(modifier = Modifier.height(FollowersSheetUi.NameTopSpacing))
+        Text(
+            text = username,
+            style = LocalAppTopography.current.lgBold.copy(fontSize = 18.sp, fontWeight = FontWeight.Bold),
+            color = YralColors.NeutralTextPrimary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Spacer(modifier = Modifier.height(FollowersSheetUi.TabsTopSpacing))
+        FollowersTabRow(
+            selectedTab = selectedTab,
+            onTabSelected = {
+                selectedTab = it
+                onTabSelected(it)
+            },
+        )
+        Spacer(modifier = Modifier.height(FollowersSheetUi.ListTopSpacing))
+        LazyColumn(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(),
+            verticalArrangement = Arrangement.spacedBy(FollowersSheetUi.ListItemSpacing),
+        ) {
+            when (val refreshState = pagingItems.loadState.refresh) {
+                is LoadState.Loading -> {
+                    item { FollowersLoadingState() }
+                }
+
+                is LoadState.Error -> {
+                    item {
+                        FollowersErrorState(onRetry = { pagingItems.retry() })
+                    }
+                }
+
+                is LoadState.NotLoading -> {
+                    if (pagingItems.itemCount == 0) {
+                        item { FollowersEmptyState(selectedTab) }
+                    } else {
+                        for (pageIndex in 0 until pagingItems.itemCount) {
+                            val page = pagingItems[pageIndex]
+                            if (page != null) {
+                                items(
+                                    page.items,
+                                    key = { follower -> toReadablePrincipalText(follower.principalId.toString()) + "-$pageIndex" }) {
+                                    follower ->
+                                        FollowerRow(
+                                            follower = follower,
+                                            onFollowToggle = onFollowToggle,
+                                        )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            item {
+                PagingAppendIndicator(
+                    loadState = pagingItems.loadState.append,
+                    onRetry = pagingItems::retry,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FollowersLoadingState() {
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 24.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        YralLoader(size = 32.dp)
+    }
+}
+
+@Composable
+private fun FollowersErrorState(onRetry: () -> Unit) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 24.dp),
+        horizontalAlignment = Alignment.Start,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            text = stringResource(Res.string.followers_load_error),
+            style = LocalAppTopography.current.baseRegular,
+            color = YralColors.NeutralTextPrimary,
+            textAlign = TextAlign.Center,
+        )
+        YralGradientButton(
+            modifier = Modifier.width(160.dp),
+            text = stringResource(DesignRes.string.try_again),
+            buttonHeight = 36.dp,
+            fillMaxWidth = false,
+            onClick = onRetry,
+        )
+    }
+}
+
+@Composable
+private fun FollowersEmptyState(tab: FollowersSheetTab) {
+    val message =
+        when (tab) {
+            FollowersSheetTab.Followers -> stringResource(Res.string.followers_empty_list)
+            FollowersSheetTab.Following -> stringResource(Res.string.following_empty_list)
+        }
+
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 24.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = message,
+            style = LocalAppTopography.current.baseRegular,
+            color = YralColors.NeutralTextSecondary,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
+private fun FollowersTabRow(
+    selectedTab: FollowersSheetTab,
+    onTabSelected: (FollowersSheetTab) -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(FollowersSheetUi.SeparatorTopSpacing),
+    ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            FollowersTabItem(
+                modifier = Modifier.align(Alignment.CenterStart),
+                text = stringResource(DesignRes.string.followers),
+                isSelected = selectedTab == FollowersSheetTab.Followers,
+                onClick = { onTabSelected(FollowersSheetTab.Followers) },
+            )
+            FollowersTabItem(
+                modifier = Modifier.align(Alignment.CenterEnd),
+                text = stringResource(DesignRes.string.following),
+                isSelected = selectedTab == FollowersSheetTab.Following,
+                onClick = { onTabSelected(FollowersSheetTab.Following) },
+            )
+        }
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(FollowersSheetUi.SeparatorHeight)
+                    .background(YralColors.Neutral700),
+        ) {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth(0.5f)
+                        .height(FollowersSheetUi.SeparatorHeight)
+                        .align(
+                            if (selectedTab == FollowersSheetTab.Followers) {
+                                Alignment.CenterStart
+                            } else {
+                                Alignment.CenterEnd
+                            },
+                        ).background(YralColors.Pink300),
+            )
+        }
+    }
+}
+
+@Composable
+private fun FollowersTabItem(
+    modifier: Modifier = Modifier,
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth(0.5f)
+                .then(modifier)
+                .clickable(onClick = onClick)
+                .padding(horizontal = 16.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = text,
+            style = LocalAppTopography.current.baseRegular.copy(fontSize = 14.sp),
+            color =
+                if (isSelected) {
+                    YralColors.NeutralTextPrimary
+                } else {
+                    YralColors.NeutralTextPrimary.copy(alpha = FollowersSheetUi.TAB_UNSELECTED_ALPHA)
+                },
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Suppress("LongMethod")
+@Composable
+private fun FollowerRow(
+    follower: FollowerItem,
+    onFollowToggle: (String, Boolean) -> Unit,
+) {
+    val principalText = remember(follower.principalId) { toReadablePrincipalText(follower.principalId.toString()) }
+    val displayName = remember(principalText) { resolveUsername(null, principalText) ?: principalText }
+    val initial = remember(displayName) { displayName.firstOrNull()?.uppercaseChar()?.toString() ?: "?" }
+    val isFollowing = follower.callerFollows
+    val avatarUrl =
+        remember(follower.profilePictureUrl, principalText) {
+            follower.profilePictureUrl?.takeIf { it.isNotBlank() } ?: propicFromPrincipal(principalText)
+        }
+
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(FollowersSheetUi.RowCornerRadius))
+                .background(YralColors.Neutral900)
+                .padding(vertical = FollowersSheetUi.ItemPaddingVertical),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(FollowersSheetUi.ItemPaddingVertical),
+        ) {
+            YralAsyncImage(
+                imageUrl = avatarUrl,
+                modifier =
+                    Modifier
+                        .size(FollowersSheetUi.AvatarSize)
+                        .clip(CircleShape),
+                contentScale = ContentScale.Crop,
+            )
+            Text(
+                text = displayName,
+                style = LocalAppTopography.current.baseSemiBold.copy(fontSize = 14.sp),
+                color = YralColors.NeutralTextPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        if (isFollowing) {
+            YralButton(
+                text = stringResource(DesignRes.string.following),
+                modifier =
+                    Modifier
+                        .width(FollowersSheetUi.ActionButtonWidth)
+                        .height(FollowersSheetUi.ActionButtonHeight),
+                backgroundColor = YralColors.Neutral800,
+                borderColor = YralColors.Neutral700,
+                textStyle = LocalAppTopography.current.baseSemiBold.copy(fontSize = 14.sp, color = YralColors.Neutral50),
+                buttonHeight = FollowersSheetUi.ActionButtonHeight,
+                fillMaxWidth = false,
+                onClick = { onFollowToggle(principalText, true) },
+            )
+        } else {
+            YralGradientButton(
+                modifier =
+                    Modifier
+                        .width(FollowersSheetUi.ActionButtonWidth)
+                        .height(FollowersSheetUi.ActionButtonHeight),
+                buttonHeight = FollowersSheetUi.ActionButtonHeight,
+                fillMaxWidth = false,
+                text = stringResource(DesignRes.string.follow),
+                onClick = { onFollowToggle(principalText, false) },
+            )
+        }
+    }
+}
+
+private fun toReadablePrincipalText(raw: String): String =
+    raw
+        .removePrefix("Principal(")
+        .removeSuffix(")")
+        .removePrefix("text=")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -740,7 +1203,7 @@ private fun PagingErrorIndicator(
     ) {
         if (onRetry != null) {
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
+                horizontalAlignment = Alignment.Start,
                 verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
                 Text(
@@ -781,7 +1244,7 @@ private fun VideoGridItem(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .aspectRatio(ProfileMainScreenConstants.GRID_ITEM_ASPECT_RATIO)
+                .aspectRatio(GRID_ITEM_ASPECT_RATIO)
                 .clip(shape = RoundedCornerShape(8.dp))
                 .background(
                     color = YralColors.Neutral900,
@@ -836,7 +1299,7 @@ private fun DeletingOverLay(
         ) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Bottom),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                horizontalAlignment = Alignment.Start,
             ) {
                 YralLoader(size = loaderSize, LottieRes.READ_LOADER)
                 Text(
@@ -915,13 +1378,4 @@ private fun BoxScope.VideoGridItemActions(
             )
         }
     }
-}
-
-object ProfileMainScreenConstants {
-    const val GRID_ITEM_ASPECT_RATIO = 0.75f
-    const val PULL_TO_REFRESH_INDICATOR_SIZE = 34f
-    const val PULL_TO_REFRESH_INDICATOR_THRESHOLD = 36f
-    const val PULL_TO_REFRESH_OFFSET_MULTIPLIER = 1.5f
-    const val MAX_LINES_FOR_POST_DESCRIPTION = 5
-    const val PADDING_BOTTOM_ACCOUNT_INFO = 20
 }
