@@ -1,8 +1,11 @@
 package com.yral.shared.features.uploadvideo.ui.fileUpload
 
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 actual fun formatMaxDuration(duration: Double): String {
     // STUB implementation
@@ -27,28 +30,17 @@ internal actual fun SelectVideoView(
 ) {
     // STUB implementation
 
-    val errorSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    val selectionState =
-        VideoSelectionState(
-            shouldLaunchPicker = false,
-            hasRequestedPermissions = false,
-            showPermissionError = false,
-            isProcessingVideo = false,
-            errorSheetState = errorSheetState,
-        )
+//    val errorSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var isProcessingVideo by remember { mutableStateOf(false) }
 
     VideoSelectionContent(
         maxSeconds = maxSeconds,
-        hasPermissions = true,
-        selectionState = selectionState,
-        onLaunchVideoPicker = {
-            onCTAClicked()
-            // stub
-        },
-        onRequestPermissions = {
-            onCTAClicked()
-            // stub
+        isProcessingVideo = isProcessingVideo,
+        onSelectFileClick = {
+            if (!isProcessingVideo) {
+                onCTAClicked()
+                // stub
+            }
         },
     )
 }
