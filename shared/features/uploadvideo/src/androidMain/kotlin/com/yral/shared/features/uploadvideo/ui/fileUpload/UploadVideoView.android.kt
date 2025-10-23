@@ -25,7 +25,6 @@ import com.google.accompanist.permissions.MultiplePermissionsState
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.shouldShowRationale
 import com.yral.shared.features.uploadvideo.utils.VideoFileManager
-import com.yral.shared.features.uploadvideo.utils.VideoMetadataExtractor
 import com.yral.shared.features.uploadvideo.utils.VideoPermissionUtils
 import com.yral.shared.features.uploadvideo.utils.VideoValidator
 import kotlinx.coroutines.Dispatchers
@@ -224,14 +223,3 @@ private fun VideoSelectionPermissionHandler(
         )
     }
 }
-
-@Composable
-actual fun formatFileSize(
-    bytes: Long,
-    precision: Int,
-): String {
-    val videoMetadataExtractor: VideoMetadataExtractor = koinInject()
-    return videoMetadataExtractor.formatFileSize(bytes, precision)
-}
-
-actual fun formatMaxDuration(duration: Double): String = "%.0f".format(duration)

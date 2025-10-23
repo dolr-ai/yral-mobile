@@ -7,20 +7,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 
-actual fun formatMaxDuration(duration: Double): String {
-    // STUB implementation
-    return duration.toString()
-}
-
-@Composable
-actual fun formatFileSize(
-    bytes: Long,
-    precision: Int,
-): String {
-    // STUB implementation
-    return bytes.toString()
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal actual fun SelectVideoView(

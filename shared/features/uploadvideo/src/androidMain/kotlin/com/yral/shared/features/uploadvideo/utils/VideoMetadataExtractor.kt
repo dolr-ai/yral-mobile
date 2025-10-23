@@ -61,21 +61,4 @@ class VideoMetadataExtractor {
         }.onFailure { exception ->
             Logger.e("Permission denied accessing file: $filePath", exception)
         }.getOrDefault(0L)
-
-    @Suppress("MagicNumber")
-    fun formatFileSize(
-        bytes: Long,
-        precision: Int = 1,
-    ): String {
-        val units = arrayOf("B", "KB", "MB", "GB")
-        var size = bytes.toFloat()
-        var unitIndex = 0
-
-        while (size >= 1024 && unitIndex < units.size - 1) {
-            size /= 1024
-            unitIndex++
-        }
-
-        return "%.${precision}f %s".format(size, units[unitIndex])
-    }
 }

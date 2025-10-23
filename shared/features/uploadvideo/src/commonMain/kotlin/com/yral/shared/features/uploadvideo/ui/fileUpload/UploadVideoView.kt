@@ -27,6 +27,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
 import com.yral.shared.features.uploadvideo.utils.VideoValidationError
+import com.yral.shared.features.uploadvideo.utils.formatFileSize
 import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
@@ -222,7 +223,7 @@ private fun VideoPickerError.toErrorMessage(): String =
                 is VideoValidationError.DurationExceedsLimit ->
                     stringResource(
                         Res.string.video_validation_duration_exceeds_limit_with_data,
-                        formatMaxDuration(error.limit),
+                        error.limit.toInt(),
                     )
                 is VideoValidationError.FileSizeExceedsLimit ->
                     stringResource(
@@ -233,11 +234,3 @@ private fun VideoPickerError.toErrorMessage(): String =
 
         is VideoPickerError.ProcessingFailed -> stringResource(Res.string.video_validation_processing_failed)
     }
-
-expect fun formatMaxDuration(duration: Double): String
-
-@Composable
-expect fun formatFileSize(
-    bytes: Long,
-    precision: Int = 1,
-): String
