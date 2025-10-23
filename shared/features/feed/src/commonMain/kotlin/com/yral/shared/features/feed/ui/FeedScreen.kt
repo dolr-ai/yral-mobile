@@ -37,6 +37,7 @@ import co.touchlab.kermit.Logger
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.feed.ui.components.SignupNudge
+import com.yral.shared.features.feed.viewmodel.FeedEvents
 import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedType
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
@@ -47,6 +48,10 @@ import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.formatAbbreviation
+import com.yral.shared.libs.designsystem.component.toast.ToastManager
+import com.yral.shared.libs.designsystem.component.toast.ToastType
+import com.yral.shared.libs.designsystem.component.toast.showError
+import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
@@ -79,6 +84,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_s
 import yral_mobile.shared.libs.designsystem.generated.resources.ok
 import yral_mobile.shared.libs.designsystem.generated.resources.pink_gradient_background
 import yral_mobile.shared.libs.designsystem.generated.resources.shadow_bottom
+import yral_mobile.shared.libs.designsystem.generated.resources.started_following
 import kotlin.time.Duration.Companion.seconds
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
@@ -235,6 +241,23 @@ fun FeedScreen(
             onDismiss = { viewModel.toggleSignupFailed(false) },
         )
     }
+
+    var followedUser by remember { mutableStateOf<String?>(null) }
+    val followSuccessfulMessage = stringResource(DesignRes.string.started_following, followedUser ?: "")
+    LaunchedEffect(followedUser) {
+        followedUser?.let { ToastManager.showSuccess(type = ToastType.Small(message = followSuccessfulMessage)) }
+        followedUser = null
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.feedEvents.collect { event ->
+            when (event) {
+                is FeedEvents.FollowedSuccessfully -> followedUser = event.userName
+                is FeedEvents.UnfollowedSuccessfully -> Unit
+                is FeedEvents.Failed -> ToastManager.showError(type = ToastType.Small(message = event.message))
+            }
+        }
+    }
 }
 
 private fun getReels(state: FeedState): List<Reels> =
@@ -348,18 +371,16 @@ private fun ActionsRight(
         val feedDetails = state.feedDetails[pageNo]
         if (state.overlayType in listOf(OverlayType.GAME_TOGGLE, OverlayType.DAILY_RANK)) {
             feedDetails.profileImageURL?.let { profileImage ->
-                Column(
-                    modifier =
-                        Modifier
-                            .offset(y = 16.dp)
-                            .clickable { openProfile(feedDetails.toCanisterData()) },
-                ) {
+                Column(modifier = Modifier.offset(y = 16.dp)) {
                     YralAsyncImage(
                         imageUrl = profileImage,
                         border = 2.dp,
                         borderColor = Color.White,
                         backgroundColor = YralColors.ProfilePicBackground,
-                        modifier = Modifier.size(36.dp),
+                        modifier =
+                            Modifier
+                                .size(36.dp)
+                                .clickable { openProfile(feedDetails.toCanisterData()) },
                     )
                     Image(
                         painter =
@@ -373,7 +394,21 @@ private fun ActionsRight(
                             ),
                         contentDescription = "follow",
                         contentScale = ContentScale.None,
-                        modifier = Modifier.size(36.dp).offset(y = (-10).dp),
+                        modifier =
+                            Modifier
+                                .size(36.dp)
+                                .offset(y = (-10).dp)
+                                .clickable {
+                                    if (feedDetails.isFollowing) {
+                                        openProfile(feedDetails.toCanisterData())
+                                    } else {
+                                        if (state.isLoggedIn) {
+                                            feedViewModel.follow(feedDetails.toCanisterData())
+                                        } else {
+                                            openProfile(feedDetails.toCanisterData())
+                                        }
+                                    }
+                                },
                     )
                 }
             }
