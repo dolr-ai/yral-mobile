@@ -15,6 +15,7 @@ object YralColors {
     val NeutralBackgroundCardBackground: Color = Color(0xFF171717)
     val NeutralIconsActive: Color = Color(0xFFFAFAFA)
 
+    val Neutral0: Color = Color(0xFFFFFFFF)
     val Neutral50: Color = Color(0xFFFAFAFA)
     val Neutral300: Color = Color(0xFFD4D4D4)
     val Neutral500: Color = Color(0xFFA3A3A3)
@@ -56,6 +57,7 @@ object YralColors {
     val Green400: Color = Color(0xFF158F5C)
     val SuccessGreen: Color = Color(0xFF10B981)
 
+    val Grey0: Color = Neutral0
     val Grey50: Color = Neutral50
 
     val Yellow200: Color = Color(0xFFFFC33A)

@@ -2,8 +2,9 @@ package com.yral.shared.rust.service.domain
 
 import com.yral.shared.rust.service.domain.models.FollowersPageResult
 import com.yral.shared.rust.service.domain.models.FollowingPageResult
+import com.yral.shared.rust.service.domain.models.ProfileUpdateDetails
+import com.yral.shared.rust.service.domain.models.UserProfileDetails
 import com.yral.shared.uniffi.generated.Principal
-import com.yral.shared.uniffi.generated.UisUserProfileDetailsForFrontendV4
 
 interface UserInfoRepository {
     suspend fun followUser(
@@ -19,7 +20,7 @@ interface UserInfoRepository {
     suspend fun getProfileDetailsV4(
         principal: Principal,
         targetPrincipal: Principal,
-    ): UisUserProfileDetailsForFrontendV4
+    ): UserProfileDetails
 
     suspend fun getFollowers(
         principal: Principal,
@@ -36,4 +37,9 @@ interface UserInfoRepository {
         limit: ULong,
         withCallerFollows: Boolean?,
     ): FollowingPageResult
+
+    suspend fun updateProfileDetails(
+        principal: Principal,
+        details: ProfileUpdateDetails,
+    )
 }
