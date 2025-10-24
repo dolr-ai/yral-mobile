@@ -16,7 +16,7 @@ data class User(
 )
 
 @Serializable
-data class SuperProperties(
+internal data class SuperProperties(
     @SerialName("is_creator")
     val isCreator: Boolean?,
     @SerialName("is_logged_in")
@@ -49,7 +49,7 @@ data class SuperProperties(
     )
 }
 
-fun User.toSuperProperties(): SuperProperties =
+internal fun User.toSuperProperties(): SuperProperties =
     SuperProperties(
         isCreator = isCreator,
         isLoggedIn = isLoggedIn,
