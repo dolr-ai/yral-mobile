@@ -47,6 +47,13 @@ class SessionManager {
                 else -> null
             }
 
+    val bio: String?
+        get() =
+            when (val state = mutableState.value) {
+                is SessionState.SignedIn -> state.session.bio
+                else -> null
+            }
+
     val isCreatedFromServiceCanister: Boolean?
         get() =
             when (val state = mutableState.value) {
