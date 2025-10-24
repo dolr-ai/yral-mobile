@@ -67,6 +67,7 @@ import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -242,17 +243,21 @@ fun FeedScreen(
         )
     }
 
-    var followedUser by remember { mutableStateOf<String?>(null) }
-    val followSuccessfulMessage = stringResource(DesignRes.string.started_following, followedUser ?: "")
-    LaunchedEffect(followedUser) {
-        followedUser?.let { ToastManager.showSuccess(type = ToastType.Small(message = followSuccessfulMessage)) }
-        followedUser = null
-    }
-
     LaunchedEffect(Unit) {
         viewModel.feedEvents.collect { event ->
             when (event) {
-                is FeedEvents.FollowedSuccessfully -> followedUser = event.userName
+                is FeedEvents.FollowedSuccessfully -> {
+                    ToastManager.showSuccess(
+                        type =
+                            ToastType.Small(
+                                message =
+                                    getString(
+                                        DesignRes.string.started_following,
+                                        event.userName,
+                                    ),
+                            ),
+                    )
+                }
                 is FeedEvents.UnfollowedSuccessfully -> Unit
                 is FeedEvents.Failed -> ToastManager.showError(type = ToastType.Small(message = event.message))
             }
