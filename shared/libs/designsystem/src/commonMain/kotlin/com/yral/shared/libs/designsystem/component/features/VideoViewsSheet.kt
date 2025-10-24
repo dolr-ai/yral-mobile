@@ -33,7 +33,6 @@ import yral_mobile.shared.libs.designsystem.generated.resources.total_engaged_vi
 import yral_mobile.shared.libs.designsystem.generated.resources.total_views
 import yral_mobile.shared.libs.designsystem.generated.resources.video_insights
 
-@Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VideoViewsSheet(
@@ -72,57 +71,52 @@ fun VideoViewsSheet(
                 verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
                 horizontalAlignment = Alignment.Start,
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(
-                        text = stringResource(Res.string.total_views),
-                        style = LocalAppTopography.current.mdMedium,
-                        color = YralColors.NeutralTextSecondary,
-                        textAlign = TextAlign.Center,
-                    )
-                    YralShimmerView(
-                        data = totalViews?.toLong(),
-                        placeholderData = 100000,
-                    ) { views ->
-                        Text(
-                            text = formatAbbreviation(views, 0),
-                            style = LocalAppTopography.current.mdMedium,
-                            color = YralColors.NeutralIconsActive,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
-                }
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(
-                        text = stringResource(Res.string.total_engaged_views),
-                        style = LocalAppTopography.current.mdMedium,
-                        color = YralColors.NeutralTextSecondary,
-                        textAlign = TextAlign.Center,
-                    )
-                    YralShimmerView(
-                        data = totalEngagedViews?.toLong(),
-                        placeholderData = 100000,
-                    ) { views ->
-                        Text(
-                            text = formatAbbreviation(views, 0),
-                            style = LocalAppTopography.current.mdMedium,
-                            color = YralColors.NeutralIconsActive,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
-                }
+                ViewInfoRow(
+                    label = stringResource(Res.string.total_views),
+                    value = totalViews?.toLong(),
+                    placeHolderValue = 100000,
+                )
+                ViewInfoRow(
+                    label = stringResource(Res.string.total_engaged_views),
+                    value = totalEngagedViews?.toLong(),
+                    placeHolderValue = 100000,
+                )
                 YralInfoView(
                     modifier = Modifier.fillMaxWidth(),
                     info = stringResource(Res.string.engaged_views_description),
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun ViewInfoRow(
+    label: String,
+    value: Long?,
+    placeHolderValue: Long,
+) {
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Text(
+            text = label,
+            style = LocalAppTopography.current.mdMedium,
+            color = YralColors.NeutralTextSecondary,
+            textAlign = TextAlign.Center,
+        )
+        YralShimmerView(
+            data = value,
+            placeholderData = placeHolderValue,
+        ) { views ->
+            Text(
+                text = formatAbbreviation(views, 0),
+                style = LocalAppTopography.current.mdMedium,
+                color = YralColors.NeutralIconsActive,
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }

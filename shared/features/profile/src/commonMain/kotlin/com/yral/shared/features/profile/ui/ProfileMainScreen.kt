@@ -914,28 +914,8 @@ private fun BoxScope.VideoGridItemActions(
         } else {
             DesignRes.drawable.ic_views
         }
-    val leftIconDescription =
-        if (isLikeVisible) {
-            "likes"
-        } else {
-            "views"
-        }
-    val leftText =
-        if (isLikeVisible) {
-            likeCount
-        } else {
-            viewCount
-        }
-    val leftIconModifier =
-        if (isLikeVisible) {
-            Modifier
-        } else {
-            Modifier.clickable {
-                if (!isLikeVisible) {
-                    onViewsClick()
-                }
-            }
-        }
+    val leftIconDescription = if (isLikeVisible) "likes" else "views"
+    val leftText = if (isLikeVisible) likeCount else viewCount
     Row(
         modifier =
             Modifier
@@ -948,7 +928,12 @@ private fun BoxScope.VideoGridItemActions(
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = leftIconModifier,
+            modifier =
+                Modifier.clickable {
+                    if (!isLikeVisible) {
+                        onViewsClick()
+                    }
+                },
         ) {
             Image(
                 painter = painterResource(leftIcon),
