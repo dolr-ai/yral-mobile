@@ -69,8 +69,6 @@ import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.profile.viewmodel.VideoViewState
 import com.yral.shared.features.profile.viewmodel.ViewState
 import com.yral.shared.libs.arch.presentation.UiState
-import com.yral.shared.libs.designsystem.component.AccountInfoView
-import com.yral.shared.libs.designsystem.component.DeleteConfirmationSheet
 import com.yral.shared.libs.designsystem.component.LoaderSize
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralButtonState
@@ -79,6 +77,8 @@ import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
+import com.yral.shared.libs.designsystem.component.features.AccountInfoView
+import com.yral.shared.libs.designsystem.component.features.DeleteConfirmationSheet
 import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.toast.ToastManager

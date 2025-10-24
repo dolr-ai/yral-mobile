@@ -39,9 +39,9 @@ import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.features.wallet.viewmodel.WalletViewModel
 import com.yral.shared.libs.CurrencyFormatter
 import com.yral.shared.libs.NumberFormatter
-import com.yral.shared.libs.designsystem.component.AccountInfoView
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralButton
+import com.yral.shared.libs.designsystem.component.features.AccountInfoView
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.PreloadLottieAnimations
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
