@@ -754,6 +754,7 @@ class FeedViewModel(
     }
 
     fun follow(canisterData: CanisterData) {
+        if (_state.value.isFollowInProgress) return
         coroutineScope.launch {
             sessionManager.userPrincipal?.let { userPrincipal ->
                 _state.update { it.copy(isFollowInProgress = true) }
