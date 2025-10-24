@@ -29,10 +29,10 @@ import yral_mobile.shared.features.uploadvideo.generated.resources.Res
 import yral_mobile.shared.features.uploadvideo.generated.resources.go_to_home
 import yral_mobile.shared.features.uploadvideo.generated.resources.upload_completed
 import yral_mobile.shared.features.uploadvideo.generated.resources.upload_completed_message
-import yral_mobile.shared.features.uploadvideo.generated.resources.upload_error
-import yral_mobile.shared.features.uploadvideo.generated.resources.upload_success
 import yral_mobile.shared.features.uploadvideo.generated.resources.upload_video_error
 import yral_mobile.shared.libs.designsystem.generated.resources.done
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_error
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_success
 import yral_mobile.shared.libs.designsystem.generated.resources.my_profile
 import yral_mobile.shared.libs.designsystem.generated.resources.something_went_wrong
 import yral_mobile.shared.libs.designsystem.generated.resources.try_again
@@ -55,7 +55,7 @@ fun UploadVideoSuccess(onDone: () -> Unit) {
         ) {
             AnimatedBounceIcon(
                 modifier = Modifier.offset(y = (-8).dp),
-                imageRes = Res.drawable.upload_success,
+                imageRes = DesignRes.drawable.ic_success,
             )
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -128,7 +128,7 @@ fun UploadVideoFailure(
         ) {
             AnimatedBounceIcon(
                 modifier = Modifier.offset(y = (-8).dp),
-                imageRes = Res.drawable.upload_error,
+                imageRes = DesignRes.drawable.ic_error,
             )
             Column(
                 modifier = Modifier.fillMaxWidth(),

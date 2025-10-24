@@ -37,4 +37,12 @@
     <string name="follow">Follow</string>
     <string name="started_following">You’re now following @%1$s !</string>
     <string name="login_to_follow_subtext">Log in to explore user profiles, videos and all the fun stuff inside YRAL.</string>
+
+    <string name="video_insights">Video Insights</string>
+    <string name="total_views">Total Views</string>
+    <string name="total_engaged_views">Total Engaged views</string>
+    <string name="engaged_views_description">Engaged views: Counted when a logged-in user watches your video for more than 3 seconds. Each user counts only once per video.</string>
+
+    <string name="error_data_not_loaded">Oops...Something went wrong! We couldn’t load your data. Please refresh or try again later.</string>
+    <string name="refresh">Refresh</string>
 </resources>

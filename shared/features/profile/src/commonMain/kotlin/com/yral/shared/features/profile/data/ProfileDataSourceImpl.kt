@@ -5,9 +5,11 @@ import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.profile.data.models.DeleteVideoRequestBody
+import com.yral.shared.features.profile.data.models.VideoViewsDto
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
 import com.yral.shared.features.profile.domain.models.ProfileVideosPageResult
 import com.yral.shared.http.httpDelete
+import com.yral.shared.http.httpPost
 import com.yral.shared.rust.service.domain.IndividualUserRepository
 import com.yral.shared.rust.service.domain.models.Posts
 import com.yral.shared.rust.service.domain.models.PostsOfUserProfileError
@@ -99,7 +101,17 @@ class ProfileDataSourceImpl(
         }
     }
 
+    override suspend fun getProfileVideoViewsCount(videoId: List<String>): List<VideoViewsDto> =
+        httpPost(httpClient, json) {
+            url {
+                host = OFF_CHAIN_BASE_URL
+                path(VIDEO_VIEWS_ENDPOINT)
+            }
+            setBody(mapOf("video_ids" to videoId))
+        }
+
     companion object {
         private const val DELETE_VIDEO_ENDPOINT = "/api/v2/posts"
+        private const val VIDEO_VIEWS_ENDPOINT = "/api/v1/rewards/videos/bulk-stats-v2"
     }
 }

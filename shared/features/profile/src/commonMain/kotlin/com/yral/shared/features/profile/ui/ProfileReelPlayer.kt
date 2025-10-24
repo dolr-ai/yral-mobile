@@ -78,6 +78,7 @@ fun ProfileReelPlayer(
     onBack: () -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
     onShareClick: (FeedDetails) -> Unit,
+    onViewsClick: (FeedDetails) -> Unit,
     getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
     modifier: Modifier = Modifier,
 ) {
@@ -109,6 +110,7 @@ fun ProfileReelPlayer(
                     onReportClick = { onReportClick(pageNo, currentVideo) },
                     onDeleteVideo = { onDeleteVideo(currentVideo) },
                     onShareClick = { onShareClick(currentVideo) },
+                    onViewsClick = { onViewsClick(currentVideo) },
                 )
                 when (val reportSheetState = reportSheetState) {
                     ReportSheetState.Closed -> Unit
@@ -139,6 +141,7 @@ private fun ProfileReelOverlay(
     onReportClick: () -> Unit,
     onDeleteVideo: () -> Unit,
     onShareClick: () -> Unit,
+    onViewsClick: () -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Header(
@@ -168,6 +171,7 @@ private fun ProfileReelOverlay(
                 onReportClick = onReportClick,
                 onShareClick = onShareClick,
                 onDeleteVideo = onDeleteVideo,
+                onViewsClick = onViewsClick,
             )
         }
         DeletingOverlay(
@@ -260,6 +264,7 @@ private fun ActionsRight(
     onReportClick: () -> Unit,
     onShareClick: () -> Unit,
     onDeleteVideo: () -> Unit,
+    onViewsClick: () -> Unit,
 ) {
     Column(
         modifier = modifier,
@@ -272,6 +277,7 @@ private fun ActionsRight(
 
         ViewsIcon(
             views = views,
+            onViewsClick = onViewsClick,
         )
 
         ReportVideo(
@@ -290,11 +296,12 @@ private fun ActionsRight(
 private fun ViewsIcon(
     modifier: Modifier = Modifier,
     views: Long,
+    onViewsClick: () -> Unit,
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(0.dp, Alignment.Top),
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier,
+        modifier = modifier.clickable { onViewsClick() },
     ) {
         Image(
             painter = painterResource(DesignRes.drawable.ic_views),
