@@ -29,6 +29,7 @@ import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import com.yral.shared.libs.routing.deeplink.engine.RoutingService
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.rust.service.services.HelperService.initRustLogger
+import com.yral.shared.rust.service.services.RustLogLevel
 import io.branch.indexing.BranchUniversalObject
 import io.branch.referral.Branch
 import io.branch.referral.BranchError
@@ -84,9 +85,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        if (BuildConfig.DEBUG) {
-            initRustLogger()
-        }
+        initRustLogger(if (BuildConfig.DEBUG) RustLogLevel.DEBUG else RustLogLevel.ERROR)
         oAuthUtils = koinInstance.get()
         oAuthUtilsHelper = koinInstance.get()
         // Always create the root component outside Compose on the main thread
