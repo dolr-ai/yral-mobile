@@ -79,6 +79,7 @@ import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
 import com.yral.shared.libs.designsystem.component.features.AccountInfoView
 import com.yral.shared.libs.designsystem.component.features.DeleteConfirmationSheet
+import com.yral.shared.libs.designsystem.component.features.VideoViewsSheet
 import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
@@ -280,7 +281,6 @@ fun ProfileMainScreen(
             VideoViewState.None -> {
                 MainContent(
                     modifier = Modifier.fillMaxSize(),
-                    bottomSheetState = bottomSheetState,
                     state = state,
                     viewModel = viewModel,
                     gridState = gridState,
@@ -295,7 +295,6 @@ fun ProfileMainScreen(
                     openAccount = { component.openAccount() },
                     openEditProfile = { component.openEditProfile() },
                     onBackClicked = { component.onBackClicked() },
-                    loginBottomSheet = loginBottomSheet,
                 )
             }
         }
@@ -326,6 +325,39 @@ fun ProfileMainScreen(
         }
         DeleteConfirmationState.None, is DeleteConfirmationState.InProgress -> Unit
     }
+    val extraSheetState = rememberModalBottomSheetState()
+    var extraSheetLink by remember { mutableStateOf("") }
+    when (val bottomSheet = state.bottomSheet) {
+        ProfileBottomSheet.None -> Unit
+        ProfileBottomSheet.SignUp -> {
+            loginBottomSheet(
+                bottomSheetState,
+                { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
+                viewModel.getTncLink(),
+                { extraSheetLink = viewModel.getTncLink() },
+            )
+        }
+
+        is ProfileBottomSheet.VideoView -> {
+            val videoId = bottomSheet.videoId
+            val views = state.viewsData[videoId] as? UiState.Success
+            val thumbnail = profileVideos.itemSnapshotList.firstOrNull { it?.videoID == videoId }?.thumbnail
+            VideoViewsSheet(
+                sheetState = bottomSheetState,
+                onDismissRequest = { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
+                thumbnailUrl = thumbnail ?: "",
+                totalViews = views?.data?.allViews,
+                totalEngagedViews = views?.data?.loggedInViews,
+            )
+        }
+    }
+    if (extraSheetLink.isNotEmpty()) {
+        YralWebViewBottomSheet(
+            link = extraSheetLink,
+            bottomSheetState = extraSheetState,
+            onDismissRequest = { extraSheetLink = "" },
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -341,7 +373,6 @@ typealias LoginBottomSheetComposable = @Composable (
 @Composable
 private fun MainContent(
     modifier: Modifier,
-    bottomSheetState: SheetState,
     state: ViewState,
     viewModel: ProfileViewModel,
     gridState: LazyGridState,
@@ -353,7 +384,6 @@ private fun MainContent(
     openAccount: () -> Unit,
     openEditProfile: () -> Unit,
     onBackClicked: () -> Unit,
-    loginBottomSheet: LoginBottomSheetComposable,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader(
@@ -430,28 +460,6 @@ private fun MainContent(
                 }
             }
         }
-    }
-    val extraSheetState = rememberModalBottomSheetState()
-    var extraSheetLink by remember { mutableStateOf("") }
-    when (state.bottomSheet) {
-        ProfileBottomSheet.None -> Unit
-        ProfileBottomSheet.SignUp -> {
-            loginBottomSheet(
-                bottomSheetState,
-                { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
-                viewModel.getTncLink(),
-                { extraSheetLink = viewModel.getTncLink() },
-            )
-        }
-
-        is ProfileBottomSheet.VideoView -> Unit
-    }
-    if (extraSheetLink.isNotEmpty()) {
-        YralWebViewBottomSheet(
-            link = extraSheetLink,
-            bottomSheetState = extraSheetState,
-            onDismissRequest = { extraSheetLink = "" },
-        )
     }
 }
 
