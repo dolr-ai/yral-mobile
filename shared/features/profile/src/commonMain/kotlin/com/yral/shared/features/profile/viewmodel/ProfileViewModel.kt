@@ -409,6 +409,7 @@ class ProfileViewModel(
     }
 
     fun followUnfollow() {
+        if (_state.value.isFollowInProgress) return
         viewModelScope.launch {
             sessionManager.userPrincipal?.let { userPrincipal ->
                 with(_state.value) {

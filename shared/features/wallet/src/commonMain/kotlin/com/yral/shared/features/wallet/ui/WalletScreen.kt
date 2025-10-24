@@ -85,12 +85,11 @@ fun WalletScreen(
         WalletHeader()
         Spacer(modifier = Modifier.height(4.dp))
         state.accountInfo?.let { info ->
+            // Defaults since login not required on wallet
             AccountInfoView(
                 accountInfo = info,
                 isSocialSignIn = true,
-                showEditProfile = false,
                 onLoginClicked = {},
-                onEditProfileClicked = {},
             )
         }
         state.yralTokenBalance?.let { coinBalance ->

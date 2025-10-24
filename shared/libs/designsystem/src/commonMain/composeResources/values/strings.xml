@@ -36,4 +36,5 @@
     <string name="following">Following</string>
     <string name="follow">Follow</string>
     <string name="started_following">You’re now following @%1$s !</string>
+    <string name="login_to_follow_subtext">Log in to explore user profiles, videos and all the fun stuff inside YRAL.</string>
 </resources>

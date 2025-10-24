@@ -39,12 +39,17 @@ import com.yral.shared.reportVideo.domain.ReportRequestParams
 import com.yral.shared.reportVideo.domain.ReportVideoUseCase
 import com.yral.shared.reportVideo.domain.models.ReportSheetState
 import com.yral.shared.reportVideo.domain.models.ReportVideoData
+import com.yral.shared.rust.service.domain.usecases.FollowUserParams
+import com.yral.shared.rust.service.domain.usecases.FollowUserUseCase
+import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -87,6 +92,9 @@ class FeedViewModel(
 
     private val _state = MutableStateFlow(FeedState())
     val state: StateFlow<FeedState> = _state.asStateFlow()
+
+    private val feedEventsChannel = Channel<FeedEvents>(Channel.CONFLATED)
+    val feedEvents = feedEventsChannel.receiveAsFlow()
 
     init {
         initAvailableFeeds()
@@ -745,6 +753,32 @@ class FeedViewModel(
         }
     }
 
+    fun follow(canisterData: CanisterData) {
+        if (_state.value.isFollowInProgress) return
+        coroutineScope.launch {
+            sessionManager.userPrincipal?.let { userPrincipal ->
+                _state.update { it.copy(isFollowInProgress = true) }
+                requiredUseCases
+                    .followUserUseCase(
+                        parameter =
+                            FollowUserParams(
+                                principal = userPrincipal,
+                                targetPrincipal = canisterData.userPrincipalId,
+                            ),
+                    ).onSuccess {
+                        _state.update { it.copy(isFollowInProgress = false) }
+                        feedEventsChannel.trySend(FeedEvents.FollowedSuccessfully(canisterData.username ?: ""))
+                        sessionManager.addPrincipalToFollow(canisterData.userPrincipalId)
+                        Logger.d("Follow") { "Started following" }
+                    }.onFailure { e ->
+                        _state.update { it.copy(isFollowInProgress = false) }
+                        feedEventsChannel.trySend(FeedEvents.Failed(e.message ?: "Follow failed"))
+                        Logger.d("Follow") { "Follow request failed $e" }
+                    }
+            }
+        }
+    }
+
     data class RequiredUseCases(
         val getInitialFeedUseCase: GetInitialFeedUseCase,
         val fetchMoreFeedUseCase: FetchMoreFeedUseCase,
@@ -753,6 +787,7 @@ class FeedViewModel(
         val reportVideoUseCase: ReportVideoUseCase,
         val checkVideoVoteUseCase: CheckVideoVoteUseCase,
         val getAIFeedUseCase: GetAIFeedUseCase,
+        val followUserUseCase: FollowUserUseCase,
     )
 }
 
@@ -773,6 +808,7 @@ data class FeedState(
     val isLoggedIn: Boolean = false,
     val availableFeedTypes: List<FeedType> = listOf(FeedType.DEFAULT),
     val feedType: FeedType = FeedType.DEFAULT,
+    val isFollowInProgress: Boolean = false,
 )
 
 enum class OverlayType {
@@ -794,6 +830,16 @@ data class VideoData(
     val lastKnownTotalTime: Int = 0,
     val isFirstTimeUpdate: Boolean = true,
 )
+
+sealed class FeedEvents {
+    data class FollowedSuccessfully(
+        val userName: String,
+    ) : FeedEvents()
+    data object UnfollowedSuccessfully : FeedEvents()
+    data class Failed(
+        val message: String,
+    ) : FeedEvents()
+}
 
 @Suppress("MagicNumber")
 internal fun Int.percentageOf(total: Int): Double =

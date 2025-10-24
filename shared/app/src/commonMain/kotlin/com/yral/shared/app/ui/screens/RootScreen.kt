@@ -31,6 +31,7 @@ import com.yral.shared.app.ui.components.UpdateNotificationHost
 import com.yral.shared.app.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.shared.app.ui.screens.home.HomeScreen
 import com.yral.shared.core.session.SessionState
+import com.yral.shared.features.auth.ui.LoginBottomSheet
 import com.yral.shared.features.profile.ui.EditProfileScreen
 import com.yral.shared.features.profile.ui.ProfileMainScreen
 import com.yral.shared.features.profile.viewmodel.EditProfileViewModel
@@ -102,7 +103,14 @@ fun RootScreen(
                         viewModel = profileViewModel,
                         profileVideos = profileVideos,
                         loginState = UiState.Initial,
-                        loginBottomSheet = { _, _, _, _ -> Unit },
+                        loginBottomSheet = { bottomSheetState, onDismissRequest, termsLink, openTerms ->
+                            LoginBottomSheet(
+                                bottomSheetState = bottomSheetState,
+                                onDismissRequest = onDismissRequest,
+                                termsLink = termsLink,
+                                openTerms = openTerms,
+                            )
+                        },
                         getPrefetchListener = { reel -> PrefetchVideoListenerImpl(reel) },
                     )
                 }

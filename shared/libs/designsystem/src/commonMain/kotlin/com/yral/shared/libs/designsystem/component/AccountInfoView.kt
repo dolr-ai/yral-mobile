@@ -41,12 +41,14 @@ fun AccountInfoView(
     totalFollowers: Long? = null,
     totalFollowing: Long? = null,
     isSocialSignIn: Boolean,
-    showEditProfile: Boolean,
+    loginText: String = stringResource(Res.string.login),
+    loginSubText: String = stringResource(Res.string.anonymous_account_setup),
+    onLoginClicked: () -> Unit,
+    showEditProfile: Boolean = false,
+    onEditProfileClicked: () -> Unit = {},
     showFollow: Boolean = false,
     isFollowing: Boolean = false,
     isFollowInProgress: Boolean = false,
-    onLoginClicked: () -> Unit,
-    onEditProfileClicked: () -> Unit,
     onFollowClicked: () -> Unit = {},
 ) {
     Column(
@@ -118,53 +120,61 @@ fun AccountInfoView(
                 }
             }
         }
-        if (showEditProfile) {
-            ProfileButton(
-                text = stringResource(Res.string.edit_profile),
-                modifier = Modifier.fillMaxWidth(),
-                onClick = onEditProfileClicked,
-            )
-        }
-        if (!isSocialSignIn) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
-            ) {
-                YralGradientButton(
-                    text = stringResource(Res.string.login),
-                    onClick = onLoginClicked,
-                )
-                Text(
-                    text = stringResource(Res.string.anonymous_account_setup),
-                    style = LocalAppTopography.current.baseRegular,
-                    color = YralColors.NeutralTextPrimary,
-                    textAlign = TextAlign.Center,
+        when {
+            !isSocialSignIn -> {
+                Column(
                     modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
+                ) {
+                    YralGradientButton(
+                        text = loginText,
+                        onClick = onLoginClicked,
+                    )
+                    Text(
+                        text = loginSubText,
+                        style = LocalAppTopography.current.baseRegular,
+                        color = YralColors.NeutralTextPrimary,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+            showEditProfile -> {
+                ProfileButton(
+                    text = stringResource(Res.string.edit_profile),
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = onEditProfileClicked,
                 )
             }
-        }
-        if (showFollow) {
-            YralButton(
-                modifier = Modifier.fillMaxWidth(),
-                text =
-                    stringResource(
-                        resource =
-                            if (isFollowing) {
-                                Res.string.following
-                            } else {
-                                Res.string.follow
-                            },
-                    ),
-                borderColor = YralColors.Neutral700,
-                borderWidth = 1.dp,
-                backgroundColor = YralColors.Neutral800,
-                textStyle =
-                    TextStyle(
-                        color = YralColors.NeutralTextPrimary,
-                    ),
-                onClick = onFollowClicked,
-                buttonState = if (isFollowInProgress) YralButtonState.Loading else YralButtonState.Enabled,
-            )
+            showFollow -> {
+                val followText =
+                    when {
+                        isFollowInProgress -> ""
+                        isFollowing -> stringResource(Res.string.following)
+                        else -> stringResource(Res.string.follow)
+                    }
+                val buttonState =
+                    if (isFollowInProgress) YralButtonState.Loading else YralButtonState.Enabled
+                if (isFollowing) {
+                    YralButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = followText,
+                        borderColor = YralColors.Neutral700,
+                        borderWidth = 1.dp,
+                        backgroundColor = YralColors.Neutral800,
+                        textStyle = TextStyle(color = YralColors.NeutralTextPrimary),
+                        onClick = onFollowClicked,
+                        buttonState = buttonState,
+                    )
+                } else {
+                    YralGradientButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = followText,
+                        onClick = onFollowClicked,
+                        buttonState = buttonState,
+                    )
+                }
+            }
         }
         Spacer(
             modifier =
