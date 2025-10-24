@@ -468,27 +468,27 @@ def cast_vote(request: Request):
         return error_response(500, "INTERNAL", "Internal server error")
 
 def _get_daily_position(pid: str) -> int:
-    """
-    Returns the user's dense rank for today's IST leaderboard.
-    If user not found, returns 0.
-    If user exists but has 0 wins, still returns their rank (N+1).
-    """
-    bucket_id, _start, _end = _bucket_bounds_ist()
-    users_ref = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
-    user_doc = users_ref.document(pid).get()
+    bucket_id, _start_ms, _end_ms = _bucket_bounds_ist()
+    daily_doc_ref = db().collection(DAILY_COLL).document(bucket_id)
+    daily_doc = daily_doc_ref.get()
 
-    # User not found → rank 0
-    if not user_doc.exists:
+    if not daily_doc.exists:
         return 0
 
-    wins = int(user_doc.get("smiley_game_wins") or 0)
+    users_ref = daily_doc_ref.collection("users")
+    user_doc = users_ref.document(pid).get()
 
-    # Count users with strictly more wins
+    if user_doc.exists:
+        wins = int(user_doc.get("smiley_game_wins") or 0)
+    else:
+        wins = 0
+
     count_snap = (
         users_ref.where("smiley_game_wins", ">", wins)
-                 .count()
-                 .get()
+                .count()
+                .get()
     )
+
     higher_count = int(count_snap[0][0].value)
     position = higher_count + 1
 
