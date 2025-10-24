@@ -1925,19 +1925,24 @@ def daily_rank(request: Request):
 
         # ───────── Get bucket and user doc ─────────
         bucket_id, _start_ms, _end_ms = _bucket_bounds_ist()
-        users_ref = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
-        user_doc = users_ref.document(pid).get()
+        daily_doc_ref = db().collection(DAILY_COLL).document(bucket_id)
+        daily_doc = daily_doc_ref.get()
 
-        if not user_doc.exists:
+        if not daily_doc.exists:
             return jsonify({
                 "principal_id": pid,
                 "wins": 0,
                 "position": 0
             }), 200
 
-        wins = int(user_doc.get("smiley_game_wins") or 0)
+        users_ref = daily_doc_ref.collection("users")
+        user_doc = users_ref.document(pid).get()
 
-        # ───────── Rank calculation (dense) ─────────
+        if user_doc.exists:
+            wins = int(user_doc.get("smiley_game_wins") or 0)
+        else:
+            wins = 0
+
         count_snap = (
             users_ref.where("smiley_game_wins", ">", wins)
                      .count()
