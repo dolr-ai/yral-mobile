@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -28,9 +29,11 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.BottomSheetDefaults.DragHandle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.pullToRefreshIndicator
@@ -49,6 +52,8 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -62,6 +67,9 @@ import androidx.paging.compose.itemKey
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.profile.nav.ProfileMainComponent
+import com.yral.shared.features.profile.ui.followers.FollowersBottomSheet
+import com.yral.shared.features.profile.ui.followers.FollowersSheetTab
+import com.yral.shared.features.profile.ui.followers.FollowersSheetUi
 import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
 import com.yral.shared.features.profile.viewmodel.ProfileBottomSheet
 import com.yral.shared.features.profile.viewmodel.ProfileEvents
@@ -71,6 +79,7 @@ import com.yral.shared.features.profile.viewmodel.ViewState
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.LoaderSize
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
+import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralButtonType
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
@@ -125,6 +134,22 @@ import yral_mobile.shared.libs.designsystem.generated.resources.upload_video
 import yral_mobile.shared.libs.designsystem.generated.resources.video_insights
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
+internal const val GRID_ITEM_ASPECT_RATIO = 0.75f
+internal const val PULL_TO_REFRESH_INDICATOR_SIZE = 34f
+internal const val PULL_TO_REFRESH_INDICATOR_THRESHOLD = 36f
+internal const val PULL_TO_REFRESH_OFFSET_MULTIPLIER = 1.5f
+internal const val MAX_LINES_FOR_POST_DESCRIPTION = 5
+internal const val PADDING_BOTTOM_ACCOUNT_INFO = 20
+internal const val SHEET_GROWTH_PER_ITEM = 0.05f
+
+private fun calculateSheetFraction(itemCount: Int): Float {
+    val base = FollowersSheetUi.MIN_HEIGHT_FRACTION
+    val increment = SHEET_GROWTH_PER_ITEM
+    return (base + itemCount * increment).coerceIn(base, FollowersSheetUi.EXPANDED_HEIGHT_FRACTION)
+}
+
+private fun LazyPagingItems<PagedFollowerItem>.snapshotCount(): Int = itemSnapshotList.items.sumOf { it.items.size }
+
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
@@ -149,9 +174,11 @@ fun ProfileMainScreen(
                 is ProfileEvents.FollowedSuccessfully -> {
                     ToastManager.showSuccess(type = ToastType.Small(message = followedSuccessfully))
                     followers.refresh()
+                    following.refresh()
                 }
                 is ProfileEvents.UnfollowedSuccessfully -> {
                     followers.refresh()
+                    following.refresh()
                 }
                 is ProfileEvents.Failed -> {
                     ToastManager.showError(type = ToastType.Small(message = event.message))
@@ -170,6 +197,8 @@ fun ProfileMainScreen(
     }
 
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val followersSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+    var followerSheetTab by remember { mutableStateOf<FollowersSheetTab?>(null) }
     LaunchedEffect(loginState) {
         if (loginState is UiState.Failure) {
             viewModel.setBottomSheetType(ProfileBottomSheet.SignUp)
@@ -291,13 +320,17 @@ fun ProfileMainScreen(
                     followers = followers,
                     following = following,
                     deletingVideoId = deletingVideoId,
-                    uploadVideo = {
-                        viewModel.uploadVideoClicked()
-                        component.onUploadVideoClick()
-                    },
-                    openAccount = { component.openAccount() },
-                    openEditProfile = { component.openEditProfile() },
-                    onBackClicked = { component.onBackClicked() },
+                    callbacks =
+                        MainContentCallbacks(
+                            uploadVideo = {
+                                viewModel.uploadVideoClicked()
+                                component.onUploadVideoClick()
+                            },
+                            openAccount = { component.openAccount() },
+                            openEditProfile = { component.openEditProfile() },
+                            onBackClicked = { component.onBackClicked() },
+                            onFollowersSectionClick = { followerSheetTab = it },
+                        ),
                 )
             }
         }
@@ -384,6 +417,57 @@ fun ProfileMainScreen(
             onDismissRequest = { extraSheetLink = "" },
         )
     }
+
+    val accountInfo = state.accountInfo
+    if (followerSheetTab != null && accountInfo != null) {
+        val density = LocalDensity.current
+        val screenHeight = with(density) { LocalWindowInfo.current.containerSize.height.toDp() }
+        val maxSheetHeight = screenHeight * FollowersSheetUi.EXPANDED_HEIGHT_FRACTION
+        val currentListSize =
+            when (followerSheetTab!!) {
+                FollowersSheetTab.Followers -> followers.snapshotCount()
+                FollowersSheetTab.Following -> following.snapshotCount()
+            }
+        val minSheetHeight =
+            (screenHeight * calculateSheetFraction(currentListSize)).coerceAtMost(maxSheetHeight)
+        LaunchedEffect(followerSheetTab) {
+            if (followerSheetTab != null) {
+                if (!followersSheetState.isVisible) {
+                    followersSheetState.show()
+                }
+                if (followersSheetState.hasPartiallyExpandedState &&
+                    followersSheetState.currentValue != SheetValue.PartiallyExpanded
+                ) {
+                    followersSheetState.partialExpand()
+                }
+            }
+        }
+        YralBottomSheet(
+            bottomSheetState = followersSheetState,
+            onDismissRequest = { followerSheetTab = null },
+            dragHandle = { DragHandle(color = YralColors.Neutral500) },
+        ) {
+            Box(
+                modifier =
+                    Modifier.heightIn(
+                        min = minSheetHeight,
+                        max = maxSheetHeight,
+                    ),
+            ) {
+                FollowersBottomSheet(
+                    username = accountInfo.displayName,
+                    initialTab = followerSheetTab!!,
+                    followers = followers,
+                    following = following,
+                    minSheetHeight = minSheetHeight,
+                    maxSheetHeight = maxSheetHeight,
+                    followLoading = state.followLoading,
+                    onTabSelected = { followerSheetTab = it },
+                    onFollowToggle = viewModel::toggleFollowForPrincipal,
+                )
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -393,6 +477,15 @@ typealias LoginBottomSheetComposable = @Composable (
     termsLink: String,
     openTerms: () -> Unit,
 ) -> Unit
+
+@Suppress("LongMethod", "CyclomaticComplexMethod")
+private data class MainContentCallbacks(
+    val uploadVideo: () -> Unit,
+    val openAccount: () -> Unit,
+    val openEditProfile: () -> Unit,
+    val onBackClicked: () -> Unit,
+    val onFollowersSectionClick: (FollowersSheetTab) -> Unit,
+)
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -406,18 +499,15 @@ private fun MainContent(
     followers: LazyPagingItems<PagedFollowerItem>?,
     following: LazyPagingItems<PagedFollowerItem>?,
     deletingVideoId: String,
-    uploadVideo: () -> Unit,
-    openAccount: () -> Unit,
-    openEditProfile: () -> Unit,
-    onBackClicked: () -> Unit,
+    callbacks: MainContentCallbacks,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader(
             isOwnProfile = state.isOwnProfile,
             userName = state.accountInfo?.displayName,
             isWalletEnabled = state.isWalletEnabled,
-            openAccount = openAccount,
-            onBack = { onBackClicked() },
+            openAccount = callbacks.openAccount,
+            onBack = callbacks.onBackClicked,
         )
         state.accountInfo?.let { info ->
             val followersCount =
@@ -444,11 +534,14 @@ private fun MainContent(
                 loginSubText = stringResource(DesignRes.string.login_to_follow_subtext),
                 onLoginClicked = { viewModel.setBottomSheetType(ProfileBottomSheet.SignUp) },
                 showEditProfile = state.isOwnProfile,
-                onEditProfileClicked = openEditProfile,
+                onEditProfileClicked = callbacks.openEditProfile,
                 showFollow = !state.isOwnProfile,
                 isFollowing = state.isFollowing,
                 isFollowInProgress = state.isFollowInProgress,
                 onFollowClicked = { viewModel.followUnfollow() },
+                onFollowersClick = { callbacks.onFollowersSectionClick(FollowersSheetTab.Followers) },
+                onFollowingClick = { callbacks.onFollowersSectionClick(FollowersSheetTab.Following) },
+                bio = null,
             )
         }
         when (profileVideos.loadState.refresh) {
@@ -472,7 +565,7 @@ private fun MainContent(
                         profileVideos = profileVideos,
                         isOwnProfile = state.isOwnProfile,
                         deletingVideoId = deletingVideoId,
-                        uploadVideo = uploadVideo,
+                        uploadVideo = callbacks.uploadVideo,
                         openVideoReel = { viewModel.openVideoReel(it) },
                         onDeleteVideo = {
                             viewModel.confirmDelete(
@@ -502,11 +595,10 @@ private fun ProfileHeader(
             Modifier
                 .fillMaxWidth()
                 .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp),
-        horizontalArrangement = Arrangement.End,
-        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
-            modifier = Modifier.Companion.weight(1f),
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -549,7 +641,7 @@ private fun LoadingContent() {
         modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
         contentAlignment = Alignment.Center,
     ) {
-        YralLoader(size = ProfileMainScreenConstants.PULL_TO_REFRESH_INDICATOR_SIZE.dp)
+        YralLoader(size = PULL_TO_REFRESH_INDICATOR_SIZE.dp)
     }
 }
 
@@ -557,7 +649,7 @@ private fun LoadingContent() {
 private fun ErrorContent(message: String) {
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Center,
     ) {
         Text(
@@ -593,13 +685,13 @@ private fun SuccessContent(
         modifier =
             Modifier
                 .fillMaxSize()
-                .padding(top = ProfileMainScreenConstants.PADDING_BOTTOM_ACCOUNT_INFO.dp),
+                .padding(top = PADDING_BOTTOM_ACCOUNT_INFO.dp),
     ) {
         val pullRefreshState = rememberPullToRefreshState()
         val offset =
             pullRefreshState.distanceFraction *
-                ProfileMainScreenConstants.PULL_TO_REFRESH_INDICATOR_SIZE *
-                ProfileMainScreenConstants.PULL_TO_REFRESH_OFFSET_MULTIPLIER
+                PULL_TO_REFRESH_INDICATOR_SIZE *
+                PULL_TO_REFRESH_OFFSET_MULTIPLIER
 
         val isRefreshing = profileVideos.loadState.refresh is LoadState.Loading
 
@@ -619,12 +711,12 @@ private fun SuccessContent(
                                 state = pullRefreshState,
                                 isRefreshing = isRefreshing,
                                 containerColor = Color.Transparent,
-                                threshold = ProfileMainScreenConstants.PULL_TO_REFRESH_INDICATOR_THRESHOLD.dp,
+                                threshold = PULL_TO_REFRESH_INDICATOR_THRESHOLD.dp,
                                 elevation = 0.dp,
                             ),
                     contentAlignment = Alignment.Center,
                 ) {
-                    YralLoader(ProfileMainScreenConstants.PULL_TO_REFRESH_INDICATOR_SIZE.dp)
+                    YralLoader(PULL_TO_REFRESH_INDICATOR_SIZE.dp)
                 }
             },
         ) {
@@ -656,7 +748,7 @@ private fun EmptyStateContent(
             Modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp)
-                .offset(y = (offset - ProfileMainScreenConstants.PADDING_BOTTOM_ACCOUNT_INFO).dp)
+                .offset(y = (offset - PADDING_BOTTOM_ACCOUNT_INFO).dp)
                 .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -683,7 +775,6 @@ private fun EmptyStateContent(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun VideoGridContent(
     gridState: LazyGridState,
@@ -782,7 +873,7 @@ private fun PagingErrorIndicator(
     ) {
         if (onRetry != null) {
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
+                horizontalAlignment = Alignment.Start,
                 verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
                 Text(
@@ -824,7 +915,7 @@ private fun VideoGridItem(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .aspectRatio(ProfileMainScreenConstants.GRID_ITEM_ASPECT_RATIO)
+                .aspectRatio(GRID_ITEM_ASPECT_RATIO)
                 .clip(shape = RoundedCornerShape(8.dp))
                 .background(
                     color = YralColors.Neutral900,
@@ -880,7 +971,7 @@ private fun DeletingOverLay(
         ) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Bottom),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                horizontalAlignment = Alignment.Start,
             ) {
                 YralLoader(size = loaderSize, LottieRes.READ_LOADER)
                 Text(
@@ -957,13 +1048,4 @@ private fun BoxScope.VideoGridItemActions(
             )
         }
     }
-}
-
-object ProfileMainScreenConstants {
-    const val GRID_ITEM_ASPECT_RATIO = 0.75f
-    const val PULL_TO_REFRESH_INDICATOR_SIZE = 34f
-    const val PULL_TO_REFRESH_INDICATOR_THRESHOLD = 36f
-    const val PULL_TO_REFRESH_OFFSET_MULTIPLIER = 1.5f
-    const val MAX_LINES_FOR_POST_DESCRIPTION = 5
-    const val PADDING_BOTTOM_ACCOUNT_INFO = 20
 }

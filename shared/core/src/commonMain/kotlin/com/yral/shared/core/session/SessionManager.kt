@@ -102,6 +102,16 @@ class SessionManager {
         }
     }
 
+    fun updateBio(bio: String?) {
+        mutableState.update { state ->
+            if (state is SessionState.SignedIn) {
+                state.copy(session = state.session.copy(bio = bio))
+            } else {
+                state
+            }
+        }
+    }
+
     fun updateFirebaseLoginState(isLoggedIn: Boolean) {
         mutableProperties.update { it.copy(isFirebaseLoggedIn = isLoggedIn) }
     }
