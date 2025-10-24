@@ -18,8 +18,24 @@ final class UsernameGenerator {
   private let maxLength = 15
 
   private init() {
-    nouns = NOUNS
-    adjectives = ADJECTIVES
+    nouns = UsernameGenerator.loadWords(from: "nouns")
+    adjectives = UsernameGenerator.loadWords(from: "adjectives")
+  }
+
+  private static func loadWords(from filename: String) -> [String] {
+    guard let url = Bundle.main.url(forResource: filename, withExtension: "json") else {
+      print("Missing file: \(filename).json")
+      return []
+    }
+
+    do {
+      let data = try Data(contentsOf: url)
+      let words = try JSONDecoder().decode([String].self, from: data)
+      return words
+    } catch {
+      print("Failed to load \(filename).json: \(error)")
+      return []
+    }
   }
 
   func generateUsername(from principal: String) -> String {
