@@ -58,7 +58,23 @@ actual class MixpanelAnalyticsProvider actual constructor(
 
     override fun reset(resetOnlyProperties: Boolean) {
         mixpanel.people.unset(properties = listOf(ONE_SIGNAL_PROPERTY))
-        mixpanel.reset()
+        if (resetOnlyProperties) {
+            val superProps: MutableMap<Any?, Any?> =
+                mutableMapOf(
+                    "is_creator" to null,
+                    "is_logged_in" to null,
+                    "wallet_balance" to null,
+                    "token_type" to null,
+                    "canister_id" to null,
+                    "is_Forced Gameplay_test_user" to null,
+                    "email_id" to null,
+                    "visitor_id" to null,
+                    "user_id" to null,
+                )
+            mixpanel.registerSuperProperties(superProps)
+        } else {
+            mixpanel.reset()
+        }
     }
 
     override fun toValidKeyName(key: String) = key
