@@ -32,7 +32,7 @@ class OneSignalAnalyticsProvider(
         }
     }
 
-    override fun reset() {
+    override fun reset(resetOnlyProperties: Boolean) {
         oneSignal.logout()
     }
 

@@ -34,7 +34,7 @@ actual class FacebookAnalyticsProvider actual constructor(
         AppEventsLogger.setUserID(user.userId)
     }
 
-    override fun reset() {
+    override fun reset(resetOnlyProperties: Boolean) {
         AppEventsLogger.clearUserID()
     }
 

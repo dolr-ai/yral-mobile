@@ -77,7 +77,7 @@ class BigQueryAnalyticsProvider(
         this.user = user
     }
 
-    override fun reset() {
+    override fun reset(resetOnlyProperties: Boolean) {
         user = null
         scope.launch { mutex.withLock { queue.clear() } }
     }

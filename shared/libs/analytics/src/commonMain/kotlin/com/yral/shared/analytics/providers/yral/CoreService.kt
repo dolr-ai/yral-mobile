@@ -65,7 +65,7 @@ class CoreService(
         this.user = user
     }
 
-    override fun reset() {
+    override fun reset(resetOnlyProperties: Boolean) {
         this.user = null
     }
 

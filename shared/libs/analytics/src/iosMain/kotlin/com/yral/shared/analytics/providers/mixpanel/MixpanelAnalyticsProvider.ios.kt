@@ -56,7 +56,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
         mixpanel.registerSuperProperties(superProps)
     }
 
-    override fun reset() {
+    override fun reset(resetOnlyProperties: Boolean) {
         mixpanel.people.unset(properties = listOf(ONE_SIGNAL_PROPERTY))
         mixpanel.reset()
     }

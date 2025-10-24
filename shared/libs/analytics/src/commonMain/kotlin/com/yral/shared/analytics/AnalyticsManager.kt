@@ -95,11 +95,11 @@ class AnalyticsManager(
             user.walletBalance != null &&
             user.isForcedGamePlayUser != null
 
-    fun reset() {
+    fun reset(resetOnlyProperties: Boolean = false) {
         providers.forEach { it.flush() }
-        providers.forEach { it.reset() }
+        providers.forEach { it.reset(resetOnlyProperties) }
         coreService?.flush()
-        coreService?.reset()
+        coreService?.reset(resetOnlyProperties)
         scope.launch { mutex.withLock { pendingEvents.clear() } }
         isReady.store(false)
     }

@@ -28,7 +28,7 @@ actual class FacebookAnalyticsProvider actual constructor(
     }
 
     @OptIn(ExperimentalForeignApi::class)
-    override fun reset() {
+    override fun reset(resetOnlyProperties: Boolean) {
         FBSDKAppEvents.shared().setUserID(null)
     }
 

@@ -402,7 +402,7 @@ class DefaultAuthClient(
                 }
                 val currentUser = sessionManager.userPrincipal
                 // reset analytics manage: flush events and reset user properties
-                analyticsManager.reset()
+                analyticsManager.reset(true)
                 sessionManager.updateState(SessionState.Loading)
                 authenticate(result.code, currentUser)
                 return

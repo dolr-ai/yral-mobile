@@ -10,7 +10,7 @@ interface AnalyticsProvider {
     fun flush() { }
 
     fun setUserProperties(user: User)
-    fun reset()
+    fun reset(resetOnlyProperties: Boolean = false)
 
     fun toValidKeyName(key: String): String
 }

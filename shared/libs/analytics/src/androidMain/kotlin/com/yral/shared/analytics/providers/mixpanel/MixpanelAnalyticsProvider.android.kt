@@ -7,13 +7,15 @@ import com.mixpanel.android.sessionreplay.models.MPSessionReplayConfig
 import com.mixpanel.android.sessionreplay.sensitive_views.AutoMaskedView
 import com.yral.shared.analytics.AnalyticsProvider
 import com.yral.shared.analytics.EventToMapConverter
+import com.yral.shared.analytics.SuperProperties
 import com.yral.shared.analytics.User
 import com.yral.shared.analytics.di.IS_DEBUG
 import com.yral.shared.analytics.events.EventData
-import com.yral.shared.analytics.events.TokenType
+import com.yral.shared.analytics.toSuperProperties
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.serialization.json.Json
 import org.json.JSONObject
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -67,44 +69,30 @@ actual class MixpanelAnalyticsProvider actual constructor(
     }
 
     override fun setUserProperties(user: User) {
-        val superProps: MutableMap<Any, Any?> =
-            mutableMapOf(
-                "is_creator" to (user.isCreator ?: false),
-                "is_logged_in" to user.isLoggedIn,
-                "wallet_balance" to user.walletBalance,
-                "wallet_token_type" to (user.tokenType?.serialName ?: ""),
-                "canister_id" to user.canisterId,
-                "is_forced_gameplay_test_user" to user.isForcedGamePlayUser,
-                "email_id" to user.emailId,
-            )
         mixpanel.people.set(ONE_SIGNAL_PROPERTY, user.userId)
         if (user.isLoggedIn == true) {
             mixpanel.identify(user.userId)
             MPSessionReplay.getInstance()?.identify(user.userId)
             distinctId.value = mixpanel.distinctId
-            superProps["user_id"] = user.userId
-            superProps["visitor_id"] = null
-        } else {
-            superProps["visitor_id"] = user.userId
-            superProps["user_id"] = null
         }
-        mixpanel.registerSuperProperties(JSONObject(superProps))
+        registerSuperProperties(user.toSuperProperties())
     }
 
-    override fun reset() {
+    override fun reset(resetOnlyProperties: Boolean) {
         mixpanel.people.unset(ONE_SIGNAL_PROPERTY)
-        mixpanel.reset()
-        MPSessionReplay.getInstance()?.identify(mixpanel.distinctId)
-        distinctId.value = mixpanel.distinctId
+        if (resetOnlyProperties) {
+            registerSuperProperties(SuperProperties())
+        } else {
+            mixpanel.reset()
+            MPSessionReplay.getInstance()?.identify(mixpanel.distinctId)
+            distinctId.value = mixpanel.distinctId
+        }
+    }
+
+    private fun registerSuperProperties(properties: SuperProperties) {
+        val superProperties = Json.encodeToString(properties)
+        mixpanel.registerSuperProperties(JSONObject(superProperties))
     }
 
     override fun toValidKeyName(key: String): String = key
-
-    val TokenType.serialName: String
-        get() =
-            when (this) {
-                TokenType.CENTS -> "cents"
-                TokenType.SATS -> "sats"
-                TokenType.YRAL -> "yral"
-            }
 }

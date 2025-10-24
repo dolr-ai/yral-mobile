@@ -26,7 +26,7 @@ class FirebaseAnalyticsProvider(
         firebaseAnalytics.setUserId(user.userId)
     }
 
-    override fun reset() {
+    override fun reset(resetOnlyProperties: Boolean) {
         firebaseAnalytics.resetAnalyticsData()
         firebaseAnalytics.setUserId("")
         firebaseAnalytics.setUserProperty("name", "")
