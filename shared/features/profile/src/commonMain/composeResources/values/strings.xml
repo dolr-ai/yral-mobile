@@ -8,5 +8,8 @@
     <string name="you_have_not_uploaded_any_video_yet">You have not uploaded any videos yet.</string>
     <string name="error_loading_more_videos">Error loading more videos</string>
     <string name="profile_picture_updated">Your profile picture has been updated!</string>
+    <string name="followers_empty_list">No followers yet.</string>
+    <string name="following_empty_list">You are not following anyone yet.</string>
+    <string name="followers_load_error">We couldn't load this list. Please try again.</string>
 
 </resources>

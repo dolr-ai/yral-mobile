@@ -2,6 +2,7 @@ package com.yral.shared.libs.designsystem.component
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,6 +42,7 @@ fun AccountInfoView(
     accountInfo: AccountInfo,
     totalFollowers: Long? = null,
     totalFollowing: Long? = null,
+    bio: String? = null,
     isSocialSignIn: Boolean,
     showEditProfile: Boolean,
     showFollow: Boolean = false,
@@ -49,6 +51,8 @@ fun AccountInfoView(
     onLoginClicked: () -> Unit,
     onEditProfileClicked: () -> Unit,
     onFollowClicked: () -> Unit = {},
+    onFollowersClick: (() -> Unit)? = null,
+    onFollowingClick: (() -> Unit)? = null,
 ) {
     Column(
         modifier =
@@ -85,7 +89,12 @@ fun AccountInfoView(
                         Column(
                             verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Top),
                             horizontalAlignment = Alignment.Start,
-                            modifier = Modifier.weight(1f),
+                            modifier =
+                                Modifier
+                                    .weight(1f)
+                                    .clickable(enabled = onFollowersClick != null) {
+                                        onFollowersClick?.invoke()
+                                    },
                         ) {
                             Text(
                                 text = formatAbbreviation(totalFollowers, 0),
@@ -103,7 +112,12 @@ fun AccountInfoView(
                         Column(
                             verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Top),
                             horizontalAlignment = Alignment.Start,
-                            modifier = Modifier.weight(1f),
+                            modifier =
+                                Modifier
+                                    .weight(1f)
+                                    .clickable(enabled = onFollowingClick != null) {
+                                        onFollowingClick?.invoke()
+                                    },
                         ) {
                             Text(
                                 text = formatAbbreviation(totalFollowing, 0),
@@ -117,6 +131,14 @@ fun AccountInfoView(
                             )
                         }
                     }
+                }
+                bio?.takeUnless { it.isBlank() }?.let { nonEmptyBio ->
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        text = nonEmptyBio,
+                        style = LocalAppTopography.current.regRegular,
+                        color = YralColors.NeutralTextPrimary,
+                    )
                 }
             }
         }

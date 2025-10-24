@@ -87,6 +87,7 @@ class EditProfileViewModel(
                 ),
             ).onSuccess { details ->
                 val bio = sanitizeBio(details.bio.orEmpty())
+                sessionManager.updateBio(bio)
                 val profileImage = details.profilePictureUrl
                 _state.update { current ->
                     if (current.initialBio.isNotEmpty()) {
