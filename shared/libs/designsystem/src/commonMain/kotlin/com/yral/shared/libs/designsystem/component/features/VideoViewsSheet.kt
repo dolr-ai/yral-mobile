@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralInfoView
+import com.yral.shared.libs.designsystem.component.YralShimmerView
 import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -82,9 +83,12 @@ fun VideoViewsSheet(
                         color = YralColors.NeutralTextSecondary,
                         textAlign = TextAlign.Center,
                     )
-                    totalViews?.let {
+                    YralShimmerView(
+                        data = totalViews?.toLong(),
+                        placeholderData = 100000,
+                    ) { views ->
                         Text(
-                            text = formatAbbreviation(totalViews.toLong(), 0),
+                            text = formatAbbreviation(views, 0),
                             style = LocalAppTopography.current.mdMedium,
                             color = YralColors.NeutralIconsActive,
                             textAlign = TextAlign.Center,
@@ -102,9 +106,12 @@ fun VideoViewsSheet(
                         color = YralColors.NeutralTextSecondary,
                         textAlign = TextAlign.Center,
                     )
-                    totalEngagedViews?.let {
+                    YralShimmerView(
+                        data = totalEngagedViews?.toLong(),
+                        placeholderData = 100000,
+                    ) { views ->
                         Text(
-                            text = formatAbbreviation(totalEngagedViews.toLong(), 0),
+                            text = formatAbbreviation(views, 0),
                             style = LocalAppTopography.current.mdMedium,
                             color = YralColors.NeutralIconsActive,
                             textAlign = TextAlign.Center,

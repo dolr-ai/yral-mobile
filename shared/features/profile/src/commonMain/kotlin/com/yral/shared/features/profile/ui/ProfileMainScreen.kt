@@ -110,16 +110,19 @@ import yral_mobile.shared.libs.designsystem.generated.resources.account_nav
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.cancel
 import yral_mobile.shared.libs.designsystem.generated.resources.delete
+import yral_mobile.shared.libs.designsystem.generated.resources.error_data_not_loaded
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_views
 import yral_mobile.shared.libs.designsystem.generated.resources.login_to_follow_subtext
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.my_profile
 import yral_mobile.shared.libs.designsystem.generated.resources.oops
+import yral_mobile.shared.libs.designsystem.generated.resources.refresh
 import yral_mobile.shared.libs.designsystem.generated.resources.something_went_wrong
 import yral_mobile.shared.libs.designsystem.generated.resources.started_following
 import yral_mobile.shared.libs.designsystem.generated.resources.try_again
 import yral_mobile.shared.libs.designsystem.generated.resources.upload_video
+import yral_mobile.shared.libs.designsystem.generated.resources.video_insights
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
@@ -325,6 +328,7 @@ fun ProfileMainScreen(
         }
         DeleteConfirmationState.None, is DeleteConfirmationState.InProgress -> Unit
     }
+
     val extraSheetState = rememberModalBottomSheetState()
     var extraSheetLink by remember { mutableStateOf("") }
     when (val bottomSheet = state.bottomSheet) {
@@ -340,15 +344,37 @@ fun ProfileMainScreen(
 
         is ProfileBottomSheet.VideoView -> {
             val videoId = bottomSheet.videoId
-            val views = state.viewsData[videoId] as? UiState.Success
-            val thumbnail = profileVideos.itemSnapshotList.firstOrNull { it?.videoID == videoId }?.thumbnail
-            VideoViewsSheet(
-                sheetState = bottomSheetState,
-                onDismissRequest = { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
-                thumbnailUrl = thumbnail ?: "",
-                totalViews = views?.data?.allViews,
-                totalEngagedViews = views?.data?.loggedInViews,
-            )
+            val video = profileVideos.itemSnapshotList.firstOrNull { it?.videoID == videoId }
+            val views = state.viewsData[videoId]
+            when (views) {
+                is UiState.Failure -> {
+                    YralErrorMessage(
+                        title = stringResource(DesignRes.string.video_insights),
+                        error = stringResource(DesignRes.string.error_data_not_loaded),
+                        cta = stringResource(DesignRes.string.refresh),
+                        onDismiss = { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
+                        onClick = { video?.let { viewModel.showVideoViews(video) } },
+                        sheetState = bottomSheetState,
+                        showErrorIcon = true,
+                        showDragHandle = true,
+                    )
+                }
+                UiState.Initial,
+                is UiState.InProgress,
+                is UiState.Success,
+                -> {
+                    val totalViews = (views as? UiState.Success)?.data?.allViews
+                    val totalEngagedViews = (views as? UiState.Success)?.data?.loggedInViews
+                    VideoViewsSheet(
+                        sheetState = bottomSheetState,
+                        onDismissRequest = { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
+                        thumbnailUrl = video?.thumbnail ?: "",
+                        totalViews = totalViews,
+                        totalEngagedViews = totalEngagedViews,
+                    )
+                }
+                else -> Unit
+            }
         }
     }
     if (extraSheetLink.isNotEmpty()) {
