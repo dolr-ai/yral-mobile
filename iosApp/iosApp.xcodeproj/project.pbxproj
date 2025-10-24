@@ -43,12 +43,12 @@
 		100540D62E9E6139004F8588 /* UsernameGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100540D42E9E6135004F8588 /* UsernameGenerator.swift */; };
 		100540D82E9E6147004F8588 /* SeededGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100540D72E9E6142004F8588 /* SeededGenerator.swift */; };
 		100540D92E9E6147004F8588 /* SeededGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100540D72E9E6142004F8588 /* SeededGenerator.swift */; };
-		100540DB2E9E61B7004F8588 /* Nouns.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100540DA2E9E61B3004F8588 /* Nouns.swift */; };
-		100540DC2E9E61B7004F8588 /* Nouns.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100540DA2E9E61B3004F8588 /* Nouns.swift */; };
-		100540DE2E9E61BB004F8588 /* Adjectives.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100540DD2E9E61B9004F8588 /* Adjectives.swift */; };
-		100540DF2E9E61BB004F8588 /* Adjectives.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100540DD2E9E61B9004F8588 /* Adjectives.swift */; };
 		100540E12E9E8F44004F8588 /* EditProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100540E02E9E8F44004F8588 /* EditProfileView.swift */; };
 		100540E22E9E8F44004F8588 /* EditProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100540E02E9E8F44004F8588 /* EditProfileView.swift */; };
+		100541B62EAB551A004F8588 /* nouns.json in Resources */ = {isa = PBXBuildFile; fileRef = 100541B52EAB5514004F8588 /* nouns.json */; };
+		100541B72EAB551A004F8588 /* nouns.json in Resources */ = {isa = PBXBuildFile; fileRef = 100541B52EAB5514004F8588 /* nouns.json */; };
+		100541B92EAB5524004F8588 /* adjectives.json in Resources */ = {isa = PBXBuildFile; fileRef = 100541B82EAB551F004F8588 /* adjectives.json */; };
+		100541BA2EAB5524004F8588 /* adjectives.json in Resources */ = {isa = PBXBuildFile; fileRef = 100541B82EAB551F004F8588 /* adjectives.json */; };
 		100F63D32DCB4630000BC17E /* SmileyGameRuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */; };
 		100F63D42DCB4630000BC17E /* SmileyGameRuleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */; };
 		100F64EE2DCC96C9000BC17E /* YralCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100F64ED2DCC96C5000BC17E /* YralCache.swift */; };
@@ -811,9 +811,9 @@
 		1005408A2E9D4AD4004F8588 /* ConfirmUsernameBottomSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmUsernameBottomSheet.swift; sourceTree = "<group>"; };
 		100540D42E9E6135004F8588 /* UsernameGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsernameGenerator.swift; sourceTree = "<group>"; };
 		100540D72E9E6142004F8588 /* SeededGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeededGenerator.swift; sourceTree = "<group>"; };
-		100540DA2E9E61B3004F8588 /* Nouns.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Nouns.swift; sourceTree = "<group>"; };
-		100540DD2E9E61B9004F8588 /* Adjectives.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Adjectives.swift; sourceTree = "<group>"; };
 		100540E02E9E8F44004F8588 /* EditProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileView.swift; sourceTree = "<group>"; };
+		100541B52EAB5514004F8588 /* nouns.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = nouns.json; sourceTree = "<group>"; };
+		100541B82EAB551F004F8588 /* adjectives.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = adjectives.json; sourceTree = "<group>"; };
 		100F63D22DCB4630000BC17E /* SmileyGameRuleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameRuleView.swift; sourceTree = "<group>"; };
 		100F64ED2DCC96C5000BC17E /* YralCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralCache.swift; sourceTree = "<group>"; };
 		100FCD6E2E659CDE00E9A02D /* ViewControllerWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewControllerWrapper.swift; sourceTree = "<group>"; };
@@ -1345,8 +1345,8 @@
 		100540D32E9E6122004F8588 /* UsernameGenerator */ = {
 			isa = PBXGroup;
 			children = (
-				100540DD2E9E61B9004F8588 /* Adjectives.swift */,
-				100540DA2E9E61B3004F8588 /* Nouns.swift */,
+				100541B82EAB551F004F8588 /* adjectives.json */,
+				100541B52EAB5514004F8588 /* nouns.json */,
 				100540D72E9E6142004F8588 /* SeededGenerator.swift */,
 				100540D42E9E6135004F8588 /* UsernameGenerator.swift */,
 			);
@@ -3305,6 +3305,7 @@
 				105034212DD4955C00571B4E /* smiley_game_fire.json in Resources */,
 				105037642DDC5C4700571B4E /* smiley_game_loss.caf in Resources */,
 				105034222DD4955C00571B4E /* smiley_game_laugh.json in Resources */,
+				100541BA2EAB5524004F8588 /* adjectives.json in Resources */,
 				105034232DD4955C00571B4E /* smiley_game_rocket.json in Resources */,
 				AC32E41B2D270097001DDA43 /* KumbhSans-VariableFont_YOPQ,wght.ttf in Resources */,
 				ACB3439A2E4357A800EC74A0 /* sats_claim_loading.json in Resources */,
@@ -3313,6 +3314,7 @@
 				AC32E41C2D270097001DDA43 /* KumbhSans-Bold.ttf in Resources */,
 				AC99BB922D834387008012C2 /* Lightning_Lottie.json in Resources */,
 				107C609F2DB9FDA0006FC467 /* smiley_game_lose.json in Resources */,
+				100541B62EAB551A004F8588 /* nouns.json in Resources */,
 				107C60A02DB9FDA0006FC467 /* smiley_game_win.json in Resources */,
 				AC32E41D2D270097001DDA43 /* KumbhSans-Light.ttf in Resources */,
 				058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */,
@@ -3355,6 +3357,7 @@
 				1050341C2DD4955C00571B4E /* smiley_game_fire.json in Resources */,
 				105037652DDC5C4700571B4E /* smiley_game_loss.caf in Resources */,
 				1050341D2DD4955C00571B4E /* smiley_game_laugh.json in Resources */,
+				100541B92EAB5524004F8588 /* adjectives.json in Resources */,
 				1050341E2DD4955C00571B4E /* smiley_game_rocket.json in Resources */,
 				AC32E40F2D270097001DDA43 /* KumbhSans-VariableFont_YOPQ,wght.ttf in Resources */,
 				ACB3439D2E4357A800EC74A0 /* sats_claim_loading.json in Resources */,
@@ -3363,6 +3366,7 @@
 				AC32E4102D270097001DDA43 /* KumbhSans-Bold.ttf in Resources */,
 				AC99BB932D834387008012C2 /* Lightning_Lottie.json in Resources */,
 				107C60A12DB9FDA0006FC467 /* smiley_game_lose.json in Resources */,
+				100541B72EAB551A004F8588 /* nouns.json in Resources */,
 				107C60A22DB9FDA0006FC467 /* smiley_game_win.json in Resources */,
 				AC32E4112D270097001DDA43 /* KumbhSans-Light.ttf in Resources */,
 				ACD941B22CFF575C0038FCB6 /* Assets.xcassets in Resources */,
@@ -3740,7 +3744,6 @@
 				ACEBF7EF2D6F847300B594A0 /* ToastManager.swift in Sources */,
 				10FEA9882E720AC5000103EB /* SizeReader.swift in Sources */,
 				ACAA4D6D2DDCB257001092A6 /* FirebasePerformanceMonitor.swift in Sources */,
-				100540DC2E9E61B7004F8588 /* Nouns.swift in Sources */,
 				103EB6A42E9393450045A5DA /* VideoViewedRewardsCreditedBottomSheet.swift in Sources */,
 				ACDD23E72D8B1B5F00AB0DAF /* ProfileVideoRequest.swift in Sources */,
 				ACC0D44E2D8DDB21006DCF5C /* ProfileRepository.swift in Sources */,
@@ -3891,7 +3894,6 @@
 				AC811B402DBA56F70094C5F6 /* SignupOverlay.swift in Sources */,
 				ACAA4DBC2DDE08D6001092A6 /* HLSDownloadManager+Mockers.swift in Sources */,
 				10020A152DE9842800DF269E /* UIApplication+Extensions.swift in Sources */,
-				100540DE2E9E61BB004F8588 /* Adjectives.swift in Sources */,
 				10020A132DE8446000DF269E /* LeaderboardDIContainer.swift in Sources */,
 				ACD8C3642E7C685B0066027B /* BTCPriceResponseDTO.swift in Sources */,
 				ACB09FDA2D92D6E900EE3239 /* MoreFeedsRequest.swift in Sources */,
@@ -4079,7 +4081,6 @@
 				ACEBF7F02D6F847300B594A0 /* ToastManager.swift in Sources */,
 				10FEA9892E720AC5000103EB /* SizeReader.swift in Sources */,
 				ACAA4D6C2DDCB257001092A6 /* FirebasePerformanceMonitor.swift in Sources */,
-				100540DB2E9E61B7004F8588 /* Nouns.swift in Sources */,
 				103EB6A32E9393450045A5DA /* VideoViewedRewardsCreditedBottomSheet.swift in Sources */,
 				ACDD23E82D8B1B5F00AB0DAF /* ProfileVideoRequest.swift in Sources */,
 				ACC0D44F2D8DDB21006DCF5C /* ProfileRepository.swift in Sources */,
@@ -4230,7 +4231,6 @@
 				AC811B412DBA56F70094C5F6 /* SignupOverlay.swift in Sources */,
 				ACAA4DBB2DDE08D6001092A6 /* HLSDownloadManager+Mockers.swift in Sources */,
 				10020A162DE9842800DF269E /* UIApplication+Extensions.swift in Sources */,
-				100540DF2E9E61BB004F8588 /* Adjectives.swift in Sources */,
 				10020A122DE8446000DF269E /* LeaderboardDIContainer.swift in Sources */,
 				ACD8C3632E7C685B0066027B /* BTCPriceResponseDTO.swift in Sources */,
 				ACB09FDB2D92D6E900EE3239 /* MoreFeedsRequest.swift in Sources */,
