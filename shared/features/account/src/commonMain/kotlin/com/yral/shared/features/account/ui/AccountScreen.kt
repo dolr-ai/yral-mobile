@@ -175,12 +175,10 @@ private fun AccountScreenContent(
             AccountInfoView(
                 accountInfo = accountInfo,
                 isSocialSignIn = state.isLoggedIn,
-                showEditProfile = false,
                 onLoginClicked = {
                     viewModel.setBottomSheetType(AccountBottomSheet.SignUp)
                     viewModel.accountsTelemetry.signUpClicked(SignupPageName.MENU)
                 },
-                onEditProfileClicked = {},
             )
             Spacer(modifier = Modifier.height(8.dp))
         } else {

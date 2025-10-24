@@ -110,6 +110,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.cancel
 import yral_mobile.shared.libs.designsystem.generated.resources.delete
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_views
+import yral_mobile.shared.libs.designsystem.generated.resources.login_to_follow_subtext
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.my_profile
@@ -382,13 +383,14 @@ private fun MainContent(
                 accountInfo = info,
                 totalFollowers = followersCount,
                 totalFollowing = followingCount,
-                isSocialSignIn = state.isLoggedIn || !state.isOwnProfile,
-                showEditProfile = state.isLoggedIn && state.isOwnProfile,
-                showFollow = !state.isOwnProfile && state.isLoggedIn,
+                isSocialSignIn = state.isLoggedIn,
+                loginSubText = stringResource(DesignRes.string.login_to_follow_subtext),
+                onLoginClicked = { viewModel.setBottomSheetType(ProfileBottomSheet.SignUp) },
+                showEditProfile = state.isOwnProfile,
+                onEditProfileClicked = openEditProfile,
+                showFollow = !state.isOwnProfile,
                 isFollowing = state.isFollowing,
                 isFollowInProgress = state.isFollowInProgress,
-                onLoginClicked = { viewModel.setBottomSheetType(ProfileBottomSheet.SignUp) },
-                onEditProfileClicked = openEditProfile,
                 onFollowClicked = { viewModel.followUnfollow() },
             )
         }
@@ -401,25 +403,29 @@ private fun MainContent(
                 ErrorContent(message = stringResource(Res.string.error_loading_videos))
             }
             is LoadState.NotLoading -> {
-                if (state.manualRefreshTriggered) {
-                    viewModel.pushScreenView(profileVideos.itemCount)
-                    viewModel.setManualRefreshTriggered(false)
+                if (!state.isOwnProfile && !state.isLoggedIn) {
+                    // Implement blocked ui profile view when needed
+                } else {
+                    if (state.manualRefreshTriggered) {
+                        viewModel.pushScreenView(profileVideos.itemCount)
+                        viewModel.setManualRefreshTriggered(false)
+                    }
+                    SuccessContent(
+                        gridState = gridState,
+                        profileVideos = profileVideos,
+                        isOwnProfile = state.isOwnProfile,
+                        deletingVideoId = deletingVideoId,
+                        uploadVideo = uploadVideo,
+                        openVideoReel = { viewModel.openVideoReel(it) },
+                        onDeleteVideo = {
+                            viewModel.confirmDelete(
+                                feedDetails = it,
+                                ctaType = VideoDeleteCTA.PROFILE_THUMBNAIL,
+                            )
+                        },
+                        onManualRefreshTriggered = { viewModel.setManualRefreshTriggered(it) },
+                    )
                 }
-                SuccessContent(
-                    gridState = gridState,
-                    profileVideos = profileVideos,
-                    isOwnProfile = state.isOwnProfile,
-                    deletingVideoId = deletingVideoId,
-                    uploadVideo = uploadVideo,
-                    openVideoReel = { viewModel.openVideoReel(it) },
-                    onDeleteVideo = {
-                        viewModel.confirmDelete(
-                            feedDetails = it,
-                            ctaType = VideoDeleteCTA.PROFILE_THUMBNAIL,
-                        )
-                    },
-                    onManualRefreshTriggered = { viewModel.setManualRefreshTriggered(it) },
-                )
             }
         }
     }
