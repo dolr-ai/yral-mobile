@@ -138,6 +138,15 @@ enum class RustLogLevel {
     TRACE,
 }
 
+internal fun RustLogLevel.toLogLevel(): LogLevel =
+    when (this) {
+        RustLogLevel.ERROR -> LogLevel.ERROR
+        RustLogLevel.WARN -> LogLevel.WARN
+        RustLogLevel.INFO -> LogLevel.INFO
+        RustLogLevel.DEBUG -> LogLevel.DEBUG
+        RustLogLevel.TRACE -> LogLevel.TRACE
+    }
+
 fun LogMessage.toRust(): RustLogMessage =
     RustLogMessage(
         tag = tag,
