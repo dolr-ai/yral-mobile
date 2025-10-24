@@ -69,8 +69,6 @@ import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.profile.viewmodel.VideoViewState
 import com.yral.shared.features.profile.viewmodel.ViewState
 import com.yral.shared.libs.arch.presentation.UiState
-import com.yral.shared.libs.designsystem.component.AccountInfoView
-import com.yral.shared.libs.designsystem.component.DeleteConfirmationSheet
 import com.yral.shared.libs.designsystem.component.LoaderSize
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralButtonState
@@ -79,6 +77,9 @@ import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
+import com.yral.shared.libs.designsystem.component.features.AccountInfoView
+import com.yral.shared.libs.designsystem.component.features.DeleteConfirmationSheet
+import com.yral.shared.libs.designsystem.component.features.VideoViewsSheet
 import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
@@ -109,16 +110,19 @@ import yral_mobile.shared.libs.designsystem.generated.resources.account_nav
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.cancel
 import yral_mobile.shared.libs.designsystem.generated.resources.delete
+import yral_mobile.shared.libs.designsystem.generated.resources.error_data_not_loaded
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_views
 import yral_mobile.shared.libs.designsystem.generated.resources.login_to_follow_subtext
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.my_profile
 import yral_mobile.shared.libs.designsystem.generated.resources.oops
+import yral_mobile.shared.libs.designsystem.generated.resources.refresh
 import yral_mobile.shared.libs.designsystem.generated.resources.something_went_wrong
 import yral_mobile.shared.libs.designsystem.generated.resources.started_following
 import yral_mobile.shared.libs.designsystem.generated.resources.try_again
 import yral_mobile.shared.libs.designsystem.generated.resources.upload_video
+import yral_mobile.shared.libs.designsystem.generated.resources.video_insights
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
@@ -269,6 +273,7 @@ fun ProfileMainScreen(
                                 msgFeedVideoShareDesc,
                             )
                         },
+                        onViewsClick = { video -> viewModel.showVideoViews(video) },
                         getPrefetchListener = getPrefetchListener,
                         modifier = Modifier.fillMaxSize(),
                     )
@@ -279,7 +284,6 @@ fun ProfileMainScreen(
             VideoViewState.None -> {
                 MainContent(
                     modifier = Modifier.fillMaxSize(),
-                    bottomSheetState = bottomSheetState,
                     state = state,
                     viewModel = viewModel,
                     gridState = gridState,
@@ -294,7 +298,6 @@ fun ProfileMainScreen(
                     openAccount = { component.openAccount() },
                     openEditProfile = { component.openEditProfile() },
                     onBackClicked = { component.onBackClicked() },
-                    loginBottomSheet = loginBottomSheet,
                 )
             }
         }
@@ -325,6 +328,62 @@ fun ProfileMainScreen(
         }
         DeleteConfirmationState.None, is DeleteConfirmationState.InProgress -> Unit
     }
+
+    val extraSheetState = rememberModalBottomSheetState()
+    var extraSheetLink by remember { mutableStateOf("") }
+    when (val bottomSheet = state.bottomSheet) {
+        ProfileBottomSheet.None -> Unit
+        ProfileBottomSheet.SignUp -> {
+            loginBottomSheet(
+                bottomSheetState,
+                { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
+                viewModel.getTncLink(),
+                { extraSheetLink = viewModel.getTncLink() },
+            )
+        }
+
+        is ProfileBottomSheet.VideoView -> {
+            val videoId = bottomSheet.videoId
+            val video = profileVideos.itemSnapshotList.firstOrNull { it?.videoID == videoId }
+            val views = state.viewsData[videoId]
+            when (views) {
+                is UiState.Failure -> {
+                    YralErrorMessage(
+                        title = stringResource(DesignRes.string.video_insights),
+                        error = stringResource(DesignRes.string.error_data_not_loaded),
+                        cta = stringResource(DesignRes.string.refresh),
+                        onDismiss = { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
+                        onClick = { video?.let { viewModel.showVideoViews(video) } },
+                        sheetState = bottomSheetState,
+                        showErrorIcon = true,
+                        showDragHandle = true,
+                    )
+                }
+                UiState.Initial,
+                is UiState.InProgress,
+                is UiState.Success,
+                -> {
+                    val totalViews = (views as? UiState.Success)?.data?.allViews
+                    val totalEngagedViews = (views as? UiState.Success)?.data?.loggedInViews
+                    VideoViewsSheet(
+                        sheetState = bottomSheetState,
+                        onDismissRequest = { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
+                        thumbnailUrl = video?.thumbnail ?: "",
+                        totalViews = totalViews,
+                        totalEngagedViews = totalEngagedViews,
+                    )
+                }
+                else -> Unit
+            }
+        }
+    }
+    if (extraSheetLink.isNotEmpty()) {
+        YralWebViewBottomSheet(
+            link = extraSheetLink,
+            bottomSheetState = extraSheetState,
+            onDismissRequest = { extraSheetLink = "" },
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -340,7 +399,6 @@ typealias LoginBottomSheetComposable = @Composable (
 @Composable
 private fun MainContent(
     modifier: Modifier,
-    bottomSheetState: SheetState,
     state: ViewState,
     viewModel: ProfileViewModel,
     gridState: LazyGridState,
@@ -352,7 +410,6 @@ private fun MainContent(
     openAccount: () -> Unit,
     openEditProfile: () -> Unit,
     onBackClicked: () -> Unit,
-    loginBottomSheet: LoginBottomSheetComposable,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader(
@@ -423,31 +480,12 @@ private fun MainContent(
                                 ctaType = VideoDeleteCTA.PROFILE_THUMBNAIL,
                             )
                         },
+                        onViewsClick = { viewModel.showVideoViews(it) },
                         onManualRefreshTriggered = { viewModel.setManualRefreshTriggered(it) },
                     )
                 }
             }
         }
-    }
-    val extraSheetState = rememberModalBottomSheetState()
-    var extraSheetLink by remember { mutableStateOf("") }
-    when (state.bottomSheet) {
-        ProfileBottomSheet.None -> Unit
-        ProfileBottomSheet.SignUp -> {
-            loginBottomSheet(
-                bottomSheetState,
-                { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
-                viewModel.getTncLink(),
-                { extraSheetLink = viewModel.getTncLink() },
-            )
-        }
-    }
-    if (extraSheetLink.isNotEmpty()) {
-        YralWebViewBottomSheet(
-            link = extraSheetLink,
-            bottomSheetState = extraSheetState,
-            onDismissRequest = { extraSheetLink = "" },
-        )
     }
 }
 
@@ -548,6 +586,7 @@ private fun SuccessContent(
     uploadVideo: () -> Unit,
     openVideoReel: (Int) -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
+    onViewsClick: (FeedDetails) -> Unit,
     onManualRefreshTriggered: (Boolean) -> Unit,
 ) {
     Column(
@@ -600,6 +639,7 @@ private fun SuccessContent(
                     deletingVideoId = deletingVideoId,
                     openVideoReel = openVideoReel,
                     onDeleteVideo = onDeleteVideo,
+                    onViewsClick = onViewsClick,
                 )
             }
         }
@@ -653,6 +693,7 @@ private fun VideoGridContent(
     deletingVideoId: String,
     openVideoReel: (Int) -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
+    onViewsClick: (FeedDetails) -> Unit,
 ) {
     LazyVerticalGrid(
         state = gridState,
@@ -678,6 +719,7 @@ private fun VideoGridContent(
                     isDeleting = deletingVideoId == video.videoID,
                     openVideoReel = { openVideoReel(index) },
                     onDeleteClick = { onDeleteVideo(video) },
+                    onViewsClick = { onViewsClick(video) },
                 )
             }
         }
@@ -776,6 +818,7 @@ private fun VideoGridItem(
     isDeleting: Boolean,
     openVideoReel: () -> Unit,
     onDeleteClick: () -> Unit,
+    onViewsClick: () -> Unit,
 ) {
     Box(
         modifier =
@@ -807,6 +850,7 @@ private fun VideoGridItem(
                 viewCount = video.viewCount,
                 isOwnProfile = isOwnProfile,
                 onDeleteVideo = onDeleteClick,
+                onViewsClick = onViewsClick,
             )
         }
         DeletingOverLay(
@@ -849,6 +893,7 @@ private fun DeletingOverLay(
     }
 }
 
+@Suppress("LongMethod")
 @Composable
 private fun BoxScope.VideoGridItemActions(
     isLiked: Boolean,
@@ -857,7 +902,20 @@ private fun BoxScope.VideoGridItemActions(
     isLikeVisible: Boolean = false,
     isOwnProfile: Boolean,
     onDeleteVideo: () -> Unit,
+    onViewsClick: () -> Unit,
 ) {
+    val leftIcon =
+        if (isLikeVisible) {
+            if (likeCount > 0U && isLiked) {
+                Res.drawable.pink_heart
+            } else {
+                Res.drawable.white_heart
+            }
+        } else {
+            DesignRes.drawable.ic_views
+        }
+    val leftIconDescription = if (isLikeVisible) "likes" else "views"
+    val leftText = if (isLikeVisible) likeCount else viewCount
     Row(
         modifier =
             Modifier
@@ -870,36 +928,20 @@ private fun BoxScope.VideoGridItemActions(
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            val icon =
-                if (isLikeVisible) {
-                    if (likeCount > 0U && isLiked) {
-                        Res.drawable.pink_heart
-                    } else {
-                        Res.drawable.white_heart
+            modifier =
+                Modifier.clickable {
+                    if (!isLikeVisible) {
+                        onViewsClick()
                     }
-                } else {
-                    DesignRes.drawable.ic_views
-                }
-            val iconDescription =
-                if (isLikeVisible) {
-                    "likes"
-                } else {
-                    "views"
-                }
-            val iconCount =
-                if (isLikeVisible) {
-                    likeCount
-                } else {
-                    viewCount
-                }
+                },
+        ) {
             Image(
-                painter = painterResource(icon),
-                contentDescription = iconDescription,
+                painter = painterResource(leftIcon),
+                contentDescription = leftIconDescription,
                 modifier = Modifier.size(24.dp),
             )
             Text(
-                text = formatAbbreviation(iconCount.toLong()),
+                text = formatAbbreviation(leftText.toLong()),
                 style = LocalAppTopography.current.baseMedium,
                 color = YralColors.NeutralTextPrimary,
             )

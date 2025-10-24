@@ -24,9 +24,12 @@ import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.profile.analytics.ProfileTelemetry
 import com.yral.shared.features.profile.domain.DeleteVideoUseCase
+import com.yral.shared.features.profile.domain.GetProfileVideoViewsUseCase
 import com.yral.shared.features.profile.domain.ProfileVideosPagingSource
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
+import com.yral.shared.features.profile.domain.models.VideoViews
 import com.yral.shared.features.profile.domain.repository.ProfileRepository
+import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastStatus
 import com.yral.shared.libs.designsystem.component.toast.ToastType
@@ -58,6 +61,9 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
 
 @Suppress("LongParameterList")
 class ProfileViewModel(
@@ -68,6 +74,7 @@ class ProfileViewModel(
     private val reportVideoUseCase: ReportVideoUseCase,
     private val followUserUseCase: FollowUserUseCase,
     private val unfollowUserUseCase: UnfollowUserUseCase,
+    private val getProfileVideoViewsUseCase: GetProfileVideoViewsUseCase,
     private val profileTelemetry: ProfileTelemetry,
     private val shareService: ShareService,
     private val urlBuilder: UrlBuilder,
@@ -79,6 +86,7 @@ class ProfileViewModel(
     companion object {
         private const val POSTS_PER_PAGE = 20
         private const val POSTS_PREFETCH_DISTANCE = 5
+        private val VIEWS_REFRESH_THRESHOLD = 15.seconds
     }
 
     private val _state =
@@ -469,6 +477,60 @@ class ProfileViewModel(
             }
         }
     }
+
+    @OptIn(ExperimentalTime::class)
+    fun showVideoViews(video: FeedDetails) {
+        viewModelScope.launch {
+            val currentViews = _state.value.viewsData[video.videoID]
+            val shouldRefresh =
+                when (currentViews) {
+                    is UiState.InProgress -> return@launch
+                    is UiState.Success -> {
+                        val now = Clock.System.now()
+                        now - currentViews.data.lastFetched > VIEWS_REFRESH_THRESHOLD
+                    }
+                    else -> true
+                }
+            _state.update {
+                it.copy(
+                    bottomSheet = ProfileBottomSheet.VideoView(videoId = video.videoID),
+                    viewsData =
+                        if (shouldRefresh) {
+                            it.viewsData.toMutableMap().apply { this[video.videoID] = UiState.InProgress() }
+                        } else {
+                            it.viewsData
+                        },
+                )
+            }
+            if (!shouldRefresh) return@launch
+            getProfileVideoViewsUseCase
+                .invoke(parameter = GetProfileVideoViewsUseCase.Params(videoId = listOf(video.videoID)))
+                .onSuccess { views ->
+                    val viewData = views.firstOrNull { view -> view.videoId == video.videoID }
+                    Logger.d("VideoViews") { "Got video views $viewData" }
+                    viewData?.let {
+                        _state.update {
+                            it.copy(
+                                viewsData =
+                                    it.viewsData.toMutableMap().apply {
+                                        this[video.videoID] = UiState.Success(viewData)
+                                    },
+                            )
+                        }
+                    }
+                }.onFailure { e ->
+                    Logger.e("VideoViews") { "Failed to get video views $e" }
+                    _state.update {
+                        it.copy(
+                            viewsData =
+                                it.viewsData.toMutableMap().apply {
+                                    this[video.videoID] = UiState.Failure(e)
+                                },
+                        )
+                    }
+                }
+        }
+    }
 }
 
 data class ViewState(
@@ -484,11 +546,15 @@ data class ViewState(
     val isOwnProfile: Boolean = true,
     val isFollowing: Boolean = false,
     val isFollowInProgress: Boolean = false,
+    val viewsData: Map<String, UiState<VideoViews>> = emptyMap(),
 )
 
 sealed interface ProfileBottomSheet {
     data object None : ProfileBottomSheet
     data object SignUp : ProfileBottomSheet
+    data class VideoView(
+        val videoId: String,
+    ) : ProfileBottomSheet
 }
 
 sealed class DeleteConfirmationState {

@@ -64,6 +64,10 @@ object YralColors {
     val Yellow100: Color = Color(0xFFFFDC8D)
     val PrimaryYellow: Color = Color(0xFFF9EA0E)
 
+    val Blue100: Color = Color(0xFF8EBDFF)
+    val Blue300: Color = Color(0xFF2B63B3)
+    val Blue500: Color = Color(0xFF0A1626)
+
     val CoinBalanceBGStart = Color(0xFFFFCC00)
     val CoinBalanceBGEnd = Color(0xFFDA8100)
     val SmileyGameCardBackground = Color(0x66000000)
