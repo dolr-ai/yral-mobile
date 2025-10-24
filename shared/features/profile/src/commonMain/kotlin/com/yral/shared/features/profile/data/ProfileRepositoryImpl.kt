@@ -23,7 +23,7 @@ class ProfileRepositoryImpl(
         dataSource
             .deleteVideo(request)
 
-    override suspend fun getProfileVideoViewsCount(videoId: String): List<VideoViews> =
+    override suspend fun getProfileVideoViewsCount(videoId: List<String>): List<VideoViews> =
         dataSource
             .getProfileVideoViewsCount(videoId)
             .map { it.toDomain() }

@@ -16,6 +16,6 @@ class GetProfileVideoViewsUseCase(
             .getProfileVideoViewsCount(videoId = parameter.videoId)
 
     data class Params(
-        val videoId: String,
+        val videoId: List<String>,
     )
 }

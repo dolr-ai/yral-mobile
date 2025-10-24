@@ -101,17 +101,17 @@ class ProfileDataSourceImpl(
         }
     }
 
-    override suspend fun getProfileVideoViewsCount(videoId: String): List<VideoViewsDto> =
+    override suspend fun getProfileVideoViewsCount(videoId: List<String>): List<VideoViewsDto> =
         httpPost(httpClient, json) {
             url {
                 host = OFF_CHAIN_BASE_URL
                 path(VIDEO_VIEWS_ENDPOINT)
             }
-            setBody(mapOf("video_ids" to listOf(videoId)))
+            setBody(mapOf("video_ids" to videoId))
         }
 
     companion object {
         private const val DELETE_VIDEO_ENDPOINT = "/api/v2/posts"
-        private const val VIDEO_VIEWS_ENDPOINT = "api/v1/rewards/videos/bulk-stats-v2"
+        private const val VIDEO_VIEWS_ENDPOINT = "/api/v1/rewards/videos/bulk-stats-v2"
     }
 }

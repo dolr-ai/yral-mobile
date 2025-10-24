@@ -15,5 +15,5 @@ interface ProfileDataSource {
 
     suspend fun deleteVideo(request: DeleteVideoRequest)
 
-    suspend fun getProfileVideoViewsCount(videoId: String): List<VideoViewsDto>
+    suspend fun getProfileVideoViewsCount(videoId: List<String>): List<VideoViewsDto>
 }

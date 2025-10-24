@@ -15,5 +15,5 @@ interface ProfileRepository {
 
     suspend fun deleteVideo(request: DeleteVideoRequest)
 
-    suspend fun getProfileVideoViewsCount(videoId: String): List<VideoViews>
+    suspend fun getProfileVideoViewsCount(videoId: List<String>): List<VideoViews>
 }

@@ -496,7 +496,7 @@ class ProfileViewModel(
                     bottomSheet = ProfileBottomSheet.VideoView(videoId = video.videoID),
                     viewsData =
                         if (shouldRefresh) {
-                            it.viewsData.toMutableMap().apply { this[video.videoID] = UiState.Initial }
+                            it.viewsData.toMutableMap().apply { this[video.videoID] = UiState.InProgress() }
                         } else {
                             it.viewsData
                         },
@@ -504,7 +504,7 @@ class ProfileViewModel(
             }
             if (!shouldRefresh) return@launch
             getProfileVideoViewsUseCase
-                .invoke(parameter = GetProfileVideoViewsUseCase.Params(videoId = video.videoID))
+                .invoke(parameter = GetProfileVideoViewsUseCase.Params(videoId = listOf(video.videoID)))
                 .onSuccess { views ->
                     val viewData = views.firstOrNull { view -> view.videoId == video.videoID }
                     Logger.d("VideoViews") { "Got video views $viewData" }
@@ -524,7 +524,7 @@ class ProfileViewModel(
                         it.copy(
                             viewsData =
                                 it.viewsData.toMutableMap().apply {
-                                    this[video.videoID] = UiState.Failure(Throwable("Failed fetching video views $e"))
+                                    this[video.videoID] = UiState.Failure(e)
                                 },
                         )
                     }
