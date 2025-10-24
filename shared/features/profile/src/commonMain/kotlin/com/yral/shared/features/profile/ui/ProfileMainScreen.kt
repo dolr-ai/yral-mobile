@@ -541,7 +541,7 @@ private fun MainContent(
                 onFollowClicked = { viewModel.followUnfollow() },
                 onFollowersClick = { callbacks.onFollowersSectionClick(FollowersSheetTab.Followers) },
                 onFollowingClick = { callbacks.onFollowersSectionClick(FollowersSheetTab.Following) },
-                bio = null,
+                bio = info.bio,
             )
         }
         when (profileVideos.loadState.refresh) {

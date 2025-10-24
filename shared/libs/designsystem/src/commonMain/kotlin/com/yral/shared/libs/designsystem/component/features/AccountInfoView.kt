@@ -70,7 +70,7 @@ fun AccountInfoView(
                     top = YralDimens.paddingLg,
                     end = 16.dp,
                 ),
-        verticalArrangement = Arrangement.spacedBy(30.dp, Alignment.Top),
+        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
         horizontalAlignment = Alignment.Start,
     ) {
         Row(
@@ -139,15 +139,15 @@ fun AccountInfoView(
                         }
                     }
                 }
-                bio?.takeUnless { it.isBlank() }?.let { nonEmptyBio ->
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Text(
-                        text = nonEmptyBio,
-                        style = LocalAppTopography.current.regRegular,
-                        color = YralColors.NeutralTextPrimary,
-                    )
-                }
+                // Bio moved below the row to align with profile picture edge
             }
+        }
+        bio?.takeUnless { it.isBlank() }?.let { nonEmptyBio ->
+            Text(
+                text = nonEmptyBio,
+                style = LocalAppTopography.current.regRegular,
+                color = YralColors.NeutralTextPrimary,
+            )
         }
         when {
             !isSocialSignIn -> {

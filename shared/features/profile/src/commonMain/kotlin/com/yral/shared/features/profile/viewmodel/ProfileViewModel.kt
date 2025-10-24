@@ -192,6 +192,7 @@ class ProfileViewModel(
                         userPrincipal = canisterData.userPrincipalId,
                         profilePic = canisterData.profilePic,
                         username = canisterData.username,
+                        bio = null, // populated for own profile via session observer
                     ),
             )
         }
@@ -227,6 +228,7 @@ class ProfileViewModel(
                                             userPrincipal = sessionManager.userPrincipal.orEmpty(),
                                             profilePic = updatedPic,
                                             username = sessionManager.username,
+                                            bio = sessionManager.bio,
                                         )
                                 current.copy(accountInfo = updatedInfo)
                             }

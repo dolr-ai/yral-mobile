@@ -406,6 +406,8 @@ class EditProfileViewModel(
                         }
                         return@launch
                     }.onSuccess {
+                        // Reflect bio change in session so Profile screen updates immediately
+                        sessionManager.updateBio(sanitizedBio.takeUnless { it.isEmpty() })
                         _state.update { current ->
                             current.copy(
                                 bioInput = sanitizedBio,
