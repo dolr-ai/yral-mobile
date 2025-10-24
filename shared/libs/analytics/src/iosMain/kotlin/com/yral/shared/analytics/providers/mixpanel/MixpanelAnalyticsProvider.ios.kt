@@ -53,6 +53,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
             superProps["visitor_id"] = user.userId
             superProps["user_id"] = null
         }
+        mixpanel.people.set(superProps)
         mixpanel.registerSuperProperties(superProps)
     }
 

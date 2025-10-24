@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.analytics.User
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.DELAY_FOR_SESSION_PROPERTIES
 import com.yral.shared.core.session.Session
@@ -400,11 +401,20 @@ class DefaultAuthClient(
                     authTelemetry.authFailed()
                     throw SecurityException("Invalid state parameter - possible CSRF attack")
                 }
-                val currentUser = sessionManager.userPrincipal
                 // reset analytics manage: flush events and reset user properties
-                analyticsManager.reset()
+                analyticsManager.flush()
+                sessionManager.canisterID?.let { canisterId ->
+                    sessionManager.userPrincipal?.let { userPrincipal ->
+                        analyticsManager.setUserProperties(
+                            User(
+                                userId = userPrincipal,
+                                canisterId = canisterId,
+                            ),
+                        )
+                    }
+                }
                 sessionManager.updateState(SessionState.Loading)
-                authenticate(result.code, currentUser)
+                authenticate(result.code, sessionManager.userPrincipal)
                 return
             }
             is OAuthResult.Error -> {

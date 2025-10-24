@@ -67,7 +67,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
     }
 
     override fun setUserProperties(user: User) {
-        val superProps: MutableMap<Any, Any?> =
+        val superProps: MutableMap<String, Any?> =
             mutableMapOf(
                 "is_creator" to (user.isCreator ?: false),
                 "is_logged_in" to user.isLoggedIn,
@@ -88,6 +88,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
             superProps["visitor_id"] = user.userId
             superProps["user_id"] = null
         }
+        mixpanel.people.set(JSONObject(superProps))
         mixpanel.registerSuperProperties(JSONObject(superProps))
     }
 

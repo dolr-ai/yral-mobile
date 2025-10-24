@@ -11,4 +11,18 @@ data class User(
     val tokenType: TokenType?,
     val isForcedGamePlayUser: Boolean?,
     val emailId: String?,
-)
+) {
+    constructor(
+        userId: String,
+        canisterId: String,
+    ) : this(
+        userId = userId,
+        canisterId = canisterId,
+        isLoggedIn = null,
+        isCreator = null,
+        walletBalance = null,
+        tokenType = null,
+        isForcedGamePlayUser = null,
+        emailId = null,
+    )
+}
