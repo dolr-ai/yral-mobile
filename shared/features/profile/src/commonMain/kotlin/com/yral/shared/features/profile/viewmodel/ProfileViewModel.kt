@@ -204,6 +204,7 @@ class ProfileViewModel(
                     isFollowing = canisterData.isFollowing,
                 )
             }
+            refreshOtherProfileDetails()
         } else {
             viewModelScope.launch {
                 sessionManager
@@ -214,29 +215,7 @@ class ProfileViewModel(
                         }
                     }
             }
-            viewModelScope.launch {
-                val principal = sessionManager.userPrincipal ?: return@launch
-                getProfileDetailsV4UseCase(
-                    GetProfileDetailsV4Params(
-                        principal = principal,
-                        targetPrincipal = principal,
-                    ),
-                ).onSuccess { details ->
-                    val updatedPic = details.profilePictureUrl
-                    if (!updatedPic.isNullOrBlank()) {
-                        sessionManager.updateProfilePicture(updatedPic)
-                        _state.update { current ->
-                            current.accountInfo?.let { current.copy(accountInfo = it.copy(profilePic = updatedPic)) }
-                                ?: current
-                        }
-                    }
-                    details.bio.let { bio ->
-                        sessionManager.updateBio(bio)
-                    }
-                }.onFailure { error ->
-                    crashlyticsManager.recordException(Exception(error))
-                }
-            }
+            refreshOwnProfileDetails()
         }
         viewModelScope.launch {
             sessionManager
@@ -244,8 +223,88 @@ class ProfileViewModel(
                     selector = { it.isSocialSignIn },
                     defaultValue = false,
                 ).collect { isSocialSignIn ->
-                    _state.update { it.copy(isLoggedIn = isSocialSignIn) }
+                    val wasLoggedIn = _state.value.isLoggedIn
+                    _state.update { current ->
+                        current.copy(
+                            isLoggedIn = isSocialSignIn,
+                            isOwnProfile =
+                                if (isSocialSignIn) {
+                                    canisterData.userPrincipalId == sessionManager.userPrincipal
+                                } else {
+                                    current.isOwnProfile
+                                },
+                        )
+                    }
+                    if (isSocialSignIn && !wasLoggedIn) {
+                        if (canisterData.userPrincipalId == sessionManager.userPrincipal) {
+                            refreshOwnProfileDetails()
+                        } else {
+                            refreshOtherProfileDetails()
+                        }
+                    }
                 }
+        }
+    }
+
+    private fun refreshOwnProfileDetails() {
+        viewModelScope.launch {
+            val principal = sessionManager.userPrincipal ?: return@launch
+            getProfileDetailsV4UseCase(
+                GetProfileDetailsV4Params(
+                    principal = principal,
+                    targetPrincipal = principal,
+                ),
+            ).onSuccess { details ->
+                val updatedPic = details.profilePictureUrl
+                val bio = details.bio
+                if (!updatedPic.isNullOrBlank()) {
+                    sessionManager.updateProfilePicture(updatedPic)
+                }
+                sessionManager.updateBio(bio)
+                _state.update { current ->
+                    val currentInfo = current.accountInfo
+                    val newInfo =
+                        currentInfo?.copy(
+                            profilePic = updatedPic?.takeUnless { it.isBlank() } ?: currentInfo.profilePic,
+                            bio = bio?.takeUnless { it.isBlank() } ?: currentInfo.bio,
+                        )
+                    current.copy(accountInfo = newInfo)
+                }
+            }.onFailure { error ->
+                crashlyticsManager.recordException(Exception(error))
+            }
+        }
+    }
+
+    private fun refreshOtherProfileDetails() {
+        if (sessionManager.identity == null) return
+        val targetPrincipal = canisterData.userPrincipalId
+        if (targetPrincipal.isBlank()) return
+        viewModelScope.launch {
+            val callerPrincipal = sessionManager.userPrincipal ?: return@launch
+            getProfileDetailsV4UseCase(
+                GetProfileDetailsV4Params(
+                    principal = callerPrincipal,
+                    targetPrincipal = targetPrincipal,
+                ),
+            ).onSuccess { details ->
+                _state.update { current ->
+                    val existingInfo = current.accountInfo
+                    val updatedInfo =
+                        existingInfo?.copy(
+                            bio = details.bio?.takeUnless { it.isBlank() } ?: existingInfo.bio,
+                            profilePic =
+                                details.profilePictureUrl?.takeUnless { it.isBlank() }
+                                    ?: existingInfo.profilePic,
+                        )
+                    current.copy(
+                        accountInfo = updatedInfo,
+                        isFollowing = details.callerFollowsUser ?: current.isFollowing,
+                    )
+                }
+            }.onFailure { error ->
+                crashlyticsManager.recordException(Exception(error))
+            }
         }
     }
 
