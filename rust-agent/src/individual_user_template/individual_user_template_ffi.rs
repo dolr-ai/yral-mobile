@@ -465,7 +465,7 @@ mod ffi {
         ) -> Result<DelegatedIdentityWire, String>;
         fn delegated_identity_wire_to_json(wire: &DelegatedIdentityWire) -> String;
     }
-
+    
     extern "Rust" {
         type CanistersWrapper;
         async fn authenticate_with_network(
@@ -477,6 +477,7 @@ mod ffi {
         fn get_user_principal(&self) -> Principal;
         fn get_user_principal_string(&self) -> String;
         fn is_created_from_service_canister(&self) -> bool;
+        fn get_username(&self) -> Option<String>;
         fn expiry_ns(&self) -> u64;
     }
 
@@ -626,5 +627,11 @@ mod ffi {
         fn is_reached_end_of_items_list(error: PostServiceGetPostsOfUserProfileError) -> bool;
         fn is_invalid_bounds_passed(error: PostServiceGetPostsOfUserProfileError) -> bool;
         fn is_exceeded_max_number_of_items_allowed_in_one_request(error: PostServiceGetPostsOfUserProfileError) -> bool;
+    }
+
+    extern "Rust" {
+        type FFIError;
+        fn to_string(&self) -> String;
+        async fn set_user_metadata(identity_data: Vec<u8>, user_canister_id: String, user_name: String) -> Result<(), FFIError>;
     }
 }

@@ -19,6 +19,7 @@ struct WalletView: View {
   @State private var showEarnBTCButton = false
   @State private var showEarnBTCBottomSheet = false
   @EnvironmentObject var session: SessionManager
+  @EnvironmentObject var eventBus: EventBus
 
   init(viewModel: WalletViewModel) {
     _viewModel = StateObject(wrappedValue: viewModel)
@@ -36,6 +37,7 @@ struct WalletView: View {
           accountInfo: $accountInfo,
           shouldApplySpacing: false,
           showLoginButton: Binding(get: { false }, set: { _ in }),
+          showEditProfileButton: Binding(get: { false }, set: { _ in }),
           delegate: nil
         )
         .padding(.top, Constants.userInfoViewToPadding)
@@ -169,6 +171,11 @@ struct WalletView: View {
           await viewModel.fetchAccountInfo()
         }
       default: break
+      }
+    }
+    .onReceive(eventBus.updatedUsername) { _ in
+      Task {
+        await viewModel.fetchAccountInfo()
       }
     }
     .overlay(alignment: .center, content: {

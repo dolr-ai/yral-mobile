@@ -22,6 +22,7 @@ struct ProfileView: View {
   @State private var showDeleteIndicator: Bool = false
   @State private var showFeeds = false
   @State private var showAccount = false
+  @State private var showEditProfile = false
   @State private var currentIndex: Int = .zero
   @State private var isPushNotificationFlow: Bool = false
   @State private var isVisible = false
@@ -34,6 +35,7 @@ struct ProfileView: View {
 
   @EnvironmentObject var session: SessionManager
   @EnvironmentObject private var deepLinkRouter: DeepLinkRouter
+  @EnvironmentObject var eventBus: EventBus
 
   var uploadVideoPressed: (() -> Void) = {}
 
@@ -63,6 +65,18 @@ struct ProfileView: View {
         .edgesIgnoringSafeArea(.all)
       } else if showAccount {
         router.displayAccountView(showAccount: $showAccount)
+      } else if showEditProfile {
+        if let unwrappedAccountInfo = accountInfo {
+          router.displayEditProfileView(
+            showEditProfile: $showEditProfile,
+            accountInfo: Binding<AccountInfo>(
+              get: { unwrappedAccountInfo },
+              set: { newValue in
+                self.accountInfo = newValue
+              }
+            )
+          )
+        }
       } else {
         VStack(spacing: .zero) {
           VStack(alignment: .leading, spacing: Constants.vStackSpacing) {
@@ -83,6 +97,7 @@ struct ProfileView: View {
                 accountInfo: $accountInfo,
                 shouldApplySpacing: false,
                 showLoginButton: $showLoginButton,
+                showEditProfileButton: $showLoginButton.inverted,
                 delegate: self
               )
             }
@@ -320,6 +335,11 @@ struct ProfileView: View {
       default: break
       }
     }
+    .onReceive(eventBus.updatedUsername) { _ in
+      Task {
+        await viewModel.fetchProfileInfo()
+      }
+    }
     .fullScreenCover(isPresented: $showSignupSheet) {
       ZStack(alignment: .center) {
         SignupSheet(
@@ -394,6 +414,11 @@ extension ProfileView: UserInfoViewProtocol {
     AnalyticsModuleKt.getAnalyticsManager().trackEvent(
       event: AuthScreenViewedEventData(pageName: .menu)
     )
+  }
+
+  func editProfilePressed() {
+    UIView.setAnimationsEnabled(false)
+    showEditProfile = true
   }
 }
 

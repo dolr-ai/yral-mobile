@@ -19,6 +19,11 @@ protocol ProfileRouterProtocol {
   ) -> FeedsViewControllerWrapper
 
   func displayAccountView(showAccount: Binding<Bool>) -> AccountView
+
+  func displayEditProfileView(
+    showEditProfile: Binding<Bool>,
+    accountInfo: Binding<AccountInfo>
+  ) -> EditProfileView
 }
 
 final class ProfileRouter: ProfileRouterProtocol {
@@ -46,5 +51,12 @@ final class ProfileRouter: ProfileRouterProtocol {
 
   func displayAccountView(showAccount: Binding<Bool>) -> AccountView {
     return profileDI.makeAccount(showAccount: showAccount)
+  }
+
+  func displayEditProfileView(showEditProfile: Binding<Bool>, accountInfo: Binding<AccountInfo>) -> EditProfileView {
+    return profileDI.makeEditProfile(
+      showEditProfile: showEditProfile,
+      accountInfo: accountInfo
+    )
   }
 }

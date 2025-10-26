@@ -1645,6 +1645,18 @@ void* __swift_bridge__$Vec_PostServiceResult3$get_mut(void* vec_ptr, uintptr_t i
 uintptr_t __swift_bridge__$Vec_PostServiceResult3$len(void* vec_ptr);
 void* __swift_bridge__$Vec_PostServiceResult3$as_ptr(void* vec_ptr);
 
+typedef struct FFIError FFIError;
+void __swift_bridge__$FFIError$_free(void* self);
+
+void* __swift_bridge__$Vec_FFIError$new(void);
+void __swift_bridge__$Vec_FFIError$drop(void* vec_ptr);
+void __swift_bridge__$Vec_FFIError$push(void* vec_ptr, void* item_ptr);
+void* __swift_bridge__$Vec_FFIError$pop(void* vec_ptr);
+void* __swift_bridge__$Vec_FFIError$get(void* vec_ptr, uintptr_t index);
+void* __swift_bridge__$Vec_FFIError$get_mut(void* vec_ptr, uintptr_t index);
+uintptr_t __swift_bridge__$Vec_FFIError$len(void* vec_ptr);
+void* __swift_bridge__$Vec_FFIError$as_ptr(void* vec_ptr);
+
 uint64_t __swift_bridge__$PostDetailsForFrontend$id(void* self);
 bool __swift_bridge__$PostDetailsForFrontend$is_nsfw(void* self);
 struct RustStr __swift_bridge__$PostDetailsForFrontend$video_uid(void* self);
@@ -1753,6 +1765,7 @@ void* __swift_bridge__$CanistersWrapper$get_canister_principal_string(void* self
 void* __swift_bridge__$CanistersWrapper$get_user_principal(void* self);
 void* __swift_bridge__$CanistersWrapper$get_user_principal_string(void* self);
 bool __swift_bridge__$CanistersWrapper$is_created_from_service_canister(void* self);
+void* __swift_bridge__$CanistersWrapper$get_username(void* self);
 uint64_t __swift_bridge__$CanistersWrapper$expiry_ns(void* self);
 struct __private__OptionU64 __swift_bridge__$extract_time_as_double(void* result);
 struct __private__ResultPtrAndPtr __swift_bridge__$get_principal(void* text);
@@ -1803,6 +1816,8 @@ void* __swift_bridge__$post_service_result_vec_err_value(void* result);
 bool __swift_bridge__$is_reached_end_of_items_list(void* error);
 bool __swift_bridge__$is_invalid_bounds_passed(void* error);
 bool __swift_bridge__$is_exceeded_max_number_of_items_allowed_in_one_request(void* error);
+void* __swift_bridge__$FFIError$to_string(void* self);
+void __swift_bridge__$set_user_metadata(void* callback_wrapper, void __swift_bridge__$set_user_metadata$async(void* callback_wrapper, void* ret), void* identity_data, void* user_canister_id, void* user_name);
 typedef enum __swift_bridge__$ResultU32AndAgentError$Tag {__swift_bridge__$ResultU32AndAgentError$ResultOk, __swift_bridge__$ResultU32AndAgentError$ResultErr} __swift_bridge__$ResultU32AndAgentError$Tag;
 union __swift_bridge__$ResultU32AndAgentError$Fields {uint32_t ok; void* err;};
 typedef struct __swift_bridge__$ResultU32AndAgentError{__swift_bridge__$ResultU32AndAgentError$Tag tag; union __swift_bridge__$ResultU32AndAgentError$Fields payload;} __swift_bridge__$ResultU32AndAgentError;
