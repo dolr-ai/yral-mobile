@@ -41,7 +41,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.followers
 import yral_mobile.shared.libs.designsystem.generated.resources.following
 import yral_mobile.shared.libs.designsystem.generated.resources.login
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "LongParameterList")
 @Composable
 fun AccountInfoView(
     accountInfo: AccountInfo,

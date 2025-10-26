@@ -64,10 +64,6 @@ object FollowersSheetUi {
     const val EXPANDED_HEIGHT_FRACTION = 0.9f
     const val TAB_UNSELECTED_ALPHA = 0.6f
     const val TAB_WIDTH_FRACTION = 0.5f
-    val DragHandleTopSpacing = 12.dp
-    val DragHandleWidth = 32.dp
-    val DragHandleHeight = 2.dp
-    val DragHandleCornerRadius = 50.dp
     val HorizontalPadding = 16.dp
     val NameTopSpacing = 28.dp
     val TabsTopSpacing = 28.dp
@@ -76,7 +72,6 @@ object FollowersSheetUi {
     val ListTopSpacing = 36.dp
     val ListItemSpacing = 16.dp
     val AvatarSize = 42.dp
-    val AvatarInitialFontSize = 16.sp
     val ItemPaddingHorizontal = 16.dp
     val ItemPaddingVertical = 12.dp
     val ActionButtonWidth = 118.dp

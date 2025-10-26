@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
@@ -29,7 +30,6 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.BottomSheetDefaults.DragHandle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SheetState
@@ -104,7 +104,7 @@ import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.profile.generated.resources.Res
-import yral_mobile.shared.features.profile.generated.resources.clapperboard
+import yral_mobile.shared.features.profile.generated.resources.create_ai_video
 import yral_mobile.shared.features.profile.generated.resources.delete
 import yral_mobile.shared.features.profile.generated.resources.delete_video
 import yral_mobile.shared.features.profile.generated.resources.deleting
@@ -112,15 +112,19 @@ import yral_mobile.shared.features.profile.generated.resources.error_loading_mor
 import yral_mobile.shared.features.profile.generated.resources.error_loading_videos
 import yral_mobile.shared.features.profile.generated.resources.failed_to_delete_video
 import yral_mobile.shared.features.profile.generated.resources.pink_heart
+import yral_mobile.shared.features.profile.generated.resources.profile_empty_subtitle
+import yral_mobile.shared.features.profile.generated.resources.profile_empty_title
+import yral_mobile.shared.features.profile.generated.resources.profile_locked_subtitle
+import yral_mobile.shared.features.profile.generated.resources.profile_locked_title
 import yral_mobile.shared.features.profile.generated.resources.video_will_be_deleted_permanently
 import yral_mobile.shared.features.profile.generated.resources.white_heart
-import yral_mobile.shared.features.profile.generated.resources.you_have_not_uploaded_any_video_yet
 import yral_mobile.shared.libs.designsystem.generated.resources.account_nav
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.cancel
 import yral_mobile.shared.libs.designsystem.generated.resources.delete
 import yral_mobile.shared.libs.designsystem.generated.resources.error_data_not_loaded
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_views
+import yral_mobile.shared.libs.designsystem.generated.resources.login
 import yral_mobile.shared.libs.designsystem.generated.resources.login_to_follow_subtext
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share_desc
@@ -130,7 +134,6 @@ import yral_mobile.shared.libs.designsystem.generated.resources.refresh
 import yral_mobile.shared.libs.designsystem.generated.resources.something_went_wrong
 import yral_mobile.shared.libs.designsystem.generated.resources.started_following
 import yral_mobile.shared.libs.designsystem.generated.resources.try_again
-import yral_mobile.shared.libs.designsystem.generated.resources.upload_video
 import yral_mobile.shared.libs.designsystem.generated.resources.video_insights
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
@@ -421,7 +424,11 @@ fun ProfileMainScreen(
     val accountInfo = state.accountInfo
     if (followerSheetTab != null && accountInfo != null) {
         val density = LocalDensity.current
-        val screenHeight = with(density) { LocalWindowInfo.current.containerSize.height.toDp() }
+        val screenHeight =
+            with(density) {
+                LocalWindowInfo.current.containerSize.height
+                    .toDp()
+            }
         val maxSheetHeight = screenHeight * FollowersSheetUi.EXPANDED_HEIGHT_FRACTION
         val currentListSize =
             when (followerSheetTab!!) {
@@ -445,7 +452,26 @@ fun ProfileMainScreen(
         YralBottomSheet(
             bottomSheetState = followersSheetState,
             onDismissRequest = { followerSheetTab = null },
-            dragHandle = { DragHandle(color = YralColors.Neutral500) },
+            dragHandle = {
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .width(32.dp)
+                                .height(2.dp)
+                                .background(
+                                    color = YralColors.Neutral500,
+                                    shape = RoundedCornerShape(50.dp),
+                                ),
+                    )
+                }
+            },
         ) {
             Box(
                 modifier =
@@ -553,8 +579,12 @@ private fun MainContent(
                 ErrorContent(message = stringResource(Res.string.error_loading_videos))
             }
             is LoadState.NotLoading -> {
-                if (!state.isOwnProfile && !state.isLoggedIn) {
-                    // Implement blocked ui profile view when needed
+                if (state.isOwnProfile && !state.isLoggedIn) {
+                    LockedProfileContent(
+                        onLoginClick = {
+                            viewModel.setBottomSheetType(ProfileBottomSheet.SignUp)
+                        },
+                    )
                 } else {
                     if (state.manualRefreshTriggered) {
                         viewModel.pushScreenView(profileVideos.itemCount)
@@ -753,24 +783,65 @@ private fun EmptyStateContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Image(
-            painter = painterResource(Res.drawable.clapperboard),
-            contentDescription = null,
-            modifier = Modifier.size(100.dp),
-        )
-        Spacer(modifier = Modifier.height(20.dp))
         Text(
-            text = stringResource(Res.string.you_have_not_uploaded_any_video_yet),
-            style = LocalAppTopography.current.lgMedium,
+            text = stringResource(Res.string.profile_empty_title),
+            style =
+                LocalAppTopography.current.mdSemiBold,
             color = YralColors.NeutralTextPrimary,
             textAlign = TextAlign.Center,
         )
-        Spacer(modifier = Modifier.height(36.dp))
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            text = stringResource(Res.string.profile_empty_subtitle),
+            style =
+                LocalAppTopography.current.baseRegular,
+            color = YralColors.NeutralTextSecondary,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(modifier = Modifier.height(30.dp))
         YralGradientButton(
-            modifier = Modifier.fillMaxWidth(),
-            text = stringResource(DesignRes.string.upload_video),
-            buttonType = YralButtonType.White,
+            modifier = Modifier.width(236.dp),
+            text = stringResource(Res.string.create_ai_video),
+            buttonHeight = 42.dp,
+            fillMaxWidth = false,
             onClick = uploadVideo,
+        )
+    }
+}
+
+@Composable
+private fun LockedProfileContent(onLoginClick: () -> Unit) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp)
+                .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = stringResource(Res.string.profile_locked_title),
+            style =
+                LocalAppTopography.current.mdSemiBold,
+            color = YralColors.NeutralTextPrimary,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            text = stringResource(Res.string.profile_locked_subtitle),
+            style =
+                LocalAppTopography.current.baseRegular,
+            color = YralColors.NeutralTextSecondary,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(modifier = Modifier.height(30.dp))
+        YralGradientButton(
+            modifier = Modifier.width(236.dp),
+            text = stringResource(DesignRes.string.login),
+            buttonHeight = 42.dp,
+            fillMaxWidth = false,
+            onClick = onLoginClick,
         )
     }
 }
