@@ -31,6 +31,7 @@ import com.yral.shared.app.ui.components.UpdateNotificationHost
 import com.yral.shared.app.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.shared.app.ui.screens.home.HomeScreen
 import com.yral.shared.core.session.SessionState
+import com.yral.shared.core.session.getKey
 import com.yral.shared.features.auth.ui.LoginBottomSheet
 import com.yral.shared.features.profile.ui.EditProfileScreen
 import com.yral.shared.features.profile.ui.ProfileMainScreen
@@ -83,10 +84,11 @@ fun RootScreen(
                     )
                 }
                 is Child.EditProfile -> {
+                    val sessionKey = state.sessionState.getKey()
                     HandleSystemBars(show = true)
                     EditProfileScreen(
                         component = child.component,
-                        viewModel = koinViewModel<EditProfileViewModel>(),
+                        viewModel = koinViewModel<EditProfileViewModel>(key = "edit-profile-$sessionKey"),
                         modifier = Modifier.fillMaxSize().safeDrawingPadding(),
                     )
                 }

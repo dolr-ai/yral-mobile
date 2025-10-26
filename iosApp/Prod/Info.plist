@@ -55,10 +55,12 @@
 	<true/>
 	<key>MIXPANEL_TOKEN</key>
 	<string>609abef3172b5fc64554f5ac6c77414d</string>
-	<key>NSCameraUsageDescription</key>
-	<string>Yral requires camera access to allow you to record and upload videos. Your camera will only be used when you choose to create a new video.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Yral requires microphone access to capture audio while recording videos. Your microphone will only be used during video recording.</string>
+  <key>NSCameraUsageDescription</key>
+  <string>Yral requires camera access to allow you to record and upload videos. Your camera will only be used when you choose to create a new video.</string>
+  <key>NSPhotoLibraryUsageDescription</key>
+  <string>Yral needs access to your photo library so you can choose a profile picture.</string>
+  <key>NSMicrophoneUsageDescription</key>
+  <string>Yral requires microphone access to capture audio while recording videos. Your microphone will only be used during video recording.</string>
 	<key>ONESIGNAL_APP_ID</key>
 	<string>3b2fb986-1a1a-4afd-b0f0-271faa4697a2</string>
 	<key>UIAppFonts</key>

@@ -2,6 +2,7 @@ package com.yral.shared.libs.designsystem.component.features
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -39,22 +41,26 @@ import yral_mobile.shared.libs.designsystem.generated.resources.followers
 import yral_mobile.shared.libs.designsystem.generated.resources.following
 import yral_mobile.shared.libs.designsystem.generated.resources.login
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "LongParameterList")
 @Composable
 fun AccountInfoView(
     accountInfo: AccountInfo,
     totalFollowers: Long? = null,
     totalFollowing: Long? = null,
+    bio: String? = null,
     isSocialSignIn: Boolean,
+    showLogin: Boolean = true,
     loginText: String = stringResource(Res.string.login),
     loginSubText: String = stringResource(Res.string.anonymous_account_setup),
-    onLoginClicked: () -> Unit,
+    onLoginClicked: () -> Unit = {},
     showEditProfile: Boolean = false,
     onEditProfileClicked: () -> Unit = {},
     showFollow: Boolean = false,
     isFollowing: Boolean = false,
     isFollowInProgress: Boolean = false,
     onFollowClicked: () -> Unit = {},
+    onFollowersClick: (() -> Unit)? = null,
+    onFollowingClick: (() -> Unit)? = null,
 ) {
     Column(
         modifier =
@@ -65,7 +71,7 @@ fun AccountInfoView(
                     top = YralDimens.paddingLg,
                     end = 16.dp,
                 ),
-        verticalArrangement = Arrangement.spacedBy(30.dp, Alignment.Top),
+        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
         horizontalAlignment = Alignment.Start,
     ) {
         Row(
@@ -76,6 +82,7 @@ fun AccountInfoView(
             YralAsyncImage(
                 imageUrl = accountInfo.profilePic,
                 modifier = Modifier.size(76.dp),
+                contentScale = ContentScale.Crop,
             )
             Column(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -90,7 +97,12 @@ fun AccountInfoView(
                         Column(
                             verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Top),
                             horizontalAlignment = Alignment.Start,
-                            modifier = Modifier.weight(1f),
+                            modifier =
+                                Modifier
+                                    .weight(1f)
+                                    .clickable(enabled = onFollowersClick != null) {
+                                        onFollowersClick?.invoke()
+                                    },
                         ) {
                             Text(
                                 text = formatAbbreviation(totalFollowers, 0),
@@ -108,7 +120,12 @@ fun AccountInfoView(
                         Column(
                             verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Top),
                             horizontalAlignment = Alignment.Start,
-                            modifier = Modifier.weight(1f),
+                            modifier =
+                                Modifier
+                                    .weight(1f)
+                                    .clickable(enabled = onFollowingClick != null) {
+                                        onFollowingClick?.invoke()
+                                    },
                         ) {
                             Text(
                                 text = formatAbbreviation(totalFollowing, 0),
@@ -123,10 +140,18 @@ fun AccountInfoView(
                         }
                     }
                 }
+                // Bio moved below the row to align with profile picture edge
             }
         }
+        bio?.takeUnless { it.isBlank() }?.let { nonEmptyBio ->
+            Text(
+                text = nonEmptyBio,
+                style = LocalAppTopography.current.regRegular,
+                color = YralColors.NeutralTextPrimary,
+            )
+        }
         when {
-            !isSocialSignIn -> {
+            !isSocialSignIn && showLogin -> {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),

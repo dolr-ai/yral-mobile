@@ -5,7 +5,17 @@
     <string name="delete_video">Delete video?</string>
     <string name="failed_to_delete_video">Failed to delete video</string>
     <string name="error_loading_videos">Error loading videos</string>
-    <string name="you_have_not_uploaded_any_video_yet">You have not uploaded any videos yet.</string>
+    <string name="profile_empty_title">Get Started</string>
+    <string name="profile_empty_subtitle">You don't get the hype till you make\nyour own AI video.</string>
+    <string name="create_ai_video">Create AI Video</string>
+    <string name="profile_locked_title">Unlock Profile</string>
+    <string name="profile_locked_subtitle">Log in to claim rewards, build your profile,\nand join the YRAL community.</string>
+    <string name="profile_view_locked_title">Access restricted</string>
+    <string name="profile_view_locked_subtitle">Log in to explore user profiles, videos,\nand all the fun stuff inside YRAL.</string>
     <string name="error_loading_more_videos">Error loading more videos</string>
+    <string name="profile_picture_updated">Your profile picture has been updated!</string>
+    <string name="followers_empty_list">No followers yet.</string>
+    <string name="following_empty_list">You are not following anyone yet.</string>
+    <string name="followers_load_error">We couldn't load this list. Please try again.</string>
 
 </resources>
