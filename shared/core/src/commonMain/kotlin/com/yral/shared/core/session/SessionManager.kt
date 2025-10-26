@@ -47,6 +47,13 @@ class SessionManager {
                 else -> null
             }
 
+    val bio: String?
+        get() =
+            when (val state = mutableState.value) {
+                is SessionState.SignedIn -> state.session.bio
+                else -> null
+            }
+
     val isCreatedFromServiceCanister: Boolean?
         get() =
             when (val state = mutableState.value) {
@@ -86,6 +93,26 @@ class SessionManager {
         mutableState.update { state ->
             if (state is SessionState.SignedIn) {
                 state.copy(session = state.session.copy(username = username))
+            } else {
+                state
+            }
+        }
+    }
+
+    fun updateProfilePicture(profilePictureUrl: String?) {
+        mutableState.update { state ->
+            if (state is SessionState.SignedIn) {
+                state.copy(session = state.session.copy(profilePic = profilePictureUrl))
+            } else {
+                state
+            }
+        }
+    }
+
+    fun updateBio(bio: String?) {
+        mutableState.update { state ->
+            if (state is SessionState.SignedIn) {
+                state.copy(session = state.session.copy(bio = bio))
             } else {
                 state
             }

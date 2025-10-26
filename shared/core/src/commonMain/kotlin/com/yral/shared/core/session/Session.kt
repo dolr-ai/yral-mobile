@@ -6,6 +6,7 @@ data class Session(
     val userPrincipal: String? = null,
     val profilePic: String? = null,
     val username: String? = null,
+    val bio: String? = null,
     val isCreatedFromServiceCanister: Boolean = false,
 )
 

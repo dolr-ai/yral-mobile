@@ -27,4 +27,8 @@ class ProfileRepositoryImpl(
         dataSource
             .getProfileVideoViewsCount(videoId)
             .map { it.toDomain() }
+
+    override suspend fun uploadProfileImage(imageBase64: String): String =
+        dataSource
+            .uploadProfileImage(imageBase64)
 }
