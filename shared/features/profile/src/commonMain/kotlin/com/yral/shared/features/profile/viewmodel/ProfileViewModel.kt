@@ -204,18 +204,12 @@ class ProfileViewModel(
                     isFollowing = canisterData.isFollowing,
                 )
             }
-            refreshOtherProfileDetails()
         } else {
             viewModelScope.launch {
                 sessionManager
                     .observeSessionState(transform = { sessionManager.getAccountInfo() })
-                    .collect { info ->
-                        _state.update { current ->
-                            current.copy(accountInfo = info)
-                        }
-                    }
+                    .collect { info -> _state.update { current -> current.copy(accountInfo = info) } }
             }
-            refreshOwnProfileDetails()
         }
         viewModelScope.launch {
             sessionManager
@@ -271,7 +265,7 @@ class ProfileViewModel(
                     current.copy(accountInfo = newInfo)
                 }
             }.onFailure { error ->
-                crashlyticsManager.recordException(Exception(error))
+                Logger.e("refreshOwnProfileDetails") { "Failed to fetch profile details $error" }
             }
         }
     }
@@ -303,7 +297,7 @@ class ProfileViewModel(
                     )
                 }
             }.onFailure { error ->
-                crashlyticsManager.recordException(Exception(error))
+                Logger.e("refreshOtherProfileDetails") { "Failed to fetch profile details $error" }
             }
         }
     }

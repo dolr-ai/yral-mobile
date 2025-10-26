@@ -29,7 +29,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -65,7 +64,7 @@ object FollowersSheetUi {
     const val TAB_UNSELECTED_ALPHA = 0.6f
     const val TAB_WIDTH_FRACTION = 0.5f
     val HorizontalPadding = 16.dp
-    val NameTopSpacing = 28.dp
+    val NameTopSpacing = 12.dp
     val TabsTopSpacing = 28.dp
     val SeparatorTopSpacing = 12.dp
     val SeparatorHeight = 1.dp
@@ -122,10 +121,7 @@ fun FollowersBottomSheet(
             text = username,
             modifier = Modifier.fillMaxWidth(),
             style =
-                LocalAppTopography.current.lgBold.copy(
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                ),
+                LocalAppTopography.current.lgBold,
             color = YralColors.NeutralTextPrimary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -149,10 +145,7 @@ fun FollowersBottomSheet(
         ) {
             when (pagingItems.loadState.refresh) {
                 is LoadState.Loading -> item { FollowersLoadingState() }
-                is LoadState.Error ->
-                    item {
-                        FollowersErrorState(onRetry = { pagingItems.retry() })
-                    }
+                is LoadState.Error -> item { FollowersErrorState(onRetry = { pagingItems.retry() }) }
 
                 is LoadState.NotLoading -> {
                     if (pagingItems.itemCount == 0) {
@@ -164,7 +157,7 @@ fun FollowersBottomSheet(
                                 items(
                                     items = page.items,
                                     key = { follower ->
-                                        toReadablePrincipalText(follower.principalId.toString()) + "-$pageIndex"
+                                        toReadablePrincipalText(follower.principalId) + "-$pageIndex"
                                     },
                                     contentType = { _ -> "FollowerItem" },
                                 ) { follower ->
@@ -222,8 +215,7 @@ private fun FollowersErrorState(onRetry: () -> Unit) {
         YralGradientButton(
             modifier = Modifier.width(160.dp),
             text = stringResource(DesignRes.string.try_again),
-            buttonHeight = 36.dp,
-            fillMaxWidth = false,
+            buttonHeight = 38.dp,
             onClick = onRetry,
         )
     }
@@ -400,7 +392,6 @@ private fun FollowerRow(
                         color = YralColors.Neutral50,
                     ),
                 buttonHeight = FollowersSheetUi.ActionButtonHeight,
-                fillMaxWidth = false,
                 buttonState = if (isLoading) YralButtonState.Loading else YralButtonState.Enabled,
                 onClick = { if (!isLoading) onFollowToggle(principalText, true) },
             )
@@ -411,7 +402,6 @@ private fun FollowerRow(
                         .width(FollowersSheetUi.ActionButtonWidth)
                         .height(FollowersSheetUi.ActionButtonHeight),
                 buttonHeight = FollowersSheetUi.ActionButtonHeight,
-                fillMaxWidth = false,
                 text = stringResource(DesignRes.string.follow),
                 buttonState = if (isLoading) YralButtonState.Loading else YralButtonState.Enabled,
                 onClick = { if (!isLoading) onFollowToggle(principalText, false) },

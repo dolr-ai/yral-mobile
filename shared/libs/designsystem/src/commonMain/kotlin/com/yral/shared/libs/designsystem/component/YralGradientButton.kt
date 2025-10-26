@@ -37,13 +37,12 @@ fun YralGradientButton(
     buttonType: YralButtonType = YralButtonType.Pink,
     text: String,
     buttonHeight: Dp = 45.dp,
-    fillMaxWidth: Boolean = true,
     onClick: () -> Unit,
 ) {
     Row(
         modifier =
             modifier
-                .then(if (fillMaxWidth) Modifier.fillMaxWidth() else Modifier)
+                .fillMaxWidth()
                 .height(buttonHeight)
                 .paint(
                     painter = painterResource(getButtonBackground(buttonType, buttonState)),

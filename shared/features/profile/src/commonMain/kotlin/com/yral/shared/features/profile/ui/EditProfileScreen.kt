@@ -160,7 +160,7 @@ fun EditProfileScreen(
     ) {
         LaunchedEffect(showPickerSheet) {
             if (!showPickerSheet) {
-                runCatching { bottomSheetState.hide() }
+                bottomSheetState.hide()
             }
         }
         Column(

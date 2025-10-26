@@ -9,12 +9,15 @@ class UploadProfileImageUseCase(
     private val profileRepository: ProfileRepository,
     appDispatchers: AppDispatchers,
     failureListener: UseCaseFailureListener,
-) : SuspendUseCase<UploadProfileImageParams, String>(appDispatchers.network, failureListener) {
+) : SuspendUseCase<UploadProfileImageUseCase.UploadProfileImageParams, String>(
+        appDispatchers.network,
+        failureListener,
+    ) {
     override suspend fun execute(parameter: UploadProfileImageParams): String =
         profileRepository
             .uploadProfileImage(parameter.imageBase64)
-}
 
-data class UploadProfileImageParams(
-    val imageBase64: String,
-)
+    data class UploadProfileImageParams(
+        val imageBase64: String,
+    )
+}

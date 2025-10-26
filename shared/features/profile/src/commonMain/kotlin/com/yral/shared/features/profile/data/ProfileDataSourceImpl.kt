@@ -76,16 +76,11 @@ class ProfileDataSourceImpl(
     }
 
     override suspend fun deleteVideo(request: DeleteVideoRequest) {
-        val userPrincipal =
-            sessionManager.userPrincipal
-                ?: throw YralException("No user principal found")
-        val identity =
-            sessionManager.identity
-                ?: throw YralException("No identity found")
+        val userPrincipal = sessionManager.userPrincipal ?: throw YralException("No user principal found")
+        val identity = sessionManager.identity ?: throw YralException("No identity found")
 
         val identityWireJson = delegatedIdentityWireToJson(identity)
-        val delegatedIdentityWire =
-            json.decodeFromString<KotlinDelegatedIdentityWire>(identityWireJson)
+        val delegatedIdentityWire = json.decodeFromString<KotlinDelegatedIdentityWire>(identityWireJson)
 
         val deleteRequest =
             DeleteVideoRequestBody(
@@ -114,20 +109,17 @@ class ProfileDataSourceImpl(
         }
 
     override suspend fun uploadProfileImage(imageBase64: String): String {
-        val identity =
-            sessionManager.identity
-                ?: throw YralException("No identity found")
+        val identity = sessionManager.identity ?: throw YralException("No identity found")
 
         val identityWireJson = delegatedIdentityWireToJson(identity)
-        val delegatedIdentityWire =
-            json.decodeFromString<KotlinDelegatedIdentityWire>(identityWireJson)
+        val delegatedIdentityWire = json.decodeFromString<KotlinDelegatedIdentityWire>(identityWireJson)
 
         val response =
             httpPost<UploadProfileImageResponse>(httpClient, json) {
                 url {
                     protocol = URLProtocol.HTTPS
                     host = OFF_CHAIN_BASE_URL
-                    path("api", "v1", "user", "profile-image")
+                    path(UPLOAD_PROFILE_ENDPOINT)
                 }
                 setBody(
                     UploadProfileImageRequestBody(
@@ -143,5 +135,6 @@ class ProfileDataSourceImpl(
     companion object {
         private const val DELETE_VIDEO_ENDPOINT = "/api/v2/posts"
         private const val VIDEO_VIEWS_ENDPOINT = "/api/v1/rewards/videos/bulk-stats-v2"
+        private const val UPLOAD_PROFILE_ENDPOINT = "/api/v1/user/profile-image"
     }
 }

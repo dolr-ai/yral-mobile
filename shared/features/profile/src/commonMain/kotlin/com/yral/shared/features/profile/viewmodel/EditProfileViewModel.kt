@@ -7,8 +7,8 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.crashlytics.core.CrashlyticsManager
-import com.yral.shared.features.profile.domain.UploadProfileImageParams
 import com.yral.shared.features.profile.domain.UploadProfileImageUseCase
+import com.yral.shared.features.profile.domain.UploadProfileImageUseCase.UploadProfileImageParams
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4Params
@@ -77,35 +77,35 @@ class EditProfileViewModel(
     }
 
     private fun fetchProfileDetails() {
-        val principalText = sessionManager.userPrincipal ?: return
-        val principal = principalText
-        viewModelScope.launch {
-            getProfileDetailsV4UseCase(
-                GetProfileDetailsV4Params(
-                    principal = principal,
-                    targetPrincipal = principal,
-                ),
-            ).onSuccess { details ->
-                val bio = sanitizeBio(details.bio.orEmpty())
-                sessionManager.updateBio(bio)
-                val profileImage = details.profilePictureUrl
-                _state.update { current ->
-                    if (current.initialBio.isNotEmpty()) {
-                        current
-                    } else {
-                        current.copy(
-                            bioInput = bio,
-                            initialBio = bio,
-                            profileImageUrl = profileImage ?: current.profileImageUrl,
-                        )
+        sessionManager.userPrincipal?.let { principalText ->
+            viewModelScope.launch {
+                getProfileDetailsV4UseCase(
+                    GetProfileDetailsV4Params(
+                        principal = principalText,
+                        targetPrincipal = principalText,
+                    ),
+                ).onSuccess { details ->
+                    val bio = sanitizeBio(details.bio.orEmpty())
+                    sessionManager.updateBio(bio)
+                    val profileImage = details.profilePictureUrl
+                    _state.update { current ->
+                        if (current.initialBio.isNotEmpty()) {
+                            current
+                        } else {
+                            current.copy(
+                                bioInput = bio,
+                                initialBio = bio,
+                                profileImageUrl = profileImage ?: current.profileImageUrl,
+                            )
+                        }
                     }
+                    if (profileImage != null) {
+                        sessionManager.updateProfilePicture(profileImage)
+                        preferences.putString(PrefKeys.PROFILE_PIC.name, profileImage)
+                    }
+                }.onFailure { error ->
+                    logger.e { "Failed to fetch profile details: ${error.message}" }
                 }
-                if (profileImage != null) {
-                    sessionManager.updateProfilePicture(profileImage)
-                    preferences.putString(PrefKeys.PROFILE_PIC.name, profileImage)
-                }
-            }.onFailure { error ->
-                logger.e { "Failed to fetch profile details: ${error.message}" }
             }
         }
     }

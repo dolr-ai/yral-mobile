@@ -32,6 +32,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
@@ -82,6 +83,7 @@ import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralButtonType
+import com.yral.shared.libs.designsystem.component.YralDragHandle
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralLoader
@@ -171,19 +173,28 @@ fun ProfileMainScreen(
     val followers = viewModel.followers.collectAsLazyPagingItems()
     val following = viewModel.following.collectAsLazyPagingItems()
 
-    val followedSuccessfully = stringResource(DesignRes.string.started_following, state.accountInfo?.displayName ?: "")
+    val followedSuccessfully =
+        stringResource(DesignRes.string.started_following, state.accountInfo?.displayName ?: "")
     LaunchedEffect(Unit) {
         viewModel.profileEvents.collect { event ->
             when (event) {
                 is ProfileEvents.FollowedSuccessfully -> {
                     ToastManager.showSuccess(type = ToastType.Small(message = followedSuccessfully))
-                    followers.refresh()
-                    following.refresh()
+                    if (state.isOwnProfile) {
+                        following.refresh()
+                    } else {
+                        followers.refresh()
+                    }
                 }
+
                 is ProfileEvents.UnfollowedSuccessfully -> {
-                    followers.refresh()
-                    following.refresh()
+                    if (state.isOwnProfile) {
+                        following.refresh()
+                    } else {
+                        followers.refresh()
+                    }
                 }
+
                 is ProfileEvents.Failed -> {
                     ToastManager.showError(type = ToastType.Small(message = event.message))
                 }
@@ -259,13 +270,14 @@ fun ProfileMainScreen(
         modifier =
             modifier
                 .fillMaxSize()
-                .background(Color.Black),
+                .background(MaterialTheme.colorScheme.primaryContainer),
     ) {
         when (val videoViewState = state.videoView) {
             is VideoViewState.ViewingReels -> {
                 if (profileVideos.itemCount > 0) {
                     val msgFeedVideoShare = stringResource(DesignRes.string.msg_feed_video_share)
-                    val msgFeedVideoShareDesc = stringResource(DesignRes.string.msg_feed_video_share_desc)
+                    val msgFeedVideoShareDesc =
+                        stringResource(DesignRes.string.msg_feed_video_share_desc)
                     ProfileReelPlayer(
                         reelVideos = profileVideos,
                         initialPage =
@@ -319,6 +331,7 @@ fun ProfileMainScreen(
                     viewModel.closeVideoReel()
                 }
             }
+
             VideoViewState.None -> {
                 MainContent(
                     modifier = Modifier.fillMaxSize(),
@@ -329,17 +342,14 @@ fun ProfileMainScreen(
                     followers = followers,
                     following = following,
                     deletingVideoId = deletingVideoId,
-                    callbacks =
-                        MainContentCallbacks(
-                            uploadVideo = {
-                                viewModel.uploadVideoClicked()
-                                component.onUploadVideoClick()
-                            },
-                            openAccount = { component.openAccount() },
-                            openEditProfile = { component.openEditProfile() },
-                            onBackClicked = { component.onBackClicked() },
-                            onFollowersSectionClick = { followerSheetTab = it },
-                        ),
+                    uploadVideo = {
+                        viewModel.uploadVideoClicked()
+                        component.onUploadVideoClick()
+                    },
+                    openAccount = { component.openAccount() },
+                    openEditProfile = { component.openEditProfile() },
+                    onBackClicked = { component.onBackClicked() },
+                    onFollowersSectionClick = { followerSheetTab = it },
                 )
             }
         }
@@ -358,6 +368,7 @@ fun ProfileMainScreen(
                 onDelete = { viewModel.deleteVideo() },
             )
         }
+
         is DeleteConfirmationState.Error -> {
             YralErrorMessage(
                 title = stringResource(DesignRes.string.oops),
@@ -368,6 +379,7 @@ fun ProfileMainScreen(
                 sheetState = bottomSheetState,
             )
         }
+
         DeleteConfirmationState.None, is DeleteConfirmationState.InProgress -> Unit
     }
 
@@ -401,6 +413,7 @@ fun ProfileMainScreen(
                         showDragHandle = true,
                     )
                 }
+
                 UiState.Initial,
                 is UiState.InProgress,
                 is UiState.Success,
@@ -415,6 +428,7 @@ fun ProfileMainScreen(
                         totalEngagedViews = totalEngagedViews,
                     )
                 }
+
                 else -> Unit
             }
         }
@@ -458,26 +472,7 @@ fun ProfileMainScreen(
         YralBottomSheet(
             bottomSheetState = followersSheetState,
             onDismissRequest = { followerSheetTab = null },
-            dragHandle = {
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(top = 12.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Box(
-                        modifier =
-                            Modifier
-                                .width(32.dp)
-                                .height(2.dp)
-                                .background(
-                                    color = YralColors.Neutral500,
-                                    shape = RoundedCornerShape(50.dp),
-                                ),
-                    )
-                }
-            },
+            dragHandle = { YralDragHandle() },
         ) {
             Box(
                 modifier =
@@ -511,15 +506,6 @@ typealias LoginBottomSheetComposable = @Composable (
 ) -> Unit
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
-private data class MainContentCallbacks(
-    val uploadVideo: () -> Unit,
-    val openAccount: () -> Unit,
-    val openEditProfile: () -> Unit,
-    val onBackClicked: () -> Unit,
-    val onFollowersSectionClick: (FollowersSheetTab) -> Unit,
-)
-
-@Suppress("LongMethod", "CyclomaticComplexMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MainContent(
@@ -531,15 +517,19 @@ private fun MainContent(
     followers: LazyPagingItems<PagedFollowerItem>?,
     following: LazyPagingItems<PagedFollowerItem>?,
     deletingVideoId: String,
-    callbacks: MainContentCallbacks,
+    uploadVideo: () -> Unit,
+    openAccount: () -> Unit,
+    openEditProfile: () -> Unit,
+    onBackClicked: () -> Unit,
+    onFollowersSectionClick: (FollowersSheetTab) -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader(
             isOwnProfile = state.isOwnProfile,
             userName = state.accountInfo?.displayName,
             isWalletEnabled = state.isWalletEnabled,
-            openAccount = callbacks.openAccount,
-            onBack = callbacks.onBackClicked,
+            openAccount = openAccount,
+            onBack = onBackClicked,
         )
         state.accountInfo?.let { info ->
             val followersCount =
@@ -563,26 +553,28 @@ private fun MainContent(
                 totalFollowers = followersCount,
                 totalFollowing = followingCount,
                 isSocialSignIn = state.isLoggedIn,
-                showLoginPrompt = false,
+                showLogin = false,
                 bio = info.bio,
                 showEditProfile = state.isOwnProfile && state.isLoggedIn,
-                onEditProfileClicked = callbacks.openEditProfile,
+                onEditProfileClicked = openEditProfile,
                 showFollow = !state.isOwnProfile && state.isLoggedIn,
                 isFollowing = state.isFollowing,
                 isFollowInProgress = state.isFollowInProgress,
                 onFollowClicked = { viewModel.followUnfollow() },
-                onFollowersClick = { callbacks.onFollowersSectionClick(FollowersSheetTab.Followers) },
-                onFollowingClick = { callbacks.onFollowersSectionClick(FollowersSheetTab.Following) },
+                onFollowersClick = { onFollowersSectionClick(FollowersSheetTab.Followers) },
+                onFollowingClick = { onFollowersSectionClick(FollowersSheetTab.Following) },
             )
         }
         when (profileVideos.loadState.refresh) {
             is LoadState.Loading -> {
                 LoadingContent()
             }
+
             is LoadState.Error -> {
                 if (state.manualRefreshTriggered) viewModel.setManualRefreshTriggered(false)
                 ErrorContent(message = stringResource(Res.string.error_loading_videos))
             }
+
             is LoadState.NotLoading -> {
                 if (!state.isLoggedIn) {
                     LockedProfileContent(
@@ -601,7 +593,7 @@ private fun MainContent(
                         profileVideos = profileVideos,
                         isOwnProfile = state.isOwnProfile,
                         deletingVideoId = deletingVideoId,
-                        uploadVideo = callbacks.uploadVideo,
+                        uploadVideo = uploadVideo,
                         openVideoReel = { viewModel.openVideoReel(it) },
                         onDeleteVideo = {
                             viewModel.confirmDelete(
@@ -808,8 +800,6 @@ private fun EmptyStateContent(
         YralGradientButton(
             modifier = Modifier.width(236.dp),
             text = stringResource(Res.string.create_ai_video),
-            buttonHeight = 42.dp,
-            fillMaxWidth = false,
             onClick = uploadVideo,
         )
     }
@@ -859,8 +849,6 @@ private fun LockedProfileContent(
         YralGradientButton(
             modifier = Modifier.width(236.dp),
             text = stringResource(DesignRes.string.login),
-            buttonHeight = 42.dp,
-            fillMaxWidth = false,
             onClick = onLoginClick,
         )
     }
@@ -927,12 +915,14 @@ private fun PagingAppendIndicator(
         is LoadState.Loading -> {
             PagingLoadingIndicator(modifier = modifier)
         }
+
         is LoadState.Error -> {
             PagingErrorIndicator(
                 modifier = modifier,
                 onRetry = onRetry,
             )
         }
+
         is LoadState.NotLoading -> {}
     }
 }
