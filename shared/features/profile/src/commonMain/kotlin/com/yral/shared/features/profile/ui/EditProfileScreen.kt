@@ -177,9 +177,6 @@ fun EditProfileScreen(
                             val inBio = bioBounds?.contains(position) == true
 
                             if (!inUsername && !inBio) {
-                                if (state.isUsernameFocused) {
-                                    viewModel.revertUsernameChange()
-                                }
                                 focusManager.clearFocus()
                             }
                         }
@@ -263,15 +260,26 @@ fun EditProfileScreen(
                 EmailSection(email = state.emailId)
                 Spacer(modifier = Modifier.height(24.dp))
 
+                val sanitizedUsername = remember(state.usernameInput) { state.usernameInput.trim().removePrefix("@") }
+                val sanitizedBio = remember(state.bioInput) { state.bioInput.trim() }
+                val hasPendingChanges =
+                    sanitizedUsername != state.initialUsername || sanitizedBio != state.initialBio
+                val isButtonEnabled =
+                    hasPendingChanges &&
+                        state.isUsernameValid &&
+                        !state.isSavingProfile &&
+                        !state.isUploadingProfileImage
+                val saveButtonState =
+                    when {
+                        state.isSavingProfile || state.isUploadingProfileImage -> YralButtonState.Loading
+                        isButtonEnabled -> YralButtonState.Enabled
+                        else -> YralButtonState.Disabled
+                    }
+
                 YralGradientButton(
                     modifier = Modifier.fillMaxWidth(),
                     text = stringResource(DesignRes.string.save_changes),
-                    buttonState =
-                        if (state.isSavingProfile || state.isUploadingProfileImage) {
-                            YralButtonState.Loading
-                        } else {
-                            YralButtonState.Enabled
-                        },
+                    buttonState = saveButtonState,
                     onClick = handleSave,
                 )
                 Spacer(modifier = Modifier.height(24.dp))

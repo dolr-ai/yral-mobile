@@ -49,9 +49,10 @@ fun AccountInfoView(
     totalFollowing: Long? = null,
     bio: String? = null,
     isSocialSignIn: Boolean,
+    showLoginPrompt: Boolean = true,
     loginText: String = stringResource(Res.string.login),
     loginSubText: String = stringResource(Res.string.anonymous_account_setup),
-    onLoginClicked: () -> Unit,
+    onLoginClicked: () -> Unit = {},
     showEditProfile: Boolean = false,
     onEditProfileClicked: () -> Unit = {},
     showFollow: Boolean = false,
@@ -150,7 +151,7 @@ fun AccountInfoView(
             )
         }
         when {
-            !isSocialSignIn -> {
+            !isSocialSignIn && showLoginPrompt -> {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),

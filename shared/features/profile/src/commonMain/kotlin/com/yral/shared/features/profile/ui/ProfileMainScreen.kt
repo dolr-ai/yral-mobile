@@ -116,6 +116,8 @@ import yral_mobile.shared.features.profile.generated.resources.profile_empty_sub
 import yral_mobile.shared.features.profile.generated.resources.profile_empty_title
 import yral_mobile.shared.features.profile.generated.resources.profile_locked_subtitle
 import yral_mobile.shared.features.profile.generated.resources.profile_locked_title
+import yral_mobile.shared.features.profile.generated.resources.profile_view_locked_subtitle
+import yral_mobile.shared.features.profile.generated.resources.profile_view_locked_title
 import yral_mobile.shared.features.profile.generated.resources.video_will_be_deleted_permanently
 import yral_mobile.shared.features.profile.generated.resources.white_heart
 import yral_mobile.shared.libs.designsystem.generated.resources.account_nav
@@ -125,7 +127,6 @@ import yral_mobile.shared.libs.designsystem.generated.resources.delete
 import yral_mobile.shared.libs.designsystem.generated.resources.error_data_not_loaded
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_views
 import yral_mobile.shared.libs.designsystem.generated.resources.login
-import yral_mobile.shared.libs.designsystem.generated.resources.login_to_follow_subtext
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.my_profile
@@ -557,17 +558,16 @@ private fun MainContent(
                 totalFollowers = followersCount,
                 totalFollowing = followingCount,
                 isSocialSignIn = state.isLoggedIn,
-                loginSubText = stringResource(DesignRes.string.login_to_follow_subtext),
-                onLoginClicked = { viewModel.setBottomSheetType(ProfileBottomSheet.SignUp) },
-                showEditProfile = state.isOwnProfile,
+                showLoginPrompt = false,
+                bio = info.bio,
+                showEditProfile = state.isOwnProfile && state.isLoggedIn,
                 onEditProfileClicked = callbacks.openEditProfile,
-                showFollow = !state.isOwnProfile,
+                showFollow = !state.isOwnProfile && state.isLoggedIn,
                 isFollowing = state.isFollowing,
                 isFollowInProgress = state.isFollowInProgress,
                 onFollowClicked = { viewModel.followUnfollow() },
                 onFollowersClick = { callbacks.onFollowersSectionClick(FollowersSheetTab.Followers) },
                 onFollowingClick = { callbacks.onFollowersSectionClick(FollowersSheetTab.Following) },
-                bio = info.bio,
             )
         }
         when (profileVideos.loadState.refresh) {
@@ -579,11 +579,12 @@ private fun MainContent(
                 ErrorContent(message = stringResource(Res.string.error_loading_videos))
             }
             is LoadState.NotLoading -> {
-                if (state.isOwnProfile && !state.isLoggedIn) {
+                if (!state.isLoggedIn) {
                     LockedProfileContent(
                         onLoginClick = {
                             viewModel.setBottomSheetType(ProfileBottomSheet.SignUp)
                         },
+                        isOwnProfile = state.isOwnProfile,
                     )
                 } else {
                     if (state.manualRefreshTriggered) {
@@ -810,7 +811,10 @@ private fun EmptyStateContent(
 }
 
 @Composable
-private fun LockedProfileContent(onLoginClick: () -> Unit) {
+private fun LockedProfileContent(
+    onLoginClick: () -> Unit,
+    isOwnProfile: Boolean,
+) {
     Column(
         modifier =
             Modifier
@@ -820,18 +824,29 @@ private fun LockedProfileContent(onLoginClick: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
+        val titleRes =
+            if (isOwnProfile) {
+                Res.string.profile_locked_title
+            } else {
+                Res.string.profile_view_locked_title
+            }
+        val subtitleRes =
+            if (isOwnProfile) {
+                Res.string.profile_locked_subtitle
+            } else {
+                Res.string.profile_view_locked_subtitle
+            }
+
         Text(
-            text = stringResource(Res.string.profile_locked_title),
-            style =
-                LocalAppTopography.current.mdSemiBold,
+            text = stringResource(titleRes),
+            style = LocalAppTopography.current.mdSemiBold,
             color = YralColors.NeutralTextPrimary,
             textAlign = TextAlign.Center,
         )
         Spacer(modifier = Modifier.height(10.dp))
         Text(
-            text = stringResource(Res.string.profile_locked_subtitle),
-            style =
-                LocalAppTopography.current.baseRegular,
+            text = stringResource(subtitleRes),
+            style = LocalAppTopography.current.baseRegular,
             color = YralColors.NeutralTextSecondary,
             textAlign = TextAlign.Center,
         )
