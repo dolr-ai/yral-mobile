@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -34,7 +33,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetState
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.pullToRefreshIndicator
@@ -53,8 +51,6 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -69,9 +65,8 @@ import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.profile.ui.followers.FollowersBottomSheet
-import com.yral.shared.features.profile.ui.followers.FollowersSheetTab
-import com.yral.shared.features.profile.ui.followers.FollowersSheetUi
 import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
+import com.yral.shared.features.profile.viewmodel.FollowersSheetTab
 import com.yral.shared.features.profile.viewmodel.ProfileBottomSheet
 import com.yral.shared.features.profile.viewmodel.ProfileEvents
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
@@ -80,10 +75,8 @@ import com.yral.shared.features.profile.viewmodel.ViewState
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.LoaderSize
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
-import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralButtonType
-import com.yral.shared.libs.designsystem.component.YralDragHandle
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralLoader
@@ -148,14 +141,6 @@ internal const val MAX_LINES_FOR_POST_DESCRIPTION = 5
 internal const val PADDING_BOTTOM_ACCOUNT_INFO = 20
 internal const val SHEET_GROWTH_PER_ITEM = 0.05f
 
-private fun calculateSheetFraction(itemCount: Int): Float {
-    val base = FollowersSheetUi.MIN_HEIGHT_FRACTION
-    val increment = SHEET_GROWTH_PER_ITEM
-    return (base + itemCount * increment).coerceIn(base, FollowersSheetUi.EXPANDED_HEIGHT_FRACTION)
-}
-
-private fun LazyPagingItems<PagedFollowerItem>.snapshotCount(): Int = itemSnapshotList.items.sumOf { it.items.size }
-
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
@@ -212,8 +197,7 @@ fun ProfileMainScreen(
     }
 
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val followersSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
-    var followerSheetTab by remember { mutableStateOf<FollowersSheetTab?>(null) }
+
     LaunchedEffect(loginState) {
         if (loginState is UiState.Failure) {
             viewModel.setBottomSheetType(ProfileBottomSheet.SignUp)
@@ -349,7 +333,7 @@ fun ProfileMainScreen(
                     openAccount = { component.openAccount() },
                     openEditProfile = { component.openEditProfile() },
                     onBackClicked = { component.onBackClicked() },
-                    onFollowersSectionClick = { followerSheetTab = it },
+                    onFollowersSectionClick = { viewModel.updateFollowSheetTab(it) },
                 )
             }
         }
@@ -383,6 +367,7 @@ fun ProfileMainScreen(
         DeleteConfirmationState.None, is DeleteConfirmationState.InProgress -> Unit
     }
 
+    val followersSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val extraSheetState = rememberModalBottomSheetState()
     var extraSheetLink by remember { mutableStateOf("") }
     when (val bottomSheet = state.bottomSheet) {
@@ -432,6 +417,22 @@ fun ProfileMainScreen(
                 else -> Unit
             }
         }
+
+        is ProfileBottomSheet.FollowDetails -> {
+            state.accountInfo?.let { accountInfo ->
+                FollowersBottomSheet(
+                    sheetState = followersSheetState,
+                    onDismissRequest = { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
+                    username = accountInfo.displayName,
+                    initialTab = bottomSheet.tab,
+                    followers = followers,
+                    following = following,
+                    followLoading = state.followLoading,
+                    onTabSelected = { viewModel.updateFollowSheetTab(it) },
+                    onFollowToggle = viewModel::toggleFollowForPrincipal,
+                )
+            }
+        }
     }
     if (extraSheetLink.isNotEmpty()) {
         YralWebViewBottomSheet(
@@ -439,61 +440,6 @@ fun ProfileMainScreen(
             bottomSheetState = extraSheetState,
             onDismissRequest = { extraSheetLink = "" },
         )
-    }
-
-    val accountInfo = state.accountInfo
-    if (followerSheetTab != null && accountInfo != null) {
-        val density = LocalDensity.current
-        val screenHeight =
-            with(density) {
-                LocalWindowInfo.current.containerSize.height
-                    .toDp()
-            }
-        val maxSheetHeight = screenHeight * FollowersSheetUi.EXPANDED_HEIGHT_FRACTION
-        val currentListSize =
-            when (followerSheetTab!!) {
-                FollowersSheetTab.Followers -> followers.snapshotCount()
-                FollowersSheetTab.Following -> following.snapshotCount()
-            }
-        val minSheetHeight =
-            (screenHeight * calculateSheetFraction(currentListSize)).coerceAtMost(maxSheetHeight)
-        LaunchedEffect(followerSheetTab) {
-            if (followerSheetTab != null) {
-                if (!followersSheetState.isVisible) {
-                    followersSheetState.show()
-                }
-                if (followersSheetState.hasPartiallyExpandedState &&
-                    followersSheetState.currentValue != SheetValue.PartiallyExpanded
-                ) {
-                    followersSheetState.partialExpand()
-                }
-            }
-        }
-        YralBottomSheet(
-            bottomSheetState = followersSheetState,
-            onDismissRequest = { followerSheetTab = null },
-            dragHandle = { YralDragHandle() },
-        ) {
-            Box(
-                modifier =
-                    Modifier.heightIn(
-                        min = minSheetHeight,
-                        max = maxSheetHeight,
-                    ),
-            ) {
-                FollowersBottomSheet(
-                    username = accountInfo.displayName,
-                    initialTab = followerSheetTab!!,
-                    followers = followers,
-                    following = following,
-                    minSheetHeight = minSheetHeight,
-                    maxSheetHeight = maxSheetHeight,
-                    followLoading = state.followLoading,
-                    onTabSelected = { followerSheetTab = it },
-                    onFollowToggle = viewModel::toggleFollowForPrincipal,
-                )
-            }
-        }
     }
 }
 
