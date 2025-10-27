@@ -79,12 +79,12 @@ internal fun UpsPostDetailsForFrontend.toFeedDetails(
     )
 }
 
-internal fun PostDetailsWithUserInfo.toFeedDetails(videoUid: String): FeedDetails {
-    val videoUrl = "$CLOUD_FLARE_PREFIX$videoUid$CLOUD_FLARE_SUFFIX_MP4"
-    val thumbnailUrl = "$CLOUD_FLARE_PREFIX$videoUid$THUMBNAIL_SUFFIX"
+internal fun PostDetailsWithUserInfo.toFeedDetails(): FeedDetails {
+    val videoUrl = "$CLOUD_FLARE_PREFIX$uid$CLOUD_FLARE_SUFFIX_MP4"
+    val thumbnailUrl = "$CLOUD_FLARE_PREFIX$uid$THUMBNAIL_SUFFIX"
     return FeedDetails(
         postID = postId,
-        videoID = videoUid,
+        videoID = uid,
         canisterID = canisterId,
         principalID = posterPrincipal,
         url = videoUrl,

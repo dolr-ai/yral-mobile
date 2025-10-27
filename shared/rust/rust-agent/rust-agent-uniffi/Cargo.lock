@@ -1408,7 +1408,7 @@ checksum = "0cc23270f6e1808e30a928bdc84dea0b9b4136a8bc82338574f23baf47bbd280"
 [[package]]
 name = "global-constants"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#1a62438b589c0ac182f51345af727153bb6d2996"
+source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#28a9e042fa81ac3446cc81efdbfc07eaae546178"
 dependencies = [
  "candid",
  "num-bigint",
@@ -1536,7 +1536,7 @@ dependencies = [
 [[package]]
 name = "hon-worker-common"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#1a62438b589c0ac182f51345af727153bb6d2996"
+source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#28a9e042fa81ac3446cc81efdbfc07eaae546178"
 dependencies = [
  "candid",
  "global-constants",
@@ -4086,7 +4086,7 @@ checksum = "b7c388c1b5e93756d0c740965c41e8822f866621d41acbdf6336a6a168f8840c"
 [[package]]
 name = "sns-validation"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#1a62438b589c0ac182f51345af727153bb6d2996"
+source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#28a9e042fa81ac3446cc81efdbfc07eaae546178"
 dependencies = [
  "candid",
  "humantime",
@@ -5350,7 +5350,7 @@ dependencies = [
 [[package]]
 name = "yral-canisters-client"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#1a62438b589c0ac182f51345af727153bb6d2996"
+source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#28a9e042fa81ac3446cc81efdbfc07eaae546178"
 dependencies = [
  "anyhow",
  "candid",
@@ -5371,7 +5371,7 @@ dependencies = [
 [[package]]
 name = "yral-canisters-common"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#1a62438b589c0ac182f51345af727153bb6d2996"
+source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#28a9e042fa81ac3446cc81efdbfc07eaae546178"
 dependencies = [
  "async-trait",
  "candid",
@@ -5408,7 +5408,7 @@ dependencies = [
 [[package]]
 name = "yral-identity"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#1a62438b589c0ac182f51345af727153bb6d2996"
+source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#28a9e042fa81ac3446cc81efdbfc07eaae546178"
 dependencies = [
  "candid",
  "getrandom 0.2.16",
@@ -5423,7 +5423,7 @@ dependencies = [
 [[package]]
 name = "yral-metadata-client"
 version = "0.1.0"
-source = "git+https://github.com/yral-dapp/yral-metadata?branch=master#b19adb6993b0244254e66800a32b3d0ab19edbd4"
+source = "git+https://github.com/yral-dapp/yral-metadata?branch=master#9e1ecbfc4ada80f18fbe9abfc32b6281f90f8f75"
 dependencies = [
  "ic-agent",
  "reqwest",
@@ -5435,7 +5435,7 @@ dependencies = [
 [[package]]
 name = "yral-metadata-types"
 version = "0.1.0"
-source = "git+https://github.com/yral-dapp/yral-metadata?branch=master#b19adb6993b0244254e66800a32b3d0ab19edbd4"
+source = "git+https://github.com/yral-dapp/yral-metadata?branch=master#9e1ecbfc4ada80f18fbe9abfc32b6281f90f8f75"
 dependencies = [
  "candid",
  "chrono",
@@ -5475,7 +5475,7 @@ dependencies = [
 [[package]]
 name = "yral-pump-n-dump-common"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#1a62438b589c0ac182f51345af727153bb6d2996"
+source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#28a9e042fa81ac3446cc81efdbfc07eaae546178"
 dependencies = [
  "candid",
  "serde",
@@ -5488,7 +5488,7 @@ dependencies = [
 [[package]]
 name = "yral-types"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#1a62438b589c0ac182f51345af727153bb6d2996"
+source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#28a9e042fa81ac3446cc81efdbfc07eaae546178"
 dependencies = [
  "ic-agent",
  "k256",
@@ -5501,7 +5501,7 @@ dependencies = [
 [[package]]
 name = "yral-username-gen"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#1a62438b589c0ac182f51345af727153bb6d2996"
+source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#28a9e042fa81ac3446cc81efdbfc07eaae546178"
 dependencies = [
  "candid",
  "rand 0.9.2",
