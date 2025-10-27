@@ -20,6 +20,7 @@ import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.utils.getAccountInfo
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.data.feed.domain.FeedDetails
@@ -194,7 +195,8 @@ class ProfileViewModel(
             emptyFlow()
         }
 
-    val followStatus = sessionManager.observeSessionProperty { it.followedPrincipals to it.unFollowedPrincipals }
+    val followStatus =
+        sessionManager.observeSessionProperty { it.followedPrincipals to it.unFollowedPrincipals }
 
     init {
         _state.update {
@@ -206,6 +208,7 @@ class ProfileViewModel(
                         username = canisterData.username,
                         bio = null, // populated for own profile via session observer
                     ),
+                viewerPrincipal = sessionManager.userPrincipal,
             )
         }
         val isOwnProfile = canisterData.userPrincipalId == sessionManager.userPrincipal
@@ -223,6 +226,17 @@ class ProfileViewModel(
                     .observeSessionState(transform = { sessionManager.getAccountInfo() })
                     .collect { info -> _state.update { current -> current.copy(accountInfo = info) } }
             }
+        }
+        viewModelScope.launch {
+            sessionManager
+                .observeSessionState { state ->
+                    when (state) {
+                        is SessionState.SignedIn -> state.session.userPrincipal
+                        else -> null
+                    }
+                }.collect { principal ->
+                    _state.update { current -> current.copy(viewerPrincipal = principal) }
+                }
         }
         viewModelScope.launch {
             sessionManager
@@ -272,7 +286,9 @@ class ProfileViewModel(
                     val currentInfo = current.accountInfo
                     val newInfo =
                         currentInfo?.copy(
-                            profilePic = updatedPic?.takeUnless { it.isBlank() } ?: currentInfo.profilePic,
+                            profilePic =
+                                updatedPic?.takeUnless { it.isBlank() }
+                                    ?: currentInfo.profilePic,
                             bio = bio?.takeUnless { it.isBlank() } ?: currentInfo.bio,
                         )
                     current.copy(accountInfo = newInfo)
@@ -369,7 +385,11 @@ class ProfileViewModel(
                 }.onFailure { error ->
                     _state.update {
                         it.copy(
-                            deleteConfirmation = DeleteConfirmationState.Error(deleteRequest, error),
+                            deleteConfirmation =
+                                DeleteConfirmationState.Error(
+                                    deleteRequest,
+                                    error,
+                                ),
                         )
                     }
                 }
@@ -575,7 +595,11 @@ class ProfileViewModel(
                         sessionManager.removePrincipalFromFollow(targetPrincipal)
                     }
                     result.onFailure { error ->
-                        profileEventsChannel.trySend(ProfileEvents.Failed(error.message ?: "Unfollow failed"))
+                        profileEventsChannel.trySend(
+                            ProfileEvents.Failed(
+                                error.message ?: "Unfollow failed",
+                            ),
+                        )
                     }
                 } else {
                     val result =
@@ -591,7 +615,11 @@ class ProfileViewModel(
                         sessionManager.addPrincipalToFollow(targetPrincipal)
                     }
                     result.onFailure { error ->
-                        profileEventsChannel.trySend(ProfileEvents.Failed(error.message ?: "Follow failed"))
+                        profileEventsChannel.trySend(
+                            ProfileEvents.Failed(
+                                error.message ?: "Follow failed",
+                            ),
+                        )
                     }
                 }
             } finally {
@@ -657,6 +685,7 @@ class ProfileViewModel(
                         val now = Clock.System.now()
                         now - currentViews.data.lastFetched > VIEWS_REFRESH_THRESHOLD
                     }
+
                     else -> true
                 }
             _state.update {
@@ -664,7 +693,9 @@ class ProfileViewModel(
                     bottomSheet = ProfileBottomSheet.VideoView(videoId = video.videoID),
                     viewsData =
                         if (shouldRefresh) {
-                            it.viewsData.toMutableMap().apply { this[video.videoID] = UiState.InProgress() }
+                            it.viewsData
+                                .toMutableMap()
+                                .apply { this[video.videoID] = UiState.InProgress() }
                         } else {
                             it.viewsData
                         },
@@ -731,6 +762,7 @@ data class ViewState(
     val isFollowInProgress: Boolean = false,
     val viewsData: Map<String, UiState<VideoViews>> = emptyMap(),
     val followLoading: Map<String, Boolean> = emptyMap(),
+    val viewerPrincipal: String? = null,
 )
 
 sealed interface ProfileBottomSheet {
@@ -739,6 +771,7 @@ sealed interface ProfileBottomSheet {
     data class VideoView(
         val videoId: String,
     ) : ProfileBottomSheet
+
     data class FollowDetails(
         val tab: FollowersSheetTab,
     ) : ProfileBottomSheet
