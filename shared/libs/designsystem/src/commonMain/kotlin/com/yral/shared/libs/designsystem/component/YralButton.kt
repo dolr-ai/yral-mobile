@@ -45,12 +45,14 @@ fun YralButton(
     buttonState: YralButtonState = YralButtonState.Enabled,
     loader: LottieRes = LottieRes.YRAL_LOADER,
     paddingValues: PaddingValues = PaddingValues(all = 10.dp),
+    buttonHeight: Dp = 45.dp,
     onClick: () -> Unit,
 ) {
     Row(
         modifier =
             modifier
-                .height(45.dp)
+                .fillMaxWidth()
+                .height(buttonHeight)
                 .background(
                     color = backgroundColor,
                     shape = RoundedCornerShape(8.dp),

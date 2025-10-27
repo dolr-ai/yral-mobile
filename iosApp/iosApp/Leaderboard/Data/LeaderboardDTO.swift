@@ -13,10 +13,11 @@ struct LeaderboardRowDTO: Decodable {
   var position: Int
   let wins: Int
   let reward: Int?
+  let username: String?
 
   enum CodingKeys: String, CodingKey {
     case principalID = "principal_id"
-    case position, wins, reward
+    case position, wins, reward, username
   }
 }
 
@@ -48,7 +49,8 @@ extension LeaderboardRowDTO {
       position: position,
       principalID: principalID,
       wins: wins,
-      reward: reward
+      reward: reward,
+      username: username ?? UsernameGenerator.shared.generateUsername(from: principalID)
     )
   }
 }

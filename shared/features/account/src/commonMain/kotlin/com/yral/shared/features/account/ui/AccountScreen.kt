@@ -52,11 +52,11 @@ import com.yral.shared.features.account.viewmodel.AccountsState
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.account.viewmodel.ErrorType
 import com.yral.shared.libs.arch.presentation.UiState
-import com.yral.shared.libs.designsystem.component.AccountInfoView
-import com.yral.shared.libs.designsystem.component.DeleteConfirmationSheet
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
+import com.yral.shared.libs.designsystem.component.features.AccountInfoView
+import com.yral.shared.libs.designsystem.component.features.DeleteConfirmationSheet
 import com.yral.shared.libs.designsystem.component.getSVGImageModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -175,13 +175,12 @@ private fun AccountScreenContent(
             AccountInfoView(
                 accountInfo = accountInfo,
                 isSocialSignIn = state.isLoggedIn,
-                showEditProfile = false,
                 onLoginClicked = {
                     viewModel.setBottomSheetType(AccountBottomSheet.SignUp)
                     viewModel.accountsTelemetry.signUpClicked(SignupPageName.MENU)
                 },
-                onEditProfileClicked = {},
             )
+            Spacer(modifier = Modifier.height(8.dp))
         } else {
             Spacer(modifier = Modifier.height(8.dp))
         }

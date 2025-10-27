@@ -23,6 +23,7 @@ use yral_types::delegated_identity::DelegatedIdentityWire;
 use yral_canisters_common::utils::profile::propic_from_principal as inner_propic_from_principal;
 use yral_metadata_client::MetadataClient;
 use yral_metadata_client::DeviceRegistrationToken;
+use yral_metadata_types::SetUserMetadataReqMetadata;
 use yral_canisters_client::rate_limits;
 use yral_canisters_client::rate_limits::RateLimitStatus;
 use yral_canisters_client::rate_limits::RateLimits;
@@ -435,7 +436,64 @@ pub fn is_exceeded_max_number_of_items_allowed_in_one_request(error: PostService
     )
 }
 
-
 pub fn is_created_from_service_canister(canister_principal: Principal) -> bool {
     canister_principal == yral_canisters_client::ic::USER_INFO_SERVICE_ID
+}
+
+pub enum FFIError {
+    AgentError(String),
+    CandidError(String),
+    PrincipalError(String),
+    UnknownError(String)
+}
+
+impl From<PrincipalError> for FFIError {
+    fn from(err: PrincipalError) -> Self {
+        FFIError::PrincipalError(err.to_string())
+    }
+}
+
+impl std::fmt::Display for FFIError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            FFIError::AgentError(msg) => write!(f, "AgentError: {}", msg),
+            FFIError::CandidError(msg) => write!(f, "CandidError: {}", msg),
+            FFIError::PrincipalError(msg) => write!(f, "PrincipalError: {}", msg),
+            FFIError::UnknownError(msg) => write!(f, "UnknownError: {}", msg),
+        }
+    }
+}
+
+impl FFIError {
+    pub fn to_string(&self) -> String {
+        format!("{}", self)
+    }
+}
+
+pub async fn set_user_metadata(
+    identity_data: Vec<u8>,
+    user_canister_id: String,
+    user_name: String,
+) -> std::result::Result<(), FFIError> {
+    RUNTIME
+        .spawn(async move {
+            let identity = delegated_identity_from_bytes(&identity_data)
+                .map_err(|e| FFIError::UnknownError(format!("Failed to parse identity: {:?}", e)))?;
+            let principal = Principal::from_text(&user_canister_id).map_err(FFIError::from)?;
+
+            let client: MetadataClient<false> = MetadataClient::default();
+            let metadata = SetUserMetadataReqMetadata {
+                user_canister_id: principal,
+                user_name,
+            };
+
+            client
+                .set_user_metadata(&identity, metadata)
+                .await
+                .map_err(|e| FFIError::AgentError(format!("Api Error: {:?}", e)))?;
+
+            Ok(())
+        })
+        .await
+        .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
 }

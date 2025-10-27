@@ -7,7 +7,9 @@ import com.yral.shared.features.feed.data.IFeedDataSource
 import com.yral.shared.features.feed.domain.IFeedRepository
 import com.yral.shared.features.feed.domain.useCases.CheckVideoVoteUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsUseCase
+import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsWithCreatorInfoUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchMoreFeedUseCase
+import com.yral.shared.features.feed.domain.useCases.GetAIFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.RequiredUseCases
@@ -21,6 +23,8 @@ val feedModule =
         factoryOf(::GetInitialFeedUseCase)
         factoryOf(::FetchMoreFeedUseCase)
         factoryOf(::FetchFeedDetailsUseCase)
+        factoryOf(::FetchFeedDetailsWithCreatorInfoUseCase)
+        factoryOf(::GetAIFeedUseCase)
         factoryOf(::CheckVideoVoteUseCase)
         viewModelOf(::FeedViewModel)
         factoryOf(::FeedRepository) { bind<IFeedRepository>() }

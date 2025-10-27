@@ -15,6 +15,9 @@ data class FeedDetails(
     var likeCount: ULong,
     var isLiked: Boolean,
     var nsfwProbability: Double?,
+    val isFollowing: Boolean,
+    val isFromServiceCanister: Boolean,
+    val userName: String?,
 ) {
     fun isNSFW(): Boolean = (nsfwProbability ?: 0.0) > NSFW_PROBABILITY
 

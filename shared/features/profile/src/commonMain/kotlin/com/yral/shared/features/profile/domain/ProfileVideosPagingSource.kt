@@ -6,6 +6,9 @@ import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.profile.domain.repository.ProfileRepository
 
 class ProfileVideosPagingSource(
+    private val canisterId: String,
+    private val userPrincipal: String,
+    private val isFromServiceCanister: Boolean,
     private val profileRepository: ProfileRepository,
 ) : PagingSource<ULong, FeedDetails>() {
     override suspend fun load(params: LoadParams<ULong>): LoadResult<ULong, FeedDetails> =
@@ -15,6 +18,9 @@ class ProfileVideosPagingSource(
             val result =
                 profileRepository
                     .getProfileVideos(
+                        canisterId = canisterId,
+                        userPrincipal = userPrincipal,
+                        isFromServiceCanister = isFromServiceCanister,
                         startIndex = startIndex,
                         pageSize = pageSize,
                     )

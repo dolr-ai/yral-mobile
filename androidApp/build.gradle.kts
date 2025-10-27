@@ -14,8 +14,8 @@ android {
     namespace = "com.yral.android"
     defaultConfig {
         applicationId = "com.yral.android"
-        versionCode = 27
-        versionName = "1.9.1"
+        versionCode = 28
+        versionName = "2.0.0"
         ndkVersion = "28.0.13004108"
         buildConfigField(
             type = "String",
@@ -144,7 +144,6 @@ dependencies {
     implementation(projects.shared.rust.service)
     implementation(projects.shared.libs.routing.deeplinkEngine)
     implementation(projects.shared.features.wallet)
-    implementation(projects.shared.libs.formatters)
     implementation(projects.shared.libs.designsystem)
     implementation(projects.shared.features.reportVideo)
     implementation(compose.components.resources)

@@ -54,6 +54,7 @@ struct AccountView: View {
               accountInfo: .constant(info),
               shouldApplySpacing: false,
               showLoginButton: $showLoginButton,
+              showEditProfileButton: Binding(get: { false }, set: { _ in }),
               delegate: self
             )
             .padding(.horizontal, Constants.userInfoHorizontalPadding)
@@ -62,11 +63,13 @@ struct AccountView: View {
               accountInfo: .constant(
                 AccountInfo(
                   imageURL: URL(fileURLWithPath: ""),
-                  canisterID: ""
+                  canisterID: "",
+                  username: ""
                 )
               )
               , shouldApplySpacing: false,
               showLoginButton: $showLoginButton,
+              showEditProfileButton: Binding(get: { false }, set: { _ in }),
               delegate: self
             )
             .padding(.horizontal, Constants.userInfoHorizontalPadding)
@@ -178,6 +181,8 @@ extension AccountView: UserInfoViewProtocol {
       event: AuthScreenViewedEventData(pageName: .menu)
     )
   }
+
+  func editProfilePressed() {}
 }
 
 extension AccountView: SignupSheetProtocol {

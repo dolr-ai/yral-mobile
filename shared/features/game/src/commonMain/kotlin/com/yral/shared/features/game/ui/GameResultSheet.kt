@@ -57,11 +57,7 @@ fun GameResultSheet(
     YralBottomSheet(
         onDismissRequest = onDismissRequest,
         bottomSheetState = bottomSheetState,
-        dragHandle = {
-            DragHandle(
-                color = YralColors.Neutral500,
-            )
-        },
+        dragHandle = { DragHandle(color = YralColors.Neutral500) },
     ) {
         Column(
             modifier =

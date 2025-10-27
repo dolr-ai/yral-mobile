@@ -12,6 +12,7 @@ import P256K
 import AuthenticationServices
 import iosSharedUmbrella
 
+// swiftlint: disable file_length
 // swiftlint: disable type_body_length
 final class DefaultAuthClient: NSObject, AuthClient {
   private(set) var identity: DelegatedIdentity?
@@ -19,6 +20,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
   private(set) var canisterPrincipalString: String?
   private(set) var userPrincipal: Principal?
   private(set) var userPrincipalString: String?
+  private(set) var username: String?
   private(set) var emailId: String?
   private(set) var identityData: Data?
   var isNewUser = false
@@ -104,6 +106,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
         self.identity = identity
         self.canisterPrincipalString = canisterPrincipalString
         self.userPrincipalString = userPrincipalString
+        self.username = UserDefaultsManager.shared.get(for: .username) as String?
         self.canisterPrincipal = try get_principal(canisterPrincipalString.intoRustString())
         self.userPrincipal = try get_principal(userPrincipalString.intoRustString())
         self.isServiceCanister = UserDefaultsManager.shared.get(for: .isServiceCanisterUser) as Bool? ?? false
@@ -227,12 +230,14 @@ final class DefaultAuthClient: NSObject, AuthClient {
     UserDefaultsManager.shared.set(refreshClaims.exp, for: .authRefreshTokenExpiryDateKey)
   }
 
+  // swiftlint: disable function_parameter_count
   func storeSessionData(
     identity: Data,
     canisterPrincipal: String,
     userPrincipal: String,
     email: String?,
-    isServiceCanister: Bool
+    isServiceCanister: Bool,
+    username: String?
   ) {
     do {
       try recordThrowingOperation {
@@ -240,11 +245,26 @@ final class DefaultAuthClient: NSObject, AuthClient {
         try KeychainHelper.store(userPrincipal, for: Constants.keychainUserPrincipal)
         try KeychainHelper.store(canisterPrincipal, for: Constants.keychainCanisterPrincipal)
         UserDefaultsManager.shared.set(isServiceCanister, for: .isServiceCanisterUser)
+        if let username {
+          UserDefaultsManager.shared.set(username, for: .username)
+        }
         guard let email = email else { return }
         try KeychainHelper.store(email, for: Constants.keychainEmail)
       }
     } catch {
       print(error)
+    }
+  }
+  // swiftlint: enable function_parameter_count
+
+  func updateUsername(_ username: String) {
+    self.username = username
+    UserDefaultsManager.shared.set(username, for: .username)
+
+    if let userPrincipal = userPrincipalString {
+      Task {
+        try? await firebaseService.update(username: username, forPrincipal: userPrincipal)
+      }
     }
   }
 
@@ -279,6 +299,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
       let canisterPrincipalString = canistersWrapper.get_canister_principal_string().toString()
       let userPrincipal = canistersWrapper.get_user_principal()
       let userPrincipalString = canistersWrapper.get_user_principal_string().toString()
+      let username = canistersWrapper.get_username()?.toString()
       crashReporter.setUserId(userPrincipalString)
       await MainActor.run {
         self.identity = identity
@@ -286,6 +307,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
         self.canisterPrincipalString = canisterPrincipalString
         self.userPrincipal = userPrincipal
         self.userPrincipalString = userPrincipalString
+        self.username = username
         self.isServiceCanister = canistersWrapper.is_created_from_service_canister()
         self.emailId = email
         self.storeSessionData(
@@ -293,7 +315,8 @@ final class DefaultAuthClient: NSObject, AuthClient {
           canisterPrincipal: canisterPrincipalString,
           userPrincipal: userPrincipalString,
           email: email,
-          isServiceCanister: self.isServiceCanister
+          isServiceCanister: self.isServiceCanister,
+          username: username
         )
       }
       await updateAuthState(for: type, withCoins: .zero, isFetchingCoins: true)
@@ -314,6 +337,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
     try? KeychainHelper.deleteItem(for: Constants.keychainRefreshToken)
     UserDefaultsManager.shared.remove(.authIdentityExpiryDateKey)
     UserDefaultsManager.shared.remove(.authRefreshTokenExpiryDateKey)
+    UserDefaultsManager.shared.remove(.username)
     do {
       try await deregisterForNotifications()
     } catch {
@@ -325,6 +349,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
     canisterPrincipalString = nil
     userPrincipal = nil
     userPrincipalString = nil
+    username = nil
     identityData = nil
     UserDefaultsManager.shared.set(false, for: DefaultsKey.userDefaultsLoggedIn)
     AnalyticsModuleKt.getAnalyticsManager().reset()
@@ -397,3 +422,4 @@ final class DefaultAuthClient: NSObject, AuthClient {
   }
 }
 // swiftlint: enable type_body_length
+// swiftlint: enable file_length

@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.paint
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
@@ -35,13 +36,14 @@ fun YralGradientButton(
     buttonState: YralButtonState = YralButtonState.Enabled,
     buttonType: YralButtonType = YralButtonType.Pink,
     text: String,
+    buttonHeight: Dp = 45.dp,
     onClick: () -> Unit,
 ) {
     Row(
         modifier =
             modifier
                 .fillMaxWidth()
-                .height(45.dp)
+                .height(buttonHeight)
                 .paint(
                     painter = painterResource(getButtonBackground(buttonType, buttonState)),
                     contentScale = ContentScale.FillBounds,
@@ -53,24 +55,26 @@ fun YralGradientButton(
         horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AnimatedVisibility(
-            visible = buttonState != YralButtonState.Loading,
-            enter = fadeIn(),
-            exit = fadeOut(),
-        ) {
-            YralMaskedVectorTextV2(
-                text = text,
-                drawableRes = getButtonTextBackground(buttonType, buttonState),
-                textStyle =
-                    LocalAppTopography
-                        .current
-                        .mdBold
-                        .plus(
-                            TextStyle(
-                                textAlign = TextAlign.Center,
+        if (text.isNotEmpty()) {
+            AnimatedVisibility(
+                visible = buttonState != YralButtonState.Loading,
+                enter = fadeIn(),
+                exit = fadeOut(),
+            ) {
+                YralMaskedVectorTextV2(
+                    text = text,
+                    drawableRes = getButtonTextBackground(buttonType, buttonState),
+                    textStyle =
+                        LocalAppTopography
+                            .current
+                            .mdBold
+                            .plus(
+                                TextStyle(
+                                    textAlign = TextAlign.Center,
+                                ),
                             ),
-                        ),
-            )
+                )
+            }
         }
         AnimatedVisibility(
             visible = buttonState == YralButtonState.Loading,

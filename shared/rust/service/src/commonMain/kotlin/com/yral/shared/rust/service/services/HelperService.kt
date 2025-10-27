@@ -6,7 +6,6 @@ import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.getOrThrow
 import com.yral.shared.koin.koinInstance
-import com.yral.shared.uniffi.generated.LogLevel
 import com.yral.shared.uniffi.generated.LoggerException
 
 object HelperService {
@@ -93,12 +92,12 @@ object HelperService {
             Err(mappedError)
         }
 
-    fun initRustLogger() {
+    fun initRustLogger(logLevel: RustLogLevel) {
         try {
             com.yral.shared.uniffi.generated
                 .initRustLogger(
                     customTag = "YralMobileRust",
-                    maxLevel = LogLevel.DEBUG,
+                    maxLevel = logLevel.toLogLevel(),
                 )
             startLogForwarding()
             logger.i { "Rust logger initialized successfully" }

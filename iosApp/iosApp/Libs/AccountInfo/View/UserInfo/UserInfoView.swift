@@ -12,6 +12,7 @@ import iosSharedUmbrella
 struct UserInfoView: View {
   @Binding var accountInfo: AccountInfo?
   @Binding var showLoginButton: Bool
+  @Binding var showEditProfileButton: Bool
   var shouldApplySpacing: Bool
   var delegate: UserInfoViewProtocol?
 
@@ -19,11 +20,13 @@ struct UserInfoView: View {
     accountInfo: Binding<AccountInfo?>,
     shouldApplySpacing: Bool,
     showLoginButton: Binding<Bool>,
+    showEditProfileButton: Binding<Bool>,
     delegate: UserInfoViewProtocol?
   ) {
     self._accountInfo = accountInfo
     self.shouldApplySpacing = shouldApplySpacing
     self._showLoginButton = showLoginButton
+    self._showEditProfileButton = showEditProfileButton
     self.delegate = delegate
   }
 
@@ -40,12 +43,13 @@ struct UserInfoView: View {
           )
           .clipShape(Circle())
           .overlay(Circle().stroke(Color.white, lineWidth: .one))
-        Text(accountInfo?.canisterID ?? "")
+        Text(accountInfo?.username ?? "")
           .font(Constants.profileLabelFont)
           .foregroundColor(Constants.profileLabelColor)
           .lineLimit(.two)
       }
       .frame(maxWidth: .infinity, alignment: .leading)
+
       if showLoginButton {
         Button {
           delegate?.loginPressed()
@@ -61,7 +65,27 @@ struct UserInfoView: View {
             .background(Constants.loginButtonGradient)
             .cornerRadius(Constants.loginButtonCornerRadius)
         }
+      } else if showEditProfileButton {
+        Button {
+          delegate?.editProfilePressed()
+        } label: {
+          Text(Constants.editButtonTitle)
+            .font(Constants.editButtonFont)
+            .foregroundColor(Constants.editButtonColor)
+            .padding(.vertical, Constants.editButtonVertical)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .background(
+              RoundedRectangle(cornerRadius: Constants.editButtonCornerRadius)
+                .fill(Constants.editButtonBackground)
+            )
+            .overlay(
+              RoundedRectangle(cornerRadius: Constants.editButtonCornerRadius)
+                .stroke(Constants.editButtonBorder, lineWidth: .one)
+            )
+        }
+        .padding(.vertical, -Constants.editButtonParentVertical)
       }
+
       Rectangle()
         .fill(Constants.dividerColor)
         .frame(height: .one)
@@ -94,9 +118,19 @@ extension UserInfoView {
     static let loginButtonHeight = 45.0
     static let loginButtonCornerRadius: CGFloat = 8
     static let dividerColor = YralColor.grey800.swiftUIColor
+
+    static let editButtonTitle = "Edit Profile"
+    static let editButtonFont = YralFont.pt14.semiBold.swiftUIFont
+    static let editButtonColor = YralColor.grey50.swiftUIColor
+    static let editButtonBackground = YralColor.grey800.swiftUIColor
+    static let editButtonBorder = YralColor.grey700.swiftUIColor
+    static let editButtonCornerRadius = 8.0
+    static let editButtonVertical = 10.0
+    static let editButtonParentVertical = 14.0
   }
 }
 
 protocol UserInfoViewProtocol: Any {
   func loginPressed()
+  func editProfilePressed()
 }
