@@ -112,7 +112,11 @@ fun FeedScreen(
     LaunchedEffect(Unit) {
         component.openPostDetails.collectLatest {
             if (it != null) {
-                viewModel.showDeeplinkedVideoFirst(it.postId, it.canisterId)
+                viewModel.showDeeplinkedVideoFirst(
+                    postId = it.postId,
+                    canisterId = it.canisterId,
+                    publisherUserId = it.publisherUserId,
+                )
             }
         }
     }

@@ -98,6 +98,6 @@ class CoreService(
 
     companion object {
         private const val ANALYTICS_BATCH_SIZE = 5
-        private const val ANALYTICS_FLUSH_MS = 30000L
+        private const val ANALYTICS_FLUSH_MS = 10000L
     }
 }

@@ -119,6 +119,8 @@ local.properties
 # Rust analyzer and other tools
 /rust-agent/target/
 rust-analyzer.json
+/shared/rust/rust-agent/target/rust-analyzer/flycheck0/stderr
+/shared/rust/rust-agent/target/rust-analyzer/flycheck0/stdout
 
 # kotlin
 .kotlin

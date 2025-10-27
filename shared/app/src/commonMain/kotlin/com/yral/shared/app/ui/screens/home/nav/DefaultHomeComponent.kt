@@ -1,5 +1,6 @@
 package com.yral.shared.app.ui.screens.home.nav
 
+import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.router.slot.SlotNavigation
@@ -99,9 +100,10 @@ internal class DefaultHomeComponent(
     override fun onNavigationRequest(appRoute: AppRoute) {
         when (appRoute) {
             is PostDetailsRoute ->
-                navigation.replaceAll(Config.Feed) {
-                    (stack.value.active.instance as? Child.Feed)?.component?.openPostDetails(appRoute)
-                }
+                navigation
+                    .replaceAll(Config.Feed) {
+                        (stack.value.active.instance as? Child.Feed)?.component?.openPostDetails(appRoute)
+                    }.also { Logger.d("LinkSharing") { "Link details received $appRoute" } }
             is Wallet -> onWalletTabClick()
             is Leaderboard -> onLeaderboardTabClick()
             is Profile -> onProfileTabClick()
