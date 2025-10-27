@@ -19,6 +19,7 @@ import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.utils.getAccountInfo
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.data.feed.domain.FeedDetails
@@ -193,6 +194,7 @@ class ProfileViewModel(
                         username = canisterData.username,
                         bio = null, // populated for own profile via session observer
                     ),
+                viewerPrincipal = sessionManager.userPrincipal,
             )
         }
         val isOwnProfile = canisterData.userPrincipalId == sessionManager.userPrincipal
@@ -213,6 +215,17 @@ class ProfileViewModel(
         }
         viewModelScope.launch {
             sessionManager
+                .observeSessionState { state ->
+                    when (state) {
+                        is SessionState.SignedIn -> state.session.userPrincipal
+                        else -> null
+                    }
+                }.collect { principal ->
+                    _state.update { current -> current.copy(viewerPrincipal = principal) }
+                }
+        }
+        viewModelScope.launch {
+            sessionManager
                 .observeSessionPropertyWithDefault(
                     selector = { it.isSocialSignIn },
                     defaultValue = false,
@@ -227,6 +240,7 @@ class ProfileViewModel(
                                 } else {
                                     current.isOwnProfile
                                 },
+                            viewerPrincipal = sessionManager.userPrincipal,
                         )
                     }
                     if (isSocialSignIn && !wasLoggedIn) {
@@ -701,6 +715,7 @@ data class ViewState(
     val isFollowInProgress: Boolean = false,
     val viewsData: Map<String, UiState<VideoViews>> = emptyMap(),
     val followLoading: Map<String, Boolean> = emptyMap(),
+    val viewerPrincipal: String? = null,
 )
 
 sealed interface ProfileBottomSheet {

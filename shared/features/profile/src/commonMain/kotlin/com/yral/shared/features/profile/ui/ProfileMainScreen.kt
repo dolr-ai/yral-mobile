@@ -428,6 +428,7 @@ fun ProfileMainScreen(
                     followers = followers,
                     following = following,
                     followLoading = state.followLoading,
+                    viewerPrincipal = state.viewerPrincipal,
                     onTabSelected = { viewModel.updateFollowSheetTab(it) },
                     onFollowToggle = viewModel::toggleFollowForPrincipal,
                 )
