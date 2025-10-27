@@ -669,6 +669,7 @@ class ProfileViewModel(
 
     @OptIn(ExperimentalTime::class)
     fun showVideoViews(video: FeedDetails) {
+        if (!_state.value.isOwnProfile) return
         viewModelScope.launch {
             val currentViews = _state.value.viewsData[video.videoID]
             val shouldRefresh =
