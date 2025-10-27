@@ -183,29 +183,18 @@ pub async fn authenticate_with_network(
     let canister_principal = canisters.user_canister();
     let user_principal = canisters.user_principal();
     let profile_details = canisters.profile_details();
-    if canister_principal == yral_canisters_client::ic::USER_INFO_SERVICE_ID {
-        Ok(
+    let is_created_from_service_canister = canister_principal == yral_canisters_client::ic::USER_INFO_SERVICE_ID;
+        
+    Ok(
             CanistersWrapper {
                 inner: canisters,
-                is_created_from_service_canister: true,
+                is_created_from_service_canister: is_created_from_service_canister,
                 canister_principal: canister_principal,
-                user_principal: profile_details.user_canister,
+                user_principal: user_principal,
                 profile_pic: profile_details.profile_pic_or_random(),
                 username: profile_details.username.clone(),
             }
         )
-    } else {
-        Ok(
-            CanistersWrapper {
-                inner: canisters,
-                is_created_from_service_canister: false,
-                canister_principal: canister_principal,
-                user_principal: user_principal,
-                profile_pic: propic_from_principal(user_principal),
-                username: profile_details.username.clone(),
-            }
-        )
-    }
 }
 
 pub fn extract_time_as_double(result: Result11) -> Option<u64> {

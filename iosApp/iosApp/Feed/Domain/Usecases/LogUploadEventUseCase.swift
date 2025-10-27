@@ -73,7 +73,7 @@ class LogUploadEventUseCase:
 
 extension LogUploadEventUseCase {
   enum Constants {
-    static let timeDuration = 30.0
+    static let timeDuration = 10.0
     static let bufferSize = 10
   }
 }
