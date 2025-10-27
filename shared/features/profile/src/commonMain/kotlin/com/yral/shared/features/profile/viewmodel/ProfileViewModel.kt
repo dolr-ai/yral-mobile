@@ -418,7 +418,11 @@ class ProfileViewModel(
         viewModelScope.launch {
             // Build internal deep link using UrlBuilder and PostDetailsRoute
             val route =
-                PostDetailsRoute(canisterId = feedDetails.canisterID, postId = feedDetails.postID)
+                PostDetailsRoute(
+                    canisterId = feedDetails.canisterID,
+                    postId = feedDetails.postID,
+                    publisherUserId = feedDetails.principalID,
+                )
             val internalUrl = urlBuilder.build(route) ?: feedDetails.url
             runSuspendCatching {
                 val link =

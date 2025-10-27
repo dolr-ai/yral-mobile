@@ -67,10 +67,11 @@ object Unknown : AppRoute {
 data class PostDetailsRoute(
     val canisterId: String,
     val postId: String,
+    val publisherUserId: String,
 ) : AppRoute,
     ExternallyExposedRoute {
     companion object Companion {
-        const val PATH = "post/details/{canisterId}/{postId}"
+        const val PATH = "post/details/{canisterId}/{postId}/{publisherUserId}"
     }
 }
 
