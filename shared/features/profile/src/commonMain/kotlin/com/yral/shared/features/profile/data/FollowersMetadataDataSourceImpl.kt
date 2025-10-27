@@ -1,6 +1,7 @@
 package com.yral.shared.features.profile.data
 
 import com.yral.shared.core.AppConfigurations.METADATA_BASE_URL
+import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.http.httpPost
 import com.yral.shared.rust.service.domain.metadata.FollowersMetadataDataSource
 import io.ktor.client.HttpClient
@@ -18,26 +19,28 @@ class FollowersMetadataDataSourceImpl(
     private val json: Json,
 ) : FollowersMetadataDataSource {
     override suspend fun fetchUsernames(principals: List<String>): Map<String, String> {
-        principals.let { principals ->
-            val response: BulkMetadataResponseDto =
-                httpPost(
-                    httpClient = httpClient,
-                    json = json,
-                ) {
-                    url {
-                        host = METADATA_BASE_URL
-                        path(METADATA_BULK_PATH)
-                    }
-                    contentType(ContentType.Application.Json)
-                    setBody(MetadataBulkRequestDto(users = principals))
+        if (principals.isEmpty()) return emptyMap()
+        val response: BulkMetadataResponseDto =
+            httpPost(
+                httpClient = httpClient,
+                json = json,
+            ) {
+                url {
+                    host = METADATA_BASE_URL
+                    path(METADATA_BULK_PATH)
                 }
-            val data = response.ok ?: return emptyMap()
-            return buildMap {
-                data.forEach { (principal, metadata) ->
-                    val username = metadata?.userName?.takeIf { it.isNotBlank() }
-                    username?.let { username ->
-                        put(principal, username)
-                    }
+                contentType(ContentType.Application.Json)
+                setBody(MetadataBulkRequestDto(users = principals))
+            }
+        val data =
+            response.ok ?: throw YralException(
+                response.err?.toString() ?: "FollowersMetadataDataSourceImpl failed",
+            )
+        return buildMap {
+            data.forEach { (principal, metadata) ->
+                val username = metadata?.userName?.takeIf { it.isNotBlank() }
+                username?.let { username ->
+                    put(principal, username)
                 }
             }
         }

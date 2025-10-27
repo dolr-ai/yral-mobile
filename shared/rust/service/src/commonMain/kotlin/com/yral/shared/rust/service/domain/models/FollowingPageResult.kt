@@ -1,6 +1,5 @@
 package com.yral.shared.rust.service.domain.models
 
-import com.yral.shared.rust.service.utils.toPrincipalText
 import com.yral.shared.uniffi.generated.Principal
 import com.yral.shared.uniffi.generated.UisFollowingResponse
 
@@ -15,7 +14,7 @@ fun UisFollowingResponse.toFollowingPageResult(usernames: Map<String, String>): 
         nextCursor = this.nextCursor,
         following =
             this.following.map { follower ->
-                val principalText = follower.principalId.toPrincipalText()
+                val principalText = follower.principalId
                 FollowerItem(
                     callerFollows = follower.callerFollows,
                     profilePictureUrl = follower.profilePictureUrl,

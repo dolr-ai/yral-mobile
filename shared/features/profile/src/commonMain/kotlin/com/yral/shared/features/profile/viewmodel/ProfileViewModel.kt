@@ -68,7 +68,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
-@Suppress("LongParameterList", "TooManyFunctions")
+@Suppress("LongParameterList", "TooManyFunctions", "LargeClass")
 class ProfileViewModel(
     private val canisterData: CanisterData,
     private val sessionManager: SessionManager,
@@ -182,7 +182,8 @@ class ProfileViewModel(
             emptyFlow()
         }
 
-    val followStatus = sessionManager.observeSessionProperty { it.followedPrincipals to it.unFollowedPrincipals }
+    val followStatus =
+        sessionManager.observeSessionProperty { it.followedPrincipals to it.unFollowedPrincipals }
 
     init {
         _state.update {
@@ -240,7 +241,6 @@ class ProfileViewModel(
                                 } else {
                                     current.isOwnProfile
                                 },
-                            viewerPrincipal = sessionManager.userPrincipal,
                         )
                     }
                     if (isSocialSignIn && !wasLoggedIn) {
@@ -273,7 +273,9 @@ class ProfileViewModel(
                     val currentInfo = current.accountInfo
                     val newInfo =
                         currentInfo?.copy(
-                            profilePic = updatedPic?.takeUnless { it.isBlank() } ?: currentInfo.profilePic,
+                            profilePic =
+                                updatedPic?.takeUnless { it.isBlank() }
+                                    ?: currentInfo.profilePic,
                             bio = bio?.takeUnless { it.isBlank() } ?: currentInfo.bio,
                         )
                     current.copy(accountInfo = newInfo)
@@ -366,7 +368,11 @@ class ProfileViewModel(
                 }.onFailure { error ->
                     _state.update {
                         it.copy(
-                            deleteConfirmation = DeleteConfirmationState.Error(deleteRequest, error),
+                            deleteConfirmation =
+                                DeleteConfirmationState.Error(
+                                    deleteRequest,
+                                    error,
+                                ),
                         )
                     }
                 }
@@ -568,7 +574,11 @@ class ProfileViewModel(
                         sessionManager.removePrincipalFromFollow(targetPrincipal)
                     }
                     result.onFailure { error ->
-                        profileEventsChannel.trySend(ProfileEvents.Failed(error.message ?: "Unfollow failed"))
+                        profileEventsChannel.trySend(
+                            ProfileEvents.Failed(
+                                error.message ?: "Unfollow failed",
+                            ),
+                        )
                     }
                 } else {
                     val result =
@@ -584,7 +594,11 @@ class ProfileViewModel(
                         sessionManager.addPrincipalToFollow(targetPrincipal)
                     }
                     result.onFailure { error ->
-                        profileEventsChannel.trySend(ProfileEvents.Failed(error.message ?: "Follow failed"))
+                        profileEventsChannel.trySend(
+                            ProfileEvents.Failed(
+                                error.message ?: "Follow failed",
+                            ),
+                        )
                     }
                 }
             } finally {
@@ -648,6 +662,7 @@ class ProfileViewModel(
                         val now = Clock.System.now()
                         now - currentViews.data.lastFetched > VIEWS_REFRESH_THRESHOLD
                     }
+
                     else -> true
                 }
             _state.update {
@@ -655,7 +670,9 @@ class ProfileViewModel(
                     bottomSheet = ProfileBottomSheet.VideoView(videoId = video.videoID),
                     viewsData =
                         if (shouldRefresh) {
-                            it.viewsData.toMutableMap().apply { this[video.videoID] = UiState.InProgress() }
+                            it.viewsData
+                                .toMutableMap()
+                                .apply { this[video.videoID] = UiState.InProgress() }
                         } else {
                             it.viewsData
                         },
@@ -724,6 +741,7 @@ sealed interface ProfileBottomSheet {
     data class VideoView(
         val videoId: String,
     ) : ProfileBottomSheet
+
     data class FollowDetails(
         val tab: FollowersSheetTab,
     ) : ProfileBottomSheet

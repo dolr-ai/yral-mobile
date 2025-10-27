@@ -1,6 +1,9 @@
 package com.yral.shared.rust.service.data
 
 import co.touchlab.kermit.Logger
+import com.github.michaelbull.result.coroutines.runSuspendCatching
+import com.github.michaelbull.result.getOrElse
+import com.github.michaelbull.result.onFailure
 import com.yral.shared.rust.service.domain.UserInfoRepository
 import com.yral.shared.rust.service.domain.metadata.FollowersMetadataDataSource
 import com.yral.shared.rust.service.domain.models.FollowersPageResult
@@ -10,7 +13,6 @@ import com.yral.shared.rust.service.domain.models.UserProfileDetails
 import com.yral.shared.rust.service.domain.models.toDomain
 import com.yral.shared.rust.service.domain.models.toFollowerPageResult
 import com.yral.shared.rust.service.domain.models.toFollowingPageResult
-import com.yral.shared.rust.service.utils.toPrincipalText
 import com.yral.shared.uniffi.generated.Principal
 
 class UserInfoRepositoryImpl(
@@ -54,10 +56,10 @@ class UserInfoRepositoryImpl(
             )
 
         val usernames =
-            runCatching {
+            runSuspendCatching {
                 val principalTexts =
                     response.followers
-                        .map { it.principalId.toPrincipalText() }
+                        .map { it.principalId }
                         .filter { it.isNotBlank() }
                         .distinct()
                 followersMetadataDataSource.fetchUsernames(principalTexts)
@@ -84,10 +86,10 @@ class UserInfoRepositoryImpl(
             )
 
         val usernames =
-            runCatching {
+            runSuspendCatching {
                 val principalTexts =
                     response.following
-                        .map { it.principalId.toPrincipalText() }
+                        .map { it.principalId }
                         .filter { it.isNotBlank() }
                         .distinct()
                 followersMetadataDataSource.fetchUsernames(principalTexts)
