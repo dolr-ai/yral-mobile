@@ -1,6 +1,7 @@
 package com.yral.shared.rust.service.utils
 
 import com.yral.shared.uniffi.generated.FfiException
+import com.yral.shared.uniffi.generated.Principal
 
 fun delegatedIdentityWireToJson(bytes: ByteArray): String =
     com.yral.shared.uniffi.generated
@@ -9,6 +10,12 @@ fun delegatedIdentityWireToJson(bytes: ByteArray): String =
 fun propicFromPrincipal(principalId: String): String =
     com.yral.shared.uniffi.generated
         .propicFromPrincipal(principalId)
+
+fun Principal.toPrincipalText(): String =
+    toString()
+        .removePrefix("Principal(")
+        .removeSuffix(")")
+        .removePrefix("text=")
 
 suspend fun authenticateWithNetwork(data: ByteArray): CanisterData {
     try {
