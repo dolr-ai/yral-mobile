@@ -1,5 +1,7 @@
 package com.yral.shared.rust.service.data
 
+import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.feed.data.PostDTO
 import com.yral.shared.rust.service.services.ICPLedgerServiceFactory
 import com.yral.shared.rust.service.services.IndividualUserServiceFactory
@@ -18,6 +20,7 @@ internal class IndividualUserDataSourceImpl(
     private val userPostServiceFactory: UserPostServiceFactory,
     private val snsLedgerServiceFactory: SnsLedgerServiceFactory,
     private val icpLedgerServiceFactory: ICPLedgerServiceFactory,
+    private val sessionManager: SessionManager,
 ) : IndividualUserDataSource {
     override suspend fun fetchFeedDetails(post: PostDTO): PostDetailsForFrontend =
         individualUserServiceFactory
@@ -29,13 +32,16 @@ internal class IndividualUserDataSourceImpl(
             .service(principal = post.canisterID)
             .getIndividualPostDetailsById(post.postID)
 
-    override suspend fun fetchFeedDetailsWithCreatorInfo(post: PostDTO): PostDetailsWithUserInfo? =
-        getPostDetailsWithCreatorInfoV1(
+    override suspend fun fetchFeedDetailsWithCreatorInfo(post: PostDTO): PostDetailsWithUserInfo? {
+        val identity = sessionManager.identity ?: throw YralException("No identity found")
+        return getPostDetailsWithCreatorInfoV1(
+            identityData = identity,
             userCanister = post.canisterID,
             postId = post.postID,
             creatorPrincipal = post.publisherUserId,
             nsfwProbability = post.nsfwProbability?.toFloat() ?: 0.0f,
         )
+    }
 
     override suspend fun getPostsOfThisUserProfileWithPaginationCursor(
         canisterId: String,
