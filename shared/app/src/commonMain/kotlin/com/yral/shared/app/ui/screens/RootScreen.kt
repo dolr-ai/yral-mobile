@@ -21,18 +21,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.fade
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.yral.shared.app.nav.RootComponent
 import com.yral.shared.app.nav.RootComponent.Child
 import com.yral.shared.app.ui.components.UpdateNotificationHost
+import com.yral.shared.app.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.shared.app.ui.screens.home.HomeScreen
 import com.yral.shared.core.session.SessionState
+import com.yral.shared.core.session.getKey
+import com.yral.shared.features.auth.ui.LoginBottomSheet
 import com.yral.shared.features.profile.ui.EditProfileScreen
+import com.yral.shared.features.profile.ui.ProfileMainScreen
 import com.yral.shared.features.profile.viewmodel.EditProfileViewModel
+import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.root.viewmodels.RootError
 import com.yral.shared.features.root.viewmodels.RootViewModel
+import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
@@ -40,6 +47,7 @@ import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.component.toast.ToastHost
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import yral_mobile.shared.app.generated.resources.Res
 import yral_mobile.shared.app.generated.resources.error_retry
 import yral_mobile.shared.app.generated.resources.error_timeout
@@ -53,25 +61,7 @@ fun RootScreen(
     viewModel: RootViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
-    val sessionState by viewModel.sessionManagerState.collectAsState()
-
-    val analyticsUser = viewModel.analyticsUser.collectAsState(null)
-    LaunchedEffect(analyticsUser.value) {
-        viewModel.setUser(analyticsUser.value)
-    }
-
-    LaunchedEffect(sessionState) {
-        if (sessionState != state.currentSessionState) {
-            when (sessionState) {
-                is SessionState.Initial -> viewModel.initialize()
-                is SessionState.SignedIn -> viewModel.initialize()
-                else -> Unit
-            }
-        }
-    }
-
     rootComponent.setSplashActive(state.showSplash)
-
     Box(modifier = Modifier.fillMaxSize()) {
         Children(stack = rootComponent.stack, modifier = Modifier.fillMaxSize(), animation = stackAnimation(fade())) {
             when (val child = it.instance) {
@@ -85,21 +75,45 @@ fun RootScreen(
                     )
                 }
                 is Child.Home -> {
-                    // Reset system bars to normal
                     HandleSystemBars(show = true)
                     HomeScreen(
                         component = child.component,
-                        sessionState = sessionState,
+                        sessionState = state.sessionState,
                         bottomNavigationAnalytics = { viewModel.bottomNavigationClicked(it) },
                         updateProfileVideosCount = { viewModel.updateProfileVideosCount(it) },
                     )
                 }
                 is Child.EditProfile -> {
+                    val sessionKey = state.sessionState.getKey()
                     HandleSystemBars(show = true)
                     EditProfileScreen(
                         component = child.component,
-                        viewModel = koinViewModel<EditProfileViewModel>(),
+                        viewModel = koinViewModel<EditProfileViewModel>(key = "edit-profile-$sessionKey"),
                         modifier = Modifier.fillMaxSize().safeDrawingPadding(),
+                    )
+                }
+                is Child.UserProfile -> {
+                    HandleSystemBars(show = true)
+                    val profileViewModel =
+                        koinViewModel<ProfileViewModel>(
+                            key = "profile-${child.component.userCanisterData?.userPrincipalId}",
+                        ) { parametersOf(child.component.userCanisterData) }
+                    val profileVideos = profileViewModel.profileVideos.collectAsLazyPagingItems()
+                    ProfileMainScreen(
+                        component = child.component,
+                        modifier = Modifier.fillMaxSize().safeDrawingPadding(),
+                        viewModel = profileViewModel,
+                        profileVideos = profileVideos,
+                        loginState = UiState.Initial,
+                        loginBottomSheet = { bottomSheetState, onDismissRequest, termsLink, openTerms ->
+                            LoginBottomSheet(
+                                bottomSheetState = bottomSheetState,
+                                onDismissRequest = onDismissRequest,
+                                termsLink = termsLink,
+                                openTerms = openTerms,
+                            )
+                        },
+                        getPrefetchListener = { reel -> PrefetchVideoListenerImpl(reel) },
                     )
                 }
             }
@@ -126,7 +140,7 @@ fun RootScreen(
         // 1. after logout on account screen during anonymous sign in
         // 2. after social sign in
         // 3. after delete account during anonymous sign in
-        if (!state.showSplash && sessionState is SessionState.Loading) {
+        if (!state.showSplash && state.sessionState is SessionState.Loading) {
             BlockingLoader()
         }
 

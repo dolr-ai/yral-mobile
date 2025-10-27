@@ -36,12 +36,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import com.yral.shared.data.feed.domain.FeedDetails
-import com.yral.shared.libs.NumberFormatter
 import com.yral.shared.libs.designsystem.component.YralLoader
+import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
-import com.yral.shared.libs.formatAbbreviation
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
@@ -62,11 +61,14 @@ import yral_mobile.shared.libs.designsystem.generated.resources.shadow_bottom
 import yral_mobile.shared.libs.designsystem.generated.resources.your_videos
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
+@Suppress("LongParameterList")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileReelPlayer(
     reelVideos: LazyPagingItems<FeedDetails>,
     initialPage: Int,
+    isOwnProfile: Boolean,
+    userName: String?,
     deletingVideoId: String,
     isReporting: Boolean,
     reportSheetState: ReportSheetState,
@@ -76,6 +78,7 @@ fun ProfileReelPlayer(
     onBack: () -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
     onShareClick: (FeedDetails) -> Unit,
+    onViewsClick: (FeedDetails) -> Unit,
     getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
     modifier: Modifier = Modifier,
 ) {
@@ -100,11 +103,14 @@ fun ProfileReelPlayer(
             if (currentVideo != null) {
                 ProfileReelOverlay(
                     currentVideo = currentVideo,
+                    isOwnProfile = isOwnProfile,
+                    userName = userName,
                     isDeleting = deletingVideoId == currentVideo.videoID,
                     onBack = onBack,
                     onReportClick = { onReportClick(pageNo, currentVideo) },
                     onDeleteVideo = { onDeleteVideo(currentVideo) },
                     onShareClick = { onShareClick(currentVideo) },
+                    onViewsClick = { onViewsClick(currentVideo) },
                 )
                 when (val reportSheetState = reportSheetState) {
                     ReportSheetState.Closed -> Unit
@@ -128,15 +134,20 @@ fun ProfileReelPlayer(
 @Composable
 private fun ProfileReelOverlay(
     currentVideo: FeedDetails,
+    isOwnProfile: Boolean,
+    userName: String?,
     isDeleting: Boolean,
     onBack: () -> Unit,
     onReportClick: () -> Unit,
     onDeleteVideo: () -> Unit,
     onShareClick: () -> Unit,
+    onViewsClick: () -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Header(
             modifier = Modifier.align(Alignment.TopStart),
+            isOwnProfile = isOwnProfile,
+            userName = userName,
             onBack = onBack,
         )
         Box(
@@ -156,9 +167,11 @@ private fun ProfileReelOverlay(
             ActionsRight(
                 modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 89.dp),
                 views = currentVideo.viewCount.toLong(),
+                isOwnProfile = isOwnProfile,
                 onReportClick = onReportClick,
                 onShareClick = onShareClick,
                 onDeleteVideo = onDeleteVideo,
+                onViewsClick = onViewsClick,
             )
         }
         DeletingOverlay(
@@ -172,6 +185,8 @@ private fun ProfileReelOverlay(
 @Composable
 private fun Header(
     modifier: Modifier,
+    isOwnProfile: Boolean,
+    userName: String?,
     onBack: () -> Unit,
 ) {
     Row(
@@ -191,7 +206,12 @@ private fun Header(
             contentDescription = "back",
         )
         Text(
-            text = stringResource(DesignRes.string.your_videos),
+            text =
+                if (isOwnProfile) {
+                    stringResource(DesignRes.string.your_videos)
+                } else {
+                    userName ?: ""
+                },
             style = LocalAppTopography.current.xlBold,
             color = Color.White,
         )
@@ -216,8 +236,7 @@ private fun Caption(
         if (isPostDescriptionExpanded) {
             val scrollState = rememberScrollState()
             val maxHeight =
-                LocalAppTopography.current.feedDescription.lineHeight.value *
-                    ProfileMainScreenConstants.MAX_LINES_FOR_POST_DESCRIPTION
+                LocalAppTopography.current.feedDescription.lineHeight.value * MAX_LINES_FOR_POST_DESCRIPTION
             Text(
                 modifier = Modifier.heightIn(max = maxHeight.dp).verticalScroll(scrollState),
                 text = caption,
@@ -240,9 +259,11 @@ private fun Caption(
 private fun ActionsRight(
     modifier: Modifier,
     views: Long,
+    isOwnProfile: Boolean,
     onReportClick: () -> Unit,
     onShareClick: () -> Unit,
     onDeleteVideo: () -> Unit,
+    onViewsClick: () -> Unit,
 ) {
     Column(
         modifier = modifier,
@@ -255,15 +276,18 @@ private fun ActionsRight(
 
         ViewsIcon(
             views = views,
+            onViewsClick = onViewsClick,
         )
 
         ReportVideo(
             onReportClicked = onReportClick,
         )
 
-        DeleteIcon(
-            onDeleteVideo = onDeleteVideo,
-        )
+        if (isOwnProfile) {
+            DeleteIcon(
+                onDeleteVideo = onDeleteVideo,
+            )
+        }
     }
 }
 
@@ -271,11 +295,12 @@ private fun ActionsRight(
 private fun ViewsIcon(
     modifier: Modifier = Modifier,
     views: Long,
+    onViewsClick: () -> Unit,
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(0.dp, Alignment.Top),
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier,
+        modifier = modifier.clickable { onViewsClick() },
     ) {
         Image(
             painter = painterResource(DesignRes.drawable.ic_views),
@@ -284,7 +309,7 @@ private fun ViewsIcon(
             modifier = Modifier.size(36.dp),
         )
         Text(
-            text = NumberFormatter().formatAbbreviation(views, 1),
+            text = formatAbbreviation(views, 1),
             style = LocalAppTopography.current.regSemiBold,
             color = YralColors.NeutralTextPrimary,
         )

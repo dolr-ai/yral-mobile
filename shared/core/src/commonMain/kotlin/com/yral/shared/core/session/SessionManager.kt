@@ -1,85 +1,96 @@
 package com.yral.shared.core.session
 
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
 class SessionManager {
-    private val _state = MutableStateFlow<SessionState>(SessionState.Initial)
-    val state = _state.asStateFlow()
-
-    private val sessionProperties = MutableStateFlow(SessionProperties())
+    private val mutableState = MutableStateFlow<SessionState>(SessionState.Initial)
+    private val mutableProperties = MutableStateFlow(SessionProperties())
 
     val canisterID: String?
         get() =
-            when (val state = _state.value) {
+            when (val state = mutableState.value) {
                 is SessionState.SignedIn -> state.session.canisterId
                 else -> null
             }
 
     val userPrincipal: String?
         get() =
-            when (val state = _state.value) {
+            when (val state = mutableState.value) {
                 is SessionState.SignedIn -> state.session.userPrincipal
                 else -> null
             }
 
     val identity: ByteArray?
         get() =
-            when (val state = _state.value) {
+            when (val state = mutableState.value) {
                 is SessionState.SignedIn -> state.session.identity
                 else -> null
             }
 
     val profilePic: String?
         get() =
-            when (val state = _state.value) {
+            when (val state = mutableState.value) {
                 is SessionState.SignedIn -> state.session.profilePic
                 else -> null
             }
 
     val username: String?
         get() =
-            when (val state = _state.value) {
+            when (val state = mutableState.value) {
                 is SessionState.SignedIn -> state.session.username
+                else -> null
+            }
+
+    val bio: String?
+        get() =
+            when (val state = mutableState.value) {
+                is SessionState.SignedIn -> state.session.bio
                 else -> null
             }
 
     val isCreatedFromServiceCanister: Boolean?
         get() =
-            when (val state = _state.value) {
+            when (val state = mutableState.value) {
                 is SessionState.SignedIn -> state.session.isCreatedFromServiceCanister
                 else -> null
             }
 
+    val profileVideosCount: Int
+        get() = mutableProperties.value.profileVideosCount ?: 0
+
     fun updateState(state: SessionState) {
-        _state.update { state }
-        sessionProperties.update { SessionProperties() }
+        mutableState.update { state }
+        mutableProperties.update { SessionProperties() }
     }
 
     fun updateCoinBalance(newBalance: Long) {
-        sessionProperties.update { it.copy(coinBalance = newBalance) }
+        mutableProperties.update { it.copy(coinBalance = newBalance) }
     }
 
     fun updateSocialSignInStatus(isSocialSignIn: Boolean) {
-        sessionProperties.update { it.copy(isSocialSignIn = isSocialSignIn) }
+        mutableProperties.update { it.copy(isSocialSignIn = isSocialSignIn) }
     }
 
     fun updateProfileVideosCount(count: Int?) {
-        sessionProperties.update { it.copy(profileVideosCount = count) }
+        mutableProperties.update { it.copy(profileVideosCount = count) }
     }
 
     fun updateIsForcedGamePlayUser(isForcedGamePlayUser: Boolean) {
-        sessionProperties.update { it.copy(isForcedGamePlayUser = isForcedGamePlayUser) }
+        mutableProperties.update { it.copy(isForcedGamePlayUser = isForcedGamePlayUser) }
     }
 
     fun updateLoggedInUserEmail(email: String?) {
-        sessionProperties.update { it.copy(emailId = email) }
+        mutableProperties.update { it.copy(emailId = email) }
     }
 
     fun updateUsername(username: String?) {
-        _state.update { state ->
+        mutableState.update { state ->
             if (state is SessionState.SignedIn) {
                 state.copy(session = state.session.copy(username = username))
             } else {
@@ -88,18 +99,81 @@ class SessionManager {
         }
     }
 
+    fun updateProfilePicture(profilePictureUrl: String?) {
+        mutableState.update { state ->
+            if (state is SessionState.SignedIn) {
+                state.copy(session = state.session.copy(profilePic = profilePictureUrl))
+            } else {
+                state
+            }
+        }
+    }
+
+    fun updateBio(bio: String?) {
+        mutableState.update { state ->
+            if (state is SessionState.SignedIn) {
+                state.copy(session = state.session.copy(bio = bio))
+            } else {
+                state
+            }
+        }
+    }
+
     fun updateFirebaseLoginState(isLoggedIn: Boolean) {
-        sessionProperties.update { it.copy(isFirebaseLoggedIn = isLoggedIn) }
+        mutableProperties.update { it.copy(isFirebaseLoggedIn = isLoggedIn) }
     }
 
     fun updateDailyRank(dailyRank: Long?) {
-        sessionProperties.update { it.copy(dailyRank = dailyRank) }
+        mutableProperties.update { it.copy(dailyRank = dailyRank) }
     }
 
-    fun observeSessionProperties(): StateFlow<SessionProperties> = sessionProperties.asStateFlow()
+    fun addPrincipalToFollow(principal: String) {
+        mutableProperties.update {
+            it.copy(
+                followedPrincipals = it.followedPrincipals + principal,
+                unFollowedPrincipals = it.unFollowedPrincipals - principal,
+            )
+        }
+    }
+
+    fun removePrincipalFromFollow(principal: String) {
+        mutableProperties.update {
+            it.copy(
+                followedPrincipals = it.followedPrincipals - principal,
+                unFollowedPrincipals = it.unFollowedPrincipals + principal,
+            )
+        }
+    }
+
+    fun <T : Any> observeSessionPropertyWithDefault(
+        selector: (SessionProperties) -> T?,
+        defaultValue: T,
+    ) = mutableProperties
+        .map { selector(it) ?: defaultValue }
+        .distinctUntilChanged()
+
+    fun <T> observeSessionProperty(selector: (SessionProperties) -> T) =
+        mutableProperties
+            .map(selector)
+            .distinctUntilChanged()
+
+    fun <R> observeSessionStateWithProperty(transform: suspend (SessionState, SessionProperties) -> R) =
+        combine(mutableState.asStateFlow(), mutableProperties.asStateFlow(), transform).distinctUntilChanged()
+
+    fun <T> observeSessionState(transform: suspend (SessionState) -> T) =
+        mutableState
+            .map(transform)
+            .distinctUntilChanged()
+
+    suspend fun <T : Any> readLatestSessionPropertyWithDefault(
+        selector: (SessionProperties) -> T?,
+        defaultValue: T,
+    ) = mutableProperties
+        .map { selector(it) ?: defaultValue }
+        .first()
 
     fun resetSessionProperties() {
-        sessionProperties.update {
+        mutableProperties.update {
             SessionProperties(
                 coinBalance = 0,
                 profileVideosCount = 0,
@@ -107,10 +181,6 @@ class SessionManager {
             )
         }
     }
-
-    fun isSocialSignIn(): Boolean = sessionProperties.value.isSocialSignIn ?: false
-
-    fun profileVideosCount(): Int = sessionProperties.value.profileVideosCount ?: 0
 }
 
 sealed interface SessionState {

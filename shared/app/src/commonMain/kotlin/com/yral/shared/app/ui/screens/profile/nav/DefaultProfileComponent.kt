@@ -117,6 +117,7 @@ internal class DefaultProfileComponent(
             onUploadVideoClicked = onUploadVideoClicked,
             openAccount = this::openAccount,
             openEditProfile = this::openEditProfile,
+            onBackClicked = {},
         )
 
     private fun accountComponent(componentContext: ComponentContext): AccountComponent =

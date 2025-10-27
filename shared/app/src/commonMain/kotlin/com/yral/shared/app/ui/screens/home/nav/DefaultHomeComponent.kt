@@ -32,12 +32,14 @@ import com.yral.shared.libs.routing.routes.api.RewardOn
 import com.yral.shared.libs.routing.routes.api.RewardsReceived
 import com.yral.shared.libs.routing.routes.api.VideoUploadSuccessful
 import com.yral.shared.libs.routing.routes.api.Wallet
+import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.serialization.Serializable
 
 @Suppress("TooManyFunctions")
 internal class DefaultHomeComponent(
     componentContext: ComponentContext,
     private val openEditProfile: () -> Unit,
+    private val openProfile: (userCanisterData: CanisterData) -> Unit,
 ) : HomeComponent(),
     ComponentContext by componentContext {
     private val navigation = StackNavigation<Config>()
@@ -160,7 +162,7 @@ internal class DefaultHomeComponent(
         }
 
     private fun feedComponent(componentContext: ComponentContext): FeedComponent =
-        FeedComponent.Companion(componentContext = componentContext)
+        FeedComponent.Companion(componentContext = componentContext, openProfile)
 
     private fun leaderboardComponent(componentContext: ComponentContext): LeaderboardComponent =
         LeaderboardComponent.Companion(

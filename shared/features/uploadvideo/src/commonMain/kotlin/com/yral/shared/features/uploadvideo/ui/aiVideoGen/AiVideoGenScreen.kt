@@ -85,7 +85,6 @@ import yral_mobile.shared.features.uploadvideo.generated.resources.stay_here
 import yral_mobile.shared.features.uploadvideo.generated.resources.this_may_take_few_minutes
 import yral_mobile.shared.features.uploadvideo.generated.resources.to_earn_token
 import yral_mobile.shared.features.uploadvideo.generated.resources.upload_completed_message
-import yral_mobile.shared.features.uploadvideo.generated.resources.upload_error
 import yral_mobile.shared.features.uploadvideo.generated.resources.upload_successful
 import yral_mobile.shared.features.uploadvideo.generated.resources.yes_take_me_back
 import yral_mobile.shared.features.uploadvideo.generated.resources.you_will_loose_ai_credits
@@ -93,6 +92,7 @@ import yral_mobile.shared.features.uploadvideo.generated.resources.you_will_loos
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.coins
 import yral_mobile.shared.libs.designsystem.generated.resources.done
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_error
 import yral_mobile.shared.libs.designsystem.generated.resources.my_profile
 import yral_mobile.shared.libs.designsystem.generated.resources.pink_gradient_background
 import yral_mobile.shared.libs.designsystem.generated.resources.something_went_wrong
@@ -473,7 +473,7 @@ private fun GenerationErrorPrompt(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Image(
-                    painter = painterResource(Res.drawable.upload_error),
+                    painter = painterResource(DesignRes.drawable.ic_error),
                     contentDescription = "error symbol",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.size(120.dp),

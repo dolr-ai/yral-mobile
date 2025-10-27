@@ -35,11 +35,7 @@ fun YralWebViewBottomSheet(
     YralBottomSheet(
         onDismissRequest = onDismissRequest,
         bottomSheetState = bottomSheetState,
-        dragHandle = {
-            DragHandle(
-                color = YralColors.Pink300,
-            )
-        },
+        dragHandle = { DragHandle(color = YralColors.Pink300) },
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),

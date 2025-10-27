@@ -1,5 +1,6 @@
 package com.yral.shared.rust.service.data
 
+import com.yral.shared.rust.service.domain.models.ProfileUpdateDetails
 import com.yral.shared.uniffi.generated.Principal
 import com.yral.shared.uniffi.generated.UisFollowersResponse
 import com.yral.shared.uniffi.generated.UisFollowingResponse
@@ -36,4 +37,9 @@ interface UserInfoDataSource {
         limit: ULong,
         withCallerFollows: Boolean?,
     ): UisFollowingResponse
+
+    suspend fun updateProfileDetails(
+        principal: Principal,
+        details: ProfileUpdateDetails,
+    )
 }

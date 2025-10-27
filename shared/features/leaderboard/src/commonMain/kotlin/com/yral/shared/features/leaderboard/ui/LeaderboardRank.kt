@@ -41,10 +41,9 @@ import com.yral.shared.features.leaderboard.ui.LeaderboardRankConstants.STATIC_T
 import com.yral.shared.features.leaderboard.ui.LeaderboardRankConstants.TROPHY_OFFSET_X
 import com.yral.shared.features.leaderboard.ui.LeaderboardRankConstants.TROPHY_ROTATION
 import com.yral.shared.features.leaderboard.ui.LeaderboardRankConstants.TROPHY_SCALE
-import com.yral.shared.libs.NumberFormatter
+import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
-import com.yral.shared.libs.formatAbbreviation
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
@@ -197,7 +196,7 @@ private fun PositionText(
         label = "Position change",
     ) { balance ->
         Text(
-            text = "#".plus(NumberFormatter().formatAbbreviation(balance)),
+            text = "#".plus(formatAbbreviation(balance)),
             style = LocalAppTopography.current.feedCanisterId,
             color = animatedColor,
             overflow = TextOverflow.Ellipsis,

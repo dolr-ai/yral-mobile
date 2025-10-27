@@ -108,7 +108,7 @@ class ProfileInfoView: UIView, ImageLoaderProtocol {
     } else {
       imageView.image = Constants.defaultProfileImage
     }
-    titleLabel.text = data.title
+    titleLabel.text = UsernameGenerator.shared.generateUsername(from: data.title)
     subtitleLabel.text = data.subtitle
     coinsView.set(coins: data.coins)
   }

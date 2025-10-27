@@ -27,8 +27,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -45,22 +43,32 @@ class AiVideoGenViewModel internal constructor(
     private val _state = MutableStateFlow(ViewState())
     val state: StateFlow<ViewState> = _state.asStateFlow()
     val sessionObserver =
-        combine(
-            sessionManager.state,
-            sessionManager.observeSessionProperties(),
-        ) { state, properties ->
-            // required to dismiss sheet since viewModel is not be recreated
+        sessionManager.observeSessionStateWithProperty { state, properties ->
             if (_state.value.bottomSheetType is BottomSheetType.Signup) {
                 _state.update { it.copy(bottomSheetType = BottomSheetType.None) }
             }
-            when (state) {
-                is SessionState.SignedIn -> state.session.canisterId
-                else -> null
-            } to properties.coinBalance
-        }.distinctUntilChanged()
+            val canisterId =
+                when (state) {
+                    is SessionState.SignedIn -> state.session.canisterId
+                    else -> null
+                }
+            canisterId to properties.coinBalance
+        }
 
     private var currentRequestKey: VideoGenRequestKey? = null
     private var pollingJob: Job? = null
+
+    init {
+        viewModelScope.launch {
+            sessionManager
+                .observeSessionPropertyWithDefault(
+                    selector = { it.isSocialSignIn },
+                    defaultValue = false,
+                ).collect { isSocialSignIn ->
+                    _state.update { it.copy(isLoggedIn = isSocialSignIn) }
+                }
+        }
+    }
 
     fun refresh(canisterId: String) {
         val currentCanister = _state.value.currentCanister
@@ -132,7 +140,11 @@ class AiVideoGenViewModel internal constructor(
                         parameter =
                             GetFreeCreditsStatusUseCase.Params(
                                 userPrincipal = userPrincipal,
-                                isRegistered = sessionManager.isSocialSignIn(),
+                                isRegistered =
+                                    sessionManager.readLatestSessionPropertyWithDefault(
+                                        selector = { it.isSocialSignIn },
+                                        defaultValue = false,
+                                    ),
                             ),
                     ).onSuccess { status ->
                         uploadVideoTelemetry.videoCreationPageViewed(
@@ -155,14 +167,14 @@ class AiVideoGenViewModel internal constructor(
     }
 
     private fun RateLimitStatus.usedCredits() =
-        if (sessionManager.isSocialSignIn()) {
+        if (_state.value.isLoggedIn) {
             if (isLimited) 1 else 0
         } else {
             0
         }
 
     fun generateAiVideo() {
-        if (!sessionManager.isSocialSignIn()) {
+        if (!_state.value.isLoggedIn) {
             setBottomSheetType(type = BottomSheetType.Signup)
             return
         }
@@ -414,6 +426,7 @@ class AiVideoGenViewModel internal constructor(
         val currentCanister: String? = null,
         val currentBalance: Long? = null,
         val reservedBalance: Long? = null,
+        val isLoggedIn: Boolean = false,
     ) {
         fun isBalanceLow() = (selectedProvider?.cost?.sats ?: 0) > (currentBalance ?: -1)
 

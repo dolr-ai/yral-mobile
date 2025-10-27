@@ -39,9 +39,9 @@ import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.features.wallet.viewmodel.WalletViewModel
 import com.yral.shared.libs.CurrencyFormatter
 import com.yral.shared.libs.NumberFormatter
-import com.yral.shared.libs.designsystem.component.AccountInfoView
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralButton
+import com.yral.shared.libs.designsystem.component.features.AccountInfoView
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.PreloadLottieAnimations
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
@@ -75,23 +75,21 @@ fun WalletScreen(
     viewModel: WalletViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val isFirebaseLoggedIn by viewModel.firebaseLogin.collectAsStateWithLifecycle(false)
     val countryCode = Locale.current.region
     LaunchedEffect(Unit) { viewModel.onScreenViewed() }
-    LaunchedEffect(isFirebaseLoggedIn) {
-        viewModel.refresh(countryCode, isFirebaseLoggedIn)
+    LaunchedEffect(state.isFirebaseLoggedIn) {
+        viewModel.refresh(countryCode)
     }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     Column(modifier = modifier.fillMaxSize()) {
         WalletHeader()
         Spacer(modifier = Modifier.height(4.dp))
         state.accountInfo?.let { info ->
+            // Defaults since login not required on wallet
             AccountInfoView(
                 accountInfo = info,
                 isSocialSignIn = true,
-                showEditProfile = false,
                 onLoginClicked = {},
-                onEditProfileClicked = {},
             )
         }
         state.yralTokenBalance?.let { coinBalance ->

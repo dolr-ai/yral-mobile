@@ -35,13 +35,12 @@ import com.yral.shared.features.leaderboard.ui.main.LeaderboardMainScreenConstan
 import com.yral.shared.features.leaderboard.ui.main.LeaderboardMainScreenConstants.LEADERBOARD_HEADER_WEIGHTS_FOLD
 import com.yral.shared.features.leaderboard.ui.main.LeaderboardMainScreenConstants.LEADERBOARD_ROW_WEIGHTS
 import com.yral.shared.libs.CurrencyFormatter
-import com.yral.shared.libs.NumberFormatter
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
+import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.windowInfo.rememberScreenFoldStateProvider
-import com.yral.shared.libs.formatAbbreviation
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.leaderboard.generated.resources.Res
@@ -256,7 +255,7 @@ private fun UserBriefContent(
             contentAlignment = Alignment.CenterEnd,
         ) {
             Text(
-                text = NumberFormatter().formatAbbreviation(wins),
+                text = formatAbbreviation(wins),
                 style = LocalAppTopography.current.baseBold,
                 color = YralColors.Neutral50,
                 textAlign = TextAlign.Center,
@@ -273,7 +272,7 @@ fun UserBriefPositionNumber(
     decorateCurrentUser: Boolean,
 ) {
     val decoration = LeaderboardHelpers.getTextDecoration(position)
-    val formattedPosition = NumberFormatter().formatAbbreviation(position)
+    val formattedPosition = formatAbbreviation(position)
     if (decoration != null && !decorateCurrentUser) {
         YralMaskedVectorTextV2(
             text = "#$formattedPosition",

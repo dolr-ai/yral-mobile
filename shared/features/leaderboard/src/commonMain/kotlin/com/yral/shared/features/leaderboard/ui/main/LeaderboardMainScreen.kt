@@ -42,7 +42,6 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.shared.features.leaderboard.data.models.LeaderboardMode
 import com.yral.shared.features.leaderboard.nav.main.LeaderboardMainComponent
 import com.yral.shared.features.leaderboard.ui.LeaderboardRow
@@ -76,28 +75,23 @@ fun LeaderboardMainScreen(
 ) {
     val countryCode = Locale.current.region
     val state by viewModel.state.collectAsState()
-    var showConfetti by remember(state.isCurrentUserInTop) { mutableStateOf(state.isCurrentUserInTop) }
-    val isFirebaseLoggedIn by viewModel.firebaseLogin.collectAsStateWithLifecycle(false)
-    var hasStartedLoadingSinceLogin by remember(isFirebaseLoggedIn) { mutableStateOf(false) }
     LaunchedEffect(Unit) { viewModel.leaderboardPageViewed() }
-    LaunchedEffect(isFirebaseLoggedIn) {
-        if (isFirebaseLoggedIn) {
+
+    var showConfetti by remember(state.isCurrentUserInTop) { mutableStateOf(state.isCurrentUserInTop) }
+
+    LaunchedEffect(state.isFirebaseLoggedIn) {
+        if (state.isFirebaseLoggedIn) {
             viewModel.loadData(countryCode)
         }
     }
-    val isEmptyStateVisible by remember(state.isLoading, isFirebaseLoggedIn, hasStartedLoadingSinceLogin) {
+    val isEmptyStateVisible by remember(state.isLoading, state.isFirebaseLoggedIn, state.leaderboard) {
         derivedStateOf {
             !state.isLoading &&
-                isFirebaseLoggedIn &&
-                hasStartedLoadingSinceLogin &&
+                state.isFirebaseLoggedIn &&
                 state.leaderboard.isEmpty()
         }
     }
-    LaunchedEffect(state.isLoading, isFirebaseLoggedIn) {
-        if (isFirebaseLoggedIn && state.isLoading) {
-            hasStartedLoadingSinceLogin = true
-        }
-    }
+
     val listState = rememberLazyListState()
     var isTrophyVisible by remember { mutableStateOf(true) }
     var pageLoadedReported by remember(state.selectedMode) { mutableStateOf(false) }
@@ -153,7 +147,7 @@ fun LeaderboardMainScreen(
                 LeaderboardHeader(
                     countryCode = countryCode,
                     state = state,
-                    isFirebaseLoggedIn = isFirebaseLoggedIn,
+                    isFirebaseLoggedIn = state.isFirebaseLoggedIn,
                     component = component,
                     isTrophyVisible = isTrophyVisible || state.isLoading,
                     viewModel = viewModel,

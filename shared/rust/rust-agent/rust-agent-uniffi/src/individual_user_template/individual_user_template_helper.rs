@@ -2,6 +2,7 @@ use std::str::FromStr;
 
 use crate::individual_user_template::*;
 use crate::uni_ffi_helpers::*;
+use candid::de;
 use candid::Nat;
 use candid::{self, ser, CandidType, Decode, Deserialize, Encode, Principal};
 use ic_agent::export::PrincipalError;
@@ -15,9 +16,9 @@ use k256::elliptic_curve::sec1::ToEncodedPoint;
 use k256::elliptic_curve::JwkEcKey;
 use k256::Secp256k1;
 use serde_bytes::ByteBuf;
+use yral_canisters_common::utils::posts::PostDetails;
 use std::time::UNIX_EPOCH;
 use tokio::time::Duration;
-use yral_canisters_common::utils::profile::propic_from_principal as inner_propic_from_principal;
 use yral_canisters_common::Canisters;
 use yral_metadata_client::DeviceRegistrationToken;
 use yral_metadata_client::MetadataClient;
@@ -245,7 +246,7 @@ impl GetPostsOfUserProfileError {
 
 #[uniffi::export]
 fn propic_from_principal(principal: Principal) -> String {
-    inner_propic_from_principal(principal)
+    yral_canisters_common::utils::profile::propic_from_principal(principal)
 }
 
 #[uniffi::export]
@@ -326,4 +327,79 @@ pub async fn set_user_metadata(
         })
         .await
         .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
+}
+
+
+#[derive(uniffi::Record)]
+pub struct PostDetailsWithUserInfo {
+    pub canister_id: Principal, // canister id of the publishing canister.
+    pub post_id: String,
+    pub uid: String,
+    pub description: String,
+    pub views: u64,
+    pub likes: u64,
+    pub display_name: Option<String>,
+    pub username: Option<String>,
+    pub propic_url: String,
+    /// Whether post is liked by the authenticated
+    /// user or not, None if unknown
+    pub liked_by_user: Option<bool>,
+    pub poster_principal: Principal,
+    pub creator_follows_user: Option<bool>,
+    pub user_follows_creator: Option<bool>,
+    pub creator_bio: Option<String>,
+    pub hashtags: Vec<String>,
+    pub is_nsfw: bool,
+    pub hot_or_not_feed_ranking_score: Option<u64>,
+    pub created_at: Duration,
+    pub nsfw_probability: f32,
+}
+
+impl PostDetailsWithUserInfo {
+    pub fn from_post_details(post: PostDetails) -> Self {
+        Self {
+            canister_id: post.canister_id,
+            post_id: post.post_id,
+            uid: post.uid,
+            description: post.description,
+            views: post.views,
+            likes: post.likes,
+            display_name: post.display_name,
+            username: post.username,
+            propic_url: post.propic_url,
+            liked_by_user: post.liked_by_user,
+            poster_principal: post.poster_principal,
+            creator_follows_user: post.creator_follows_user,
+            user_follows_creator: post.user_follows_creator,
+            creator_bio: post.creator_bio,
+            hashtags: post.hastags,
+            is_nsfw: post.is_nsfw,
+            hot_or_not_feed_ranking_score: post.hot_or_not_feed_ranking_score,
+            created_at: post.created_at,
+            nsfw_probability: post.nsfw_probability,
+        }
+    }
+}
+
+#[uniffi::export]
+pub async fn get_post_details_with_creator_info_v1(
+    user_canister: Principal,
+    post_id: String,
+    creator_principal: Principal,
+    nsfw_probability: Option<f32>,
+) -> std::result::Result<Option<PostDetailsWithUserInfo>, FFIError> {
+    RUNTIME.spawn(async move {
+        let details = Canisters::<false>::default().get_post_details_with_creator_info_v1(
+            user_canister, 
+            post_id, 
+            creator_principal, 
+            nsfw_probability
+        ).await
+        .map_err(|e| FFIError::AgentError(format!("Api Error: {:?}", e)))?;
+        let details_wrapper = match details {
+            Some(post) => Some(PostDetailsWithUserInfo::from_post_details(post)),
+            None => None,
+        };
+        Ok(details_wrapper)
+    }).await.map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
 }

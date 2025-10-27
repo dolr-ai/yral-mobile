@@ -13,7 +13,12 @@
     <string name="upload_video">Upload Video</string>
     <string name="edit_profile">Edit Profile</string>
     <string name="username">Username</string>
-    <string name="unique_id">Unique ID</string>
+    <string name="unique_id">Principal ID</string>
+    <string name="bio">Bio</string>
+    <string name="enter_bio">Enter bio</string>
+    <string name="email_id">Email Id</string>
+    <string name="save_changes">Save Changes</string>
+    <string name="uploading_profile_picture">Uploading Profile Pciture</string>
     <string name="username_helper_text">Try creating a unique username. Use 3–15 alphabets or numbers. No spaces or special characters allowed.</string>
     <string name="username_error_text">Username should be between 3 and 15 characters long and contain no special characters.</string>
     <string name="change_name_prompt">Are you sure you want to change your name to %1$s?</string>
@@ -29,6 +34,23 @@
     <string name="permission_required_title">Permission required!</string>
     <string name="go_to_settings">Go to settings</string>
 
+    <string name="upload_photo">Upload Photo</string>
+    <string name="take_photo">Take A Photo</string>
+
     <string name="could_not_login">Couldn’t Log In</string>
     <string name="could_not_login_desc">The operation couldn’t be completed. Please try again</string>
+
+    <string name="followers">Followers</string>
+    <string name="following">Following</string>
+    <string name="follow">Follow</string>
+    <string name="started_following">You’re now following @%1$s !</string>
+    <string name="login_to_follow_subtext">Log in to explore user profiles, videos and all the fun stuff inside YRAL.</string>
+
+    <string name="video_insights">Video Insights</string>
+    <string name="total_views">Total Views</string>
+    <string name="total_engaged_views">Total Engaged views</string>
+    <string name="engaged_views_description">Engaged views: Counted when a logged-in user watches your video for more than 3 seconds. Each user counts only once per video.</string>
+
+    <string name="error_data_not_loaded">Oops...Something went wrong! We couldn’t load your data. Please refresh or try again later.</string>
+    <string name="refresh">Refresh</string>
 </resources>

@@ -17,6 +17,7 @@ enum DefaultsKey: String {
   case keychainMigrationDone
   case onboardingCompleted
   case isServiceCanisterUser
+  case username
 }
 
 final class UserDefaultsManager {

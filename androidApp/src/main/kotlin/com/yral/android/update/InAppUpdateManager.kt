@@ -169,7 +169,6 @@ class InAppUpdateManager(
 
         Logger.d(TAG) { "Update available - Priority: $priority, Staleness: $stalenessDays days" }
 
-        return UpdateType.FLEXIBLE
         return when {
             // Priority 4 or 5 = Immediate update
             priority >= PRIORITY_IMMEDIATE -> UpdateType.IMMEDIATE
