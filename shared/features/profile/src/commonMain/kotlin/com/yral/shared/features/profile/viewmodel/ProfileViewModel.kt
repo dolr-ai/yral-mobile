@@ -7,6 +7,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.filter
+import androidx.paging.map
 import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.onFailure
@@ -67,7 +68,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
-@Suppress("LongParameterList", "TooManyFunctions")
+@Suppress("LongParameterList", "TooManyFunctions", "LargeClass")
 class ProfileViewModel(
     private val canisterData: CanisterData,
     private val sessionManager: SessionManager,
@@ -103,8 +104,18 @@ class ProfileViewModel(
     private val profileEventsChannel = Channel<ProfileEvents>(Channel.CONFLATED)
     val profileEvents = profileEventsChannel.receiveAsFlow()
 
-    private val deletedVideoIds = MutableStateFlow<Set<String>>(emptySet())
-    val profileVideos: Flow<PagingData<FeedDetails>> =
+    private val pagingUpdateChannel = Channel<PagingUpdateEvent>(Channel.CONFLATED)
+
+    // Unified state management for paging data
+    private val pagingState =
+        MutableStateFlow(
+            PagingState(
+                updatedDetails = emptyMap(),
+                deletedVideoIds = emptySet(),
+            ),
+        )
+
+    private val _profileVideos: Flow<PagingData<FeedDetails>> =
         if (canisterData.userPrincipalId.isNotEmpty()) {
             Pager(
                 config =
@@ -122,20 +133,24 @@ class ProfileViewModel(
                         isFromServiceCanister = canisterData.isCreatedFromServiceCanister,
                     )
                 },
-            ).flow
-                .cachedIn(viewModelScope)
-                .combine(deletedVideoIds) { pagingData, deletedIds ->
-                    val videoIds = mutableSetOf<String>()
-                    pagingData
-                        .filter { video ->
-                            video.videoID.isNotEmpty() &&
-                                videoIds.add(video.videoID) &&
-                                video.videoID !in deletedIds
-                        }
-                }.distinctUntilChanged()
+            ).flow.cachedIn(viewModelScope)
         } else {
             flowOf()
         }
+
+    val profileVideos: Flow<PagingData<FeedDetails>> =
+        _profileVideos
+            .combine(pagingState) { pagingData, state ->
+                val videoIds = mutableSetOf<String>()
+                pagingData
+                    .filter { video ->
+                        video.videoID.isNotEmpty() &&
+                            videoIds.add(video.videoID) &&
+                            video.videoID !in state.deletedVideoIds
+                    }.map { details ->
+                        state.updatedDetails[details.videoID] ?: details
+                    }
+            }.distinctUntilChanged()
 
     val followers: Flow<PagingData<PagedFollowerItem>> =
         if (canisterData.userPrincipalId.isNotEmpty()) {
@@ -237,6 +252,29 @@ class ProfileViewModel(
                         }
                     }
                 }
+        }
+
+        // Collect paging update events
+        viewModelScope.launch {
+            pagingUpdateChannel.receiveAsFlow().collect { event ->
+                when (event) {
+                    is PagingUpdateEvent.UpdateVideoDetails -> {
+                        pagingState.update { current ->
+                            current.copy(
+                                updatedDetails = current.updatedDetails + (event.videoId to event.updatedDetails),
+                            )
+                        }
+                    }
+                    is PagingUpdateEvent.DeleteVideo -> {
+                        pagingState.update { current ->
+                            current.copy(
+                                deletedVideoIds = current.deletedVideoIds + event.videoId,
+                                updatedDetails = current.updatedDetails - event.videoId,
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -341,7 +379,9 @@ class ProfileViewModel(
                         feedDetails = deleteRequest.feedDetails,
                         catType = deleteRequest.ctaType,
                     )
-                    deletedVideoIds.update { it + deleteRequest.feedDetails.videoID }
+                    pagingUpdateChannel.trySend(
+                        PagingUpdateEvent.DeleteVideo(deleteRequest.feedDetails.videoID),
+                    )
 
                     // Update session manager with new video count
                     val currentCount = sessionManager.profileVideosCount
@@ -666,6 +706,12 @@ class ProfileViewModel(
                                     },
                             )
                         }
+                        pagingUpdateChannel.trySend(
+                            PagingUpdateEvent.UpdateVideoDetails(
+                                videoId = video.videoID,
+                                updatedDetails = video.copy(viewCount = viewData.allViews),
+                            ),
+                        )
                     }
                 }.onFailure { e ->
                     Logger.e("VideoViews") { "Failed to get video views $e" }
@@ -747,6 +793,22 @@ sealed class ProfileEvents {
     data class Failed(
         val message: String,
     ) : ProfileEvents()
+}
+
+data class PagingState(
+    val updatedDetails: Map<String, FeedDetails>,
+    val deletedVideoIds: Set<String>,
+)
+
+sealed class PagingUpdateEvent {
+    data class UpdateVideoDetails(
+        val videoId: String,
+        val updatedDetails: FeedDetails,
+    ) : PagingUpdateEvent()
+
+    data class DeleteVideo(
+        val videoId: String,
+    ) : PagingUpdateEvent()
 }
 
 enum class FollowersSheetTab {
