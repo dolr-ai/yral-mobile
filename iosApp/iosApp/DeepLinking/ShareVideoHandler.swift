@@ -15,6 +15,7 @@ struct SharePayload {
   let imageUrl: String?
   let postId: String
   let canisterId: String
+  let publisherUserId: String
 }
 
 final class BranchShareService {
@@ -45,7 +46,11 @@ final class BranchShareService {
                     channel: String,
                     campaign: String? = nil,
                     completion: @escaping (String?, Error?) -> Void) {
-    let route = PostDetailsRoute(canisterId: payload.canisterId, postId: payload.postId)
+    let route = PostDetailsRoute(
+      canisterId: payload.canisterId,
+      postId: payload.postId,
+      publisherUserId: payload.publisherUserId
+    )
     guard let url = AppDIHelper().getRoutingService().buildUrl(route: route) else {
       completion(nil, DeepLinkUrlError.notFound)
       return
