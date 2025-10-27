@@ -321,7 +321,7 @@ class FeedsRepository: FeedRepositoryProtocol {
           publisherUserId: $0.publisherUserID,
           userID: userPrincipalString,
           videoID: $0.videoID,
-          viewCount: Int32($0.viewCount)
+          viewCount: Int32($0.viewCount), absoluteWatched: $0.absoluteWatched
         )
       }
       let videoRequestDTO = VideoEventRequestDTO(

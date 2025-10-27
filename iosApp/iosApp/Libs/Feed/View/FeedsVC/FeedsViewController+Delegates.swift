@@ -86,7 +86,8 @@ extension FeedsViewController: FeedsCellProtocol {
         description: Constants.shareDescription,
         imageUrl: item.thumbnail.absoluteString,
         postId: item.postID,
-        canisterId: item.canisterID
+        canisterId: item.canisterID,
+        publisherUserId: item.principalID
       ),
       channel: ""
     ) { [weak self] shareUrlString, error  in
