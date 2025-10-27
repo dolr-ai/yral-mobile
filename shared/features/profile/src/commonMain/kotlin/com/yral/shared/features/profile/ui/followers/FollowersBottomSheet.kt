@@ -75,6 +75,7 @@ fun FollowersBottomSheet(
     followers: LazyPagingItems<PagedFollowerItem>,
     following: LazyPagingItems<PagedFollowerItem>,
     followLoading: Map<String, Boolean>,
+    viewerPrincipal: String?,
     onTabSelected: (FollowersSheetTab) -> Unit,
     onFollowToggle: (String, Boolean) -> Unit,
 ) {
@@ -103,6 +104,7 @@ fun FollowersBottomSheet(
             minSheetHeight = heightConstrains.first,
             maxSheetHeight = heightConstrains.second,
             followLoading = followLoading,
+            viewerPrincipal = viewerPrincipal,
             onTabSelected = onTabSelected,
             onFollowToggle = onFollowToggle,
         )
@@ -119,6 +121,7 @@ private fun FollowersBottomSheetContent(
     minSheetHeight: Dp,
     maxSheetHeight: Dp,
     followLoading: Map<String, Boolean>,
+    viewerPrincipal: String?,
     onTabSelected: (FollowersSheetTab) -> Unit,
     onFollowToggle: (String, Boolean) -> Unit,
 ) {
@@ -182,13 +185,14 @@ private fun FollowersBottomSheetContent(
                                 items(
                                     items = page.items,
                                     key = { follower ->
-                                        toReadablePrincipalText(follower.principalId) + "-$pageIndex"
+                                        "${follower.principalId}-$pageIndex"
                                     },
                                     contentType = { _ -> "FollowerItem" },
                                 ) { follower ->
                                     FollowerRow(
                                         follower = follower,
                                         followLoading = followLoading,
+                                        viewerPrincipal = viewerPrincipal,
                                         onFollowToggle = onFollowToggle,
                                     )
                                 }
@@ -354,13 +358,17 @@ private fun FollowersTabItem(
 private fun FollowerRow(
     follower: FollowerItem,
     followLoading: Map<String, Boolean>,
+    viewerPrincipal: String?,
     onFollowToggle: (String, Boolean) -> Unit,
 ) {
     val principalText =
-        remember(follower.principalId) { toReadablePrincipalText(follower.principalId.toString()) }
+        remember(follower.principalId) { follower.principalId }
     val displayName =
-        remember(principalText) { resolveUsername(null, principalText) ?: principalText }
+        remember(follower.username, principalText) {
+            resolveUsername(follower.username, principalText) ?: principalText
+        }
     val isFollowing = follower.callerFollows
+    val isCurrentUser = viewerPrincipal != null && viewerPrincipal == principalText
     val avatarUrl =
         remember(follower.profilePictureUrl, principalText) {
             follower.profilePictureUrl?.takeIf { it.isNotBlank() } ?: propicFromPrincipal(
@@ -402,31 +410,33 @@ private fun FollowerRow(
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        if (isFollowing) {
-            YralButton(
-                text = stringResource(DesignRes.string.following),
-                modifier =
-                    Modifier
-                        .width(FollowersSheetUi.ActionButtonWidth)
-                        .height(FollowersSheetUi.ActionButtonHeight),
-                backgroundColor = YralColors.Neutral800,
-                borderColor = YralColors.Neutral700,
-                textStyle = LocalAppTopography.current.baseSemiBold.copy(color = YralColors.Neutral50),
-                buttonHeight = FollowersSheetUi.ActionButtonHeight,
-                buttonState = if (isLoading) YralButtonState.Loading else YralButtonState.Enabled,
-                onClick = { if (!isLoading) onFollowToggle(principalText, true) },
-            )
-        } else {
-            YralGradientButton(
-                modifier =
-                    Modifier
-                        .width(FollowersSheetUi.ActionButtonWidth)
-                        .height(FollowersSheetUi.ActionButtonHeight),
-                buttonHeight = FollowersSheetUi.ActionButtonHeight,
-                text = stringResource(DesignRes.string.follow),
-                buttonState = if (isLoading) YralButtonState.Loading else YralButtonState.Enabled,
-                onClick = { if (!isLoading) onFollowToggle(principalText, false) },
-            )
+        if (!isCurrentUser) {
+            if (isFollowing) {
+                YralButton(
+                    text = stringResource(DesignRes.string.following),
+                    modifier =
+                        Modifier
+                            .width(FollowersSheetUi.ActionButtonWidth)
+                            .height(FollowersSheetUi.ActionButtonHeight),
+                    backgroundColor = YralColors.Neutral800,
+                    borderColor = YralColors.Neutral700,
+                    textStyle = LocalAppTopography.current.baseSemiBold.copy(color = YralColors.Neutral50),
+                    buttonHeight = FollowersSheetUi.ActionButtonHeight,
+                    buttonState = if (isLoading) YralButtonState.Loading else YralButtonState.Enabled,
+                    onClick = { if (!isLoading) onFollowToggle(principalText, true) },
+                )
+            } else {
+                YralGradientButton(
+                    modifier =
+                        Modifier
+                            .width(FollowersSheetUi.ActionButtonWidth)
+                            .height(FollowersSheetUi.ActionButtonHeight),
+                    buttonHeight = FollowersSheetUi.ActionButtonHeight,
+                    text = stringResource(DesignRes.string.follow),
+                    buttonState = if (isLoading) YralButtonState.Loading else YralButtonState.Enabled,
+                    onClick = { if (!isLoading) onFollowToggle(principalText, false) },
+                )
+            }
         }
     }
 }
@@ -442,12 +452,6 @@ private fun FollowersPagingIndicator(
         is LoadState.NotLoading -> Unit
     }
 }
-
-private fun toReadablePrincipalText(raw: String): String =
-    raw
-        .removePrefix("Principal(")
-        .removeSuffix(")")
-        .removePrefix("text=")
 
 fun calculateSheetMinMaxHeight(
     currentListSize: Int,

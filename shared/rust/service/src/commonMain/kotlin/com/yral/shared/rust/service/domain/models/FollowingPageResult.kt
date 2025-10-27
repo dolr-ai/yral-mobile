@@ -9,15 +9,17 @@ data class FollowingPageResult(
     val totalCount: ULong,
 )
 
-fun UisFollowingResponse.toFollowingPageResult(): FollowingPageResult =
+fun UisFollowingResponse.toFollowingPageResult(usernames: Map<String, String>): FollowingPageResult =
     FollowingPageResult(
         nextCursor = this.nextCursor,
         following =
             this.following.map { follower ->
+                val principalText = follower.principalId
                 FollowerItem(
                     callerFollows = follower.callerFollows,
                     profilePictureUrl = follower.profilePictureUrl,
                     principalId = follower.principalId,
+                    username = usernames[principalText],
                 )
             },
         totalCount = this.totalCount,
