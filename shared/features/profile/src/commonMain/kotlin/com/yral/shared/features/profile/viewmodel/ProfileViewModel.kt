@@ -251,6 +251,29 @@ class ProfileViewModel(
                     }
                 }
         }
+
+        // Collect paging update events
+        viewModelScope.launch {
+            pagingUpdateChannel.receiveAsFlow().collect { event ->
+                when (event) {
+                    is PagingUpdateEvent.UpdateVideoDetails -> {
+                        pagingState.update { current ->
+                            current.copy(
+                                updatedDetails = current.updatedDetails + (event.videoId to event.updatedDetails),
+                            )
+                        }
+                    }
+                    is PagingUpdateEvent.DeleteVideo -> {
+                        pagingState.update { current ->
+                            current.copy(
+                                deletedVideoIds = current.deletedVideoIds + event.videoId,
+                                updatedDetails = current.updatedDetails - event.videoId,
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private fun refreshOwnProfileDetails() {
