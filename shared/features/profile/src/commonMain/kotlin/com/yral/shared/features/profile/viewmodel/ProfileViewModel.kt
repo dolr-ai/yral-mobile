@@ -676,6 +676,14 @@ class ProfileViewModel(
                 }
         }
     }
+
+    fun updateFollowSheetTab(tab: FollowersSheetTab) {
+        _state.update {
+            it.copy(
+                bottomSheet = ProfileBottomSheet.FollowDetails(tab),
+            )
+        }
+    }
 }
 
 data class ViewState(
@@ -700,6 +708,9 @@ sealed interface ProfileBottomSheet {
     data object SignUp : ProfileBottomSheet
     data class VideoView(
         val videoId: String,
+    ) : ProfileBottomSheet
+    data class FollowDetails(
+        val tab: FollowersSheetTab,
     ) : ProfileBottomSheet
 }
 
@@ -732,4 +743,9 @@ sealed class ProfileEvents {
     data class Failed(
         val message: String,
     ) : ProfileEvents()
+}
+
+enum class FollowersSheetTab {
+    Followers,
+    Following,
 }
