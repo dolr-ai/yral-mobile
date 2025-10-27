@@ -1005,6 +1005,8 @@ private fun DeletingOverLay(
                     text = stringResource(Res.string.deleting),
                     style = textStyle,
                     color = YralColors.NeutralTextPrimary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         }
