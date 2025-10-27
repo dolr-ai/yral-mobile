@@ -104,8 +104,6 @@ class ProfileViewModel(
     private val profileEventsChannel = Channel<ProfileEvents>(Channel.CONFLATED)
     val profileEvents = profileEventsChannel.receiveAsFlow()
 
-    private val pagingUpdateChannel = Channel<PagingUpdateEvent>(Channel.CONFLATED)
-
     // Unified state management for paging data
     private val pagingState =
         MutableStateFlow(
@@ -253,29 +251,6 @@ class ProfileViewModel(
                     }
                 }
         }
-
-        // Collect paging update events
-        viewModelScope.launch {
-            pagingUpdateChannel.receiveAsFlow().collect { event ->
-                when (event) {
-                    is PagingUpdateEvent.UpdateVideoDetails -> {
-                        pagingState.update { current ->
-                            current.copy(
-                                updatedDetails = current.updatedDetails + (event.videoId to event.updatedDetails),
-                            )
-                        }
-                    }
-                    is PagingUpdateEvent.DeleteVideo -> {
-                        pagingState.update { current ->
-                            current.copy(
-                                deletedVideoIds = current.deletedVideoIds + event.videoId,
-                                updatedDetails = current.updatedDetails - event.videoId,
-                            )
-                        }
-                    }
-                }
-            }
-        }
     }
 
     private fun refreshOwnProfileDetails() {
@@ -379,10 +354,12 @@ class ProfileViewModel(
                         feedDetails = deleteRequest.feedDetails,
                         catType = deleteRequest.ctaType,
                     )
-                    pagingUpdateChannel.trySend(
-                        PagingUpdateEvent.DeleteVideo(deleteRequest.feedDetails.videoID),
-                    )
-
+                    pagingState.update { current ->
+                        current.copy(
+                            deletedVideoIds = current.deletedVideoIds + deleteRequest.feedDetails.videoID,
+                            updatedDetails = current.updatedDetails - deleteRequest.feedDetails.videoID,
+                        )
+                    }
                     // Update session manager with new video count
                     val currentCount = sessionManager.profileVideosCount
                     sessionManager.updateProfileVideosCount(
@@ -667,6 +644,7 @@ class ProfileViewModel(
         }
     }
 
+    @Suppress("LongMethod")
     @OptIn(ExperimentalTime::class)
     fun showVideoViews(video: FeedDetails) {
         if (!_state.value.isOwnProfile) return
@@ -707,12 +685,13 @@ class ProfileViewModel(
                                     },
                             )
                         }
-                        pagingUpdateChannel.trySend(
-                            PagingUpdateEvent.UpdateVideoDetails(
-                                videoId = video.videoID,
-                                updatedDetails = video.copy(viewCount = viewData.allViews),
-                            ),
-                        )
+                        pagingState.update { current ->
+                            current.copy(
+                                updatedDetails =
+                                    current.updatedDetails +
+                                        (video.videoID to video.copy(viewCount = viewData.allViews)),
+                            )
+                        }
                     }
                 }.onFailure { e ->
                     Logger.e("VideoViews") { "Failed to get video views $e" }
@@ -800,17 +779,6 @@ data class PagingState(
     val updatedDetails: Map<String, FeedDetails>,
     val deletedVideoIds: Set<String>,
 )
-
-sealed class PagingUpdateEvent {
-    data class UpdateVideoDetails(
-        val videoId: String,
-        val updatedDetails: FeedDetails,
-    ) : PagingUpdateEvent()
-
-    data class DeleteVideo(
-        val videoId: String,
-    ) : PagingUpdateEvent()
-}
 
 enum class FollowersSheetTab {
     Followers,

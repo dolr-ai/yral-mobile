@@ -302,18 +302,20 @@ class FeedViewModel(
                         _state.update { currentState ->
                             addDeeplinkData(currentState, detail)
                         }
+                    } ?: run {
+                        val exceptionMessage = "Detail is null for $postId in deeplink"
+                        crashlyticsManager.recordException(YralException(exceptionMessage))
+                        setDeeplinkFetching(false)
+                        Logger.e("LinkSharing") { exceptionMessage }
                     }
-                        ?: crashlyticsManager
-                            .recordException(YralException("Detail is null for $postId in deeplink"))
-                            .also {
-                                Logger.e("LinkSharing") { "Detail is null for $postId in deeplink" }
-                            }
                 }.onFailure { throwable ->
                     Logger.e("LinkSharing", throwable) {
                         "Failed to fetch deep linked video details for postId=$postId canisterId=$canisterId"
                     }
                     setDeeplinkFetching(false)
                 }
+        } else {
+            setDeeplinkFetching(false)
         }
     }
 
