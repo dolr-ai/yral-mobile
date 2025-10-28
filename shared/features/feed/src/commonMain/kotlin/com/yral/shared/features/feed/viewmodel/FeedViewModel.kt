@@ -208,7 +208,7 @@ class FeedViewModel(
                             setLoadingMore(false)
                             updateFeedType(FeedType.DEFAULT)
                         } else {
-                            val notVotedCount = filterVotedAndFetchDetails(posts, true)
+                            val notVotedCount = filterVotedAndFetchDetails(posts)
                             val newTotal = totalNotVotedCount + notVotedCount
                             Logger.d("FeedPagination") { "notVotedCount in ai feed $notVotedCount" }
                             if (notVotedCount < SUFFICIENT_NEW_REQUIRED) {
@@ -343,7 +343,7 @@ class FeedViewModel(
     @Suppress("LongMethod")
     private suspend fun filterVotedAndFetchDetails(
         posts: List<Post>,
-        checkVotes: Boolean = true,
+        checkVotes: Boolean = false,
     ): Int {
         val fetchedIds = _state.value.posts.mapTo(HashSet()) { it.videoID }
         val newPosts = posts.filter { post -> post.videoID !in fetchedIds }
