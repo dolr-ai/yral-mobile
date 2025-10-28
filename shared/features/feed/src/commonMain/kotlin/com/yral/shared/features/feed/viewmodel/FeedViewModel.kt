@@ -77,7 +77,7 @@ class FeedViewModel(
 
     companion object {
         const val PRE_FETCH_BEFORE_LAST = 5
-        private const val FIRST_SECOND_WATCHED_THRESHOLD_MS = 1000L
+        private const val FIRST_SECOND_WATCHED_THRESHOLD_MS = 100L
         private val ANALYTICS_VIDEO_STARTED_RANGE = 0L..1000L
         private val ANALYTICS_VIDEO_VIEWED_RANGE = 3000L..4000L
         private const val FULL_VIDEO_WATCHED_THRESHOLD = 95.0
@@ -208,7 +208,7 @@ class FeedViewModel(
                             setLoadingMore(false)
                             updateFeedType(FeedType.DEFAULT)
                         } else {
-                            val notVotedCount = filterVotedAndFetchDetails(posts, true)
+                            val notVotedCount = filterVotedAndFetchDetails(posts)
                             val newTotal = totalNotVotedCount + notVotedCount
                             Logger.d("FeedPagination") { "notVotedCount in ai feed $notVotedCount" }
                             if (notVotedCount < SUFFICIENT_NEW_REQUIRED) {
@@ -343,7 +343,7 @@ class FeedViewModel(
     @Suppress("LongMethod")
     private suspend fun filterVotedAndFetchDetails(
         posts: List<Post>,
-        checkVotes: Boolean = true,
+        checkVotes: Boolean = false,
     ): Int {
         val fetchedIds = _state.value.posts.mapTo(HashSet()) { it.videoID }
         val newPosts = posts.filter { post -> post.videoID !in fetchedIds }
@@ -522,22 +522,27 @@ class FeedViewModel(
         totalTime: Int,
     ) {
         coroutineScope.launch {
+            // Get current state values before any updates
+            val videoData = _state.value.videoData
             val currentFeedDetails = _state.value.feedDetails[_state.value.currentPageOfFeed]
             when (currentTime) {
                 in ANALYTICS_VIDEO_STARTED_RANGE -> feedTelemetry.trackVideoStarted(currentFeedDetails)
 
                 in ANALYTICS_VIDEO_VIEWED_RANGE -> {
+                    val shouldLog3Second = !videoData.isFirstTimeUpdate && !videoData.didLog3SecondWatched
+                    if (shouldLog3Second) {
+                        recordEvent(videoData = _state.value.videoData.copy(didLog3SecondWatched = true))
+                    }
                     feedTelemetry.trackVideoViewed(currentFeedDetails)
                     feedTelemetry.resetVideoStarted(currentFeedDetails.videoID)
                 }
             }
 
             // If we've already logged full video watched, no need to continue processing
-            if (_state.value.videoData.didLogFullVideoWatched) {
+            if (videoData.didLogFullVideoWatched) {
                 return@launch
             }
-            // Get current state values before any updates
-            val videoData = _state.value.videoData
+
             // Check for threshold crossing - only if not the first update and we haven't logged it yet
             val shouldLogFirstSecond =
                 !videoData.isFirstTimeUpdate &&
@@ -842,6 +847,7 @@ enum class FeedType {
 }
 
 data class VideoData(
+    val didLog3SecondWatched: Boolean = false,
     val didLogFirstSecondWatched: Boolean = false,
     val didLogFullVideoWatched: Boolean = false,
     val lastKnownCurrentTime: Int = 0,
