@@ -18,6 +18,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,17 +31,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import com.yral.shared.core.utils.resolveUsername
+import com.yral.shared.features.profile.ui.SHEET_GROWTH_PER_ITEM
+import com.yral.shared.features.profile.viewmodel.FollowersSheetTab
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
+import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.component.YralButtonState
+import com.yral.shared.libs.designsystem.component.YralDragHandle
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
@@ -58,34 +65,55 @@ import yral_mobile.shared.libs.designsystem.generated.resources.following
 import yral_mobile.shared.libs.designsystem.generated.resources.try_again
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
-object FollowersSheetUi {
-    const val MIN_HEIGHT_FRACTION = 0.35f
-    const val EXPANDED_HEIGHT_FRACTION = 0.9f
-    const val TAB_UNSELECTED_ALPHA = 0.6f
-    const val TAB_WIDTH_FRACTION = 0.5f
-    val HorizontalPadding = 16.dp
-    val NameTopSpacing = 12.dp
-    val TabsTopSpacing = 28.dp
-    val SeparatorTopSpacing = 12.dp
-    val SeparatorHeight = 1.dp
-    val ListTopSpacing = 36.dp
-    val ListItemSpacing = 16.dp
-    val AvatarSize = 42.dp
-    val ItemPaddingHorizontal = 16.dp
-    val ItemPaddingVertical = 12.dp
-    val ActionButtonWidth = 118.dp
-    val ActionButtonHeight = 36.dp
-    val RowCornerRadius = 12.dp
-}
-
-enum class FollowersSheetTab {
-    Followers,
-    Following,
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FollowersBottomSheet(
+    sheetState: SheetState,
+    onDismissRequest: () -> Unit,
+    username: String,
+    initialTab: FollowersSheetTab,
+    followers: LazyPagingItems<PagedFollowerItem>,
+    following: LazyPagingItems<PagedFollowerItem>,
+    followLoading: Map<String, Boolean>,
+    viewerPrincipal: String?,
+    onTabSelected: (FollowersSheetTab) -> Unit,
+    onFollowToggle: (String, Boolean) -> Unit,
+) {
+    val currentListSize =
+        when (initialTab) {
+            FollowersSheetTab.Followers -> followers.itemSnapshotList.size
+            FollowersSheetTab.Following -> following.itemSnapshotList.size
+        }
+    val density = LocalDensity.current
+    val screenHeight =
+        with(density) {
+            LocalWindowInfo.current.containerSize.height
+                .toDp()
+        }
+    val heightConstrains = calculateSheetMinMaxHeight(currentListSize, screenHeight)
+    YralBottomSheet(
+        bottomSheetState = sheetState,
+        onDismissRequest = onDismissRequest,
+        dragHandle = { YralDragHandle() },
+    ) {
+        FollowersBottomSheetContent(
+            username = username,
+            initialTab = initialTab,
+            followers = followers,
+            following = following,
+            minSheetHeight = heightConstrains.first,
+            maxSheetHeight = heightConstrains.second,
+            followLoading = followLoading,
+            viewerPrincipal = viewerPrincipal,
+            onTabSelected = onTabSelected,
+            onFollowToggle = onFollowToggle,
+        )
+    }
 }
 
 @Suppress("LongMethod")
 @Composable
-fun FollowersBottomSheet(
+private fun FollowersBottomSheetContent(
     username: String,
     initialTab: FollowersSheetTab,
     followers: LazyPagingItems<PagedFollowerItem>,
@@ -93,6 +121,7 @@ fun FollowersBottomSheet(
     minSheetHeight: Dp,
     maxSheetHeight: Dp,
     followLoading: Map<String, Boolean>,
+    viewerPrincipal: String?,
     onTabSelected: (FollowersSheetTab) -> Unit,
     onFollowToggle: (String, Boolean) -> Unit,
 ) {
@@ -120,8 +149,7 @@ fun FollowersBottomSheet(
         Text(
             text = username,
             modifier = Modifier.fillMaxWidth(),
-            style =
-                LocalAppTopography.current.lgBold,
+            style = LocalAppTopography.current.lgBold,
             color = YralColors.NeutralTextPrimary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -157,13 +185,14 @@ fun FollowersBottomSheet(
                                 items(
                                     items = page.items,
                                     key = { follower ->
-                                        toReadablePrincipalText(follower.principalId) + "-$pageIndex"
+                                        "${follower.principalId}-$pageIndex"
                                     },
                                     contentType = { _ -> "FollowerItem" },
                                 ) { follower ->
                                     FollowerRow(
                                         follower = follower,
                                         followLoading = followLoading,
+                                        viewerPrincipal = viewerPrincipal,
                                         onFollowToggle = onFollowToggle,
                                     )
                                 }
@@ -215,7 +244,7 @@ private fun FollowersErrorState(onRetry: () -> Unit) {
         YralGradientButton(
             modifier = Modifier.width(160.dp),
             text = stringResource(DesignRes.string.try_again),
-            buttonHeight = 38.dp,
+            buttonHeight = FollowersSheetUi.ActionButtonHeight,
             onClick = onRetry,
         )
     }
@@ -310,7 +339,7 @@ private fun FollowersTabItem(
     ) {
         Text(
             text = text,
-            style = LocalAppTopography.current.baseRegular.copy(fontSize = 14.sp),
+            style = LocalAppTopography.current.baseRegular,
             color =
                 if (isSelected) {
                     YralColors.NeutralTextPrimary
@@ -329,13 +358,17 @@ private fun FollowersTabItem(
 private fun FollowerRow(
     follower: FollowerItem,
     followLoading: Map<String, Boolean>,
+    viewerPrincipal: String?,
     onFollowToggle: (String, Boolean) -> Unit,
 ) {
     val principalText =
-        remember(follower.principalId) { toReadablePrincipalText(follower.principalId.toString()) }
+        remember(follower.principalId) { follower.principalId }
     val displayName =
-        remember(principalText) { resolveUsername(null, principalText) ?: principalText }
+        remember(follower.username, principalText) {
+            resolveUsername(follower.username, principalText) ?: principalText
+        }
     val isFollowing = follower.callerFollows
+    val isCurrentUser = viewerPrincipal != null && viewerPrincipal == principalText
     val avatarUrl =
         remember(follower.profilePictureUrl, principalText) {
             follower.profilePictureUrl?.takeIf { it.isNotBlank() } ?: propicFromPrincipal(
@@ -371,41 +404,39 @@ private fun FollowerRow(
             )
             Text(
                 text = displayName,
-                style = LocalAppTopography.current.baseSemiBold.copy(fontSize = 14.sp),
+                style = LocalAppTopography.current.baseSemiBold,
                 color = YralColors.NeutralTextPrimary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        if (isFollowing) {
-            YralButton(
-                text = stringResource(DesignRes.string.following),
-                modifier =
-                    Modifier
-                        .width(FollowersSheetUi.ActionButtonWidth)
-                        .height(FollowersSheetUi.ActionButtonHeight),
-                backgroundColor = YralColors.Neutral800,
-                borderColor = YralColors.Neutral700,
-                textStyle =
-                    LocalAppTopography.current.baseSemiBold.copy(
-                        fontSize = 14.sp,
-                        color = YralColors.Neutral50,
-                    ),
-                buttonHeight = FollowersSheetUi.ActionButtonHeight,
-                buttonState = if (isLoading) YralButtonState.Loading else YralButtonState.Enabled,
-                onClick = { if (!isLoading) onFollowToggle(principalText, true) },
-            )
-        } else {
-            YralGradientButton(
-                modifier =
-                    Modifier
-                        .width(FollowersSheetUi.ActionButtonWidth)
-                        .height(FollowersSheetUi.ActionButtonHeight),
-                buttonHeight = FollowersSheetUi.ActionButtonHeight,
-                text = stringResource(DesignRes.string.follow),
-                buttonState = if (isLoading) YralButtonState.Loading else YralButtonState.Enabled,
-                onClick = { if (!isLoading) onFollowToggle(principalText, false) },
-            )
+        if (!isCurrentUser) {
+            if (isFollowing) {
+                YralButton(
+                    text = stringResource(DesignRes.string.following),
+                    modifier =
+                        Modifier
+                            .width(FollowersSheetUi.ActionButtonWidth)
+                            .height(FollowersSheetUi.ActionButtonHeight),
+                    backgroundColor = YralColors.Neutral800,
+                    borderColor = YralColors.Neutral700,
+                    textStyle = LocalAppTopography.current.baseSemiBold.copy(color = YralColors.Neutral50),
+                    buttonHeight = FollowersSheetUi.ActionButtonHeight,
+                    buttonState = if (isLoading) YralButtonState.Loading else YralButtonState.Enabled,
+                    onClick = { if (!isLoading) onFollowToggle(principalText, true) },
+                )
+            } else {
+                YralGradientButton(
+                    modifier =
+                        Modifier
+                            .width(FollowersSheetUi.ActionButtonWidth)
+                            .height(FollowersSheetUi.ActionButtonHeight),
+                    buttonHeight = FollowersSheetUi.ActionButtonHeight,
+                    text = stringResource(DesignRes.string.follow),
+                    buttonState = if (isLoading) YralButtonState.Loading else YralButtonState.Enabled,
+                    onClick = { if (!isLoading) onFollowToggle(principalText, false) },
+                )
+            }
         }
     }
 }
@@ -422,8 +453,37 @@ private fun FollowersPagingIndicator(
     }
 }
 
-private fun toReadablePrincipalText(raw: String): String =
-    raw
-        .removePrefix("Principal(")
-        .removeSuffix(")")
-        .removePrefix("text=")
+fun calculateSheetMinMaxHeight(
+    currentListSize: Int,
+    screenHeight: Dp,
+): Pair<Dp, Dp> {
+    val maxSheetHeight = screenHeight * FollowersSheetUi.EXPANDED_HEIGHT_FRACTION
+    val minSheetHeight = (screenHeight * calculateSheetFraction(currentListSize)).coerceAtMost(maxSheetHeight)
+    return minSheetHeight to maxSheetHeight
+}
+
+private fun calculateSheetFraction(itemCount: Int): Float {
+    val base = FollowersSheetUi.MIN_HEIGHT_FRACTION
+    val increment = SHEET_GROWTH_PER_ITEM
+    return (base + itemCount * increment).coerceIn(base, FollowersSheetUi.EXPANDED_HEIGHT_FRACTION)
+}
+
+private object FollowersSheetUi {
+    const val MIN_HEIGHT_FRACTION = 0.35f
+    const val EXPANDED_HEIGHT_FRACTION = 0.9f
+    const val TAB_UNSELECTED_ALPHA = 0.6f
+    const val TAB_WIDTH_FRACTION = 0.5f
+    val HorizontalPadding = 16.dp
+    val NameTopSpacing = 12.dp
+    val TabsTopSpacing = 28.dp
+    val SeparatorTopSpacing = 12.dp
+    val SeparatorHeight = 1.dp
+    val ListTopSpacing = 36.dp
+    val ListItemSpacing = 16.dp
+    val AvatarSize = 42.dp
+    val ItemPaddingHorizontal = 16.dp
+    val ItemPaddingVertical = 12.dp
+    val ActionButtonWidth = 118.dp
+    val ActionButtonHeight = 38.dp
+    val RowCornerRadius = 12.dp
+}

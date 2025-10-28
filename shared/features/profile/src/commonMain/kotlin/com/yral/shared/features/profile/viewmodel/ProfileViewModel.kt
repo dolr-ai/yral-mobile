@@ -7,6 +7,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.filter
+import androidx.paging.map
 import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.onFailure
@@ -19,6 +20,7 @@ import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.utils.getAccountInfo
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.data.feed.domain.FeedDetails
@@ -67,7 +69,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
-@Suppress("LongParameterList", "TooManyFunctions")
+@Suppress("LongParameterList", "TooManyFunctions", "LargeClass")
 class ProfileViewModel(
     private val canisterData: CanisterData,
     private val sessionManager: SessionManager,
@@ -103,8 +105,16 @@ class ProfileViewModel(
     private val profileEventsChannel = Channel<ProfileEvents>(Channel.CONFLATED)
     val profileEvents = profileEventsChannel.receiveAsFlow()
 
-    private val deletedVideoIds = MutableStateFlow<Set<String>>(emptySet())
-    val profileVideos: Flow<PagingData<FeedDetails>> =
+    // Unified state management for paging data
+    private val pagingState =
+        MutableStateFlow(
+            PagingState(
+                updatedDetails = emptyMap(),
+                deletedVideoIds = emptySet(),
+            ),
+        )
+
+    private val _profileVideos: Flow<PagingData<FeedDetails>> =
         if (canisterData.userPrincipalId.isNotEmpty()) {
             Pager(
                 config =
@@ -122,20 +132,24 @@ class ProfileViewModel(
                         isFromServiceCanister = canisterData.isCreatedFromServiceCanister,
                     )
                 },
-            ).flow
-                .cachedIn(viewModelScope)
-                .combine(deletedVideoIds) { pagingData, deletedIds ->
-                    val videoIds = mutableSetOf<String>()
-                    pagingData
-                        .filter { video ->
-                            video.videoID.isNotEmpty() &&
-                                videoIds.add(video.videoID) &&
-                                video.videoID !in deletedIds
-                        }
-                }.distinctUntilChanged()
+            ).flow.cachedIn(viewModelScope)
         } else {
             flowOf()
         }
+
+    val profileVideos: Flow<PagingData<FeedDetails>> =
+        _profileVideos
+            .combine(pagingState) { pagingData, state ->
+                val videoIds = mutableSetOf<String>()
+                pagingData
+                    .filter { video ->
+                        video.videoID.isNotEmpty() &&
+                            videoIds.add(video.videoID) &&
+                            video.videoID !in state.deletedVideoIds
+                    }.map { details ->
+                        state.updatedDetails[details.videoID] ?: details
+                    }
+            }.distinctUntilChanged()
 
     val followers: Flow<PagingData<PagedFollowerItem>> =
         if (canisterData.userPrincipalId.isNotEmpty()) {
@@ -181,7 +195,8 @@ class ProfileViewModel(
             emptyFlow()
         }
 
-    val followStatus = sessionManager.observeSessionProperty { it.followedPrincipals to it.unFollowedPrincipals }
+    val followStatus =
+        sessionManager.observeSessionProperty { it.followedPrincipals to it.unFollowedPrincipals }
 
     init {
         _state.update {
@@ -193,6 +208,7 @@ class ProfileViewModel(
                         username = canisterData.username,
                         bio = null, // populated for own profile via session observer
                     ),
+                viewerPrincipal = sessionManager.userPrincipal,
             )
         }
         val isOwnProfile = canisterData.userPrincipalId == sessionManager.userPrincipal
@@ -210,6 +226,17 @@ class ProfileViewModel(
                     .observeSessionState(transform = { sessionManager.getAccountInfo() })
                     .collect { info -> _state.update { current -> current.copy(accountInfo = info) } }
             }
+        }
+        viewModelScope.launch {
+            sessionManager
+                .observeSessionState { state ->
+                    when (state) {
+                        is SessionState.SignedIn -> state.session.userPrincipal
+                        else -> null
+                    }
+                }.collect { principal ->
+                    _state.update { current -> current.copy(viewerPrincipal = principal) }
+                }
         }
         viewModelScope.launch {
             sessionManager
@@ -259,7 +286,9 @@ class ProfileViewModel(
                     val currentInfo = current.accountInfo
                     val newInfo =
                         currentInfo?.copy(
-                            profilePic = updatedPic?.takeUnless { it.isBlank() } ?: currentInfo.profilePic,
+                            profilePic =
+                                updatedPic?.takeUnless { it.isBlank() }
+                                    ?: currentInfo.profilePic,
                             bio = bio?.takeUnless { it.isBlank() } ?: currentInfo.bio,
                         )
                     current.copy(accountInfo = newInfo)
@@ -341,8 +370,12 @@ class ProfileViewModel(
                         feedDetails = deleteRequest.feedDetails,
                         catType = deleteRequest.ctaType,
                     )
-                    deletedVideoIds.update { it + deleteRequest.feedDetails.videoID }
-
+                    pagingState.update { current ->
+                        current.copy(
+                            deletedVideoIds = current.deletedVideoIds + deleteRequest.feedDetails.videoID,
+                            updatedDetails = current.updatedDetails - deleteRequest.feedDetails.videoID,
+                        )
+                    }
                     // Update session manager with new video count
                     val currentCount = sessionManager.profileVideosCount
                     sessionManager.updateProfileVideosCount(
@@ -352,7 +385,11 @@ class ProfileViewModel(
                 }.onFailure { error ->
                     _state.update {
                         it.copy(
-                            deleteConfirmation = DeleteConfirmationState.Error(deleteRequest, error),
+                            deleteConfirmation =
+                                DeleteConfirmationState.Error(
+                                    deleteRequest,
+                                    error,
+                                ),
                         )
                     }
                 }
@@ -418,7 +455,11 @@ class ProfileViewModel(
         viewModelScope.launch {
             // Build internal deep link using UrlBuilder and PostDetailsRoute
             val route =
-                PostDetailsRoute(canisterId = feedDetails.canisterID, postId = feedDetails.postID)
+                PostDetailsRoute(
+                    canisterId = feedDetails.canisterID,
+                    postId = feedDetails.postID,
+                    publisherUserId = feedDetails.principalID,
+                )
             val internalUrl = urlBuilder.build(route) ?: feedDetails.url
             runSuspendCatching {
                 val link =
@@ -554,7 +595,11 @@ class ProfileViewModel(
                         sessionManager.removePrincipalFromFollow(targetPrincipal)
                     }
                     result.onFailure { error ->
-                        profileEventsChannel.trySend(ProfileEvents.Failed(error.message ?: "Unfollow failed"))
+                        profileEventsChannel.trySend(
+                            ProfileEvents.Failed(
+                                error.message ?: "Unfollow failed",
+                            ),
+                        )
                     }
                 } else {
                     val result =
@@ -570,7 +615,11 @@ class ProfileViewModel(
                         sessionManager.addPrincipalToFollow(targetPrincipal)
                     }
                     result.onFailure { error ->
-                        profileEventsChannel.trySend(ProfileEvents.Failed(error.message ?: "Follow failed"))
+                        profileEventsChannel.trySend(
+                            ProfileEvents.Failed(
+                                error.message ?: "Follow failed",
+                            ),
+                        )
                     }
                 }
             } finally {
@@ -623,8 +672,10 @@ class ProfileViewModel(
         }
     }
 
+    @Suppress("LongMethod")
     @OptIn(ExperimentalTime::class)
     fun showVideoViews(video: FeedDetails) {
+        if (!_state.value.isOwnProfile) return
         viewModelScope.launch {
             val currentViews = _state.value.viewsData[video.videoID]
             val shouldRefresh =
@@ -634,6 +685,7 @@ class ProfileViewModel(
                         val now = Clock.System.now()
                         now - currentViews.data.lastFetched > VIEWS_REFRESH_THRESHOLD
                     }
+
                     else -> true
                 }
             _state.update {
@@ -641,7 +693,9 @@ class ProfileViewModel(
                     bottomSheet = ProfileBottomSheet.VideoView(videoId = video.videoID),
                     viewsData =
                         if (shouldRefresh) {
-                            it.viewsData.toMutableMap().apply { this[video.videoID] = UiState.InProgress() }
+                            it.viewsData
+                                .toMutableMap()
+                                .apply { this[video.videoID] = UiState.InProgress() }
                         } else {
                             it.viewsData
                         },
@@ -662,6 +716,13 @@ class ProfileViewModel(
                                     },
                             )
                         }
+                        pagingState.update { current ->
+                            current.copy(
+                                updatedDetails =
+                                    current.updatedDetails +
+                                        (video.videoID to video.copy(viewCount = viewData.allViews)),
+                            )
+                        }
                     }
                 }.onFailure { e ->
                     Logger.e("VideoViews") { "Failed to get video views $e" }
@@ -674,6 +735,14 @@ class ProfileViewModel(
                         )
                     }
                 }
+        }
+    }
+
+    fun updateFollowSheetTab(tab: FollowersSheetTab) {
+        _state.update {
+            it.copy(
+                bottomSheet = ProfileBottomSheet.FollowDetails(tab),
+            )
         }
     }
 }
@@ -693,6 +762,7 @@ data class ViewState(
     val isFollowInProgress: Boolean = false,
     val viewsData: Map<String, UiState<VideoViews>> = emptyMap(),
     val followLoading: Map<String, Boolean> = emptyMap(),
+    val viewerPrincipal: String? = null,
 )
 
 sealed interface ProfileBottomSheet {
@@ -700,6 +770,10 @@ sealed interface ProfileBottomSheet {
     data object SignUp : ProfileBottomSheet
     data class VideoView(
         val videoId: String,
+    ) : ProfileBottomSheet
+
+    data class FollowDetails(
+        val tab: FollowersSheetTab,
     ) : ProfileBottomSheet
 }
 
@@ -732,4 +806,14 @@ sealed class ProfileEvents {
     data class Failed(
         val message: String,
     ) : ProfileEvents()
+}
+
+data class PagingState(
+    val updatedDetails: Map<String, FeedDetails>,
+    val deletedVideoIds: Set<String>,
+)
+
+enum class FollowersSheetTab {
+    Followers,
+    Following,
 }

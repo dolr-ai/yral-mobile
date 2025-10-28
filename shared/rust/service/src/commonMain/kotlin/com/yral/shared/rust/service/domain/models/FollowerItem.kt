@@ -6,4 +6,5 @@ data class FollowerItem(
     val callerFollows: Boolean,
     val profilePictureUrl: String?,
     val principalId: Principal,
+    val username: String?,
 )

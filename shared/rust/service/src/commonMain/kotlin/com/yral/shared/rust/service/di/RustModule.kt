@@ -41,8 +41,8 @@ val rustModule: Module =
         factoryOf(::RateLimitDataSourceImpl) { bind<RateLimitDataSource>() }
 
         // User Info Service
-        factoryOf(::UserInfoRepositoryImpl) { bind<UserInfoRepository>() }
         factoryOf(::UserInfoDataSourceImpl) { bind<UserInfoDataSource>() }
+        factoryOf(::UserInfoRepositoryImpl) { bind<UserInfoRepository>() }
 
         // Service Factories
         single { IndividualUserServiceFactory() }
