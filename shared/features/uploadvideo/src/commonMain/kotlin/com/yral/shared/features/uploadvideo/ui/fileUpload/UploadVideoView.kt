@@ -27,6 +27,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
 import com.yral.shared.features.uploadvideo.utils.VideoValidationError
+import com.yral.shared.features.uploadvideo.utils.VideoValidator
+import com.yral.shared.features.uploadvideo.utils.formatFileSize
 import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
@@ -108,7 +110,7 @@ fun UploadVideo(
 
 @Composable
 internal expect fun SelectVideoView(
-    maxSeconds: Int = 60,
+    maxSeconds: Int = VideoValidator.VIDEO_MAX_DURATION_SECONDS.toInt(),
     onVideoSelected: (String) -> Unit,
     onCTAClicked: () -> Unit,
 )
@@ -123,10 +125,8 @@ sealed class VideoPickerError {
 @Composable
 internal fun VideoSelectionContent(
     maxSeconds: Int,
-    hasPermissions: Boolean,
-    selectionState: VideoSelectionState,
-    onLaunchVideoPicker: () -> Unit,
-    onRequestPermissions: () -> Unit,
+    isProcessingVideo: Boolean,
+    onSelectFileClick: () -> Unit,
 ) {
     Column(
         modifier = Modifier.fillMaxSize().padding(start = 18.dp, end = 18.dp),
@@ -145,10 +145,8 @@ internal fun VideoSelectionContent(
         )
         Spacer(Modifier.height(0.dp))
         VideoSelectionButton(
-            isProcessingVideo = selectionState.isProcessingVideo,
-            hasPermissions = hasPermissions,
-            onLaunchVideoPicker = onLaunchVideoPicker,
-            onRequestPermissions = onRequestPermissions,
+            isProcessingVideo = isProcessingVideo,
+            onSelectFileClick = onSelectFileClick,
         )
     }
 }
@@ -156,9 +154,7 @@ internal fun VideoSelectionContent(
 @Composable
 private fun VideoSelectionButton(
     isProcessingVideo: Boolean,
-    hasPermissions: Boolean,
-    onLaunchVideoPicker: () -> Unit,
-    onRequestPermissions: () -> Unit,
+    onSelectFileClick: () -> Unit,
 ) {
     YralButton(
         modifier =
@@ -175,49 +171,45 @@ private fun VideoSelectionButton(
         backgroundColor = YralColors.Neutral900,
         textStyle = TextStyle(color = YralColors.Pink300),
         buttonState = if (isProcessingVideo) YralButtonState.Loading else YralButtonState.Enabled,
-    ) {
-        if (!isProcessingVideo) {
-            if (hasPermissions) {
-                onLaunchVideoPicker()
-            } else {
-                onRequestPermissions()
-            }
-        }
-    }
+        onClick = onSelectFileClick,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun VideoSelectionErrorDialog(
-    selectionState: VideoSelectionState,
-    pickerError: VideoPickerError?,
+internal fun VideoSelectionPermissionErrorDialog(
+    sheetState: SheetState,
     onDismissError: () -> Unit,
     onGoToSettingsClicked: () -> Unit,
 ) {
-    if (selectionState.showPermissionError) {
-        YralErrorMessage(
-            title = stringResource(DesignRes.string.permission_required_title),
-            error = stringResource(Res.string.permission_required_description),
-            sheetState = selectionState.errorSheetState,
-            cta = stringResource(DesignRes.string.go_to_settings),
-            onClick = {
-                onDismissError()
-                onGoToSettingsClicked()
-            },
-            onDismiss = onDismissError,
-        )
-    }
+    YralErrorMessage(
+        title = stringResource(DesignRes.string.permission_required_title),
+        error = stringResource(Res.string.permission_required_description),
+        sheetState = sheetState,
+        cta = stringResource(DesignRes.string.go_to_settings),
+        onClick = {
+            onDismissError()
+            onGoToSettingsClicked()
+        },
+        onDismiss = onDismissError,
+    )
+}
 
-    if (pickerError != null) {
-        YralErrorMessage(
-            title = stringResource(DesignRes.string.error),
-            error = pickerError.toErrorMessage(),
-            sheetState = selectionState.errorSheetState,
-            cta = stringResource(DesignRes.string.ok),
-            onClick = onDismissError,
-            onDismiss = onDismissError,
-        )
-    }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun VideoSelectionPickerErrorDialog(
+    sheetState: SheetState,
+    pickerError: VideoPickerError,
+    onDismissError: () -> Unit,
+) {
+    YralErrorMessage(
+        title = stringResource(DesignRes.string.error),
+        error = pickerError.toErrorMessage(),
+        sheetState = sheetState,
+        cta = stringResource(DesignRes.string.ok),
+        onClick = onDismissError,
+        onDismiss = onDismissError,
+    )
 }
 
 @Composable
@@ -232,7 +224,7 @@ private fun VideoPickerError.toErrorMessage(): String =
                 is VideoValidationError.DurationExceedsLimit ->
                     stringResource(
                         Res.string.video_validation_duration_exceeds_limit_with_data,
-                        formatMaxDuration(error.limit),
+                        error.limit.toInt(),
                     )
                 is VideoValidationError.FileSizeExceedsLimit ->
                     stringResource(
@@ -243,23 +235,3 @@ private fun VideoPickerError.toErrorMessage(): String =
 
         is VideoPickerError.ProcessingFailed -> stringResource(Res.string.video_validation_processing_failed)
     }
-
-expect fun formatMaxDuration(duration: Double): String
-
-@Composable
-expect fun formatFileSize(
-    bytes: Long,
-    precision: Int = 1,
-): String
-
-/**
- * Data class to hold all state variables for the video selection screen
- */
-@OptIn(ExperimentalMaterial3Api::class)
-data class VideoSelectionState(
-    val shouldLaunchPicker: Boolean = false,
-    val hasRequestedPermissions: Boolean = false,
-    val showPermissionError: Boolean = false,
-    val isProcessingVideo: Boolean = false,
-    val errorSheetState: SheetState,
-)
