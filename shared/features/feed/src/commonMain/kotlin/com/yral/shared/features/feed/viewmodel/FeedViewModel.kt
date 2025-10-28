@@ -522,22 +522,27 @@ class FeedViewModel(
         totalTime: Int,
     ) {
         coroutineScope.launch {
+            // Get current state values before any updates
+            val videoData = _state.value.videoData
             val currentFeedDetails = _state.value.feedDetails[_state.value.currentPageOfFeed]
             when (currentTime) {
                 in ANALYTICS_VIDEO_STARTED_RANGE -> feedTelemetry.trackVideoStarted(currentFeedDetails)
 
                 in ANALYTICS_VIDEO_VIEWED_RANGE -> {
+                    val shouldLog3Second = !videoData.isFirstTimeUpdate && !videoData.didLog3SecondWatched
+                    if (shouldLog3Second) {
+                        recordEvent(videoData = _state.value.videoData.copy(didLog3SecondWatched = true))
+                    }
                     feedTelemetry.trackVideoViewed(currentFeedDetails)
                     feedTelemetry.resetVideoStarted(currentFeedDetails.videoID)
                 }
             }
 
             // If we've already logged full video watched, no need to continue processing
-            if (_state.value.videoData.didLogFullVideoWatched) {
+            if (videoData.didLogFullVideoWatched) {
                 return@launch
             }
-            // Get current state values before any updates
-            val videoData = _state.value.videoData
+
             // Check for threshold crossing - only if not the first update and we haven't logged it yet
             val shouldLogFirstSecond =
                 !videoData.isFirstTimeUpdate &&
