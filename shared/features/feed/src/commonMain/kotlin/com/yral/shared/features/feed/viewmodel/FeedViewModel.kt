@@ -77,7 +77,7 @@ class FeedViewModel(
 
     companion object {
         const val PRE_FETCH_BEFORE_LAST = 5
-        private const val FIRST_SECOND_WATCHED_THRESHOLD_MS = 1000L
+        private const val FIRST_SECOND_WATCHED_THRESHOLD_MS = 100L
         private val ANALYTICS_VIDEO_STARTED_RANGE = 0L..1000L
         private val ANALYTICS_VIDEO_VIEWED_RANGE = 3000L..4000L
         private const val FULL_VIDEO_WATCHED_THRESHOLD = 95.0
@@ -842,6 +842,7 @@ enum class FeedType {
 }
 
 data class VideoData(
+    val didLog3SecondWatched: Boolean = false,
     val didLogFirstSecondWatched: Boolean = false,
     val didLogFullVideoWatched: Boolean = false,
     val lastKnownCurrentTime: Int = 0,
