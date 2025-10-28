@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.yral.shared.features.wallet.domain.models.BtcRewardConfig
 import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.features.wallet.viewmodel.WalletViewModel
 import com.yral.shared.libs.CurrencyFormatter
@@ -42,10 +43,9 @@ import com.yral.shared.libs.NumberFormatter
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.component.features.AccountInfoView
+import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
-import com.yral.shared.libs.designsystem.component.lottie.PreloadLottieAnimations
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
-import com.yral.shared.libs.designsystem.component.lottie.YralRemoteLottieAnimation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralBrushes
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -57,12 +57,14 @@ import yral_mobile.shared.features.wallet.generated.resources.bit_coin
 import yral_mobile.shared.features.wallet.generated.resources.bitcoin
 import yral_mobile.shared.features.wallet.generated.resources.btc_inr_rate
 import yral_mobile.shared.features.wallet.generated.resources.get_bitcoin
+import yral_mobile.shared.features.wallet.generated.resources.get_bitcoin_base
 import yral_mobile.shared.features.wallet.generated.resources.how_to_earn_bitcoin
 import yral_mobile.shared.features.wallet.generated.resources.how_to_earn_bitcoins
 import yral_mobile.shared.features.wallet.generated.resources.ic_rupee
 import yral_mobile.shared.features.wallet.generated.resources.my_wallet
 import yral_mobile.shared.libs.designsystem.generated.resources.coins
 import yral_mobile.shared.libs.designsystem.generated.resources.current_balance
+import yral_mobile.shared.libs.designsystem.generated.resources.n_engaged_views
 import yral_mobile.shared.libs.designsystem.generated.resources.yral
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
@@ -124,14 +126,9 @@ fun WalletScreen(
                 onDismissRequest = { viewModel.toggleHowToEarnHelp(false) },
                 bottomSheetState = bottomSheetState,
                 dragHandle = null,
-                content = { HowToEarnBitcoinSheet(state.rewardAnimationUrl) },
+                content = { HowToEarnBitcoinSheet(rewardConfig) },
             )
         }
-    }
-    state.rewardAnimationUrl?.let {
-        PreloadLottieAnimations(
-            urls = listOf(it),
-        )
     }
 }
 
@@ -370,7 +367,8 @@ private fun Double.toCurrencyString(currencyCode: String) =
 
 @Suppress("LongMethod", "UnusedParameter")
 @Composable
-private fun HowToEarnBitcoinSheet(rewardAnimationUrl: String?) {
+private fun HowToEarnBitcoinSheet(config: BtcRewardConfig) {
+    val rewardViews = formatAbbreviation(config.viewMileStone, 0)
     Column(
         verticalArrangement = Arrangement.spacedBy(52.dp, Alignment.Top),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -388,19 +386,19 @@ private fun HowToEarnBitcoinSheet(rewardAnimationUrl: String?) {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Box(modifier = Modifier.width(358.dp).height(161.dp)) {
-                rewardAnimationUrl?.let {
-                    YralRemoteLottieAnimation(
-                        url = rewardAnimationUrl,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
-                    ?: YralLottieAnimation(
-                        rawRes = LottieRes.BTC_REWARDS_VIEWS_ANIMATION,
-                        modifier = Modifier.fillMaxSize(),
-                    )
+                YralLottieAnimation(
+                    rawRes = LottieRes.BTC_REWARDS_COINS_ANIMATION,
+                    modifier = Modifier.fillMaxSize(),
+                )
+                Text(
+                    text = stringResource(DesignRes.string.n_engaged_views, rewardViews),
+                    style = LocalAppTopography.current.xlBold,
+                    color = Color.White,
+                    modifier = Modifier.align(Alignment.Center),
+                )
             }
             Text(
-                text = buildAnnotatedGetText(),
+                text = buildAnnotatedGetText(config),
                 style = LocalAppTopography.current.baseRegular,
                 color = YralColors.NeutralTextPrimary,
                 modifier = Modifier.fillMaxWidth(),
@@ -411,9 +409,9 @@ private fun HowToEarnBitcoinSheet(rewardAnimationUrl: String?) {
 }
 
 @Composable
-private fun buildAnnotatedGetText(): AnnotatedString =
+private fun buildAnnotatedGetText(rewardConfig: BtcRewardConfig): AnnotatedString =
     buildAnnotatedString {
-        val fullText = stringResource(Res.string.get_bitcoin)
+        val fullText = rewardText(rewardConfig)
         val maskedText = stringResource(Res.string.bit_coin)
         val maskedStart = fullText.indexOf(maskedText)
         val maskedEnd = maskedStart + maskedText.length
@@ -450,3 +448,36 @@ private fun buildAnnotatedGetText(): AnnotatedString =
             }
         }
     }
+
+@Composable
+private fun rewardText(rewardConfig: BtcRewardConfig): String {
+    val countryCode = Locale.current.region
+    val rewardAmount =
+        when (countryCode) {
+            "IN" -> rewardConfig.rewardAmountInr
+            else -> rewardConfig.rewardAmountUsd
+        }
+    val rewardCurrency =
+        when (countryCode) {
+            "IN" -> "INR"
+            else -> "USD"
+        }
+    val reward =
+        rewardAmount?.let {
+            CurrencyFormatter().format(
+                amount = rewardAmount,
+                currencyCode = rewardCurrency,
+                withCurrencySymbol = true,
+                minimumFractionDigits = 0,
+                maximumFractionDigits = 2,
+            )
+        }
+    val rewardViews = formatAbbreviation(rewardConfig.viewMileStone, 0)
+    val fullText =
+        if (reward == null) {
+            stringResource(Res.string.get_bitcoin_base, rewardViews)
+        } else {
+            stringResource(Res.string.get_bitcoin, reward, rewardViews)
+        }
+    return fullText
+}

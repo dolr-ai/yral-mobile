@@ -14,9 +14,18 @@ data class BtcRewardConfigResponseDto(
 data class BtcRewardConfigDto(
     @SerialName("view_milestone")
     val viewMileStone: Long,
+    @SerialName("reward_amount_inr")
+    val rewardAmountInr: Double?,
+    @SerialName("reward_amount_usd")
+    val rewardAmountUsd: Double?,
+    @SerialName("min_watch_duration")
+    val minDurationWatched: Float,
 )
 
 fun BtcRewardConfigDto.toDomain(): BtcRewardConfig =
     BtcRewardConfig(
         viewMileStone = viewMileStone,
+        rewardAmountInr = rewardAmountInr,
+        rewardAmountUsd = rewardAmountUsd,
+        minDurationWatched = minDurationWatched,
     )
