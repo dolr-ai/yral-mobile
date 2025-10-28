@@ -9,7 +9,7 @@ data class FollowersPageResult(
     val totalCount: ULong,
 )
 
-fun UisFollowersResponse.toFollowerPageResult(): FollowersPageResult =
+fun UisFollowersResponse.toFollowerPageResult(usernames: Map<String, String>): FollowersPageResult =
     FollowersPageResult(
         nextCursor = this.nextCursor,
         followers =
@@ -18,6 +18,7 @@ fun UisFollowersResponse.toFollowerPageResult(): FollowersPageResult =
                     callerFollows = follower.callerFollows,
                     profilePictureUrl = follower.profilePictureUrl,
                     principalId = follower.principalId,
+                    username = usernames[follower.principalId],
                 )
             },
         totalCount = this.totalCount,

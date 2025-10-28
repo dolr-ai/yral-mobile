@@ -59,7 +59,7 @@ internal class IndividualUserRepositoryImpl(
     override suspend fun fetchFeedDetailsWithCreatorInfo(post: Post): FeedDetails? =
         dataSource
             .fetchFeedDetailsWithCreatorInfo(post.toDTO())
-            ?.toFeedDetails(post.videoID)
+            ?.toFeedDetails()
 
     override suspend fun getUserBitcoinBalance(
         canisterId: String,

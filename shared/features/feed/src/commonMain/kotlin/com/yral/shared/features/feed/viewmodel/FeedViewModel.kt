@@ -240,17 +240,20 @@ class FeedViewModel(
     fun showDeeplinkedVideoFirst(
         postId: String,
         canisterId: String,
+        publisherUserId: String,
     ) {
+        Logger.d("LinkSharing") { "Fetching details for $postId $canisterId $publisherUserId" }
         coroutineScope.launch {
             // If details already exist, move to front and return; else fetch and show.
-            if (tryShowExistingDeeplink(postId, canisterId)) return@launch
-            fetchAndShowDeeplink(postId, canisterId)
+            if (tryShowExistingDeeplink(postId, canisterId, publisherUserId)) return@launch
+            fetchAndShowDeeplink(postId, canisterId, publisherUserId)
         }
     }
 
     private suspend fun tryShowExistingDeeplink(
         postId: String,
         canisterId: String,
+        publisherUserId: String,
     ): Boolean {
         // currently setting currentPageOfFeed to 0 does not reset the position and requires
         // changes to pager state handling. Setting fetching to true kinda recreates the Pager
@@ -259,7 +262,7 @@ class FeedViewModel(
 
         val existingDetail =
             _state.value.feedDetails.firstOrNull {
-                it.postID == postId && it.canisterID == canisterId
+                it.postID == postId && it.canisterID == canisterId && it.principalID == publisherUserId
             }
         if (existingDetail != null) {
             _state.update { currentState ->
@@ -274,36 +277,46 @@ class FeedViewModel(
     private suspend fun fetchAndShowDeeplink(
         postId: String,
         canisterId: String,
+        publisherUserId: String,
     ) {
-        // We only need canisterId and postId for fetching details.
+        // We only need canisterId, publisherUserId and postId for fetching details.
         // Other Post fields are not used by the underlying data source for this call.
         val post =
             Post(
                 canisterID = canisterId,
-                publisherUserId = "",
+                publisherUserId = publisherUserId,
                 postID = postId,
                 videoID = "",
                 nsfwProbability = null,
             )
 
-        setDeeplinkFetching(true)
-        requiredUseCases.fetchVideoDetailsWithCreatorInfoUseCase
-            .invoke(post)
-            .onSuccess { detail ->
-                detail?.let {
-                    feedTelemetry.onDeeplink(detail.videoID)
-                    _state.update { currentState ->
-                        addDeeplinkData(currentState, detail)
+        if (publisherUserId.isNotBlank()) {
+            setDeeplinkFetching(true)
+            Logger.d("LinkSharing") { "Fetching details with creator Info" }
+            requiredUseCases
+                .fetchVideoDetailsWithCreatorInfoUseCase(post)
+                .onSuccess { detail ->
+                    Logger.d("LinkSharing") { "Details Received $detail" }
+                    detail?.let {
+                        feedTelemetry.onDeeplink(detail.videoID)
+                        _state.update { currentState ->
+                            addDeeplinkData(currentState, detail)
+                        }
+                    } ?: run {
+                        val exceptionMessage = "Detail is null for $postId in deeplink"
+                        crashlyticsManager.recordException(YralException(exceptionMessage))
+                        setDeeplinkFetching(false)
+                        Logger.e("LinkSharing") { exceptionMessage }
                     }
-                } ?: crashlyticsManager.recordException(YralException("Detail is null for $postId in deeplink")).also {
-                    Logger.e("Feed") { "Detail is null for $postId in deeplink" }
+                }.onFailure { throwable ->
+                    Logger.e("LinkSharing", throwable) {
+                        "Failed to fetch deep linked video details for postId=$postId canisterId=$canisterId"
+                    }
+                    setDeeplinkFetching(false)
                 }
-            }.onFailure { throwable ->
-                Logger.e(throwable) {
-                    "Failed to fetch deep linked video details for postId=$postId canisterId=$canisterId"
-                }
-                setDeeplinkFetching(false)
-            }
+        } else {
+            setDeeplinkFetching(false)
+        }
     }
 
     private fun addDeeplinkData(
@@ -676,7 +689,12 @@ class FeedViewModel(
         feedTelemetry.onShareClicked(feedDetails, sessionManager.userPrincipal)
         viewModelScope.launch {
             // Build internal deep link using UrlBuilder and PostDetailsRoute
-            val route = PostDetailsRoute(canisterId = feedDetails.canisterID, postId = feedDetails.postID)
+            val route =
+                PostDetailsRoute(
+                    canisterId = feedDetails.canisterID,
+                    postId = feedDetails.postID,
+                    publisherUserId = feedDetails.principalID,
+                )
             val internalUrl = urlBuilder.build(route) ?: feedDetails.url
             runSuspendCatching {
                 val link =

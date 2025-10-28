@@ -383,13 +383,29 @@ impl PostDetailsWithUserInfo {
 
 #[uniffi::export]
 pub async fn get_post_details_with_creator_info_v1(
+    identity_data: Vec<u8>,
     user_canister: Principal,
     post_id: String,
     creator_principal: Principal,
     nsfw_probability: Option<f32>,
 ) -> std::result::Result<Option<PostDetailsWithUserInfo>, FFIError> {
     RUNTIME.spawn(async move {
-        let details = Canisters::<false>::default().get_post_details_with_creator_info_v1(
+        let identity_wire = delegated_identity_wire_from_bytes(&identity_data)
+            .map_err(|e| FFIError::UnknownError(format!("Invalid: {:?}", e)))?;
+        let identity = delegated_identity_from_bytes(&identity_data.as_slice())
+            .map_err(|e| FFIError::UnknownError(format!("Invalid: {:?}", e)))?;
+        let base_canister = Canisters::<false>::default();
+        let canister = base_canister.set_agent(
+            Arc::new(identity), 
+            Arc::new(identity_wire)
+        ).unwrap();
+
+        // Alternatively, if you want to authenticate directly:
+        // let canister = Canisters::<true>::authenticate_with_network(identity_wire)
+        //     .await
+        //     .map_err(|e| FFIError::AgentError(format!("Invalid: {:?}", e)))?;
+
+        let details = canister.get_post_details_with_creator_info_v1(
             user_canister, 
             post_id, 
             creator_principal, 
