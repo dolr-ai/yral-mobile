@@ -157,14 +157,12 @@ class ProfileTelemetry(
     fun followerListViewed(
         publisherUserId: String,
         tab: FollowersListTab,
-        listSize: Int,
         totalCount: Long,
     ) {
         analyticsManager.trackEvent(
             FollowersListViewedEventData(
                 publisherUserId = publisherUserId,
                 tab = tab,
-                listSize = listSize,
                 totalCount = totalCount,
             ),
         )

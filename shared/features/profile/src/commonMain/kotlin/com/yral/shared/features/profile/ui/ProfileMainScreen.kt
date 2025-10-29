@@ -442,7 +442,6 @@ fun ProfileMainScreen(
                                     val count = followersCount(bottomSheet.tab, followers, following)
                                     viewModel.followListViewed(
                                         tab = bottomSheet.tab,
-                                        listSize = count.first,
                                         totalCount = count.second,
                                     )
                                 }

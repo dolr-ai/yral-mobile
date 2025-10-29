@@ -960,8 +960,6 @@ data class FollowersListViewedEventData(
     @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
     @SerialName("publisher_user_id")
     val publisherUserId: String,
-    @SerialName("list_size")
-    val listSize: Int,
     @SerialName("total_count")
     val totalCount: Long,
     @SerialName("tab")
@@ -971,13 +969,11 @@ data class FollowersListViewedEventData(
     constructor(
         publisherUserId: String,
         tab: FollowersListTab,
-        listSize: Int,
         totalCount: Long,
     ) : this(
         FeatureEvents.FOLLOWERS_LIST_VIEWED.getEventName(),
         Features.FEED.getFeatureName(),
         publisherUserId,
-        listSize,
         totalCount,
         tab,
     )

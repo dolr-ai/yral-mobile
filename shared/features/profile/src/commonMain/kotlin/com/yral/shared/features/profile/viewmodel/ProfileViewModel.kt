@@ -772,12 +772,10 @@ class ProfileViewModel(
 
     fun followListViewed(
         tab: FollowersSheetTab,
-        listSize: Int,
         totalCount: Long,
     ) {
         profileTelemetry.followerListViewed(
             publisherUserId = canisterData.userPrincipalId,
-            listSize = listSize,
             totalCount = totalCount,
             tab =
                 when (tab) {
