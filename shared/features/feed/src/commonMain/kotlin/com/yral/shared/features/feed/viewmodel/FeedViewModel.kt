@@ -778,6 +778,7 @@ class FeedViewModel(
 
     fun follow(canisterData: CanisterData) {
         if (_state.value.isFollowInProgress) return
+        pushFollowClicked(canisterData.userPrincipalId)
         coroutineScope.launch {
             sessionManager.userPrincipal?.let { userPrincipal ->
                 _state.update { it.copy(isFollowInProgress = true) }
@@ -800,6 +801,10 @@ class FeedViewModel(
                     }
             }
         }
+    }
+
+    fun pushFollowClicked(publisherUserId: String) {
+        feedTelemetry.followClicked(publisherUserId)
     }
 
     data class RequiredUseCases(

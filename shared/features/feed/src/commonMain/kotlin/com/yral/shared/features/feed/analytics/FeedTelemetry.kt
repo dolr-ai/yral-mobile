@@ -9,6 +9,7 @@ import com.yral.shared.analytics.events.GameType
 import com.yral.shared.analytics.events.HomePageViewedEventData
 import com.yral.shared.analytics.events.ShareAppOpenedFromLinkEventData
 import com.yral.shared.analytics.events.SourceScreen
+import com.yral.shared.analytics.events.UserFollowedEventData
 import com.yral.shared.analytics.events.VideoClickedEventData
 import com.yral.shared.analytics.events.VideoDurationWatchedEventData
 import com.yral.shared.analytics.events.VideoImpressionEventData
@@ -185,5 +186,15 @@ class FeedTelemetry(
         isExpanded: Boolean,
     ) {
         analyticsManager.trackEvent(FeedToggleClickedEventData(feedType, isExpanded))
+    }
+
+    fun followClicked(publisherUserId: String) {
+        analyticsManager.trackEvent(
+            UserFollowedEventData(
+                publisherUserId = publisherUserId,
+                source = SourceScreen.HOMEFEED,
+                ctaType = CtaType.FOLLOW,
+            ),
+        )
     }
 }

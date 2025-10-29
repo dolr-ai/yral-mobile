@@ -417,6 +417,7 @@ private fun ActionsRight(
                                         if (state.isLoggedIn) {
                                             feedViewModel.follow(feedDetails.toCanisterData())
                                         } else {
+                                            feedViewModel.pushFollowClicked(feedDetails.principalID)
                                             openProfile(feedDetails.toCanisterData())
                                         }
                                     }
