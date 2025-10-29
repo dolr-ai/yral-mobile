@@ -6,6 +6,7 @@ import com.yral.shared.features.profile.data.ProfileDataSource
 import com.yral.shared.features.profile.data.ProfileDataSourceImpl
 import com.yral.shared.features.profile.data.ProfileRepositoryImpl
 import com.yral.shared.features.profile.domain.DeleteVideoUseCase
+import com.yral.shared.features.profile.domain.FollowNotificationUseCase
 import com.yral.shared.features.profile.domain.GetProfileVideoViewsUseCase
 import com.yral.shared.features.profile.domain.UploadProfileImageUseCase
 import com.yral.shared.features.profile.domain.repository.ProfileRepository
@@ -25,6 +26,7 @@ val profileModule =
         factoryOf(::DeleteVideoUseCase)
         factoryOf(::GetProfileVideoViewsUseCase)
         factoryOf(::UploadProfileImageUseCase)
+        factoryOf(::FollowNotificationUseCase)
         factoryOf(::ProfileTelemetry)
         viewModelOf(::ProfileViewModel)
         viewModelOf(::EditProfileViewModel)

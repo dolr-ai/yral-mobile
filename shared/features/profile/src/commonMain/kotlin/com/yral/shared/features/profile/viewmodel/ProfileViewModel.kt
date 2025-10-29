@@ -26,6 +26,7 @@ import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.profile.analytics.ProfileTelemetry
 import com.yral.shared.features.profile.domain.DeleteVideoUseCase
+import com.yral.shared.features.profile.domain.FollowNotificationUseCase
 import com.yral.shared.features.profile.domain.GetProfileVideoViewsUseCase
 import com.yral.shared.features.profile.domain.ProfileVideosPagingSource
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
@@ -78,6 +79,7 @@ class ProfileViewModel(
     private val reportVideoUseCase: ReportVideoUseCase,
     private val followUserUseCase: FollowUserUseCase,
     private val unfollowUserUseCase: UnfollowUserUseCase,
+    private val followNotificationUseCase: FollowNotificationUseCase,
     private val getProfileVideoViewsUseCase: GetProfileVideoViewsUseCase,
     private val profileTelemetry: ProfileTelemetry,
     private val shareService: ShareService,
@@ -613,6 +615,7 @@ class ProfileViewModel(
                     result.onSuccess {
                         profileEventsChannel.trySend(ProfileEvents.FollowedSuccessfully)
                         sessionManager.addPrincipalToFollow(targetPrincipal)
+                        followNotification(targetPrincipal)
                     }
                     result.onFailure { error ->
                         profileEventsChannel.trySend(
@@ -641,11 +644,27 @@ class ProfileViewModel(
                 _state.update { it.copy(isFollowing = true, isFollowInProgress = false) }
                 profileEventsChannel.trySend(ProfileEvents.FollowedSuccessfully)
                 sessionManager.addPrincipalToFollow(canisterData.userPrincipalId)
+                followNotification(canisterData.userPrincipalId)
                 Logger.d("Follow") { "Started following" }
             }.onFailure { e ->
                 _state.update { it.copy(isFollowInProgress = false) }
                 profileEventsChannel.trySend(ProfileEvents.Failed(e.message ?: "Follow failed"))
                 Logger.d("Follow") { "Follow request failed $e" }
+            }
+        }
+    }
+
+    private fun followNotification(targetPrincipal: String) {
+        viewModelScope.launch {
+            // fire and forget
+            sessionManager.username?.let { userName ->
+                followNotificationUseCase(
+                    parameter =
+                        FollowNotificationUseCase.Params(
+                            followerUsername = userName,
+                            targetPrincipal = targetPrincipal,
+                        ),
+                )
             }
         }
     }
