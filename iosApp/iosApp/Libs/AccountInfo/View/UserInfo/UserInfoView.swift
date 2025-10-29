@@ -13,29 +13,23 @@ struct UserInfoView: View {
   @Binding var accountInfo: AccountInfo?
   @Binding var showLoginButton: Bool
   @Binding var showEditProfileButton: Bool
-  var shouldApplySpacing: Bool
   var delegate: UserInfoViewProtocol?
 
   init(
     accountInfo: Binding<AccountInfo?>,
-    shouldApplySpacing: Bool,
     showLoginButton: Binding<Bool>,
     showEditProfileButton: Binding<Bool>,
     delegate: UserInfoViewProtocol?
   ) {
     self._accountInfo = accountInfo
-    self.shouldApplySpacing = shouldApplySpacing
     self._showLoginButton = showLoginButton
     self._showEditProfileButton = showEditProfileButton
     self.delegate = delegate
   }
 
   var body: some View {
-    VStack(spacing: Constants.verticalSpacing) {
-      if shouldApplySpacing {
-        Spacer().frame(width: Constants.verticalSpacing)
-      }
-      HStack(spacing: Constants.horizontalSpacing) {
+    VStack(alignment: .leading, spacing: Constants.verticalSpacing) {
+      HStack(spacing: .zero) {
         URLImage(url: accountInfo?.imageURL)
           .frame(
             width: Constants.imageSize,
@@ -43,12 +37,65 @@ struct UserInfoView: View {
           )
           .clipShape(Circle())
           .overlay(Circle().stroke(Color.white, lineWidth: .one))
-        Text(accountInfo?.username ?? "")
-          .font(Constants.profileLabelFont)
-          .foregroundColor(Constants.profileLabelColor)
-          .lineLimit(.two)
+          .padding(.trailing, 16)
+
+        VStack(alignment: .leading, spacing: 10) {
+          Text(accountInfo?.username ?? "")
+            .font(Constants.usernameFont)
+            .foregroundColor(Constants.usernameColor)
+            .lineLimit(.one)
+
+          if let followers = accountInfo?.followers,
+             let following = accountInfo?.following,
+             let gamesPlayed = accountInfo?.gamesPlayed {
+            HStack(spacing: .zero) {
+              VStack(alignment: .leading, spacing: 4) {
+                Text("0")
+                  .font(Constants.detailInfoFont)
+                  .foregroundColor(Constants.detailInfoColor)
+
+                Text("Followers")
+                  .font(Constants.detailFont)
+                  .foregroundColor(Constants.detailColor)
+              }
+
+              Spacer(minLength: .zero)
+
+              VStack(alignment: .leading, spacing: 4) {
+                Text("0")
+                  .font(Constants.detailInfoFont)
+                  .foregroundColor(Constants.detailInfoColor)
+
+                Text("Following")
+                  .font(Constants.detailFont)
+                  .foregroundColor(Constants.detailColor)
+              }
+
+              Spacer(minLength: .zero)
+
+              VStack(alignment: .leading, spacing: 4) {
+                Text("0")
+                  .font(Constants.detailInfoFont)
+                  .foregroundColor(Constants.detailInfoColor)
+
+                Text("Games Played")
+                  .font(Constants.detailFont)
+                  .foregroundColor(Constants.detailColor)
+              }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+          }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
       }
       .frame(maxWidth: .infinity, alignment: .leading)
+
+      if let bio = accountInfo?.bio {
+        Text("This is a sample bio blah blah blah\nThis is second line of the bio hahaha")
+          .font(Constants.bioFont)
+          .foregroundColor(Constants.bioColor)
+          .padding(.top, 8)
+      }
 
       if showLoginButton {
         Button {
@@ -83,26 +130,29 @@ struct UserInfoView: View {
                 .stroke(Constants.editButtonBorder, lineWidth: .one)
             )
         }
-        .padding(.vertical, -Constants.editButtonParentVertical)
       }
 
       Rectangle()
         .fill(Constants.dividerColor)
         .frame(height: .one)
     }
-    .padding([.horizontal], shouldApplySpacing ? Constants.horizontalPadding : .zero)
     .background(Color.black.edgesIgnoringSafeArea(.all))
   }
 }
 
 extension UserInfoView {
   enum Constants {
-    static let verticalSpacing: CGFloat = 30
-    static let horizontalSpacing: CGFloat = 16
+    static let verticalSpacing: CGFloat = 16
     static let horizontalPadding: CGFloat = 16
-    static let imageSize: CGFloat = 60
-    static let profileLabelFont = YralFont.pt14.medium.swiftUIFont
-    static let profileLabelColor =  YralColor.grey500.swiftUIColor
+    static let imageSize: CGFloat = 76
+    static let usernameFont = YralFont.pt14.semiBold.swiftUIFont
+    static let usernameColor =  YralColor.grey50.swiftUIColor
+    static let detailInfoFont = YralFont.pt16.semiBold.swiftUIFont
+    static let detailInfoColor = YralColor.grey50.swiftUIColor
+    static let detailFont = YralFont.pt14.regular.swiftUIFont
+    static let detailColor = YralColor.grey50.swiftUIColor
+    static let bioFont = YralFont.pt12.regular.swiftUIFont
+    static let bioColor = YralColor.grey50.swiftUIColor
     static let loginButtonTitle = "Login"
     static let loginButtonTextColor =  YralColor.grey50.swiftUIColor
     static let loginButtonFont = YralFont.pt16.bold.swiftUIFont
@@ -126,7 +176,6 @@ extension UserInfoView {
     static let editButtonBorder = YralColor.grey700.swiftUIColor
     static let editButtonCornerRadius = 8.0
     static let editButtonVertical = 10.0
-    static let editButtonParentVertical = 14.0
   }
 }
 

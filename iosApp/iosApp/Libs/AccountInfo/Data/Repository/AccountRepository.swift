@@ -27,7 +27,11 @@ class AccountRepository: AccountRepositoryProtocol {
       canisterID: authClient.userPrincipalString ?? "",
       username: authClient.username ?? UsernameGenerator.shared.generateUsername(
         from: authClient.userPrincipalString ?? ""
-      )
+      ),
+      followers: nil,
+      following: nil,
+      gamesPlayed: nil,
+      bio: nil
     ))
   }
 

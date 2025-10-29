@@ -12,4 +12,8 @@ struct AccountInfo: Equatable {
   let imageURL: URL?
   let canisterID: String
   let username: String
+  let followers: Int?
+  let following: Int?
+  let gamesPlayed: Int?
+  let bio: String?
 }

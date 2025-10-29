@@ -35,7 +35,6 @@ struct WalletView: View {
 
         UserInfoView(
           accountInfo: $accountInfo,
-          shouldApplySpacing: false,
           showLoginButton: Binding(get: { false }, set: { _ in }),
           showEditProfileButton: Binding(get: { false }, set: { _ in }),
           delegate: nil

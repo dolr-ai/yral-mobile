@@ -10,85 +10,94 @@ import SwiftUI
 import iosSharedUmbrella
 
 struct ProfileEmptyStateView: View {
-  var uploadVideoPressed: (() -> Void)
+  @EnvironmentObject var session: SessionManager
+
+  @State private var isLoggedIn = false
+
+  var loginPressed: (() -> Void)
+  var createAIVideoPressed: (() -> Void)
+
   var body: some View {
-    VStack(spacing: Constants.verticalSpacing) {
-      Image(Constants.iconName)
-        .resizable()
-        .scaledToFit()
-        .frame(width: Constants.iconSize, height: Constants.iconSize)
+    VStack(spacing: .zero) {
+      Spacer(minLength: isLoggedIn ? Constants.createVideoSpacer : Constants.loginSpacer)
 
-      VStack(spacing: Constants.verticalSpacingInner) {
-        Text(Constants.messageText)
-          .font(Constants.messageFont)
-          .foregroundColor(Constants.messageColor)
-          .frame(width: Constants.width)
-          .multilineTextAlignment(.center)
+      Text(isLoggedIn ? Constants.createVideo : Constants.login)
+        .font(Constants.titleFont)
+        .foregroundColor(Constants.titleColor)
 
-        Button(
-          action: {
-            AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-              event: UploadVideoClickedEventData(pageName: "profile")
-            )
-            uploadVideoPressed()
-          },
-          label: {
-            Text(Constants.buttonTitle)
-              .font(Constants.buttonFont)
-              .overlay(
-                Constants.buttonTextGradient
-                  .mask {
-                    Text(Constants.buttonTitle)
-                      .font(Constants.buttonFont)
-                  }
-              )
-              .frame(width: Constants.width, height: Constants.buttonHeight)
-              .background(Constants.buttonBackgroundColor)
-              .cornerRadius(Constants.buttonCornerRadius)
+      Text(isLoggedIn ? Constants.createVideoSubtitle : Constants.loginSubtitle)
+        .font(Constants.subtitleFont)
+        .foregroundColor(Constants.subtitleColor)
+        .multilineTextAlignment(.center)
+        .padding(.top, Constants.subtitleTop)
+        .padding(.bottom, Constants.subtitleBottom)
 
-          }
-        )
+      Button {
+        if isLoggedIn {
+          AnalyticsModuleKt.getAnalyticsManager().trackEvent(
+            event: UploadVideoClickedEventData(pageName: "profile")
+          )
+          createAIVideoPressed()
+        } else {
+          loginPressed()
+        }
+      }
+      label: {
+        Text(isLoggedIn ? Constants.createVideoButton : Constants.loginButton)
+          .foregroundColor(Constants.buttonColor)
+          .font(Constants.buttonFont)
+          .frame(width: Constants.buttonWidth, height: Constants.buttonHeight)
+          .background(Constants.buttonGradient)
+          .cornerRadius(Constants.buttonCornerRadius)
       }
     }
-    .padding(Constants.padding)
     .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .onReceive(session.phasePublisher) { phase in
+      switch phase {
+      case .permanent:
+        isLoggedIn = true
+      default:
+        isLoggedIn = false
+      }
+    }
   }
 }
 
 extension ProfileEmptyStateView {
   enum Constants {
-    static let width = 269.0
-    static let padding: CGFloat = 16.0
-    static let verticalSpacing: CGFloat = 50.0
-    static let verticalSpacingInner: CGFloat = 30.0
+    static let loginSpacer = 140.0
+    static let login = "Unlock Profile"
 
-    static let iconName = "profile_empty_state"
-    static let iconSize: CGFloat = 100.0
+    static let createVideoSpacer = 140.0
+    static let createVideo = "Create AI Video"
 
-    static let messageText = "You have not uploaded any videos yet."
-    static let messageFont = YralFont.pt18.medium.swiftUIFont
-    static let messageColor: Color = YralColor.grey0.swiftUIColor
+    static let loginSubtitle = "Log in to claim rewards, build your profile,\nand join the YRAL community"
+    static let createVideoSubtitle = "You don't get the hype till you make\nyour own AI video."
 
-    static let buttonTitle = "Upload Video"
+    static let titleFont = YralFont.pt16.semiBold.swiftUIFont
+    static let titleColor = YralColor.grey50.swiftUIColor
+
+    static let subtitleTop = 10.0
+    static let subtitleBottom = 30.0
+    static let subtitleFont = YralFont.pt14.regular.swiftUIFont
+    static let subtitleColor = YralColor.grey400.swiftUIColor
+
+    static let loginButton = "Login"
+    static let createVideoButton = "Create AI Video"
+    static let buttonHeight = 44.0
+    static let buttonWidth = 272.0
+    static let buttonCornerRadius = 8.0
     static let buttonFont = YralFont.pt16.bold.swiftUIFont
-    static let buttonTextGradient = LinearGradient(
-      gradient: Gradient(stops: [
-        .init(color: Color(red: 1.0, green: 120/255, blue: 193/255), location: 0.0),
-        .init(color: Color(red: 226/255, green: 1/255, blue: 123/255), location: 0.5),
-        .init(color: Color(red: 173/255, green: 0, blue: 94/255), location: 1.0)
-      ]),
-      startPoint: .topTrailing,
-      endPoint: .topLeading
+    static let buttonColor = YralColor.grey50.swiftUIColor
+
+    static let buttonGradient = LinearGradient(
+      stops: [
+        Gradient.Stop(color: Color(red: 1, green: 0.47, blue: 0.76), location: 0.00),
+        Gradient.Stop(color: Color(red: 0.89, green: 0, blue: 0.48), location: 0.51),
+        Gradient.Stop(color: Color(red: 0.68, green: 0, blue: 0.37), location: 1.00)
+      ],
+      startPoint: UnitPoint(x: 0.94, y: 0.13),
+      endPoint: UnitPoint(x: 0.35, y: 0.89)
     )
-    static let buttonBackgroundColor: Color = YralColor.grey0.swiftUIColor
-    static let buttonCornerRadius: CGFloat = 8.0
-    static let buttonVerticalPadding: CGFloat = 12.0
-    static let buttonHeight = 45.0
-
-  }
-}
-
-#Preview {
-  ProfileEmptyStateView {
   }
 }

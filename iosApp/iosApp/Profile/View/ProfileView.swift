@@ -95,8 +95,7 @@ struct ProfileView: View {
             if showAccountInfo {
               UserInfoView(
                 accountInfo: $accountInfo,
-                shouldApplySpacing: false,
-                showLoginButton: $showLoginButton,
+                showLoginButton: .constant(false),
                 showEditProfileButton: $showLoginButton.inverted,
                 delegate: self
               )
@@ -111,6 +110,8 @@ struct ProfileView: View {
                   VStack {
                     Spacer(minLength: Constants.minimumTopSpacing)
                     ProfileEmptyStateView {
+                      loginPressed()
+                    } createAIVideoPressed: {
                       uploadVideoPressed()
                     }
                     Spacer(minLength: Constants.minimumBottomSpacing)

@@ -204,7 +204,11 @@ struct EditProfileView: View {
                     accountInfo = AccountInfo(
                       imageURL: accountInfo.imageURL,
                       canisterID: accountInfo.canisterID,
-                      username: username
+                      username: username,
+                      followers: nil,
+                      following: nil,
+                      gamesPlayed: nil,
+                      bio: nil
                     )
                   }
                 } catch {

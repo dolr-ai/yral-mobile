@@ -52,7 +52,6 @@ struct AccountView: View {
           case .successfullyFetched(let info):
             UserInfoView(
               accountInfo: .constant(info),
-              shouldApplySpacing: false,
               showLoginButton: $showLoginButton,
               showEditProfileButton: Binding(get: { false }, set: { _ in }),
               delegate: self
@@ -64,10 +63,13 @@ struct AccountView: View {
                 AccountInfo(
                   imageURL: URL(fileURLWithPath: ""),
                   canisterID: "",
-                  username: ""
+                  username: "",
+                  followers: nil,
+                  following: nil,
+                  gamesPlayed: nil,
+                  bio: nil
                 )
-              )
-              , shouldApplySpacing: false,
+              ),
               showLoginButton: $showLoginButton,
               showEditProfileButton: Binding(get: { false }, set: { _ in }),
               delegate: self
