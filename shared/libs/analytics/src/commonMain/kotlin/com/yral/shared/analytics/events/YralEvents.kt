@@ -904,6 +904,85 @@ data class AirdropClaimedEventData(
     )
 }
 
+@Serializable
+data class UserFollowedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.USER_FOLLOWED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+    @SerialName("publisher_user_id")
+    val publisherUserId: String,
+    @SerialName("source")
+    val source: SourceScreen,
+    @SerialName("cta_type")
+    val ctaType: CtaType,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        publisherUserId: String,
+        source: SourceScreen,
+        ctaType: CtaType,
+    ) : this(
+        FeatureEvents.USER_FOLLOWED.getEventName(),
+        Features.FEED.getFeatureName(),
+        publisherUserId,
+        source,
+        ctaType,
+    )
+}
+
+@Serializable
+data class UserUnFollowedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.USER_UNFOLLOWED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+    @SerialName("publisher_user_id")
+    val publisherUserId: String,
+    @SerialName("source")
+    val source: SourceScreen,
+    @SerialName("cta_type")
+    val ctaType: CtaType,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        publisherUserId: String,
+        source: SourceScreen,
+        ctaType: CtaType,
+    ) : this(
+        FeatureEvents.USER_UNFOLLOWED.getEventName(),
+        Features.FEED.getFeatureName(),
+        publisherUserId,
+        source,
+        ctaType,
+    )
+}
+
+@Serializable
+data class FollowersListViewedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.FOLLOWERS_LIST_VIEWED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+    @SerialName("publisher_user_id")
+    val publisherUserId: String,
+    @SerialName("list_size")
+    val listSize: Int,
+    @SerialName("total_count")
+    val totalCount: Int,
+    @SerialName("tab")
+    val tab: FollowersListTab,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        publisherUserId: String,
+        tab: FollowersListTab,
+        listSize: Int,
+        totalCount: Int,
+    ) : this(
+        FeatureEvents.FOLLOWERS_LIST_VIEWED.getEventName(),
+        Features.FEED.getFeatureName(),
+        publisherUserId,
+        listSize,
+        totalCount,
+        tab,
+    )
+}
+
 // --- Wallet ---
 @Serializable
 data class WalletPageViewedEventData(
@@ -1237,6 +1316,12 @@ enum class CtaType {
 
     @SerialName("video_play")
     PLAY,
+
+    @SerialName("follow")
+    FOLLOW,
+
+    @SerialName("unfollow")
+    UNFOLLOW,
 }
 
 @Serializable
@@ -1348,4 +1433,13 @@ enum class FeedType {
 
     @SerialName("nsfw")
     NSFW,
+}
+
+@Serializable
+enum class FollowersListTab {
+    @SerialName("following")
+    FOLLOWING,
+
+    @SerialName("followers")
+    FOLLOWERS,
 }

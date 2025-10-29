@@ -87,6 +87,12 @@ enum class FeatureEvents {
     // Share
     VIDEO_SHARE_CLICKED,
     SHARE_APP_OPENED_FROM_LINK,
+
+    // Follow
+    USER_FOLLOWED,
+    USER_UNFOLLOWED,
+    FOLLOWERS_LIST_VIEWED,
+
     ;
 
     fun getEventName(): String =
