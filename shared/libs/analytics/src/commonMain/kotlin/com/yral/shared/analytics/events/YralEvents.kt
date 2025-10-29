@@ -761,7 +761,7 @@ data class VideoGenerationModelSelectedData(
 
 @Serializable
 data class CreateAIVideoClickedData(
-    @SerialName("event") override val event: String = FeatureEvents.VIDEO_UPLOAD_ERROR_SHOWN.getEventName(),
+    @SerialName("event") override val event: String = FeatureEvents.CREATE_AI_VIDEO_CLICKED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
     @SerialName("model") val model: String,
     @SerialName("prompt") val prompt: String,
@@ -777,9 +777,10 @@ data class CreateAIVideoClickedData(
 
 @Serializable
 data class AiVideoGeneratedData(
-    @SerialName("event") override val event: String = FeatureEvents.VIDEO_UPLOAD_ERROR_SHOWN.getEventName(),
+    @SerialName("event") override val event: String = FeatureEvents.AI_VIDEO_GENERATED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
     @SerialName("model") val model: String,
+    @SerialName("prompt") val prompt: String,
     @SerialName("is_success") val isSuccess: Boolean,
     @SerialName("reason") val reason: String?,
     @SerialName("reason_type") val reasonType: AiVideoGenFailureType?,
@@ -787,6 +788,7 @@ data class AiVideoGeneratedData(
     EventData {
     constructor(
         model: String,
+        prompt: String,
         isSuccess: Boolean,
         reason: String?,
         reasonType: AiVideoGenFailureType?,
@@ -794,6 +796,7 @@ data class AiVideoGeneratedData(
         FeatureEvents.AI_VIDEO_GENERATED.getEventName(),
         Features.AUTH.getFeatureName(),
         model,
+        prompt,
         isSuccess,
         reason,
         reasonType,

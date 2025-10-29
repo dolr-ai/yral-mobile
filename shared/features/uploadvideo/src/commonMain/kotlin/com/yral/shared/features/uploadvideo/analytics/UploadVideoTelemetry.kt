@@ -100,10 +100,11 @@ class UploadVideoTelemetry(
 
     fun aiVideoGenerated(
         model: String,
+        prompt: String,
         isSuccess: Boolean,
         reason: String?,
         reasonType: AiVideoGenFailureType?,
     ) {
-        analyticsManager.trackEvent(AiVideoGeneratedData(model, isSuccess, reason, reasonType))
+        analyticsManager.trackEvent(AiVideoGeneratedData(model, prompt, isSuccess, reason, reasonType))
     }
 }
