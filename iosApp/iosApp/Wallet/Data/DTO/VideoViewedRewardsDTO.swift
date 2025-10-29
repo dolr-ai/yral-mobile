@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct VideoViewedRewardsDTO: Decodable {
+struct VideoViewedRewardsDTO: Decodable, Equatable {
   let config: VideoViewedRewardsConfigDTO?
 
   enum CodingKeys: String, CodingKey {
@@ -16,20 +16,16 @@ struct VideoViewedRewardsDTO: Decodable {
   }
 }
 
-struct VideoViewedRewardsConfigDTO: Decodable {
-  let rewardAmountINR: Int
+struct VideoViewedRewardsConfigDTO: Decodable, Equatable {
+  let rewardAmountINR: Double?
+  let rewardAmountUSD: Double?
   let viewMilestone: Int
-  let minWatchDuration: Int
-  let fraudThreshold: Int
-  let shodowBanDuration: Int
-  let configVersion: Int
+  let minWatchDuration: Double
 
   enum CodingKeys: String, CodingKey {
     case rewardAmountINR = "reward_amount_inr"
+    case rewardAmountUSD = "reward_amount_usd"
     case viewMilestone = "view_milestone"
     case minWatchDuration = "min_watch_duration"
-    case fraudThreshold = "fraud_threshold"
-    case shodowBanDuration = "shadow_ban_duration"
-    case configVersion = "config_version"
   }
 }

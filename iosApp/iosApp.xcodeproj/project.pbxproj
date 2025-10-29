@@ -111,6 +111,8 @@
 		10512A442DA666AD00114BAA /* YralPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A422DA666A900114BAA /* YralPlayer.swift */; };
 		10512A522DA795A800114BAA /* YralQueuePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A512DA7959D00114BAA /* YralQueuePlayer.swift */; };
 		10512A532DA795A800114BAA /* YralQueuePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10512A512DA7959D00114BAA /* YralQueuePlayer.swift */; };
+		105E2DA22EB208EB0097690E /* video_view_rewards.json in Resources */ = {isa = PBXBuildFile; fileRef = 105E2DA12EB208EB0097690E /* video_view_rewards.json */; };
+		105E2DA32EB208EB0097690E /* video_view_rewards.json in Resources */ = {isa = PBXBuildFile; fileRef = 105E2DA12EB208EB0097690E /* video_view_rewards.json */; };
 		107079612E742034000C7A2C /* LeaderboardView+Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107079602E742029000C7A2C /* LeaderboardView+Constants.swift */; };
 		107079622E742034000C7A2C /* LeaderboardView+Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107079602E742029000C7A2C /* LeaderboardView+Constants.swift */; };
 		1072EF7C2E8EBFCA00C34353 /* VideoViewedRewardsDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1072EF7B2E8EBFBB00C34353 /* VideoViewedRewardsDTO.swift */; };
@@ -845,6 +847,7 @@
 		105037672DDC5DB000571B4E /* SmileyGameConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmileyGameConfig.swift; sourceTree = "<group>"; };
 		10512A422DA666A900114BAA /* YralPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralPlayer.swift; sourceTree = "<group>"; };
 		10512A512DA7959D00114BAA /* YralQueuePlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YralQueuePlayer.swift; sourceTree = "<group>"; };
+		105E2DA12EB208EB0097690E /* video_view_rewards.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = video_view_rewards.json; sourceTree = "<group>"; };
 		107079602E742029000C7A2C /* LeaderboardView+Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LeaderboardView+Constants.swift"; sourceTree = "<group>"; };
 		1072EF7B2E8EBFBB00C34353 /* VideoViewedRewardsDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoViewedRewardsDTO.swift; sourceTree = "<group>"; };
 		1072EF7E2E8EC47800C34353 /* VideoViewedRewardsUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoViewedRewardsUseCase.swift; sourceTree = "<group>"; };
@@ -1179,8 +1182,6 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AC9B77DE2D58C7E300270FC9 /* YralTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = YralTests;
 			sourceTree = "<group>";
 		};
@@ -3125,6 +3126,7 @@
 		ACEBF7E62D6F56F400B594A0 /* Lottie */ = {
 			isa = PBXGroup;
 			children = (
+				105E2DA12EB208EB0097690E /* video_view_rewards.json */,
 				10FEA91B2E705598000103EB /* leaderboard_confetti.json */,
 				10FEA8FD2E6EC7AA000103EB /* leaderboard_all_time.json */,
 				10FEA8FE2E6EC7AA000103EB /* leaderboard_daily.json */,
@@ -3297,6 +3299,7 @@
 				AC32E4162D270097001DDA43 /* KumbhSans-ExtraLight.ttf in Resources */,
 				AC32E4172D270097001DDA43 /* KumbhSans-Regular.ttf in Resources */,
 				1023FFEF2E41DD3E00E6936E /* smiley_game_puke.json in Resources */,
+				105E2DA22EB208EB0097690E /* video_view_rewards.json in Resources */,
 				AC32E4182D270097001DDA43 /* KumbhSans-Medium.ttf in Resources */,
 				AC4714EA2D38120800A64E29 /* GoogleService-Info.plist in Resources */,
 				AC32E4192D270097001DDA43 /* OFL.txt in Resources */,
@@ -3349,6 +3352,7 @@
 				AC32E40A2D270097001DDA43 /* KumbhSans-ExtraLight.ttf in Resources */,
 				AC32E40B2D270097001DDA43 /* KumbhSans-Regular.ttf in Resources */,
 				1023FFEE2E41DD3E00E6936E /* smiley_game_puke.json in Resources */,
+				105E2DA32EB208EB0097690E /* video_view_rewards.json in Resources */,
 				AC32E40C2D270097001DDA43 /* KumbhSans-Medium.ttf in Resources */,
 				AC12B9D22D3809B7004E9EA9 /* GoogleService-Info.plist in Resources */,
 				AC32E40D2D270097001DDA43 /* OFL.txt in Resources */,
@@ -3386,9 +3390,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3403,9 +3411,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3420,9 +3432,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3437,9 +3453,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3601,9 +3621,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3618,9 +3642,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;

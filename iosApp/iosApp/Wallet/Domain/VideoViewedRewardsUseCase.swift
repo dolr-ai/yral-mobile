@@ -9,10 +9,11 @@
 import Foundation
 
 protocol VideoViewedRewardsUseCaseProtocol {
-  func execute() async -> Result<Bool, WalletError>
+  func execute() async -> Result<VideoViewedRewardsDTO, WalletError>
 }
 
-class VideoViewedRewardsUseCase: BaseResultUseCase<Void, Bool, WalletError>, VideoViewedRewardsUseCaseProtocol {
+class VideoViewedRewardsUseCase: BaseResultUseCase<Void, VideoViewedRewardsDTO, WalletError>,
+                                 VideoViewedRewardsUseCaseProtocol {
   let walletRepository: WalletRepositoryProtocol
 
   init(
@@ -23,11 +24,11 @@ class VideoViewedRewardsUseCase: BaseResultUseCase<Void, Bool, WalletError>, Vid
     super.init(crashReporter: crashReporter)
   }
 
-  func execute() async -> Result<Bool, WalletError> {
+  func execute() async -> Result<VideoViewedRewardsDTO, WalletError> {
     await super.execute(request: ())
   }
 
-  override func runImplementation(_ request: Void) async -> Result<Bool, WalletError> {
-    await walletRepository.fetchVideoViewedRewardsStatus()
+  override func runImplementation(_ request: Void) async -> Result<VideoViewedRewardsDTO, WalletError> {
+    await walletRepository.fetchVideoViewedRewardsConfig()
   }
 }
