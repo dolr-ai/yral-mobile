@@ -29,7 +29,7 @@ class FeedTelemetry(
         analyticsManager.trackEvent(HomePageViewedEventData())
     }
 
-    suspend fun onVideoDurationWatched(
+    fun onVideoDurationWatched(
         feedDetails: FeedDetails,
         isLoggedIn: Boolean,
         currentTime: Int,
@@ -42,9 +42,9 @@ class FeedTelemetry(
                     canisterId = sessionManager.canisterID ?: "",
                     userID = sessionManager.userPrincipal ?: "",
                     isLoggedIn = isLoggedIn,
-                    absoluteWatched = currentTime.toDouble(),
+                    absoluteWatched = currentTime / 1000.0,
                     percentageWatched = currentTime.percentageOf(totalTime),
-                    videoDuration = totalTime.toDouble(),
+                    videoDuration = totalTime / 1000.0,
                 )
         analyticsManager.trackEvent(eventData)
     }
