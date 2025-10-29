@@ -32,6 +32,8 @@ struct ProfileView: View {
   @State private var showSignupSheet: Bool = false
   @State private var showSignupFailureSheet: Bool = false
   @State private var loadingProvider: SocialProvider?
+  @State private var showVideoInsights = false
+  @State private var insightsInfo: ProfileVideoInfo?
 
   @EnvironmentObject var session: SessionManager
   @EnvironmentObject private var deepLinkRouter: DeepLinkRouter
@@ -167,6 +169,10 @@ struct ProfileView: View {
                       withAnimation {
                         showFeeds = true
                       }
+                    },
+                    onInsightsTapped: { videoInfo in
+                      insightsInfo = videoInfo
+                      showVideoInsights = true
                     },
                     onLoadMore: {
                       Task { @MainActor in

@@ -34,6 +34,32 @@ class ProfileRepository: ProfileRepositoryProtocol {
     self.authClient = authClient
   }
 
+  func fetchVideoInsights(request: VideoInsightsRequestDTO) async -> Result<[VideoInsightsDTO], ProfileError> {
+    guard let baseURL = URL(string: AppConfiguration().offchainBaseURLString) else {
+      return .failure(.networkError("Invalid Request"))
+    }
+
+    do {
+      let endpoint = Endpoint(
+        http: "",
+        baseURL: baseURL,
+        path: "/api/v1/rewards/videos/bulk-stats-v2",
+        method: .post,
+        headers: ["Content-Type": "application/json"],
+        body: try? JSONEncoder().encode(request)
+      )
+
+      let response = try await httpService.performRequest(
+        for: endpoint,
+        decodeAs: [VideoInsightsDTO].self
+      )
+
+      return .success(response)
+    } catch {
+      return .failure(.networkError(error.localizedDescription))
+    }
+  }
+
   func fetchVideos(request: ProfileVideoRequest) async -> Result<[FeedResult], ProfileError> {
     let result = await getUserVideos(with: request.startIndex, offset: request.offset)
     switch result {

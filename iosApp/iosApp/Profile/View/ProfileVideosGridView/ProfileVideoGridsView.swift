@@ -15,6 +15,7 @@ struct ProfileVideosGridView: View {
   @State private var lastLoadedItemID: String?
   var onDelete: ((ProfileVideoInfo) -> Void)?
   var onVideoTapped: ((ProfileVideoInfo) -> Void)?
+  var onInsightsTapped: ((ProfileVideoInfo) -> Void)?
   var onLoadMore: (() -> Void)?
 
   private let columns = [
@@ -40,6 +41,9 @@ struct ProfileVideosGridView: View {
                 Text("\(video.viewCount)")
                   .font(Constants.viewTextFont)
                   .foregroundColor(Constants.viewTextColor)
+              }
+              .onTapGesture {
+                onInsightsTapped?(video)
               }
               .padding(.leading, Constants.buttonHorizontalPadding)
               Spacer()

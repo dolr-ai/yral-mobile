@@ -37,6 +37,7 @@ class ProfileViewModel: ObservableObject {
   let deleteVideoUseCase: DeleteVideoUseCaseProtocol
   let refreshVideoUseCase: RefreshVideosUseCaseProtocol
   let socialSigninUseCase: SocialSignInUseCaseProtocol
+  let videoInsightsUseCase: VideoInsightsUseCaseProtocol
   private var cancellables = Set<AnyCancellable>()
   var deletedVideos: [ProfileVideoInfo] = []
   var startIndex = Int.zero
@@ -49,13 +50,15 @@ class ProfileViewModel: ObservableObject {
     myVideosUseCase: MyVideosUseCaseProtocol,
     deleteVideoUseCase: DeleteVideoUseCaseProtocol,
     refreshVideoUseCase: RefreshVideosUseCaseProtocol,
-    socialSigninUseCase: SocialSignInUseCaseProtocol
+    socialSigninUseCase: SocialSignInUseCaseProtocol,
+    videoInsightsUseCase: VideoInsightsUseCaseProtocol
   ) {
     self.accountUseCase = accountUseCase
     self.myVideosUseCase = myVideosUseCase
     self.deleteVideoUseCase = deleteVideoUseCase
     self.refreshVideoUseCase = refreshVideoUseCase
     self.socialSigninUseCase = socialSigninUseCase
+    self.videoInsightsUseCase = videoInsightsUseCase
     myVideosUseCase.videosPublisher
       .sink { [weak self] videos in
         guard let self = self else { return }
@@ -98,6 +101,18 @@ class ProfileViewModel: ObservableObject {
         state = .success
       case .failure(let error):
         state = .failure(error.localizedDescription)
+      }
+    }
+  }
+
+  func fetchVideoInsights(videoIDs: [String]) async {
+    let result = await videoInsightsUseCase.execute(request: VideoInsightsRequestDTO(videoIDs: videoIDs))
+    await MainActor.run {
+      switch result {
+      case .success(let videosInsights):
+        break
+      case .failure(let error):
+        break
       }
     }
   }

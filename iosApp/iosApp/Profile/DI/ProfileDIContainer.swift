@@ -55,7 +55,11 @@ final class ProfileDIContainer {
         profileRepository: profileRepository,
         crashReporter: dependencies.crashReporter
       ),
-      socialSigninUseCase: dependencies.socialSignInUseCase
+      socialSigninUseCase: dependencies.socialSignInUseCase,
+      videoInsightsUseCase: VideoInsightsUseCase(
+        repository: profileRepository,
+        crashReporter: dependencies.crashReporter
+      )
     )
   }
 
