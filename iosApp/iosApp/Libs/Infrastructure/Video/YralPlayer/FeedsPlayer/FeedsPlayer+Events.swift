@@ -102,6 +102,9 @@ extension FeedsPlayer {
         )
       }
     }
+    if seconds >= CGFloat.three, engageLogged.insert(currentVideoID).inserted {
+      delegate?.reachedPlaybackMilestone(.engaged, for: currentIndex)
+    }
     guard duration.isFinite, duration > 0 else { return }
 
     let elapsedInLoop = time.seconds.truncatingRemainder(dividingBy: duration)
@@ -132,5 +135,6 @@ extension FeedsPlayer {
 
 enum PlaybackMilestone {
   case started
+  case engaged
   case almostFinished
 }

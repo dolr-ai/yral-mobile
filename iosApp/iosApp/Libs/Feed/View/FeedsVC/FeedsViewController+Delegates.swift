@@ -357,6 +357,9 @@ extension FeedsViewController: FeedsPlayerProtocol {
     case .started:
       absoluteWatched = min(duration, 0.1)
       percentageWatched = absoluteWatched / duration * 100
+    case .engaged:
+      absoluteWatched = min(duration, 3.0)
+      percentageWatched = absoluteWatched / duration * 100
     case .almostFinished:
       absoluteWatched = duration * 0.95
       percentageWatched = 95

@@ -36,6 +36,7 @@ final class FeedsPlayer: YralPlayer {
   // MARK: Video duration event loggers
   var timeObserver: Any?
   var startLogged = Set<String>()
+  var engageLogged = Set<String>()
   var finishLogged = Set<String>()
   var lastLoopProgress: Double = 0
 
@@ -116,6 +117,7 @@ final class FeedsPlayer: YralPlayer {
     (player as? AVQueuePlayer)?.replaceCurrentItem(with: nil)
     if let videoID = feedResults[safe: index]?.videoID {
       startLogged.remove(videoID)
+      engageLogged.remove(videoID)
       finishLogged.remove(videoID)
     }
 
