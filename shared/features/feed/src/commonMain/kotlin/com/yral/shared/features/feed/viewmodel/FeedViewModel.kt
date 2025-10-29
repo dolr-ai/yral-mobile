@@ -529,10 +529,6 @@ class FeedViewModel(
                 in ANALYTICS_VIDEO_STARTED_RANGE -> feedTelemetry.trackVideoStarted(currentFeedDetails)
 
                 in ANALYTICS_VIDEO_VIEWED_RANGE -> {
-                    val shouldLog3Second = !videoData.isFirstTimeUpdate && !videoData.didLog3SecondWatched
-                    if (shouldLog3Second) {
-                        recordEvent(videoData = _state.value.videoData.copy(didLog3SecondWatched = true))
-                    }
                     feedTelemetry.trackVideoViewed(currentFeedDetails)
                     feedTelemetry.resetVideoStarted(currentFeedDetails.videoID)
                 }
@@ -551,6 +547,10 @@ class FeedViewModel(
             val shouldLogFullVideo =
                 currentTime.percentageOf(totalTime) >= FULL_VIDEO_WATCHED_THRESHOLD &&
                     !videoData.didLogFullVideoWatched
+            val shouldLog3Second =
+                !videoData.isFirstTimeUpdate &&
+                    currentTime in ANALYTICS_VIDEO_VIEWED_RANGE &&
+                    !videoData.didLog3SecondWatched
             // Update the last known time values
             _state.update {
                 it.copy(
@@ -564,24 +564,16 @@ class FeedViewModel(
             }
             // Log first second event if needed
             if (shouldLogFirstSecond) {
-                recordEvent(
-                    videoData =
-                        _state.value.videoData.copy(
-                            didLogFirstSecondWatched = true,
-                        ),
-                )
+                recordEvent(videoData = _state.value.videoData.copy(didLogFirstSecondWatched = true))
+            } else if (shouldLog3Second) {
+                recordEvent(videoData = _state.value.videoData.copy(didLog3SecondWatched = true))
             } else if (shouldLogFullVideo) {
-                recordEvent(
-                    videoData =
-                        state.value.videoData.copy(
-                            didLogFullVideoWatched = true,
-                        ),
-                )
+                recordEvent(videoData = state.value.videoData.copy(didLogFullVideoWatched = true))
             }
         }
     }
 
-    private suspend fun recordEvent(videoData: VideoData) {
+    private fun recordEvent(videoData: VideoData) {
         val currentFeed = _state.value.feedDetails[_state.value.currentPageOfFeed]
         feedTelemetry.onVideoDurationWatched(
             feedDetails = currentFeed,
