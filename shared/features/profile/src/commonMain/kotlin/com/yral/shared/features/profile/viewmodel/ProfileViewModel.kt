@@ -16,6 +16,7 @@ import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.WalletFeatureFlags
 import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.shared.analytics.events.CtaType
+import com.yral.shared.analytics.events.FollowersListTab
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.AccountInfo
@@ -566,8 +567,10 @@ class ProfileViewModel(
                 val currentState = _state.value
                 if (currentState.isLoggedIn) {
                     if (currentState.isFollowing) {
+                        profileTelemetry.unFollowClicked(canisterData.userPrincipalId)
                         unFollow()
                     } else {
+                        profileTelemetry.followClicked(canisterData.userPrincipalId)
                         follow()
                     }
                 }
@@ -584,6 +587,7 @@ class ProfileViewModel(
             setFollowLoading(targetPrincipal, true)
             try {
                 if (currentlyFollowing) {
+                    profileTelemetry.unFollowClicked(targetPrincipal)
                     val result =
                         unfollowUserUseCase(
                             parameter =
@@ -604,6 +608,7 @@ class ProfileViewModel(
                         )
                     }
                 } else {
+                    profileTelemetry.followClicked(targetPrincipal)
                     val result =
                         followUserUseCase(
                             parameter =
@@ -763,6 +768,23 @@ class ProfileViewModel(
                 bottomSheet = ProfileBottomSheet.FollowDetails(tab),
             )
         }
+    }
+
+    fun followListViewed(
+        tab: FollowersSheetTab,
+        listSize: Int,
+        totalCount: Long,
+    ) {
+        profileTelemetry.followerListViewed(
+            publisherUserId = canisterData.userPrincipalId,
+            listSize = listSize,
+            totalCount = totalCount,
+            tab =
+                when (tab) {
+                    FollowersSheetTab.Followers -> FollowersListTab.FOLLOWERS
+                    FollowersSheetTab.Following -> FollowersListTab.FOLLOWING
+                },
+        )
     }
 }
 

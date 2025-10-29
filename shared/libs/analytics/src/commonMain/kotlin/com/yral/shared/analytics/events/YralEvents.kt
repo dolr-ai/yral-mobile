@@ -963,7 +963,7 @@ data class FollowersListViewedEventData(
     @SerialName("list_size")
     val listSize: Int,
     @SerialName("total_count")
-    val totalCount: Int,
+    val totalCount: Long,
     @SerialName("tab")
     val tab: FollowersListTab,
 ) : BaseEventData(),
@@ -972,7 +972,7 @@ data class FollowersListViewedEventData(
         publisherUserId: String,
         tab: FollowersListTab,
         listSize: Int,
-        totalCount: Int,
+        totalCount: Long,
     ) : this(
         FeatureEvents.FOLLOWERS_LIST_VIEWED.getEventName(),
         Features.FEED.getFeatureName(),
