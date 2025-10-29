@@ -3,6 +3,8 @@ package com.yral.shared.features.feed.analytics
 import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.CtaType
+import com.yral.shared.analytics.events.FeedToggleClickedEventData
+import com.yral.shared.analytics.events.FeedType
 import com.yral.shared.analytics.events.GameType
 import com.yral.shared.analytics.events.HomePageViewedEventData
 import com.yral.shared.analytics.events.ShareAppOpenedFromLinkEventData
@@ -176,5 +178,12 @@ class FeedTelemetry(
 
     fun onDeeplink(videoId: String) {
         analyticsManager.trackEvent(ShareAppOpenedFromLinkEventData(videoId))
+    }
+
+    fun feedToggleClicked(
+        feedType: FeedType,
+        isExpanded: Boolean,
+    ) {
+        analyticsManager.trackEvent(FeedToggleClickedEventData(feedType, isExpanded))
     }
 }

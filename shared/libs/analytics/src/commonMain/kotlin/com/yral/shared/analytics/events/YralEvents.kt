@@ -148,6 +148,25 @@ data class BottomNavigationClickedEventData(
     )
 }
 
+@Serializable
+data class FeedToggleClickedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.FEED_TOGGLE_CLICKED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+    @SerialName("feed_type") val feedType: FeedType,
+    @SerialName("is_expanded") val isExpanded: Boolean,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        feedType: FeedType,
+        isExpanded: Boolean,
+    ) : this(
+        FeatureEvents.FEED_TOGGLE_CLICKED.getEventName(),
+        Features.FEED.getFeatureName(),
+        feedType,
+        isExpanded,
+    )
+}
+
 // --- Video ---
 
 @Serializable
@@ -1317,4 +1336,16 @@ enum class LeaderBoardTabType {
 
     @SerialName("all")
     ALL,
+}
+
+@Serializable
+enum class FeedType {
+    @SerialName("default")
+    DEFAULT,
+
+    @SerialName("ai")
+    AI,
+
+    @SerialName("nsfw")
+    NSFW,
 }

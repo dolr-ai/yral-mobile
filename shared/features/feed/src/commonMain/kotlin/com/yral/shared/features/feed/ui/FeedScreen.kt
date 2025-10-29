@@ -34,12 +34,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
+import com.yral.shared.analytics.events.FeedType
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.feed.ui.components.SignupNudge
 import com.yral.shared.features.feed.viewmodel.FeedEvents
 import com.yral.shared.features.feed.viewmodel.FeedState
-import com.yral.shared.features.feed.viewmodel.FeedType
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.PRE_FETCH_BEFORE_LAST
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.SIGN_UP_PAGE
@@ -373,6 +373,9 @@ private fun ActionsRight(
                     feedType = state.feedType,
                     isLoadingMore = state.isLoadingMore,
                     onSelectFeed = { feedViewModel.updateFeedType(it) },
+                    pushFeedToggleClicked = { type, isExpanded ->
+                        feedViewModel.pushFeedToggleClicked(type, isExpanded)
+                    },
                     modifier = Modifier.offset(y = 16.dp),
                 )
             }
@@ -467,6 +470,7 @@ private fun FeedToggle(
     isLoadingMore: Boolean,
     modifier: Modifier = Modifier,
     onSelectFeed: (feedType: FeedType) -> Unit,
+    pushFeedToggleClicked: (feedType: FeedType, isExpanded: Boolean) -> Unit,
     feedToggleBGOpacity: Float = 0.6f,
 ) {
     val icons =
@@ -499,16 +503,22 @@ private fun FeedToggle(
                     isSelected = feedType == type,
                     onSelectFeed = {
                         isExpanded = false
+                        pushFeedToggleClicked(type, true)
                         onSelectFeed(type)
                     },
                 )
             }
         } else {
-            icons.find { (type, _) -> feedType == type }?.let { (_, drawable) ->
+            icons.find { (type, _) -> feedType == type }?.let { (type, drawable) ->
                 FeedIcon(
                     drawable = drawable,
                     isSelected = true,
-                    onSelectFeed = { if (!isLoadingMore) isExpanded = true },
+                    onSelectFeed = {
+                        if (!isLoadingMore) {
+                            isExpanded = true
+                            pushFeedToggleClicked(type, false)
+                        }
+                    },
                 )
             }
         }
