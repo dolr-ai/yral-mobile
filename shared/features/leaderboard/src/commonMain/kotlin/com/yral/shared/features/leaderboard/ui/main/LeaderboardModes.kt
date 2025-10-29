@@ -54,6 +54,7 @@ import yral_mobile.shared.features.leaderboard.generated.resources.ic_calander_w
 import yral_mobile.shared.features.leaderboard.generated.resources.ic_clock
 import yral_mobile.shared.features.leaderboard.generated.resources.ic_gradient_clock
 import yral_mobile.shared.libs.designsystem.generated.resources.count_down_timer
+import kotlin.time.Duration.Companion.milliseconds
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Composable
@@ -286,4 +287,14 @@ fun LeaderboardHistoryIcon(modifier: Modifier) {
     }
 }
 
-internal expect fun formatMillisToHHmmSS(millis: Long): String
+@Suppress("MagicNumber")
+internal fun formatMillisToHHmmSS(millis: Long): String {
+    val duration = millis.milliseconds
+    val hours = duration.inWholeHours
+    val minutes = duration.inWholeMinutes % 60
+    val seconds = duration.inWholeSeconds % 60
+
+    fun Long.twoDigits(): String = this.toString().padStart(2, '0')
+
+    return "${hours.twoDigits()}:${minutes.twoDigits()}:${seconds.twoDigits()}"
+}
