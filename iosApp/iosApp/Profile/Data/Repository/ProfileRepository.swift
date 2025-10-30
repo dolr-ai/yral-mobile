@@ -64,9 +64,20 @@ class ProfileRepository: ProfileRepositoryProtocol {
     let result = await getUserVideos(with: request.startIndex, offset: request.offset)
     switch result {
     case .success(let newVideos):
-      let filteredNewVideos = newVideos.filter { newVideo in
+      var filteredNewVideos = newVideos.filter { newVideo in
         !videos.contains { $0.postID == newVideo.postID }
       }
+
+      let videoIds = filteredNewVideos.map { $0.videoID }
+      let result = await fetchVideoInsights(request: VideoInsightsRequestDTO(videoIDs: videoIds))
+      if case .success(let insights) = result {
+        for videoIndex in 0 ..< filteredNewVideos.count {
+          if let match = insights.first(where: { $0.videoID == filteredNewVideos[videoIndex].videoID }) {
+            filteredNewVideos[videoIndex].viewCount = Int64(match.totalViews)
+          }
+        }
+      }
+
       newVideosSubject.send(filteredNewVideos)
       videos.append(contentsOf: filteredNewVideos)
       return .success(newVideos)
@@ -85,9 +96,27 @@ class ProfileRepository: ProfileRepositoryProtocol {
     case .success(let newChunk):
       let newVideoIDs = Set(newChunk.map { $0.postID })
       let filteredOldVideos = videos.filter { !newVideoIDs.contains($0.postID) }
+
+      var totalVideos = newChunk + filteredOldVideos
+      let videoIDs = totalVideos.map { $0.videoID }
+      let insightsResult = await fetchVideoInsights(
+        request: VideoInsightsRequestDTO(videoIDs: videoIDs)
+      )
+      if case .success(let insights) = insightsResult {
+        for videoIndex in 0 ..< totalVideos.count {
+          if let match = insights.first(where: {
+            $0.videoID == totalVideos[videoIndex].videoID
+          }) {
+            totalVideos[videoIndex].viewCount = Int64(match.totalViews)
+          }
+        }
+      }
+
+      let finalVideos = totalVideos
+
       await MainActor.run { [weak self] in
         guard let self = self else { return }
-        videos = newChunk + filteredOldVideos
+        videos = finalVideos
       }
       return .success(videos)
 
