@@ -16,13 +16,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.UIKitView
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.cValue
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import platform.AVFoundation.AVLayerVideoGravityResizeAspect
 import platform.AVFoundation.AVLayerVideoGravityResizeAspectFill
 import platform.AVFoundation.AVPlayer
 import platform.AVFoundation.AVPlayerActionAtItemEndNone
-import platform.AVFoundation.AVPlayerItem
 import platform.AVFoundation.AVPlayerItemDidPlayToEndTimeNotification
 import platform.AVFoundation.AVPlayerItemFailedToPlayToEndTimeErrorKey
 import platform.AVFoundation.AVPlayerItemFailedToPlayToEndTimeNotification
@@ -31,9 +28,11 @@ import platform.AVFoundation.AVPlayerItemStatusReadyToPlay
 import platform.AVFoundation.AVPlayerTimeControlStatusPlaying
 import platform.AVFoundation.AVPlayerTimeControlStatusWaitingToPlayAtSpecifiedRate
 import platform.AVFoundation.actionAtItemEnd
+import platform.AVFoundation.addPeriodicTimeObserverForInterval
 import platform.AVFoundation.currentItem
 import platform.AVFoundation.pause
 import platform.AVFoundation.play
+import platform.AVFoundation.removeTimeObserver
 import platform.AVFoundation.replaceCurrentItemWithPlayerItem
 import platform.AVFoundation.seekToTime
 import platform.AVFoundation.timeControlStatus
@@ -47,6 +46,8 @@ import platform.Foundation.NSOperationQueue
 import platform.Foundation.NSURL
 import platform.UIKit.UIColor
 import platform.UIKit.UIView
+import platform.darwin.dispatch_get_main_queue
+import kotlin.math.roundToLong
 
 @Composable
 @Suppress("LongMethod", "CyclomaticComplexMethod")
@@ -104,44 +105,61 @@ actual fun YralVideoPlayer(
         }
     }
 
-    LaunchedEffect(player) {
-        if (player == null) return@LaunchedEffect
-        isLoading = true
-        hasError = false
-        while (isActive) {
-            val currentItem: AVPlayerItem? = player.currentItem
-            when (currentItem?.status) {
-                AVPlayerItemStatusReadyToPlay -> isLoading = false
-                AVPlayerItemStatusFailed -> {
-                    if (!hasError) {
+    DisposableEffect(player) {
+        if (player == null) {
+            return@DisposableEffect onDispose { }
+        }
+
+        @Suppress("MagicNumber")
+        val interval = cmTimeInterval(0.25)
+        val observerToken =
+            player.addPeriodicTimeObserverForInterval(
+                interval = interval,
+                queue = dispatch_get_main_queue(),
+            ) { _: CValue<CMTime> ->
+                val currentItem = player.currentItem
+                when (currentItem?.status) {
+                    AVPlayerItemStatusReadyToPlay -> {
+                        if (isLoading) {
+                            isLoading = false
+                        }
+                        if (hasError) {
+                            hasError = false
+                        }
+                    }
+
+                    AVPlayerItemStatusFailed -> {
                         val errorMessage =
                             currentItem.error?.localizedDescription
                                 ?: "Playback error"
-                        hasError = true
+                        if (!hasError) {
+                            hasError = true
+                            onError(errorMessage)
+                        }
                         isLoading = false
-                        onError(errorMessage)
+                        isPlaying = false
+                    }
+
+                    else -> {
+                        isLoading = true
                     }
                 }
 
-                else -> {
+                val playing =
+                    player.timeControlStatus == AVPlayerTimeControlStatusPlaying &&
+                        !hasError &&
+                        !isLoading
+                if (isPlaying != playing) {
+                    isPlaying = playing
+                }
+
+                if (player.timeControlStatus == AVPlayerTimeControlStatusWaitingToPlayAtSpecifiedRate) {
                     isLoading = true
                 }
             }
 
-            val playing =
-                player.timeControlStatus == AVPlayerTimeControlStatusPlaying &&
-                    !isLoading &&
-                    !hasError
-            if (isPlaying != playing) {
-                isPlaying = playing
-            }
-
-            if (player.timeControlStatus == AVPlayerTimeControlStatusWaitingToPlayAtSpecifiedRate) {
-                isLoading = true
-            }
-
-            @Suppress("MagicNumber")
-            delay(250)
+        onDispose {
+            player.removeTimeObserver(observerToken)
         }
     }
 
@@ -258,11 +276,22 @@ private fun processUrl(rawUrl: String): NSURL? {
     }
 }
 
+private const val TIME_SCALE = 600L
+
+@Suppress("MagicNumber")
+private fun cmTimeInterval(seconds: Double): CValue<CMTime> =
+    cValue {
+        value = (seconds * TIME_SCALE).roundToLong()
+        timescale = TIME_SCALE.toInt()
+        flags = 1u
+        epoch = 0L
+    }
+
 @Suppress("MagicNumber")
 private fun cmTimeZero(): CValue<CMTime> =
     cValue {
         value = 0L
-        timescale = 600
+        timescale = TIME_SCALE.toInt()
         flags = 1u
         epoch = 0L
     }
