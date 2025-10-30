@@ -382,6 +382,7 @@ struct ProfileView: View {
     )) {
       if let videoInfo = insightsVideoInfo {
         router.displayVideoInsightsBottomSheet(
+          openedFromFeed: false,
           videoInfo: videoInfo) { updatedTotalViews in
             if let totalViews = updatedTotalViews,
                let currentIndex = videos.firstIndex(where: { $0.videoId == videoInfo.videoId }) {

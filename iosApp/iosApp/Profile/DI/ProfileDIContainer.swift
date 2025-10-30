@@ -142,11 +142,13 @@ final class ProfileDIContainer {
   }
 
   func makeVideoInsightsBottomSheet(
+    openedFromFeed: Bool,
     videoInfo: ProfileVideoInfo,
     onComplete: @escaping (Int64?) -> Void
   ) -> VideoInsightsBottomSheet {
     return VideoInsightsBottomSheet(
       viewModel: makeVideoInsightsViewModel(),
+      openedFromFeed: openedFromFeed,
       videoInfo: videoInfo,
       onComplete: onComplete
     )

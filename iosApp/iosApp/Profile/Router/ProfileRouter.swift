@@ -26,6 +26,7 @@ protocol ProfileRouterProtocol {
   ) -> EditProfileView
 
   func displayVideoInsightsBottomSheet(
+    openedFromFeed: Bool,
     videoInfo: ProfileVideoInfo,
     onComplete: @escaping (Int64?) -> Void
   ) -> VideoInsightsBottomSheet
@@ -66,10 +67,12 @@ final class ProfileRouter: ProfileRouterProtocol {
   }
 
   func displayVideoInsightsBottomSheet(
+    openedFromFeed: Bool,
     videoInfo: ProfileVideoInfo,
     onComplete: @escaping (Int64?) -> Void
   ) -> VideoInsightsBottomSheet {
     return profileDI.makeVideoInsightsBottomSheet(
+      openedFromFeed: openedFromFeed,
       videoInfo: videoInfo,
       onComplete: onComplete
     )

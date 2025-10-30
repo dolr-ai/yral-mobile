@@ -16,28 +16,41 @@ struct VideoInsightsBottomSheet: View {
   @State private var insightsInfo: VideoInsightsDTO?
   @State private var errorMessage: String?
 
+  private var openedFromFeed: Bool
   private var videoInfo: ProfileVideoInfo
   let onComplete: (Int64?) -> Void
 
   init(
     viewModel: VideoInsightsViewModel,
+    openedFromFeed: Bool,
     videoInfo: ProfileVideoInfo,
     onComplete: @escaping (Int64?) -> Void
   ) {
     self._viewModel = StateObject(wrappedValue: viewModel)
+    self.openedFromFeed = openedFromFeed
     self.videoInfo = videoInfo
     self.onComplete = onComplete
   }
 
   var body: some View {
     ZStack(alignment: .bottom) {
-      Color.clear
-        .contentShape(Rectangle())
-        .ignoresSafeArea()
-        .onTapGesture {
-          dismiss()
-        }
-        .transition(.opacity)
+      if openedFromFeed {
+        Color.black.opacity(Constants.backgroundOpacity)
+          .contentShape(Rectangle())
+          .ignoresSafeArea()
+          .onTapGesture {
+            dismiss()
+          }
+          .transition(.opacity)
+      } else {
+        Color.clear
+          .contentShape(Rectangle())
+          .ignoresSafeArea()
+          .onTapGesture {
+            dismiss()
+          }
+          .transition(.opacity)
+      }
 
       if showBottomSheet {
         VStack(spacing: .zero) {
@@ -226,6 +239,7 @@ struct VideoInsightsBottomSheet: View {
 extension VideoInsightsBottomSheet {
   enum Constants {
     static let backgroundColor = YralColor.grey900.swiftUIColor
+    static let backgroundOpacity = 0.8
     static let vStackHorizontalPadding = 16.0
     static let bottomSheetDismissValue = 100.0
     static let bottomSheetDismissTime = 0.1

@@ -69,6 +69,40 @@ extension FeedsViewController: FeedsCellProtocol {
     self.present(hostingController!, animated: true, completion: nil)
   }
 
+  func viewsTapped(index: Int) {
+    guard index < feedsDataSource.snapshot().itemIdentifiers.count else { return }
+    let item = feedsDataSource.snapshot().itemIdentifiers[index]
+
+    guard let authClient = appDIContainer?.authClient else {
+      return
+    }
+
+    let profileRepository = ProfileRepository(
+      httpService: HTTPService(),
+      authClient: authClient
+    )
+    let videoInsightsUseCase = VideoInsightsUseCase(
+      repository: profileRepository,
+      crashReporter: authClient.crashReporter
+    )
+    let videoInsightsViewModel = VideoInsightsViewModel(
+      videoInsightsUseCase: videoInsightsUseCase
+    )
+    let videoInsightsBottomSheet = VideoInsightsBottomSheet(
+      viewModel: videoInsightsViewModel,
+      openedFromFeed: true,
+      videoInfo: item.toProfileVideoInfo()) { _ in
+        self.dismiss(animated: true)
+      }
+
+    var hostingController: UIHostingController<VideoInsightsBottomSheet>?
+    hostingController = UIHostingController(rootView: videoInsightsBottomSheet)
+    hostingController!.modalPresentationStyle = .overFullScreen
+    hostingController!.modalTransitionStyle = .crossDissolve
+    hostingController?.view.backgroundColor = .clear
+    self.present(hostingController!, animated: true, completion: nil)
+  }
+
   func shareButtonTapped(index: Int) {
     activityIndicator.startAnimating(in: self.view)
     guard index < feedsDataSource.snapshot().itemIdentifiers.count else { return }
