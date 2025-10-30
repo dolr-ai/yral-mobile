@@ -105,18 +105,6 @@ class ProfileViewModel: ObservableObject {
     }
   }
 
-  func fetchVideoInsights(videoIDs: [String]) async {
-    let result = await videoInsightsUseCase.execute(request: VideoInsightsRequestDTO(videoIDs: videoIDs))
-    await MainActor.run {
-      switch result {
-      case .success(let videosInsights):
-        break
-      case .failure(let error):
-        break
-      }
-    }
-  }
-
   func getVideos() async {
     guard !isLoading, hasMorePages else { return }
 

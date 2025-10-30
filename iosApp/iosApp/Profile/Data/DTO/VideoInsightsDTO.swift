@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct VideoInsightsDTO: Decodable {
+struct VideoInsightsDTO: Decodable, Equatable {
   let videoID: String
   let totalViews: UInt64
   let engagedViews: UInt64
