@@ -25,17 +25,13 @@ class ProfileVideosPagingSource(
                         startIndex = startIndex,
                         pageSize = pageSize,
                     )
-            val profileVideos = result.posts
+            var profileVideos = result.posts
             val videoStats =
                 profileRepository
                     .getProfileVideoViewsCount(profileVideos.map { it.videoID })
+                    .associate { it.videoId to it.allViews }
             if (videoStats.isNotEmpty()) {
-                profileVideos.map {
-                    it.copy(
-                        viewCount =
-                            videoStats.firstOrNull { views -> views.videoId == it.videoID }?.allViews ?: it.viewCount,
-                    )
-                }
+                profileVideos = profileVideos.map { it.copy(viewCount = videoStats[it.videoID] ?: it.viewCount) }
             }
             LoadResult.Page(
                 data = profileVideos,
