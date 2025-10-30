@@ -289,6 +289,8 @@ class FeedViewModel(
                 postID = postId,
                 videoID = "",
                 nsfwProbability = null,
+                numViewsAll = null,
+                numViewsLoggedIn = null,
             )
 
         if (publisherUserId.isNotBlank()) {
@@ -360,10 +362,17 @@ class FeedViewModel(
                         .invoke(post)
                         .map { detail ->
                             if (detail == null) {
-                                Logger.e("FeedPagination") { "Detail is null for ${post.postID}" }
+                                // Logger.e("FeedPagination") { "Detail is null for ${post.postID}" }
                                 crashlyticsManager.recordException(YralException("Detail is null for ${post.postID}"))
                             }
-                            detail to
+                            Logger.e("FeedPagination") {
+                                "${post.videoID} view count " +
+                                    "in post ${post.numViewsAll} " +
+                                    "in feed details ${detail?.viewCount}"
+                            }
+                            val updatedDetail =
+                                post.numViewsAll?.let { views -> detail?.copy(viewCount = views) } ?: detail
+                            updatedDetail to
                                 if (checkVotes) {
                                     detail?.let { isAlreadyVoted(it) }
                                 } else {
