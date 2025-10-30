@@ -57,6 +57,6 @@ class FeedRemoteDataSource(
     companion object {
         private const val CACHED_FEED_PATH = "v3/recommendations/cache"
         private const val ML_FEED_PATH = "v3/recommendations"
-        private const val AI_ML_FEED_PATH = "recommend-with-metadata"
+        private const val AI_ML_FEED_PATH = "v2/recommend-with-metadata"
     }
 }
