@@ -1,11 +1,19 @@
 package com.yral.shared.libs.videoPlayer.util
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
 import com.yral.shared.libs.videoPlayer.pool.PlatformPlayer
 
 @Composable
-actual fun rememberPrefetchPlayerWithLifecycle(): PlatformPlayer {
-    return PlatformPlayer() // STUB
+actual fun rememberPlatformPlayer(): PlatformPlayer {
+    val platformPlayer = remember { PlatformPlayer() } // STUB
+    DisposableEffect(key1 = platformPlayer) {
+        onDispose {
+            platformPlayer.release()
+        }
+    }
+    return platformPlayer
 }
 
 @Composable
