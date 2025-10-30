@@ -11,6 +11,7 @@ import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.FeedFeatureFlags
 import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.shared.analytics.events.CtaType
+import com.yral.shared.analytics.events.FeedType
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.utils.processFirstNSuspendFlow
@@ -768,8 +769,16 @@ class FeedViewModel(
         }
     }
 
+    fun pushFeedToggleClicked(
+        feedType: FeedType,
+        isExpanded: Boolean,
+    ) {
+        feedTelemetry.feedToggleClicked(feedType, isExpanded)
+    }
+
     fun follow(canisterData: CanisterData) {
         if (_state.value.isFollowInProgress) return
+        pushFollowClicked(canisterData.userPrincipalId)
         coroutineScope.launch {
             sessionManager.userPrincipal?.let { userPrincipal ->
                 _state.update { it.copy(isFollowInProgress = true) }
@@ -792,6 +801,10 @@ class FeedViewModel(
                     }
             }
         }
+    }
+
+    fun pushFollowClicked(publisherUserId: String) {
+        feedTelemetry.followClicked(publisherUserId)
     }
 
     data class RequiredUseCases(
@@ -830,12 +843,6 @@ enum class OverlayType {
     DEFAULT,
     GAME_TOGGLE,
     DAILY_RANK,
-}
-
-enum class FeedType {
-    DEFAULT,
-    AI,
-    NSFW,
 }
 
 data class VideoData(
