@@ -25,6 +25,8 @@ fun AIPostResponseDTO.toPostResponse(): PostResponse =
                     postID = it.postID,
                     videoID = it.videoID,
                     nsfwProbability = it.nsfwProbability,
+                    numViewsLoggedIn = it.numViewsLoggedIn,
+                    numViewsAll = it.numViewsAll,
                 )
             },
     )

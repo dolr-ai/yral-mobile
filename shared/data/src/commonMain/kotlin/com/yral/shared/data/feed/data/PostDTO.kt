@@ -15,4 +15,8 @@ data class PostDTO(
     val videoID: String,
     @SerialName("nsfw_probability")
     val nsfwProbability: Double? = null,
+    @SerialName("num_views_loggedin")
+    val numViewsLoggedIn: ULong? = null,
+    @SerialName("num_views_all")
+    val numViewsAll: ULong? = null,
 )

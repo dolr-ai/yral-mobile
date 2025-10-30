@@ -8,6 +8,8 @@ data class Post(
     val postID: String,
     val videoID: String,
     val nsfwProbability: Double?,
+    val numViewsLoggedIn: ULong?,
+    val numViewsAll: ULong?,
 )
 
 fun Post.toDTO(): PostDTO =
