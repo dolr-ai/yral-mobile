@@ -859,11 +859,13 @@ data class UploadVideoClickedEventData(
 data class PushNotificationsPopupEventData(
     @SerialName("event") override val event: String = FeatureEvents.ENABLE_PUSH_NOTIFICATION_POPUP_SHOWN.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+    @SerialName("source") val source: AnalyticsAlertsRequestType,
 ) : BaseEventData(),
     EventData {
-    constructor() : this(
+    constructor(source: AnalyticsAlertsRequestType) : this(
         FeatureEvents.ENABLE_PUSH_NOTIFICATION_POPUP_SHOWN.getEventName(),
         Features.FEED.getFeatureName(),
+        source,
     )
 }
 
@@ -871,11 +873,13 @@ data class PushNotificationsPopupEventData(
 data class PushNotificationsEnabledEventData(
     @SerialName("event") override val event: String = FeatureEvents.NOTIFICATIONS_ENABLED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+    @SerialName("source") val source: AnalyticsAlertsRequestType,
 ) : BaseEventData(),
     EventData {
-    constructor() : this(
+    constructor(source: AnalyticsAlertsRequestType) : this(
         FeatureEvents.NOTIFICATIONS_ENABLED.getEventName(),
         Features.FEED.getFeatureName(),
+        source,
     )
 }
 
@@ -1438,4 +1442,16 @@ enum class FollowersListTab {
 
     @SerialName("followers")
     FOLLOWERS,
+}
+
+@Serializable
+enum class AnalyticsAlertsRequestType {
+    @SerialName("follow_back")
+    FOLLOW_BACK,
+
+    @SerialName("video")
+    VIDEO,
+
+    @SerialName("default")
+    DEFAULT,
 }

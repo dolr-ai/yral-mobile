@@ -24,9 +24,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.analytics.events.AnalyticsAlertsRequestType
 import com.yral.shared.analytics.events.PushNotificationsEnabledEventData
 import com.yral.shared.analytics.events.PushNotificationsPopupEventData
 import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
+import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.component.YralGradientButton
@@ -43,21 +45,16 @@ import dev.icerock.moko.permissions.compose.rememberPermissionsControllerFactory
 import dev.icerock.moko.permissions.notifications.REMOTE_NOTIFICATION
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import yral_mobile.shared.app.generated.resources.Res
-import yral_mobile.shared.app.generated.resources.a_little_nudge
-import yral_mobile.shared.app.generated.resources.enable_notification_message
 import yral_mobile.shared.app.generated.resources.not_now
-import yral_mobile.shared.app.generated.resources.nudge
 import yral_mobile.shared.app.generated.resources.turn_on_alerts
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun AlertsRequestBottomSheet(
     component: AlertsRequestComponent,
-    isNotNowEnabled: Boolean = false,
     analyticsManager: AnalyticsManager = koinInject(),
 ) {
     val factory: PermissionsControllerFactory = rememberPermissionsControllerFactory()
@@ -75,16 +72,22 @@ internal fun AlertsRequestBottomSheet(
     val showSheet by component.showSheet.collectAsState()
 
     if (showSheet) {
-        LaunchedEffect(Unit) { analyticsManager.trackEvent(PushNotificationsPopupEventData()) }
+        LaunchedEffect(Unit) {
+            analyticsManager.trackEvent(
+                event = PushNotificationsPopupEventData(component.type.toAnalyticsType()),
+            )
+        }
         val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         AlertSheet(
             bottomSheetState = bottomSheetState,
-            isNotNowEnabled = isNotNowEnabled,
             onDismissRequest = component::onDismissClicked,
+            type = component.type,
             onTurnOnAlertsClicked = {
                 coroutineScope.launch {
                     controller.requestNotificationPermission(onPermissionGranted = {
-                        analyticsManager.trackEvent(PushNotificationsEnabledEventData())
+                        analyticsManager.trackEvent(
+                            event = PushNotificationsEnabledEventData(component.type.toAnalyticsType()),
+                        )
                         component.onPermissionChanged(true)
                     })
                 }
@@ -98,11 +101,12 @@ internal fun AlertsRequestBottomSheet(
 @OptIn(ExperimentalMaterial3Api::class)
 private fun AlertSheet(
     bottomSheetState: SheetState,
-    isNotNowEnabled: Boolean,
     onDismissRequest: () -> Unit,
+    type: AlertsRequestType,
     onTurnOnAlertsClicked: () -> Unit,
     onNotNowClicked: () -> Unit,
 ) {
+    val info = getAlertRequestInfo(type)
     YralBottomSheet(
         onDismissRequest = onDismissRequest,
         bottomSheetState = bottomSheetState,
@@ -114,19 +118,19 @@ private fun AlertSheet(
                     .padding(horizontal = 16.dp, vertical = 36.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(
-                text = stringResource(Res.string.a_little_nudge),
-                style = LocalAppTopography.current.xlSemiBold,
-            )
-            Spacer(Modifier.height(46.dp))
             Image(
-                painter = painterResource(Res.drawable.nudge),
+                painter = info.icon,
                 contentDescription = null,
                 modifier = Modifier.size(134.dp),
             )
-            Spacer(Modifier.height(46.dp))
+            Spacer(Modifier.height(30.dp))
             Text(
-                text = stringResource(Res.string.enable_notification_message),
+                text = info.title,
+                style = LocalAppTopography.current.xlSemiBold,
+            )
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = info.subTitle,
                 style = LocalAppTopography.current.baseRegular,
                 textAlign = TextAlign.Center,
             )
@@ -135,7 +139,7 @@ private fun AlertSheet(
                 text = stringResource(Res.string.turn_on_alerts),
                 onClick = onTurnOnAlertsClicked,
             )
-            if (isNotNowEnabled) {
+            if (info.isNotNowButtonVisible) {
                 Spacer(Modifier.height(12.dp))
                 YralButton(
                     text = stringResource(Res.string.not_now),
@@ -182,3 +186,10 @@ private suspend fun PermissionsController.requestNotificationPermission(onPermis
         // Permission was denied.
     }
 }
+
+fun AlertsRequestType.toAnalyticsType(): AnalyticsAlertsRequestType =
+    when (this) {
+        AlertsRequestType.FOLLOW_BACK -> AnalyticsAlertsRequestType.FOLLOW_BACK
+        AlertsRequestType.VIDEO -> AnalyticsAlertsRequestType.VIDEO
+        AlertsRequestType.DEFAULT -> AnalyticsAlertsRequestType.DEFAULT
+    }
