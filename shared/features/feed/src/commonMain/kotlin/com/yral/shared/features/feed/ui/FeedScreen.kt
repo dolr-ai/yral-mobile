@@ -42,6 +42,7 @@ import com.yral.shared.features.feed.ui.components.SignupNudge
 import com.yral.shared.features.feed.viewmodel.FeedEvents
 import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
+import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.FOLLOW_NUDGE_PAGE
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.PRE_FETCH_BEFORE_LAST
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.SIGN_UP_PAGE
 import com.yral.shared.features.feed.viewmodel.OverlayType
@@ -262,7 +263,9 @@ fun FeedScreen(
                                     ),
                             ),
                     )
-                    component.showAlertsOnDialog(AlertsRequestType.FOLLOW_BACK)
+                    if (state.currentPageOfFeed % FOLLOW_NUDGE_PAGE == 0) {
+                        component.showAlertsOnDialog(AlertsRequestType.FOLLOW_BACK)
+                    }
                 }
                 is FeedEvents.UnfollowedSuccessfully -> Unit
                 is FeedEvents.Failed -> ToastManager.showError(type = ToastType.Small(message = event.message))
