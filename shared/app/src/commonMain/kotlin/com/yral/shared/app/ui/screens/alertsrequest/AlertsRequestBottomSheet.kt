@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.analytics.events.AnalyticsAlertsRequestType
 import com.yral.shared.analytics.events.PushNotificationsEnabledEventData
 import com.yral.shared.analytics.events.PushNotificationsPopupEventData
 import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
@@ -71,7 +72,11 @@ internal fun AlertsRequestBottomSheet(
     val showSheet by component.showSheet.collectAsState()
 
     if (showSheet) {
-        LaunchedEffect(Unit) { analyticsManager.trackEvent(PushNotificationsPopupEventData()) }
+        LaunchedEffect(Unit) {
+            analyticsManager.trackEvent(
+                event = PushNotificationsPopupEventData(component.type.toAnalyticsType()),
+            )
+        }
         val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         AlertSheet(
             bottomSheetState = bottomSheetState,
@@ -80,7 +85,9 @@ internal fun AlertsRequestBottomSheet(
             onTurnOnAlertsClicked = {
                 coroutineScope.launch {
                     controller.requestNotificationPermission(onPermissionGranted = {
-                        analyticsManager.trackEvent(PushNotificationsEnabledEventData())
+                        analyticsManager.trackEvent(
+                            event = PushNotificationsEnabledEventData(component.type.toAnalyticsType()),
+                        )
                         component.onPermissionChanged(true)
                     })
                 }
@@ -179,3 +186,10 @@ private suspend fun PermissionsController.requestNotificationPermission(onPermis
         // Permission was denied.
     }
 }
+
+fun AlertsRequestType.toAnalyticsType(): AnalyticsAlertsRequestType =
+    when (this) {
+        AlertsRequestType.FOLLOW_BACK -> AnalyticsAlertsRequestType.FOLLOW_BACK
+        AlertsRequestType.VIDEO -> AnalyticsAlertsRequestType.VIDEO
+        AlertsRequestType.DEFAULT -> AnalyticsAlertsRequestType.DEFAULT
+    }
