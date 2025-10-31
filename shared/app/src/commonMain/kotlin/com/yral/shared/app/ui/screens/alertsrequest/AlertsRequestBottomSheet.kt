@@ -106,7 +106,7 @@ private fun AlertSheet(
     onTurnOnAlertsClicked: () -> Unit,
     onNotNowClicked: () -> Unit,
 ) {
-    val info = getAlterRequestInfo(type)
+    val info = getAlertRequestInfo(type)
     YralBottomSheet(
         onDismissRequest = onDismissRequest,
         bottomSheetState = bottomSheetState,

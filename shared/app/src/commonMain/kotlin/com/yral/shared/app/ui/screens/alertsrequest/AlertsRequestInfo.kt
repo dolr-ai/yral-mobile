@@ -24,7 +24,7 @@ data class AlertsRequestInfo(
 )
 
 @Composable
-fun getAlterRequestInfo(type: AlertsRequestType): AlertsRequestInfo =
+fun getAlertRequestInfo(type: AlertsRequestType): AlertsRequestInfo =
     when (type) {
         AlertsRequestType.FOLLOW_BACK ->
             AlertsRequestInfo(
