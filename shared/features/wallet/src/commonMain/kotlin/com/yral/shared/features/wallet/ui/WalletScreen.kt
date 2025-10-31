@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.wallet.domain.models.BtcRewardConfig
 import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.features.wallet.viewmodel.WalletViewModel
@@ -123,7 +124,10 @@ fun WalletScreen(
     if (state.howToEarnHelpVisible) {
         state.rewardConfig?.let { rewardConfig ->
             YralBottomSheet(
-                onDismissRequest = { viewModel.toggleHowToEarnHelp(false) },
+                onDismissRequest = {
+                    viewModel.toggleHowToEarnHelp(false)
+                    component.showAlertsOnDialog(AlertsRequestType.DEFAULT)
+                },
                 bottomSheetState = bottomSheetState,
                 dragHandle = null,
                 content = { HowToEarnBitcoinSheet(rewardConfig) },

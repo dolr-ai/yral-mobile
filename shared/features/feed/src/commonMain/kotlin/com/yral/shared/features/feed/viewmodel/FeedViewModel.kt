@@ -89,6 +89,7 @@ class FeedViewModel(
         private const val SUFFICIENT_NEW_REQUIRED = 10
         const val SIGN_UP_PAGE = 9
         private const val PAGER_STATE_REFRESH_BUFFER_MS = 100L
+        const val FOLLOW_NUDGE_PAGE = 5
     }
 
     private val _state = MutableStateFlow(FeedState())

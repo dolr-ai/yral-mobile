@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,9 +27,11 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.fade
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
+import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.shared.app.nav.RootComponent
 import com.yral.shared.app.nav.RootComponent.Child
 import com.yral.shared.app.ui.components.UpdateNotificationHost
+import com.yral.shared.app.ui.screens.alertsrequest.AlertsRequestBottomSheet
 import com.yral.shared.app.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.shared.app.ui.screens.home.HomeScreen
 import com.yral.shared.core.session.SessionState
@@ -62,102 +66,117 @@ fun RootScreen(
 ) {
     val state by viewModel.state.collectAsState()
     rootComponent.setSplashActive(state.showSplash)
-    Box(modifier = Modifier.fillMaxSize()) {
-        Children(stack = rootComponent.stack, modifier = Modifier.fillMaxSize(), animation = stackAnimation(fade())) {
-            when (val child = it.instance) {
-                is Child.Splash -> {
-                    HandleSystemBars(show = false)
-                    Splash(
-                        modifier = Modifier.fillMaxSize(),
-                        initialAnimationComplete = state.initialAnimationComplete,
-                        onAnimationComplete = { viewModel.onSplashAnimationComplete() },
-                        onScreenViewed = { viewModel.splashScreenViewed() },
-                    )
-                }
-                is Child.Home -> {
-                    HandleSystemBars(show = true)
-                    HomeScreen(
-                        component = child.component,
-                        sessionState = state.sessionState,
-                        bottomNavigationAnalytics = { viewModel.bottomNavigationClicked(it) },
-                        updateProfileVideosCount = { viewModel.updateProfileVideosCount(it) },
-                    )
-                }
-                is Child.EditProfile -> {
-                    val sessionKey = state.sessionState.getKey()
-                    HandleSystemBars(show = true)
-                    EditProfileScreen(
-                        component = child.component,
-                        viewModel = koinViewModel<EditProfileViewModel>(key = "edit-profile-$sessionKey"),
-                        modifier = Modifier.fillMaxSize().safeDrawingPadding(),
-                    )
-                }
-                is Child.UserProfile -> {
-                    HandleSystemBars(show = true)
-                    val profileViewModel =
-                        koinViewModel<ProfileViewModel>(
-                            key = "profile-${child.component.userCanisterData?.userPrincipalId}",
-                        ) { parametersOf(child.component.userCanisterData) }
-                    val profileVideos = profileViewModel.profileVideos.collectAsLazyPagingItems()
-                    ProfileMainScreen(
-                        component = child.component,
-                        modifier = Modifier.fillMaxSize().safeDrawingPadding(),
-                        viewModel = profileViewModel,
-                        profileVideos = profileVideos,
-                        loginState = UiState.Initial,
-                        loginBottomSheet = { bottomSheetState, onDismissRequest, termsLink, openTerms ->
-                            LoginBottomSheet(
-                                bottomSheetState = bottomSheetState,
-                                onDismissRequest = onDismissRequest,
-                                termsLink = termsLink,
-                                openTerms = openTerms,
-                            )
-                        },
-                        getPrefetchListener = { reel -> PrefetchVideoListenerImpl(reel) },
-                    )
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Children(
+                stack = rootComponent.stack,
+                modifier = Modifier.fillMaxSize(),
+                animation = stackAnimation(fade()),
+            ) {
+                when (val child = it.instance) {
+                    is Child.Splash -> {
+                        HandleSystemBars(show = false)
+                        Splash(
+                            modifier = Modifier.fillMaxSize(),
+                            initialAnimationComplete = state.initialAnimationComplete,
+                            onAnimationComplete = { viewModel.onSplashAnimationComplete() },
+                            onScreenViewed = { viewModel.splashScreenViewed() },
+                        )
+                    }
+
+                    is Child.Home -> {
+                        HandleSystemBars(show = true)
+                        HomeScreen(
+                            component = child.component,
+                            sessionState = state.sessionState,
+                            bottomNavigationAnalytics = { viewModel.bottomNavigationClicked(it) },
+                            updateProfileVideosCount = { viewModel.updateProfileVideosCount(it) },
+                        )
+                    }
+
+                    is Child.EditProfile -> {
+                        val sessionKey = state.sessionState.getKey()
+                        HandleSystemBars(show = true)
+                        EditProfileScreen(
+                            component = child.component,
+                            viewModel = koinViewModel<EditProfileViewModel>(key = "edit-profile-$sessionKey"),
+                            modifier = Modifier.fillMaxSize().safeDrawingPadding(),
+                        )
+                    }
+
+                    is Child.UserProfile -> {
+                        HandleSystemBars(show = true)
+                        val profileViewModel =
+                            koinViewModel<ProfileViewModel>(
+                                key = "profile-${child.component.userCanisterData?.userPrincipalId}",
+                            ) { parametersOf(child.component.userCanisterData) }
+                        val profileVideos =
+                            profileViewModel.profileVideos.collectAsLazyPagingItems()
+                        ProfileMainScreen(
+                            component = child.component,
+                            modifier = Modifier.fillMaxSize().safeDrawingPadding(),
+                            viewModel = profileViewModel,
+                            profileVideos = profileVideos,
+                            loginState = UiState.Initial,
+                            loginBottomSheet = { bottomSheetState, onDismissRequest, termsLink, openTerms ->
+                                LoginBottomSheet(
+                                    bottomSheetState = bottomSheetState,
+                                    onDismissRequest = onDismissRequest,
+                                    termsLink = termsLink,
+                                    openTerms = openTerms,
+                                )
+                            },
+                            getPrefetchListener = { reel -> PrefetchVideoListenerImpl(reel) },
+                        )
+                    }
                 }
             }
-        }
 
-        // shows login error for both splash and account screen
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        LaunchedEffect(state.error) {
-            if (state.error == null) {
-                sheetState.hide()
+            // shows login error for both splash and account screen
+            val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+            LaunchedEffect(state.error) {
+                if (state.error == null) {
+                    sheetState.hide()
+                }
             }
-        }
-        state.error?.let { error ->
-            YralErrorMessage(
-                title = stringResource(Res.string.error_timeout_title),
-                error = error.toErrorMessage(),
-                sheetState = sheetState,
-                cta = stringResource(Res.string.error_retry),
-                onDismiss = { viewModel.initialize() },
-                onClick = { viewModel.initialize() },
-            )
-        }
-        // when session is loading & splash is not visible
-        // 1. after logout on account screen during anonymous sign in
-        // 2. after social sign in
-        // 3. after delete account during anonymous sign in
-        if (!state.showSplash && state.sessionState is SessionState.Loading) {
-            BlockingLoader()
-        }
+            state.error?.let { error ->
+                YralErrorMessage(
+                    title = stringResource(Res.string.error_timeout_title),
+                    error = error.toErrorMessage(),
+                    sheetState = sheetState,
+                    cta = stringResource(Res.string.error_retry),
+                    onDismiss = { viewModel.initialize() },
+                    onClick = { viewModel.initialize() },
+                )
+            }
+            // when session is loading & splash is not visible
+            // 1. after logout on account screen during anonymous sign in
+            // 2. after social sign in
+            // 3. after delete account during anonymous sign in
+            if (!state.showSplash && state.sessionState is SessionState.Loading) {
+                BlockingLoader()
+            }
 
-        if (!rootComponent.isSplashActive()) {
-            ToastHost(
-                modifier =
-                    Modifier
-                        .padding(horizontal = 16.dp)
-                        .statusBarsPadding()
-                        .padding(top = 12.dp),
-            )
-        }
+            if (!rootComponent.isSplashActive()) {
+                ToastHost(
+                    modifier =
+                        Modifier
+                            .padding(horizontal = 16.dp)
+                            .statusBarsPadding()
+                            .padding(top = 12.dp),
+                )
+            }
 
-        // Show update notifications (Snackbar) for flexible updates
-        UpdateNotificationHost(
-            rootComponent = rootComponent,
-        )
+            // Show update notifications (Snackbar) for flexible updates
+            UpdateNotificationHost(
+                rootComponent = rootComponent,
+            )
+
+            SlotContent(rootComponent)
+        }
     }
 }
 
@@ -224,3 +243,15 @@ fun RootError.toErrorMessage(): String =
             RootError.TIMEOUT -> Res.string.error_timeout
         },
     )
+
+@Composable
+private fun SlotContent(component: RootComponent) {
+    val slot by component.slot.subscribeAsState()
+    slot.child?.instance?.also { slotChild ->
+        when (slotChild) {
+            is RootComponent.SlotChild.AlertsRequestBottomSheet -> {
+                AlertsRequestBottomSheet(component = slotChild.component)
+            }
+        }
+    }
+}

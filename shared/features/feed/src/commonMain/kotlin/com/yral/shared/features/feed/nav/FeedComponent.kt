@@ -1,11 +1,13 @@
 package com.yral.shared.features.feed.nav
 
 import com.arkivanov.decompose.ComponentContext
+import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.flow.Flow
 
 interface FeedComponent {
+    val showAlertsOnDialog: (type: AlertsRequestType) -> Unit
     val openPostDetails: Flow<PostDetailsRoute?>
     fun openPostDetails(postDetailsRoute: PostDetailsRoute)
     fun openProfile(userCanisterData: CanisterData)
@@ -14,6 +16,7 @@ interface FeedComponent {
         operator fun invoke(
             componentContext: ComponentContext,
             openProfile: (userCanisterData: CanisterData) -> Unit,
-        ): FeedComponent = DefaultFeedComponent(componentContext, openProfile)
+            showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
+        ): FeedComponent = DefaultFeedComponent(componentContext, showAlertsOnDialog, openProfile)
     }
 }
