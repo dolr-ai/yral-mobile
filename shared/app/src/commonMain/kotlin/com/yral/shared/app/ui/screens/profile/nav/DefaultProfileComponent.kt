@@ -13,6 +13,7 @@ import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.libs.routing.routes.api.VideoUploadSuccessful
+import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -24,6 +25,7 @@ internal class DefaultProfileComponent(
     private val snapshot: Snapshot?,
     private val onUploadVideoClicked: () -> Unit,
     private val openEditProfile: () -> Unit,
+    private val openProfile: (CanisterData) -> Unit,
 ) : ProfileComponent(),
     ComponentContext by componentContext,
     KoinComponent {
@@ -117,6 +119,7 @@ internal class DefaultProfileComponent(
             onUploadVideoClicked = onUploadVideoClicked,
             openAccount = this::openAccount,
             openEditProfile = this::openEditProfile,
+            openProfile = openProfile,
             onBackClicked = {},
         )
 

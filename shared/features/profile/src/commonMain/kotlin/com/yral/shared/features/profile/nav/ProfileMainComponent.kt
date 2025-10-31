@@ -10,6 +10,7 @@ interface ProfileMainComponent {
     fun onUploadVideoClick()
     fun openAccount()
     fun openEditProfile()
+    fun openProfile(userCanisterData: CanisterData)
     fun onBackClicked()
     companion object Companion {
         operator fun invoke(
@@ -19,6 +20,7 @@ interface ProfileMainComponent {
             onUploadVideoClicked: () -> Unit,
             openAccount: () -> Unit,
             openEditProfile: () -> Unit,
+            openProfile: (CanisterData) -> Unit,
             onBackClicked: () -> Unit,
         ): ProfileMainComponent =
             DefaultProfileMainComponent(
@@ -28,6 +30,7 @@ interface ProfileMainComponent {
                 onUploadVideoClicked = onUploadVideoClicked,
                 openAccount = openAccount,
                 openEditProfile = openEditProfile,
+                openProfile = openProfile,
                 onBackClicked = onBackClicked,
             )
     }

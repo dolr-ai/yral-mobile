@@ -8,6 +8,7 @@ import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
 import com.yral.shared.libs.routing.routes.api.AppRoute
+import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 
@@ -47,6 +48,14 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
             snapshot: Snapshot?,
             onUploadVideoClicked: () -> Unit,
             openEditProfile: () -> Unit,
-        ): ProfileComponent = DefaultProfileComponent(componentContext, snapshot, onUploadVideoClicked, openEditProfile)
+            openProfile: (CanisterData) -> Unit,
+        ): ProfileComponent =
+            DefaultProfileComponent(
+                componentContext,
+                snapshot,
+                onUploadVideoClicked,
+                openEditProfile,
+                openProfile,
+            )
     }
 }
