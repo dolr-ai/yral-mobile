@@ -195,7 +195,10 @@ internal class DefaultHomeComponent(
         AccountComponent.Companion(componentContext = componentContext)
 
     private fun walletComponent(componentContext: ComponentContext): WalletComponent =
-        WalletComponent.Companion(componentContext = componentContext)
+        WalletComponent.Companion(
+            componentContext = componentContext,
+            showAlertsOnDialog = { showSlot(SlotConfig.AlertsRequestBottomSheet) },
+        )
 
     private fun slotChild(
         config: SlotConfig,

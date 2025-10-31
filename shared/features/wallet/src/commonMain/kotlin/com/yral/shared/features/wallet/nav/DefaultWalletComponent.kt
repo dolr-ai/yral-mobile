@@ -5,6 +5,7 @@ import org.koin.core.component.KoinComponent
 
 internal class DefaultWalletComponent(
     componentContext: ComponentContext,
+    override val showAlertsOnDialog: () -> Unit,
 ) : WalletComponent,
     ComponentContext by componentContext,
     KoinComponent

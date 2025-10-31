@@ -123,7 +123,10 @@ fun WalletScreen(
     if (state.howToEarnHelpVisible) {
         state.rewardConfig?.let { rewardConfig ->
             YralBottomSheet(
-                onDismissRequest = { viewModel.toggleHowToEarnHelp(false) },
+                onDismissRequest = {
+                    viewModel.toggleHowToEarnHelp(false)
+                    component.showAlertsOnDialog()
+                },
                 bottomSheetState = bottomSheetState,
                 dragHandle = null,
                 content = { HowToEarnBitcoinSheet(rewardConfig) },
