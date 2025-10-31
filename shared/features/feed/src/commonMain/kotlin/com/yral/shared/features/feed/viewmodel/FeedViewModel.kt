@@ -11,6 +11,7 @@ import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.FeedFeatureFlags
 import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.shared.analytics.events.CtaType
+import com.yral.shared.analytics.events.FeedType
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.utils.processFirstNSuspendFlow
@@ -77,7 +78,7 @@ class FeedViewModel(
 
     companion object {
         const val PRE_FETCH_BEFORE_LAST = 5
-        private const val FIRST_SECOND_WATCHED_THRESHOLD_MS = 1000L
+        private const val FIRST_SECOND_WATCHED_THRESHOLD_MS = 100L
         private val ANALYTICS_VIDEO_STARTED_RANGE = 0L..1000L
         private val ANALYTICS_VIDEO_VIEWED_RANGE = 3000L..4000L
         private const val FULL_VIDEO_WATCHED_THRESHOLD = 95.0
@@ -88,6 +89,7 @@ class FeedViewModel(
         private const val SUFFICIENT_NEW_REQUIRED = 10
         const val SIGN_UP_PAGE = 9
         private const val PAGER_STATE_REFRESH_BUFFER_MS = 100L
+        const val FOLLOW_NUDGE_PAGE = 5
     }
 
     private val _state = MutableStateFlow(FeedState())
@@ -208,7 +210,7 @@ class FeedViewModel(
                             setLoadingMore(false)
                             updateFeedType(FeedType.DEFAULT)
                         } else {
-                            val notVotedCount = filterVotedAndFetchDetails(posts, true)
+                            val notVotedCount = filterVotedAndFetchDetails(posts)
                             val newTotal = totalNotVotedCount + notVotedCount
                             Logger.d("FeedPagination") { "notVotedCount in ai feed $notVotedCount" }
                             if (notVotedCount < SUFFICIENT_NEW_REQUIRED) {
@@ -288,6 +290,8 @@ class FeedViewModel(
                 postID = postId,
                 videoID = "",
                 nsfwProbability = null,
+                numViewsAll = null,
+                numViewsLoggedIn = null,
             )
 
         if (publisherUserId.isNotBlank()) {
@@ -343,7 +347,7 @@ class FeedViewModel(
     @Suppress("LongMethod")
     private suspend fun filterVotedAndFetchDetails(
         posts: List<Post>,
-        checkVotes: Boolean = true,
+        checkVotes: Boolean = false,
     ): Int {
         val fetchedIds = _state.value.posts.mapTo(HashSet()) { it.videoID }
         val newPosts = posts.filter { post -> post.videoID !in fetchedIds }
@@ -359,10 +363,17 @@ class FeedViewModel(
                         .invoke(post)
                         .map { detail ->
                             if (detail == null) {
-                                Logger.e("FeedPagination") { "Detail is null for ${post.postID}" }
+                                // Logger.e("FeedPagination") { "Detail is null for ${post.postID}" }
                                 crashlyticsManager.recordException(YralException("Detail is null for ${post.postID}"))
                             }
-                            detail to
+                            Logger.e("FeedPagination") {
+                                "${post.videoID} view count " +
+                                    "in post ${post.numViewsAll} " +
+                                    "in feed details ${detail?.viewCount}"
+                            }
+                            val updatedDetail =
+                                post.numViewsAll?.let { views -> detail?.copy(viewCount = views) } ?: detail
+                            updatedDetail to
                                 if (checkVotes) {
                                     detail?.let { isAlreadyVoted(it) }
                                 } else {
@@ -522,6 +533,8 @@ class FeedViewModel(
         totalTime: Int,
     ) {
         coroutineScope.launch {
+            // Get current state values before any updates
+            val videoData = _state.value.videoData
             val currentFeedDetails = _state.value.feedDetails[_state.value.currentPageOfFeed]
             when (currentTime) {
                 in ANALYTICS_VIDEO_STARTED_RANGE -> feedTelemetry.trackVideoStarted(currentFeedDetails)
@@ -533,11 +546,10 @@ class FeedViewModel(
             }
 
             // If we've already logged full video watched, no need to continue processing
-            if (_state.value.videoData.didLogFullVideoWatched) {
+            if (videoData.didLogFullVideoWatched) {
                 return@launch
             }
-            // Get current state values before any updates
-            val videoData = _state.value.videoData
+
             // Check for threshold crossing - only if not the first update and we haven't logged it yet
             val shouldLogFirstSecond =
                 !videoData.isFirstTimeUpdate &&
@@ -546,6 +558,10 @@ class FeedViewModel(
             val shouldLogFullVideo =
                 currentTime.percentageOf(totalTime) >= FULL_VIDEO_WATCHED_THRESHOLD &&
                     !videoData.didLogFullVideoWatched
+            val shouldLog3Second =
+                !videoData.isFirstTimeUpdate &&
+                    currentTime in ANALYTICS_VIDEO_VIEWED_RANGE &&
+                    !videoData.didLog3SecondWatched
             // Update the last known time values
             _state.update {
                 it.copy(
@@ -559,24 +575,16 @@ class FeedViewModel(
             }
             // Log first second event if needed
             if (shouldLogFirstSecond) {
-                recordEvent(
-                    videoData =
-                        _state.value.videoData.copy(
-                            didLogFirstSecondWatched = true,
-                        ),
-                )
+                recordEvent(videoData = _state.value.videoData.copy(didLogFirstSecondWatched = true))
+            } else if (shouldLog3Second) {
+                recordEvent(videoData = _state.value.videoData.copy(didLog3SecondWatched = true))
             } else if (shouldLogFullVideo) {
-                recordEvent(
-                    videoData =
-                        state.value.videoData.copy(
-                            didLogFullVideoWatched = true,
-                        ),
-                )
+                recordEvent(videoData = state.value.videoData.copy(didLogFullVideoWatched = true))
             }
         }
     }
 
-    private suspend fun recordEvent(videoData: VideoData) {
+    private fun recordEvent(videoData: VideoData) {
         val currentFeed = _state.value.feedDetails[_state.value.currentPageOfFeed]
         feedTelemetry.onVideoDurationWatched(
             feedDetails = currentFeed,
@@ -771,8 +779,16 @@ class FeedViewModel(
         }
     }
 
+    fun pushFeedToggleClicked(
+        feedType: FeedType,
+        isExpanded: Boolean,
+    ) {
+        feedTelemetry.feedToggleClicked(feedType, isExpanded)
+    }
+
     fun follow(canisterData: CanisterData) {
         if (_state.value.isFollowInProgress) return
+        pushFollowClicked(canisterData.userPrincipalId)
         coroutineScope.launch {
             sessionManager.userPrincipal?.let { userPrincipal ->
                 _state.update { it.copy(isFollowInProgress = true) }
@@ -795,6 +811,10 @@ class FeedViewModel(
                     }
             }
         }
+    }
+
+    fun pushFollowClicked(publisherUserId: String) {
+        feedTelemetry.followClicked(publisherUserId)
     }
 
     data class RequiredUseCases(
@@ -835,13 +855,8 @@ enum class OverlayType {
     DAILY_RANK,
 }
 
-enum class FeedType {
-    DEFAULT,
-    AI,
-    NSFW,
-}
-
 data class VideoData(
+    val didLog3SecondWatched: Boolean = false,
     val didLogFirstSecondWatched: Boolean = false,
     val didLogFullVideoWatched: Boolean = false,
     val lastKnownCurrentTime: Int = 0,

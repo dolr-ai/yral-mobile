@@ -356,7 +356,7 @@ struct CreateAIVideoScreenView: View {
           }
         }
         generatingVideo = true
-        viewModel.startPolling()
+        viewModel.startPolling(prompt: promptText)
       case .generateVideoFailure(let errMessage):
         errorMessage = errMessage
       case .generateVideoStatusFailure(let errMessage, let addBalance):

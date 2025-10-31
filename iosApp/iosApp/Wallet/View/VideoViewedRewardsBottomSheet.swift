@@ -11,8 +11,10 @@ import SwiftUI
 struct VideoViewedRewardsBottomSheet: View {
   @State private var showBottomSheet = false
   @State private var dragOffset: CGFloat = .zero
-  @State private var lottieData: Data?
 
+  let viewMilestone: Int
+  let inrReward: Double?
+  let usdReward: Double?
   let onComplete: () -> Void
 
   private var getBitcoinAttributedText: NSAttributedString {
@@ -39,6 +41,18 @@ struct VideoViewedRewardsBottomSheet: View {
     attributed.append(NSAttributedString(string: Constants.descriptionText1, attributes: attrs))
     attributed.append(NSAttributedString(string: Constants.descriptionText2, attributes: boldAttrs))
     attributed.append(NSAttributedString(string: Constants.descriptionText3, attributes: attrs))
+
+    let locale = Locale.current.regionCode ?? "US"
+
+    if locale == "IN" {
+      attributed.append(NSAttributedString(string: "₹\(inrReward?.cleanValue ?? "0")\n", attributes: attrs))
+    } else {
+      attributed.append(NSAttributedString(string: "$\(usdReward?.cleanValue ?? "0")\n", attributes: attrs))
+    }
+
+    attributed.append(NSAttributedString(string: Constants.descriptionText4, attributes: attrs))
+    attributed.append(NSAttributedString(string: "\(viewMilestone) ", attributes: attrs))
+    attributed.append(NSAttributedString(string: Constants.descriptionText5, attributes: attrs))
 
     return attributed
   }
@@ -80,14 +94,6 @@ struct VideoViewedRewardsBottomSheet: View {
       }
     }
     .onAppear {
-      FirebaseLottieManager.shared.data(
-        forPath: Constants.lottiePath
-      ) { result in
-          if case .success(let data) = result {
-            lottieData = data
-          }
-        }
-
       withAnimation(.easeInOut(duration: Constants.bottomSheetAppearTime)) {
         showBottomSheet = true
       }
@@ -105,24 +111,19 @@ struct VideoViewedRewardsBottomSheet: View {
         .padding(.top, Constants.titleTop)
         .padding(.bottom, Constants.titleBottom)
 
-      if let data = lottieData {
+      ZStack {
         LottieView(
-          data: data,
-          name: "",
+          name: Constants.lottie,
           loopMode: .loop,
           animationSpeed: .one,
           resetProgress: false) {}
           .frame(width: Constants.lottieWidth)
           .frame(height: Constants.lottieHeight)
           .aspectRatio(contentMode: .fit)
-      } else {
-        Color.clear
-          .frame(width: Constants.lottieWidth)
-          .frame(height: Constants.lottieHeight)
-          .overlay(
-            LottieLoaderView(animationName: Constants.loader, resetProgess: false)
-              .frame(width: Constants.loaderSize, height: Constants.loaderSize)
-          )
+
+        Text("\(viewMilestone) Engaged views")
+          .font(YralFont.pt20.bold.swiftUIFont)
+          .foregroundStyle(YralColor.grey0.swiftUIColor)
       }
 
       AttributedText(
@@ -162,7 +163,7 @@ extension VideoViewedRewardsBottomSheet {
     static let titleTop = 40.0
     static let titleBottom = 40.0
 
-    static let lottiePath = "btc_rewards/btc_rewards_views.json"
+    static let lottie = "video_view_rewards"
     static let lottieWidth = UIScreen.main.bounds.width - 32
     static let lottieHeight = lottieWidth * 0.5
 
@@ -171,8 +172,10 @@ extension VideoViewedRewardsBottomSheet {
     static let descriptionBaseFont = YralFont.pt16.regular.uiFont
     static let descriptionBoldFont = YralFont.pt16.bold.uiFont
     static let descriptionText1 = "Get "
-    static let descriptionText2 = "Bitcoin\n"
-    static let descriptionText3 = "on having views per video."
+    static let descriptionText2 = "Bitcoin "
+    static let descriptionText3 = "worth "
+    static let descriptionText4 = "for every "
+    static let descriptionText5 = "engaged views!"
     static let descriptionBaseColor =  YralColor.grey300.uiColor
     static let descriptionBoldColor = UIColor(
       red: 219/255,

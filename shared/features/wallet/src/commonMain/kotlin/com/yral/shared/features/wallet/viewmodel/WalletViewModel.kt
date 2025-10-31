@@ -13,8 +13,6 @@ import com.yral.shared.features.wallet.domain.GetBtcConversionUseCase
 import com.yral.shared.features.wallet.domain.GetRewardConfigUseCase
 import com.yral.shared.features.wallet.domain.GetUserBtcBalanceUseCase
 import com.yral.shared.features.wallet.domain.models.BtcRewardConfig
-import com.yral.shared.firebaseStore.getDownloadUrl
-import dev.gitlive.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,7 +25,6 @@ class WalletViewModel(
     private val getUserBtcBalanceUseCase: GetUserBtcBalanceUseCase,
     private val getRewardConfigUseCase: GetRewardConfigUseCase,
     private val walletTelemetry: WalletTelemetry,
-    private val firebaseStorage: FirebaseStorage,
 ) : ViewModel() {
     private val _state = MutableStateFlow(WalletState())
     val state: StateFlow<WalletState> = _state.asStateFlow()
@@ -39,16 +36,6 @@ class WalletViewModel(
                 .invoke()
                 .onSuccess { rewardConfig -> _state.update { it.copy(rewardConfig = rewardConfig) } }
                 .onFailure { Logger.e("Wallet") { "error fetching reward config $it" } }
-        }
-        viewModelScope.launch {
-            val animation =
-                getDownloadUrl(
-                    path = BTC_REWARD_ANIMATION_URL,
-                    storage = firebaseStorage,
-                )
-            if (animation.isNotEmpty()) {
-                _state.update { it.copy(rewardAnimationUrl = animation) }
-            }
         }
         viewModelScope.launch {
             sessionManager
@@ -119,10 +106,6 @@ class WalletViewModel(
             walletTelemetry.onHowToEarnClicked()
         }
     }
-
-    companion object {
-        private const val BTC_REWARD_ANIMATION_URL = "btc_rewards/btc_rewards_views.json"
-    }
 }
 
 data class WalletState(
@@ -133,6 +116,5 @@ data class WalletState(
     val accountInfo: AccountInfo? = null,
     val howToEarnHelpVisible: Boolean = false,
     val rewardConfig: BtcRewardConfig? = null,
-    val rewardAnimationUrl: String? = null,
     val isFirebaseLoggedIn: Boolean = false,
 )

@@ -5,6 +5,7 @@ import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.profile.data.models.DeleteVideoRequestBody
+import com.yral.shared.features.profile.data.models.FollowNotificationDto
 import com.yral.shared.features.profile.data.models.UploadProfileImageRequestBody
 import com.yral.shared.features.profile.data.models.UploadProfileImageResponse
 import com.yral.shared.features.profile.data.models.VideoViewsDto
@@ -132,9 +133,20 @@ class ProfileDataSourceImpl(
         return response.profileImageUrl
     }
 
+    override suspend fun followNotification(request: FollowNotificationDto) =
+        httpPost<Unit>(httpClient, json) {
+            url {
+                protocol = URLProtocol.HTTPS
+                host = OFF_CHAIN_BASE_URL
+                path(FOLLOW_NOTIFICATION)
+            }
+            setBody(request)
+        }
+
     companion object {
         private const val DELETE_VIDEO_ENDPOINT = "/api/v2/posts"
         private const val VIDEO_VIEWS_ENDPOINT = "/api/v1/rewards/videos/bulk-stats-v2"
         private const val UPLOAD_PROFILE_ENDPOINT = "/api/v1/user/profile-image"
+        private const val FOLLOW_NOTIFICATION = "/api/v1/user/follow-notification"
     }
 }

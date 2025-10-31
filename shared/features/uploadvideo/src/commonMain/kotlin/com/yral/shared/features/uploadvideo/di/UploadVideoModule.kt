@@ -19,6 +19,7 @@ import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel
 import com.yral.shared.features.uploadvideo.presentation.FlowSelectionViewModel
 import com.yral.shared.features.uploadvideo.presentation.UploadVideoViewModel
 import com.yral.shared.features.uploadvideo.presentation.UploadVideoViewModel.RequiredUseCases
+import com.yral.shared.features.uploadvideo.utils.VideoValidator
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.bind
@@ -51,4 +52,7 @@ val uploadVideoModule =
 
         // Flow selection
         viewModelOf(::FlowSelectionViewModel)
+
+        // utils
+        factoryOf(::VideoValidator)
     }

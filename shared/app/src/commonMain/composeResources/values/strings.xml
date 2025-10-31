@@ -6,7 +6,11 @@
 
     <!-- Alerts Request -->
     <string name="a_little_nudge">A little nudge!</string>
-    <string name="enable_notification_message">The action moves fast.\nDon’t fall behind, enable notifications and be the first to know when something’s happening.</string>
+    <string name="enable_notification_message">Stay in loop! Enable notifications so you never miss what’s new on YRAL.</string>
+    <string name="video_nudge">Your masterpiece is cooking!</string>
+    <string name="enable_video_nudge_msg">Enable notifications to know the moment your AI video is ready to view.</string>
+    <string name="follow_back_nudge">Don’t miss the follow-back!</string>
+    <string name="enable_follow_back_nudge_msg">Get notified when they follow you back or share something fresh.</string>
     <string name="turn_on_alerts">Turn on Alerts</string>
     <string name="not_now">Not Now</string>
 
