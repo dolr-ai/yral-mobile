@@ -6,6 +6,7 @@ import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.flow.Flow
 
 interface FeedComponent {
+    val showAlertsOnDialog: () -> Unit
     val openPostDetails: Flow<PostDetailsRoute?>
     fun openPostDetails(postDetailsRoute: PostDetailsRoute)
     fun openProfile(userCanisterData: CanisterData)
@@ -14,6 +15,7 @@ interface FeedComponent {
         operator fun invoke(
             componentContext: ComponentContext,
             openProfile: (userCanisterData: CanisterData) -> Unit,
-        ): FeedComponent = DefaultFeedComponent(componentContext, openProfile)
+            showAlertsOnDialog: () -> Unit,
+        ): FeedComponent = DefaultFeedComponent(componentContext, showAlertsOnDialog, openProfile)
     }
 }

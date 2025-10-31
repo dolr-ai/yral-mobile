@@ -164,7 +164,11 @@ internal class DefaultHomeComponent(
         }
 
     private fun feedComponent(componentContext: ComponentContext): FeedComponent =
-        FeedComponent.Companion(componentContext = componentContext, openProfile)
+        FeedComponent.Companion(
+            componentContext = componentContext,
+            openProfile = openProfile,
+            showAlertsOnDialog = { showSlot(SlotConfig.AlertsRequestBottomSheet) },
+        )
 
     private fun leaderboardComponent(componentContext: ComponentContext): LeaderboardComponent =
         LeaderboardComponent.Companion(

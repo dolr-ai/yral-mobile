@@ -11,6 +11,7 @@ import org.koin.core.component.KoinComponent
 
 internal class DefaultFeedComponent(
     componentContext: ComponentContext,
+    override val showAlertsOnDialog: () -> Unit,
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
 ) : FeedComponent,
     ComponentContext by componentContext,

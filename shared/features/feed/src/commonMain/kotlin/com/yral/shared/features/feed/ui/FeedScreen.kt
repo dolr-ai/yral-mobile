@@ -261,6 +261,7 @@ fun FeedScreen(
                                     ),
                             ),
                     )
+                    component.showAlertsOnDialog()
                 }
                 is FeedEvents.UnfollowedSuccessfully -> Unit
                 is FeedEvents.Failed -> ToastManager.showError(type = ToastType.Small(message = event.message))
