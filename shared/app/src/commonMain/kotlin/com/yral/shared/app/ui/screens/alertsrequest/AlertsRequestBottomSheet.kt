@@ -50,7 +50,7 @@ import yral_mobile.shared.app.generated.resources.Res
 import yral_mobile.shared.app.generated.resources.a_little_nudge
 import yral_mobile.shared.app.generated.resources.enable_notification_message
 import yral_mobile.shared.app.generated.resources.not_now
-import yral_mobile.shared.app.generated.resources.nudge
+import yral_mobile.shared.app.generated.resources.nudge_default
 import yral_mobile.shared.app.generated.resources.turn_on_alerts
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -120,7 +120,7 @@ private fun AlertSheet(
             )
             Spacer(Modifier.height(46.dp))
             Image(
-                painter = painterResource(Res.drawable.nudge),
+                painter = painterResource(Res.drawable.nudge_default),
                 contentDescription = null,
                 modifier = Modifier.size(134.dp),
             )
