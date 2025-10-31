@@ -33,6 +33,9 @@ struct ProfileView: View {
   @State private var showSignupFailureSheet: Bool = false
   @State private var loadingProvider: SocialProvider?
 
+  @State private var showVideoInsights = false
+  @State private var insightsVideoInfo: ProfileVideoInfo?
+
   @EnvironmentObject var session: SessionManager
   @EnvironmentObject private var deepLinkRouter: DeepLinkRouter
   @EnvironmentObject var eventBus: EventBus
@@ -167,6 +170,10 @@ struct ProfileView: View {
                       withAnimation {
                         showFeeds = true
                       }
+                    },
+                    onInsightsTapped: { videoInfo in
+                      insightsVideoInfo = videoInfo
+                      showVideoInsights = true
                     },
                     onLoadMore: {
                       Task { @MainActor in
@@ -356,6 +363,36 @@ struct ProfileView: View {
         showSignupFailureSheet = false
       })
       .background( ClearBackgroundView() )
+    }
+    .overlay(alignment: .center, content: {
+      if showVideoInsights {
+        Color.black.opacity(0.8)
+          .ignoresSafeArea()
+          .transition(.opacity)
+      }
+    })
+    .fullScreenCover(isPresented: Binding(
+      get: { showVideoInsights && insightsVideoInfo != nil },
+      set: { newValue in
+        showVideoInsights = newValue
+        if !newValue {
+          insightsVideoInfo = nil
+        }
+      }
+    )) {
+      if let videoInfo = insightsVideoInfo {
+        router.displayVideoInsightsBottomSheet(
+          openedFromFeed: false,
+          videoInfo: videoInfo) { updatedTotalViews in
+            if let totalViews = updatedTotalViews,
+               let currentIndex = videos.firstIndex(where: { $0.videoId == videoInfo.videoId }) {
+              videos[currentIndex].viewCount = totalViews
+            }
+            showVideoInsights = false
+            insightsVideoInfo = nil
+          }
+          .background(ClearBackgroundView())
+      }
     }
     .onReceive(deepLinkRouter.$pendingDestination.compactMap { $0 }) { dest in
       guard dest == .profileAfterUpload else { return }

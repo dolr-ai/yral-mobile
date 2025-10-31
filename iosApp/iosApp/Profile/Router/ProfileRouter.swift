@@ -24,6 +24,12 @@ protocol ProfileRouterProtocol {
     showEditProfile: Binding<Bool>,
     accountInfo: Binding<AccountInfo>
   ) -> EditProfileView
+
+  func displayVideoInsightsBottomSheet(
+    openedFromFeed: Bool,
+    videoInfo: ProfileVideoInfo,
+    onComplete: @escaping (Int64?) -> Void
+  ) -> VideoInsightsBottomSheet
 }
 
 final class ProfileRouter: ProfileRouterProtocol {
@@ -57,6 +63,18 @@ final class ProfileRouter: ProfileRouterProtocol {
     return profileDI.makeEditProfile(
       showEditProfile: showEditProfile,
       accountInfo: accountInfo
+    )
+  }
+
+  func displayVideoInsightsBottomSheet(
+    openedFromFeed: Bool,
+    videoInfo: ProfileVideoInfo,
+    onComplete: @escaping (Int64?) -> Void
+  ) -> VideoInsightsBottomSheet {
+    return profileDI.makeVideoInsightsBottomSheet(
+      openedFromFeed: openedFromFeed,
+      videoInfo: videoInfo,
+      onComplete: onComplete
     )
   }
 }

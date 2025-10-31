@@ -155,6 +155,7 @@ class CreateAIVideoViewModel: ObservableObject {
         AnalyticsModuleKt.getAnalyticsManager().trackEvent(
           event: AiVideoGeneratedData(
             model: selectedProvider?.name ?? "",
+            prompt: prompt,
             isSuccess: false,
             reason: error.localizedDescription,
             reasonType: .triggerFailed
@@ -167,7 +168,8 @@ class CreateAIVideoViewModel: ObservableObject {
     }
   }
 
-  func getGenerateVideoStatus(for request: GenerateVideoRequestKeyResponse) async {
+  // swiftlint: disable function_body_length
+  func getGenerateVideoStatus(for request: GenerateVideoRequestKeyResponse, prompt: String) async {
     do {
       let result = await generateVideoStatusUseCase.execute(request: UInt64(request.counter))
       await MainActor.run {
@@ -179,6 +181,7 @@ class CreateAIVideoViewModel: ObservableObject {
             AnalyticsModuleKt.getAnalyticsManager().trackEvent(
               event: AiVideoGeneratedData(
                 model: selectedProvider?.name ?? "",
+                prompt: prompt,
                 isSuccess: true,
                 reason: nil,
                 reasonType: nil
@@ -190,6 +193,7 @@ class CreateAIVideoViewModel: ObservableObject {
             AnalyticsModuleKt.getAnalyticsManager().trackEvent(
               event: AiVideoGeneratedData(
                 model: selectedProvider?.name ?? "",
+                prompt: prompt,
                 isSuccess: false,
                 reason: "Video generation failed",
                 reasonType: .generationFailed
@@ -205,6 +209,7 @@ class CreateAIVideoViewModel: ObservableObject {
           AnalyticsModuleKt.getAnalyticsManager().trackEvent(
             event: AiVideoGeneratedData(
               model: selectedProvider?.name ?? "",
+              prompt: prompt,
               isSuccess: false,
               reason: error.localizedDescription,
               reasonType: .generationFailed
@@ -219,6 +224,7 @@ class CreateAIVideoViewModel: ObservableObject {
       }
     }
   }
+  // swiftlint: enable function_body_length
 
   func uploadAIVideo() async {
     guard let videoURL = videoURLString else {
@@ -244,7 +250,7 @@ class CreateAIVideoViewModel: ObservableObject {
     }
   }
 
-  func startPolling() {
+  func startPolling(prompt: String) {
     if let task = pollingTask, !task.isCancelled {
       return
     }
@@ -260,7 +266,10 @@ class CreateAIVideoViewModel: ObservableObject {
     pollingTask = Task { [weak self] in
       while !Task.isCancelled {
         guard let self else { return }
-        await self.getGenerateVideoStatus(for: request)
+        await self.getGenerateVideoStatus(
+          for: request,
+          prompt: prompt
+        )
         try? await Task.sleep(nanoseconds: 5 * 1_000_000_000)
       }
     }
