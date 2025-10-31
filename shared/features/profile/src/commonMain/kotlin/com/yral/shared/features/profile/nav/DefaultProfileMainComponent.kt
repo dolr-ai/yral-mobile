@@ -1,6 +1,7 @@
 package com.yral.shared.features.profile.nav
 
 import com.arkivanov.decompose.ComponentContext
+import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.flow.Flow
 import org.koin.core.component.KoinComponent
@@ -13,7 +14,7 @@ internal class DefaultProfileMainComponent(
     private val openAccount: () -> Unit,
     private val openEditProfile: () -> Unit,
     private val onBackClicked: () -> Unit,
-    override val showAlertsOnDialog: () -> Unit,
+    override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
 ) : ProfileMainComponent,
     ComponentContext by componentContext,
     KoinComponent {

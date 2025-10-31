@@ -18,6 +18,7 @@ import com.arkivanov.decompose.value.Value
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
+import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
@@ -89,7 +90,7 @@ class DefaultRootComponent(
                 componentContext = componentContext,
                 openEditProfile = this::openEditProfile,
                 openProfile = this::openProfile,
-                showAlertsOnDialog = { this.showSlot(SlotConfig.AlertsRequestBottomSheet) },
+                showAlertsOnDialog = { this.showSlot(SlotConfig.AlertsRequestBottomSheet(it)) },
             )
         homeComponent = component
         return component
@@ -113,7 +114,7 @@ class DefaultRootComponent(
             openAccount = {},
             openEditProfile = {},
             onBackClicked = this::onBackClicked,
-            showAlertsOnDialog = { this.showSlot(SlotConfig.AlertsRequestBottomSheet) },
+            showAlertsOnDialog = { this.showSlot(SlotConfig.AlertsRequestBottomSheet(it)) },
         )
 
     override fun onBackClicked() {
@@ -161,15 +162,19 @@ class DefaultRootComponent(
         componentContext: ComponentContext,
     ): RootComponent.SlotChild =
         when (config) {
-            SlotConfig.AlertsRequestBottomSheet ->
+            is SlotConfig.AlertsRequestBottomSheet ->
                 RootComponent.SlotChild.AlertsRequestBottomSheet(
-                    alertsRequestComponent(componentContext),
+                    component = alertsRequestComponent(componentContext, config.type),
                 )
         }
 
-    private fun alertsRequestComponent(componentContext: ComponentContext): AlertsRequestComponent =
+    private fun alertsRequestComponent(
+        componentContext: ComponentContext,
+        type: AlertsRequestType,
+    ): AlertsRequestComponent =
         AlertsRequestComponent(
             componentContext = componentContext,
+            type = type,
             onDismissed = slotNavigation::dismiss,
         )
 
@@ -197,6 +202,8 @@ class DefaultRootComponent(
     @Serializable
     private sealed interface SlotConfig {
         @Serializable
-        data object AlertsRequestBottomSheet : SlotConfig
+        data class AlertsRequestBottomSheet(
+            val type: AlertsRequestType,
+        ) : SlotConfig
     }
 }

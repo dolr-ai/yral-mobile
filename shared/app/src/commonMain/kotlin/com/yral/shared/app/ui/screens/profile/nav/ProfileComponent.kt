@@ -3,6 +3,7 @@ package com.yral.shared.app.ui.screens.profile.nav
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
+import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
@@ -15,7 +16,7 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
     abstract val stack: Value<ChildStack<*, Child>>
 
     abstract val pendingVideoNavigation: Flow<String?>
-    abstract val showAlertsOnDialog: () -> Unit
+    abstract val showAlertsOnDialog: (type: AlertsRequestType) -> Unit
     abstract fun onUploadVideoClick()
     abstract fun onNavigationRequest(appRoute: AppRoute)
     abstract fun openAccount()
@@ -48,7 +49,7 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
             snapshot: Snapshot?,
             onUploadVideoClicked: () -> Unit,
             openEditProfile: () -> Unit,
-            showAlertsOnDialog: () -> Unit,
+            showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
         ): ProfileComponent =
             DefaultProfileComponent(
                 componentContext,

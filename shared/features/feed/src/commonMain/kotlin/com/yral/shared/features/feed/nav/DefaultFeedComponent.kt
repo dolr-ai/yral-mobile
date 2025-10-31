@@ -2,6 +2,7 @@ package com.yral.shared.features.feed.nav
 
 import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.ComponentContext
+import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.channels.Channel
@@ -11,7 +12,7 @@ import org.koin.core.component.KoinComponent
 
 internal class DefaultFeedComponent(
     componentContext: ComponentContext,
-    override val showAlertsOnDialog: () -> Unit,
+    override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
 ) : FeedComponent,
     ComponentContext by componentContext,

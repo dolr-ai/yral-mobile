@@ -1,13 +1,14 @@
 package com.yral.shared.features.profile.nav
 
 import com.arkivanov.decompose.ComponentContext
+import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.flow.Flow
 
 interface ProfileMainComponent {
     val pendingVideoNavigation: Flow<String?>
     val userCanisterData: CanisterData?
-    val showAlertsOnDialog: () -> Unit
+    val showAlertsOnDialog: (type: AlertsRequestType) -> Unit
     fun onUploadVideoClick()
     fun openAccount()
     fun openEditProfile()
@@ -21,7 +22,7 @@ interface ProfileMainComponent {
             openAccount: () -> Unit,
             openEditProfile: () -> Unit,
             onBackClicked: () -> Unit,
-            showAlertsOnDialog: () -> Unit,
+            showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
         ): ProfileMainComponent =
             DefaultProfileMainComponent(
                 componentContext = componentContext,

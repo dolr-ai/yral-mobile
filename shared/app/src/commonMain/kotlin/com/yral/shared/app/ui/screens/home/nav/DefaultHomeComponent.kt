@@ -14,6 +14,7 @@ import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
+import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
@@ -40,7 +41,7 @@ internal class DefaultHomeComponent(
     componentContext: ComponentContext,
     private val openEditProfile: () -> Unit,
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
-    override val showAlertsOnDialog: () -> Unit,
+    override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
 ) : HomeComponent(),
     ComponentContext by componentContext {
     private val navigation = StackNavigation<Config>()
@@ -182,7 +183,7 @@ internal class DefaultHomeComponent(
             componentContext = componentContext,
             goToHome = {
                 onFeedTabClick()
-                showAlertsOnDialog()
+                showAlertsOnDialog(AlertsRequestType.VIDEO)
             },
             snapshot = childSnapshots[Config.UploadVideo] as? UploadVideoRootComponent.Snapshot,
         )

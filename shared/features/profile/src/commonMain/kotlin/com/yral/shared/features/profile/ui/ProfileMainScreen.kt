@@ -63,6 +63,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import com.yral.shared.analytics.events.VideoDeleteCTA
+import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.profile.ui.followers.FollowersBottomSheet
@@ -167,7 +168,7 @@ fun ProfileMainScreen(
             when (event) {
                 is ProfileEvents.FollowedSuccessfully -> {
                     ToastManager.showSuccess(type = ToastType.Small(message = followedSuccessfully))
-                    component.showAlertsOnDialog()
+                    component.showAlertsOnDialog(AlertsRequestType.FOLLOW_BACK)
                     if (state.isOwnProfile) {
                         following.refresh()
                     } else {

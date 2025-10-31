@@ -1,12 +1,14 @@
 package com.yral.shared.app.ui.screens.alertsrequest.nav
 
 import com.arkivanov.decompose.ComponentContext
+import com.yral.shared.data.AlertsRequestType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 internal class DefaultAlertsRequestComponent(
     componentContext: ComponentContext,
+    override val type: AlertsRequestType,
     private val onDismissed: () -> Unit,
 ) : AlertsRequestComponent,
     ComponentContext by componentContext {
