@@ -96,7 +96,11 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
+import com.yral.shared.rust.service.domain.models.FollowerItem
 import com.yral.shared.rust.service.domain.models.PagedFollowerItem
+import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
+import com.yral.shared.rust.service.utils.propicFromPrincipal
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import org.jetbrains.compose.resources.painterResource
@@ -450,6 +454,24 @@ fun ProfileMainScreen(
                             }
                         }
                 }
+                val serviceCanisterId = remember { getUserInfoServiceCanister() }
+                val onFollowerSelected: (FollowerItem) -> Unit = followerSelected@{ follower ->
+                    val principal = follower.principalId.toString()
+                    if (principal.isBlank()) return@followerSelected
+                    val profilePic =
+                        follower.profilePictureUrl?.takeIf { it.isNotBlank() } ?: propicFromPrincipal(principal)
+                    val canisterData =
+                        CanisterData(
+                            canisterId = serviceCanisterId,
+                            userPrincipalId = principal,
+                            profilePic = profilePic,
+                            username = follower.username,
+                            isCreatedFromServiceCanister = true,
+                            isFollowing = follower.callerFollows,
+                        )
+                    viewModel.setBottomSheetType(ProfileBottomSheet.None)
+                    component.openProfile(canisterData)
+                }
                 FollowersBottomSheet(
                     sheetState = followersSheetState,
                     onDismissRequest = { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
@@ -461,6 +483,7 @@ fun ProfileMainScreen(
                     viewerPrincipal = state.viewerPrincipal,
                     onTabSelected = { viewModel.updateFollowSheetTab(tab = it) },
                     onFollowToggle = viewModel::toggleFollowForPrincipal,
+                    onUserSelected = onFollowerSelected,
                 )
             }
         }
