@@ -89,6 +89,7 @@ class DefaultRootComponent(
                 componentContext = componentContext,
                 openEditProfile = this::openEditProfile,
                 openProfile = this::openProfile,
+                showAlertsOnDialog = { this.showSlot(SlotConfig.AlertsRequestBottomSheet) },
             )
         homeComponent = component
         return component

@@ -4,7 +4,6 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
-import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.feed.nav.FeedComponent
@@ -18,6 +17,7 @@ import com.yral.shared.rust.service.utils.CanisterData
 
 abstract class HomeComponent {
     abstract val stack: Value<ChildStack<*, Child>>
+    abstract val showAlertsOnDialog: () -> Unit
 
     abstract fun onFeedTabClick()
     abstract fun onLeaderboardTabClick()
@@ -51,10 +51,6 @@ abstract class HomeComponent {
     abstract val slot: Value<ChildSlot<*, SlotChild>>
 
     sealed class SlotChild {
-        class AlertsRequestBottomSheet(
-            val component: AlertsRequestComponent,
-        ) : SlotChild()
-
         class VideoViewsRewardsBottomSheet(
             val component: VideoViewRewardsComponent,
             val data: RewardsReceived,
@@ -65,6 +61,7 @@ abstract class HomeComponent {
             componentContext: ComponentContext,
             openEditProfile: () -> Unit,
             openProfile: (userCanisterData: CanisterData) -> Unit,
-        ): HomeComponent = DefaultHomeComponent(componentContext, openEditProfile, openProfile)
+            showAlertsOnDialog: () -> Unit,
+        ): HomeComponent = DefaultHomeComponent(componentContext, openEditProfile, openProfile, showAlertsOnDialog)
     }
 }
