@@ -23,7 +23,7 @@ final class DeepLinkRouter: ObservableObject {
     case wallet
     case profile
     case profileAfterUpload
-    case openVideo(postId: String, canisterId: String?)
+    case openVideo(postId: String, canisterId: String?, numViewsAll: Int64?, numViewsLoggedIn: Int64?)
     case videoViewedRewards(videoID: String, totalViews: Int64, rewardAmount: Double)
   }
 
@@ -65,7 +65,12 @@ final class DeepLinkRouter: ObservableObject {
   private func mapRouteToDestination(_ route: AppRoute) -> Destination? {
     switch route {
     case let postDetailsRoute as PostDetailsRoute:
-      return .openVideo(postId: postDetailsRoute.postId, canisterId: postDetailsRoute.canisterId)
+      return .openVideo(
+        postId: postDetailsRoute.postId,
+        canisterId: postDetailsRoute.canisterId,
+        numViewsAll: nil,
+        numViewsLoggedIn: nil
+      )
     case _ as Home:
       return .home
     case _ as Leaderboard:
