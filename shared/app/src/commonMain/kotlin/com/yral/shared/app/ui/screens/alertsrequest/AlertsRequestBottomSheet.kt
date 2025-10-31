@@ -111,17 +111,17 @@ private fun AlertSheet(
                     .padding(horizontal = 16.dp, vertical = 36.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(
-                text = info.title,
-                style = LocalAppTopography.current.xlSemiBold,
-            )
-            Spacer(Modifier.height(46.dp))
             Image(
                 painter = info.icon,
                 contentDescription = null,
                 modifier = Modifier.size(134.dp),
             )
-            Spacer(Modifier.height(46.dp))
+            Spacer(Modifier.height(30.dp))
+            Text(
+                text = info.title,
+                style = LocalAppTopography.current.xlSemiBold,
+            )
+            Spacer(Modifier.height(16.dp))
             Text(
                 text = info.subTitle,
                 style = LocalAppTopography.current.baseRegular,
