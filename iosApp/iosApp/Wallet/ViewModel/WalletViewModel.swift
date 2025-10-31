@@ -34,7 +34,7 @@ enum WalletPageEvent: Equatable {
   case accountInfoFetched(AccountInfo)
   case btcBalanceFetched(Double)
   case exchangeRateFetched(Double)
-  case videoViewedRewardsStatusFetched(Bool)
+  case videoViewedRewardsConfigFetched(VideoViewedRewardsDTO)
 }
 
 class WalletViewModel: ObservableObject {
@@ -90,11 +90,11 @@ class WalletViewModel: ObservableObject {
     }
   }
 
-  @MainActor func fetchVideoViewedRewardsStatus() async {
+  @MainActor func fetchVideoViewedRewardsConfig() async {
     let result = await videoViewedRewardsUseCase.execute()
     switch result {
-    case .success(let status):
-      event = .videoViewedRewardsStatusFetched(status)
+    case .success(let config):
+      event = .videoViewedRewardsConfigFetched(config)
     case .failure:
       break
     }
