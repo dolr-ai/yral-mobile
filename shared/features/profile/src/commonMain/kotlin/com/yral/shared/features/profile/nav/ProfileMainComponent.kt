@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 interface ProfileMainComponent {
     val pendingVideoNavigation: Flow<String?>
     val userCanisterData: CanisterData?
+    val showAlertsOnDialog: () -> Unit
     fun onUploadVideoClick()
     fun openAccount()
     fun openEditProfile()
@@ -20,6 +21,7 @@ interface ProfileMainComponent {
             openAccount: () -> Unit,
             openEditProfile: () -> Unit,
             onBackClicked: () -> Unit,
+            showAlertsOnDialog: () -> Unit,
         ): ProfileMainComponent =
             DefaultProfileMainComponent(
                 componentContext = componentContext,
@@ -29,6 +31,7 @@ interface ProfileMainComponent {
                 openAccount = openAccount,
                 openEditProfile = openEditProfile,
                 onBackClicked = onBackClicked,
+                showAlertsOnDialog = showAlertsOnDialog,
             )
     }
 }

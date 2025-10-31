@@ -13,6 +13,7 @@ internal class DefaultProfileMainComponent(
     private val openAccount: () -> Unit,
     private val openEditProfile: () -> Unit,
     private val onBackClicked: () -> Unit,
+    override val showAlertsOnDialog: () -> Unit,
 ) : ProfileMainComponent,
     ComponentContext by componentContext,
     KoinComponent {

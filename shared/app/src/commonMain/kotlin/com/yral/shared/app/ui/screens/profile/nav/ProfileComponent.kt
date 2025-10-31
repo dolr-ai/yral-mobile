@@ -15,6 +15,7 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
     abstract val stack: Value<ChildStack<*, Child>>
 
     abstract val pendingVideoNavigation: Flow<String?>
+    abstract val showAlertsOnDialog: () -> Unit
     abstract fun onUploadVideoClick()
     abstract fun onNavigationRequest(appRoute: AppRoute)
     abstract fun openAccount()
@@ -47,6 +48,14 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
             snapshot: Snapshot?,
             onUploadVideoClicked: () -> Unit,
             openEditProfile: () -> Unit,
-        ): ProfileComponent = DefaultProfileComponent(componentContext, snapshot, onUploadVideoClicked, openEditProfile)
+            showAlertsOnDialog: () -> Unit,
+        ): ProfileComponent =
+            DefaultProfileComponent(
+                componentContext,
+                snapshot,
+                onUploadVideoClicked,
+                openEditProfile,
+                showAlertsOnDialog,
+            )
     }
 }

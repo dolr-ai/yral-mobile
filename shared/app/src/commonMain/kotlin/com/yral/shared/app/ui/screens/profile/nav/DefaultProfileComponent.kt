@@ -24,6 +24,7 @@ internal class DefaultProfileComponent(
     private val snapshot: Snapshot?,
     private val onUploadVideoClicked: () -> Unit,
     private val openEditProfile: () -> Unit,
+    override val showAlertsOnDialog: () -> Unit,
 ) : ProfileComponent(),
     ComponentContext by componentContext,
     KoinComponent {
@@ -84,9 +85,9 @@ internal class DefaultProfileComponent(
         val routes =
             stack.value.items.map { item ->
                 return@map when (val config = item.configuration) {
-                    is Config.Main -> ProfileComponent.Snapshot.Route.Main
-                    is Config.Account -> ProfileComponent.Snapshot.Route.Account
-                    is Config.EditProfile -> ProfileComponent.Snapshot.Route.EditProfile
+                    is Config.Main -> Snapshot.Route.Main
+                    is Config.Account -> Snapshot.Route.Account
+                    is Config.EditProfile -> Snapshot.Route.EditProfile
                     else -> error("Unsupported profile config: $config")
                 }
             }
@@ -118,6 +119,7 @@ internal class DefaultProfileComponent(
             openAccount = this::openAccount,
             openEditProfile = this::openEditProfile,
             onBackClicked = {},
+            showAlertsOnDialog = showAlertsOnDialog,
         )
 
     private fun accountComponent(componentContext: ComponentContext): AccountComponent =

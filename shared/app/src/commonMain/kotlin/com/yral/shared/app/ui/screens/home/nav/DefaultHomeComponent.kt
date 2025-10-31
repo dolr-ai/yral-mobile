@@ -193,6 +193,7 @@ internal class DefaultHomeComponent(
             onUploadVideoClicked = { onUploadVideoTabClick() },
             openEditProfile = openEditProfile,
             snapshot = childSnapshots[Config.Profile] as? ProfileComponent.Snapshot,
+            showAlertsOnDialog = { showSlot(SlotConfig.AlertsRequestBottomSheet) },
         )
 
     private fun accountComponent(componentContext: ComponentContext): AccountComponent =

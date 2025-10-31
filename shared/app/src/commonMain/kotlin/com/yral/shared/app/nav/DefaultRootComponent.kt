@@ -1,6 +1,11 @@
 package com.yral.shared.app.nav
 
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.decompose.router.slot.ChildSlot
+import com.arkivanov.decompose.router.slot.SlotNavigation
+import com.arkivanov.decompose.router.slot.activate
+import com.arkivanov.decompose.router.slot.childSlot
+import com.arkivanov.decompose.router.slot.dismiss
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.active
@@ -11,6 +16,7 @@ import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.app.UpdateState
+import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
@@ -62,6 +68,16 @@ class DefaultRootComponent(
             is Config.UserProfile -> RootComponent.Child.UserProfile(profileComponent(componentContext, config))
         }
 
+    private val slotNavigation = SlotNavigation<SlotConfig>()
+
+    override val slot: Value<ChildSlot<*, RootComponent.SlotChild>> =
+        childSlot(
+            source = slotNavigation,
+            serializer = SlotConfig.serializer(),
+            handleBackButton = true,
+            childFactory = ::slotChild,
+        )
+
     private fun splashComponent(componentContext: ComponentContext): SplashComponent =
         SplashComponent(
             componentContext = componentContext,
@@ -96,6 +112,7 @@ class DefaultRootComponent(
             openAccount = {},
             openEditProfile = {},
             onBackClicked = this::onBackClicked,
+            showAlertsOnDialog = { this.showSlot(SlotConfig.AlertsRequestBottomSheet) },
         )
 
     override fun onBackClicked() {
@@ -138,6 +155,27 @@ class DefaultRootComponent(
         navigation.pushToFront(Config.UserProfile(userCanisterData))
     }
 
+    private fun slotChild(
+        config: SlotConfig,
+        componentContext: ComponentContext,
+    ): RootComponent.SlotChild =
+        when (config) {
+            SlotConfig.AlertsRequestBottomSheet ->
+                RootComponent.SlotChild.AlertsRequestBottomSheet(
+                    alertsRequestComponent(componentContext),
+                )
+        }
+
+    private fun alertsRequestComponent(componentContext: ComponentContext): AlertsRequestComponent =
+        AlertsRequestComponent(
+            componentContext = componentContext,
+            onDismissed = slotNavigation::dismiss,
+        )
+
+    private fun showSlot(slotConfig: SlotConfig) {
+        slotNavigation.activate(slotConfig)
+    }
+
     @Serializable
     private sealed interface Config {
         @Serializable
@@ -153,5 +191,11 @@ class DefaultRootComponent(
         data class UserProfile(
             val userCanisterData: CanisterData,
         ) : Config
+    }
+
+    @Serializable
+    private sealed interface SlotConfig {
+        @Serializable
+        data object AlertsRequestBottomSheet : SlotConfig
     }
 }
