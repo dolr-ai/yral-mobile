@@ -24,9 +24,9 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil3.compose.AsyncImage
+import com.yral.shared.libs.videoPlayer.PlatformPlayer
 import com.yral.shared.libs.videoPlayer.model.PlayerData
 import com.yral.shared.libs.videoPlayer.model.ScreenResize
-import com.yral.shared.libs.videoPlayer.pool.PlatformPlayer
 import com.yral.shared.libs.videoPlayer.pool.PlayerPool
 import com.yral.shared.libs.videoPlayer.pool.VideoListener
 import com.yral.shared.libs.videoPlayer.rememberPooledPlatformPlayer

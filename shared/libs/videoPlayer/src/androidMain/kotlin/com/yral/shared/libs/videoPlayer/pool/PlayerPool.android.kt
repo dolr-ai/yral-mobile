@@ -12,6 +12,7 @@ import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.libs.videoPlayer.PlatformPlayer
 import com.yral.shared.libs.videoPlayer.createHlsMediaSource
 import com.yral.shared.libs.videoPlayer.createProgressiveMediaSource
 import com.yral.shared.libs.videoPlayer.model.PlayerData

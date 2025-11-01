@@ -7,8 +7,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.yral.shared.libs.videoPlayer.PlatformPlayer
 import com.yral.shared.libs.videoPlayer.getPlayerLifecycleObserver
-import com.yral.shared.libs.videoPlayer.pool.PlatformPlayer
 
 @Composable
 fun rememberPrefetchPlayerWithLifecycle(): PlatformPlayer {

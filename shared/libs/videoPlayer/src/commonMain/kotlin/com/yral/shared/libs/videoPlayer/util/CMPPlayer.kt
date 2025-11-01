@@ -7,10 +7,10 @@ import co.touchlab.kermit.Logger
 import coil3.ImageLoader
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
+import com.yral.shared.libs.videoPlayer.PlatformPlayer
 import com.yral.shared.libs.videoPlayer.model.PlayerData
 import com.yral.shared.libs.videoPlayer.model.PlayerSpeed
 import com.yral.shared.libs.videoPlayer.model.ScreenResize
-import com.yral.shared.libs.videoPlayer.pool.PlatformPlayer
 import com.yral.shared.libs.videoPlayer.pool.PlayerPool
 import com.yral.shared.libs.videoPlayer.pool.VideoListener
 import org.koin.compose.koinInject

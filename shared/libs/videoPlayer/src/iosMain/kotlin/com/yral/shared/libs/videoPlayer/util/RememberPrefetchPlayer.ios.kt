@@ -3,7 +3,7 @@ package com.yral.shared.libs.videoPlayer.util
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
-import com.yral.shared.libs.videoPlayer.pool.PlatformPlayer
+import com.yral.shared.libs.videoPlayer.PlatformPlayer
 
 @Composable
 actual fun rememberPlatformPlayer(): PlatformPlayer {

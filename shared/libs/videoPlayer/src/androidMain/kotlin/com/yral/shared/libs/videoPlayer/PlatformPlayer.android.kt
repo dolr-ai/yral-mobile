@@ -1,4 +1,4 @@
-package com.yral.shared.libs.videoPlayer.pool
+package com.yral.shared.libs.videoPlayer
 
 import androidx.annotation.OptIn
 import androidx.media3.common.Format

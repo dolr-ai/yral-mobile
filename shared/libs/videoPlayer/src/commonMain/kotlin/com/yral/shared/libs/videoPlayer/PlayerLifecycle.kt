@@ -3,7 +3,6 @@ package com.yral.shared.libs.videoPlayer
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import co.touchlab.kermit.Logger
-import com.yral.shared.libs.videoPlayer.pool.PlatformPlayer
 
 fun getPlayerLifecycleObserver(
     player: PlatformPlayer,
