@@ -437,7 +437,7 @@ class FeedsViewController: UIViewController {
     deepLinkRouter.$pendingDestination.sink { [weak self] destination in
       guard let self = self else { return }
       switch destination {
-      case .openVideo(postId: let postId, canisterId: let canisterID, _, _):
+      case .openVideo(postId: let postId, canisterId: let canisterID):
         self.feedsCV.isHidden = true
         self.pendingAnchor = DeepLinkFeedRequest(
           postID: postId,
