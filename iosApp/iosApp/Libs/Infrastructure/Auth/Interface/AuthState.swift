@@ -9,12 +9,19 @@
 public enum AuthState: Equatable {
   case uninitialized
   case authenticating
-  case ephemeralAuthentication(userPrincipal: String, canisterPrincipal: String, coins: UInt64, isFetchingCoins: Bool)
+  case ephemeralAuthentication(
+    userPrincipal: String,
+    canisterPrincipal: String,
+    coins: UInt64,
+    position: Int,
+    isFetchingCoins: Bool
+  )
   case permanentAuthentication(
     userPrincipal: String,
     canisterPrincipal: String,
     email: String,
     coins: UInt64,
+    position: Int,
     isFetchingCoins: Bool
   )
   case loggedOut
@@ -28,8 +35,17 @@ public enum AuthState: Equatable {
 
   var coins: UInt64 {
     switch self {
-    case .ephemeralAuthentication(_, _, let coins, _), .permanentAuthentication(_, _, _, let coins, _):
+    case .ephemeralAuthentication(_, _, let coins, _, _), .permanentAuthentication(_, _, _, let coins, _, _):
       return coins
+    default:
+      return 0
+    }
+  }
+
+  var position: Int {
+    switch self {
+    case .ephemeralAuthentication(_, _, _, let position, _), .permanentAuthentication(_, _, _, _, let position, _):
+      return position
     default:
       return 0
     }

@@ -70,6 +70,18 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     return stackView
   }()
 
+  private var creatorImageView: UIImageView = {
+    let imageView = UIImageView()
+    imageView.translatesAutoresizingMaskIntoConstraints = false
+    imageView.widthAnchor.constraint(equalToConstant: 36).isActive = true
+    imageView.heightAnchor.constraint(equalToConstant: 36).isActive = true
+    imageView.layer.masksToBounds = true
+    imageView.layer.cornerRadius = 18
+    imageView.layer.borderColor = YralColor.grey0.uiColor.cgColor
+    imageView.layer.borderWidth = 2
+    return imageView
+  }()
+
   private var shareButton: UIButton = {
     return getActionButton(withTitle: "", image: Constants.shareButtonImage)
   }()
@@ -302,9 +314,9 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       .receive(on: RunLoop.main)
       .compactMap { state -> (coins: UInt64, fetching: Bool)? in
         switch state {
-        case .ephemeralAuthentication(_, _, let coins, let fetching),
-            .permanentAuthentication(_, _, _, let coins, let fetching):
-          return (coins, fetching)
+        case .ephemeralAuthentication(_, _, let coins, let position, let fetching),
+            .permanentAuthentication(_, _, _, let coins, let position, let fetching):
+          return (coins, position, fetching)
         default:
           return nil
         }
@@ -518,6 +530,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       profileInfoView.set(data: profileInfo)
       profileInfoView.isHidden = false
       captionScrollView.isHidden = true
+      actionsStackView.addArrangedSubview(creatorImageView)
       actionsStackView.addArrangedSubview(shareButton)
       actionsStackView.addArrangedSubview(viewsCountView)
       actionsStackView.addArrangedSubview(reportButton)
@@ -528,6 +541,7 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
       }
     } else {
       reportButton.removeFromSuperview()
+      actionsStackView.addArrangedSubview(creatorImageView)
       actionsStackView.addArrangedSubview(shareButton)
       actionsStackView.addArrangedSubview(viewsCountView)
       actionsStackView.addArrangedSubview(deleteButton)
@@ -537,6 +551,10 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     }
 
     viewsCountView.setCount(feedInfo.viewCount)
+
+    if let creatorImageURL = profileInfo.imageURL {
+      loadImage(with: creatorImageURL, placeholderImage: nil, on: creatorImageView)
+    }
 
     signupOverlayHost.view.isHidden = !feedInfo.showLoginOverlay
     if feedInfo.showLoginOverlay {
@@ -610,7 +628,7 @@ extension FeedsCell {
   enum Constants {
     static let stackViewSpacing = 32.0
     static let horizontalMargin = 16.0
-    static let stackViewHeight = 182.0
+    static let stackViewHeight = 250.0
     static let stackViewBottom = 96.0
     static let stackViewBGColor = UIColor.clear
     static let actionButtonFont = YralFont.pt16.semiBold.uiFont

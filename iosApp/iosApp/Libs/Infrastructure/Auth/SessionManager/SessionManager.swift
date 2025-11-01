@@ -31,14 +31,41 @@ final class SessionManager: ObservableObject {
       .store(in: &bag)
   }
 
-  // swiftlint: disable function_body_length
-  func update(coins: UInt64) {
+  func update(position: Int) {
     switch state {
-    case .ephemeralAuthentication(let userPrincipal, let canisterPrincipal, _, _):
+    case .ephemeralAuthentication(let userPrincipal, let canisterPrincipal, let coins, _, _):
       state = .ephemeralAuthentication(
         userPrincipal: userPrincipal,
         canisterPrincipal: canisterPrincipal,
         coins: coins,
+        position: position,
+        isFetchingCoins: false
+      )
+
+    case .permanentAuthentication(let userPrincipal, let email, let canisterPrincipal, let coins, _, _):
+      state = .permanentAuthentication(
+        userPrincipal: userPrincipal,
+        canisterPrincipal: canisterPrincipal,
+        email: email,
+        coins: coins,
+        position: position,
+        isFetchingCoins: false
+      )
+
+    default:
+      break
+    }
+  }
+
+  // swiftlint: disable function_body_length
+  func update(coins: UInt64) {
+    switch state {
+    case .ephemeralAuthentication(let userPrincipal, let canisterPrincipal, _, let position, _):
+      state = .ephemeralAuthentication(
+        userPrincipal: userPrincipal,
+        canisterPrincipal: canisterPrincipal,
+        coins: coins,
+        position: position,
         isFetchingCoins: false
       )
       AnalyticsModuleKt.getAnalyticsManager().setUserProperties(
@@ -57,12 +84,13 @@ final class SessionManager: ObservableObject {
           emailId: nil
         )
       )
-    case .permanentAuthentication(let userPrincipal, let email, let canisterPrincipal, _, _):
+    case .permanentAuthentication(let userPrincipal, let email, let canisterPrincipal, _, let position, _):
       state = .permanentAuthentication(
         userPrincipal: userPrincipal,
         canisterPrincipal: canisterPrincipal,
         email: email,
         coins: coins,
+        position: position,
         isFetchingCoins: false
       )
       AnalyticsModuleKt.getAnalyticsManager().setUserProperties(
@@ -110,8 +138,8 @@ extension SessionManager {
         return self.$state
           .compactMap { state -> Void? in
             switch state {
-            case .ephemeralAuthentication(_, _, _, let fetching),
-                .permanentAuthentication(_, _, _, _, let fetching):
+            case .ephemeralAuthentication(_, _, _, _, let fetching),
+                .permanentAuthentication(_, _, _, _, _, let fetching):
               return fetching ? nil : ()
             default:
               return nil
