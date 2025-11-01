@@ -133,7 +133,7 @@ actual class PlayerPool(
             }
 
         pooledPlayer.platformPlayer.setMediaSource(mediaSource)
-        pooledPlayer.platformPlayer.seekTo(0, 0)
+        pooledPlayer.platformPlayer.seekTo(0)
         pooledPlayer.platformPlayer.prepare()
     }
 

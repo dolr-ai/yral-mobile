@@ -48,13 +48,6 @@ actual class PlatformPlayer(
         }
     }
 
-    actual fun seekTo(
-        mediaItemIndex: Int,
-        positionMs: Long,
-    ) {
-        exoPlayer.seekTo(mediaItemIndex, positionMs)
-    }
-
     fun addListener(listener: Player.Listener) {
         exoPlayer.addListener(listener)
     }
