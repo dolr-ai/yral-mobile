@@ -16,6 +16,7 @@ struct FeedResult: Hashable {
   let hashtags: [String]
   let thumbnail: URL
   var viewCount: Int64
+  let viewCountLoggedIn: Int64
   let displayName: String
   let postDescription: String
   var profileImageURL: URL?
