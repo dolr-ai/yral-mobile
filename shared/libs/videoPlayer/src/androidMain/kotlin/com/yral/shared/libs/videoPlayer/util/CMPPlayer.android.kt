@@ -13,18 +13,21 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.media3.common.Player
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil3.compose.AsyncImage
+import com.yral.shared.libs.videoPlayer.PlatformPlaybackState
 import com.yral.shared.libs.videoPlayer.PlatformPlayer
+import com.yral.shared.libs.videoPlayer.PlatformPlayerError
+import com.yral.shared.libs.videoPlayer.PlatformPlayerListener
 import com.yral.shared.libs.videoPlayer.model.PlayerData
 import com.yral.shared.libs.videoPlayer.model.ScreenResize
 import com.yral.shared.libs.videoPlayer.pool.PlayerPool
@@ -55,16 +58,20 @@ actual fun CMPPlayer(
 
     var isBuffering by remember { mutableStateOf(false) }
     var showThumbnail by remember { mutableStateOf(true) }
+    val latestParams = rememberUpdatedState(playerParams)
 
     // Notify buffer state changes
     LaunchedEffect(isBuffering) {
-        playerParams.onBufferingChanged(isBuffering)
+        latestParams.value.onBufferingChanged(isBuffering)
     }
 
     // Update current time every second
     LaunchedEffect(platformPlayer) {
         while (isActive && platformPlayer != null) {
-            playerParams.onCurrentTimeChanged(platformPlayer.currentPosition().coerceAtLeast(0L).toInt())
+            val params = latestParams.value
+            if (!params.isSliding) {
+                params.onCurrentTimeChanged(platformPlayer.currentPosition().coerceAtLeast(0L).toInt())
+            }
             delay(1000) // Delay for 1 second
         }
     }
@@ -88,29 +95,63 @@ actual fun CMPPlayer(
         }
     }
 
-    platformPlayer?.internalExoPlayer?.let { player ->
-        // Manage player listener and lifecycle
-        DisposableEffect(player) {
+    platformPlayer?.let { currentPlayer ->
+        DisposableEffect(currentPlayer) {
             val listener =
-                createPlayerListener(
-                    playerParams.isSliding,
-                    playerParams.onTotalTimeChanged,
-                    playerParams.onCurrentTimeChanged,
-                    loadingState = { isBuffering = it },
-                    playerParams.onDidEndVideo,
-                    playerParams.loop,
-                    player,
-                    hideThumbnail = {
-                        if (showThumbnail) {
-                            showThumbnail = false
+                object : PlatformPlayerListener {
+                    override fun onDurationChanged(durationMs: Long) {
+                        val params = latestParams.value
+                        if (!params.isSliding) {
+                            params.onTotalTimeChanged(durationMs.coerceAtLeast(0L).toInt())
+                            params.onCurrentTimeChanged(platformPlayer.currentPosition().coerceAtLeast(0L).toInt())
                         }
-                    },
-                )
+                    }
 
-            player.addListener(listener)
+                    override fun onPlaybackStateChanged(state: PlatformPlaybackState) {
+                        when (state) {
+                            PlatformPlaybackState.BUFFERING -> {
+                                isBuffering = true
+                            }
+
+                            PlatformPlaybackState.READY -> {
+                                isBuffering = false
+                                if (showThumbnail) {
+                                    showThumbnail = false
+                                }
+                            }
+
+                            PlatformPlaybackState.ENDED -> {
+                                isBuffering = false
+                                val params = latestParams.value
+                                params.onDidEndVideo()
+                                currentPlayer.seekTo(0)
+                                if (params.loop) {
+                                    currentPlayer.play()
+                                }
+                            }
+
+                            PlatformPlaybackState.IDLE -> {
+                                isBuffering = false
+                            }
+                        }
+                    }
+
+                    override fun onPlayerError(error: PlatformPlayerError) {
+                        // Check if it's a decoder initialization exception
+                        if (error.code == PlaybackException.ERROR_CODE_DECODER_INIT_FAILED) {
+                            // Attempt to play again with a 1-second delay
+                            currentPlayer.seekTo(0)
+                            currentPlayer.prepare()
+
+                            // For hardware decoder issues, we've already configured fallback in ExoPlayerHelper
+                        }
+                    }
+                }
+
+            currentPlayer.addListener(listener)
 
             onDispose {
-                player.removeListener(listener)
+                currentPlayer.removeListener(listener)
             }
         }
     }
@@ -157,60 +198,3 @@ private fun PlatformVideoPlayerView(
         },
     )
 }
-
-private fun createPlayerListener(
-    isSliding: Boolean,
-    totalTime: (Int) -> Unit,
-    currentTime: (Int) -> Unit,
-    loadingState: (Boolean) -> Unit,
-    didEndVideo: () -> Unit,
-    loop: Boolean,
-    exoPlayer: ExoPlayer,
-    hideThumbnail: () -> Unit,
-): Player.Listener =
-    object : Player.Listener {
-        override fun onEvents(
-            player: Player,
-            events: Player.Events,
-        ) {
-            if (!isSliding) {
-                totalTime(player.duration.coerceAtLeast(0L).toInt())
-                currentTime(player.currentPosition.coerceAtLeast(0L).toInt())
-            }
-        }
-
-        override fun onPlaybackStateChanged(playbackState: Int) {
-            when (playbackState) {
-                Player.STATE_BUFFERING -> {
-                    loadingState(true)
-                }
-
-                Player.STATE_READY -> {
-                    loadingState(false)
-                    hideThumbnail()
-                }
-
-                Player.STATE_ENDED -> {
-                    loadingState(false)
-                    didEndVideo()
-                    exoPlayer.seekTo(0)
-                    if (loop) exoPlayer.play()
-                }
-
-                Player.STATE_IDLE -> {
-                    loadingState(false)
-                }
-            }
-        }
-
-        override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
-            // Check if it's a decoder initialization exception
-            if (error.errorCode == androidx.media3.common.PlaybackException.ERROR_CODE_DECODER_INIT_FAILED) {
-                // Attempt to play again with a 1-second delay
-                exoPlayer.seekTo(0)
-                exoPlayer.prepare()
-
-                // For hardware decoder issues, we've already configured fallback in ExoPlayerHelper
-            }
-        }
-    }

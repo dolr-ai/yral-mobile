@@ -5,14 +5,16 @@ import androidx.annotation.OptIn
 import androidx.core.net.toUri
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
-import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.libs.videoPlayer.PlatformPlaybackState
 import com.yral.shared.libs.videoPlayer.PlatformPlayer
+import com.yral.shared.libs.videoPlayer.PlatformPlayerError
+import com.yral.shared.libs.videoPlayer.PlatformPlayerListener
 import com.yral.shared.libs.videoPlayer.createHlsMediaSource
 import com.yral.shared.libs.videoPlayer.createProgressiveMediaSource
 import com.yral.shared.libs.videoPlayer.model.PlayerData
@@ -39,7 +41,7 @@ actual class PlayerPool(
         val platformPlayer: PlatformPlayer,
         var isInUse: Boolean = false,
         var currentUrl: String? = null,
-        var internalListener: Player.Listener? = null,
+        var internalListener: PlatformPlayerListener? = null,
         var externalListener: VideoListener?,
     )
 
@@ -142,19 +144,19 @@ actual class PlayerPool(
             createPooledPlayerPerformanceListener(
                 onStateChange = { playbackState ->
                     when (playbackState) {
-                        Player.STATE_BUFFERING -> {
+                        PlatformPlaybackState.BUFFERING -> {
                             pooledPlayer.externalListener?.onBuffer()
                         }
 
-                        Player.STATE_READY -> {
+                        PlatformPlaybackState.READY -> {
                             pooledPlayer.externalListener?.onReady()
                         }
 
-                        Player.STATE_IDLE -> {
+                        PlatformPlaybackState.IDLE -> {
                             pooledPlayer.externalListener?.onIdle()
                         }
 
-                        Player.STATE_ENDED -> {
+                        PlatformPlaybackState.ENDED -> {
                             pooledPlayer.externalListener?.onEnd()
                         }
                     }
@@ -169,15 +171,15 @@ actual class PlayerPool(
     }
 
     private fun createPooledPlayerPerformanceListener(
-        onStateChange: (Int) -> Unit,
-        onError: (PlaybackException) -> Unit,
-    ): Player.Listener =
-        object : Player.Listener {
-            override fun onPlaybackStateChanged(playbackState: Int) {
-                onStateChange(playbackState)
+        onStateChange: (PlatformPlaybackState) -> Unit,
+        onError: (PlatformPlayerError) -> Unit,
+    ): PlatformPlayerListener =
+        object : PlatformPlayerListener {
+            override fun onPlaybackStateChanged(state: PlatformPlaybackState) {
+                onStateChange(state)
             }
 
-            override fun onPlayerError(error: PlaybackException) {
+            override fun onPlayerError(error: PlatformPlayerError) {
                 error.printStackTrace()
                 onError(error)
             }

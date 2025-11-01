@@ -6,21 +6,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
-import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import com.yral.shared.libs.videoPlayer.PlatformPlaybackState
 import com.yral.shared.libs.videoPlayer.PlatformPlayer
+import com.yral.shared.libs.videoPlayer.PlatformPlayerError
+import com.yral.shared.libs.videoPlayer.PlatformPlayerListener
 import com.yral.shared.libs.videoPlayer.createHlsMediaSource
 import com.yral.shared.libs.videoPlayer.createProgressiveMediaSource
 
@@ -45,20 +47,23 @@ actual fun PrefetchVideo(
 ) {
     if (url.isEmpty()) return
     val context = LocalContext.current
-    var currentPlayerState by remember { mutableIntStateOf(Player.STATE_IDLE) }
+    var currentPlayerState by remember { mutableStateOf(PlatformPlaybackState.IDLE) }
     LaunchedEffect(currentPlayerState) {
         when (currentPlayerState) {
-            Player.STATE_BUFFERING -> {
+            PlatformPlaybackState.BUFFERING -> {
                 listener?.onBuffer()
             }
 
-            Player.STATE_READY -> {
+            PlatformPlaybackState.READY -> {
                 listener?.onReady()
                 onUrlReady(url)
             }
 
-            Player.STATE_IDLE -> {
+            PlatformPlaybackState.IDLE -> {
                 listener?.onIdle()
+            }
+
+            PlatformPlaybackState.ENDED -> {
             }
         }
     }
@@ -101,16 +106,16 @@ actual fun PrefetchVideo(
 }
 
 private fun createPrefetchPlayerListener(
-    onStateChange: (Int) -> Unit,
-    onErr: (PlaybackException) -> Unit,
-): Player.Listener =
-    object : Player.Listener {
-        override fun onPlaybackStateChanged(playbackState: Int) {
-            onStateChange(playbackState)
+    onStateChange: (PlatformPlaybackState) -> Unit,
+    onErr: () -> Unit,
+): PlatformPlayerListener =
+    object : PlatformPlayerListener {
+        override fun onPlaybackStateChanged(state: PlatformPlaybackState) {
+            onStateChange(state)
         }
 
-        override fun onPlayerError(error: PlaybackException) {
-            onErr(error)
+        override fun onPlayerError(error: PlatformPlayerError) {
+            onErr()
         }
     }
 
