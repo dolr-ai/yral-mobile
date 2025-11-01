@@ -42,6 +42,12 @@ actual class PlatformPlayer(
         exoPlayer.prepare()
     }
 
+    actual fun seekTo(positionMs: Long) {
+        if (exoPlayer.currentPosition != positionMs) {
+            exoPlayer.seekTo(positionMs)
+        }
+    }
+
     actual fun seekTo(
         mediaItemIndex: Int,
         positionMs: Long,
@@ -64,4 +70,16 @@ actual class PlatformPlayer(
 
     // Internal access to ExoPlayer for Android-specific operations like performance monitoring
     internal val internalExoPlayer: ExoPlayer = exoPlayer
+
+    actual fun setVolume(volume: Float) {
+        exoPlayer.volume = volume
+    }
+
+    actual fun setPlaybackSpeed(speed: Float) {
+        if (exoPlayer.playbackParameters.speed != speed) {
+            exoPlayer.setPlaybackSpeed(speed)
+        }
+    }
+
+    actual fun currentPosition(): Long = exoPlayer.currentPosition
 }

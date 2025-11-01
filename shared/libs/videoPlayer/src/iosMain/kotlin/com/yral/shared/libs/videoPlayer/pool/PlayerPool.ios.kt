@@ -58,4 +58,17 @@ actual class PlatformPlayer {
         positionMs: Long,
     ) {
     }
+
+    actual fun seekTo(positionMs: Long) {
+    }
+
+    actual fun setVolume(volume: Float) {
+    }
+
+    actual fun setPlaybackSpeed(speed: Float) {
+    }
+
+    actual fun currentPosition(): Long {
+        TODO("Not yet implemented")
+    }
 }
