@@ -20,14 +20,14 @@ expect fun CMPPlayer(
 data class CMPPlayerParams(
     val isPause: Boolean,
     val isMute: Boolean,
-    val totalTime: ((Int) -> Unit),
-    val currentTime: ((Int) -> Unit),
+    val onTotalTimeChanged: ((Int) -> Unit),
+    val onCurrentTimeChanged: ((Int) -> Unit),
     val isSliding: Boolean,
     val sliderTime: Int?,
     val speed: PlayerSpeed,
     val size: ScreenResize,
-    val bufferCallback: ((Boolean) -> Unit),
-    val didEndVideo: (() -> Unit),
+    val onBufferingChanged: ((Boolean) -> Unit),
+    val onDidEndVideo: (() -> Unit),
     val loop: Boolean,
     val volume: Float,
 )

@@ -93,13 +93,13 @@ actual fun CMPPlayer(
 
     // Notify buffer state changes
     LaunchedEffect(isBuffering) {
-        playerParams.bufferCallback(isBuffering)
+        playerParams.onBufferingChanged(isBuffering)
     }
 
     // Update current time every second
     LaunchedEffect(exoPlayer) {
         while (isActive && exoPlayer != null) {
-            playerParams.currentTime(exoPlayer.currentPosition.coerceAtLeast(0L).toInt())
+            playerParams.onCurrentTimeChanged(exoPlayer.currentPosition.coerceAtLeast(0L).toInt())
             delay(1000) // Delay for 1 second
         }
     }
@@ -168,10 +168,10 @@ actual fun CMPPlayer(
             val listener =
                 createPlayerListener(
                     playerParams.isSliding,
-                    playerParams.totalTime,
-                    playerParams.currentTime,
+                    playerParams.onTotalTimeChanged,
+                    playerParams.onCurrentTimeChanged,
                     loadingState = { isBuffering = it },
-                    playerParams.didEndVideo,
+                    playerParams.onDidEndVideo,
                     playerParams.loop,
                     exoPlayer,
                     hideThumbnail = {
