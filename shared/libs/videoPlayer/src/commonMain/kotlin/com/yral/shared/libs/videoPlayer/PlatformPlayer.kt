@@ -12,10 +12,6 @@ expect class PlatformPlayer {
     fun setMediaSource(source: Any)
     fun prepare()
     fun seekTo(positionMs: Long)
-    fun seekTo(
-        mediaItemIndex: Int,
-        positionMs: Long,
-    )
     fun setVolume(volume: Float)
     fun setPlaybackSpeed(speed: Float)
 

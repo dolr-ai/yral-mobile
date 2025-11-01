@@ -84,7 +84,7 @@ actual fun PrefetchVideo(
             }
 
         player.setMediaSource(mediaSource)
-        player.seekTo(0, 0)
+        player.seekTo(0)
         player.prepare()
     }
     DisposableEffect(url) {
