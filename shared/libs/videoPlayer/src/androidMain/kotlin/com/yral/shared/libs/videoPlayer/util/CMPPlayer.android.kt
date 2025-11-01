@@ -3,6 +3,7 @@
 package com.yral.shared.libs.videoPlayer.util
 
 import android.content.Context
+import android.view.ViewGroup
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -32,7 +33,6 @@ import com.yral.shared.libs.videoPlayer.model.PlayerSpeed
 import com.yral.shared.libs.videoPlayer.model.ScreenResize
 import com.yral.shared.libs.videoPlayer.pool.PlayerPool
 import com.yral.shared.libs.videoPlayer.pool.VideoListener
-import com.yral.shared.libs.videoPlayer.rememberPlayerView
 import com.yral.shared.libs.videoPlayer.rememberPooledPlatformPlayer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -56,7 +56,37 @@ actual fun CMPPlayer(
             videoListener = videoListener,
         )?.internalExoPlayer
 
-    val playerView = exoPlayer?.let { rememberPlayerView(it, context) }
+    LaunchedEffect(
+        exoPlayer,
+        playerParams.isPause,
+        playerParams.isMute,
+        playerParams.sliderTime,
+        playerParams.speed,
+    ) {
+        if (exoPlayer == null) return@LaunchedEffect
+
+        val shouldPlay = !playerParams.isPause
+        if (exoPlayer.playWhenReady != shouldPlay) {
+            exoPlayer.playWhenReady = shouldPlay
+        }
+
+        val desiredVolume = if (playerParams.isMute) 0f else 1f
+        if (exoPlayer.volume != desiredVolume) {
+            exoPlayer.volume = desiredVolume
+        }
+
+        playerParams.sliderTime?.let { newPos ->
+            val target = newPos.toLong()
+            if (exoPlayer.currentPosition != target) {
+                exoPlayer.seekTo(target)
+            }
+        }
+
+        val desiredSpeed = playerParams.speed.toFloat()
+        if (exoPlayer.playbackParameters.speed != desiredSpeed) {
+            exoPlayer.setPlaybackSpeed(desiredSpeed)
+        }
+    }
 
     var isBuffering by remember { mutableStateOf(false) }
     var showThumbnail by remember { mutableStateOf(true) }
@@ -74,11 +104,6 @@ actual fun CMPPlayer(
         }
     }
 
-    // Keep screen on while the player view is active
-    LaunchedEffect(playerView) {
-        playerView?.keepScreenOn = true
-    }
-
     LaunchedEffect(playerData.prefetchThumbnails) {
         playerData.prefetchThumbnails.forEach {
             prefetchThumbnail(
@@ -90,24 +115,40 @@ actual fun CMPPlayer(
 
     Box(modifier) {
         // YralBlurredThumbnail(playerData.thumbnailUrl)
-        playerView?.let {
-            AndroidView(
-                factory = { playerView },
-                modifier = modifier,
-                update = {
-                    exoPlayer.playWhenReady = !playerParams.isPause
-                    exoPlayer.volume = if (playerParams.isMute) 0f else 1f
-                    playerParams.sliderTime?.let { exoPlayer.seekTo(it.toLong()) }
-                    exoPlayer.setPlaybackSpeed(playerParams.speed.toFloat())
-                    playerView.artworkDisplayMode = PlayerView.ARTWORK_DISPLAY_MODE_FILL
-                    playerView.resizeMode =
-                        when (playerParams.size) {
-                            ScreenResize.FIT -> AspectRatioFrameLayout.RESIZE_MODE_FIT
-                            ScreenResize.FILL -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-                        }
-                },
-            )
-        }
+        AndroidView(
+            factory = {
+                PlayerView(context)
+                    .apply {
+                        layoutParams =
+                            ViewGroup.LayoutParams(
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                            )
+                        useController = false
+                        resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                        setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
+                        artworkDisplayMode = PlayerView.ARTWORK_DISPLAY_MODE_FILL
+                    }
+            },
+            modifier = modifier,
+            update = { playerView ->
+                playerView.player = exoPlayer
+                playerView.keepScreenOn = true
+                playerView.resizeMode =
+                    when (playerParams.size) {
+                        ScreenResize.FIT -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+                        ScreenResize.FILL -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                    }
+            },
+            onReset = { playerView ->
+                playerView.keepScreenOn = false
+                playerView.player = null
+            },
+            onRelease = { playerView ->
+                playerView.keepScreenOn = false
+                playerView.player = null
+            },
+        )
         if (showThumbnail) {
             AsyncImage(
                 model = playerData.thumbnailUrl,
@@ -145,12 +186,6 @@ actual fun CMPPlayer(
             onDispose {
                 exoPlayer.removeListener(listener)
             }
-        }
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            playerView?.keepScreenOn = false
         }
     }
 }
