@@ -78,7 +78,7 @@ fun CMPPlayer(
 
     Box(modifier) {
         // YralBlurredThumbnail(playerData.thumbnailUrl)
-        PlatformVideoPlayerView(modifier, platformPlayer, playerParams.size)
+        PlatformVideoPlayerView(Modifier.fillMaxSize(), platformPlayer, playerParams.size)
         if (showThumbnail) {
             AsyncImage(
                 model = playerData.thumbnailUrl,
