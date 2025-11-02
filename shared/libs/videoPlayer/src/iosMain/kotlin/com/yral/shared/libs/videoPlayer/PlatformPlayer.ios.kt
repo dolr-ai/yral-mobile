@@ -19,6 +19,7 @@ import platform.AVFoundation.automaticallyWaitsToMinimizeStalling
 import platform.AVFoundation.currentItem
 import platform.AVFoundation.currentTime
 import platform.AVFoundation.duration
+import platform.AVFoundation.AVURLAsset
 import platform.AVFoundation.pause
 import platform.AVFoundation.play
 import platform.AVFoundation.rate
@@ -37,6 +38,10 @@ import platform.Foundation.NSOperationQueue
 import platform.Foundation.NSURL
 import platform.darwin.dispatch_get_main_queue
 import kotlin.math.roundToLong
+import com.yral.shared.libs.videoPlayer.util.isHlsUrl
+import platform.AVFoundation.asset
+import platform.AVFoundation.canUseNetworkResourcesForLiveStreamingWhilePaused
+import platform.AVFoundation.preferredForwardBufferDuration
 
 @Suppress("TooManyFunctions")
 actual class PlatformPlayer {
@@ -96,16 +101,24 @@ actual class PlatformPlayer {
 
     actual fun setMediaSource(source: Any) {
         val currentPlayer = player ?: return
-        val playerItem =
+        val (playerItem, isHlsSource) =
             when (source) {
-                is AVPlayerItem -> source
-                is NSURL -> AVPlayerItem(uRL = source)
-                is String -> resolveUrl(source)?.let { AVPlayerItem(uRL = it) }
+                is AVPlayerItem -> source to source.isHlsItem()
+                is NSURL -> AVPlayerItem(uRL = source) to (source.absoluteString?.let(::isHlsUrl) ?: false)
+                is String -> resolveUrl(source)?.let { AVPlayerItem(uRL = it) to isHlsUrl(source) }
                 else -> null
-            }
+            } ?: (null to false)
 
         requireNotNull(playerItem) {
             "Unsupported media source type: ${source::class.simpleName}"
+        }
+
+        if (isHlsSource) {
+            playerItem.canUseNetworkResourcesForLiveStreamingWhilePaused = true
+            playerItem.preferredForwardBufferDuration = HLS_FORWARD_BUFFER_DURATION_SECONDS
+            currentPlayer.automaticallyWaitsToMinimizeStalling = true
+        } else {
+            currentPlayer.automaticallyWaitsToMinimizeStalling = false
         }
 
         currentPlayer.replaceCurrentItemWithPlayerItem(playerItem)
@@ -182,6 +195,17 @@ actual class PlatformPlayer {
 
             else -> NSURL(string = trimmed)
         }
+    }
+
+    private fun AVPlayerItem.isHlsItem(): Boolean {
+        val asset = asset
+        if (asset is AVURLAsset) {
+            val urlString = asset.URL?.absoluteString
+            if (urlString != null) {
+                return isHlsUrl(urlString)
+            }
+        }
+        return false
     }
 
     @OptIn(ExperimentalForeignApi::class)
@@ -374,5 +398,6 @@ actual class PlatformPlayer {
         private const val TIME_SCALE = 600L
         private const val MILLIS_IN_SECOND = 1000.0
         private const val DEFAULT_PLAYBACK_SPEED = 1f
+        private const val HLS_FORWARD_BUFFER_DURATION_SECONDS = 5.0
     }
 }
