@@ -3,10 +3,12 @@
 package com.yral.shared.libs.videoPlayer.util
 
 import android.view.ViewGroup
+import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.PlaybackException
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.yral.shared.libs.videoPlayer.PlatformPlayer
@@ -16,6 +18,7 @@ import com.yral.shared.libs.videoPlayer.model.ScreenResize
 internal actual fun isDecoderInitFailed(error: PlatformPlayerError): Boolean =
     error.code == PlaybackException.ERROR_CODE_DECODER_INIT_FAILED
 
+@OptIn(UnstableApi::class)
 @Composable
 internal actual fun PlatformVideoPlayerView(
     modifier: Modifier,
