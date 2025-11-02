@@ -130,6 +130,7 @@ fun EditProfileScreen(
     val handleBack =
         remember(viewModel, component) {
             {
+                viewModel.trackEditProfileCancelledIfUnsaved()
                 viewModel.discardUnsavedProfileEdits()
                 component.onBack()
             }
@@ -148,6 +149,7 @@ fun EditProfileScreen(
 
     DisposableEffect(Unit) {
         onDispose {
+            viewModel.trackEditProfileCancelledIfUnsaved()
             viewModel.discardUnsavedProfileEdits()
         }
     }

@@ -62,6 +62,7 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
+import com.yral.shared.analytics.events.EditProfileSource
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.feed.domain.FeedDetails
@@ -339,7 +340,10 @@ fun ProfileMainScreen(
                         component.onUploadVideoClick()
                     },
                     openAccount = { component.openAccount() },
-                    openEditProfile = { component.openEditProfile() },
+                    openEditProfile = {
+                        viewModel.onEditProfileOpened(EditProfileSource.PROFILE)
+                        component.openEditProfile()
+                    },
                     onBackClicked = { component.onBackClicked() },
                     onFollowersSectionClick = { viewModel.updateFollowSheetTab(tab = it) },
                 )
