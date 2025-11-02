@@ -105,6 +105,10 @@ actual fun PrefetchVideo(
     }
 }
 
+actual fun evictPrefetchedVideo(url: String) {
+    // Android prefetch relies on ExoPlayer cache; no explicit eviction required here.
+}
+
 private fun createPrefetchPlayerListener(
     onStateChange: (PlatformPlaybackState) -> Unit,
     onErr: () -> Unit,

@@ -45,3 +45,8 @@ actual fun PrefetchVideo(
         }
     }
 }
+
+actual fun evictPrefetchedVideo(url: String) {
+    if (url.isEmpty()) return
+    IosVideoPrefetchRegistry.evict(url)
+}

@@ -41,6 +41,8 @@ expect fun PrefetchVideo(
     onUrlReady: (url: String) -> Unit,
 )
 
+expect fun evictPrefetchedVideo(url: String)
+
 interface PrefetchVideoListener {
     fun onSetupPlayer()
     fun onBuffer()

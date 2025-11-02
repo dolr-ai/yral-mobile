@@ -2,6 +2,7 @@ package com.yral.shared.libs.videoPlayer.prefetch
 
 import co.touchlab.kermit.Logger
 import com.yral.shared.libs.videoPlayer.PlatformPlaybackState
+import com.yral.shared.libs.videoPlayer.model.PREFETCH_NEXT_N_VIDEOS
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.AVFoundation.AVKeyValueStatusLoaded
@@ -17,17 +18,18 @@ import platform.AVFoundation.volume
 import platform.Foundation.NSLock
 import platform.Foundation.NSThread
 import platform.Foundation.NSURL
+import platform.darwin.DISPATCH_TIME_FOREVER
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
 import platform.darwin.dispatch_semaphore_create
 import platform.darwin.dispatch_semaphore_signal
 import platform.darwin.dispatch_semaphore_wait
-import platform.darwin.DISPATCH_TIME_FOREVER
 
 internal object IosVideoPrefetchRegistry {
     private val logger = Logger.withTag("iOSPrefetch")
     private val lock = NSLock()
     private val entries = mutableMapOf<String, PrefetchEntry>()
+    private val usageOrder = ArrayDeque<String>()
 
     fun register(
         url: String,
@@ -43,12 +45,14 @@ internal object IosVideoPrefetchRegistry {
                     logger.d { "register: start $url" }
                     PrefetchEntry(url = url, lock = lock).also { it.startPrefetch() }
                 }
+            updateUsageLocked(url)
             callback =
                 PrefetchCallback(
                     listener = listener,
                     onUrlReady = onUrlReady,
                 )
             entry.callbacks.add(callback)
+            trimToSizeLocked()
         } finally {
             lock.unlock()
         }
@@ -60,6 +64,7 @@ internal object IosVideoPrefetchRegistry {
     fun consume(url: String): AVURLAsset? =
         lock.withLock {
             val entry = entries[url] ?: return null
+            updateUsageLocked(url)
             logger.d { "consume: using prefetched asset for $url" }
             entry.consumeAsset()
         }
@@ -75,17 +80,39 @@ internal object IosVideoPrefetchRegistry {
     fun evict(url: String) {
         lock.withLock {
             val entry = entries.remove(url) ?: return
+            usageOrder.remove(url)
             logger.d { "evict: disposing $url" }
             entry.dispose()
         }
     }
-    
-    private fun removeEntry(url: String, entry: PrefetchEntry) {
+
+    private fun removeEntry(
+        url: String,
+        entry: PrefetchEntry,
+    ) {
         lock.withLock {
             val current = entries[url]
             if (current === entry) {
                 entries.remove(url)
+                usageOrder.remove(url)
             }
+        }
+    }
+
+    private fun updateUsageLocked(url: String) {
+        usageOrder.remove(url)
+        usageOrder.addLast(url)
+    }
+
+    @Suppress("LoopWithTooManyJumpStatements")
+    private fun trimToSizeLocked() {
+        val maxEntries = PREFETCH_NEXT_N_VIDEOS + PREFETCH_WINDOW_BUFFER
+        while (usageOrder.size > maxEntries) {
+            if (usageOrder.isEmpty()) break
+            val oldestUrl = usageOrder.removeFirst()
+            val removedEntry = entries.remove(oldestUrl) ?: continue
+            logger.d { "trim: disposing $oldestUrl" }
+            removedEntry.dispose()
         }
     }
 
@@ -100,7 +127,8 @@ internal object IosVideoPrefetchRegistry {
             private set
         private var disposed = false
         private val asset: AVURLAsset =
-            NSURL.URLWithString(url)
+            NSURL
+                .URLWithString(url)
                 ?.let { nsUrl ->
                     AVURLAsset(
                         uRL = nsUrl,
@@ -109,8 +137,7 @@ internal object IosVideoPrefetchRegistry {
                 } ?: error("Invalid URL: $url")
         private var prefetchPlayer: AVPlayer? = null
 
-        private fun callbacksSnapshot(): List<PrefetchCallback> =
-            lock.withLock { callbacks.toList() }
+        private fun callbacksSnapshot(): List<PrefetchCallback> = lock.withLock { callbacks.toList() }
 
         fun notifyInitialState(callback: PrefetchCallback) {
             dispatch_async(mainQueue) {
@@ -237,3 +264,5 @@ private inline fun <T> runOnMainSync(crossinline block: () -> T): T {
     dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER)
     return result as T
 }
+
+private const val PREFETCH_WINDOW_BUFFER = 3
