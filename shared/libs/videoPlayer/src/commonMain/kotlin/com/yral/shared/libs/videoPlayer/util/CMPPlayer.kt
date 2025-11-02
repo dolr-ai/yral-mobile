@@ -19,6 +19,7 @@ import coil3.ImageLoader
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
+import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.libs.videoPlayer.PlatformPlaybackState
 import com.yral.shared.libs.videoPlayer.PlatformPlayer
 import com.yral.shared.libs.videoPlayer.PlatformPlayerError
@@ -76,6 +77,7 @@ fun CMPPlayer(
         PrefetchThumbnail(url = it)
     }
 
+    val logger = koinInject<YralLogger>().withTag("CMPPlayer")
     Box(modifier) {
         // YralBlurredThumbnail(playerData.thumbnailUrl)
         PlatformVideoPlayerView(Modifier.fillMaxSize(), platformPlayer, playerParams.size)
@@ -84,6 +86,9 @@ fun CMPPlayer(
                 model = playerData.thumbnailUrl,
                 contentDescription = "Thumbnail",
                 contentScale = ContentScale.Fit,
+                onState = { state ->
+                    logger.d { "onState: $state" }
+                },
                 modifier =
                     Modifier
                         .fillMaxSize()
@@ -97,6 +102,7 @@ fun CMPPlayer(
             val listener =
                 object : PlatformPlayerListener {
                     override fun onDurationChanged(durationMs: Long) {
+                        logger.d { "onDurationChanged: $durationMs" }
                         val params = latestParams.value
                         if (!params.isSliding) {
                             params.onTotalTimeChanged(durationMs.coerceAtLeast(0L).toInt())
@@ -105,6 +111,7 @@ fun CMPPlayer(
                     }
 
                     override fun onPlaybackStateChanged(state: PlatformPlaybackState) {
+                        logger.d { "onPlaybackStateChanged: $state" }
                         when (state) {
                             PlatformPlaybackState.BUFFERING -> {
                                 isBuffering = true
@@ -134,6 +141,7 @@ fun CMPPlayer(
                     }
 
                     override fun onPlayerError(error: PlatformPlayerError) {
+                        logger.d { "onPlayerError: $error" }
                         // Check if it's a decoder initialization exception
                         if (isDecoderInitFailed(error)) {
                             // Attempt to play again with a 1-second delay
