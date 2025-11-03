@@ -182,7 +182,8 @@ class FeedsRepository: FeedRepositoryProtocol {
       url: videoURL,
       hashtags: resultValue.hashtags().map { $0.as_str().toString() },
       thumbnail: thumbnailURL,
-      viewCount: Int64(resultValue.view_stats().total_view_count()),
+      viewCount: feed.numViewsAll ?? Int64(resultValue.view_stats().total_view_count()),
+      viewCountLoggedIn: feed.numViewsLoggedIn ?? 0,
       displayName: "",
       postDescription: resultValue.description().toString(),
       profileImageURL: profileImageURL,
@@ -224,7 +225,8 @@ class FeedsRepository: FeedRepositoryProtocol {
       url: videoURL,
       hashtags: result.hashtags().map { $0.as_str().toString() },
       thumbnail: thumbnailURL,
-      viewCount: Int64(result.total_view_count()),
+      viewCount: feed.numViewsAll ?? Int64(result.total_view_count()),
+      viewCountLoggedIn: feed.numViewsLoggedIn ?? 0,
       displayName: result.created_by_display_name()?.toString() ?? "",
       postDescription: result.description().toString(),
       profileImageURL: profileImageURL,
@@ -423,6 +425,8 @@ protocol FeedMapping {
   var postID: String { get }
   var canisterID: String { get }
   var nsfwProbability: Double { get }
+  var numViewsAll: Int64? { get }
+  var numViewsLoggedIn: Int64? { get }
 }
 
 extension DeepLinkFeedRequest: FeedMapping {

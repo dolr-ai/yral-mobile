@@ -23,6 +23,8 @@ struct CacheDTO: Codable {
   let videoID: String
   let nsfwProbability: Double
   let publisherUserID: String
+  let numViewsAll: Int64?
+  let numViewsLoggedIn: Int64?
 
   enum CodingKeys: String, CodingKey {
     case postID = "post_id"
@@ -30,6 +32,8 @@ struct CacheDTO: Codable {
     case videoID = "video_id"
     case nsfwProbability = "nsfw_probability"
     case publisherUserID = "publisher_user_id"
+    case numViewsAll = "num_views_all"
+    case numViewsLoggedIn = "num_views_loggedin"
   }
 }
 
