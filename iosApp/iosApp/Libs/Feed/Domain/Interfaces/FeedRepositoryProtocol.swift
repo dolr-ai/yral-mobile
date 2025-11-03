@@ -8,6 +8,7 @@
 import Combine
 
 protocol FeedRepositoryProtocol {
+  func getAIFeeds(count: Int) async -> Result<[FeedResult], FeedError>
   func getInitialFeeds(numResults: Int) async -> Result<Void, FeedError>
   func fetchMoreFeeds(request: MoreFeedsRequest) async -> Result<[FeedResult], FeedError>
   func fetchDeepLinkFeed(request: DeepLinkFeedRequest) async -> Result<FeedResult, FeedError>

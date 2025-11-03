@@ -72,6 +72,8 @@ protocol FeedViewModelProtocol: ObservableObject {
   var unifiedEventPublisher: AnyPublisher<UnifiedFeedEvent?, Never> { get }
   var unifiedEvent: UnifiedFeedEvent? { get }
 
+  func fetchAIFeeds(count: Int) async
+  func loadMoreAIFeeds() async
   func fetchFeeds(request: InitialFeedRequest) async
   func loadMoreFeeds() async
   func fetchDeepLinkFeed(request: DeepLinkFeedRequest) async

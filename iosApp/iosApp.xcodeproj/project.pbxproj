@@ -123,6 +123,8 @@
 		105E2DAF2EB235760097690E /* VideoInsightsRequestDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105E2DAD2EB2356E0097690E /* VideoInsightsRequestDTO.swift */; };
 		105E2DB12EB331020097690E /* VideoInsightsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105E2DB02EB330FC0097690E /* VideoInsightsViewModel.swift */; };
 		105E2DB22EB331020097690E /* VideoInsightsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105E2DB02EB330FC0097690E /* VideoInsightsViewModel.swift */; };
+		105E2E862EB8F8180097690E /* FetchAIFeedsUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105E2E852EB8F8100097690E /* FetchAIFeedsUseCase.swift */; };
+		105E2E872EB8F8180097690E /* FetchAIFeedsUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105E2E852EB8F8100097690E /* FetchAIFeedsUseCase.swift */; };
 		107079612E742034000C7A2C /* LeaderboardView+Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107079602E742029000C7A2C /* LeaderboardView+Constants.swift */; };
 		107079622E742034000C7A2C /* LeaderboardView+Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107079602E742029000C7A2C /* LeaderboardView+Constants.swift */; };
 		1072EF7C2E8EBFCA00C34353 /* VideoViewedRewardsDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1072EF7B2E8EBFBB00C34353 /* VideoViewedRewardsDTO.swift */; };
@@ -863,6 +865,7 @@
 		105E2DAA2EB234480097690E /* VideoInsightsUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoInsightsUseCase.swift; sourceTree = "<group>"; };
 		105E2DAD2EB2356E0097690E /* VideoInsightsRequestDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoInsightsRequestDTO.swift; sourceTree = "<group>"; };
 		105E2DB02EB330FC0097690E /* VideoInsightsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoInsightsViewModel.swift; sourceTree = "<group>"; };
+		105E2E852EB8F8100097690E /* FetchAIFeedsUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FetchAIFeedsUseCase.swift; sourceTree = "<group>"; };
 		107079602E742029000C7A2C /* LeaderboardView+Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LeaderboardView+Constants.swift"; sourceTree = "<group>"; };
 		1072EF7B2E8EBFBB00C34353 /* VideoViewedRewardsDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoViewedRewardsDTO.swift; sourceTree = "<group>"; };
 		1072EF7E2E8EC47800C34353 /* VideoViewedRewardsUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoViewedRewardsUseCase.swift; sourceTree = "<group>"; };
@@ -1197,8 +1200,6 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AC9B77DE2D58C7E300270FC9 /* YralTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = YralTests;
 			sourceTree = "<group>";
 		};
@@ -2515,6 +2516,7 @@
 		ACB46A622D0F0B67002E200C /* Usecases */ = {
 			isa = PBXGroup;
 			children = (
+				105E2E852EB8F8100097690E /* FetchAIFeedsUseCase.swift */,
 				ACE77F232E74419200896DD2 /* DeepLinkFeedUseCase.swift */,
 				ACB46A632D0F0B70002E200C /* FetchInitialFeedsUseCase.swift */,
 				AC49605A2D2C4BE5008D59D9 /* FetchMoreFeedsUseCase.swift */,
@@ -3412,9 +3414,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3429,9 +3435,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3446,9 +3456,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral/Pods-Yral-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3463,9 +3477,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-YralTests/Pods-YralTests-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3627,9 +3645,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3644,9 +3666,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yral-Staging/Pods-Yral-Staging-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -3770,6 +3796,7 @@
 				10020A192DED6CED00DF269E /* LeaderboardRowView.swift in Sources */,
 				ACC0F3972D2ED5D700FA5BD0 /* LottieView.swift in Sources */,
 				AC7D5B3E2E0EA7C6008853AF /* NotificationsNudge.swift in Sources */,
+				105E2E872EB8F8180097690E /* FetchAIFeedsUseCase.swift in Sources */,
 				AC1912982E79624700BA5D78 /* WalletView.swift in Sources */,
 				AC2C30D22D96C51600DA9F81 /* ReportEntity.swift in Sources */,
 				ACB46A7D2D105BEB002E200C /* UIKitInitializers.swift in Sources */,
@@ -4112,6 +4139,7 @@
 				10020A182DED6CED00DF269E /* LeaderboardRowView.swift in Sources */,
 				ACC0F3982D2ED5D700FA5BD0 /* LottieView.swift in Sources */,
 				AC7D5B3F2E0EA7C6008853AF /* NotificationsNudge.swift in Sources */,
+				105E2E862EB8F8180097690E /* FetchAIFeedsUseCase.swift in Sources */,
 				AC1912972E79624700BA5D78 /* WalletView.swift in Sources */,
 				AC2C30D12D96C51600DA9F81 /* ReportEntity.swift in Sources */,
 				ACB46A7C2D105BEB002E200C /* UIKitInitializers.swift in Sources */,
