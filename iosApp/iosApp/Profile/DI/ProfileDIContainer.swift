@@ -42,6 +42,13 @@ final class ProfileDIContainer {
     )
   }()
 
+  lazy var videoInsightsUseCase: VideoInsightsUseCaseProtocol = {
+    VideoInsightsUseCase(
+      repository: profileRepository,
+      crashReporter: dependencies.crashReporter
+    )
+  }()
+
   init(dependencies: Dependencies) {
     self.dependencies = dependencies
   }
@@ -55,7 +62,11 @@ final class ProfileDIContainer {
         profileRepository: profileRepository,
         crashReporter: dependencies.crashReporter
       ),
-      socialSigninUseCase: dependencies.socialSignInUseCase
+      socialSigninUseCase: dependencies.socialSignInUseCase,
+      videoInsightsUseCase: VideoInsightsUseCase(
+        repository: profileRepository,
+        crashReporter: dependencies.crashReporter
+      )
     )
   }
 
@@ -123,6 +134,23 @@ final class ProfileDIContainer {
     EditProfileView(
       accountInfo: accountInfo,
       showEditProfile: showEditProfile
+    )
+  }
+
+  private func makeVideoInsightsViewModel() -> VideoInsightsViewModel {
+    return VideoInsightsViewModel(videoInsightsUseCase: videoInsightsUseCase)
+  }
+
+  func makeVideoInsightsBottomSheet(
+    openedFromFeed: Bool,
+    videoInfo: ProfileVideoInfo,
+    onComplete: @escaping (Int64?) -> Void
+  ) -> VideoInsightsBottomSheet {
+    return VideoInsightsBottomSheet(
+      viewModel: makeVideoInsightsViewModel(),
+      openedFromFeed: openedFromFeed,
+      videoInfo: videoInfo,
+      onComplete: onComplete
     )
   }
 }

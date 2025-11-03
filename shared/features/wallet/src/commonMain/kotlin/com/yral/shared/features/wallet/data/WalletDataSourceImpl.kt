@@ -81,6 +81,6 @@ class WalletDataSourceImpl(
     companion object {
         private const val BTC_VALUE_BY_COUNTRY_PATH = "btc_value_by_country"
         private const val HEADER_X_FIREBASE_APPCHECK = "X-Firebase-AppCheck"
-        private const val BTC_REWARD_CONFIG_PATH = "api/v1/rewards/config"
+        private const val BTC_REWARD_CONFIG_PATH = "api/v1/rewards/config_v2"
     }
 }

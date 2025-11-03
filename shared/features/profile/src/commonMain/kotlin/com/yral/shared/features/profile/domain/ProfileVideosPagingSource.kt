@@ -2,6 +2,7 @@ package com.yral.shared.features.profile.domain
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import co.touchlab.kermit.Logger
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.profile.domain.repository.ProfileRepository
 
@@ -24,13 +25,23 @@ class ProfileVideosPagingSource(
                         startIndex = startIndex,
                         pageSize = pageSize,
                     )
-            val profileVideos = result.posts
+            var profileVideos = result.posts
+            val videoStats =
+                profileRepository
+                    .getProfileVideoViewsCount(profileVideos.map { it.videoID })
+                    .associate { it.videoId to it.allViews }
+            if (videoStats.isNotEmpty()) {
+                profileVideos = profileVideos.map { it.copy(viewCount = videoStats[it.videoID] ?: it.viewCount) }
+            }
             LoadResult.Page(
                 data = profileVideos,
                 prevKey = null,
                 nextKey = if (result.hasNextPage) result.nextStartIndex else null,
             )
-        }.getOrElse { LoadResult.Error(it) }
+        }.getOrElse {
+            Logger.e("ProfileVideosPaging", it)
+            LoadResult.Error(it)
+        }
 
     override fun getRefreshKey(state: PagingState<ULong, FeedDetails>): ULong? = null
 }

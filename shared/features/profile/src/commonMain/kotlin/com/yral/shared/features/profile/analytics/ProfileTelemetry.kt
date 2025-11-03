@@ -4,10 +4,14 @@ import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.CtaType
 import com.yral.shared.analytics.events.DeleteVideoInitiatedEventData
+import com.yral.shared.analytics.events.FollowersListTab
+import com.yral.shared.analytics.events.FollowersListViewedEventData
 import com.yral.shared.analytics.events.GameType
 import com.yral.shared.analytics.events.ProfilePageViewedEventData
 import com.yral.shared.analytics.events.SourceScreen
 import com.yral.shared.analytics.events.UploadVideoClickedEventData
+import com.yral.shared.analytics.events.UserFollowedEventData
+import com.yral.shared.analytics.events.UserUnFollowedEventData
 import com.yral.shared.analytics.events.VideoClickedEventData
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.analytics.events.VideoDeletedEventData
@@ -127,6 +131,40 @@ class ProfileTelemetry(
                     gameType = GameType.SMILEY,
                     reason = reason.reason,
                 ),
+        )
+    }
+
+    fun followClicked(publisherUserId: String) {
+        analyticsManager.trackEvent(
+            UserFollowedEventData(
+                publisherUserId = publisherUserId,
+                source = SourceScreen.PROFILE,
+                ctaType = CtaType.FOLLOW,
+            ),
+        )
+    }
+
+    fun unFollowClicked(publisherUserId: String) {
+        analyticsManager.trackEvent(
+            UserUnFollowedEventData(
+                publisherUserId = publisherUserId,
+                source = SourceScreen.PROFILE,
+                ctaType = CtaType.FOLLOW,
+            ),
+        )
+    }
+
+    fun followerListViewed(
+        publisherUserId: String,
+        tab: FollowersListTab,
+        totalCount: Long,
+    ) {
+        analyticsManager.trackEvent(
+            FollowersListViewedEventData(
+                publisherUserId = publisherUserId,
+                tab = tab,
+                totalCount = totalCount,
+            ),
         )
     }
 }

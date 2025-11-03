@@ -3,10 +3,13 @@ package com.yral.shared.features.feed.analytics
 import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.CtaType
+import com.yral.shared.analytics.events.FeedToggleClickedEventData
+import com.yral.shared.analytics.events.FeedType
 import com.yral.shared.analytics.events.GameType
 import com.yral.shared.analytics.events.HomePageViewedEventData
 import com.yral.shared.analytics.events.ShareAppOpenedFromLinkEventData
 import com.yral.shared.analytics.events.SourceScreen
+import com.yral.shared.analytics.events.UserFollowedEventData
 import com.yral.shared.analytics.events.VideoClickedEventData
 import com.yral.shared.analytics.events.VideoDurationWatchedEventData
 import com.yral.shared.analytics.events.VideoImpressionEventData
@@ -29,7 +32,7 @@ class FeedTelemetry(
         analyticsManager.trackEvent(HomePageViewedEventData())
     }
 
-    suspend fun onVideoDurationWatched(
+    fun onVideoDurationWatched(
         feedDetails: FeedDetails,
         isLoggedIn: Boolean,
         currentTime: Int,
@@ -42,9 +45,9 @@ class FeedTelemetry(
                     canisterId = sessionManager.canisterID ?: "",
                     userID = sessionManager.userPrincipal ?: "",
                     isLoggedIn = isLoggedIn,
-                    absoluteWatched = currentTime.toDouble(),
+                    absoluteWatched = currentTime / 1000.0,
                     percentageWatched = currentTime.percentageOf(totalTime),
-                    videoDuration = totalTime.toDouble(),
+                    videoDuration = totalTime / 1000.0,
                 )
         analyticsManager.trackEvent(eventData)
     }
@@ -176,5 +179,22 @@ class FeedTelemetry(
 
     fun onDeeplink(videoId: String) {
         analyticsManager.trackEvent(ShareAppOpenedFromLinkEventData(videoId))
+    }
+
+    fun feedToggleClicked(
+        feedType: FeedType,
+        isExpanded: Boolean,
+    ) {
+        analyticsManager.trackEvent(FeedToggleClickedEventData(feedType, isExpanded))
+    }
+
+    fun followClicked(publisherUserId: String) {
+        analyticsManager.trackEvent(
+            UserFollowedEventData(
+                publisherUserId = publisherUserId,
+                source = SourceScreen.HOMEFEED,
+                ctaType = CtaType.FOLLOW,
+            ),
+        )
     }
 }

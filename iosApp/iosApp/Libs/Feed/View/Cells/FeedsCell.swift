@@ -28,6 +28,7 @@ protocol FeedsCellProtocol: AnyObject {
   func howToPlayTapped()
   func howToPlayShown(index: Int)
   func coinsTapped()
+  func viewsTapped(index: Int)
 }
 
 // swiftlint: disable type_body_length
@@ -81,9 +82,11 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     return getActionButton(withTitle: "", image: Constants.reportButtonImage)
   }()
 
-  private var viewsCountView: ViewsCountView = {
+  private lazy var viewsCountView: ViewsCountView = {
     let view = ViewsCountView()
     view.translatesAutoresizingMaskIntoConstraints = false
+    let tapGesture = UITapGestureRecognizer(target: self, action: #selector(viewsTapped))
+    view.addGestureRecognizer(tapGesture)
     return view
   }()
 
@@ -260,6 +263,11 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
     shareButton.addTarget(self, action: #selector(shareButtonTapped), for: .touchUpInside)
     deleteButton.addTarget(self, action: #selector(deleteButtonTapped), for: .touchUpInside)
     reportButton.addTarget(self, action: #selector(reportButtonTapped), for: .touchUpInside)
+
+    NSLayoutConstraint.activate([
+      viewsCountView.widthAnchor.constraint(equalToConstant: 36),
+      viewsCountView.heightAnchor.constraint(equalToConstant: 53)
+    ])
   }
 
   private func addSignupOverlay() {
@@ -469,6 +477,12 @@ class FeedsCell: UICollectionViewCell, ReusableView, ImageLoaderProtocol {
 
   @objc func reportButtonTapped() {
     delegate?.reportButtonTapped(index: index)
+  }
+
+  @objc func viewsTapped() {
+    if feedType == .currentUser {
+      delegate?.viewsTapped(index: index)
+    }
   }
 
   // swiftlint: disable function_parameter_count

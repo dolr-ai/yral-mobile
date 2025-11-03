@@ -173,6 +173,7 @@ class AiVideoGenViewModel internal constructor(
             0
         }
 
+    @Suppress("LongMethod")
     fun generateAiVideo() {
         if (!_state.value.isLoggedIn) {
             setBottomSheetType(type = BottomSheetType.Signup)
@@ -211,19 +212,28 @@ class AiVideoGenViewModel internal constructor(
                                 reserveBalance()
                                 pollAndUploadVideo(
                                     modelName = selectedProvider.name,
+                                    prompt = currentState.prompt.trim(),
                                     requestKey = requestKey,
                                 )
                                 return@onSuccess
                             }
                             result.providerError?.let { error ->
-                                pushTriggerFailed(selectedProvider.name, error)
+                                pushTriggerFailed(
+                                    model = selectedProvider.name,
+                                    prompt = currentState.prompt.trim(),
+                                    reason = error,
+                                )
                                 _state.update {
                                     it.copy(bottomSheetType = BottomSheetType.Error(error, true))
                                 }
                             }
                         }.onFailure { error ->
                             logger.e(error) { "Error generating video" }
-                            pushTriggerFailed(selectedProvider.name, error.message ?: "")
+                            pushTriggerFailed(
+                                model = selectedProvider.name,
+                                prompt = currentState.prompt.trim(),
+                                reason = error.message ?: "",
+                            )
                             _state.update {
                                 it.copy(bottomSheetType = BottomSheetType.Error("", true))
                             }
@@ -259,10 +269,12 @@ class AiVideoGenViewModel internal constructor(
 
     private fun pushTriggerFailed(
         model: String,
+        prompt: String,
         reason: String,
     ) {
         uploadVideoTelemetry.aiVideoGenerated(
             model = model,
+            prompt = prompt,
             isSuccess = false,
             reason = reason,
             reasonType = AiVideoGenFailureType.TRIGGER_FAILED,
@@ -272,6 +284,7 @@ class AiVideoGenViewModel internal constructor(
     @Suppress("LongMethod")
     private fun pollAndUploadVideo(
         modelName: String,
+        prompt: String,
         requestKey: VideoGenRequestKey,
     ) {
         pollingJob?.cancel()
@@ -285,6 +298,7 @@ class AiVideoGenViewModel internal constructor(
                             PollAndUploadAiVideoUseCase.Params(
                                 userPrincipal = userPrincipal,
                                 modelName = modelName,
+                                prompt = prompt,
                                 requestKey = requestKey,
                                 isFastInitially = false,
                                 hashtags = emptyList(),
@@ -337,6 +351,7 @@ class AiVideoGenViewModel internal constructor(
                             failure = { error ->
                                 uploadVideoTelemetry.aiVideoGenerated(
                                     model = _state.value.selectedProvider?.name ?: "",
+                                    prompt = prompt,
                                     isSuccess = false,
                                     reason = error.message,
                                     reasonType = AiVideoGenFailureType.GENERATION_FAILED,
@@ -356,6 +371,7 @@ class AiVideoGenViewModel internal constructor(
                 currentRequestKey != null && _state.value.reservedBalance != null -> {
                     pollAndUploadVideo(
                         modelName = _state.value.selectedProvider?.name ?: "",
+                        prompt = _state.value.prompt.trim(),
                         requestKey = currentRequestKey!!,
                     )
                 }

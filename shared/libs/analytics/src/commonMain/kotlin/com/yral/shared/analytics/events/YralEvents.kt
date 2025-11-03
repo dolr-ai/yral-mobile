@@ -148,6 +148,25 @@ data class BottomNavigationClickedEventData(
     )
 }
 
+@Serializable
+data class FeedToggleClickedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.FEED_TOGGLE_CLICKED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+    @SerialName("feed_type") val feedType: FeedType,
+    @SerialName("is_expanded") val isExpanded: Boolean,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        feedType: FeedType,
+        isExpanded: Boolean,
+    ) : this(
+        FeatureEvents.FEED_TOGGLE_CLICKED.getEventName(),
+        Features.FEED.getFeatureName(),
+        feedType,
+        isExpanded,
+    )
+}
+
 // --- Video ---
 
 @Serializable
@@ -761,7 +780,7 @@ data class VideoGenerationModelSelectedData(
 
 @Serializable
 data class CreateAIVideoClickedData(
-    @SerialName("event") override val event: String = FeatureEvents.VIDEO_UPLOAD_ERROR_SHOWN.getEventName(),
+    @SerialName("event") override val event: String = FeatureEvents.CREATE_AI_VIDEO_CLICKED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
     @SerialName("model") val model: String,
     @SerialName("prompt") val prompt: String,
@@ -777,9 +796,10 @@ data class CreateAIVideoClickedData(
 
 @Serializable
 data class AiVideoGeneratedData(
-    @SerialName("event") override val event: String = FeatureEvents.VIDEO_UPLOAD_ERROR_SHOWN.getEventName(),
+    @SerialName("event") override val event: String = FeatureEvents.AI_VIDEO_GENERATED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
     @SerialName("model") val model: String,
+    @SerialName("prompt") val prompt: String,
     @SerialName("is_success") val isSuccess: Boolean,
     @SerialName("reason") val reason: String?,
     @SerialName("reason_type") val reasonType: AiVideoGenFailureType?,
@@ -787,6 +807,7 @@ data class AiVideoGeneratedData(
     EventData {
     constructor(
         model: String,
+        prompt: String,
         isSuccess: Boolean,
         reason: String?,
         reasonType: AiVideoGenFailureType?,
@@ -794,6 +815,7 @@ data class AiVideoGeneratedData(
         FeatureEvents.AI_VIDEO_GENERATED.getEventName(),
         Features.AUTH.getFeatureName(),
         model,
+        prompt,
         isSuccess,
         reason,
         reasonType,
@@ -837,11 +859,13 @@ data class UploadVideoClickedEventData(
 data class PushNotificationsPopupEventData(
     @SerialName("event") override val event: String = FeatureEvents.ENABLE_PUSH_NOTIFICATION_POPUP_SHOWN.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+    @SerialName("source") val source: AnalyticsAlertsRequestType,
 ) : BaseEventData(),
     EventData {
-    constructor() : this(
+    constructor(source: AnalyticsAlertsRequestType) : this(
         FeatureEvents.ENABLE_PUSH_NOTIFICATION_POPUP_SHOWN.getEventName(),
         Features.FEED.getFeatureName(),
+        source,
     )
 }
 
@@ -849,11 +873,13 @@ data class PushNotificationsPopupEventData(
 data class PushNotificationsEnabledEventData(
     @SerialName("event") override val event: String = FeatureEvents.NOTIFICATIONS_ENABLED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+    @SerialName("source") val source: AnalyticsAlertsRequestType,
 ) : BaseEventData(),
     EventData {
-    constructor() : this(
+    constructor(source: AnalyticsAlertsRequestType) : this(
         FeatureEvents.NOTIFICATIONS_ENABLED.getEventName(),
         Features.FEED.getFeatureName(),
+        source,
     )
 }
 
@@ -879,6 +905,81 @@ data class AirdropClaimedEventData(
         isSuccess,
         claimedAmount,
         isAutoCredited,
+    )
+}
+
+@Serializable
+data class UserFollowedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.USER_FOLLOWED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+    @SerialName("publisher_user_id")
+    val publisherUserId: String,
+    @SerialName("source")
+    val source: SourceScreen,
+    @SerialName("cta_type")
+    val ctaType: CtaType,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        publisherUserId: String,
+        source: SourceScreen,
+        ctaType: CtaType,
+    ) : this(
+        FeatureEvents.USER_FOLLOWED.getEventName(),
+        Features.FEED.getFeatureName(),
+        publisherUserId,
+        source,
+        ctaType,
+    )
+}
+
+@Serializable
+data class UserUnFollowedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.USER_UNFOLLOWED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+    @SerialName("publisher_user_id")
+    val publisherUserId: String,
+    @SerialName("source")
+    val source: SourceScreen,
+    @SerialName("cta_type")
+    val ctaType: CtaType,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        publisherUserId: String,
+        source: SourceScreen,
+        ctaType: CtaType,
+    ) : this(
+        FeatureEvents.USER_UNFOLLOWED.getEventName(),
+        Features.FEED.getFeatureName(),
+        publisherUserId,
+        source,
+        ctaType,
+    )
+}
+
+@Serializable
+data class FollowersListViewedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.FOLLOWERS_LIST_VIEWED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+    @SerialName("publisher_user_id")
+    val publisherUserId: String,
+    @SerialName("total_count")
+    val totalCount: Long,
+    @SerialName("tab")
+    val tab: FollowersListTab,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        publisherUserId: String,
+        tab: FollowersListTab,
+        totalCount: Long,
+    ) : this(
+        FeatureEvents.FOLLOWERS_LIST_VIEWED.getEventName(),
+        Features.FEED.getFeatureName(),
+        publisherUserId,
+        totalCount,
+        tab,
     )
 }
 
@@ -1215,6 +1316,12 @@ enum class CtaType {
 
     @SerialName("video_play")
     PLAY,
+
+    @SerialName("follow")
+    FOLLOW,
+
+    @SerialName("unfollow")
+    UNFOLLOW,
 }
 
 @Serializable
@@ -1314,4 +1421,37 @@ enum class LeaderBoardTabType {
 
     @SerialName("all")
     ALL,
+}
+
+@Serializable
+enum class FeedType {
+    @SerialName("default")
+    DEFAULT,
+
+    @SerialName("ai")
+    AI,
+
+    @SerialName("nsfw")
+    NSFW,
+}
+
+@Serializable
+enum class FollowersListTab {
+    @SerialName("following")
+    FOLLOWING,
+
+    @SerialName("followers")
+    FOLLOWERS,
+}
+
+@Serializable
+enum class AnalyticsAlertsRequestType {
+    @SerialName("follow_back")
+    FOLLOW_BACK,
+
+    @SerialName("video")
+    VIDEO,
+
+    @SerialName("default")
+    DEFAULT,
 }

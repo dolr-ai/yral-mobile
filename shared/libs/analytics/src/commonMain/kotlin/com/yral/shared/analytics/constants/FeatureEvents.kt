@@ -31,6 +31,7 @@ enum class FeatureEvents {
     VIDEO_DURATION_WATCHED,
     ENABLE_PUSH_NOTIFICATION_POPUP_SHOWN,
     NOTIFICATIONS_ENABLED,
+    FEED_TOGGLE_CLICKED,
 
     // Game
     GAME_VOTED,
@@ -86,6 +87,12 @@ enum class FeatureEvents {
     // Share
     VIDEO_SHARE_CLICKED,
     SHARE_APP_OPENED_FROM_LINK,
+
+    // Follow
+    USER_FOLLOWED,
+    USER_UNFOLLOWED,
+    FOLLOWERS_LIST_VIEWED,
+
     ;
 
     fun getEventName(): String =

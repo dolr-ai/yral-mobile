@@ -13,8 +13,8 @@ import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
-import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
+import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
@@ -41,6 +41,7 @@ internal class DefaultHomeComponent(
     componentContext: ComponentContext,
     private val openEditProfile: () -> Unit,
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
+    override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
 ) : HomeComponent(),
     ComponentContext by componentContext {
     private val navigation = StackNavigation<Config>()
@@ -164,7 +165,11 @@ internal class DefaultHomeComponent(
         }
 
     private fun feedComponent(componentContext: ComponentContext): FeedComponent =
-        FeedComponent.Companion(componentContext = componentContext, openProfile)
+        FeedComponent.Companion(
+            componentContext = componentContext,
+            openProfile = openProfile,
+            showAlertsOnDialog = showAlertsOnDialog,
+        )
 
     private fun leaderboardComponent(componentContext: ComponentContext): LeaderboardComponent =
         LeaderboardComponent.Companion(
@@ -178,7 +183,7 @@ internal class DefaultHomeComponent(
             componentContext = componentContext,
             goToHome = {
                 onFeedTabClick()
-                showSlot(SlotConfig.AlertsRequestBottomSheet)
+                showAlertsOnDialog(AlertsRequestType.VIDEO)
             },
             snapshot = childSnapshots[Config.UploadVideo] as? UploadVideoRootComponent.Snapshot,
         )
@@ -189,35 +194,29 @@ internal class DefaultHomeComponent(
             onUploadVideoClicked = { onUploadVideoTabClick() },
             openEditProfile = openEditProfile,
             snapshot = childSnapshots[Config.Profile] as? ProfileComponent.Snapshot,
+            showAlertsOnDialog = showAlertsOnDialog,
         )
 
     private fun accountComponent(componentContext: ComponentContext): AccountComponent =
         AccountComponent.Companion(componentContext = componentContext)
 
     private fun walletComponent(componentContext: ComponentContext): WalletComponent =
-        WalletComponent.Companion(componentContext = componentContext)
+        WalletComponent.Companion(
+            componentContext = componentContext,
+            showAlertsOnDialog = showAlertsOnDialog,
+        )
 
     private fun slotChild(
         config: SlotConfig,
         componentContext: ComponentContext,
     ): SlotChild =
         when (config) {
-            SlotConfig.AlertsRequestBottomSheet ->
-                SlotChild.AlertsRequestBottomSheet(
-                    alertsRequestComponent(componentContext),
-                )
             is SlotConfig.VideoViewsRewardsBottomSheet ->
                 SlotChild.VideoViewsRewardsBottomSheet(
                     component = btcRewardsComponent(componentContext),
                     data = config.data,
                 )
         }
-
-    private fun alertsRequestComponent(componentContext: ComponentContext): AlertsRequestComponent =
-        AlertsRequestComponent(
-            componentContext = componentContext,
-            onDismissed = slotNavigation::dismiss,
-        )
 
     private fun btcRewardsComponent(componentContext: ComponentContext): VideoViewRewardsComponent =
         DefaultVideoViewRewardsComponent(
@@ -260,9 +259,6 @@ internal class DefaultHomeComponent(
 
     @Serializable
     private sealed interface SlotConfig {
-        @Serializable
-        data object AlertsRequestBottomSheet : SlotConfig
-
         @Serializable
         data class VideoViewsRewardsBottomSheet(
             val data: RewardsReceived,

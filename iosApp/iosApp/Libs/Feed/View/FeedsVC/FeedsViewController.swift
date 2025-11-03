@@ -27,6 +27,7 @@ class FeedsViewController: UIViewController {
   var pendingAnchor: DeepLinkFeedRequest?
   var hasAppliedInitialSnapshot = false
   var isApplyingSnapshot = false
+  var appDIContainer: AppDIContainer?
 
   lazy var feedsPlayer: YralPlayer = { [unowned self] in
     let monitor = DefaultNetworkMonitor()

@@ -24,10 +24,9 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.MultiplePermissionsState
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.shouldShowRationale
+import com.yral.shared.features.uploadvideo.utils.AndroidVideoValidator
 import com.yral.shared.features.uploadvideo.utils.VideoFileManager
-import com.yral.shared.features.uploadvideo.utils.VideoMetadataExtractor
 import com.yral.shared.features.uploadvideo.utils.VideoPermissionUtils
-import com.yral.shared.features.uploadvideo.utils.VideoValidator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -47,19 +46,8 @@ internal actual fun SelectVideoView(
     val permissionState =
         VideoPermissionUtils.rememberVideoPermissionsState { hasRequestedPermissions = true }
 
-    var showPermissionError by remember { mutableStateOf(false) }
     var pickerError by remember { mutableStateOf<VideoPickerError?>(null) }
     var isProcessingVideo by remember { mutableStateOf(false) }
-    val errorSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    val selectionState =
-        VideoSelectionState(
-            shouldLaunchPicker = shouldLaunchPicker,
-            hasRequestedPermissions = hasRequestedPermissions,
-            showPermissionError = showPermissionError,
-            isProcessingVideo = isProcessingVideo,
-            errorSheetState = errorSheetState,
-        )
 
     val videoPickerLauncher =
         rememberVideoPickerLauncher(
@@ -70,46 +58,42 @@ internal actual fun SelectVideoView(
 
     VideoSelectionPermissionHandler(
         permissionState = permissionState,
-        selectionState = selectionState,
+        shouldLaunchPicker = shouldLaunchPicker,
+        hasRequestedPermissions = hasRequestedPermissions,
         onShouldLaunchPickerChange = { shouldLaunchPicker = it },
         onHasRequestedPermissionsChange = { hasRequestedPermissions = it },
-        onShowPermissionErrorChange = { showPermissionError = it },
         videoPickerLauncher = videoPickerLauncher,
     )
 
     VideoSelectionContent(
         maxSeconds = maxSeconds,
-        hasPermissions = VideoPermissionUtils.hasSufficientVideoPermissions(permissionState),
-        selectionState = selectionState,
-        onLaunchVideoPicker = {
-            onCTAClicked()
-            videoPickerLauncher.launch("video/*")
-        },
-        onRequestPermissions = {
-            onCTAClicked()
-            shouldLaunchPicker = true
-            permissionState.launchMultiplePermissionRequest()
-        },
-    )
-
-    val context = LocalContext.current
-
-    VideoSelectionErrorDialog(
-        selectionState = selectionState,
-        pickerError = pickerError,
-        onDismissError = {
-            showPermissionError = false
-            pickerError = null
-        },
-        onGoToSettingsClicked = {
-            // Open device settings
-            val intent =
-                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                    data = Uri.fromParts("package", context.packageName, null)
+        isProcessingVideo = isProcessingVideo,
+        onSelectFileClick = {
+            if (!isProcessingVideo) {
+                onCTAClicked()
+                val hasPermissions =
+                    VideoPermissionUtils.hasSufficientVideoPermissions(permissionState)
+                if (hasPermissions) {
+                    videoPickerLauncher.launch("video/*")
+                } else {
+                    shouldLaunchPicker = true
+                    permissionState.launchMultiplePermissionRequest()
                 }
-            context.startActivity(intent)
+            }
         },
     )
+
+    val pickerErrorValue = pickerError
+
+    if (pickerErrorValue != null) {
+        VideoSelectionPickerErrorDialog(
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            pickerError = pickerErrorValue,
+            onDismissError = {
+                pickerError = null
+            },
+        )
+    }
 }
 
 @Composable
@@ -119,7 +103,7 @@ private fun rememberVideoPickerLauncher(
     onError: (VideoPickerError) -> Unit,
 ): ActivityResultLauncher<String> {
     val context = LocalContext.current
-    val videoValidator: VideoValidator = koinInject()
+    val videoValidator: AndroidVideoValidator = koinInject()
     val videoFileManager: VideoFileManager = koinInject()
     val coroutineScope = rememberCoroutineScope()
 
@@ -171,18 +155,20 @@ private fun rememberVideoPickerLauncher(
 @Composable
 private fun VideoSelectionPermissionHandler(
     permissionState: MultiplePermissionsState,
-    selectionState: VideoSelectionState,
+    shouldLaunchPicker: Boolean,
+    hasRequestedPermissions: Boolean,
     onShouldLaunchPickerChange: (Boolean) -> Unit,
     onHasRequestedPermissionsChange: (Boolean) -> Unit,
-    onShowPermissionErrorChange: (Boolean) -> Unit,
     videoPickerLauncher: ActivityResultLauncher<String>,
 ) {
+    var showPermissionError by remember { mutableStateOf(false) }
+
     // Launch video picker when permissions are sufficient and flag is set
     LaunchedEffect(
         VideoPermissionUtils.hasSufficientVideoPermissions(permissionState),
-        selectionState.shouldLaunchPicker,
+        shouldLaunchPicker,
     ) {
-        if (VideoPermissionUtils.hasSufficientVideoPermissions(permissionState) && selectionState.shouldLaunchPicker) {
+        if (VideoPermissionUtils.hasSufficientVideoPermissions(permissionState) && shouldLaunchPicker) {
             onShouldLaunchPickerChange(false)
             videoPickerLauncher.launch("video/*")
         }
@@ -205,37 +191,35 @@ private fun VideoSelectionPermissionHandler(
             }
         }
     LaunchedEffect(
-        selectionState.hasRequestedPermissions,
+        hasRequestedPermissions,
         grantedCount.value,
         noRationaleDeniedCount.value,
     ) {
-        if (selectionState.hasRequestedPermissions &&
+        if (hasRequestedPermissions &&
             !VideoPermissionUtils.hasSufficientVideoPermissions(permissionState) &&
             VideoPermissionUtils.arePermissionsPermanentlyDenied(permissionState)
         ) {
             onShouldLaunchPickerChange(false)
             onHasRequestedPermissionsChange(false)
-            onShowPermissionErrorChange(true)
+            showPermissionError = true
         }
     }
 
-    // Handle error sheet visibility
-    LaunchedEffect(selectionState.showPermissionError) {
-        if (selectionState.showPermissionError) {
-            selectionState.errorSheetState.show()
-        } else {
-            selectionState.errorSheetState.hide()
-        }
+    if (showPermissionError) {
+        val context = LocalContext.current
+        VideoSelectionPermissionErrorDialog(
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            onDismissError = {
+                showPermissionError = false
+            },
+            onGoToSettingsClicked = {
+                // Open device settings
+                val intent =
+                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.fromParts("package", context.packageName, null)
+                    }
+                context.startActivity(intent)
+            },
+        )
     }
 }
-
-@Composable
-actual fun formatFileSize(
-    bytes: Long,
-    precision: Int,
-): String {
-    val videoMetadataExtractor: VideoMetadataExtractor = koinInject()
-    return videoMetadataExtractor.formatFileSize(bytes, precision)
-}
-
-actual fun formatMaxDuration(duration: Double): String = "%.0f".format(duration)

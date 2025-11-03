@@ -51,7 +51,11 @@ internal class PollAndUploadAiVideoUseCase(
                             )
                         when (status) {
                             is Result2.Err -> {
-                                pushGenerationFailed(parameters.modelName, status.v1)
+                                pushGenerationFailed(
+                                    model = parameters.modelName,
+                                    prompt = parameters.prompt,
+                                    reason = status.v1,
+                                )
                                 emit(Ok(PollAndUploadResult.Failed(status.v1)))
                                 return@withTimeout
                             }
@@ -59,7 +63,10 @@ internal class PollAndUploadAiVideoUseCase(
                             is Result2.Ok -> {
                                 when (val videoStatus = status.v1) {
                                     is VideoGenRequestStatus.Complete -> {
-                                        pushGenerationSuccessful(parameters.modelName)
+                                        pushGenerationSuccessful(
+                                            model = parameters.modelName,
+                                            prompt = parameters.prompt,
+                                        )
                                         uploadVideoTelemetry.uploadInitiated(VideoCreationType.AI_VIDEO)
                                         // Upload the video when generation is complete
                                         uploadAiVideoFromUrlUseCase
@@ -89,7 +96,11 @@ internal class PollAndUploadAiVideoUseCase(
                                     }
 
                                     is VideoGenRequestStatus.Failed -> {
-                                        pushGenerationFailed(parameters.modelName, videoStatus.v1)
+                                        pushGenerationFailed(
+                                            model = parameters.modelName,
+                                            prompt = parameters.prompt,
+                                            reason = videoStatus.v1,
+                                        )
                                         emit(Ok(PollAndUploadResult.Failed(videoStatus.v1)))
                                         return@withTimeout
                                     }
@@ -107,7 +118,11 @@ internal class PollAndUploadAiVideoUseCase(
                     }
                 }
             } catch (e: TimeoutCancellationException) {
-                pushGenerationFailed(parameters.modelName, "Timeout")
+                pushGenerationFailed(
+                    model = parameters.modelName,
+                    prompt = parameters.prompt,
+                    reason = "Timeout",
+                )
                 throw VideoGenerationTimeoutException.fromTimeoutCancellation(
                     timeoutException = e,
                     requestKey = parameters.requestKey.toString(),
@@ -117,9 +132,13 @@ internal class PollAndUploadAiVideoUseCase(
             }
         }
 
-    private fun pushGenerationSuccessful(model: String) {
+    private fun pushGenerationSuccessful(
+        model: String,
+        prompt: String,
+    ) {
         uploadVideoTelemetry.aiVideoGenerated(
             model = model,
+            prompt = prompt,
             isSuccess = true,
             reason = null,
             reasonType = null,
@@ -128,10 +147,12 @@ internal class PollAndUploadAiVideoUseCase(
 
     private fun pushGenerationFailed(
         model: String,
+        prompt: String,
         reason: String,
     ) {
         uploadVideoTelemetry.aiVideoGenerated(
             model = model,
+            prompt = prompt,
             isSuccess = false,
             reason = reason,
             reasonType = AiVideoGenFailureType.GENERATION_FAILED,
@@ -187,6 +208,7 @@ internal class PollAndUploadAiVideoUseCase(
     data class Params(
         val userPrincipal: String,
         val modelName: String,
+        val prompt: String,
         val requestKey: VideoGenRequestKey,
         val isFastInitially: Boolean = false,
         val maxPollingTimeMs: Long = DEFAULT_MAX_POLLING_MS,

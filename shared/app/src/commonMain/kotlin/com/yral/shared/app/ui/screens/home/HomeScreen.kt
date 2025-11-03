@@ -49,7 +49,6 @@ import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.WalletFeatureFlags
 import com.yral.shared.analytics.events.CategoryName
-import com.yral.shared.app.ui.screens.alertsrequest.AlertsRequestBottomSheet
 import com.yral.shared.app.ui.screens.feed.FeedScaffoldScreen
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent.SlotChild
@@ -157,11 +156,6 @@ private fun SlotContent(component: HomeComponent) {
     val slot by component.slot.subscribeAsState()
     slot.child?.instance?.also { slotChild ->
         when (slotChild) {
-            is SlotChild.AlertsRequestBottomSheet ->
-                AlertsRequestBottomSheet(
-                    component = slotChild.component,
-                )
-
             is SlotChild.VideoViewsRewardsBottomSheet ->
                 VideoViewsRewardsBottomSheet(
                     component = slotChild.component,

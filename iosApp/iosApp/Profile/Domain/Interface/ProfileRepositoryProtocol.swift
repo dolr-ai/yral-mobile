@@ -8,6 +8,7 @@
 import Combine
 
 protocol ProfileRepositoryProtocol {
+  func fetchVideoInsights(request: VideoInsightsRequestDTO) async -> Result<[VideoInsightsDTO], ProfileError>
   func fetchVideos(request: ProfileVideoRequest) async -> Result<[FeedResult], ProfileError>
   func refreshVideos(shouldPurge: Bool) async -> Result<[FeedResult], ProfileError>
   func deleteVideo(request: DeleteVideoRequest) async -> Result<Void, ProfileError>

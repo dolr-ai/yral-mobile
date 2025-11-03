@@ -158,13 +158,8 @@ class FeedsRepository: FeedRepositoryProtocol {
       let result = try await service.get_individual_post_details_by_id(feed.postID)
       throw FeedError.rustError(RustError.unknown(post_service_result_err_value(result).toString()))
     }
-    let voteExistsForSmileyGame = (try? await fetchSmileyGamePlayedStatus(for: resultValue.video_uid().toString()))
-        ?? false
     guard !is_banned_due_to_user_reporting(resultValue.status()) else {
       throw FeedError.rustError(RustError.unknown("Post is banned"))
-    }
-    guard !voteExistsForSmileyGame || isDeeplink else {
-      throw FeedError.firebaseError("User has already voted for this video")
     }
     let videoURL = URL(
       string: "\(Constants.cloudfarePrefix)\(resultValue.video_uid().toString())\(Constants.cloudflareSuffix)"
@@ -203,14 +198,9 @@ class FeedsRepository: FeedRepositoryProtocol {
     let identity = try self.authClient.generateNewDelegatedIdentity()
     let service = try Service(principal, identity)
     let result = try await service.get_individual_post_details_by_id(UInt64(feed.postID) ?? 0)
-    let voteExistsForSmileyGame = (try? await fetchSmileyGamePlayedStatus(for: result.video_uid().toString())) ?? false
 
     guard result.status().is_banned_due_to_user_reporting() == false else {
       throw FeedError.rustError(RustError.unknown("Post is banned"))
-    }
-
-    guard !voteExistsForSmileyGame || isDeeplink else {
-      throw FeedError.firebaseError("User has already voted for this video")
     }
 
     let videoURL = URL(
@@ -321,7 +311,7 @@ class FeedsRepository: FeedRepositoryProtocol {
           publisherUserId: $0.publisherUserID,
           userID: userPrincipalString,
           videoID: $0.videoID,
-          viewCount: Int32($0.viewCount)
+          viewCount: Int32($0.viewCount), absoluteWatched: $0.absoluteWatched
         )
       }
       let videoRequestDTO = VideoEventRequestDTO(
@@ -401,20 +391,6 @@ class FeedsRepository: FeedRepositoryProtocol {
       throw AuthError.authenticationFailed("Failed to convert wire JSON string to Data")
     }
     return try JSONDecoder().decode(SwiftDelegatedIdentityWire.self, from: data)
-  }
-
-  private func fetchSmileyGamePlayedStatus(for videoID: String) async throws -> Bool {
-    guard let userPrincipalID = authClient.userPrincipalString else {
-      throw FeedError.unknown("User principal ID not found")
-    }
-
-    do {
-      let documentPath = "videos/\(videoID)/votes/\(userPrincipalID)"
-      let documentExists = try await firebaseService.documentExists(for: documentPath)
-      return documentExists
-    } catch {
-      throw FeedError.firebaseError(error.localizedDescription)
-    }
   }
 }
 // swiftlint: enable type_body_length

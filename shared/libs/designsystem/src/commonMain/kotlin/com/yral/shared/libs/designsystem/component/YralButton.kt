@@ -51,7 +51,6 @@ fun YralButton(
     Row(
         modifier =
             modifier
-                .fillMaxWidth()
                 .height(buttonHeight)
                 .background(
                     color = backgroundColor,
