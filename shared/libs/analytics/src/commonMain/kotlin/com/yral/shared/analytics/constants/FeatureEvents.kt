@@ -60,6 +60,9 @@ enum class FeatureEvents {
     // Profile
     PROFILE_PAGE_VIEWED,
     UPLOAD_VIDEO_CLICKED,
+    EDIT_PROFILE_STARTED,
+    EDIT_PROFILE_COMPLETED,
+    EDIT_PROFILE_CANCELLED,
 
     // Wallet
     WALLET_PAGE_VIEWED,

@@ -4,6 +4,10 @@ import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.CtaType
 import com.yral.shared.analytics.events.DeleteVideoInitiatedEventData
+import com.yral.shared.analytics.events.EditProfileCancelledEventData
+import com.yral.shared.analytics.events.EditProfileCompletedEventData
+import com.yral.shared.analytics.events.EditProfileSource
+import com.yral.shared.analytics.events.EditProfileStartedEventData
 import com.yral.shared.analytics.events.FollowersListTab
 import com.yral.shared.analytics.events.FollowersListViewedEventData
 import com.yral.shared.analytics.events.GameType
@@ -39,6 +43,28 @@ class ProfileTelemetry(
 
     fun onUploadVideoClicked() {
         analyticsManager.trackEvent(UploadVideoClickedEventData())
+    }
+
+    fun onEditProfileStarted(source: EditProfileSource) {
+        analyticsManager.trackEvent(EditProfileStartedEventData(source))
+    }
+
+    fun onEditProfileCompleted(
+        usernameUpdated: Boolean,
+        profileImageUpdated: Boolean,
+        bioUpdated: Boolean,
+    ) {
+        analyticsManager.trackEvent(
+            EditProfileCompletedEventData(
+                usernameUpdated = usernameUpdated,
+                profileImageUpdated = profileImageUpdated,
+                bioUpdated = bioUpdated,
+            ),
+        )
+    }
+
+    fun onEditProfileCancelled() {
+        analyticsManager.trackEvent(EditProfileCancelledEventData())
     }
 
     fun onVideoClicked(feedDetails: FeedDetails) {

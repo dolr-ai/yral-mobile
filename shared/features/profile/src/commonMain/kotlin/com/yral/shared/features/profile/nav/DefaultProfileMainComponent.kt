@@ -13,6 +13,7 @@ internal class DefaultProfileMainComponent(
     private val onUploadVideoClicked: () -> Unit,
     private val openAccount: () -> Unit,
     private val openEditProfile: () -> Unit,
+    private val openProfile: (CanisterData) -> Unit,
     private val onBackClicked: () -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
 ) : ProfileMainComponent,
@@ -28,6 +29,10 @@ internal class DefaultProfileMainComponent(
 
     override fun openEditProfile() {
         openEditProfile.invoke()
+    }
+
+    override fun openProfile(userCanisterData: CanisterData) {
+        openProfile.invoke(userCanisterData)
     }
 
     override fun onBackClicked() {
