@@ -44,6 +44,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -62,6 +63,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import com.yral.shared.analytics.events.VideoDeleteCTA
+import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.profile.ui.followers.FollowersBottomSheet
@@ -96,6 +98,7 @@ import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
 import com.yral.shared.rust.service.domain.models.PagedFollowerItem
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.profile.generated.resources.Res
@@ -165,6 +168,7 @@ fun ProfileMainScreen(
             when (event) {
                 is ProfileEvents.FollowedSuccessfully -> {
                     ToastManager.showSuccess(type = ToastType.Small(message = followedSuccessfully))
+                    component.showAlertsOnDialog(AlertsRequestType.FOLLOW_BACK)
                     if (state.isOwnProfile) {
                         following.refresh()
                     } else {
@@ -333,7 +337,7 @@ fun ProfileMainScreen(
                     openAccount = { component.openAccount() },
                     openEditProfile = { component.openEditProfile() },
                     onBackClicked = { component.onBackClicked() },
-                    onFollowersSectionClick = { viewModel.updateFollowSheetTab(it) },
+                    onFollowersSectionClick = { viewModel.updateFollowSheetTab(tab = it) },
                 )
             }
         }
@@ -420,6 +424,32 @@ fun ProfileMainScreen(
 
         is ProfileBottomSheet.FollowDetails -> {
             state.accountInfo?.let { accountInfo ->
+                val isFetched = remember(bottomSheet.tab) { mutableStateOf(false) }
+                LaunchedEffect(isFetched) {
+                    snapshotFlow {
+                        when (bottomSheet.tab) {
+                            FollowersSheetTab.Followers -> {
+                                followers.loadState.refresh is LoadState.NotLoading && followers.itemCount >= 0
+                            }
+                            FollowersSheetTab.Following -> {
+                                following.loadState.refresh is LoadState.NotLoading && following.itemCount >= 0
+                            }
+                        }
+                    }.distinctUntilChanged()
+                        .collect { loaded ->
+                            if (loaded) {
+                                // Call only if not already fetched
+                                if (!isFetched.value) {
+                                    isFetched.value = true
+                                    val count = followersCount(bottomSheet.tab, followers, following)
+                                    viewModel.followListViewed(
+                                        tab = bottomSheet.tab,
+                                        totalCount = count.second,
+                                    )
+                                }
+                            }
+                        }
+                }
                 FollowersBottomSheet(
                     sheetState = followersSheetState,
                     onDismissRequest = { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
@@ -429,7 +459,7 @@ fun ProfileMainScreen(
                     following = following,
                     followLoading = state.followLoading,
                     viewerPrincipal = state.viewerPrincipal,
-                    onTabSelected = { viewModel.updateFollowSheetTab(it) },
+                    onTabSelected = { viewModel.updateFollowSheetTab(tab = it) },
                     onFollowToggle = viewModel::toggleFollowForPrincipal,
                 )
             }
@@ -479,22 +509,8 @@ private fun MainContent(
             onBack = onBackClicked,
         )
         state.accountInfo?.let { info ->
-            val followersCount =
-                followers?.let { pagingItems ->
-                    if (pagingItems.itemCount > 0) {
-                        pagingItems[0]?.totalCount?.toLong() ?: 0
-                    } else {
-                        0
-                    }
-                } ?: 0
-            val followingCount =
-                following?.let { pagingItems ->
-                    if (pagingItems.itemCount > 0) {
-                        pagingItems[0]?.totalCount?.toLong() ?: 0
-                    } else {
-                        0
-                    }
-                } ?: 0
+            val followersCount = totalCount(followers)
+            val followingCount = totalCount(following)
             AccountInfoView(
                 accountInfo = info,
                 totalFollowers = followersCount,
@@ -557,6 +573,24 @@ private fun MainContent(
     }
 }
 
+private fun followersCount(
+    tab: FollowersSheetTab,
+    followers: LazyPagingItems<PagedFollowerItem>?,
+    following: LazyPagingItems<PagedFollowerItem>?,
+) = when (tab) {
+    FollowersSheetTab.Followers -> (followers?.itemCount ?: 0) to totalCount(followers)
+    FollowersSheetTab.Following -> (following?.itemCount ?: 0) to totalCount(following)
+}
+
+private fun totalCount(data: LazyPagingItems<PagedFollowerItem>?) =
+    data?.let { pagingItems ->
+        if (pagingItems.itemCount > 0) {
+            pagingItems[0]?.totalCount?.toLong() ?: 0
+        } else {
+            0
+        }
+    } ?: 0
+
 @Composable
 private fun ProfileHeader(
     isOwnProfile: Boolean,
@@ -571,11 +605,11 @@ private fun ProfileHeader(
                 .fillMaxWidth()
                 .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.Top,
     ) {
         Row(
             horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Top,
         ) {
             if (!isOwnProfile) {
                 Icon(
@@ -624,7 +658,7 @@ private fun LoadingContent() {
 private fun ErrorContent(message: String) {
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
-        horizontalAlignment = Alignment.Start,
+        horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Text(

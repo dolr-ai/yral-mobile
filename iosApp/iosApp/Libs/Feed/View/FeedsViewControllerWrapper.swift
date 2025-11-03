@@ -17,12 +17,15 @@ struct FeedsViewControllerWrapper: UIViewControllerRepresentable {
   @EnvironmentObject var session: SessionManager
   @EnvironmentObject var deepLinkRouter: DeepLinkRouter
   @EnvironmentObject var eventBus: EventBus
+  @Environment(\.appDIContainer) var appDIContainer
 
   func makeUIViewController(context: Context) -> UINavigationController {
     feedsViewController.onBackButtonTap = { [weak feedsViewController] in
       $showFeeds.wrappedValue = false
       feedsViewController?.onBackButtonTap = nil
     }
+
+    feedsViewController.appDIContainer = appDIContainer
     let navigationController = UINavigationController(rootViewController: feedsViewController)
     navigationController.view.backgroundColor = .clear
     navigationController.edgesForExtendedLayout = .all

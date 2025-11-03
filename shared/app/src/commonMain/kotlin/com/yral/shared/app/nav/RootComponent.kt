@@ -1,8 +1,10 @@
 package com.yral.shared.app.nav
 
+import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.app.UpdateState
+import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
@@ -11,6 +13,7 @@ import com.yral.shared.rust.service.utils.CanisterData
 
 interface RootComponent {
     val stack: Value<ChildStack<*, Child>>
+    val slot: Value<ChildSlot<*, SlotChild>>
     val updateState: Value<UpdateState>
 
     fun onBackClicked()
@@ -43,5 +46,11 @@ interface RootComponent {
         class UserProfile(
             val component: ProfileMainComponent,
         ) : Child()
+    }
+
+    sealed class SlotChild {
+        class AlertsRequestBottomSheet(
+            val component: AlertsRequestComponent,
+        ) : SlotChild()
     }
 }

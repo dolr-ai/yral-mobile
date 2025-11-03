@@ -12,6 +12,7 @@ import iosSharedUmbrella
 struct WalletView: View {
   @StateObject var viewModel: WalletViewModel
   @State var accountInfo: AccountInfo?
+  @State var rewardsConfig: VideoViewedRewardsDTO?
   @State private var isLoadingFirstTime = true
   @State private var yralToken = 0
   @State private var btcToken = 0.0
@@ -155,12 +156,9 @@ struct WalletView: View {
         btcToken = balance
       case .exchangeRateFetched(let exchangeRate):
         btcToCurrencyValue = exchangeRate
-      case .videoViewedRewardsStatusFetched(let status):
-        showEarnBTCButton = status
-        FirebaseLottieManager.shared.downloadAndSaveToCache(
-          forPath: Constants.lottiePath,
-          ignoreCache: true
-        )
+      case .videoViewedRewardsConfigFetched(let config):
+        showEarnBTCButton = (config.config?.rewardAmountINR ?? 0) > 0
+        rewardsConfig = config
       default: break
       }
     }
@@ -186,7 +184,11 @@ struct WalletView: View {
       }
     })
     .fullScreenCover(isPresented: $showEarnBTCBottomSheet) {
-      VideoViewedRewardsBottomSheet {
+      VideoViewedRewardsBottomSheet(
+        viewMilestone: rewardsConfig?.config?.viewMilestone ?? 0,
+        inrReward: rewardsConfig?.config?.rewardAmountINR ?? 0,
+        usdReward: rewardsConfig?.config?.rewardAmountUSD ?? 0
+      ) {
         showEarnBTCBottomSheet = false
       }
       .background( ClearBackgroundView() )
@@ -198,7 +200,7 @@ struct WalletView: View {
       guard isLoadingFirstTime else { return }
       await viewModel.fetchAccountInfo()
       isLoadingFirstTime = false
-      await viewModel.fetchVideoViewedRewardsStatus()
+      await viewModel.fetchVideoViewedRewardsConfig()
       await viewModel.fetchExchangeRate()
     }
   }
@@ -267,6 +269,5 @@ extension WalletView {
     static let ctaVertical = 10.0
     static let ctaHorizontal = 20.0
     static let bottomSheetBackgroundOpacity = 0.8
-    static let lottiePath = "btc_rewards/btc_rewards_views.json"
   }
 }

@@ -2,10 +2,6 @@ package com.yral.shared.features.leaderboard.ui.main
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -40,7 +36,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.yral.shared.features.leaderboard.data.models.LeaderboardMode
 import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
-import com.yral.shared.libs.designsystem.component.YralNeonBorder
+import com.yral.shared.libs.designsystem.component.neonBorder
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.delay
@@ -54,6 +50,7 @@ import yral_mobile.shared.features.leaderboard.generated.resources.ic_calander_w
 import yral_mobile.shared.features.leaderboard.generated.resources.ic_clock
 import yral_mobile.shared.features.leaderboard.generated.resources.ic_gradient_clock
 import yral_mobile.shared.libs.designsystem.generated.resources.count_down_timer
+import kotlin.time.Duration.Companion.milliseconds
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Composable
@@ -198,31 +195,21 @@ fun ColumnScope.LeaderboardCountdown(
 
 @Composable
 private fun BoxScope.LeaderboardCountdownBorder(borderColor: Color) {
-    val infiniteTransition = rememberInfiniteTransition(label = "infiniteBounce")
-    val alpha by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 0f,
-        animationSpec =
-            infiniteRepeatable(
-                tween(
-                    durationMillis = LeaderboardMainScreenConstants.COUNT_DOWN_BORDER_ANIMATION_DURATION,
-                    easing = FastOutLinearInEasing,
-                ),
-                RepeatMode.Reverse,
-            ),
-        label = "alpha",
-    )
     val containerColor = YralColors.Neutral950
     val cornerRadius = 49.dp
     val paddingValues = PaddingValues(horizontal = 0.dp, vertical = 0.dp)
     val neonColor = borderColor
-    YralNeonBorder(
-        paddingValues = paddingValues,
-        cornerRadius = cornerRadius,
-        containerColor = containerColor,
-        neonColor = neonColor,
-        borderWidth = 10f,
-        animationDuration = LeaderboardMainScreenConstants.COUNT_DOWN_BORDER_ANIMATION_DURATION.toLong(),
+    Box(
+        modifier =
+            Modifier
+                .matchParentSize()
+                .neonBorder(
+                    paddingValues = paddingValues,
+                    cornerRadius = cornerRadius,
+                    containerColor = containerColor,
+                    animationDuration = LeaderboardMainScreenConstants.COUNT_DOWN_BORDER_ANIMATION_DURATION.toLong(),
+                    neonColor = neonColor,
+                ),
     )
 }
 
@@ -286,4 +273,14 @@ fun LeaderboardHistoryIcon(modifier: Modifier) {
     }
 }
 
-internal expect fun formatMillisToHHmmSS(millis: Long): String
+@Suppress("MagicNumber")
+internal fun formatMillisToHHmmSS(millis: Long): String {
+    val duration = millis.milliseconds
+    val hours = duration.inWholeHours
+    val minutes = duration.inWholeMinutes % 60
+    val seconds = duration.inWholeSeconds % 60
+
+    fun Long.twoDigits(): String = this.toString().padStart(2, '0')
+
+    return "${hours.twoDigits()}:${minutes.twoDigits()}:${seconds.twoDigits()}"
+}

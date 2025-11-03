@@ -4,7 +4,8 @@
     <string name="btc_inr_rate">1 Bitcoin = %1$s</string>
     <string name="how_to_earn_bitcoin">How to get Bitcoin</string>
     <string name="how_to_earn_bitcoins">How to get Bitcoin reward?</string>
-    <string name="get_bitcoin">Get Bitcoin \non having views per video.</string>
+    <string name="get_bitcoin">Get Bitcoin worth %1$s\nfor every %2$s engaged views!</string>
+    <string name="get_bitcoin_base">Get Bitcoin \non having engaged views per video.</string>
     <string name="btc_credited">Bitcoin Reward added</string>
     <string name="go_to_wallet">Go to Wallet</string>
     <string name="keep_scrolling">Keep Scrolling</string>

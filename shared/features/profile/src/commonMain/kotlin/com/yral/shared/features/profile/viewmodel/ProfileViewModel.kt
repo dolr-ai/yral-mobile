@@ -16,6 +16,7 @@ import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.WalletFeatureFlags
 import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.shared.analytics.events.CtaType
+import com.yral.shared.analytics.events.FollowersListTab
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.AccountInfo
@@ -26,6 +27,7 @@ import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.profile.analytics.ProfileTelemetry
 import com.yral.shared.features.profile.domain.DeleteVideoUseCase
+import com.yral.shared.features.profile.domain.FollowNotificationUseCase
 import com.yral.shared.features.profile.domain.GetProfileVideoViewsUseCase
 import com.yral.shared.features.profile.domain.ProfileVideosPagingSource
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
@@ -78,6 +80,7 @@ class ProfileViewModel(
     private val reportVideoUseCase: ReportVideoUseCase,
     private val followUserUseCase: FollowUserUseCase,
     private val unfollowUserUseCase: UnfollowUserUseCase,
+    private val followNotificationUseCase: FollowNotificationUseCase,
     private val getProfileVideoViewsUseCase: GetProfileVideoViewsUseCase,
     private val profileTelemetry: ProfileTelemetry,
     private val shareService: ShareService,
@@ -564,8 +567,10 @@ class ProfileViewModel(
                 val currentState = _state.value
                 if (currentState.isLoggedIn) {
                     if (currentState.isFollowing) {
+                        profileTelemetry.unFollowClicked(canisterData.userPrincipalId)
                         unFollow()
                     } else {
+                        profileTelemetry.followClicked(canisterData.userPrincipalId)
                         follow()
                     }
                 }
@@ -582,6 +587,7 @@ class ProfileViewModel(
             setFollowLoading(targetPrincipal, true)
             try {
                 if (currentlyFollowing) {
+                    profileTelemetry.unFollowClicked(targetPrincipal)
                     val result =
                         unfollowUserUseCase(
                             parameter =
@@ -602,6 +608,7 @@ class ProfileViewModel(
                         )
                     }
                 } else {
+                    profileTelemetry.followClicked(targetPrincipal)
                     val result =
                         followUserUseCase(
                             parameter =
@@ -613,6 +620,7 @@ class ProfileViewModel(
                     result.onSuccess {
                         profileEventsChannel.trySend(ProfileEvents.FollowedSuccessfully)
                         sessionManager.addPrincipalToFollow(targetPrincipal)
+                        followNotification(targetPrincipal)
                     }
                     result.onFailure { error ->
                         profileEventsChannel.trySend(
@@ -641,11 +649,27 @@ class ProfileViewModel(
                 _state.update { it.copy(isFollowing = true, isFollowInProgress = false) }
                 profileEventsChannel.trySend(ProfileEvents.FollowedSuccessfully)
                 sessionManager.addPrincipalToFollow(canisterData.userPrincipalId)
+                followNotification(canisterData.userPrincipalId)
                 Logger.d("Follow") { "Started following" }
             }.onFailure { e ->
                 _state.update { it.copy(isFollowInProgress = false) }
                 profileEventsChannel.trySend(ProfileEvents.Failed(e.message ?: "Follow failed"))
                 Logger.d("Follow") { "Follow request failed $e" }
+            }
+        }
+    }
+
+    private fun followNotification(targetPrincipal: String) {
+        viewModelScope.launch {
+            // fire and forget
+            sessionManager.username?.let { userName ->
+                followNotificationUseCase(
+                    parameter =
+                        FollowNotificationUseCase.Params(
+                            followerUsername = userName,
+                            targetPrincipal = targetPrincipal,
+                        ),
+                )
             }
         }
     }
@@ -744,6 +768,21 @@ class ProfileViewModel(
                 bottomSheet = ProfileBottomSheet.FollowDetails(tab),
             )
         }
+    }
+
+    fun followListViewed(
+        tab: FollowersSheetTab,
+        totalCount: Long,
+    ) {
+        profileTelemetry.followerListViewed(
+            publisherUserId = canisterData.userPrincipalId,
+            totalCount = totalCount,
+            tab =
+                when (tab) {
+                    FollowersSheetTab.Followers -> FollowersListTab.FOLLOWERS
+                    FollowersSheetTab.Following -> FollowersListTab.FOLLOWING
+                },
+        )
     }
 }
 

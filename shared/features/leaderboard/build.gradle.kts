@@ -33,5 +33,8 @@ kotlin {
             implementation(projects.shared.libs.designsystem)
             implementation(projects.shared.rust.service)
         }
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+        }
     }
 }
