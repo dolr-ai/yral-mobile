@@ -439,7 +439,12 @@ class FeedsViewController: UIViewController {
       switch destination {
       case .openVideo(postId: let postId, canisterId: let canisterID):
         self.feedsCV.isHidden = true
-        self.pendingAnchor = DeepLinkFeedRequest(postID: postId, canisterID: canisterID ?? "")
+        self.pendingAnchor = DeepLinkFeedRequest(
+          postID: postId,
+          canisterID: canisterID ?? "",
+          numViewsAll: nil,
+          numViewsLoggedIn: nil
+        )
         self.handleAnchorIfReady()
       default: break
       }
@@ -460,7 +465,9 @@ class FeedsViewController: UIViewController {
         await viewModel.fetchDeepLinkFeed(
           request: DeepLinkFeedRequest(
             postID: anchor.postID,
-            canisterID: anchor.canisterID
+            canisterID: anchor.canisterID,
+            numViewsAll: nil,
+            numViewsLoggedIn: nil
           )
         )
       }
