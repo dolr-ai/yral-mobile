@@ -467,6 +467,33 @@ def cast_vote(request: Request):
         print("Unhandled error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
+def _get_daily_position(pid: str) -> int:
+    bucket_id, _start_ms, _end_ms = _bucket_bounds_ist()
+    daily_doc_ref = db().collection(DAILY_COLL).document(bucket_id)
+    daily_doc = daily_doc_ref.get()
+
+    if not daily_doc.exists:
+        return 0
+
+    users_ref = daily_doc_ref.collection("users")
+    user_doc = users_ref.document(pid).get()
+
+    if user_doc.exists:
+        wins = int(user_doc.get("smiley_game_wins") or 0)
+    else:
+        wins = 0
+
+    count_snap = (
+        users_ref.where("smiley_game_wins", ">", wins)
+                .count()
+                .get()
+    )
+
+    higher_count = int(count_snap[0][0].value)
+    position = higher_count + 1
+
+    return position
+
 @https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
 def cast_vote_v2(request: Request):
     balance_update_token = os.environ["BALANCE_UPDATE_TOKEN"]
@@ -596,6 +623,12 @@ def cast_vote_v2(request: Request):
         except Exception as e:
             print(f"[daily-leaderboard] failed for {pid}: {e}", file=sys.stderr)
 
+        try:
+            new_position = _get_daily_position(pid)
+        except Exception as e:
+            print(f"[rank] position calc failed for {pid}: {e}", file=sys.stderr)
+            new_position = 0
+
         # 6. success payload (voted smiley) ──────────────────────────────
         voted = smiley_map[sid]
         return jsonify({
@@ -608,7 +641,8 @@ def cast_vote_v2(request: Request):
                 "image_fallback": voted["image_fallback"]
             },
             "coins":       coins,
-            "coin_delta":  delta
+            "coin_delta":  delta,
+            "new_position": new_position
         }), 200
 
     # known error wrappers ───────────────────────────────────────────────
@@ -1842,6 +1876,93 @@ def leaderboard_history_v2(request: Request):
         return error_response(500, "FIRESTORE_ERROR", str(e))
     except Exception as e:
         print("leaderboard_history error:", e, file=sys.stderr)
+        return error_response(500, "INTERNAL", "Internal server error")
+
+@https_fn.on_request(region="us-central1")
+def daily_rank(request: Request):
+    """
+    POST /daily_rank
+
+    Request:
+      {
+        "data": {
+          "principal_id": "<pid>"
+        }
+      }
+
+    Response (200):
+      {
+        "principal_id": "<pid>",
+        "wins": <int>,
+        "position": <int>
+      }
+    """
+    try:
+        if request.method != "POST":
+            return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
+
+        body = request.get_json(silent=True) or {}
+        data = body.get("data", {}) or {}
+        pid = str(data.get("principal_id", "")).strip()
+
+        if not pid:
+            return error_response(400, "MISSING_PID", "principal_id is required")
+
+        # ───────── Auth & App Check ─────────
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
+        auth.verify_id_token(auth_header.split(" ", 1)[1])
+
+        # Optional: Uncomment if App Check required
+        # actok = request.headers.get("X-Firebase-AppCheck")
+        # if not actok:
+        #     return error_response(401, "APPCHECK_MISSING", "App Check token required")
+        # try:
+        #     app_check.verify_token(actok)
+        # except Exception:
+        #     return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
+
+        # ───────── Get bucket and user doc ─────────
+        bucket_id, _start_ms, _end_ms = _bucket_bounds_ist()
+        daily_doc_ref = db().collection(DAILY_COLL).document(bucket_id)
+        daily_doc = daily_doc_ref.get()
+
+        if not daily_doc.exists:
+            return jsonify({
+                "principal_id": pid,
+                "wins": 0,
+                "position": 0
+            }), 200
+
+        users_ref = daily_doc_ref.collection("users")
+        user_doc = users_ref.document(pid).get()
+
+        if user_doc.exists:
+            wins = int(user_doc.get("smiley_game_wins") or 0)
+        else:
+            wins = 0
+
+        count_snap = (
+            users_ref.where("smiley_game_wins", ">", wins)
+                     .count()
+                     .get()
+        )
+        higher_count = int(count_snap[0][0].value)
+        position = higher_count + 1
+
+        return jsonify({
+            "principal_id": pid,
+            "wins": wins,
+            "position": position
+        }), 200
+
+    except auth.InvalidIdTokenError:
+        return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
+    except GoogleAPICallError as e:
+        return error_response(500, "FIRESTORE_ERROR", str(e))
+    except Exception as e:
+        print("daily_rank error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
 
