@@ -16,6 +16,7 @@ import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.WalletFeatureFlags
 import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.shared.analytics.events.CtaType
+import com.yral.shared.analytics.events.EditProfileSource
 import com.yral.shared.analytics.events.FollowersListTab
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.exceptions.YralException
@@ -440,6 +441,10 @@ class ProfileViewModel(
 
     fun uploadVideoClicked() {
         profileTelemetry.onUploadVideoClicked()
+    }
+
+    fun onEditProfileOpened(source: EditProfileSource) {
+        profileTelemetry.onEditProfileStarted(source)
     }
 
     fun setManualRefreshTriggered(isTriggered: Boolean) {

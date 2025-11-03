@@ -7,6 +7,7 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.features.profile.analytics.ProfileTelemetry
 import com.yral.shared.features.profile.domain.UploadProfileImageUseCase
 import com.yral.shared.features.profile.domain.UploadProfileImageUseCase.UploadProfileImageParams
 import com.yral.shared.preferences.PrefKeys
@@ -28,12 +29,14 @@ import yral_mobile.shared.features.profile.generated.resources.profile_picture_u
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
+@Suppress("TooManyFunctions")
 class EditProfileViewModel(
     private val sessionManager: SessionManager,
     private val preferences: Preferences,
     private val getProfileDetailsV4UseCase: GetProfileDetailsV4UseCase,
     private val updateProfileDetailsUseCase: UpdateProfileDetailsUseCase,
     private val uploadProfileImageUseCase: UploadProfileImageUseCase,
+    private val profileTelemetry: ProfileTelemetry,
     private val crashlyticsManager: CrashlyticsManager,
 ) : ViewModel() {
     private val logger = Logger.withTag("EditProfileViewModel")
@@ -110,7 +113,7 @@ class EditProfileViewModel(
         }
     }
 
-    @Suppress("TooGenericExceptionCaught")
+    @Suppress("TooGenericExceptionCaught", "LongMethod")
     fun uploadProfileImage(imageBytes: ByteArray) {
         if (_state.value.isUploadingProfileImage) {
             return
@@ -142,6 +145,8 @@ class EditProfileViewModel(
 
             uploadProfileImageUseCase(UploadProfileImageParams(base64))
                 .onSuccess { imageUrl ->
+                    val previousImageUrl = _state.value.profileImageUrl
+                    val isImageUpdated = imageUrl != previousImageUrl && imageUrl.isNotEmpty()
                     sessionManager.updateProfilePicture(imageUrl)
                     preferences.putString(PrefKeys.PROFILE_PIC.name, imageUrl)
                     _state.update { current ->
@@ -149,8 +154,19 @@ class EditProfileViewModel(
                             profileImageUrl = imageUrl,
                             isUploadingProfileImage = false,
                             profileImageUploadError = null,
+                            hasProfileImageChanged = isImageUpdated,
                             profileImageToastMessage = Res.string.profile_picture_updated,
                         )
+                    }
+                    if (isImageUpdated) {
+                        profileTelemetry.onEditProfileCompleted(
+                            usernameUpdated = false,
+                            profileImageUpdated = true,
+                            bioUpdated = false,
+                        )
+                        _state.update { current ->
+                            current.copy(hasProfileImageChanged = false)
+                        }
                     }
                 }.onFailure { error ->
                     logger.e { "Failed to upload profile image: ${error.message}" }
@@ -266,19 +282,31 @@ class EditProfileViewModel(
 
     @Suppress("LongMethod", "CyclomaticComplexMethod", "ReturnCount", "TooGenericExceptionCaught")
     fun saveProfileChanges() {
-        val sanitizedUsername = sanitizeInput(_state.value.usernameInput)
-        val sanitizedBio = sanitizeBio(_state.value.bioInput)
+        val currentState = _state.value
+        val sanitizedUsername = sanitizeInput(currentState.usernameInput)
+        val sanitizedBio = sanitizeBio(currentState.bioInput)
         val userPrincipalText = sessionManager.userPrincipal ?: return
         val principal = userPrincipalText
         val identity = sessionManager.identity
         val userCanisterId = sessionManager.canisterID
-        val previousUsername = _state.value.initialUsername
-        val previousBio = _state.value.initialBio
+        val previousUsername = currentState.initialUsername
+        val previousBio = currentState.initialBio
+        val profileImageUpdated = currentState.hasProfileImageChanged
         val shouldUpdateUsername = previousUsername != sanitizedUsername
         val shouldUpdateBio = previousBio != sanitizedBio
 
+        profileTelemetry.onEditProfileCompleted(
+            usernameUpdated = shouldUpdateUsername,
+            profileImageUpdated = profileImageUpdated,
+            bioUpdated = shouldUpdateBio,
+        )
+
         _state.update { current ->
-            current.copy(usernameInput = sanitizedUsername, bioInput = sanitizedBio)
+            current.copy(
+                usernameInput = sanitizedUsername,
+                bioInput = sanitizedBio,
+                hasProfileImageChanged = false,
+            )
         }
 
         if (shouldUpdateUsername && (identity == null || userCanisterId == null)) {
@@ -297,6 +325,7 @@ class EditProfileViewModel(
                     isUsernameValid = true,
                     usernameErrorMessage = null,
                     shouldFocusUsername = false,
+                    hasProfileImageChanged = false,
                 )
             }
             return
@@ -473,11 +502,21 @@ class EditProfileViewModel(
                 isSavingProfile = false,
                 isBioFocused = false,
                 profileImageToastMessage = null,
+                hasProfileImageChanged = false,
             )
         }
     }
 
     fun sanitizedUsername(): String = sanitizeInput(_state.value.usernameInput)
+
+    fun trackEditProfileCancelledIfUnsaved() {
+        val currentState = _state.value
+        val usernameChanged = sanitizeInput(currentState.usernameInput) != currentState.initialUsername
+        val bioChanged = sanitizeBio(currentState.bioInput) != currentState.initialBio
+        if (usernameChanged || bioChanged) {
+            profileTelemetry.onEditProfileCancelled()
+        }
+    }
 
     private fun sanitizeInput(value: String): String = value.trim().removePrefix("@")
 
@@ -496,6 +535,7 @@ data class EditProfileViewState(
     val profileImageUrl: String? = null,
     val isUploadingProfileImage: Boolean = false,
     val profileImageUploadError: String? = null,
+    val hasProfileImageChanged: Boolean = false,
     val usernameInput: String = "",
     val uniqueId: String = "",
     val initialUsername: String = "",
