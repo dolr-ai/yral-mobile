@@ -115,6 +115,8 @@ import yral_mobile.shared.features.profile.generated.resources.error_loading_mor
 import yral_mobile.shared.features.profile.generated.resources.error_loading_videos
 import yral_mobile.shared.features.profile.generated.resources.failed_to_delete_video
 import yral_mobile.shared.features.profile.generated.resources.pink_heart
+import yral_mobile.shared.features.profile.generated.resources.profile_empty_other_subtitle
+import yral_mobile.shared.features.profile.generated.resources.profile_empty_other_title
 import yral_mobile.shared.features.profile.generated.resources.profile_empty_subtitle
 import yral_mobile.shared.features.profile.generated.resources.profile_empty_title
 import yral_mobile.shared.features.profile.generated.resources.profile_locked_subtitle
@@ -757,7 +759,11 @@ private fun SuccessContent(
             },
         ) {
             if (profileVideos.itemCount == 0 && profileVideos.loadState.refresh is LoadState.NotLoading) {
-                EmptyStateContent(offset, uploadVideo)
+                EmptyStateContent(
+                    offset = offset,
+                    isOwnProfile = isOwnProfile,
+                    uploadVideo = uploadVideo,
+                )
             } else {
                 VideoGridContent(
                     gridState = gridState,
@@ -777,8 +783,22 @@ private fun SuccessContent(
 @Composable
 private fun EmptyStateContent(
     offset: Float,
+    isOwnProfile: Boolean,
     uploadVideo: () -> Unit,
 ) {
+    val titleRes =
+        if (isOwnProfile) {
+            Res.string.profile_empty_title
+        } else {
+            Res.string.profile_empty_other_title
+        }
+    val subtitleRes =
+        if (isOwnProfile) {
+            Res.string.profile_empty_subtitle
+        } else {
+            Res.string.profile_empty_other_subtitle
+        }
+
     Column(
         modifier =
             Modifier
@@ -790,7 +810,7 @@ private fun EmptyStateContent(
         verticalArrangement = Arrangement.Center,
     ) {
         Text(
-            text = stringResource(Res.string.profile_empty_title),
+            text = stringResource(titleRes),
             style =
                 LocalAppTopography.current.mdSemiBold,
             color = YralColors.NeutralTextPrimary,
@@ -798,18 +818,20 @@ private fun EmptyStateContent(
         )
         Spacer(modifier = Modifier.height(10.dp))
         Text(
-            text = stringResource(Res.string.profile_empty_subtitle),
+            text = stringResource(subtitleRes),
             style =
                 LocalAppTopography.current.baseRegular,
             color = YralColors.NeutralTextSecondary,
             textAlign = TextAlign.Center,
         )
-        Spacer(modifier = Modifier.height(30.dp))
-        YralGradientButton(
-            modifier = Modifier.width(236.dp),
-            text = stringResource(Res.string.create_ai_video),
-            onClick = uploadVideo,
-        )
+        if (isOwnProfile) {
+            Spacer(modifier = Modifier.height(30.dp))
+            YralGradientButton(
+                modifier = Modifier.width(236.dp),
+                text = stringResource(Res.string.create_ai_video),
+                onClick = uploadVideo,
+            )
+        }
     }
 }
 

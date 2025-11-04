@@ -1,46 +1,9 @@
 package com.yral.shared.core.utils
 
-private val USERNAME_PREFIX_WORDS =
-    listOf(
-        "amber",
-        "aster",
-        "aurora",
-        "blaze",
-        "cascade",
-        "celeste",
-        "ember",
-        "glimmer",
-        "halo",
-        "harbor",
-        "lumen",
-        "meadow",
-        "nebula",
-        "onyx",
-        "orbit",
-        "pebble",
-        "quartz",
-        "solace",
-        "solstice",
-        "spark",
-        "spruce",
-        "starlit",
-        "summit",
-        "terra",
-        "topaz",
-        "velvet",
-        "verve",
-        "vista",
-        "willow",
-        "zenith",
-        "zephyr",
-    )
+private const val USERNAME_DIGIT_COUNT = 3
+private const val USERNAME_MAX_LENGTH = 15
 
-private const val USERNAME_HASH_LENGTH = 6
-private const val USERNAME_BASE = 36
-private const val USERNAME_PAD_CHAR = '0'
-
-private const val FNV64_OFFSET_BASIS = 0xcbf29ce484222325uL
-private const val FNV64_PRIME = 0x100000001b3uL
+internal expect fun sha256(data: ByteArray): ByteArray
 
 fun resolveUsername(
     preferred: String?,
@@ -53,14 +16,67 @@ fun resolveUsername(
     return principal?.let { generateUsernameFromPrincipal(it) }
 }
 
+@Suppress("MagicNumber")
 fun generateUsernameFromPrincipal(principal: String): String {
-    val hash =
-        principal.encodeToByteArray().fold(FNV64_OFFSET_BASIS) { acc, byte ->
-            (acc xor byte.toUByte().toULong()) * FNV64_PRIME
+    val seed = sha256(principal.encodeToByteArray())
+    val generator = SeededGenerator(seed)
+    val noun = USERNAME_NOUNS.randomOrDefault(generator, "apple")
+    val adjective = USERNAME_ADJECTIVES.randomOrDefault(generator, "bold")
+
+    val base =
+        StringBuilder(noun.length + adjective.length + USERNAME_DIGIT_COUNT).apply {
+            append(noun)
+            append(adjective)
+            val limit = (USERNAME_MAX_LENGTH - USERNAME_DIGIT_COUNT).coerceAtLeast(0)
+            if (length > limit) {
+                setLength(limit)
+            }
         }
-    val base36 = hash.toString(USERNAME_BASE)
-    val suffix = base36.takeLast(USERNAME_HASH_LENGTH).padStart(USERNAME_HASH_LENGTH, USERNAME_PAD_CHAR)
-    val prefixIndex = (hash % USERNAME_PREFIX_WORDS.size.toULong()).toInt()
-    val prefix = USERNAME_PREFIX_WORDS[prefixIndex]
-    return "$prefix-${suffix.lowercase()}"
+
+    repeat(USERNAME_DIGIT_COUNT) {
+        base.append(generator.nextInt(10))
+    }
+
+    return base.toString()
 }
+
+@Suppress("MagicNumber")
+private class SeededGenerator(
+    seedBytes: ByteArray,
+) {
+    private val state =
+        if (seedBytes.size >= 32) {
+            seedBytes.copyOf(32)
+        } else {
+            ByteArray(32).also { seedBytes.copyInto(it, endIndex = seedBytes.size) }
+        }
+    private var index = 0
+
+    private fun nextChunk(): Long {
+        if (index + 8 > state.size) {
+            index = 0
+        }
+        var value = 0L
+        repeat(8) { offset ->
+            value = (value shl 8) or (state[index + offset].toLong() and 0xffL)
+        }
+        index += 8
+        return value
+    }
+
+    fun nextInt(bound: Int): Int {
+        require(bound > 0)
+        val next = nextChunk() and Long.MAX_VALUE
+        return (next % bound.toLong()).toInt()
+    }
+}
+
+private fun List<String>.randomOrDefault(
+    generator: SeededGenerator,
+    fallback: String,
+): String =
+    if (isEmpty()) {
+        fallback
+    } else {
+        this[generator.nextInt(size)]
+    }
