@@ -17,6 +17,42 @@ struct PostsResponse: Codable {
   }
 }
 
+struct AIPostsResponse: Codable {
+  let userID: String
+  let count: Int
+  let timestamp: Double
+  let videos: [AIPostDTO]
+
+  enum CodingKeys: String, CodingKey {
+    case userID = "user_id"
+    case count, timestamp, videos
+  }
+}
+
+struct AIPostDTO: Codable {
+  let videoID: String
+  let postID: String
+  let canisterID: String
+  let publisherUserID: String
+  let numViewsAll: Int64?
+  let numViewsLoggedIn: Int64?
+
+  enum CodingKeys: String, CodingKey {
+    case postID = "post_id"
+    case canisterID = "canister_id"
+    case videoID = "video_id"
+    case publisherUserID = "publisher_user_id"
+    case numViewsAll = "num_views_all"
+    case numViewsLoggedIn = "num_views_loggedin"
+  }
+}
+
+extension AIPostDTO: FeedMapping {
+  var nsfwProbability: Double {
+    return .zero
+  }
+}
+
 struct CacheDTO: Codable {
   let postID: String
   let canisterID: String

@@ -45,6 +45,10 @@ final class FeedDIContainer {
       authClient: dependencies.authClient
     )
     return FeedsViewModel(
+      aiFeedsUseCase: FetchAIFeedsUseCase(
+        feedRepository: repository,
+        crashReporter: dependencies.crashReporter
+      ),
       fetchFeedsUseCase: FetchInitialFeedsUseCase(
         feedRepository: repository,
         crashReporter: dependencies.crashReporter

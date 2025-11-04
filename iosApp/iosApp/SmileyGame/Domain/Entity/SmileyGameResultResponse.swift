@@ -12,5 +12,6 @@ struct SmileyGameResultResponse: Hashable {
   let outcome: String
   let coins: UInt64
   let coinDelta: Int
+  let newPosition: Int
   let smiley: Smiley
 }

@@ -420,9 +420,9 @@ extension ProfileView {
     // swiftlint: disable large_tuple
     let (userPrincipal, canisterPrincipal, email, coins, isLoggedIn): (String, String, String?, UInt64, Bool) = {
       switch session.state {
-      case .ephemeralAuthentication(let userPrincipal, let canisterPrincipal, let coins, _):
+      case .ephemeralAuthentication(let userPrincipal, let canisterPrincipal, let coins, _, _):
         return (userPrincipal, canisterPrincipal, nil, coins, false)
-      case .permanentAuthentication(let userPrincipal, let canisterPrincipal, let email, let coins, _):
+      case .permanentAuthentication(let userPrincipal, let canisterPrincipal, let email, let coins, _, _):
         return (userPrincipal, canisterPrincipal, email, coins, true)
       default:
         return ("", "", nil, .zero, false)
