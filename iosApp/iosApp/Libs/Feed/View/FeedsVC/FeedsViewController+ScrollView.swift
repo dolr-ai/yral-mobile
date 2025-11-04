@@ -111,7 +111,11 @@ extension FeedsViewController: UICollectionViewDelegate {
     if indexPath.item >= feedsCount - Constants.thresholdForLoadingMoreResults, !loadMoreRequestMade {
       Task {
         self.loadMoreRequestMade = true
-        await viewModel.loadMoreFeeds()
+        if self.feedType == .otherUsers {
+          await viewModel.loadMoreAIFeeds()
+        } else {
+          await viewModel.loadMoreFeeds()
+        }
       }
     }
     if indexPath.item >= feedsCount - 1 {

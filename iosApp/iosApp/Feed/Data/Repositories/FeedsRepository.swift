@@ -31,6 +31,60 @@ class FeedsRepository: FeedRepositoryProtocol {
     self.authClient = authClient
   }
 
+  func getAIFeeds(count: Int) async -> Result<[FeedResult], FeedError> {
+    guard let principal = authClient.userPrincipalString else {
+      return .failure(FeedError.authError(.authenticationFailed("Missing principal")))
+    }
+
+    var aiFeedResponse: [AIPostDTO]
+    do {
+      aiFeedResponse = try await httpService.performRequest(
+        for: CacheEndPoints.getAIFeed(
+          request: AIFeedRequestDTO(
+            userID: principal,
+            count: count,
+            recommendationType: "mixed"
+          )
+        ),
+        decodeAs: AIPostsResponse.self
+      ).videos
+    } catch {
+      switch error {
+      case let error as NetworkError:
+        return .failure(FeedError.networkError(error))
+      default:
+        return .failure(FeedError.unknown(error.localizedDescription))
+      }
+    }
+
+    var aggregatedErrors: [Error] = []
+    var result: [FeedResult] = []
+
+    for feed in aiFeedResponse {
+      do {
+        let feedResult = try await self.mapToFeedResults(feed: feed)
+        result.append(feedResult)
+        self.feedsUpdateSubject.send([feedResult])
+      } catch {
+        let feedError = self.handleFeedError(error: error)
+        aggregatedErrors.append(feedError)
+      }
+    }
+
+    if !aggregatedErrors.isEmpty {
+      return .failure(
+        FeedError.aggregated(
+          AggregatedError(
+            errors: aggregatedErrors
+          ),
+          result
+        )
+      )
+    }
+
+    return .success((result))
+  }
+
   func getInitialFeeds(numResults: Int) async -> Result<Void, FeedError> {
     guard let principal = authClient.canisterPrincipalString else {
       return .failure(FeedError.authError(.authenticationFailed("Missing principal")))
@@ -417,6 +471,19 @@ class CacheEndPoints {
       method: .post,
       headers: ["Content-Type": "application/json"],
       body: try JSONEncoder().encode(request)
+    )
+  }
+
+  static func getAIFeed(request: AIFeedRequestDTO) throws -> Endpoint {
+    return Endpoint(
+      http: "",
+      baseURL: URL(string: FeedsRepository.Constants.aiFeedsBaseURL)!,
+      path: "\(FeedsRepository.Constants.aiFeedSuffix)/\(request.userID)",
+      method: .get,
+      queryItems: [
+        URLQueryItem(name: "count", value: String(request.count)),
+        URLQueryItem(name: "rec_type", value: request.recommendationType)
+      ]
     )
   }
 }

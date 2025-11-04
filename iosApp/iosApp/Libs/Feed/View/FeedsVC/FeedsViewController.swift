@@ -112,7 +112,11 @@ class FeedsViewController: UIViewController {
     addDeepLinkListner()
     Task { @MainActor [weak self] in
       guard let self = self else { return }
-      await viewModel.fetchFeeds(request: InitialFeedRequest(numResults: Constants.initialNumResults))
+      if feedType == .otherUsers {
+        await viewModel.fetchAIFeeds(count: Constants.initialNumResults)
+      } else {
+        await viewModel.fetchFeeds(request: InitialFeedRequest(numResults: Constants.initialNumResults))
+      }
     }
     NotificationCenter.default.addObserver(
       self,
@@ -420,13 +424,15 @@ class FeedsViewController: UIViewController {
       .sink { [weak self] in
         guard let self else { return }
         Task { @MainActor in
-          await self.viewModel.fetchFeeds(
-            request: InitialFeedRequest(
-              numResults: FeedsViewController.Constants.initialNumResults
-            )
-          )
           if self.feedType == .otherUsers {
+            await self.viewModel.fetchAIFeeds(count: FeedsViewController.Constants.initialNumResults)
             await self.viewModel.fetchSmileys()
+          } else {
+            await self.viewModel.fetchFeeds(
+              request: InitialFeedRequest(
+                numResults: FeedsViewController.Constants.initialNumResults
+              )
+            )
           }
         }
       }
