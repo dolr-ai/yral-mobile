@@ -153,7 +153,7 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   }
 
   @MainActor func loadMoreAIFeeds() async {
-    unifiedEvent = .loadedMoreFeeds
+    unifiedEvent = .loadingMoreFeeds
     unifiedState = .loading
 
     do {
