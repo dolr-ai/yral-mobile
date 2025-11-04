@@ -9,4 +9,6 @@
 struct DeepLinkFeedRequest {
   let postID: String
   let canisterID: String
+  let numViewsAll: Int64?
+  let numViewsLoggedIn: Int64?
 }
