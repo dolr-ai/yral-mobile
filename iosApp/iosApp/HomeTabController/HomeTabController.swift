@@ -142,7 +142,9 @@ struct HomeTabController: View {
         ZStack(alignment: .center) {
           NotificationsNudge {
             showNotificationsNudge = false
-            AnalyticsModuleKt.getAnalyticsManager().trackEvent(event: PushNotificationsPopupEventData())
+            AnalyticsModuleKt.getAnalyticsManager().trackEvent(event: PushNotificationsPopupEventData(
+              source: .video
+            ))
           }
           .background( ClearBackgroundView() )
         }

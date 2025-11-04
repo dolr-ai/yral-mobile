@@ -36,7 +36,7 @@ class NotificationToggleViewModel: ObservableObject {
             .requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
               DispatchQueue.main.async {
                 AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-                  event: PushNotificationsEnabledEventData()
+                  event: PushNotificationsEnabledEventData(source: .video)
                 )
                 self.isNotificationEnabled = granted
                 if granted {
