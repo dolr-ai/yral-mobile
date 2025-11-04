@@ -62,6 +62,7 @@ class CastVoteRepository: CastVoteRepositoryProtocol {
         outcome: response.outcome,
         coins: response.coins,
         coinDelta: response.coinDelta,
+        newPosition: response.newPosition,
         smiley: response.smiley.toDomain()
       ))
     } catch {

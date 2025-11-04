@@ -125,6 +125,10 @@
 		105E2DB22EB331020097690E /* VideoInsightsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105E2DB02EB330FC0097690E /* VideoInsightsViewModel.swift */; };
 		105E2E862EB8F8180097690E /* FetchAIFeedsUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105E2E852EB8F8100097690E /* FetchAIFeedsUseCase.swift */; };
 		105E2E872EB8F8180097690E /* FetchAIFeedsUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105E2E852EB8F8100097690E /* FetchAIFeedsUseCase.swift */; };
+		105E2EAF2EB9FD620097690E /* DailyRankResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105E2EAE2EB9FD5D0097690E /* DailyRankResponse.swift */; };
+		105E2EB02EB9FD620097690E /* DailyRankResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105E2EAE2EB9FD5D0097690E /* DailyRankResponse.swift */; };
+		105E2EB22EB9FD7F0097690E /* DailyRankError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105E2EB12EB9FD7B0097690E /* DailyRankError.swift */; };
+		105E2EB32EB9FD7F0097690E /* DailyRankError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105E2EB12EB9FD7B0097690E /* DailyRankError.swift */; };
 		107079612E742034000C7A2C /* LeaderboardView+Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107079602E742029000C7A2C /* LeaderboardView+Constants.swift */; };
 		107079622E742034000C7A2C /* LeaderboardView+Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107079602E742029000C7A2C /* LeaderboardView+Constants.swift */; };
 		1072EF7C2E8EBFCA00C34353 /* VideoViewedRewardsDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1072EF7B2E8EBFBB00C34353 /* VideoViewedRewardsDTO.swift */; };
@@ -866,6 +870,8 @@
 		105E2DAD2EB2356E0097690E /* VideoInsightsRequestDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoInsightsRequestDTO.swift; sourceTree = "<group>"; };
 		105E2DB02EB330FC0097690E /* VideoInsightsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoInsightsViewModel.swift; sourceTree = "<group>"; };
 		105E2E852EB8F8100097690E /* FetchAIFeedsUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FetchAIFeedsUseCase.swift; sourceTree = "<group>"; };
+		105E2EAE2EB9FD5D0097690E /* DailyRankResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyRankResponse.swift; sourceTree = "<group>"; };
+		105E2EB12EB9FD7B0097690E /* DailyRankError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyRankError.swift; sourceTree = "<group>"; };
 		107079602E742029000C7A2C /* LeaderboardView+Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LeaderboardView+Constants.swift"; sourceTree = "<group>"; };
 		1072EF7B2E8EBFBB00C34353 /* VideoViewedRewardsDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoViewedRewardsDTO.swift; sourceTree = "<group>"; };
 		1072EF7E2E8EC47800C34353 /* VideoViewedRewardsUseCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoViewedRewardsUseCase.swift; sourceTree = "<group>"; };
@@ -1494,6 +1500,8 @@
 		107C60AE2DBF459E006FC467 /* Entity */ = {
 			isa = PBXGroup;
 			children = (
+				105E2EB12EB9FD7B0097690E /* DailyRankError.swift */,
+				105E2EAE2EB9FD5D0097690E /* DailyRankResponse.swift */,
 				10020AAF2DF7FE2400DF269E /* SatsCoinError.swift */,
 				10020AAC2DF7FDAC00DF269E /* SatsCoinResponse.swift */,
 				105036F52DDB289D00571B4E /* ExchangePrincipalResponse.swift */,
@@ -3771,6 +3779,7 @@
 				100FCD702E659CE400E9A02D /* ViewControllerWrapper.swift in Sources */,
 				100540D82E9E6147004F8588 /* SeededGenerator.swift in Sources */,
 				ACB46A532D0ED22B002E200C /* FeedQuery.swift in Sources */,
+				105E2EB02EB9FD620097690E /* DailyRankResponse.swift in Sources */,
 				AC32E4502D296628001DDA43 /* AccountUseCase.swift in Sources */,
 				ACCA778F2DE4C1A2005BC0FA /* EventBuffer.swift in Sources */,
 				ACEBF7EF2D6F847300B594A0 /* ToastManager.swift in Sources */,
@@ -3936,6 +3945,7 @@
 				107C60912DB7809A006FC467 /* UIView+Extensions.swift in Sources */,
 				ACDD23E42D8B19FF00AB0DAF /* MyVideosUseCase.swift in Sources */,
 				ACF63A742DC26C9500C4BCCC /* TokenClaimsDTO.swift in Sources */,
+				105E2EB22EB9FD7F0097690E /* DailyRankError.swift in Sources */,
 				ACC0D4342D8BFE67006DCF5C /* NudgePopupView.swift in Sources */,
 				AC1ACFA02DB964AB001BDCFD /* SwiftUI+Extensions.swift in Sources */,
 				ACAA4D722DDCF866001092A6 /* FeedsPlayer+Events.swift in Sources */,
@@ -4114,6 +4124,7 @@
 				100FCD6F2E659CE400E9A02D /* ViewControllerWrapper.swift in Sources */,
 				100540D92E9E6147004F8588 /* SeededGenerator.swift in Sources */,
 				ACB46A542D0ED22B002E200C /* FeedQuery.swift in Sources */,
+				105E2EAF2EB9FD620097690E /* DailyRankResponse.swift in Sources */,
 				AC32E44F2D296628001DDA43 /* AccountUseCase.swift in Sources */,
 				ACCA778E2DE4C1A2005BC0FA /* EventBuffer.swift in Sources */,
 				ACEBF7F02D6F847300B594A0 /* ToastManager.swift in Sources */,
@@ -4279,6 +4290,7 @@
 				107C60902DB7809A006FC467 /* UIView+Extensions.swift in Sources */,
 				ACDD23E52D8B19FF00AB0DAF /* MyVideosUseCase.swift in Sources */,
 				ACF63A752DC26C9500C4BCCC /* TokenClaimsDTO.swift in Sources */,
+				105E2EB32EB9FD7F0097690E /* DailyRankError.swift in Sources */,
 				ACC0D4352D8BFE67006DCF5C /* NudgePopupView.swift in Sources */,
 				AC1ACF9F2DB964AB001BDCFD /* SwiftUI+Extensions.swift in Sources */,
 				ACAA4D732DDCF866001092A6 /* FeedsPlayer+Events.swift in Sources */,

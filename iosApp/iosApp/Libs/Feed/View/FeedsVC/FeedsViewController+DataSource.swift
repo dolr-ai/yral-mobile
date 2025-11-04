@@ -51,7 +51,8 @@ extension FeedsViewController {
             imageURL: feed.profileImageURL,
             title: feed.principalID,
             subtitle: feed.postDescription,
-            coins: session.state.coins
+            coins: session.state.coins,
+            position: session.state.dailyRank
           ),
           smileyGame: feed.smileyGame,
           session: session,
@@ -233,6 +234,7 @@ extension FeedsViewController {
     let oldBalance = session.state.coins
     let updatedBalance = Int(oldBalance) + response.coinDelta
     session.update(coins: UInt64(updatedBalance))
+    session.update(dailyRank: response.newPosition)
   }
 
   func updateUIAfterGamePlayed(for videoID: String) {

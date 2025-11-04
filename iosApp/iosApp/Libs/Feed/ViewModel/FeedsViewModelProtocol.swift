@@ -90,6 +90,6 @@ protocol FeedViewModelProtocol: ObservableObject {
 }
 
 extension FeedViewModelProtocol {
-  func fetchSmileys() async {}
-  func castVote(request: CastVoteQuery) async {}
+  func fetchSmileys() async { }
+  func castVote(request: CastVoteQuery) async { }
 }
