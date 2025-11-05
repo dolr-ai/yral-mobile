@@ -26,10 +26,10 @@ import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.utils.getAccountInfo
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
-import com.yral.shared.data.feed.domain.CommonApis
-import com.yral.shared.data.feed.domain.FeedDetails
-import com.yral.shared.data.feed.domain.VideoViews
-import com.yral.shared.data.feed.domain.useCases.GetVideoViewsUseCase
+import com.yral.shared.data.domain.CommonApis
+import com.yral.shared.data.domain.models.FeedDetails
+import com.yral.shared.data.domain.models.VideoViews
+import com.yral.shared.data.domain.useCases.GetVideoViewsUseCase
 import com.yral.shared.features.profile.analytics.ProfileTelemetry
 import com.yral.shared.features.profile.domain.DeleteVideoUseCase
 import com.yral.shared.features.profile.domain.FollowNotificationUseCase

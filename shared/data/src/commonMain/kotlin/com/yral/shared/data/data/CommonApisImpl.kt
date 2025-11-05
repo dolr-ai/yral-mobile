@@ -1,7 +1,8 @@
-package com.yral.shared.data.feed.data
+package com.yral.shared.data.data
 
-import com.yral.shared.data.feed.domain.CommonApis
-import com.yral.shared.data.feed.domain.VideoViews
+import com.yral.shared.data.data.models.toDomain
+import com.yral.shared.data.domain.CommonApis
+import com.yral.shared.data.domain.models.VideoViews
 
 class CommonApisImpl(
     val remoteDataSource: CommonApisDataSource,

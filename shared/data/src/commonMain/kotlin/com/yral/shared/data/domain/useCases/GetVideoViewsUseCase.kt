@@ -1,7 +1,7 @@
-package com.yral.shared.data.feed.domain.useCases
+package com.yral.shared.data.domain.useCases
 
-import com.yral.shared.data.feed.domain.CommonApis
-import com.yral.shared.data.feed.domain.VideoViews
+import com.yral.shared.data.domain.CommonApis
+import com.yral.shared.data.domain.models.VideoViews
 import com.yral.shared.libs.arch.domain.SuspendUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers

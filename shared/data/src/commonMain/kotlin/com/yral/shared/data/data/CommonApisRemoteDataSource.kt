@@ -1,6 +1,7 @@
-package com.yral.shared.data.feed.data
+package com.yral.shared.data.data
 
 import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
+import com.yral.shared.data.data.models.VideoViewsDto
 import com.yral.shared.http.httpPost
 import io.ktor.client.HttpClient
 import io.ktor.client.request.setBody

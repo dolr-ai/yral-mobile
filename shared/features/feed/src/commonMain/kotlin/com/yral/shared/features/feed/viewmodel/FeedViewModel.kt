@@ -17,9 +17,9 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.utils.processFirstNSuspendFlow
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
-import com.yral.shared.data.feed.domain.FeedDetails
-import com.yral.shared.data.feed.domain.Post
-import com.yral.shared.data.feed.domain.useCases.GetVideoViewsUseCase
+import com.yral.shared.data.domain.models.FeedDetails
+import com.yral.shared.data.domain.models.Post
+import com.yral.shared.data.domain.useCases.GetVideoViewsUseCase
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.feed.analytics.FeedTelemetry

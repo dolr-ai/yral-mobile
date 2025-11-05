@@ -3,8 +3,8 @@ package com.yral.shared.features.profile.domain
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import co.touchlab.kermit.Logger
-import com.yral.shared.data.feed.domain.CommonApis
-import com.yral.shared.data.feed.domain.FeedDetails
+import com.yral.shared.data.domain.CommonApis
+import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.features.profile.domain.repository.ProfileRepository
 
 class ProfileVideosPagingSource(
