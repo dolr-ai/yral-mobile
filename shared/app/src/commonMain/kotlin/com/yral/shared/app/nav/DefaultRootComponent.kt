@@ -113,6 +113,7 @@ class DefaultRootComponent(
             onUploadVideoClicked = {},
             openAccount = {},
             openEditProfile = {},
+            openProfile = this::openProfile,
             onBackClicked = this::onBackClicked,
             showAlertsOnDialog = { this.showSlot(SlotConfig.AlertsRequestBottomSheet(it)) },
         )

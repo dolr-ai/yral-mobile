@@ -78,6 +78,7 @@ fun FollowersBottomSheet(
     viewerPrincipal: String?,
     onTabSelected: (FollowersSheetTab) -> Unit,
     onFollowToggle: (String, Boolean) -> Unit,
+    onUserSelected: (FollowerItem) -> Unit,
 ) {
     val currentListSize =
         when (initialTab) {
@@ -107,6 +108,7 @@ fun FollowersBottomSheet(
             viewerPrincipal = viewerPrincipal,
             onTabSelected = onTabSelected,
             onFollowToggle = onFollowToggle,
+            onUserSelected = onUserSelected,
         )
     }
 }
@@ -124,6 +126,7 @@ private fun FollowersBottomSheetContent(
     viewerPrincipal: String?,
     onTabSelected: (FollowersSheetTab) -> Unit,
     onFollowToggle: (String, Boolean) -> Unit,
+    onUserSelected: (FollowerItem) -> Unit,
 ) {
     var selectedTab by remember(initialTab) { mutableStateOf(initialTab) }
     val pagingItems = if (selectedTab == FollowersSheetTab.Followers) followers else following
@@ -194,6 +197,7 @@ private fun FollowersBottomSheetContent(
                                         followLoading = followLoading,
                                         viewerPrincipal = viewerPrincipal,
                                         onFollowToggle = onFollowToggle,
+                                        onUserSelected = onUserSelected,
                                     )
                                 }
                             }
@@ -360,6 +364,7 @@ private fun FollowerRow(
     followLoading: Map<String, Boolean>,
     viewerPrincipal: String?,
     onFollowToggle: (String, Boolean) -> Unit,
+    onUserSelected: (FollowerItem) -> Unit,
 ) {
     val principalText =
         remember(follower.principalId) { follower.principalId }
@@ -383,6 +388,7 @@ private fun FollowerRow(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(FollowersSheetUi.RowCornerRadius))
                 .background(YralColors.Neutral900)
+                .clickable { onUserSelected(follower) }
                 .padding(
                     horizontal = FollowersSheetUi.ItemPaddingHorizontal,
                     vertical = FollowersSheetUi.ItemPaddingVertical,

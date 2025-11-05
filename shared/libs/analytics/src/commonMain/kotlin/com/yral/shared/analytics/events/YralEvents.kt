@@ -842,6 +842,54 @@ data class ProfilePageViewedEventData(
 }
 
 @Serializable
+data class EditProfileStartedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.EDIT_PROFILE_STARTED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.PROFILE.getFeatureName(),
+    @SerialName("source") val source: EditProfileSource,
+) : BaseEventData(),
+    EventData {
+    constructor(source: EditProfileSource) : this(
+        FeatureEvents.EDIT_PROFILE_STARTED.getEventName(),
+        Features.PROFILE.getFeatureName(),
+        source,
+    )
+}
+
+@Serializable
+data class EditProfileCompletedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.EDIT_PROFILE_COMPLETED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.PROFILE.getFeatureName(),
+    @SerialName("username_updated") val usernameUpdated: Boolean,
+    @SerialName("profile_image_updated") val profileImageUpdated: Boolean,
+    @SerialName("bio_updated") val bioUpdated: Boolean,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        usernameUpdated: Boolean,
+        profileImageUpdated: Boolean,
+        bioUpdated: Boolean,
+    ) : this(
+        FeatureEvents.EDIT_PROFILE_COMPLETED.getEventName(),
+        Features.PROFILE.getFeatureName(),
+        usernameUpdated,
+        profileImageUpdated,
+        bioUpdated,
+    )
+}
+
+@Serializable
+data class EditProfileCancelledEventData(
+    @SerialName("event") override val event: String = FeatureEvents.EDIT_PROFILE_CANCELLED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.PROFILE.getFeatureName(),
+) : BaseEventData(),
+    EventData {
+    constructor() : this(
+        FeatureEvents.EDIT_PROFILE_CANCELLED.getEventName(),
+        Features.PROFILE.getFeatureName(),
+    )
+}
+
+@Serializable
 data class UploadVideoClickedEventData(
     @SerialName("event") override val event: String = FeatureEvents.UPLOAD_VIDEO_CLICKED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.PROFILE.getFeatureName(),
@@ -1433,6 +1481,15 @@ enum class FeedType {
 
     @SerialName("nsfw")
     NSFW,
+}
+
+@Serializable
+enum class EditProfileSource {
+    @SerialName("settings")
+    SETTINGS,
+
+    @SerialName("profile")
+    PROFILE,
 }
 
 @Serializable
