@@ -388,6 +388,7 @@ private fun FollowerRow(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(FollowersSheetUi.RowCornerRadius))
                 .background(YralColors.Neutral900)
+                .clickable { onUserSelected(follower) }
                 .padding(
                     horizontal = FollowersSheetUi.ItemPaddingHorizontal,
                     vertical = FollowersSheetUi.ItemPaddingVertical,
@@ -398,7 +399,6 @@ private fun FollowerRow(
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(FollowersSheetUi.ItemPaddingVertical),
-            modifier = Modifier.clickable { onUserSelected(follower) },
         ) {
             YralAsyncImage(
                 imageUrl = avatarUrl,
