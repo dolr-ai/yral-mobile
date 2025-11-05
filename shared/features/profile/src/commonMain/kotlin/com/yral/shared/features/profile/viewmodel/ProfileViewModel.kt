@@ -26,12 +26,13 @@ import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.utils.getAccountInfo
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
+import com.yral.shared.data.feed.domain.CommonApis
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.data.feed.domain.VideoViews
+import com.yral.shared.data.feed.domain.useCases.GetVideoViewsUseCase
 import com.yral.shared.features.profile.analytics.ProfileTelemetry
 import com.yral.shared.features.profile.domain.DeleteVideoUseCase
 import com.yral.shared.features.profile.domain.FollowNotificationUseCase
-import com.yral.shared.features.profile.domain.GetProfileVideoViewsUseCase
 import com.yral.shared.features.profile.domain.ProfileVideosPagingSource
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
 import com.yral.shared.features.profile.domain.repository.ProfileRepository
@@ -78,12 +79,13 @@ class ProfileViewModel(
     private val canisterData: CanisterData,
     private val sessionManager: SessionManager,
     private val profileRepository: ProfileRepository,
+    private val commonApis: CommonApis,
     private val deleteVideoUseCase: DeleteVideoUseCase,
     private val reportVideoUseCase: ReportVideoUseCase,
     private val followUserUseCase: FollowUserUseCase,
     private val unfollowUserUseCase: UnfollowUserUseCase,
     private val followNotificationUseCase: FollowNotificationUseCase,
-    private val getProfileVideoViewsUseCase: GetProfileVideoViewsUseCase,
+    private val getVideoViewsUseCase: GetVideoViewsUseCase,
     private val profileTelemetry: ProfileTelemetry,
     private val shareService: ShareService,
     private val urlBuilder: UrlBuilder,
@@ -132,6 +134,7 @@ class ProfileViewModel(
                 pagingSourceFactory = {
                     ProfileVideosPagingSource(
                         profileRepository = profileRepository,
+                        commonApis = commonApis,
                         canisterId = canisterData.canisterId,
                         userPrincipal = canisterData.userPrincipalId,
                         isFromServiceCanister = canisterData.isCreatedFromServiceCanister,
@@ -735,8 +738,8 @@ class ProfileViewModel(
                 )
             }
             if (!shouldRefresh) return@launch
-            getProfileVideoViewsUseCase
-                .invoke(parameter = GetProfileVideoViewsUseCase.Params(videoId = listOf(video.videoID)))
+            getVideoViewsUseCase
+                .invoke(parameter = GetVideoViewsUseCase.Params(videoId = listOf(video.videoID)))
                 .onSuccess { views ->
                     val viewData = views.firstOrNull { view -> view.videoId == video.videoID }
                     Logger.d("VideoViews") { "Got video views $viewData" }

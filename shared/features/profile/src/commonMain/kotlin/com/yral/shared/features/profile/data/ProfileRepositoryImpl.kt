@@ -1,7 +1,5 @@
 package com.yral.shared.features.profile.data
 
-import com.yral.shared.data.feed.data.toDomain
-import com.yral.shared.data.feed.domain.VideoViews
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
 import com.yral.shared.features.profile.domain.models.FollowNotification
 import com.yral.shared.features.profile.domain.models.ProfileVideosPageResult
@@ -24,11 +22,6 @@ class ProfileRepositoryImpl(
     override suspend fun deleteVideo(request: DeleteVideoRequest) =
         dataSource
             .deleteVideo(request)
-
-    override suspend fun getProfileVideoViewsCount(videoId: List<String>): List<VideoViews> =
-        dataSource
-            .getProfileVideoViewsCount(videoId)
-            .map { it.toDomain() }
 
     override suspend fun uploadProfileImage(imageBase64: String): String =
         dataSource

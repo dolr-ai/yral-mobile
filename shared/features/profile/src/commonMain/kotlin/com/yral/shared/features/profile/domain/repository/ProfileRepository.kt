@@ -1,6 +1,5 @@
 package com.yral.shared.features.profile.domain.repository
 
-import com.yral.shared.data.feed.domain.VideoViews
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
 import com.yral.shared.features.profile.domain.models.FollowNotification
 import com.yral.shared.features.profile.domain.models.ProfileVideosPageResult
@@ -15,8 +14,6 @@ interface ProfileRepository {
     ): ProfileVideosPageResult
 
     suspend fun deleteVideo(request: DeleteVideoRequest)
-
-    suspend fun getProfileVideoViewsCount(videoId: List<String>): List<VideoViews>
 
     suspend fun uploadProfileImage(imageBase64: String): String
 

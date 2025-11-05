@@ -4,7 +4,6 @@ import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.core.session.SessionManager
-import com.yral.shared.data.feed.data.VideoViewsDto
 import com.yral.shared.features.profile.data.models.DeleteVideoRequestBody
 import com.yral.shared.features.profile.data.models.FollowNotificationDto
 import com.yral.shared.features.profile.data.models.UploadProfileImageRequestBody
@@ -100,15 +99,6 @@ class ProfileDataSourceImpl(
         }
     }
 
-    override suspend fun getProfileVideoViewsCount(videoId: List<String>): List<VideoViewsDto> =
-        httpPost(httpClient, json) {
-            url {
-                host = OFF_CHAIN_BASE_URL
-                path(VIDEO_VIEWS_ENDPOINT)
-            }
-            setBody(mapOf("video_ids" to videoId))
-        }
-
     override suspend fun uploadProfileImage(imageBase64: String): String {
         val identity = sessionManager.identity ?: throw YralException("No identity found")
 
@@ -145,7 +135,6 @@ class ProfileDataSourceImpl(
 
     companion object {
         private const val DELETE_VIDEO_ENDPOINT = "/api/v2/posts"
-        private const val VIDEO_VIEWS_ENDPOINT = "/api/v1/rewards/videos/bulk-stats-v2"
         private const val UPLOAD_PROFILE_ENDPOINT = "/api/v1/user/profile-image"
         private const val FOLLOW_NOTIFICATION = "/api/v1/user/follow-notification"
     }
