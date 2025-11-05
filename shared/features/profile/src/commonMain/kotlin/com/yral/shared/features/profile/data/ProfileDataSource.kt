@@ -1,7 +1,7 @@
 package com.yral.shared.features.profile.data
 
+import com.yral.shared.data.feed.data.VideoViewsDto
 import com.yral.shared.features.profile.data.models.FollowNotificationDto
-import com.yral.shared.features.profile.data.models.VideoViewsDto
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
 import com.yral.shared.features.profile.domain.models.ProfileVideosPageResult
 

@@ -27,13 +27,13 @@ import com.yral.shared.core.utils.getAccountInfo
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.data.feed.domain.FeedDetails
+import com.yral.shared.data.feed.domain.VideoViews
 import com.yral.shared.features.profile.analytics.ProfileTelemetry
 import com.yral.shared.features.profile.domain.DeleteVideoUseCase
 import com.yral.shared.features.profile.domain.FollowNotificationUseCase
 import com.yral.shared.features.profile.domain.GetProfileVideoViewsUseCase
 import com.yral.shared.features.profile.domain.ProfileVideosPagingSource
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
-import com.yral.shared.features.profile.domain.models.VideoViews
 import com.yral.shared.features.profile.domain.repository.ProfileRepository
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.toast.ToastManager

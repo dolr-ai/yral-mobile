@@ -1,6 +1,6 @@
 package com.yral.shared.features.profile.domain
 
-import com.yral.shared.features.profile.domain.models.VideoViews
+import com.yral.shared.data.feed.domain.VideoViews
 import com.yral.shared.features.profile.domain.repository.ProfileRepository
 import com.yral.shared.libs.arch.domain.SuspendUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener

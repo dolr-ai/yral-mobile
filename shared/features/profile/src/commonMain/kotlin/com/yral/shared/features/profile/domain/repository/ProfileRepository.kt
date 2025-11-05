@@ -1,9 +1,9 @@
 package com.yral.shared.features.profile.domain.repository
 
+import com.yral.shared.data.feed.domain.VideoViews
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
 import com.yral.shared.features.profile.domain.models.FollowNotification
 import com.yral.shared.features.profile.domain.models.ProfileVideosPageResult
-import com.yral.shared.features.profile.domain.models.VideoViews
 
 interface ProfileRepository {
     suspend fun getProfileVideos(

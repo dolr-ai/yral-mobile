@@ -1,4 +1,4 @@
-package com.yral.shared.features.profile.domain.models
+package com.yral.shared.data.feed.domain
 
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant

@@ -4,11 +4,11 @@ import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.data.feed.data.VideoViewsDto
 import com.yral.shared.features.profile.data.models.DeleteVideoRequestBody
 import com.yral.shared.features.profile.data.models.FollowNotificationDto
 import com.yral.shared.features.profile.data.models.UploadProfileImageRequestBody
 import com.yral.shared.features.profile.data.models.UploadProfileImageResponse
-import com.yral.shared.features.profile.data.models.VideoViewsDto
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
 import com.yral.shared.features.profile.domain.models.ProfileVideosPageResult
 import com.yral.shared.http.httpDelete

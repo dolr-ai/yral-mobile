@@ -1,6 +1,6 @@
-package com.yral.shared.features.profile.data.models
+package com.yral.shared.data.feed.data
 
-import com.yral.shared.features.profile.domain.models.VideoViews
+import com.yral.shared.data.feed.domain.VideoViews
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlin.time.Clock
