@@ -46,23 +46,12 @@ class AiVideoGenViewModel internal constructor(
                     is SessionState.SignedIn -> state.session.canisterId
                     else -> null
                 }
+            _state.update { it.copy(isLoggedIn = properties.isSocialSignIn ?: false) }
             canisterId to properties.coinBalance
         }
 
     private var currentRequestKey: VideoGenRequestKey? = null
     private var pollingJob: Job? = null
-
-    init {
-        viewModelScope.launch {
-            sessionManager
-                .observeSessionPropertyWithDefault(
-                    selector = { it.isSocialSignIn },
-                    defaultValue = false,
-                ).collect { isSocialSignIn ->
-                    _state.update { it.copy(isLoggedIn = isSocialSignIn) }
-                }
-        }
-    }
 
     fun refresh(canisterId: String) {
         val currentCanister = _state.value.currentCanister
@@ -148,13 +137,15 @@ class AiVideoGenViewModel internal constructor(
                         )
                         _state.update { it.copy(usedCredits = status.usedCredits()) }
                         logger.d { "Used credits ${_state.value.usedCredits} $status" }
+                        checkForSubscription()
                     }.onFailure { error ->
                         uploadVideoTelemetry.videoCreationPageViewed(
                             type = VideoCreationType.AI_VIDEO,
                             creditsFetched = false,
                         )
-                        logger.e(error) { "Error fetching free credits" }
                         _state.update { it.copy(usedCredits = null) }
+                        logger.e(error) { "Error fetching free credits" }
+                        checkForSubscription()
                     }
             }
         }
@@ -396,7 +387,7 @@ class AiVideoGenViewModel internal constructor(
         }
 
     fun cleanup() {
-        _state.update { ViewState() }
+        _state.update { ViewState().copy(isLoggedIn = it.isLoggedIn) }
         currentRequestKey = null
         pollingJob?.cancel()
     }
@@ -417,6 +408,22 @@ class AiVideoGenViewModel internal constructor(
 
     fun updateBalance(balance: Long) {
         _state.update { it.copy(currentBalance = balance) }
+    }
+
+    private fun checkForSubscription() {
+        _state.update {
+            val isCreditsAvailable = it.isCreditsAvailable()
+            val isBalanceLow = it.isBalanceLow()
+            it.copy(
+                bottomSheetType =
+                    when {
+                        it.bottomSheetType != BottomSheetType.None -> it.bottomSheetType
+                        !isCreditsAvailable && !isBalanceLow -> BottomSheetType.FreeCreditsUsed
+                        !isCreditsAvailable && isBalanceLow -> BottomSheetType.OutOfCredits
+                        else -> BottomSheetType.None
+                    },
+            )
+        }
     }
 
     data class ViewState(
@@ -445,6 +452,8 @@ class AiVideoGenViewModel internal constructor(
             val endFlow: Boolean = false,
         ) : BottomSheetType()
         data object BackConfirmation : BottomSheetType()
+        data object FreeCreditsUsed : BottomSheetType()
+        data object OutOfCredits : BottomSheetType()
     }
 
     internal data class RequiredUseCases(

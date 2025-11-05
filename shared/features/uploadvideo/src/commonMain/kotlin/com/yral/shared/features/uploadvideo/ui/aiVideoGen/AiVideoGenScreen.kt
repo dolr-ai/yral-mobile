@@ -62,6 +62,7 @@ import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralConfirmationMessage
+import com.yral.shared.libs.designsystem.component.YralDragHandle
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
@@ -70,19 +71,26 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.videoPlayer.YralVideoPlayer
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.features.uploadvideo.generated.resources.Res
 import yral_mobile.shared.features.uploadvideo.generated.resources.create_ai_video
+import yral_mobile.shared.features.uploadvideo.generated.resources.empty_box
 import yral_mobile.shared.features.uploadvideo.generated.resources.generate_video
 import yral_mobile.shared.features.uploadvideo.generated.resources.generating_video
+import yral_mobile.shared.features.uploadvideo.generated.resources.out_of_token
+import yral_mobile.shared.features.uploadvideo.generated.resources.out_of_token_desc
 import yral_mobile.shared.features.uploadvideo.generated.resources.play_games
 import yral_mobile.shared.features.uploadvideo.generated.resources.stay_here
 import yral_mobile.shared.features.uploadvideo.generated.resources.this_may_take_few_minutes
 import yral_mobile.shared.features.uploadvideo.generated.resources.to_earn_token
 import yral_mobile.shared.features.uploadvideo.generated.resources.upload_completed_message
 import yral_mobile.shared.features.uploadvideo.generated.resources.upload_successful
+import yral_mobile.shared.features.uploadvideo.generated.resources.used_free_ai_video
+import yral_mobile.shared.features.uploadvideo.generated.resources.used_free_ai_video_desc
+import yral_mobile.shared.features.uploadvideo.generated.resources.video_camera
 import yral_mobile.shared.features.uploadvideo.generated.resources.yes_take_me_back
 import yral_mobile.shared.features.uploadvideo.generated.resources.you_will_loose_ai_credits
 import yral_mobile.shared.features.uploadvideo.generated.resources.you_will_loose_credits_desc
@@ -93,6 +101,8 @@ import yral_mobile.shared.libs.designsystem.generated.resources.ic_error
 import yral_mobile.shared.libs.designsystem.generated.resources.my_profile
 import yral_mobile.shared.libs.designsystem.generated.resources.pink_gradient_background
 import yral_mobile.shared.libs.designsystem.generated.resources.something_went_wrong
+import yral_mobile.shared.libs.designsystem.generated.resources.subscribe_for
+import yral_mobile.shared.libs.designsystem.generated.resources.subscribe_now
 import yral_mobile.shared.libs.designsystem.generated.resources.try_again
 import yral_mobile.shared.libs.designsystem.generated.resources.your_videos
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
@@ -231,6 +241,48 @@ private fun AiVideoGenScreenPrompts(
                     viewModel.cleanup()
                     component.onBack()
                 },
+            )
+        }
+        is BottomSheetType.FreeCreditsUsed -> {
+            SubscribePrompt(
+                bottomSheetState = extraSheetState,
+                dismissSheet = { viewModel.setBottomSheetType(BottomSheetType.None) },
+                icon = Res.drawable.video_camera,
+                title = stringResource(Res.string.used_free_ai_video),
+                subtitle =
+                    buildAnnotatedString {
+                        val fullMessage = stringResource(Res.string.used_free_ai_video_desc)
+                        val firstPart = fullMessage.substringBefore("+").trim()
+                        val endPart = fullMessage.substringAfter("+").trim()
+                        withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                            append(firstPart)
+                        }
+                        append(" + ")
+                        append(endPart)
+                    },
+                buttonText = stringResource(DesignRes.string.subscribe_for),
+                onSubscribe = { viewModel.setBottomSheetType(BottomSheetType.None) },
+            )
+        }
+        is BottomSheetType.OutOfCredits -> {
+            SubscribePrompt(
+                bottomSheetState = extraSheetState,
+                dismissSheet = { viewModel.setBottomSheetType(BottomSheetType.None) },
+                icon = Res.drawable.empty_box,
+                title = stringResource(Res.string.out_of_token),
+                subtitle =
+                    buildAnnotatedString {
+                        val fullMessage = stringResource(Res.string.out_of_token_desc)
+                        val firstPart = fullMessage.substringBefore("+").trim()
+                        val endPart = fullMessage.substringAfter("+").trim()
+                        withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                            append(firstPart)
+                        }
+                        append(" + ")
+                        append(endPart)
+                    },
+                buttonText = stringResource(DesignRes.string.subscribe_now),
+                onSubscribe = { viewModel.setBottomSheetType(BottomSheetType.None) },
             )
         }
         is BottomSheetType.None -> Unit
@@ -537,6 +589,60 @@ private fun Header(onBack: () -> Unit) {
             style = LocalAppTopography.current.xlBold,
             color = YralColors.NeutralTextPrimary,
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SubscribePrompt(
+    bottomSheetState: SheetState,
+    dismissSheet: () -> Unit,
+    icon: DrawableResource,
+    title: String,
+    subtitle: AnnotatedString,
+    buttonText: String,
+    onSubscribe: () -> Unit,
+) {
+    YralBottomSheet(
+        onDismissRequest = dismissSheet,
+        bottomSheetState = bottomSheetState,
+        dragHandle = { YralDragHandle() },
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(28.dp, Alignment.CenterVertically),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 36.dp),
+        ) {
+            Image(
+                painter = painterResource(icon),
+                contentDescription = "icon",
+                contentScale = ContentScale.FillBounds,
+                modifier = Modifier.size(100.dp),
+            )
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
+                horizontalAlignment = Alignment.Start,
+            ) {
+                Text(
+                    text = title,
+                    style = LocalAppTopography.current.lgBold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Text(
+                    text = subtitle,
+                    style = LocalAppTopography.current.baseRegular,
+                    color = YralColors.NeutralTextSecondary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            YralGradientButton(
+                text = buttonText,
+                onClick = onSubscribe,
+            )
+        }
     }
 }
 
