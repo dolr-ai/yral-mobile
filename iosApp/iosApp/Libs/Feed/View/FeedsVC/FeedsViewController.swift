@@ -442,6 +442,7 @@ class FeedsViewController: UIViewController {
   func addDeepLinkListner() {
     deepLinkRouter.$pendingDestination.sink { [weak self] destination in
       guard let self = self else { return }
+      guard feedType == .otherUsers else { return }
       switch destination {
       case .openVideo(postId: let postId, canisterId: let canisterID):
         self.feedsCV.isHidden = true

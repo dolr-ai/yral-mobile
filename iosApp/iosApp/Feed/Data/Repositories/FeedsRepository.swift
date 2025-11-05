@@ -185,14 +185,47 @@ class FeedsRepository: FeedRepositoryProtocol {
 
   func fetchDeepLinkFeed(request: DeepLinkFeedRequest) async -> Result<FeedResult, FeedError> {
     do {
-      let result = try await self.mapToFeedResults(feed: request, isDeeplink: true)
+      var result = try await self.mapToFeedResults(feed: request, isDeeplink: true)
       AnalyticsModuleKt.getAnalyticsManager().trackEvent(
         event: ShareAppOpenedFromLinkEventData(videoId: result.videoID)
       )
+
+      let insightsRequest = VideoInsightsRequestDTO(videoIDs: [result.videoID])
+      if case let .success(insights) = await fetchVideoInsights(request: insightsRequest),
+         let viewCount = insights.first?.totalViews {
+        result.viewCount = Int64(viewCount)
+      }
+
       return .success(result)
     } catch {
       let feedError = self.handleFeedError(error: error)
       return .failure(feedError)
+    }
+  }
+
+  private func fetchVideoInsights(request: VideoInsightsRequestDTO) async -> Result<[VideoInsightsDTO], ProfileError> {
+    guard let baseURL = URL(string: AppConfiguration().offchainBaseURLString) else {
+      return .failure(.networkError("Invalid Request"))
+    }
+
+    do {
+      let endpoint = Endpoint(
+        http: "",
+        baseURL: baseURL,
+        path: Constants.videoViewsPath,
+        method: .post,
+        headers: ["Content-Type": "application/json"],
+        body: try? JSONEncoder().encode(request)
+      )
+
+      let response = try await httpService.performRequest(
+        for: endpoint,
+        decodeAs: [VideoInsightsDTO].self
+      )
+
+      return .success(response)
+    } catch {
+      return .failure(.networkError(error.localizedDescription))
     }
   }
 
