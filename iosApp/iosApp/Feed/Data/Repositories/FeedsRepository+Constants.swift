@@ -22,6 +22,7 @@ extension FeedsRepository {
     static let rechargePath = "tap_to_recharge"
     static let initialNumResults: Int64 = 20
     static let mlNumResults: Int64 = 10
+    static let videoViewsPath = "/api/v1/rewards/videos/bulk-stats-v2"
     static var firebaseBaseURLString: String {
       guard let uri = Bundle.main.object(forInfoDictionaryKey: "FIREBASE_CLOUD_BASE_URL") as? String,
             !uri.isEmpty

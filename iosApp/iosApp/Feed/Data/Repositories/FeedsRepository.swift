@@ -212,7 +212,7 @@ class FeedsRepository: FeedRepositoryProtocol {
       let endpoint = Endpoint(
         http: "",
         baseURL: baseURL,
-        path: "/api/v1/rewards/videos/bulk-stats-v2",
+        path: Constants.videoViewsPath,
         method: .post,
         headers: ["Content-Type": "application/json"],
         body: try? JSONEncoder().encode(request)
