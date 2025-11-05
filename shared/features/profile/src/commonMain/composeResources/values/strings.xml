@@ -7,6 +7,8 @@
     <string name="error_loading_videos">Error loading videos</string>
     <string name="profile_empty_title">Get Started</string>
     <string name="profile_empty_subtitle">You don't get the hype till you make\nyour own AI video.</string>
+    <string name="profile_empty_other_title">No Posts Yet!</string>
+    <string name="profile_empty_other_subtitle">Follow them to be the first to\nsee what they share!</string>
     <string name="create_ai_video">Create AI Video</string>
     <string name="profile_locked_title">Unlock Profile</string>
     <string name="profile_locked_subtitle">Log in to claim rewards, build your profile,\nand join the YRAL community.</string>
