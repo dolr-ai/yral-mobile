@@ -319,7 +319,7 @@ final class DefaultAuthClient: NSObject, AuthClient {
           username: username
         )
       }
-      await updateAuthState(for: type, withCoins: .zero, isFetchingCoins: true)
+      await updateAuthState(for: type, withCoins: .zero, isFetchingCoins: true, dailyRank: .zero)
       Task { @MainActor in
         try await exchangePrincipalID(type: type)
       }

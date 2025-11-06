@@ -8,6 +8,18 @@
 
 import Foundation
 
+struct AIFeedRequestDTO: Codable {
+  let userID: String
+  let count: Int
+  let recommendationType: String
+
+  enum CodingKeys: String, CodingKey {
+    case userID = "user_id"
+    case count
+    case recommendationType = "rec_type"
+  }
+}
+
 struct FeedRequestDTO: Codable {
   let userID: String
   let isNSFW: Bool = false

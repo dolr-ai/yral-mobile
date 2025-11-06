@@ -9,7 +9,9 @@ import Foundation
 import Combine
 import iosSharedUmbrella
 
+// swiftlint: disable type_body_length
 class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
+  let aiFeedsUseCase: FetchAIFeedsUseCaseProtocol
   let initialFeedsUseCase: FetchInitialFeedsUseCaseProtocol
   let moreFeedsUseCase: FetchMoreFeedsUseCaseProtocol
   let deeplinkFeedUseCase: DeepLinkFeedUseCaseProtocol
@@ -38,6 +40,7 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
   @Published var unifiedEvent: UnifiedFeedEvent?
 
   init(
+    aiFeedsUseCase: FetchAIFeedsUseCaseProtocol,
     fetchFeedsUseCase: FetchInitialFeedsUseCaseProtocol,
     moreFeedsUseCase: FetchMoreFeedsUseCaseProtocol,
     deeplinkFeedUseCase: DeepLinkFeedUseCaseProtocol,
@@ -47,6 +50,7 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
     castVoteUseCase: CastVoteUseCaseProtocol,
     rechargeWalletUseCase: RechargeUseCaseProtocol
   ) {
+    self.aiFeedsUseCase = aiFeedsUseCase
     self.initialFeedsUseCase = fetchFeedsUseCase
     self.moreFeedsUseCase = moreFeedsUseCase
     self.deeplinkFeedUseCase = deeplinkFeedUseCase
@@ -98,6 +102,26 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
     }
   }
 
+  @MainActor func fetchAIFeeds(count: Int) async {
+    unifiedState = .loading
+
+    do {
+      let result = await aiFeedsUseCase.execute(request: count)
+      isFetchingInitialFeeds = false
+      unifiedEvent = .finishedLoadingInitialFeeds
+      if self.currentFeeds.count <= FeedsViewController.Constants.initialNumResults {
+        await loadMoreAIFeeds()
+      }
+
+      switch result {
+      case .failure(let failure):
+        print(failure)
+      default:
+        break
+      }
+    }
+  }
+
   @MainActor func fetchFeeds(request: InitialFeedRequest) async {
     unifiedState = .loading
 
@@ -124,6 +148,33 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
         unifiedEvent = .fetchedDeeplinkFeed(feed)
       case .failure(let failure):
         print(failure)
+      }
+    }
+  }
+
+  @MainActor func loadMoreAIFeeds() async {
+    unifiedEvent = .loadingMoreFeeds
+    unifiedState = .loading
+
+    do {
+      var newFeeds: [FeedResult]?
+
+      let result = await aiFeedsUseCase.execute(request: feedsBatchSize)
+      switch result {
+      case .success(let feeds):
+        unifiedEvent = .loadedMoreFeeds
+        newFeeds = feeds
+      case .failure(let error):
+        if case FeedError.aggregated(_, let feeds) = error {
+          newFeeds = feeds
+        }
+        unifiedEvent = .loadMoreFeedsFailed(errorMessage: error.localizedDescription)
+        unifiedState = .failure(errorMessage: error.localizedDescription)
+      }
+
+      if let feeds = newFeeds, feeds.count < .five {
+        feedsBatchSize = min(feedsBatchSize + .ten, FeedsViewController.Constants.maxFeedBatchSize)
+        await loadMoreAIFeeds()
       }
     }
   }
@@ -271,6 +322,7 @@ class FeedsViewModel: FeedViewModelProtocol, ObservableObject {
     }
   }
 }
+// swiftlint: enable type_body_length
 
 extension FeedsViewModel {
   enum Constants {

@@ -14,6 +14,7 @@ extension UIView {
     start: CGPoint = .init(x: 0, y: 0),
     end: CGPoint = .init(x: 0, y: 1),
     frame: CGRect? = nil,
+    corners: UIRectCorner? = nil,
     cornerRadius: CGFloat? = nil,
     opacity: Float? = nil
   ) {
@@ -29,11 +30,23 @@ extension UIView {
     gradient.colors = colors.map { $0.cgColor }
     gradient.startPoint = start
     gradient.endPoint   = end
-    if let cornerRadius = cornerRadius {
-      gradient.cornerRadius = cornerRadius
-    }
+
     if let opacity = opacity {
       gradient.opacity = opacity
+    }
+
+    if let corners = corners, let radius = cornerRadius {
+      let path = UIBezierPath(
+        roundedRect: gradient.bounds,
+        byRoundingCorners: corners,
+        cornerRadii: CGSize(width: radius, height: radius)
+      )
+      let mask = CAShapeLayer()
+      mask.path = path.cgPath
+      gradient.mask = mask
+    } else {
+      gradient.mask = nil
+      gradient.cornerRadius = cornerRadius ?? 0
     }
   }
 }
