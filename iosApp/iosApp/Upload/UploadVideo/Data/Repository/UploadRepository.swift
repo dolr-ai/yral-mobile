@@ -80,6 +80,7 @@ class UploadRepository: UploadRepositoryProtocol {
     }
   }
 
+  // swiftlint: disable function_body_length
   func updateMetadata(request: UploadVideoRequest) async -> Result<Void, VideoUploadError> {
     guard let baseURL = httpService.baseURL else {
       return .failure(.network(.invalidRequest))
@@ -107,6 +108,7 @@ class UploadRepository: UploadRepositoryProtocol {
         body: try JSONEncoder().encode(metaRequest)
       )
       _ = try await httpService.performRequest(for: endpoint)
+      let affiliate = AppDIHelper().getAffiliateAttributionStore().peek()
       AnalyticsModuleKt.getAnalyticsManager().trackEvent(
         event: VideoUploadSuccessEventData(
           videoId: request.videoUID,
@@ -114,13 +116,19 @@ class UploadRepository: UploadRepositoryProtocol {
           isGameEnabled: true,
           gameType: .smiley,
           isNsfw: false,
-          type: .uploadVideo
+          type: .uploadVideo,
+          affiliate: affiliate
         )
       )
       return .success(())
     } catch {
+      let affiliate = AppDIHelper().getAffiliateAttributionStore().peek()
       AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-        event: VideoUploadErrorShownEventData(reason: error.localizedDescription, type: .uploadVideo)
+        event: VideoUploadErrorShownEventData(
+          reason: error.localizedDescription,
+          type: .uploadVideo,
+          affiliate: affiliate
+        )
       )
       switch error {
       case let netErr as NetworkError:
@@ -132,6 +140,7 @@ class UploadRepository: UploadRepositoryProtocol {
       }
     }
   }
+  // swiftlint: enable function_body_length
 
   private func swiftDelegatedIdentityWire(from rustWire: DelegatedIdentityWire) throws -> SwiftDelegatedIdentityWire {
     let wireJsonString = delegated_identity_wire_to_json(rustWire).toString()

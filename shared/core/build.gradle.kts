@@ -17,6 +17,7 @@ kotlin {
             api(libs.kotlinResult.core)
             api(libs.kotlinResult.coroutines)
             implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.russhwolf.multiplatformSettings.core)
 
             api(libs.touchlab.logger)
 

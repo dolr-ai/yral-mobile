@@ -19,6 +19,7 @@ import com.yral.shared.app.UpdateState
 import com.yral.shared.app.nav.DefaultRootComponent
 import com.yral.shared.app.ui.MyApplicationTheme
 import com.yral.shared.app.ui.screens.RootScreen
+import com.yral.shared.core.analytics.AffiliateAttributionStore
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.utils.OAuthResult
 import com.yral.shared.features.auth.utils.OAuthUtils
@@ -48,6 +49,7 @@ class MainActivity : ComponentActivity() {
     private val crashlyticsManager: CrashlyticsManager by inject()
     private val settings: Settings by inject()
     private val routingService: RoutingService by inject()
+    private val affiliateAttributionStore: AffiliateAttributionStore by inject()
 
     private val updateResultLauncher: ActivityResultLauncher<IntentSenderRequest> =
         registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
@@ -70,6 +72,7 @@ class MainActivity : ComponentActivity() {
                     Logger.d("BranchSDK") { "Channel " + linkProperties.channel }
                     Logger.d("BranchSDK") { "control params " + linkProperties.controlParams }
                 }
+                storeAffiliateAttribution(branchUniversalObject)
 
                 val deeplinkPath =
                     linkProperties?.controlParams?.get("\$deeplink_path")
@@ -129,7 +132,12 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleIntentForBranch(intent: Intent) {
-        if (intent.hasExtra("branch_force_new_session") && intent.getBooleanExtra("branch_force_new_session", false)) {
+        if (intent.hasExtra("branch_force_new_session") &&
+            intent.getBooleanExtra(
+                "branch_force_new_session",
+                false,
+            )
+        ) {
             Branch
                 .sessionBuilder(this)
                 .withCallback(branchSessionCallback)
@@ -200,5 +208,35 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         oAuthUtils.cleanup()
         super.onDestroy()
+    }
+
+    private fun storeAffiliateAttribution(branchUniversalObject: BranchUniversalObject?) {
+        val affiliateName =
+            branchUniversalObject
+                ?.metadata
+                ?.get("~channel")
+                ?.takeIf { !it.isNullOrBlank() }
+                ?: branchUniversalObject
+                    ?.metadata
+                    ?.get("channel")
+                    ?.takeIf { !it.isNullOrBlank() }
+                ?: branchUniversalObject
+                    ?.metadata
+                    ?.get("\$channel")
+                    ?.takeIf { !it.isNullOrBlank() }
+                ?: branchUniversalObject
+                    ?.contentMetadata
+                    ?.customMetadata
+                    ?.get("~channel")
+                    ?.takeIf { !it.isNullOrBlank() }
+                ?: branchUniversalObject
+                    ?.contentMetadata
+                    ?.customMetadata
+                    ?.get("channel")
+                    ?.takeIf { !it.isNullOrBlank() }
+
+        if (!affiliateName.isNullOrBlank()) {
+            affiliateAttributionStore.storeIfEmpty(affiliateName)
+        }
     }
 }

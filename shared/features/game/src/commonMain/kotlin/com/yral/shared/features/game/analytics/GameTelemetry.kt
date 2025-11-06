@@ -11,10 +11,12 @@ import com.yral.shared.analytics.events.GameTutorialShownEventData
 import com.yral.shared.analytics.events.GameType
 import com.yral.shared.analytics.events.GameVotedEventData
 import com.yral.shared.analytics.events.TokenType
+import com.yral.shared.core.analytics.AffiliateAttributionStore
 import com.yral.shared.data.domain.models.FeedDetails
 
 class GameTelemetry(
     private val analyticsManager: AnalyticsManager,
+    private val affiliateAttributionStore: AffiliateAttributionStore,
 ) {
     fun onGameVoted(
         feedDetails: FeedDetails,
@@ -63,6 +65,7 @@ class GameTelemetry(
                     gameResult = if (coinDelta > 0) GameResult.WIN else GameResult.LOSS,
                     wonLossAmount = coinDelta,
                     isTutorialVote = isTutorialVote,
+                    affiliate = affiliateAttributionStore.peek(),
                 ),
         )
     }

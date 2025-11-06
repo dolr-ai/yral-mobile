@@ -15,11 +15,13 @@ import com.yral.shared.analytics.events.VideoUploadErrorShownEventData
 import com.yral.shared.analytics.events.VideoUploadInitiatedEventData
 import com.yral.shared.analytics.events.VideoUploadSuccessEventData
 import com.yral.shared.analytics.events.VideoUploadTypeSelectedData
+import com.yral.shared.core.analytics.AffiliateAttributionStore
 import com.yral.shared.core.session.SessionManager
 
 class UploadVideoTelemetry(
     private val analyticsManager: AnalyticsManager,
     private val sessionManager: SessionManager,
+    private val affiliateAttributionStore: AffiliateAttributionStore,
 ) {
     fun uploadVideoScreenViewed() {
         analyticsManager.trackEvent(UploadVideoPageViewedEventData())
@@ -55,6 +57,7 @@ class UploadVideoTelemetry(
                     captionAdded = true,
                     hashtagsAdded = true,
                     type = type,
+                    affiliate = affiliateAttributionStore.peek(),
                 ),
         )
     }
@@ -72,6 +75,7 @@ class UploadVideoTelemetry(
                     gameType = GameType.SMILEY,
                     isGameEnabled = true,
                     type = type,
+                    affiliate = affiliateAttributionStore.peek(),
                 ),
         )
     }
@@ -80,7 +84,13 @@ class UploadVideoTelemetry(
         reason: String,
         type: VideoCreationType,
     ) {
-        analyticsManager.trackEvent(VideoUploadErrorShownEventData(reason, type))
+        analyticsManager.trackEvent(
+            VideoUploadErrorShownEventData(
+                reason,
+                type,
+                affiliate = affiliateAttributionStore.peek(),
+            ),
+        )
     }
 
     fun videoUploadTypeSelected(type: VideoCreationType) {
@@ -105,6 +115,14 @@ class UploadVideoTelemetry(
         reason: String?,
         reasonType: AiVideoGenFailureType?,
     ) {
-        analyticsManager.trackEvent(AiVideoGeneratedData(model, prompt, isSuccess, reason, reasonType))
+        analyticsManager.trackEvent(
+            AiVideoGeneratedData(
+                model,
+                prompt,
+                isSuccess,
+                reason,
+                reasonType,
+            ),
+        )
     }
 }
