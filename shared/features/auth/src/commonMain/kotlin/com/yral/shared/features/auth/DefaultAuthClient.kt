@@ -38,9 +38,7 @@ import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.YralFfiException
 import com.yral.shared.rust.service.utils.authenticateWithNetwork
-import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.FirebaseAuth
-import dev.gitlive.firebase.messaging.messaging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -151,11 +149,7 @@ class DefaultAuthClient(
         ).forEach { key ->
             preferences.remove(key)
         }
-        requiredUseCases.deregisterNotificationTokenUseCase(
-            DeregisterNotificationTokenUseCase.Parameter(
-                token = Firebase.messaging.getToken(),
-            ),
-        )
+        requiredUseCases.deregisterNotificationTokenUseCase()
         // clear cached canister data after parsing token
         resetCachedCanisterData()
         // reset analytics manage: flush events and reset user properties
@@ -351,12 +345,7 @@ class DefaultAuthClient(
         }
         scope.launch { updateBalanceAndProceed(session) }
         scope.launch {
-            val result =
-                requiredUseCases.registerNotificationTokenUseCase(
-                    RegisterNotificationTokenUseCase.Parameter(
-                        token = Firebase.messaging.getToken(),
-                    ),
-                )
+            val result = requiredUseCases.registerNotificationTokenUseCase()
             Logger.d(DefaultAuthClient::class.simpleName!!) { "Notification token registered: $result" }
         }
     }

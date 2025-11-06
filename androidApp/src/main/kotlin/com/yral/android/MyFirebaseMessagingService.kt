@@ -23,7 +23,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     @WorkerThread
     override fun onNewToken(token: String) {
         Logger.d("MyFirebaseMessagingService") { "onNewToken: $token" }
-        sendTokenToServer(token)
+        sendTokenToServer()
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
@@ -81,12 +81,9 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         startActivity(intent)
     }
 
-    private fun sendTokenToServer(token: String) =
+    private fun sendTokenToServer() =
         runBlocking {
-            val result =
-                registerNotificationTokenUseCase(
-                    RegisterNotificationTokenUseCase.Parameter(token = token),
-                )
+            val result = registerNotificationTokenUseCase()
             Logger.d("MyFirebaseMessagingService") { "Notification token registered: $result" }
         }
 }
