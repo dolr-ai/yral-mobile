@@ -552,6 +552,36 @@ class FeedViewModel(
                 feedDetails = currentState.feedDetails[currentState.currentPageOfFeed],
             )
         }
+        refreshVideoViewCount(currentState.feedDetails[currentState.currentPageOfFeed])
+    }
+
+    private fun refreshVideoViewCount(detail: FeedDetails) {
+        viewModelScope.launch {
+            requiredUseCases
+                .videoViewsUseCase(
+                    parameter = GetVideoViewsUseCase.Params(listOf(detail.videoID)),
+                ).onSuccess { views ->
+                    views.firstOrNull()?.allViews?.let { allViews ->
+                        Logger.d("ViewCount") { "View count : $allViews" }
+                        _state.update { currentState ->
+                            val list = currentState.feedDetails
+                            val index = list.indexOfFirst { it.videoID == detail.videoID }
+                            if (index == -1) {
+                                currentState
+                            } else {
+                                currentState.copy(
+                                    feedDetails =
+                                        list
+                                            .toMutableList()
+                                            .apply { this[index] = this[index].copy(viewCount = allViews) },
+                                )
+                            }
+                        }
+                    }
+                }.onFailure {
+                    Logger.d("ViewCount") { "Failed to fetch view count" }
+                }
+        }
     }
 
     fun setPostDescriptionExpanded(isExpanded: Boolean) {
