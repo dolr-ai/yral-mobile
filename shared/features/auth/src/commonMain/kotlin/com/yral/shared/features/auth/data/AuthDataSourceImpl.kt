@@ -10,6 +10,7 @@ import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.features.auth.data.models.DeleteAccountRequestDto
 import com.yral.shared.features.auth.data.models.ExchangePrincipalResponseDto
 import com.yral.shared.features.auth.data.models.TokenResponseDto
+import com.yral.shared.features.auth.di.AuthEnv
 import com.yral.shared.firebaseStore.cloudFunctionUrl
 import com.yral.shared.firebaseStore.firebaseAppCheckToken
 import com.yral.shared.http.httpDelete
@@ -33,12 +34,13 @@ class AuthDataSourceImpl(
     private val client: HttpClient,
     private val json: Json,
     private val preferences: Preferences,
+    private val authEnv: AuthEnv,
 ) : AuthDataSource {
     override suspend fun obtainAnonymousIdentity(): TokenResponseDto {
         val formData =
             listOf(
                 "grant_type" to GRANT_TYPE_CLIENT_CREDS,
-                "client_id" to CLIENT_ID,
+                "client_id" to authEnv.clientId,
             ).joinToString("&") { (key, value) ->
                 "$key=$value"
             }
@@ -61,10 +63,10 @@ class AuthDataSourceImpl(
         val formData =
             listOf(
                 "grant_type" to GRANT_TYPE_AUTHORIZATION,
-                "client_id" to CLIENT_ID,
+                "client_id" to authEnv.clientId,
                 "code" to code,
                 "code_verifier" to verifier,
-                "redirect_uri" to REDIRECT_URI,
+                "redirect_uri" to authEnv.redirectUri.uriString,
             ).joinToString("&") { (key, value) ->
                 "$key=$value"
             }
@@ -85,7 +87,7 @@ class AuthDataSourceImpl(
             listOf(
                 "grant_type" to GRANT_TYPE_REFRESH_TOKEN,
                 "refresh_token" to token,
-                "client_id" to CLIENT_ID,
+                "client_id" to authEnv.clientId,
             ).joinToString("&") { (key, value) ->
                 "$key=$value"
             }
@@ -195,11 +197,6 @@ class AuthDataSourceImpl(
     }
 
     companion object {
-        const val REDIRECT_URI_SCHEME = "yral"
-        const val REDIRECT_URI_HOST = "oauth"
-        const val REDIRECT_URI_PATH = "/callback"
-        const val REDIRECT_URI = "$REDIRECT_URI_SCHEME://$REDIRECT_URI_HOST$REDIRECT_URI_PATH"
-        const val CLIENT_ID = "c89b29de-8366-4e62-9b9e-c29585740acf"
         private const val PATH_AUTHENTICATE_TOKEN = "oauth/token"
         private const val GRANT_TYPE_AUTHORIZATION = "authorization_code"
         private const val GRANT_TYPE_CLIENT_CREDS = "client_credentials"

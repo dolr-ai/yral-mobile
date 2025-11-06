@@ -97,6 +97,8 @@
 	<string>Dark</string>
 	<key>YRAL_REDIRECT_URI</key>
 	<string>com.yral.iosApp.staging://oauth/callback</string>
+	<key>YRAL_REDIRECT_URI_SCHEME</key>
+	<string>com.yral.iosapp.staging</string>
 	<key>branch_key</key>
 	<dict>
 		<key>live</key>

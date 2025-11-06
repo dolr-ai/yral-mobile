@@ -20,6 +20,7 @@ import com.yral.shared.features.auth.viewModel.LoginViewModel
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
+import org.koin.core.scope.Scope
 import org.koin.dsl.module
 
 val authModule =
@@ -38,4 +39,24 @@ val authModule =
         factoryOf(::RegisterNotificationTokenUseCase)
         factoryOf(::DeregisterNotificationTokenUseCase)
         singleOf(::LoginViewModel)
+        single { createAuthEnv() }
     }
+
+internal expect fun Scope.createAuthEnv(): AuthEnv
+
+data class AuthEnv(
+    val clientId: String,
+    val redirectUri: RedirectUri,
+) {
+    data class RedirectUri(
+        val scheme: String,
+        val host: String = REDIRECT_URI_HOST,
+        val path: String = REDIRECT_URI_PATH,
+    ) {
+        val uriString = "$scheme://$host$path"
+        companion object {
+            const val REDIRECT_URI_HOST = "oauth"
+            const val REDIRECT_URI_PATH = "/callback"
+        }
+    }
+}

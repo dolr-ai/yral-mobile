@@ -101,6 +101,8 @@
 	<string>Dark</string>
 	<key>YRAL_REDIRECT_URI</key>
 	<string>com.yral.iosApp://oauth/callback</string>
+	<key>YRAL_REDIRECT_URI_SCHEME</key>
+	<string>com.yral.iosapp</string>
 	<key>branch_key</key>
 	<dict>
 		<key>live</key>
