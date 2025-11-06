@@ -395,6 +395,7 @@ class DefaultAuthClient(
 
     private suspend fun handleOAuthCallback(result: OAuthResult) {
         lateinit var error: String
+        var currentUserPrincipal: String? = null
         when (result) {
             is OAuthResult.Success -> {
                 if (result.state != currentState) {
@@ -405,6 +406,7 @@ class DefaultAuthClient(
                 analyticsManager.flush()
                 sessionManager.canisterID?.let { canisterId ->
                     sessionManager.userPrincipal?.let { userPrincipal ->
+                        currentUserPrincipal = userPrincipal
                         analyticsManager.setUserProperties(
                             User(
                                 userId = userPrincipal,
@@ -414,7 +416,7 @@ class DefaultAuthClient(
                     }
                 }
                 sessionManager.updateState(SessionState.Loading)
-                authenticate(result.code, sessionManager.userPrincipal)
+                authenticate(result.code, currentUserPrincipal)
                 return
             }
             is OAuthResult.Error -> {
