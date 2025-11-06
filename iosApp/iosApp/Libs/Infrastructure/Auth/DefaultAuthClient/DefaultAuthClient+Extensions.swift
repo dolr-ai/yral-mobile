@@ -248,13 +248,15 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
             event: SignupSuccessEventData(
               isReferral: false,
               referralUserID: "",
-              authJourney: provider!.authJourney()
+              authJourney: provider!.authJourney(),
+              affiliate: AppDIHelper().getAffiliateAttributionStore().peek()
             )
           )
         } else {
           AnalyticsModuleKt.getAnalyticsManager().trackEvent(
             event: LoginSuccessEventData(
-              authJourney: provider!.authJourney()
+              authJourney: provider!.authJourney(),
+              affiliate: AppDIHelper().getAffiliateAttributionStore().peek()
             )
           )
         }

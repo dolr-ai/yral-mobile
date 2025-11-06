@@ -313,8 +313,12 @@ struct ProfileView: View {
         showSignupSheet = false
       case .socialSignInFailure:
         if let authJourney = loadingProvider?.authJourney() {
+          let affiliate = AppDIHelper().getAffiliateAttributionStore().peek()
           AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-            event: AuthFailedEventData(authJourney: authJourney)
+            event: AuthFailedEventData(
+              authJourney: authJourney,
+              affiliate: affiliate
+            )
           )
         }
         loadingProvider = nil

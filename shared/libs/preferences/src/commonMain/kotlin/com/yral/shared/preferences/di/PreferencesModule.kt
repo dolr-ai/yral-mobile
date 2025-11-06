@@ -1,5 +1,6 @@
 package com.yral.shared.preferences.di
 
+import com.yral.shared.preferences.AffiliateAttributionStore
 import com.yral.shared.preferences.AsyncPreferencesImpl
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.preferences.PreferencesFactory
@@ -14,4 +15,5 @@ val preferencesModule =
         singleOf(::AsyncPreferencesImpl) { bind<Preferences>() }
         single { PreferencesFactory() }
         single { get<PreferencesFactory>().create(USER_SHARED_PREF_NAME) }
+        single { AffiliateAttributionStore(get()) }
     }

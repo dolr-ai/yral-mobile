@@ -191,6 +191,7 @@ extension FeedsViewController {
     }
     let item = items[index]
     let result = response.outcome == Constants.winResult ? GameResult.win : GameResult.loss
+    let affiliate = AppDIHelper().getAffiliateAttributionStore().peek()
 
     AnalyticsModuleKt.getAnalyticsManager().trackEvent(
       event: GamePlayedEventData(
@@ -206,7 +207,8 @@ extension FeedsViewController {
         optionChosen: response.smiley.id,
         gameResult: result,
         wonLossAmount: Int32(abs(response.coinDelta)),
-        isTutorialVote: isTutorialVote
+        isTutorialVote: isTutorialVote,
+        affiliate: affiliate
       )
     )
   }
