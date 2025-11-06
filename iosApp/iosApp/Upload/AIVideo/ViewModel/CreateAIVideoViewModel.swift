@@ -233,7 +233,12 @@ class CreateAIVideoViewModel: ObservableObject {
     }
 
     AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-      event: VideoUploadInitiatedEventData(captionAdded: false, hashtagsAdded: false, type: .aiVideo)
+      event: VideoUploadInitiatedEventData(
+        captionAdded: false,
+        hashtagsAdded: false,
+        type: .aiVideo,
+        affiliate: AppDIHelper().getAffiliateAttributionStore().peek()
+      )
     )
 
     do {

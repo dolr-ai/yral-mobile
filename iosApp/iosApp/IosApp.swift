@@ -23,13 +23,16 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     Branch.setUseTestBranchKey(true)
     #endif
 
-    Branch.getInstance().initSession(launchOptions: launchOptions) { (params, error) in
+    Branch.getInstance().initSession(launchOptions: launchOptions) { [weak self] (params, error) in
       if let error = error {
         print("\(DeepLinkRouter.Constants.branchError)", error)
         return
       }
 
+      guard let self = self else { return }
+
       if let dict = params as? [String: Any] {
+        self.handleAffiliateAttribution(params: dict)
         Task { @MainActor in
           DeepLinkRouter.shared.resolve(from: dict)
         }
@@ -145,6 +148,32 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
       }
     }
     return false
+  }
+
+  private func handleAffiliateAttribution(params: [String: Any]) {
+    guard isBranchClick(params["+clicked_branch_link"]) else { return }
+    guard let channel = (
+      params["~channel"] as? String
+        ?? params["channel"] as? String
+    )?.trimmingCharacters(in: .whitespacesAndNewlines),
+      !channel.isEmpty
+    else { return }
+
+    AppDIHelper().getAffiliateAttributionStore().storeIfEmpty(affiliate: channel)
+  }
+
+  private func isBranchClick(_ value: Any?) -> Bool {
+    switch value {
+    case let bool as Bool:
+      return bool
+    case let number as NSNumber:
+      return number.intValue == 1
+    case let string as String:
+      let lowered = string.lowercased()
+      return lowered == "1" || lowered == "true"
+    default:
+      return false
+    }
   }
 
   private func migrateKeychain() {

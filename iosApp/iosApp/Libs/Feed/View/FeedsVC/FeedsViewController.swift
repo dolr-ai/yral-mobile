@@ -144,8 +144,9 @@ class FeedsViewController: UIViewController {
   override func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
     if self.feedType == .otherUsers {
+      let affiliate = AppDIHelper().getAffiliateAttributionStore().peek()
       AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-        event: HomePageViewedEventData()
+        event: HomePageViewedEventData(affiliate: affiliate)
       )
     }
   }

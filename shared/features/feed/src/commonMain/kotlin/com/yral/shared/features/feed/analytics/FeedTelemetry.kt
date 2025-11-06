@@ -20,16 +20,22 @@ import com.yral.shared.analytics.events.VideoViewedEventData
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.features.feed.viewmodel.percentageOf
+import com.yral.shared.preferences.AffiliateAttributionStore
 import com.yral.shared.reportVideo.domain.models.VideoReportReason
 
 class FeedTelemetry(
     private val analyticsManager: AnalyticsManager,
     private val sessionManager: SessionManager,
+    private val affiliateAttributionStore: AffiliateAttributionStore,
 ) {
     private val trackedImpressions = mutableSetOf<String>()
     private val trackedStated = mutableSetOf<String>()
     fun onFeedPageViewed() {
-        analyticsManager.trackEvent(HomePageViewedEventData())
+        analyticsManager.trackEvent(
+            HomePageViewedEventData(
+                affiliate = affiliateAttributionStore.peek(),
+            ),
+        )
     }
 
     fun onVideoDurationWatched(

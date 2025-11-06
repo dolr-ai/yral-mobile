@@ -140,6 +140,7 @@ class AIVideoRepository: AIVideoRepositoryProtocol {
     }
   }
 
+  // swiftlint: disable function_body_length
   func uploadVideo(with url: String) async -> Result<Void, UploadAIVideoError> {
     guard let baseURL = URL(string: AppConfiguration().anonIdentityBaseURLString) else {
       return .failure(.network(.invalidRequest))
@@ -177,14 +178,19 @@ class AIVideoRepository: AIVideoRepositoryProtocol {
           isGameEnabled: true,
           gameType: .smiley,
           isNsfw: false,
-          type: .aiVideo
+          type: .aiVideo,
+          affiliate: AppDIHelper().getAffiliateAttributionStore().peek()
         )
       )
 
       return .success(())
     } catch {
       AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-        event: VideoUploadErrorShownEventData(reason: error.localizedDescription, type: .aiVideo)
+        event: VideoUploadErrorShownEventData(
+          reason: error.localizedDescription,
+          type: .aiVideo,
+          affiliate: AppDIHelper().getAffiliateAttributionStore().peek()
+        )
       )
 
       switch error {
@@ -197,6 +203,7 @@ class AIVideoRepository: AIVideoRepositoryProtocol {
       }
     }
   }
+  // swiftlint: enable function_body_length
 }
 
 extension AIVideoRepository {
