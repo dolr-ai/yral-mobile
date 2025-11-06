@@ -57,7 +57,7 @@ import com.yral.shared.app.ui.screens.uploadVideo.UploadVideoRootScreen
 import com.yral.shared.core.session.SessionKey
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.session.getKey
-import com.yral.shared.data.feed.domain.FeedDetails
+import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.features.account.ui.AccountScreen
 import com.yral.shared.features.account.ui.AlertsPermissionController
 import com.yral.shared.features.account.ui.rememberAlertsPermissionController

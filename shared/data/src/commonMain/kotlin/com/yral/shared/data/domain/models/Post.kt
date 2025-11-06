@@ -1,6 +1,6 @@
-package com.yral.shared.data.feed.domain
+package com.yral.shared.data.domain.models
 
-import com.yral.shared.data.feed.data.PostDTO
+import com.yral.shared.data.data.models.PostDTO
 
 data class Post(
     val canisterID: String,

@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
 import com.yral.shared.analytics.events.FeedType
 import com.yral.shared.data.AlertsRequestType
-import com.yral.shared.data.feed.domain.FeedDetails
+import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.feed.ui.components.SignupNudge
 import com.yral.shared.features.feed.viewmodel.FeedEvents

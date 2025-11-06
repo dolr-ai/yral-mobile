@@ -1,4 +1,4 @@
-package com.yral.shared.data.feed.domain
+package com.yral.shared.data.domain.models
 
 data class FeedDetails(
     val postID: String,

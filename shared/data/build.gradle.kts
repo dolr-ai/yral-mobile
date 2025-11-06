@@ -20,7 +20,11 @@ kotlin {
 
             api(libs.touchlab.logger)
 
+            implementation(projects.shared.core)
             implementation(projects.shared.libs.koin)
+            implementation(projects.shared.libs.http)
+            implementation(projects.shared.libs.arch)
+            implementation(projects.shared.libs.coroutinesX)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
