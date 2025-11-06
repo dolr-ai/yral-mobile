@@ -1,4 +1,4 @@
-package com.yral.shared.core.analytics
+package com.yral.shared.preferences
 
 import com.russhwolf.settings.Settings
 

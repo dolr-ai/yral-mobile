@@ -19,7 +19,6 @@ import com.yral.shared.app.UpdateState
 import com.yral.shared.app.nav.DefaultRootComponent
 import com.yral.shared.app.ui.MyApplicationTheme
 import com.yral.shared.app.ui.screens.RootScreen
-import com.yral.shared.core.analytics.AffiliateAttributionStore
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.utils.OAuthResult
 import com.yral.shared.features.auth.utils.OAuthUtils
@@ -29,6 +28,7 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import com.yral.shared.libs.routing.deeplink.engine.RoutingService
 import com.yral.shared.libs.routing.routes.api.AppRoute
+import com.yral.shared.preferences.AffiliateAttributionStore
 import com.yral.shared.rust.service.services.HelperService.initRustLogger
 import com.yral.shared.rust.service.services.RustLogLevel
 import io.branch.indexing.BranchUniversalObject
@@ -72,7 +72,7 @@ class MainActivity : ComponentActivity() {
                     Logger.d("BranchSDK") { "Channel " + linkProperties.channel }
                     Logger.d("BranchSDK") { "control params " + linkProperties.controlParams }
                 }
-                storeAffiliateAttribution(branchUniversalObject)
+                storeAffiliateAttribution(linkProperties)
 
                 val deeplinkPath =
                     linkProperties?.controlParams?.get("\$deeplink_path")
@@ -210,33 +210,8 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
     }
 
-    private fun storeAffiliateAttribution(branchUniversalObject: BranchUniversalObject?) {
-        val affiliateName =
-            branchUniversalObject
-                ?.metadata
-                ?.get("~channel")
-                ?.takeIf { !it.isNullOrBlank() }
-                ?: branchUniversalObject
-                    ?.metadata
-                    ?.get("channel")
-                    ?.takeIf { !it.isNullOrBlank() }
-                ?: branchUniversalObject
-                    ?.metadata
-                    ?.get("\$channel")
-                    ?.takeIf { !it.isNullOrBlank() }
-                ?: branchUniversalObject
-                    ?.contentMetadata
-                    ?.customMetadata
-                    ?.get("~channel")
-                    ?.takeIf { !it.isNullOrBlank() }
-                ?: branchUniversalObject
-                    ?.contentMetadata
-                    ?.customMetadata
-                    ?.get("channel")
-                    ?.takeIf { !it.isNullOrBlank() }
-
-        if (!affiliateName.isNullOrBlank()) {
-            affiliateAttributionStore.storeIfEmpty(affiliateName)
-        }
+    private fun storeAffiliateAttribution(linkProperties: LinkProperties?) {
+        val channel = linkProperties?.channel?.takeIf { !it.isNullOrBlank() } ?: return
+        affiliateAttributionStore.storeIfEmpty(channel)
     }
 }

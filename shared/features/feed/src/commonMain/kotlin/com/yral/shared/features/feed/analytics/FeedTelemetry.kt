@@ -17,10 +17,10 @@ import com.yral.shared.analytics.events.VideoReportedEventData
 import com.yral.shared.analytics.events.VideoShareClickedEventData
 import com.yral.shared.analytics.events.VideoStartedEventData
 import com.yral.shared.analytics.events.VideoViewedEventData
-import com.yral.shared.core.analytics.AffiliateAttributionStore
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.features.feed.viewmodel.percentageOf
+import com.yral.shared.preferences.AffiliateAttributionStore
 import com.yral.shared.reportVideo.domain.models.VideoReportReason
 
 class FeedTelemetry(

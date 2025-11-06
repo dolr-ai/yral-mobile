@@ -11,8 +11,8 @@ import com.yral.shared.analytics.events.GameTutorialShownEventData
 import com.yral.shared.analytics.events.GameType
 import com.yral.shared.analytics.events.GameVotedEventData
 import com.yral.shared.analytics.events.TokenType
-import com.yral.shared.core.analytics.AffiliateAttributionStore
 import com.yral.shared.data.domain.models.FeedDetails
+import com.yral.shared.preferences.AffiliateAttributionStore
 
 class GameTelemetry(
     private val analyticsManager: AnalyticsManager,

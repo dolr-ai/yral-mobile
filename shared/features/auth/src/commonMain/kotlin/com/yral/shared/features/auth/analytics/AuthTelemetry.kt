@@ -8,7 +8,7 @@ import com.yral.shared.analytics.events.LoginSuccessEventData
 import com.yral.shared.analytics.events.SignupJourneySelected
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.analytics.events.SignupSuccessEventData
-import com.yral.shared.core.analytics.AffiliateAttributionStore
+import com.yral.shared.preferences.AffiliateAttributionStore
 
 class AuthTelemetry(
     private val analyticsManager: AnalyticsManager,
