@@ -32,11 +32,13 @@ struct SmileyGameResultDTO: Decodable {
   let outcome: String
   let coins: UInt64
   let coinDelta: Int
+  let newPosition: Int
   let smiley: SmileyDTO
 
   enum CodingKeys: String, CodingKey {
     case outcome, coins, smiley
     case coinDelta = "coin_delta"
+    case newPosition = "new_position"
   }
 }
 

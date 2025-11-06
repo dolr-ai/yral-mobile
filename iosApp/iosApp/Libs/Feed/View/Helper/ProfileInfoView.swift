@@ -9,29 +9,40 @@
 import UIKit
 
 class ProfileInfoView: UIView, ImageLoaderProtocol {
+  var positionBackgroundView: UIView = {
+    let view = getUIView()
+    view.setGradientBackground(
+      colors: [
+        YralColor.red300.uiColor,
+        YralColor.red500.uiColor
+      ],
+      frame: CGRect(x: .zero,
+                    y: .zero,
+                    width: 75,
+                    height: 32),
+      corners: [.topRight, .bottomRight],
+      cornerRadius: 16,
+      opacity: 0.9
+    )
+    view.clipsToBounds = false
+    return view
+  }()
+
   var imageView: UIImageView = {
     let imageView = getUIImageView()
     imageView.backgroundColor = .clear
     imageView.layer.masksToBounds = true
-    imageView.layer.borderWidth = Constants.imageBorderWidth
-    imageView.layer.borderColor = Constants.imageBorderColor
-    imageView.layer.cornerRadius = Constants.imageViewSize / 2
     return imageView
   }()
 
-  var titleLabel: UILabel = {
+  var positionLabel: UILabel = {
     let label = getUILabel()
     label.backgroundColor = .clear
-    label.font = Constants.titleLabelFont
-    label.textColor = Constants.textColor
-    return label
-  }()
-
-  var subtitleLabel: UILabel = {
-    let label = getUILabel()
-    label.backgroundColor = .clear
-    label.font = Constants.subtitleLabelFont
-    label.textColor = Constants.textColor
+    label.font = YralFont.pt16.semiBold.uiFont
+    label.textColor = YralColor.grey50.uiColor
+    label.adjustsFontSizeToFitWidth = true
+    label.minimumScaleFactor = 0.5
+    label.numberOfLines = 1
     return label
   }()
 
@@ -51,19 +62,30 @@ class ProfileInfoView: UIView, ImageLoaderProtocol {
 
   func setupUI() {
     self.translatesAutoresizingMaskIntoConstraints = false
-    addImageView()
+    addRankView()
     addCoinsView()
-    addTitleLabel()
-    addSubtitleLabel()
   }
 
-  func addImageView() {
-    addSubview(imageView)
+  func addRankView() {
+    addSubview(positionBackgroundView)
+    positionBackgroundView.addSubview(imageView)
+    positionBackgroundView.addSubview(positionLabel)
+    imageView.image = UIImage(named: "feed_trophy")
+
     NSLayoutConstraint.activate([
-      imageView.topAnchor.constraint(equalTo: topAnchor, constant: Constants.imageViewTop),
-      imageView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: Constants.imageViewLeading),
-      imageView.heightAnchor.constraint(equalToConstant: Constants.imageViewSize),
-      imageView.widthAnchor.constraint(equalToConstant: Constants.imageViewSize)
+      positionBackgroundView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 14),
+      positionBackgroundView.centerYAnchor.constraint(equalTo: centerYAnchor),
+      positionBackgroundView.heightAnchor.constraint(equalToConstant: 32),
+      positionBackgroundView.widthAnchor.constraint(greaterThanOrEqualToConstant: 75),
+
+      imageView.centerYAnchor.constraint(equalTo: positionBackgroundView.centerYAnchor),
+      imageView.leadingAnchor.constraint(equalTo: positionBackgroundView.leadingAnchor, constant: -14),
+      imageView.heightAnchor.constraint(equalToConstant: 36),
+      imageView.widthAnchor.constraint(equalToConstant: 33),
+
+      positionLabel.trailingAnchor.constraint(equalTo: positionBackgroundView.trailingAnchor, constant: -16),
+      positionLabel.leadingAnchor.constraint(equalTo: positionBackgroundView.leadingAnchor, constant: 18),
+      positionLabel.centerYAnchor.constraint(equalTo: positionBackgroundView.centerYAnchor)
     ])
   }
 
@@ -80,37 +102,14 @@ class ProfileInfoView: UIView, ImageLoaderProtocol {
     coinsView.addGestureRecognizer(tapGesture)
   }
 
-  func addTitleLabel() {
-    addSubview(titleLabel)
-    NSLayoutConstraint.activate([
-      titleLabel.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: Constants.labelLeading),
-      titleLabel.trailingAnchor.constraint(equalTo: coinsView.leadingAnchor, constant: -Constants.labelTrailing),
-      titleLabel.heightAnchor.constraint(equalToConstant: Constants.titleLabelHeight),
-      titleLabel.topAnchor.constraint(equalTo: imageView.topAnchor)
-    ])
-  }
-
-  func addSubtitleLabel() {
-    addSubview(subtitleLabel)
-    NSLayoutConstraint.activate([
-      subtitleLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
-      subtitleLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
-      subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor),
-      subtitleLabel.heightAnchor.constraint(equalToConstant: Constants.subtitleLabelHeight)
-    ])
-  }
-
   func set(data: ProfileInfo) {
     profileInfo = data
-
-    if let imageURL = data.imageURL {
-      loadImage(with: imageURL, placeholderImage: nil, on: imageView)
-    } else {
-      imageView.image = Constants.defaultProfileImage
-    }
-    titleLabel.text = UsernameGenerator.shared.generateUsername(from: data.title)
-    subtitleLabel.text = data.subtitle
     coinsView.set(coins: data.coins)
+    positionLabel.text = "#\(data.position.formattedWithSuffix)"
+  }
+
+  func updatePosition(newPosition: Int) {
+    positionLabel.text = "#\(newPosition.formattedWithSuffix)"
   }
 
   func updateCoins(by newCoins: Int) {
@@ -126,6 +125,7 @@ class ProfileInfoView: UIView, ImageLoaderProtocol {
     let title: String
     let subtitle: String
     var coins: UInt64
+    var position: Int
   }
 }
 
