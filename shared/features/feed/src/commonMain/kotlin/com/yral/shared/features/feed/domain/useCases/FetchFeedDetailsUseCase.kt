@@ -1,7 +1,7 @@
 package com.yral.shared.features.feed.domain.useCases
 
-import com.yral.shared.data.feed.domain.FeedDetails
-import com.yral.shared.data.feed.domain.Post
+import com.yral.shared.data.domain.models.FeedDetails
+import com.yral.shared.data.domain.models.Post
 import com.yral.shared.libs.arch.domain.SuspendUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers

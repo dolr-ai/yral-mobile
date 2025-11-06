@@ -21,7 +21,7 @@ import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.analytics.events.VideoDeletedEventData
 import com.yral.shared.analytics.events.VideoReportedEventData
 import com.yral.shared.analytics.events.VideoShareClickedEventData
-import com.yral.shared.data.feed.domain.FeedDetails
+import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.reportVideo.domain.models.VideoReportReason
 
 class ProfileTelemetry(

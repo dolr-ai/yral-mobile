@@ -35,7 +35,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
-import com.yral.shared.data.feed.domain.FeedDetails
+import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes

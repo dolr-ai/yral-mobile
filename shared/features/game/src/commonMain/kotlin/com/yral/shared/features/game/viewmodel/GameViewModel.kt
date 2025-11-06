@@ -9,7 +9,7 @@ import com.yral.shared.analytics.events.GameConcludedCtaType
 import com.yral.shared.analytics.events.GameType
 import com.yral.shared.core.session.DELAY_FOR_SESSION_PROPERTIES
 import com.yral.shared.core.session.SessionManager
-import com.yral.shared.data.feed.domain.FeedDetails
+import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.features.game.analytics.GameTelemetry
 import com.yral.shared.features.game.domain.AutoRechargeBalanceUseCase
 import com.yral.shared.features.game.domain.CastVoteUseCase

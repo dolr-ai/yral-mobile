@@ -65,7 +65,7 @@ import androidx.paging.compose.itemKey
 import com.yral.shared.analytics.events.EditProfileSource
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.data.AlertsRequestType
-import com.yral.shared.data.feed.domain.FeedDetails
+import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.profile.ui.followers.FollowersBottomSheet
 import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState

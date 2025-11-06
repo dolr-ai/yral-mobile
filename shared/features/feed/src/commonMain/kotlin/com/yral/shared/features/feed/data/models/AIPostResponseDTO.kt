@@ -1,7 +1,7 @@
 package com.yral.shared.features.feed.data.models
 
-import com.yral.shared.data.feed.data.PostDTO
-import com.yral.shared.data.feed.domain.Post
+import com.yral.shared.data.data.models.PostDTO
+import com.yral.shared.data.domain.models.Post
 import com.yral.shared.features.feed.domain.models.PostResponse
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
