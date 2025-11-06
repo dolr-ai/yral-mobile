@@ -11,6 +11,7 @@ import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.YralAuthException
 import com.yral.shared.features.auth.YralFBAuthException
@@ -53,7 +54,7 @@ class RootViewModel(
                 // updateSessionAsRegistered, FirebaseAuth/Coin balance update
                 _state.update { it.copy(error = RootError.TIMEOUT) }
                 Logger.e("Auth error - $e")
-                crashlyticsManager.recordException(e)
+                crashlyticsManager.recordException(e, ExceptionType.AUTH)
             }
 
     internal var splashScreenTimeout: Long = SPLASH_SCREEN_TIMEOUT
@@ -118,11 +119,11 @@ class RootViewModel(
                                 } catch (e: YralFBAuthException) {
                                     // Do not update error in state since no error message required
                                     Logger.e("Firebase Auth error - $e")
-                                    crashlyticsManager.recordException(e)
+                                    crashlyticsManager.recordException(e, ExceptionType.AUTH)
                                 } catch (e: YralAuthException) {
                                     // can be triggered in postFirebaseLogin when getting balance
                                     Logger.e("Fetch Balance error - $e")
-                                    crashlyticsManager.recordException(e)
+                                    crashlyticsManager.recordException(e, ExceptionType.AUTH)
                                 }
                             }
                     }
@@ -147,13 +148,14 @@ class RootViewModel(
                     Logger.e("Splash timeout - ${e.message}")
                     crashlyticsManager.recordException(
                         YralException("Splash screen timeout - initialization took too long"),
+                        ExceptionType.AUTH,
                     )
                     throw e
                 } catch (e: YralAuthException) {
                     // for async calls before setSession
                     _state.update { it.copy(error = RootError.TIMEOUT) }
                     Logger.e("Auth error - $e")
-                    crashlyticsManager.recordException(e)
+                    crashlyticsManager.recordException(e, ExceptionType.AUTH)
                 }
             }
     }

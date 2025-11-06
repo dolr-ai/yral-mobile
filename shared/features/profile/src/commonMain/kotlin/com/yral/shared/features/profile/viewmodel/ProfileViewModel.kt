@@ -25,6 +25,7 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.utils.getAccountInfo
 import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.features.profile.analytics.ProfileTelemetry
 import com.yral.shared.features.profile.domain.DeleteVideoUseCase
@@ -488,7 +489,10 @@ class ProfileViewModel(
                 )
             }.onFailure {
                 Logger.e(ProfileViewModel::class.simpleName!!, it) { "Failed to share post" }
-                crashlyticsManager.recordException(YralException(it))
+                crashlyticsManager.recordException(
+                    YralException(it),
+                    ExceptionType.DEEPLINK,
+                )
             }
         }
     }

@@ -16,6 +16,7 @@ import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.utils.processFirstNSuspendFlow
 import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.data.feed.domain.FeedDetails
 import com.yral.shared.data.feed.domain.Post
 import com.yral.shared.features.auth.AuthClientFactory
@@ -167,7 +168,10 @@ class FeedViewModel(
                             setLoadingMore(false)
                             loadMoreFeed()
                         } else {
-                            crashlyticsManager.recordException(YralException("Initial cache feed empty"))
+                            crashlyticsManager.recordException(
+                                YralException("Initial cache feed empty"),
+                                ExceptionType.FEED,
+                            )
                             val notVotedCount = filterVotedAndFetchDetails(posts)
                             Logger.d("FeedPagination") { "notVotedCount in initialFeed $notVotedCount" }
                             if (notVotedCount < SUFFICIENT_NEW_REQUIRED) {
@@ -308,7 +312,10 @@ class FeedViewModel(
                         }
                     } ?: run {
                         val exceptionMessage = "Detail is null for $postId in deeplink"
-                        crashlyticsManager.recordException(YralException(exceptionMessage))
+                        crashlyticsManager.recordException(
+                            YralException(exceptionMessage),
+                            ExceptionType.FEED,
+                        )
                         setDeeplinkFetching(false)
                         Logger.e("LinkSharing") { exceptionMessage }
                     }
@@ -364,7 +371,10 @@ class FeedViewModel(
                         .map { detail ->
                             if (detail == null) {
                                 // Logger.e("FeedPagination") { "Detail is null for ${post.postID}" }
-                                crashlyticsManager.recordException(YralException("Detail is null for ${post.postID}"))
+                                crashlyticsManager.recordException(
+                                    YralException("Detail is null for ${post.postID}"),
+                                    ExceptionType.FEED,
+                                )
                             }
                             Logger.e("FeedPagination") {
                                 "${post.videoID} view count " +
@@ -491,7 +501,10 @@ class FeedViewModel(
                         }
                     } else {
                         if (totalNotVotedCount < SUFFICIENT_NEW_REQUIRED) {
-                            crashlyticsManager.recordException(YralException("Feed ran dry"))
+                            crashlyticsManager.recordException(
+                                YralException("Feed ran dry"),
+                                ExceptionType.FEED,
+                            )
                         }
                         setLoadingMore(false)
                     }
@@ -723,7 +736,10 @@ class FeedViewModel(
                 )
             }.onFailure {
                 Logger.e(FeedViewModel::class.simpleName!!, it) { "Failed to share post" }
-                crashlyticsManager.recordException(YralException(it))
+                crashlyticsManager.recordException(
+                    YralException(it),
+                    ExceptionType.DEEPLINK,
+                )
             }
         }
     }
@@ -749,7 +765,7 @@ class FeedViewModel(
             try {
                 authClient.signInWithSocial(context, SocialProvider.GOOGLE)
             } catch (e: Exception) {
-                crashlyticsManager.recordException(e)
+                crashlyticsManager.recordException(e, ExceptionType.AUTH)
                 toggleSignupFailed(true)
             }
         }

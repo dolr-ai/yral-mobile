@@ -12,6 +12,7 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.auth.analytics.AuthTelemetry
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.models.ExchangePrincipalResponse
@@ -184,7 +185,10 @@ class DefaultAuthClient(
                 isCreatedFromServiceCanister = canisterWrapper.isCreatedFromServiceCanister,
             )
         } catch (e: YralFfiException) {
-            crashlyticsManager.recordException(YralException("Reauthenticate failed $e"))
+            crashlyticsManager.recordException(
+                YralException("Reauthenticate failed $e"),
+                ExceptionType.AUTH,
+            )
             null
         }
 
@@ -219,7 +223,7 @@ class DefaultAuthClient(
             }
         } catch (e: YralFfiException) {
             resetCachedCanisterData()
-            crashlyticsManager.recordException(e)
+            crashlyticsManager.recordException(e, ExceptionType.AUTH)
             throw YralAuthException(e)
         }
     }
