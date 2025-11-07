@@ -3,7 +3,8 @@ package com.yral.shared.features.profile.domain
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import co.touchlab.kermit.Logger
-import com.yral.shared.data.feed.domain.FeedDetails
+import com.yral.shared.data.domain.CommonApis
+import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.features.profile.domain.repository.ProfileRepository
 
 class ProfileVideosPagingSource(
@@ -11,6 +12,7 @@ class ProfileVideosPagingSource(
     private val userPrincipal: String,
     private val isFromServiceCanister: Boolean,
     private val profileRepository: ProfileRepository,
+    private val commonApis: CommonApis,
 ) : PagingSource<ULong, FeedDetails>() {
     override suspend fun load(params: LoadParams<ULong>): LoadResult<ULong, FeedDetails> =
         runCatching {
@@ -27,8 +29,8 @@ class ProfileVideosPagingSource(
                     )
             var profileVideos = result.posts
             val videoStats =
-                profileRepository
-                    .getProfileVideoViewsCount(profileVideos.map { it.videoID })
+                commonApis
+                    .getVideoViewsCount(profileVideos.map { it.videoID })
                     .associate { it.videoId to it.allViews }
             if (videoStats.isNotEmpty()) {
                 profileVideos = profileVideos.map { it.copy(viewCount = videoStats[it.videoID] ?: it.viewCount) }

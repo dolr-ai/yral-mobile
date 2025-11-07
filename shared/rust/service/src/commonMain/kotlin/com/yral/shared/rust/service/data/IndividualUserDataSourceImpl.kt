@@ -2,7 +2,7 @@ package com.yral.shared.rust.service.data
 
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
-import com.yral.shared.data.feed.data.PostDTO
+import com.yral.shared.data.data.models.PostDTO
 import com.yral.shared.rust.service.services.ICPLedgerServiceFactory
 import com.yral.shared.rust.service.services.IndividualUserServiceFactory
 import com.yral.shared.rust.service.services.SnsLedgerServiceFactory

@@ -9,6 +9,15 @@ internal class FirebaseCrashlyticsProvider(
         get() = "firebase"
 
     override fun recordException(exception: Exception) {
+        crashlytics.setCustomKey("error_type", ExceptionType.UNKNOWN.name.lowercase())
+        crashlytics.recordException(exception)
+    }
+
+    override fun recordException(
+        exception: Exception,
+        type: ExceptionType,
+    ) {
+        crashlytics.setCustomKey("error_type", type.name.lowercase())
         crashlytics.recordException(exception)
     }
 

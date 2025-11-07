@@ -12,6 +12,7 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.auth.analytics.AuthTelemetry
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.models.ExchangePrincipalResponse
@@ -37,9 +38,7 @@ import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.YralFfiException
 import com.yral.shared.rust.service.utils.authenticateWithNetwork
-import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.FirebaseAuth
-import dev.gitlive.firebase.messaging.messaging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -150,11 +149,7 @@ class DefaultAuthClient(
         ).forEach { key ->
             preferences.remove(key)
         }
-        requiredUseCases.deregisterNotificationTokenUseCase(
-            DeregisterNotificationTokenUseCase.Parameter(
-                token = Firebase.messaging.getToken(),
-            ),
-        )
+        requiredUseCases.deregisterNotificationTokenUseCase()
         // clear cached canister data after parsing token
         resetCachedCanisterData()
         // reset analytics manage: flush events and reset user properties
@@ -184,7 +179,10 @@ class DefaultAuthClient(
                 isCreatedFromServiceCanister = canisterWrapper.isCreatedFromServiceCanister,
             )
         } catch (e: YralFfiException) {
-            crashlyticsManager.recordException(YralException("Reauthenticate failed $e"))
+            crashlyticsManager.recordException(
+                YralException("Reauthenticate failed $e"),
+                ExceptionType.AUTH,
+            )
             null
         }
 
@@ -219,7 +217,7 @@ class DefaultAuthClient(
             }
         } catch (e: YralFfiException) {
             resetCachedCanisterData()
-            crashlyticsManager.recordException(e)
+            crashlyticsManager.recordException(e, ExceptionType.AUTH)
             throw YralAuthException(e)
         }
     }
@@ -347,12 +345,7 @@ class DefaultAuthClient(
         }
         scope.launch { updateBalanceAndProceed(session) }
         scope.launch {
-            val result =
-                requiredUseCases.registerNotificationTokenUseCase(
-                    RegisterNotificationTokenUseCase.Parameter(
-                        token = Firebase.messaging.getToken(),
-                    ),
-                )
+            val result = requiredUseCases.registerNotificationTokenUseCase()
             Logger.d(DefaultAuthClient::class.simpleName!!) { "Notification token registered: $result" }
         }
     }
@@ -395,6 +388,7 @@ class DefaultAuthClient(
 
     private suspend fun handleOAuthCallback(result: OAuthResult) {
         lateinit var error: String
+        var currentUserPrincipal: String? = null
         when (result) {
             is OAuthResult.Success -> {
                 if (result.state != currentState) {
@@ -405,6 +399,7 @@ class DefaultAuthClient(
                 analyticsManager.flush()
                 sessionManager.canisterID?.let { canisterId ->
                     sessionManager.userPrincipal?.let { userPrincipal ->
+                        currentUserPrincipal = userPrincipal
                         analyticsManager.setUserProperties(
                             User(
                                 userId = userPrincipal,
@@ -414,7 +409,7 @@ class DefaultAuthClient(
                     }
                 }
                 sessionManager.updateState(SessionState.Loading)
-                authenticate(result.code, sessionManager.userPrincipal)
+                authenticate(result.code, currentUserPrincipal)
                 return
             }
             is OAuthResult.Error -> {

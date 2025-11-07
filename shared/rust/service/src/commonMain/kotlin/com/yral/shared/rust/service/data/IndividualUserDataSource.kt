@@ -1,6 +1,6 @@
 package com.yral.shared.rust.service.data
 
-import com.yral.shared.data.feed.data.PostDTO
+import com.yral.shared.data.data.models.PostDTO
 import com.yral.shared.uniffi.generated.PostDetailsForFrontend
 import com.yral.shared.uniffi.generated.PostDetailsWithUserInfo
 import com.yral.shared.uniffi.generated.Result12

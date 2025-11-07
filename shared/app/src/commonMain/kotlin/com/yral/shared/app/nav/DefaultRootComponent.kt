@@ -165,7 +165,7 @@ class DefaultRootComponent(
         when (config) {
             is SlotConfig.AlertsRequestBottomSheet ->
                 RootComponent.SlotChild.AlertsRequestBottomSheet(
-                    component = alertsRequestComponent(componentContext, config.type),
+                    component = alertsRequestComponent(componentContext, config.requestType),
                 )
         }
 
@@ -204,7 +204,7 @@ class DefaultRootComponent(
     private sealed interface SlotConfig {
         @Serializable
         data class AlertsRequestBottomSheet(
-            val type: AlertsRequestType,
+            val requestType: AlertsRequestType,
         ) : SlotConfig
     }
 }

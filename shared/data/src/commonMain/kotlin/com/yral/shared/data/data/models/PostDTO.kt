@@ -1,4 +1,4 @@
-package com.yral.shared.data.feed.data
+package com.yral.shared.data.data.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

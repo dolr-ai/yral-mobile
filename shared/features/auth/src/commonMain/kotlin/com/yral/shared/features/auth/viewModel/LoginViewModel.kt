@@ -3,6 +3,7 @@ package com.yral.shared.features.auth.viewModel
 import androidx.lifecycle.ViewModel
 import co.touchlab.kermit.Logger
 import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.libs.arch.presentation.UiState
@@ -38,7 +39,7 @@ class LoginViewModel(
                 authClient.signInWithSocial(context, SocialProvider.GOOGLE)
                 _state.value = UiState.Success(Unit)
             } catch (e: Exception) {
-                crashlyticsManager.recordException(e)
+                crashlyticsManager.recordException(e, ExceptionType.AUTH)
                 _state.value = UiState.Failure(e)
             }
         }
