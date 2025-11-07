@@ -2,24 +2,20 @@ package com.yral.shared.features.auth.domain.useCases
 
 import co.touchlab.kermit.Logger
 import com.yral.shared.features.auth.domain.AuthRepository
-import com.yral.shared.libs.arch.domain.SuspendUseCase
+import com.yral.shared.libs.arch.domain.UnitSuspendUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
+import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.messaging.messaging
 
 class RegisterNotificationTokenUseCase(
     appDispatchers: AppDispatchers,
     failureListener: UseCaseFailureListener,
     private val authRepository: AuthRepository,
-) : SuspendUseCase<RegisterNotificationTokenUseCase.Parameter, Unit>(
-        appDispatchers.network,
-        failureListener,
-    ) {
-    override suspend fun execute(parameter: Parameter) {
-        Logger.d("RegisterNotificationTokenUseCase") { "Registering token ${parameter.token}" }
-        authRepository.registerForNotifications(parameter.token)
+) : UnitSuspendUseCase<Unit>(appDispatchers.network, failureListener) {
+    override suspend fun execute(parameter: Unit) {
+        val token = Firebase.messaging.getToken()
+        Logger.d("RegisterNotificationTokenUseCase") { "Registering token $token" }
+        authRepository.registerForNotifications(token)
     }
-
-    data class Parameter(
-        val token: String,
-    )
 }

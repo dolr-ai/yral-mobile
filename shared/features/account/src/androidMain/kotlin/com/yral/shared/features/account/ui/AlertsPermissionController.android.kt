@@ -9,8 +9,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import co.touchlab.kermit.Logger
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
-import dev.gitlive.firebase.Firebase
-import dev.gitlive.firebase.messaging.messaging
 import dev.icerock.moko.permissions.DeniedAlwaysException
 import dev.icerock.moko.permissions.DeniedException
 import dev.icerock.moko.permissions.Permission
@@ -97,29 +95,9 @@ actual fun rememberAlertsPermissionController(viewModel: AccountsViewModel): Ale
     }
 }
 
-private suspend fun registerNotificationToken(viewModel: AccountsViewModel): Boolean {
-    val tokenResult = runCatching { Firebase.messaging.getToken() }
-    val token = tokenResult.getOrNull()
-    if (!tokenResult.isSuccess || token.isNullOrBlank()) {
-        Logger.e("AccountScreen") {
-            "Failed to fetch FCM token for registration: ${tokenResult.exceptionOrNull()?.message}"
-        }
-        return false
-    }
-    return viewModel.registerAlerts(token)
-}
+private suspend fun registerNotificationToken(viewModel: AccountsViewModel): Boolean = viewModel.registerAlerts()
 
-private suspend fun deregisterNotificationToken(viewModel: AccountsViewModel): Boolean {
-    val tokenResult = runCatching { Firebase.messaging.getToken() }
-    val token = tokenResult.getOrNull()
-    if (!tokenResult.isSuccess || token.isNullOrBlank()) {
-        Logger.e("AccountScreen") {
-            "Failed to fetch FCM token for deregistration: ${tokenResult.exceptionOrNull()?.message}"
-        }
-        return false
-    }
-    return viewModel.deregisterAlerts(token)
-}
+private suspend fun deregisterNotificationToken(viewModel: AccountsViewModel): Boolean = viewModel.deregisterAlerts()
 
 private fun openNotificationSettings(context: Context) {
     val primaryIntent =

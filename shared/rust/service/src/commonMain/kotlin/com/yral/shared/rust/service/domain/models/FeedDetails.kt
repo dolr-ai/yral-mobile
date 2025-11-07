@@ -2,7 +2,7 @@ package com.yral.shared.rust.service.domain.models
 
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.utils.resolveUsername
-import com.yral.shared.data.feed.domain.FeedDetails
+import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.rust.service.data.IndividualUserDataSourceImpl.Companion.CLOUD_FLARE_PREFIX
 import com.yral.shared.rust.service.data.IndividualUserDataSourceImpl.Companion.CLOUD_FLARE_SUFFIX_MP4
 import com.yral.shared.rust.service.data.IndividualUserDataSourceImpl.Companion.THUMBNAIL_SUFFIX

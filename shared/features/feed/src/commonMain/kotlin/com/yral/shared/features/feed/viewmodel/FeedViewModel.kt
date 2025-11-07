@@ -16,8 +16,10 @@ import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.utils.processFirstNSuspendFlow
 import com.yral.shared.crashlytics.core.CrashlyticsManager
-import com.yral.shared.data.feed.domain.FeedDetails
-import com.yral.shared.data.feed.domain.Post
+import com.yral.shared.crashlytics.core.ExceptionType
+import com.yral.shared.data.domain.models.FeedDetails
+import com.yral.shared.data.domain.models.Post
+import com.yral.shared.data.domain.useCases.GetVideoViewsUseCase
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.feed.analytics.FeedTelemetry
@@ -167,7 +169,10 @@ class FeedViewModel(
                             setLoadingMore(false)
                             loadMoreFeed()
                         } else {
-                            crashlyticsManager.recordException(YralException("Initial cache feed empty"))
+                            crashlyticsManager.recordException(
+                                YralException("Initial cache feed empty"),
+                                ExceptionType.FEED,
+                            )
                             val notVotedCount = filterVotedAndFetchDetails(posts)
                             Logger.d("FeedPagination") { "notVotedCount in initialFeed $notVotedCount" }
                             if (notVotedCount < SUFFICIENT_NEW_REQUIRED) {
@@ -302,13 +307,32 @@ class FeedViewModel(
                 .onSuccess { detail ->
                     Logger.d("LinkSharing") { "Details Received $detail" }
                     detail?.let {
-                        feedTelemetry.onDeeplink(detail.videoID)
-                        _state.update { currentState ->
-                            addDeeplinkData(currentState, detail)
-                        }
+                        Logger.d("LinkSharing") { "Fetching views for ${detail.videoID} current: ${detail.viewCount}" }
+                        requiredUseCases
+                            .videoViewsUseCase(
+                                parameter = GetVideoViewsUseCase.Params(listOf(detail.videoID)),
+                            ).onSuccess { views ->
+                                feedTelemetry.onDeeplink(detail.videoID)
+                                views.firstOrNull()?.allViews?.let { allViews ->
+                                    Logger.d("LinkSharing") { "View count : $allViews" }
+                                    _state.update { currentState ->
+                                        addDeeplinkData(currentState, detail.copy(viewCount = allViews))
+                                    }
+                                } ?: run {
+                                    Logger.d("LinkSharing") { "Failed to fetch view count" }
+                                    _state.update { currentState -> addDeeplinkData(currentState, detail) }
+                                }
+                            }.onFailure {
+                                Logger.d("LinkSharing") { "Failed to fetch view count" }
+                                feedTelemetry.onDeeplink(detail.videoID)
+                                _state.update { currentState -> addDeeplinkData(currentState, detail) }
+                            }
                     } ?: run {
                         val exceptionMessage = "Detail is null for $postId in deeplink"
-                        crashlyticsManager.recordException(YralException(exceptionMessage))
+                        crashlyticsManager.recordException(
+                            YralException(exceptionMessage),
+                            ExceptionType.FEED,
+                        )
                         setDeeplinkFetching(false)
                         Logger.e("LinkSharing") { exceptionMessage }
                     }
@@ -364,7 +388,10 @@ class FeedViewModel(
                         .map { detail ->
                             if (detail == null) {
                                 // Logger.e("FeedPagination") { "Detail is null for ${post.postID}" }
-                                crashlyticsManager.recordException(YralException("Detail is null for ${post.postID}"))
+                                crashlyticsManager.recordException(
+                                    YralException("Detail is null for ${post.postID}"),
+                                    ExceptionType.FEED,
+                                )
                             }
                             Logger.e("FeedPagination") {
                                 "${post.videoID} view count " +
@@ -491,7 +518,10 @@ class FeedViewModel(
                         }
                     } else {
                         if (totalNotVotedCount < SUFFICIENT_NEW_REQUIRED) {
-                            crashlyticsManager.recordException(YralException("Feed ran dry"))
+                            crashlyticsManager.recordException(
+                                YralException("Feed ran dry"),
+                                ExceptionType.FEED,
+                            )
                         }
                         setLoadingMore(false)
                     }
@@ -521,6 +551,36 @@ class FeedViewModel(
             feedTelemetry.trackVideoImpression(
                 feedDetails = currentState.feedDetails[currentState.currentPageOfFeed],
             )
+        }
+        refreshVideoViewCount(currentState.feedDetails[currentState.currentPageOfFeed])
+    }
+
+    private fun refreshVideoViewCount(detail: FeedDetails) {
+        viewModelScope.launch {
+            requiredUseCases
+                .videoViewsUseCase(
+                    parameter = GetVideoViewsUseCase.Params(listOf(detail.videoID)),
+                ).onSuccess { views ->
+                    views.firstOrNull()?.allViews?.let { allViews ->
+                        Logger.d("ViewCount") { "View count : $allViews" }
+                        _state.update { currentState ->
+                            val list = currentState.feedDetails
+                            val index = list.indexOfFirst { it.videoID == detail.videoID }
+                            if (index == -1) {
+                                currentState
+                            } else {
+                                currentState.copy(
+                                    feedDetails =
+                                        list
+                                            .toMutableList()
+                                            .apply { this[index] = this[index].copy(viewCount = allViews) },
+                                )
+                            }
+                        }
+                    }
+                }.onFailure {
+                    Logger.d("ViewCount") { "Failed to fetch view count" }
+                }
         }
     }
 
@@ -723,7 +783,10 @@ class FeedViewModel(
                 )
             }.onFailure {
                 Logger.e(FeedViewModel::class.simpleName!!, it) { "Failed to share post" }
-                crashlyticsManager.recordException(YralException(it))
+                crashlyticsManager.recordException(
+                    YralException(it),
+                    ExceptionType.DEEPLINK,
+                )
             }
         }
     }
@@ -749,7 +812,7 @@ class FeedViewModel(
             try {
                 authClient.signInWithSocial(context, SocialProvider.GOOGLE)
             } catch (e: Exception) {
-                crashlyticsManager.recordException(e)
+                crashlyticsManager.recordException(e, ExceptionType.AUTH)
                 toggleSignupFailed(true)
             }
         }
@@ -826,6 +889,7 @@ class FeedViewModel(
         val checkVideoVoteUseCase: CheckVideoVoteUseCase,
         val getAIFeedUseCase: GetAIFeedUseCase,
         val followUserUseCase: FollowUserUseCase,
+        val videoViewsUseCase: GetVideoViewsUseCase,
     )
 }
 

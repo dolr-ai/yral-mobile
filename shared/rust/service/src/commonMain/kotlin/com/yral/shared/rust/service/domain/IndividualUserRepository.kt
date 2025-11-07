@@ -1,7 +1,7 @@
 package com.yral.shared.rust.service.domain
 
-import com.yral.shared.data.feed.domain.FeedDetails
-import com.yral.shared.data.feed.domain.Post
+import com.yral.shared.data.domain.models.FeedDetails
+import com.yral.shared.data.domain.models.Post
 import com.yral.shared.rust.service.domain.models.Posts
 
 interface IndividualUserRepository {

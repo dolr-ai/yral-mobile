@@ -1,6 +1,6 @@
 package com.yral.shared.rust.service.domain.models
 
-import com.yral.shared.data.feed.domain.FeedDetails
+import com.yral.shared.data.domain.models.FeedDetails
 
 sealed class Posts {
     data class Ok(

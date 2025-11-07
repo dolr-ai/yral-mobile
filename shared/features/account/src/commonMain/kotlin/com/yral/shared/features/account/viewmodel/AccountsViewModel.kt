@@ -213,26 +213,18 @@ class AccountsViewModel internal constructor(
         _state.update { it.copy(alertsEnabled = isEnabled) }
     }
 
-    suspend fun registerAlerts(token: String): Boolean =
+    suspend fun registerAlerts(): Boolean =
         runCatching {
-            registerNotificationTokenUseCase(
-                RegisterNotificationTokenUseCase.Parameter(token = token),
-            )
+            registerNotificationTokenUseCase()
         }.onFailure { error ->
-            Logger.e("AccountsViewModel") {
-                "Failed to register notifications: ${error.message}"
-            }
+            Logger.e("AccountsViewModel") { "Failed to register notifications: ${error.message}" }
         }.isSuccess
 
-    suspend fun deregisterAlerts(token: String): Boolean =
+    suspend fun deregisterAlerts(): Boolean =
         runCatching {
-            deregisterNotificationTokenUseCase(
-                DeregisterNotificationTokenUseCase.Parameter(token = token),
-            )
+            deregisterNotificationTokenUseCase()
         }.onFailure { error ->
-            Logger.e("AccountsViewModel") {
-                "Failed to deregister notifications: ${error.message}"
-            }
+            Logger.e("AccountsViewModel") { "Failed to deregister notifications: ${error.message}" }
         }.isSuccess
 
     companion object {
