@@ -74,8 +74,8 @@ internal fun UpsPostDetailsForFrontend.toFeedDetails(
     )
 }
 
-internal fun PostDetailsWithUserInfo.toFeedDetails(): FeedDetails {
-    return FeedDetails(
+internal fun PostDetailsWithUserInfo.toFeedDetails(): FeedDetails =
+    FeedDetails(
         postID = postId,
         videoID = uid,
         canisterID = canisterId,
@@ -94,7 +94,6 @@ internal fun PostDetailsWithUserInfo.toFeedDetails(): FeedDetails {
         isFromServiceCanister = canisterId == getUserInfoServiceCanister(),
         userName = username,
     )
-}
 
 fun FeedDetails.toCanisterData(): CanisterData =
     CanisterData(

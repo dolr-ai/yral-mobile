@@ -15,9 +15,10 @@ fun rememberPlayerPool(
     platformPlayerFactory: PlatformPlayerFactory = koinInject(),
     platformMediaSourceFactory: PlatformMediaSourceFactory = koinInject(),
 ): PlayerPool {
-    val pool = remember(maxPoolSize, platformPlayerFactory, platformMediaSourceFactory) {
-        PlayerPool(platformPlayerFactory, platformMediaSourceFactory, maxPoolSize)
-    }
+    val pool =
+        remember(maxPoolSize, platformPlayerFactory, platformMediaSourceFactory) {
+            PlayerPool(platformPlayerFactory, platformMediaSourceFactory, maxPoolSize)
+        }
     DisposableEffect(pool) {
         onDispose {
             pool.dispose() // or pool.clear() depending on your API

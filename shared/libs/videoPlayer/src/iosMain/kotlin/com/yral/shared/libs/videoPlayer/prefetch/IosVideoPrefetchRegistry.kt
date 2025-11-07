@@ -77,11 +77,12 @@ internal object IosVideoPrefetchRegistry {
     }
 
     fun evict(url: String) {
-        val entry = lock.withLock {
-            entries.remove(url)?.also {
-                usageOrder.remove(url)
-            }
-        } ?: return
+        val entry =
+            lock.withLock {
+                entries.remove(url)?.also {
+                    usageOrder.remove(url)
+                }
+            } ?: return
         logger.d { "evict: disposing $url" }
         entry.dispose()
     }
@@ -261,7 +262,9 @@ private inline fun <T> runOnMainSync(crossinline block: () -> T): T {
     dispatch_async(dispatch_get_main_queue()) {
         try {
             result = block()
-        } catch (e: Throwable) {
+        } catch (
+            @Suppress("TooGenericExceptionCaught") e: Throwable,
+        ) {
             exception = e
         } finally {
             dispatch_semaphore_signal(semaphore)

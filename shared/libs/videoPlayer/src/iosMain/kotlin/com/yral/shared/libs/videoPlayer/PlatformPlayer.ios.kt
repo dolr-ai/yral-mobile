@@ -1,5 +1,6 @@
 package com.yral.shared.libs.videoPlayer
 
+import com.yral.shared.libs.videoPlayer.util.isHlsUrl
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.cValue
@@ -13,15 +14,18 @@ import platform.AVFoundation.AVPlayerItemStatusFailed
 import platform.AVFoundation.AVPlayerItemStatusReadyToPlay
 import platform.AVFoundation.AVPlayerTimeControlStatusPlaying
 import platform.AVFoundation.AVPlayerTimeControlStatusWaitingToPlayAtSpecifiedRate
+import platform.AVFoundation.AVURLAsset
 import platform.AVFoundation.actionAtItemEnd
 import platform.AVFoundation.addPeriodicTimeObserverForInterval
+import platform.AVFoundation.asset
 import platform.AVFoundation.automaticallyWaitsToMinimizeStalling
+import platform.AVFoundation.canUseNetworkResourcesForLiveStreamingWhilePaused
 import platform.AVFoundation.currentItem
 import platform.AVFoundation.currentTime
 import platform.AVFoundation.duration
-import platform.AVFoundation.AVURLAsset
 import platform.AVFoundation.pause
 import platform.AVFoundation.play
+import platform.AVFoundation.preferredForwardBufferDuration
 import platform.AVFoundation.rate
 import platform.AVFoundation.removeTimeObserver
 import platform.AVFoundation.replaceCurrentItemWithPlayerItem
@@ -38,10 +42,6 @@ import platform.Foundation.NSOperationQueue
 import platform.Foundation.NSURL
 import platform.darwin.dispatch_get_main_queue
 import kotlin.math.roundToLong
-import com.yral.shared.libs.videoPlayer.util.isHlsUrl
-import platform.AVFoundation.asset
-import platform.AVFoundation.canUseNetworkResourcesForLiveStreamingWhilePaused
-import platform.AVFoundation.preferredForwardBufferDuration
 
 @Suppress("TooManyFunctions")
 actual class PlatformPlayer {

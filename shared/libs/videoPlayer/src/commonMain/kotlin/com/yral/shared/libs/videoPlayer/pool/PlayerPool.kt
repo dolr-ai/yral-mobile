@@ -168,15 +168,17 @@ class PlayerPool(
         pool.clear()
     }
 
-    suspend fun onPlayBackStarted(playerData: PlayerData) = mutex.withLock {
-        val pooledPlayer = pool.find { it.currentUrl == playerData.url }
-        pooledPlayer?.externalListener?.onPlayBackStarted()
-    }
+    suspend fun onPlayBackStarted(playerData: PlayerData) =
+        mutex.withLock {
+            val pooledPlayer = pool.find { it.currentUrl == playerData.url }
+            pooledPlayer?.externalListener?.onPlayBackStarted()
+        }
 
-    suspend fun onPlayBackStopped(playerData: PlayerData) = mutex.withLock{
-        val pooledPlayer = pool.find { it.currentUrl == playerData.url }
-        pooledPlayer?.externalListener?.onPlayBackStopped()
-    }
+    suspend fun onPlayBackStopped(playerData: PlayerData) =
+        mutex.withLock {
+            val pooledPlayer = pool.find { it.currentUrl == playerData.url }
+            pooledPlayer?.externalListener?.onPlayBackStopped()
+        }
 }
 
 interface PlatformPlayerFactory {

@@ -85,10 +85,11 @@ internal class IndividualUserDataSourceImpl(
 
         fun thumbnailUrl(videoUid: String) = "$CLOUD_FLARE_PREFIX$videoUid$THUMBNAIL_SUFFIX"
 
-        fun videoUrl(videoUid: String) = when (getPreferredVideoFormat()) {
-            PreferredVideoFormat.MP4 -> mp4Url(videoUid)
-            PreferredVideoFormat.HLS -> hlsUrl(videoUid)
-        }
+        fun videoUrl(videoUid: String) =
+            when (getPreferredVideoFormat()) {
+                PreferredVideoFormat.MP4 -> mp4Url(videoUid)
+                PreferredVideoFormat.HLS -> hlsUrl(videoUid)
+            }
 
         private fun mp4Url(videoUid: String) = "$CLOUD_FLARE_PREFIX$videoUid$CLOUD_FLARE_SUFFIX_MP4"
         private fun hlsUrl(videoUid: String) = "$CLOUD_FLARE_PREFIX$videoUid$CLOUD_FLARE_SUFFIX"
@@ -97,7 +98,7 @@ internal class IndividualUserDataSourceImpl(
 
 enum class PreferredVideoFormat {
     MP4,
-    HLS
+    HLS,
 }
 
 expect fun getPreferredVideoFormat(): PreferredVideoFormat
