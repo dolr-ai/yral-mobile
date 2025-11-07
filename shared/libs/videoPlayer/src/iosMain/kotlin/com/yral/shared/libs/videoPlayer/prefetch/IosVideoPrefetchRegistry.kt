@@ -61,13 +61,12 @@ internal object IosVideoPrefetchRegistry {
         return PrefetchHandleImpl(url, entry, callback)
     }
 
-    fun consume(url: String): AVURLAsset? =
-        lock.withLock {
-            val entry = entries[url] ?: return null
-            updateUsageLocked(url)
-            logger.d { "consume: using prefetched asset for $url" }
-            entry.consumeAsset()
-        }
+    fun consume(url: String): AVURLAsset? {
+        val entry = lock.withLock { entries[url] } ?: return null
+        lock.withLock { updateUsageLocked(url) }
+        logger.d { "consume: using prefetched asset for $url" }
+        return entry.consumeAsset()
+    }
 
     fun removeCallback(handle: PrefetchHandle) {
         check(handle is PrefetchHandleImpl)
@@ -78,12 +77,13 @@ internal object IosVideoPrefetchRegistry {
     }
 
     fun evict(url: String) {
-        lock.withLock {
-            val entry = entries.remove(url) ?: return
-            usageOrder.remove(url)
-            logger.d { "evict: disposing $url" }
-            entry.dispose()
-        }
+        val entry = lock.withLock {
+            entries.remove(url)?.also {
+                usageOrder.remove(url)
+            }
+        } ?: return
+        logger.d { "evict: disposing $url" }
+        entry.dispose()
     }
 
     private fun removeEntry(
@@ -256,12 +256,20 @@ private inline fun <T> runOnMainSync(crossinline block: () -> T): T {
         return block()
     }
     var result: T? = null
+    var exception: Throwable? = null
     val semaphore = dispatch_semaphore_create(0)
     dispatch_async(dispatch_get_main_queue()) {
-        result = block()
-        dispatch_semaphore_signal(semaphore)
+        try {
+            result = block()
+        } catch (e: Throwable) {
+            exception = e
+        } finally {
+            dispatch_semaphore_signal(semaphore)
+        }
     }
     dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER)
+    exception?.let { throw it }
+    @Suppress("UNCHECKED_CAST")
     return result as T
 }
 

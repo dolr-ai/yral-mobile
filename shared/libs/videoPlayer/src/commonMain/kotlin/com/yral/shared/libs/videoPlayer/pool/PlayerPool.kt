@@ -71,6 +71,7 @@ class PlayerPool(
                 pooledPlayer.platformPlayer.pause()
                 pooledPlayer.platformPlayer.stop()
                 pooledPlayer.platformPlayer.clearMediaItems()
+//                pooledPlayer.externalListener = null
                 cleanup(pooledPlayer)
             }
         }
@@ -78,6 +79,7 @@ class PlayerPool(
     private fun cleanup(pooledPlayer: PooledPlayer) {
         pooledPlayer.internalListener?.let { listener ->
             pooledPlayer.platformPlayer.removeListener(listener)
+            pooledPlayer.internalListener = null
         }
     }
 
@@ -166,12 +168,12 @@ class PlayerPool(
         pool.clear()
     }
 
-    fun onPlayBackStarted(playerData: PlayerData) {
+    suspend fun onPlayBackStarted(playerData: PlayerData) = mutex.withLock {
         val pooledPlayer = pool.find { it.currentUrl == playerData.url }
         pooledPlayer?.externalListener?.onPlayBackStarted()
     }
 
-    fun onPlayBackStopped(playerData: PlayerData) {
+    suspend fun onPlayBackStopped(playerData: PlayerData) = mutex.withLock{
         val pooledPlayer = pool.find { it.currentUrl == playerData.url }
         pooledPlayer?.externalListener?.onPlayBackStopped()
     }

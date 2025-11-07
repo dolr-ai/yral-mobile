@@ -198,6 +198,7 @@ internal fun BindPlayerState(
         platformPlayer,
         playerParams.isPause,
         playerParams.isMute,
+        playerParams.volume,
         playerParams.sliderTime,
         playerParams.speed,
     ) {
@@ -210,7 +211,7 @@ internal fun BindPlayerState(
             platformPlayer.pause()
         }
 
-        val desiredVolume = if (playerParams.isMute) 0f else 1f
+        val desiredVolume = if (playerParams.isMute) 0f else playerParams.volume
         platformPlayer.setVolume(volume = desiredVolume)
 
         playerParams.sliderTime?.let { newPos ->

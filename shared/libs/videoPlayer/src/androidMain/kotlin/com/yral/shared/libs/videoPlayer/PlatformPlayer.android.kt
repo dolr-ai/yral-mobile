@@ -26,6 +26,7 @@ actual class PlatformPlayer(
     }
 
     actual fun release() {
+        listenerMap.clear()
         exoPlayer.release()
     }
 
