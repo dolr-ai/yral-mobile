@@ -61,6 +61,7 @@ class DefaultAuthClient(
     private val initRustFactories: (identity: ByteArray) -> Unit,
 ) : AuthClient {
     private var currentState: String? = null
+    private var currentProvider: SocialProvider? = null
 
     override suspend fun initialize() {
         sessionManager.updateState(SessionState.Loading)
@@ -369,6 +370,7 @@ class DefaultAuthClient(
         context: Any,
         provider: SocialProvider,
     ) {
+        currentProvider = provider
         initiateOAuthFlow(context, provider)
     }
 
@@ -389,10 +391,12 @@ class DefaultAuthClient(
     private suspend fun handleOAuthCallback(result: OAuthResult) {
         lateinit var error: String
         var currentUserPrincipal: String? = null
+        val provider = currentProvider ?: SocialProvider.GOOGLE
         when (result) {
             is OAuthResult.Success -> {
                 if (result.state != currentState) {
-                    authTelemetry.authFailed()
+                    authTelemetry.authFailed(provider)
+                    currentProvider = null
                     throw SecurityException("Invalid state parameter - possible CSRF attack")
                 }
                 // reset analytics manage: flush events and reset user properties
@@ -422,7 +426,8 @@ class DefaultAuthClient(
                 error = "OAuth authentication timed out - please try again"
             }
         }
-        authTelemetry.authFailed()
+        authTelemetry.authFailed(provider)
+        currentProvider = null
         throw YralAuthException("OAuth authentication failed - $error")
     }
 
@@ -430,6 +435,7 @@ class DefaultAuthClient(
         code: String,
         currentUserPrincipal: String?,
     ) {
+        val provider = currentProvider ?: SocialProvider.GOOGLE
         requiredUseCases.authenticateTokenUseCase
             .invoke(code)
             .onSuccess { tokenResponse ->
@@ -447,10 +453,13 @@ class DefaultAuthClient(
                     delay(DELAY_FOR_SESSION_PROPERTIES)
                     authTelemetry.onAuthSuccess(
                         isNewUser = currentUserPrincipal == sessionManager.userPrincipal,
+                        provider = provider,
                     )
                 }
+                currentProvider = null
             }.onFailure {
-                authTelemetry.authFailed()
+                authTelemetry.authFailed(provider)
+                currentProvider = null
                 throw YralAuthException("authenticate social sign in failed - ${it.message}")
             }
     }

@@ -25,6 +25,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.features.auth.analytics.AuthTelemetry
+import com.yral.shared.features.auth.utils.SocialProvider
+import com.yral.shared.features.auth.utils.defaultSocialProviders
 import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -36,8 +38,10 @@ import yral_mobile.shared.features.auth.generated.resources.continue_to_sign_up_
 import yral_mobile.shared.features.auth.generated.resources.join_yral
 import yral_mobile.shared.features.auth.generated.resources.sign_up_disclaimer
 import yral_mobile.shared.features.auth.generated.resources.signup_consent
+import yral_mobile.shared.features.auth.generated.resources.signup_with_apple
 import yral_mobile.shared.features.auth.generated.resources.signup_with_google
 import yral_mobile.shared.features.auth.generated.resources.terms_of_service_signup_consent
+import yral_mobile.shared.libs.designsystem.generated.resources.apple
 import yral_mobile.shared.libs.designsystem.generated.resources.google
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
@@ -46,7 +50,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 fun SignupView(
     pageName: SignupPageName,
     termsLink: String,
-    onSignupClicked: () -> Unit,
+    onSignupClicked: (SocialProvider) -> Unit,
     openTerms: () -> Unit,
     authTelemetry: AuthTelemetry = koinInject(),
 ) {
@@ -95,12 +99,24 @@ fun SignupView(
                 verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.Top),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                YralButton(
-                    text = stringResource(Res.string.signup_with_google),
-                    icon = DesignRes.drawable.google,
-                ) {
-                    authTelemetry.onSignupJourneySelected()
-                    onSignupClicked()
+                defaultSocialProviders().forEach { provider ->
+                    val buttonTextRes =
+                        when (provider) {
+                            SocialProvider.GOOGLE -> Res.string.signup_with_google
+                            SocialProvider.APPLE -> Res.string.signup_with_apple
+                        }
+                    val iconRes =
+                        when (provider) {
+                            SocialProvider.GOOGLE -> DesignRes.drawable.google
+                            SocialProvider.APPLE -> DesignRes.drawable.apple
+                        }
+                    YralButton(
+                        text = stringResource(buttonTextRes),
+                        icon = iconRes,
+                    ) {
+                        authTelemetry.onSignupJourneySelected(provider)
+                        onSignupClicked(provider)
+                    }
                 }
                 Text(
                     text = annotateText(termsLink, openTerms),

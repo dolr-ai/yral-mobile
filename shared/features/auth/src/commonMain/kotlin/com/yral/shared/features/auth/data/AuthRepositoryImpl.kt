@@ -1,10 +1,9 @@
 package com.yral.shared.features.auth.data
 
 import com.yral.shared.core.AppConfigurations.OAUTH_BASE_URL
-import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.CLIENT_ID
-import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI
 import com.yral.shared.features.auth.data.models.toExchangePrincipalResponse
 import com.yral.shared.features.auth.data.models.toTokenResponse
+import com.yral.shared.features.auth.di.AuthEnv
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.models.ExchangePrincipalResponse
 import com.yral.shared.features.auth.domain.models.TokenResponse
@@ -19,6 +18,7 @@ import io.ktor.http.Url
 class AuthRepositoryImpl(
     private val dataSource: AuthDataSource,
     private val oAuthUtilsHelper: OAuthUtilsHelper,
+    private val authEnv: AuthEnv,
 ) : AuthRepository {
     private var verifier: String = ""
 
@@ -36,10 +36,10 @@ class AuthRepositoryImpl(
                 parameters =
                     Parameters.build {
                         append("provider", provider.value)
-                        append("client_id", CLIENT_ID)
+                        append("client_id", authEnv.clientId)
                         append("response_type", "code")
                         append("response_mode", "query")
-                        append("redirect_uri", REDIRECT_URI)
+                        append("redirect_uri", authEnv.redirectUri.uriString)
                         append("scope", "openid")
                         append("code_challenge", codeChallenge)
                         append("code_challenge_method", "S256")
