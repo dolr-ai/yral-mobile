@@ -20,6 +20,7 @@ struct HomeTabController: View {
     )
   }
 
+  @State private var previousTab: Tab = .home
   @State private var selectedTab: Tab = .home
   @State private var tabBarHeight = UITabBarController().tabBar.frame.height
   @State private var showFeeds = false
@@ -81,11 +82,22 @@ struct HomeTabController: View {
           .tag(Tab.profile)
       }
       .onChange(of: selectedTab) { tab in
+        if previousTab == .wallet && tab != .wallet {
+          eventBus.dismissFullScreenCoverWallet.send(())
+        }
+
+        if previousTab == .profile && tab != .profile {
+          eventBus.dismissFullScreenCoverProfile.send(())
+        }
+
         guard !suppressAnalytics else {
           suppressAnalytics = false
+          previousTab = tab
           return
         }
+
         tabDidChange(to: tab)
+        previousTab = tab
       }
       .onReceive(deepLinkRouter.$pendingDestination.compactMap { $0 }) { dest in
         switch dest {
