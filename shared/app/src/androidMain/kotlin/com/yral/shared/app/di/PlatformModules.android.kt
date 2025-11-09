@@ -16,6 +16,7 @@ import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.libs.designsystem.component.AndroidScreenFoldStateProvider
 import com.yral.shared.libs.designsystem.windowInfo.ScreenFoldStateProvider
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -49,8 +50,8 @@ actual val platformModule =
         }
         // Required single
         // Reason: Verified in Repo, Callback in Repo required once app resumes
-        single<OAuthUtils> { AndroidOAuthUtils() }
-        factory<OAuthUtilsHelper> { AndroidOAuthUtilsHelper() }
+        singleOf(::AndroidOAuthUtils) bind OAuthUtils::class
+        factoryOf(::AndroidOAuthUtilsHelper) bind OAuthUtilsHelper::class
         single<ImageLoader> { SingletonImageLoader.get(get()) }
         factory<ScreenFoldStateProvider> { (activityContext: Context) ->
             AndroidScreenFoldStateProvider(activityContext)

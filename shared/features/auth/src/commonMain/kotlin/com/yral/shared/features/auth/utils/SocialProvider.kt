@@ -4,4 +4,5 @@ enum class SocialProvider(
     val value: String,
 ) {
     GOOGLE("google"),
+    APPLE("apple"),
 }

@@ -807,10 +807,13 @@ class FeedViewModel(
         }
 
     @Suppress("TooGenericExceptionCaught")
-    fun signInWithGoogle(context: Any) {
+    fun signInWithSocial(
+        context: Any,
+        provider: SocialProvider,
+    ) {
         coroutineScope.launch {
             try {
-                authClient.signInWithSocial(context, SocialProvider.GOOGLE)
+                authClient.signInWithSocial(context, provider)
             } catch (e: Exception) {
                 crashlyticsManager.recordException(e, ExceptionType.AUTH)
                 toggleSignupFailed(true)
