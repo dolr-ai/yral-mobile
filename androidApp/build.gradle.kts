@@ -98,7 +98,7 @@ dependencies {
     implementation(libs.firebase.appcheck.debug)
     implementation(libs.firebase.messaging)
     implementation(libs.coil.compose)
-    implementation(libs.coil.okhttp)
+    implementation(libs.coil.ktor3)
     implementation(libs.coil.svg)
     implementation(libs.accompanist.permission)
     implementation(libs.facebook.sdk.android.core)

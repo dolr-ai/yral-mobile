@@ -2,60 +2,29 @@
 
 package com.yral.shared.libs.videoPlayer.pool
 
-import com.yral.shared.libs.videoPlayer.model.PlayerData
+import co.touchlab.kermit.Logger
+import com.yral.shared.libs.videoPlayer.PlatformPlayer
+import com.yral.shared.libs.videoPlayer.prefetch.IosVideoPrefetchRegistry
+import platform.AVFoundation.AVPlayerItem
+import platform.Foundation.NSURL
 
-/**
- * STUB implementation
- */
-actual class PlayerPool actual constructor(
-    maxPoolSize: Int,
-) {
-    actual suspend fun getPlayer(
-        playerData: PlayerData,
-        videoListener: VideoListener?,
-    ): PlatformPlayer = PlatformPlayer()
-
-    actual suspend fun releasePlayer(player: PlatformPlayer) {
-    }
-
-    actual fun dispose() {
-    }
-
-    actual fun onPlayBackStarted(playerData: PlayerData) {
-    }
-
-    actual fun onPlayBackStopped(playerData: PlayerData) {
-    }
+class IosPlatformPlayerFactory : PlatformPlayerFactory {
+    override fun createPlayer(): PlatformPlayer = PlatformPlayer()
 }
 
-/**
- * STUB implementation
- */
-actual class PlatformPlayer {
-    actual fun play() {
-    }
+class IosPlatformMediaSourceFactory : PlatformMediaSourceFactory {
+    private val logger = Logger.withTag("iOSPrefetch")
 
-    actual fun pause() {
-    }
-
-    actual fun stop() {
-    }
-
-    actual fun release() {
-    }
-
-    actual fun clearMediaItems() {
-    }
-
-    actual fun setMediaSource(source: Any) {
-    }
-
-    actual fun prepare() {
-    }
-
-    actual fun seekTo(
-        mediaItemIndex: Int,
-        positionMs: Long,
-    ) {
+    override fun createMediaSource(url: String): Any {
+        IosVideoPrefetchRegistry.consume(url)?.let { prefetchedAsset ->
+            logger.d { "mediaSource: using prefetched asset for $url" }
+            return AVPlayerItem(asset = prefetchedAsset)
+        }
+        val nsUrl =
+            requireNotNull(NSURL(string = url)) {
+                "Invalid URL supplied to media source factory: $url"
+            }
+        logger.d { "mediaSource: creating fresh item for $url" }
+        return AVPlayerItem(uRL = nsUrl)
     }
 }

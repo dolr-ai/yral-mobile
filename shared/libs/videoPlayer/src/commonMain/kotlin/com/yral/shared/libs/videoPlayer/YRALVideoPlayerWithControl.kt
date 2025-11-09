@@ -98,6 +98,24 @@ internal fun YRALVideoPlayerWithControl(
                 },
     ) {
         // Video player component
+        val onTotalTimeChanged = remember { { time: Int -> totalTime = time } }
+        val onCurrentTimeChanged =
+            remember {
+                { time: Int ->
+                    if (isSliding.not()) {
+                        currentTime = time // Update current playback time
+                        sliderTime = null // Reset slider time if not sliding
+                    }
+                }
+            }
+        val onBufferingChanged = remember { { buffering: Boolean -> isBuffering = buffering } }
+        val onDidEndVideo =
+            remember(playerConfig.loop, playerConfig.didEndVideo, playerControls.onPauseToggle) {
+                {
+                    playerConfig.didEndVideo?.invoke()
+                    if (!playerConfig.loop) playerControls.onPauseToggle()
+                }
+            }
         CMPPlayer(
             modifier = modifier,
             playerData = playerData,
@@ -107,24 +125,14 @@ internal fun YRALVideoPlayerWithControl(
                 CMPPlayerParams(
                     isPause = playerControls.isPause,
                     isMute = isMute,
-                    totalTime = { totalTime = it }, // Update total time of the video
-                    currentTime = {
-                        if (isSliding.not()) {
-                            currentTime = it // Update current playback time
-                            sliderTime = null // Reset slider time if not sliding
-                        }
-                    },
+                    onTotalTimeChanged = onTotalTimeChanged, // Update total time of the video
+                    onCurrentTimeChanged = onCurrentTimeChanged,
                     isSliding = isSliding, // Pass seek bar sliding state
                     sliderTime = sliderTime, // Pass seek bar slider time
                     speed = selectedSpeed, // Pass selected playback speed
                     size = screenSize,
-                    bufferCallback = { isBuffering = it },
-                    didEndVideo = {
-                        playerConfig.didEndVideo?.invoke()
-                        if (playerConfig.loop.not()) {
-                            playerControls.onPauseToggle()
-                        }
-                    },
+                    onBufferingChanged = onBufferingChanged,
+                    onDidEndVideo = onDidEndVideo,
                     loop = playerConfig.loop,
                     volume = if (isMute) 0f else 1f,
                 ),

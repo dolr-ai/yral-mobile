@@ -78,9 +78,27 @@ internal class IndividualUserDataSourceImpl(
             .icrc1BalanceOf(Account(owner = principalId, subaccount = null))
 
     internal companion object {
-        internal const val CLOUD_FLARE_PREFIX = "https://customer-2p3jflss4r4hmpnz.cloudflarestream.com/"
-        internal const val CLOUD_FLARE_SUFFIX = "/manifest/video.m3u8"
-        internal const val CLOUD_FLARE_SUFFIX_MP4 = "/downloads/default.mp4"
-        internal const val THUMBNAIL_SUFFIX = "/thumbnails/thumbnail.jpg"
+        private const val CLOUD_FLARE_PREFIX = "https://customer-2p3jflss4r4hmpnz.cloudflarestream.com/"
+        private const val CLOUD_FLARE_SUFFIX = "/manifest/video.m3u8"
+        private const val CLOUD_FLARE_SUFFIX_MP4 = "/downloads/default.mp4"
+        private const val THUMBNAIL_SUFFIX = "/thumbnails/thumbnail.jpg"
+
+        fun thumbnailUrl(videoUid: String) = "$CLOUD_FLARE_PREFIX$videoUid$THUMBNAIL_SUFFIX"
+
+        fun videoUrl(videoUid: String) =
+            when (getPreferredVideoFormat()) {
+                PreferredVideoFormat.MP4 -> mp4Url(videoUid)
+                PreferredVideoFormat.HLS -> hlsUrl(videoUid)
+            }
+
+        private fun mp4Url(videoUid: String) = "$CLOUD_FLARE_PREFIX$videoUid$CLOUD_FLARE_SUFFIX_MP4"
+        private fun hlsUrl(videoUid: String) = "$CLOUD_FLARE_PREFIX$videoUid$CLOUD_FLARE_SUFFIX"
     }
 }
+
+enum class PreferredVideoFormat {
+    MP4,
+    HLS,
+}
+
+expect fun getPreferredVideoFormat(): PreferredVideoFormat
