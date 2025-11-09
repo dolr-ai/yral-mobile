@@ -82,14 +82,21 @@ data class SignupSuccessEventData(
     @SerialName("is_referral") val isReferral: Boolean,
     @SerialName("referrer_user_id") val referralUserID: String,
     @SerialName("auth_journey") val authJourney: AuthJourney,
+    @SerialName("affiliate") val affiliate: String? = null,
 ) : BaseEventData(),
     EventData {
-    constructor(isReferral: Boolean, referralUserID: String, authJourney: AuthJourney) : this(
+    constructor(
+        isReferral: Boolean,
+        referralUserID: String,
+        authJourney: AuthJourney,
+        affiliate: String? = null,
+    ) : this(
         FeatureEvents.SIGNUP_SUCCESS.getEventName(),
         Features.AUTH.getFeatureName(),
         isReferral,
         referralUserID,
         authJourney,
+        affiliate,
     )
 }
 
@@ -98,12 +105,14 @@ data class LoginSuccessEventData(
     @SerialName("event") override val event: String = FeatureEvents.LOGIN_SUCCESS.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.AUTH.getFeatureName(),
     @SerialName("auth_journey") val authJourney: AuthJourney,
+    @SerialName("affiliate") val affiliate: String? = null,
 ) : BaseEventData(),
     EventData {
-    constructor(authJourney: AuthJourney) : this(
+    constructor(authJourney: AuthJourney, affiliate: String? = null) : this(
         FeatureEvents.LOGIN_SUCCESS.getEventName(),
         Features.AUTH.getFeatureName(),
         authJourney,
+        affiliate,
     )
 }
 
@@ -112,12 +121,14 @@ data class AuthFailedEventData(
     @SerialName("event") override val event: String = FeatureEvents.AUTH_FAILED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.AUTH.getFeatureName(),
     @SerialName("auth_journey") val authJourney: AuthJourney,
+    @SerialName("affiliate") val affiliate: String? = null,
 ) : BaseEventData(),
     EventData {
-    constructor(authJourney: AuthJourney) : this(
+    constructor(authJourney: AuthJourney, affiliate: String? = null) : this(
         FeatureEvents.AUTH_FAILED.getEventName(),
         Features.AUTH.getFeatureName(),
         authJourney,
+        affiliate,
     )
 }
 
@@ -126,11 +137,13 @@ data class AuthFailedEventData(
 data class HomePageViewedEventData(
     @SerialName("event") override val event: String = FeatureEvents.HOME_PAGE_VIEWED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+    @SerialName("affiliate") val affiliate: String? = null,
 ) : BaseEventData(),
     EventData {
-    constructor() : this(
+    constructor(affiliate: String? = null) : this(
         FeatureEvents.HOME_PAGE_VIEWED.getEventName(),
         Features.AUTH.getFeatureName(),
+        affiliate,
     )
 }
 
@@ -466,6 +479,7 @@ data class GamePlayedEventData(
     @SerialName("conclusion") val gameResult: GameResult,
     @SerialName("won_loss_amount") val wonLossAmount: Int,
     @SerialName("is_tutorial_vote") val isTutorialVote: Boolean,
+    @SerialName("affiliate") val affiliate: String? = null,
 ) : BaseEventData(),
     EventData {
     constructor(
@@ -482,6 +496,7 @@ data class GamePlayedEventData(
         gameResult: GameResult,
         wonLossAmount: Int,
         isTutorialVote: Boolean,
+        affiliate: String? = null,
     ) : this(
         FeatureEvents.GAME_PLAYED.getEventName(),
         Features.AUTH.getFeatureName(),
@@ -498,6 +513,7 @@ data class GamePlayedEventData(
         gameResult,
         abs(wonLossAmount),
         isTutorialVote,
+        affiliate,
     )
 }
 
@@ -692,14 +708,21 @@ data class VideoUploadInitiatedEventData(
     @SerialName("caption_added") val captionAdded: Boolean,
     @SerialName("hashtags_added") val hashtagsAdded: Boolean,
     @SerialName("type_ext") val type: VideoCreationType,
+    @SerialName("affiliate") val affiliate: String? = null,
 ) : BaseEventData(),
     EventData {
-    constructor(captionAdded: Boolean, hashtagsAdded: Boolean, type: VideoCreationType) : this(
+    constructor(
+        captionAdded: Boolean,
+        hashtagsAdded: Boolean,
+        type: VideoCreationType,
+        affiliate: String? = null,
+    ) : this(
         FeatureEvents.VIDEO_UPLOAD_INITIATED.getEventName(),
         Features.AUTH.getFeatureName(),
         captionAdded,
         hashtagsAdded,
         type,
+        affiliate,
     )
 }
 
@@ -713,6 +736,7 @@ data class VideoUploadSuccessEventData(
     @SerialName("game_type") val gameType: GameType,
     @SerialName("is_nsfw") val isNsfw: Boolean,
     @SerialName("type_ext") val type: VideoCreationType,
+    @SerialName("affiliate") val affiliate: String? = null,
 ) : BaseEventData(),
     EventData {
     constructor(
@@ -722,6 +746,7 @@ data class VideoUploadSuccessEventData(
         gameType: GameType,
         isNsfw: Boolean,
         type: VideoCreationType,
+        affiliate: String? = null,
     ) : this(
         FeatureEvents.VIDEO_UPLOAD_SUCCESS.getEventName(),
         Features.AUTH.getFeatureName(),
@@ -731,6 +756,7 @@ data class VideoUploadSuccessEventData(
         gameType,
         isNsfw,
         type,
+        affiliate,
     )
 }
 
@@ -740,13 +766,19 @@ data class VideoUploadErrorShownEventData(
     @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
     @SerialName("reason") val reason: String,
     @SerialName("type_ext") val type: VideoCreationType,
+    @SerialName("affiliate") val affiliate: String? = null,
 ) : BaseEventData(),
     EventData {
-    constructor(reason: String, type: VideoCreationType) : this(
+    constructor(
+        reason: String,
+        type: VideoCreationType,
+        affiliate: String? = null,
+    ) : this(
         FeatureEvents.VIDEO_UPLOAD_ERROR_SHOWN.getEventName(),
         Features.AUTH.getFeatureName(),
         reason,
         type,
+        affiliate,
     )
 }
 

@@ -28,6 +28,7 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import com.yral.shared.libs.routing.deeplink.engine.RoutingService
 import com.yral.shared.libs.routing.routes.api.AppRoute
+import com.yral.shared.preferences.AffiliateAttributionStore
 import com.yral.shared.rust.service.services.HelperService.initRustLogger
 import com.yral.shared.rust.service.services.RustLogLevel
 import io.branch.indexing.BranchUniversalObject
@@ -48,6 +49,7 @@ class MainActivity : ComponentActivity() {
     private val crashlyticsManager: CrashlyticsManager by inject()
     private val settings: Settings by inject()
     private val routingService: RoutingService by inject()
+    private val affiliateAttributionStore: AffiliateAttributionStore by inject()
 
     private val updateResultLauncher: ActivityResultLauncher<IntentSenderRequest> =
         registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
@@ -70,6 +72,7 @@ class MainActivity : ComponentActivity() {
                     Logger.d("BranchSDK") { "Channel " + linkProperties.channel }
                     Logger.d("BranchSDK") { "control params " + linkProperties.controlParams }
                 }
+                storeAffiliateAttribution(linkProperties)
 
                 val deeplinkPath =
                     linkProperties?.controlParams?.get("\$deeplink_path")
@@ -129,7 +132,12 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleIntentForBranch(intent: Intent) {
-        if (intent.hasExtra("branch_force_new_session") && intent.getBooleanExtra("branch_force_new_session", false)) {
+        if (intent.hasExtra("branch_force_new_session") &&
+            intent.getBooleanExtra(
+                "branch_force_new_session",
+                false,
+            )
+        ) {
             Branch
                 .sessionBuilder(this)
                 .withCallback(branchSessionCallback)
@@ -200,5 +208,10 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         oAuthUtils.cleanup()
         super.onDestroy()
+    }
+
+    private fun storeAffiliateAttribution(linkProperties: LinkProperties?) {
+        val channel = linkProperties?.channel?.takeIf { !it.isNullOrBlank() } ?: return
+        affiliateAttributionStore.storeIfEmpty(channel)
     }
 }

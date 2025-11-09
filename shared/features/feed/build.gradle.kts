@@ -16,6 +16,7 @@ kotlin {
         commonMain.dependencies {
             implementation(projects.shared.core)
             implementation(projects.shared.features.auth)
+            implementation(projects.shared.libs.preferences)
             implementation(projects.shared.libs.koin)
             implementation(projects.shared.libs.crashlytics)
             implementation(projects.shared.libs.analytics)

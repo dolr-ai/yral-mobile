@@ -187,8 +187,14 @@ struct UploadView: View {
         Task {
           await viewModel.finishUpload(fileURL: url, caption: "", hashtags: [""])
         }
+        let affiliate = AppDIHelper().getAffiliateAttributionStore().peek()
         AnalyticsModuleKt.getAnalyticsManager().trackEvent(
-          event: VideoUploadInitiatedEventData(captionAdded: false, hashtagsAdded: false, type: .uploadVideo)
+          event: VideoUploadInitiatedEventData(
+            captionAdded: false,
+            hashtagsAdded: false,
+            type: .uploadVideo,
+            affiliate: affiliate
+          )
         )
 
       case .videoSelected(let url):

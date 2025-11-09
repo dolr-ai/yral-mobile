@@ -8,9 +8,11 @@ import com.yral.shared.analytics.events.LoginSuccessEventData
 import com.yral.shared.analytics.events.SignupJourneySelected
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.analytics.events.SignupSuccessEventData
+import com.yral.shared.preferences.AffiliateAttributionStore
 
 class AuthTelemetry(
     private val analyticsManager: AnalyticsManager,
+    private val affiliateAttributionStore: AffiliateAttributionStore,
 ) {
     fun onSignupViewed(pageName: SignupPageName) {
         analyticsManager.trackEvent(AuthScreenViewedEventData(pageName = pageName))
@@ -29,21 +31,35 @@ class AuthTelemetry(
     }
 
     private fun onSignupSuccess() {
+        val affiliate = affiliateAttributionStore.peek()
         analyticsManager.trackEvent(
             event =
                 SignupSuccessEventData(
                     isReferral = false,
                     referralUserID = "",
                     authJourney = AuthJourney.GOOGLE,
+                    affiliate = affiliate,
                 ),
         )
     }
 
     private fun onLoginSuccess() {
-        analyticsManager.trackEvent(LoginSuccessEventData(authJourney = AuthJourney.GOOGLE))
+        val affiliate = affiliateAttributionStore.peek()
+        analyticsManager.trackEvent(
+            LoginSuccessEventData(
+                authJourney = AuthJourney.GOOGLE,
+                affiliate = affiliate,
+            ),
+        )
     }
 
     fun authFailed() {
-        analyticsManager.trackEvent(AuthFailedEventData(authJourney = AuthJourney.GOOGLE))
+        val affiliate = affiliateAttributionStore.peek()
+        analyticsManager.trackEvent(
+            AuthFailedEventData(
+                authJourney = AuthJourney.GOOGLE,
+                affiliate = affiliate,
+            ),
+        )
     }
 }
