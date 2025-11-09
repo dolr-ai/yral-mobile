@@ -27,6 +27,8 @@ import com.yral.shared.http.di.networkModule
 import com.yral.shared.libs.arch.data.NetworkBoundResource
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
+import com.yral.shared.libs.videoPlayer.pool.PlatformMediaSourceFactory
+import com.yral.shared.libs.videoPlayer.pool.PlatformPlayerFactory
 import com.yral.shared.preferences.di.preferencesModule
 import com.yral.shared.reportVideo.di.reportVideoModule
 import com.yral.shared.rust.service.di.rustModule
@@ -34,6 +36,7 @@ import com.yral.shared.rust.service.services.RustLogForwardingListener
 import org.koin.core.context.startKoin
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
+import org.koin.core.scope.Scope
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.bind
 import org.koin.dsl.includes
@@ -63,6 +66,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             loggerModule,
             httpListenerModule,
             commonDataModule,
+            videoPlayerModule,
         )
 
         modules(
@@ -97,3 +101,12 @@ internal val httpListenerModule =
     module {
         factoryOf(::AppHTTPEventListener) bind HTTPEventListener::class
     }
+
+internal val videoPlayerModule =
+    module {
+        factory { createPlatformPlayerFactory() }
+        factory { createPlatformMediaSourceFactory() }
+    }
+
+expect fun Scope.createPlatformPlayerFactory(): PlatformPlayerFactory
+expect fun Scope.createPlatformMediaSourceFactory(): PlatformMediaSourceFactory
