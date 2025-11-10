@@ -1969,6 +1969,28 @@ def daily_rank(request: Request):
 #################### BTC to CURRENCY ####################
 TICKER_URL = "https://blockchain.info/ticker"
 
+def _fetch_btc_price(currency_code: str) -> tuple[float | None, tuple[str, str] | None]:
+    try:
+        resp = requests.get(TICKER_URL, timeout=6)
+    except RequestException as e:
+        print(f"[ERROR] BTC price request failed: {e}", file=sys.stderr)
+        return None, ("UPSTREAM_UNREACHABLE", "Price source not reachable")
+
+    if resp.status_code != 200:
+        print(f"[ERROR] BTC price source returned status {resp.status_code}", file=sys.stderr)
+        return None, ("UPSTREAM_BAD_STATUS", f"Price source returned {resp.status_code}")
+
+    try:
+        data = resp.json()
+        currency_data = data.get(currency_code) or {}
+        last = float(currency_data["last"])
+        if last <= 0:
+            raise ValueError("BTC price must be positive")
+        return last, None
+    except (ValueError, TypeError, KeyError) as e:
+        print(f"[ERROR] BTC price payload parse error: {e}", file=sys.stderr)
+        return None, ("UPSTREAM_BAD_PAYLOAD", "Unexpected price payload")
+
 @https_fn.on_request(region="us-central1")
 def btc_value_by_country(request: Request):
     """
@@ -2008,22 +2030,12 @@ def btc_value_by_country(request: Request):
         currency_code = "INR" if country_code == "IN" else "USD"
 
         # ─── Fetch BTC price ────────────────────────────────────────────
-        try:
-            resp = requests.get(TICKER_URL, timeout=6)
-        except requests.RequestException as e:
-            print("Network error:", e, file=sys.stderr)
-            return error_response(502, "UPSTREAM_UNREACHABLE", "Price source not reachable")
+        price, price_error = _fetch_btc_price(currency_code)
+        if price_error or price is None:
+            code, message = price_error if price_error else ("UPSTREAM_BAD_PAYLOAD", "Unexpected price payload")
+            return error_response(502, code, message)
 
-        if resp.status_code != 200:
-            return error_response(502, "UPSTREAM_BAD_STATUS", f"Price source returned {resp.status_code}")
-
-        try:
-            data = resp.json()
-            currency_data = data.get(currency_code) or {}
-            last = round(float(currency_data["last"]), 2)
-        except Exception as e:
-            print("Parse error:", e, file=sys.stderr)
-            return error_response(502, "UPSTREAM_BAD_PAYLOAD", "Unexpected price payload")
+        last = round(price, 2)
 
         return jsonify({
             "conversion_rate": last,
