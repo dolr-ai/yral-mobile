@@ -30,6 +30,7 @@ BALANCE_URL_YRAL_TOKEN = "https://yral-hot-or-not.go-bazzinga.workers.dev/update
 BALANCE_URL_CKBTC = "https://yral-hot-or-not.go-bazzinga.workers.dev/v2/transfer_ckbtc"
 
 IST = timezone(timedelta(hours=5, minutes=30))
+SATOSHIS_PER_BTC = 100_000_000
 
 # ─────────────────────  DATABASE HELPER  ────────────────────────
 _db = None
@@ -969,6 +970,21 @@ def reward_leaderboard_winners(cloud_event):
                 "reason": "No winners found"
             }), 200
 
+        inr_to_ckbtc_factor = None
+        if currency == CURRENCY_BTC:
+            btc_price_inr, price_error = _fetch_btc_price("INR")
+            if price_error or btc_price_inr is None:
+                code, message = price_error if price_error else ("PRICE_UNAVAILABLE", "Unable to fetch BTC price")
+                print(f"[ERROR] BTC reward conversion failed ({code}): {message}")
+                return jsonify({
+                    "status": "error",
+                    "reason": "Unable to fetch BTC price",
+                    "details": message
+                }), 502
+
+            inr_to_ckbtc_factor = SATOSHIS_PER_BTC / btc_price_inr
+            print(f"[INFO] BTC price for rewards (INR): {btc_price_inr}")
+
         reward_log = []
 
         for user in winners:
@@ -985,7 +1001,10 @@ def reward_leaderboard_winners(cloud_event):
                 success, error = _push_delta_yral_token(token, pid, reward_amount)
             elif currency == CURRENCY_BTC:
                 reward_amount_inr = reward_amount
-                reward_amount_ckbtc = reward_amount_inr * 10   # Assuming 1 BTC = ₹1,00,00,000
+                if not inr_to_ckbtc_factor:
+                    print("[ERROR] BTC conversion factor missing; skipping reward")
+                    continue
+                reward_amount_ckbtc = max(1, int(round(reward_amount_inr * inr_to_ckbtc_factor)))
                 success, error = _push_delta_ckbtc(token, reward_amount_ckbtc, pid, "Daily leaderboard reward")
             else:
                 print(f"[ERROR] Unknown currency: {currency}")
