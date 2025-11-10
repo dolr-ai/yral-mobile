@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.github.michaelbull.result.fold
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.featureflag.AppFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.shared.analytics.events.AiVideoGenFailureType
@@ -423,6 +424,7 @@ class AiVideoGenViewModel internal constructor(
     fun getTncLink(): String = flagManager.get(AccountFeatureFlags.AccountLinks.Links).tnc
 
     private fun checkForSubscription() {
+        if (!flagManager.isEnabled(AppFeatureFlags.Common.EnableSubscription)) return
         _state.update {
             val isCreditsAvailable = it.isCreditsAvailable()
             val isBalanceLow = it.isBalanceLow()
