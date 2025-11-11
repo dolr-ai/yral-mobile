@@ -1,5 +1,6 @@
 package com.yral.shared.analytics.providers.onesignal
 
+import co.touchlab.kermit.Logger
 import com.yral.shared.analytics.AnalyticsProvider
 import com.yral.shared.analytics.EventToMapConverter
 import com.yral.shared.analytics.User
@@ -14,9 +15,15 @@ class OneSignalAnalyticsProvider(
 ) : AnalyticsProvider {
     override val name: String = "one_signal"
 
-    init {
-        oneSignal.initialize(appId)
-    }
+    private val logger = Logger.withTag("OneSignalAnalytics")
+    private val isInitialized =
+        runCatching {
+            require(appId.isNotBlank()) { "OneSignal app id must not be blank" }
+            oneSignal.initialize(appId)
+            true
+        }.onFailure { error ->
+            logger.e(error) { "Failed to initialize OneSignal" }
+        }.getOrDefault(false)
 
     override fun shouldTrackEvent(event: EventData): Boolean = false
 
@@ -25,16 +32,24 @@ class OneSignalAnalyticsProvider(
     }
 
     override fun setUserProperties(user: User) {
-        if (user.isLoggedIn == true) {
-            oneSignal.login(user.userId)
-        } else {
-            oneSignal.logout()
+        when (user.isLoggedIn) {
+            true -> runWhenInitialized { oneSignal.login(user.userId) }
+            false -> runWhenInitialized { oneSignal.logout() }
+            null -> logger.v { "Skipping OneSignal user sync because login state is unknown" }
         }
     }
 
     override fun reset() {
-        oneSignal.logout()
+        runWhenInitialized { oneSignal.logout() }
     }
 
     override fun toValidKeyName(key: String): String = key
+
+    private inline fun runWhenInitialized(block: () -> Unit) {
+        if (isInitialized) {
+            block()
+        } else {
+            logger.w { "OneSignal not initialized; skipping requested operation" }
+        }
+    }
 }
