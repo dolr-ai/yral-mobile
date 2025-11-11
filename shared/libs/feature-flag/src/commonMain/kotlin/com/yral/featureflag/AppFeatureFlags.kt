@@ -7,6 +7,17 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 object AppFeatureFlags {
+    object Common :
+        FlagGroup(keyPrefix = "app", defaultAudience = FlagAudience.INTERNAL_QA) {
+        val EnableSubscription: FeatureFlag<Boolean> =
+            boolean(
+                keySuffix = "enableSubscription",
+                name = "Enable Subscription",
+                description = "Toggle subscription usage on App.",
+                defaultValue = false,
+            )
+    }
+
     object Android :
         FlagGroup(keyPrefix = "app_android", defaultAudience = FlagAudience.INTERNAL_QA) {
         val EnableAppCheck: FeatureFlag<Boolean> =
@@ -17,6 +28,7 @@ object AppFeatureFlags {
                 defaultValue = false,
             )
     }
+
     object Ios :
         FlagGroup(keyPrefix = "app_ios", defaultAudience = FlagAudience.INTERNAL_QA) {
         val InAppUpdate: FeatureFlag<IAPConfig> =
