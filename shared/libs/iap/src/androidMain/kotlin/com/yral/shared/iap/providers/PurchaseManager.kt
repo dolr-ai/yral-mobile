@@ -7,28 +7,20 @@ import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.QueryPurchasesParams
 import com.yral.shared.iap.IAPError
 import com.yral.shared.iap.model.PurchaseState
+import com.yral.shared.iap.model.SubscriptionStatus
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import com.yral.shared.iap.model.Purchase as IAPPurchase
 
-/**
- * Handles purchase operations and purchase restoration.
- */
 internal class PurchaseManager(
     private val connectionManager: BillingClientConnectionManager,
 ) {
-    /**
-     * Restores all previously purchased products (both in-app and subscriptions).
-     * Automatically acknowledges unacknowledged purchases.
-     *
-     * @return Result containing list of restored purchases, or error if restore fails
-     */
     suspend fun restorePurchases(): Result<List<IAPPurchase>> =
         try {
             val client = connectionManager.ensureReady()
             val purchases = mutableListOf<IAPPurchase>()
-
-            // Query both in-app and subscription purchases
             val inAppResult = queryPurchases(client, BillingClient.ProductType.INAPP, purchases)
             val subscriptionResult = queryPurchases(client, BillingClient.ProductType.SUBS, purchases)
 
@@ -51,10 +43,6 @@ internal class PurchaseManager(
             Result.failure(IAPError.UnknownError(e))
         }
 
-    /**
-     * Queries purchases for a specific product type and adds them to the purchases list.
-     * Automatically acknowledges unacknowledged purchases.
-     */
     private suspend fun queryPurchases(
         client: BillingClient,
         productType: String,
@@ -69,7 +57,7 @@ internal class PurchaseManager(
             ) { billingResult, purchaseList ->
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                     purchaseList.forEach { purchase ->
-                        purchases.add(convertPurchase(purchase))
+                        purchases.add(convertPurchase(purchase, productType))
                         acknowledgePurchaseIfNeeded(client, purchase)
                     }
                 }
@@ -77,11 +65,23 @@ internal class PurchaseManager(
             }
         }
 
-    /**
-     * Converts Android Purchase object to IAPPurchase model.
-     */
-    private fun convertPurchase(purchase: Purchase): IAPPurchase =
-        IAPPurchase(
+    private fun convertPurchase(
+        purchase: Purchase,
+        productType: String = BillingClient.ProductType.INAPP,
+    ): IAPPurchase {
+        val isSubscription = productType == BillingClient.ProductType.SUBS
+        val isAutoRenewing: Boolean? = if (isSubscription) purchase.isAutoRenewing else null
+        val isSuspended: Boolean? = if (isSubscription) purchase.isSuspended else null
+        val expirationDate: Long? = null
+
+        val subscriptionStatus =
+            if (isSubscription) {
+                determineSubscriptionStatus(expirationDate, isAutoRenewing, isSuspended)
+            } else {
+                SubscriptionStatus.UNKNOWN
+            }
+
+        return IAPPurchase(
             productId = purchase.products.firstOrNull() ?: "",
             purchaseToken = purchase.purchaseToken,
             purchaseTime = purchase.purchaseTime,
@@ -91,12 +91,29 @@ internal class PurchaseManager(
                     Purchase.PurchaseState.PENDING -> PurchaseState.PENDING
                     else -> PurchaseState.FAILED
                 },
+            expirationDate = expirationDate,
+            isAutoRenewing = isAutoRenewing,
+            subscriptionStatus = subscriptionStatus,
         )
+    }
 
-    /**
-     * Acknowledges a purchase if it hasn't been acknowledged yet.
-     * Required for non-consumable products and subscriptions.
-     */
+    @Suppress("ReturnCount")
+    private fun determineSubscriptionStatus(
+        expirationDate: Long?,
+        isAutoRenewing: Boolean?,
+        isSuspended: Boolean?,
+    ): SubscriptionStatus {
+        if (isSuspended == true) return SubscriptionStatus.PAUSED
+        expirationDate?.let { expiry ->
+            @OptIn(ExperimentalTime::class)
+            if (expiry <= Clock.System.now().toEpochMilliseconds()) {
+                return SubscriptionStatus.EXPIRED
+            }
+        }
+        if (isAutoRenewing == false) return SubscriptionStatus.CANCELLED
+        return SubscriptionStatus.ACTIVE
+    }
+
     private fun acknowledgePurchaseIfNeeded(
         client: BillingClient,
         purchase: Purchase,
