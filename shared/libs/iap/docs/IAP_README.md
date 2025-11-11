@@ -12,6 +12,7 @@ The IAP module abstracts platform-specific implementations (Google Play Billing 
 - ✅ **Type-Safe Product IDs**: Enum-based product identification
 - ✅ **Event Listeners**: Reactive event handling via `IAPListener`
 - ✅ **Compose Support**: Built-in Compose helpers for easy integration
+- ✅ **Subscription Status Tracking**: Comprehensive handling of active, paused, cancelled, and expired subscriptions
 - ✅ **Timeout Handling**: Automatic timeout and cleanup for purchase operations
 - ✅ **Error Matching**: Intelligent error matching to specific product IDs
 - ✅ **Thread-Safe**: All operations are thread-safe with proper synchronization
@@ -285,17 +286,95 @@ data class Product(
 
 ### Purchase Model
 
-Represents a completed purchase:
+Represents a completed purchase with subscription status information:
 
 ```kotlin
 data class Purchase(
     val productId: String,
-    val purchaseToken: String,      // Token for server validation
-    val purchaseTime: Long,         // Timestamp in milliseconds
-    val state: PurchaseState,       // PURCHASED, PENDING, or FAILED
-    val receipt: String? = null,    // Base64 receipt (iOS only)
-)
+    val purchaseToken: String?,         // Token for server validation (Android)
+    val receipt: String? = null,         // Base64 receipt (iOS)
+    val purchaseTime: Long,              // Timestamp in milliseconds
+    val state: PurchaseState,            // PURCHASED, PENDING, or FAILED
+    val expirationDate: Long? = null,    // Expiration date (subscriptions only)
+    val isAutoRenewing: Boolean? = null, // Auto-renewal status (subscriptions only)
+    val subscriptionStatus: SubscriptionStatus? = null, // Current subscription status
+) {
+    fun isActiveSubscription(): Boolean // Checks if subscription is currently active
+}
 ```
+
+#### Field Details
+
+**Platform-Specific Fields:**
+- `purchaseToken`: Android-specific token for server-side validation. Always null on iOS.
+- `receipt`: iOS-specific base64-encoded receipt for server-side validation. Always null on Android.
+
+**Subscription Fields:**
+All subscription-related fields (`expirationDate`, `isAutoRenewing`, `subscriptionStatus`) are null for non-subscription products (one-time purchases).
+
+**expirationDate:**
+- For subscriptions, represents when the subscription period ends (milliseconds since epoch)
+- **Android**: Not directly available from Purchase object. The Android Purchase API does not expose `getExpirationDate()`. Expiration dates must be:
+  - Calculated from `purchaseTime` + subscription period (from ProductDetails)
+  - Retrieved via server-side validation using `purchaseToken`
+- **iOS**: Not available from StoreKit 1 transaction objects. Must be extracted from the receipt via server-side validation using the `receipt` field
+- **Best Practice**: Always validate expiration dates server-side for production apps
+
+**isAutoRenewing:**
+- Indicates if the subscription will automatically renew at the end of the current billing period
+- **true**: Subscription will automatically renew. User has active subscription
+  - Note: During grace period or account hold (payment failures), this remains `true` even though payment failed. The subscription is still active during these periods
+- **false**: Subscription is cancelled but remains active until expiration. User retains access until the end of the current billing period
+- **null**: For non-subscription products or when status is unknown
+- **Platform Availability:**
+  - **Android**: Available directly from `Purchase.isAutoRenewing` property. According to [Android subscription lifecycle](https://developer.android.com/google/play/billing/lifecycle/subscriptions), `isAutoRenewing` remains `true` during grace periods and account holds
+  - **iOS**: Not available from StoreKit 1. Requires server-side receipt validation
+- **Important Notes:**
+  - A cancelled subscription (auto-renewal disabled) is still considered active until expiration
+  - Grace period and account hold states cannot be detected from `isAutoRenewing` alone (both remain `true`). Server-side validation is required to detect these states
+  - Use `isActiveSubscription()` to check current access, which handles these cases
+
+**subscriptionStatus:**
+- Current subscription lifecycle state:
+  - **ACTIVE**: Subscription is active, auto-renewing, and user has access. Includes subscriptions in grace period or account hold (payment failures), as these remain active and `isAutoRenewing` stays `true`
+  - **PAUSED**: Subscription is paused (Android only). User retains access until pause period begins, then loses access. Can be resumed
+  - **CANCELLED**: Subscription is cancelled but still active until expiration. User retains access until the end of the current billing period
+  - **EXPIRED**: Subscription has expired. User no longer has access
+  - **UNKNOWN**: Status cannot be determined (non-subscriptions or unavailable data)
+- **Platform Availability:**
+  - **Android**: Determined from `isAutoRenewing` and `isSuspended` (available in Billing Library 8.1.0+). According to [Android subscription lifecycle](https://developer.android.com/google/play/billing/lifecycle/subscriptions):
+    - Grace period and account hold cannot be detected client-side (both show as ACTIVE)
+    - Expiration checking requires server-side validation or calculation
+    - Paused subscriptions may not appear in query results during pause period
+  - **iOS**: Cannot be determined client-side. Requires server-side receipt validation
+
+**isActiveSubscription():**
+- Determines if this purchase represents an active subscription with current access
+- A subscription is considered active if:
+  1. It has a valid subscription status (not null or UNKNOWN)
+  2. The status is ACTIVE or CANCELLED (cancelled subscriptions remain active until expiry)
+  3. The expiration date (if available) is in the future
+- **Important Notes:**
+  - **ACTIVE** subscriptions include those in grace period or account hold (payment failures). According to [Android subscription lifecycle](https://developer.android.com/google/play/billing/lifecycle/subscriptions), subscriptions remain active during grace periods and account holds, with `isAutoRenewing` staying `true`. These states cannot be distinguished client-side
+  - **CANCELLED** subscriptions are considered active until expiration
+  - **PAUSED** subscriptions return false (user loses access during pause)
+  - **EXPIRED** subscriptions return false
+  - If expiration date is unavailable, status alone determines active state
+- **Best Practice**: For production apps, use server-side validation to detect grace periods, account holds, and accurate expiration dates, as these cannot be determined from the Purchase object alone
+
+#### Android Subscription Lifecycle
+
+According to [Android subscription lifecycle](https://developer.android.com/google/play/billing/lifecycle/subscriptions):
+
+- **Grace Period**: Payment failed but subscription remains active. `isAutoRenewing` stays `true`. Cannot be detected client-side - requires server-side validation
+- **Account Hold**: Multiple payment failures. Subscription remains active, `isAutoRenewing` stays `true`. Cannot be detected client-side - requires server-side validation
+- **Paused**: User-initiated pause. May not appear in query results during pause period
+- **Cancelled**: Auto-renewal disabled but subscription active until expiration
+- **Expired**: Subscription period ended. User loses access
+
+**Platform Limitations:**
+- **Android**: Expiration dates are not directly available from the Purchase object. They must be calculated from purchase time + subscription period or retrieved via server-side validation using the purchase token. Grace periods and account holds cannot be detected client-side
+- **iOS**: Subscription status and expiration dates require server-side receipt validation. The receipt is included as base64-encoded data for this purpose
 
 ### Error Handling
 
@@ -312,21 +391,51 @@ sealed class IAPError : Exception {
 }
 ```
 
+## Subscription Status Handling
+
+The module tracks subscription lifecycle states to handle paused, cancelled, and expired subscriptions.
+
+### Status States
+
+- **ACTIVE**: Subscription is active and auto-renewing
+- **PAUSED**: Subscription is paused (Android only)
+- **CANCELLED**: Subscription is cancelled but still active until expiration
+- **EXPIRED**: Subscription has expired
+- **UNKNOWN**: Status cannot be determined
+
+### Usage
+
+```kotlin
+// Check if subscription is active
+val isActive = iapManager.isProductPurchased(ProductId.PREMIUM_MONTHLY)
+
+// Or use Purchase helper
+if (purchase.isActiveSubscription()) {
+    // Subscription is active
+}
+```
+
+**Note**: See `SubscriptionStatus.kt`, `Purchase.kt`, and platform provider files for detailed documentation on status determination, platform limitations, and best practices.
+
 ## Platform-Specific Details
 
 ### Android
 
-- **Billing Library**: Google Play Billing Library 8.0
+- **Billing Library**: Google Play Billing Library 8.1.0
 - **Context Requirement**: `Activity` context required for `purchaseProduct()`
 - **Automatic Acknowledgment**: Purchases are automatically acknowledged
 - **Subscription Support**: Full support for subscription products with all pricing phases
 
+See `AndroidIAPProvider.kt` and `PurchaseManager.kt` for detailed implementation notes.
+
 ### iOS
 
-- **StoreKit**: Native StoreKit framework
+- **StoreKit**: Native StoreKit framework (StoreKit 1)
 - **No Context Required**: `purchaseProduct()` accepts `Unit` on iOS
 - **Receipt Extraction**: Receipts are automatically extracted and included in `Purchase` model
 - **Transaction Observer**: Automatically handles transaction state updates
+
+See `IOSIAPProvider.kt` and `PurchaseManager.kt` for detailed implementation notes and limitations.
 
 ## Timeout and Error Handling
 
