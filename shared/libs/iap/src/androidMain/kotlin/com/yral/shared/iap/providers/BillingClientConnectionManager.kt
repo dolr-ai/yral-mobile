@@ -12,10 +12,6 @@ import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-/**
- * Manages BillingClient connection lifecycle with connection pooling.
- * Ensures only one connection attempt is active at a time, with other callers waiting for the same connection.
- */
 internal class BillingClientConnectionManager(
     context: Context,
     purchasesUpdatedListener: PurchasesUpdatedListener,
@@ -36,16 +32,7 @@ internal class BillingClientConnectionManager(
     @Volatile
     private var mainContinuation: Continuation<BillingClient>? = null
 
-    /**
-     * Ensures the BillingClient is connected and ready for use.
-     * Implements connection pooling: if a connection is in progress, subsequent callers wait
-     * for the same connection instead of creating new ones.
-     *
-     * @return Ready BillingClient instance
-     * @throws IAPError.BillingUnavailable if connection fails
-     */
     suspend fun ensureReady(): BillingClient {
-        // Fast path: already connected
         if (billingClient.isReady) {
             return billingClient
         }
