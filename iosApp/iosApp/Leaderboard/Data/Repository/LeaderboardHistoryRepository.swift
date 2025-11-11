@@ -32,9 +32,7 @@ class LeaderboardHistoryRepository: LeaderboardHistoryRepositoryProtocol {
     var httpHeaders = [String: String]()
 
     do {
-      guard let userIDToken = try await firebaseService.fetchUserIDToken() else {
-        return .failure(.unknown(Constants.firebaseUserIDError))
-      }
+      let userIDToken = try await firebaseService.fetchUserIDToken()
 
       httpHeaders = [
         "Content-Type": "application/json",
