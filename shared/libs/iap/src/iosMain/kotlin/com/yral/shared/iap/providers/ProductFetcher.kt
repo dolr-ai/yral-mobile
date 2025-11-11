@@ -22,29 +22,16 @@ import platform.darwin.NSObject
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-/**
- * Handles product fetching and caching for iOS StoreKit.
- * Manages SKProduct cache to avoid redundant network requests.
- */
 internal class ProductFetcher {
-    // Cache SKProducts by product ID to avoid refetching
     private val productCache = mutableMapOf<String, SKProduct>()
     private val productCacheLock = NSLock()
 
     companion object {
-        // Conversion factor: price to micros (1 dollar = 1,000,000 micros)
         private const val PRICE_TO_MICROS_FACTOR = 1_000_000L
     }
 
-    /**
-     * Fetches products from the App Store and caches SKProducts.
-     *
-     * @param productIds List of product IDs to fetch
-     * @return Result containing list of Product models or IAPError
-     */
     suspend fun fetchProducts(productIds: List<ProductId>): Result<List<Product>> =
         suspendCancellableCoroutine { continuation ->
-            // Convert ProductId enum to strings for the StoreKit API
             val productIdStrings = productIds.map { it.productId }
             val productIdentifiers = NSSet.setWithArray(productIdStrings)
             val request = SKProductsRequest(productIdentifiers = productIdentifiers)
@@ -57,12 +44,9 @@ internal class ProductFetcher {
                     ) {
                         val products = didReceiveResponse.products
                         val productList = mutableListOf<Product>()
-
-                        // Cache SKProducts and build Product list
                         for (i in 0 until products.size) {
                             val skProduct = products[i] as? SKProduct
                             if (skProduct != null) {
-                                // Cache the SKProduct
                                 productCacheLock.withLock {
                                     productCache[skProduct.productIdentifier] = skProduct
                                 }
@@ -125,33 +109,15 @@ internal class ProductFetcher {
             }
         }
 
-    /**
-     * Gets SKProduct from cache or fetches it if not cached.
-     *
-     * @param productId Product ID to get
-     * @return SKProduct if found, null otherwise
-     */
     suspend fun getOrFetchSKProduct(productId: ProductId): SKProduct? {
         val productIdString = productId.productId
-
-        // Check cache first
-        val cached =
-            productCacheLock.withLock {
-                productCache[productIdString]
-            }
-        if (cached != null) {
-            return cached
-        }
-
-        // Not in cache, fetch it
+        val cached = productCacheLock.withLock { productCache[productIdString] }
+        if (cached != null) return cached
         val fetchResult = fetchProducts(listOf(productId))
         return if (fetchResult.isFailure) {
             null
         } else {
-            // Should be in cache now
-            productCacheLock.withLock {
-                productCache[productIdString]
-            }
+            productCacheLock.withLock { productCache[productIdString] }
         }
     }
 }
