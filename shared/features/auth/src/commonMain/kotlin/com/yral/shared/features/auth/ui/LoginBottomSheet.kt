@@ -47,9 +47,7 @@ fun LoginBottomSheet(
     val context = getContext()
     val state = loginViewModel.state.collectAsStateWithLifecycle()
     when (state.value) {
-        is UiState.Initial,
-        is UiState.InProgress,
-        -> {
+        is UiState.Initial, is UiState.InProgress -> {
             YralBottomSheet(
                 onDismissRequest = dismissRequest,
                 bottomSheetState = bottomSheetState,
@@ -71,7 +69,9 @@ fun LoginBottomSheet(
                     ) {
                         SignupView(
                             pageName = pageName,
-                            onSignupClicked = { loginViewModel.signInWithGoogle(context) },
+                            onSignupClicked = { provider ->
+                                loginViewModel.signInWithSocial(context, provider)
+                            },
                             termsLink = termsLink,
                             openTerms = openTerms,
                         )

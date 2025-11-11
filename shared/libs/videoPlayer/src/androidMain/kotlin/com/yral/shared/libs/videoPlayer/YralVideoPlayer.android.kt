@@ -2,15 +2,8 @@ package com.yral.shared.libs.videoPlayer
 
 import android.content.Context
 import androidx.annotation.OptIn
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -20,10 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
@@ -32,11 +22,6 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
-import kotlinx.coroutines.delay
-import org.jetbrains.compose.resources.painterResource
-import yral_mobile.shared.libs.videoplayer.generated.resources.Res
-import yral_mobile.shared.libs.videoplayer.generated.resources.pause
-import yral_mobile.shared.libs.videoplayer.generated.resources.play
 import java.io.File
 
 @Suppress("LongMethod")
@@ -112,7 +97,13 @@ actual fun YralVideoPlayer(
             hasError = hasError,
             isLoading = isLoading,
             isPlaying = isPlaying,
-            exoPlayer = exoPlayer,
+            togglePlayPause = {
+                if (isPlaying) {
+                    exoPlayer?.pause()
+                } else {
+                    exoPlayer?.play()
+                }
+            },
         )
     }
 
@@ -120,88 +111,6 @@ actual fun YralVideoPlayer(
     DisposableEffect(exoPlayer) {
         onDispose {
             exoPlayer?.release()
-        }
-    }
-}
-
-@Composable
-private fun PlayerOverlay(
-    modifier: Modifier,
-    hasError: Boolean,
-    isLoading: Boolean,
-    isPlaying: Boolean,
-    exoPlayer: ExoPlayer?,
-) {
-    Box(modifier.fillMaxSize()) {
-        // Custom Play/Pause Control Overlay
-        if (!hasError) {
-            PlayPauseControl(isPlaying, isLoading) {
-                if (isPlaying) {
-                    exoPlayer?.pause()
-                } else {
-                    exoPlayer?.play()
-                }
-            }
-        }
-
-        // Error state - simplified without red background
-        if (hasError) {
-            PlayerError()
-        }
-    }
-}
-
-@Composable
-private fun PlayerError() {
-    Box(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.3f)),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            painter = painterResource(Res.drawable.play),
-            contentDescription = "Video Error - Tap to retry",
-            tint = Color.White.copy(alpha = 0.8f),
-            modifier = Modifier.size(48.dp),
-        )
-    }
-}
-
-@Composable
-private fun PlayPauseControl(
-    isPlaying: Boolean,
-    isLoading: Boolean,
-    togglePlayPause: () -> Unit,
-) {
-    var isPlayPauseVisible by remember { mutableStateOf(true) }
-    LaunchedEffect(isPlayPauseVisible) {
-        delay(PLAY_PAUSE_BUTTON_TIMEOUT)
-        if (isPlayPauseVisible) {
-            isPlayPauseVisible = false
-        }
-    }
-    Box(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .clickable { isPlayPauseVisible = !isPlayPauseVisible },
-        contentAlignment = Alignment.Center,
-    ) {
-        if (!isLoading && isPlayPauseVisible) {
-            Image(
-                painter =
-                    painterResource(
-                        if (isPlaying) Res.drawable.pause else Res.drawable.play,
-                    ),
-                contentDescription = if (isPlaying) "Pause" else "Play",
-                modifier =
-                    Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .clickable { togglePlayPause() },
-            )
         }
     }
 }
@@ -268,5 +177,3 @@ private fun processUrl(url: String): String? =
         url.startsWith("http", ignoreCase = true) -> url
         else -> File(url).takeIf { it.exists() }?.toURI()?.toString()
     }
-
-private const val PLAY_PAUSE_BUTTON_TIMEOUT = 2000L

@@ -1,8 +1,7 @@
 package com.yral.shared.features.auth.utils
 
-import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI_HOST
-import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI_PATH
-import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI_SCHEME
+import com.yral.shared.core.logging.YralLogger
+import com.yral.shared.features.auth.di.AuthEnv
 import com.yral.shared.features.auth.domain.models.TokenClaims
 import io.ktor.http.Url
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -20,37 +19,186 @@ import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
+import platform.AuthenticationServices.ASPresentationAnchor
+import platform.AuthenticationServices.ASWebAuthenticationPresentationContextProvidingProtocol
+import platform.AuthenticationServices.ASWebAuthenticationSession
+import platform.AuthenticationServices.ASWebAuthenticationSessionErrorCodeCanceledLogin
+import platform.AuthenticationServices.ASWebAuthenticationSessionErrorDomain
 import platform.CoreCrypto.CC_SHA256
 import platform.CoreCrypto.CC_SHA256_DIGEST_LENGTH
+import platform.Foundation.NSError
+import platform.Foundation.NSURL
 import platform.Security.SecRandomCopyBytes
 import platform.Security.errSecSuccess
 import platform.Security.kSecRandomDefault
+import platform.UIKit.UIApplication
+import platform.UIKit.UIViewController
+import platform.UIKit.UIWindow
+import platform.darwin.NSObject
+import platform.darwin.dispatch_async
+import platform.darwin.dispatch_get_main_queue
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
-class IosOAuthUtils : OAuthUtils {
+class IosOAuthUtils(
+    yralLogger: YralLogger,
+    authEnv: AuthEnv,
+    private val helper: OAuthUtilsHelper,
+) : OAuthUtils {
+    private val redirectUri: AuthEnv.RedirectUri = authEnv.redirectUri
+    private val logger = yralLogger.withTag("IosOAuthUtils")
     override var callBack: ((OAuthResult) -> Unit)? = null
     override var callbackExpiry: Long = 0L
+    private var authSession: ASWebAuthenticationSession? = null
+    private var currentPresentationProvider: OAuthPresentationAnchorProvider? = null
 
+    @OptIn(ExperimentalTime::class)
     override fun openOAuth(
         context: Any,
         authUrl: Url,
         callBack: (OAuthResult) -> Unit,
     ) {
-        // STUB
+        logger.d { "openOAuth" }
+        val nsUrl = NSURL(string = authUrl.toString())
+        this.callBack = callBack
+        this.callbackExpiry = Clock.System.now().toEpochMilliseconds() + CALLBACK_TIMEOUT_MS
+        val provider = OAuthPresentationAnchorProvider(context as? UIViewController)
+        currentPresentationProvider = provider
+        val strongSelf = this
+        dispatch_async(dispatch_get_main_queue()) {
+            strongSelf.startSession(nsUrl, provider)
+        }
     }
 
+    @OptIn(ExperimentalTime::class)
     override fun invokeCallback(result: OAuthResult) {
-        // STUB
+        logger.d { "invokeCallback" }
+        if (callbackExpiry > 0 && Clock.System.now().toEpochMilliseconds() > callbackExpiry) {
+            logger.d { "invokeCallback TimedOut" }
+            callBack?.invoke(OAuthResult.TimedOut)
+        } else {
+            callBack?.invoke(result)
+        }
+        cleanup()
     }
 
     override fun cleanup() {
-        // STUB
+        logger.d { "cleanup" }
+        val session = authSession
+        authSession = null
+        currentPresentationProvider = null
+        callBack = null
+        callbackExpiry = 0L
+        if (session != null) {
+            dispatch_async(dispatch_get_main_queue()) {
+                session.cancel()
+            }
+        }
+    }
+
+    private fun startSession(
+        url: NSURL,
+        provider: OAuthPresentationAnchorProvider,
+    ) {
+        logger.d { "startSession" }
+        authSession?.cancel()
+        val session =
+            ASWebAuthenticationSession(
+                uRL = url,
+                callbackURLScheme = redirectUri.scheme,
+                completionHandler = { callbackUrl, error ->
+                    handleSessionCompletion(callbackUrl, error)
+                },
+            )
+        session.presentationContextProvider = provider
+        session.prefersEphemeralWebBrowserSession = true
+        authSession = session
+        if (!session.start()) {
+            logger.d { "failed to start session" }
+            dispatch_async(dispatch_get_main_queue()) {
+                invokeCallback(
+                    OAuthResult.Error(
+                        error = "session_start_failed",
+                        errorDescription = "Unable to launch ASWebAuthenticationSession",
+                    ),
+                )
+            }
+        }
+    }
+
+    private fun handleSessionCompletion(
+        callbackUrl: NSURL?,
+        error: NSError?,
+    ) {
+        logger.d { "handleSessionCompletion" }
+        val result =
+            when {
+                callbackUrl != null -> {
+                    callbackUrl.absoluteString?.let { helper.mapUriToOAuthResult(it) }
+                        ?: OAuthResult.Error(
+                            error = "invalid_callback",
+                            errorDescription = "OAuth callback missing required parameters",
+                        )
+                }
+                error != null -> {
+                    if (error.domain == ASWebAuthenticationSessionErrorDomain &&
+                        error.code == ASWebAuthenticationSessionErrorCodeCanceledLogin
+                    ) {
+                        OAuthResult.Cancelled
+                    } else {
+                        OAuthResult.Error(
+                            error = error.domain ?: "unknown_error",
+                            errorDescription = error.localizedDescription,
+                        )
+                    }
+                }
+                else -> {
+                    OAuthResult.Error(
+                        error = "unknown_error",
+                        errorDescription = "OAuth flow finished without a callback URL or error",
+                    )
+                }
+            }
+        dispatch_async(dispatch_get_main_queue()) {
+            invokeCallback(result)
+        }
+    }
+
+    companion object {
+        private const val CALLBACK_TIMEOUT_MS = 5 * 60 * 1000L
+    }
+}
+
+private class OAuthPresentationAnchorProvider(
+    private val viewController: UIViewController?,
+) : NSObject(),
+    ASWebAuthenticationPresentationContextProvidingProtocol {
+    override fun presentationAnchorForWebAuthenticationSession(session: ASWebAuthenticationSession): ASPresentationAnchor {
+        viewController?.view?.window?.let { return it }
+        return resolveDefaultWindow()
+    }
+
+    private fun resolveDefaultWindow(): UIWindow {
+        UIApplication.sharedApplication.keyWindow?.let { return it }
+        val windows = UIApplication.sharedApplication.windows
+        val count = windows.count()
+        for (index in 0 until count) {
+            val window = windows[index] as? UIWindow
+            if (window != null && !window.hidden) {
+                return window
+            }
+        }
+        return UIWindow()
     }
 }
 
 @OptIn(ExperimentalEncodingApi::class)
-class IosOAuthUtilsHelper : OAuthUtilsHelper {
+class IosOAuthUtilsHelper(
+    authEnv: AuthEnv,
+) : OAuthUtilsHelper {
+    private val redirectUri: AuthEnv.RedirectUri = authEnv.redirectUri
     private val json = Json { ignoreUnknownKeys = true }
 
     override fun generateCodeVerifier(): String = generateRandomUrlSafeString()
@@ -96,9 +244,9 @@ class IosOAuthUtilsHelper : OAuthUtilsHelper {
 
     override fun mapUriToOAuthResult(uri: String): OAuthResult? {
         val url = runCatching { Url(uri) }.getOrElse { return null }
-        if (url.protocol.name != REDIRECT_URI_SCHEME ||
-            url.host != REDIRECT_URI_HOST ||
-            url.encodedPath != REDIRECT_URI_PATH
+        if (url.protocol.name != redirectUri.scheme ||
+            url.host != redirectUri.host ||
+            url.encodedPath != redirectUri.path
         ) {
             return null
         }
@@ -145,7 +293,7 @@ class IosOAuthUtilsHelper : OAuthUtilsHelper {
 
     @OptIn(ExperimentalForeignApi::class)
     private fun sha256(data: ByteArray): ByteArray {
-        val digest = UByteArray(CC_SHA256_DIGEST_LENGTH.toInt())
+        val digest = UByteArray(CC_SHA256_DIGEST_LENGTH)
         data.usePinned { inputPinned ->
             digest.usePinned { digestPinned ->
                 CC_SHA256(

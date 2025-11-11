@@ -441,9 +441,7 @@ class FeedsRepository: FeedRepositoryProtocol {
     }
     do {
       var httpHeaders = [String: String]()
-      guard let userIDToken = try await firebaseService.fetchUserIDToken() else {
-        return .failure(.firebaseError("Failed to fetch user ID token"))
-      }
+      let userIDToken = try await firebaseService.fetchUserIDToken()
       httpHeaders = [
         "Content-Type": "application/json",
         "Authorization": "Bearer \(userIDToken)"

@@ -14,8 +14,8 @@ android {
     namespace = "com.yral.android"
     defaultConfig {
         applicationId = "com.yral.android"
-        versionCode = 35
-        versionName = "2.0.6"
+        versionCode = 36
+        versionName = "2.0.7"
         ndkVersion = "28.0.13004108"
         buildConfigField(
             type = "String",
@@ -98,7 +98,7 @@ dependencies {
     implementation(libs.firebase.appcheck.debug)
     implementation(libs.firebase.messaging)
     implementation(libs.coil.compose)
-    implementation(libs.coil.okhttp)
+    implementation(libs.coil.ktor3)
     implementation(libs.coil.svg)
     implementation(libs.accompanist.permission)
     implementation(libs.facebook.sdk.android.core)
