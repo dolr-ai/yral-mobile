@@ -4,8 +4,19 @@ import com.yral.shared.iap.IAPError
 import com.yral.shared.iap.model.Product
 import com.yral.shared.iap.model.ProductId
 import com.yral.shared.iap.model.PurchaseState
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withTimeout
 import platform.StoreKit.SKPaymentQueue
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import com.yral.shared.iap.model.Purchase as IAPPurchase
+
+/**
+ * Timeout for purchase operations (5 minutes).
+ * This allows sufficient time for user interaction with the payment flow.
+ */
+private val PURCHASE_TIMEOUT: Duration = 5.minutes
 
 /**
  * iOS implementation of IAPProvider using StoreKit.
@@ -41,6 +52,7 @@ internal class IOSIAPProvider : IAPProvider {
         productFetcher
             .fetchProducts(productIds)
 
+    @Suppress("ReturnCount")
     override suspend fun purchaseProduct(
         productId: ProductId,
         context: Any?,
@@ -53,9 +65,29 @@ internal class IOSIAPProvider : IAPProvider {
                 productFetcher.getOrFetchSKProduct(productId)
                     ?: return Result.failure(IAPError.ProductNotFound(productIdString))
 
-            // Initiate purchase and wait for result
+            // Initiate purchase and wait for result with timeout
             val deferred = purchaseManager.initiatePurchase(skProduct, productIdString)
-            deferred.await()
+            try {
+                withTimeout(PURCHASE_TIMEOUT) {
+                    deferred.await()
+                }
+            } catch (e: TimeoutCancellationException) {
+                // Cleanup on timeout - exception is intentionally handled and converted to Result
+                purchaseManager.cleanupPendingPurchase(productIdString)
+                return Result.failure(
+                    IAPError.PurchaseFailed(
+                        productIdString,
+                        Exception(
+                            "Purchase operation timed out after ${PURCHASE_TIMEOUT.inWholeSeconds} seconds",
+                            e,
+                        ),
+                    ),
+                )
+            } catch (e: CancellationException) {
+                // Cleanup on cancellation - re-throw to respect coroutine cancellation
+                purchaseManager.cleanupPendingPurchase(productIdString)
+                throw e
+            }
         } catch (e: IAPError) {
             Result.failure(e)
         } catch (
@@ -65,24 +97,63 @@ internal class IOSIAPProvider : IAPProvider {
         }
     }
 
+    @Suppress("ReturnCount")
     override suspend fun restorePurchases(): Result<List<IAPPurchase>> {
         return try {
             val (existingContinuation, newDeferred) = purchaseManager.startRestore()
 
-            // If we got an existing continuation, await it
+            // If we got an existing continuation, await it with timeout
             val result =
                 if (existingContinuation != null) {
-                    existingContinuation.await()
+                    try {
+                        withTimeout(PURCHASE_TIMEOUT) {
+                            existingContinuation.await()
+                        }
+                    } catch (e: TimeoutCancellationException) {
+                        // Cleanup on timeout - exception is intentionally handled and converted to Result
+                        purchaseManager.cleanupRestore()
+                        return Result.failure(
+                            IAPError.NetworkError(
+                                Exception(
+                                    "Restore operation timed out after ${PURCHASE_TIMEOUT.inWholeSeconds} seconds",
+                                    e,
+                                ),
+                            ),
+                        )
+                    } catch (e: CancellationException) {
+                        // Cleanup on cancellation - re-throw to respect coroutine cancellation
+                        purchaseManager.cleanupRestore()
+                        throw e
+                    }
                 } else {
                     // Start restore
                     paymentQueue.restoreCompletedTransactions()
 
-                    // Wait for restore to complete (observer will complete this)
+                    // Wait for restore to complete (observer will complete this) with timeout
                     val deferred =
                         newDeferred ?: return Result.failure(
                             IAPError.UnknownError(Exception("Failed to create restore continuation")),
                         )
-                    deferred.await()
+                    try {
+                        withTimeout(PURCHASE_TIMEOUT) {
+                            deferred.await()
+                        }
+                    } catch (e: TimeoutCancellationException) {
+                        // Cleanup on timeout - exception is intentionally handled and converted to Result
+                        purchaseManager.cleanupRestore()
+                        return Result.failure(
+                            IAPError.NetworkError(
+                                Exception(
+                                    "Restore operation timed out after ${PURCHASE_TIMEOUT.inWholeSeconds} seconds",
+                                    e,
+                                ),
+                            ),
+                        )
+                    } catch (e: CancellationException) {
+                        // Cleanup on cancellation - re-throw to respect coroutine cancellation
+                        purchaseManager.cleanupRestore()
+                        throw e
+                    }
                 }
             result
         } catch (e: IAPError) {

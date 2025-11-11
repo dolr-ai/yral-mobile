@@ -15,10 +15,20 @@ import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeout
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import com.yral.shared.iap.model.Purchase as IAPPurchase
+
+/**
+ * Timeout for purchase operations (5 minutes).
+ * This allows sufficient time for user interaction with the billing flow.
+ */
+private val PURCHASE_TIMEOUT: Duration = 5.minutes
 
 /**
  * Android implementation of IAPProvider using Google Play Billing Library.
@@ -58,7 +68,7 @@ internal class AndroidIAPProvider(
      * @param context Activity context (required on Android)
      * @return Result containing Purchase object, or error if purchase fails
      */
-    @Suppress("ReturnCount")
+    @Suppress("ReturnCount", "LongMethod")
     override suspend fun purchaseProduct(
         productId: ProductId,
         context: Any?,
@@ -108,8 +118,28 @@ internal class AndroidIAPProvider(
                     pendingPurchases[productIdString] = deferred
                 }
 
-                // Wait for purchase result from PurchasesUpdatedListener
-                deferred.await()
+                // Wait for purchase result from PurchasesUpdatedListener with timeout
+                try {
+                    withTimeout(PURCHASE_TIMEOUT) {
+                        deferred.await()
+                    }
+                } catch (e: TimeoutCancellationException) {
+                    // Cleanup on timeout - exception is intentionally handled and converted to Result
+                    cleanupPendingPurchase(productIdString)
+                    return Result.failure(
+                        IAPError.PurchaseFailed(
+                            productIdString,
+                            Exception(
+                                "Purchase operation timed out after ${PURCHASE_TIMEOUT.inWholeSeconds} seconds",
+                                e,
+                            ),
+                        ),
+                    )
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    // Cleanup on cancellation - re-throw to respect coroutine cancellation
+                    cleanupPendingPurchase(productIdString)
+                    throw e
+                }
             } else {
                 Result.failure(
                     IAPError.PurchaseFailed(
@@ -154,52 +184,105 @@ internal class AndroidIAPProvider(
         purchases: List<Purchase>?,
     ) {
         if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
-            // Handle billing errors - complete all pending purchases
-            callbackScope.launch {
-                pendingPurchasesLock.withLock {
-                    val error =
-                        when (billingResult.responseCode) {
-                            BillingClient.BillingResponseCode.USER_CANCELED -> {
-                                IAPError.PurchaseCancelled("")
-                            }
-                            BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> {
-                                IAPError.PurchaseFailed(
-                                    "",
-                                    Exception("Item already owned: ${billingResult.debugMessage}"),
-                                )
-                            }
-                            else -> {
-                                IAPError.PurchaseFailed(
-                                    "",
-                                    Exception("Billing error: ${billingResult.debugMessage}"),
-                                )
-                            }
-                        }
-
-                    // Complete all pending purchases with error
-                    pendingPurchases.values.forEach { deferred ->
-                        if (!deferred.isCompleted) {
-                            deferred.complete(Result.failure(error))
-                        }
-                    }
-                    pendingPurchases.clear()
-                }
-            }
+            handleBillingError(billingResult, purchases)
             return
         }
 
-        // Process successful purchases
+        handleSuccessfulPurchases(purchases)
+    }
+
+    /**
+     * Handles billing errors by matching to specific product IDs when possible.
+     */
+    private fun handleBillingError(
+        billingResult: BillingResult,
+        purchases: List<Purchase>?,
+    ) {
+        callbackScope.launch {
+            pendingPurchasesLock.withLock {
+                val error = createBillingError(billingResult)
+                val matchedProductId = purchases?.firstOrNull()?.products?.firstOrNull()
+
+                if (matchedProductId != null && pendingPurchases.containsKey(matchedProductId)) {
+                    completeSpecificPurchaseError(matchedProductId, error)
+                } else {
+                    completeAllPendingPurchasesError(error)
+                }
+            }
+        }
+    }
+
+    /**
+     * Creates an IAPError from a BillingResult.
+     */
+    private fun createBillingError(billingResult: BillingResult): IAPError =
+        when (billingResult.responseCode) {
+            BillingClient.BillingResponseCode.USER_CANCELED -> {
+                IAPError.PurchaseCancelled("")
+            }
+            BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> {
+                IAPError.PurchaseFailed(
+                    "",
+                    Exception("Item already owned: ${billingResult.debugMessage}"),
+                )
+            }
+            else -> {
+                IAPError.PurchaseFailed(
+                    "",
+                    Exception("Billing error: ${billingResult.debugMessage}"),
+                )
+            }
+        }
+
+    /**
+     * Completes a specific pending purchase with an error.
+     */
+    private fun completeSpecificPurchaseError(
+        productId: String,
+        error: IAPError,
+    ) {
+        val matchedError =
+            when (error) {
+                is IAPError.PurchaseCancelled -> IAPError.PurchaseCancelled(productId)
+                is IAPError.PurchaseFailed -> error.copy(productId = productId)
+                else -> error
+            }
+        pendingPurchases.remove(productId)?.let { deferred ->
+            if (!deferred.isCompleted) {
+                deferred.complete(Result.failure(matchedError))
+            }
+        }
+    }
+
+    /**
+     * Completes all pending purchases with an error.
+     */
+    private fun completeAllPendingPurchasesError(error: IAPError) {
+        pendingPurchases.values.forEach { deferred ->
+            if (!deferred.isCompleted) {
+                deferred.complete(Result.failure(error))
+            }
+        }
+        pendingPurchases.clear()
+    }
+
+    /**
+     * Handles successful purchases by acknowledging and completing pending deferreds.
+     */
+    private fun handleSuccessfulPurchases(purchases: List<Purchase>?) {
         purchases?.forEach { purchase ->
             val productId = purchase.products.firstOrNull() ?: return@forEach
             val iapPurchase = convertPurchase(purchase)
 
-            // Acknowledge purchase if needed
             acknowledgePurchaseIfNeeded(purchase)
 
-            // Complete pending purchase
             callbackScope.launch {
                 pendingPurchasesLock.withLock {
-                    pendingPurchases.remove(productId)?.complete(Result.success(iapPurchase))
+                    pendingPurchases.remove(productId)?.let { deferred ->
+                        if (!deferred.isCompleted) {
+                            deferred.complete(Result.success(iapPurchase))
+                        }
+                    }
                 }
             }
         }
@@ -235,6 +318,27 @@ internal class AndroidIAPProvider(
                         .setPurchaseToken(purchase.purchaseToken)
                         .build()
                 client.acknowledgePurchase(params) { }
+            }
+        }
+    }
+
+    /**
+     * Cleans up a pending purchase deferred when operation is cancelled or times out.
+     * Ensures no memory leaks from hanging deferreds.
+     */
+    private suspend fun cleanupPendingPurchase(productId: String) {
+        pendingPurchasesLock.withLock {
+            pendingPurchases.remove(productId)?.let { deferred ->
+                if (!deferred.isCompleted) {
+                    deferred.complete(
+                        Result.failure(
+                            IAPError.PurchaseFailed(
+                                productId,
+                                Exception("Purchase operation was cancelled or timed out"),
+                            ),
+                        ),
+                    )
+                }
             }
         }
     }

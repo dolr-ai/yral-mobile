@@ -142,7 +142,7 @@ internal class PurchaseManager(
     fun completeRestore() {
         restoreLock.withLock {
             val continuation = restoreContinuation
-            if (continuation != null) {
+            if (continuation != null && !continuation.isCompleted) {
                 restoreContinuation = null
                 continuation.complete(Result.success(restoredPurchases.toList()))
             }
@@ -155,7 +155,7 @@ internal class PurchaseManager(
     fun completeRestoreWithError(error: NSError) {
         restoreLock.withLock {
             val continuation = restoreContinuation
-            if (continuation != null) {
+            if (continuation != null && !continuation.isCompleted) {
                 restoreContinuation = null
                 continuation.complete(
                     Result.failure(
@@ -184,7 +184,11 @@ internal class PurchaseManager(
 
         // Complete pending purchase
         pendingPurchasesLock.withLock {
-            pendingPurchases.remove(productId)?.complete(Result.success(purchaseWithReceipt))
+            pendingPurchases.remove(productId)?.let { deferred ->
+                if (!deferred.isCompleted) {
+                    deferred.complete(Result.success(purchaseWithReceipt))
+                }
+            }
         }
 
         // Finish the transaction
@@ -220,7 +224,11 @@ internal class PurchaseManager(
 
         // Complete pending purchase with error
         pendingPurchasesLock.withLock {
-            pendingPurchases.remove(productId)?.complete(Result.failure(error))
+            pendingPurchases.remove(productId)?.let { deferred ->
+                if (!deferred.isCompleted) {
+                    deferred.complete(Result.failure(error))
+                }
+            }
         }
 
         // Finish the transaction
@@ -246,7 +254,11 @@ internal class PurchaseManager(
 
         // Also complete pending purchase if any (for restore operations)
         pendingPurchasesLock.withLock {
-            pendingPurchases.remove(productId)?.complete(Result.success(purchaseWithReceipt))
+            pendingPurchases.remove(productId)?.let { deferred ->
+                if (!deferred.isCompleted) {
+                    deferred.complete(Result.success(purchaseWithReceipt))
+                }
+            }
         }
 
         // Finish the transaction
@@ -270,7 +282,11 @@ internal class PurchaseManager(
             )
 
         pendingPurchasesLock.withLock {
-            pendingPurchases.remove(productId)?.complete(Result.failure(error))
+            pendingPurchases.remove(productId)?.let { deferred ->
+                if (!deferred.isCompleted) {
+                    deferred.complete(Result.failure(error))
+                }
+            }
         }
         // Don't finish transaction - it will be updated when approved/denied
     }
@@ -306,5 +322,46 @@ internal class PurchaseManager(
         val receiptURL = NSBundle.mainBundle.appStoreReceiptURL ?: return null
         val receiptData = NSData.dataWithContentsOfURL(receiptURL) ?: return null
         return receiptData.base64EncodedStringWithOptions(0u)
+    }
+
+    /**
+     * Cleans up a pending purchase deferred when operation is cancelled or times out.
+     * Ensures no memory leaks from hanging deferreds.
+     */
+    fun cleanupPendingPurchase(productId: String) {
+        pendingPurchasesLock.withLock {
+            pendingPurchases.remove(productId)?.let { deferred ->
+                if (!deferred.isCompleted) {
+                    deferred.complete(
+                        Result.failure(
+                            IAPError.PurchaseFailed(
+                                productId,
+                                Exception("Purchase operation was cancelled or timed out"),
+                            ),
+                        ),
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * Cleans up restore operation when cancelled or times out.
+     */
+    fun cleanupRestore() {
+        restoreLock.withLock {
+            restoreContinuation?.let { deferred ->
+                if (!deferred.isCompleted) {
+                    restoreContinuation = null
+                    deferred.complete(
+                        Result.failure(
+                            IAPError.NetworkError(
+                                Exception("Restore operation was cancelled or timed out"),
+                            ),
+                        ),
+                    )
+                }
+            }
+        }
     }
 }
