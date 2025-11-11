@@ -233,16 +233,18 @@ struct IosApp: App {
   var body: some Scene {
     WindowGroup {
       // RootView(root: delegate.root)
-      contentView()
-        .environmentObject(deepLinkRouter)
-        .environmentObject(eventBus)
-        .environment(\.appDIContainer, appDIContainer)
-        .onOpenURL { url in
-          Branch.getInstance().application(UIApplication.shared, open: url, options: [:])
-        }
-        .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
-          Branch.getInstance().continue(activity)
-        }
+      //     .ignoresSafeArea(edges: .all)
+      //     .ignoresSafeArea(.keyboard)
+     contentView()
+       .environmentObject(deepLinkRouter)
+       .environmentObject(eventBus)
+       .environment(\.appDIContainer, appDIContainer)
+       .onOpenURL { url in
+         Branch.getInstance().application(UIApplication.shared, open: url, options: [:])
+       }
+       .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
+         Branch.getInstance().continue(activity)
+       }
     }
   }
 
