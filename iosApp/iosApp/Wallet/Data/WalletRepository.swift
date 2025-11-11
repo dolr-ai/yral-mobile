@@ -48,9 +48,7 @@ class WalletRepository: WalletRepositoryProtocol {
     else { return .failure(WalletError.networkError(NetworkError.invalidRequest))}
     do {
       var httpHeaders = [String: String]()
-      guard let userIDToken = try await firebaseService.fetchUserIDToken() else {
-        return .failure(WalletError.firebaseError("Failed to fetch user ID token"))
-      }
+      let userIDToken = try await firebaseService.fetchUserIDToken()
       httpHeaders = [
         "Content-Type": "application/json",
         "Authorization": "Bearer \(userIDToken)"

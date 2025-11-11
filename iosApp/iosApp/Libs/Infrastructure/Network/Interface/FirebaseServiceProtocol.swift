@@ -13,7 +13,7 @@ protocol FirebaseServiceProtocol {
   func resetSession() async throws
   func signIn(withCustomToken token: String) async throws
   func signOut() throws
-  func fetchUserIDToken() async throws -> String?
+  func fetchUserIDToken() async throws -> String
   func fetchAppCheckToken() async -> String?
   func fetchCoins(for principal: String) async throws -> Int
   func update(coins: UInt64, forPrincipal principal: String) async throws

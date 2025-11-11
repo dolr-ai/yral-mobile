@@ -351,6 +351,10 @@ struct ProfileView: View {
         await viewModel.fetchProfileInfo()
       }
     }
+    .onReceive(eventBus.dismissFullScreenCoverProfile) { _ in
+      showVideoInsights = false
+      insightsVideoInfo = nil
+    }
     .fullScreenCover(isPresented: $showSignupSheet) {
       ZStack(alignment: .center) {
         SignupSheet(
