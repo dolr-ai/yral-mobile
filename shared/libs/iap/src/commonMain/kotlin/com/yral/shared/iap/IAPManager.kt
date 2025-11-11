@@ -14,29 +14,18 @@ class IAPManager(
     private val listeners = mutableSetOf<IAPListener>()
     private val listenersMutex = Mutex()
 
-    /**
-     * Registers a listener to receive IAP events
-     * Note: This is thread-safe and can be called from any thread
-     */
     suspend fun addListener(listener: IAPListener) {
         listenersMutex.withLock {
             listeners.add(listener)
         }
     }
 
-    /**
-     * Unregisters a listener
-     * Note: This is thread-safe and can be called from any thread
-     */
     suspend fun removeListener(listener: IAPListener) {
         listenersMutex.withLock {
             listeners.remove(listener)
         }
     }
 
-    /**
-     * Fetches products from the platform store
-     */
     suspend fun fetchProducts(productIds: List<ProductId>): Result<List<Product>> {
         val result = provider.fetchProducts(productIds)
         notifyListeners {
@@ -49,15 +38,6 @@ class IAPManager(
         return result
     }
 
-    /**
-     * Initiates a purchase for the given product.
-     *
-     * Note: In Compose, prefer using [rememberPurchase] instead.
-     * This method is kept for non-Compose usage or advanced scenarios.
-     *
-     * @param productId The product ID to purchase
-     * @param context Platform-specific context (Activity on Android, Unit on iOS)
-     */
     suspend fun purchaseProduct(
         productId: ProductId,
         context: Any? = null,
@@ -78,9 +58,6 @@ class IAPManager(
         return result
     }
 
-    /**
-     * Restores previously purchased products
-     */
     suspend fun restorePurchases(): Result<List<Purchase>> {
         val result = provider.restorePurchases()
         notifyListeners {
@@ -98,9 +75,6 @@ class IAPManager(
         return result
     }
 
-    /**
-     * Checks if a product is currently purchased
-     */
     suspend fun isProductPurchased(productId: ProductId): Boolean = provider.isProductPurchased(productId)
 
     private suspend fun notifyListeners(action: IAPListener.() -> Unit) {
@@ -109,8 +83,6 @@ class IAPManager(
                 runCatching {
                     listener.action()
                 }.onFailure {
-                    // Log error but don't break other listeners
-                    // In production, you might want to use a logger here
                     Logger.e("IAPManager", it) { "Failed to notify listener ${listener::class}" }
                 }
             }

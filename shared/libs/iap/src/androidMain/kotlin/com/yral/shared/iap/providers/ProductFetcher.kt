@@ -9,28 +9,14 @@ import com.yral.shared.iap.model.Product
 import com.yral.shared.iap.model.ProductId
 import com.yral.shared.iap.model.ProductType
 
-/**
- * Handles fetching product details from Google Play Store.
- * Supports both in-app products (one-time purchases) and subscriptions.
- */
 internal class ProductFetcher(
     private val connectionManager: BillingClientConnectionManager,
 ) {
-    /**
-     * Fetches product details from Google Play Store for the given product IDs.
-     * Handles both in-app products (one-time purchases) and subscriptions.
-     * For subscriptions, extracts recurring pricing from the last pricing phase.
-     *
-     * @param productIds List of product IDs to fetch
-     * @return Result containing list of Product objects, or error if fetch fails
-     */
     suspend fun fetchProducts(productIds: List<ProductId>): Result<List<Product>> =
         try {
             val client = connectionManager.ensureReady()
             val productList = mutableListOf<Product>()
             val productIdStrings = productIds.map { it.productId }
-
-            // Separate in-app products and subscriptions based on naming convention
             val (inAppProductIds, subscriptionProductIds) =
                 productIdStrings.partition { productId ->
                     !productId.contains("sub_") &&
@@ -38,24 +24,18 @@ internal class ProductFetcher(
                         !productId.contains("monthly") &&
                         !productId.contains("yearly")
                 }
-
-            // Fetch in-app products (continue even if this fails)
             if (inAppProductIds.isNotEmpty()) {
                 val inAppProducts = fetchInAppProducts(client, inAppProductIds)
                 if (inAppProducts.isSuccess) {
                     productList.addAll(inAppProducts.getOrNull() ?: emptyList())
                 }
             }
-
-            // Fetch subscription products (continue even if in-app products failed)
             if (subscriptionProductIds.isNotEmpty()) {
                 val subscriptionProducts = fetchSubscriptionProducts(client, subscriptionProductIds)
                 if (subscriptionProducts.isSuccess) {
                     productList.addAll(subscriptionProducts.getOrNull() ?: emptyList())
                 }
             }
-
-            // Return success if we got any products, otherwise return error
             if (productList.isNotEmpty()) {
                 Result.success(productList)
             } else {
@@ -73,20 +53,10 @@ internal class ProductFetcher(
             Result.failure(IAPError.UnknownError(e))
         }
 
-    /**
-     * Queries product details for a single product, trying both INAPP and SUBS types.
-     * Returns the ProductDetails if found, null otherwise.
-     */
     suspend fun queryProductDetailsForPurchase(productId: String): ProductDetails? {
         val client = connectionManager.ensureReady()
-
-        // Try INAPP first (one-time purchases)
         val inAppProduct = queryProductDetailsByType(client, productId, BillingClient.ProductType.INAPP)
-        if (inAppProduct != null) {
-            return inAppProduct
-        }
-
-        // Try SUBS (subscriptions)
+        if (inAppProduct != null) return inAppProduct
         return queryProductDetailsByType(client, productId, BillingClient.ProductType.SUBS)
     }
 
@@ -204,14 +174,10 @@ internal class ProductFetcher(
             return null
         }
 
-        // Find first offer with valid pricing
         val validOffer =
             subscriptionOfferDetails.firstOrNull { offerDetails ->
-                val pricingPhaseList = offerDetails.pricingPhases.pricingPhaseList
-                pricingPhaseList.isNotEmpty()
+                offerDetails.pricingPhases.pricingPhaseList.isNotEmpty()
             } ?: return null
-
-        // Use last phase (recurring price, after intro/trial phases)
         val pricingPhaseList = validOffer.pricingPhases.pricingPhaseList
         val recurringPhase = pricingPhaseList.last()
         val pricingInfo = extractPricingPhaseInfo(recurringPhase) ?: return null
