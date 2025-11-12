@@ -80,7 +80,7 @@ internal class IOSIAPProvider : IAPProvider {
     }
 
     @Suppress("ReturnCount")
-    override suspend fun restorePurchases(): Result<List<IAPPurchase>> {
+    override suspend fun restorePurchases(userId: String?): Result<List<IAPPurchase>> {
         return try {
             val (existingContinuation, newDeferred) = purchaseManager.startRestore()
 
@@ -141,10 +141,13 @@ internal class IOSIAPProvider : IAPProvider {
         }
     }
 
-    override suspend fun isProductPurchased(productId: ProductId): Boolean =
+    override suspend fun isProductPurchased(
+        productId: ProductId,
+        userId: String?,
+    ): Boolean =
         runCatching {
             val productIdString = productId.productId
-            val restoreResult = restorePurchases()
+            val restoreResult = restorePurchases(userId)
             restoreResult
                 .getOrNull()
                 ?.any { purchase ->
@@ -158,4 +161,9 @@ internal class IOSIAPProvider : IAPProvider {
                 }
                 ?: false
         }.getOrDefault(false)
+
+    override suspend fun setAccountIdentifier(
+        userId: String,
+        accountIdentifier: String,
+    ) { /* No Op*/ }
 }

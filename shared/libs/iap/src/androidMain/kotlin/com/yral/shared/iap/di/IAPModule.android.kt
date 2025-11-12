@@ -9,4 +9,6 @@ internal actual fun Scope.createIAPProvider(): IAPProvider =
     AndroidIAPProvider(
         context = androidContext(),
         appDispatchers = get(),
+        preferences = get(),
+        sessionManager = get(),
     )

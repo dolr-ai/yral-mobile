@@ -217,6 +217,7 @@ internal class PurchaseManager(
             expirationDate = null,
             isAutoRenewing = null,
             subscriptionStatus = SubscriptionStatus.UNKNOWN,
+            accountIdentifier = null,
         )
     }
 

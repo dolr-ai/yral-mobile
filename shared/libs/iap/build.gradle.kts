@@ -17,6 +17,7 @@ kotlin {
             implementation(projects.shared.core)
             implementation(projects.shared.libs.coroutinesX)
             implementation(projects.shared.libs.koin)
+            implementation(projects.shared.libs.preferences)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.datetime)
         }

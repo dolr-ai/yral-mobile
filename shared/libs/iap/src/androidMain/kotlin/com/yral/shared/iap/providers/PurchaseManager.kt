@@ -73,6 +73,7 @@ internal class PurchaseManager(
         val isAutoRenewing: Boolean? = if (isSubscription) purchase.isAutoRenewing else null
         val isSuspended: Boolean? = if (isSubscription) purchase.isSuspended else null
         val expirationDate: Long? = null
+        val accountIdentifier = purchase.accountIdentifiers?.obfuscatedAccountId
 
         val subscriptionStatus =
             if (isSubscription) {
@@ -94,6 +95,7 @@ internal class PurchaseManager(
             expirationDate = expirationDate,
             isAutoRenewing = isAutoRenewing,
             subscriptionStatus = subscriptionStatus,
+            accountIdentifier = accountIdentifier,
         )
     }
 
