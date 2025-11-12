@@ -536,6 +536,8 @@ This ensures that:
 - No cross-account subscription access occurs
 - Secure validation even after app reinstall
 
+**Edge Cases:** See `IAP_EDGE_CASES.md` for detailed information about edge cases, potential issues, and how the module handles them.
+
 ## Best Practices
 
 1. **Always use `rememberPurchase` in Compose**: It handles context automatically

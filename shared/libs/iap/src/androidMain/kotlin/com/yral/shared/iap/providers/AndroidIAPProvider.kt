@@ -2,6 +2,7 @@ package com.yral.shared.iap.providers
 
 import android.app.Activity
 import android.content.Context
+import co.touchlab.kermit.Logger
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.BillingResult
@@ -31,6 +32,7 @@ import com.yral.shared.iap.model.Purchase as IAPPurchase
 
 private val PURCHASE_TIMEOUT: Duration = 5.minutes
 private const val ACCOUNT_IDENTIFIER_PREFIX = "iap_account_identifier_"
+private const val ACCOUNT_IDENTIFIER_SEPARATOR = ","
 
 internal class AndroidIAPProvider(
     context: Context,
@@ -38,6 +40,11 @@ internal class AndroidIAPProvider(
     private val preferences: Preferences,
     private val sessionManager: SessionManager,
 ) : IAPProvider {
+    private var warningNotifier: suspend (String) -> Unit = {}
+
+    fun setWarningNotifier(notifier: suspend (String) -> Unit) {
+        warningNotifier = notifier
+    }
     private val pendingPurchases = mutableMapOf<String, CompletableDeferred<Result<IAPPurchase>>>()
     private val pendingPurchasesLock = Mutex()
     private val callbackScope = CoroutineScope(SupervisorJob() + appDispatchers.network)
@@ -138,12 +145,15 @@ internal class AndroidIAPProvider(
         return if (userId == null) {
             allPurchases
         } else {
-            val accountIdentifier = getAccountIdentifierForUser(userId)
-            if (accountIdentifier == null) {
+            val accountIdentifiers = getAccountIdentifiersForUser(userId)
+            if (accountIdentifiers.isEmpty()) {
                 Result.success(emptyList())
             } else {
                 allPurchases.map { purchases ->
-                    purchases.filter { it.accountIdentifier == accountIdentifier }
+                    purchases.filter { purchase ->
+                        purchase.accountIdentifier != null &&
+                            accountIdentifiers.contains(purchase.accountIdentifier)
+                    }
                 }
             }
         }
@@ -166,14 +176,15 @@ internal class AndroidIAPProvider(
                 }
             }
 
-            val accountIdentifier = getAccountIdentifierForUser(userId)
-            if (accountIdentifier == null) {
+            val accountIdentifiers = getAccountIdentifiersForUser(userId)
+            if (accountIdentifiers.isEmpty()) {
                 return false
             }
 
             purchases
                 .filter { purchase ->
-                    purchase.accountIdentifier == accountIdentifier
+                    purchase.accountIdentifier != null &&
+                        accountIdentifiers.contains(purchase.accountIdentifier)
                 }.any { purchase ->
                     purchase.productId == productIdString &&
                         purchase.state == PurchaseState.PURCHASED &&
@@ -181,24 +192,44 @@ internal class AndroidIAPProvider(
                 }
         }.getOrDefault(false)
 
-    private suspend fun getAccountIdentifierForUser(userId: String): String? {
+    private suspend fun getAccountIdentifiersForUser(userId: String): Set<String> {
         val key = "$ACCOUNT_IDENTIFIER_PREFIX$userId"
-        return preferences.getString(key)
+        val stored = preferences.getString(key) ?: return emptySet()
+        return stored.split(ACCOUNT_IDENTIFIER_SEPARATOR).filter { it.isNotEmpty() }.toSet()
     }
 
-    private suspend fun storeAccountIdentifierForUser(
+    private suspend fun addAccountIdentifierForUser(
         userId: String,
         accountIdentifier: String,
     ) {
-        val key = "$ACCOUNT_IDENTIFIER_PREFIX$userId"
-        preferences.putString(key, accountIdentifier)
+        val existing = getAccountIdentifiersForUser(userId)
+        if (!existing.contains(accountIdentifier)) {
+            val key = "$ACCOUNT_IDENTIFIER_PREFIX$userId"
+            val updated = (existing + accountIdentifier).joinToString(ACCOUNT_IDENTIFIER_SEPARATOR)
+            preferences.putString(key, updated)
+        }
+    }
+
+    private suspend fun validateAccountIdentifier(accountIdentifier: String): Boolean {
+        val allPurchases = purchaseManager.restorePurchases().getOrNull() ?: return false
+        return allPurchases.any { it.accountIdentifier == accountIdentifier }
     }
 
     override suspend fun setAccountIdentifier(
         userId: String,
         accountIdentifier: String,
     ) {
-        storeAccountIdentifierForUser(userId, accountIdentifier)
+        if (validateAccountIdentifier(accountIdentifier)) {
+            addAccountIdentifierForUser(userId, accountIdentifier)
+        } else {
+            val message =
+                "Account identifier $accountIdentifier does not match any purchases. " +
+                    "Not storing mapping for user $userId."
+            Logger.w("AndroidIAPProvider") { message }
+            callbackScope.launch {
+                warningNotifier(message)
+            }
+        }
     }
 
     private fun handlePurchaseUpdate(
@@ -288,8 +319,37 @@ internal class AndroidIAPProvider(
                 val userId = sessionManager.userPrincipal
                 if (userId != null) {
                     callbackScope.launch {
-                        storeAccountIdentifierForUser(userId, accountIdentifier)
+                        val existing = getAccountIdentifiersForUser(userId)
+                        if (!existing.contains(accountIdentifier)) {
+                            if (existing.isNotEmpty()) {
+                                val message =
+                                    "Account identifier changed for user $userId. " +
+                                        "Existing: ${existing.joinToString()}, " +
+                                        "New: $accountIdentifier. " +
+                                        "Adding new identifier to support multiple accounts."
+                                Logger.w("AndroidIAPProvider") { message }
+                                warningNotifier(message)
+                            }
+                            addAccountIdentifierForUser(userId, accountIdentifier)
+                        }
                     }
+                } else {
+                    val message =
+                        "Purchase completed but userId is null. " +
+                            "Account identifier $accountIdentifier not stored. " +
+                            "User may need to restore purchases after login."
+                    Logger.w("AndroidIAPProvider") { message }
+                    callbackScope.launch {
+                        warningNotifier(message)
+                    }
+                }
+            } else {
+                val message =
+                    "Purchase completed but account identifier is null. " +
+                        "Mapping not stored. User may need backend rehydration."
+                Logger.w("AndroidIAPProvider") { message }
+                callbackScope.launch {
+                    warningNotifier(message)
                 }
             }
 
