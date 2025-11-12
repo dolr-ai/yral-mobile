@@ -87,6 +87,13 @@ class IAPManager(
         provider.setAccountIdentifier(userId, accountIdentifier)
     }
 
+    suspend fun notifyWarning(message: String) {
+        Logger.w("IAPManager") { message }
+        notifyListeners {
+            onWarning(message)
+        }
+    }
+
     private suspend fun notifyListeners(action: IAPListener.() -> Unit) {
         listenersMutex.withLock {
             listeners.forEach { listener ->
