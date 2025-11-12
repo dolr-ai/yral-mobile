@@ -9,4 +9,5 @@ interface IAPListener {
     fun onPurchaseError(error: IAPError)
     fun onPurchasesRestored(purchases: List<Purchase>)
     fun onRestoreError(error: IAPError)
+    fun onWarning(message: String)
 }

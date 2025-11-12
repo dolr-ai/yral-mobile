@@ -46,6 +46,7 @@ fun IAPManager.rememberPurchase(
                 override fun onPurchaseError(error: IAPError) = onError(error)
                 override fun onPurchasesRestored(purchases: List<Purchase>) { /* No op */ }
                 override fun onRestoreError(error: IAPError) { /* No op */ }
+                override fun onWarning(message: String) { /* No op */ }
             }
         }
     return rememberPurchase(listener)

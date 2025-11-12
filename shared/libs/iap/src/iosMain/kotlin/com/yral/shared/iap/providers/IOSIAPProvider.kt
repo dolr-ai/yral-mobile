@@ -16,6 +16,11 @@ import com.yral.shared.iap.model.Purchase as IAPPurchase
 private val PURCHASE_TIMEOUT: Duration = 5.minutes
 
 internal class IOSIAPProvider : IAPProvider {
+    private var warningNotifier: suspend (String) -> Unit = {}
+
+    fun setWarningNotifier(notifier: suspend (String) -> Unit) {
+        warningNotifier = notifier
+    }
     private val paymentQueue: SKPaymentQueue = SKPaymentQueue.defaultQueue()
     private val productFetcher = ProductFetcher()
     private val purchaseManager = PurchaseManager(paymentQueue)
