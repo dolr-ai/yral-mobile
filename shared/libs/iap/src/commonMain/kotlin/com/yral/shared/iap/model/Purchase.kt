@@ -19,6 +19,7 @@ data class Purchase(
     val expirationDate: Long? = null,
     val isAutoRenewing: Boolean? = null,
     val subscriptionStatus: SubscriptionStatus? = null,
+    val accountIdentifier: String? = null,
 ) {
     /** Returns true if subscription is active and user has access. */
     @OptIn(ExperimentalTime::class)
