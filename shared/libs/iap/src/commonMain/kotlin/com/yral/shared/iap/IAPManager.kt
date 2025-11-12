@@ -58,8 +58,8 @@ class IAPManager(
         return result
     }
 
-    suspend fun restorePurchases(): Result<List<Purchase>> {
-        val result = provider.restorePurchases()
+    suspend fun restorePurchases(userId: String?): Result<List<Purchase>> {
+        val result = provider.restorePurchases(userId)
         notifyListeners {
             if (result.isSuccess) {
                 result.getOrNull()?.let { purchases ->
@@ -75,7 +75,17 @@ class IAPManager(
         return result
     }
 
-    suspend fun isProductPurchased(productId: ProductId): Boolean = provider.isProductPurchased(productId)
+    suspend fun isProductPurchased(
+        productId: ProductId,
+        userId: String?,
+    ): Boolean = provider.isProductPurchased(productId, userId)
+
+    suspend fun setAccountIdentifier(
+        userId: String,
+        accountIdentifier: String,
+    ) {
+        provider.setAccountIdentifier(userId, accountIdentifier)
+    }
 
     private suspend fun notifyListeners(action: IAPListener.() -> Unit) {
         listenersMutex.withLock {

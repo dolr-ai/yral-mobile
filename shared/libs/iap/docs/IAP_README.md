@@ -13,6 +13,7 @@ The IAP module abstracts platform-specific implementations (Google Play Billing 
 - ✅ **Event Listeners**: Reactive event handling via `IAPListener`
 - ✅ **Compose Support**: Built-in Compose helpers for easy integration
 - ✅ **Subscription Status Tracking**: Comprehensive handling of active, paused, cancelled, and expired subscriptions
+- ✅ **Account Validation**: Automatic filtering of purchases by Google Play account to prevent cross-account access
 - ✅ **Timeout Handling**: Automatic timeout and cleanup for purchase operations
 - ✅ **Error Matching**: Intelligent error matching to specific product IDs
 - ✅ **Thread-Safe**: All operations are thread-safe with proper synchronization
@@ -187,7 +188,8 @@ viewModelScope.launch {
 
 ```kotlin
 viewModelScope.launch {
-    val result = iapManager.restorePurchases()
+    val userId = sessionManager.userPrincipal
+    val result = iapManager.restorePurchases(userId)
     
     result.onSuccess { purchases ->
         // Process restored purchases
@@ -200,16 +202,21 @@ viewModelScope.launch {
 }
 ```
 
+**Note**: Always pass `userId` from `SessionManager.userPrincipal` to ensure proper account validation.
+
 #### 6. Check Purchase Status
 
 ```kotlin
 viewModelScope.launch {
-    val isPurchased = iapManager.isProductPurchased(ProductId.PREMIUM_MONTHLY)
+    val userId = sessionManager.userPrincipal
+    val isPurchased = iapManager.isProductPurchased(ProductId.PREMIUM_MONTHLY, userId)
     if (isPurchased) {
         // User has purchased this product
     }
 }
 ```
+
+**Note**: Always pass `userId` from `SessionManager.userPrincipal` to ensure proper account validation.
 
 ### Using IAPListener
 
@@ -407,7 +414,8 @@ The module tracks subscription lifecycle states to handle paused, cancelled, and
 
 ```kotlin
 // Check if subscription is active
-val isActive = iapManager.isProductPurchased(ProductId.PREMIUM_MONTHLY)
+val userId = sessionManager.userPrincipal
+val isActive = iapManager.isProductPurchased(ProductId.PREMIUM_MONTHLY, userId)
 
 // Or use Purchase helper
 if (purchase.isActiveSubscription()) {
@@ -446,6 +454,88 @@ The module includes robust timeout and error handling:
 - **Error Matching**: Errors are matched to specific product IDs when possible
 - **Thread Safety**: All operations are thread-safe with proper synchronization
 
+## Account Validation
+
+### Multiple Google Play Accounts
+
+When users have multiple Google Play accounts on their device, subscriptions are tied to the specific Google Play account that made the purchase. The IAP module handles account validation to ensure users can only access subscriptions from their own Google Play account.
+
+#### How It Works
+
+1. **Account Identifier Storage**: When a purchase is made, the module:
+   - Extracts the Google Play account identifier from the `Purchase` object using `accountIdentifiers.obfuscatedAccountId`
+   - Gets the current app user ID from `SessionManager.userPrincipal`
+   - Stores the mapping: `userId → accountIdentifier` in persistent storage (Preferences)
+
+2. **Purchase Validation**: When checking if a product is purchased (`isProductPurchased`) or restoring purchases (`restorePurchases`):
+   - Retrieves the stored account identifier for the given `userId`
+   - If account identifier is **not found**, returns `false` (not purchased) or empty list
+   - If account identifier is found, filters purchases to only include those matching the stored identifier
+
+3. **Security**: The module uses a strict validation approach:
+   - **No fallback behavior**: If account identifier mapping is missing, access is denied
+   - This prevents cross-account access even after app reinstall
+   - Backend can rehydrate the mapping using `setAccountIdentifier()`
+
+#### Usage Example
+
+```kotlin
+// Get current user ID
+val userId = sessionManager.userPrincipal
+
+// Check if product is purchased (automatically filters by user's Google Play account)
+val isPurchased = iapManager.isProductPurchased(ProductId.PREMIUM_MONTHLY, userId)
+
+// Restore purchases (automatically filters by user's Google Play account)
+val purchases = iapManager.restorePurchases(userId)
+```
+
+#### Backend Rehydration
+
+If the account identifier mapping is lost (e.g., after app reinstall), the backend can restore it:
+
+```kotlin
+// After fetching user data from backend
+val userId = sessionManager.userPrincipal
+val accountIdentifier = backendResponse.googlePlayAccountId
+
+// Rehydrate the mapping
+iapManager.setAccountIdentifier(userId, accountIdentifier)
+
+// Now purchases will work correctly
+val isPurchased = iapManager.isProductPurchased(ProductId.PREMIUM_MONTHLY, userId)
+```
+
+**Backend Integration:**
+- Store the Google Play account identifier (`obfuscatedAccountId`) on your backend when a purchase is made
+- When user logs in, include the account identifier in the user profile/response
+- Call `setAccountIdentifier()` to restore the mapping before checking purchases
+
+#### Important Notes
+
+- **Android**: Account validation is fully supported using Google Play Billing Library's account identifiers.
+- **iOS**: Account validation is not applicable as iOS uses a single App Store account per device.
+- **Security**: If account identifier mapping is missing, `isProductPurchased()` returns `false` and `restorePurchases()` returns empty list (no fallback to all purchases).
+- **Persistence**: Account identifier mappings are stored in Preferences and persist across app restarts.
+
+#### User Experience
+
+When a user switches Google Play accounts:
+- Subscriptions from the previous account are automatically filtered out
+- Only subscriptions from the current account are considered
+- Users must switch back to the original account to access their previous subscriptions
+
+When a user reinstalls the app:
+- Account identifier mapping is lost locally
+- Backend must provide the mapping via `setAccountIdentifier()`
+- Until mapping is restored, purchases will return `false`/empty list
+
+This ensures that:
+- User A's subscription cannot be accessed by User B
+- Each account maintains its own subscription state
+- No cross-account subscription access occurs
+- Secure validation even after app reinstall
+
 ## Best Practices
 
 1. **Always use `rememberPurchase` in Compose**: It handles context automatically
@@ -453,8 +543,9 @@ The module includes robust timeout and error handling:
 3. **Unregister listeners**: Always unregister listeners to prevent memory leaks
 4. **Handle all error cases**: Check for `PurchaseCancelled`, `PurchaseFailed`, etc.
 5. **Validate purchases server-side**: Use `purchaseToken` (Android) or `receipt` (iOS) for server validation
-6. **Check purchase status**: Use `isProductPurchased()` to check if user has access
-7. **Restore purchases**: Always provide a "Restore Purchases" option for users
+6. **Always pass userId**: Use `SessionManager.userPrincipal` when calling `isProductPurchased()` and `restorePurchases()`
+7. **Backend rehydration**: Store account identifier on backend and restore using `setAccountIdentifier()` after login
+8. **Restore purchases**: Always provide a "Restore Purchases" option for users
 
 ## Example: Complete Purchase Flow
 
@@ -487,6 +578,12 @@ fun PremiumScreen(iapManager: IAPManager) {
     
     LaunchedEffect(Unit) {
         isLoading = true
+        val userId = sessionManager.userPrincipal
+        
+        // Restore account identifier from backend if needed
+        // (This should be done during login/authentication)
+        // iapManager.setAccountIdentifier(userId, backendAccountIdentifier)
+        
         iapManager.fetchProducts(
             listOf(ProductId.PREMIUM_MONTHLY, ProductId.PREMIUM_YEARLY)
         ).onSuccess {

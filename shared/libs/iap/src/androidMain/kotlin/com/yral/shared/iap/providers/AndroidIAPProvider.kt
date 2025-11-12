@@ -7,12 +7,14 @@ import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.BillingResult
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
+import com.yral.shared.core.session.SessionManager
 import com.yral.shared.iap.IAPError
 import com.yral.shared.iap.model.Product
 import com.yral.shared.iap.model.ProductId
 import com.yral.shared.iap.model.PurchaseState
 import com.yral.shared.iap.model.SubscriptionStatus
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
+import com.yral.shared.preferences.Preferences
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -28,10 +30,13 @@ import kotlin.time.ExperimentalTime
 import com.yral.shared.iap.model.Purchase as IAPPurchase
 
 private val PURCHASE_TIMEOUT: Duration = 5.minutes
+private const val ACCOUNT_IDENTIFIER_PREFIX = "iap_account_identifier_"
 
 internal class AndroidIAPProvider(
     context: Context,
     appDispatchers: AppDispatchers,
+    private val preferences: Preferences,
+    private val sessionManager: SessionManager,
 ) : IAPProvider {
     private val pendingPurchases = mutableMapOf<String, CompletableDeferred<Result<IAPPurchase>>>()
     private val pendingPurchasesLock = Mutex()
@@ -128,21 +133,73 @@ internal class AndroidIAPProvider(
         }
     }
 
-    override suspend fun restorePurchases(): Result<List<IAPPurchase>> = purchaseManager.restorePurchases()
+    override suspend fun restorePurchases(userId: String?): Result<List<IAPPurchase>> {
+        val allPurchases = purchaseManager.restorePurchases()
+        return if (userId == null) {
+            allPurchases
+        } else {
+            val accountIdentifier = getAccountIdentifierForUser(userId)
+            if (accountIdentifier == null) {
+                Result.success(emptyList())
+            } else {
+                allPurchases.map { purchases ->
+                    purchases.filter { it.accountIdentifier == accountIdentifier }
+                }
+            }
+        }
+    }
 
-    override suspend fun isProductPurchased(productId: ProductId): Boolean =
+    override suspend fun isProductPurchased(
+        productId: ProductId,
+        userId: String?,
+    ): Boolean =
         runCatching {
             val productIdString = productId.productId
-            val restoreResult = restorePurchases()
-            restoreResult
-                .getOrNull()
-                ?.any { purchase ->
+            val restoreResult = restorePurchases(userId)
+            val purchases = restoreResult.getOrNull() ?: return false
+
+            if (userId == null) {
+                return purchases.any { purchase ->
                     purchase.productId == productIdString &&
                         purchase.state == PurchaseState.PURCHASED &&
                         (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
                 }
-                ?: false
+            }
+
+            val accountIdentifier = getAccountIdentifierForUser(userId)
+            if (accountIdentifier == null) {
+                return false
+            }
+
+            purchases
+                .filter { purchase ->
+                    purchase.accountIdentifier == accountIdentifier
+                }.any { purchase ->
+                    purchase.productId == productIdString &&
+                        purchase.state == PurchaseState.PURCHASED &&
+                        (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
+                }
         }.getOrDefault(false)
+
+    private suspend fun getAccountIdentifierForUser(userId: String): String? {
+        val key = "$ACCOUNT_IDENTIFIER_PREFIX$userId"
+        return preferences.getString(key)
+    }
+
+    private suspend fun storeAccountIdentifierForUser(
+        userId: String,
+        accountIdentifier: String,
+    ) {
+        val key = "$ACCOUNT_IDENTIFIER_PREFIX$userId"
+        preferences.putString(key, accountIdentifier)
+    }
+
+    override suspend fun setAccountIdentifier(
+        userId: String,
+        accountIdentifier: String,
+    ) {
+        storeAccountIdentifierForUser(userId, accountIdentifier)
+    }
 
     private fun handlePurchaseUpdate(
         billingResult: BillingResult,
@@ -223,8 +280,18 @@ internal class AndroidIAPProvider(
         purchases?.forEach { purchase ->
             val productId = purchase.products.firstOrNull() ?: return@forEach
             val iapPurchase = convertPurchase(purchase)
+            val accountIdentifier = iapPurchase.accountIdentifier
 
             acknowledgePurchaseIfNeeded(purchase)
+
+            if (accountIdentifier != null) {
+                val userId = sessionManager.userPrincipal
+                if (userId != null) {
+                    callbackScope.launch {
+                        storeAccountIdentifierForUser(userId, accountIdentifier)
+                    }
+                }
+            }
 
             callbackScope.launch {
                 pendingPurchasesLock.withLock {
@@ -243,6 +310,7 @@ internal class AndroidIAPProvider(
         val isSuspended: Boolean = purchase.isSuspended
         val expirationDate: Long? = null
         val subscriptionStatus = determineSubscriptionStatus(expirationDate, isAutoRenewing, isSuspended)
+        val accountIdentifier = purchase.accountIdentifiers?.obfuscatedAccountId
 
         return IAPPurchase(
             productId = purchase.products.firstOrNull() ?: "",
@@ -257,6 +325,7 @@ internal class AndroidIAPProvider(
             expirationDate = expirationDate,
             isAutoRenewing = isAutoRenewing,
             subscriptionStatus = subscriptionStatus,
+            accountIdentifier = accountIdentifier,
         )
     }
 
