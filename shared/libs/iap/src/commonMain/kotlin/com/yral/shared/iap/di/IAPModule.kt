@@ -18,5 +18,14 @@ internal expect fun Scope.createIAPProvider(): IAPProvider
 val iapModule =
     module {
         single<IAPProvider> { createIAPProvider() }
-        single<IAPManager> { IAPManager(get()) }
+        single<IAPManager> {
+            val manager = IAPManager(get())
+            wireWarningNotifier(manager, get())
+            manager
+        }
     }
+
+internal expect fun wireWarningNotifier(
+    manager: IAPManager,
+    provider: IAPProvider,
+)
