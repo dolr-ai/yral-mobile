@@ -20,48 +20,86 @@ The IAP module abstracts platform-specific implementations (Google Play Billing 
 
 ## Architecture
 
-The module follows a provider pattern architecture:
+The module is split into two nested modules:
+
+### Core Module (`shared/libs/iap/core`)
+
+Pure IAP functionality without business logic:
+- **No dependencies** on `Preferences`, `SessionManager`, or business logic
+- Pure platform IAP operations (Billing Library/StoreKit)
+- Package: `com.yral.shared.iap.core.*`
+- Use this if you need vanilla IAP without account validation
+
+### Main Module (`shared/libs/iap/main`)
+
+Business logic layer that wraps core:
+- **Depends on** `iap/core`, `preferences`, `sessionManager`
+- Adds userId-based account validation
+- Adds Compose helpers
+- Package: `com.yral.shared.iap.*` (public API)
+- **This is what you should use** in your app
 
 ```
-┌─────────────────┐
-│   IAPManager    │  ← Public API (consumers use this)
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│   IAPProvider   │  ← Interface (platform abstraction)
-└────────┬────────┘
-         │
-    ┌────┴────┐
-    ▼         ▼
-┌────────┐ ┌────────┐
-│Android │ │  iOS   │  ← Platform-specific implementations
-│Provider│ │Provider│
-└────────┘ └────────┘
+┌─────────────────────────────────────────────────┐
+│              Main Module (Public API)          │
+│  ┌──────────────────────────────────────────┐  │
+│  │   IAPManager (with userId support)       │  │
+│  │   IAPProvider (with account validation)   │  │
+│  │   IAPListener (with onWarning)            │  │
+│  │   IAPProviderImpl (common, KMP)          │  │
+│  └──────────────┬───────────────────────────┘  │
+│                 │ Wraps                        │
+│                 ▼                               │
+│  ┌──────────────────────────────────────────┐  │
+│  │         Core Module (Pure IAP)           │  │
+│  │  ┌────────────────────────────────────┐  │  │
+│  │  │   IAPManager (no userId)           │  │  │
+│  │  │   IAPProvider (no userId)          │  │  │
+│  │  │   IAPListener (no onWarning)        │  │  │
+│  │  └──────────────┬─────────────────────┘  │  │
+│  │                 │                          │  │
+│  │    ┌────────────┴────────────┐            │  │
+│  │    ▼                          ▼            │  │
+│  │  ┌────────┐              ┌────────┐       │  │
+│  │  │Android │              │  iOS   │       │  │
+│  │  │Provider│              │Provider│       │  │
+│  │  └────────┘              └────────┘       │  │
+│  └──────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────┘
 ```
 
 ### Components
 
-- **IAPManager**: Main entry point for IAP operations. Manages listeners and delegates to platform providers.
-- **IAPProvider**: Interface defining the contract for platform-specific implementations.
-- **AndroidIAPProvider**: Android implementation using Google Play Billing Library 8.0.
-- **IOSIAPProvider**: iOS implementation using StoreKit.
-- **IAPListener**: Interface for receiving IAP events (products fetched, purchase success/failure, etc.).
+**Main Module (Public API):**
+- **IAPManager**: Main entry point with userId support and account validation
+- **IAPProvider**: Interface with userId parameters and account validation
+- **IAPProviderImpl**: Common implementation that wraps core provider, adds account validation using Preferences and SessionManager (works for both Android and iOS)
+- **IAPListener**: Extends core listener with `onWarning` method
+
+**Core Module (Internal):**
+- **IAPManager**: Pure IAP manager without business logic
+- **IAPProvider**: Interface without userId parameters
+- **AndroidIAPProvider**: Pure Android IAP using Google Play Billing Library 8.1.0
+- **IOSIAPProvider**: Pure iOS IAP using StoreKit
+- **IAPListener**: Basic listener without `onWarning`
 
 ## Setup
 
 ### 1. Add Dependency
 
-The module is already included in the project. Ensure `iapModule` is registered in your Koin configuration:
+The module is already included in the project. Register both `iapCoreModule` and `iapModule` in your Koin configuration:
 
 ```kotlin
 startKoin {
     modules(
         // ... other modules
-        iapModule,
+        iapCoreModule,  // Core module (pure IAP)
+        iapModule,      // Main module (with account validation)
     )
 }
 ```
+
+**Note**: The main module depends on the core module, so both must be registered. The core module provides pure IAP functionality, while the main module adds business logic (account validation, userId support).
 
 ### 2. Configure Product IDs
 
@@ -287,7 +325,7 @@ data class Product(
     val currencyCode: String,
     val title: String,
     val description: String,
-    val type: ProductType,          // SUBSCRIPTION or NON_CONSUMABLE
+    val type: ProductType,          // SUBS or ONE_TIME
 )
 ```
 
@@ -433,8 +471,9 @@ if (purchase.isActiveSubscription()) {
 - **Context Requirement**: `Activity` context required for `purchaseProduct()`
 - **Automatic Acknowledgment**: Purchases are automatically acknowledged
 - **Subscription Support**: Full support for subscription products with all pricing phases
+- **Account Validation**: Fully supported using Google Play account identifiers
 
-See `AndroidIAPProvider.kt` and `PurchaseManager.kt` for detailed implementation notes.
+See `core/src/androidMain/.../AndroidIAPProvider.kt` and `PurchaseManager.kt` for detailed implementation notes.
 
 ### iOS
 
@@ -442,8 +481,9 @@ See `AndroidIAPProvider.kt` and `PurchaseManager.kt` for detailed implementation
 - **No Context Required**: `purchaseProduct()` accepts `Unit` on iOS
 - **Receipt Extraction**: Receipts are automatically extracted and included in `Purchase` model
 - **Transaction Observer**: Automatically handles transaction state updates
+- **Account Validation**: `setAccountIdentifier()` is implemented and stores identifiers, but iOS doesn't have account identifiers in purchases (single App Store account per device)
 
-See `IOSIAPProvider.kt` and `PurchaseManager.kt` for detailed implementation notes and limitations.
+See `core/src/iosMain/.../IOSIAPProvider.kt` and `PurchaseManager.kt` for detailed implementation notes and limitations.
 
 ## Timeout and Error Handling
 
@@ -513,10 +553,11 @@ val isPurchased = iapManager.isProductPurchased(ProductId.PREMIUM_MONTHLY, userI
 
 #### Important Notes
 
-- **Android**: Account validation is fully supported using Google Play Billing Library's account identifiers.
-- **iOS**: Account validation is not applicable as iOS uses a single App Store account per device.
+- **Android**: Account validation is fully supported using Google Play Billing Library's account identifiers. Purchases are filtered by the stored account identifier(s) for the current user.
+- **iOS**: `setAccountIdentifier()` is implemented and stores the identifier, but iOS doesn't have account identifiers in purchases (uses a single App Store account per device). The identifier is stored for consistency and potential future use, but filtering is not applicable.
 - **Security**: If account identifier mapping is missing, `isProductPurchased()` returns `false` and `restorePurchases()` returns empty list (no fallback to all purchases).
 - **Persistence**: Account identifier mappings are stored in Preferences and persist across app restarts.
+- **SessionManager**: Used directly (KMP-compatible) to get the current user ID for account validation.
 
 #### User Experience
 
@@ -627,35 +668,56 @@ fun PremiumScreen(iapManager: IAPManager) {
 
 ```
 shared/libs/iap/
-├── src/
-│   ├── commonMain/
-│   │   └── kotlin/com/yral/shared/iap/
-│   │       ├── IAPManager.kt          # Main API
-│   │       ├── IAPListener.kt          # Event listener interface
-│   │       ├── IAPError.kt             # Error types
-│   │       ├── IAPComposeHelpers.kt   # Compose helpers
-│   │       ├── di/IAPModule.kt         # Koin DI module
-│   │       ├── model/                  # Data models
-│   │       │   ├── Product.kt
-│   │       │   ├── ProductId.kt
-│   │       │   ├── Purchase.kt
-│   │       │   └── ProductType.kt
-│   │       └── providers/
-│   │           └── IAPProvider.kt      # Provider interface
-│   ├── androidMain/
-│   │   └── kotlin/com/yral/shared/iap/providers/
-│   │       ├── AndroidIAPProvider.kt
-│   │       ├── BillingClientConnectionManager.kt
-│   │       ├── ProductFetcher.kt
-│   │       └── PurchaseManager.kt
-│   └── iosMain/
-│       └── kotlin/com/yral/shared/iap/providers/
-│           ├── IOSIAPProvider.kt
-│           ├── ProductFetcher.kt
-│           ├── PurchaseManager.kt
-│           ├── TransactionObserver.kt
-│           └── util/IOSIAPUtils.kt
-└── build.gradle.kts
+├── core/                                    # Core module (pure IAP)
+│   └── src/
+│       ├── commonMain/
+│       │   └── kotlin/com/yral/shared/iap/core/
+│       │       ├── IAPManager.kt           # Core IAP manager
+│       │       ├── IAPListener.kt          # Core listener
+│       │       ├── IAPError.kt              # Error types
+│       │       ├── model/                   # Data models
+│       │       │   ├── Product.kt
+│       │       │   ├── ProductId.kt
+│       │       │   ├── Purchase.kt
+│       │       │   ├── ProductType.kt
+│       │       │   ├── PurchaseState.kt
+│       │       │   └── SubscriptionStatus.kt
+│       │       ├── providers/
+│       │       │   └── IAPProvider.kt       # Core provider interface
+│       │       └── di/
+│       │           └── IAPModule.kt        # Core DI module
+│       ├── androidMain/
+│       │   └── kotlin/com/yral/shared/iap/core/providers/
+│       │       ├── AndroidIAPProvider.kt
+│       │       ├── BillingClientConnectionManager.kt
+│       │       ├── ProductFetcher.kt
+│       │       └── PurchaseManager.kt
+│       └── iosMain/
+│           └── kotlin/com/yral/shared/iap/core/providers/
+│               ├── IOSIAPProvider.kt
+│               ├── ProductFetcher.kt
+│               ├── PurchaseManager.kt
+│               ├── TransactionObserver.kt
+│               └── util/
+│                   └── IOSIAPUtils.kt
+└── main/                                    # Main module (business logic)
+    └── src/
+        ├── commonMain/
+        │   └── kotlin/com/yral/shared/iap/
+        │       ├── IAPManager.kt            # Main IAP manager (with userId)
+        │       ├── IAPListener.kt            # Main listener (with onWarning)
+        │       ├── IAPComposeHelpers.kt      # Compose helpers
+        │       ├── providers/
+        │       │   ├── IAPProvider.kt        # Main provider interface
+        │       │   └── IAPProviderImpl.kt     # Common implementation (KMP)
+        │       └── di/
+        │           └── IAPModule.kt          # Main DI module
+        ├── androidMain/
+        │   └── kotlin/com/yral/shared/iap/
+        │       └── IAPComposeHelpers.android.kt
+        └── iosMain/
+            └── kotlin/com/yral/shared/iap/
+                └── IAPComposeHelpers.ios.kt
 ```
 
 ## License
