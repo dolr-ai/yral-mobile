@@ -28,6 +28,7 @@ import com.yral.shared.firebaseAuth.di.firebaseAuthModule
 import com.yral.shared.firebaseStore.di.firestoreModule
 import com.yral.shared.http.HTTPEventListener
 import com.yral.shared.http.di.networkModule
+import com.yral.shared.iap.core.di.iapCoreModule
 import com.yral.shared.iap.di.iapModule
 import com.yral.shared.libs.arch.data.NetworkBoundResource
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
@@ -60,6 +61,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             preferencesModule,
             analyticsModule,
             crashlyticsModule,
+            iapCoreModule,
             iapModule,
             networkModule,
             fileDownloaderModule,
