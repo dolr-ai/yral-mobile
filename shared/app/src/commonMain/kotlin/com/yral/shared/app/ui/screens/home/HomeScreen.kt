@@ -211,10 +211,11 @@ private fun HomeScreenContent(
                     component = child.component,
                     viewModel = accountViewModel,
                     loginState = loginState,
-                    loginBottomSheet = { bottomSheetState, onDismissRequest, termsLink, openTerms ->
+                    loginBottomSheet = { bottomSheetState, onDismissRequest, _, termsLink, openTerms ->
                         LoginBottomSheet(
                             bottomSheetState = bottomSheetState,
                             onDismissRequest = onDismissRequest,
+                            onLoginSuccess = null, // no extra action required
                             termsLink = termsLink,
                             openTerms = openTerms,
                         )
