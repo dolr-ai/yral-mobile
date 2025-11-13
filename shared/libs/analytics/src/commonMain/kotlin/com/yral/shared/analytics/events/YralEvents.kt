@@ -1330,6 +1330,12 @@ enum class SignupPageName {
 
     @SerialName("video_creation")
     VIDEO_CREATION,
+
+    @SerialName("upload_video")
+    UPLOAD_VIDEO,
+
+    @SerialName("leaderboard")
+    LEADERBOARD,
 }
 
 @Serializable
