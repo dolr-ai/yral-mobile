@@ -32,7 +32,6 @@ class LeaderBoardViewModel(
     private val _state = MutableStateFlow(LeaderBoardState())
     val state: StateFlow<LeaderBoardState> = _state.asStateFlow()
     private var countdownJob: Job? = null
-
     val dailyRank = sessionManager.observeSessionProperty { it.dailyRank }
 
     val refreshRank =
@@ -46,6 +45,20 @@ class LeaderBoardViewModel(
                 .observeSessionProperty { it.isFirebaseLoggedIn }
                 .collect { isFirebaseLoggedIn ->
                     _state.update { it.copy(isFirebaseLoggedIn = isFirebaseLoggedIn) }
+                }
+        }
+        viewModelScope.launch {
+            sessionManager
+                .observeSessionPropertyWithDefault(
+                    selector = { it.isSocialSignIn },
+                    defaultValue = false,
+                ).collect { isSocialSignedIn ->
+                    _state.update {
+                        it.copy(
+                            isSocialSignedIn = isSocialSignedIn,
+                            hasShownSignupPrompt = if (isSocialSignedIn) false else it.hasShownSignupPrompt,
+                        )
+                    }
                 }
         }
     }
@@ -191,6 +204,14 @@ class LeaderBoardViewModel(
         private const val COUNT_DOWN_BLINK_THRESHOLD = 2 * 60 * 60 * 1000 // Last 2 hours
         const val TOP_N_THRESHOLD = 3
     }
+
+    fun setBottomSheetType(type: BottomSheetType) {
+        _state.update { it.copy(bottomSheetType = type) }
+    }
+
+    fun setSignupPromptShown(shown: Boolean) {
+        _state.update { it.copy(hasShownSignupPrompt = shown) }
+    }
 }
 
 data class LeaderBoardState(
@@ -206,4 +227,12 @@ data class LeaderBoardState(
     val rewardCurrencyCode: String? = null,
     val rewardsTable: Map<Int, Double>? = null,
     val isFirebaseLoggedIn: Boolean = false,
+    val isSocialSignedIn: Boolean = false,
+    val bottomSheetType: BottomSheetType = BottomSheetType.None,
+    val hasShownSignupPrompt: Boolean = false,
 )
+
+sealed class BottomSheetType {
+    data object None : BottomSheetType()
+    data object Signup : BottomSheetType()
+}
