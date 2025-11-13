@@ -175,13 +175,6 @@ internal fun YRALReelsPlayerView(
     // Report initial pager state
     LaunchedEffect(Unit) { onPageLoaded(pagerState.currentPage) }
 
-    // Animate scrolling to the current page when it changes
-    LaunchedEffect(key1 = pagerState) {
-        snapshotFlow { pagerState.currentPage }
-            .distinctUntilChanged()
-            .collect { page -> pagerState.animateScrollToPage(page) }
-    }
-
     // Page change to start/stop play back time trace
     var lastPage by remember { mutableIntStateOf(-1) }
     LaunchedEffect(key1 = pagerState, reels) {
@@ -207,10 +200,11 @@ internal fun YRALReelsPlayerView(
     }
 
     var isPause by remember { mutableStateOf(false) } // State for pausing/resuming video
+    LaunchedEffect(pagerState.currentPage) { isPause = false }
 
     // Detect user attempts to scroll beyond available pages (start or end)
     val edgeDetectConnection =
-        remember(pageCount, pagerState.currentPage, playerConfig.reelVerticalScrolling) {
+        remember(pageCount, playerConfig.reelVerticalScrolling) {
             EdgeScrollDetectConnection(
                 pageCount = pageCount,
                 pagerState = pagerState,
