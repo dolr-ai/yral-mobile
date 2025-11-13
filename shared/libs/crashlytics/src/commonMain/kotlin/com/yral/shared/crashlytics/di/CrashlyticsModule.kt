@@ -1,5 +1,6 @@
 package com.yral.shared.crashlytics.di
 
+import com.yral.shared.crashlytics.core.CrashlyticsLogWriter
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.FirebaseCrashlyticsProvider
 import com.yral.shared.crashlytics.core.SentryCrashlyticsProvider
@@ -38,4 +39,5 @@ val crashlyticsModule =
                 .addProvider(get<FirebaseCrashlyticsProvider>())
                 .addProvider(get<SentryCrashlyticsProvider>())
         }
+        single { CrashlyticsLogWriter(get()) }
     }

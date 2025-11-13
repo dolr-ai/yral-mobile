@@ -5,11 +5,11 @@ import co.touchlab.kermit.Logger
 import co.touchlab.kermit.StaticConfig
 
 class YralLogger(
-    writer: LogWriter?,
+    logWriters: List<LogWriter> = emptyList(),
 ) : Logger(
         tag = "YralApp",
         config =
             StaticConfig(
-                logWriterList = writer?.let { listOf(writer) } ?: emptyList(),
+                logWriterList = logWriters,
             ),
     )

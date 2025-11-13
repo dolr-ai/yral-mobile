@@ -1,5 +1,6 @@
 package com.yral.shared.app.di
 
+import co.touchlab.kermit.LogWriter
 import co.touchlab.kermit.platformLogWriter
 import com.yral.shared.analytics.di.IS_DEBUG
 import com.yral.shared.analytics.di.analyticsModule
@@ -9,6 +10,7 @@ import com.yral.shared.app.config.AppUseCaseFailureListener
 import com.yral.shared.app.config.NBRFailureListener
 import com.yral.shared.core.di.coreModule
 import com.yral.shared.core.logging.YralLogger
+import com.yral.shared.crashlytics.core.CrashlyticsLogWriter
 import com.yral.shared.crashlytics.di.crashlyticsModule
 import com.yral.shared.data.di.commonDataModule
 import com.yral.shared.features.account.di.accountsModule
@@ -85,7 +87,14 @@ fun initKoin(config: KoinAppDeclaration? = null) {
 
 internal val loggerModule =
     module {
-        single { YralLogger(if (get(IS_DEBUG)) platformLogWriter() else null) }
+        single {
+            val logWriters = mutableListOf<LogWriter>()
+            if (get(IS_DEBUG)) {
+                logWriters += platformLogWriter()
+            }
+            logWriters += get<CrashlyticsLogWriter>()
+            YralLogger(logWriters)
+        }
         singleOf(::AppRustLogForwardingListener) bind RustLogForwardingListener::class
     }
 

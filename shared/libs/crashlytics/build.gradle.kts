@@ -17,6 +17,7 @@ kotlin {
 
             api(libs.gitlive.firebase.kotlin.crashlytics)
             implementation(libs.sentry.kmp)
+            implementation(libs.touchlab.logger)
         }
     }
 }
