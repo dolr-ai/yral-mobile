@@ -11,6 +11,7 @@ import android.webkit.WebViewClient
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -147,3 +148,5 @@ actual fun YralWebView(
         }
     }
 }
+
+actual fun LazyItemScope.yralWebViewModifier(): Modifier = Modifier.fillMaxSize()
