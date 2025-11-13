@@ -6,8 +6,8 @@ SUPPORTED_REWARD_CURRENCIES = [CURRENCY_YRAL, CURRENCY_BTC]
 DEFAULT_REWARD_CURRENCY = SUPPORTED_REWARD_CURRENCIES[1]
 
 # Disabled in staging
-# Disabled in production
-REWARDS_ENABLED = False
+# Enabled in production
+REWARDS_ENABLED = True
 
 REWARD_AMOUNT = {
     CURRENCY_YRAL: {
@@ -19,18 +19,28 @@ REWARD_AMOUNT = {
     },
     CURRENCY_BTC: {
         COUNTRY_CODE_INDIA: {
-            "1": 1000,
-            "2": 500,
-            "3": 250,
+            "1": 400,
+            "2": 250,
+            "3": 200,
             "4": 150,
-            "5": 100,
+            "5": 120,
+            "6": 100,
+            "7": 90,
+            "8": 80,
+            "9": 60,
+            "10": 50
         },
         COUNTRY_CODE_USA: {
-            "1": 10,
-            "2": 5,
+            "1": 5,
+            "2": 3,
             "3": 3,
             "4": 2,
-            "5": 1,
+            "5": 2,
+            "6": 1,
+            "7": 1,
+            "8": 1,
+            "9": 1,
+            "10": 1
         }
     }
 }
