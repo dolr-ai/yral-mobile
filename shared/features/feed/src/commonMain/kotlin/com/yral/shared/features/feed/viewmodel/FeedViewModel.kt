@@ -825,6 +825,22 @@ class FeedViewModel(
         _state.update { it.copy(showSignupFailedSheet = shouldShow) }
     }
 
+    fun onSharedVideoOpened(route: PostDetailsRoute) {
+        if (_state.value.isLoggedIn) return
+        val routeKey = route.toRouteKey()
+        if (_state.value.lastHandledSharedVideoRoute == routeKey) return
+        _state.update {
+            it.copy(
+                showSharedVideoLoginSheet = true,
+                lastHandledSharedVideoRoute = routeKey,
+            )
+        }
+    }
+
+    fun hideSharedVideoLoginSheet() {
+        _state.update { it.copy(showSharedVideoLoginSheet = false) }
+    }
+
     fun pushScreenView() {
         feedTelemetry.onFeedPageViewed()
     }
@@ -909,6 +925,8 @@ data class FeedState(
     val isDeeplinkFetching: Boolean = false,
     val reportSheetState: ReportSheetState = ReportSheetState.Closed,
     val showSignupFailedSheet: Boolean = false,
+    val showSharedVideoLoginSheet: Boolean = false,
+    val lastHandledSharedVideoRoute: String? = null,
     val overlayType: OverlayType = OverlayType.DAILY_RANK,
     val isLoggedIn: Boolean = false,
     val availableFeedTypes: List<FeedType> = listOf(FeedType.DEFAULT),
@@ -948,3 +966,5 @@ internal fun Int.percentageOf(total: Int): Double =
     } else {
         0.0
     }
+
+private fun PostDetailsRoute.toRouteKey(): String = "$postId:$canisterId:$publisherUserId"

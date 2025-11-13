@@ -37,6 +37,7 @@ fun LoginBottomSheet(
     onDismissRequest: () -> Unit,
     onLoginSuccess: (() -> Unit)? = null,
     openTerms: () -> Unit,
+    headlineText: String? = null,
     loginViewModel: LoginViewModel = koinViewModel(),
 ) {
     val dismissRequest = remember(onDismissRequest) { createDismissCallback(onDismissRequest, loginViewModel) }
@@ -67,6 +68,7 @@ fun LoginBottomSheet(
                             onSignupClicked = { provider -> loginViewModel.signInWithSocial(context, provider) },
                             termsLink = termsLink,
                             openTerms = openTerms,
+                            headlineText = headlineText,
                         )
                         Spacer(modifier = Modifier.height(adaptiveHeight))
                     }
