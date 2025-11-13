@@ -90,6 +90,7 @@ class FeedViewModel(
         private const val FEEDS_PAGE_SIZE_AI_FEED = 10
         private const val SUFFICIENT_NEW_REQUIRED = 10
         const val SIGN_UP_PAGE = 9
+        const val SUBSCRIPTION_PAGE = 2
         private const val PAGER_STATE_REFRESH_BUFFER_MS = 100L
         const val FOLLOW_NUDGE_PAGE = 5
     }
