@@ -16,6 +16,7 @@ kotlin {
             implementation(projects.shared.libs.koin)
 
             api(libs.gitlive.firebase.kotlin.crashlytics)
+            implementation(libs.sentry.kmp)
         }
     }
 }

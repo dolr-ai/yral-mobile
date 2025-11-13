@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.gms)
     alias(libs.plugins.firebase.perf)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.sentry)
 }
 
 android {
@@ -80,6 +81,18 @@ android {
             signingConfig = signingConfigs.getByName("release")
         }
     }
+}
+
+sentry {
+    autoUploadProguardMapping.set(true)
+    includeProguardMapping = true
+    autoUploadNativeSymbols = true
+    ignoredVariants.set(
+        listOf(
+            "stagingDebug",
+            "prodDebug",
+        ),
+    )
 }
 
 dependencies {

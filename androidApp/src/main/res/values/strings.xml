@@ -28,6 +28,10 @@
     <!-- OneSignal SDK Configuration -->
     <string name="onesignal_app_id">3b2fb986-1a1a-4afd-b0f0-271faa4697a2</string>
 
+    <!-- Sentry Configuration -->
+    <string name="sentry_dsn"></string>
+    <string name="sentry_environment">android-prod</string>
+
 
 
 
