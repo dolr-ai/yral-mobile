@@ -20,5 +20,5 @@ val networkModule =
                 get(),
             )
         }
-        single { HttpLogger(get()) }
+        single { HttpLogger(get(), get()) }
     }

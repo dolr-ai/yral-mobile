@@ -1531,9 +1531,9 @@ PODS:
   - PromisesSwift (2.4.0):
     - PromisesObjC (= 2.4.0)
   - RecaptchaInterop (101.0.0)
-  - Sentry (8.37.0):
-    - Sentry/Core (= 8.37.0)
-  - Sentry/Core (8.37.0)
+  - Sentry (8.25.0):
+    - Sentry/Core (= 8.25.0)
+  - Sentry/Core (8.25.0)
 
 DEPENDENCIES:
   - FBSDKCoreKit (= 18.0.0)
@@ -1553,7 +1553,7 @@ DEPENDENCIES:
   - Mixpanel (= 5.0.8)
   - nanopb (= 3.30910.0)
   - OneSignal/OneSignal (= 5.2.14)
-  - Sentry (= 8.37.0)
+  - Sentry (= 8.25.0)
 
 SPEC REPOS:
   trunk:
@@ -1645,8 +1645,8 @@ SPEC CHECKSUMS:
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   PromisesSwift: 9d77319bbe72ebf6d872900551f7eeba9bce2851
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
-  Sentry: ee060c09b2f7ec1240e95c766ab44c04c7bdb052
+  Sentry: cd86fc55628f5b7c572cabe66cc8f95a9d2f165a
 
-PODFILE CHECKSUM: ba0f9acf76f6bab80cba1492276e63ef7ffbe618
+PODFILE CHECKSUM: 5ceeae5ea6538869af5c71b5a190e47c6f5f0067
 
 COCOAPODS: 1.16.2

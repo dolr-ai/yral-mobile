@@ -51,8 +51,6 @@ actual val platformModule =
             val buildNumber = (bundle.objectForInfoDictionaryKey("CFBundleVersion") as? String) ?: "0"
             "$bundleId@$version+$buildNumber"
         }
-        single<OAuthUtils> { IosOAuthUtils() }
-        factory<OAuthUtilsHelper> { IosOAuthUtilsHelper() }
         singleOf(::IosOAuthUtils) bind OAuthUtils::class
         factoryOf(::IosOAuthUtilsHelper) bind OAuthUtilsHelper::class
         single<ScreenFoldStateProvider> { IOSScreenFoldStateProvider() }
