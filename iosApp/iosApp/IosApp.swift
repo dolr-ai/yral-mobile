@@ -235,6 +235,7 @@ struct IosApp: App {
       // RootView(root: delegate.root)
       //     .ignoresSafeArea(edges: .all)
       //     .ignoresSafeArea(.keyboard)
+      //     .edgesIgnoringSafeArea(.all)
      contentView()
        .environmentObject(deepLinkRouter)
        .environmentObject(eventBus)
