@@ -50,6 +50,7 @@ import com.yral.shared.features.account.viewmodel.AccountHelpLink
 import com.yral.shared.features.account.viewmodel.AccountHelpLinkType
 import com.yral.shared.features.account.viewmodel.AccountsState
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
+import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.LOGOUT_URI
 import com.yral.shared.features.account.viewmodel.ErrorType
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
@@ -141,12 +142,17 @@ fun AccountScreen(
             viewModel = viewModel,
             alertsEnabled = state.alertsEnabled,
             onAlertsToggle = handleAlertsToggle,
+            onBack = { component.onBack() },
         )
         SheetContent(
             bottomSheetState = bottomSheetState,
             bottomSheetType = state.bottomSheetType,
             tncLink = state.accountLinks.tnc,
             onDismissRequest = { viewModel.setBottomSheetType(AccountBottomSheet.None) },
+            onLoginSuccess = {
+                viewModel.setBottomSheetType(AccountBottomSheet.None)
+                component.onBack()
+            },
             onDeleteAccount = { viewModel.deleteAccount() },
             loginBottomSheet = loginBottomSheet,
         )
@@ -159,6 +165,7 @@ private fun AccountScreenContent(
     viewModel: AccountsViewModel,
     alertsEnabled: Boolean,
     onAlertsToggle: (Boolean) -> Unit,
+    onBack: () -> Unit,
 ) {
     val helperLinks = remember(state.isLoggedIn) { viewModel.getHelperLinks() }
     Column(
@@ -191,6 +198,9 @@ private fun AccountScreenContent(
             onLinkClicked = {
                 viewModel.accountsTelemetry.onMenuClicked(it.menuCtaType)
                 viewModel.handleHelpLink(it)
+                if (it.link == LOGOUT_URI) {
+                    onBack()
+                }
             },
         )
         Spacer(Modifier.weight(1f))
@@ -212,6 +222,7 @@ private fun AccountScreenContent(
 typealias LoginBottomSheetComposable = @Composable (
     bottomSheetState: SheetState,
     onDismissRequest: () -> Unit,
+    onLoginSuccess: () -> Unit,
     termsLink: String,
     openTerms: () -> Unit,
 ) -> Unit
@@ -224,6 +235,7 @@ private fun SheetContent(
     bottomSheetType: AccountBottomSheet,
     tncLink: String,
     onDismissRequest: () -> Unit,
+    onLoginSuccess: () -> Unit,
     onDeleteAccount: () -> Unit,
     loginBottomSheet: LoginBottomSheetComposable,
 ) {
@@ -234,6 +246,7 @@ private fun SheetContent(
             loginBottomSheet(
                 bottomSheetState,
                 onDismissRequest,
+                onLoginSuccess,
                 tncLink,
                 { extraSheetLink = tncLink },
             )
