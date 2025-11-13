@@ -43,6 +43,7 @@ internal fun UploadVideoRootScreen(
                     loginState = loginState,
                     loginBottomSheet = { pageName, bottomSheetState, onDismissRequest, termsLink, openTerms ->
                         LoginBottomSheet(
+                            pageName = pageName,
                             bottomSheetState = bottomSheetState,
                             onDismissRequest = onDismissRequest,
                             termsLink = termsLink,
@@ -52,7 +53,22 @@ internal fun UploadVideoRootScreen(
                 )
             }
             is UploadVideoRootComponent.Child.FileUpload -> {
-                UploadVideoScreen(component = instance.component, bottomPadding = bottomPadding)
+                val loginViewModel: LoginViewModel = koinViewModel()
+                val loginState by loginViewModel.state.collectAsStateWithLifecycle()
+                UploadVideoScreen(
+                    component = instance.component,
+                    bottomPadding = bottomPadding,
+                    loginState = loginState,
+                    loginBottomSheet = { pageName, bottomSheetState, onDismissRequest, termsLink, openTerms ->
+                        LoginBottomSheet(
+                            pageName = pageName,
+                            bottomSheetState = bottomSheetState,
+                            onDismissRequest = onDismissRequest,
+                            termsLink = termsLink,
+                            openTerms = openTerms,
+                        )
+                    },
+                )
             }
         }
     }
