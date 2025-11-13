@@ -51,7 +51,7 @@ import co.touchlab.kermit.Logger
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.features.uploadvideo.nav.fileUpload.UploadVideoComponent
 import com.yral.shared.features.uploadvideo.presentation.UploadVideoViewModel
-import com.yral.shared.features.uploadvideo.ui.aiVideoGen.LoginBottomSheetComposable
+import com.yral.shared.features.uploadvideo.ui.LoginBottomSheetComposable
 import com.yral.shared.features.uploadvideo.ui.components.hashtagInput.HashtagInput
 import com.yral.shared.features.uploadvideo.ui.components.hashtagInput.keyboardHeightAsState
 import com.yral.shared.libs.arch.presentation.UiState
