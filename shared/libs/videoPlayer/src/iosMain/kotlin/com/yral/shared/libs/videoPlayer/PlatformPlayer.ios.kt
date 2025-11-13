@@ -177,11 +177,13 @@ actual class PlatformPlayer {
         }
     }
 
-    private fun createPlayer(): AVPlayer =
-        AVPlayer().apply {
+    private fun createPlayer(): AVPlayer {
+        IosAudioSession.ensurePlaybackSessionActive()
+        return AVPlayer().apply {
             actionAtItemEnd = AVPlayerActionAtItemEndNone
             automaticallyWaitsToMinimizeStalling = false
         }
+    }
 
     private fun resolveUrl(raw: String): NSURL? {
         val trimmed = raw.trim()
