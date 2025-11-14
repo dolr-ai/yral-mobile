@@ -27,7 +27,6 @@ kotlin {
             implementation(projects.shared.libs.preferences)
             implementation(projects.shared.libs.koin)
             implementation(projects.shared.core)
-            implementation(projects.shared.libs.crashlytics)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)

@@ -23,6 +23,7 @@ import com.yral.shared.libs.designsystem.windowInfo.ScreenFoldStateProvider
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
+import org.koin.core.scope.Scope
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
@@ -81,28 +82,7 @@ actual val platformModule =
             }
         }
         single<String>(SENTRY_RELEASE) {
-            val context = androidContext()
-            val packageManager = context.packageManager
-            val packageName = context.packageName
-            val packageInfo =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    packageManager.getPackageInfo(
-                        packageName,
-                        PackageManager.PackageInfoFlags.of(0),
-                    )
-                } else {
-                    @Suppress("DEPRECATION")
-                    packageManager.getPackageInfo(packageName, 0)
-                }
-            val versionName = packageInfo.versionName ?: "0.0.0"
-            val versionCode =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    packageInfo.longVersionCode
-                } else {
-                    @Suppress("DEPRECATION")
-                    packageInfo.versionCode.toLong()
-                }
-            "$packageName@$versionName+$versionCode"
+            getSentryRelease()
         }
         // Required single
         // Reason: Verified in Repo, Callback in Repo required once app resumes
@@ -114,3 +94,28 @@ actual val platformModule =
         }
         singleOf(::AndroidOneSignal) bind OneSignalKMP::class
     }
+
+private fun Scope.getSentryRelease(): String {
+    val context = androidContext()
+    val packageManager = context.packageManager
+    val packageName = context.packageName
+    val packageInfo =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            packageManager.getPackageInfo(
+                packageName,
+                PackageManager.PackageInfoFlags.of(0),
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            packageManager.getPackageInfo(packageName, 0)
+        }
+    val versionName = packageInfo.versionName ?: "0.0.0"
+    val versionCode =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            packageInfo.longVersionCode
+        } else {
+            @Suppress("DEPRECATION")
+            packageInfo.versionCode.toLong()
+        }
+    return "$packageName@$versionName+$versionCode"
+}

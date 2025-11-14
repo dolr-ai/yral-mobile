@@ -1,5 +1,6 @@
 package com.yral.shared.app.di
 
+import co.touchlab.kermit.LogWriter
 import co.touchlab.kermit.platformLogWriter
 import com.yral.shared.analytics.di.IS_DEBUG
 import com.yral.shared.analytics.di.analyticsModule
@@ -85,7 +86,13 @@ fun initKoin(config: KoinAppDeclaration? = null) {
 
 internal val loggerModule =
     module {
-        single { YralLogger(if (get(IS_DEBUG)) listOf(platformLogWriter()) else emptyList()) }
+        single {
+            val writers = mutableListOf<LogWriter>()
+            if (get(IS_DEBUG)) {
+                writers += platformLogWriter()
+            }
+            YralLogger(writers)
+        }
         singleOf(::AppRustLogForwardingListener) bind RustLogForwardingListener::class
     }
 

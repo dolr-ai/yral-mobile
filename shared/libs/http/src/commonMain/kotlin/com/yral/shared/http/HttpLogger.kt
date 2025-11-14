@@ -1,17 +1,16 @@
 package com.yral.shared.http
 
+import co.touchlab.kermit.LogWriter
 import com.yral.shared.core.logging.YralLogger
-import com.yral.shared.crashlytics.core.CrashlyticsLogWriter
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 
 class HttpLogger(
     baseLogger: YralLogger,
-    crashlyticsLogWriter: CrashlyticsLogWriter,
+    additionalLogWriter: LogWriter?,
 ) : Logger {
     private val logger =
-        baseLogger
-            .withAdditionalLogWriter(crashlyticsLogWriter)
+        (additionalLogWriter?.let { baseLogger.withAdditionalLogWriter(it) } ?: baseLogger)
             .withTag("HTTP")
 
     override fun log(message: String) {
