@@ -40,7 +40,7 @@ actual val platformModule =
         }
         single<String>(SENTRY_ENVIRONMENT) {
             (NSBundle.mainBundle.objectForInfoDictionaryKey("SENTRY_ENVIRONMENT") as? String)
-                ?: "ios"
+                ?: "ios: unknown"
         }
         single<String>(SENTRY_RELEASE) {
             val bundle = NSBundle.mainBundle

@@ -75,7 +75,7 @@ actual val platformModule =
                         it.packageName,
                     )
                 if (id == 0) {
-                    "android"
+                    "android: unknown"
                 } else {
                     it.getString(id).ifBlank { "android" }
                 }

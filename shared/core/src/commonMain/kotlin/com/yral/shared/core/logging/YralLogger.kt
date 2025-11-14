@@ -10,10 +10,7 @@ class YralLogger(
     logWriters: List<LogWriter> = emptyList(),
 ) : Logger(
         tag = "YralApp",
-        config =
-            StaticConfig(
-                logWriterList = logWriters,
-            ),
+        config = StaticConfig(logWriterList = logWriters),
     ) {
     fun withAdditionalLogWriter(writer: LogWriter): Logger =
         Logger(

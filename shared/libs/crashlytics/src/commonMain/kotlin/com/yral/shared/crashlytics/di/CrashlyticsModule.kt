@@ -1,6 +1,5 @@
 package com.yral.shared.crashlytics.di
 
-import com.yral.shared.crashlytics.core.CrashlyticsLogWriter
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.FirebaseCrashlyticsProvider
 import com.yral.shared.crashlytics.core.SentryCrashlyticsProvider
@@ -11,7 +10,6 @@ import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.app
 import dev.gitlive.firebase.crashlytics.crashlytics
 import io.sentry.kotlin.multiplatform.Sentry
-import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 private var sentryInitialized = false
@@ -40,5 +38,4 @@ val crashlyticsModule =
                 .addProvider(get<FirebaseCrashlyticsProvider>())
                 .addProvider(get<SentryCrashlyticsProvider>())
         }
-        single(named("crashlyticsLogWriter")) { CrashlyticsLogWriter(get()) }
     }
