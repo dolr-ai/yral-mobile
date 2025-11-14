@@ -1,4 +1,9 @@
 <resources>
     <string name="scroll_to_next_video">Scroll To Next Video</string>
-
+    <string name="subscription_nudge_title">Go YRAL Pro.\nCreate without limits</string>
+    <string name="subscription_nudge_benefit_ai">Free 30 AI videos per month.</string>
+    <string name="subscription_nudge_benefit_btc">Earn ₹10 BTC per 50 engaged views.</string>
+    <string name="subscription_nudge_benefit_global">Daily access to global content.</string>
+    <string name="subscription_nudge_cta_subscribe">Subscribe for ₹1</string>
+    <string name="subscription_nudge_cta_dismiss">Dismiss</string>
 </resources>
