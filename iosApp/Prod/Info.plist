@@ -63,6 +63,10 @@
 	<string>Yral needs access to your photo library so you can choose a profile picture.</string>
 	<key>ONESIGNAL_APP_ID</key>
 	<string>3b2fb986-1a1a-4afd-b0f0-271faa4697a2</string>
+	<key>SENTRY_DSN</key>
+	<string>https://673c701dcea89017a3cfa26059ac10cc@apm.yral.com/14</string>
+	<key>SENTRY_ENVIRONMENT</key>
+	<string>prod</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>KumbhSans-Black.ttf</string>
