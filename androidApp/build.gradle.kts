@@ -93,6 +93,9 @@ sentry {
             "prodDebug",
         ),
     )
+    tracingInstrumentation {
+        enabled.set(false)
+    }
 }
 
 dependencies {
