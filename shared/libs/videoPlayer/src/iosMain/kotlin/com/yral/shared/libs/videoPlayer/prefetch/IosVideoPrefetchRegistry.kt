@@ -1,9 +1,11 @@
 package com.yral.shared.libs.videoPlayer.prefetch
 
 import co.touchlab.kermit.Logger
+import com.yral.shared.libs.videoPlayer.IosAudioSession
 import com.yral.shared.libs.videoPlayer.PlatformPlaybackState
 import com.yral.shared.libs.videoPlayer.model.PREFETCH_NEXT_N_VIDEOS
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
+import com.yral.shared.libs.videoPlayer.util.runOnMainSync
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.AVFoundation.AVKeyValueStatusLoaded
 import platform.AVFoundation.AVPlayer
@@ -16,14 +18,9 @@ import platform.AVFoundation.play
 import platform.AVFoundation.replaceCurrentItemWithPlayerItem
 import platform.AVFoundation.volume
 import platform.Foundation.NSLock
-import platform.Foundation.NSThread
 import platform.Foundation.NSURL
-import platform.darwin.DISPATCH_TIME_FOREVER
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
-import platform.darwin.dispatch_semaphore_create
-import platform.darwin.dispatch_semaphore_signal
-import platform.darwin.dispatch_semaphore_wait
 
 internal object IosVideoPrefetchRegistry {
     private val logger = Logger.withTag("iOSPrefetch")
@@ -163,6 +160,8 @@ internal object IosVideoPrefetchRegistry {
                 callbacksSnapshot().forEach { it.listener?.onBuffer() }
                 logger.d { "prefetch: buffering $url" }
 
+                IosAudioSession.ensurePlaybackSessionActive()
+
                 val playerItem = AVPlayerItem(asset = asset)
                 prefetchPlayer =
                     AVPlayer(playerItem = playerItem).apply {
@@ -250,30 +249,6 @@ private inline fun <T> NSLock.withLock(block: () -> T): T {
     } finally {
         unlock()
     }
-}
-
-private inline fun <T> runOnMainSync(crossinline block: () -> T): T {
-    if (NSThread.isMainThread()) {
-        return block()
-    }
-    var result: T? = null
-    var exception: Throwable? = null
-    val semaphore = dispatch_semaphore_create(0)
-    dispatch_async(dispatch_get_main_queue()) {
-        try {
-            result = block()
-        } catch (
-            @Suppress("TooGenericExceptionCaught") e: Throwable,
-        ) {
-            exception = e
-        } finally {
-            dispatch_semaphore_signal(semaphore)
-        }
-    }
-    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER)
-    exception?.let { throw it }
-    @Suppress("UNCHECKED_CAST")
-    return result as T
 }
 
 private const val PREFETCH_WINDOW_BUFFER = 3

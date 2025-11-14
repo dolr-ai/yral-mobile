@@ -68,6 +68,7 @@ actual fun YralVideoPlayer(
     val playerHolder =
         remember(processedUrl) {
             processedUrl?.let {
+                IosAudioSession.ensurePlaybackSessionActive()
                 PlayerHolder(
                     player =
                         AVPlayer(uRL = it).apply {
