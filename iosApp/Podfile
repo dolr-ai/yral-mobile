@@ -21,6 +21,7 @@ def add_common_pods
   pod 'Mixpanel', '5.0.8'
   pod 'FBSDKCoreKit', '18.0.0'
   pod 'OneSignal/OneSignal', '5.2.14'
+  pod 'Sentry', '8.25.0'
 end
 
 target 'Yral' do
@@ -37,4 +38,14 @@ end
 target 'Yral-Staging' do
   add_common_pods
   pod 'iosSharedUmbrella', :path => '../iosSharedUmbrella'
+end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+      config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'gnu++17'
+      config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
+    end
+  end
 end

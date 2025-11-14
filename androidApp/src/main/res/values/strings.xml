@@ -28,6 +28,10 @@
     <!-- OneSignal SDK Configuration -->
     <string name="onesignal_app_id">3b2fb986-1a1a-4afd-b0f0-271faa4697a2</string>
 
+    <!-- Sentry Configuration -->
+    <string name="sentry_dsn">https://8c02037eff3cc273ff921053b3aeb309@apm.yral.com/13</string>
+    <string name="sentry_environment">prod</string>
+
 
 
 
