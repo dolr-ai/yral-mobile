@@ -2,6 +2,7 @@ package com.yral.shared.libs.designsystem.component
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.material3.BottomSheetDefaults.DragHandle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
@@ -43,9 +44,15 @@ fun YralWebViewBottomSheet(
             item {
                 YralWebView(
                     url = link,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = yralWebViewModifier(),
                 )
             }
         }
     }
 }
+
+/**
+ * Webview scrolling in bottom sheet behaves differently depending on platform and requires
+ * different Modifier configuration
+ */
+expect fun LazyItemScope.yralWebViewModifier(): Modifier
