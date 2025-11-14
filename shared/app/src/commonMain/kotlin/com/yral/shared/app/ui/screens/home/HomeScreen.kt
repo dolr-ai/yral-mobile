@@ -184,7 +184,6 @@ private fun HomeScreenContent(
             parametersOf(canisterData)
         }
     val accountViewModel = koinViewModel<AccountsViewModel>(key = "account-$sessionKey")
-    val accountState by accountViewModel.state.collectAsStateWithLifecycle()
     val leaderBoardViewModel = koinViewModel<LeaderBoardViewModel>(key = "leaderboard-$sessionKey")
 
     val profileVideos = getProfileVideos(profileViewModel, sessionKey, updateProfileVideosCount)
@@ -231,7 +230,6 @@ private fun HomeScreenContent(
                 LeaderboardScreen(
                     component = child.component,
                     leaderBoardViewModel = leaderBoardViewModel,
-                    tncLink = accountState.accountLinks.tnc,
                     loginState = loginState,
                     loginBottomSheet = { pageName, bottomSheetState, onDismissRequest, termsLink, openTerms ->
                         LoginBottomSheet(

@@ -30,7 +30,6 @@ fun LeaderboardScreen(
     component: LeaderboardComponent,
     leaderBoardViewModel: LeaderBoardViewModel,
     modifier: Modifier = Modifier,
-    tncLink: String,
     loginState: UiState<*>,
     loginBottomSheet: LoginBottomSheetComposable,
 ) {
@@ -38,6 +37,7 @@ fun LeaderboardScreen(
     val loginSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val extraSheetState = rememberModalBottomSheetState()
     var extraSheetLink by remember { mutableStateOf("") }
+    val tncLink = remember { leaderBoardViewModel.getTncLink() }
 
     LaunchedEffect(viewState.isSocialSignedIn) {
         if (viewState.isSocialSignedIn) {

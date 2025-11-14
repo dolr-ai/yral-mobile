@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.featureflag.FeatureFlagManager
+import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.leaderboard.analytics.LeaderBoardTelemetry
 import com.yral.shared.features.leaderboard.data.models.LeaderboardMode
@@ -28,6 +30,7 @@ class LeaderBoardViewModel(
     private val getLeaderboardRankForTodayUseCase: GetLeaderboardRankForTodayUseCase,
     private val sessionManager: SessionManager,
     private val leaderBoardTelemetry: LeaderBoardTelemetry,
+    private val flagManager: FeatureFlagManager,
 ) : ViewModel() {
     private val _state = MutableStateFlow(LeaderBoardState())
     val state: StateFlow<LeaderBoardState> = _state.asStateFlow()
@@ -204,6 +207,8 @@ class LeaderBoardViewModel(
         private const val COUNT_DOWN_BLINK_THRESHOLD = 2 * 60 * 60 * 1000 // Last 2 hours
         const val TOP_N_THRESHOLD = 3
     }
+
+    fun getTncLink(): String = flagManager.get(AccountFeatureFlags.AccountLinks.Links).tnc
 
     fun setBottomSheetType(type: BottomSheetType) {
         _state.update { it.copy(bottomSheetType = type) }
