@@ -35,10 +35,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
 import com.yral.shared.analytics.events.FeedType
-import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.domain.models.FeedDetails
-import com.yral.shared.features.auth.ui.LoginBottomSheet
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.feed.ui.components.SignupNudge
 import com.yral.shared.features.feed.viewmodel.FeedEvents
@@ -51,7 +49,6 @@ import com.yral.shared.features.feed.viewmodel.OverlayType
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralLoader
-import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
 import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastType
@@ -79,7 +76,6 @@ import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.features.feed.generated.resources.Res
 import yral_mobile.shared.features.feed.generated.resources.ic_ai_feed
 import yral_mobile.shared.features.feed.generated.resources.ic_normal_video
-import yral_mobile.shared.features.feed.generated.resources.login_to_get_25_tokens
 import yral_mobile.shared.libs.designsystem.generated.resources.could_not_login
 import yral_mobile.shared.libs.designsystem.generated.resources.could_not_login_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_follow
@@ -111,9 +107,6 @@ fun FeedScreen(
     getVideoListener: (reel: Reels) -> VideoListener?,
 ) {
     val state by viewModel.state.collectAsState()
-    val loginSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val termsSheetState = rememberModalBottomSheetState()
-    var termsLink by remember { mutableStateOf("") }
     val tncLink = remember { viewModel.getTncLink() }
 
     LaunchedEffect(Unit) { viewModel.pushScreenView() }
@@ -122,12 +115,14 @@ fun FeedScreen(
     LaunchedEffect(Unit) {
         component.openPostDetails.collectLatest {
             if (it != null) {
-                viewModel.onSharedVideoOpened(it)
-                viewModel.showDeeplinkedVideoFirst(
-                    postId = it.postId,
-                    canisterId = it.canisterId,
-                    publisherUserId = it.publisherUserId,
-                )
+                val shouldHandleNow = viewModel.onSharedVideoOpened(it)
+                if (shouldHandleNow) {
+                    viewModel.showDeeplinkedVideoFirst(
+                        postId = it.postId,
+                        canisterId = it.canisterId,
+                        publisherUserId = it.publisherUserId,
+                    )
+                }
             }
         }
     }
@@ -255,27 +250,6 @@ fun FeedScreen(
             cta = stringResource(DesignRes.string.ok),
             onClick = { viewModel.toggleSignupFailed(false) },
             onDismiss = { viewModel.toggleSignupFailed(false) },
-        )
-    }
-
-    if (state.showSharedVideoLoginSheet) {
-        val shareLoginHeadline = stringResource(Res.string.login_to_get_25_tokens)
-        LoginBottomSheet(
-            pageName = SignupPageName.HOME,
-            termsLink = tncLink,
-            bottomSheetState = loginSheetState,
-            onDismissRequest = { viewModel.hideSharedVideoLoginSheet() },
-            onLoginSuccess = { viewModel.hideSharedVideoLoginSheet() },
-            openTerms = { termsLink = tncLink },
-            headlineText = shareLoginHeadline,
-        )
-    }
-
-    if (termsLink.isNotEmpty()) {
-        YralWebViewBottomSheet(
-            link = termsLink,
-            bottomSheetState = termsSheetState,
-            onDismissRequest = { termsLink = "" },
         )
     }
 

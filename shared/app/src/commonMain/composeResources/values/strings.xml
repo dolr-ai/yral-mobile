@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <resources>
 
     <!--In App Purchases-->
@@ -16,11 +17,12 @@
 
     <string name="new_">New</string>
 
-
     <!-- Error Messages -->
     <string name="error_timeout_title">Oops!</string>
     <string name="error_timeout">Unable to load content. Please try again.</string>
     <string name="error_retry">Retry</string>
 
+    <!-- Shared login copy -->
+    <string name="login_to_get_25_tokens">Login to get 25 tokens</string>
 
 </resources>
