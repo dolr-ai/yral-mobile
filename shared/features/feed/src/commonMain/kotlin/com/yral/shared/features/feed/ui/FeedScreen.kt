@@ -122,12 +122,14 @@ fun FeedScreen(
     LaunchedEffect(Unit) {
         component.openPostDetails.collectLatest {
             if (it != null) {
-                viewModel.onSharedVideoOpened(it)
-                viewModel.showDeeplinkedVideoFirst(
-                    postId = it.postId,
-                    canisterId = it.canisterId,
-                    publisherUserId = it.publisherUserId,
-                )
+                val shouldHandleNow = viewModel.onSharedVideoOpened(it)
+                if (shouldHandleNow) {
+                    viewModel.showDeeplinkedVideoFirst(
+                        postId = it.postId,
+                        canisterId = it.canisterId,
+                        publisherUserId = it.publisherUserId,
+                    )
+                }
             }
         }
     }
@@ -264,8 +266,8 @@ fun FeedScreen(
             pageName = SignupPageName.HOME,
             termsLink = tncLink,
             bottomSheetState = loginSheetState,
-            onDismissRequest = { viewModel.hideSharedVideoLoginSheet() },
-            onLoginSuccess = { viewModel.hideSharedVideoLoginSheet() },
+            onDismissRequest = { viewModel.hideSharedVideoLoginSheet(loginCompleted = false) },
+            onLoginSuccess = { viewModel.hideSharedVideoLoginSheet(loginCompleted = true) },
             openTerms = { termsLink = tncLink },
             headlineText = shareLoginHeadline,
         )
