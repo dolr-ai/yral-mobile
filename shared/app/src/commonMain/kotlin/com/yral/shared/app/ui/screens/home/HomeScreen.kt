@@ -224,11 +224,24 @@ private fun HomeScreenContent(
                 )
             }
 
-            is HomeComponent.Child.Leaderboard ->
+            is HomeComponent.Child.Leaderboard -> {
+                val loginViewModel: LoginViewModel = koinViewModel()
+                val loginState by loginViewModel.state.collectAsStateWithLifecycle()
                 LeaderboardScreen(
                     component = child.component,
                     leaderBoardViewModel = leaderBoardViewModel,
+                    loginState = loginState,
+                    loginBottomSheet = { pageName, bottomSheetState, onDismissRequest, termsLink, openTerms ->
+                        LoginBottomSheet(
+                            pageName = pageName,
+                            bottomSheetState = bottomSheetState,
+                            onDismissRequest = onDismissRequest,
+                            termsLink = termsLink,
+                            openTerms = openTerms,
+                        )
+                    },
                 )
+            }
 
             is HomeComponent.Child.UploadVideo -> {
                 UploadVideoRootScreen(
