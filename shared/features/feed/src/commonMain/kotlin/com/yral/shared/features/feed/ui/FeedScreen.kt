@@ -39,12 +39,14 @@ import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.feed.ui.components.SignupNudge
+import com.yral.shared.features.feed.ui.components.SubscriptionNudge
 import com.yral.shared.features.feed.viewmodel.FeedEvents
 import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.FOLLOW_NUDGE_PAGE
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.PRE_FETCH_BEFORE_LAST
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.SIGN_UP_PAGE
+import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.SUBSCRIPTION_PAGE
 import com.yral.shared.features.feed.viewmodel.OverlayType
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
