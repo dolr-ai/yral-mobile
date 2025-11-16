@@ -121,7 +121,7 @@ struct HomeTabController: View {
           )
           showBTCEarnedBottomSheet = true
         }
-        deepLinkRouter.pendingDestination = nil
+        deepLinkRouter.clearResolution()
       }
       .onReceive(eventBus.startPlayingTapped) {
         selectedTab = .home
