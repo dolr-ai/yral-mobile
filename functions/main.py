@@ -219,7 +219,7 @@ def _push_delta_yral_token(token: str, principal_id: str, delta: int) -> tuple[b
         "is_airdropped": False
     }
     try:
-        resp = requests.post(url, json=body, timeout=5, headers=headers)
+        resp = requests.post(url, json=body, timeout=30, headers=headers)
         if resp.status_code == 200:
             return True, None
         return False, f"Status: {resp.status_code}, Body: {resp.text}"
@@ -241,7 +241,7 @@ def _push_delta_ckbtc(token: str, amount: int, recipient_principal: str, memo_te
     }
 
     try:
-        resp = requests.post(url, json=body, timeout=5, headers=headers)
+        resp = requests.post(url, json=body, timeout=30, headers=headers)
         if resp.status_code == 200:
             json = resp.json()
             if json.get("success", False):
@@ -558,8 +558,8 @@ def cast_vote_v2(request: Request):
                 })
 
                 zero = {s["id"]: 0 for s in smileys}
-                zero[seed_a] = 1
-                zero[seed_b] = 1
+                zero[seed_a] = 1000
+                zero[seed_b] = 1000
                 tx.set(shard_ref(0), zero, merge=True)
 
                 for k in range(1, SHARDS):
@@ -883,7 +883,7 @@ def _has_any_docs_for_day(bucket_id: str) -> bool:
         print(f"[skip] users scan error for {bucket_id}: {e}", file=sys.stderr)
         return False
 
-def _top_winners(bucket_id: str) -> list[dict]:
+def _top_winners(bucket_id: str, max_rank: int = 5) -> list[dict]:
     MAX_DOCS = 100
     coll = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
 
@@ -903,7 +903,7 @@ def _top_winners(bucket_id: str) -> list[dict]:
         if wins != last_wins:
             current_rank += 1
             last_wins = wins
-        if current_rank > 5:
+        if current_rank > max_rank:
             break
         winners.append({
             "principal_id": snap.id,
@@ -962,7 +962,9 @@ def reward_leaderboard_winners(cloud_event):
                 "reason": "Missing currency, rewards_table, or token"
             }), 400
 
-        winners = _top_winners(bucket_id)
+        max_reward_rank = max(1, len(rewards_table))
+
+        winners = _top_winners(bucket_id, max_rank=max_reward_rank)
         if not winners:
             print(f"[INFO] No winners found for {bucket_id}")
             return jsonify({
@@ -1990,7 +1992,7 @@ TICKER_URL = "https://blockchain.info/ticker"
 
 def _fetch_btc_price(currency_code: str) -> tuple[float | None, tuple[str, str] | None]:
     try:
-        resp = requests.get(TICKER_URL, timeout=6)
+        resp = requests.get(TICKER_URL, timeout=30)
     except RequestException as e:
         print(f"[ERROR] BTC price request failed: {e}", file=sys.stderr)
         return None, ("UPSTREAM_UNREACHABLE", "Price source not reachable")
