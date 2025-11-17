@@ -52,6 +52,7 @@ fun SignupView(
     termsLink: String,
     onSignupClicked: (SocialProvider) -> Unit,
     openTerms: () -> Unit,
+    headlineText: String? = null,
     authTelemetry: AuthTelemetry = koinInject(),
 ) {
     LaunchedEffect(Unit) { authTelemetry.onSignupViewed(pageName) }
@@ -82,7 +83,7 @@ fun SignupView(
                 Text(
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
-                    text = stringResource(Res.string.continue_to_sign_up_for_free),
+                    text = headlineText ?: stringResource(Res.string.continue_to_sign_up_for_free),
                     style = LocalAppTopography.current.xlSemiBold,
                     color = Color.White,
                 )

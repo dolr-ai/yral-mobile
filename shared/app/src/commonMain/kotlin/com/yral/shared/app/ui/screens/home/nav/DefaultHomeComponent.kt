@@ -13,6 +13,7 @@ import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
+import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.account.nav.AccountComponent
@@ -73,6 +74,7 @@ internal class DefaultHomeComponent(
         }
 
     private val slotNavigation = SlotNavigation<SlotConfig>()
+    private var loginSlotCallbacks: LoginSlotCallbacks? = null
 
     override val slot: Value<ChildSlot<*, SlotChild>> =
         childSlot(
@@ -132,6 +134,35 @@ internal class DefaultHomeComponent(
 
     override fun onWalletTabClick() {
         navigation.replaceKeepingFeed(Config.Wallet)
+    }
+
+    override fun showLoginBottomSheet(
+        pageName: SignupPageName,
+        headlineText: String?,
+        termsLink: String,
+        onDismissRequest: () -> Unit,
+        onLoginSuccess: () -> Unit,
+    ) {
+        loginSlotCallbacks =
+            LoginSlotCallbacks(
+                onDismissRequest = onDismissRequest,
+                onLoginSuccess = onLoginSuccess,
+            )
+        showSlot(
+            SlotConfig.LoginBottomSheet(
+                pageName = pageName,
+                headlineText = headlineText,
+                termsLink = termsLink,
+            ),
+        )
+    }
+
+    override fun hideLoginBottomSheetIfVisible() {
+        val currentConfig = slot.value.child?.configuration
+        if (currentConfig is SlotConfig.LoginBottomSheet) {
+            loginSlotCallbacks = null
+            slotNavigation.dismiss()
+        }
     }
 
     private inline fun StackNavigator<Config>.replaceKeepingFeed(
@@ -217,6 +248,22 @@ internal class DefaultHomeComponent(
                     component = btcRewardsComponent(componentContext),
                     data = config.data,
                 )
+            is SlotConfig.LoginBottomSheet ->
+                SlotChild.LoginBottomSheet(
+                    pageName = config.pageName,
+                    headlineText = config.headlineText,
+                    termsLink = config.termsLink,
+                    onDismissRequest = {
+                        loginSlotCallbacks?.onDismissRequest?.invoke()
+                        loginSlotCallbacks = null
+                        slotNavigation.dismiss()
+                    },
+                    onLoginSuccess = {
+                        loginSlotCallbacks?.onLoginSuccess?.invoke()
+                        loginSlotCallbacks = null
+                        slotNavigation.dismiss()
+                    },
+                )
         }
 
     private fun btcRewardsComponent(componentContext: ComponentContext): VideoViewRewardsComponent =
@@ -264,5 +311,17 @@ internal class DefaultHomeComponent(
         data class VideoViewsRewardsBottomSheet(
             val data: RewardsReceived,
         ) : SlotConfig
+
+        @Serializable
+        data class LoginBottomSheet(
+            val pageName: SignupPageName,
+            val headlineText: String?,
+            val termsLink: String,
+        ) : SlotConfig
     }
+
+    private data class LoginSlotCallbacks(
+        val onDismissRequest: () -> Unit,
+        val onLoginSuccess: () -> Unit,
+    )
 }
