@@ -36,14 +36,12 @@ import com.yral.shared.app.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.shared.app.ui.screens.home.HomeScreen
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.session.getKey
-import com.yral.shared.features.auth.ui.LoginBottomSheet
 import com.yral.shared.features.profile.ui.EditProfileScreen
 import com.yral.shared.features.profile.ui.ProfileMainScreen
 import com.yral.shared.features.profile.viewmodel.EditProfileViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.root.viewmodels.RootError
 import com.yral.shared.features.root.viewmodels.RootViewModel
-import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
@@ -120,15 +118,6 @@ fun RootScreen(
                             modifier = Modifier.fillMaxSize().safeDrawingPadding(),
                             viewModel = profileViewModel,
                             profileVideos = profileVideos,
-                            loginState = UiState.Initial,
-                            loginBottomSheet = { bottomSheetState, onDismissRequest, termsLink, openTerms ->
-                                LoginBottomSheet(
-                                    bottomSheetState = bottomSheetState,
-                                    onDismissRequest = onDismissRequest,
-                                    termsLink = termsLink,
-                                    openTerms = openTerms,
-                                )
-                            },
                             getPrefetchListener = { reel -> PrefetchVideoListenerImpl(reel) },
                         )
                     }

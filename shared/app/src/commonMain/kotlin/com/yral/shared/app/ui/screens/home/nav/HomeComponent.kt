@@ -10,6 +10,7 @@ import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
+import com.yral.shared.features.root.viewmodels.HomeViewModel
 import com.yral.shared.features.uploadvideo.nav.UploadVideoRootComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.features.wallet.ui.btcRewards.nav.VideoViewRewardsComponent
@@ -20,6 +21,7 @@ import com.yral.shared.rust.service.utils.CanisterData
 abstract class HomeComponent {
     abstract val stack: Value<ChildStack<*, Child>>
     abstract val showAlertsOnDialog: (type: AlertsRequestType) -> Unit
+    abstract val homeViewModel: HomeViewModel
 
     abstract fun onFeedTabClick()
     abstract fun onLeaderboardTabClick()

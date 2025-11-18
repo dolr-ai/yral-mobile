@@ -116,6 +116,7 @@ class DefaultRootComponent(
             openProfile = this::openProfile,
             onBackClicked = this::onBackClicked,
             showAlertsOnDialog = { this.showSlot(SlotConfig.AlertsRequestBottomSheet(it)) },
+            promptLogin = {},
         )
 
     override fun onBackClicked() {

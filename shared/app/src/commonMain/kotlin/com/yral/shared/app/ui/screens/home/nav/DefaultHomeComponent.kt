@@ -19,15 +19,18 @@ import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
+import com.yral.shared.features.root.viewmodels.HomeViewModel
 import com.yral.shared.features.uploadvideo.nav.UploadVideoRootComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.features.wallet.ui.btcRewards.nav.DefaultVideoViewRewardsComponent
 import com.yral.shared.features.wallet.ui.btcRewards.nav.VideoViewRewardsComponent
+import com.yral.shared.koin.koinInstance
 import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
 import com.yral.shared.libs.routing.routes.api.AddVideo
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.libs.routing.routes.api.GenerateAIVideo
 import com.yral.shared.libs.routing.routes.api.Leaderboard
+import com.yral.shared.libs.routing.routes.api.PendingAppRouteStore
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.libs.routing.routes.api.Profile
 import com.yral.shared.libs.routing.routes.api.RewardOn
@@ -72,6 +75,8 @@ internal class DefaultHomeComponent(
                 }
             }
         }
+
+    override val homeViewModel: HomeViewModel = koinInstance.get<HomeViewModel>()
 
     private val slotNavigation = SlotNavigation<SlotConfig>()
     private var loginSlotCallbacks: LoginSlotCallbacks? = null
@@ -200,6 +205,10 @@ internal class DefaultHomeComponent(
             componentContext = componentContext,
             openProfile = openProfile,
             showAlertsOnDialog = showAlertsOnDialog,
+            promptLogin = {
+                PendingAppRouteStore.store(it)
+                homeViewModel.showSignupPrompt(true, SignupPageName.HOME)
+            },
         )
 
     private fun leaderboardComponent(componentContext: ComponentContext): LeaderboardComponent =
@@ -216,6 +225,7 @@ internal class DefaultHomeComponent(
                 onFeedTabClick()
                 showAlertsOnDialog(AlertsRequestType.VIDEO)
             },
+            promptLogin = { homeViewModel.showSignupPrompt(true, it) },
             snapshot = childSnapshots[Config.UploadVideo] as? UploadVideoRootComponent.Snapshot,
         )
 
@@ -227,10 +237,14 @@ internal class DefaultHomeComponent(
             openProfile = openProfile,
             snapshot = childSnapshots[Config.Profile] as? ProfileComponent.Snapshot,
             showAlertsOnDialog = showAlertsOnDialog,
+            promptLogin = { homeViewModel.showSignupPrompt(true, SignupPageName.MENU) },
         )
 
     private fun accountComponent(componentContext: ComponentContext): AccountComponent =
-        AccountComponent.Companion(componentContext = componentContext)
+        AccountComponent.Companion(
+            componentContext = componentContext,
+            promptLogin = { homeViewModel.showSignupPrompt(true, SignupPageName.MENU) },
+        )
 
     private fun walletComponent(componentContext: ComponentContext): WalletComponent =
         WalletComponent.Companion(

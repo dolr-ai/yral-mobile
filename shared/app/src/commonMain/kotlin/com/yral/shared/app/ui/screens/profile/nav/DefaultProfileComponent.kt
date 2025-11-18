@@ -28,6 +28,7 @@ internal class DefaultProfileComponent(
     private val openEditProfile: () -> Unit,
     private val openProfile: (CanisterData) -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
+    override val promptLogin: () -> Unit,
 ) : ProfileComponent(),
     ComponentContext by componentContext,
     KoinComponent {
@@ -124,12 +125,14 @@ internal class DefaultProfileComponent(
             openProfile = openProfile,
             onBackClicked = {},
             showAlertsOnDialog = showAlertsOnDialog,
+            promptLogin = promptLogin,
         )
 
     private fun accountComponent(componentContext: ComponentContext): AccountComponent =
         AccountComponent.Companion(
             componentContext = componentContext,
             onBack = this::onBackClicked,
+            promptLogin = promptLogin,
         )
 
     private fun editProfileComponent(componentContext: ComponentContext): EditProfileComponent =

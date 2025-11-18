@@ -6,6 +6,7 @@ internal class DefaultAiVideoGenComponent(
     componentContext: ComponentContext,
     private val goToHome: () -> Unit,
     private val onBack: () -> Unit,
+    override val promptLogin: () -> Unit,
 ) : AiVideoGenComponent(),
     ComponentContext by componentContext {
     override fun onBack() {

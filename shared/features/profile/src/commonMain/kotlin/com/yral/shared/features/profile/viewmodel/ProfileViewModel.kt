@@ -818,7 +818,6 @@ data class ViewState(
 
 sealed interface ProfileBottomSheet {
     data object None : ProfileBottomSheet
-    data object SignUp : ProfileBottomSheet
     data class VideoView(
         val videoId: String,
     ) : ProfileBottomSheet
