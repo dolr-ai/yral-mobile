@@ -22,8 +22,6 @@ import com.yral.shared.app.ui.screens.home.nav.HomeComponent
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
-import com.yral.shared.features.root.viewmodels.RootViewModel
-import com.yral.shared.koin.koinInstance
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.flow.flowOf
@@ -74,7 +72,6 @@ class DefaultRootComponent(
 
     private val slotNavigation = SlotNavigation<SlotConfig>()
     private var loginSlotCallbacks: LoginSlotCallbacks? = null
-    private val rootViewModel: RootViewModel = koinInstance.get<RootViewModel>()
 
     override val slot: Value<ChildSlot<*, RootComponent.SlotChild>> =
         childSlot(
@@ -124,11 +121,9 @@ class DefaultRootComponent(
             onBackClicked = this::onBackClicked,
             showAlertsOnDialog = { this.showSlot(SlotConfig.AlertsRequestBottomSheet(it)) },
             promptLogin = {
-                val termsLink = rootViewModel.getTncLink()
                 showLoginBottomSheet(
                     pageName = SignupPageName.MENU,
                     headlineText = null,
-                    termsLink = termsLink,
                     onDismissRequest = { hideLoginBottomSheetIfVisible() },
                     onLoginSuccess = { hideLoginBottomSheetIfVisible() },
                 )
@@ -178,7 +173,6 @@ class DefaultRootComponent(
     override fun showLoginBottomSheet(
         pageName: SignupPageName,
         headlineText: String?,
-        termsLink: String,
         onDismissRequest: () -> Unit,
         onLoginSuccess: () -> Unit,
     ) {
@@ -191,7 +185,6 @@ class DefaultRootComponent(
             SlotConfig.LoginBottomSheet(
                 pageName = pageName,
                 headlineText = headlineText,
-                termsLink = termsLink,
             ),
         )
     }
@@ -217,7 +210,6 @@ class DefaultRootComponent(
                 RootComponent.SlotChild.LoginBottomSheet(
                     pageName = config.pageName,
                     headlineText = config.headlineText,
-                    termsLink = config.termsLink,
                     onDismissRequest = {
                         loginSlotCallbacks?.onDismissRequest?.invoke()
                         loginSlotCallbacks = null
@@ -273,7 +265,6 @@ class DefaultRootComponent(
         data class LoginBottomSheet(
             val pageName: SignupPageName,
             val headlineText: String?,
-            val termsLink: String,
         ) : SlotConfig
     }
 

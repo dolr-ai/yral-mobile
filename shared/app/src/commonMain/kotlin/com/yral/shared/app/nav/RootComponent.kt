@@ -36,7 +36,6 @@ interface RootComponent {
     fun showLoginBottomSheet(
         pageName: SignupPageName,
         headlineText: String?,
-        termsLink: String,
         onDismissRequest: () -> Unit,
         onLoginSuccess: () -> Unit = {},
     )
@@ -67,7 +66,6 @@ interface RootComponent {
         class LoginBottomSheet(
             val pageName: SignupPageName,
             val headlineText: String?,
-            val termsLink: String,
             val onDismissRequest: () -> Unit,
             val onLoginSuccess: () -> Unit,
         ) : SlotChild()

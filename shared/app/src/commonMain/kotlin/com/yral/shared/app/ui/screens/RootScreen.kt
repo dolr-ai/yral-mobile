@@ -255,11 +255,10 @@ private fun SlotContent(component: RootComponent) {
                 var termsLink by remember { mutableStateOf("") }
                 LoginBottomSheet(
                     pageName = slotChild.pageName,
-                    termsLink = slotChild.termsLink,
                     bottomSheetState = bottomSheetState,
                     onDismissRequest = slotChild.onDismissRequest,
                     onLoginSuccess = slotChild.onLoginSuccess,
-                    openTerms = { termsLink = slotChild.termsLink },
+                    openTerms = { termsLink = it },
                     headlineText = slotChild.headlineText,
                     loginViewModel = loginViewModel,
                 )

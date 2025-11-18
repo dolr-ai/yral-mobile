@@ -32,11 +32,10 @@ import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 @Composable
 fun LoginBottomSheet(
     pageName: SignupPageName = SignupPageName.MENU,
-    termsLink: String,
     bottomSheetState: SheetState,
     onDismissRequest: () -> Unit,
     onLoginSuccess: (() -> Unit)? = null,
-    openTerms: () -> Unit,
+    openTerms: (terms: String) -> Unit,
     headlineText: String? = null,
     loginViewModel: LoginViewModel = koinViewModel(),
 ) {
@@ -47,6 +46,7 @@ fun LoginBottomSheet(
         }
     val context = getContext()
     val state = loginViewModel.state.collectAsStateWithLifecycle()
+    val termsLink = remember { loginViewModel.getTncLink() }
     when (state.value) {
         is UiState.Initial, is UiState.InProgress -> {
             YralBottomSheet(
@@ -67,7 +67,7 @@ fun LoginBottomSheet(
                             pageName = pageName,
                             onSignupClicked = { provider -> loginViewModel.signInWithSocial(context, provider) },
                             termsLink = termsLink,
-                            openTerms = openTerms,
+                            openTerms = { openTerms(termsLink) },
                             headlineText = headlineText,
                         )
                         Spacer(modifier = Modifier.height(adaptiveHeight))

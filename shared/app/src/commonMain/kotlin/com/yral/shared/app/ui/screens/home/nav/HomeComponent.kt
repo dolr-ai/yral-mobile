@@ -33,7 +33,6 @@ abstract class HomeComponent {
     abstract fun showLoginBottomSheet(
         pageName: SignupPageName,
         headlineText: String?,
-        termsLink: String,
         onDismissRequest: () -> Unit,
         onLoginSuccess: () -> Unit = {},
     )
@@ -77,7 +76,6 @@ abstract class HomeComponent {
             showLoginBottomSheet: (
                 pageName: SignupPageName,
                 headlineText: String?,
-                termsLink: String,
                 onDismissRequest: () -> Unit,
                 onLoginSuccess: () -> Unit,
             ) -> Unit,
