@@ -206,7 +206,6 @@ private fun HomeScreenContent(
     val canisterData = sessionState.getCanisterData()
     val feedViewModel = koinViewModel<FeedViewModel>(key = "feed-$sessionKey")
     val gameViewModel = koinViewModel<GameViewModel>(key = "game-$sessionKey")
-    val feedState by feedViewModel.state.collectAsStateWithLifecycle()
     val profileViewModel =
         koinViewModel<ProfileViewModel>(key = "profile-$sessionKey") {
             parametersOf(canisterData)
@@ -218,22 +217,6 @@ private fun HomeScreenContent(
 
     val alertsPermissionController = rememberAlertsPermissionController(accountViewModel)
     NotificationPermissionObserver(alertsPermissionController, accountViewModel)
-
-    val sharedVideoLoginHeadline = stringResource(Res.string.login_to_get_25_tokens)
-    val tncLink = remember { feedViewModel.getTncLink() }
-    LaunchedEffect(feedState.showSharedVideoLoginSheet, sharedVideoLoginHeadline, tncLink) {
-        if (feedState.showSharedVideoLoginSheet) {
-            component.showLoginBottomSheet(
-                pageName = SignupPageName.HOME,
-                headlineText = sharedVideoLoginHeadline,
-                termsLink = tncLink,
-                onDismissRequest = { feedViewModel.hideSharedVideoLoginSheet(loginCompleted = false) },
-                onLoginSuccess = { feedViewModel.hideSharedVideoLoginSheet(loginCompleted = true) },
-            )
-        } else {
-            component.hideLoginBottomSheetIfVisible()
-        }
-    }
 
     Children(
         stack = component.stack,
@@ -249,52 +232,26 @@ private fun HomeScreenContent(
                 )
 
             is HomeComponent.Child.Account -> {
-                val loginViewModel: LoginViewModel = koinViewModel()
-                val loginState by loginViewModel.state.collectAsStateWithLifecycle()
                 AccountScreen(
                     component = child.component,
                     viewModel = accountViewModel,
-                    loginState = loginState,
-                    loginBottomSheet = { bottomSheetState, onDismissRequest, _, termsLink, openTerms ->
-                        LoginBottomSheet(
-                            bottomSheetState = bottomSheetState,
-                            onDismissRequest = onDismissRequest,
-                            onLoginSuccess = null, // no extra action required
-                            termsLink = termsLink,
-                            openTerms = openTerms,
-                        )
-                    },
                     onAlertsToggleRequest = alertsPermissionController.toggle,
                 )
             }
 
-            is HomeComponent.Child.Leaderboard -> {
-                val loginViewModel: LoginViewModel = koinViewModel()
-                val loginState by loginViewModel.state.collectAsStateWithLifecycle()
+            is HomeComponent.Child.Leaderboard ->
                 LeaderboardScreen(
                     component = child.component,
                     leaderBoardViewModel = leaderBoardViewModel,
-                    loginState = loginState,
-                    loginBottomSheet = { pageName, bottomSheetState, onDismissRequest, termsLink, openTerms ->
-                        LoginBottomSheet(
-                            pageName = pageName,
-                            bottomSheetState = bottomSheetState,
-                            onDismissRequest = onDismissRequest,
-                            termsLink = termsLink,
-                            openTerms = openTerms,
-                        )
-                    },
                 )
-            }
 
-            is HomeComponent.Child.UploadVideo -> {
+            is HomeComponent.Child.UploadVideo ->
                 UploadVideoRootScreen(
                     component = child.component,
                     bottomPadding = innerPadding.calculateBottomPadding(),
                 )
-            }
 
-            is HomeComponent.Child.Profile -> {
+            is HomeComponent.Child.Profile ->
                 profileVideos?.let {
                     ProfileScreen(
                         component = child.component,
@@ -304,14 +261,16 @@ private fun HomeScreenContent(
                         onAlertsToggleRequest = alertsPermissionController.toggle,
                     )
                 }
-            }
 
-            is HomeComponent.Child.Wallet -> {
+            is HomeComponent.Child.Wallet ->
                 WalletScreen(
                     component = child.component,
                 )
-            }
         }
+        LoginIfRequired(
+            currentChild = it.instance,
+            component = component,
+        )
     }
 }
 
@@ -569,3 +528,77 @@ private fun SessionState.getCanisterData(): CanisterData =
                 isCreatedFromServiceCanister = session.isCreatedFromServiceCanister,
             )
     }
+
+@Suppress("LongMethod")
+@Composable
+private fun LoginIfRequired(
+    currentChild: HomeComponent.Child,
+    component: HomeComponent,
+) {
+    val homeState by component.homeViewModel.state.collectAsStateWithLifecycle()
+    val tncLink = remember { component.homeViewModel.getTncLink() }
+    val sharedVideoLoginHeadline = stringResource(Res.string.login_to_get_25_tokens)
+    val dismissSheet =
+        remember {
+            {
+                component.homeViewModel.showSignupPrompt(false, null)
+                component.hideLoginBottomSheetIfVisible()
+            }
+        }
+    LaunchedEffect(homeState.showSignupPrompt, homeState.isSocialSignedIn) {
+        if (homeState.isSocialSignedIn || !homeState.showSignupPrompt) return@LaunchedEffect
+        when (currentChild) {
+            is HomeComponent.Child.Feed -> {
+                component.showLoginBottomSheet(
+                    pageName = SignupPageName.HOME,
+                    headlineText = sharedVideoLoginHeadline,
+                    termsLink = tncLink,
+                    onDismissRequest = dismissSheet,
+                    onLoginSuccess = dismissSheet,
+                )
+            }
+            is HomeComponent.Child.UploadVideo -> {
+                component.showLoginBottomSheet(
+                    pageName = homeState.pageName ?: SignupPageName.UPLOAD_VIDEO,
+                    headlineText = null,
+                    termsLink = tncLink,
+                    onDismissRequest = dismissSheet,
+                    onLoginSuccess = dismissSheet,
+                )
+            }
+            is HomeComponent.Child.Profile -> {
+                component.showLoginBottomSheet(
+                    pageName = SignupPageName.MENU,
+                    headlineText = null,
+                    termsLink = tncLink,
+                    onDismissRequest = dismissSheet,
+                    onLoginSuccess = dismissSheet,
+                )
+            }
+            else -> Unit
+        }
+    }
+    LaunchedEffect(homeState.hasShownSignupPrompt, homeState.isSocialSignedIn) {
+        if (homeState.isSocialSignedIn) return@LaunchedEffect
+        when (currentChild) {
+            is HomeComponent.Child.Leaderboard -> {
+                if (homeState.hasShownSignupPrompt[SignupPageName.LEADERBOARD] != true) {
+                    component.showLoginBottomSheet(
+                        pageName = SignupPageName.LEADERBOARD,
+                        headlineText = null,
+                        termsLink = tncLink,
+                        onDismissRequest = {
+                            dismissSheet()
+                            component.homeViewModel.onSignupPromptShown(SignupPageName.LEADERBOARD)
+                        },
+                        onLoginSuccess = {
+                            dismissSheet()
+                            component.homeViewModel.onSignupPromptShown(SignupPageName.LEADERBOARD)
+                        },
+                    )
+                }
+            }
+            else -> Unit
+        }
+    }
+}

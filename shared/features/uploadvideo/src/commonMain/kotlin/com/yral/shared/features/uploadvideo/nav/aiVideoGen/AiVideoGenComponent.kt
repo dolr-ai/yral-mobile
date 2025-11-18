@@ -3,6 +3,7 @@ package com.yral.shared.features.uploadvideo.nav.aiVideoGen
 import com.arkivanov.decompose.ComponentContext
 
 abstract class AiVideoGenComponent {
+    abstract val promptLogin: () -> Unit
     abstract fun onBack()
 
     abstract fun goToHome()
@@ -12,11 +13,13 @@ abstract class AiVideoGenComponent {
             componentContext: ComponentContext,
             goToHome: () -> Unit,
             onBack: () -> Unit,
+            promptLogin: () -> Unit,
         ): AiVideoGenComponent =
             DefaultAiVideoGenComponent(
                 componentContext,
                 goToHome,
                 onBack,
+                promptLogin,
             )
     }
 }

@@ -9,6 +9,7 @@ interface ProfileMainComponent {
     val pendingVideoNavigation: Flow<String?>
     val userCanisterData: CanisterData?
     val showAlertsOnDialog: (type: AlertsRequestType) -> Unit
+    val promptLogin: () -> Unit
     fun onUploadVideoClick()
     fun openAccount()
     fun openEditProfile()
@@ -25,6 +26,7 @@ interface ProfileMainComponent {
             openProfile: (CanisterData) -> Unit,
             onBackClicked: () -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
+            promptLogin: () -> Unit,
         ): ProfileMainComponent =
             DefaultProfileMainComponent(
                 componentContext = componentContext,
@@ -36,6 +38,7 @@ interface ProfileMainComponent {
                 openProfile = openProfile,
                 onBackClicked = onBackClicked,
                 showAlertsOnDialog = showAlertsOnDialog,
+                promptLogin = promptLogin,
             )
     }
 }

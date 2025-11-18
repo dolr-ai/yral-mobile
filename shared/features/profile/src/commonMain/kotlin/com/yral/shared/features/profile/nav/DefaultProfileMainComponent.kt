@@ -6,6 +6,7 @@ import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.flow.Flow
 import org.koin.core.component.KoinComponent
 
+@Suppress("LongParameterList")
 internal class DefaultProfileMainComponent(
     componentContext: ComponentContext,
     override val pendingVideoNavigation: Flow<String?>,
@@ -16,6 +17,7 @@ internal class DefaultProfileMainComponent(
     private val openProfile: (CanisterData) -> Unit,
     private val onBackClicked: () -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
+    override val promptLogin: () -> Unit,
 ) : ProfileMainComponent,
     ComponentContext by componentContext,
     KoinComponent {

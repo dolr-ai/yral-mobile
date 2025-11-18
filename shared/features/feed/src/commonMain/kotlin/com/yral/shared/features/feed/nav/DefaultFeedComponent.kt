@@ -3,6 +3,7 @@ package com.yral.shared.features.feed.nav
 import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.ComponentContext
 import com.yral.shared.data.AlertsRequestType
+import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.channels.Channel
@@ -14,6 +15,7 @@ internal class DefaultFeedComponent(
     componentContext: ComponentContext,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
+    override val promptLogin: (pendingRoute: AppRoute) -> Unit,
 ) : FeedComponent,
     ComponentContext by componentContext,
     KoinComponent {

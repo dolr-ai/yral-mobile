@@ -18,6 +18,7 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
 
     abstract val pendingVideoNavigation: Flow<String?>
     abstract val showAlertsOnDialog: (type: AlertsRequestType) -> Unit
+    abstract val promptLogin: () -> Unit
     abstract fun onUploadVideoClick()
     abstract fun onNavigationRequest(appRoute: AppRoute)
     abstract fun openAccount()
@@ -52,6 +53,7 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
             openEditProfile: () -> Unit,
             openProfile: (CanisterData) -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
+            promptLogin: () -> Unit,
         ): ProfileComponent =
             DefaultProfileComponent(
                 componentContext,
@@ -60,6 +62,7 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
                 openEditProfile,
                 openProfile,
                 showAlertsOnDialog,
+                promptLogin,
             )
     }
 }
