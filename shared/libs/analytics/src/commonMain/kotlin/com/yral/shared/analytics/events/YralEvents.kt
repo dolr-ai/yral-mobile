@@ -1328,6 +1328,9 @@ enum class SignupPageName {
     @SerialName("menu")
     MENU,
 
+    @SerialName("profile")
+    PROFILE,
+
     @SerialName("video_creation")
     VIDEO_CREATION,
 

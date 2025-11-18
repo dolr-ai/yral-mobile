@@ -9,6 +9,7 @@ import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.pushToFront
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
+import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.profile.nav.EditProfileComponent
@@ -29,7 +30,7 @@ internal class DefaultProfileComponent(
     private val openEditProfile: () -> Unit,
     private val openProfile: (CanisterData) -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
-    override val promptLogin: () -> Unit,
+    override val promptLogin: (pageName: SignupPageName) -> Unit,
 ) : ProfileComponent(),
     ComponentContext by componentContext,
     KoinComponent {

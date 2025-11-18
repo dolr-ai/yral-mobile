@@ -538,7 +538,7 @@ private fun LoginIfRequired(
             }
             is HomeComponent.Child.Profile -> {
                 component.showLoginBottomSheet(
-                    pageName = SignupPageName.MENU,
+                    pageName = homeState.pageName ?: SignupPageName.MENU,
                     headlineText = null,
                     onDismissRequest = dismissSheet,
                     onLoginSuccess = {
