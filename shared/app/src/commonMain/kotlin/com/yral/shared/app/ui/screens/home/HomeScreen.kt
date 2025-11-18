@@ -509,7 +509,6 @@ private fun LoginIfRequired(
     component: HomeComponent,
 ) {
     val homeState by component.homeViewModel.state.collectAsStateWithLifecycle()
-    val tncLink = remember { component.homeViewModel.getTncLink() }
     val sharedVideoLoginHeadline = stringResource(Res.string.login_to_get_25_tokens)
     val dismissSheet =
         remember {
@@ -525,7 +524,6 @@ private fun LoginIfRequired(
                 component.showLoginBottomSheet(
                     pageName = SignupPageName.HOME,
                     headlineText = sharedVideoLoginHeadline,
-                    termsLink = tncLink,
                     onDismissRequest = dismissSheet,
                     onLoginSuccess = dismissSheet,
                 )
@@ -534,7 +532,6 @@ private fun LoginIfRequired(
                 component.showLoginBottomSheet(
                     pageName = homeState.pageName ?: SignupPageName.UPLOAD_VIDEO,
                     headlineText = null,
-                    termsLink = tncLink,
                     onDismissRequest = dismissSheet,
                     onLoginSuccess = dismissSheet,
                 )
@@ -543,7 +540,6 @@ private fun LoginIfRequired(
                 component.showLoginBottomSheet(
                     pageName = SignupPageName.MENU,
                     headlineText = null,
-                    termsLink = tncLink,
                     onDismissRequest = dismissSheet,
                     onLoginSuccess = {
                         dismissSheet()
@@ -562,7 +558,6 @@ private fun LoginIfRequired(
                     component.showLoginBottomSheet(
                         pageName = SignupPageName.LEADERBOARD,
                         headlineText = null,
-                        termsLink = tncLink,
                         onDismissRequest = {
                             dismissSheet()
                             component.homeViewModel.onSignupPromptShown(SignupPageName.LEADERBOARD)

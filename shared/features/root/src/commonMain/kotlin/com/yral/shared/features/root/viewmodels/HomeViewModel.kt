@@ -2,8 +2,6 @@ package com.yral.shared.features.root.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.yral.featureflag.FeatureFlagManager
-import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.core.session.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,7 +11,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
-    private val flagManager: FeatureFlagManager,
     private val sessionManager: SessionManager,
 ) : ViewModel() {
     private val _state = MutableStateFlow(HomeState())
@@ -43,8 +40,6 @@ class HomeViewModel(
     ) {
         _state.update { it.copy(showSignupPrompt = show, pageName = pageName) }
     }
-
-    fun getTncLink(): String = flagManager.get(AccountFeatureFlags.AccountLinks.Links).tnc
 }
 
 data class HomeState(

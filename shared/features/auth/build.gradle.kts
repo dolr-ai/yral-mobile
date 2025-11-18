@@ -31,6 +31,7 @@ kotlin {
             implementation(projects.shared.libs.coroutinesX)
             implementation(projects.shared.rust.service)
             implementation(projects.shared.libs.designsystem)
+            implementation(projects.shared.libs.featureFlag)
 
             implementation(libs.gitlive.firebase.messaging)
 

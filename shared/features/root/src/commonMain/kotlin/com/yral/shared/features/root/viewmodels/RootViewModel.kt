@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import co.touchlab.kermit.Logger
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.FeedFeatureFlags
-import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.shared.analytics.User
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.TokenType
@@ -189,8 +188,6 @@ class RootViewModel(
     fun bottomNavigationClicked(categoryName: CategoryName) {
         rootTelemetry.bottomNavigationClicked(categoryName)
     }
-
-    fun getTncLink(): String = flagManager.get(AccountFeatureFlags.AccountLinks.Links).tnc
 }
 
 data class RootState(

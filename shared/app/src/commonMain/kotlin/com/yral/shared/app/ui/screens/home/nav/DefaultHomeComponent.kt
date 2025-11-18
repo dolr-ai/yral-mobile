@@ -49,7 +49,6 @@ internal class DefaultHomeComponent(
     private val showLoginBottomSheetFromRoot: (
         pageName: SignupPageName,
         headlineText: String?,
-        termsLink: String,
         onDismissRequest: () -> Unit,
         onLoginSuccess: () -> Unit,
     ) -> Unit,
@@ -151,13 +150,11 @@ internal class DefaultHomeComponent(
     override fun showLoginBottomSheet(
         pageName: SignupPageName,
         headlineText: String?,
-        termsLink: String,
         onDismissRequest: () -> Unit,
         onLoginSuccess: () -> Unit,
     ) = showLoginBottomSheetFromRoot(
         pageName,
         headlineText,
-        termsLink,
         onDismissRequest,
         onLoginSuccess,
     )
