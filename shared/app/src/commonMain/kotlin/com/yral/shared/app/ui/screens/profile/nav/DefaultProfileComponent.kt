@@ -7,6 +7,7 @@ import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.pushToFront
+import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.account.nav.AccountComponent
@@ -68,6 +69,10 @@ internal class DefaultProfileComponent(
 
     override fun openAccount() {
         navigation.pushToFront(Config.Account)
+    }
+
+    override fun openProfile() {
+        navigation.replaceAll(Config.Main)
     }
 
     override fun openEditProfile() {
