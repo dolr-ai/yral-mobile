@@ -46,13 +46,13 @@ internal class DefaultHomeComponent(
     private val openEditProfile: () -> Unit,
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
-    private val showLoginBottomSheetFromRoot: (
+    private val showLoginBottomSheet: (
         pageName: SignupPageName,
         headlineText: String?,
         onDismissRequest: () -> Unit,
         onLoginSuccess: () -> Unit,
     ) -> Unit,
-    private val hideLoginBottomSheetFromRootIfVisible: () -> Unit,
+    private val hideLoginBottomSheetIfVisible: () -> Unit,
 ) : HomeComponent(),
     ComponentContext by componentContext {
     private val navigation = StackNavigation<Config>()
@@ -152,14 +152,18 @@ internal class DefaultHomeComponent(
         headlineText: String?,
         onDismissRequest: () -> Unit,
         onLoginSuccess: () -> Unit,
-    ) = showLoginBottomSheetFromRoot(
-        pageName,
-        headlineText,
-        onDismissRequest,
-        onLoginSuccess,
-    )
+    ) {
+        showLoginBottomSheet.invoke(
+            pageName,
+            headlineText,
+            onDismissRequest,
+            onLoginSuccess,
+        )
+    }
 
-    override fun hideLoginBottomSheetIfVisible() = hideLoginBottomSheetFromRootIfVisible()
+    override fun hideLoginBottomSheetIfVisible() {
+        hideLoginBottomSheetIfVisible.invoke()
+    }
 
     private inline fun StackNavigator<Config>.replaceKeepingFeed(
         configuration: Config,
