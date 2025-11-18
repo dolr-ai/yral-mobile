@@ -133,7 +133,7 @@ fun AccountScreen(
             alertsEnabled = state.alertsEnabled,
             onAlertsToggle = handleAlertsToggle,
             onBack = { component.onBack() },
-            promptLogin = { component.promptLogin() },
+            promptLogin = { component.promptLogin(SignupPageName.MENU) },
         )
         SheetContent(
             bottomSheetState = bottomSheetState,

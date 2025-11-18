@@ -232,13 +232,13 @@ internal class DefaultHomeComponent(
             openProfile = openProfile,
             snapshot = childSnapshots[Config.Profile] as? ProfileComponent.Snapshot,
             showAlertsOnDialog = showAlertsOnDialog,
-            promptLogin = { homeViewModel.showSignupPrompt(true, SignupPageName.MENU) },
+            promptLogin = { homeViewModel.showSignupPrompt(true, it) },
         )
 
     private fun accountComponent(componentContext: ComponentContext): AccountComponent =
         AccountComponent.Companion(
             componentContext = componentContext,
-            promptLogin = { homeViewModel.showSignupPrompt(true, SignupPageName.MENU) },
+            promptLogin = { homeViewModel.showSignupPrompt(true, it) },
         )
 
     private fun walletComponent(componentContext: ComponentContext): WalletComponent =

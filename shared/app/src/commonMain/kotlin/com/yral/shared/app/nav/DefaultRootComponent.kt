@@ -122,7 +122,7 @@ class DefaultRootComponent(
             showAlertsOnDialog = { this.showSlot(SlotConfig.AlertsRequestBottomSheet(it)) },
             promptLogin = {
                 showLoginBottomSheet(
-                    pageName = SignupPageName.MENU,
+                    pageName = SignupPageName.PROFILE,
                     headlineText = null,
                     onDismissRequest = { hideLoginBottomSheetIfVisible() },
                     onLoginSuccess = { hideLoginBottomSheetIfVisible() },

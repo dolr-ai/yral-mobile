@@ -31,7 +31,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginBottomSheet(
-    pageName: SignupPageName = SignupPageName.MENU,
+    pageName: SignupPageName,
     bottomSheetState: SheetState,
     onDismissRequest: () -> Unit,
     onLoginSuccess: (() -> Unit)? = null,

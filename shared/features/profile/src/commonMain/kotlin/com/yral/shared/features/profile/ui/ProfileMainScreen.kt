@@ -62,6 +62,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import com.yral.shared.analytics.events.EditProfileSource
+import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.domain.models.FeedDetails
@@ -337,7 +338,7 @@ fun ProfileMainScreen(
                     },
                     onBackClicked = { component.onBackClicked() },
                     onFollowersSectionClick = { viewModel.updateFollowSheetTab(tab = it) },
-                    promptLogin = { component.promptLogin() },
+                    promptLogin = { component.promptLogin(SignupPageName.PROFILE) },
                 )
             }
         }
