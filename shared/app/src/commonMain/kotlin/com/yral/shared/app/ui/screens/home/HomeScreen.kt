@@ -22,7 +22,6 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -63,8 +62,6 @@ import com.yral.shared.features.account.ui.AccountScreen
 import com.yral.shared.features.account.ui.AlertsPermissionController
 import com.yral.shared.features.account.ui.rememberAlertsPermissionController
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
-import com.yral.shared.features.auth.ui.LoginBottomSheet
-import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.leaderboard.ui.LeaderboardScreen
@@ -73,7 +70,6 @@ import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.wallet.ui.WalletScreen
 import com.yral.shared.features.wallet.ui.btcRewards.VideoViewsRewardsBottomSheet
 import com.yral.shared.libs.designsystem.component.YralFeedback
-import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
 import com.yral.shared.libs.designsystem.component.popPressedSoundUri
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -165,29 +161,6 @@ private fun SlotContent(component: HomeComponent) {
                     component = slotChild.component,
                     data = slotChild.data,
                 )
-            is SlotChild.LoginBottomSheet -> {
-                val loginViewModel: LoginViewModel = koinViewModel()
-                val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-                val termsSheetState = rememberModalBottomSheetState()
-                var termsLink by remember { mutableStateOf("") }
-                LoginBottomSheet(
-                    pageName = slotChild.pageName,
-                    termsLink = slotChild.termsLink,
-                    bottomSheetState = bottomSheetState,
-                    onDismissRequest = slotChild.onDismissRequest,
-                    onLoginSuccess = slotChild.onLoginSuccess,
-                    openTerms = { termsLink = slotChild.termsLink },
-                    headlineText = slotChild.headlineText,
-                    loginViewModel = loginViewModel,
-                )
-                if (termsLink.isNotEmpty()) {
-                    YralWebViewBottomSheet(
-                        link = termsLink,
-                        bottomSheetState = termsSheetState,
-                        onDismissRequest = { termsLink = "" },
-                    )
-                }
-            }
         }
     }
 }
@@ -572,7 +545,10 @@ private fun LoginIfRequired(
                     headlineText = null,
                     termsLink = tncLink,
                     onDismissRequest = dismissSheet,
-                    onLoginSuccess = dismissSheet,
+                    onLoginSuccess = {
+                        dismissSheet()
+                        currentChild.component.openProfile()
+                    },
                 )
             }
             else -> Unit

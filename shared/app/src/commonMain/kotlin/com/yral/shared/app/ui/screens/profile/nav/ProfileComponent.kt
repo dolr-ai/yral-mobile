@@ -24,6 +24,7 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
     abstract fun openAccount()
     abstract fun openEditProfile()
     abstract fun onBackClicked(): Boolean
+    abstract fun openProfile()
 
     sealed class Child {
         class Main(

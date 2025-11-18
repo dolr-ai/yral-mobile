@@ -35,7 +35,7 @@ abstract class HomeComponent {
         headlineText: String?,
         termsLink: String,
         onDismissRequest: () -> Unit,
-        onLoginSuccess: () -> Unit,
+        onLoginSuccess: () -> Unit = {},
     )
     abstract fun hideLoginBottomSheetIfVisible()
 
@@ -67,14 +67,6 @@ abstract class HomeComponent {
             val component: VideoViewRewardsComponent,
             val data: RewardsReceived,
         ) : SlotChild()
-
-        class LoginBottomSheet(
-            val pageName: SignupPageName,
-            val headlineText: String?,
-            val termsLink: String,
-            val onDismissRequest: () -> Unit,
-            val onLoginSuccess: () -> Unit,
-        ) : SlotChild()
     }
     companion object {
         operator fun invoke(
@@ -82,6 +74,22 @@ abstract class HomeComponent {
             openEditProfile: () -> Unit,
             openProfile: (userCanisterData: CanisterData) -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
-        ): HomeComponent = DefaultHomeComponent(componentContext, openEditProfile, openProfile, showAlertsOnDialog)
+            showLoginBottomSheet: (
+                pageName: SignupPageName,
+                headlineText: String?,
+                termsLink: String,
+                onDismissRequest: () -> Unit,
+                onLoginSuccess: () -> Unit,
+            ) -> Unit,
+            hideLoginBottomSheetIfVisible: () -> Unit,
+        ): HomeComponent =
+            DefaultHomeComponent(
+                componentContext,
+                openEditProfile,
+                openProfile,
+                showAlertsOnDialog,
+                showLoginBottomSheet,
+                hideLoginBottomSheetIfVisible,
+            )
     }
 }
