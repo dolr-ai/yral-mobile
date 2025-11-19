@@ -33,3 +33,12 @@ fun EventData.shouldSendToFacebook(): Boolean =
         FeatureEvents.GAME_PLAYED.getEventName() -> true
         else -> false
     }
+
+fun EventData.shouldAppendUtm(): Boolean =
+    when (event) {
+        FeatureEvents.SIGNUP_SUCCESS.getEventName() -> true
+        FeatureEvents.LOGIN_SUCCESS.getEventName() -> true
+        FeatureEvents.AUTH_FAILED.getEventName() -> true
+        FeatureEvents.HOME_PAGE_VIEWED.getEventName() -> true
+        else -> false
+    }
