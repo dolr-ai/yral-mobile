@@ -140,6 +140,7 @@ dependencies {
 
     implementation(libs.branch)
     implementation(libs.play.services.ads.identifier)
+    implementation(libs.installreferrer)
 
     implementation(libs.googlePlay.inAppUpdate)
 
