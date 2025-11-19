@@ -80,6 +80,8 @@ import com.yral.shared.libs.designsystem.component.LoaderSize
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralButtonType
+import com.yral.shared.libs.designsystem.component.YralContextMenu
+import com.yral.shared.libs.designsystem.component.YralContextMenuItem
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralLoader
@@ -110,6 +112,7 @@ import yral_mobile.shared.features.profile.generated.resources.create_ai_video
 import yral_mobile.shared.features.profile.generated.resources.delete
 import yral_mobile.shared.features.profile.generated.resources.delete_video
 import yral_mobile.shared.features.profile.generated.resources.deleting
+import yral_mobile.shared.features.profile.generated.resources.download
 import yral_mobile.shared.features.profile.generated.resources.error_loading_more_videos
 import yral_mobile.shared.features.profile.generated.resources.error_loading_videos
 import yral_mobile.shared.features.profile.generated.resources.failed_to_delete_video
@@ -129,6 +132,8 @@ import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.cancel
 import yral_mobile.shared.libs.designsystem.generated.resources.delete
 import yral_mobile.shared.libs.designsystem.generated.resources.error_data_not_loaded
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_dots_vertical
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_download
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_views
 import yral_mobile.shared.libs.designsystem.generated.resources.login
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share
@@ -301,6 +306,7 @@ fun ProfileMainScreen(
                                 ctaType = VideoDeleteCTA.VIDEO_FULLSCREEN,
                             )
                         },
+                        onDownloadVideo = { /* No op */ },
                         onShareClick = { feedDetails ->
                             viewModel.onShareClicked(
                                 feedDetails,
@@ -559,6 +565,7 @@ private fun MainContent(
                                 ctaType = VideoDeleteCTA.PROFILE_THUMBNAIL,
                             )
                         },
+                        onDownloadVideo = { /* No op */ },
                         onViewsClick = { viewModel.showVideoViews(it) },
                         onManualRefreshTriggered = { viewModel.setManualRefreshTriggered(it) },
                     )
@@ -672,6 +679,7 @@ private fun ErrorContent(message: String) {
     }
 }
 
+@Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SuccessContent(
@@ -682,6 +690,7 @@ private fun SuccessContent(
     uploadVideo: () -> Unit,
     openVideoReel: (Int) -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
+    onDownloadVideo: (FeedDetails) -> Unit,
     onViewsClick: (FeedDetails) -> Unit,
     onManualRefreshTriggered: (Boolean) -> Unit,
 ) {
@@ -739,6 +748,7 @@ private fun SuccessContent(
                     deletingVideoId = deletingVideoId,
                     openVideoReel = openVideoReel,
                     onDeleteVideo = onDeleteVideo,
+                    onDownloadVideo = onDownloadVideo,
                     onViewsClick = onViewsClick,
                 )
             }
@@ -859,6 +869,7 @@ private fun VideoGridContent(
     deletingVideoId: String,
     openVideoReel: (Int) -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
+    onDownloadVideo: (FeedDetails) -> Unit,
     onViewsClick: (FeedDetails) -> Unit,
 ) {
     LazyVerticalGrid(
@@ -885,6 +896,7 @@ private fun VideoGridContent(
                     isDeleting = deletingVideoId == video.videoID,
                     openVideoReel = { openVideoReel(index) },
                     onDeleteClick = { onDeleteVideo(video) },
+                    onDownloadClick = { onDownloadVideo(video) },
                     onViewsClick = { onViewsClick(video) },
                 )
             }
@@ -986,6 +998,7 @@ private fun VideoGridItem(
     isDeleting: Boolean,
     openVideoReel: () -> Unit,
     onDeleteClick: () -> Unit,
+    onDownloadClick: () -> Unit,
     onViewsClick: () -> Unit,
 ) {
     Box(
@@ -1018,6 +1031,7 @@ private fun VideoGridItem(
                 viewCount = video.viewCount,
                 isOwnProfile = isOwnProfile,
                 onDeleteVideo = onDeleteClick,
+                onDownloadVideo = onDownloadClick,
                 onViewsClick = onViewsClick,
             )
         }
@@ -1072,6 +1086,7 @@ private fun BoxScope.VideoGridItemActions(
     isLikeVisible: Boolean = false,
     isOwnProfile: Boolean,
     onDeleteVideo: () -> Unit,
+    onDownloadVideo: () -> Unit,
     onViewsClick: () -> Unit,
 ) {
     val leftIcon =
@@ -1117,13 +1132,21 @@ private fun BoxScope.VideoGridItemActions(
             )
         }
         if (isOwnProfile) {
-            Image(
-                painter = painterResource(DesignRes.drawable.delete),
-                contentDescription = "Delete video",
-                modifier =
-                    Modifier
-                        .size(24.dp)
-                        .clickable { onDeleteVideo() },
+            YralContextMenu(
+                items =
+                    listOf(
+                        YralContextMenuItem(
+                            text = stringResource(Res.string.download),
+                            icon = DesignRes.drawable.ic_download,
+                            onClick = onDownloadVideo,
+                        ),
+                        YralContextMenuItem(
+                            text = stringResource(Res.string.delete),
+                            icon = DesignRes.drawable.delete,
+                            onClick = onDeleteVideo,
+                        ),
+                    ),
+                triggerIcon = DesignRes.drawable.ic_dots_vertical,
             )
         }
     }
