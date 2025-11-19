@@ -211,7 +211,14 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun storeAffiliateAttribution(linkProperties: LinkProperties?) {
-        val channel = linkProperties?.channel?.takeIf { !it.isNullOrBlank() } ?: return
+        val rawChannel =
+            linkProperties?.let {
+                linkProperties.channel
+                    ?.takeIf { it.isNotBlank() }
+                    ?: linkProperties.controlParams["~channel"]
+                    ?: linkProperties.controlParams["channel"]
+            }
+        val channel = rawChannel?.takeIf { !it.isNullOrBlank() } ?: return
         affiliateAttributionStore.storeIfEmpty(channel)
     }
 }
