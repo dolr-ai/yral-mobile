@@ -45,6 +45,7 @@ val analyticsModule =
                 eventFilter = { !it.shouldSendToYralBE() },
                 mapConverter = get(),
                 token = get<String>(MIXPANEL_TOKEN),
+                utmAttributionStore = get(),
             )
         }
         single {
