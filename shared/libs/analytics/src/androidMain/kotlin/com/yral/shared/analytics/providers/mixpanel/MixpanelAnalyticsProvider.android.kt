@@ -11,6 +11,13 @@ import com.yral.shared.analytics.User
 import com.yral.shared.analytics.di.IS_DEBUG
 import com.yral.shared.analytics.events.EventData
 import com.yral.shared.analytics.events.TokenType
+import com.yral.shared.analytics.events.shouldAppendUtm
+import com.yral.shared.preferences.UTM_CAMPAIGN_PARAM
+import com.yral.shared.preferences.UTM_CONTENT_PARAM
+import com.yral.shared.preferences.UTM_MEDIUM_PARAM
+import com.yral.shared.preferences.UTM_SOURCE_PARAM
+import com.yral.shared.preferences.UTM_TERM_PARAM
+import com.yral.shared.preferences.UtmAttributionStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,6 +29,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
     private val eventFilter: (EventData) -> Boolean,
     private val mapConverter: EventToMapConverter,
     token: String,
+    private val utmAttributionStore: UtmAttributionStore,
 ) : AnalyticsProvider,
     KoinComponent {
     private companion object {
@@ -62,7 +70,10 @@ actual class MixpanelAnalyticsProvider actual constructor(
     override fun shouldTrackEvent(event: EventData): Boolean = eventFilter(event)
 
     override fun trackEvent(event: EventData) {
-        val properties = mapConverter.toMap(event)
+        val properties: MutableMap<String, Any?> = mapConverter.toMap(event).toMutableMap()
+        if (event.shouldAppendUtm()) {
+            appendUtmParams(properties)
+        }
         mixpanel.trackMap(toValidKeyName(event.event), properties)
     }
 
@@ -100,6 +111,15 @@ actual class MixpanelAnalyticsProvider actual constructor(
     }
 
     override fun toValidKeyName(key: String): String = key
+
+    private fun appendUtmParams(props: MutableMap<String, Any?>) {
+        val utmParams = utmAttributionStore.get()
+        utmParams.source?.let { props[UTM_SOURCE_PARAM] = it }
+        utmParams.medium?.let { props[UTM_MEDIUM_PARAM] = it }
+        utmParams.campaign?.let { props[UTM_CAMPAIGN_PARAM] = it }
+        utmParams.term?.let { props[UTM_TERM_PARAM] = it }
+        utmParams.content?.let { props[UTM_CONTENT_PARAM] = it }
+    }
 
     val TokenType.serialName: String
         get() =

@@ -29,6 +29,12 @@ import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import com.yral.shared.libs.routing.deeplink.engine.RoutingService
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.preferences.AffiliateAttributionStore
+import com.yral.shared.preferences.UTM_CAMPAIGN_PARAM
+import com.yral.shared.preferences.UTM_CONTENT_PARAM
+import com.yral.shared.preferences.UTM_MEDIUM_PARAM
+import com.yral.shared.preferences.UTM_SOURCE_PARAM
+import com.yral.shared.preferences.UTM_TERM_PARAM
+import com.yral.shared.preferences.UtmAttributionStore
 import com.yral.shared.rust.service.services.HelperService.initRustLogger
 import com.yral.shared.rust.service.services.RustLogLevel
 import io.branch.indexing.BranchUniversalObject
@@ -50,6 +56,7 @@ class MainActivity : ComponentActivity() {
     private val settings: Settings by inject()
     private val routingService: RoutingService by inject()
     private val affiliateAttributionStore: AffiliateAttributionStore by inject()
+    private val utmAttributionStore: UtmAttributionStore by inject()
 
     private val updateResultLauncher: ActivityResultLauncher<IntentSenderRequest> =
         registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
@@ -73,6 +80,7 @@ class MainActivity : ComponentActivity() {
                     Logger.d("BranchSDK") { "control params " + linkProperties.controlParams }
                 }
                 storeAffiliateAttribution(linkProperties)
+                storeUtmAttribution(linkProperties)
 
                 val deeplinkPath =
                     linkProperties?.controlParams?.get("\$deeplink_path")
@@ -218,7 +226,25 @@ class MainActivity : ComponentActivity() {
                     ?: linkProperties.controlParams["~channel"]
                     ?: linkProperties.controlParams["channel"]
             }
-        val channel = rawChannel?.takeIf { !it.isNullOrBlank() } ?: return
+        val channel = rawChannel?.takeIf { it.isNotBlank() } ?: return
         affiliateAttributionStore.storeIfEmpty(channel)
+    }
+
+    private fun storeUtmAttribution(linkProperties: LinkProperties?) {
+        val controlParams = linkProperties?.controlParams ?: return
+        Logger.d("BranchSDK") { "controlParams: $controlParams" }
+        val utmSource = controlParams[UTM_SOURCE_PARAM]
+        val utmMedium = controlParams[UTM_MEDIUM_PARAM]
+        val utmCampaign = controlParams[UTM_CAMPAIGN_PARAM]
+        val utmTerm = controlParams[UTM_TERM_PARAM]
+        val utmContent = controlParams[UTM_CONTENT_PARAM]
+
+        utmAttributionStore.storeIfEmpty(
+            source = utmSource,
+            medium = utmMedium,
+            campaign = utmCampaign,
+            term = utmTerm,
+            content = utmContent,
+        )
     }
 }
