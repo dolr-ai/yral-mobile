@@ -29,6 +29,7 @@ import org.koin.android.ext.koin.androidContext
 
 class YralApp : Application() {
     private val appCoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private lateinit var installReferrerAttribution: InstallReferrerAttribution
 
     override fun onCreate() {
         super.onCreate()
@@ -41,6 +42,8 @@ class YralApp : Application() {
             modules(videoWidgetModule)
         }
         setupFirebase()
+        installReferrerAttribution = InstallReferrerAttribution(this, appCoroutineScope)
+        installReferrerAttribution.setup()
         observeAndAddDistinctIdToBranch()
     }
 
