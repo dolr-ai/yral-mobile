@@ -58,6 +58,7 @@ import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.features.uploadvideo.nav.aiVideoGen.AiVideoGenComponent
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel.BottomSheetType
+import com.yral.shared.features.uploadvideo.ui.LoginBottomSheetComposable
 import com.yral.shared.features.uploadvideo.ui.aiVideoGen.AiVideoGenScreenConstants.LOADING_MESSAGE_DELAY
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
@@ -183,15 +184,6 @@ fun AiVideoGenScreen(
     }
     AiVideoGenScreenPrompts(component, viewState, viewModel, loginBottomSheet)
 }
-
-@OptIn(ExperimentalMaterial3Api::class)
-typealias LoginBottomSheetComposable = @Composable (
-    pageName: SignupPageName,
-    bottomSheetState: SheetState,
-    onDismissRequest: () -> Unit,
-    termsLink: String,
-    openTerms: () -> Unit,
-) -> Unit
 
 @Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)

@@ -8,14 +8,15 @@ plugins {
     alias(libs.plugins.gms)
     alias(libs.plugins.firebase.perf)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.sentry)
 }
 
 android {
     namespace = "com.yral.android"
     defaultConfig {
         applicationId = "com.yral.android"
-        versionCode = 35
-        versionName = "2.0.6"
+        versionCode = 37
+        versionName = "2.0.7"
         ndkVersion = "28.0.13004108"
         buildConfigField(
             type = "String",
@@ -82,6 +83,21 @@ android {
     }
 }
 
+sentry {
+    autoUploadProguardMapping.set(true)
+    includeProguardMapping = true
+    autoUploadNativeSymbols = true
+    ignoredVariants.set(
+        listOf(
+            "stagingDebug",
+            "prodDebug",
+        ),
+    )
+    tracingInstrumentation {
+        enabled.set(false)
+    }
+}
+
 dependencies {
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.tooling.preview)
@@ -90,6 +106,13 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.paging.compose)
     implementation(libs.androidx.emoji2)
+    implementation(platform(libs.sentry.bom))
+    implementation(libs.sentry.compose.android)
+    implementation(libs.sentry.android.navigation)
+    implementation(libs.sentry.android.fragment)
+    implementation(libs.sentry.android.sqlite)
+    implementation(libs.sentry.okhttp)
+    implementation(libs.sentry.kotlin.extensions)
     debugImplementation(libs.compose.ui.tooling)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
@@ -98,7 +121,7 @@ dependencies {
     implementation(libs.firebase.appcheck.debug)
     implementation(libs.firebase.messaging)
     implementation(libs.coil.compose)
-    implementation(libs.coil.okhttp)
+    implementation(libs.coil.ktor3)
     implementation(libs.coil.svg)
     implementation(libs.accompanist.permission)
     implementation(libs.facebook.sdk.android.core)

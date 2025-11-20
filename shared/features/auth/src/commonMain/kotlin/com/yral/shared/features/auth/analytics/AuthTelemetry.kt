@@ -8,6 +8,7 @@ import com.yral.shared.analytics.events.LoginSuccessEventData
 import com.yral.shared.analytics.events.SignupJourneySelected
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.analytics.events.SignupSuccessEventData
+import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.preferences.AffiliateAttributionStore
 
 class AuthTelemetry(
@@ -18,48 +19,57 @@ class AuthTelemetry(
         analyticsManager.trackEvent(AuthScreenViewedEventData(pageName = pageName))
     }
 
-    fun onSignupJourneySelected() {
-        analyticsManager.trackEvent(SignupJourneySelected(authJourney = AuthJourney.GOOGLE))
+    fun onSignupJourneySelected(provider: SocialProvider = SocialProvider.GOOGLE) {
+        analyticsManager.trackEvent(SignupJourneySelected(authJourney = provider.toAuthJourney()))
     }
 
-    fun onAuthSuccess(isNewUser: Boolean) {
+    fun onAuthSuccess(
+        isNewUser: Boolean,
+        provider: SocialProvider = SocialProvider.GOOGLE,
+    ) {
         if (isNewUser) {
-            onSignupSuccess()
+            onSignupSuccess(provider)
         } else {
-            onLoginSuccess()
+            onLoginSuccess(provider)
         }
     }
 
-    private fun onSignupSuccess() {
+    private fun onSignupSuccess(provider: SocialProvider) {
         val affiliate = affiliateAttributionStore.peek()
         analyticsManager.trackEvent(
             event =
                 SignupSuccessEventData(
                     isReferral = false,
                     referralUserID = "",
-                    authJourney = AuthJourney.GOOGLE,
+                    authJourney = provider.toAuthJourney(),
                     affiliate = affiliate,
                 ),
         )
     }
 
-    private fun onLoginSuccess() {
+    private fun onLoginSuccess(provider: SocialProvider) {
         val affiliate = affiliateAttributionStore.peek()
         analyticsManager.trackEvent(
             LoginSuccessEventData(
-                authJourney = AuthJourney.GOOGLE,
+                authJourney = provider.toAuthJourney(),
                 affiliate = affiliate,
             ),
         )
     }
 
-    fun authFailed() {
+    fun authFailed(provider: SocialProvider = SocialProvider.GOOGLE) {
         val affiliate = affiliateAttributionStore.peek()
         analyticsManager.trackEvent(
             AuthFailedEventData(
-                authJourney = AuthJourney.GOOGLE,
+                authJourney = provider.toAuthJourney(),
                 affiliate = affiliate,
             ),
         )
     }
+
+    private fun SocialProvider.toAuthJourney(): AuthJourney =
+        when (this) {
+            SocialProvider.GOOGLE -> AuthJourney.GOOGLE
+            SocialProvider.APPLE -> AuthJourney.APPLE
+        }
 }

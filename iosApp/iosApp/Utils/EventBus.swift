@@ -14,4 +14,6 @@ final class EventBus: ObservableObject {
   let playGamesToEarnMoreTapped = PassthroughSubject<Void, Never>()
   let walletTapped = PassthroughSubject<Void, Never>()
   let updatedUsername = PassthroughSubject<String, Never>()
+  let dismissFullScreenCoverWallet = PassthroughSubject<Void, Never>()
+  let dismissFullScreenCoverProfile = PassthroughSubject<Void, Never>()
 }

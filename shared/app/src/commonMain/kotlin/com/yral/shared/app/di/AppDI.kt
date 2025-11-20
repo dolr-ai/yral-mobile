@@ -1,5 +1,6 @@
 package com.yral.shared.app.di
 
+import co.touchlab.kermit.LogWriter
 import co.touchlab.kermit.platformLogWriter
 import com.yral.shared.analytics.di.IS_DEBUG
 import com.yral.shared.analytics.di.analyticsModule
@@ -7,6 +8,7 @@ import com.yral.shared.app.config.AppHTTPEventListener
 import com.yral.shared.app.config.AppRustLogForwardingListener
 import com.yral.shared.app.config.AppUseCaseFailureListener
 import com.yral.shared.app.config.NBRFailureListener
+import com.yral.shared.app.logging.SentryLogWriter
 import com.yral.shared.core.di.coreModule
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.crashlytics.di.crashlyticsModule
@@ -27,6 +29,8 @@ import com.yral.shared.http.di.networkModule
 import com.yral.shared.libs.arch.data.NetworkBoundResource
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
+import com.yral.shared.libs.videoPlayer.pool.PlatformMediaSourceFactory
+import com.yral.shared.libs.videoPlayer.pool.PlatformPlayerFactory
 import com.yral.shared.preferences.di.preferencesModule
 import com.yral.shared.reportVideo.di.reportVideoModule
 import com.yral.shared.rust.service.di.rustModule
@@ -34,6 +38,8 @@ import com.yral.shared.rust.service.services.RustLogForwardingListener
 import org.koin.core.context.startKoin
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
+import org.koin.core.qualifier.named
+import org.koin.core.scope.Scope
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.bind
 import org.koin.dsl.includes
@@ -63,6 +69,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             loggerModule,
             httpListenerModule,
             commonDataModule,
+            videoPlayerModule,
         )
 
         modules(
@@ -81,8 +88,22 @@ fun initKoin(config: KoinAppDeclaration? = null) {
 
 internal val loggerModule =
     module {
-        single { YralLogger(if (get(IS_DEBUG)) platformLogWriter() else null) }
-        singleOf(::AppRustLogForwardingListener) bind RustLogForwardingListener::class
+        single { SentryLogWriter() }
+        single(named("httpLogWriter")) { get<SentryLogWriter>() }
+        single(named("rustLogWriter")) { get<SentryLogWriter>() }
+        single {
+            val writers = mutableListOf<LogWriter>()
+            if (get(IS_DEBUG)) {
+                writers += platformLogWriter()
+            }
+            YralLogger(writers)
+        }
+        single {
+            AppRustLogForwardingListener(
+                get(),
+                get(named("rustLogWriter")),
+            )
+        } bind RustLogForwardingListener::class
     }
 
 internal val dispatchersModule = module { single { AppDispatchers() } }
@@ -97,3 +118,12 @@ internal val httpListenerModule =
     module {
         factoryOf(::AppHTTPEventListener) bind HTTPEventListener::class
     }
+
+internal val videoPlayerModule =
+    module {
+        factory { createPlatformPlayerFactory() }
+        factory { createPlatformMediaSourceFactory() }
+    }
+
+expect fun Scope.createPlatformPlayerFactory(): PlatformPlayerFactory
+expect fun Scope.createPlatformMediaSourceFactory(): PlatformMediaSourceFactory

@@ -40,13 +40,11 @@ class FirebaseService: FirebaseServiceProtocol {
     try Auth.auth().signOut()
   }
 
-  func fetchUserIDToken() async throws -> String? {
-    do {
-      let idToken = try await Auth.auth().currentUser?.getIDToken()
-      return idToken
-    } catch {
-      throw(error)
+  func fetchUserIDToken() async throws -> String {
+    guard let user = Auth.auth().currentUser else {
+      throw NetworkError.invalidResponse("No Firebase user found")
     }
+    return try await user.getIDToken()
   }
 
   func fetchAppCheckToken() async -> String? {

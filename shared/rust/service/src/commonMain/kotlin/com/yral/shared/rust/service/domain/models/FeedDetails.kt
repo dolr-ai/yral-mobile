@@ -3,9 +3,8 @@ package com.yral.shared.rust.service.domain.models
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.data.domain.models.FeedDetails
-import com.yral.shared.rust.service.data.IndividualUserDataSourceImpl.Companion.CLOUD_FLARE_PREFIX
-import com.yral.shared.rust.service.data.IndividualUserDataSourceImpl.Companion.CLOUD_FLARE_SUFFIX_MP4
-import com.yral.shared.rust.service.data.IndividualUserDataSourceImpl.Companion.THUMBNAIL_SUFFIX
+import com.yral.shared.rust.service.data.IndividualUserDataSourceImpl.Companion.thumbnailUrl
+import com.yral.shared.rust.service.data.IndividualUserDataSourceImpl.Companion.videoUrl
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import com.yral.shared.rust.service.utils.propicFromPrincipal
@@ -23,17 +22,15 @@ internal fun PostDetailsForFrontend.toFeedDetails(
     if (status == PostStatus.BANNED_DUE_TO_USER_REPORTING) {
         throw YralException("Post is banned $postId")
     }
-    val videoUrl = "$CLOUD_FLARE_PREFIX$videoUid$CLOUD_FLARE_SUFFIX_MP4"
-    val thumbnailUrl = "$CLOUD_FLARE_PREFIX$videoUid$THUMBNAIL_SUFFIX"
     val profileImageUrl = propicFromPrincipal(createdByUserPrincipalId)
     return FeedDetails(
         postID = postId,
         videoID = videoUid,
         canisterID = canisterId,
         principalID = createdByUserPrincipalId,
-        url = videoUrl,
+        url = videoUrl(videoUid),
         hashtags = hashtags,
-        thumbnail = thumbnailUrl,
+        thumbnail = thumbnailUrl(videoUid),
         viewCount = totalViewCount,
         displayName = createdByDisplayName ?: "",
         postDescription = description,
@@ -55,17 +52,15 @@ internal fun UpsPostDetailsForFrontend.toFeedDetails(
     if (status == UpsPostStatus.BANNED_DUE_TO_USER_REPORTING) {
         throw YralException("Post is banned $postId")
     }
-    val videoUrl = "$CLOUD_FLARE_PREFIX$videoUid$CLOUD_FLARE_SUFFIX_MP4"
-    val thumbnailUrl = "$CLOUD_FLARE_PREFIX$videoUid$THUMBNAIL_SUFFIX"
     val profileImageUrl = propicFromPrincipal(createdByUserPrincipalId)
     return FeedDetails(
         postID = postId,
         videoID = videoUid,
         canisterID = canisterId,
         principalID = createdByUserPrincipalId,
-        url = videoUrl,
+        url = videoUrl(videoUid),
         hashtags = hashtags,
-        thumbnail = thumbnailUrl,
+        thumbnail = thumbnailUrl(videoUid),
         viewCount = totalViewCount,
         displayName = "",
         postDescription = description,
@@ -79,17 +74,15 @@ internal fun UpsPostDetailsForFrontend.toFeedDetails(
     )
 }
 
-internal fun PostDetailsWithUserInfo.toFeedDetails(): FeedDetails {
-    val videoUrl = "$CLOUD_FLARE_PREFIX$uid$CLOUD_FLARE_SUFFIX_MP4"
-    val thumbnailUrl = "$CLOUD_FLARE_PREFIX$uid$THUMBNAIL_SUFFIX"
-    return FeedDetails(
+internal fun PostDetailsWithUserInfo.toFeedDetails(): FeedDetails =
+    FeedDetails(
         postID = postId,
         videoID = uid,
         canisterID = canisterId,
         principalID = posterPrincipal,
-        url = videoUrl,
+        url = videoUrl(uid),
         hashtags = hashtags,
-        thumbnail = thumbnailUrl,
+        thumbnail = thumbnailUrl(uid),
         viewCount = views,
         displayName = displayName ?: username ?: "",
         postDescription = description,
@@ -101,7 +94,6 @@ internal fun PostDetailsWithUserInfo.toFeedDetails(): FeedDetails {
         isFromServiceCanister = canisterId == getUserInfoServiceCanister(),
         userName = username,
     )
-}
 
 fun FeedDetails.toCanisterData(): CanisterData =
     CanisterData(

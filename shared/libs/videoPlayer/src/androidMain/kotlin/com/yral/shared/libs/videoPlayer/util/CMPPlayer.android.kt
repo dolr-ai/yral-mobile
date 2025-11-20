@@ -2,234 +2,61 @@
 
 package com.yral.shared.libs.videoPlayer.util
 
-import android.content.Context
+import android.view.ViewGroup
 import androidx.annotation.OptIn
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.media3.common.Player
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
-import coil3.ImageLoader
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import com.yral.shared.libs.videoPlayer.model.PlayerData
-import com.yral.shared.libs.videoPlayer.model.PlayerSpeed
+import com.yral.shared.libs.videoPlayer.PlatformPlayer
+import com.yral.shared.libs.videoPlayer.PlatformPlayerError
 import com.yral.shared.libs.videoPlayer.model.ScreenResize
-import com.yral.shared.libs.videoPlayer.pool.PlayerPool
-import com.yral.shared.libs.videoPlayer.pool.VideoListener
-import com.yral.shared.libs.videoPlayer.rememberPlayerView
-import com.yral.shared.libs.videoPlayer.rememberPooledExoPlayer
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 
-@Suppress("LongMethod", "CyclomaticComplexMethod")
+internal actual fun isDecoderInitFailed(error: PlatformPlayerError): Boolean =
+    error.code == PlaybackException.ERROR_CODE_DECODER_INIT_FAILED
+
 @OptIn(UnstableApi::class)
 @Composable
-actual fun CMPPlayer(
+internal actual fun PlatformVideoPlayerView(
     modifier: Modifier,
-    playerData: PlayerData,
-    playerParams: CMPPlayerParams,
-    playerPool: PlayerPool,
-    videoListener: VideoListener?,
+    platformPlayer: PlatformPlayer?,
+    screenResize: ScreenResize,
 ) {
-    val context = LocalContext.current
-    val exoPlayer =
-        rememberPooledExoPlayer(
-            playerData = playerData,
-            playerPool = playerPool,
-            isPause = playerParams.isPause,
-            videoListener = videoListener,
-        )
-
-    val playerView = exoPlayer?.let { rememberPlayerView(it, context) }
-
-    var isBuffering by remember { mutableStateOf(false) }
-    var showThumbnail by remember { mutableStateOf(true) }
-
-    // Notify buffer state changes
-    LaunchedEffect(isBuffering) {
-        playerParams.bufferCallback(isBuffering)
-    }
-
-    // Update current time every second
-    LaunchedEffect(exoPlayer) {
-        while (isActive && exoPlayer != null) {
-            playerParams.currentTime(exoPlayer.currentPosition.coerceAtLeast(0L).toInt())
-            delay(1000) // Delay for 1 second
-        }
-    }
-
-    // Keep screen on while the player view is active
-    LaunchedEffect(playerView) {
-        playerView?.keepScreenOn = true
-    }
-
-    LaunchedEffect(playerData.prefetchThumbnails) {
-        playerData.prefetchThumbnails.forEach {
-            prefetchThumbnail(
-                context = context,
-                url = it,
-            )
-        }
-    }
-
-    Box(modifier) {
-        // YralBlurredThumbnail(playerData.thumbnailUrl)
-        playerView?.let {
-            AndroidView(
-                factory = { playerView },
-                modifier = modifier,
-                update = {
-                    exoPlayer.playWhenReady = !playerParams.isPause
-                    exoPlayer.volume = if (playerParams.isMute) 0f else 1f
-                    playerParams.sliderTime?.let { exoPlayer.seekTo(it.toLong()) }
-                    exoPlayer.setPlaybackSpeed(playerParams.speed.toFloat())
-                    playerView.artworkDisplayMode = PlayerView.ARTWORK_DISPLAY_MODE_FILL
-                    playerView.resizeMode =
-                        when (playerParams.size) {
-                            ScreenResize.FIT -> AspectRatioFrameLayout.RESIZE_MODE_FIT
-                            ScreenResize.FILL -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-                        }
-                },
-            )
-        }
-        if (showThumbnail) {
-            AsyncImage(
-                model = playerData.thumbnailUrl,
-                contentDescription = "Thumbnail",
-                contentScale = ContentScale.Fit,
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .background(Color.Black),
-            )
-        }
-    }
-
-    exoPlayer?.let {
-        // Manage player listener and lifecycle
-        DisposableEffect(exoPlayer) {
-            val listener =
-                createPlayerListener(
-                    playerParams.isSliding,
-                    playerParams.totalTime,
-                    playerParams.currentTime,
-                    loadingState = { isBuffering = it },
-                    playerParams.didEndVideo,
-                    playerParams.loop,
-                    exoPlayer,
-                    hideThumbnail = {
-                        if (showThumbnail) {
-                            showThumbnail = false
-                        }
-                    },
-                )
-
-            exoPlayer.addListener(listener)
-
-            onDispose {
-                exoPlayer.removeListener(listener)
-            }
-        }
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            playerView?.keepScreenOn = false
-        }
-    }
-}
-
-private fun PlayerSpeed.toFloat(): Float =
-    when (this) {
-        PlayerSpeed.X0_5 -> 0.5f
-        PlayerSpeed.X1 -> 1f
-        PlayerSpeed.X1_5 -> 1.5f
-        PlayerSpeed.X2 -> 2f
-    }
-
-private fun createPlayerListener(
-    isSliding: Boolean,
-    totalTime: (Int) -> Unit,
-    currentTime: (Int) -> Unit,
-    loadingState: (Boolean) -> Unit,
-    didEndVideo: () -> Unit,
-    loop: Boolean,
-    exoPlayer: ExoPlayer,
-    hideThumbnail: () -> Unit,
-): Player.Listener =
-    object : Player.Listener {
-        override fun onEvents(
-            player: Player,
-            events: Player.Events,
-        ) {
-            if (!isSliding) {
-                totalTime(player.duration.coerceAtLeast(0L).toInt())
-                currentTime(player.currentPosition.coerceAtLeast(0L).toInt())
-            }
-        }
-
-        override fun onPlaybackStateChanged(playbackState: Int) {
-            when (playbackState) {
-                Player.STATE_BUFFERING -> {
-                    loadingState(true)
+    AndroidView(
+        factory = { context ->
+            PlayerView(context)
+                .apply {
+                    layoutParams =
+                        ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                        )
+                    useController = false
+                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                    setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
+                    artworkDisplayMode = PlayerView.ARTWORK_DISPLAY_MODE_FILL
                 }
-
-                Player.STATE_READY -> {
-                    loadingState(false)
-                    hideThumbnail()
+        },
+        modifier = modifier,
+        update = { playerView ->
+            playerView.player = platformPlayer?.internalExoPlayer
+            playerView.keepScreenOn = true
+            playerView.resizeMode =
+                when (screenResize) {
+                    ScreenResize.FIT -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+                    ScreenResize.FILL -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
                 }
-
-                Player.STATE_ENDED -> {
-                    loadingState(false)
-                    didEndVideo()
-                    exoPlayer.seekTo(0)
-                    if (loop) exoPlayer.play()
-                }
-
-                Player.STATE_IDLE -> {
-                    loadingState(false)
-                }
-            }
-        }
-
-        override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
-            // Check if it's a decoder initialization exception
-            if (error.errorCode == androidx.media3.common.PlaybackException.ERROR_CODE_DECODER_INIT_FAILED) {
-                // Attempt to play again with a 1-second delay
-                exoPlayer.seekTo(0)
-                exoPlayer.prepare()
-
-                // For hardware decoder issues, we've already configured fallback in ExoPlayerHelper
-            }
-        }
-    }
-
-private fun prefetchThumbnail(
-    context: Context,
-    url: String,
-) {
-    val request =
-        ImageRequest
-            .Builder(context)
-            .data(url)
-            .build()
-
-    val imageLoader = ImageLoader(context)
-    imageLoader.enqueue(request)
+        },
+        onReset = { playerView ->
+            playerView.keepScreenOn = false
+            playerView.player = null
+        },
+        onRelease = { playerView ->
+            playerView.keepScreenOn = false
+            playerView.player = null
+        },
+    )
 }

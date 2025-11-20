@@ -176,6 +176,9 @@ struct WalletView: View {
         await viewModel.fetchAccountInfo()
       }
     }
+    .onReceive(eventBus.dismissFullScreenCoverWallet) { _ in
+      showEarnBTCBottomSheet = false
+    }
     .overlay(alignment: .center, content: {
       if showEarnBTCBottomSheet {
         Color.black.opacity(Constants.bottomSheetBackgroundOpacity)

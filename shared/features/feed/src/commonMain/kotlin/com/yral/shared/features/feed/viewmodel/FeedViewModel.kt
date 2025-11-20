@@ -29,6 +29,7 @@ import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsWithCreator
 import com.yral.shared.features.feed.domain.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetAIFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
+import com.yral.shared.features.feed.shared.PendingSharedVideoStore
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastStatus
@@ -70,6 +71,7 @@ class FeedViewModel(
     private val flagManager: FeatureFlagManager,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
+    private var hasAttemptedPendingRouteConsumption = false
 
     private val authClient =
         authClientFactory
@@ -137,7 +139,19 @@ class FeedViewModel(
                     defaultValue = false,
                 ).collect { isSocialSignIn ->
                     _state.update { it.copy(isLoggedIn = isSocialSignIn) }
+                    if (isSocialSignIn) {
+                        hasAttemptedPendingRouteConsumption = false
+                    }
                 }
+        }
+        viewModelScope.launch {
+            state.collect { feedState ->
+                if (feedState.feedDetails.isNotEmpty()) {
+                    consumePendingSharedVideoRouteIfNeeded()
+                } else {
+                    hasAttemptedPendingRouteConsumption = false
+                }
+            }
         }
     }
 
@@ -807,10 +821,13 @@ class FeedViewModel(
         }
 
     @Suppress("TooGenericExceptionCaught")
-    fun signInWithGoogle(context: Any) {
+    fun signInWithSocial(
+        context: Any,
+        provider: SocialProvider,
+    ) {
         coroutineScope.launch {
             try {
-                authClient.signInWithSocial(context, SocialProvider.GOOGLE)
+                authClient.signInWithSocial(context, provider)
             } catch (e: Exception) {
                 crashlyticsManager.recordException(e, ExceptionType.AUTH)
                 toggleSignupFailed(true)
@@ -820,6 +837,31 @@ class FeedViewModel(
 
     fun toggleSignupFailed(shouldShow: Boolean) {
         _state.update { it.copy(showSignupFailedSheet = shouldShow) }
+    }
+
+    fun onSharedVideoOpened(route: PostDetailsRoute): Boolean {
+        if (_state.value.isLoggedIn) {
+            return true
+        }
+        PendingSharedVideoStore.store(route)
+        hasAttemptedPendingRouteConsumption = false
+        val routeKey = route.toRouteKey()
+        if (_state.value.lastHandledSharedVideoRoute != routeKey) {
+            _state.update {
+                it.copy(
+                    showSharedVideoLoginSheet = true,
+                    lastHandledSharedVideoRoute = routeKey,
+                )
+            }
+        }
+        return false
+    }
+
+    fun hideSharedVideoLoginSheet(loginCompleted: Boolean) {
+        _state.update { it.copy(showSharedVideoLoginSheet = false) }
+        if (loginCompleted) {
+            hasAttemptedPendingRouteConsumption = false
+        }
     }
 
     fun pushScreenView() {
@@ -876,6 +918,20 @@ class FeedViewModel(
         }
     }
 
+    private fun consumePendingSharedVideoRouteIfNeeded() {
+        if (hasAttemptedPendingRouteConsumption) return
+        if (sessionManager.userPrincipal == null) return
+        val route = PendingSharedVideoStore.consume()
+        hasAttemptedPendingRouteConsumption = true
+        if (route != null) {
+            showDeeplinkedVideoFirst(
+                postId = route.postId,
+                canisterId = route.canisterId,
+                publisherUserId = route.publisherUserId,
+            )
+        }
+    }
+
     fun pushFollowClicked(publisherUserId: String) {
         feedTelemetry.followClicked(publisherUserId)
     }
@@ -906,6 +962,8 @@ data class FeedState(
     val isDeeplinkFetching: Boolean = false,
     val reportSheetState: ReportSheetState = ReportSheetState.Closed,
     val showSignupFailedSheet: Boolean = false,
+    val showSharedVideoLoginSheet: Boolean = false,
+    val lastHandledSharedVideoRoute: String? = null,
     val overlayType: OverlayType = OverlayType.DAILY_RANK,
     val isLoggedIn: Boolean = false,
     val availableFeedTypes: List<FeedType> = listOf(FeedType.DEFAULT),
@@ -945,3 +1003,5 @@ internal fun Int.percentageOf(total: Int): Double =
     } else {
         0.0
     }
+
+private fun PostDetailsRoute.toRouteKey(): String = "$postId:$canisterId:$publisherUserId"

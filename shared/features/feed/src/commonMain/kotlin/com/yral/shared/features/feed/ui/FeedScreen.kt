@@ -107,6 +107,7 @@ fun FeedScreen(
     getVideoListener: (reel: Reels) -> VideoListener?,
 ) {
     val state by viewModel.state.collectAsState()
+    val tncLink = remember { viewModel.getTncLink() }
 
     LaunchedEffect(Unit) { viewModel.pushScreenView() }
 
@@ -114,11 +115,14 @@ fun FeedScreen(
     LaunchedEffect(Unit) {
         component.openPostDetails.collectLatest {
             if (it != null) {
-                viewModel.showDeeplinkedVideoFirst(
-                    postId = it.postId,
-                    canisterId = it.canisterId,
-                    publisherUserId = it.publisherUserId,
-                )
+                val shouldHandleNow = viewModel.onSharedVideoOpened(it)
+                if (shouldHandleNow) {
+                    viewModel.showDeeplinkedVideoFirst(
+                        postId = it.postId,
+                        canisterId = it.canisterId,
+                        publisherUserId = it.publisherUserId,
+                    )
+                }
             }
         }
     }
@@ -310,8 +314,8 @@ private fun FeedOverlay(
         )
         if (!state.isLoggedIn && pageNo != 0 && (pageNo % SIGN_UP_PAGE) == 0) {
             val context = getContext()
-            SignupNudge(tncLink = feedViewModel.getTncLink()) {
-                feedViewModel.signInWithGoogle(context)
+            SignupNudge(tncLink = feedViewModel.getTncLink()) { provider ->
+                feedViewModel.signInWithSocial(context, provider)
             }
         }
     }

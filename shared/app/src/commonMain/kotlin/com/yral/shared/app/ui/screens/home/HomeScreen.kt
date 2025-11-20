@@ -7,11 +7,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,10 +17,12 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -35,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -49,6 +49,7 @@ import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.WalletFeatureFlags
 import com.yral.shared.analytics.events.CategoryName
+import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.app.ui.screens.feed.FeedScaffoldScreen
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent.SlotChild
@@ -72,6 +73,7 @@ import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.wallet.ui.WalletScreen
 import com.yral.shared.features.wallet.ui.btcRewards.VideoViewsRewardsBottomSheet
 import com.yral.shared.libs.designsystem.component.YralFeedback
+import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
 import com.yral.shared.libs.designsystem.component.popPressedSoundUri
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -88,6 +90,7 @@ import yral_mobile.shared.app.generated.resources.home_nav_selected
 import yral_mobile.shared.app.generated.resources.home_nav_unselected
 import yral_mobile.shared.app.generated.resources.leaderboard_nav_selected
 import yral_mobile.shared.app.generated.resources.leaderboard_nav_unselected
+import yral_mobile.shared.app.generated.resources.login_to_get_25_tokens
 import yral_mobile.shared.app.generated.resources.new_
 import yral_mobile.shared.app.generated.resources.profile_nav_selected
 import yral_mobile.shared.app.generated.resources.profile_nav_unselected
@@ -151,6 +154,7 @@ internal fun HomeScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SlotContent(component: HomeComponent) {
     val slot by component.slot.subscribeAsState()
@@ -161,6 +165,29 @@ private fun SlotContent(component: HomeComponent) {
                     component = slotChild.component,
                     data = slotChild.data,
                 )
+            is SlotChild.LoginBottomSheet -> {
+                val loginViewModel: LoginViewModel = koinViewModel()
+                val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+                val termsSheetState = rememberModalBottomSheetState()
+                var termsLink by remember { mutableStateOf("") }
+                LoginBottomSheet(
+                    pageName = slotChild.pageName,
+                    termsLink = slotChild.termsLink,
+                    bottomSheetState = bottomSheetState,
+                    onDismissRequest = slotChild.onDismissRequest,
+                    onLoginSuccess = slotChild.onLoginSuccess,
+                    openTerms = { termsLink = slotChild.termsLink },
+                    headlineText = slotChild.headlineText,
+                    loginViewModel = loginViewModel,
+                )
+                if (termsLink.isNotEmpty()) {
+                    YralWebViewBottomSheet(
+                        link = termsLink,
+                        bottomSheetState = termsSheetState,
+                        onDismissRequest = { termsLink = "" },
+                    )
+                }
+            }
         }
     }
 }
@@ -179,6 +206,7 @@ private fun HomeScreenContent(
     val canisterData = sessionState.getCanisterData()
     val feedViewModel = koinViewModel<FeedViewModel>(key = "feed-$sessionKey")
     val gameViewModel = koinViewModel<GameViewModel>(key = "game-$sessionKey")
+    val feedState by feedViewModel.state.collectAsStateWithLifecycle()
     val profileViewModel =
         koinViewModel<ProfileViewModel>(key = "profile-$sessionKey") {
             parametersOf(canisterData)
@@ -190,6 +218,22 @@ private fun HomeScreenContent(
 
     val alertsPermissionController = rememberAlertsPermissionController(accountViewModel)
     NotificationPermissionObserver(alertsPermissionController, accountViewModel)
+
+    val sharedVideoLoginHeadline = stringResource(Res.string.login_to_get_25_tokens)
+    val tncLink = remember { feedViewModel.getTncLink() }
+    LaunchedEffect(feedState.showSharedVideoLoginSheet, sharedVideoLoginHeadline, tncLink) {
+        if (feedState.showSharedVideoLoginSheet) {
+            component.showLoginBottomSheet(
+                pageName = SignupPageName.HOME,
+                headlineText = sharedVideoLoginHeadline,
+                termsLink = tncLink,
+                onDismissRequest = { feedViewModel.hideSharedVideoLoginSheet(loginCompleted = false) },
+                onLoginSuccess = { feedViewModel.hideSharedVideoLoginSheet(loginCompleted = true) },
+            )
+        } else {
+            component.hideLoginBottomSheetIfVisible()
+        }
+    }
 
     Children(
         stack = component.stack,
@@ -211,10 +255,11 @@ private fun HomeScreenContent(
                     component = child.component,
                     viewModel = accountViewModel,
                     loginState = loginState,
-                    loginBottomSheet = { bottomSheetState, onDismissRequest, termsLink, openTerms ->
+                    loginBottomSheet = { bottomSheetState, onDismissRequest, _, termsLink, openTerms ->
                         LoginBottomSheet(
                             bottomSheetState = bottomSheetState,
                             onDismissRequest = onDismissRequest,
+                            onLoginSuccess = null, // no extra action required
                             termsLink = termsLink,
                             openTerms = openTerms,
                         )
@@ -223,11 +268,24 @@ private fun HomeScreenContent(
                 )
             }
 
-            is HomeComponent.Child.Leaderboard ->
+            is HomeComponent.Child.Leaderboard -> {
+                val loginViewModel: LoginViewModel = koinViewModel()
+                val loginState by loginViewModel.state.collectAsStateWithLifecycle()
                 LeaderboardScreen(
                     component = child.component,
                     leaderBoardViewModel = leaderBoardViewModel,
+                    loginState = loginState,
+                    loginBottomSheet = { pageName, bottomSheetState, onDismissRequest, termsLink, openTerms ->
+                        LoginBottomSheet(
+                            pageName = pageName,
+                            bottomSheetState = bottomSheetState,
+                            onDismissRequest = onDismissRequest,
+                            termsLink = termsLink,
+                            openTerms = openTerms,
+                        )
+                    },
                 )
+            }
 
             is HomeComponent.Child.UploadVideo -> {
                 UploadVideoRootScreen(
@@ -324,25 +382,15 @@ private fun HomeNavigationBar(
                     else -> true
                 }
             }
+    val insetHeightPx = NavigationBarDefaults.windowInsets.getBottom(LocalDensity.current)
+    val insetHeightDp = with(LocalDensity.current) { insetHeightPx.toDp() }
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.primaryContainer,
         modifier =
             Modifier
-                .navigationBarsPadding()
-                .fillMaxWidth()
-                .height(67.dp)
-                .padding(start = 16.dp, end = 16.dp),
-        windowInsets = WindowInsets(0, 0, 0, 0),
+                .height(67.dp + insetHeightDp),
     ) {
         tabs.forEachIndexed { index, tab ->
-            val alignment =
-                remember {
-                    when (index) {
-                        0 -> Alignment.CenterStart
-                        HomeTab.entries.size - 1 -> Alignment.CenterEnd
-                        else -> Alignment.Center
-                    }
-                }
             NavigationBarItem(
                 modifier = Modifier.weight(1f),
                 selected = currentTab == tab,
@@ -352,15 +400,10 @@ private fun HomeNavigationBar(
                     bottomNavigationClicked(tab.categoryName)
                 },
                 icon = {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = alignment,
-                    ) {
-                        NavBarIcon(
-                            isSelected = currentTab == tab,
-                            tab = tab,
-                        )
-                    }
+                    NavBarIcon(
+                        isSelected = currentTab == tab,
+                        tab = tab,
+                    )
                 },
                 colors =
                     NavigationBarItemDefaults.colors(

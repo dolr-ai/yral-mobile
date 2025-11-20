@@ -47,6 +47,9 @@ media3Exoplayer = "1.6.1"
 mixpanel = "8.2.0"
 mixpanel-session-replay = "1.0.0"
 onesignal = "5.4.0"
+sentryKmp = "0.21.0"
+sentryAndroid = "8.25.0"
+sentryGradlePlugin = "4.12.0"
 multiplatform-settings = "1.3.0"
 nimbus-jose-jwt = "10.0.2"
 okhttp-bom = "5.2.1"
@@ -96,6 +99,7 @@ chucker-release = { module = "com.github.chuckerteam.chucker:library-no-op", ver
 coil-core = { module = "io.coil-kt.coil3:coil-core", version.ref = "coil" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
+coil-ktor3 = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
 
 compose-ui = { module = "androidx.compose.ui:ui", version.ref = "compose" }
@@ -171,6 +175,14 @@ ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx
 
 mixpanel-android = { module = "com.mixpanel.android:mixpanel-android", version.ref = "mixpanel" }
 mixpanel-session-replay-android = { module = "com.mixpanel.android:mixpanel-android-session-replay", version.ref = "mixpanel-session-replay" }
+sentry-kmp = { module = "io.sentry:sentry-kotlin-multiplatform", version.ref = "sentryKmp" }
+sentry-bom = { module = "io.sentry:sentry-bom", version.ref = "sentryAndroid" }
+sentry-compose-android = { module = "io.sentry:sentry-compose-android", version.ref = "sentryAndroid" }
+sentry-android-navigation = { module = "io.sentry:sentry-android-navigation", version.ref = "sentryAndroid" }
+sentry-android-fragment = { module = "io.sentry:sentry-android-fragment", version.ref = "sentryAndroid" }
+sentry-android-sqlite = { module = "io.sentry:sentry-android-sqlite", version.ref = "sentryAndroid" }
+sentry-okhttp = { module = "io.sentry:sentry-okhttp", version.ref = "sentryAndroid" }
+sentry-kotlin-extensions = { module = "io.sentry:sentry-kotlin-extensions", version.ref = "sentryAndroid" }
 onesignal = { module = "com.onesignal:OneSignal", version.ref = "onesignal" }
 
 moko-permissions = { group = "dev.icerock.moko", name = "permissions", version.ref = "moko-permissions" }
@@ -237,6 +249,7 @@ detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebaseCrashlyticsPlugin" }
 firebase-perf = { id = "com.google.firebase.firebase-perf", version.ref = "firebasePerfPlugin" }
 gms = { id = "com.google.gms.google-services", version.ref = "play-services" }
+sentry = { id = "io.sentry.android.gradle", version.ref = "sentryGradlePlugin" }
 gobleyCargo = { id = "dev.gobley.cargo", version.ref = "gobley" }
 gobleyUniffi = { id = "dev.gobley.uniffi", version.ref = "gobley" }
 kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

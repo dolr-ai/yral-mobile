@@ -69,10 +69,11 @@ internal fun ProfileScreen(
                     component = instance.component,
                     viewModel = accountsViewModel,
                     loginState = loginState,
-                    loginBottomSheet = { bottomSheetState, onDismissRequest, termsLink, openTerms ->
+                    loginBottomSheet = { bottomSheetState, onDismissRequest, onLoginSuccess, termsLink, openTerms ->
                         LoginBottomSheet(
                             bottomSheetState = bottomSheetState,
                             onDismissRequest = onDismissRequest,
+                            onLoginSuccess = onLoginSuccess,
                             termsLink = termsLink,
                             openTerms = openTerms,
                         )

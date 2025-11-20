@@ -7,9 +7,7 @@ import androidx.core.net.toUri
 import co.touchlab.kermit.Logger
 import com.nimbusds.jose.shaded.gson.Gson
 import com.nimbusds.jwt.JWTParser
-import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI_HOST
-import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI_PATH
-import com.yral.shared.features.auth.data.AuthDataSourceImpl.Companion.REDIRECT_URI_SCHEME
+import com.yral.shared.features.auth.di.AuthEnv
 import com.yral.shared.features.auth.domain.models.TokenClaims
 import io.ktor.http.Url
 import io.ktor.http.toURI
@@ -17,10 +15,10 @@ import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Date
 
-class AndroidOAuthUtils(
-    override var callBack: ((OAuthResult) -> Unit)? = null,
-    override var callbackExpiry: Long = 0L,
-) : OAuthUtils {
+class AndroidOAuthUtils : OAuthUtils {
+    override var callBack: ((OAuthResult) -> Unit)? = null
+    override var callbackExpiry: Long = 0L
+
     companion object {
         private const val CALLBACK_TIMEOUT_MS = 5 * 60 * 1000L // 5 minutes
     }
@@ -68,7 +66,11 @@ class AndroidOAuthUtils(
     }
 }
 
-class AndroidOAuthUtilsHelper : OAuthUtilsHelper {
+class AndroidOAuthUtilsHelper(
+    authEnv: AuthEnv,
+) : OAuthUtilsHelper {
+    private val redirectUri: AuthEnv.RedirectUri = authEnv.redirectUri
+
     override fun generateCodeVerifier(): String {
         val secureRandom = SecureRandom()
         val bytes = ByteArray(CODE_VERIFIER_LENGTH)
@@ -113,9 +115,9 @@ class AndroidOAuthUtilsHelper : OAuthUtilsHelper {
 
     override fun mapUriToOAuthResult(uri: String): OAuthResult? {
         val uriObj = uri.toUri()
-        if (uriObj.scheme == REDIRECT_URI_SCHEME &&
-            uriObj.host == REDIRECT_URI_HOST &&
-            uriObj.path == REDIRECT_URI_PATH
+        if (uriObj.scheme == redirectUri.scheme &&
+            uriObj.host == redirectUri.host &&
+            uriObj.path == redirectUri.path
         ) {
             Logger.d("MainActivity") { "Processing OAuth redirect: $uri" }
             val code = uriObj.getQueryParameter("code")
