@@ -1,6 +1,5 @@
 package com.yral.android
 
-import android.app.Application
 import co.touchlab.kermit.LogWriter
 import co.touchlab.kermit.Logger
 import com.yral.shared.core.logging.YralLogger
@@ -22,7 +21,6 @@ import javax.crypto.spec.SecretKeySpec
 
 @Suppress("TooGenericExceptionCaught")
 class MetaInstallReferrerAttribution(
-    private val application: Application,
     private val scope: CoroutineScope,
 ) {
     private companion object {
@@ -55,7 +53,7 @@ class MetaInstallReferrerAttribution(
 
         scope.launch {
             runCatching {
-                val key = application.getString(R.string.meta_install_referrer_decryption_key)
+                val key = BuildConfig.META_INSTALL_REFERRER_DECRYPTION_KEY
                 if (key.isEmpty()) {
                     logger.i { "Decryption key not available" }
                     return@runCatching

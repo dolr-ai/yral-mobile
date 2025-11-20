@@ -178,8 +178,7 @@ class MetaInstallReferrerAttributionTest {
     }
 
     private fun createTestInstance(): MetaInstallReferrerAttribution {
-        val mockApplication = object : android.app.Application() {}
         val mockScope = kotlinx.coroutines.CoroutineScope(Dispatchers.Unconfined)
-        return MetaInstallReferrerAttribution(mockApplication, mockScope)
+        return MetaInstallReferrerAttribution(mockScope)
     }
 }
