@@ -32,6 +32,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.pullToRefreshIndicator
@@ -78,10 +79,12 @@ import com.yral.shared.features.profile.viewmodel.ViewState
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.LoaderSize
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
+import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralButtonType
 import com.yral.shared.libs.designsystem.component.YralContextMenu
 import com.yral.shared.libs.designsystem.component.YralContextMenuItem
+import com.yral.shared.libs.designsystem.component.YralDragHandle
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralLoader
@@ -113,6 +116,8 @@ import yral_mobile.shared.features.profile.generated.resources.delete
 import yral_mobile.shared.features.profile.generated.resources.delete_video
 import yral_mobile.shared.features.profile.generated.resources.deleting
 import yral_mobile.shared.features.profile.generated.resources.download
+import yral_mobile.shared.features.profile.generated.resources.downloading_video
+import yral_mobile.shared.features.profile.generated.resources.downloading_video_desc
 import yral_mobile.shared.features.profile.generated.resources.error_loading_more_videos
 import yral_mobile.shared.features.profile.generated.resources.error_loading_videos
 import yral_mobile.shared.features.profile.generated.resources.failed_to_delete_video
@@ -306,7 +311,7 @@ fun ProfileMainScreen(
                                 ctaType = VideoDeleteCTA.VIDEO_FULLSCREEN,
                             )
                         },
-                        onDownloadVideo = { /* No op */ },
+                        onDownloadVideo = { viewModel.downloadVideo(it) },
                         onShareClick = { feedDetails ->
                             viewModel.onShareClicked(
                                 feedDetails,
@@ -386,8 +391,7 @@ fun ProfileMainScreen(
         is ProfileBottomSheet.VideoView -> {
             val videoId = bottomSheet.videoId
             val video = profileVideos.itemSnapshotList.firstOrNull { it?.videoID == videoId }
-            val views = state.viewsData[videoId]
-            when (views) {
+            when (val views = state.viewsData[videoId]) {
                 is UiState.Failure -> {
                     YralErrorMessage(
                         title = stringResource(DesignRes.string.video_insights),
@@ -481,6 +485,13 @@ fun ProfileMainScreen(
                 )
             }
         }
+
+        is ProfileBottomSheet.DownloadTriggered -> {
+            DownloadTriggeredSheet(
+                bottomSheetState = bottomSheetState,
+                onDismissRequest = { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
+            )
+        }
     }
 }
 
@@ -565,7 +576,7 @@ private fun MainContent(
                                 ctaType = VideoDeleteCTA.PROFILE_THUMBNAIL,
                             )
                         },
-                        onDownloadVideo = { /* No op */ },
+                        onDownloadVideo = { viewModel.downloadVideo(it) },
                         onViewsClick = { viewModel.showVideoViews(it) },
                         onManualRefreshTriggered = { viewModel.setManualRefreshTriggered(it) },
                     )
@@ -1148,6 +1159,54 @@ private fun BoxScope.VideoGridItemActions(
                     ),
                 triggerIcon = DesignRes.drawable.ic_dots_vertical,
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DownloadTriggeredSheet(
+    bottomSheetState: SheetState,
+    onDismissRequest: () -> Unit,
+) {
+    YralBottomSheet(
+        bottomSheetState = bottomSheetState,
+        onDismissRequest = onDismissRequest,
+        dragHandle = { YralDragHandle() },
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(28.dp, Alignment.CenterVertically),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier =
+                Modifier
+                    .background(color = YralColors.Neutral900)
+                    .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 36.dp),
+        ) {
+            Image(
+                painter = painterResource(Res.drawable.download),
+                contentDescription = "Download",
+                contentScale = ContentScale.FillBounds,
+                modifier = Modifier.size(100.dp),
+            )
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
+                horizontalAlignment = Alignment.Start,
+            ) {
+                Text(
+                    text = stringResource(Res.string.downloading_video),
+                    style = LocalAppTopography.current.lgBold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Text(
+                    text = stringResource(Res.string.downloading_video_desc),
+                    style = LocalAppTopography.current.baseRegular,
+                    color = YralColors.NeutralIconsActive,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
 }

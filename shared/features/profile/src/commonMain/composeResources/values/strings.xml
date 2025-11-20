@@ -20,4 +20,7 @@
     <string name="following_empty_list">You are not following anyone yet.</string>
     <string name="followers_load_error">We couldn't load this list. Please try again.</string>
     <string name="download">Download</string>
+    <string name="downloading_video">Downloading Your Video</string>
+    <string name="downloading_video_desc">Please keep this tab open until the download is complete.</string>
+    <string name="download_successful">Your video has been downloaded successfully.</string>
 </resources>
