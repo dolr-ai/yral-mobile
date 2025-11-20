@@ -11,7 +11,6 @@ import com.yral.shared.analytics.User
 import com.yral.shared.analytics.di.IS_DEBUG
 import com.yral.shared.analytics.events.EventData
 import com.yral.shared.analytics.events.TokenType
-import com.yral.shared.analytics.events.shouldAppendUtm
 import com.yral.shared.preferences.UTM_CAMPAIGN_PARAM
 import com.yral.shared.preferences.UTM_CONTENT_PARAM
 import com.yral.shared.preferences.UTM_MEDIUM_PARAM
@@ -71,9 +70,6 @@ actual class MixpanelAnalyticsProvider actual constructor(
 
     override fun trackEvent(event: EventData) {
         val properties: MutableMap<String, Any?> = mapConverter.toMap(event).toMutableMap()
-        if (event.shouldAppendUtm()) {
-            appendUtmParams(properties)
-        }
         mixpanel.trackMap(toValidKeyName(event.event), properties)
     }
 
@@ -88,6 +84,14 @@ actual class MixpanelAnalyticsProvider actual constructor(
                 "is_forced_gameplay_test_user" to user.isForcedGamePlayUser,
                 "email_id" to user.emailId,
             )
+
+        // Attach UTM attribution as user-level properties (people + super props)
+        val utmParams = utmAttributionStore.get()
+        utmParams.source?.let { superProps[UTM_SOURCE_PARAM] = it }
+        utmParams.medium?.let { superProps[UTM_MEDIUM_PARAM] = it }
+        utmParams.campaign?.let { superProps[UTM_CAMPAIGN_PARAM] = it }
+        utmParams.term?.let { superProps[UTM_TERM_PARAM] = it }
+        utmParams.content?.let { superProps[UTM_CONTENT_PARAM] = it }
         mixpanel.people.set(ONE_SIGNAL_PROPERTY, user.userId)
         if (user.isLoggedIn == true) {
             mixpanel.identify(user.userId)
@@ -100,6 +104,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
             superProps["user_id"] = null
         }
         mixpanel.people.set(JSONObject(superProps))
+        superProps.keys.filter { it.contains("utm") }.forEach { superProps.remove(it) }
         mixpanel.registerSuperProperties(JSONObject(superProps))
     }
 
@@ -111,15 +116,6 @@ actual class MixpanelAnalyticsProvider actual constructor(
     }
 
     override fun toValidKeyName(key: String): String = key
-
-    private fun appendUtmParams(props: MutableMap<String, Any?>) {
-        val utmParams = utmAttributionStore.get()
-        utmParams.source?.let { props[UTM_SOURCE_PARAM] = it }
-        utmParams.medium?.let { props[UTM_MEDIUM_PARAM] = it }
-        utmParams.campaign?.let { props[UTM_CAMPAIGN_PARAM] = it }
-        utmParams.term?.let { props[UTM_TERM_PARAM] = it }
-        utmParams.content?.let { props[UTM_CONTENT_PARAM] = it }
-    }
 
     val TokenType.serialName: String
         get() =
