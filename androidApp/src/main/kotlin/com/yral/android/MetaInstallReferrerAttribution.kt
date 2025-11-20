@@ -1,7 +1,9 @@
 package com.yral.android
 
 import android.app.Application
+import co.touchlab.kermit.LogWriter
 import co.touchlab.kermit.Logger
+import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.koin.koinInstance
@@ -13,6 +15,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.koin.core.qualifier.named
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
@@ -30,6 +33,11 @@ class MetaInstallReferrerAttribution(
 
     private val crashlyticsManager: CrashlyticsManager by lazy { koinInstance.get<CrashlyticsManager>() }
     private val utmAttributionStore: UtmAttributionStore by lazy { koinInstance.get<UtmAttributionStore>() }
+    private val logger: Logger by lazy {
+        val baseLogger = koinInstance.get<YralLogger>()
+        val sentryLogWriter = koinInstance.get<LogWriter>(named("installReferrerLogWriter"))
+        baseLogger.withAdditionalLogWriter(sentryLogWriter).withTag("MetaInstallReferrer")
+    }
 
     fun isMetaInstallReferrerData(referrer: String): Boolean {
         val trimmed = referrer.trim()
@@ -41,7 +49,7 @@ class MetaInstallReferrerAttribution(
 
     fun processEncryptedData(encryptedJsonString: String) {
         if (utmAttributionStore.isInstallReferrerCompleted()) {
-            Logger.d("MetaInstallReferrer") { "Install referrer attribution already completed, skipping." }
+            logger.i { "Install referrer attribution already completed, skipping." }
             return
         }
 
@@ -49,7 +57,7 @@ class MetaInstallReferrerAttribution(
             runCatching {
                 val key = application.getString(R.string.meta_install_referrer_decryption_key)
                 if (key.isEmpty()) {
-                    Logger.d("MetaInstallReferrer") { "Decryption key not available" }
+                    logger.i { "Decryption key not available" }
                     return@runCatching
                 }
 
@@ -75,13 +83,22 @@ class MetaInstallReferrerAttribution(
                             term = utmParams.term,
                             content = utmParams.content,
                         )
-                        Logger.d("MetaInstallReferrer") { "Successfully stored Meta Install Referrer UTM params" }
+                        utmAttributionStore.markInstallReferrerCompleted()
+                        logger.i {
+                            "Successfully stored Meta Install Referrer UTM params: " +
+                                "source=${utmParams.source}, " +
+                                "campaign=${utmParams.campaign}, " +
+                                "term=${utmParams.term}, " +
+                                "content=${utmParams.content}"
+                        }
+                    } else {
+                        logger.d { "Decrypted metadata resulted in empty UTM params" }
                     }
                 } else {
-                    Logger.d("MetaInstallReferrer") { "No encrypted data found in utm_content.source" }
+                    logger.i { "No encrypted data found in utm_content.source" }
                 }
             }.onFailure { exception ->
-                Logger.e("MetaInstallReferrer", exception) { "Failed to process Meta Install Referrer data" }
+                logger.e(exception) { "Failed to process Meta Install Referrer data" }
                 crashlyticsManager.recordException(
                     exception as? Exception ?: Exception(exception),
                     ExceptionType.INSTALL_REFERRER,

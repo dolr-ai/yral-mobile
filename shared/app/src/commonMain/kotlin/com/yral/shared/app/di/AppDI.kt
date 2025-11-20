@@ -89,8 +89,9 @@ fun initKoin(config: KoinAppDeclaration? = null) {
 internal val loggerModule =
     module {
         single { SentryLogWriter() }
-        single(named("httpLogWriter")) { get<SentryLogWriter>() }
-        single(named("rustLogWriter")) { get<SentryLogWriter>() }
+        single<LogWriter>(named("httpLogWriter")) { SentryLogWriter() }
+        single<LogWriter>(named("rustLogWriter")) { SentryLogWriter() }
+        single<LogWriter>(named("installReferrerLogWriter")) { SentryLogWriter() }
         single {
             val writers = mutableListOf<LogWriter>()
             if (get(IS_DEBUG)) {
