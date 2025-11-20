@@ -362,13 +362,16 @@ def _record_banned_principals(banned: dict[str, int], bucket_id: str) -> None:
     """
     batch = db().batch()
 
-    for pid, total in banned.items():
-        doc = _banned_user_doc(pid)
-        batch.set(doc, {
-            "bucket_id": bucket_id,
-            "total_games": total,
-            "banned_at": firestore.SERVER_TIMESTAMP
-        }, merge=True)
+    if banned:
+        print(f"[BAN] writing {len(banned)} principals for {bucket_id}", file=sys.stderr)
+        for pid, total in banned.items():
+            doc = _banned_user_doc(pid)
+            batch.set(doc, {
+                "bucket_id": bucket_id,
+                "total_games": total,
+                "banned_at": firestore.SERVER_TIMESTAMP
+            }, merge=True)
+            print(f"[BAN] principal={pid} total_games={total}", file=sys.stderr)
 
     batch.commit()
 
