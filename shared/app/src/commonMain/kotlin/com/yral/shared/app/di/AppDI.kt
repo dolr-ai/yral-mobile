@@ -29,6 +29,7 @@ import com.yral.shared.http.di.networkModule
 import com.yral.shared.libs.arch.data.NetworkBoundResource
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
+import com.yral.shared.libs.fileio.di.fileIoModule
 import com.yral.shared.libs.videoPlayer.pool.PlatformMediaSourceFactory
 import com.yral.shared.libs.videoPlayer.pool.PlatformPlayerFactory
 import com.yral.shared.preferences.di.preferencesModule
@@ -57,6 +58,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             analyticsModule,
             crashlyticsModule,
             networkModule,
+            fileIoModule,
             rustModule,
             firebaseAuthModule,
             firestoreModule,

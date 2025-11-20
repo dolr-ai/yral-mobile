@@ -57,6 +57,7 @@ if (isLocalRust) {
 include(":shared:rust:service")
 include(":shared:libs:preferences")
 include(":shared:libs:http")
+include(":shared:libs:file-io")
 include(":shared:features:auth")
 include(":shared:libs:analytics")
 include(":shared:libs:crashlytics")
