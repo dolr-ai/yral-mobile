@@ -148,9 +148,7 @@ class InstallReferrerAttribution(
                     )
                 }.onSuccess {
                     utmAttributionStore.markInstallReferrerCompleted()
-                    logger.i {
-                        "Successfully stored UTM params: source=${utmParams.source}, campaign=${utmParams.campaign}"
-                    }
+                    logger.i { "Successfully stored UTM params: $utmParams" }
                 }.onFailure { exception ->
                     logger.e(exception) { "Failed to store UTM params from Play InstallReferrer" }
                     crashlyticsManager.recordException(
