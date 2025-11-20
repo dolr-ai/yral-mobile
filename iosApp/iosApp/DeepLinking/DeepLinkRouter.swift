@@ -13,7 +13,8 @@ import iosSharedUmbrella
 final class DeepLinkRouter: ObservableObject {
   static let shared = DeepLinkRouter()
 
-  @Published var pendingDestination: Destination?
+  @Published private(set) var appRoute: AppRoute?
+  @Published private(set) var pendingDestination: Destination?
 
   enum Destination: Equatable {
     case home
@@ -28,15 +29,25 @@ final class DeepLinkRouter: ObservableObject {
   }
 
   @discardableResult func resolve(from userInfo: [AnyHashable: Any]) -> Destination? {
-    if let dest = resolveDestination(fromPNs: userInfo) {
-      pendingDestination = dest
-    } else if let dest = resolveBranchDestination(fromBranch: userInfo) {
-      pendingDestination = dest
+    if let route = resolveAppRoute(fromPNs: userInfo) {
+      setRoute(route: route)
+    } else if let route = resolveBranchAppRoute(fromBranch: userInfo) {
+      setRoute(route: route)
     }
     return pendingDestination
   }
+  
+  func setRoute(route: AppRoute) {
+    appRoute = route
+    pendingDestination = mapRouteToDestination(route)
+  }
+    
+  func clearResolution() {
+    appRoute = nil
+    pendingDestination = nil
+  }
 
-  private func resolveDestination(fromPNs userInfo: [AnyHashable: Any]) -> Destination? {
+  private func resolveAppRoute(fromPNs userInfo: [AnyHashable: Any]) -> AppRoute? {
     guard let payloadString = userInfo[Constants.payloadString] as? String,
           let payloadData = payloadString.data(using: .utf8),
           let payloadDict = try? JSONSerialization.jsonObject(with: payloadData) as? [String: Any],
@@ -45,18 +56,18 @@ final class DeepLinkRouter: ObservableObject {
     }
 
     let route = AppDIHelper().getRoutingService().parseUrl(url: internalURL)
-    return mapRouteToDestination(route)
+    return route
   }
 
-  private func resolveBranchDestination(fromBranch params: [AnyHashable: Any]) -> Destination? {
+  private func resolveBranchAppRoute(fromBranch params: [AnyHashable: Any]) -> AppRoute? {
     guard DeepLinkRouter.isBranchClick(params["+clicked_branch_link"]) else { return nil }
 
     if let type = params[Constants.typeString] as? String,
        type == Constants.videoUploadSuccessType {
-      return .profileAfterUpload
+      return VideoUploadSuccessful(videoID: nil)
     } else if let deepLinkPath = params["$deeplink_path"] as? String {
       let route = AppDIHelper().getRoutingService().parseUrl(url: deepLinkPath)
-      return mapRouteToDestination(route)
+      return route
     }
 
     return nil
