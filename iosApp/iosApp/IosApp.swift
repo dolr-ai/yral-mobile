@@ -215,6 +215,11 @@ struct IosApp: App {
   @StateObject private var deepLinkRouter = DeepLinkRouter.shared
   @StateObject private var eventBus: EventBus
   @State private var authStatus: AuthState = .uninitialized
+  @State private var showEULA: Bool = !(
+    UserDefaultsManager.shared.get(for: .eulaAccepted) as Bool? ?? false
+  )
+  @State private var showRecommendedAppUpdate = false
+  @State private var showMandatoryAppUpdate = false
 
   init() {
     let container = AppDIContainer()
@@ -232,20 +237,47 @@ struct IosApp: App {
 
   var body: some Scene {
     WindowGroup {
-      // RootView(root: delegate.root)
-      //     .ignoresSafeArea(edges: .all)
-      //     .ignoresSafeArea(.keyboard)
-      //     .edgesIgnoringSafeArea(.all)
-     contentView()
-       .environmentObject(deepLinkRouter)
-       .environmentObject(eventBus)
-       .environment(\.appDIContainer, appDIContainer)
-       .onOpenURL { url in
-         Branch.getInstance().application(UIApplication.shared, open: url, options: [:])
-       }
-       .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
-         Branch.getInstance().continue(activity)
-       }
+       RootView(root: delegate.root)
+           .ignoresSafeArea(edges: .all)
+           .ignoresSafeArea(.keyboard)
+           .edgesIgnoringSafeArea(.all)
+           .fullScreenCover(isPresented: $showEULA) {
+             EULAPopupView(isPresented: $showEULA) {
+               UserDefaultsManager.shared.set(true, for: .eulaAccepted)
+             }
+             .background( ClearBackgroundView() )
+           }
+           .fullScreenCover(isPresented: $showRecommendedAppUpdate) {
+             RecommendedUpdatePopUp {
+               showRecommendedAppUpdate = false
+             }
+             .background( ClearBackgroundView() )
+           }
+           .fullScreenCover(isPresented: $showMandatoryAppUpdate) {
+             MandatoryUpdateView()
+           }
+           .onAppear {
+             let status = AppUpdateHandler.shared.getAppUpdateStatus()
+             switch status {
+             case .none:
+               break
+             case .force:
+               self.showMandatoryAppUpdate = true
+             case .recommended:
+               self.showRecommendedAppUpdate = true
+             }
+           }
+
+//     contentView()
+//       .environmentObject(deepLinkRouter)
+//       .environmentObject(eventBus)
+//       .environment(\.appDIContainer, appDIContainer)
+//       .onOpenURL { url in
+//         Branch.getInstance().application(UIApplication.shared, open: url, options: [:])
+//       }
+//       .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
+//         Branch.getInstance().continue(activity)
+//       }
     }
   }
 
