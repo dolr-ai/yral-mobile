@@ -21,7 +21,7 @@ def add_common_pods
   pod 'Mixpanel', '5.0.8'
   pod 'FBSDKCoreKit', '18.0.0'
   pod 'OneSignal/OneSignal', '5.2.14'
-  pod 'Sentry', '8.25.0'
+  pod 'Sentry', '8.57.1'
 end
 
 target 'Yral' do
