@@ -33,7 +33,7 @@ class InstallReferrerAttribution(
     private var client: InstallReferrerClient? = null
     private val crashlyticsManager: CrashlyticsManager by lazy { koinInstance.get<CrashlyticsManager>() }
     private val utmAttributionStore: UtmAttributionStore by lazy { koinInstance.get<UtmAttributionStore>() }
-    private val metaAttribution by lazy { MetaInstallReferrerAttribution(application, scope) }
+    private val metaAttribution by lazy { MetaInstallReferrerAttribution(scope) }
     private val logger: Logger by lazy {
         val baseLogger = koinInstance.get<YralLogger>()
         val sentryLogWriter = koinInstance.get<LogWriter>(named("installReferrerLogWriter"))

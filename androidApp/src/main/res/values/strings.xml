@@ -23,9 +23,6 @@
     <!-- Facebook SDK Configuration -->
     <string name="facebook_app_id">4094678660808510</string>
     <string name="facebook_client_token">12e001a6a4b9c84c8e617275f274a1a1</string>
-    <!-- Meta Install Referrer Decryption Key (optional) -->
-    <!-- Get this from Facebook App Dashboard > Settings > Basic > Android section -->
-    <string name="meta_install_referrer_decryption_key">YOUR_DECRYPTION_KEY_HERE</string>
     <!-- MixPanel SDK Configuration -->
     <string name="mixpanel_token">609abef3172b5fc64554f5ac6c77414d</string>
     <!-- OneSignal SDK Configuration -->
