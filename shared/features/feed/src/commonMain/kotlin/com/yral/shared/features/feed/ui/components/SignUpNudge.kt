@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.features.auth.ui.SignupView
+import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
@@ -33,7 +34,7 @@ import yral_mobile.shared.features.feed.generated.resources.scroll_to_next_video
 @Composable
 fun SignupNudge(
     tncLink: String,
-    onSignupClicked: () -> Unit,
+    onSignupClicked: (SocialProvider) -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState()
     var link by remember { mutableStateOf("") }

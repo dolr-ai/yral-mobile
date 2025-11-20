@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,22 +35,20 @@ fun LoginBottomSheet(
     termsLink: String,
     bottomSheetState: SheetState,
     onDismissRequest: () -> Unit,
+    onLoginSuccess: (() -> Unit)? = null,
     openTerms: () -> Unit,
+    headlineText: String? = null,
     loginViewModel: LoginViewModel = koinViewModel(),
 ) {
-    val dismissRequest =
-        remember(onDismissRequest, loginViewModel) {
-            {
-                onDismissRequest()
-                loginViewModel.sheetDismissed()
-            }
+    val dismissRequest = remember(onDismissRequest) { createDismissCallback(onDismissRequest, loginViewModel) }
+    val loginSuccess =
+        remember(onLoginSuccess) {
+            onLoginSuccess?.let { createDismissCallback(it, loginViewModel) }
         }
     val context = getContext()
     val state = loginViewModel.state.collectAsStateWithLifecycle()
     when (state.value) {
-        is UiState.Initial,
-        is UiState.InProgress,
-        -> {
+        is UiState.Initial, is UiState.InProgress -> {
             YralBottomSheet(
                 onDismissRequest = dismissRequest,
                 bottomSheetState = bottomSheetState,
@@ -60,20 +59,16 @@ fun LoginBottomSheet(
                     Column(
                         modifier =
                             Modifier
-                                .padding(
-                                    start = 16.dp,
-                                    top = 45.dp,
-                                    end = 16.dp,
-                                    bottom = 16.dp,
-                                ),
+                                .padding(start = 16.dp, top = 45.dp, end = 16.dp, bottom = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(0.dp, Alignment.Top),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         SignupView(
                             pageName = pageName,
-                            onSignupClicked = { loginViewModel.signInWithGoogle(context) },
+                            onSignupClicked = { provider -> loginViewModel.signInWithSocial(context, provider) },
                             termsLink = termsLink,
                             openTerms = openTerms,
+                            headlineText = headlineText,
                         )
                         Spacer(modifier = Modifier.height(adaptiveHeight))
                     }
@@ -81,7 +76,7 @@ fun LoginBottomSheet(
             }
         }
         is UiState.Success<*> -> {
-            dismissRequest()
+            LaunchedEffect(Unit) { loginSuccess?.invoke() ?: dismissRequest() }
         }
         is UiState.Failure -> {
             YralErrorMessage(
@@ -89,8 +84,8 @@ fun LoginBottomSheet(
                 error = stringResource(DesignRes.string.could_not_login_desc),
                 sheetState = bottomSheetState,
                 cta = stringResource(DesignRes.string.ok),
-                onClick = { dismissRequest() },
-                onDismiss = { dismissRequest() },
+                onClick = dismissRequest,
+                onDismiss = dismissRequest,
             )
         }
     }
@@ -98,6 +93,15 @@ fun LoginBottomSheet(
 
 @Composable
 internal expect fun getContext(): Any
+
+private fun createDismissCallback(
+    onDismiss: () -> Unit,
+    loginViewModel: LoginViewModel,
+): () -> Unit =
+    {
+        onDismiss()
+        loginViewModel.sheetDismissed()
+    }
 
 private object LoginBottomSheetConstants {
     const val BOTTOM_SHEET_SPACER_PERCENT_TO_SCREEN = 0.3f

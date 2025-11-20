@@ -4,6 +4,7 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
+import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.account.nav.AccountComponent
@@ -27,6 +28,14 @@ abstract class HomeComponent {
     abstract fun onAccountTabClick()
     abstract fun onWalletTabClick()
     abstract fun onNavigationRequest(appRoute: AppRoute)
+    abstract fun showLoginBottomSheet(
+        pageName: SignupPageName,
+        headlineText: String?,
+        termsLink: String,
+        onDismissRequest: () -> Unit,
+        onLoginSuccess: () -> Unit,
+    )
+    abstract fun hideLoginBottomSheetIfVisible()
 
     sealed class Child {
         class Feed(
@@ -55,6 +64,14 @@ abstract class HomeComponent {
         class VideoViewsRewardsBottomSheet(
             val component: VideoViewRewardsComponent,
             val data: RewardsReceived,
+        ) : SlotChild()
+
+        class LoginBottomSheet(
+            val pageName: SignupPageName,
+            val headlineText: String?,
+            val termsLink: String,
+            val onDismissRequest: () -> Unit,
+            val onLoginSuccess: () -> Unit,
         ) : SlotChild()
     }
     companion object {

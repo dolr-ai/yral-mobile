@@ -49,6 +49,8 @@ kotlin {
             implementation(projects.shared.features.leaderboard)
             implementation(projects.shared.rust.service)
             implementation(libs.coil.compose)
+            implementation(libs.coil.ktor3)
+            implementation(libs.sentry.kmp)
 
             implementation(compose.components.resources)
 

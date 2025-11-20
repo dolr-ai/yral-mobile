@@ -26,6 +26,11 @@ jobs:
   build-play-store-internal:
     if: startsWith(github.event.pull_request.head.ref, 'release/') || startsWith(github.event.pull_request.head.ref, 'hotfix/')
     runs-on: ubuntu-latest
+    env:
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+      SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+      SENTRY_URL: ${{ vars.SENTRY_URL }}
 
     steps:
       - name: Check out repository

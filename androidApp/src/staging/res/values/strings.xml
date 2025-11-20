@@ -2,4 +2,6 @@
     <string name="app_name">Yral-α</string>
     <string name="mixpanel_token">9f7ce647e4b8548dc3cd5b16a98c9ade</string>
     <string name="onesignal_app_id">fe0ef73c-3eef-4c16-baa8-59dc8512895a</string>
+    <string name="sentry_dsn">https://8c02037eff3cc273ff921053b3aeb309@apm.yral.com/13</string>
+    <string name="sentry_environment">staging</string>
 </resources>

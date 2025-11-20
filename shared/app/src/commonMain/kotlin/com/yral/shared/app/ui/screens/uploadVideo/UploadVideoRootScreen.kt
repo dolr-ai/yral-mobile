@@ -30,19 +30,20 @@ internal fun UploadVideoRootScreen(
         modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer),
         animation = stackAnimation(slide()),
     ) { child ->
+        val loginViewModel: LoginViewModel = koinViewModel()
+        val loginState by loginViewModel.state.collectAsStateWithLifecycle()
         when (val instance = child.instance) {
             is UploadVideoRootComponent.Child.FlowSelection -> {
                 FlowSelectionScreen(component = instance.component)
             }
             is UploadVideoRootComponent.Child.AiVideoGen -> {
-                val loginViewModel: LoginViewModel = koinViewModel()
-                val loginState by loginViewModel.state.collectAsStateWithLifecycle()
                 AiVideoGenScreen(
                     component = instance.component,
                     bottomPadding = bottomPadding,
                     loginState = loginState,
                     loginBottomSheet = { pageName, bottomSheetState, onDismissRequest, termsLink, openTerms ->
                         LoginBottomSheet(
+                            pageName = pageName,
                             bottomSheetState = bottomSheetState,
                             onDismissRequest = onDismissRequest,
                             termsLink = termsLink,
@@ -52,7 +53,20 @@ internal fun UploadVideoRootScreen(
                 )
             }
             is UploadVideoRootComponent.Child.FileUpload -> {
-                UploadVideoScreen(component = instance.component, bottomPadding = bottomPadding)
+                UploadVideoScreen(
+                    component = instance.component,
+                    bottomPadding = bottomPadding,
+                    loginState = loginState,
+                    loginBottomSheet = { pageName, bottomSheetState, onDismissRequest, termsLink, openTerms ->
+                        LoginBottomSheet(
+                            pageName = pageName,
+                            bottomSheetState = bottomSheetState,
+                            onDismissRequest = onDismissRequest,
+                            termsLink = termsLink,
+                            openTerms = openTerms,
+                        )
+                    },
+                )
             }
         }
     }

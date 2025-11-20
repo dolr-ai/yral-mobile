@@ -32,6 +32,7 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
 
             implementation(projects.shared.core)
+            implementation(projects.shared.libs.koin)
 
             implementation(libs.coil.compose)
 

@@ -11,16 +11,9 @@ extension DefaultAuthClient {
   func exchangePrincipalID(type: DelegateIdentityType) async throws {
     do {
       try await recordThrowingOperation {
-        let newSignIn = try? await firebaseService.signInAnonymously(with: userPrincipalString ?? "")
+        let newSignIn = try await firebaseService.signInAnonymously(with: userPrincipalString ?? "")
+        let userIDToken = try await firebaseService.fetchUserIDToken()
 
-        let userIDToken = try? await firebaseService.fetchUserIDToken()
-        guard let userIDToken else {
-          Task { [weak self] in
-            guard let self = self else { return }
-            await self.setAnalyticsData()
-          }
-          return
-        }
         var httpHeaders = [
           "Content-Type": "application/json",
           "Authorization": "Bearer \(userIDToken)"
@@ -33,12 +26,13 @@ extension DefaultAuthClient {
           "principal_id": userPrincipalString ?? ""
         ]
 
-        if userPrincipalString != nil, !(newSignIn ?? true) {
+        if userPrincipalString != nil, !newSignIn {
           let dailyRank = try await getDailyRank(type: type)
           try await getUserBalance(type: type, dailyRank: dailyRank)
         } else {
           try await firstTimeSignIn(type: type, httpHeaders: httpHeaders, httpBody: httpBody)
         }
+
         Task { [weak self] in
           guard let self = self else { return }
           await self.setAnalyticsData()
@@ -57,9 +51,7 @@ extension DefaultAuthClient {
 
     var httpHeaders = [String: String]()
 
-    guard let userIDToken = try await firebaseService.fetchUserIDToken() else {
-      throw DailyRankError.unknown("Failed to fetch user ID token")
-    }
+    let userIDToken = try await firebaseService.fetchUserIDToken()
 
     httpHeaders = [
       "Content-Type": "application/json",

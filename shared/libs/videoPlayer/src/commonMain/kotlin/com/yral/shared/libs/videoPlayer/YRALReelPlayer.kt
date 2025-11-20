@@ -11,6 +11,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
@@ -30,6 +31,7 @@ import com.yral.shared.libs.videoPlayer.util.EdgeScrollDetectConnection
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideo
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
 import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
+import com.yral.shared.libs.videoPlayer.util.evictPrefetchedVideo
 import com.yral.shared.libs.videoPlayer.util.nextN
 import com.yral.shared.libs.videoPlayer.util.rememberPrefetchPlayerWithLifecycle
 import kotlinx.coroutines.delay
@@ -110,6 +112,17 @@ internal fun YRALReelsPlayerView(
     // Prefetch state management
     val prefetchQueue = remember { mutableStateSetOf<Reels>() }
     val prefetchedReels = remember { mutableStateSetOf<String>() }
+    val prefetchedReelUrls = remember { mutableStateMapOf<String, String>() }
+    DisposableEffect(Unit) {
+        onDispose {
+            prefetchedReelUrls.values.forEach { url ->
+                evictPrefetchedVideo(url)
+            }
+            prefetchedReelUrls.clear()
+            prefetchedReels.clear()
+            prefetchQueue.clear()
+        }
+    }
     // Add new videos to prefetch queue on page change
     LaunchedEffect(reels, pagerState) {
         snapshotFlow { pagerState.currentPage }
@@ -133,19 +146,34 @@ internal fun YRALReelsPlayerView(
             onUrlReady = {
                 prefetchQueue.removeAll { it.videoId == reel.videoId }
                 prefetchedReels.add(reel.videoId)
+                prefetchedReelUrls[reel.videoId] = reel.videoUrl
             },
         )
     }
 
+    LaunchedEffect(reels, pagerState, prefetchedReelUrls) {
+        snapshotFlow {
+            val currentPage = pagerState.currentPage
+            val keepIds = mutableSetOf<String>()
+            reels.getOrNull(currentPage)?.videoId?.let(keepIds::add)
+            reels.getOrNull(currentPage - 1)?.videoId?.let(keepIds::add)
+            reels
+                .nextN(currentPage, PREFETCH_NEXT_N_VIDEOS)
+                .forEach { keepIds.add(it.videoId) }
+            keepIds.toSet() to prefetchedReelUrls.toMap()
+        }.distinctUntilChanged().collect { (keepIds, prefetchedMap) ->
+            prefetchedMap.forEach { (videoId, url) ->
+                if (videoId !in keepIds) {
+                    evictPrefetchedVideo(url)
+                    prefetchedReels.remove(videoId)
+                    prefetchedReelUrls.remove(videoId)
+                }
+            }
+        }
+    }
+
     // Report initial pager state
     LaunchedEffect(Unit) { onPageLoaded(pagerState.currentPage) }
-
-    // Animate scrolling to the current page when it changes
-    LaunchedEffect(key1 = pagerState) {
-        snapshotFlow { pagerState.currentPage }
-            .distinctUntilChanged()
-            .collect { page -> pagerState.animateScrollToPage(page) }
-    }
 
     // Page change to start/stop play back time trace
     var lastPage by remember { mutableIntStateOf(-1) }
@@ -172,10 +200,11 @@ internal fun YRALReelsPlayerView(
     }
 
     var isPause by remember { mutableStateOf(false) } // State for pausing/resuming video
+    LaunchedEffect(pagerState.currentPage) { isPause = false }
 
     // Detect user attempts to scroll beyond available pages (start or end)
     val edgeDetectConnection =
-        remember(pageCount, pagerState.currentPage, playerConfig.reelVerticalScrolling) {
+        remember(pageCount, playerConfig.reelVerticalScrolling) {
             EdgeScrollDetectConnection(
                 pageCount = pageCount,
                 pagerState = pagerState,

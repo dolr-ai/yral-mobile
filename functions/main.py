@@ -30,6 +30,7 @@ BALANCE_URL_YRAL_TOKEN = "https://yral-hot-or-not.go-bazzinga.workers.dev/update
 BALANCE_URL_CKBTC = "https://yral-hot-or-not.go-bazzinga.workers.dev/v2/transfer_ckbtc"
 
 IST = timezone(timedelta(hours=5, minutes=30))
+SATOSHIS_PER_BTC = 100_000_000
 
 # ─────────────────────  DATABASE HELPER  ────────────────────────
 _db = None
@@ -218,7 +219,7 @@ def _push_delta_yral_token(token: str, principal_id: str, delta: int) -> tuple[b
         "is_airdropped": False
     }
     try:
-        resp = requests.post(url, json=body, timeout=5, headers=headers)
+        resp = requests.post(url, json=body, timeout=30, headers=headers)
         if resp.status_code == 200:
             return True, None
         return False, f"Status: {resp.status_code}, Body: {resp.text}"
@@ -240,7 +241,7 @@ def _push_delta_ckbtc(token: str, amount: int, recipient_principal: str, memo_te
     }
 
     try:
-        resp = requests.post(url, json=body, timeout=5, headers=headers)
+        resp = requests.post(url, json=body, timeout=30, headers=headers)
         if resp.status_code == 200:
             json = resp.json()
             if json.get("success", False):
@@ -557,8 +558,8 @@ def cast_vote_v2(request: Request):
                 })
 
                 zero = {s["id"]: 0 for s in smileys}
-                zero[seed_a] = 1
-                zero[seed_b] = 1
+                zero[seed_a] = 1000
+                zero[seed_b] = 1000
                 tx.set(shard_ref(0), zero, merge=True)
 
                 for k in range(1, SHARDS):
@@ -882,7 +883,7 @@ def _has_any_docs_for_day(bucket_id: str) -> bool:
         print(f"[skip] users scan error for {bucket_id}: {e}", file=sys.stderr)
         return False
 
-def _top_winners(bucket_id: str) -> list[dict]:
+def _top_winners(bucket_id: str, max_rank: int = 5) -> list[dict]:
     MAX_DOCS = 100
     coll = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
 
@@ -902,7 +903,7 @@ def _top_winners(bucket_id: str) -> list[dict]:
         if wins != last_wins:
             current_rank += 1
             last_wins = wins
-        if current_rank > 5:
+        if current_rank > max_rank:
             break
         winners.append({
             "principal_id": snap.id,
@@ -961,13 +962,30 @@ def reward_leaderboard_winners(cloud_event):
                 "reason": "Missing currency, rewards_table, or token"
             }), 400
 
-        winners = _top_winners(bucket_id)
+        max_reward_rank = max(1, len(rewards_table))
+
+        winners = _top_winners(bucket_id, max_rank=max_reward_rank)
         if not winners:
             print(f"[INFO] No winners found for {bucket_id}")
             return jsonify({
                 "status": "skipped",
                 "reason": "No winners found"
             }), 200
+
+        inr_to_ckbtc_factor = None
+        if currency == CURRENCY_BTC:
+            btc_price_inr, price_error = _fetch_btc_price("INR")
+            if price_error or btc_price_inr is None:
+                code, message = price_error if price_error else ("PRICE_UNAVAILABLE", "Unable to fetch BTC price")
+                print(f"[ERROR] BTC reward conversion failed ({code}): {message}")
+                return jsonify({
+                    "status": "error",
+                    "reason": "Unable to fetch BTC price",
+                    "details": message
+                }), 502
+
+            inr_to_ckbtc_factor = SATOSHIS_PER_BTC / btc_price_inr
+            print(f"[INFO] BTC price for rewards (INR): {btc_price_inr}")
 
         reward_log = []
 
@@ -985,7 +1003,10 @@ def reward_leaderboard_winners(cloud_event):
                 success, error = _push_delta_yral_token(token, pid, reward_amount)
             elif currency == CURRENCY_BTC:
                 reward_amount_inr = reward_amount
-                reward_amount_ckbtc = reward_amount_inr * 10   # Assuming 1 BTC = ₹1,00,00,000
+                if not inr_to_ckbtc_factor:
+                    print("[ERROR] BTC conversion factor missing; skipping reward")
+                    continue
+                reward_amount_ckbtc = max(1, int(round(reward_amount_inr * inr_to_ckbtc_factor)))
                 success, error = _push_delta_ckbtc(token, reward_amount_ckbtc, pid, "Daily leaderboard reward")
             else:
                 print(f"[ERROR] Unknown currency: {currency}")
@@ -1969,6 +1990,28 @@ def daily_rank(request: Request):
 #################### BTC to CURRENCY ####################
 TICKER_URL = "https://blockchain.info/ticker"
 
+def _fetch_btc_price(currency_code: str) -> tuple[float | None, tuple[str, str] | None]:
+    try:
+        resp = requests.get(TICKER_URL, timeout=30)
+    except RequestException as e:
+        print(f"[ERROR] BTC price request failed: {e}", file=sys.stderr)
+        return None, ("UPSTREAM_UNREACHABLE", "Price source not reachable")
+
+    if resp.status_code != 200:
+        print(f"[ERROR] BTC price source returned status {resp.status_code}", file=sys.stderr)
+        return None, ("UPSTREAM_BAD_STATUS", f"Price source returned {resp.status_code}")
+
+    try:
+        data = resp.json()
+        currency_data = data.get(currency_code) or {}
+        last = float(currency_data["last"])
+        if last <= 0:
+            raise ValueError("BTC price must be positive")
+        return last, None
+    except (ValueError, TypeError, KeyError) as e:
+        print(f"[ERROR] BTC price payload parse error: {e}", file=sys.stderr)
+        return None, ("UPSTREAM_BAD_PAYLOAD", "Unexpected price payload")
+
 @https_fn.on_request(region="us-central1")
 def btc_value_by_country(request: Request):
     """
@@ -2008,22 +2051,12 @@ def btc_value_by_country(request: Request):
         currency_code = "INR" if country_code == "IN" else "USD"
 
         # ─── Fetch BTC price ────────────────────────────────────────────
-        try:
-            resp = requests.get(TICKER_URL, timeout=6)
-        except requests.RequestException as e:
-            print("Network error:", e, file=sys.stderr)
-            return error_response(502, "UPSTREAM_UNREACHABLE", "Price source not reachable")
+        price, price_error = _fetch_btc_price(currency_code)
+        if price_error or price is None:
+            code, message = price_error if price_error else ("UPSTREAM_BAD_PAYLOAD", "Unexpected price payload")
+            return error_response(502, code, message)
 
-        if resp.status_code != 200:
-            return error_response(502, "UPSTREAM_BAD_STATUS", f"Price source returned {resp.status_code}")
-
-        try:
-            data = resp.json()
-            currency_data = data.get(currency_code) or {}
-            last = round(float(currency_data["last"]), 2)
-        except Exception as e:
-            print("Parse error:", e, file=sys.stderr)
-            return error_response(502, "UPSTREAM_BAD_PAYLOAD", "Unexpected price payload")
+        last = round(price, 2)
 
         return jsonify({
             "conversion_rate": last,
