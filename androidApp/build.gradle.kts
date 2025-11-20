@@ -172,6 +172,8 @@ dependencies {
     implementation(projects.shared.features.reportVideo)
     implementation(compose.components.resources)
     implementation(projects.shared.features.leaderboard)
+
+    testImplementation(libs.kotlin.test)
 }
 
 afterEvaluate {

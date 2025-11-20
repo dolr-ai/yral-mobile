@@ -30,6 +30,7 @@ class InstallReferrerAttribution(
     private var client: InstallReferrerClient? = null
     private val crashlyticsManager: CrashlyticsManager by lazy { koinInstance.get<CrashlyticsManager>() }
     private val utmAttributionStore: UtmAttributionStore by lazy { koinInstance.get<UtmAttributionStore>() }
+    private val metaAttribution by lazy { MetaInstallReferrerAttribution(application, scope) }
 
     fun setup() {
         if (utmAttributionStore.isInstallReferrerCompleted()) {
@@ -63,7 +64,7 @@ class InstallReferrerAttribution(
                             runCatching {
                                 val response = client?.installReferrer
                                 val referrer = response?.installReferrer
-                                Logger.d("InstallReferrer") { "InstallReferrer: $referrer" }
+                                Logger.d("InstallReferrer") { "Play InstallReferrer: $referrer" }
                                 handleInstallReferrer(referrer)
                             }.onFailure { exception ->
                                 Logger.e("InstallReferrer", exception) { "Error while handling install referrer" }
@@ -80,12 +81,12 @@ class InstallReferrerAttribution(
                         InstallReferrerClient.InstallReferrerResponse.DEVELOPER_ERROR,
                         InstallReferrerClient.InstallReferrerResponse.SERVICE_DISCONNECTED,
                         -> {
-                            Logger.d("InstallReferrer") { "InstallReferrer not available, code=$responseCode" }
+                            Logger.d("InstallReferrer") { "Play InstallReferrer not available, code=$responseCode" }
                             endConnectionSafely()
                         }
 
                         else -> {
-                            Logger.d("InstallReferrer") { "Unknown InstallReferrer response code=$responseCode" }
+                            Logger.d("InstallReferrer") { "Unknown Play InstallReferrer response code=$responseCode" }
                             endConnectionSafely()
                         }
                     }
@@ -98,7 +99,7 @@ class InstallReferrerAttribution(
 
             override fun onInstallReferrerServiceDisconnected() {
                 // Service disconnected; we won't retry automatically but we log for diagnostics.
-                Logger.d("InstallReferrer") { "InstallReferrer service disconnected" }
+                Logger.d("InstallReferrer") { "Play InstallReferrer service disconnected" }
                 endConnectionSafely()
             }
         }
@@ -118,25 +119,33 @@ class InstallReferrerAttribution(
     private fun handleInstallReferrer(referrer: String?) {
         try {
             val raw = referrer?.takeIf { it.isNotBlank() } ?: return
-            val utmParams = extractUtmParams(raw)
-            if (utmParams.isEmpty()) return
 
-            runCatching {
-                utmAttributionStore.storeIfEmpty(
-                    source = utmParams.source,
-                    medium = utmParams.medium,
-                    campaign = utmParams.campaign,
-                    term = utmParams.term,
-                    content = utmParams.content,
-                )
-            }.onSuccess {
-                utmAttributionStore.markInstallReferrerCompleted()
-            }.onFailure { exception ->
-                Logger.e("InstallReferrer", exception) { "Failed to store UTM params from InstallReferrer" }
-                crashlyticsManager.recordException(
-                    exception as? Exception ?: Exception(exception),
-                    ExceptionType.INSTALL_REFERRER,
-                )
+            if (metaAttribution.isMetaInstallReferrerData(raw)) {
+                Logger.d("InstallReferrer") {
+                    "Detected Meta Install Referrer data, delegating to MetaInstallReferrerAttribution"
+                }
+                metaAttribution.processEncryptedData(raw)
+            } else {
+                val utmParams = extractUtmParams(raw)
+                if (utmParams.isEmpty()) return
+                runCatching {
+                    utmAttributionStore.storeIfEmpty(
+                        source = utmParams.source,
+                        medium = utmParams.medium,
+                        campaign = utmParams.campaign,
+                        term = utmParams.term,
+                        content = utmParams.content,
+                    )
+                }.onSuccess { utmAttributionStore.markInstallReferrerCompleted() }.onFailure { exception ->
+                    Logger.e(
+                        "InstallReferrer",
+                        exception,
+                    ) { "Failed to store UTM params from Play InstallReferrer" }
+                    crashlyticsManager.recordException(
+                        exception as? Exception ?: Exception(exception),
+                        ExceptionType.INSTALL_REFERRER,
+                    )
+                }
             }
         } catch (exception: Exception) {
             Logger.e("InstallReferrer", exception) { "Unexpected error while parsing InstallReferrer" }
