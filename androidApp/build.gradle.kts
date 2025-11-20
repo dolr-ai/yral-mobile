@@ -28,6 +28,11 @@ android {
             name = "BRANCH_KEY",
             value = "\"${System.getenv("YRAL_BRANCH_KEY")}\"",
         )
+        buildConfigField(
+            type = "String",
+            name = "META_INSTALL_REFERRER_DECRYPTION_KEY",
+            value = "\"${System.getenv("YRAL_META_INSTALL_REFERRER_DECRYPTION_KEY") ?: ""}\"",
+        )
     }
     buildFeatures {
         compose = true
