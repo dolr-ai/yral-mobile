@@ -25,6 +25,8 @@ PID_REGEX = re.compile(r'^[A-Za-z0-9_-]{6,64}$')
 SMILEY_GAME_CONFIG_PATH = "config/smiley_game_v2"
 VIDEO_COLL = "videos"
 DAILY_COLL = "leaderboards_daily"
+BANNED_USERS_COLL = "smiley_game_banned_users"
+SMILEY_GAME_BAN_THRESHOLD = 15000
 
 BALANCE_URL_YRAL_TOKEN = "https://yral-hot-or-not.go-bazzinga.workers.dev/update_balance/"
 BALANCE_URL_CKBTC = "https://yral-hot-or-not.go-bazzinga.workers.dev/v2/transfer_ckbtc"
@@ -495,6 +497,32 @@ def _get_daily_position(pid: str) -> int:
 
     return position
 
+def _banned_user_doc(pid: str):
+    return db().collection(BANNED_USERS_COLL).document(pid)
+
+def _is_smiley_game_banned(pid: str) -> bool:
+    """
+    Checks if a principal is marked as banned for the smiley game.
+    """
+    snap = _banned_user_doc(pid).get()
+    return snap.exists
+
+def _record_banned_principals(banned: dict[str, int], bucket_id: str) -> None:
+    """
+    Persist banned principal ids with metadata for traceability.
+    """
+    batch = db().batch()
+
+    for pid, total in banned.items():
+        doc = _banned_user_doc(pid)
+        batch.set(doc, {
+            "bucket_id": bucket_id,
+            "total_games": total,
+            "banned_at": firestore.SERVER_TIMESTAMP
+        }, merge=True)
+
+    batch.commit()
+
 @https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
 def cast_vote_v2(request: Request):
     balance_update_token = os.environ["BALANCE_UPDATE_TOKEN"]
@@ -535,6 +563,7 @@ def cast_vote_v2(request: Request):
         vote_ref  = vid_ref.collection("votes").document(pid)
         user_ref = db().document(f"users/{pid}")
         shard_ref = lambda k: vid_ref.collection("tallies").document(f"shard_{k}")
+        is_banned = _is_smiley_game_banned(pid)
 
         # 3. transaction: READS first, WRITES after ──────────────────────
         @firestore.transactional
@@ -583,23 +612,26 @@ def cast_vote_v2(request: Request):
         if tx_out["result"] == "INSUFFICIENT":
             return error_response(402, "INSUFFICIENT_COINS", f"Balance {tx_out['coins']} < {abs(LOSS_PENALTY)} required")
 
-        # 4. read tallies after commit ───────────────────────────────────
-        raw_counts = collections.Counter()
-        for k in range(SHARDS):
-            shard = shard_ref(k).get().to_dict() or {}
-            raw_counts.update(shard)
-
-        counts = {sm_id: raw_counts.get(sm_id, 0) for sm_id in smiley_map.keys()}
-
-        max_votes = max(counts.values())
-        leaders = [sm for sm, v in counts.items() if v == max_votes]
-
-        if len(leaders) == 1:
-            winner_id = leaders[0]
-            outcome = "WIN" if sid == winner_id else "LOSS"
-        else:
-            winner_id = None
+        # 4. outcome selection ───────────────────────────────────────────
+        if is_banned:
             outcome = "LOSS"
+        else:
+            raw_counts = collections.Counter()
+            for k in range(SHARDS):
+                shard = shard_ref(k).get().to_dict() or {}
+                raw_counts.update(shard)
+
+            counts = {sm_id: raw_counts.get(sm_id, 0) for sm_id in smiley_map.keys()}
+
+            max_votes = max(counts.values())
+            leaders = [sm for sm, v in counts.items() if v == max_votes]
+
+            if len(leaders) == 1:
+                winner_id = leaders[0]
+                outcome = "WIN" if sid == winner_id else "LOSS"
+            else:
+                winner_id = None
+                outcome = "LOSS"
 
         # 5. coin mutation ───────────────────────────────────────────────
         delta  = WIN_REWARD if outcome == "WIN" else LOSS_PENALTY
@@ -912,6 +944,57 @@ def _top_winners(bucket_id: str, max_rank: int = 5) -> list[dict]:
         })
 
     return winners
+
+@https_fn.on_request(region="us-central1")
+def ban_high_volume_smiley_players(cloud_event):
+    """
+    Scans yesterday's daily leaderboard (IST) and bans principals who crossed
+    SMILEY_GAME_BAN_THRESHOLD total games (wins + losses). Intended to be
+    triggered nightly (~00:05 IST) similar to reward_leaderboard_winners.
+    """
+    try:
+        bucket_id = _yesterday_bucket_id_ist()
+        day_ref = db().collection(DAILY_COLL).document(bucket_id)
+        day_snap = day_ref.get()
+
+        if not day_snap.exists:
+            print(f"[SKIP] No leaderboard doc for {bucket_id}")
+            return jsonify({
+                "status": "skipped",
+                "reason": f"No leaderboard doc for {bucket_id}"
+            }), 200
+
+        users_coll = day_ref.collection("users")
+        banned: Dict[str, int] = {}
+        scanned = 0
+
+        for user_snap in users_coll.stream():
+            scanned += 1
+            wins = int(user_snap.get("smiley_game_wins") or 0)
+            losses = int(user_snap.get("smiley_game_losses") or 0)
+            total_games = wins + losses
+
+            if total_games > SMILEY_GAME_BAN_THRESHOLD:
+                banned[user_snap.id] = total_games
+
+        _record_banned_principals(banned, bucket_id)
+
+        print(f"[BAN] scanned={scanned} banned={len(banned)} bucket={bucket_id}")
+        return jsonify({
+            "status": "success",
+            "bucket_id": bucket_id,
+            "scanned_users": scanned,
+            "banned_count": len(banned),
+            "banned_principals": list(banned.keys())
+        }), 200
+
+    except Exception as e:
+        print("ban_high_volume_smiley_players error:", e, file=sys.stderr)
+        return jsonify({
+            "status": "error",
+            "message": "Internal server error",
+            "details": str(e)
+        }), 500
 
 @https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
 def reward_leaderboard_winners(cloud_event):
