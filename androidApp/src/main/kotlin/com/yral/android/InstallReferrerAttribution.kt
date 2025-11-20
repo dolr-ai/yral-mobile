@@ -32,6 +32,10 @@ class InstallReferrerAttribution(
     private val utmAttributionStore: UtmAttributionStore by lazy { koinInstance.get<UtmAttributionStore>() }
 
     fun setup() {
+        if (utmAttributionStore.isInstallReferrerCompleted()) {
+            Logger.d("InstallReferrer") { "Install referrer attribution already completed, skipping." }
+            return
+        }
         scope.launch {
             runCatching {
                 client =
@@ -125,6 +129,8 @@ class InstallReferrerAttribution(
                     term = utmParams.term,
                     content = utmParams.content,
                 )
+            }.onSuccess {
+                utmAttributionStore.markInstallReferrerCompleted()
             }.onFailure { exception ->
                 Logger.e("InstallReferrer", exception) { "Failed to store UTM params from InstallReferrer" }
                 crashlyticsManager.recordException(
