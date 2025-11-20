@@ -40,6 +40,7 @@ import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastStatus
 import com.yral.shared.libs.designsystem.component.toast.ToastType
+import com.yral.shared.libs.fileio.FileDownloader
 import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.libs.sharing.LinkGenerator
@@ -94,6 +95,7 @@ class ProfileViewModel(
     private val flagManager: FeatureFlagManager,
     private val userInfoPagingSourceFactory: UserInfoPagingSourceFactory,
     private val getProfileDetailsV4UseCase: GetProfileDetailsV4UseCase,
+    private val fileDownloader: FileDownloader,
 ) : ViewModel() {
     companion object {
         private const val POSTS_PER_PAGE = 20
@@ -495,6 +497,29 @@ class ProfileViewModel(
                 crashlyticsManager.recordException(
                     YralException(it),
                     ExceptionType.DEEPLINK,
+                )
+            }
+        }
+    }
+
+    fun downloadVideo(feedDetails: FeedDetails) {
+        viewModelScope.launch {
+            runSuspendCatching {
+                fileDownloader
+                    .downloadFile(
+                        url = feedDetails.url,
+                        fileName = "YRAL_${feedDetails.videoID}.mp4",
+                        saveToGallery = true,
+                    ).onSuccess {
+                        Logger.d("FileDownload") { "File download successful" }
+                    }.onFailure {
+                        Logger.e("FileDownload", it) { "File download failed" }
+                    }
+            }.onFailure { error ->
+                Logger.e("FileDownload", error) { "File download failed" }
+                crashlyticsManager.recordException(
+                    YralException(error),
+                    ExceptionType.UNKNOWN,
                 )
             }
         }

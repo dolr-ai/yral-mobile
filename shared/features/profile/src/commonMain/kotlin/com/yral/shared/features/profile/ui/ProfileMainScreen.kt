@@ -306,7 +306,7 @@ fun ProfileMainScreen(
                                 ctaType = VideoDeleteCTA.VIDEO_FULLSCREEN,
                             )
                         },
-                        onDownloadVideo = { /* No op */ },
+                        onDownloadVideo = { viewModel.downloadVideo(it) },
                         onShareClick = { feedDetails ->
                             viewModel.onShareClicked(
                                 feedDetails,
@@ -565,7 +565,7 @@ private fun MainContent(
                                 ctaType = VideoDeleteCTA.PROFILE_THUMBNAIL,
                             )
                         },
-                        onDownloadVideo = { /* No op */ },
+                        onDownloadVideo = { viewModel.downloadVideo(it) },
                         onViewsClick = { viewModel.showVideoViews(it) },
                         onManualRefreshTriggered = { viewModel.setManualRefreshTriggered(it) },
                     )
