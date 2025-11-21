@@ -27,7 +27,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -48,16 +47,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.touchlab.kermit.Logger
-import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.features.uploadvideo.nav.fileUpload.UploadVideoComponent
 import com.yral.shared.features.uploadvideo.presentation.UploadVideoViewModel
-import com.yral.shared.features.uploadvideo.ui.LoginBottomSheetComposable
 import com.yral.shared.features.uploadvideo.ui.components.hashtagInput.HashtagInput
 import com.yral.shared.features.uploadvideo.ui.components.hashtagInput.keyboardHeightAsState
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralGradientButton
-import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.videoPlayer.ResizeMode
@@ -87,8 +83,6 @@ fun UploadVideoScreen(
     bottomPadding: Dp,
     modifier: Modifier = Modifier,
     viewModel: UploadVideoViewModel = koinViewModel(),
-    loginState: UiState<*>,
-    loginBottomSheet: LoginBottomSheetComposable,
 ) {
     val viewState by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.pushScreenView() }
@@ -100,21 +94,11 @@ fun UploadVideoScreen(
 
     val listState = rememberLazyListState()
     val keyboardHeight by keyboardHeightAsState()
-    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val extraSheetState = rememberModalBottomSheetState()
-    var extraSheetLink by remember { mutableStateOf("") }
     LaunchedEffect(keyboardHeight) {
         if (keyboardHeight > 0) {
             listState.animateScrollToItem(TOTAL_ITEMS - 1)
         }
     }
-
-    LaunchedEffect(loginState) {
-        if (loginState is UiState.Failure) {
-            viewModel.setBottomSheetType(UploadVideoViewModel.BottomSheetType.Signup)
-        }
-    }
-
     BackHandler(enabled = viewState.uploadUiState !is UiState.Initial, onBack = { })
     when (val uploadUiState = viewState.uploadUiState) {
         UiState.Initial -> {
@@ -125,6 +109,7 @@ fun UploadVideoScreen(
                 viewState = viewState,
                 viewModel = viewModel,
                 onBack = { component.onBack() },
+                promptLogin = { component.promptLogin() },
             )
         }
 
@@ -145,27 +130,6 @@ fun UploadVideoScreen(
             )
         }
     }
-
-    when (viewState.bottomSheetType) {
-        UploadVideoViewModel.BottomSheetType.Signup -> {
-            loginBottomSheet(
-                SignupPageName.UPLOAD_VIDEO,
-                bottomSheetState,
-                { viewModel.setBottomSheetType(UploadVideoViewModel.BottomSheetType.None) },
-                viewModel.getTncLink(),
-                { extraSheetLink = viewModel.getTncLink() },
-            )
-        }
-        UploadVideoViewModel.BottomSheetType.None -> Unit
-    }
-
-    if (extraSheetLink.isNotEmpty()) {
-        YralWebViewBottomSheet(
-            link = extraSheetLink,
-            bottomSheetState = extraSheetState,
-            onDismissRequest = { extraSheetLink = "" },
-        )
-    }
 }
 
 @Composable
@@ -176,6 +140,7 @@ private fun UploadVideoIdle(
     viewState: UploadVideoViewModel.ViewState,
     viewModel: UploadVideoViewModel,
     onBack: () -> Unit,
+    promptLogin: () -> Unit,
 ) {
     val density = LocalDensity.current
     val imeBottomDp = with(density) { WindowInsets.ime.getBottom(this).toDp() }
@@ -196,7 +161,18 @@ private fun UploadVideoIdle(
             )
         }
         item { Spacer(Modifier.height(20.dp)) }
-        item { Submit(enabled = viewState.canUpload, onClick = viewModel::onUploadButtonClicked) }
+        item {
+            Submit(
+                enabled = viewState.canUpload,
+                onClick = {
+                    if (viewState.isLoggedIn) {
+                        viewModel.onUploadButtonClicked()
+                    } else {
+                        promptLogin()
+                    }
+                },
+            )
+        }
     }
 }
 

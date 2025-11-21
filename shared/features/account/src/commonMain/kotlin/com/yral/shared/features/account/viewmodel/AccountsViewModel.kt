@@ -268,8 +268,6 @@ sealed interface AccountBottomSheet {
     data class ShowWebView(
         val linkToOpen: AccountHelpLink,
     ) : AccountBottomSheet
-
-    data object SignUp : AccountBottomSheet
     data object DeleteAccount : AccountBottomSheet
     data class ErrorMessage(
         val errorType: ErrorType,

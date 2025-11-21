@@ -18,6 +18,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,15 +40,16 @@ import com.yral.shared.app.ui.screens.home.HomeScreen
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.session.getKey
 import com.yral.shared.features.auth.ui.LoginBottomSheet
+import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.features.profile.ui.EditProfileScreen
 import com.yral.shared.features.profile.ui.ProfileMainScreen
 import com.yral.shared.features.profile.viewmodel.EditProfileViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.root.viewmodels.RootError
 import com.yral.shared.features.root.viewmodels.RootViewModel
-import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralLoader
+import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.component.toast.ToastHost
@@ -120,15 +124,6 @@ fun RootScreen(
                             modifier = Modifier.fillMaxSize().safeDrawingPadding(),
                             viewModel = profileViewModel,
                             profileVideos = profileVideos,
-                            loginState = UiState.Initial,
-                            loginBottomSheet = { bottomSheetState, onDismissRequest, termsLink, openTerms ->
-                                LoginBottomSheet(
-                                    bottomSheetState = bottomSheetState,
-                                    onDismissRequest = onDismissRequest,
-                                    termsLink = termsLink,
-                                    openTerms = openTerms,
-                                )
-                            },
                             getPrefetchListener = { reel -> PrefetchVideoListenerImpl(reel) },
                         )
                     }
@@ -244,6 +239,7 @@ fun RootError.toErrorMessage(): String =
         },
     )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SlotContent(component: RootComponent) {
     val slot by component.slot.subscribeAsState()
@@ -251,6 +247,28 @@ private fun SlotContent(component: RootComponent) {
         when (slotChild) {
             is RootComponent.SlotChild.AlertsRequestBottomSheet -> {
                 AlertsRequestBottomSheet(component = slotChild.component)
+            }
+            is RootComponent.SlotChild.LoginBottomSheet -> {
+                val loginViewModel: LoginViewModel = koinViewModel()
+                val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+                val termsSheetState = rememberModalBottomSheetState()
+                var termsLink by remember { mutableStateOf("") }
+                LoginBottomSheet(
+                    pageName = slotChild.pageName,
+                    bottomSheetState = bottomSheetState,
+                    onDismissRequest = slotChild.onDismissRequest,
+                    onLoginSuccess = slotChild.onLoginSuccess,
+                    openTerms = { termsLink = it },
+                    headlineText = slotChild.headlineText,
+                    loginViewModel = loginViewModel,
+                )
+                if (termsLink.isNotEmpty()) {
+                    YralWebViewBottomSheet(
+                        link = termsLink,
+                        bottomSheetState = termsSheetState,
+                        onDismissRequest = { termsLink = "" },
+                    )
+                }
             }
         }
     }

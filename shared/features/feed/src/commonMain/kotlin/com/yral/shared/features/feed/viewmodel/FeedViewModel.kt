@@ -29,12 +29,12 @@ import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsWithCreator
 import com.yral.shared.features.feed.domain.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetAIFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
-import com.yral.shared.features.feed.shared.PendingSharedVideoStore
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastStatus
 import com.yral.shared.libs.designsystem.component.toast.ToastType
 import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
+import com.yral.shared.libs.routing.routes.api.PendingAppRouteStore
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.libs.sharing.LinkGenerator
 import com.yral.shared.libs.sharing.LinkInput
@@ -71,7 +71,6 @@ class FeedViewModel(
     private val flagManager: FeatureFlagManager,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
-    private var hasAttemptedPendingRouteConsumption = false
 
     private val authClient =
         authClientFactory
@@ -137,21 +136,7 @@ class FeedViewModel(
                 .observeSessionPropertyWithDefault(
                     selector = { it.isSocialSignIn },
                     defaultValue = false,
-                ).collect { isSocialSignIn ->
-                    _state.update { it.copy(isLoggedIn = isSocialSignIn) }
-                    if (isSocialSignIn) {
-                        hasAttemptedPendingRouteConsumption = false
-                    }
-                }
-        }
-        viewModelScope.launch {
-            state.collect { feedState ->
-                if (feedState.feedDetails.isNotEmpty()) {
-                    consumePendingSharedVideoRouteIfNeeded()
-                } else {
-                    hasAttemptedPendingRouteConsumption = false
-                }
-            }
+                ).collect { isSocialSignIn -> _state.update { it.copy(isLoggedIn = isSocialSignIn) } }
         }
     }
 
@@ -287,6 +272,7 @@ class FeedViewModel(
             }
         if (existingDetail != null) {
             _state.update { currentState ->
+                Logger.d("LinkSharing") { "Existing detail found $existingDetail" }
                 addDeeplinkData(currentState, existingDetail)
             }
             return true
@@ -368,6 +354,7 @@ class FeedViewModel(
         // Remove existing occurrence and insert at current page index
         val filtered = currentState.feedDetails.filterNot { it.videoID == details.videoID }
         val targetIndex = currentState.currentPageOfFeed.coerceIn(0, filtered.size)
+        Logger.d("LinkSharing") { "targetIndex $targetIndex" }
         val updatedFeedDetails =
             filtered
                 .toMutableList()
@@ -839,31 +826,6 @@ class FeedViewModel(
         _state.update { it.copy(showSignupFailedSheet = shouldShow) }
     }
 
-    fun onSharedVideoOpened(route: PostDetailsRoute): Boolean {
-        if (_state.value.isLoggedIn) {
-            return true
-        }
-        PendingSharedVideoStore.store(route)
-        hasAttemptedPendingRouteConsumption = false
-        val routeKey = route.toRouteKey()
-        if (_state.value.lastHandledSharedVideoRoute != routeKey) {
-            _state.update {
-                it.copy(
-                    showSharedVideoLoginSheet = true,
-                    lastHandledSharedVideoRoute = routeKey,
-                )
-            }
-        }
-        return false
-    }
-
-    fun hideSharedVideoLoginSheet(loginCompleted: Boolean) {
-        _state.update { it.copy(showSharedVideoLoginSheet = false) }
-        if (loginCompleted) {
-            hasAttemptedPendingRouteConsumption = false
-        }
-    }
-
     fun pushScreenView() {
         feedTelemetry.onFeedPageViewed()
     }
@@ -918,17 +880,18 @@ class FeedViewModel(
         }
     }
 
-    private fun consumePendingSharedVideoRouteIfNeeded() {
-        if (hasAttemptedPendingRouteConsumption) return
-        if (sessionManager.userPrincipal == null) return
-        val route = PendingSharedVideoStore.consume()
-        hasAttemptedPendingRouteConsumption = true
-        if (route != null) {
-            showDeeplinkedVideoFirst(
-                postId = route.postId,
-                canisterId = route.canisterId,
-                publisherUserId = route.publisherUserId,
-            )
+    fun consumePendingSharedVideoRouteIfNeeded() {
+        sessionManager.userPrincipal?.let {
+            val route = PendingAppRouteStore.peek() as? PostDetailsRoute
+            if (route != null && _state.value.isLoggedIn) {
+                Logger.d("LinkSharing") { "Found pending deeplink route $route ${_state.value.feedDetails[0].videoID}" }
+                PendingAppRouteStore.consume()
+                showDeeplinkedVideoFirst(
+                    postId = route.postId,
+                    canisterId = route.canisterId,
+                    publisherUserId = route.publisherUserId,
+                )
+            }
         }
     }
 
@@ -962,8 +925,6 @@ data class FeedState(
     val isDeeplinkFetching: Boolean = false,
     val reportSheetState: ReportSheetState = ReportSheetState.Closed,
     val showSignupFailedSheet: Boolean = false,
-    val showSharedVideoLoginSheet: Boolean = false,
-    val lastHandledSharedVideoRoute: String? = null,
     val overlayType: OverlayType = OverlayType.DAILY_RANK,
     val isLoggedIn: Boolean = false,
     val availableFeedTypes: List<FeedType> = listOf(FeedType.DEFAULT),
@@ -1003,5 +964,3 @@ internal fun Int.percentageOf(total: Int): Double =
     } else {
         0.0
     }
-
-private fun PostDetailsRoute.toRouteKey(): String = "$postId:$canisterId:$publisherUserId"

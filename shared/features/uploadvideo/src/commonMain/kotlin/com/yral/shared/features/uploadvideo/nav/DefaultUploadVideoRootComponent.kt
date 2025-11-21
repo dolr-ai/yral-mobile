@@ -9,6 +9,7 @@ import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.pushToFront
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
+import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.features.uploadvideo.nav.aiVideoGen.AiVideoGenComponent
 import com.yral.shared.features.uploadvideo.nav.fileUpload.UploadVideoComponent
 import com.yral.shared.features.uploadvideo.nav.flowSelection.FlowSelectionComponent
@@ -19,6 +20,7 @@ import org.koin.core.component.KoinComponent
 
 internal class DefaultUploadVideoRootComponent(
     componentContext: ComponentContext,
+    override val promptLogin: (pageName: SignupPageName) -> Unit,
     private val goToHome: () -> Unit,
     private val snapshot: Snapshot?,
 ) : UploadVideoRootComponent(),
@@ -96,6 +98,7 @@ internal class DefaultUploadVideoRootComponent(
             componentContext = componentContext,
             onBack = { navigation.pop() },
             goToHome = iGoToHome,
+            promptLogin = { promptLogin(SignupPageName.VIDEO_CREATION) },
         )
 
     private fun uploadVideoComponent(componentContext: ComponentContext): UploadVideoComponent =
@@ -103,6 +106,7 @@ internal class DefaultUploadVideoRootComponent(
             componentContext = componentContext,
             goToHome = iGoToHome,
             onBack = { navigation.pop() },
+            promptLogin = { promptLogin(SignupPageName.UPLOAD_VIDEO) },
         )
 
     override fun handleNavigation(appRoute: AppRoute) {
