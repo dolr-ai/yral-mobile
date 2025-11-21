@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.github.michaelbull.result.fold
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.featureflag.AppFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.shared.analytics.events.AiVideoGenFailureType
@@ -52,23 +53,12 @@ class AiVideoGenViewModel internal constructor(
                     is SessionState.SignedIn -> state.session.canisterId
                     else -> null
                 }
+            _state.update { it.copy(isLoggedIn = properties.isSocialSignIn ?: false) }
             canisterId to properties.coinBalance
         }
 
     private var currentRequestKey: VideoGenRequestKey? = null
     private var pollingJob: Job? = null
-
-    init {
-        viewModelScope.launch {
-            sessionManager
-                .observeSessionPropertyWithDefault(
-                    selector = { it.isSocialSignIn },
-                    defaultValue = false,
-                ).collect { isSocialSignIn ->
-                    _state.update { it.copy(isLoggedIn = isSocialSignIn) }
-                }
-        }
-    }
 
     fun refresh(canisterId: String) {
         val currentCanister = _state.value.currentCanister
@@ -154,13 +144,15 @@ class AiVideoGenViewModel internal constructor(
                         )
                         _state.update { it.copy(usedCredits = status.usedCredits()) }
                         logger.d { "Used credits ${_state.value.usedCredits} $status" }
+                        checkForSubscription()
                     }.onFailure { error ->
                         uploadVideoTelemetry.videoCreationPageViewed(
                             type = VideoCreationType.AI_VIDEO,
                             creditsFetched = false,
                         )
-                        logger.e(error) { "Error fetching free credits" }
                         _state.update { it.copy(usedCredits = null) }
+                        logger.e(error) { "Error fetching free credits" }
+                        checkForSubscription()
                     }
             }
         }
@@ -406,7 +398,7 @@ class AiVideoGenViewModel internal constructor(
         }
 
     fun cleanup() {
-        _state.update { ViewState() }
+        _state.update { ViewState().copy(isLoggedIn = it.isLoggedIn) }
         currentRequestKey = null
         pollingJob?.cancel()
     }
@@ -430,6 +422,23 @@ class AiVideoGenViewModel internal constructor(
     }
 
     fun getTncLink(): String = flagManager.get(AccountFeatureFlags.AccountLinks.Links).tnc
+
+    private fun checkForSubscription() {
+        if (!flagManager.isEnabled(AppFeatureFlags.Common.EnableSubscription)) return
+        _state.update {
+            val isCreditsAvailable = it.isCreditsAvailable()
+            val isBalanceLow = it.isBalanceLow()
+            it.copy(
+                bottomSheetType =
+                    when {
+                        it.bottomSheetType != BottomSheetType.None -> it.bottomSheetType
+                        !isCreditsAvailable && !isBalanceLow -> BottomSheetType.FreeCreditsUsed
+                        !isCreditsAvailable && isBalanceLow -> BottomSheetType.OutOfCredits
+                        else -> BottomSheetType.None
+                    },
+            )
+        }
+    }
 
     data class ViewState(
         val selectedProvider: Provider? = null,
@@ -458,6 +467,8 @@ class AiVideoGenViewModel internal constructor(
         ) : BottomSheetType()
         data object Signup : BottomSheetType()
         data object BackConfirmation : BottomSheetType()
+        data object FreeCreditsUsed : BottomSheetType()
+        data object OutOfCredits : BottomSheetType()
     }
 
     internal data class RequiredUseCases(
