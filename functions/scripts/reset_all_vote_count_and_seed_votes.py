@@ -3,7 +3,7 @@
 reset_all_vote_count_and_seed_votes.py
 ───────────────────
 Zero out every emoji tally field in shard docs under videos/*/tallies/*,
-but seed two random non-heart emojis per video with 1,000 votes (heart stays 0).
+but seed three random non-heart emojis per video with 1,000 votes (heart stays 0).
 Usage:
   # Staging
   FIREBASE_PROJECT=yral-staging python3 scripts/reset_all_vote_count_and_seed_votes.py
@@ -28,7 +28,7 @@ from google.api_core import exceptions
 # ───────── Config ─────────
 EMOJI_FIELDS     = ("laugh", "heart", "fire", "surprise", "rocket", "puke")
 NON_HEART_EMOJIS = tuple(field for field in EMOJI_FIELDS if field != "heart")
-SEED_EMOJI_COUNT = 2
+SEED_EMOJI_COUNT = 3
 SEED_VOTE_VALUE  = 1000
 PROJECT_ID       = os.environ.get("FIREBASE_PROJECT", "yral-staging")
 LIMIT_DOCS       = int(os.environ.get("LIMIT_DOCS", "0"))
