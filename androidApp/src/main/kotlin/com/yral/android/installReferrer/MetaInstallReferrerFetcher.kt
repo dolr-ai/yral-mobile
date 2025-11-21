@@ -3,7 +3,7 @@ package com.yral.android.installReferrer
 import android.app.Application
 import android.content.ContentResolver
 import android.database.Cursor
-import android.net.Uri
+import androidx.core.net.toUri
 import co.touchlab.kermit.LogWriter
 import co.touchlab.kermit.Logger
 import com.yral.android.R
@@ -73,7 +73,7 @@ class MetaInstallReferrerFetcher(
             if (packageManager.resolveContentProvider(providerAuthority, 0) == null) {
                 continue
             }
-            val providerUri = Uri.parse("content://$providerAuthority/$facebookAppId")
+            val providerUri = "content://$providerAuthority/$facebookAppId".toUri()
             var cursor: Cursor? = null
             try {
                 logger.d { "Querying $appName Install Referrer ContentProvider: $providerUri" }

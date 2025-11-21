@@ -1,5 +1,7 @@
 package com.yral.android.installReferrer
 
+import android.net.Uri
+import androidx.core.net.toUri
 import co.touchlab.kermit.LogWriter
 import co.touchlab.kermit.Logger
 import com.yral.android.BuildConfig
@@ -12,7 +14,9 @@ import com.yral.shared.preferences.UtmParams
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.koin.core.qualifier.named
@@ -39,11 +43,15 @@ class MetaInstallReferrerAttribution(
     }
 
     fun isMetaInstallReferrerData(referrer: String): Boolean {
-        val trimmed = referrer.trim()
-        if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) {
-            return false
-        }
-        return trimmed.contains("\"data\"") && trimmed.contains("\"nonce\"")
+        val json = convertReferrerToJson(referrer) ?: return false
+
+        // Check if utm_content contains encrypted data structure (source.data and source.nonce)
+        val utmContent = json["utm_content"]?.jsonObject
+        val source = utmContent?.get("source")?.jsonObject
+        val hasData = source?.get("data") != null
+        val hasNonce = source?.get("nonce") != null
+
+        return hasData && hasNonce
     }
 
     fun processEncryptedData(encryptedJsonString: String) {
@@ -54,7 +62,7 @@ class MetaInstallReferrerAttribution(
 
         scope.launch {
             runCatching {
-                val installReferrerJson = parseInstallReferrerJson(encryptedJsonString) ?: return@runCatching
+                val installReferrerJson = convertReferrerToJson(encryptedJsonString) ?: return@runCatching
 
                 val rootUtmParams = extractRootLevelUtmParams(installReferrerJson)
                 val encryptedData = extractEncryptedData(installReferrerJson)
@@ -91,13 +99,46 @@ class MetaInstallReferrerAttribution(
         }
     }
 
-    private fun parseInstallReferrerJson(jsonString: String): JsonObject? =
-        try {
-            Json.decodeFromString(JsonObject.serializer(), jsonString)
-        } catch (e: Exception) {
-            logger.i(e) { "Could not parse JSON from referrer data" }
-            null
+    private fun convertReferrerToJson(referrerData: String): JsonObject? {
+        val trimmed = referrerData.trim()
+        return when {
+            trimmed.startsWith("{") && trimmed.endsWith("}") -> {
+                runCatching {
+                    Json.decodeFromString(JsonObject.serializer(), trimmed)
+                }.onFailure { e ->
+                    logger.i(e) { "Could not parse JSON from referrer data" }
+                }.getOrNull()
+            }
+            trimmed.contains("utm_content=") -> {
+                runCatching {
+                    val uri = (if (trimmed.contains("://")) trimmed else "https://dummy/?$trimmed").toUri()
+                    buildJsonFromQueryParams(uri)
+                }.onFailure { e ->
+                    logger.i(e) { "Could not parse query string from referrer data" }
+                }.getOrNull()
+            }
+            else -> null
         }
+    }
+
+    private fun buildJsonFromQueryParams(uri: Uri): JsonObject {
+        val jsonMap = mutableMapOf<String, JsonElement>()
+        uri.getQueryParameter("utm_source")?.let { jsonMap["utm_source"] = JsonPrimitive(it) }
+        uri.getQueryParameter("utm_campaign")?.let { jsonMap["utm_campaign"] = JsonPrimitive(it) }
+        uri.getQueryParameter("utm_medium")?.let { jsonMap["utm_medium"] = JsonPrimitive(it) }
+        uri.getQueryParameter("utm_term")?.let { jsonMap["utm_term"] = JsonPrimitive(it) }
+        uri.getQueryParameter("utm_content")?.trim()?.let { content ->
+            jsonMap["utm_content"] =
+                if (content.startsWith("{") && content.endsWith("}")) {
+                    runCatching {
+                        Json.decodeFromString(JsonObject.serializer(), content)
+                    }.getOrElse { JsonPrimitive(content) }
+                } else {
+                    JsonPrimitive(content)
+                }
+        }
+        return JsonObject(jsonMap)
+    }
 
     private fun extractRootLevelUtmParams(json: JsonObject): UtmParams =
         UtmParams(

@@ -179,6 +179,8 @@ dependencies {
     implementation(projects.shared.features.leaderboard)
 
     testImplementation(libs.kotlin.test)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
 
 afterEvaluate {
