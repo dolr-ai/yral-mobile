@@ -67,6 +67,7 @@ installreferrer = "2.2"
 emoji2 = "1.5.0"
 window = "1.5.0"
 compottie = "2.0.1"
+robolectric = "4.15"
 
 [libraries]
 
@@ -155,6 +156,7 @@ koin-compose = { group = "io.insert-koin", name = "koin-compose" }
 koin-compose-viewmodel = { group = "io.insert-koin", name = "koin-compose-viewmodel" }
 
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 
 kotlinResult-core = { group = "com.michael-bull.kotlin-result", name = "kotlin-result", version.ref = "kotlinResult" }
 kotlinResult-coroutines = { group = "com.michael-bull.kotlin-result", name = "kotlin-result-coroutines", version.ref = "kotlinResult" }
