@@ -432,15 +432,15 @@ def cast_vote_v2(request: Request):
             vid_exists  = vid_ref.get(transaction=tx).exists
             if not vid_exists:
                 all_ids = [s["id"] for s in smileys if s["id"] not in ["heart"]]
-                seed_a, seed_b = random.sample(all_ids, 2)
+                seed_ids = random.sample(all_ids, 3)
 
                 tx.set(vid_ref, {
                     "created_at": firestore.SERVER_TIMESTAMP
                 })
 
                 zero = {s["id"]: 0 for s in smileys}
-                zero[seed_a] = 1000
-                zero[seed_b] = 1000
+                for seed_id in seed_ids:
+                    zero[seed_id] = 1000
                 tx.set(shard_ref(0), zero, merge=True)
 
                 for k in range(1, SHARDS):
