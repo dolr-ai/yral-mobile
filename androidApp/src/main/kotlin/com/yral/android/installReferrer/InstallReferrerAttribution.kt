@@ -1,4 +1,4 @@
-package com.yral.android
+package com.yral.android.installReferrer
 
 import android.app.Application
 import android.net.Uri
@@ -127,34 +127,35 @@ class InstallReferrerAttribution(
         try {
             val raw = referrer?.takeIf { it.isNotBlank() } ?: return
 
-            if (metaAttribution.isMetaInstallReferrerData(raw)) {
-                logger.i {
-                    "Detected Meta Install Referrer data, delegating to MetaInstallReferrerAttribution"
+            when {
+                metaAttribution.isMetaInstallReferrerData(raw) -> {
+                    logger.i { "Detected encrypted Meta Install Referrer data" }
+                    metaAttribution.processEncryptedData(raw)
                 }
-                metaAttribution.processEncryptedData(raw)
-            } else {
-                val utmParams = extractUtmParams(raw)
-                if (utmParams.isEmpty()) {
-                    logger.d { "No UTM parameters found in install referrer" }
-                    return
-                }
-                runCatching {
-                    utmAttributionStore.storeIfEmpty(
-                        source = utmParams.source,
-                        medium = utmParams.medium,
-                        campaign = utmParams.campaign,
-                        term = utmParams.term,
-                        content = utmParams.content,
-                    )
-                }.onSuccess {
-                    utmAttributionStore.markInstallReferrerCompleted()
-                    logger.i { "Successfully stored UTM params: $utmParams" }
-                }.onFailure { exception ->
-                    logger.e(exception) { "Failed to store UTM params from Play InstallReferrer" }
-                    crashlyticsManager.recordException(
-                        exception as? Exception ?: Exception(exception),
-                        ExceptionType.INSTALL_REFERRER,
-                    )
+                else -> {
+                    val utmParams = extractUtmParams(raw)
+                    if (utmParams.isEmpty()) {
+                        logger.d { "No UTM parameters found in install referrer" }
+                        return
+                    }
+                    runCatching {
+                        utmAttributionStore.storeIfEmpty(
+                            source = utmParams.source,
+                            medium = utmParams.medium,
+                            campaign = utmParams.campaign,
+                            term = utmParams.term,
+                            content = utmParams.content,
+                        )
+                    }.onSuccess {
+                        utmAttributionStore.markInstallReferrerCompleted()
+                        logger.i { "Successfully stored UTM params: $utmParams" }
+                    }.onFailure { exception ->
+                        logger.e(exception) { "Failed to store UTM params from Play InstallReferrer" }
+                        crashlyticsManager.recordException(
+                            exception as? Exception ?: Exception(exception),
+                            ExceptionType.INSTALL_REFERRER,
+                        )
+                    }
                 }
             }
         } catch (exception: Exception) {
