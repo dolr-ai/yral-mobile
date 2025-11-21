@@ -1,4 +1,4 @@
-package com.yral.android
+package com.yral.android.installReferrer
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.Dispatchers
