@@ -13,6 +13,8 @@ import com.google.firebase.appcheck.appCheck
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.initialize
+import com.yral.android.installReferrer.InstallReferrerAttribution
+import com.yral.android.installReferrer.MetaInstallReferrerFetcher
 import com.yral.featureflag.AppFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.providers.mixpanel.MixpanelAnalyticsProvider
@@ -30,6 +32,7 @@ import org.koin.android.ext.koin.androidContext
 class YralApp : Application() {
     private val appCoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private lateinit var installReferrerAttribution: InstallReferrerAttribution
+    private lateinit var metaInstallReferrerFetcher: MetaInstallReferrerFetcher
 
     override fun onCreate() {
         super.onCreate()
@@ -42,9 +45,20 @@ class YralApp : Application() {
             modules(videoWidgetModule)
         }
         setupFirebase()
-        installReferrerAttribution = InstallReferrerAttribution(this, appCoroutineScope)
-        installReferrerAttribution.setup()
+        checkInstallReferrer()
         observeAndAddDistinctIdToBranch()
+    }
+
+    private fun checkInstallReferrer() {
+        // Check Meta Install Referrer first (supports VT and multi-session CT)
+        // Then fall back to Play Install Referrer API if needed
+        metaInstallReferrerFetcher = MetaInstallReferrerFetcher(this, appCoroutineScope)
+        metaInstallReferrerFetcher.fetchAndProcess {
+            // After Meta Install Referrer check completes, check Play Install Referrer API
+            // if attribution wasn't completed
+            installReferrerAttribution = InstallReferrerAttribution(this, appCoroutineScope)
+            installReferrerAttribution.setup()
+        }
     }
 
     private fun setupFirebase() {

@@ -1,7 +1,8 @@
-package com.yral.android
+package com.yral.android.installReferrer
 
 import co.touchlab.kermit.LogWriter
 import co.touchlab.kermit.Logger
+import com.yral.android.BuildConfig
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
