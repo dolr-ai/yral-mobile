@@ -19,6 +19,7 @@ import com.yral.shared.features.root.analytics.RootTelemetry
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
+import com.yral.shared.preferences.UtmAttributionStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -44,6 +45,7 @@ class RootViewModel(
     private val rootTelemetry: RootTelemetry,
     private val flagManager: FeatureFlagManager,
     private val preferences: Preferences,
+    private val utmAttributionStore: UtmAttributionStore,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
@@ -131,6 +133,11 @@ class RootViewModel(
         }
         coroutineScope.launch {
             analyticsUser.collect { user -> rootTelemetry.setUser(user) }
+        }
+        coroutineScope.launch {
+            if (utmAttributionStore.isInstallReferrerCompleted()) {
+                rootTelemetry.captureReferral(utmAttributionStore.get())
+            }
         }
     }
 

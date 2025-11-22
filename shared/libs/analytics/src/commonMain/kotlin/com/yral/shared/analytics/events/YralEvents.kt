@@ -1131,7 +1131,29 @@ data class HowToEarnClickedEventData(
     )
 }
 
-// --- Refer & Earn ---
+// --- Refer & Earn --
+@Serializable
+data class ReferralReceivedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.REFERRAL_RECEIVED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.REFERRAL.getFeatureName(),
+    @SerialName("source") val source: String?,
+    @SerialName("medium") val medium: String?,
+    @SerialName("campaign") val campaign: String?,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        source: String?,
+        medium: String?,
+        campaign: String?,
+    ) : this(
+        FeatureEvents.REFERRAL_RECEIVED.getEventName(),
+        Features.REFERRAL.getFeatureName(),
+        source,
+        medium,
+        campaign,
+    )
+}
+
 @Serializable
 data class ReferAndEarnPageViewedEventData(
     @SerialName("event") override val event: String = FeatureEvents.REFER_AND_EARN_PAGE_VIEWED.getEventName(),
