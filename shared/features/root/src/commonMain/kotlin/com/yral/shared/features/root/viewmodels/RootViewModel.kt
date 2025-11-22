@@ -135,8 +135,9 @@ class RootViewModel(
             analyticsUser.collect { user -> rootTelemetry.setUser(user) }
         }
         coroutineScope.launch {
-            if (utmAttributionStore.isInstallReferrerCompleted()) {
+            if (!utmAttributionStore.isInstallReferrerTracked()) {
                 rootTelemetry.captureReferral(utmAttributionStore.get())
+                utmAttributionStore.markInstallReferrerTracked()
             }
         }
     }
