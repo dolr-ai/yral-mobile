@@ -111,15 +111,11 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
       if type == Constants.videoUploadSuccessType {
         ToastManager.showToast(type: .uploadSuccess) {}
         onTap: {
-          DeepLinkRouter.shared.pendingDestination = .profileAfterUpload
+          DeepLinkRouter.shared.setRoute(route: VideoUploadSuccessful(videoID: nil))
         }
       } else if type == Constants.videoViewedRewardType {
         if let rewards = AppDIHelper().getRoutingService().parseUrl(url: internalURL) as? RewardsReceived {
-          DeepLinkRouter.shared.pendingDestination = .videoViewedRewards(
-            videoID: rewards.videoID ?? "",
-            totalViews: Int64(rewards.viewCount ?? "0") ?? 0,
-            rewardAmount: Double(rewards.rewardBtc ?? "0") ?? 0
-          )
+          DeepLinkRouter.shared.setRoute(route: rewards)
         }
       }
     }
@@ -160,6 +156,21 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     else { return }
 
     AppDIHelper().getAffiliateAttributionStore().storeIfEmpty(affiliate: channel)
+
+    // Capture UTM parameters (if present) for attribution
+    let utmSource = params[Constants.utmSource] as? String
+    let utmMedium = params[Constants.utmMedium] as? String
+    let utmCampaign = params[Constants.utmCampaign] as? String
+    let utmTerm = params[Constants.utmTerm] as? String
+    let utmContent = params[Constants.utmContent] as? String
+
+    AppDIHelper().getUtmAttributionStore().storeIfEmpty(
+      source: utmSource,
+      medium: utmMedium,
+      campaign: utmCampaign,
+      term: utmTerm,
+      content: utmContent
+    )
   }
 
   private func isBranchClick(_ value: Any?) -> Bool {
@@ -215,6 +226,11 @@ struct IosApp: App {
   @StateObject private var deepLinkRouter = DeepLinkRouter.shared
   @StateObject private var eventBus: EventBus
   @State private var authStatus: AuthState = .uninitialized
+  @State private var showEULA: Bool = !(
+    UserDefaultsManager.shared.get(for: .eulaAccepted) as Bool? ?? false
+  )
+  @State private var showRecommendedAppUpdate = false
+  @State private var showMandatoryAppUpdate = false
 
   init() {
     let container = AppDIContainer()
@@ -232,20 +248,58 @@ struct IosApp: App {
 
   var body: some Scene {
     WindowGroup {
-      // RootView(root: delegate.root)
-      //     .ignoresSafeArea(edges: .all)
-      //     .ignoresSafeArea(.keyboard)
-      //     .edgesIgnoringSafeArea(.all)
-     contentView()
-       .environmentObject(deepLinkRouter)
-       .environmentObject(eventBus)
-       .environment(\.appDIContainer, appDIContainer)
-       .onOpenURL { url in
-         Branch.getInstance().application(UIApplication.shared, open: url, options: [:])
-       }
-       .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
-         Branch.getInstance().continue(activity)
-       }
+       RootView(root: delegate.root)
+           .ignoresSafeArea(edges: .all)
+           .ignoresSafeArea(.keyboard)
+           .edgesIgnoringSafeArea(.all)
+         .environmentObject(deepLinkRouter)
+         .onReceive(deepLinkRouter.$appRoute.compactMap { $0 }) { route in
+           delegate.root.onNavigationRequest(appRoute: route)
+           deepLinkRouter.clearResolution()
+         }
+         .onOpenURL { url in
+           Branch.getInstance().application(UIApplication.shared, open: url, options: [:])
+         }
+         .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
+           Branch.getInstance().continue(activity)
+         }
+       .fullScreenCover(isPresented: $showEULA) {
+             EULAPopupView(isPresented: $showEULA) {
+               UserDefaultsManager.shared.set(true, for: .eulaAccepted)
+             }
+             .background( ClearBackgroundView() )
+           }
+           .fullScreenCover(isPresented: $showRecommendedAppUpdate) {
+             RecommendedUpdatePopUp {
+               showRecommendedAppUpdate = false
+             }
+             .background( ClearBackgroundView() )
+           }
+           .fullScreenCover(isPresented: $showMandatoryAppUpdate) {
+             MandatoryUpdateView()
+           }
+           .onAppear {
+             let status = AppUpdateHandler.shared.getAppUpdateStatus()
+             switch status {
+             case .none:
+               break
+             case .force:
+               self.showMandatoryAppUpdate = true
+             case .recommended:
+               self.showRecommendedAppUpdate = true
+             }
+           }
+
+//     contentView()
+//       .environmentObject(deepLinkRouter)
+//       .environmentObject(eventBus)
+//       .environment(\.appDIContainer, appDIContainer)
+//       .onOpenURL { url in
+//         Branch.getInstance().application(UIApplication.shared, open: url, options: [:])
+//       }
+//       .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
+//         Branch.getInstance().continue(activity)
+//       }
     }
   }
 
@@ -311,5 +365,10 @@ extension AppDelegate {
     static let internalURL = "internalUrl"
     static let videoUploadSuccessType = "VideoUploadSuccessful"
     static let videoViewedRewardType = "RewardEarned"
+    static let utmSource = "utm_source"
+    static let utmMedium = "utm_medium"
+    static let utmCampaign = "utm_campaign"
+    static let utmTerm = "utm_term"
+    static let utmContent = "utm_content"
   }
 }
