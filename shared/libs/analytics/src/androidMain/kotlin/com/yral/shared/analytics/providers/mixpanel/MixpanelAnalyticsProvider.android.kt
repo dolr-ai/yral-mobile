@@ -11,6 +11,12 @@ import com.yral.shared.analytics.User
 import com.yral.shared.analytics.di.IS_DEBUG
 import com.yral.shared.analytics.events.EventData
 import com.yral.shared.analytics.events.TokenType
+import com.yral.shared.preferences.UTM_CAMPAIGN_PARAM
+import com.yral.shared.preferences.UTM_CONTENT_PARAM
+import com.yral.shared.preferences.UTM_MEDIUM_PARAM
+import com.yral.shared.preferences.UTM_SOURCE_PARAM
+import com.yral.shared.preferences.UTM_TERM_PARAM
+import com.yral.shared.preferences.UtmAttributionStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,6 +28,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
     private val eventFilter: (EventData) -> Boolean,
     private val mapConverter: EventToMapConverter,
     token: String,
+    private val utmAttributionStore: UtmAttributionStore,
 ) : AnalyticsProvider,
     KoinComponent {
     private companion object {
@@ -62,7 +69,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
     override fun shouldTrackEvent(event: EventData): Boolean = eventFilter(event)
 
     override fun trackEvent(event: EventData) {
-        val properties = mapConverter.toMap(event)
+        val properties: MutableMap<String, Any?> = mapConverter.toMap(event).toMutableMap()
         mixpanel.trackMap(toValidKeyName(event.event), properties)
     }
 
@@ -77,6 +84,14 @@ actual class MixpanelAnalyticsProvider actual constructor(
                 "is_forced_gameplay_test_user" to user.isForcedGamePlayUser,
                 "email_id" to user.emailId,
             )
+
+        // Attach UTM attribution as user-level properties (people + super props)
+        val utmParams = utmAttributionStore.get()
+        utmParams.source?.let { superProps[UTM_SOURCE_PARAM] = it }
+        utmParams.medium?.let { superProps[UTM_MEDIUM_PARAM] = it }
+        utmParams.campaign?.let { superProps[UTM_CAMPAIGN_PARAM] = it }
+        utmParams.term?.let { superProps[UTM_TERM_PARAM] = it }
+        utmParams.content?.let { superProps[UTM_CONTENT_PARAM] = it }
         mixpanel.people.set(ONE_SIGNAL_PROPERTY, user.userId)
         if (user.isLoggedIn == true) {
             mixpanel.identify(user.userId)
@@ -89,6 +104,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
             superProps["user_id"] = null
         }
         mixpanel.people.set(JSONObject(superProps))
+        superProps.keys.filter { it.contains("utm") }.forEach { superProps.remove(it) }
         mixpanel.registerSuperProperties(JSONObject(superProps))
     }
 
