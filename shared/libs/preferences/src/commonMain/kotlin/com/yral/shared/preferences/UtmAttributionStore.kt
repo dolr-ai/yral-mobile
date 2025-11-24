@@ -16,7 +16,6 @@ private const val UTM_CAMPAIGN_KEY = UTM_CAMPAIGN_PARAM
 private const val UTM_TERM_KEY = UTM_TERM_PARAM
 private const val UTM_CONTENT_KEY = UTM_CONTENT_PARAM
 private const val INSTALL_REFERRER_COMPLETED_KEY = "install_referrer_completed"
-private const val INSTALL_REFERRER_TRACKED_KEY = "install_referrer_tracked"
 
 data class UtmParams(
     val source: String? = null,
@@ -79,6 +78,7 @@ class UtmAttributionStore(
                     settings.putString(UTM_CONTENT_KEY, value)
                 }
             }
+        markInstallReferrerCompleted()
     }
 
     fun get(): UtmParams =
@@ -94,16 +94,8 @@ class UtmAttributionStore(
         settings
             .getBoolean(INSTALL_REFERRER_COMPLETED_KEY, false)
 
-    fun markInstallReferrerCompleted() {
+    private fun markInstallReferrerCompleted() {
         settings.putBoolean(INSTALL_REFERRER_COMPLETED_KEY, true)
-    }
-
-    fun isInstallReferrerTracked(): Boolean =
-        settings
-            .getBoolean(INSTALL_REFERRER_TRACKED_KEY, false)
-
-    fun markInstallReferrerTracked() {
-        settings.putBoolean(INSTALL_REFERRER_TRACKED_KEY, true)
     }
 
     fun clear() {
@@ -113,6 +105,5 @@ class UtmAttributionStore(
         settings.remove(UTM_TERM_KEY)
         settings.remove(UTM_CONTENT_KEY)
         settings.remove(INSTALL_REFERRER_COMPLETED_KEY)
-        settings.remove(INSTALL_REFERRER_TRACKED_KEY)
     }
 }

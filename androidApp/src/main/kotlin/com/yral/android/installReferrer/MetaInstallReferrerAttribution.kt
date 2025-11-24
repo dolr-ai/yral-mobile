@@ -231,6 +231,7 @@ class MetaInstallReferrerAttribution(
             return
         }
 
+        if (utmAttributionStore.isInstallReferrerCompleted()) return
         utmAttributionStore.storeIfEmpty(
             source = utmParams.source,
             medium = utmParams.medium,
@@ -238,15 +239,14 @@ class MetaInstallReferrerAttribution(
             term = utmParams.term,
             content = utmParams.content,
         )
-        utmAttributionStore.markInstallReferrerCompleted()
         analyticsManager.trackEvent(
             ReferralReceivedEventData(
                 source = utmParams.source,
                 medium = utmParams.medium,
                 campaign = utmParams.campaign,
+                term = utmParams.term,
             ),
         )
-        utmAttributionStore.markInstallReferrerTracked()
         logger.i {
             "Successfully stored Meta Install Referrer UTM params: " +
                 "source=${utmParams.source}, campaign=${utmParams.campaign}, " +

@@ -77,6 +77,7 @@ class InstallReferrerAttribution(
                                 val response = client?.installReferrer
                                 val referrer = response?.installReferrer
                                 logger.i { "Play InstallReferrer received: $referrer" }
+                                if (utmAttributionStore.isInstallReferrerCompleted()) return
                                 handleInstallReferrer(referrer)
                             }.onFailure { exception ->
                                 logger.e(exception) { "Error while handling install referrer" }
@@ -150,18 +151,14 @@ class InstallReferrerAttribution(
                             term = utmParams.term,
                             content = utmParams.content,
                         )
-                    }.onSuccess {
-                        utmAttributionStore.markInstallReferrerCompleted()
-                        if (!utmAttributionStore.isInstallReferrerTracked()) {
-                            analyticsManager.trackEvent(
-                                ReferralReceivedEventData(
-                                    source = utmParams.source,
-                                    medium = utmParams.medium,
-                                    campaign = utmParams.campaign,
-                                ),
-                            )
-                            utmAttributionStore.markInstallReferrerTracked()
-                        }
+                        analyticsManager.trackEvent(
+                            ReferralReceivedEventData(
+                                source = utmParams.source,
+                                medium = utmParams.medium,
+                                campaign = utmParams.campaign,
+                                term = utmParams.term,
+                            ),
+                        )
                         logger.i { "Successfully stored UTM params: $utmParams" }
                     }.onFailure { exception ->
                         logger.e(exception) { "Failed to store UTM params from Play InstallReferrer" }

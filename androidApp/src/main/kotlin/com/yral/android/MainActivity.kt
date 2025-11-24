@@ -15,6 +15,8 @@ import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.defaultComponentContext
 import com.russhwolf.settings.Settings
 import com.yral.android.update.InAppUpdateManager
+import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.analytics.events.ReferralReceivedEventData
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.nav.DefaultRootComponent
 import com.yral.shared.app.ui.MyApplicationTheme
@@ -57,6 +59,7 @@ class MainActivity : ComponentActivity() {
     private val routingService: RoutingService by inject()
     private val affiliateAttributionStore: AffiliateAttributionStore by inject()
     private val utmAttributionStore: UtmAttributionStore by inject()
+    private val analyticsManager: AnalyticsManager by inject()
 
     private val updateResultLauncher: ActivityResultLauncher<IntentSenderRequest> =
         registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
@@ -231,6 +234,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun storeUtmAttribution(linkProperties: LinkProperties?) {
+        if (utmAttributionStore.isInstallReferrerCompleted()) return
         val controlParams = linkProperties?.controlParams ?: return
         Logger.d("BranchSDK") { "controlParams: $controlParams" }
         val utmSource = controlParams[UTM_SOURCE_PARAM]
@@ -245,6 +249,14 @@ class MainActivity : ComponentActivity() {
             campaign = utmCampaign,
             term = utmTerm,
             content = utmContent,
+        )
+        analyticsManager.trackEvent(
+            ReferralReceivedEventData(
+                source = utmSource,
+                medium = utmMedium,
+                campaign = utmCampaign,
+                term = utmTerm,
+            ),
         )
     }
 }
