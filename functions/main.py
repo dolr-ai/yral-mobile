@@ -354,35 +354,6 @@ def _get_daily_position(pid: str) -> int:
 
     return position
 
-def _banned_user_doc(pid: str):
-    return db().collection(BANNED_USERS_COLL).document(pid)
-
-def _is_smiley_game_banned(pid: str) -> bool:
-    """
-    Checks if a principal is marked as banned for the smiley game.
-    """
-    snap = _banned_user_doc(pid).get()
-    return snap.exists
-
-def _record_banned_principals(banned: dict[str, int], bucket_id: str) -> None:
-    """
-    Persist banned principal ids with metadata for traceability.
-    """
-    batch = db().batch()
-
-    if banned:
-        print(f"[BAN] writing {len(banned)} principals for {bucket_id}", file=sys.stderr)
-        for pid, total in banned.items():
-            doc = _banned_user_doc(pid)
-            batch.set(doc, {
-                "bucket_id": bucket_id,
-                "total_games": total,
-                "banned_at": firestore.SERVER_TIMESTAMP
-            }, merge=True)
-            print(f"[BAN] principal={pid} total_games={total}", file=sys.stderr)
-
-    batch.commit()
-
 @https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
 def cast_vote_v2(request: Request):
     balance_update_token = os.environ["BALANCE_UPDATE_TOKEN"]
@@ -836,57 +807,6 @@ def _top_winners(bucket_id: str, max_rank: int = 5) -> list[dict]:
         })
 
     return winners
-
-@https_fn.on_request(region="us-central1")
-def ban_high_volume_smiley_players(cloud_event):
-    """
-    Scans yesterday's daily leaderboard (IST) and bans principals who crossed
-    SMILEY_GAME_BAN_THRESHOLD total games (wins + losses). Intended to be
-    triggered nightly (~00:05 IST) similar to reward_leaderboard_winners.
-    """
-    try:
-        bucket_id = _yesterday_bucket_id_ist()
-        day_ref = db().collection(DAILY_COLL).document(bucket_id)
-        day_snap = day_ref.get()
-
-        if not day_snap.exists:
-            print(f"[SKIP] No leaderboard doc for {bucket_id}")
-            return jsonify({
-                "status": "skipped",
-                "reason": f"No leaderboard doc for {bucket_id}"
-            }), 200
-
-        users_coll = day_ref.collection("users")
-        banned: Dict[str, int] = {}
-        scanned = 0
-
-        for user_snap in users_coll.stream():
-            scanned += 1
-            wins = int(user_snap.get("smiley_game_wins") or 0)
-            losses = int(user_snap.get("smiley_game_losses") or 0)
-            total_games = wins + losses
-
-            if total_games > SMILEY_GAME_BAN_THRESHOLD:
-                banned[user_snap.id] = total_games
-
-        _record_banned_principals(banned, bucket_id)
-
-        print(f"[BAN] scanned={scanned} banned={len(banned)} bucket={bucket_id}")
-        return jsonify({
-            "status": "success",
-            "bucket_id": bucket_id,
-            "scanned_users": scanned,
-            "banned_count": len(banned),
-            "banned_principals": list(banned.keys())
-        }), 200
-
-    except Exception as e:
-        print("ban_high_volume_smiley_players error:", e, file=sys.stderr)
-        return jsonify({
-            "status": "error",
-            "message": "Internal server error",
-            "details": str(e)
-        }), 500
 
 @https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
 def reward_leaderboard_winners(cloud_event):
