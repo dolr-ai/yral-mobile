@@ -19,7 +19,7 @@ firebase_admin.initialize_app()
 
 WIN_REWARD = 3
 LOSS_PENALTY = -1
-SHARDS = 10
+SHARDS = 5
 
 PID_REGEX = re.compile(r'^[A-Za-z0-9_-]{6,64}$')
 SMILEY_GAME_CONFIG_PATH = "config/smiley_game_v2"
