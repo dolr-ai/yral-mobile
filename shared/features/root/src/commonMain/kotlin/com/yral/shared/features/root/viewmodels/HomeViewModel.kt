@@ -30,7 +30,7 @@ class HomeViewModel(
 
     fun onSignupPromptShown(pageName: SignupPageName) {
         _state.update {
-            it.copy(hasShownSignupPrompt = _state.value.hasShownSignupPrompt + (pageName to true))
+            it.copy(hasShownSignupPrompt = it.hasShownSignupPrompt + (pageName to true))
         }
     }
 

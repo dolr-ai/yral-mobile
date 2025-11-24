@@ -550,7 +550,7 @@ private fun LoginIfRequired(
             else -> Unit
         }
     }
-    LaunchedEffect(homeState.hasShownSignupPrompt, homeState.isSocialSignedIn) {
+    LaunchedEffect(currentChild, homeState.hasShownSignupPrompt, homeState.isSocialSignedIn) {
         if (homeState.isSocialSignedIn) return@LaunchedEffect
         when (currentChild) {
             is HomeComponent.Child.Leaderboard -> {

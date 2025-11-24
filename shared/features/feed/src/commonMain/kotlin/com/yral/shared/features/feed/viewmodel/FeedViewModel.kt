@@ -884,7 +884,7 @@ class FeedViewModel(
         sessionManager.userPrincipal?.let {
             val route = PendingAppRouteStore.peek() as? PostDetailsRoute
             if (route != null && _state.value.isLoggedIn) {
-                Logger.d("LinkSharing") { "Found pending deeplink route $route ${_state.value.feedDetails[0].videoID}" }
+                Logger.d("LinkSharing") { "Found pending deeplink route $route" }
                 PendingAppRouteStore.consume()
                 showDeeplinkedVideoFirst(
                     postId = route.postId,
