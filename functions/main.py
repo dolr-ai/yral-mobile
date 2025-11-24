@@ -533,6 +533,12 @@ def cast_vote_v2(request: Request):
         else:
             user_ref.update({"smiley_game_losses": firestore.Increment(1)})
 
+        if is_banned and coins > 0:
+            if _push_delta_yral_token(balance_update_token, pid, -coins):
+                coins = tx_coin_change(pid, vid, -coins, "BANNED")
+            else:
+                print(f"Failed to set balance 0 for banned user {pid}")
+
         try:
             _inc_daily_leaderboard(pid, outcome)
         except Exception as e:

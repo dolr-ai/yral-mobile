@@ -20,7 +20,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from google.api_core import exceptions
 
-PROJECT_ID       = os.environ.get("FIREBASE_PROJECT", "yral-mobile")
+PROJECT_ID       = os.environ.get("FIREBASE_PROJECT", "yral-staging")
 DRY_RUN          = os.environ.get("DRY_RUN", "").lower() in ("1", "true", "yes")
 BATCH_SIZE       = int(os.environ.get("BATCH_SIZE", "500"))
 WRITE_BATCH_MAX  = int(os.environ.get("WRITE_BATCH_MAX", "450"))
