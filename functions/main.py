@@ -1174,6 +1174,7 @@ def leaderboard_v3(request: Request):
         day_users = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
         top_snaps = (
             day_users.where("smiley_game_wins", ">", 0)
+                    .where("is_smiley_game_banned", "==", False)
                     .order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
                     .limit(10)
                     .stream()
@@ -1219,26 +1220,37 @@ def leaderboard_v3(request: Request):
                 user_row = row
                 break
 
-        if user_row is None:
+        user_profile = db().collection("users").document(pid).get()
+        profile_data = user_profile.to_dict() or {}
+        user_is_banned = bool(profile_data.get("is_smiley_game_banned") or False)
+
+        if user_is_banned:
+            user_row = {
+                "principal_id": pid,
+                "wins": 0,
+                "position": 0,
+                "reward": None,
+                "username": profile_data.get("username")
+            }
+        elif user_row is None:
             entry_ref = day_users.document(pid)
             entry_snap = entry_ref.get()
             user_wins = int((entry_snap.get("smiley_game_wins") if entry_snap.exists else 0) or 0)
-            user_doc = db().collection("users").document(pid).get()
-            username = (user_doc.to_dict() or {}).get("username")
-
             rank_q = (
                 day_users.where("smiley_game_wins", ">", user_wins)
-                        .count()
-                        .get()
+                         .where("is_smiley_game_banned", "==", False)
+                         .count()
+                         .get()
             )
-            user_position = int(rank_q[0][0].value) + 1
+            higher = int(rank_q[0][0].value)
+            user_position = higher + 1
 
             user_row = {
                 "principal_id": pid,
                 "wins": user_wins,
                 "position": user_position,
                 "reward": rewards_table.get(str(user_position)) if (rewards_enabled and user_wins > 0) else None,
-                "username": username
+                "username": profile_data.get("username")
             }
 
         return jsonify({
