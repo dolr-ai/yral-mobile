@@ -18,8 +18,10 @@ import platform.Foundation.writeToURL
 import platform.Photos.PHAssetCreationRequest
 import platform.Photos.PHAssetResourceTypePhoto
 import platform.Photos.PHAssetResourceTypeVideo
+import platform.Photos.PHAuthorizationStatus
 import platform.Photos.PHAuthorizationStatusAuthorized
 import platform.Photos.PHAuthorizationStatusLimited
+import platform.Photos.PHAuthorizationStatusNotDetermined
 import platform.Photos.PHPhotoLibrary
 import kotlin.coroutines.resume
 
@@ -87,13 +89,20 @@ class IosFileDownloader : FileDownloader {
         fileURL: NSURL,
         fileName: String,
     ): Result<String, YralException> {
-        val authStatus = PHPhotoLibrary.authorizationStatus()
+        var authStatus = PHPhotoLibrary.authorizationStatus()
+
+        if (authStatus == PHAuthorizationStatusNotDetermined) {
+            authStatus = requestPhotoLibraryPermission()
+        }
+
         if (authStatus != PHAuthorizationStatusAuthorized && authStatus != PHAuthorizationStatusLimited) {
-            logger.e { "Photo library access denied" }
+            logger.e { "Photo library access denied: $authStatus" }
             return Err(
                 YralException("Photo library access denied. Please enable photo library access in Settings."),
             )
         }
+
+        logger.d { "Photo library access granted" }
 
         val fileType = fileName.getFileType()
 
@@ -130,4 +139,11 @@ class IosFileDownloader : FileDownloader {
             )
         }
     }
+
+    private suspend fun requestPhotoLibraryPermission(): PHAuthorizationStatus =
+        suspendCancellableCoroutine { continuation ->
+            PHPhotoLibrary.requestAuthorization { status ->
+                continuation.resume(status)
+            }
+        }
 }
