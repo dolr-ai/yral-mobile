@@ -5,6 +5,8 @@ import androidx.core.net.toUri
 import co.touchlab.kermit.LogWriter
 import co.touchlab.kermit.Logger
 import com.yral.android.BuildConfig
+import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.analytics.events.ReferralReceivedEventData
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
@@ -28,6 +30,7 @@ import javax.crypto.spec.SecretKeySpec
 @Suppress("TooGenericExceptionCaught")
 class MetaInstallReferrerAttribution(
     private val scope: CoroutineScope,
+    private val analyticsManager: AnalyticsManager,
 ) {
     private companion object {
         private const val AES_ALGORITHM = "AES"
@@ -236,6 +239,14 @@ class MetaInstallReferrerAttribution(
             content = utmParams.content,
         )
         utmAttributionStore.markInstallReferrerCompleted()
+        analyticsManager.trackEvent(
+            ReferralReceivedEventData(
+                source = utmParams.source,
+                medium = utmParams.medium,
+                campaign = utmParams.campaign,
+            ),
+        )
+        utmAttributionStore.markInstallReferrerTracked()
         logger.i {
             "Successfully stored Meta Install Referrer UTM params: " +
                 "source=${utmParams.source}, campaign=${utmParams.campaign}, " +
