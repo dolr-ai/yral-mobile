@@ -1437,16 +1437,23 @@ def daily_rank(request: Request):
 
         if user_doc.exists:
             wins = int(user_doc.get("smiley_game_wins") or 0)
+            is_banned = bool(user_doc.get("is_smiley_game_banned") or False)
         else:
             wins = 0
+            is_banned = False
 
-        count_snap = (
-            users_ref.where("smiley_game_wins", ">", wins)
-                     .count()
-                     .get()
-        )
-        higher_count = int(count_snap[0][0].value)
-        position = higher_count + 1
+        if is_banned:
+            higher_count = 0
+            position = 0
+        else:
+            count_snap = (
+                users_ref.where("smiley_game_wins", ">", wins)
+                         .where("is_smiley_game_banned", "==", False)
+                         .count()
+                         .get()
+            )
+            higher_count = int(count_snap[0][0].value)
+            position = higher_count + 1
 
         return jsonify({
             "principal_id": pid,
