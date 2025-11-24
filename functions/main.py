@@ -25,6 +25,8 @@ PID_REGEX = re.compile(r'^[A-Za-z0-9_-]{6,64}$')
 SMILEY_GAME_CONFIG_PATH = "config/smiley_game_v2"
 VIDEO_COLL = "videos"
 DAILY_COLL = "leaderboards_daily"
+BANNED_USERS_COLL = "smiley_game_banned_users"
+SMILEY_GAME_BAN_THRESHOLD = 15000
 
 BALANCE_URL_YRAL_TOKEN = "https://yral-hot-or-not.go-bazzinga.workers.dev/update_balance/"
 BALANCE_URL_CKBTC = "https://yral-hot-or-not.go-bazzinga.workers.dev/v2/transfer_ckbtc"
@@ -317,157 +319,6 @@ def tap_to_recharge(request: Request):
         print("Unhandled error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
-# TODO: REMOVE THIS
-@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
-def cast_vote(request: Request):
-    balance_update_token = os.environ["BALANCE_UPDATE_TOKEN"]
-    try:
-        # 1. validation & auth ────────────────────────────────────────────
-        if request.method != "POST":
-            return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
-
-        body = request.get_json(silent=True) or {}
-        data = body.get("data", {})
-        pid  = str(body.get("principal_id") or data.get("principal_id") or "").strip()
-        vid  = str(body.get("video_id") or data.get("video_id") or "").strip()
-        sid  = str(body.get("smiley_id") or data.get("smiley_id") or "").strip()
-
-        auth_header = request.headers.get("Authorization", "")
-        if not auth_header.startswith("Bearer "):
-            return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
-        auth.verify_id_token(auth_header.split(" ", 1)[1])
-
-        # actok = request.headers.get("X-Firebase-AppCheck")
-        # if actok:
-        #     try:
-        #         app_check.verify_token(actok)
-        #     except Exception:
-        #         return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
-
-        # load the global smiley list once per cold-start
-        smileys     = get_smileys()                          # [{id, image_name, …}, …]
-        smiley_map  = {s["id"]: s for s in smileys}
-        
-        smiley_map.pop("puke", None)
-
-        if sid not in smiley_map:
-            return error_response(400, "SMILEY_NOT_ALLOWED", "smiley_id not in config")
-
-        # 2. references ───────────────────────────────────────────────────
-        vid_ref   = db().collection(VIDEO_COLL).document(vid)
-        vote_ref  = vid_ref.collection("votes").document(pid)
-        user_ref = db().document(f"users/{pid}")
-        shard_ref = lambda k: vid_ref.collection("tallies").document(f"shard_{k}")
-
-        # 3. transaction: READS first, WRITES after ──────────────────────
-        @firestore.transactional
-        def _vote_tx(tx: firestore.Transaction) -> dict:
-            user_snapshot = user_ref.get(transaction=tx)
-            balance = user_snapshot.get("coins") or 0
-            if balance < abs(LOSS_PENALTY):
-                return {"result": "INSUFFICIENT", "coins": balance}
-
-            already_voted = vote_ref.get(transaction=tx).exists
-            if already_voted:
-                return {"result": "DUP"}
-
-            vid_exists  = vid_ref.get(transaction=tx).exists
-            if not vid_exists:
-                all_ids = [s["id"] for s in smileys]
-                seed_a = random.choice(all_ids)
-                
-                pool = [smid for smid in all_ids if smid != seed_a]
-                seed_b = random.choice(pool)
-
-                tx.set(vid_ref, {
-                    "created_at": firestore.SERVER_TIMESTAMP
-                })
-
-                zero = {s["id"]: 0 for s in smileys}
-                zero[seed_a] = 1
-                zero[seed_b] = 1
-                tx.set(shard_ref(0), zero, merge=True)
-
-                for k in range(1, SHARDS):
-                    tx.set(shard_ref(k), {s["id"]: 0 for s in smileys}, merge=True)
-
-            # write vote + counter
-            tx.set(vote_ref, {
-                "smiley_id": sid,
-                "at": firestore.SERVER_TIMESTAMP
-            })
-            tx.update(
-                shard_ref(random.randrange(SHARDS)),
-                {sid: firestore.Increment(1)}
-            )
-            return {"result": "OK"}
-
-        tx_out = _vote_tx(db().transaction())
-        if tx_out["result"] == "DUP":
-            return error_response(409, "DUPLICATE_VOTE", "You have already voted on this video. Scroll to Next Video to keep Voting.")
-
-        if tx_out["result"] == "INSUFFICIENT":
-            return error_response(402, "INSUFFICIENT_COINS", f"Balance {tx_out['coins']} < {abs(LOSS_PENALTY)} required")
-
-        # 4. read tallies after commit ───────────────────────────────────
-        raw_counts = collections.Counter()
-        for k in range(SHARDS):
-            shard = shard_ref(k).get().to_dict() or {}
-            raw_counts.update(shard)
-
-        counts = {sid: raw_counts.get(sid, 0) for sid in smiley_map.keys()}
-
-        max_votes = max(counts.values())
-        leaders = [sm for sm, v in counts.items() if v == max_votes]
-
-        if len(leaders) == 1:
-            winner_id = leaders[0]
-            outcome = "WIN" if sid == winner_id else "LOSS"
-        else:
-            winner_id = None
-            outcome = "LOSS"
-
-        # 5. coin mutation ───────────────────────────────────────────────
-        delta  = WIN_REWARD if outcome == "WIN" else LOSS_PENALTY
-        coins  = tx_coin_change(pid, vid, delta, outcome)
-
-        if not _push_delta_yral_token(balance_update_token, pid, delta):
-            _ = tx_coin_change(pid, vid, -delta, "ROLLBACK")
-            return error_response(502, "UPSTREAM_FAILED", "We couldn’t record your vote. Please try voting again after sometime.")
-
-        vote_ref.update({
-            "outcome": outcome,
-            "coin_delta": delta
-        })
-
-        if outcome == "WIN":
-            user_ref.update({"smiley_game_wins": firestore.Increment(1)})
-        else:
-            user_ref.update({"smiley_game_losses": firestore.Increment(1)})
-
-        # 6. success payload (voted smiley) ──────────────────────────────
-        voted = smiley_map[sid]
-        return jsonify({
-            "outcome":    outcome,
-            "smiley": {
-                "id":         voted["id"],
-                "image_url": voted["image_url"],
-                "is_active":  voted["is_active"],
-                "click_animation": voted["click_animation"]
-            },
-            "coins":       coins,
-            "coin_delta":  delta
-        }), 200
-
-    # known error wrappers ───────────────────────────────────────────────
-    except auth.InvalidIdTokenError:
-        return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
-    except GoogleAPICallError as e:
-        return error_response(500, "FIRESTORE_ERROR", str(e))
-    except Exception as e:                                 # fallback
-        print("Unhandled error:", e, file=sys.stderr)
-        return error_response(500, "INTERNAL", "Internal server error")
-
 def _get_daily_position(pid: str) -> int:
     bucket_id, _start_ms, _end_ms = _bucket_bounds_ist()
     daily_doc_ref = db().collection(DAILY_COLL).document(bucket_id)
@@ -494,6 +345,35 @@ def _get_daily_position(pid: str) -> int:
     position = higher_count + 1
 
     return position
+
+def _banned_user_doc(pid: str):
+    return db().collection(BANNED_USERS_COLL).document(pid)
+
+def _is_smiley_game_banned(pid: str) -> bool:
+    """
+    Checks if a principal is marked as banned for the smiley game.
+    """
+    snap = _banned_user_doc(pid).get()
+    return snap.exists
+
+def _record_banned_principals(banned: dict[str, int], bucket_id: str) -> None:
+    """
+    Persist banned principal ids with metadata for traceability.
+    """
+    batch = db().batch()
+
+    if banned:
+        print(f"[BAN] writing {len(banned)} principals for {bucket_id}", file=sys.stderr)
+        for pid, total in banned.items():
+            doc = _banned_user_doc(pid)
+            batch.set(doc, {
+                "bucket_id": bucket_id,
+                "total_games": total,
+                "banned_at": firestore.SERVER_TIMESTAMP
+            }, merge=True)
+            print(f"[BAN] principal={pid} total_games={total}", file=sys.stderr)
+
+    batch.commit()
 
 @https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
 def cast_vote_v2(request: Request):
@@ -535,6 +415,7 @@ def cast_vote_v2(request: Request):
         vote_ref  = vid_ref.collection("votes").document(pid)
         user_ref = db().document(f"users/{pid}")
         shard_ref = lambda k: vid_ref.collection("tallies").document(f"shard_{k}")
+        is_banned = _is_smiley_game_banned(pid)
 
         # 3. transaction: READS first, WRITES after ──────────────────────
         @firestore.transactional
@@ -583,23 +464,26 @@ def cast_vote_v2(request: Request):
         if tx_out["result"] == "INSUFFICIENT":
             return error_response(402, "INSUFFICIENT_COINS", f"Balance {tx_out['coins']} < {abs(LOSS_PENALTY)} required")
 
-        # 4. read tallies after commit ───────────────────────────────────
-        raw_counts = collections.Counter()
-        for k in range(SHARDS):
-            shard = shard_ref(k).get().to_dict() or {}
-            raw_counts.update(shard)
-
-        counts = {sm_id: raw_counts.get(sm_id, 0) for sm_id in smiley_map.keys()}
-
-        max_votes = max(counts.values())
-        leaders = [sm for sm, v in counts.items() if v == max_votes]
-
-        if len(leaders) == 1:
-            winner_id = leaders[0]
-            outcome = "WIN" if sid == winner_id else "LOSS"
-        else:
-            winner_id = None
+        # 4. outcome selection ───────────────────────────────────────────
+        if is_banned:
             outcome = "LOSS"
+        else:
+            raw_counts = collections.Counter()
+            for k in range(SHARDS):
+                shard = shard_ref(k).get().to_dict() or {}
+                raw_counts.update(shard)
+
+            counts = {sm_id: raw_counts.get(sm_id, 0) for sm_id in smiley_map.keys()}
+
+            max_votes = max(counts.values())
+            leaders = [sm for sm, v in counts.items() if v == max_votes]
+
+            if len(leaders) == 1:
+                winner_id = leaders[0]
+                outcome = "WIN" if sid == winner_id else "LOSS"
+            else:
+                winner_id = None
+                outcome = "LOSS"
 
         # 5. coin mutation ───────────────────────────────────────────────
         delta  = WIN_REWARD if outcome == "WIN" else LOSS_PENALTY
@@ -913,6 +797,57 @@ def _top_winners(bucket_id: str, max_rank: int = 5) -> list[dict]:
 
     return winners
 
+@https_fn.on_request(region="us-central1")
+def ban_high_volume_smiley_players(cloud_event):
+    """
+    Scans yesterday's daily leaderboard (IST) and bans principals who crossed
+    SMILEY_GAME_BAN_THRESHOLD total games (wins + losses). Intended to be
+    triggered nightly (~00:05 IST) similar to reward_leaderboard_winners.
+    """
+    try:
+        bucket_id = _yesterday_bucket_id_ist()
+        day_ref = db().collection(DAILY_COLL).document(bucket_id)
+        day_snap = day_ref.get()
+
+        if not day_snap.exists:
+            print(f"[SKIP] No leaderboard doc for {bucket_id}")
+            return jsonify({
+                "status": "skipped",
+                "reason": f"No leaderboard doc for {bucket_id}"
+            }), 200
+
+        users_coll = day_ref.collection("users")
+        banned: Dict[str, int] = {}
+        scanned = 0
+
+        for user_snap in users_coll.stream():
+            scanned += 1
+            wins = int(user_snap.get("smiley_game_wins") or 0)
+            losses = int(user_snap.get("smiley_game_losses") or 0)
+            total_games = wins + losses
+
+            if total_games > SMILEY_GAME_BAN_THRESHOLD:
+                banned[user_snap.id] = total_games
+
+        _record_banned_principals(banned, bucket_id)
+
+        print(f"[BAN] scanned={scanned} banned={len(banned)} bucket={bucket_id}")
+        return jsonify({
+            "status": "success",
+            "bucket_id": bucket_id,
+            "scanned_users": scanned,
+            "banned_count": len(banned),
+            "banned_principals": list(banned.keys())
+        }), 200
+
+    except Exception as e:
+        print("ban_high_volume_smiley_players error:", e, file=sys.stderr)
+        return jsonify({
+            "status": "error",
+            "message": "Internal server error",
+            "details": str(e)
+        }), 500
+
 @https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
 def reward_leaderboard_winners(cloud_event):
     try:
@@ -1049,350 +984,6 @@ def reward_leaderboard_winners(cloud_event):
             "message": "Internal server error",
             "details": str(e)
         }), 500
-
-# TODO: REMOVE THIS
-@https_fn.on_request(region="us-central1")
-def leaderboard(request: Request):
-    """
-    Request
-      { "data": { "principal_id": "<pid>", "mode": "daily" | "all_time" } }
-
-    Response
-      {
-        "user_row": { principal_id, wins, position },
-        "top_rows": [ … up to 10 … ],
-        "time_left_ms": <int | null>   # ms left in today's IST window if daily, else null
-      }
-    """
-    try:
-        if request.method != "POST":
-            return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
-
-        body = request.get_json(silent=True) or {}
-        data = body.get("data", {}) or {}
-
-        pid  = str(data.get("principal_id", "")).strip()
-        mode = str(data.get("mode", "")).lower().strip()
-        is_daily = (mode == "daily")
-
-        if not pid:
-            return error_response(400, "MISSING_PID", "principal_id required")
-
-        # ───────── Auth & App Check ─────────
-        auth_header = request.headers.get("Authorization", "")
-        if not auth_header.startswith("Bearer "):
-            return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
-        auth.verify_id_token(auth_header.split(" ", 1)[1])
-
-        # actok = request.headers.get("X-Firebase-AppCheck")
-        # if not actok:
-        #     return error_response(401, "APPCHECK_MISSING", "App Check token required")
-        # try:
-        #     app_check.verify_token(actok)
-        # except Exception:
-        #     return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
-
-        if not is_daily:
-            # ===== All-time leaderboard =====
-            users = db().collection("users")
-            user_ref = users.document(pid)
-
-            user_snap = user_ref.get()
-            user_wins = int(user_snap.get("smiley_game_wins") or 0)
-
-            rank_q = (
-                users.where("smiley_game_wins", ">", user_wins)
-                     .count()
-                     .get()
-            )
-            user_position = int(rank_q[0][0].value) + 1
-
-            top_snaps = (
-                users.order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
-                     .limit(10)
-                     .stream()
-            )
-
-            top_rows, current_rank, last_wins = [], 0, None
-            for snap in top_snaps:
-                wins = int(snap.get("smiley_game_wins") or 0)
-                if wins != last_wins:
-                    current_rank += 1   # dense ranking
-                    last_wins = wins
-                top_rows.append({
-                    "principal_id": snap.id,
-                    "wins": wins,
-                    "position": current_rank
-                })
-
-            user_row = {
-                "principal_id": pid,
-                "wins": user_wins,
-                "position": user_position
-            }
-
-            return jsonify({
-                "user_row": user_row,
-                "top_rows": top_rows,
-                "time_left_ms": None
-            }), 200
-
-        # ===== Daily leaderboard (IST day) =====
-        bucket_id, _start_ms, end_ms = _bucket_bounds_ist()
-        now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
-        time_left_ms = max(0, end_ms - now_ms)
-
-        day_users = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
-        entry_ref = day_users.document(pid)
-
-        entry_snap = entry_ref.get()
-        user_wins = int((entry_snap.get("smiley_game_wins") if entry_snap.exists else 0) or 0)
-
-        rank_q = (
-            day_users.where("smiley_game_wins", ">", user_wins)
-                     .count()
-                     .get()
-        )
-        user_position = int(rank_q[0][0].value) + 1
-
-        top_snaps = (
-            day_users.order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
-                     .limit(10)
-                     .stream()
-        )
-
-        top_rows, current_rank, last_wins = [], 0, None
-        for snap in top_snaps:
-            wins = int(snap.get("smiley_game_wins") or 0)
-            if wins != last_wins:
-                current_rank += 1    # dense ranking
-                last_wins = wins
-            top_rows.append({
-                "principal_id": snap.id,
-                "wins": wins,
-                "position": current_rank
-            })
-
-        need = 10 - len(top_rows)
-        if need > 0:
-            # Pull a pool of candidates from all-time users, then shuffle
-            candidates = (
-            db().collection("users")
-                .order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
-                .limit(20)
-                .stream()
-            )
-            existing_ids = {r["principal_id"] for r in top_rows}
-            cand_ids = [u.id for u in candidates if u.id not in existing_ids]
-            random.shuffle(cand_ids)
-            fill_ids = cand_ids[:need]
-
-            # Dense ranking: all zeros share the same position.
-            if last_wins != 0:
-                current_rank += 1
-                last_wins = 0
-
-            for pid_fill in fill_ids:
-                top_rows.append({
-                    "principal_id": pid_fill,
-                    "wins": 0,
-                    "position": current_rank
-                })
-
-        # Safety: ensure exactly 10
-        top_rows = top_rows[:10]
-
-        user_row = {
-            "principal_id": pid,
-            "wins": user_wins,
-            "position": user_position
-        }
-
-        return jsonify({
-            "user_row": user_row,
-            "top_rows": top_rows,
-            "time_left_ms": time_left_ms
-        }), 200
-
-    except auth.InvalidIdTokenError:
-        return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
-    except GoogleAPICallError as e:
-        return error_response(500, "FIRESTORE_ERROR", str(e))
-    except Exception as e:
-        print("Leaderboard error:", e, file=sys.stderr)
-        return error_response(500, "INTERNAL", "Internal server error")
-
-# TODO: REMOVE THIS
-@https_fn.on_request(region="us-central1")
-def leaderboard_v2(request: Request):
-    """
-    Request
-      { "data": { "principal_id": "<pid>", "mode": "daily" | "all_time" } }
-
-    Response
-      {
-        "user_row": { principal_id, wins, position },
-        "top_rows": [ … up to 10 … ],
-        "time_left_ms": <int | null>   # ms left in today's IST window if daily, else null
-      }
-    """
-    try:
-        if request.method != "POST":
-            return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
-
-        body = request.get_json(silent=True) or {}
-        data = body.get("data", {}) or {}
-
-        pid  = str(data.get("principal_id", "")).strip()
-        mode = str(data.get("mode", "")).lower().strip()
-        is_daily = (mode == "daily")
-
-        if not pid:
-            return error_response(400, "MISSING_PID", "principal_id required")
-
-        # ───────── Auth & App Check ─────────
-        auth_header = request.headers.get("Authorization", "")
-        if not auth_header.startswith("Bearer "):
-            return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
-        auth.verify_id_token(auth_header.split(" ", 1)[1])
-
-        # actok = request.headers.get("X-Firebase-AppCheck")
-        # if not actok:
-        #     return error_response(401, "APPCHECK_MISSING", "App Check token required")
-        # try:
-        #     app_check.verify_token(actok)
-        # except Exception:
-        #     return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
-
-        if not is_daily:
-            # ===== All-time leaderboard =====
-            users = db().collection("users")
-            user_ref = users.document(pid)
-
-            user_snap = user_ref.get()
-            user_wins = int(user_snap.get("smiley_game_wins") or 0)
-
-            rank_q = (
-                users.where("smiley_game_wins", ">", user_wins)
-                     .count()
-                     .get()
-            )
-            user_position = int(rank_q[0][0].value) + 1
-
-            top_snaps = (
-                users.order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
-                     .limit(10)
-                     .stream()
-            )
-
-            top_rows, current_rank, last_wins = [], 0, None
-            for snap in top_snaps:
-                wins = int(snap.get("smiley_game_wins") or 0)
-                if wins != last_wins:
-                    current_rank += 1   # dense ranking
-                    last_wins = wins
-                top_rows.append({
-                    "principal_id": snap.id,
-                    "wins": wins,
-                    "position": current_rank
-                })
-
-            user_row = {
-                "principal_id": pid,
-                "wins": user_wins,
-                "position": user_position
-            }
-
-            return jsonify({
-                "user_row": user_row,
-                "top_rows": top_rows,
-                "time_left_ms": None
-            }), 200
-
-        # ===== Daily leaderboard (IST day) =====
-        bucket_id, _start_ms, end_ms = _bucket_bounds_ist()
-        now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
-        time_left_ms = max(0, end_ms - now_ms)
-
-        day_users = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
-        entry_ref = day_users.document(pid)
-
-        entry_snap = entry_ref.get()
-        user_wins = int((entry_snap.get("smiley_game_wins") if entry_snap.exists else 0) or 0)
-
-        rank_q = (
-            day_users.where("smiley_game_wins", ">", user_wins)
-                     .count()
-                     .get()
-        )
-        user_position = int(rank_q[0][0].value) + 1
-
-        top_snaps = (
-            day_users.order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
-                     .limit(10)
-                     .stream()
-        )
-
-        top_rows, current_rank, last_wins = [], 0, None
-        for snap in top_snaps:
-            wins = int(snap.get("smiley_game_wins") or 0)
-            if wins != last_wins:
-                current_rank += 1    # dense ranking
-                last_wins = wins
-            top_rows.append({
-                "principal_id": snap.id,
-                "wins": wins,
-                "position": current_rank
-            })
-
-        need = 10 - len(top_rows)
-        if need > 0:
-            # Pull a pool of candidates from all-time users, then shuffle
-            candidates = (
-            db().collection("users")
-                .order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
-                .limit(20)
-                .stream()
-            )
-            existing_ids = {r["principal_id"] for r in top_rows}
-            cand_ids = [u.id for u in candidates if u.id not in existing_ids]
-            random.shuffle(cand_ids)
-            fill_ids = cand_ids[:need]
-
-            # Dense ranking: all zeros share the same position.
-            if last_wins != 0:
-                current_rank += 1
-                last_wins = 0
-
-            for pid_fill in fill_ids:
-                top_rows.append({
-                    "principal_id": pid_fill,
-                    "wins": 0,
-                    "position": current_rank
-                })
-
-        # Safety: ensure exactly 10
-        top_rows = top_rows[:10]
-
-        user_row = {
-            "principal_id": pid,
-            "wins": user_wins,
-            "position": user_position
-        }
-
-        return jsonify({
-            "user_row": user_row,
-            "top_rows": top_rows,
-            "time_left_ms": time_left_ms
-        }), 200
-
-    except auth.InvalidIdTokenError:
-        return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
-    except GoogleAPICallError as e:
-        return error_response(500, "FIRESTORE_ERROR", str(e))
-    except Exception as e:
-        print("Leaderboard error:", e, file=sys.stderr)
-        return error_response(500, "INTERNAL", "Internal server error")
 
 @https_fn.on_request(region="us-central1")
 def leaderboard_v3(request: Request):
@@ -1633,147 +1224,6 @@ def leaderboard_v3(request: Request):
         return error_response(500, "FIRESTORE_ERROR", str(e))
     except Exception as e:
         print("Leaderboard error:", e, file=sys.stderr)
-        return error_response(500, "INTERNAL", "Internal server error")
-
-# TODO: REMOVE THIS
-@https_fn.on_request(region="us-central1")
-def leaderboard_history(request: Request):
-    """
-    Request:
-      { "data": { "principal_id": "<pid>" } }
-
-    Response: 200 OK with an ARRAY (newest → oldest). Each item:
-      {
-        "date": "Aug 15",
-        "top_rows": [ { principal_id, wins, position } ... up to 10 ],
-        "user_row": { principal_id, wins, position } | null
-      }
-
-    Notes:
-    - If a given day has no docs (or any read error), that day is omitted entirely.
-    - Latest day returned is "yesterday" in IST.
-    """
-    try:
-        if request.method != "POST":
-            return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
-
-        body = request.get_json(silent=True) or {}
-        data = body.get("data", {}) or {}
-        pid = str(data.get("principal_id", "")).strip()
-
-        if not pid:
-            return error_response(400, "MISSING_PID", "principal_id required")
-
-        # ── Auth & App Check ────────────────────────────────────────────────
-        auth_header = request.headers.get("Authorization", "")
-        if not auth_header.startswith("Bearer "):
-            return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
-        auth.verify_id_token(auth_header.split(" ", 1)[1])
-
-        # actok = request.headers.get("X-Firebase-AppCheck")
-        # if not actok:
-        #     return error_response(401, "APPCHECK_MISSING", "App Check token required")
-        # try:
-        #     app_check.verify_token(actok)
-        # except Exception:
-        #     return error_response(401, "APPCHECK_INVALID", "App Check token invalid")
-
-        # ── Build last 7 IST dates EXCLUDING today (newest → oldest) ───────
-        today = _ist_today_date()
-        days = [today - timedelta(days=offset) for offset in range(1, 8)]  # 1..7 days ago
-
-        result: List[Dict] = []
-        for d in days:
-            bucket_id = _bucket_id_for_ist_day(d)
-            date_label = _friendly_date_str(d)
-            top_rows = []
-            last_wins, current_rank = None, 0
-
-            # Skip if the day has no docs (or read error)
-            if not _has_any_docs_for_day(bucket_id):
-                # Pull a pool of candidates from all-time users, then shuffle
-                need = 10
-                candidates = (
-                db().collection("users")
-                    .order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
-                    .limit(20)
-                    .stream()
-                )
-                existing_ids = {r["principal_id"] for r in top_rows}
-                cand_ids = [u.id for u in candidates if u.id not in existing_ids]
-                random.shuffle(cand_ids)
-                fill_ids = cand_ids[:need]
-
-                # Dense ranking: all zeros share the same position.
-                if last_wins != 0:
-                    current_rank += 1
-                    last_wins = 0
-
-                for pid_fill in fill_ids:
-                    top_rows.append({
-                        "principal_id": pid_fill,
-                        "wins": 0,
-                        "position": current_rank
-                    })
-            else:
-                # Top rows (dense)
-                try:
-                    top_rows, last_wins, current_rank = _dense_top_rows_for_day(bucket_id)
-                except GoogleAPICallError as e:
-                    # Per requirement, skip this day fully on read error
-                    print(f"[skip] top rows read error for {bucket_id}: {e}", file=sys.stderr)
-                    continue
-
-            need = 10 - len(top_rows)
-            if need > 0:
-                # Pull a pool of candidates from all-time users, then shuffle
-                candidates = (
-                db().collection("users")
-                    .order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
-                    .limit(20)
-                    .stream()
-                )
-                existing_ids = {r["principal_id"] for r in top_rows}
-                cand_ids = [u.id for u in candidates if u.id not in existing_ids]
-                random.shuffle(cand_ids)
-                fill_ids = cand_ids[:need]
-
-                # Dense ranking: all zeros share the same position.
-                if last_wins != 0:
-                    current_rank += 1
-                    last_wins = 0
-
-                for pid_fill in fill_ids:
-                    top_rows.append({
-                        "principal_id": pid_fill,
-                        "wins": 0,
-                        "position": current_rank
-                    })
-
-            # Safety: ensure exactly 10
-            top_rows = top_rows[:10]
-
-            # Compute user_row; null it if user appears in top_rows
-            try:
-                user_row = _user_row_for_day(bucket_id, pid)
-            except GoogleAPICallError as e:
-                user_row = {"principal_id": pid, "wins": 0, "position": 1}
-
-            result.append({
-                "date": date_label,      # 'Aug 15'
-                "top_rows": top_rows,    # up to 10, dense-ranked
-                "user_row": user_row     # or null if in top_rows
-            })
-
-        # Already newest → oldest because we iterated 1..7 days ago in order
-        return jsonify(result), 200
-
-    except auth.InvalidIdTokenError:
-        return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
-    except GoogleAPICallError as e:
-        return error_response(500, "FIRESTORE_ERROR", str(e))
-    except Exception as e:
-        print("leaderboard_daily_last7_excl_today error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
 @https_fn.on_request(region="us-central1")

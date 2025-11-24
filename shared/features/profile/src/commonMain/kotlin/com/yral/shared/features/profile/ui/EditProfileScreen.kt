@@ -4,9 +4,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,14 +43,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.boundsInRoot
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.AnnotatedString
@@ -113,8 +107,6 @@ fun EditProfileScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val clipboardManager = LocalClipboardManager.current
     val focusManager = LocalFocusManager.current
-    var usernameBounds by remember { mutableStateOf<Rect?>(null) }
-    var bioBounds by remember { mutableStateOf<Rect?>(null) }
     val scrollState = rememberScrollState()
     val galleryPicker = rememberProfileImagePicker(viewModel::uploadProfileImage)
     val photoCapture = rememberProfilePhotoCapture(viewModel::uploadProfileImage)
@@ -170,16 +162,20 @@ fun EditProfileScreen(
                 Modifier
                     .fillMaxSize()
                     .verticalScroll(scrollState)
-                    .pointerInput(state.isUsernameFocused, usernameBounds, bioBounds) {
-                        awaitEachGesture {
-                            val down = awaitFirstDown(requireUnconsumed = true)
-                            val up = waitForUpOrCancellation()
-                            val position = (up ?: down).position
-                            val inUsername = usernameBounds?.contains(position) == true
-                            val inBio = bioBounds?.contains(position) == true
-
-                            if (!inUsername && !inBio) {
-                                focusManager.clearFocus()
+                    .pointerInput(Unit) {
+                        // This only clears focus when tap is NOT consumed
+                        // by a child (like BasicTextField)
+                        awaitPointerEventScope {
+                            while (true) {
+                                val event = awaitPointerEvent()
+                                val anyPressed = event.changes.any { it.pressed }
+                                if (!anyPressed) {
+                                    // Pointer is up -> clear focus if nothing consumed it
+                                    val allUnconsumed = event.changes.all { !it.isConsumed }
+                                    if (allUnconsumed) {
+                                        focusManager.clearFocus()
+                                    }
+                                }
                             }
                         }
                     },
@@ -209,7 +205,6 @@ fun EditProfileScreen(
                     onFocusChanged = viewModel::onUsernameFocusChanged,
                     onClear = viewModel::clearUsernameInput,
                     onRevert = viewModel::revertUsernameChange,
-                    onBoundsChanged = { usernameBounds = it },
                 )
                 val isInvalid = !state.isUsernameValid
                 val customError = state.usernameErrorMessage
@@ -245,7 +240,6 @@ fun EditProfileScreen(
                     onBioChange = viewModel::onBioChanged,
                     onFocusChanged = viewModel::onBioFocusChanged,
                     isFocused = state.isBioFocused,
-                    onBoundsChanged = { bioBounds = it },
                 )
                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -513,7 +507,6 @@ private fun UsernameSection(
     onFocusChanged: (Boolean) -> Unit,
     onClear: () -> Unit,
     onRevert: () -> Unit,
-    onBoundsChanged: (Rect) -> Unit,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -531,7 +524,6 @@ private fun UsernameSection(
             onFocusChanged = onFocusChanged,
             onClear = onClear,
             onRevert = onRevert,
-            onBoundsChanged = onBoundsChanged,
         )
     }
 }
@@ -544,7 +536,6 @@ private fun UsernameTextField(
     onFocusChanged: (Boolean) -> Unit,
     onClear: () -> Unit,
     onRevert: () -> Unit,
-    onBoundsChanged: (Rect) -> Unit,
 ) {
     val shape = RoundedCornerShape(12.dp)
     val focusRequester = remember { FocusRequester() }
@@ -575,10 +566,7 @@ private fun UsernameTextField(
                 .fillMaxWidth()
                 .height(44.dp)
                 .focusRequester(focusRequester)
-                .onFocusChanged { focusState -> onFocusChanged(focusState.isFocused) }
-                .onGloballyPositioned { coordinates ->
-                    onBoundsChanged(coordinates.boundsInRoot())
-                },
+                .onFocusChanged { focusState -> onFocusChanged(focusState.isFocused) },
         decorationBox = { innerTextField ->
             val isInvalid = !state.isUsernameValid
             val borderColor =
@@ -626,7 +614,6 @@ private fun BioSection(
     onBioChange: (String) -> Unit,
     onFocusChanged: (Boolean) -> Unit,
     isFocused: Boolean,
-    onBoundsChanged: (Rect) -> Unit,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -648,9 +635,7 @@ private fun BioSection(
                 Modifier
                     .fillMaxWidth()
                     .defaultMinSize(minHeight = 44.dp)
-                    .onGloballyPositioned { coordinates ->
-                        onBoundsChanged(coordinates.boundsInRoot())
-                    }.onFocusChanged { focusState -> onFocusChanged(focusState.isFocused) },
+                    .onFocusChanged { focusState -> onFocusChanged(focusState.isFocused) },
             decorationBox = { innerTextField ->
                 Box(
                     modifier =
