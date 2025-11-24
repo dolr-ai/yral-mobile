@@ -141,14 +141,22 @@ class MetaInstallReferrerAttribution(
         return JsonObject(jsonMap)
     }
 
-    private fun extractRootLevelUtmParams(json: JsonObject): UtmParams =
-        UtmParams(
+    private fun extractRootLevelUtmParams(json: JsonObject): UtmParams {
+        val contentValue =
+            when (val utmContent = json["utm_content"]) {
+                is JsonPrimitive -> utmContent.content
+                is JsonObject -> Json.encodeToString(JsonObject.serializer(), utmContent)
+                else -> null // It's null or some other type
+            }
+
+        return UtmParams(
             campaign = json["utm_campaign"]?.jsonPrimitive?.content,
             source = json["utm_source"]?.jsonPrimitive?.content,
             medium = json["utm_medium"]?.jsonPrimitive?.content,
             term = json["utm_term"]?.jsonPrimitive?.content,
-            content = json["utm_content"]?.jsonPrimitive?.content,
+            content = contentValue,
         )
+    }
 
     private data class EncryptedData(
         val dataHex: String,
