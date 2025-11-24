@@ -15,6 +15,7 @@ import com.arkivanov.decompose.router.stack.pushToFront
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
+import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
@@ -70,6 +71,7 @@ class DefaultRootComponent(
         }
 
     private val slotNavigation = SlotNavigation<SlotConfig>()
+    private var loginSlotCallbacks: LoginSlotCallbacks? = null
 
     override val slot: Value<ChildSlot<*, RootComponent.SlotChild>> =
         childSlot(
@@ -91,6 +93,8 @@ class DefaultRootComponent(
                 openEditProfile = this::openEditProfile,
                 openProfile = this::openProfile,
                 showAlertsOnDialog = { this.showSlot(SlotConfig.AlertsRequestBottomSheet(it)) },
+                showLoginBottomSheet = this::showLoginBottomSheet,
+                hideLoginBottomSheetIfVisible = this::hideLoginBottomSheetIfVisible,
             )
         homeComponent = component
         return component
@@ -116,6 +120,14 @@ class DefaultRootComponent(
             openProfile = this::openProfile,
             onBackClicked = this::onBackClicked,
             showAlertsOnDialog = { this.showSlot(SlotConfig.AlertsRequestBottomSheet(it)) },
+            promptLogin = {
+                showLoginBottomSheet(
+                    pageName = SignupPageName.PROFILE,
+                    headlineText = null,
+                    onDismissRequest = { hideLoginBottomSheetIfVisible() },
+                    onLoginSuccess = { hideLoginBottomSheetIfVisible() },
+                )
+            },
         )
 
     override fun onBackClicked() {
@@ -158,6 +170,33 @@ class DefaultRootComponent(
         navigation.pushToFront(Config.UserProfile(userCanisterData))
     }
 
+    override fun showLoginBottomSheet(
+        pageName: SignupPageName,
+        headlineText: String?,
+        onDismissRequest: () -> Unit,
+        onLoginSuccess: () -> Unit,
+    ) {
+        loginSlotCallbacks =
+            LoginSlotCallbacks(
+                onDismissRequest = onDismissRequest,
+                onLoginSuccess = onLoginSuccess,
+            )
+        showSlot(
+            SlotConfig.LoginBottomSheet(
+                pageName = pageName,
+                headlineText = headlineText,
+            ),
+        )
+    }
+
+    override fun hideLoginBottomSheetIfVisible() {
+        val currentConfig = slot.value.child?.configuration
+        if (currentConfig is SlotConfig.LoginBottomSheet) {
+            loginSlotCallbacks = null
+            slotNavigation.dismiss()
+        }
+    }
+
     private fun slotChild(
         config: SlotConfig,
         componentContext: ComponentContext,
@@ -166,6 +205,21 @@ class DefaultRootComponent(
             is SlotConfig.AlertsRequestBottomSheet ->
                 RootComponent.SlotChild.AlertsRequestBottomSheet(
                     component = alertsRequestComponent(componentContext, config.requestType),
+                )
+            is SlotConfig.LoginBottomSheet ->
+                RootComponent.SlotChild.LoginBottomSheet(
+                    pageName = config.pageName,
+                    headlineText = config.headlineText,
+                    onDismissRequest = {
+                        loginSlotCallbacks?.onDismissRequest?.invoke()
+                        loginSlotCallbacks = null
+                        slotNavigation.dismiss()
+                    },
+                    onLoginSuccess = {
+                        loginSlotCallbacks?.onLoginSuccess?.invoke()
+                        loginSlotCallbacks = null
+                        slotNavigation.dismiss()
+                    },
                 )
         }
 
@@ -206,5 +260,16 @@ class DefaultRootComponent(
         data class AlertsRequestBottomSheet(
             val requestType: AlertsRequestType,
         ) : SlotConfig
+
+        @Serializable
+        data class LoginBottomSheet(
+            val pageName: SignupPageName,
+            val headlineText: String?,
+        ) : SlotConfig
     }
+
+    private data class LoginSlotCallbacks(
+        val onDismissRequest: () -> Unit,
+        val onLoginSuccess: () -> Unit,
+    )
 }

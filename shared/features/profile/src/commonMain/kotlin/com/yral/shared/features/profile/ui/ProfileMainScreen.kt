@@ -32,7 +32,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.pullToRefreshIndicator
@@ -63,6 +62,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import com.yral.shared.analytics.events.EditProfileSource
+import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.domain.models.FeedDetails
@@ -83,7 +83,6 @@ import com.yral.shared.libs.designsystem.component.YralButtonType
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralLoader
-import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
 import com.yral.shared.libs.designsystem.component.features.AccountInfoView
 import com.yral.shared.libs.designsystem.component.features.DeleteConfirmationSheet
 import com.yral.shared.libs.designsystem.component.features.VideoViewsSheet
@@ -159,8 +158,6 @@ fun ProfileMainScreen(
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel,
     profileVideos: LazyPagingItems<FeedDetails>,
-    loginState: UiState<*>,
-    loginBottomSheet: LoginBottomSheetComposable,
     getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -207,17 +204,10 @@ fun ProfileMainScreen(
         }
     }
 
-    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    LaunchedEffect(loginState) {
-        if (loginState is UiState.Failure) {
-            viewModel.setBottomSheetType(ProfileBottomSheet.SignUp)
-        }
-    }
-
     val backHandlerEnabled by remember(state.videoView) {
         mutableStateOf(state.videoView is VideoViewState.ViewingReels)
     }
+
     LaunchedEffect(Unit) { viewModel.pushScreenView(profileVideos.itemCount) }
 
     var pendingVideoIdState by remember { mutableStateOf<String?>(null) }
@@ -348,11 +338,13 @@ fun ProfileMainScreen(
                     },
                     onBackClicked = { component.onBackClicked() },
                     onFollowersSectionClick = { viewModel.updateFollowSheetTab(tab = it) },
+                    promptLogin = { component.promptLogin(SignupPageName.PROFILE) },
                 )
             }
         }
     }
 
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     when (state.deleteConfirmation) {
         is DeleteConfirmationState.AwaitingConfirmation -> {
             DeleteConfirmationSheet(
@@ -382,18 +374,8 @@ fun ProfileMainScreen(
     }
 
     val followersSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
-    val extraSheetState = rememberModalBottomSheetState()
-    var extraSheetLink by remember { mutableStateOf("") }
     when (val bottomSheet = state.bottomSheet) {
         ProfileBottomSheet.None -> Unit
-        ProfileBottomSheet.SignUp -> {
-            loginBottomSheet(
-                bottomSheetState,
-                { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
-                viewModel.getTncLink(),
-                { extraSheetLink = viewModel.getTncLink() },
-            )
-        }
 
         is ProfileBottomSheet.VideoView -> {
             val videoId = bottomSheet.videoId
@@ -494,22 +476,7 @@ fun ProfileMainScreen(
             }
         }
     }
-    if (extraSheetLink.isNotEmpty()) {
-        YralWebViewBottomSheet(
-            link = extraSheetLink,
-            bottomSheetState = extraSheetState,
-            onDismissRequest = { extraSheetLink = "" },
-        )
-    }
 }
-
-@OptIn(ExperimentalMaterial3Api::class)
-typealias LoginBottomSheetComposable = @Composable (
-    bottomSheetState: SheetState,
-    onDismissRequest: () -> Unit,
-    termsLink: String,
-    openTerms: () -> Unit,
-) -> Unit
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -528,6 +495,7 @@ private fun MainContent(
     openEditProfile: () -> Unit,
     onBackClicked: () -> Unit,
     onFollowersSectionClick: (FollowersSheetTab) -> Unit,
+    promptLogin: () -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader(
@@ -570,9 +538,7 @@ private fun MainContent(
             is LoadState.NotLoading -> {
                 if (!state.isLoggedIn) {
                     LockedProfileContent(
-                        onLoginClick = {
-                            viewModel.setBottomSheetType(ProfileBottomSheet.SignUp)
-                        },
+                        onLoginClick = promptLogin,
                         isOwnProfile = state.isOwnProfile,
                     )
                 } else {

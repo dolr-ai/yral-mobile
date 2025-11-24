@@ -5,8 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.github.michaelbull.result.fold
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
-import com.yral.featureflag.FeatureFlagManager
-import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.shared.analytics.events.AiVideoGenFailureType
 import com.yral.shared.analytics.events.VideoCreationType
 import com.yral.shared.core.logging.YralLogger
@@ -35,7 +33,6 @@ class AiVideoGenViewModel internal constructor(
     private val requiredUseCases: RequiredUseCases,
     private val sessionManager: SessionManager,
     private val uploadVideoTelemetry: UploadVideoTelemetry,
-    private val flagManager: FeatureFlagManager,
     logger: YralLogger,
 ) : ViewModel() {
     private val logger = logger.withTag(AiVideoGenViewModel::class.simpleName ?: "")
@@ -44,9 +41,6 @@ class AiVideoGenViewModel internal constructor(
     val state: StateFlow<ViewState> = _state.asStateFlow()
     val sessionObserver =
         sessionManager.observeSessionStateWithProperty { state, properties ->
-            if (_state.value.bottomSheetType is BottomSheetType.Signup) {
-                _state.update { it.copy(bottomSheetType = BottomSheetType.None) }
-            }
             val canisterId =
                 when (state) {
                     is SessionState.SignedIn -> state.session.canisterId
@@ -175,10 +169,6 @@ class AiVideoGenViewModel internal constructor(
 
     @Suppress("LongMethod")
     fun generateAiVideo() {
-        if (!_state.value.isLoggedIn) {
-            setBottomSheetType(type = BottomSheetType.Signup)
-            return
-        }
         viewModelScope.launch {
             val currentState = _state.value
             currentState.selectedProvider?.let { selectedProvider ->
@@ -429,8 +419,6 @@ class AiVideoGenViewModel internal constructor(
         _state.update { it.copy(currentBalance = balance) }
     }
 
-    fun getTncLink(): String = flagManager.get(AccountFeatureFlags.AccountLinks.Links).tnc
-
     data class ViewState(
         val selectedProvider: Provider? = null,
         val providers: List<Provider> = emptyList(),
@@ -456,7 +444,6 @@ class AiVideoGenViewModel internal constructor(
             val message: String,
             val endFlow: Boolean = false,
         ) : BottomSheetType()
-        data object Signup : BottomSheetType()
         data object BackConfirmation : BottomSheetType()
     }
 
