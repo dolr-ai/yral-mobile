@@ -335,13 +335,14 @@ def _get_daily_position(pid: str) -> int:
     else:
         wins = 0
 
-    count_snap = (
+    count_query = (
         users_ref.where("smiley_game_wins", ">", wins)
-                .count()
-                .get()
+                 .where("is_smiley_game_banned", "==", False)
+                 .count()
+                 .get()
     )
 
-    higher_count = int(count_snap[0][0].value)
+    higher_count = int(count_query[0][0].value)
     position = higher_count + 1
 
     return position
@@ -415,7 +416,29 @@ def cast_vote_v2(request: Request):
         vote_ref  = vid_ref.collection("votes").document(pid)
         user_ref = db().document(f"users/{pid}")
         shard_ref = lambda k: vid_ref.collection("tallies").document(f"shard_{k}")
-        is_banned = _is_smiley_game_banned(pid)
+
+        user_snapshot = user_ref.get()
+        user_data = user_snapshot.to_dict() or {}
+        is_banned = bool(user_data.get("is_smiley_game_banned") or False)
+
+        # Ban check before transaction using today's leaderboard counters (only if not already banned)
+        if not is_banned:
+            bucket_id, _, _ = _bucket_bounds_ist()
+            day_entry_ref = db().collection(f"{DAILY_COLL}/{bucket_id}/users").document(pid)
+            day_entry_snap = day_entry_ref.get()
+            day_entry = day_entry_snap.to_dict() or {}
+
+            wins_before = int(day_entry.get("smiley_game_wins") or 0)
+            losses_before = int(day_entry.get("smiley_game_losses") or 0)
+
+            total_games_after_vote = wins_before + losses_before + 1
+            if total_games_after_vote > SMILEY_GAME_BAN_THRESHOLD:
+                is_banned = True
+                user_ref.set({"is_smiley_game_banned": True}, merge=True)
+                day_entry_ref.set({"is_smiley_game_banned": True}, merge=True)
+            else:
+                user_ref.set({"is_smiley_game_banned": False}, merge=True)
+                day_entry_ref.set({"is_smiley_game_banned": False}, merge=True)
 
         # 3. transaction: READS first, WRITES after ──────────────────────
         @firestore.transactional
@@ -574,6 +597,8 @@ def _inc_daily_leaderboard(pid: str, outcome: str) -> None:
     bucket_id, start_ms, end_ms = _bucket_bounds_ist()
     day_ref   = db().document(f"{DAILY_COLL}/{bucket_id}")
     entry_ref = day_ref.collection("users").document(pid)
+    user_snapshot = db().document(f"users/{pid}").get()
+    is_banned = bool((user_snapshot.to_dict() or {}).get("is_smiley_game_banned"))
 
     @firestore.transactional
     def _tx(tx: firestore.Transaction):
@@ -615,6 +640,7 @@ def _inc_daily_leaderboard(pid: str, outcome: str) -> None:
             "principal_id": pid,
             "smiley_game_wins": firestore.Increment(1 if outcome == "WIN"  else 0),
             "smiley_game_losses": firestore.Increment(1 if outcome == "LOSS" else 0),
+            "is_smiley_game_banned": is_banned,
             "updated_at": firestore.SERVER_TIMESTAMP
         }
         tx.set(entry_ref, updates, merge=True)
