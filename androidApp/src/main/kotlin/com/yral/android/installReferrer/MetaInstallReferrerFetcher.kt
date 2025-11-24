@@ -7,6 +7,7 @@ import androidx.core.net.toUri
 import co.touchlab.kermit.LogWriter
 import co.touchlab.kermit.Logger
 import com.yral.android.R
+import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
@@ -33,7 +34,8 @@ class MetaInstallReferrerFetcher(
     }
 
     private val crashlyticsManager: CrashlyticsManager by lazy { koinInstance.get<CrashlyticsManager>() }
-    private val metaAttribution by lazy { MetaInstallReferrerAttribution(scope) }
+    private val analyticsManager: AnalyticsManager by lazy { koinInstance.get<AnalyticsManager>() }
+    private val metaAttribution by lazy { MetaInstallReferrerAttribution(scope, analyticsManager) }
     private val logger: Logger by lazy {
         val baseLogger = koinInstance.get<YralLogger>()
         val sentryLogWriter = koinInstance.get<LogWriter>(named("installReferrerLogWriter"))

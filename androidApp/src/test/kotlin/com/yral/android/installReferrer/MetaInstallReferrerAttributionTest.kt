@@ -2,6 +2,7 @@ package com.yral.android.installReferrer
 
 import co.touchlab.kermit.Logger
 import com.yral.android.BuildConfig
+import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.preferences.UtmParams
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +27,7 @@ class MetaInstallReferrerAttributionTest {
     private val skipDecryptionTests = false
 
     private fun createTestInstance(): MetaInstallReferrerAttribution =
-        MetaInstallReferrerAttribution(CoroutineScope(Dispatchers.Unconfined))
+        MetaInstallReferrerAttribution(CoroutineScope(Dispatchers.Unconfined), AnalyticsManager())
 
     private fun extractUtmParamsFromJson(json: JsonObject): UtmParams {
         // Match the actual implementation: stringify JsonObject, extract JsonPrimitive content

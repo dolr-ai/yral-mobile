@@ -6,6 +6,8 @@ import co.touchlab.kermit.LogWriter
 import co.touchlab.kermit.Logger
 import com.android.installreferrer.api.InstallReferrerClient
 import com.android.installreferrer.api.InstallReferrerStateListener
+import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.analytics.events.ReferralReceivedEventData
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
@@ -34,7 +36,8 @@ class InstallReferrerAttribution(
     private var client: InstallReferrerClient? = null
     private val crashlyticsManager: CrashlyticsManager by lazy { koinInstance.get<CrashlyticsManager>() }
     private val utmAttributionStore: UtmAttributionStore by lazy { koinInstance.get<UtmAttributionStore>() }
-    private val metaAttribution by lazy { MetaInstallReferrerAttribution(scope) }
+    private val analyticsManager: AnalyticsManager by lazy { koinInstance.get<AnalyticsManager>() }
+    private val metaAttribution by lazy { MetaInstallReferrerAttribution(scope, analyticsManager) }
     private val logger: Logger by lazy {
         val baseLogger = koinInstance.get<YralLogger>()
         val sentryLogWriter = koinInstance.get<LogWriter>(named("installReferrerLogWriter"))
@@ -149,6 +152,16 @@ class InstallReferrerAttribution(
                         )
                     }.onSuccess {
                         utmAttributionStore.markInstallReferrerCompleted()
+                        if (!utmAttributionStore.isInstallReferrerTracked()) {
+                            analyticsManager.trackEvent(
+                                ReferralReceivedEventData(
+                                    source = utmParams.source,
+                                    medium = utmParams.medium,
+                                    campaign = utmParams.campaign,
+                                ),
+                            )
+                            utmAttributionStore.markInstallReferrerTracked()
+                        }
                         logger.i { "Successfully stored UTM params: $utmParams" }
                     }.onFailure { exception ->
                         logger.e(exception) { "Failed to store UTM params from Play InstallReferrer" }
