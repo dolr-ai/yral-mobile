@@ -7,7 +7,9 @@ import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.pushToFront
+import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
+import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.profile.nav.EditProfileComponent
@@ -28,6 +30,7 @@ internal class DefaultProfileComponent(
     private val openEditProfile: () -> Unit,
     private val openProfile: (CanisterData) -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
+    override val promptLogin: (pageName: SignupPageName) -> Unit,
 ) : ProfileComponent(),
     ComponentContext by componentContext,
     KoinComponent {
@@ -67,6 +70,10 @@ internal class DefaultProfileComponent(
 
     override fun openAccount() {
         navigation.pushToFront(Config.Account)
+    }
+
+    override fun openProfile() {
+        navigation.replaceAll(Config.Main)
     }
 
     override fun openEditProfile() {
@@ -124,12 +131,14 @@ internal class DefaultProfileComponent(
             openProfile = openProfile,
             onBackClicked = {},
             showAlertsOnDialog = showAlertsOnDialog,
+            promptLogin = promptLogin,
         )
 
     private fun accountComponent(componentContext: ComponentContext): AccountComponent =
         AccountComponent.Companion(
             componentContext = componentContext,
             onBack = this::onBackClicked,
+            promptLogin = promptLogin,
         )
 
     private fun editProfileComponent(componentContext: ComponentContext): EditProfileComponent =

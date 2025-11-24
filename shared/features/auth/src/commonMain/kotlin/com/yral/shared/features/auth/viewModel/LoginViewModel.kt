@@ -2,6 +2,8 @@ package com.yral.shared.features.auth.viewModel
 
 import androidx.lifecycle.ViewModel
 import co.touchlab.kermit.Logger
+import com.yral.featureflag.FeatureFlagManager
+import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.auth.AuthClientFactory
@@ -18,6 +20,7 @@ class LoginViewModel(
     appDispatchers: AppDispatchers,
     authClientFactory: AuthClientFactory,
     private val crashlyticsManager: CrashlyticsManager,
+    private val flagManager: FeatureFlagManager,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
@@ -51,4 +54,6 @@ class LoginViewModel(
     fun sheetDismissed() {
         _state.value = UiState.Initial
     }
+
+    fun getTncLink(): String = flagManager.get(AccountFeatureFlags.AccountLinks.Links).tnc
 }
