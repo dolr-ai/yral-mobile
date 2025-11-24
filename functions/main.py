@@ -674,6 +674,7 @@ def _dense_top_rows_for_day_v2(bucket_id: str, rewards_table: Optional[Dict[str,
     coll = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
     snaps = (
         coll.where("smiley_game_wins", ">", 0)
+            .where("is_smiley_game_banned", "==", False)
             .order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
             .limit(10)
             .stream()
@@ -745,13 +746,30 @@ def _user_row_for_day_v2(bucket_id: str, pid: str, rewards_table: Optional[Dict[
     entry = day_users.document(pid).get()
     user_wins = int((entry.get("smiley_game_wins") if entry.exists else 0) or 0)
 
-    # Compute dense rank
-    rank_q = day_users.where("smiley_game_wins", ">", user_wins).count().get()
-    higher = int(rank_q[0][0].value)
-    position = higher + 1
+    user_is_banned = bool(entry.get("is_smiley_game_banned") or False)
 
     user_doc = db().collection("users").document(pid).get()
-    username = (user_doc.to_dict() or {}).get("username")
+    user_profile = user_doc.to_dict() or {}
+    username = user_profile.get("username")
+
+    if user_is_banned:
+        return {
+            "principal_id": pid,
+            "wins": 0,
+            "position": 0,
+            "reward": None,
+            "username": username
+        }
+
+    # Compute dense rank excluding banned users
+    rank_q = (
+        day_users.where("smiley_game_wins", ">", user_wins)
+                 .where("is_smiley_game_banned", "==", False)
+                 .count()
+                 .get()
+    )
+    higher = int(rank_q[0][0].value)
+    position = higher + 1
 
     user_row = {
         "principal_id": pid,
