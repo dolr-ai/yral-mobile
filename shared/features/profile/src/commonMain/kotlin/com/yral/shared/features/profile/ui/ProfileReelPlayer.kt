@@ -352,7 +352,7 @@ private fun ShareIcon(
         modifier =
             modifier
                 .size(36.dp)
-                .padding(1.5.dp)
+                .padding(2.5.dp)
                 .clickable(onClick = onClick),
         painter = painterResource(DesignRes.drawable.ic_share),
         contentDescription = "share video",
