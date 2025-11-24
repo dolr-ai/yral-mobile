@@ -799,6 +799,7 @@ def _top_winners(bucket_id: str, max_rank: int = 5) -> list[dict]:
 
     snaps = (
         coll.where("smiley_game_wins", ">", 0)
+            .where("is_smiley_game_banned", "==", False)
             .order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
             .limit(MAX_DOCS)
             .stream()
