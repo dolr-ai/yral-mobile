@@ -520,7 +520,7 @@ extension FeedsViewController {
     // swiftlint: disable line_length
     static let blockNudgeSubtitle = "Blocking a user will hide their videos and activity from appearing in your home feed"
     // swiftlint: enable line_length
-    static let blockConfirmButton = "Confrim"
+    static let blockConfirmButton = "Confirm"
     static let blockCancelButton = "Cancel"
 
     static let nsfwProbability = 0.4
