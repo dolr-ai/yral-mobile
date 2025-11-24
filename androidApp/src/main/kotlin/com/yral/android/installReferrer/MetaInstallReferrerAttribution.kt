@@ -12,6 +12,7 @@ import com.yral.shared.koin.koinInstance
 import com.yral.shared.preferences.UtmAttributionStore
 import com.yral.shared.preferences.UtmParams
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -60,7 +61,7 @@ class MetaInstallReferrerAttribution(
             return
         }
 
-        scope.launch {
+        scope.launch(Dispatchers.Default) {
             runCatching {
                 val installReferrerJson = convertReferrerToJson(encryptedJsonString) ?: return@runCatching
 

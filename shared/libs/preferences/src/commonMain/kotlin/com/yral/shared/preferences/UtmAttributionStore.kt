@@ -113,5 +113,6 @@ class UtmAttributionStore(
         settings.remove(UTM_TERM_KEY)
         settings.remove(UTM_CONTENT_KEY)
         settings.remove(INSTALL_REFERRER_COMPLETED_KEY)
+        settings.remove(INSTALL_REFERRER_TRACKED_KEY)
     }
 }

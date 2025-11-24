@@ -87,11 +87,13 @@ actual class MixpanelAnalyticsProvider actual constructor(
 
         // Attach UTM attribution as user-level properties (people + super props)
         val utmParams = utmAttributionStore.get()
-        utmParams.source?.let { superProps[UTM_SOURCE_PARAM] = it }
-        utmParams.medium?.let { superProps[UTM_MEDIUM_PARAM] = it }
-        utmParams.campaign?.let { superProps[UTM_CAMPAIGN_PARAM] = it }
-        utmParams.term?.let { superProps[UTM_TERM_PARAM] = it }
-        utmParams.content?.let { superProps[UTM_CONTENT_PARAM] = it }
+        val utmParamsMap: MutableMap<String, Any?> = mutableMapOf()
+        utmParams.source?.let { utmParamsMap[UTM_SOURCE_PARAM] = it }
+        utmParams.medium?.let { utmParamsMap[UTM_MEDIUM_PARAM] = it }
+        utmParams.campaign?.let { utmParamsMap[UTM_CAMPAIGN_PARAM] = it }
+        utmParams.term?.let { utmParamsMap[UTM_TERM_PARAM] = it }
+        utmParams.content?.let { utmParamsMap[UTM_CONTENT_PARAM] = it }
+
         mixpanel.people.set(ONE_SIGNAL_PROPERTY, user.userId)
         if (user.isLoggedIn == true) {
             mixpanel.identify(user.userId)
@@ -103,8 +105,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
             superProps["visitor_id"] = user.userId
             superProps["user_id"] = null
         }
-        mixpanel.people.set(JSONObject(superProps))
-        superProps.keys.filter { it.contains("utm") }.forEach { superProps.remove(it) }
+        mixpanel.people.set(JSONObject(superProps + utmParamsMap))
         mixpanel.registerSuperProperties(JSONObject(superProps))
     }
 

@@ -18,6 +18,7 @@ import com.yral.shared.preferences.UTM_TERM_PARAM
 import com.yral.shared.preferences.UtmAttributionStore
 import com.yral.shared.preferences.UtmParams
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.core.qualifier.named
 
@@ -45,7 +46,7 @@ class InstallReferrerAttribution(
             logger.i { "Install referrer attribution already completed, skipping." }
             return
         }
-        scope.launch {
+        scope.launch(Dispatchers.IO) {
             runCatching {
                 client =
                     InstallReferrerClient

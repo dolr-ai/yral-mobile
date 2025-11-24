@@ -31,8 +31,6 @@ import org.koin.android.ext.koin.androidContext
 
 class YralApp : Application() {
     private val appCoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private lateinit var installReferrerAttribution: InstallReferrerAttribution
-    private lateinit var metaInstallReferrerFetcher: MetaInstallReferrerFetcher
 
     override fun onCreate() {
         super.onCreate()
@@ -52,11 +50,11 @@ class YralApp : Application() {
     private fun checkInstallReferrer() {
         // Check Meta Install Referrer first (supports VT and multi-session CT)
         // Then fall back to Play Install Referrer API if needed
-        metaInstallReferrerFetcher = MetaInstallReferrerFetcher(this, appCoroutineScope)
+        val metaInstallReferrerFetcher = MetaInstallReferrerFetcher(this, appCoroutineScope)
         metaInstallReferrerFetcher.fetchAndProcess {
             // After Meta Install Referrer check completes, check Play Install Referrer API
             // if attribution wasn't completed
-            installReferrerAttribution = InstallReferrerAttribution(this, appCoroutineScope)
+            val installReferrerAttribution = InstallReferrerAttribution(this, appCoroutineScope)
             installReferrerAttribution.setup()
         }
     }
