@@ -40,6 +40,7 @@ import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastStatus
 import com.yral.shared.libs.designsystem.component.toast.ToastType
+import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.fileio.FileDownloader
 import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
@@ -71,6 +72,9 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
+import yral_mobile.shared.features.profile.generated.resources.Res
+import yral_mobile.shared.features.profile.generated.resources.download_successful
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
@@ -504,6 +508,7 @@ class ProfileViewModel(
 
     fun downloadVideo(feedDetails: FeedDetails) {
         viewModelScope.launch {
+            _state.update { it.copy(bottomSheet = ProfileBottomSheet.DownloadTriggered) }
             runSuspendCatching {
                 fileDownloader
                     .downloadFile(
@@ -511,9 +516,19 @@ class ProfileViewModel(
                         fileName = "YRAL_${feedDetails.videoID}.mp4",
                         saveToGallery = true,
                     ).onSuccess {
+                        ToastManager.showSuccess(
+                            type =
+                                ToastType.Small(getString(Res.string.download_successful)),
+                        )
+                        if (_state.value.bottomSheet == ProfileBottomSheet.DownloadTriggered) {
+                            _state.update { it.copy(bottomSheet = ProfileBottomSheet.None) }
+                        }
                         Logger.d("FileDownload") { "File download successful" }
-                    }.onFailure {
-                        Logger.e("FileDownload", it) { "File download failed" }
+                    }.onFailure { e ->
+                        if (_state.value.bottomSheet == ProfileBottomSheet.DownloadTriggered) {
+                            _state.update { it.copy(bottomSheet = ProfileBottomSheet.None) }
+                        }
+                        Logger.e("FileDownload", e) { "File download failed" }
                     }
             }.onFailure { error ->
                 Logger.e("FileDownload", error) { "File download failed" }
@@ -846,10 +861,10 @@ sealed interface ProfileBottomSheet {
     data class VideoView(
         val videoId: String,
     ) : ProfileBottomSheet
-
     data class FollowDetails(
         val tab: FollowersSheetTab,
     ) : ProfileBottomSheet
+    data object DownloadTriggered : ProfileBottomSheet
 }
 
 sealed class DeleteConfirmationState {
