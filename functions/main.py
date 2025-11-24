@@ -291,14 +291,20 @@ def tap_to_recharge(request: Request):
 
         # 5️⃣ Ensure balance is zero
         user_ref = db().document(f"users/{pid}")
-        current  = user_ref.get().get("coins") or 0
+        user_snapshot = user_ref.get()
+        current  = user_snapshot.get("coins") or 0
+        airdrops = int(user_snapshot.get("number_of_airdrops") or 0)
         if current > 0:
             return error_response(
                 409, "NON_ZERO_BALANCE",
                 f"Balance is already {current}. Recharge works only at 0.")
+        if airdrops >= 2:
+            return error_response(
+                403, "AIRDROP_LIMIT",
+                "Tap recharge not available: airdrop limit reached.")
 
         # 6️⃣ Push to wallet first
-        DELTA = 15
+        DELTA = 100
         if not _push_delta_yral_token(os.environ["BALANCE_UPDATE_TOKEN"], pid, DELTA):
             return error_response(
                 502, "UPSTREAM_FAILED",
@@ -306,6 +312,7 @@ def tap_to_recharge(request: Request):
 
         # 7️⃣ Book it in Firestore (reason TAP_RECHARGE)
         coins = tx_coin_change(pid, None, DELTA, "TAP_RECHARGE")
+        user_ref.update({"number_of_airdrops": firestore.Increment(1)})
 
         # 8️⃣ Success → return new total only
         return jsonify({"coins": coins}), 200
