@@ -1064,16 +1064,23 @@ def leaderboard_v3(request: Request):
             user_doc = user_snap.to_dict() or {}
             user_wins = int(user_doc.get("smiley_game_wins") or 0)
             username = user_doc.get("username")
+            user_is_banned = bool(user_doc.get("is_smiley_game_banned") or False)
 
-            rank_q = (
-                users.where("smiley_game_wins", ">", user_wins)
-                     .count()
-                     .get()
-            )
-            user_position = int(rank_q[0][0].value) + 1
+            if user_is_banned:
+                user_position = 0
+                user_wins = 0
+            else:
+                rank_q = (
+                    users.where("smiley_game_wins", ">", user_wins)
+                         .where("is_smiley_game_banned", "==", False)
+                         .count()
+                         .get()
+                )
+                user_position = int(rank_q[0][0].value) + 1
 
             top_snaps = (
-                users.order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
+                users.where("is_smiley_game_banned", "==", False)
+                     .order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
                      .limit(10)
                      .stream()
             )
