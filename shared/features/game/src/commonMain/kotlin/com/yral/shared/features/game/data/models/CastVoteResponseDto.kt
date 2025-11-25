@@ -5,6 +5,7 @@ import com.yral.shared.features.game.domain.models.CastVoteErrorCodes
 import com.yral.shared.features.game.domain.models.CastVoteResponse
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import yral_mobile.shared.libs.designsystem.generated.resources.Res
 
 @Serializable
 sealed class CastVoteResponseDto {
@@ -18,6 +19,10 @@ sealed class CastVoteResponseDto {
         val coinDelta: Int,
         @SerialName("new_position")
         val newPosition: Long? = null,
+        @SerialName("is_banned")
+        val isBanned: Boolean,
+        @SerialName("ban_message")
+        val banMessage: String? = null,
     ) : CastVoteResponseDto()
 
     @Serializable
@@ -43,6 +48,8 @@ fun CastVoteResponseDto.toCastVoteResponse(): CastVoteResponse =
                 coins = coins,
                 coinDelta = coinDelta,
                 newPosition = newPosition,
+                isBanned = isBanned,
+                banMessage = banMessage,
             )
 
         is CastVoteResponseDto.Error ->

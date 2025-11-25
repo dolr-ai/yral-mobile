@@ -535,7 +535,8 @@ def cast_vote_v2(request: Request):
             "coins":       coins,
             "coin_delta":  delta,
             "new_position": new_position,
-            "is_banned": is_banned
+            "is_banned": is_banned,
+            "ban_message": "Fraudulent activity detected. Your account has been permanently banned." if is_banned else None
         }), 200
 
     # known error wrappers ───────────────────────────────────────────────
