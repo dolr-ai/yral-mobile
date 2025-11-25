@@ -18,5 +18,4 @@ enum class ExceptionType {
     AUTH,
     FEED,
     DEEPLINK,
-    INSTALL_REFERRER,
 }
