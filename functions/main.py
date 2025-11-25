@@ -19,7 +19,7 @@ firebase_admin.initialize_app()
 
 WIN_REWARD = 3
 LOSS_PENALTY = -1
-SHARDS = 10
+SHARDS = 5
 
 PID_REGEX = re.compile(r'^[A-Za-z0-9_-]{6,64}$')
 SMILEY_GAME_CONFIG_PATH = "config/smiley_game_v2"
@@ -291,14 +291,20 @@ def tap_to_recharge(request: Request):
 
         # 5️⃣ Ensure balance is zero
         user_ref = db().document(f"users/{pid}")
-        current  = user_ref.get().get("coins") or 0
+        user_snapshot = user_ref.get()
+        current  = user_snapshot.get("coins") or 0
+        airdrops = int(user_snapshot.get("number_of_airdrops") or 0)
         if current > 0:
             return error_response(
                 409, "NON_ZERO_BALANCE",
                 f"Balance is already {current}. Recharge works only at 0.")
+        if airdrops >= 2:
+            return error_response(
+                403, "AIRDROP_LIMIT",
+                "Tap recharge not available: airdrop limit reached.")
 
         # 6️⃣ Push to wallet first
-        DELTA = 15
+        DELTA = 100
         if not _push_delta_yral_token(os.environ["BALANCE_UPDATE_TOKEN"], pid, DELTA):
             return error_response(
                 502, "UPSTREAM_FAILED",
@@ -306,6 +312,7 @@ def tap_to_recharge(request: Request):
 
         # 7️⃣ Book it in Firestore (reason TAP_RECHARGE)
         coins = tx_coin_change(pid, None, DELTA, "TAP_RECHARGE")
+        user_ref.update({"number_of_airdrops": firestore.Increment(1)})
 
         # 8️⃣ Success → return new total only
         return jsonify({"coins": coins}), 200
@@ -335,45 +342,17 @@ def _get_daily_position(pid: str) -> int:
     else:
         wins = 0
 
-    count_snap = (
+    count_query = (
         users_ref.where("smiley_game_wins", ">", wins)
-                .count()
-                .get()
+                 .where("is_smiley_game_banned", "==", False)
+                 .count()
+                 .get()
     )
 
-    higher_count = int(count_snap[0][0].value)
+    higher_count = int(count_query[0][0].value)
     position = higher_count + 1
 
     return position
-
-def _banned_user_doc(pid: str):
-    return db().collection(BANNED_USERS_COLL).document(pid)
-
-def _is_smiley_game_banned(pid: str) -> bool:
-    """
-    Checks if a principal is marked as banned for the smiley game.
-    """
-    snap = _banned_user_doc(pid).get()
-    return snap.exists
-
-def _record_banned_principals(banned: dict[str, int], bucket_id: str) -> None:
-    """
-    Persist banned principal ids with metadata for traceability.
-    """
-    batch = db().batch()
-
-    if banned:
-        print(f"[BAN] writing {len(banned)} principals for {bucket_id}", file=sys.stderr)
-        for pid, total in banned.items():
-            doc = _banned_user_doc(pid)
-            batch.set(doc, {
-                "bucket_id": bucket_id,
-                "total_games": total,
-                "banned_at": firestore.SERVER_TIMESTAMP
-            }, merge=True)
-            print(f"[BAN] principal={pid} total_games={total}", file=sys.stderr)
-
-    batch.commit()
 
 @https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
 def cast_vote_v2(request: Request):
@@ -415,7 +394,29 @@ def cast_vote_v2(request: Request):
         vote_ref  = vid_ref.collection("votes").document(pid)
         user_ref = db().document(f"users/{pid}")
         shard_ref = lambda k: vid_ref.collection("tallies").document(f"shard_{k}")
-        is_banned = _is_smiley_game_banned(pid)
+
+        user_snapshot = user_ref.get()
+        user_data = user_snapshot.to_dict() or {}
+        is_banned = bool(user_data.get("is_smiley_game_banned") or False)
+
+        # Ban check before transaction using today's leaderboard counters (only if not already banned)
+        if not is_banned:
+            bucket_id, _, _ = _bucket_bounds_ist()
+            day_entry_ref = db().collection(f"{DAILY_COLL}/{bucket_id}/users").document(pid)
+            day_entry_snap = day_entry_ref.get()
+            day_entry = day_entry_snap.to_dict() or {}
+
+            wins_before = int(day_entry.get("smiley_game_wins") or 0)
+            losses_before = int(day_entry.get("smiley_game_losses") or 0)
+
+            total_games_after_vote = wins_before + losses_before + 1
+            if total_games_after_vote > SMILEY_GAME_BAN_THRESHOLD:
+                is_banned = True
+                user_ref.set({"is_smiley_game_banned": True}, merge=True)
+                day_entry_ref.set({"is_smiley_game_banned": True}, merge=True)
+            else:
+                user_ref.set({"is_smiley_game_banned": False}, merge=True)
+                day_entry_ref.set({"is_smiley_game_banned": False}, merge=True)
 
         # 3. transaction: READS first, WRITES after ──────────────────────
         @firestore.transactional
@@ -432,15 +433,15 @@ def cast_vote_v2(request: Request):
             vid_exists  = vid_ref.get(transaction=tx).exists
             if not vid_exists:
                 all_ids = [s["id"] for s in smileys if s["id"] not in ["heart"]]
-                seed_a, seed_b = random.sample(all_ids, 2)
+                seed_ids = random.sample(all_ids, 3)
 
                 tx.set(vid_ref, {
                     "created_at": firestore.SERVER_TIMESTAMP
                 })
 
                 zero = {s["id"]: 0 for s in smileys}
-                zero[seed_a] = 1000
-                zero[seed_b] = 1000
+                for seed_id in seed_ids:
+                    zero[seed_id] = 1000
                 tx.set(shard_ref(0), zero, merge=True)
 
                 for k in range(1, SHARDS):
@@ -503,6 +504,12 @@ def cast_vote_v2(request: Request):
         else:
             user_ref.update({"smiley_game_losses": firestore.Increment(1)})
 
+        if is_banned and coins > 0:
+            if _push_delta_yral_token(balance_update_token, pid, -coins):
+                coins = tx_coin_change(pid, vid, -coins, "BANNED")
+            else:
+                print(f"Failed to set balance 0 for banned user {pid}")
+
         try:
             _inc_daily_leaderboard(pid, outcome)
         except Exception as e:
@@ -527,7 +534,8 @@ def cast_vote_v2(request: Request):
             },
             "coins":       coins,
             "coin_delta":  delta,
-            "new_position": new_position
+            "new_position": new_position,
+            "is_banned": is_banned
         }), 200
 
     # known error wrappers ───────────────────────────────────────────────
@@ -574,6 +582,8 @@ def _inc_daily_leaderboard(pid: str, outcome: str) -> None:
     bucket_id, start_ms, end_ms = _bucket_bounds_ist()
     day_ref   = db().document(f"{DAILY_COLL}/{bucket_id}")
     entry_ref = day_ref.collection("users").document(pid)
+    user_snapshot = db().document(f"users/{pid}").get()
+    is_banned = bool((user_snapshot.to_dict() or {}).get("is_smiley_game_banned"))
 
     @firestore.transactional
     def _tx(tx: firestore.Transaction):
@@ -615,6 +625,7 @@ def _inc_daily_leaderboard(pid: str, outcome: str) -> None:
             "principal_id": pid,
             "smiley_game_wins": firestore.Increment(1 if outcome == "WIN"  else 0),
             "smiley_game_losses": firestore.Increment(1 if outcome == "LOSS" else 0),
+            "is_smiley_game_banned": is_banned,
             "updated_at": firestore.SERVER_TIMESTAMP
         }
         tx.set(entry_ref, updates, merge=True)
@@ -664,6 +675,7 @@ def _dense_top_rows_for_day_v2(bucket_id: str, rewards_table: Optional[Dict[str,
     coll = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
     snaps = (
         coll.where("smiley_game_wins", ">", 0)
+            .where("is_smiley_game_banned", "==", False)
             .order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
             .limit(10)
             .stream()
@@ -735,13 +747,30 @@ def _user_row_for_day_v2(bucket_id: str, pid: str, rewards_table: Optional[Dict[
     entry = day_users.document(pid).get()
     user_wins = int((entry.get("smiley_game_wins") if entry.exists else 0) or 0)
 
-    # Compute dense rank
-    rank_q = day_users.where("smiley_game_wins", ">", user_wins).count().get()
-    higher = int(rank_q[0][0].value)
-    position = higher + 1
+    user_is_banned = bool(entry.get("is_smiley_game_banned") or False)
 
     user_doc = db().collection("users").document(pid).get()
-    username = (user_doc.to_dict() or {}).get("username")
+    user_profile = user_doc.to_dict() or {}
+    username = user_profile.get("username")
+
+    if user_is_banned:
+        return {
+            "principal_id": pid,
+            "wins": 0,
+            "position": 0,
+            "reward": None,
+            "username": username
+        }
+
+    # Compute dense rank excluding banned users
+    rank_q = (
+        day_users.where("smiley_game_wins", ">", user_wins)
+                 .where("is_smiley_game_banned", "==", False)
+                 .count()
+                 .get()
+    )
+    higher = int(rank_q[0][0].value)
+    position = higher + 1
 
     user_row = {
         "principal_id": pid,
@@ -773,6 +802,7 @@ def _top_winners(bucket_id: str, max_rank: int = 5) -> list[dict]:
 
     snaps = (
         coll.where("smiley_game_wins", ">", 0)
+            .where("is_smiley_game_banned", "==", False)
             .order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
             .limit(MAX_DOCS)
             .stream()
@@ -796,57 +826,6 @@ def _top_winners(bucket_id: str, max_rank: int = 5) -> list[dict]:
         })
 
     return winners
-
-@https_fn.on_request(region="us-central1")
-def ban_high_volume_smiley_players(cloud_event):
-    """
-    Scans yesterday's daily leaderboard (IST) and bans principals who crossed
-    SMILEY_GAME_BAN_THRESHOLD total games (wins + losses). Intended to be
-    triggered nightly (~00:05 IST) similar to reward_leaderboard_winners.
-    """
-    try:
-        bucket_id = _yesterday_bucket_id_ist()
-        day_ref = db().collection(DAILY_COLL).document(bucket_id)
-        day_snap = day_ref.get()
-
-        if not day_snap.exists:
-            print(f"[SKIP] No leaderboard doc for {bucket_id}")
-            return jsonify({
-                "status": "skipped",
-                "reason": f"No leaderboard doc for {bucket_id}"
-            }), 200
-
-        users_coll = day_ref.collection("users")
-        banned: Dict[str, int] = {}
-        scanned = 0
-
-        for user_snap in users_coll.stream():
-            scanned += 1
-            wins = int(user_snap.get("smiley_game_wins") or 0)
-            losses = int(user_snap.get("smiley_game_losses") or 0)
-            total_games = wins + losses
-
-            if total_games > SMILEY_GAME_BAN_THRESHOLD:
-                banned[user_snap.id] = total_games
-
-        _record_banned_principals(banned, bucket_id)
-
-        print(f"[BAN] scanned={scanned} banned={len(banned)} bucket={bucket_id}")
-        return jsonify({
-            "status": "success",
-            "bucket_id": bucket_id,
-            "scanned_users": scanned,
-            "banned_count": len(banned),
-            "banned_principals": list(banned.keys())
-        }), 200
-
-    except Exception as e:
-        print("ban_high_volume_smiley_players error:", e, file=sys.stderr)
-        return jsonify({
-            "status": "error",
-            "message": "Internal server error",
-            "details": str(e)
-        }), 500
 
 @https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
 def reward_leaderboard_winners(cloud_event):
@@ -1038,16 +1017,23 @@ def leaderboard_v3(request: Request):
             user_doc = user_snap.to_dict() or {}
             user_wins = int(user_doc.get("smiley_game_wins") or 0)
             username = user_doc.get("username")
+            user_is_banned = bool(user_doc.get("is_smiley_game_banned") or False)
 
-            rank_q = (
-                users.where("smiley_game_wins", ">", user_wins)
-                     .count()
-                     .get()
-            )
-            user_position = int(rank_q[0][0].value) + 1
+            if user_is_banned:
+                user_position = 0
+                user_wins = 0
+            else:
+                rank_q = (
+                    users.where("smiley_game_wins", ">", user_wins)
+                         .where("is_smiley_game_banned", "==", False)
+                         .count()
+                         .get()
+                )
+                user_position = int(rank_q[0][0].value) + 1
 
             top_snaps = (
-                users.order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
+                users.where("is_smiley_game_banned", "==", False)
+                     .order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
                      .limit(10)
                      .stream()
             )
@@ -1141,6 +1127,7 @@ def leaderboard_v3(request: Request):
         day_users = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
         top_snaps = (
             day_users.where("smiley_game_wins", ">", 0)
+                    .where("is_smiley_game_banned", "==", False)
                     .order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
                     .limit(10)
                     .stream()
@@ -1186,26 +1173,37 @@ def leaderboard_v3(request: Request):
                 user_row = row
                 break
 
-        if user_row is None:
+        user_profile = db().collection("users").document(pid).get()
+        profile_data = user_profile.to_dict() or {}
+        user_is_banned = bool(profile_data.get("is_smiley_game_banned") or False)
+
+        if user_is_banned:
+            user_row = {
+                "principal_id": pid,
+                "wins": 0,
+                "position": 0,
+                "reward": None,
+                "username": profile_data.get("username")
+            }
+        elif user_row is None:
             entry_ref = day_users.document(pid)
             entry_snap = entry_ref.get()
             user_wins = int((entry_snap.get("smiley_game_wins") if entry_snap.exists else 0) or 0)
-            user_doc = db().collection("users").document(pid).get()
-            username = (user_doc.to_dict() or {}).get("username")
-
             rank_q = (
                 day_users.where("smiley_game_wins", ">", user_wins)
-                        .count()
-                        .get()
+                         .where("is_smiley_game_banned", "==", False)
+                         .count()
+                         .get()
             )
-            user_position = int(rank_q[0][0].value) + 1
+            higher = int(rank_q[0][0].value)
+            user_position = higher + 1
 
             user_row = {
                 "principal_id": pid,
                 "wins": user_wins,
                 "position": user_position,
                 "reward": rewards_table.get(str(user_position)) if (rewards_enabled and user_wins > 0) else None,
-                "username": username
+                "username": profile_data.get("username")
             }
 
         return jsonify({
@@ -1411,16 +1409,23 @@ def daily_rank(request: Request):
 
         if user_doc.exists:
             wins = int(user_doc.get("smiley_game_wins") or 0)
+            is_banned = bool(user_doc.get("is_smiley_game_banned") or False)
         else:
             wins = 0
+            is_banned = False
 
-        count_snap = (
-            users_ref.where("smiley_game_wins", ">", wins)
-                     .count()
-                     .get()
-        )
-        higher_count = int(count_snap[0][0].value)
-        position = higher_count + 1
+        if is_banned:
+            higher_count = 0
+            position = 0
+        else:
+            count_snap = (
+                users_ref.where("smiley_game_wins", ">", wins)
+                         .where("is_smiley_game_banned", "==", False)
+                         .count()
+                         .get()
+            )
+            higher_count = int(count_snap[0][0].value)
+            position = higher_count + 1
 
         return jsonify({
             "principal_id": pid,
