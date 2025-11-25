@@ -23,6 +23,10 @@ import com.yral.shared.features.game.domain.models.GameIcon
 import com.yral.shared.features.game.domain.models.VoteResult
 import com.yral.shared.features.game.domain.models.toVoteResult
 import com.yral.shared.features.game.viewmodel.GameViewModel.Companion.SHOW_HOW_TO_PLAY_MAX_PAGE
+import com.yral.shared.libs.designsystem.component.toast.ToastDuration
+import com.yral.shared.libs.designsystem.component.toast.ToastManager
+import com.yral.shared.libs.designsystem.component.toast.ToastType
+import com.yral.shared.libs.designsystem.component.toast.showWarning
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import kotlinx.coroutines.async
@@ -196,6 +200,17 @@ class GameViewModel(
                 ).onSuccess { result ->
                     if (result is CastVoteResponse.Success) {
                         sessionManager.updateDailyRank(result.newPosition)
+                        if (result.isBanned) {
+                            result.banMessage?.let { banMessage ->
+                                ToastManager.showWarning(
+                                    type =
+                                        ToastType.Small(
+                                            message = banMessage,
+                                        ),
+                                    duration = ToastDuration.INDEFINITE,
+                                )
+                            }
+                        }
                     }
                     setFeedGameResult(
                         videoId = feedDetails.videoID,
