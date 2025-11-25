@@ -1,8 +1,8 @@
 package com.yral.shared.features.feed.domain.useCases
 
+import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.firebaseStore.repository.FBFirestoreRepositoryApi
 import com.yral.shared.libs.arch.domain.SuspendUseCase
-import com.yral.shared.libs.arch.domain.UseCaseExceptionType
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 
@@ -11,7 +11,7 @@ class CheckVideoVoteUseCase(
     dispatchers: AppDispatchers,
     useCaseFailureListener: UseCaseFailureListener,
 ) : SuspendUseCase<CheckVideoVoteUseCase.Params, Boolean>(dispatchers.network, useCaseFailureListener) {
-    override val exceptionType: UseCaseExceptionType = UseCaseExceptionType.Feed
+    override val exceptionType: String = ExceptionType.FEED.name
 
     override suspend fun execute(parameter: Params): Boolean =
         try {

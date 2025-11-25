@@ -74,5 +74,5 @@ abstract class BaseFlowUseCase<in P, out R, E>
         /**
          * Override to specify exception type. Defaults to null (Unknown).
          */
-        protected open val exceptionType: UseCaseExceptionType? = null
+        protected open val exceptionType: String? = null
     }

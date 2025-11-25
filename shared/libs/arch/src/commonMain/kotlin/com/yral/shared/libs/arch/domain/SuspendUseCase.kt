@@ -72,7 +72,7 @@ abstract class BaseSuspendUseCase<in P, out R, out E>
         /**
          * Override to specify exception type. Defaults to null (Unknown).
          */
-        protected open val exceptionType: UseCaseExceptionType? = null
+        protected open val exceptionType: String? = null
     }
 
 private class UseCaseException(

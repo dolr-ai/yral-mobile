@@ -8,7 +8,6 @@ import com.yral.shared.app.config.AppHTTPEventListener
 import com.yral.shared.app.config.AppRustLogForwardingListener
 import com.yral.shared.app.config.AppUseCaseFailureListener
 import com.yral.shared.app.config.NBRFailureListener
-import com.yral.shared.app.config.UseCaseExceptionTypeMapperImpl
 import com.yral.shared.app.logging.SentryLogWriter
 import com.yral.shared.core.di.coreModule
 import com.yral.shared.core.logging.YralLogger
@@ -28,7 +27,6 @@ import com.yral.shared.firebaseStore.di.firestoreModule
 import com.yral.shared.http.HTTPEventListener
 import com.yral.shared.http.di.networkModule
 import com.yral.shared.libs.arch.data.NetworkBoundResource
-import com.yral.shared.libs.arch.domain.UseCaseExceptionTypeMapper
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.libs.videoPlayer.pool.PlatformMediaSourceFactory
@@ -113,7 +111,6 @@ internal val dispatchersModule = module { single { AppDispatchers() } }
 internal val archModule =
     module {
         singleOf(::NBRFailureListener) bind NetworkBoundResource.OnFailureListener::class
-        singleOf(::UseCaseExceptionTypeMapperImpl) bind UseCaseExceptionTypeMapper::class
         singleOf(::AppUseCaseFailureListener) bind UseCaseFailureListener::class
     }
 
