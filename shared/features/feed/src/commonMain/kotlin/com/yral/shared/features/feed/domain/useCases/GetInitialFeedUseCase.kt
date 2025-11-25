@@ -4,6 +4,7 @@ import com.yral.shared.features.feed.domain.IFeedRepository
 import com.yral.shared.features.feed.domain.models.FeedRequest
 import com.yral.shared.features.feed.domain.models.PostResponse
 import com.yral.shared.libs.arch.domain.SuspendUseCase
+import com.yral.shared.libs.arch.domain.UseCaseExceptionType
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 
@@ -12,6 +13,8 @@ class GetInitialFeedUseCase(
     appDispatchers: AppDispatchers,
     useCaseFailureListener: UseCaseFailureListener,
 ) : SuspendUseCase<GetInitialFeedUseCase.Params, PostResponse>(appDispatchers.network, useCaseFailureListener) {
+    override val exceptionType: UseCaseExceptionType = UseCaseExceptionType.Feed
+
     override suspend fun execute(parameter: Params): PostResponse =
         feedRepository.getInitialFeeds(
             feedRequest =
