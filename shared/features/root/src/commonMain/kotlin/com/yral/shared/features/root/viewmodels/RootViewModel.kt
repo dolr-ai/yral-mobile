@@ -61,7 +61,7 @@ class RootViewModel(
     internal var initialDelayForSetup: Long = INITIAL_DELAY_FOR_SETUP
 
     companion object {
-        const val SPLASH_SCREEN_TIMEOUT = 20000L // 20 seconds timeout
+        const val SPLASH_SCREEN_TIMEOUT = 31000L // 31 seconds timeout
         const val INITIAL_DELAY_FOR_SETUP = 300L
     }
 
