@@ -5,5 +5,6 @@ interface UseCaseFailureListener {
         throwable: Throwable,
         tag: String? = null,
         message: () -> String,
+        exceptionType: String? = null,
     )
 }

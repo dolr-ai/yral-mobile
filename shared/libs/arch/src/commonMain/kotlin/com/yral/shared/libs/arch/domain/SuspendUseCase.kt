@@ -54,7 +54,12 @@ abstract class BaseSuspendUseCase<in P, out R, out E>
             }
 
         private fun onFailure(throwable: Throwable) {
-            failureListener.onFailure(throwable, tag = this::class.simpleName!!) { "onFailure" }
+            failureListener.onFailure(
+                throwable,
+                tag = this::class.simpleName!!,
+                message = { "onFailure" },
+                exceptionType = exceptionType,
+            )
         }
 
         open suspend fun executeWith(parameter: P): Result<R, E> = Ok(execute(parameter))
@@ -63,6 +68,11 @@ abstract class BaseSuspendUseCase<in P, out R, out E>
         protected abstract suspend fun execute(parameter: P): R
 
         protected abstract fun Throwable.toError(): E
+
+        /**
+         * Override to specify exception type. Defaults to null (Unknown).
+         */
+        protected open val exceptionType: String? = null
     }
 
 private class UseCaseException(
