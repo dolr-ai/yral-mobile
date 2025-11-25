@@ -157,6 +157,7 @@ class InstallReferrerAttribution(
                                 medium = utmParams.medium,
                                 campaign = utmParams.campaign,
                                 term = utmParams.term,
+                                content = utmParams.content,
                             ),
                         )
                         logger.i { "Successfully stored UTM params: $utmParams" }

@@ -245,6 +245,7 @@ class MetaInstallReferrerAttribution(
                 medium = utmParams.medium,
                 campaign = utmParams.campaign,
                 term = utmParams.term,
+                content = utmParams.content,
             ),
         )
         logger.i {

@@ -256,6 +256,7 @@ class MainActivity : ComponentActivity() {
                 medium = utmMedium,
                 campaign = utmCampaign,
                 term = utmTerm,
+                content = utmContent,
             ),
         )
     }

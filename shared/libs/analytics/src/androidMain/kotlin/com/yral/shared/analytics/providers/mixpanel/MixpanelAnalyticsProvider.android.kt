@@ -12,7 +12,6 @@ import com.yral.shared.analytics.di.IS_DEBUG
 import com.yral.shared.analytics.events.EventData
 import com.yral.shared.analytics.events.TokenType
 import com.yral.shared.preferences.UTM_CAMPAIGN_PARAM
-import com.yral.shared.preferences.UTM_CONTENT_PARAM
 import com.yral.shared.preferences.UTM_MEDIUM_PARAM
 import com.yral.shared.preferences.UTM_SOURCE_PARAM
 import com.yral.shared.preferences.UTM_TERM_PARAM
@@ -92,7 +91,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
         utmParams.medium?.let { utmParamsMap[UTM_MEDIUM_PARAM] = it }
         utmParams.campaign?.let { utmParamsMap[UTM_CAMPAIGN_PARAM] = it }
         utmParams.term?.let { utmParamsMap[UTM_TERM_PARAM] = it }
-        utmParams.content?.let { utmParamsMap[UTM_CONTENT_PARAM] = it }
+        // utmParams.content?.let { utmParamsMap[UTM_CONTENT_PARAM] = it }
 
         mixpanel.people.set(ONE_SIGNAL_PROPERTY, user.userId)
         if (user.isLoggedIn == true) {

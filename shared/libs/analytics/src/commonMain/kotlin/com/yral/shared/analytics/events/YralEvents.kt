@@ -1140,6 +1140,7 @@ data class ReferralReceivedEventData(
     @SerialName("medium") val medium: String?,
     @SerialName("campaign") val campaign: String?,
     @SerialName("term") val term: String?,
+    @SerialName("content") val content: String?,
 ) : BaseEventData(),
     EventData {
     constructor(
@@ -1147,6 +1148,7 @@ data class ReferralReceivedEventData(
         medium: String?,
         campaign: String?,
         term: String?,
+        content: String?,
     ) : this(
         FeatureEvents.REFERRAL_RECEIVED.getEventName(),
         Features.REFERRAL.getFeatureName(),
@@ -1154,6 +1156,7 @@ data class ReferralReceivedEventData(
         medium,
         campaign,
         term,
+        content,
     )
 }
 
