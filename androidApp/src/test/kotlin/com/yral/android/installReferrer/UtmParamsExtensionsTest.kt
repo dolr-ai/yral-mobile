@@ -38,6 +38,24 @@ class UtmParamsExtensionsTest {
     }
 
     @Test
+    fun `test isEmpty returns false when medium has value`() {
+        val params = UtmParams(medium = "test_medium")
+        assertFalse(params.isEmpty(), "medium should not be empty when medium has value")
+    }
+
+    @Test
+    fun `test isEmpty returns false when term has value`() {
+        val params = UtmParams(term = "test_term")
+        assertFalse(params.isEmpty(), "term should not be empty when term has value")
+    }
+
+    @Test
+    fun `test isEmpty returns false when content has value`() {
+        val params = UtmParams(content = "test_content")
+        assertFalse(params.isEmpty(), "content should not be empty when content has value")
+    }
+
+    @Test
     fun `test isNotEmpty returns true when params have values`() {
         val params =
             UtmParams(

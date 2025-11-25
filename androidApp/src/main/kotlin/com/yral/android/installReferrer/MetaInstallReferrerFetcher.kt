@@ -2,7 +2,6 @@ package com.yral.android.installReferrer
 
 import android.app.Application
 import android.content.ContentResolver
-import android.database.Cursor
 import androidx.core.net.toUri
 import com.yral.android.R
 import kotlinx.coroutines.Dispatchers
@@ -64,40 +63,45 @@ class MetaInstallReferrerFetcher(
         contentResolver: ContentResolver,
     ): String? {
         val providerUri = "content://$providerAuthority/$facebookAppId".toUri()
-        var cursor: Cursor? = null
         return runCatching {
             logger.d { "Querying $appName Install Referrer ContentProvider: $providerUri" }
-            cursor = contentResolver.query(providerUri, PROJECTION, null, null, null)
-
-            val currentCursor = cursor
-            if (currentCursor == null || !currentCursor.moveToFirst()) {
-                logger.d { "No data returned from $appName ContentProvider" }
-                return@runCatching null
-            }
-
-            val installReferrerIndex = currentCursor.getColumnIndex("install_referrer")
-            if (installReferrerIndex < 0) {
-                logger.d { "install_referrer column not found in $appName" }
-                return@runCatching null
-            }
-
-            val installReferrer = currentCursor.getString(installReferrerIndex)
-            val timestamp =
-                currentCursor.getColumnIndex("actual_timestamp").takeIf { it >= 0 }?.let { currentCursor.getLong(it) }
-            val isCT = currentCursor.getColumnIndex("is_ct").takeIf { it >= 0 }?.let { currentCursor.getInt(it) }
-
-            if (installReferrer.isNullOrBlank()) {
-                null
-            } else {
-                logger.i {
-                    "Meta Install Referrer retrieved from $appName: " +
-                        "length=${installReferrer.length}, is_ct=$isCT, timestamp=$timestamp"
+            val cursor = contentResolver.query(providerUri, PROJECTION, null, null, null)
+            cursor?.use { currentCursor ->
+                if (!currentCursor.moveToFirst()) {
+                    logger.d { "No data returned from $appName ContentProvider" }
+                    return@runCatching null
                 }
-                installReferrer
+
+                val installReferrerIndex = currentCursor.getColumnIndex("install_referrer")
+                if (installReferrerIndex < 0) {
+                    logger.d { "install_referrer column not found in $appName" }
+                    return@runCatching null
+                }
+
+                val installReferrer = currentCursor.getString(installReferrerIndex)
+                val timestamp =
+                    currentCursor
+                        .getColumnIndex("actual_timestamp")
+                        .takeIf { it >= 0 }
+                        ?.let { currentCursor.getLong(it) }
+                val isCT =
+                    currentCursor
+                        .getColumnIndex("is_ct")
+                        .takeIf { it >= 0 }
+                        ?.let { currentCursor.getInt(it) }
+
+                if (installReferrer.isNullOrBlank()) {
+                    null
+                } else {
+                    logger.i {
+                        "Meta Install Referrer retrieved from $appName: " +
+                            "length=${installReferrer.length}, is_ct=$isCT, timestamp=$timestamp"
+                    }
+                    installReferrer
+                }
             }
         }.onFailure {
             logger.e(it) { "Error querying $appName Install Referrer ContentProvider" }
         }.getOrNull()
-            .also { cursor?.close() }
     }
 }

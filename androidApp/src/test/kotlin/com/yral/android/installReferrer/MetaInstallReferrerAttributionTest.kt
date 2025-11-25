@@ -14,6 +14,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -21,6 +22,19 @@ import kotlin.test.assertTrue
  * For tests that need Android API access (e.g., Uri parsing), see MetaInstallReferrerAttributionRobolectricTest.
  */
 class MetaInstallReferrerAttributionTest {
+    private val expectedCampaignFields =
+        listOf(
+            "ad_id",
+            "adgroup_id",
+            "adgroup_name",
+            "campaign_id",
+            "campaign_name",
+            "campaign_group_id",
+            "campaign_group_name",
+            "account_id",
+            "ad_objective_name",
+        )
+
     @BeforeTest
     fun setup() {
         // Set mock logger factory for tests
@@ -84,20 +98,7 @@ class MetaInstallReferrerAttributionTest {
         val decrypted = attribution.decryptAesGcm(encryptedDataHex, nonceHex, decryptionKey)
         val metadata = Json.decodeFromString(JsonObject.serializer(), decrypted)
 
-        val expectedFields =
-            listOf(
-                "ad_id",
-                "adgroup_id",
-                "adgroup_name",
-                "campaign_id",
-                "campaign_name",
-                "campaign_group_id",
-                "campaign_group_name",
-                "account_id",
-                "ad_objective_name",
-            )
-
-        for (field in expectedFields) {
+        for (field in expectedCampaignFields) {
             assertTrue(
                 metadata.containsKey(field),
                 "Decrypted JSON should contain field: $field",
@@ -113,23 +114,10 @@ class MetaInstallReferrerAttributionTest {
         val decrypted = attribution.decryptAesGcm(encryptedDataHex, nonceHex, decryptionKey)
         val metadata = Json.decodeFromString(JsonObject.serializer(), decrypted)
 
-        val stringFields =
-            listOf(
-                "ad_id",
-                "adgroup_id",
-                "adgroup_name",
-                "campaign_id",
-                "campaign_name",
-                "campaign_group_id",
-                "campaign_group_name",
-                "account_id",
-                "ad_objective_name",
-            )
-
-        for (field in stringFields) {
+        for (field in expectedCampaignFields) {
             val value = metadata[field]?.jsonPrimitive?.content
             assertNotNull(value, "Field $field should have a string value")
-            assertEquals(value.isNotBlank(), true, "Field $field should not be blank")
+            assertTrue(value.isNotBlank(), "Field $field should not be blank")
         }
 
         val adObjectiveName = metadata["ad_objective_name"]?.jsonPrimitive?.content
@@ -293,21 +281,12 @@ class MetaInstallReferrerAttributionTest {
         assertNotNull(dataHex, "Should extract data from utm_content.source")
         assertNotNull(nonceHex, "Should extract nonce from utm_content.source")
 
-        val decrypted = attribution.decryptAesGcm(dataHex, nonceHex, decryptionKey)
-        val campaignMetadata = Json.decodeFromString(JsonObject.serializer(), decrypted)
+        val encryptedData = MetaInstallReferrerAttribution.EncryptedData(dataHex, nonceHex)
+        val finalUtmParams = attribution.buildUtmParams(rootUtmParams, encryptedData, decryptionKey)
 
-        // Simulate the prioritization logic: root-level values take priority
-        val finalCampaign =
-            rootUtmParams.campaign?.takeIf { it.isNotBlank() }
-                ?: campaignMetadata["campaign_name"]?.jsonPrimitive?.content
-        val finalSource = rootUtmParams.source?.takeIf { it.isNotBlank() } ?: "meta_ads"
-        val finalTerm =
-            rootUtmParams.term?.takeIf { it.isNotBlank() }
-                ?: campaignMetadata["adgroup_name"]?.jsonPrimitive?.content
-
-        assertEquals("root_campaign", finalCampaign, "Root-level utm_campaign should take priority")
-        assertEquals("apps.instagram.com", finalSource, "Root-level utm_source should take priority")
-        assertEquals("root_term", finalTerm, "Root-level utm_term should take priority")
+        assertEquals("root_campaign", finalUtmParams.campaign, "Root-level utm_campaign should take priority")
+        assertEquals("apps.instagram.com", finalUtmParams.source, "Root-level utm_source should take priority")
+        assertEquals("root_term", finalUtmParams.term, "Root-level utm_term should take priority")
     }
 
     @Test
@@ -340,17 +319,11 @@ class MetaInstallReferrerAttributionTest {
         assertNotNull(dataHex, "Should extract data from utm_content.source")
         assertNotNull(nonceHex, "Should extract nonce from utm_content.source")
 
-        val decrypted = attribution.decryptAesGcm(dataHex, nonceHex, decryptionKey)
-        val campaignMetadata = Json.decodeFromString(JsonObject.serializer(), decrypted)
+        val encryptedData = MetaInstallReferrerAttribution.EncryptedData(dataHex, nonceHex)
+        val finalUtmParams = attribution.buildUtmParams(rootUtmParams, encryptedData, decryptionKey)
 
-        // Simulate the fallback logic: use decrypted values when root-level is missing
-        val finalCampaign =
-            rootUtmParams.campaign?.takeIf { it.isNotBlank() }
-                ?: campaignMetadata["campaign_name"]?.jsonPrimitive?.content
-        val finalSource = rootUtmParams.source?.takeIf { it.isNotBlank() } ?: "meta_ads"
-
-        assertNotNull(finalCampaign, "Should use decrypted campaign_name when root-level is missing")
-        assertEquals("meta_ads", finalSource, "Should use default meta_ads when root-level is missing")
+        assertNotNull(finalUtmParams.campaign, "Should use decrypted campaign_name when root-level is missing")
+        assertEquals("meta_ads", finalUtmParams.source, "Should use default meta_ads when root-level is missing")
     }
 
     @Test
@@ -709,7 +682,7 @@ class MetaInstallReferrerAttributionTest {
             val utmParams = attribution.extractUtmParams(invalidJson)
 
             // Should return null for invalid JSON
-            assertEquals(utmParams, null, "extractUtmParams should return null for invalid JSON")
+            assertNull(utmParams, "extractUtmParams should return null for invalid JSON")
         }
 
     @Test
@@ -772,7 +745,7 @@ class MetaInstallReferrerAttributionTest {
         val jsonObject = Json.decodeFromString(JsonObject.serializer(), json)
         val encryptedData = attribution.extractEncryptedData(jsonObject)
 
-        assertEquals(encryptedData, null, "Should return null when no encrypted data")
+        assertNull(encryptedData, "Should return null when no encrypted data")
     }
 
     @Test

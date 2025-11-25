@@ -6,6 +6,7 @@ import com.yral.android.installReferrer.AttributionProcessor
 import com.yral.android.installReferrer.MetaInstallReferrerAttribution
 import com.yral.android.installReferrer.MetaInstallReferrerFetcher
 import com.yral.shared.preferences.UtmParams
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -22,7 +23,7 @@ class MetaAttributionProcessor(
 
     override fun process(callback: (UtmParams?) -> Unit) {
         scope.launch(Dispatchers.IO) {
-            runCatching {
+            try {
                 val fetcher = MetaInstallReferrerFetcher(application)
                 val referrerData = fetcher.fetch()
 
@@ -40,8 +41,13 @@ class MetaAttributionProcessor(
                     logger.d { "No Meta Install Referrer data found" }
                     callback(null)
                 }
-            }.onFailure {
-                logger.e(it) { "Failed to process Meta Install Referrer" }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (
+                @Suppress("TooGenericExceptionCaught")
+                e: Exception,
+            ) {
+                logger.e(e) { "Failed to process Meta Install Referrer" }
                 callback(null)
             }
         }

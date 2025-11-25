@@ -131,10 +131,10 @@ class MetaInstallReferrerAttribution {
             }
 
         return UtmParams(
-            campaign = json["utm_campaign"]?.jsonPrimitive?.content,
-            source = json["utm_source"]?.jsonPrimitive?.content,
-            medium = json["utm_medium"]?.jsonPrimitive?.content,
-            term = json["utm_term"]?.jsonPrimitive?.content,
+            campaign = (json["utm_campaign"] as? JsonPrimitive)?.content,
+            source = (json["utm_source"] as? JsonPrimitive)?.content,
+            medium = (json["utm_medium"] as? JsonPrimitive)?.content,
+            term = (json["utm_term"] as? JsonPrimitive)?.content,
             content = contentValue,
         )
     }
@@ -204,15 +204,15 @@ class MetaInstallReferrerAttribution {
      */
     @Suppress("UnusedPrivateProperty")
     internal fun mapCampaignMetadataToUtmParams(metadata: JsonObject): UtmParams {
-        val campaignId = metadata["campaign_id"]?.jsonPrimitive?.content
-        val campaignName = metadata["campaign_name"]?.jsonPrimitive?.content
-        val adgroupId = metadata["adgroup_id"]?.jsonPrimitive?.content
-        val adgroupName = metadata["adgroup_name"]?.jsonPrimitive?.content
-        val adId = metadata["ad_id"]?.jsonPrimitive?.content
-        val campaignGroupId = metadata["campaign_group_id"]?.jsonPrimitive?.content
-        val campaignGroupName = metadata["campaign_group_name"]?.jsonPrimitive?.content
-        val accountId = metadata["account_id"]?.jsonPrimitive?.content
-        val adObjectiveName = metadata["ad_objective_name"]?.jsonPrimitive?.content
+        val campaignId = (metadata["campaign_id"] as? JsonPrimitive)?.content
+        val campaignName = (metadata["campaign_name"] as? JsonPrimitive)?.content
+        val adgroupId = (metadata["adgroup_id"] as? JsonPrimitive)?.content
+        val adgroupName = (metadata["adgroup_name"] as? JsonPrimitive)?.content
+        val adId = (metadata["ad_id"] as? JsonPrimitive)?.content
+        val campaignGroupId = (metadata["campaign_group_id"] as? JsonPrimitive)?.content
+        val campaignGroupName = (metadata["campaign_group_name"] as? JsonPrimitive)?.content
+        val accountId = (metadata["account_id"] as? JsonPrimitive)?.content
+        val adObjectiveName = (metadata["ad_objective_name"] as? JsonPrimitive)?.content
 
         val utmSource = "meta_ads"
         val utmMedium = "cpc"
@@ -246,8 +246,23 @@ class MetaInstallReferrerAttribution {
     }
 
     @Suppress("MagicNumber")
-    internal fun hexStringToByteArray(hex: String): ByteArray =
-        ByteArray(hex.length / 2) { i ->
+    internal fun hexStringToByteArray(hex: String): ByteArray {
+        // Validate hex string has even length
+        if (hex.length % 2 != 0) {
+            error("hex string must have even length, got length ${hex.length}")
+        }
+
+        // Validate each character is a valid hex digit
+        for (i in hex.indices) {
+            val digit = Character.digit(hex[i], 16)
+            if (digit == -1) {
+                error("invalid hex character '${hex[i]}' at index $i")
+            }
+        }
+
+        // Only proceed with conversion after validation
+        return ByteArray(hex.length / 2) { i ->
             ((Character.digit(hex[i * 2], 16) shl 4) + Character.digit(hex[i * 2 + 1], 16)).toByte()
         }
+    }
 }

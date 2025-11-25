@@ -82,10 +82,14 @@ class MainActivity : ComponentActivity() {
                 }
                 storeAffiliateAttribution(linkProperties)
                 // Store UTM attribution through AttributionManager
-                branchAttributionProcessor?.setLinkProperties(linkProperties)
-                // Clear processed state and re-process to allow Branch processor to run
-                attributionManager.clearProcessedState("Branch")
-                attributionManager.reprocessAttribution()
+                branchAttributionProcessor?.let { processor ->
+                    linkProperties?.let { properties ->
+                        processor.setLinkProperties(properties)
+                        // Clear processed state and re-process to allow Branch processor to run
+                        attributionManager.clearProcessedState("Branch")
+                        attributionManager.reprocessAttribution()
+                    }
+                }
 
                 val deeplinkPath =
                     linkProperties?.controlParams?.get("\$deeplink_path")

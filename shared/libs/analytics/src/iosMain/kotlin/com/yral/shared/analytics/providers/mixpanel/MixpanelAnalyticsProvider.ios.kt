@@ -30,10 +30,10 @@ actual class MixpanelAnalyticsProvider actual constructor(
     override fun shouldTrackEvent(event: EventData): Boolean = eventFilter(event)
 
     override fun trackEvent(event: EventData) {
-        val props: MutableMap<String, Any?> = mapConverter.toMap(event).toMutableMap()
+        val props: Map<String, Any?> = mapConverter.toMap(event)
         mixpanel.track(
             event = toValidKeyName(event.event),
-            properties = props.mapValues { it.value as Any? },
+            properties = props.mapValues { it.value },
         )
     }
 

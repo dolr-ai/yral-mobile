@@ -7,6 +7,7 @@ import com.yral.android.installReferrer.InstallReferrerAttribution
 import com.yral.android.installReferrer.MetaInstallReferrerAttribution
 import com.yral.android.installReferrer.isEmpty
 import com.yral.shared.preferences.UtmParams
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -19,12 +20,12 @@ class PlayInstallReferrerProcessor(
     override val name: String = "PlayInstallReferrer"
 
     private val metaAttribution by lazy { MetaInstallReferrerAttribution() }
+    private val installReferrerAttribution by lazy { InstallReferrerAttribution(application) }
     private val logger = AttributionManager.createLogger("PlayInstallReferrerProcessor")
 
     override fun process(callback: (UtmParams?) -> Unit) {
         scope.launch(Dispatchers.IO) {
-            runCatching {
-                val installReferrerAttribution = InstallReferrerAttribution(application, scope)
+            try {
                 val referrer = installReferrerAttribution.fetchReferrer()
 
                 if (referrer != null && referrer.isNotBlank()) {
@@ -33,7 +34,12 @@ class PlayInstallReferrerProcessor(
                     if (metaAttribution.isMetaInstallReferrerData(referrer)) {
                         logger.i { "Detected encrypted Meta Install Referrer data in Play Install Referrer" }
                         val utmParams = metaAttribution.extractUtmParams(referrer)
-                        callback(utmParams)
+                        if (utmParams?.isEmpty() == true) {
+                            logger.d { "No UTM parameters found in Meta install referrer" }
+                            callback(null)
+                        } else {
+                            callback(utmParams)
+                        }
                     } else {
                         val utmParams = installReferrerAttribution.extractUtmParams(referrer)
                         if (utmParams.isEmpty()) {
@@ -47,8 +53,13 @@ class PlayInstallReferrerProcessor(
                     logger.d { "No Play Install Referrer data found" }
                     callback(null)
                 }
-            }.onFailure {
-                logger.e(it) { "Failed to process Play Install Referrer" }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (
+                @Suppress("TooGenericExceptionCaught")
+                e: Exception,
+            ) {
+                logger.e(e) { "Failed to process Play Install Referrer" }
                 callback(null)
             }
         }

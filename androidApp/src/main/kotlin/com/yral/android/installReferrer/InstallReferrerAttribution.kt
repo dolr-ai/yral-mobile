@@ -10,61 +10,76 @@ import com.yral.shared.preferences.UTM_MEDIUM_PARAM
 import com.yral.shared.preferences.UTM_SOURCE_PARAM
 import com.yral.shared.preferences.UTM_TERM_PARAM
 import com.yral.shared.preferences.UtmParams
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.resume
 
 class InstallReferrerAttribution(
     private val application: Application,
-    private val scope: CoroutineScope,
 ) {
     private val logger = AttributionManager.createLogger("InstallReferrer")
 
     suspend fun fetchReferrer(): String? =
         suspendCancellableCoroutine { continuation ->
-            scope.launch(Dispatchers.IO) {
-                runCatching {
-                    val tempClient =
-                        InstallReferrerClient
-                            .newBuilder(application)
-                            .build()
+            val resumed = AtomicBoolean(false)
+            var tempClient: InstallReferrerClient? = null
 
-                    tempClient.startConnection(
-                        object : InstallReferrerStateListener {
-                            override fun onInstallReferrerSetupFinished(responseCode: Int) {
-                                runCatching {
-                                    when (responseCode) {
-                                        InstallReferrerClient.InstallReferrerResponse.OK -> {
-                                            val referrer = tempClient.installReferrer?.installReferrer
-                                            logger.i { "Play InstallReferrer received: $referrer" }
-                                            continuation.resume(referrer)
-                                        }
-                                        else -> {
-                                            logger.i { "Play InstallReferrer not available, code=$responseCode" }
-                                            continuation.resume(null)
-                                        }
-                                    }
-                                }.onFailure { exception ->
-                                    logger.e(exception) { "Error while fetching install referrer" }
-                                    continuation.resume(null)
-                                }.also {
-                                    runCatching { tempClient.endConnection() }
-                                }
-                            }
-
-                            override fun onInstallReferrerServiceDisconnected() {
-                                logger.i { "Play InstallReferrer service disconnected" }
-                                continuation.resume(null)
-                                runCatching { tempClient.endConnection() }
-                            }
-                        },
-                    )
-                }.onFailure { exception ->
-                    logger.e(exception) { "Failed to fetch install referrer" }
-                    continuation.resume(null)
+            fun endConnectionSafely() {
+                tempClient?.let { client ->
+                    runCatching { client.endConnection() }
+                    tempClient = null
                 }
+            }
+
+            fun resumeOnce(value: String?) {
+                if (resumed.compareAndSet(false, true)) {
+                    continuation.resume(value)
+                    endConnectionSafely()
+                }
+            }
+
+            continuation.invokeOnCancellation {
+                if (resumed.compareAndSet(false, true)) {
+                    endConnectionSafely()
+                }
+            }
+
+            runCatching {
+                tempClient =
+                    InstallReferrerClient
+                        .newBuilder(application)
+                        .build()
+
+                tempClient!!.startConnection(
+                    object : InstallReferrerStateListener {
+                        override fun onInstallReferrerSetupFinished(responseCode: Int) {
+                            runCatching {
+                                when (responseCode) {
+                                    InstallReferrerClient.InstallReferrerResponse.OK -> {
+                                        val referrer = tempClient?.installReferrer?.installReferrer
+                                        logger.i { "Play InstallReferrer received: $referrer" }
+                                        resumeOnce(referrer)
+                                    }
+                                    else -> {
+                                        logger.i { "Play InstallReferrer not available, code=$responseCode" }
+                                        resumeOnce(null)
+                                    }
+                                }
+                            }.onFailure { exception ->
+                                logger.e(exception) { "Error while fetching install referrer" }
+                                resumeOnce(null)
+                            }
+                        }
+
+                        override fun onInstallReferrerServiceDisconnected() {
+                            logger.i { "Play InstallReferrer service disconnected" }
+                            resumeOnce(null)
+                        }
+                    },
+                )
+            }.onFailure { exception ->
+                logger.e(exception) { "Failed to fetch install referrer" }
+                resumeOnce(null)
             }
         }
 

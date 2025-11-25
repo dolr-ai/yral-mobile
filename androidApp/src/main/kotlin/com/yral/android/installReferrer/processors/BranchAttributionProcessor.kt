@@ -10,6 +10,7 @@ import com.yral.shared.preferences.UTM_SOURCE_PARAM
 import com.yral.shared.preferences.UTM_TERM_PARAM
 import com.yral.shared.preferences.UtmParams
 import io.branch.referral.util.LinkProperties
+import kotlinx.coroutines.CancellationException
 
 class BranchAttributionProcessor : AttributionProcessor {
     @Suppress("MagicNumber")
@@ -18,31 +19,44 @@ class BranchAttributionProcessor : AttributionProcessor {
 
     private val logger = AttributionManager.createLogger("BranchAttributionProcessor")
 
+    private val lock = Any()
     private var pendingLinkProperties: LinkProperties? = null
     private var pendingCallback: ((UtmParams?) -> Unit)? = null
 
     fun setLinkProperties(linkProperties: LinkProperties?) {
-        pendingLinkProperties = linkProperties
+        synchronized(lock) { pendingLinkProperties = linkProperties }
         processPendingCallback()
     }
 
     override fun process(callback: (UtmParams?) -> Unit) {
-        pendingCallback = callback
+        synchronized(lock) { pendingCallback = callback }
         processPendingCallback()
     }
 
-    @Suppress("ReturnCount")
+    @Suppress("ReturnCount", "LongMethod", "NestedBlockDepth")
     private fun processPendingCallback() {
-        val callback = pendingCallback ?: return
-        val linkProperties = pendingLinkProperties
+        val callback: ((UtmParams?) -> Unit)?
+        val linkProperties: LinkProperties?
+        synchronized(lock) {
+            callback = pendingCallback
+            linkProperties = pendingLinkProperties
+            // Clear callback atomically to avoid race condition if process() is called again
+            if (callback != null && linkProperties != null) {
+                pendingCallback = null
+            }
+        }
 
-        if (linkProperties == null) {
-            logger.d { "Branch attribution not ready yet, waiting for session callback" }
+        if (callback == null) {
             return
         }
 
-        pendingCallback = null
-        runCatching {
+        if (linkProperties == null) {
+            logger.d { "Branch attribution not ready yet, waiting for session callback" }
+            // Keep callback for when setLinkProperties is called later
+            return
+        }
+
+        try {
             val controlParams = linkProperties.controlParams
             if (controlParams == null) {
                 logger.d { "No control params in Branch link properties" }
@@ -67,19 +81,27 @@ class BranchAttributionProcessor : AttributionProcessor {
                     content = utmContent,
                 )
 
-            if (utmParams.isEmpty()) {
-                logger.d { "No UTM parameters found in Branch link properties" }
-                callback(null)
-            } else {
-                logger.i {
-                    "Branch attribution params: " +
-                        "source=$utmSource, campaign=$utmCampaign, " +
-                        "medium=$utmMedium, term=$utmTerm, content=$utmContent"
+            val result =
+                if (utmParams.isEmpty()) {
+                    logger.d { "No UTM parameters found in Branch link properties" }
+                    null
+                } else {
+                    logger.i {
+                        "Branch attribution params: " +
+                            "source=$utmSource, campaign=$utmCampaign, " +
+                            "medium=$utmMedium, term=$utmTerm, content=$utmContent"
+                    }
+                    utmParams
                 }
-                callback(utmParams)
-            }
-        }.onFailure {
-            logger.e(it) { "Failed to process Branch attribution" }
+
+            callback(result)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (
+            @Suppress("TooGenericExceptionCaught")
+            e: Exception,
+        ) {
+            logger.e(e) { "Failed to process Branch attribution" }
             callback(null)
         }
     }

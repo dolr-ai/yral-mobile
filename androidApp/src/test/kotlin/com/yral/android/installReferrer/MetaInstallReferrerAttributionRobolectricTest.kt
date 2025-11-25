@@ -5,7 +5,6 @@ import co.touchlab.kermit.Logger
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -39,10 +38,11 @@ class MetaInstallReferrerAttributionRobolectricTest {
         // utm_content= is mandatory for Meta Install Referrer
         val queryString = "utm_source=test&utm_campaign=campaign&utm_content=dummy_content"
 
-        val json = attribution.convertReferrerToJson(queryString)
-
-        assertNotNull("Should parse query string", json)
-        assertEquals("test", json!!["utm_source"]?.jsonPrimitive?.content)
+        val json =
+            requireNotNull(
+                attribution.convertReferrerToJson(queryString),
+            ) { "Should parse query string" }
+        assertEquals("test", json["utm_source"]?.jsonPrimitive?.content)
         assertEquals("campaign", json["utm_campaign"]?.jsonPrimitive?.content)
         assertEquals("dummy_content", json["utm_content"]?.jsonPrimitive?.content)
     }

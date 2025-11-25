@@ -32,9 +32,9 @@ interface AttributionProcessor {
  * Only the highest priority processor with valid data stores attribution.
  */
 class AttributionManager(
-    processors: List<AttributionProcessor>,
+    private val processors: List<AttributionProcessor>,
 ) {
-    val processors = processors.toMutableList()
+    val processorsList: List<AttributionProcessor> get() = processors
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val mutex = Mutex()
     private var isProcessing = false
@@ -101,7 +101,10 @@ class AttributionManager(
         processors.sortedBy { it.priority }
 
     private suspend fun processProcessorsInOrder(sortedProcessors: List<AttributionProcessor>) {
-        val processorsToProcess = sortedProcessors.filter { !processedProcessors.contains(it.name) }
+        val processorsToProcess =
+            mutex.withLock {
+                sortedProcessors.filter { !processedProcessors.contains(it.name) }
+            }
         for (processor in processorsToProcess) {
             if (utmAttributionStore.isInstallReferrerCompleted()) {
                 logger.i { "Attribution already completed, skipping remaining processors" }
@@ -119,7 +122,9 @@ class AttributionManager(
     private suspend fun processSingleProcessor(processor: AttributionProcessor): UtmParams? {
         logger.d { "Processing attribution with ${processor.name} (priority ${processor.priority})" }
         val result = processProcessor(processor)
-        processedProcessors.add(processor.name)
+        mutex.withLock {
+            processedProcessors.add(processor.name)
+        }
         if (result == null || result.isEmpty()) {
             logger.d { "${processor.name} returned no valid attribution data" }
             return null
@@ -188,6 +193,10 @@ class AttributionManager(
     }
 
     fun clearProcessedState(processorName: String) {
-        processedProcessors.remove(processorName)
+        scope.launch(Dispatchers.Default) {
+            mutex.withLock {
+                processedProcessors.remove(processorName)
+            }
+        }
     }
 }

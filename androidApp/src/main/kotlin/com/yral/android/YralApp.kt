@@ -51,25 +51,38 @@ class YralApp : Application() {
     }
 
     private fun checkInstallReferrer() {
-        // Create attribution manager with all processors
-        // Branch processor will wait for Branch session to complete in MainActivity
-        val branchProcessor = BranchAttributionProcessor()
-        val processors =
-            listOf(
-                MetaAttributionProcessor(this, appCoroutineScope),
-                PlayInstallReferrerProcessor(this, appCoroutineScope),
-                branchProcessor,
-            )
-        attributionManager = AttributionManager(processors)
-        attributionManager.processAttribution()
+        runCatching {
+            // Create attribution manager with all processors
+            // Branch processor will wait for Branch session to complete in MainActivity
+            val branchProcessor = BranchAttributionProcessor()
+            val processors =
+                listOf(
+                    MetaAttributionProcessor(this, appCoroutineScope),
+                    PlayInstallReferrerProcessor(this, appCoroutineScope),
+                    branchProcessor,
+                )
+            attributionManager = AttributionManager(processors)
+            attributionManager.processAttribution()
+        }.onFailure { throwable ->
+            Logger.e(throwable) { "Failed to check install referrer: ${throwable.message}" }
+        }
     }
 
-    fun getAttributionManager(): AttributionManager = attributionManager
+    fun getAttributionManager(): AttributionManager {
+        check(::attributionManager.isInitialized) {
+            "AttributionManager not initialized. Ensure onCreate() has completed."
+        }
+        return attributionManager
+    }
 
-    fun getBranchAttributionProcessor(): BranchAttributionProcessor? =
-        attributionManager.processors.find {
+    fun getBranchAttributionProcessor(): BranchAttributionProcessor? {
+        check(::attributionManager.isInitialized) {
+            "AttributionManager not initialized. Ensure onCreate() has completed."
+        }
+        return attributionManager.processorsList.find {
             it is BranchAttributionProcessor
         } as? BranchAttributionProcessor
+    }
 
     private fun setupFirebase() {
         koinInstance.get<FirebaseCrashlytics>().setCrashlyticsCollectionEnabled(!BuildConfig.DEBUG)

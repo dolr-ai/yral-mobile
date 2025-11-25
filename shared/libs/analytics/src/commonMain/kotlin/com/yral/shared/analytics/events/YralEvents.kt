@@ -1131,7 +1131,7 @@ data class HowToEarnClickedEventData(
     )
 }
 
-// --- Refer & Earn --
+// --- Refer & Earn ---
 @Serializable
 data class ReferralReceivedEventData(
     @SerialName("event") override val event: String = FeatureEvents.REFERRAL_RECEIVED.getEventName(),
