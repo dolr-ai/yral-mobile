@@ -534,7 +534,8 @@ def cast_vote_v2(request: Request):
             },
             "coins":       coins,
             "coin_delta":  delta,
-            "new_position": new_position
+            "new_position": new_position,
+            "is_banned": is_banned
         }), 200
 
     # known error wrappers ───────────────────────────────────────────────
