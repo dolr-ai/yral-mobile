@@ -86,6 +86,11 @@ android {
             signingConfig = signingConfigs.getByName("release")
         }
     }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 sentry {

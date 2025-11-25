@@ -2,49 +2,29 @@ package com.yral.android.installReferrer
 
 import android.net.Uri
 import androidx.core.net.toUri
-import co.touchlab.kermit.LogWriter
-import co.touchlab.kermit.Logger
 import com.yral.android.BuildConfig
-import com.yral.shared.analytics.AnalyticsManager
-import com.yral.shared.analytics.events.ReferralReceivedEventData
-import com.yral.shared.core.logging.YralLogger
-import com.yral.shared.crashlytics.core.CrashlyticsManager
-import com.yral.shared.crashlytics.core.ExceptionType
-import com.yral.shared.koin.koinInstance
-import com.yral.shared.preferences.UtmAttributionStore
 import com.yral.shared.preferences.UtmParams
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import org.koin.core.qualifier.named
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 @Suppress("TooGenericExceptionCaught")
-class MetaInstallReferrerAttribution(
-    private val scope: CoroutineScope,
-    private val analyticsManager: AnalyticsManager,
-) {
+class MetaInstallReferrerAttribution {
     private companion object {
         private const val AES_ALGORITHM = "AES"
         private const val GCM_ALGORITHM = "AES/GCM/NoPadding"
         private const val GCM_TAG_LENGTH = 128 // 16 bytes
     }
 
-    private val crashlyticsManager: CrashlyticsManager by lazy { koinInstance.get<CrashlyticsManager>() }
-    private val utmAttributionStore: UtmAttributionStore by lazy { koinInstance.get<UtmAttributionStore>() }
-    private val logger: Logger by lazy {
-        val baseLogger = koinInstance.get<YralLogger>()
-        val sentryLogWriter = koinInstance.get<LogWriter>(named("installReferrerLogWriter"))
-        baseLogger.withAdditionalLogWriter(sentryLogWriter).withTag("MetaInstallReferrer")
-    }
+    private val logger = AttributionManager.createLogger("MetaInstallReferrer")
 
     fun isMetaInstallReferrerData(referrer: String): Boolean {
         val json = convertReferrerToJson(referrer) ?: return false
@@ -58,15 +38,10 @@ class MetaInstallReferrerAttribution(
         return hasData && hasNonce
     }
 
-    fun processEncryptedData(encryptedJsonString: String) {
-        if (utmAttributionStore.isInstallReferrerCompleted()) {
-            logger.i { "Install referrer attribution already completed, skipping." }
-            return
-        }
-
-        scope.launch(Dispatchers.Default) {
+    suspend fun extractUtmParams(encryptedJsonString: String): UtmParams? =
+        withContext(Dispatchers.Default) {
             runCatching {
-                val installReferrerJson = convertReferrerToJson(encryptedJsonString) ?: return@runCatching
+                val installReferrerJson = convertReferrerToJson(encryptedJsonString) ?: return@withContext null
 
                 val rootUtmParams = extractRootLevelUtmParams(installReferrerJson)
                 val encryptedData = extractEncryptedData(installReferrerJson)
@@ -74,43 +49,46 @@ class MetaInstallReferrerAttribution(
 
                 val utmParams =
                     if (encryptedData != null && decryptionKey != null) {
-                        // Decrypt and merge with root-level values
-                        buildUtmParams(rootUtmParams, encryptedData, decryptionKey)
+                        runCatching {
+                            buildUtmParams(rootUtmParams, encryptedData, decryptionKey)
+                        }.getOrElse {
+                            logger.e(it) { "Decryption failed, falling back to root-level UTM params" }
+                            rootUtmParams
+                        }
                     } else {
-                        // No encrypted data or no key - use root-level values only
                         if (encryptedData != null) {
                             logger.i { "Decryption key not available, using root-level UTM params only" }
                         }
                         rootUtmParams
                     }
 
-                storeUtmParams(utmParams)
-            }.onFailure { exception ->
-                logger.e(exception) { "Failed to process Meta Install Referrer data" }
-                crashlyticsManager.recordException(
-                    exception as? Exception ?: Exception(exception),
-                    ExceptionType.INSTALL_REFERRER,
-                )
+                if (utmParams.isEmpty()) {
+                    null
+                } else {
+                    utmParams
+                }
+            }.getOrElse { exception ->
+                logger.e(exception) { "Failed to extract UTM params from Meta Install Referrer data" }
+                null
             }
         }
-    }
 
     private fun getDecryptionKey(): String? {
         val key = BuildConfig.META_INSTALL_REFERRER_DECRYPTION_KEY
         return key.ifEmpty {
-            logger.i { "Decryption key not available" }
+            logger.e { "Decryption key not available" }
             null
         }
     }
 
-    private fun convertReferrerToJson(referrerData: String): JsonObject? {
+    internal fun convertReferrerToJson(referrerData: String): JsonObject? {
         val trimmed = referrerData.trim()
         return when {
             trimmed.startsWith("{") && trimmed.endsWith("}") -> {
                 runCatching {
                     Json.decodeFromString(JsonObject.serializer(), trimmed)
                 }.onFailure { e ->
-                    logger.i(e) { "Could not parse JSON from referrer data" }
+                    logger.e(e) { "Could not parse JSON from referrer data" }
                 }.getOrNull()
             }
             trimmed.contains("utm_content=") -> {
@@ -118,7 +96,7 @@ class MetaInstallReferrerAttribution(
                     val uri = (if (trimmed.contains("://")) trimmed else "https://dummy/?$trimmed").toUri()
                     buildJsonFromQueryParams(uri)
                 }.onFailure { e ->
-                    logger.i(e) { "Could not parse query string from referrer data" }
+                    logger.e(e) { "Could not parse query string from referrer data: ${e.message}" }
                 }.getOrNull()
             }
             else -> null
@@ -144,7 +122,7 @@ class MetaInstallReferrerAttribution(
         return JsonObject(jsonMap)
     }
 
-    private fun extractRootLevelUtmParams(json: JsonObject): UtmParams {
+    internal fun extractRootLevelUtmParams(json: JsonObject): UtmParams {
         val contentValue =
             when (val utmContent = json["utm_content"]) {
                 is JsonPrimitive -> utmContent.content
@@ -161,24 +139,21 @@ class MetaInstallReferrerAttribution(
         )
     }
 
-    private data class EncryptedData(
+    internal data class EncryptedData(
         val dataHex: String,
         val nonceHex: String,
     )
 
-    private fun extractEncryptedData(json: JsonObject): EncryptedData? {
+    internal fun extractEncryptedData(json: JsonObject): EncryptedData? {
+        val utmContent = json["utm_content"] as? JsonObject ?: return null
         val dataHex =
-            json["utm_content"]
-                ?.jsonObject
-                ?.get("source")
+            utmContent["source"]
                 ?.jsonObject
                 ?.get("data")
                 ?.jsonPrimitive
                 ?.content
         val nonceHex =
-            json["utm_content"]
-                ?.jsonObject
-                ?.get("source")
+            utmContent["source"]
                 ?.jsonObject
                 ?.get("nonce")
                 ?.jsonPrimitive
@@ -191,7 +166,7 @@ class MetaInstallReferrerAttribution(
         }
     }
 
-    private fun buildUtmParams(
+    internal fun buildUtmParams(
         rootUtmParams: UtmParams,
         encryptedData: EncryptedData?,
         decryptionKey: String,
@@ -202,7 +177,6 @@ class MetaInstallReferrerAttribution(
             }
 
         return if (decryptedUtmParams != null) {
-            // Merge: root-level values take priority, fall back to decrypted values
             UtmParams(
                 source = rootUtmParams.source?.takeIf { it.isNotBlank() } ?: decryptedUtmParams.source,
                 medium = rootUtmParams.medium?.takeIf { it.isNotBlank() } ?: decryptedUtmParams.medium,
@@ -211,7 +185,6 @@ class MetaInstallReferrerAttribution(
                 content = rootUtmParams.content?.takeIf { it.isNotBlank() } ?: decryptedUtmParams.content,
             )
         } else {
-            // No encrypted data, use root-level values only
             rootUtmParams
         }
     }
@@ -225,43 +198,12 @@ class MetaInstallReferrerAttribution(
         return mapCampaignMetadataToUtmParams(campaignMetadata)
     }
 
-    private fun storeUtmParams(utmParams: UtmParams) {
-        if (utmParams.isEmpty()) {
-            logger.d { "No UTM parameters found in Meta Install Referrer data" }
-            return
-        }
-
-        if (utmAttributionStore.isInstallReferrerCompleted()) return
-        utmAttributionStore.storeIfEmpty(
-            source = utmParams.source,
-            medium = utmParams.medium,
-            campaign = utmParams.campaign,
-            term = utmParams.term,
-            content = utmParams.content,
-        )
-        analyticsManager.trackEvent(
-            ReferralReceivedEventData(
-                source = utmParams.source,
-                medium = utmParams.medium,
-                campaign = utmParams.campaign,
-                term = utmParams.term,
-                content = utmParams.content,
-            ),
-        )
-        logger.i {
-            "Successfully stored Meta Install Referrer UTM params: " +
-                "source=${utmParams.source}, campaign=${utmParams.campaign}, " +
-                "term=${utmParams.term}, content=${utmParams.content}"
-        }
-    }
-
     /**
      * Maps Facebook campaign metadata to UTM parameters.
      * Reference: https://developers.facebook.com/docs/app-ads/install-referrer
      */
     @Suppress("UnusedPrivateProperty")
-    private fun mapCampaignMetadataToUtmParams(metadata: JsonObject): UtmParams {
-        // Extract all campaign metadata fields
+    internal fun mapCampaignMetadataToUtmParams(metadata: JsonObject): UtmParams {
         val campaignId = metadata["campaign_id"]?.jsonPrimitive?.content
         val campaignName = metadata["campaign_name"]?.jsonPrimitive?.content
         val adgroupId = metadata["adgroup_id"]?.jsonPrimitive?.content
@@ -272,7 +214,6 @@ class MetaInstallReferrerAttribution(
         val accountId = metadata["account_id"]?.jsonPrimitive?.content
         val adObjectiveName = metadata["ad_objective_name"]?.jsonPrimitive?.content
 
-        // Map extracted values to UTM parameters
         val utmSource = "meta_ads"
         val utmMedium = "cpc"
         val utmCampaign = campaignName?.takeIf { it.isNotBlank() } ?: campaignId?.takeIf { it.isNotBlank() }
@@ -309,11 +250,4 @@ class MetaInstallReferrerAttribution(
         ByteArray(hex.length / 2) { i ->
             ((Character.digit(hex[i * 2], 16) shl 4) + Character.digit(hex[i * 2 + 1], 16)).toByte()
         }
-
-    private fun UtmParams.isEmpty(): Boolean =
-        source.isNullOrBlank() &&
-            medium.isNullOrBlank() &&
-            campaign.isNullOrBlank() &&
-            term.isNullOrBlank() &&
-            content.isNullOrBlank()
 }

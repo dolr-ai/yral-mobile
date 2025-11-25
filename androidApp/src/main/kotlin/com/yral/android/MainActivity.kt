@@ -14,9 +14,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.defaultComponentContext
 import com.russhwolf.settings.Settings
+import com.yral.android.installReferrer.AttributionManager
+import com.yral.android.installReferrer.processors.BranchAttributionProcessor
 import com.yral.android.update.InAppUpdateManager
-import com.yral.shared.analytics.AnalyticsManager
-import com.yral.shared.analytics.events.ReferralReceivedEventData
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.nav.DefaultRootComponent
 import com.yral.shared.app.ui.MyApplicationTheme
@@ -31,12 +31,6 @@ import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import com.yral.shared.libs.routing.deeplink.engine.RoutingService
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.preferences.AffiliateAttributionStore
-import com.yral.shared.preferences.UTM_CAMPAIGN_PARAM
-import com.yral.shared.preferences.UTM_CONTENT_PARAM
-import com.yral.shared.preferences.UTM_MEDIUM_PARAM
-import com.yral.shared.preferences.UTM_SOURCE_PARAM
-import com.yral.shared.preferences.UTM_TERM_PARAM
-import com.yral.shared.preferences.UtmAttributionStore
 import com.yral.shared.rust.service.services.HelperService.initRustLogger
 import com.yral.shared.rust.service.services.RustLogLevel
 import io.branch.indexing.BranchUniversalObject
@@ -58,8 +52,12 @@ class MainActivity : ComponentActivity() {
     private val settings: Settings by inject()
     private val routingService: RoutingService by inject()
     private val affiliateAttributionStore: AffiliateAttributionStore by inject()
-    private val utmAttributionStore: UtmAttributionStore by inject()
-    private val analyticsManager: AnalyticsManager by inject()
+    private val attributionManager: AttributionManager by lazy {
+        (application as YralApp).getAttributionManager()
+    }
+    private val branchAttributionProcessor: BranchAttributionProcessor? by lazy {
+        (application as YralApp).getBranchAttributionProcessor()
+    }
 
     private val updateResultLauncher: ActivityResultLauncher<IntentSenderRequest> =
         registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
@@ -83,7 +81,11 @@ class MainActivity : ComponentActivity() {
                     Logger.d("BranchSDK") { "control params " + linkProperties.controlParams }
                 }
                 storeAffiliateAttribution(linkProperties)
-                storeUtmAttribution(linkProperties)
+                // Store UTM attribution through AttributionManager
+                branchAttributionProcessor?.setLinkProperties(linkProperties)
+                // Clear processed state and re-process to allow Branch processor to run
+                attributionManager.clearProcessedState("Branch")
+                attributionManager.reprocessAttribution()
 
                 val deeplinkPath =
                     linkProperties?.controlParams?.get("\$deeplink_path")
@@ -231,33 +233,5 @@ class MainActivity : ComponentActivity() {
             }
         val channel = rawChannel?.takeIf { it.isNotBlank() } ?: return
         affiliateAttributionStore.storeIfEmpty(channel)
-    }
-
-    private fun storeUtmAttribution(linkProperties: LinkProperties?) {
-        if (utmAttributionStore.isInstallReferrerCompleted()) return
-        val controlParams = linkProperties?.controlParams ?: return
-        Logger.d("BranchSDK") { "controlParams: $controlParams" }
-        val utmSource = controlParams[UTM_SOURCE_PARAM]
-        val utmMedium = controlParams[UTM_MEDIUM_PARAM]
-        val utmCampaign = controlParams[UTM_CAMPAIGN_PARAM]
-        val utmTerm = controlParams[UTM_TERM_PARAM]
-        val utmContent = controlParams[UTM_CONTENT_PARAM]
-
-        utmAttributionStore.storeIfEmpty(
-            source = utmSource,
-            medium = utmMedium,
-            campaign = utmCampaign,
-            term = utmTerm,
-            content = utmContent,
-        )
-        analyticsManager.trackEvent(
-            ReferralReceivedEventData(
-                source = utmSource,
-                medium = utmMedium,
-                campaign = utmCampaign,
-                term = utmTerm,
-                content = utmContent,
-            ),
-        )
     }
 }

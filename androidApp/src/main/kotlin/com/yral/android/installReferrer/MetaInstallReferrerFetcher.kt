@@ -4,27 +4,13 @@ import android.app.Application
 import android.content.ContentResolver
 import android.database.Cursor
 import androidx.core.net.toUri
-import co.touchlab.kermit.LogWriter
-import co.touchlab.kermit.Logger
 import com.yral.android.R
-import com.yral.shared.analytics.AnalyticsManager
-import com.yral.shared.core.logging.YralLogger
-import com.yral.shared.crashlytics.core.CrashlyticsManager
-import com.yral.shared.crashlytics.core.ExceptionType
-import com.yral.shared.koin.koinInstance
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import org.koin.core.qualifier.named
+import kotlinx.coroutines.withContext
 
-/**
- * Fetches install referrer from Meta apps via ContentProvider.
- * Reference: https://developers.facebook.com/docs/app-ads/meta-install-referrer/
- */
 @Suppress("TooGenericExceptionCaught")
 class MetaInstallReferrerFetcher(
     private val application: Application,
-    private val scope: CoroutineScope,
 ) {
     private companion object {
         private const val FACEBOOK_PROVIDER = "com.facebook.katana.provider.InstallReferrerProvider"
@@ -33,31 +19,18 @@ class MetaInstallReferrerFetcher(
         private val PROJECTION = arrayOf("install_referrer", "is_ct", "actual_timestamp")
     }
 
-    private val crashlyticsManager: CrashlyticsManager by lazy { koinInstance.get<CrashlyticsManager>() }
-    private val analyticsManager: AnalyticsManager by lazy { koinInstance.get<AnalyticsManager>() }
-    private val metaAttribution by lazy { MetaInstallReferrerAttribution(scope, analyticsManager) }
-    private val logger: Logger by lazy {
-        val baseLogger = koinInstance.get<YralLogger>()
-        val sentryLogWriter = koinInstance.get<LogWriter>(named("installReferrerLogWriter"))
-        baseLogger.withAdditionalLogWriter(sentryLogWriter).withTag("MetaInstallReferrerFetcher")
-    }
+    private val logger = AttributionManager.createLogger("MetaInstallReferrerFetcher")
 
-    fun fetchAndProcess(onComplete: () -> Unit = {}) {
-        scope.launch(Dispatchers.IO) {
+    suspend fun fetch(): String? =
+        withContext(Dispatchers.IO) {
             runCatching {
-                queryMetaInstallReferrer()?.let { referrerData ->
+                queryMetaInstallReferrer()?.also { referrerData ->
                     logger.i { "Meta Install Referrer fetched: $referrerData" }
-                    processReferrerData(referrerData)
-                } ?: logger.d { "No Meta Install Referrer data found" }
+                }
             }.onFailure { exception ->
                 logger.e(exception) { "Failed to fetch Meta Install Referrer" }
-                crashlyticsManager.recordException(
-                    exception as? Exception ?: Exception(exception),
-                    ExceptionType.INSTALL_REFERRER,
-                )
-            }.also { onComplete() }
+            }.getOrNull()
         }
-    }
 
     private fun queryMetaInstallReferrer(): String? {
         val packageManager = application.packageManager
@@ -70,62 +43,61 @@ class MetaInstallReferrerFetcher(
                 INSTAGRAM_PROVIDER to "Instagram",
                 FACEBOOK_LITE_PROVIDER to "Facebook Lite",
             )
-        @Suppress("LoopWithTooManyJumpStatements")
         for ((providerAuthority, appName) in providers) {
             if (packageManager.resolveContentProvider(providerAuthority, 0) == null) {
                 continue
             }
-            val providerUri = "content://$providerAuthority/$facebookAppId".toUri()
-            var cursor: Cursor? = null
-            try {
-                logger.d { "Querying $appName Install Referrer ContentProvider: $providerUri" }
-                cursor = contentResolver.query(providerUri, PROJECTION, null, null, null)
-
-                if (cursor == null || !cursor.moveToFirst()) {
-                    logger.d { "No data returned from $appName ContentProvider" }
-                    continue
-                }
-
-                val installReferrerIndex = cursor.getColumnIndex("install_referrer")
-                if (installReferrerIndex < 0) {
-                    logger.d { "install_referrer column not found in $appName" }
-                    continue
-                }
-
-                val installReferrer = cursor.getString(installReferrerIndex)
-                val timestamp = cursor.getColumnIndex("actual_timestamp").takeIf { it >= 0 }?.let { cursor.getLong(it) }
-                val isCT = cursor.getColumnIndex("is_ct").takeIf { it >= 0 }?.let { cursor.getInt(it) }
-
-                if (!installReferrer.isNullOrBlank()) {
-                    logger.i {
-                        "Meta Install Referrer retrieved from $appName: " +
-                            "length=${installReferrer.length}, is_ct=$isCT, timestamp=$timestamp"
-                    }
-                    return installReferrer
-                }
-            } catch (exception: Exception) {
-                logger.e(exception) { "Error querying $appName Install Referrer ContentProvider" }
-                // Continue to next provider instead of throwing
-            } finally {
-                cursor?.close()
+            val result = queryProvider(providerAuthority, appName, facebookAppId, contentResolver)
+            if (result != null) {
+                return result
             }
         }
         logger.d { "No Meta Install Referrer data found in any provider" }
         return null
     }
 
-    private fun processReferrerData(referrerData: String) {
-        try {
-            val trimmed = referrerData.trim()
-            if (metaAttribution.isMetaInstallReferrerData(trimmed)) {
-                logger.i { "Detected encrypted Meta Install Referrer data" }
-                metaAttribution.processEncryptedData(trimmed)
-            } else {
-                logger.d { "No encrypted data found. Referrer: $trimmed" }
+    @Suppress("ReturnCount")
+    private fun queryProvider(
+        providerAuthority: String,
+        appName: String,
+        facebookAppId: String,
+        contentResolver: ContentResolver,
+    ): String? {
+        val providerUri = "content://$providerAuthority/$facebookAppId".toUri()
+        var cursor: Cursor? = null
+        return runCatching {
+            logger.d { "Querying $appName Install Referrer ContentProvider: $providerUri" }
+            cursor = contentResolver.query(providerUri, PROJECTION, null, null, null)
+
+            val currentCursor = cursor
+            if (currentCursor == null || !currentCursor.moveToFirst()) {
+                logger.d { "No data returned from $appName ContentProvider" }
+                return@runCatching null
             }
-        } catch (exception: Exception) {
-            logger.e(exception) { "Error processing Meta Install Referrer data" }
-            crashlyticsManager.recordException(exception, ExceptionType.INSTALL_REFERRER)
-        }
+
+            val installReferrerIndex = currentCursor.getColumnIndex("install_referrer")
+            if (installReferrerIndex < 0) {
+                logger.d { "install_referrer column not found in $appName" }
+                return@runCatching null
+            }
+
+            val installReferrer = currentCursor.getString(installReferrerIndex)
+            val timestamp =
+                currentCursor.getColumnIndex("actual_timestamp").takeIf { it >= 0 }?.let { currentCursor.getLong(it) }
+            val isCT = currentCursor.getColumnIndex("is_ct").takeIf { it >= 0 }?.let { currentCursor.getInt(it) }
+
+            if (installReferrer.isNullOrBlank()) {
+                null
+            } else {
+                logger.i {
+                    "Meta Install Referrer retrieved from $appName: " +
+                        "length=${installReferrer.length}, is_ct=$isCT, timestamp=$timestamp"
+                }
+                installReferrer
+            }
+        }.onFailure {
+            logger.e(it) { "Error querying $appName Install Referrer ContentProvider" }
+        }.getOrNull()
+            .also { cursor?.close() }
     }
 }

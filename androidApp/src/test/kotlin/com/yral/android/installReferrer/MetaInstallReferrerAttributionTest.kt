@@ -2,50 +2,49 @@ package com.yral.android.installReferrer
 
 import co.touchlab.kermit.Logger
 import com.yral.android.BuildConfig
-import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.preferences.UtmParams
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import org.robolectric.annotation.Config
 import javax.crypto.AEADBadTagException
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-@Config(sdk = [24]) // Run tests as if on Android 7.0
+/**
+ * Regular unit tests that don't require Robolectric.
+ * For tests that need Android API access (e.g., Uri parsing), see MetaInstallReferrerAttributionRobolectricTest.
+ */
 class MetaInstallReferrerAttributionTest {
+    @BeforeTest
+    fun setup() {
+        // Set mock logger factory for tests
+        AttributionManager.setLoggerFactory { tag -> Logger.withTag(tag) }
+    }
+
+    @AfterTest
+    fun teardown() {
+        // Reset logger factory after tests
+        AttributionManager.setLoggerFactory(null)
+    }
+
     @Suppress("ktlint:standard:max-line-length", "MaxLineLength")
     private val encryptedDataHex = "afe56cf6228c6ea8c79da49186e718e92a579824596ae1d0d4d20d7793dca797bd4034ccf467bfae5c79a3981e7a2968c41949237e2b2db678c1c3d39c9ae564c5cafd52f2b77a3dc77bf1bae063114d0283b97417487207735da31ddc1531d5645a9c3e602c195a0ebf69c272aa5fda3a2d781cb47e117310164715a54c7a5a032740584e2789a7b4e596034c16425139a77e507c492b629c848573c714a03a2e7d25b9459b95842332b460f3682d19c35dbc7d53e3a51e0497ff6a6cbb367e760debc4194ae097498108df7b95eac2fa9bac4320077b510be3b7b823248bfe02ae501d9fe4ba179c7de6733c92bf89d523df9e31238ef497b9db719484cbab7531dbf6c5ea5a8087f95d59f5e4f89050e0f1dc03e464168ad76a64cca64b79"
     private val nonceHex = "b7203c6a6fb633d16e9cf5c1"
     private val decryptionKey = "2575590594a9cd809e5bfacf397f8c1ac730dbc38a3e137ecd1ab66591c8c3c9"
     private val skipDecryptionTests = false
 
-    private fun createTestInstance(): MetaInstallReferrerAttribution =
-        MetaInstallReferrerAttribution(CoroutineScope(Dispatchers.Unconfined), AnalyticsManager())
+    private fun createTestInstance(): MetaInstallReferrerAttribution = MetaInstallReferrerAttribution()
 
     private fun extractUtmParamsFromJson(json: JsonObject): UtmParams {
-        // Match the actual implementation: stringify JsonObject, extract JsonPrimitive content
-        val utmContent = json["utm_content"]
-        val contentValue =
-            when (utmContent) {
-                is JsonPrimitive -> utmContent.content
-                is JsonObject -> Json.encodeToString(JsonObject.serializer(), utmContent)
-                else -> null
-            }
-
-        return UtmParams(
-            campaign = json["utm_campaign"]?.jsonPrimitive?.content,
-            source = json["utm_source"]?.jsonPrimitive?.content,
-            medium = json["utm_medium"]?.jsonPrimitive?.content,
-            term = json["utm_term"]?.jsonPrimitive?.content,
-            content = contentValue,
-        )
+        // Use the actual implementation method
+        val attribution = createTestInstance()
+        return attribution.extractRootLevelUtmParams(json)
     }
 
     @Test
@@ -388,7 +387,7 @@ class MetaInstallReferrerAttributionTest {
         val actualDataHex = "3694e3b3a4500e91c07cb533366ba08bcc2e133dad8d1456c0035211243e3111a9aba09afee1b15ee32ebb36961112306a5d0a6b9c651714ecf8ae2114fd8cae3aa7a90136c1e44b2ee798f003151b029b301f7f0deaf5b11646bd8a75889a088f627b8150dc6ff8586f3f2a47169b45639dd3cc57dbedcaee8cc2fd86971b712d5f48e063c1555819eabb239eb7c3fea0e79529b6a01214c6713b7f199afc580c07b138fe46f77764dbc6d13d541ed785915b5c0d842641db2b10aedcd56a78a15b716389686422695bb59d4f5f0abf57584c55b56ea2f57ec7c714766499024ac2edaff238e56918af5727ae9c5648b165e4b98dfb482c6f451068947e9cb9cac3f2699becf51cde6d825c6dd57fb19e4920c50ea34013bb5cf4a2e6f5c72db88891613ec76520d30494d1f4ca3c977ea1750b78c2efffdf51dbb9ee1744d242c4bb1b81f7fcb0e4ae144b68d65f8fa8382b8572eef14fab84c5fe47e993ea5dfc328cb5ee7e68a8158dc6bf56d5d115e731711d1634f09d335aa68cb34769cb87991cf28b9a1b243f18acb6eb3e0995590559972da9f7d9a2bff961"
         val actualNonceHex = "729add5d1b1d91ca2af43c3e"
 
-        // Convert to JSON format as expected by processEncryptedData
+        // Convert to JSON format for testing
         val installReferrerJson =
             """
             {
@@ -657,5 +656,166 @@ class MetaInstallReferrerAttributionTest {
         assertEquals("test_campaign", rootUtmParams.campaign, "Should extract root-level utm_campaign")
         assertEquals("apps.facebook.com", rootUtmParams.source, "Should extract root-level utm_source")
         assertEquals("simple_content_string", rootUtmParams.content, "Should extract string utm_content as-is")
+    }
+
+    @Test
+    fun `test extractUtmParams extracts UTM params from encrypted JSON`() =
+        runTest {
+            if (skipDecryptionTests) return@runTest
+
+            val attribution = createTestInstance()
+            val encryptedJsonString =
+                """
+                {
+                    "utm_campaign": "test_campaign",
+                    "utm_source": "apps.facebook.com",
+                    "utm_medium": "cpc",
+                    "utm_term": "test_term",
+                    "utm_content": {
+                        "source": {
+                            "data": "$encryptedDataHex",
+                            "nonce": "$nonceHex"
+                        }
+                    }
+                }
+                """.trimIndent()
+
+            val utmParams = attribution.extractUtmParams(encryptedJsonString)
+
+            assertNotNull(utmParams, "extractUtmParams should return UTM params")
+            assertEquals("test_campaign", utmParams.campaign, "Should extract root-level utm_campaign")
+            assertEquals("apps.facebook.com", utmParams.source, "Should extract root-level utm_source")
+            assertEquals("cpc", utmParams.medium, "Should extract root-level utm_medium")
+            assertEquals("test_term", utmParams.term, "Should extract root-level utm_term")
+        }
+
+    @Test
+    fun `test extractUtmParams returns null for empty UTM params`() =
+        runTest {
+            val attribution = createTestInstance()
+            val jsonString = "{}"
+
+            val utmParams = attribution.extractUtmParams(jsonString)
+
+            assertTrue(utmParams == null || utmParams.isEmpty(), "extractUtmParams should return null for empty params")
+        }
+
+    @Test
+    fun `test extractUtmParams handles invalid JSON gracefully`() =
+        runTest {
+            val attribution = createTestInstance()
+            val invalidJson = "not a json string"
+
+            val utmParams = attribution.extractUtmParams(invalidJson)
+
+            // Should return null for invalid JSON
+            assertEquals(utmParams, null, "extractUtmParams should return null for invalid JSON")
+        }
+
+    @Test
+    fun `test extractRootLevelUtmParams extracts params correctly`() {
+        val attribution = createTestInstance()
+        val json =
+            """
+            {
+                "utm_campaign": "campaign1",
+                "utm_source": "source1",
+                "utm_medium": "medium1",
+                "utm_term": "term1",
+                "utm_content": "content1"
+            }
+            """.trimIndent()
+
+        val jsonObject = Json.decodeFromString(JsonObject.serializer(), json)
+        val utmParams = attribution.extractRootLevelUtmParams(jsonObject)
+
+        assertEquals("campaign1", utmParams.campaign)
+        assertEquals("source1", utmParams.source)
+        assertEquals("medium1", utmParams.medium)
+        assertEquals("term1", utmParams.term)
+        assertEquals("content1", utmParams.content)
+    }
+
+    @Test
+    fun `test extractEncryptedData extracts data and nonce correctly`() {
+        val attribution = createTestInstance()
+        val json =
+            """
+            {
+                "utm_content": {
+                    "source": {
+                        "data": "$encryptedDataHex",
+                        "nonce": "$nonceHex"
+                    }
+                }
+            }
+            """.trimIndent()
+
+        val jsonObject = Json.decodeFromString(JsonObject.serializer(), json)
+        val encryptedData = attribution.extractEncryptedData(jsonObject)
+
+        assertNotNull(encryptedData, "Should extract encrypted data")
+        assertEquals(encryptedDataHex, encryptedData.dataHex, "Should extract data hex correctly")
+        assertEquals(nonceHex, encryptedData.nonceHex, "Should extract nonce hex correctly")
+    }
+
+    @Test
+    fun `test extractEncryptedData returns null when no encrypted data`() {
+        val attribution = createTestInstance()
+        val json =
+            """
+            {
+                "utm_content": "plain_string"
+            }
+            """.trimIndent()
+
+        val jsonObject = Json.decodeFromString(JsonObject.serializer(), json)
+        val encryptedData = attribution.extractEncryptedData(jsonObject)
+
+        assertEquals(encryptedData, null, "Should return null when no encrypted data")
+    }
+
+    @Test
+    fun `test buildUtmParams merges root and decrypted values correctly`() {
+        if (skipDecryptionTests) return
+
+        val attribution = createTestInstance()
+        val rootUtmParams =
+            UtmParams(
+                campaign = "root_campaign",
+                source = "root_source",
+                medium = "root_medium",
+                // Missing term
+                term = null,
+                content = null,
+            )
+
+        val encryptedData = MetaInstallReferrerAttribution.EncryptedData(encryptedDataHex, nonceHex)
+        val merged = attribution.buildUtmParams(rootUtmParams, encryptedData, decryptionKey)
+
+        // Root values should take priority
+        assertEquals("root_campaign", merged.campaign, "Root campaign should take priority")
+        assertEquals("root_source", merged.source, "Root source should take priority")
+        assertEquals("root_medium", merged.medium, "Root medium should take priority")
+        // Term should come from decrypted since root is null
+        assertNotNull(merged.term, "Term should come from decrypted data when root is null")
+    }
+
+    @Test
+    fun `test convertReferrerToJson parses JSON string correctly`() {
+        val attribution = createTestInstance()
+        val jsonString =
+            """
+            {
+                "utm_campaign": "test",
+                "utm_source": "source"
+            }
+            """.trimIndent()
+
+        val json = attribution.convertReferrerToJson(jsonString)
+
+        assertNotNull(json, "Should parse JSON string")
+        assertEquals("test", json["utm_campaign"]?.jsonPrimitive?.content)
+        assertEquals("source", json["utm_source"]?.jsonPrimitive?.content)
     }
 }
