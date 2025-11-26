@@ -517,6 +517,7 @@ class ProfileViewModel(
                         fileName = "YRAL_${feedDetails.videoID}.mp4",
                         saveToGallery = true,
                     ).onSuccess {
+                        profileTelemetry.videoDownloaded(feedDetails.videoID)
                         ToastManager.showSuccess(
                             type =
                                 ToastType.Small(getString(Res.string.download_successful)),
