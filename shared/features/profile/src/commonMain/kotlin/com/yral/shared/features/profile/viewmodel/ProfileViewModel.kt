@@ -74,6 +74,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
 import yral_mobile.shared.features.profile.generated.resources.Res
+import yral_mobile.shared.features.profile.generated.resources.download_failed
 import yral_mobile.shared.features.profile.generated.resources.download_successful
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
@@ -525,6 +526,10 @@ class ProfileViewModel(
                         }
                         Logger.d("FileDownload") { "File download successful" }
                     }.onFailure { e ->
+                        ToastManager.showToast(
+                            type = ToastType.Small(getString(Res.string.download_failed)),
+                            status = ToastStatus.Error,
+                        )
                         if (_state.value.bottomSheet == ProfileBottomSheet.DownloadTriggered) {
                             _state.update { it.copy(bottomSheet = ProfileBottomSheet.None) }
                         }
