@@ -1,7 +1,5 @@
 package com.yral.shared.preferences
 
-import com.russhwolf.settings.Settings
-
 const val UTM_SOURCE_PARAM: String = "utm_source"
 const val UTM_MEDIUM_PARAM: String = "utm_medium"
 const val UTM_CAMPAIGN_PARAM: String = "utm_campaign"
@@ -9,6 +7,7 @@ const val UTM_TERM_PARAM: String = "utm_term"
 const val UTM_CONTENT_PARAM: String = "utm_content"
 
 private const val INSTALL_REFERRER_COMPLETED_KEY = "install_referrer_completed"
+private const val UTM_SHARED_PREF_NAME = "YRAL_UTM_PREF"
 
 data class UtmParams(
     val source: String? = null,
@@ -19,8 +18,10 @@ data class UtmParams(
 )
 
 class UtmAttributionStore(
-    private val settings: Settings,
+    preferencesFactory: PreferencesFactory,
 ) {
+    private val settings = preferencesFactory.create(UTM_SHARED_PREF_NAME)
+
     /**
      * Store UTM parameters only if they haven't been set before.
      * This preserves first-touch attribution semantics.
@@ -69,11 +70,6 @@ class UtmAttributionStore(
     }
 
     fun clear() {
-        settings.remove(UTM_SOURCE_PARAM)
-        settings.remove(UTM_MEDIUM_PARAM)
-        settings.remove(UTM_CAMPAIGN_PARAM)
-        settings.remove(UTM_TERM_PARAM)
-        settings.remove(UTM_CONTENT_PARAM)
-        settings.remove(INSTALL_REFERRER_COMPLETED_KEY)
+        settings.clear()
     }
 }
