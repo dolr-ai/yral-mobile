@@ -28,6 +28,11 @@ android {
             name = "BRANCH_KEY",
             value = "\"${System.getenv("YRAL_BRANCH_KEY")}\"",
         )
+        buildConfigField(
+            type = "String",
+            name = "META_INSTALL_REFERRER_DECRYPTION_KEY",
+            value = "\"${System.getenv("YRAL_META_INSTALL_REFERRER_DECRYPTION_KEY") ?: ""}\"",
+        )
     }
     buildFeatures {
         compose = true
@@ -79,6 +84,11 @@ android {
             applicationId = "com.yral.android.app"
             dimension = "version"
             signingConfig = signingConfigs.getByName("release")
+        }
+    }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
         }
     }
 }
@@ -140,6 +150,7 @@ dependencies {
 
     implementation(libs.branch)
     implementation(libs.play.services.ads.identifier)
+    implementation(libs.installreferrer)
 
     implementation(libs.googlePlay.inAppUpdate)
 
@@ -171,6 +182,10 @@ dependencies {
     implementation(projects.shared.features.reportVideo)
     implementation(compose.components.resources)
     implementation(projects.shared.features.leaderboard)
+
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
 
 afterEvaluate {

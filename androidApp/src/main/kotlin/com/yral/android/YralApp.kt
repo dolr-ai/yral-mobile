@@ -13,6 +13,10 @@ import com.google.firebase.appcheck.appCheck
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.initialize
+import com.yral.android.installReferrer.AttributionManager
+import com.yral.android.installReferrer.processors.BranchAttributionProcessor
+import com.yral.android.installReferrer.processors.MetaAttributionProcessor
+import com.yral.android.installReferrer.processors.PlayInstallReferrerProcessor
 import com.yral.featureflag.AppFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.providers.mixpanel.MixpanelAnalyticsProvider
@@ -29,6 +33,7 @@ import org.koin.android.ext.koin.androidContext
 
 class YralApp : Application() {
     private val appCoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private lateinit var attributionManager: AttributionManager
 
     override fun onCreate() {
         super.onCreate()
@@ -41,7 +46,42 @@ class YralApp : Application() {
             modules(videoWidgetModule)
         }
         setupFirebase()
+        checkInstallReferrer()
         observeAndAddDistinctIdToBranch()
+    }
+
+    private fun checkInstallReferrer() {
+        runCatching {
+            // Create attribution manager with all processors
+            // Branch processor will wait for Branch session to complete in MainActivity
+            val branchProcessor = BranchAttributionProcessor()
+            val processors =
+                listOf(
+                    MetaAttributionProcessor(this, appCoroutineScope),
+                    PlayInstallReferrerProcessor(this, appCoroutineScope),
+                    branchProcessor,
+                )
+            attributionManager = AttributionManager(processors)
+            attributionManager.processAttribution()
+        }.onFailure { throwable ->
+            Logger.e(throwable) { "Failed to check install referrer: ${throwable.message}" }
+        }
+    }
+
+    fun getAttributionManager(): AttributionManager {
+        check(::attributionManager.isInitialized) {
+            "AttributionManager not initialized. Ensure onCreate() has completed."
+        }
+        return attributionManager
+    }
+
+    fun getBranchAttributionProcessor(): BranchAttributionProcessor? {
+        check(::attributionManager.isInitialized) {
+            "AttributionManager not initialized. Ensure onCreate() has completed."
+        }
+        return attributionManager.processorsList.find {
+            it is BranchAttributionProcessor
+        } as? BranchAttributionProcessor
     }
 
     private fun setupFirebase() {
