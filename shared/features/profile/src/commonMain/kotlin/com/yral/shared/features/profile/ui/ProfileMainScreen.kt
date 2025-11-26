@@ -108,6 +108,7 @@ import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import com.yral.shared.rust.service.utils.propicFromPrincipal
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.profile.generated.resources.Res
@@ -130,6 +131,7 @@ import yral_mobile.shared.features.profile.generated.resources.profile_locked_su
 import yral_mobile.shared.features.profile.generated.resources.profile_locked_title
 import yral_mobile.shared.features.profile.generated.resources.profile_view_locked_subtitle
 import yral_mobile.shared.features.profile.generated.resources.profile_view_locked_title
+import yral_mobile.shared.features.profile.generated.resources.storage_permission_required
 import yral_mobile.shared.features.profile.generated.resources.video_will_be_deleted_permanently
 import yral_mobile.shared.features.profile.generated.resources.white_heart
 import yral_mobile.shared.libs.designsystem.generated.resources.account_nav
@@ -171,9 +173,37 @@ fun ProfileMainScreen(
     getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val storagePermissionController = rememberStoragePermissionController()
 
     val followers = viewModel.followers.collectAsLazyPagingItems()
     val following = viewModel.following.collectAsLazyPagingItems()
+
+    // Track pending downloads for permission handling
+    var pendingDownload by remember { mutableStateOf<FeedDetails?>(null) }
+
+    // Handle permission check before download
+    LaunchedEffect(pendingDownload) {
+        val feedDetails = pendingDownload ?: return@LaunchedEffect
+        pendingDownload = null // Clear immediately to prevent re-trigger
+
+        val hasPermission = storagePermissionController.isPermissionGranted()
+        if (!hasPermission) {
+            val granted = storagePermissionController.requestPermission()
+            if (!granted) {
+                ToastManager.showError(
+                    type = ToastType.Small(getString(Res.string.storage_permission_required)),
+                )
+                return@LaunchedEffect
+            }
+        }
+        // Permission granted, proceed with download
+        viewModel.downloadVideo(feedDetails)
+    }
+
+    // Wrapper function for download that triggers permission check
+    val onDownloadVideo: (FeedDetails) -> Unit = { feedDetails ->
+        pendingDownload = feedDetails
+    }
 
     val followedSuccessfully =
         stringResource(DesignRes.string.started_following, state.accountInfo?.displayName ?: "")
@@ -311,7 +341,7 @@ fun ProfileMainScreen(
                                 ctaType = VideoDeleteCTA.VIDEO_FULLSCREEN,
                             )
                         },
-                        onDownloadVideo = { viewModel.downloadVideo(it) },
+                        onDownloadVideo = onDownloadVideo,
                         onShareClick = { feedDetails ->
                             viewModel.onShareClicked(
                                 feedDetails,
@@ -350,6 +380,7 @@ fun ProfileMainScreen(
                     onBackClicked = { component.onBackClicked() },
                     onFollowersSectionClick = { viewModel.updateFollowSheetTab(tab = it) },
                     promptLogin = { component.promptLogin(SignupPageName.PROFILE) },
+                    onDownloadVideo = onDownloadVideo,
                 )
             }
         }
@@ -495,7 +526,7 @@ fun ProfileMainScreen(
     }
 }
 
-@Suppress("LongMethod", "CyclomaticComplexMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod", "LongParameterList")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MainContent(
@@ -513,6 +544,7 @@ private fun MainContent(
     onBackClicked: () -> Unit,
     onFollowersSectionClick: (FollowersSheetTab) -> Unit,
     promptLogin: () -> Unit,
+    onDownloadVideo: (FeedDetails) -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader(
@@ -576,7 +608,7 @@ private fun MainContent(
                                 ctaType = VideoDeleteCTA.PROFILE_THUMBNAIL,
                             )
                         },
-                        onDownloadVideo = { viewModel.downloadVideo(it) },
+                        onDownloadVideo = onDownloadVideo,
                         onViewsClick = { viewModel.showVideoViews(it) },
                         onManualRefreshTriggered = { viewModel.setManualRefreshTriggered(it) },
                     )

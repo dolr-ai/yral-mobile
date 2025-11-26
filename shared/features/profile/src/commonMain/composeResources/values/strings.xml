@@ -24,4 +24,5 @@
     <string name="downloading_video_desc">Please keep this tab open until the download is complete.</string>
     <string name="download_successful">Your video has been downloaded successfully.</string>
     <string name="download_failed">Your video couldn't be downloaded. Please try again.</string>
+    <string name="storage_permission_required">Storage permission is required to download videos. Please grant permission in Settings.</string>
 </resources>

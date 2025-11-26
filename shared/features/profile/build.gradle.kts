@@ -36,6 +36,9 @@ kotlin {
             implementation(libs.androidx.paging.compose)
             implementation(compose.components.resources)
             implementation(libs.compose.ui.backhandler)
+            implementation(libs.moko.permissions)
+            implementation(libs.moko.permissions.compose)
+            implementation(libs.moko.permissions.storage)
         }
     }
 }
