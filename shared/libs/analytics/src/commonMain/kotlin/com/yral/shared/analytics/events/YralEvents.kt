@@ -7,6 +7,20 @@ import kotlinx.serialization.Serializable
 import kotlin.math.abs
 
 @Serializable
+data class FirstAppLaunchEventData(
+    @SerialName("event") override val event: String = FeatureEvents.FIRST_APP_LAUNCH.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.APP.getFeatureName(),
+    @SerialName("date_time") val dateTime: String,
+) : BaseEventData(),
+    EventData {
+    public constructor(date: String) : this(
+        FeatureEvents.FIRST_APP_LAUNCH.getEventName(),
+        Features.APP.getFeatureName(),
+        date,
+    )
+}
+
+@Serializable
 data class SplashScreenViewedEventData(
     @SerialName("event") override val event: String = FeatureEvents.SPLASH_SCREEN_VIEWED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
