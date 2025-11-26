@@ -14,6 +14,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.defaultComponentContext
 import com.russhwolf.settings.Settings
+import com.yral.android.installReferrer.AttributionManager
+import com.yral.android.installReferrer.processors.BranchAttributionProcessor
 import com.yral.android.update.InAppUpdateManager
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.nav.DefaultRootComponent
@@ -50,6 +52,12 @@ class MainActivity : ComponentActivity() {
     private val settings: Settings by inject()
     private val routingService: RoutingService by inject()
     private val affiliateAttributionStore: AffiliateAttributionStore by inject()
+    private val attributionManager: AttributionManager by lazy {
+        (application as YralApp).getAttributionManager()
+    }
+    private val branchAttributionProcessor: BranchAttributionProcessor? by lazy {
+        (application as YralApp).getBranchAttributionProcessor()
+    }
 
     private val updateResultLauncher: ActivityResultLauncher<IntentSenderRequest> =
         registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
@@ -73,6 +81,15 @@ class MainActivity : ComponentActivity() {
                     Logger.d("BranchSDK") { "control params " + linkProperties.controlParams }
                 }
                 storeAffiliateAttribution(linkProperties)
+                // Store UTM attribution through AttributionManager
+                branchAttributionProcessor?.let { processor ->
+                    linkProperties?.let { properties ->
+                        processor.setLinkProperties(properties)
+                        // Clear processed state and re-process to allow Branch processor to run
+                        attributionManager.clearProcessedState("Branch")
+                        attributionManager.reprocessAttribution()
+                    }
+                }
 
                 val deeplinkPath =
                     linkProperties?.controlParams?.get("\$deeplink_path")
@@ -211,7 +228,14 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun storeAffiliateAttribution(linkProperties: LinkProperties?) {
-        val channel = linkProperties?.channel?.takeIf { !it.isNullOrBlank() } ?: return
+        val rawChannel =
+            linkProperties?.let {
+                linkProperties.channel
+                    ?.takeIf { it.isNotBlank() }
+                    ?: linkProperties.controlParams["~channel"]
+                    ?: linkProperties.controlParams["channel"]
+            }
+        val channel = rawChannel?.takeIf { it.isNotBlank() } ?: return
         affiliateAttributionStore.storeIfEmpty(channel)
     }
 }

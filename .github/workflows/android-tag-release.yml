@@ -64,6 +64,7 @@ jobs:
           echo "KEY_PASSWORD=${{ secrets.ANDROID_SIGNING_SECRET_PASSWORD }}" >> $GITHUB_ENV
           echo "YRAL_BRANCH_KEY_TEST=${{ secrets.YRAL_BRANCH_KEY_TEST }}" >> $GITHUB_ENV
           echo "YRAL_BRANCH_KEY=${{ secrets.YRAL_BRANCH_KEY }}" >> $GITHUB_ENV
+          echo "YRAL_META_INSTALL_REFERRER_DECRYPTION_KEY=${{ secrets.YRAL_META_INSTALL_REFERRER_DECRYPTION_KEY }}" >> $GITHUB_ENV
 
       - name: Clean project
         run: ./gradlew clean
