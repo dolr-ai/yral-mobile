@@ -7,7 +7,7 @@ DEFAULT_REWARD_CURRENCY = SUPPORTED_REWARD_CURRENCIES[1]
 
 # Disabled in staging
 # Enabled in production
-REWARDS_ENABLED = True
+REWARDS_ENABLED = False
 
 REWARD_AMOUNT = {
     CURRENCY_YRAL: {
