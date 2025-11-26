@@ -27,6 +27,7 @@ VIDEO_COLL = "videos"
 DAILY_COLL = "leaderboards_daily"
 BANNED_USERS_COLL = "smiley_game_banned_users"
 SMILEY_GAME_BAN_THRESHOLD = 15000
+SMILEY_GAME_BAN_THRESHOLD_LAST_60_MINS = 1000
 
 BALANCE_URL_YRAL_TOKEN = "https://yral-hot-or-not.go-bazzinga.workers.dev/update_balance/"
 BALANCE_URL_CKBTC = "https://yral-hot-or-not.go-bazzinga.workers.dev/v2/transfer_ckbtc"
@@ -343,24 +344,52 @@ def cast_vote_v2(request: Request):
         user_data = user_snapshot.to_dict() or {}
         is_banned = bool(user_data.get("is_smiley_game_banned") or False)
 
-        # Ban check before transaction using today's leaderboard counters (only if not already banned)
         if not is_banned:
-            bucket_id, _, _ = _bucket_bounds_ist()
-            day_entry_ref = db().collection(f"{DAILY_COLL}/{bucket_id}/users").document(pid)
-            day_entry_snap = day_entry_ref.get()
-            day_entry = day_entry_snap.to_dict() or {}
+            try:
+                now_utc = datetime.now(timezone.utc)
+                window_start = now_utc - timedelta(minutes=60)
+                tx_count_query = (
+                    user_ref.collection("transactions")
+                            .where("at", ">=", window_start)
+                            .where("reason", "in", ["WIN", "LOSS"])
+                            .count()
+                            .get()
+                )
+                games_last_60 = int(tx_count_query[0][0].value)
 
-            wins_before = int(day_entry.get("smiley_game_wins") or 0)
-            losses_before = int(day_entry.get("smiley_game_losses") or 0)
+                bucket_id, _, _ = _bucket_bounds_ist()
+                day_entry_ref = db().collection(f"{DAILY_COLL}/{bucket_id}/users").document(pid)
 
-            total_games_after_vote = wins_before + losses_before + 1
-            if total_games_after_vote > SMILEY_GAME_BAN_THRESHOLD:
-                is_banned = True
-                user_ref.set({"is_smiley_game_banned": True}, merge=True)
-                day_entry_ref.set({"is_smiley_game_banned": True}, merge=True)
-            else:
+                if games_last_60 > SMILEY_GAME_BAN_THRESHOLD_LAST_60_MINS:
+                    is_banned = True
+                    user_ref.set({"is_smiley_game_banned": True}, merge=True)
+                    day_entry_ref.set({"is_smiley_game_banned": True}, merge=True)
+                    print(f"[smiley] banning user {pid} (games_last_60={games_last_60})", file=sys.stderr)
+                else:
+                    user_ref.set({"is_smiley_game_banned": False}, merge=True)
+                    day_entry_ref.set({"is_smiley_game_banned": False}, merge=True)
+            except Exception as e:
+                bucket_id, _, _ = _bucket_bounds_ist()
+                day_entry_ref = db().collection(f"{DAILY_COLL}/{bucket_id}/users").document(pid)
                 user_ref.set({"is_smiley_game_banned": False}, merge=True)
                 day_entry_ref.set({"is_smiley_game_banned": False}, merge=True)
+
+            # bucket_id, _, _ = _bucket_bounds_ist()
+            # day_entry_ref = db().collection(f"{DAILY_COLL}/{bucket_id}/users").document(pid)
+            # day_entry_snap = day_entry_ref.get()
+            # day_entry = day_entry_snap.to_dict() or {}
+
+            # wins_before = int(day_entry.get("smiley_game_wins") or 0)
+            # losses_before = int(day_entry.get("smiley_game_losses") or 0)
+
+            # total_games_after_vote = wins_before + losses_before + 1
+            # if total_games_after_vote > SMILEY_GAME_BAN_THRESHOLD:
+            #     is_banned = True
+            #     user_ref.set({"is_smiley_game_banned": True}, merge=True)
+            #     day_entry_ref.set({"is_smiley_game_banned": True}, merge=True)
+            # else:
+            #     user_ref.set({"is_smiley_game_banned": False}, merge=True)
+            #     day_entry_ref.set({"is_smiley_game_banned": False}, merge=True)
 
         # 3. transaction: READS first, WRITES after ──────────────────────
         @firestore.transactional
