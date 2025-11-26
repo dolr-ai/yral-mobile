@@ -73,64 +73,10 @@ def tx_coin_change(principal_id: str, video_id: str | None, delta: int, reason: 
 # ─────────────────────  SMILEY CONFIG HELPER  ────────────────────────
 _SMILEYS: List[Dict[str, str]] | None = None
 def get_smileys() -> List[Dict[str, str]]:
-    # global _SMILEYS
-    # if _SMILEYS is None:
-    #     snap = db().document(SMILEY_GAME_CONFIG_PATH).get()
-    #     _SMILEYS = snap.get("available_smileys") or []
-    # return _SMILEYS
-
     global _SMILEYS
     if _SMILEYS is None:
-        _SMILEYS = [
-            {
-                "click_animation": "smiley_game/animations/smiley_game_laugh.json",
-                "id": "laugh",
-                "image_name": "laugh",
-                "image_url": "smiley_game/game/laugh.png",
-                "is_active": True,
-                "image_fallback": "😂"
-            },
-            {
-                "click_animation": "smiley_game/animations/smiley_game_heart.json",
-                "id": "heart",
-                "image_name": "heart",
-                "image_url": "smiley_game/game/heart.png",
-                "is_active": True,
-                "image_fallback": "❤️"
-            },
-            {
-                "click_animation": "smiley_game/animations/smiley_game_fire.json",
-                "id": "fire",
-                "image_name": "fire",
-                "image_url": "smiley_game/game/fire.png",
-                "is_active": True,
-                "image_fallback": "🔥"
-            },
-            {
-                "click_animation": "smiley_game/animations/smiley_game_surprise.json",
-                "id": "surprise",
-                "image_name": "surprise",
-                "image_url": "smiley_game/game/surprise.png",
-                "is_active": True,
-                "image_fallback": "😲"
-            },
-            {
-                "click_animation": "smiley_game/animations/smiley_game_rocket.json",
-                "id": "rocket",
-                "image_name": "rocket",
-                "image_url": "smiley_game/game/rocket.png",
-                "is_active": True,
-                "image_fallback": "🚀"
-            },
-            {
-                "click_animation": "smiley_game/animations/smiley_game_puke.json",
-                "id": "puke",
-                "image_name": "puke",
-                "image_url": "smiley_game/game/puke.png",
-                "is_active": True,
-                "image_fallback": "🤮"
-            }
-        ]
+        snap = db().document(SMILEY_GAME_CONFIG_PATH).get()
+        _SMILEYS = snap.get("available_smileys") or []
     return _SMILEYS
 
 # ─────────────────────  ERROR HELPER  ────────────────────────
@@ -383,8 +329,6 @@ def cast_vote_v2(request: Request):
         # load the global smiley list once per cold-start
         smileys     = get_smileys()                          # [{id, image_name, …}, …]
         smiley_map  = {s["id"]: s for s in smileys}
-        
-        smiley_map.pop("heart", None)
 
         if sid not in smiley_map:
             return error_response(400, "SMILEY_NOT_ALLOWED", "smiley_id not in config")
@@ -649,28 +593,6 @@ def _friendly_date_str(d: date) -> str:
     """e.g., 'Aug 15' (no leading zero for day)."""
     return datetime(d.year, d.month, d.day, tzinfo=IST).strftime("%b %d").replace(" 0", " ")
 
-def _dense_top_rows_for_day(bucket_id: str) -> tuple[List[Dict], int, int]:
-    """Top 10 rows with dense ranking for a given IST bucket."""
-    coll = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
-    snaps = (
-        coll.order_by("smiley_game_wins", direction=firestore.Query.DESCENDING)
-            .limit(10)
-            .stream()
-    )
-    rows: List[Dict] = []
-    current_rank, last_wins = 0, None
-    for snap in snaps:
-        wins = int(snap.get("smiley_game_wins") or 0)
-        if wins != last_wins:
-            current_rank += 1  # dense ranking
-            last_wins = wins
-        rows.append({
-            "principal_id": snap.id,
-            "wins": wins,
-            "position": current_rank,
-        })
-    return rows, last_wins, current_rank
-
 def _dense_top_rows_for_day_v2(bucket_id: str, rewards_table: Optional[Dict[str, Any]] = None, rewards_enabled: bool = False) -> tuple[List[Dict], int, int]:
     """Top 10 rows with dense ranking for a given IST bucket (with optional rewards)."""
     coll = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
@@ -713,24 +635,6 @@ def _dense_top_rows_for_day_v2(bucket_id: str, rewards_table: Optional[Dict[str,
             row["username"] = username_map.get(row["principal_id"])
 
     return rows, last_wins, current_rank
-
-def _user_row_for_day(bucket_id: str, pid: str) -> Dict:
-    """Compute user's wins and dense position within that day's collection."""
-    day_users = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
-    entry = day_users.document(pid).get()
-    user_wins = int((entry.get("smiley_game_wins") if entry.exists else 0) or 0)
-
-    # Dense position: count docs with wins strictly greater than user's
-    # Firestore aggregation count() → list of results, take the first
-    rank_q = day_users.where("smiley_game_wins", ">", user_wins).count().get()
-    higher = int(rank_q[0][0].value)
-    position = higher + 1
-
-    return {
-        "principal_id": pid,
-        "wins": user_wins,
-        "position": position,
-    }
 
 def _user_row_for_day_v2(bucket_id: str, pid: str, rewards_table: Optional[Dict[str, Any]] = None, rewards_enabled: bool = False, top_rows: Optional[List[Dict]] = None) -> Dict:
     """
@@ -786,16 +690,6 @@ def _user_row_for_day_v2(bucket_id: str, pid: str, rewards_table: Optional[Dict[
         user_row["reward"] = None
 
     return user_row
-
-def _has_any_docs_for_day(bucket_id: str) -> bool:
-    """Fast existence check: returns True if the day has at least one user doc."""
-    users_coll = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
-    try:
-        return next(users_coll.limit(1).stream(), None) is not None
-    except GoogleAPICallError as e:
-        # Treat read error as "no data" per requirement to skip such a day
-        print(f"[skip] users scan error for {bucket_id}: {e}", file=sys.stderr)
-        return False
 
 def _top_winners(bucket_id: str, max_rank: int = 5) -> list[dict]:
     MAX_DOCS = 100
