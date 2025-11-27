@@ -23,6 +23,7 @@ import com.yral.shared.data.domain.useCases.GetVideoViewsUseCase
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.feed.analytics.FeedTelemetry
+import com.yral.shared.features.feed.data.models.FeedDetailsCache
 import com.yral.shared.features.feed.domain.useCases.CheckVideoVoteUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsWithCreatorInfoUseCase
@@ -39,6 +40,7 @@ import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.libs.sharing.LinkGenerator
 import com.yral.shared.libs.sharing.LinkInput
 import com.yral.shared.libs.sharing.ShareService
+import com.yral.shared.preferences.Preferences
 import com.yral.shared.reportVideo.domain.ReportRequestParams
 import com.yral.shared.reportVideo.domain.ReportVideoUseCase
 import com.yral.shared.reportVideo.domain.models.ReportSheetState
@@ -47,16 +49,24 @@ import com.yral.shared.rust.service.domain.usecases.FollowUserParams
 import com.yral.shared.rust.service.domain.usecases.FollowUserUseCase
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
+@OptIn(FlowPreview::class)
 @Suppress("TooManyFunctions", "LongParameterList", "LargeClass")
 class FeedViewModel(
     appDispatchers: AppDispatchers,
@@ -69,6 +79,8 @@ class FeedViewModel(
     private val urlBuilder: UrlBuilder,
     private val linkGenerator: LinkGenerator,
     private val flagManager: FeatureFlagManager,
+    private val preferences: Preferences,
+    private val json: Json,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
@@ -93,6 +105,11 @@ class FeedViewModel(
         const val SIGN_UP_PAGE = 9
         private const val PAGER_STATE_REFRESH_BUFFER_MS = 100L
         const val FOLLOW_NUDGE_PAGE = 5
+        private const val CACHE_EXPIRATION_DAYS = 3
+        private fun getCacheKey(userPrincipal: String) = "feed_cache_$userPrincipal"
+
+        @Suppress("MagicNumber")
+        private fun getCacheExpirationDuration(): Duration = Duration.parse("${CACHE_EXPIRATION_DAYS * 24}h")
     }
 
     private val _state = MutableStateFlow(FeedState())
@@ -103,16 +120,7 @@ class FeedViewModel(
 
     init {
         initAvailableFeeds()
-        when (_state.value.feedType) {
-            FeedType.AI -> {
-                fetchAIFeed(
-                    currentBatchSize = FEEDS_PAGE_SIZE_AI_FEED,
-                    totalNotVotedCount = 0,
-                    recursionDepth = 0,
-                )
-            }
-            else -> initialFeedData()
-        }
+        loadCachedFeedDetails()
         viewModelScope.launch {
             sessionManager
                 .observeSessionProperty { it.followedPrincipals to it.unFollowedPrincipals }
@@ -137,6 +145,14 @@ class FeedViewModel(
                     selector = { it.isSocialSignIn },
                     defaultValue = false,
                 ).collect { isSocialSignIn -> _state.update { it.copy(isLoggedIn = isSocialSignIn) } }
+        }
+        // Save cache whenever feed details or current page changes
+        viewModelScope.launch {
+            _state
+                .distinctUntilChanged { old, new ->
+                    old.feedDetails == new.feedDetails && old.currentPageOfFeed == new.currentPageOfFeed
+                }.debounce(Duration.parse("1000ms")) // Debounce to avoid too frequent saves
+                .collect { saveCacheToPreferences() }
         }
     }
 
@@ -185,6 +201,116 @@ class FeedViewModel(
                         setLoadingMore(false)
                         loadMoreFeed()
                     }
+            }
+        }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private fun loadCachedFeedDetails() {
+        coroutineScope.launch {
+            sessionManager.userPrincipal?.let { userPrincipal ->
+                val cacheKey = getCacheKey(userPrincipal)
+                val cachedJson = preferences.getString(cacheKey)
+                if (cachedJson != null) {
+                    try {
+                        val cachedData = json.decodeFromString<FeedDetailsCache>(cachedJson)
+                        val currentTime = Clock.System.now()
+                        val cacheAge = currentTime - cachedData.timestamp
+                        val expirationDuration = getCacheExpirationDuration()
+
+                        if (cacheAge <= expirationDuration) {
+                            // Cache is valid, restore feed details
+                            val cachedFeedDetails = cachedData.feedDetails
+                            if (cachedFeedDetails.isNotEmpty()) {
+                                Logger.d("FeedCache") { "Loading ${cachedFeedDetails.size} cached feed details" }
+                                _state.update { currentState ->
+                                    // Only add cached items that don't already exist
+                                    val existingVideoIds = currentState.feedDetails.mapTo(HashSet()) { it.videoID }
+                                    val newCachedDetails = cachedFeedDetails.filter { it.videoID !in existingVideoIds }
+                                    currentState.copy(
+                                        feedDetails = currentState.feedDetails + newCachedDetails,
+                                    )
+                                }
+                            }
+                        } else {
+                            val daysSinceCache = cacheAge.inWholeDays
+                            Logger.d("FeedCache") { "Cache expired (age: $daysSinceCache days)" }
+                            initializeFeed()
+                        }
+                        // Remove cache after using it (whether valid or expired)
+                        preferences.remove(cacheKey)
+                    } catch (
+                        @Suppress("TooGenericExceptionCaught")
+                        e: Exception,
+                    ) {
+                        Logger.e("FeedCache", e) { "Failed to load cached feed details" }
+                        crashlyticsManager.recordException(
+                            YralException("Failed to load cached feed details", e),
+                            ExceptionType.FEED,
+                        )
+                        // Remove corrupted cache
+                        preferences.remove(cacheKey)
+                    }
+                } else {
+                    Logger.e("FeedCache") { "No cache available" }
+                    initializeFeed()
+                }
+            }
+        }
+    }
+
+    private fun initializeFeed() {
+        when (_state.value.feedType) {
+            FeedType.AI -> {
+                fetchAIFeed(
+                    currentBatchSize = FEEDS_PAGE_SIZE_AI_FEED,
+                    totalNotVotedCount = 0,
+                    recursionDepth = 0,
+                )
+            }
+            else -> initialFeedData()
+        }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private suspend fun saveCacheToPreferences() {
+        sessionManager.userPrincipal?.let { userPrincipal ->
+            val currentState = _state.value
+            val nextPageIndex = currentState.currentPageOfFeed + 1
+            val remainingPages =
+                if (nextPageIndex < currentState.feedDetails.size) {
+                    currentState.feedDetails.subList(
+                        nextPageIndex,
+                        currentState.feedDetails.size,
+                    )
+                } else {
+                    emptyList()
+                }
+
+            if (remainingPages.isNotEmpty()) {
+                try {
+                    val cacheData =
+                        FeedDetailsCache(
+                            timestamp = Clock.System.now(),
+                            feedDetails = remainingPages,
+                        )
+                    val cacheKey = getCacheKey(userPrincipal)
+                    val cacheJsonString = json.encodeToString(cacheData)
+                    preferences.putString(cacheKey, cacheJsonString)
+                    Logger.d("FeedCache") {
+                        "Saved ${remainingPages.size}/${currentState.feedDetails.size} " +
+                            "feed details to cache for user $userPrincipal"
+                    }
+                } catch (
+                    @Suppress("TooGenericExceptionCaught")
+                    e: Exception,
+                ) {
+                    Logger.e("FeedCache", e) { "Failed to save feed details to cache" }
+                    crashlyticsManager.recordException(
+                        YralException("Failed to save feed details to cache", e),
+                        ExceptionType.FEED,
+                    )
+                }
             }
         }
     }
