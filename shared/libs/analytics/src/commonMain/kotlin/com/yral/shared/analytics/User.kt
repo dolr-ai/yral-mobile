@@ -11,6 +11,7 @@ data class User(
     val tokenType: TokenType?,
     val isForcedGamePlayUser: Boolean?,
     val emailId: String?,
+    val utmParams: AnalyticsUtmParams?,
 ) {
     constructor(
         userId: String,
@@ -24,5 +25,6 @@ data class User(
         tokenType = null,
         isForcedGamePlayUser = null,
         emailId = null,
+        utmParams = null,
     )
 }

@@ -16,7 +16,7 @@ import com.yral.shared.analytics.events.VideoUploadInitiatedEventData
 import com.yral.shared.analytics.events.VideoUploadSuccessEventData
 import com.yral.shared.analytics.events.VideoUploadTypeSelectedData
 import com.yral.shared.core.session.SessionManager
-import com.yral.shared.preferences.AffiliateAttributionStore
+import com.yral.shared.preferences.stores.AffiliateAttributionStore
 
 class UploadVideoTelemetry(
     private val analyticsManager: AnalyticsManager,

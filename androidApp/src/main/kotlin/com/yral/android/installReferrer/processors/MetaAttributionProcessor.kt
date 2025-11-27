@@ -5,7 +5,7 @@ import com.yral.android.installReferrer.AttributionManager
 import com.yral.android.installReferrer.AttributionProcessor
 import com.yral.android.installReferrer.MetaInstallReferrerAttribution
 import com.yral.android.installReferrer.MetaInstallReferrerFetcher
-import com.yral.shared.preferences.UtmParams
+import com.yral.shared.preferences.stores.UtmParams
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

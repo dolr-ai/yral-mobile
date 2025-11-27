@@ -3,12 +3,12 @@ package com.yral.android.installReferrer.processors
 import com.yral.android.installReferrer.AttributionManager
 import com.yral.android.installReferrer.AttributionProcessor
 import com.yral.android.installReferrer.isEmpty
-import com.yral.shared.preferences.UTM_CAMPAIGN_PARAM
-import com.yral.shared.preferences.UTM_CONTENT_PARAM
-import com.yral.shared.preferences.UTM_MEDIUM_PARAM
-import com.yral.shared.preferences.UTM_SOURCE_PARAM
-import com.yral.shared.preferences.UTM_TERM_PARAM
-import com.yral.shared.preferences.UtmParams
+import com.yral.shared.preferences.stores.UTM_CAMPAIGN_PARAM
+import com.yral.shared.preferences.stores.UTM_CONTENT_PARAM
+import com.yral.shared.preferences.stores.UTM_MEDIUM_PARAM
+import com.yral.shared.preferences.stores.UTM_SOURCE_PARAM
+import com.yral.shared.preferences.stores.UTM_TERM_PARAM
+import com.yral.shared.preferences.stores.UtmParams
 import io.branch.referral.util.LinkProperties
 import kotlinx.coroutines.CancellationException
 

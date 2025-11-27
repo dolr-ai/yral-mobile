@@ -2,7 +2,7 @@ package com.yral.android.installReferrer
 
 import co.touchlab.kermit.Logger
 import com.yral.android.BuildConfig
-import com.yral.shared.preferences.UtmParams
+import com.yral.shared.preferences.stores.UtmParams
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject

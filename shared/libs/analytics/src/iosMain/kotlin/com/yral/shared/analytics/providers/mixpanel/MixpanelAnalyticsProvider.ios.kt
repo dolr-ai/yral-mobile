@@ -6,11 +6,6 @@ import com.yral.shared.analytics.EventToMapConverter
 import com.yral.shared.analytics.User
 import com.yral.shared.analytics.events.EventData
 import com.yral.shared.analytics.events.TokenType
-import com.yral.shared.preferences.UTM_CAMPAIGN_PARAM
-import com.yral.shared.preferences.UTM_MEDIUM_PARAM
-import com.yral.shared.preferences.UTM_SOURCE_PARAM
-import com.yral.shared.preferences.UTM_TERM_PARAM
-import com.yral.shared.preferences.UtmAttributionStore
 import kotlinx.cinterop.ExperimentalForeignApi
 
 @OptIn(ExperimentalForeignApi::class)
@@ -18,7 +13,6 @@ actual class MixpanelAnalyticsProvider actual constructor(
     private val eventFilter: (EventData) -> Boolean,
     private val mapConverter: EventToMapConverter,
     token: String,
-    private val utmAttributionStore: UtmAttributionStore,
 ) : AnalyticsProvider {
     private companion object {
         private const val ONE_SIGNAL_PROPERTY = "\$onesignal_user_id"
@@ -52,13 +46,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
             )
 
         // Attach UTM attribution as user-level properties (people + super props)
-        val utmParams = utmAttributionStore.get()
-        val utmParamsMap: MutableMap<String, Any?> = mutableMapOf()
-        utmParams.source?.let { utmParamsMap[UTM_SOURCE_PARAM] = it }
-        utmParams.medium?.let { utmParamsMap[UTM_MEDIUM_PARAM] = it }
-        utmParams.campaign?.let { utmParamsMap[UTM_CAMPAIGN_PARAM] = it }
-        utmParams.term?.let { utmParamsMap[UTM_TERM_PARAM] = it }
-        // utmParams.content?.let { utmParamsMap[UTM_CONTENT_PARAM] = it }
+        val utmParamsMap = user.utmParams?.toMap() ?: emptyMap()
 
         mixpanel.people.set(property = ONE_SIGNAL_PROPERTY, to = user.userId)
         if (user.isLoggedIn ?: false) {
