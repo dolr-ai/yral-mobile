@@ -11,11 +11,11 @@ import com.yral.shared.analytics.User
 import com.yral.shared.analytics.di.IS_DEBUG
 import com.yral.shared.analytics.events.EventData
 import com.yral.shared.analytics.events.TokenType
-import com.yral.shared.preferences.UTM_CAMPAIGN_PARAM
-import com.yral.shared.preferences.UTM_MEDIUM_PARAM
-import com.yral.shared.preferences.UTM_SOURCE_PARAM
-import com.yral.shared.preferences.UTM_TERM_PARAM
-import com.yral.shared.preferences.UtmAttributionStore
+import com.yral.shared.preferences.stores.UTM_CAMPAIGN_PARAM
+import com.yral.shared.preferences.stores.UTM_MEDIUM_PARAM
+import com.yral.shared.preferences.stores.UTM_SOURCE_PARAM
+import com.yral.shared.preferences.stores.UTM_TERM_PARAM
+import com.yral.shared.preferences.stores.UtmAttributionStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

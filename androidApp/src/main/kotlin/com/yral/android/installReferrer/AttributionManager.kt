@@ -6,8 +6,8 @@ import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.events.ReferralReceivedEventData
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.koin.koinInstance
-import com.yral.shared.preferences.UtmAttributionStore
-import com.yral.shared.preferences.UtmParams
+import com.yral.shared.preferences.stores.UtmAttributionStore
+import com.yral.shared.preferences.stores.UtmParams
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

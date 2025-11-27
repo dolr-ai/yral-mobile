@@ -1,6 +1,6 @@
 package com.yral.android.installReferrer
 
-import com.yral.shared.preferences.UtmParams
+import com.yral.shared.preferences.stores.UtmParams
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue

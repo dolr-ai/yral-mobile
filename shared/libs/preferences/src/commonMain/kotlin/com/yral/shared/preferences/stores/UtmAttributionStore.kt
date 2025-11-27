@@ -1,4 +1,6 @@
-package com.yral.shared.preferences
+package com.yral.shared.preferences.stores
+
+import com.yral.shared.preferences.PreferencesFactory
 
 const val UTM_SOURCE_PARAM: String = "utm_source"
 const val UTM_MEDIUM_PARAM: String = "utm_medium"
