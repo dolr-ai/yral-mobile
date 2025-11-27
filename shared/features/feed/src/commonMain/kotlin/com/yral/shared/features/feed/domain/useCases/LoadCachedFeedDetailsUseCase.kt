@@ -11,6 +11,7 @@ import com.yral.shared.preferences.Preferences
 import kotlinx.serialization.json.Json
 import kotlin.time.Clock
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
@@ -51,7 +52,7 @@ class LoadCachedFeedDetailsUseCase(
         private fun getCacheKey(userPrincipal: String) = "feed_cache_$userPrincipal"
 
         @Suppress("MagicNumber")
-        private fun getCacheExpirationDuration(): Duration = Duration.parse("${CACHE_EXPIRATION_DAYS * 24}h")
+        private fun getCacheExpirationDuration(): Duration = CACHE_EXPIRATION_DAYS.days
     }
 
     data class Params(

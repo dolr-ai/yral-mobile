@@ -61,7 +61,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(FlowPreview::class)
 @Suppress("TooManyFunctions", "LongParameterList", "LargeClass")
@@ -141,7 +141,7 @@ class FeedViewModel(
             _state
                 .distinctUntilChanged { old, new ->
                     old.feedDetails == new.feedDetails && old.maxPageReached == new.maxPageReached
-                }.debounce(Duration.parse("1000ms")) // Debounce to avoid too frequent saves
+                }.debounce(1000.milliseconds) // Debounce to avoid too frequent saves
                 .collect { saveCacheToPreferences() }
         }
     }
