@@ -1,8 +1,5 @@
 package com.yral.shared.data.domain.models
 
-import kotlinx.serialization.Serializable
-
-@Serializable
 data class FeedDetails(
     val postID: String,
     val videoID: String,

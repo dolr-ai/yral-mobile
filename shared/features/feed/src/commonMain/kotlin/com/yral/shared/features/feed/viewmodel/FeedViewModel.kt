@@ -24,6 +24,8 @@ import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.feed.analytics.FeedTelemetry
 import com.yral.shared.features.feed.data.models.FeedDetailsCache
+import com.yral.shared.features.feed.data.models.toFeedDetails
+import com.yral.shared.features.feed.data.models.toFeedDetailsForCache
 import com.yral.shared.features.feed.domain.useCases.CheckVideoVoteUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsWithCreatorInfoUseCase
@@ -226,7 +228,10 @@ class FeedViewModel(
                                 _state.update { currentState ->
                                     // Only add cached items that don't already exist
                                     val existingVideoIds = currentState.feedDetails.mapTo(HashSet()) { it.videoID }
-                                    val newCachedDetails = cachedFeedDetails.filter { it.videoID !in existingVideoIds }
+                                    val newCachedDetails =
+                                        cachedFeedDetails
+                                            .filter { it.videoID !in existingVideoIds }
+                                            .map { it.toFeedDetails() }
                                     currentState.copy(
                                         feedDetails = currentState.feedDetails + newCachedDetails,
                                     )
@@ -293,7 +298,7 @@ class FeedViewModel(
                     val cacheData =
                         FeedDetailsCache(
                             timestamp = Clock.System.now(),
-                            feedDetails = remainingPages,
+                            feedDetails = remainingPages.map { it.toFeedDetailsForCache() },
                         )
                     val cacheKey = getCacheKey(userPrincipal)
                     val cacheJsonString = json.encodeToString(cacheData)
