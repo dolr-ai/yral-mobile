@@ -315,6 +315,8 @@ def cast_vote_v2(request: Request):
         vid  = str(body.get("video_id") or data.get("video_id") or "").strip()
         sid  = str(body.get("smiley_id") or data.get("smiley_id") or "").strip()
 
+        print(f"[DEBUG]: {pid}")
+
         auth_header = request.headers.get("Authorization", "")
         if not auth_header.startswith("Bearer "):
             return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
@@ -345,6 +347,8 @@ def cast_vote_v2(request: Request):
         is_banned = bool(user_data.get("is_smiley_game_banned") or False)
 
         if not is_banned:
+            bucket_id, _, _ = _bucket_bounds_ist()
+            day_entry_ref = db().collection(f"{DAILY_COLL}/{bucket_id}/users").document(pid)
             try:
                 now_utc = datetime.now(timezone.utc)
                 window_start = now_utc - timedelta(minutes=60)
@@ -357,39 +361,26 @@ def cast_vote_v2(request: Request):
                 )
                 games_last_60 = int(tx_count_query[0][0].value)
 
-                bucket_id, _, _ = _bucket_bounds_ist()
-                day_entry_ref = db().collection(f"{DAILY_COLL}/{bucket_id}/users").document(pid)
+                day_entry_snap = day_entry_ref.get()
+                day_entry = day_entry_snap.to_dict() or {}
+                wins_before = int(day_entry.get("smiley_game_wins") or 0)
+                losses_before = int(day_entry.get("smiley_game_losses") or 0)
+                total_games_after_vote = wins_before + losses_before + 1
 
-                if games_last_60 > SMILEY_GAME_BAN_THRESHOLD_LAST_60_MINS:
-                    is_banned = True
-                    user_ref.set({"is_smiley_game_banned": True}, merge=True)
-                    day_entry_ref.set({"is_smiley_game_banned": True}, merge=True)
+                exceeds_hourly_limit = games_last_60 > SMILEY_GAME_BAN_THRESHOLD_LAST_60_MINS
+                exceeds_daily_limit = total_games_after_vote > SMILEY_GAME_BAN_THRESHOLD
+                is_banned = exceeds_hourly_limit or exceeds_daily_limit
+
+                user_ref.set({"is_smiley_game_banned": is_banned}, merge=True)
+                day_entry_ref.set({"is_smiley_game_banned": is_banned}, merge=True)
+
+                if exceeds_hourly_limit:
                     print(f"[smiley] banning user {pid} (games_last_60={games_last_60})", file=sys.stderr)
-                else:
-                    user_ref.set({"is_smiley_game_banned": False}, merge=True)
-                    day_entry_ref.set({"is_smiley_game_banned": False}, merge=True)
+                if exceeds_daily_limit:
+                    print(f"[smiley] banning user {pid} (total_games_after_vote={total_games_after_vote})", file=sys.stderr)
             except Exception as e:
-                bucket_id, _, _ = _bucket_bounds_ist()
-                day_entry_ref = db().collection(f"{DAILY_COLL}/{bucket_id}/users").document(pid)
                 user_ref.set({"is_smiley_game_banned": False}, merge=True)
                 day_entry_ref.set({"is_smiley_game_banned": False}, merge=True)
-
-            # bucket_id, _, _ = _bucket_bounds_ist()
-            # day_entry_ref = db().collection(f"{DAILY_COLL}/{bucket_id}/users").document(pid)
-            # day_entry_snap = day_entry_ref.get()
-            # day_entry = day_entry_snap.to_dict() or {}
-
-            # wins_before = int(day_entry.get("smiley_game_wins") or 0)
-            # losses_before = int(day_entry.get("smiley_game_losses") or 0)
-
-            # total_games_after_vote = wins_before + losses_before + 1
-            # if total_games_after_vote > SMILEY_GAME_BAN_THRESHOLD:
-            #     is_banned = True
-            #     user_ref.set({"is_smiley_game_banned": True}, merge=True)
-            #     day_entry_ref.set({"is_smiley_game_banned": True}, merge=True)
-            # else:
-            #     user_ref.set({"is_smiley_game_banned": False}, merge=True)
-            #     day_entry_ref.set({"is_smiley_game_banned": False}, merge=True)
 
         # 3. transaction: READS first, WRITES after ──────────────────────
         @firestore.transactional
