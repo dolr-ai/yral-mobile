@@ -1,4 +1,4 @@
-package com.yral.shared.preferences
+package com.yral.shared.preferences.stores
 
 import com.russhwolf.settings.Settings
 

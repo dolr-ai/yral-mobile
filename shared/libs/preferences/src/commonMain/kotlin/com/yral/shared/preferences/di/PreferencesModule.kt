@@ -2,12 +2,12 @@ package com.yral.shared.preferences.di
 
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
-import com.yral.shared.preferences.AffiliateAttributionStore
 import com.yral.shared.preferences.AsyncPreferencesImpl
 import com.yral.shared.preferences.FlowPreferencesImpl
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.preferences.PreferencesFactory
-import com.yral.shared.preferences.UtmAttributionStore
+import com.yral.shared.preferences.stores.AffiliateAttributionStore
+import com.yral.shared.preferences.stores.UtmAttributionStore
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.qualifier.named
@@ -15,6 +15,7 @@ import org.koin.dsl.module
 
 private const val USER_SHARED_PREF_NAME = "YRAL_PREF"
 private const val FEED_CACHE_PREF_NAME = "YRAL_FEED_CACHE_PREF"
+private const val UTM_SHARED_PREF_NAME = "YRAL_UTM_PREF"
 
 @OptIn(ExperimentalSettingsApi::class)
 val preferencesModule =
@@ -32,6 +33,16 @@ val preferencesModule =
                 appDispatchers = get(),
             )
         }
+        single<Preferences>(named("UtmPreferences")) {
+            FlowPreferencesImpl(
+                flowSettings =
+                    get<PreferencesFactory>().createDataStore(
+                        preferenceName = UTM_SHARED_PREF_NAME,
+                        appDispatchers = get<AppDispatchers>(),
+                    ),
+                appDispatchers = get(),
+            )
+        }
         single { AffiliateAttributionStore(get()) }
-        single { UtmAttributionStore(get()) }
+        single { UtmAttributionStore(get(named("UtmPreferences"))) }
     }

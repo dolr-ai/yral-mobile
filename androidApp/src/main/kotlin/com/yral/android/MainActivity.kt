@@ -30,7 +30,7 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import com.yral.shared.libs.routing.deeplink.engine.RoutingService
 import com.yral.shared.libs.routing.routes.api.AppRoute
-import com.yral.shared.preferences.AffiliateAttributionStore
+import com.yral.shared.preferences.stores.AffiliateAttributionStore
 import com.yral.shared.rust.service.services.HelperService.initRustLogger
 import com.yral.shared.rust.service.services.RustLogLevel
 import io.branch.indexing.BranchUniversalObject

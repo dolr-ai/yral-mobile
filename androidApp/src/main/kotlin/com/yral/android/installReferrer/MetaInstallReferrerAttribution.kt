@@ -3,7 +3,7 @@ package com.yral.android.installReferrer
 import android.net.Uri
 import androidx.core.net.toUri
 import com.yral.android.BuildConfig
-import com.yral.shared.preferences.UtmParams
+import com.yral.shared.preferences.stores.UtmParams
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
