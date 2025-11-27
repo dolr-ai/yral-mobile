@@ -1,6 +1,7 @@
 package com.yral.shared.preferences.stores
 
 import com.yral.shared.preferences.Preferences
+import kotlin.concurrent.Volatile
 
 const val UTM_SOURCE_PARAM: String = "utm_source"
 const val UTM_MEDIUM_PARAM: String = "utm_medium"
@@ -21,6 +22,7 @@ data class UtmParams(
 class UtmAttributionStore(
     private val preferences: Preferences,
 ) {
+    @Volatile
     private var utmParams: UtmParams? = null
 
     /**
