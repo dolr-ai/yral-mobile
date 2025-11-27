@@ -4,11 +4,19 @@ import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.User
 import com.yral.shared.analytics.events.BottomNavigationClickedEventData
 import com.yral.shared.analytics.events.CategoryName
+import com.yral.shared.analytics.events.FirstAppLaunchEventData
 import com.yral.shared.analytics.events.SplashScreenViewedEventData
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 class RootTelemetry(
     private val analyticsManager: AnalyticsManager,
 ) {
+    @OptIn(ExperimentalTime::class)
+    fun onFirstAppLaunch(now: Instant) {
+        analyticsManager.forceTrackEvent(FirstAppLaunchEventData(date = now.toString()))
+    }
+
     fun onSplashScreenViewed() {
         analyticsManager.trackEvent(SplashScreenViewedEventData())
     }
