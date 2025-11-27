@@ -12,10 +12,10 @@ internal data class GetUploadUrlResponseDTO(
 
 @Serializable
 internal data class UploadDataDto(
-    val scheduledDeletion: String,
+    val scheduledDeletion: String?,
     val uid: String,
     val uploadURL: String,
-    val watermark: WatermarkDto,
+    val watermark: WatermarkDto?,
 )
 
 @Serializable

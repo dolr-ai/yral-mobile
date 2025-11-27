@@ -45,3 +45,10 @@ internal fun UploadFileRequest.toUpdateMetaDataRequestDto(delegatedIdentityWire:
                 creatorConsentForInclusionInHotOrNot = true,
             ),
     )
+
+@Serializable
+internal data class UpdateMetaDataResponseDto(
+    val success: Boolean,
+    val message: String?,
+    val data: String?,
+)

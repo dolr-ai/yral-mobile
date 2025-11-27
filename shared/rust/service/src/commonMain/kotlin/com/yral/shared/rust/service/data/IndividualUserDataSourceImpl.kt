@@ -78,21 +78,23 @@ internal class IndividualUserDataSourceImpl(
             .icrc1BalanceOf(Account(owner = principalId, subaccount = null))
 
     internal companion object {
+        private const val STORJ_PREFIX =
+            "https://link.storjshare.io/raw/jx6vm3ebgb4gt3gfkmcrw62bl7rq/yral-videos"
         private const val CLOUD_FLARE_PREFIX = "https://customer-2p3jflss4r4hmpnz.cloudflarestream.com/"
-        private const val CLOUD_FLARE_SUFFIX = "/manifest/video.m3u8"
-        private const val CLOUD_FLARE_SUFFIX_MP4 = "/downloads/default.mp4"
+
+//        private const val CLOUD_FLARE_SUFFIX = "/manifest/video.m3u8"
+//        private const val CLOUD_FLARE_SUFFIX_MP4 = "/downloads/default.mp4"
         private const val THUMBNAIL_SUFFIX = "/thumbnails/thumbnail.jpg"
 
         fun thumbnailUrl(videoUid: String) = "$CLOUD_FLARE_PREFIX$videoUid$THUMBNAIL_SUFFIX"
 
-        fun videoUrl(videoUid: String) =
-            when (getPreferredVideoFormat()) {
-                PreferredVideoFormat.MP4 -> mp4Url(videoUid)
-                PreferredVideoFormat.HLS -> hlsUrl(videoUid)
-            }
+        fun videoUrl(
+            videoUid: String,
+            publisherUserId: String,
+        ) = "$STORJ_PREFIX/$publisherUserId/$videoUid.mp4"
 
-        private fun mp4Url(videoUid: String) = "$CLOUD_FLARE_PREFIX$videoUid$CLOUD_FLARE_SUFFIX_MP4"
-        private fun hlsUrl(videoUid: String) = "$CLOUD_FLARE_PREFIX$videoUid$CLOUD_FLARE_SUFFIX"
+//        private fun mp4Url(videoUid: String) = "$CLOUD_FLARE_PREFIX$videoUid$CLOUD_FLARE_SUFFIX_MP4"
+//        private fun hlsUrl(videoUid: String) = "$CLOUD_FLARE_PREFIX$videoUid$CLOUD_FLARE_SUFFIX"
     }
 }
 
