@@ -11,6 +11,8 @@ import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsWithCreator
 import com.yral.shared.features.feed.domain.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetAIFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
+import com.yral.shared.features.feed.domain.useCases.LoadCachedFeedDetailsUseCase
+import com.yral.shared.features.feed.domain.useCases.SaveFeedDetailsCacheUseCase
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.RequiredUseCases
 import org.koin.core.module.dsl.bind
@@ -26,6 +28,8 @@ val feedModule =
         factoryOf(::FetchFeedDetailsWithCreatorInfoUseCase)
         factoryOf(::GetAIFeedUseCase)
         factoryOf(::CheckVideoVoteUseCase)
+        factoryOf(::LoadCachedFeedDetailsUseCase)
+        factoryOf(::SaveFeedDetailsCacheUseCase)
         viewModelOf(::FeedViewModel)
         factoryOf(::FeedRepository) { bind<IFeedRepository>() }
         factoryOf(::FeedRemoteDataSource) { bind<IFeedDataSource>() }

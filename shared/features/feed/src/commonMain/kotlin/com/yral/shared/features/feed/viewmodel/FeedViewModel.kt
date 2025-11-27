@@ -23,15 +23,14 @@ import com.yral.shared.data.domain.useCases.GetVideoViewsUseCase
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.feed.analytics.FeedTelemetry
-import com.yral.shared.features.feed.data.models.FeedDetailsCache
-import com.yral.shared.features.feed.data.models.toFeedDetails
-import com.yral.shared.features.feed.data.models.toFeedDetailsForCache
 import com.yral.shared.features.feed.domain.useCases.CheckVideoVoteUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsWithCreatorInfoUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetAIFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
+import com.yral.shared.features.feed.domain.useCases.LoadCachedFeedDetailsUseCase
+import com.yral.shared.features.feed.domain.useCases.SaveFeedDetailsCacheUseCase
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastStatus
@@ -42,7 +41,6 @@ import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.libs.sharing.LinkGenerator
 import com.yral.shared.libs.sharing.LinkInput
 import com.yral.shared.libs.sharing.ShareService
-import com.yral.shared.preferences.Preferences
 import com.yral.shared.reportVideo.domain.ReportRequestParams
 import com.yral.shared.reportVideo.domain.ReportVideoUseCase
 import com.yral.shared.reportVideo.domain.models.ReportSheetState
@@ -63,10 +61,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
-import kotlin.time.Clock
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 
 @OptIn(FlowPreview::class)
 @Suppress("TooManyFunctions", "LongParameterList", "LargeClass")
@@ -81,8 +76,6 @@ class FeedViewModel(
     private val urlBuilder: UrlBuilder,
     private val linkGenerator: LinkGenerator,
     private val flagManager: FeatureFlagManager,
-    private val preferences: Preferences,
-    private val json: Json,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
@@ -107,11 +100,6 @@ class FeedViewModel(
         const val SIGN_UP_PAGE = 9
         private const val PAGER_STATE_REFRESH_BUFFER_MS = 100L
         const val FOLLOW_NUDGE_PAGE = 5
-        private const val CACHE_EXPIRATION_DAYS = 3
-        private fun getCacheKey(userPrincipal: String) = "feed_cache_$userPrincipal"
-
-        @Suppress("MagicNumber")
-        private fun getCacheExpirationDuration(): Duration = Duration.parse("${CACHE_EXPIRATION_DAYS * 24}h")
     }
 
     private val _state = MutableStateFlow(FeedState())
@@ -207,59 +195,30 @@ class FeedViewModel(
         }
     }
 
-    @OptIn(ExperimentalTime::class)
     private fun loadCachedFeedDetails() {
         coroutineScope.launch {
             sessionManager.userPrincipal?.let { userPrincipal ->
-                val cacheKey = getCacheKey(userPrincipal)
-                val cachedJson = preferences.getString(cacheKey)
-                if (cachedJson != null) {
-                    try {
-                        val cachedData = json.decodeFromString<FeedDetailsCache>(cachedJson)
-                        val currentTime = Clock.System.now()
-                        val cacheAge = currentTime - cachedData.timestamp
-                        val expirationDuration = getCacheExpirationDuration()
-
-                        if (cacheAge <= expirationDuration) {
-                            // Cache is valid, restore feed details
-                            val cachedFeedDetails = cachedData.feedDetails
-                            if (cachedFeedDetails.isNotEmpty()) {
-                                Logger.d("FeedCache") { "Loading ${cachedFeedDetails.size} cached feed details" }
-                                _state.update { currentState ->
-                                    // Only add cached items that don't already exist
-                                    val existingVideoIds = currentState.feedDetails.mapTo(HashSet()) { it.videoID }
-                                    val newCachedDetails =
-                                        cachedFeedDetails
-                                            .filter { it.videoID !in existingVideoIds }
-                                            .map { it.toFeedDetails() }
-                                    currentState.copy(
-                                        feedDetails = currentState.feedDetails + newCachedDetails,
-                                    )
-                                }
+                requiredUseCases.loadCachedFeedDetailsUseCase
+                    .invoke(LoadCachedFeedDetailsUseCase.Params(userPrincipal = userPrincipal))
+                    .onSuccess { cachedFeedDetails ->
+                        if (cachedFeedDetails != null && cachedFeedDetails.isNotEmpty()) {
+                            Logger.d("FeedCache") { "Loading ${cachedFeedDetails.size} cached feed details" }
+                            _state.update { currentState ->
+                                // Only add cached items that don't already exist
+                                val existingVideoIds = currentState.feedDetails.mapTo(HashSet()) { it.videoID }
+                                val newCachedDetails = cachedFeedDetails.filter { it.videoID !in existingVideoIds }
+                                currentState.copy(
+                                    feedDetails = currentState.feedDetails + newCachedDetails,
+                                )
                             }
                         } else {
-                            val daysSinceCache = cacheAge.inWholeDays
-                            Logger.d("FeedCache") { "Cache expired (age: $daysSinceCache days)" }
+                            Logger.d("FeedCache") { "No valid cache available" }
                             initializeFeed()
                         }
-                        // Remove cache after using it (whether valid or expired)
-                        preferences.remove(cacheKey)
-                    } catch (
-                        @Suppress("TooGenericExceptionCaught")
-                        e: Exception,
-                    ) {
-                        Logger.e("FeedCache", e) { "Failed to load cached feed details" }
-                        crashlyticsManager.recordException(
-                            YralException("Failed to load cached feed details", e),
-                            ExceptionType.FEED,
-                        )
-                        // Remove corrupted cache
-                        preferences.remove(cacheKey)
+                    }.onFailure {
+                        Logger.e("FeedCache") { "No cache available or failed to load" }
+                        initializeFeed()
                     }
-                } else {
-                    Logger.e("FeedCache") { "No cache available" }
-                    initializeFeed()
-                }
             }
         }
     }
@@ -277,7 +236,6 @@ class FeedViewModel(
         }
     }
 
-    @OptIn(ExperimentalTime::class)
     private suspend fun saveCacheToPreferences() {
         sessionManager.userPrincipal?.let { userPrincipal ->
             val currentState = _state.value
@@ -294,29 +252,20 @@ class FeedViewModel(
                 }
 
             if (remainingPages.isNotEmpty()) {
-                try {
-                    val cacheData =
-                        FeedDetailsCache(
-                            timestamp = Clock.System.now(),
-                            feedDetails = remainingPages.map { it.toFeedDetailsForCache() },
-                        )
-                    val cacheKey = getCacheKey(userPrincipal)
-                    val cacheJsonString = json.encodeToString(cacheData)
-                    preferences.putString(cacheKey, cacheJsonString)
-                    Logger.d("FeedCache") {
-                        "Saved ${remainingPages.size}/${currentState.feedDetails.size} " +
-                            "feed details to cache for user $userPrincipal"
+                requiredUseCases.saveFeedDetailsCacheUseCase
+                    .invoke(
+                        SaveFeedDetailsCacheUseCase.Params(
+                            userPrincipal = userPrincipal,
+                            feedDetails = remainingPages,
+                        ),
+                    ).onSuccess {
+                        Logger.d("FeedCache") {
+                            "Saved ${remainingPages.size}/${currentState.feedDetails.size} " +
+                                "feed details to cache for user $userPrincipal"
+                        }
+                    }.onFailure {
+                        Logger.e("FeedCache") { "Failed to save feed details to cache" }
                     }
-                } catch (
-                    @Suppress("TooGenericExceptionCaught")
-                    e: Exception,
-                ) {
-                    Logger.e("FeedCache", e) { "Failed to save feed details to cache" }
-                    crashlyticsManager.recordException(
-                        YralException("Failed to save feed details to cache", e),
-                        ExceptionType.FEED,
-                    )
-                }
             }
         }
     }
@@ -1042,6 +991,8 @@ class FeedViewModel(
         val getAIFeedUseCase: GetAIFeedUseCase,
         val followUserUseCase: FollowUserUseCase,
         val videoViewsUseCase: GetVideoViewsUseCase,
+        val loadCachedFeedDetailsUseCase: LoadCachedFeedDetailsUseCase,
+        val saveFeedDetailsCacheUseCase: SaveFeedDetailsCacheUseCase,
     )
 }
 
