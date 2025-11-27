@@ -146,11 +146,11 @@ class FeedViewModel(
                     defaultValue = false,
                 ).collect { isSocialSignIn -> _state.update { it.copy(isLoggedIn = isSocialSignIn) } }
         }
-        // Save cache whenever feed details or current page changes
+        // Save cache whenever feed details or max page reached changes
         viewModelScope.launch {
             _state
                 .distinctUntilChanged { old, new ->
-                    old.feedDetails == new.feedDetails && old.currentPageOfFeed == new.currentPageOfFeed
+                    old.feedDetails == new.feedDetails && old.maxPageReached == new.maxPageReached
                 }.debounce(Duration.parse("1000ms")) // Debounce to avoid too frequent saves
                 .collect { saveCacheToPreferences() }
         }
@@ -276,7 +276,8 @@ class FeedViewModel(
     private suspend fun saveCacheToPreferences() {
         sessionManager.userPrincipal?.let { userPrincipal ->
             val currentState = _state.value
-            val nextPageIndex = currentState.currentPageOfFeed + 1
+            // Cache only unseen pages (after the highest page reached)
+            val nextPageIndex = currentState.maxPageReached + 1
             val remainingPages =
                 if (nextPageIndex < currentState.feedDetails.size) {
                     currentState.feedDetails.subList(
@@ -670,6 +671,7 @@ class FeedViewModel(
         _state.update { currentState ->
             currentState.copy(
                 currentPageOfFeed = pageNo,
+                maxPageReached = maxOf(currentState.maxPageReached, pageNo), // Update max page reached
                 videoData = VideoData(), // Reset all video data for new page
             )
         }
@@ -1042,6 +1044,7 @@ data class FeedState(
     val posts: List<Post> = emptyList(),
     val feedDetails: List<FeedDetails> = emptyList(),
     val currentPageOfFeed: Int = 0,
+    val maxPageReached: Int = 0, // Track the highest page user has scrolled to
     val isLoadingMore: Boolean = false,
     val pendingFetchDetails: Int = 0,
     val isPostDescriptionExpanded: Boolean = false,
