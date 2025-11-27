@@ -1,6 +1,6 @@
 package com.yral.shared.preferences.stores
 
-import com.yral.shared.preferences.PreferencesFactory
+import com.yral.shared.preferences.Preferences
 
 const val UTM_SOURCE_PARAM: String = "utm_source"
 const val UTM_MEDIUM_PARAM: String = "utm_medium"
@@ -9,7 +9,6 @@ const val UTM_TERM_PARAM: String = "utm_term"
 const val UTM_CONTENT_PARAM: String = "utm_content"
 
 private const val INSTALL_REFERRER_COMPLETED_KEY = "install_referrer_completed"
-private const val UTM_SHARED_PREF_NAME = "YRAL_UTM_PREF"
 
 data class UtmParams(
     val source: String? = null,
@@ -20,15 +19,15 @@ data class UtmParams(
 )
 
 class UtmAttributionStore(
-    preferencesFactory: PreferencesFactory,
+    private val preferences: Preferences,
 ) {
-    private val settings = preferencesFactory.create(UTM_SHARED_PREF_NAME)
+    private var utmParams: UtmParams? = null
 
     /**
      * Store UTM parameters only if they haven't been set before.
      * This preserves first-touch attribution semantics.
      */
-    fun storeIfEmpty(
+    suspend fun storeIfEmpty(
         source: String? = null,
         medium: String? = null,
         campaign: String? = null,
@@ -43,35 +42,38 @@ class UtmAttributionStore(
         markInstallReferrerCompleted()
     }
 
-    private fun saveIfEmpty(
+    private suspend fun saveIfEmpty(
         key: String,
         value: String?,
     ) {
         value?.takeIf { it.isNotBlank() }?.let {
-            if (settings.getStringOrNull(key).isNullOrBlank()) {
-                settings.putString(key, it)
+            if (preferences.getString(key).isNullOrBlank()) {
+                preferences.putString(key, it)
             }
         }
     }
 
-    fun get(): UtmParams =
-        UtmParams(
-            source = settings.getStringOrNull(UTM_SOURCE_PARAM)?.takeIf { it.isNotBlank() },
-            medium = settings.getStringOrNull(UTM_MEDIUM_PARAM)?.takeIf { it.isNotBlank() },
-            campaign = settings.getStringOrNull(UTM_CAMPAIGN_PARAM)?.takeIf { it.isNotBlank() },
-            term = settings.getStringOrNull(UTM_TERM_PARAM)?.takeIf { it.isNotBlank() },
-            content = settings.getStringOrNull(UTM_CONTENT_PARAM)?.takeIf { it.isNotBlank() },
-        )
+    suspend fun get(): UtmParams? =
+        if (isInstallReferrerCompleted()) {
+            utmParams ?: UtmParams(
+                source = preferences.getString(UTM_SOURCE_PARAM)?.takeIf { it.isNotBlank() },
+                medium = preferences.getString(UTM_MEDIUM_PARAM)?.takeIf { it.isNotBlank() },
+                campaign = preferences.getString(UTM_CAMPAIGN_PARAM)?.takeIf { it.isNotBlank() },
+                term = preferences.getString(UTM_TERM_PARAM)?.takeIf { it.isNotBlank() },
+                content = preferences.getString(UTM_CONTENT_PARAM)?.takeIf { it.isNotBlank() },
+            ).also { utmParams = it }
+        } else {
+            null
+        }
 
-    fun isInstallReferrerCompleted(): Boolean =
-        settings
-            .getBoolean(INSTALL_REFERRER_COMPLETED_KEY, false)
+    suspend fun isInstallReferrerCompleted(): Boolean = preferences.getBoolean(INSTALL_REFERRER_COMPLETED_KEY) ?: false
 
-    private fun markInstallReferrerCompleted() {
-        settings.putBoolean(INSTALL_REFERRER_COMPLETED_KEY, true)
+    private suspend fun markInstallReferrerCompleted() {
+        preferences.putBoolean(INSTALL_REFERRER_COMPLETED_KEY, true)
     }
 
-    fun clear() {
-        settings.clear()
+    suspend fun clear() {
+        utmParams = null
+        preferences.clearAll()
     }
 }

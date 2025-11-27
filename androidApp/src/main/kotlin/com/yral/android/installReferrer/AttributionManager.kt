@@ -132,7 +132,7 @@ class AttributionManager(
         return result
     }
 
-    private fun shouldStoreAttribution(result: UtmParams?): Boolean =
+    private suspend fun shouldStoreAttribution(result: UtmParams?): Boolean =
         result != null && result.isNotEmpty() && !utmAttributionStore.isInstallReferrerCompleted()
 
     private suspend fun markProcessingComplete() {
@@ -148,7 +148,7 @@ class AttributionManager(
             }
         }
 
-    private fun storeAttribution(
+    private suspend fun storeAttribution(
         utmParams: UtmParams,
         processorName: String,
     ) {

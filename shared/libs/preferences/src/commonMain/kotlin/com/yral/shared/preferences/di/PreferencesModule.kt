@@ -15,6 +15,7 @@ import org.koin.dsl.module
 
 private const val USER_SHARED_PREF_NAME = "YRAL_PREF"
 private const val FEED_CACHE_PREF_NAME = "YRAL_FEED_CACHE_PREF"
+private const val UTM_SHARED_PREF_NAME = "YRAL_UTM_PREF"
 
 @OptIn(ExperimentalSettingsApi::class)
 val preferencesModule =
@@ -32,6 +33,16 @@ val preferencesModule =
                 appDispatchers = get(),
             )
         }
+        single<Preferences>(named("UtmPreferences")) {
+            FlowPreferencesImpl(
+                flowSettings =
+                    get<PreferencesFactory>().createDataStore(
+                        preferenceName = UTM_SHARED_PREF_NAME,
+                        appDispatchers = get<AppDispatchers>(),
+                    ),
+                appDispatchers = get(),
+            )
+        }
         single { AffiliateAttributionStore(get()) }
-        single { UtmAttributionStore(get()) }
+        single { UtmAttributionStore(get(named("UtmPreferences"))) }
     }

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import co.touchlab.kermit.Logger
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.FeedFeatureFlags
+import com.yral.shared.analytics.AnalyticsUtmParams
 import com.yral.shared.analytics.User
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.TokenType
@@ -19,6 +20,8 @@ import com.yral.shared.features.root.analytics.RootTelemetry
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
+import com.yral.shared.preferences.stores.UtmAttributionStore
+import com.yral.shared.preferences.stores.UtmParams
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -47,6 +50,7 @@ class RootViewModel(
     private val rootTelemetry: RootTelemetry,
     private val flagManager: FeatureFlagManager,
     private val preferences: Preferences,
+    private val utmAttributionStore: UtmAttributionStore,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
@@ -84,6 +88,7 @@ class RootViewModel(
                         tokenType = TokenType.YRAL,
                         isForcedGamePlayUser = properties.isForcedGamePlayUser,
                         emailId = properties.emailId,
+                        utmParams = utmAttributionStore.get()?.toAnalyticsUtmParams(),
                     )
                 }
             }
@@ -198,6 +203,15 @@ class RootViewModel(
     fun bottomNavigationClicked(categoryName: CategoryName) {
         rootTelemetry.bottomNavigationClicked(categoryName)
     }
+
+    private fun UtmParams.toAnalyticsUtmParams(): AnalyticsUtmParams =
+        AnalyticsUtmParams(
+            source = source,
+            medium = medium,
+            campaign = campaign,
+            term = term,
+            content = content,
+        )
 }
 
 data class RootState(
