@@ -18,6 +18,7 @@ import com.yral.shared.features.feed.viewmodel.FeedViewModel.RequiredUseCases
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.viewModelOf
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 val feedModule =
@@ -28,8 +29,22 @@ val feedModule =
         factoryOf(::FetchFeedDetailsWithCreatorInfoUseCase)
         factoryOf(::GetAIFeedUseCase)
         factoryOf(::CheckVideoVoteUseCase)
-        factoryOf(::LoadCachedFeedDetailsUseCase)
-        factoryOf(::SaveFeedDetailsCacheUseCase)
+        factory {
+            LoadCachedFeedDetailsUseCase(
+                preferences = get(named("FeedCachePreferences")),
+                json = get(),
+                appDispatchers = get(),
+                useCaseFailureListener = get(),
+            )
+        }
+        factory {
+            SaveFeedDetailsCacheUseCase(
+                preferences = get(named("FeedCachePreferences")),
+                json = get(),
+                appDispatchers = get(),
+                useCaseFailureListener = get(),
+            )
+        }
         viewModelOf(::FeedViewModel)
         factoryOf(::FeedRepository) { bind<IFeedRepository>() }
         factoryOf(::FeedRemoteDataSource) { bind<IFeedDataSource>() }
