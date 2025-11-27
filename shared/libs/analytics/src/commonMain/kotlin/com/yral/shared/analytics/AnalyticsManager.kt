@@ -57,6 +57,10 @@ class AnalyticsManager(
         }
     }
 
+    fun forceTrackEvent(event: EventData) {
+        eventBus.publish(event)
+    }
+
     private fun trackEventToProviders(event: EventData) {
         providers.forEach { provider ->
             if (provider.shouldTrackEvent(event)) {

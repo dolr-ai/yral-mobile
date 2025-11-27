@@ -30,11 +30,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 enum class RootError {
     TIMEOUT,
 }
 
+@OptIn(ExperimentalTime::class)
 @Suppress("TooGenericExceptionCaught")
 class RootViewModel(
     appDispatchers: AppDispatchers,
@@ -131,6 +134,13 @@ class RootViewModel(
         }
         coroutineScope.launch {
             analyticsUser.collect { user -> rootTelemetry.setUser(user) }
+        }
+        coroutineScope.launch {
+            if (preferences.getString(PrefKeys.FIRST_APP_OPEN_DATE_TIME.name) == null) {
+                val now = Clock.System.now()
+                rootTelemetry.onFirstAppLaunch(now)
+                preferences.putString(PrefKeys.FIRST_APP_OPEN_DATE_TIME.name, now.toString())
+            }
         }
     }
 

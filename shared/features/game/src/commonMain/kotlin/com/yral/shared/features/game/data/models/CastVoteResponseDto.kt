@@ -5,7 +5,6 @@ import com.yral.shared.features.game.domain.models.CastVoteErrorCodes
 import com.yral.shared.features.game.domain.models.CastVoteResponse
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import yral_mobile.shared.libs.designsystem.generated.resources.Res
 
 @Serializable
 sealed class CastVoteResponseDto {
