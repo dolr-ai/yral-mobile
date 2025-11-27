@@ -27,7 +27,7 @@ VIDEO_COLL = "videos"
 DAILY_COLL = "leaderboards_daily"
 BANNED_USERS_COLL = "smiley_game_banned_users"
 SMILEY_GAME_BAN_THRESHOLD = 15000
-SMILEY_GAME_BAN_THRESHOLD_LAST_60_MINS = 1000
+SMILEY_GAME_BAN_THRESHOLD_LAST_60_MINS = 1500
 
 BALANCE_URL_YRAL_TOKEN = "https://yral-hot-or-not.go-bazzinga.workers.dev/update_balance/"
 BALANCE_URL_CKBTC = "https://yral-hot-or-not.go-bazzinga.workers.dev/v2/transfer_ckbtc"
