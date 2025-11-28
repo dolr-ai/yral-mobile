@@ -11,11 +11,14 @@ import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsWithCreator
 import com.yral.shared.features.feed.domain.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetAIFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
+import com.yral.shared.features.feed.domain.useCases.LoadCachedFeedDetailsUseCase
+import com.yral.shared.features.feed.domain.useCases.SaveFeedDetailsCacheUseCase
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.RequiredUseCases
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.viewModelOf
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 val feedModule =
@@ -26,6 +29,22 @@ val feedModule =
         factoryOf(::FetchFeedDetailsWithCreatorInfoUseCase)
         factoryOf(::GetAIFeedUseCase)
         factoryOf(::CheckVideoVoteUseCase)
+        factory {
+            LoadCachedFeedDetailsUseCase(
+                preferences = get(named("FeedCachePreferences")),
+                json = get(),
+                appDispatchers = get(),
+                useCaseFailureListener = get(),
+            )
+        }
+        factory {
+            SaveFeedDetailsCacheUseCase(
+                preferences = get(named("FeedCachePreferences")),
+                json = get(),
+                appDispatchers = get(),
+                useCaseFailureListener = get(),
+            )
+        }
         viewModelOf(::FeedViewModel)
         factoryOf(::FeedRepository) { bind<IFeedRepository>() }
         factoryOf(::FeedRemoteDataSource) { bind<IFeedDataSource>() }

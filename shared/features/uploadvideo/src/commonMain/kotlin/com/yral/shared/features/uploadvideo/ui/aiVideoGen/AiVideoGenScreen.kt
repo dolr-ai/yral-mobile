@@ -30,7 +30,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -53,12 +52,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.touchlab.kermit.Logger
-import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.features.uploadvideo.nav.aiVideoGen.AiVideoGenComponent
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel.BottomSheetType
-import com.yral.shared.features.uploadvideo.ui.LoginBottomSheetComposable
 import com.yral.shared.features.uploadvideo.ui.aiVideoGen.AiVideoGenScreenConstants.LOADING_MESSAGE_DELAY
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
@@ -68,7 +65,6 @@ import com.yral.shared.libs.designsystem.component.YralConfirmationMessage
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
-import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
 import com.yral.shared.libs.designsystem.component.getSVGImageModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -109,8 +105,6 @@ fun AiVideoGenScreen(
     modifier: Modifier = Modifier,
     bottomPadding: Dp,
     viewModel: AiVideoGenViewModel = koinViewModel(),
-    loginState: UiState<*>,
-    loginBottomSheet: LoginBottomSheetComposable,
 ) {
     val viewState by viewModel.state.collectAsStateWithLifecycle()
     val shouldRefresh = viewModel.sessionObserver.collectAsState(null)
@@ -118,11 +112,6 @@ fun AiVideoGenScreen(
         Logger.d("VideoGen") { "shouldRefresh: $shouldRefresh" }
         shouldRefresh.value?.first?.let { viewModel.refresh(it) }
         shouldRefresh.value?.second?.let { viewModel.updateBalance(it) }
-    }
-    LaunchedEffect(loginState) {
-        if (loginState is UiState.Failure) {
-            viewModel.setBottomSheetType(BottomSheetType.Signup)
-        }
     }
     BackHandler(
         enabled = viewState.uiState is UiState.Success,
@@ -165,6 +154,7 @@ fun AiVideoGenScreen(
                         viewModel = viewModel,
                         showProvidersSheet = { viewModel.setBottomSheetType(BottomSheetType.ModelSelection) },
                         goToHome = { component.goToHome() },
+                        promptLogin = { component.promptLogin() },
                     )
                 }
             }
@@ -182,7 +172,7 @@ fun AiVideoGenScreen(
             is UiState.Failure -> Unit // No op since failure is shown in a bottomSheet
         }
     }
-    AiVideoGenScreenPrompts(component, viewState, viewModel, loginBottomSheet)
+    AiVideoGenScreenPrompts(component, viewState, viewModel)
 }
 
 @Suppress("LongMethod")
@@ -192,11 +182,8 @@ private fun AiVideoGenScreenPrompts(
     component: AiVideoGenComponent,
     viewState: AiVideoGenViewModel.ViewState,
     viewModel: AiVideoGenViewModel,
-    loginBottomSheet: LoginBottomSheetComposable,
 ) {
-    var extraSheetLink by remember { mutableStateOf("") }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val extraSheetState = rememberModalBottomSheetState()
     when (val sheetType = viewState.bottomSheetType) {
         is BottomSheetType.ModelSelection -> {
             ModelSelection(
@@ -221,17 +208,15 @@ private fun AiVideoGenScreenPrompts(
                 message = sheetType.message,
                 bottomSheetState = bottomSheetState,
                 dismissSheet = { handleSheetAction { viewModel.resetUi() } },
-                tryAgain = { handleSheetAction { viewModel.tryAgain() } },
-            )
-        }
-        is BottomSheetType.Signup -> {
-            // reusing from account to be refactored in independent components
-            loginBottomSheet(
-                SignupPageName.VIDEO_CREATION,
-                bottomSheetState,
-                { viewModel.setBottomSheetType(BottomSheetType.None) },
-                viewModel.getTncLink(),
-                { extraSheetLink = viewModel.getTncLink() },
+                tryAgain = {
+                    handleSheetAction {
+                        if (viewState.isLoggedIn) {
+                            viewModel.tryAgain()
+                        } else {
+                            component.promptLogin()
+                        }
+                    }
+                },
             )
         }
         is BottomSheetType.BackConfirmation -> {
@@ -250,13 +235,6 @@ private fun AiVideoGenScreenPrompts(
         }
         is BottomSheetType.None -> Unit
     }
-    if (extraSheetLink.isNotEmpty()) {
-        YralWebViewBottomSheet(
-            link = extraSheetLink,
-            bottomSheetState = extraSheetState,
-            onDismissRequest = { extraSheetLink = "" },
-        )
-    }
 }
 
 @Composable
@@ -265,6 +243,7 @@ private fun PromptScreen(
     viewModel: AiVideoGenViewModel,
     showProvidersSheet: () -> Unit,
     goToHome: () -> Unit,
+    promptLogin: () -> Unit,
 ) {
     val buttonState =
         remember(viewState.usedCredits, viewState.prompt) {
@@ -300,7 +279,11 @@ private fun PromptScreen(
                 buttonState = buttonState,
                 onClick = {
                     viewModel.createAiVideoClicked()
-                    viewModel.generateAiVideo()
+                    if (viewState.isLoggedIn) {
+                        viewModel.generateAiVideo()
+                    } else {
+                        promptLogin()
+                    }
                 },
             )
         }

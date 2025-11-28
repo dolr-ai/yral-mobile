@@ -107,7 +107,6 @@ fun FeedScreen(
     getVideoListener: (reel: Reels) -> VideoListener?,
 ) {
     val state by viewModel.state.collectAsState()
-    val tncLink = remember { viewModel.getTncLink() }
 
     LaunchedEffect(Unit) { viewModel.pushScreenView() }
 
@@ -115,13 +114,13 @@ fun FeedScreen(
     LaunchedEffect(Unit) {
         component.openPostDetails.collectLatest {
             if (it != null) {
-                val shouldHandleNow = viewModel.onSharedVideoOpened(it)
-                if (shouldHandleNow) {
-                    viewModel.showDeeplinkedVideoFirst(
-                        postId = it.postId,
-                        canisterId = it.canisterId,
-                        publisherUserId = it.publisherUserId,
-                    )
+                viewModel.showDeeplinkedVideoFirst(
+                    postId = it.postId,
+                    canisterId = it.canisterId,
+                    publisherUserId = it.publisherUserId,
+                )
+                if (!state.isLoggedIn) {
+                    component.promptLogin(it)
                 }
             }
         }
@@ -132,6 +131,7 @@ fun FeedScreen(
         if (state.currentPageOfFeed < state.feedDetails.size) {
             onPageChanged(state.currentPageOfFeed, state.currentPageOfFeed)
         }
+        viewModel.consumePendingSharedVideoRouteIfNeeded()
     }
 
     // Pagination logic

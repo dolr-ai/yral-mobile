@@ -4,8 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.michaelbull.result.fold
 import com.github.michaelbull.result.getOrThrow
-import com.yral.featureflag.FeatureFlagManager
-import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.shared.analytics.events.VideoCreationType
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.logging.YralLogger
@@ -29,7 +27,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -45,7 +42,6 @@ class UploadVideoViewModel internal constructor(
     private val appDispatchers: AppDispatchers,
     private val uploadVideoTelemetry: UploadVideoTelemetry,
     private val crashlyticsManager: CrashlyticsManager,
-    private val flagManager: FeatureFlagManager,
     private val sessionManager: SessionManager,
     logger: YralLogger,
 ) : ViewModel() {
@@ -71,17 +67,7 @@ class UploadVideoViewModel internal constructor(
                     selector = { it.isSocialSignIn },
                     defaultValue = false,
                 ).collect { isSocialSignIn ->
-                    _state.update {
-                        it.copy(
-                            isLoggedIn = isSocialSignIn,
-                            bottomSheetType =
-                                if (isSocialSignIn) {
-                                    BottomSheetType.None
-                                } else {
-                                    it.bottomSheetType
-                                },
-                        )
-                    }
+                    _state.update { it.copy(isLoggedIn = isSocialSignIn) }
                 }
         }
     }
@@ -108,19 +94,11 @@ class UploadVideoViewModel internal constructor(
     }
 
     fun onUploadButtonClicked() {
-        if (!_state.value.isLoggedIn) {
-            setBottomSheetType(BottomSheetType.Signup)
-            return
-        }
         uploadVideoTelemetry.uploadInitiated(VideoCreationType.UPLOAD_VIDEO)
         validateAndPublish()
     }
 
     fun onRetryClicked() {
-        if (!_state.value.isLoggedIn) {
-            setBottomSheetType(BottomSheetType.Signup)
-            return
-        }
         _state.update { it.copy(errorAnalyticsPushed = false) }
         validateAndPublish()
     }
@@ -407,7 +385,6 @@ class UploadVideoViewModel internal constructor(
         cancelUpload()
         cancelCompleteProcess()
         deleteSelectedFile()
-        _state.update { it.copy(bottomSheetType = BottomSheetType.None) }
     }
 
     private fun cancelUpload() {
@@ -453,12 +430,6 @@ class UploadVideoViewModel internal constructor(
         }
     }
 
-    fun setBottomSheetType(type: BottomSheetType) {
-        _state.update { it.copy(bottomSheetType = type) }
-    }
-
-    fun getTncLink(): String = flagManager.get(AccountFeatureFlags.AccountLinks.Links).tnc
-
     private inline fun log(message: () -> String) {
         @Suppress("KotlinConstantConditions")
         if (!LOG_ENABLED) return
@@ -487,7 +458,6 @@ class UploadVideoViewModel internal constructor(
         val errorAnalyticsPushed: Boolean = false,
         val fileUploadUiState: UiState<UploadEndpoint> = UiState.Initial,
         val updateMetadataUiState: UiState<Unit> = UiState.Initial,
-        val bottomSheetType: BottomSheetType = BottomSheetType.None,
         val isLoggedIn: Boolean = false,
     ) {
         val canUpload: Boolean =
@@ -533,11 +503,6 @@ class UploadVideoViewModel internal constructor(
             const val PROGRESS_WEIGHT_UPLOAD = 0.9f
             const val PROGRESS_WEIGHT_METADATA = 0.1f
         }
-    }
-
-    sealed class BottomSheetType {
-        data object None : BottomSheetType()
-        data object Signup : BottomSheetType()
     }
 
     companion object {

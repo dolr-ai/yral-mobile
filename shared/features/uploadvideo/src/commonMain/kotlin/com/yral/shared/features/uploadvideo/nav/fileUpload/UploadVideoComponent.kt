@@ -4,6 +4,7 @@ import com.arkivanov.decompose.ComponentContext
 import com.yral.shared.features.uploadvideo.presentation.UploadVideoViewModel
 
 abstract class UploadVideoComponent {
+    abstract val promptLogin: () -> Unit
     abstract fun processEvent(value: UploadVideoViewModel.Event)
     abstract fun onBack()
 
@@ -12,6 +13,7 @@ abstract class UploadVideoComponent {
             componentContext: ComponentContext,
             goToHome: () -> Unit,
             onBack: () -> Unit,
-        ): UploadVideoComponent = DefaultUploadVideoComponent(componentContext, goToHome, onBack)
+            promptLogin: () -> Unit,
+        ): UploadVideoComponent = DefaultUploadVideoComponent(componentContext, goToHome, onBack, promptLogin)
     }
 }

@@ -27,10 +27,8 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -52,7 +50,6 @@ import com.yral.shared.features.account.viewmodel.AccountsState
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.LOGOUT_URI
 import com.yral.shared.features.account.viewmodel.ErrorType
-import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
@@ -104,8 +101,6 @@ fun AccountScreen(
     component: AccountComponent,
     modifier: Modifier = Modifier,
     viewModel: AccountsViewModel = koinViewModel(),
-    loginState: UiState<*>,
-    loginBottomSheet: LoginBottomSheetComposable,
     onAlertsToggleRequest: suspend (Boolean) -> Boolean,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -114,11 +109,6 @@ fun AccountScreen(
         rememberModalBottomSheetState(
             skipPartiallyExpanded = true,
         )
-    LaunchedEffect(loginState) {
-        if (loginState is UiState.Failure) {
-            viewModel.setBottomSheetType(AccountBottomSheet.SignUp)
-        }
-    }
     val scope = rememberCoroutineScope()
     val handleAlertsToggle: (Boolean) -> Unit =
         { enabled: Boolean ->
@@ -143,18 +133,13 @@ fun AccountScreen(
             alertsEnabled = state.alertsEnabled,
             onAlertsToggle = handleAlertsToggle,
             onBack = { component.onBack() },
+            promptLogin = { component.promptLogin(SignupPageName.MENU) },
         )
         SheetContent(
             bottomSheetState = bottomSheetState,
             bottomSheetType = state.bottomSheetType,
-            tncLink = state.accountLinks.tnc,
             onDismissRequest = { viewModel.setBottomSheetType(AccountBottomSheet.None) },
-            onLoginSuccess = {
-                viewModel.setBottomSheetType(AccountBottomSheet.None)
-                component.onBack()
-            },
             onDeleteAccount = { viewModel.deleteAccount() },
-            loginBottomSheet = loginBottomSheet,
         )
     }
 }
@@ -166,6 +151,7 @@ private fun AccountScreenContent(
     alertsEnabled: Boolean,
     onAlertsToggle: (Boolean) -> Unit,
     onBack: () -> Unit,
+    promptLogin: () -> Unit,
 ) {
     val helperLinks = remember(state.isLoggedIn) { viewModel.getHelperLinks() }
     Column(
@@ -183,7 +169,7 @@ private fun AccountScreenContent(
                 accountInfo = accountInfo,
                 isSocialSignIn = state.isLoggedIn,
                 onLoginClicked = {
-                    viewModel.setBottomSheetType(AccountBottomSheet.SignUp)
+                    promptLogin()
                     viewModel.accountsTelemetry.signUpClicked(SignupPageName.MENU)
                 },
             )
@@ -218,40 +204,16 @@ private fun AccountScreenContent(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-typealias LoginBottomSheetComposable = @Composable (
-    bottomSheetState: SheetState,
-    onDismissRequest: () -> Unit,
-    onLoginSuccess: () -> Unit,
-    termsLink: String,
-    openTerms: () -> Unit,
-) -> Unit
-
 @Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SheetContent(
     bottomSheetState: SheetState,
     bottomSheetType: AccountBottomSheet,
-    tncLink: String,
     onDismissRequest: () -> Unit,
-    onLoginSuccess: () -> Unit,
     onDeleteAccount: () -> Unit,
-    loginBottomSheet: LoginBottomSheetComposable,
 ) {
-    var extraSheetLink by remember { mutableStateOf("") }
-    val extraSheetState = rememberModalBottomSheetState()
     when (bottomSheetType) {
-        is AccountBottomSheet.SignUp -> {
-            loginBottomSheet(
-                bottomSheetState,
-                onDismissRequest,
-                onLoginSuccess,
-                tncLink,
-                { extraSheetLink = tncLink },
-            )
-        }
-
         is AccountBottomSheet.ShowWebView -> {
             val linkToOpen = bottomSheetType.linkToOpen
             if (linkToOpen.openInExternalBrowser) {
@@ -291,13 +253,6 @@ private fun SheetContent(
         }
 
         is AccountBottomSheet.None -> Unit
-    }
-    if (extraSheetLink.isNotEmpty()) {
-        YralWebViewBottomSheet(
-            link = extraSheetLink,
-            bottomSheetState = extraSheetState,
-            onDismissRequest = { extraSheetLink = "" },
-        )
     }
 }
 

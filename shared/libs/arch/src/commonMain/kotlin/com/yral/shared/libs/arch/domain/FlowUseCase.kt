@@ -44,14 +44,24 @@ abstract class BaseFlowUseCase<in P, out R, E>
                             throw throwable
                         }
                         val tag = this@BaseFlowUseCase::class.simpleName
-                        failureListener.onFailure(throwable, tag = tag) { "onFailure" }
+                        failureListener.onFailure(
+                            throwable,
+                            tag = tag,
+                            message = { "onFailure" },
+                            exceptionType = exceptionType,
+                        )
                     }
                 }.catch { throwable ->
                     if (throwable is CancellationException) {
                         throw throwable
                     }
                     val tag = this@BaseFlowUseCase::class.simpleName
-                    failureListener.onFailure(throwable, tag = tag) { "onFailure" }
+                    failureListener.onFailure(
+                        throwable,
+                        tag = tag,
+                        message = { "onFailure" },
+                        exceptionType = exceptionType,
+                    )
                     emit(Err(throwable.toError()))
                 }.flowOn(coroutineDispatcher)
 
@@ -60,4 +70,9 @@ abstract class BaseFlowUseCase<in P, out R, E>
         protected abstract fun Throwable.toError(): E
 
         protected abstract fun E.toThrowable(): Throwable
+
+        /**
+         * Override to specify exception type. Defaults to null (Unknown).
+         */
+        protected open val exceptionType: String? = null
     }

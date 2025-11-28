@@ -8,6 +8,7 @@ internal class DefaultUploadVideoComponent(
     componentContext: ComponentContext,
     private val goToHome: () -> Unit,
     private val onBack: () -> Unit,
+    override val promptLogin: () -> Unit,
 ) : UploadVideoComponent(),
     ComponentContext by componentContext,
     KoinComponent {

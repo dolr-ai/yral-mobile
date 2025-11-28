@@ -156,6 +156,21 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     else { return }
 
     AppDIHelper().getAffiliateAttributionStore().storeIfEmpty(affiliate: channel)
+
+    // Capture UTM parameters (if present) for attribution
+    let utmSource = params[Constants.utmSource] as? String
+    let utmMedium = params[Constants.utmMedium] as? String
+    let utmCampaign = params[Constants.utmCampaign] as? String
+    let utmTerm = params[Constants.utmTerm] as? String
+    let utmContent = params[Constants.utmContent] as? String
+
+    AppDIHelper().getUtmAttributionStore().storeIfEmpty(
+      source: utmSource,
+      medium: utmMedium,
+      campaign: utmCampaign,
+      term: utmTerm,
+      content: utmContent
+    )
   }
 
   private func isBranchClick(_ value: Any?) -> Bool {
@@ -350,5 +365,10 @@ extension AppDelegate {
     static let internalURL = "internalUrl"
     static let videoUploadSuccessType = "VideoUploadSuccessful"
     static let videoViewedRewardType = "RewardEarned"
+    static let utmSource = "utm_source"
+    static let utmMedium = "utm_medium"
+    static let utmCampaign = "utm_campaign"
+    static let utmTerm = "utm_term"
+    static let utmContent = "utm_content"
   }
 }

@@ -1,5 +1,3 @@
-import org.gradle.kotlin.dsl.implementation
-
 plugins {
     alias(libs.plugins.yral.shared.feature)
     alias(libs.plugins.yral.android.feature)
@@ -24,7 +22,6 @@ kotlin {
             implementation(projects.shared.libs.http)
             implementation(projects.shared.libs.arch)
             implementation(projects.shared.libs.coroutinesX)
-            implementation(projects.shared.libs.featureFlag)
             implementation(projects.shared.rust.service)
             implementation(projects.shared.libs.designsystem)
             implementation(projects.shared.libs.routing.routesApi)

@@ -18,6 +18,10 @@ sealed class CastVoteResponseDto {
         val coinDelta: Int,
         @SerialName("new_position")
         val newPosition: Long? = null,
+        @SerialName("is_banned")
+        val isBanned: Boolean,
+        @SerialName("ban_message")
+        val banMessage: String? = null,
     ) : CastVoteResponseDto()
 
     @Serializable
@@ -43,6 +47,8 @@ fun CastVoteResponseDto.toCastVoteResponse(): CastVoteResponse =
                 coins = coins,
                 coinDelta = coinDelta,
                 newPosition = newPosition,
+                isBanned = isBanned,
+                banMessage = banMessage,
             )
 
         is CastVoteResponseDto.Error ->

@@ -24,10 +24,10 @@ actual class MixpanelAnalyticsProvider actual constructor(
     override fun shouldTrackEvent(event: EventData): Boolean = eventFilter(event)
 
     override fun trackEvent(event: EventData) {
-        val props: Map<String, Any> = mapConverter.toMap(event)
+        val props: Map<String, Any?> = mapConverter.toMap(event)
         mixpanel.track(
             event = toValidKeyName(event.event),
-            properties = props.mapValues { it.value as Any? },
+            properties = props.mapValues { it.value },
         )
     }
 
@@ -44,6 +44,10 @@ actual class MixpanelAnalyticsProvider actual constructor(
                 "is_Forced Gameplay_test_user" to user.isForcedGamePlayUser,
                 "email_id" to user.emailId,
             )
+
+        // Attach UTM attribution as user-level properties (people + super props)
+        val utmParamsMap = user.utmParams?.toMap() ?: emptyMap()
+
         mixpanel.people.set(property = ONE_SIGNAL_PROPERTY, to = user.userId)
         if (user.isLoggedIn ?: false) {
             mixpanel.identify(user.userId)
@@ -53,7 +57,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
             superProps["visitor_id"] = user.userId
             superProps["user_id"] = null
         }
-        mixpanel.people.set(superProps)
+        mixpanel.people.set(superProps + utmParamsMap)
         mixpanel.registerSuperProperties(superProps)
     }
 

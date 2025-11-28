@@ -1,6 +1,8 @@
 package com.yral.shared.app.config
 
+import com.yral.shared.core.utils.safeValueOf
 import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 
 internal class AppUseCaseFailureListener(
@@ -10,7 +12,11 @@ internal class AppUseCaseFailureListener(
         throwable: Throwable,
         tag: String?,
         message: () -> String,
+        exceptionType: String?,
     ) {
-        crashlyticsManager.recordException(Exception(throwable))
+        crashlyticsManager.recordException(
+            exception = Exception(throwable),
+            type = safeValueOf<ExceptionType>(exceptionType?.uppercase()) ?: ExceptionType.UNKNOWN,
+        )
     }
 }
