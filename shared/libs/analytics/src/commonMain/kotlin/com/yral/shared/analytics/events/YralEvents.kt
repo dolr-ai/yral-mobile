@@ -429,6 +429,20 @@ data class VideoDeletedEventData(
     )
 }
 
+@Serializable
+data class VideoDownloadedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.VIDEO_DOWNLOADED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.PROFILE.getFeatureName(),
+    @SerialName("video_id") val videoId: String,
+) : BaseEventData(),
+    EventData {
+    constructor(videoId: String) : this(
+        FeatureEvents.VIDEO_DOWNLOADED.getEventName(),
+        Features.PROFILE.getFeatureName(),
+        videoId,
+    )
+}
+
 // --- Game ---
 @Serializable
 data class GameVotedEventData(
