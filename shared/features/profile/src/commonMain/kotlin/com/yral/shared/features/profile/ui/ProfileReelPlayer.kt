@@ -54,6 +54,7 @@ import yral_mobile.shared.features.profile.generated.resources.Res
 import yral_mobile.shared.features.profile.generated.resources.deleting
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.delete
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_download
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_share
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_views
 import yral_mobile.shared.libs.designsystem.generated.resources.shadow
@@ -77,6 +78,7 @@ fun ProfileReelPlayer(
     reportVideo: (pageNo: Int, video: FeedDetails, reportVideoData: ReportVideoData) -> Unit,
     onBack: () -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
+    onDownloadVideo: (FeedDetails) -> Unit,
     onShareClick: (FeedDetails) -> Unit,
     onViewsClick: (FeedDetails) -> Unit,
     getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
@@ -109,6 +111,7 @@ fun ProfileReelPlayer(
                     onBack = onBack,
                     onReportClick = { onReportClick(pageNo, currentVideo) },
                     onDeleteVideo = { onDeleteVideo(currentVideo) },
+                    onDownloadVideo = { onDownloadVideo(currentVideo) },
                     onShareClick = { onShareClick(currentVideo) },
                     onViewsClick = { onViewsClick(currentVideo) },
                 )
@@ -140,6 +143,7 @@ private fun ProfileReelOverlay(
     onBack: () -> Unit,
     onReportClick: () -> Unit,
     onDeleteVideo: () -> Unit,
+    onDownloadVideo: () -> Unit,
     onShareClick: () -> Unit,
     onViewsClick: () -> Unit,
 ) {
@@ -171,6 +175,7 @@ private fun ProfileReelOverlay(
                 onReportClick = onReportClick,
                 onShareClick = onShareClick,
                 onDeleteVideo = onDeleteVideo,
+                onDownloadVideo = onDownloadVideo,
                 onViewsClick = onViewsClick,
             )
         }
@@ -263,6 +268,7 @@ private fun ActionsRight(
     onReportClick: () -> Unit,
     onShareClick: () -> Unit,
     onDeleteVideo: () -> Unit,
+    onDownloadVideo: () -> Unit,
     onViewsClick: () -> Unit,
 ) {
     Column(
@@ -270,23 +276,17 @@ private fun ActionsRight(
         verticalArrangement = Arrangement.spacedBy(26.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        ShareIcon(
-            onClick = onShareClick,
-        )
-
         ViewsIcon(
             views = views,
             onViewsClick = onViewsClick,
         )
-
-        ReportVideo(
-            onReportClicked = onReportClick,
-        )
-
+        ShareIcon(onClick = onShareClick)
         if (isOwnProfile) {
-            DeleteIcon(
-                onDeleteVideo = onDeleteVideo,
-            )
+            DeleteIcon(onDeleteVideo = onDeleteVideo)
+        }
+        ReportVideo(onReportClicked = onReportClick)
+        if (isOwnProfile) {
+            DownloadIcon(onDownloadVideo = onDownloadVideo)
         }
     }
 }
@@ -317,6 +317,19 @@ private fun ViewsIcon(
 }
 
 @Composable
+private fun DownloadIcon(
+    modifier: Modifier = Modifier,
+    onDownloadVideo: () -> Unit,
+) {
+    Image(
+        painter = painterResource(DesignRes.drawable.ic_download),
+        contentDescription = "download video",
+        modifier = modifier.size(36.dp).padding(2.dp).clickable { onDownloadVideo() },
+        contentScale = ContentScale.None,
+    )
+}
+
+@Composable
 private fun DeleteIcon(
     modifier: Modifier = Modifier,
     onDeleteVideo: () -> Unit,
@@ -325,7 +338,7 @@ private fun DeleteIcon(
         Image(
             painter = painterResource(DesignRes.drawable.delete),
             contentDescription = "delete video",
-            modifier = Modifier.size(36.dp).clickable { onDeleteVideo() },
+            modifier = modifier.size(36.dp).clickable { onDeleteVideo() },
         )
     }
 }
@@ -339,7 +352,7 @@ private fun ShareIcon(
         modifier =
             modifier
                 .size(36.dp)
-                .padding(1.5.dp)
+                .padding(2.5.dp)
                 .clickable(onClick = onClick),
         painter = painterResource(DesignRes.drawable.ic_share),
         contentDescription = "share video",
