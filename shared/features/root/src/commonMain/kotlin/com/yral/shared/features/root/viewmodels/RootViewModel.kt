@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import co.touchlab.kermit.Logger
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.FeedFeatureFlags
+import com.yral.shared.analytics.AnalyticsUtmParams
 import com.yral.shared.analytics.User
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.TokenType
@@ -19,6 +20,8 @@ import com.yral.shared.features.root.analytics.RootTelemetry
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
+import com.yral.shared.preferences.stores.UtmAttributionStore
+import com.yral.shared.preferences.stores.UtmParams
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -30,11 +33,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 enum class RootError {
     TIMEOUT,
 }
 
+@OptIn(ExperimentalTime::class)
 @Suppress("TooGenericExceptionCaught")
 class RootViewModel(
     appDispatchers: AppDispatchers,
@@ -44,6 +50,7 @@ class RootViewModel(
     private val rootTelemetry: RootTelemetry,
     private val flagManager: FeatureFlagManager,
     private val preferences: Preferences,
+    private val utmAttributionStore: UtmAttributionStore,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
@@ -61,7 +68,7 @@ class RootViewModel(
     internal var initialDelayForSetup: Long = INITIAL_DELAY_FOR_SETUP
 
     companion object {
-        const val SPLASH_SCREEN_TIMEOUT = 20000L // 20 seconds timeout
+        const val SPLASH_SCREEN_TIMEOUT = 31000L // 31 seconds timeout
         const val INITIAL_DELAY_FOR_SETUP = 300L
     }
 
@@ -81,6 +88,7 @@ class RootViewModel(
                         tokenType = TokenType.YRAL,
                         isForcedGamePlayUser = properties.isForcedGamePlayUser,
                         emailId = properties.emailId,
+                        utmParams = utmAttributionStore.get()?.toAnalyticsUtmParams(),
                     )
                 }
             }
@@ -131,6 +139,13 @@ class RootViewModel(
         }
         coroutineScope.launch {
             analyticsUser.collect { user -> rootTelemetry.setUser(user) }
+        }
+        coroutineScope.launch {
+            if (preferences.getString(PrefKeys.FIRST_APP_OPEN_DATE_TIME.name) == null) {
+                val now = Clock.System.now()
+                rootTelemetry.onFirstAppLaunch(now)
+                preferences.putString(PrefKeys.FIRST_APP_OPEN_DATE_TIME.name, now.toString())
+            }
         }
     }
 
@@ -188,6 +203,15 @@ class RootViewModel(
     fun bottomNavigationClicked(categoryName: CategoryName) {
         rootTelemetry.bottomNavigationClicked(categoryName)
     }
+
+    private fun UtmParams.toAnalyticsUtmParams(): AnalyticsUtmParams =
+        AnalyticsUtmParams(
+            source = source,
+            medium = medium,
+            campaign = campaign,
+            term = term,
+            content = content,
+        )
 }
 
 data class RootState(

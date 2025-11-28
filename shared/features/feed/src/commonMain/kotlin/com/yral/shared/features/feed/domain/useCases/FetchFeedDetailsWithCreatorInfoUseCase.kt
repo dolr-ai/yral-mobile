@@ -1,5 +1,6 @@
 package com.yral.shared.features.feed.domain.useCases
 
+import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.data.domain.models.Post
 import com.yral.shared.libs.arch.domain.SuspendUseCase
@@ -12,6 +13,8 @@ class FetchFeedDetailsWithCreatorInfoUseCase(
     appDispatchers: AppDispatchers,
     useCaseFailureListener: UseCaseFailureListener,
 ) : SuspendUseCase<Post, FeedDetails?>(appDispatchers.network, useCaseFailureListener) {
+    override val exceptionType: String = ExceptionType.FEED.name
+
     override suspend fun execute(parameter: Post): FeedDetails? =
         individualUserRepository
             .fetchFeedDetailsWithCreatorInfo(parameter)

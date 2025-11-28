@@ -4,6 +4,7 @@ package com.yral.shared.analytics.constants
  * All analytic event names used across the app.
  */
 enum class FeatureEvents {
+    FIRST_APP_LAUNCH,
     SPLASH_SCREEN_VIEWED,
 
     // Auth / Signup / Login
@@ -73,6 +74,7 @@ enum class FeatureEvents {
     HOW_TO_EARN_CLICKED,
 
     // Referral
+    REFERRAL_RECEIVED,
     REFER_AND_EARN_PAGE_VIEWED,
     REFERRAL_HISTORY_VIEWED,
     SHARE_INVITES_CLICKED,

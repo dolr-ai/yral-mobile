@@ -7,6 +7,20 @@ import kotlinx.serialization.Serializable
 import kotlin.math.abs
 
 @Serializable
+data class FirstAppLaunchEventData(
+    @SerialName("event") override val event: String = FeatureEvents.FIRST_APP_LAUNCH.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.APP.getFeatureName(),
+    @SerialName("date_time") val dateTime: String,
+) : BaseEventData(),
+    EventData {
+    public constructor(date: String) : this(
+        FeatureEvents.FIRST_APP_LAUNCH.getEventName(),
+        Features.APP.getFeatureName(),
+        date,
+    )
+}
+
+@Serializable
 data class SplashScreenViewedEventData(
     @SerialName("event") override val event: String = FeatureEvents.SPLASH_SCREEN_VIEWED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
@@ -1133,6 +1147,34 @@ data class HowToEarnClickedEventData(
 
 // --- Refer & Earn ---
 @Serializable
+data class ReferralReceivedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.REFERRAL_RECEIVED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.REFERRAL.getFeatureName(),
+    @SerialName("source") val source: String?,
+    @SerialName("medium") val medium: String?,
+    @SerialName("campaign") val campaign: String?,
+    @SerialName("term") val term: String?,
+    @SerialName("content") val content: String?,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        source: String?,
+        medium: String?,
+        campaign: String?,
+        term: String?,
+        content: String?,
+    ) : this(
+        FeatureEvents.REFERRAL_RECEIVED.getEventName(),
+        Features.REFERRAL.getFeatureName(),
+        source,
+        medium,
+        campaign,
+        term,
+        content,
+    )
+}
+
+@Serializable
 data class ReferAndEarnPageViewedEventData(
     @SerialName("event") override val event: String = FeatureEvents.REFER_AND_EARN_PAGE_VIEWED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.REFERRAL.getFeatureName(),
@@ -1327,6 +1369,9 @@ enum class SignupPageName {
 
     @SerialName("menu")
     MENU,
+
+    @SerialName("profile")
+    PROFILE,
 
     @SerialName("video_creation")
     VIDEO_CREATION,

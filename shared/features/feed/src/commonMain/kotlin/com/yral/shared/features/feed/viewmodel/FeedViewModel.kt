@@ -29,12 +29,14 @@ import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsWithCreator
 import com.yral.shared.features.feed.domain.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetAIFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
-import com.yral.shared.features.feed.shared.PendingSharedVideoStore
+import com.yral.shared.features.feed.domain.useCases.LoadCachedFeedDetailsUseCase
+import com.yral.shared.features.feed.domain.useCases.SaveFeedDetailsCacheUseCase
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastStatus
 import com.yral.shared.libs.designsystem.component.toast.ToastType
 import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
+import com.yral.shared.libs.routing.routes.api.PendingAppRouteStore
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.libs.sharing.LinkGenerator
 import com.yral.shared.libs.sharing.LinkInput
@@ -47,16 +49,21 @@ import com.yral.shared.rust.service.domain.usecases.FollowUserParams
 import com.yral.shared.rust.service.domain.usecases.FollowUserUseCase
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
+@OptIn(FlowPreview::class)
 @Suppress("TooManyFunctions", "LongParameterList", "LargeClass")
 class FeedViewModel(
     appDispatchers: AppDispatchers,
@@ -71,7 +78,6 @@ class FeedViewModel(
     private val flagManager: FeatureFlagManager,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
-    private var hasAttemptedPendingRouteConsumption = false
 
     private val authClient =
         authClientFactory
@@ -104,16 +110,7 @@ class FeedViewModel(
 
     init {
         initAvailableFeeds()
-        when (_state.value.feedType) {
-            FeedType.AI -> {
-                fetchAIFeed(
-                    currentBatchSize = FEEDS_PAGE_SIZE_AI_FEED,
-                    totalNotVotedCount = 0,
-                    recursionDepth = 0,
-                )
-            }
-            else -> initialFeedData()
-        }
+        loadCachedFeedDetails()
         viewModelScope.launch {
             sessionManager
                 .observeSessionProperty { it.followedPrincipals to it.unFollowedPrincipals }
@@ -137,21 +134,15 @@ class FeedViewModel(
                 .observeSessionPropertyWithDefault(
                     selector = { it.isSocialSignIn },
                     defaultValue = false,
-                ).collect { isSocialSignIn ->
-                    _state.update { it.copy(isLoggedIn = isSocialSignIn) }
-                    if (isSocialSignIn) {
-                        hasAttemptedPendingRouteConsumption = false
-                    }
-                }
+                ).collect { isSocialSignIn -> _state.update { it.copy(isLoggedIn = isSocialSignIn) } }
         }
+        // Save cache whenever feed details or max page reached changes
         viewModelScope.launch {
-            state.collect { feedState ->
-                if (feedState.feedDetails.isNotEmpty()) {
-                    consumePendingSharedVideoRouteIfNeeded()
-                } else {
-                    hasAttemptedPendingRouteConsumption = false
-                }
-            }
+            _state
+                .distinctUntilChanged { old, new ->
+                    old.feedDetails == new.feedDetails && old.maxPageReached == new.maxPageReached
+                }.debounce(1000.milliseconds) // Debounce to avoid too frequent saves
+                .collect { saveCacheToPreferences() }
         }
     }
 
@@ -199,6 +190,81 @@ class FeedViewModel(
                     }.onFailure {
                         setLoadingMore(false)
                         loadMoreFeed()
+                    }
+            }
+        }
+    }
+
+    private fun loadCachedFeedDetails() {
+        coroutineScope.launch {
+            sessionManager.userPrincipal?.let { userPrincipal ->
+                requiredUseCases.loadCachedFeedDetailsUseCase
+                    .invoke(LoadCachedFeedDetailsUseCase.Params(userPrincipal = userPrincipal))
+                    .onSuccess { cachedFeedDetails ->
+                        if (cachedFeedDetails != null && cachedFeedDetails.isNotEmpty()) {
+                            Logger.d("FeedCache") { "Loading ${cachedFeedDetails.size} cached feed details" }
+                            _state.update { currentState ->
+                                // Only add cached items that don't already exist
+                                val existingVideoIds = currentState.feedDetails.mapTo(HashSet()) { it.videoID }
+                                val newCachedDetails = cachedFeedDetails.filter { it.videoID !in existingVideoIds }
+                                currentState.copy(
+                                    feedDetails = currentState.feedDetails + newCachedDetails,
+                                )
+                            }
+                        } else {
+                            Logger.d("FeedCache") { "No valid cache available" }
+                            initializeFeed()
+                        }
+                    }.onFailure {
+                        Logger.e("FeedCache") { "No cache available or failed to load" }
+                        initializeFeed()
+                    }
+            }
+        }
+    }
+
+    private fun initializeFeed() {
+        when (_state.value.feedType) {
+            FeedType.AI -> {
+                fetchAIFeed(
+                    currentBatchSize = FEEDS_PAGE_SIZE_AI_FEED,
+                    totalNotVotedCount = 0,
+                    recursionDepth = 0,
+                )
+            }
+            else -> initialFeedData()
+        }
+    }
+
+    private suspend fun saveCacheToPreferences() {
+        sessionManager.userPrincipal?.let { userPrincipal ->
+            val currentState = _state.value
+            // Cache only unseen pages (after the highest page reached)
+            val nextPageIndex = currentState.maxPageReached + 1
+            val remainingPages =
+                if (nextPageIndex < currentState.feedDetails.size) {
+                    currentState.feedDetails.subList(
+                        nextPageIndex,
+                        currentState.feedDetails.size,
+                    )
+                } else {
+                    emptyList()
+                }
+
+            if (remainingPages.isNotEmpty()) {
+                requiredUseCases.saveFeedDetailsCacheUseCase
+                    .invoke(
+                        SaveFeedDetailsCacheUseCase.Params(
+                            userPrincipal = userPrincipal,
+                            feedDetails = remainingPages,
+                        ),
+                    ).onSuccess {
+                        Logger.d("FeedCache") {
+                            "Saved ${remainingPages.size}/${currentState.feedDetails.size} " +
+                                "feed details to cache for user $userPrincipal"
+                        }
+                    }.onFailure {
+                        Logger.e("FeedCache") { "Failed to save feed details to cache" }
                     }
             }
         }
@@ -287,6 +353,7 @@ class FeedViewModel(
             }
         if (existingDetail != null) {
             _state.update { currentState ->
+                Logger.d("LinkSharing") { "Existing detail found $existingDetail" }
                 addDeeplinkData(currentState, existingDetail)
             }
             return true
@@ -368,6 +435,7 @@ class FeedViewModel(
         // Remove existing occurrence and insert at current page index
         val filtered = currentState.feedDetails.filterNot { it.videoID == details.videoID }
         val targetIndex = currentState.currentPageOfFeed.coerceIn(0, filtered.size)
+        Logger.d("LinkSharing") { "targetIndex $targetIndex" }
         val updatedFeedDetails =
             filtered
                 .toMutableList()
@@ -557,6 +625,7 @@ class FeedViewModel(
         _state.update { currentState ->
             currentState.copy(
                 currentPageOfFeed = pageNo,
+                maxPageReached = maxOf(currentState.maxPageReached, pageNo), // Update max page reached
                 videoData = VideoData(), // Reset all video data for new page
             )
         }
@@ -839,31 +908,6 @@ class FeedViewModel(
         _state.update { it.copy(showSignupFailedSheet = shouldShow) }
     }
 
-    fun onSharedVideoOpened(route: PostDetailsRoute): Boolean {
-        if (_state.value.isLoggedIn) {
-            return true
-        }
-        PendingSharedVideoStore.store(route)
-        hasAttemptedPendingRouteConsumption = false
-        val routeKey = route.toRouteKey()
-        if (_state.value.lastHandledSharedVideoRoute != routeKey) {
-            _state.update {
-                it.copy(
-                    showSharedVideoLoginSheet = true,
-                    lastHandledSharedVideoRoute = routeKey,
-                )
-            }
-        }
-        return false
-    }
-
-    fun hideSharedVideoLoginSheet(loginCompleted: Boolean) {
-        _state.update { it.copy(showSharedVideoLoginSheet = false) }
-        if (loginCompleted) {
-            hasAttemptedPendingRouteConsumption = false
-        }
-    }
-
     fun pushScreenView() {
         feedTelemetry.onFeedPageViewed()
     }
@@ -918,17 +962,18 @@ class FeedViewModel(
         }
     }
 
-    private fun consumePendingSharedVideoRouteIfNeeded() {
-        if (hasAttemptedPendingRouteConsumption) return
-        if (sessionManager.userPrincipal == null) return
-        val route = PendingSharedVideoStore.consume()
-        hasAttemptedPendingRouteConsumption = true
-        if (route != null) {
-            showDeeplinkedVideoFirst(
-                postId = route.postId,
-                canisterId = route.canisterId,
-                publisherUserId = route.publisherUserId,
-            )
+    fun consumePendingSharedVideoRouteIfNeeded() {
+        sessionManager.userPrincipal?.let {
+            val route = PendingAppRouteStore.peek() as? PostDetailsRoute
+            if (route != null && _state.value.isLoggedIn) {
+                Logger.d("LinkSharing") { "Found pending deeplink route $route" }
+                PendingAppRouteStore.consume()
+                showDeeplinkedVideoFirst(
+                    postId = route.postId,
+                    canisterId = route.canisterId,
+                    publisherUserId = route.publisherUserId,
+                )
+            }
         }
     }
 
@@ -946,6 +991,8 @@ class FeedViewModel(
         val getAIFeedUseCase: GetAIFeedUseCase,
         val followUserUseCase: FollowUserUseCase,
         val videoViewsUseCase: GetVideoViewsUseCase,
+        val loadCachedFeedDetailsUseCase: LoadCachedFeedDetailsUseCase,
+        val saveFeedDetailsCacheUseCase: SaveFeedDetailsCacheUseCase,
     )
 }
 
@@ -953,6 +1000,7 @@ data class FeedState(
     val posts: List<Post> = emptyList(),
     val feedDetails: List<FeedDetails> = emptyList(),
     val currentPageOfFeed: Int = 0,
+    val maxPageReached: Int = 0, // Track the highest page user has scrolled to
     val isLoadingMore: Boolean = false,
     val pendingFetchDetails: Int = 0,
     val isPostDescriptionExpanded: Boolean = false,
@@ -962,8 +1010,6 @@ data class FeedState(
     val isDeeplinkFetching: Boolean = false,
     val reportSheetState: ReportSheetState = ReportSheetState.Closed,
     val showSignupFailedSheet: Boolean = false,
-    val showSharedVideoLoginSheet: Boolean = false,
-    val lastHandledSharedVideoRoute: String? = null,
     val overlayType: OverlayType = OverlayType.DAILY_RANK,
     val isLoggedIn: Boolean = false,
     val availableFeedTypes: List<FeedType> = listOf(FeedType.DEFAULT),
@@ -1003,5 +1049,3 @@ internal fun Int.percentageOf(total: Int): Double =
     } else {
         0.0
     }
-
-private fun PostDetailsRoute.toRouteKey(): String = "$postId:$canisterId:$publisherUserId"

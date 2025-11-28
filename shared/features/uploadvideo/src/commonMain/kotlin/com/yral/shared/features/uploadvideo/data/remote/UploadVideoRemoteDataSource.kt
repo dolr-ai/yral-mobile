@@ -103,7 +103,9 @@ internal class UploadVideoRemoteDataSource(
                 },
             ) {
                 timeout {
+                    connectTimeoutMillis = UPLOAD_FILE_TIME_OUT
                     requestTimeoutMillis = UPLOAD_FILE_TIME_OUT
+                    socketTimeoutMillis = UPLOAD_FILE_TIME_OUT
                 }
                 headers.append(HttpHeaders.AcceptEncoding, "gzip")
                 onUpload(progressListener)

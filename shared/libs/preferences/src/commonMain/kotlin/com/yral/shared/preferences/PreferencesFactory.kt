@@ -1,11 +1,16 @@
 package com.yral.shared.preferences
 
+import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.Settings
+import com.russhwolf.settings.coroutines.FlowSettings
+import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 
-/**
- * Expect declaration of a platform-specific PreferencesFactory able to create a type-safe
- * [Settings] instance for the provided preference file / suite.
- */
 expect class PreferencesFactory() {
     fun create(preferenceName: String): Settings
+
+    @OptIn(ExperimentalSettingsApi::class)
+    fun createDataStore(
+        preferenceName: String,
+        appDispatchers: AppDispatchers,
+    ): FlowSettings
 }

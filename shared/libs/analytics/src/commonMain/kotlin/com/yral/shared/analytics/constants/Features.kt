@@ -1,6 +1,7 @@
 package com.yral.shared.analytics.constants
 
 enum class Features {
+    APP,
     AUTH,
     FEED,
     UPLOAD,

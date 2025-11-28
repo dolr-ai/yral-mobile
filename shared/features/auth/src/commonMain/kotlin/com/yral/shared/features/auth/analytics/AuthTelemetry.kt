@@ -9,7 +9,7 @@ import com.yral.shared.analytics.events.SignupJourneySelected
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.analytics.events.SignupSuccessEventData
 import com.yral.shared.features.auth.utils.SocialProvider
-import com.yral.shared.preferences.AffiliateAttributionStore
+import com.yral.shared.preferences.stores.AffiliateAttributionStore
 
 class AuthTelemetry(
     private val analyticsManager: AnalyticsManager,

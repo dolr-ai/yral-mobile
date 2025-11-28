@@ -6,6 +6,8 @@ sealed class CastVoteResponse {
         val coins: Long,
         val coinDelta: Int,
         val newPosition: Long?,
+        val isBanned: Boolean,
+        val banMessage: String?,
     ) : CastVoteResponse()
 
     data class Error(
