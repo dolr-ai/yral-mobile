@@ -15,6 +15,7 @@ import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
+import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.feed.nav.FeedComponent
@@ -35,9 +36,11 @@ import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.libs.routing.routes.api.Profile
 import com.yral.shared.libs.routing.routes.api.RewardOn
 import com.yral.shared.libs.routing.routes.api.RewardsReceived
+import com.yral.shared.libs.routing.routes.api.UserProfileRoute
 import com.yral.shared.libs.routing.routes.api.VideoUploadSuccessful
 import com.yral.shared.libs.routing.routes.api.Wallet
 import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import kotlinx.serialization.Serializable
 
 @Suppress("TooManyFunctions")
@@ -84,6 +87,7 @@ internal class DefaultHomeComponent(
         }
 
     override val homeViewModel: HomeViewModel = koinInstance.get<HomeViewModel>()
+    private val sessionManager: SessionManager = koinInstance.get()
 
     private val slotNavigation = SlotNavigation<SlotConfig>()
 
@@ -121,6 +125,9 @@ internal class DefaultHomeComponent(
             is Wallet -> onWalletTabClick()
             is Leaderboard -> onLeaderboardTabClick()
             is Profile -> onProfileTabClick()
+            is UserProfileRoute -> {
+                profileNavigation(appRoute = appRoute)
+            }
             is AddVideo -> onUploadVideoTabClick()
             is GenerateAIVideo ->
                 navigation.replaceKeepingFeed(Config.UploadVideo) {
@@ -275,6 +282,27 @@ internal class DefaultHomeComponent(
 
     private fun showSlot(slotConfig: SlotConfig) {
         slotNavigation.activate(slotConfig)
+    }
+
+    private fun profileNavigation(appRoute: UserProfileRoute) {
+        val currentUser = sessionManager.userPrincipal
+        if (!currentUser.isNullOrBlank() && currentUser == appRoute.userPrincipalId) {
+            onProfileTabClick()
+        } else {
+            val isServiceCanister =
+                appRoute.isFromServiceCanister ||
+                    appRoute.canisterId == getUserInfoServiceCanister()
+            val canisterData =
+                CanisterData(
+                    canisterId = appRoute.canisterId,
+                    userPrincipalId = appRoute.userPrincipalId,
+                    profilePic = appRoute.profilePic ?: "",
+                    username = appRoute.username,
+                    isCreatedFromServiceCanister = isServiceCanister,
+                    isFollowing = false,
+                )
+            openProfile(canisterData)
+        }
     }
 
     @Serializable

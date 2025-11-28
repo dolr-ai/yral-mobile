@@ -40,6 +40,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.follow
 import yral_mobile.shared.libs.designsystem.generated.resources.followers
 import yral_mobile.shared.libs.designsystem.generated.resources.following
 import yral_mobile.shared.libs.designsystem.generated.resources.login
+import yral_mobile.shared.libs.designsystem.generated.resources.share_profile
 
 @Suppress("LongMethod", "LongParameterList")
 @Composable
@@ -55,6 +56,8 @@ fun AccountInfoView(
     onLoginClicked: () -> Unit = {},
     showEditProfile: Boolean = false,
     onEditProfileClicked: () -> Unit = {},
+    showShareProfile: Boolean = false,
+    onShareProfileClicked: () -> Unit = {},
     showFollow: Boolean = false,
     isFollowing: Boolean = false,
     isFollowInProgress: Boolean = false,
@@ -170,11 +173,29 @@ fun AccountInfoView(
                 }
             }
             showEditProfile -> {
-                ProfileButton(
-                    text = stringResource(Res.string.edit_profile),
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = onEditProfileClicked,
-                )
+                if (showShareProfile) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        ProfileButton(
+                            text = stringResource(Res.string.edit_profile),
+                            modifier = Modifier.weight(1f),
+                            onClick = onEditProfileClicked,
+                        )
+                        ProfileButton(
+                            text = stringResource(Res.string.share_profile),
+                            modifier = Modifier.weight(1f),
+                            onClick = onShareProfileClicked,
+                        )
+                    }
+                } else {
+                    ProfileButton(
+                        text = stringResource(Res.string.edit_profile),
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = onEditProfileClicked,
+                    )
+                }
             }
             showFollow -> {
                 val followText =

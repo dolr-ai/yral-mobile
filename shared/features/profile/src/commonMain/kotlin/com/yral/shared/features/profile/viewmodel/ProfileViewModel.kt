@@ -44,6 +44,7 @@ import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.filedownloader.FileDownloader
 import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
+import com.yral.shared.libs.routing.routes.api.UserProfileRoute
 import com.yral.shared.libs.sharing.LinkGenerator
 import com.yral.shared.libs.sharing.LinkInput
 import com.yral.shared.libs.sharing.ShareService
@@ -60,6 +61,7 @@ import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4UseCase
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserParams
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserUseCase
 import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.rust.service.utils.propicFromPrincipal
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -499,6 +501,56 @@ class ProfileViewModel(
                 )
             }.onFailure {
                 Logger.e(ProfileViewModel::class.simpleName!!, it) { "Failed to share post" }
+                crashlyticsManager.recordException(
+                    YralException(it),
+                    ExceptionType.DEEPLINK,
+                )
+            }
+        }
+    }
+
+    fun shareProfile(
+        accountInfo: AccountInfo,
+        message: String,
+        description: String,
+    ) {
+        val principal = canisterData.userPrincipalId
+        val canisterId = canisterData.canisterId
+        if (principal.isBlank() || canisterId.isBlank()) return
+        viewModelScope.launch {
+            val route =
+                UserProfileRoute(
+                    canisterId = canisterId,
+                    userPrincipalId = principal,
+                    profilePic = accountInfo.profilePic,
+                    username = accountInfo.username,
+                    isFromServiceCanister = canisterData.isCreatedFromServiceCanister,
+                )
+            val internalUrl = urlBuilder.build(route) ?: return@launch
+            runSuspendCatching {
+                val imageUrl =
+                    accountInfo.profilePic
+                        .takeIf { it.isNotBlank() }
+                        ?: propicFromPrincipal(accountInfo.userPrincipal)
+                val link =
+                    linkGenerator.generateShareLink(
+                        LinkInput(
+                            internalUrl = internalUrl,
+                            title = message,
+                            description = description,
+                            feature = "share_profile",
+                            tags = listOf("organic", "profile_share"),
+                            contentImageUrl = imageUrl,
+                            metadata = mapOf("user_principal_id" to principal),
+                        ),
+                    )
+                val text = "$message $link"
+                shareService.shareImageWithText(
+                    imageUrl = imageUrl,
+                    text = text,
+                )
+            }.onFailure {
+                Logger.e(ProfileViewModel::class.simpleName!!, it) { "Failed to share profile" }
                 crashlyticsManager.recordException(
                     YralException(it),
                     ExceptionType.DEEPLINK,
