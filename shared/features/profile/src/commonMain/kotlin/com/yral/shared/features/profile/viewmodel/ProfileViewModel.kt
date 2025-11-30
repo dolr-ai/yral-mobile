@@ -44,6 +44,7 @@ import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.filedownloader.FileDownloader
 import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
+import com.yral.shared.libs.routing.routes.api.UserProfileRoute
 import com.yral.shared.libs.sharing.LinkGenerator
 import com.yral.shared.libs.sharing.LinkInput
 import com.yral.shared.libs.sharing.ShareService
@@ -60,6 +61,7 @@ import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4UseCase
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserParams
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserUseCase
 import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.rust.service.utils.propicFromPrincipal
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -76,9 +78,14 @@ import org.jetbrains.compose.resources.getString
 import yral_mobile.shared.features.profile.generated.resources.Res
 import yral_mobile.shared.features.profile.generated.resources.download_failed
 import yral_mobile.shared.features.profile.generated.resources.download_successful
+import org.jetbrains.compose.resources.getString
+import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share
+import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share_desc
+import yral_mobile.shared.libs.designsystem.generated.resources.profile_share_default_name
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Suppress("LongParameterList", "TooManyFunctions", "LargeClass")
 class ProfileViewModel(
@@ -224,8 +231,10 @@ class ProfileViewModel(
                         bio = null, // populated for own profile via session observer
                     ),
                 viewerPrincipal = sessionManager.userPrincipal,
+                canShareProfile = canisterData.userPrincipalId.isNotBlank(),
             )
         }
+        refreshShareCopy()
         val isOwnProfile = canisterData.userPrincipalId == sessionManager.userPrincipal
         if (!isOwnProfile) {
             _state.update {
@@ -239,7 +248,7 @@ class ProfileViewModel(
             viewModelScope.launch {
                 sessionManager
                     .observeSessionState(transform = { sessionManager.getAccountInfo() })
-                    .collect { info -> _state.update { current -> current.copy(accountInfo = info) } }
+                    .collect { info -> setAccountInfo(info) }
             }
         }
         viewModelScope.launch {
@@ -279,6 +288,34 @@ class ProfileViewModel(
                         }
                     }
                 }
+        }
+    }
+
+    private fun setAccountInfo(info: AccountInfo?) {
+        _state.update { current ->
+            current.copy(
+                accountInfo = info,
+                canShareProfile = info?.userPrincipal?.isNotBlank() == true,
+            )
+        }
+        refreshShareCopy()
+    }
+
+    private fun refreshShareCopy() {
+        viewModelScope.launch {
+            val accountInfo = _state.value.accountInfo
+            val displayName =
+                accountInfo?.displayName
+                    ?: getString(DesignRes.string.profile_share_default_name)
+            val message = getString(DesignRes.string.msg_profile_share, displayName)
+            val description = getString(DesignRes.string.msg_profile_share_desc, displayName)
+            _state.update { current ->
+                current.copy(
+                    shareDisplayName = displayName,
+                    shareMessage = message,
+                    shareDescription = description,
+                )
+            }
         }
     }
 
@@ -499,6 +536,52 @@ class ProfileViewModel(
                 )
             }.onFailure {
                 Logger.e(ProfileViewModel::class.simpleName!!, it) { "Failed to share post" }
+                crashlyticsManager.recordException(
+                    YralException(it),
+                    ExceptionType.DEEPLINK,
+                )
+            }
+        }
+    }
+
+    fun shareProfile(accountInfo: AccountInfo) {
+        val principal = canisterData.userPrincipalId
+        val canisterId = canisterData.canisterId
+        if (principal.isBlank() || canisterId.isBlank()) return
+        viewModelScope.launch {
+            val route =
+                UserProfileRoute(
+                    canisterId = canisterId,
+                    userPrincipalId = principal,
+                    profilePic = accountInfo.profilePic,
+                    username = accountInfo.username,
+                    isFromServiceCanister = canisterData.isCreatedFromServiceCanister,
+                )
+            val internalUrl = urlBuilder.build(route) ?: return@launch
+            runSuspendCatching {
+                val imageUrl =
+                    accountInfo.profilePic
+                        .takeIf { it.isNotBlank() }
+                        ?: propicFromPrincipal(accountInfo.userPrincipal)
+                val link =
+                    linkGenerator.generateShareLink(
+                        LinkInput(
+                            internalUrl = internalUrl,
+                            title = _state.value.shareMessage,
+                            description = _state.value.shareDescription,
+                            feature = "share_profile",
+                            tags = listOf("organic", "profile_share"),
+                            contentImageUrl = imageUrl,
+                            metadata = mapOf("user_principal_id" to principal),
+                        ),
+                    )
+                val text = "${_state.value.shareMessage} $link"
+                shareService.shareImageWithText(
+                    imageUrl = imageUrl,
+                    text = text,
+                )
+            }.onFailure {
+                Logger.e(ProfileViewModel::class.simpleName!!, it) { "Failed to share profile" }
                 crashlyticsManager.recordException(
                     YralException(it),
                     ExceptionType.DEEPLINK,
@@ -860,6 +943,10 @@ data class ViewState(
     val viewsData: Map<String, UiState<VideoViews>> = emptyMap(),
     val followLoading: Map<String, Boolean> = emptyMap(),
     val viewerPrincipal: String? = null,
+    val shareDisplayName: String = "",
+    val shareMessage: String = "",
+    val shareDescription: String = "",
+    val canShareProfile: Boolean = false,
 )
 
 sealed interface ProfileBottomSheet {

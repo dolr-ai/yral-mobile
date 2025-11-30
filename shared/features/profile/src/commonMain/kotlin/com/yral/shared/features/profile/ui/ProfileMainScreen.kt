@@ -141,6 +141,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.delete
 import yral_mobile.shared.libs.designsystem.generated.resources.error_data_not_loaded
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_dots_vertical
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_download
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_share
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_views
 import yral_mobile.shared.libs.designsystem.generated.resources.login
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share
@@ -148,6 +149,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_s
 import yral_mobile.shared.libs.designsystem.generated.resources.my_profile
 import yral_mobile.shared.libs.designsystem.generated.resources.oops
 import yral_mobile.shared.libs.designsystem.generated.resources.refresh
+import yral_mobile.shared.libs.designsystem.generated.resources.share_profile
 import yral_mobile.shared.libs.designsystem.generated.resources.something_went_wrong
 import yral_mobile.shared.libs.designsystem.generated.resources.started_following
 import yral_mobile.shared.libs.designsystem.generated.resources.try_again
@@ -177,6 +179,17 @@ fun ProfileMainScreen(
 
     val followers = viewModel.followers.collectAsLazyPagingItems()
     val following = viewModel.following.collectAsLazyPagingItems()
+    val currentAccountInfo = state.accountInfo
+    val onShareProfileClicked =
+        remember(currentAccountInfo, state.shareMessage, state.shareDescription) {
+            {
+                if (currentAccountInfo != null) {
+                    viewModel.shareProfile(currentAccountInfo)
+                } else {
+                    Unit
+                }
+            }
+        }
 
     // Track pending downloads for permission handling
     var pendingDownload by remember { mutableStateOf<FeedDetails?>(null) }
@@ -380,6 +393,9 @@ fun ProfileMainScreen(
                     onBackClicked = { component.onBackClicked() },
                     onFollowersSectionClick = { viewModel.updateFollowSheetTab(tab = it) },
                     promptLogin = { component.promptLogin(SignupPageName.PROFILE) },
+                    canShareProfile = state.canShareProfile,
+                    onShareProfileClicked = onShareProfileClicked,
+                    showHeaderShareButton = !state.isOwnProfile,
                     onDownloadVideo = onDownloadVideo,
                 )
             }
@@ -544,13 +560,18 @@ private fun MainContent(
     onBackClicked: () -> Unit,
     onFollowersSectionClick: (FollowersSheetTab) -> Unit,
     promptLogin: () -> Unit,
+    canShareProfile: Boolean,
+    onShareProfileClicked: () -> Unit,
+    showHeaderShareButton: Boolean,
     onDownloadVideo: (FeedDetails) -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader(
             isOwnProfile = state.isOwnProfile,
             userName = state.accountInfo?.displayName,
+            showShareProfile = showHeaderShareButton && canShareProfile,
             isWalletEnabled = state.isWalletEnabled,
+            onShareProfileClicked = onShareProfileClicked,
             openAccount = openAccount,
             onBack = onBackClicked,
         )
@@ -566,6 +587,8 @@ private fun MainContent(
                 bio = info.bio,
                 showEditProfile = state.isOwnProfile && state.isLoggedIn,
                 onEditProfileClicked = openEditProfile,
+                showShareProfile = state.isOwnProfile && state.isLoggedIn && state.canShareProfile,
+                onShareProfileClicked = onShareProfileClicked,
                 showFollow = !state.isOwnProfile && state.isLoggedIn,
                 isFollowing = state.isFollowing,
                 isFollowInProgress = state.isFollowInProgress,
@@ -640,7 +663,9 @@ private fun totalCount(data: LazyPagingItems<PagedFollowerItem>?) =
 private fun ProfileHeader(
     isOwnProfile: Boolean,
     userName: String?,
+    showShareProfile: Boolean,
     isWalletEnabled: Boolean,
+    onShareProfileClicked: () -> Unit,
     openAccount: () -> Unit,
     onBack: () -> Unit,
 ) {
@@ -652,10 +677,7 @@ private fun ProfileHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Top,
     ) {
-        Row(
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.Top,
-        ) {
+        Row(horizontalArrangement = Arrangement.Start, verticalAlignment = Alignment.Top) {
             if (!isOwnProfile) {
                 Icon(
                     painter = painterResource(DesignRes.drawable.arrow_left),
@@ -678,13 +700,29 @@ private fun ProfileHeader(
                 color = YralColors.NeutralTextPrimary,
             )
         }
-        if (isWalletEnabled) {
-            Icon(
-                painter = painterResource(DesignRes.drawable.account_nav),
-                contentDescription = "Account",
-                tint = Color.White,
-                modifier = Modifier.size(32.dp).clickable { openAccount() },
-            )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (showShareProfile) {
+                Icon(
+                    painter = painterResource(DesignRes.drawable.ic_share),
+                    contentDescription = stringResource(DesignRes.string.share_profile),
+                    tint = Color.White,
+                    modifier =
+                        Modifier
+                            .size(24.dp)
+                            .clickable { onShareProfileClicked() },
+                )
+            }
+            if (isWalletEnabled) {
+                Icon(
+                    painter = painterResource(DesignRes.drawable.account_nav),
+                    contentDescription = "Account",
+                    tint = Color.White,
+                    modifier = Modifier.size(32.dp).clickable { openAccount() },
+                )
+            }
         }
     }
 }

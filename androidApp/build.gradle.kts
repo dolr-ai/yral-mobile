@@ -21,7 +21,7 @@ android {
         buildConfigField(
             type = "String",
             name = "BRANCH_KEY_TEST",
-            value = "\"${System.getenv("YRAL_BRANCH_KEY_TEST")}\"",
+            value = "\"key_test_cuuos6m3G17sHqacdUgoYbpbFBkSpEFs\"",
         )
         buildConfigField(
             type = "String",
