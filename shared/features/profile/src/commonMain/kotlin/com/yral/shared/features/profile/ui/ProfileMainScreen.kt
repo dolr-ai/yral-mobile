@@ -146,11 +146,8 @@ import yral_mobile.shared.libs.designsystem.generated.resources.ic_views
 import yral_mobile.shared.libs.designsystem.generated.resources.login
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share_desc
-import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share
-import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.my_profile
 import yral_mobile.shared.libs.designsystem.generated.resources.oops
-import yral_mobile.shared.libs.designsystem.generated.resources.profile_share_default_name
 import yral_mobile.shared.libs.designsystem.generated.resources.refresh
 import yral_mobile.shared.libs.designsystem.generated.resources.share_profile
 import yral_mobile.shared.libs.designsystem.generated.resources.something_went_wrong
@@ -183,18 +180,14 @@ fun ProfileMainScreen(
     val followers = viewModel.followers.collectAsLazyPagingItems()
     val following = viewModel.following.collectAsLazyPagingItems()
     val currentAccountInfo = state.accountInfo
-    val shareFallbackName = stringResource(DesignRes.string.profile_share_default_name)
-    val shareDisplayName = currentAccountInfo?.displayName ?: shareFallbackName
-    val profileShareMessage = stringResource(DesignRes.string.msg_profile_share, shareDisplayName)
-    val profileShareDescription =
-        stringResource(DesignRes.string.msg_profile_share_desc, shareDisplayName)
-    val canShareProfile = currentAccountInfo?.userPrincipal?.isNotBlank() == true
     val onShareProfileClicked =
-        remember(currentAccountInfo, profileShareMessage, profileShareDescription) {
+        remember(currentAccountInfo, state.shareMessage, state.shareDescription) {
             {
-                currentAccountInfo?.let {
-                    viewModel.shareProfile(it, profileShareMessage, profileShareDescription)
-                } ?: Unit
+                if (currentAccountInfo != null) {
+                    viewModel.shareProfile(currentAccountInfo)
+                } else {
+                    Unit
+                }
             }
         }
 
@@ -400,7 +393,7 @@ fun ProfileMainScreen(
                     onBackClicked = { component.onBackClicked() },
                     onFollowersSectionClick = { viewModel.updateFollowSheetTab(tab = it) },
                     promptLogin = { component.promptLogin(SignupPageName.PROFILE) },
-                    canShareProfile = canShareProfile,
+                    canShareProfile = state.canShareProfile,
                     onShareProfileClicked = onShareProfileClicked,
                     showHeaderShareButton = !state.isOwnProfile,
                     onDownloadVideo = onDownloadVideo,
@@ -594,7 +587,7 @@ private fun MainContent(
                 bio = info.bio,
                 showEditProfile = state.isOwnProfile && state.isLoggedIn,
                 onEditProfileClicked = openEditProfile,
-                showShareProfile = state.isOwnProfile && state.isLoggedIn && canShareProfile,
+                showShareProfile = state.isOwnProfile && state.isLoggedIn && state.canShareProfile,
                 onShareProfileClicked = onShareProfileClicked,
                 showFollow = !state.isOwnProfile && state.isLoggedIn,
                 isFollowing = state.isFollowing,

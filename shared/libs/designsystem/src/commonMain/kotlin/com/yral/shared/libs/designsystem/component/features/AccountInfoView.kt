@@ -173,28 +173,22 @@ fun AccountInfoView(
                 }
             }
             showEditProfile -> {
-                if (showShareProfile) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    ) {
-                        ProfileButton(
-                            text = stringResource(Res.string.edit_profile),
-                            modifier = Modifier.weight(1f),
-                            onClick = onEditProfileClicked,
-                        )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    ProfileButton(
+                        text = stringResource(Res.string.edit_profile),
+                        modifier = Modifier.weight(1f),
+                        onClick = onEditProfileClicked,
+                    )
+                    if (showShareProfile) {
                         ProfileButton(
                             text = stringResource(Res.string.share_profile),
                             modifier = Modifier.weight(1f),
                             onClick = onShareProfileClicked,
                         )
                     }
-                } else {
-                    ProfileButton(
-                        text = stringResource(Res.string.edit_profile),
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = onEditProfileClicked,
-                    )
                 }
             }
             showFollow -> {
