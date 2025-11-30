@@ -12,6 +12,7 @@
     <string name="something_went_wrong">Something went wrong!</string>
     <string name="upload_video">Upload Video</string>
     <string name="edit_profile">Edit Profile</string>
+    <string name="share_profile">Share profile</string>
     <string name="username">Username</string>
     <string name="unique_id">Principal ID</string>
     <string name="bio">Bio</string>
@@ -26,6 +27,9 @@
     <string name="alerts">Alerts</string>
     <string name="msg_feed_video_share">Check out this video on Yral 👀 Where watching = fun + games! ⚡ Try it 👉</string>
     <string name="msg_feed_video_share_desc">Watch on Yral</string>
+    <string name="msg_profile_share">Check out %1$s on Yral 👀 Where watching = fun + games! ⚡ Try it 👉</string>
+    <string name="msg_profile_share_desc">See %1$s on Yral</string>
+    <string name="profile_share_default_name">this creator</string>
     <string name="ok">OK</string>
     <string name="error">Error</string>
     <string name="terms_of_service">Terms of service</string>

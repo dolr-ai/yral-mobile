@@ -59,6 +59,24 @@ object Profile : AppRoute, ExternallyExposedRoute {
 }
 
 @Serializable
+data class UserProfileRoute(
+    val canisterId: String,
+    val userPrincipalId: String,
+    val profilePic: String? = null,
+    val username: String? = null,
+    val isFromServiceCanister: Boolean = false,
+) : AppRoute,
+    ExternallyExposedRoute {
+    companion object {
+        const val PATH =
+            "profile/user/{canisterId}/{userPrincipalId}?" +
+                "profile_pic={profilePic}" +
+                "&username={username}" +
+                "&is_service_canister={isFromServiceCanister}"
+    }
+}
+
+@Serializable
 object Unknown : AppRoute {
     const val PATH = "/unknown"
 }

@@ -20,6 +20,7 @@ kotlin {
             implementation(projects.shared.libs.analytics)
             implementation(projects.shared.libs.preferences)
             implementation(projects.shared.libs.http)
+            implementation(projects.shared.libs.fileDownloader)
             implementation(projects.shared.libs.arch)
             implementation(projects.shared.libs.coroutinesX)
             implementation(projects.shared.rust.service)
@@ -35,6 +36,9 @@ kotlin {
             implementation(libs.androidx.paging.compose)
             implementation(compose.components.resources)
             implementation(libs.compose.ui.backhandler)
+            implementation(libs.moko.permissions)
+            implementation(libs.moko.permissions.compose)
+            implementation(libs.moko.permissions.storage)
         }
     }
 }

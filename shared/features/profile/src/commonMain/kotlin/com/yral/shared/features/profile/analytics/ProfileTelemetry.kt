@@ -19,6 +19,7 @@ import com.yral.shared.analytics.events.UserUnFollowedEventData
 import com.yral.shared.analytics.events.VideoClickedEventData
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.analytics.events.VideoDeletedEventData
+import com.yral.shared.analytics.events.VideoDownloadedEventData
 import com.yral.shared.analytics.events.VideoReportedEventData
 import com.yral.shared.analytics.events.VideoShareClickedEventData
 import com.yral.shared.data.domain.models.FeedDetails
@@ -192,5 +193,9 @@ class ProfileTelemetry(
                 totalCount = totalCount,
             ),
         )
+    }
+
+    fun videoDownloaded(videoId: String) {
+        analyticsManager.trackEvent(VideoDownloadedEventData(videoId))
     }
 }

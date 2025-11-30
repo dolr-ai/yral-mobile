@@ -57,6 +57,8 @@
 	<string>Yral requires microphone access to capture audio while recording videos. Your microphone will only be used during video recording.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Yral needs access to your photo library so you can choose a profile picture.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Yral needs permission to save downloaded videos and photos to your photo library.</string>
 	<key>ONESIGNAL_APP_ID</key>
 	<string>fe0ef73c-3eef-4c16-baa8-59dc8512895a</string>
 	<key>SENTRY_DSN</key>
