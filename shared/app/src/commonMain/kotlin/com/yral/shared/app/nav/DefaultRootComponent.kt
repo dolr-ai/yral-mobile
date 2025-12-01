@@ -19,20 +19,26 @@ import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
+import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
+import com.yral.shared.koin.koinInstance
 import com.yral.shared.libs.routing.routes.api.AppRoute
+import com.yral.shared.libs.routing.routes.api.UserProfileRoute
 import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.serialization.Serializable
 
+@Suppress("TooManyFunctions")
 class DefaultRootComponent(
     componentContext: ComponentContext,
 ) : RootComponent,
     ComponentContext by componentContext {
     private val navigation = StackNavigation<Config>()
     private var homeComponent: HomeComponent? = null
+    private val sessionManager: SessionManager = koinInstance.get()
 
     private var pendingNavRoute: AppRoute? = null
 
@@ -54,7 +60,7 @@ class DefaultRootComponent(
                 val navRoute = pendingNavRoute
                 if (navRoute != null && stack.active.instance is RootComponent.Child.Home) {
                     pendingNavRoute = null
-                    homeComponent?.onNavigationRequest(navRoute)
+                    handleAppRoute(navRoute)
                 }
             }
         }
@@ -145,13 +151,49 @@ class DefaultRootComponent(
     override fun onNavigationRequest(appRoute: AppRoute) {
         if (isSplashActive()) {
             pendingNavRoute = appRoute
-        } else {
-            homeComponent?.onNavigationRequest(appRoute)
+            return
         }
+        handleAppRoute(appRoute)
     }
 
     override fun onUpdateStateChanged(state: UpdateState) {
         _updateState.value = state
+    }
+
+    private fun handleAppRoute(appRoute: AppRoute) {
+        when (appRoute) {
+            is UserProfileRoute -> handleUserProfileRoute(appRoute)
+            else ->
+                homeComponent?.onNavigationRequest(appRoute) ?: run {
+                    pendingNavRoute = appRoute
+                    navigation.replaceAll(Config.Home)
+                }
+        }
+    }
+
+    private fun handleUserProfileRoute(appRoute: UserProfileRoute) {
+        val currentUser = sessionManager.userPrincipal
+        if (!currentUser.isNullOrBlank() && currentUser == appRoute.userPrincipalId) {
+            // Navigate to Profile tab inside Home to keep bottom nav visible
+            homeComponent?.onNavigationRequest(com.yral.shared.libs.routing.routes.api.Profile)
+                ?: run {
+                    pendingNavRoute = com.yral.shared.libs.routing.routes.api.Profile
+                    navigation.replaceAll(Config.Home)
+                }
+            return
+        }
+        val canisterData =
+            CanisterData(
+                canisterId = appRoute.canisterId,
+                userPrincipalId = appRoute.userPrincipalId,
+                profilePic = appRoute.profilePic ?: "",
+                username = appRoute.username,
+                isCreatedFromServiceCanister =
+                    appRoute.isFromServiceCanister ||
+                        appRoute.canisterId == getUserInfoServiceCanister(),
+                isFollowing = false,
+            )
+        openProfile(canisterData)
     }
 
     override fun onCompleteUpdateClicked() {
