@@ -32,6 +32,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.pullToRefreshIndicator
@@ -78,8 +79,12 @@ import com.yral.shared.features.profile.viewmodel.ViewState
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.LoaderSize
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
+import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralButtonType
+import com.yral.shared.libs.designsystem.component.YralContextMenu
+import com.yral.shared.libs.designsystem.component.YralContextMenuItem
+import com.yral.shared.libs.designsystem.component.YralDragHandle
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralLoader
@@ -103,6 +108,7 @@ import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import com.yral.shared.rust.service.utils.propicFromPrincipal
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.profile.generated.resources.Res
@@ -110,6 +116,9 @@ import yral_mobile.shared.features.profile.generated.resources.create_ai_video
 import yral_mobile.shared.features.profile.generated.resources.delete
 import yral_mobile.shared.features.profile.generated.resources.delete_video
 import yral_mobile.shared.features.profile.generated.resources.deleting
+import yral_mobile.shared.features.profile.generated.resources.download
+import yral_mobile.shared.features.profile.generated.resources.downloading_video
+import yral_mobile.shared.features.profile.generated.resources.downloading_video_desc
 import yral_mobile.shared.features.profile.generated.resources.error_loading_more_videos
 import yral_mobile.shared.features.profile.generated.resources.error_loading_videos
 import yral_mobile.shared.features.profile.generated.resources.failed_to_delete_video
@@ -122,6 +131,7 @@ import yral_mobile.shared.features.profile.generated.resources.profile_locked_su
 import yral_mobile.shared.features.profile.generated.resources.profile_locked_title
 import yral_mobile.shared.features.profile.generated.resources.profile_view_locked_subtitle
 import yral_mobile.shared.features.profile.generated.resources.profile_view_locked_title
+import yral_mobile.shared.features.profile.generated.resources.storage_permission_required
 import yral_mobile.shared.features.profile.generated.resources.video_will_be_deleted_permanently
 import yral_mobile.shared.features.profile.generated.resources.white_heart
 import yral_mobile.shared.libs.designsystem.generated.resources.account_nav
@@ -129,6 +139,9 @@ import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.cancel
 import yral_mobile.shared.libs.designsystem.generated.resources.delete
 import yral_mobile.shared.libs.designsystem.generated.resources.error_data_not_loaded
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_dots_vertical
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_download
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_share
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_views
 import yral_mobile.shared.libs.designsystem.generated.resources.login
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share
@@ -136,6 +149,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_s
 import yral_mobile.shared.libs.designsystem.generated.resources.my_profile
 import yral_mobile.shared.libs.designsystem.generated.resources.oops
 import yral_mobile.shared.libs.designsystem.generated.resources.refresh
+import yral_mobile.shared.libs.designsystem.generated.resources.share_profile
 import yral_mobile.shared.libs.designsystem.generated.resources.something_went_wrong
 import yral_mobile.shared.libs.designsystem.generated.resources.started_following
 import yral_mobile.shared.libs.designsystem.generated.resources.try_again
@@ -161,9 +175,48 @@ fun ProfileMainScreen(
     getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val storagePermissionController = rememberStoragePermissionController()
 
     val followers = viewModel.followers.collectAsLazyPagingItems()
     val following = viewModel.following.collectAsLazyPagingItems()
+    val currentAccountInfo = state.accountInfo
+    val onShareProfileClicked =
+        remember(currentAccountInfo, state.shareMessage, state.shareDescription) {
+            {
+                if (currentAccountInfo != null) {
+                    viewModel.shareProfile(currentAccountInfo)
+                } else {
+                    Unit
+                }
+            }
+        }
+
+    // Track pending downloads for permission handling
+    var pendingDownload by remember { mutableStateOf<FeedDetails?>(null) }
+
+    // Handle permission check before download
+    LaunchedEffect(pendingDownload) {
+        val feedDetails = pendingDownload ?: return@LaunchedEffect
+        pendingDownload = null // Clear immediately to prevent re-trigger
+
+        val hasPermission = storagePermissionController.isPermissionGranted()
+        if (!hasPermission) {
+            val granted = storagePermissionController.requestPermission()
+            if (!granted) {
+                ToastManager.showError(
+                    type = ToastType.Small(getString(Res.string.storage_permission_required)),
+                )
+                return@LaunchedEffect
+            }
+        }
+        // Permission granted, proceed with download
+        viewModel.downloadVideo(feedDetails)
+    }
+
+    // Wrapper function for download that triggers permission check
+    val onDownloadVideo: (FeedDetails) -> Unit = { feedDetails ->
+        pendingDownload = feedDetails
+    }
 
     val followedSuccessfully =
         stringResource(DesignRes.string.started_following, state.accountInfo?.displayName ?: "")
@@ -301,6 +354,7 @@ fun ProfileMainScreen(
                                 ctaType = VideoDeleteCTA.VIDEO_FULLSCREEN,
                             )
                         },
+                        onDownloadVideo = onDownloadVideo,
                         onShareClick = { feedDetails ->
                             viewModel.onShareClicked(
                                 feedDetails,
@@ -339,6 +393,10 @@ fun ProfileMainScreen(
                     onBackClicked = { component.onBackClicked() },
                     onFollowersSectionClick = { viewModel.updateFollowSheetTab(tab = it) },
                     promptLogin = { component.promptLogin(SignupPageName.PROFILE) },
+                    canShareProfile = state.canShareProfile,
+                    onShareProfileClicked = onShareProfileClicked,
+                    showHeaderShareButton = !state.isOwnProfile,
+                    onDownloadVideo = onDownloadVideo,
                 )
             }
         }
@@ -380,8 +438,7 @@ fun ProfileMainScreen(
         is ProfileBottomSheet.VideoView -> {
             val videoId = bottomSheet.videoId
             val video = profileVideos.itemSnapshotList.firstOrNull { it?.videoID == videoId }
-            val views = state.viewsData[videoId]
-            when (views) {
+            when (val views = state.viewsData[videoId]) {
                 is UiState.Failure -> {
                     YralErrorMessage(
                         title = stringResource(DesignRes.string.video_insights),
@@ -475,10 +532,17 @@ fun ProfileMainScreen(
                 )
             }
         }
+
+        is ProfileBottomSheet.DownloadTriggered -> {
+            DownloadTriggeredSheet(
+                bottomSheetState = bottomSheetState,
+                onDismissRequest = { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
+            )
+        }
     }
 }
 
-@Suppress("LongMethod", "CyclomaticComplexMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod", "LongParameterList")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MainContent(
@@ -496,12 +560,18 @@ private fun MainContent(
     onBackClicked: () -> Unit,
     onFollowersSectionClick: (FollowersSheetTab) -> Unit,
     promptLogin: () -> Unit,
+    canShareProfile: Boolean,
+    onShareProfileClicked: () -> Unit,
+    showHeaderShareButton: Boolean,
+    onDownloadVideo: (FeedDetails) -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader(
             isOwnProfile = state.isOwnProfile,
             userName = state.accountInfo?.displayName,
+            showShareProfile = showHeaderShareButton && canShareProfile,
             isWalletEnabled = state.isWalletEnabled,
+            onShareProfileClicked = onShareProfileClicked,
             openAccount = openAccount,
             onBack = onBackClicked,
         )
@@ -517,6 +587,8 @@ private fun MainContent(
                 bio = info.bio,
                 showEditProfile = state.isOwnProfile && state.isLoggedIn,
                 onEditProfileClicked = openEditProfile,
+                showShareProfile = state.isOwnProfile && state.isLoggedIn && state.canShareProfile,
+                onShareProfileClicked = onShareProfileClicked,
                 showFollow = !state.isOwnProfile && state.isLoggedIn,
                 isFollowing = state.isFollowing,
                 isFollowInProgress = state.isFollowInProgress,
@@ -559,6 +631,7 @@ private fun MainContent(
                                 ctaType = VideoDeleteCTA.PROFILE_THUMBNAIL,
                             )
                         },
+                        onDownloadVideo = onDownloadVideo,
                         onViewsClick = { viewModel.showVideoViews(it) },
                         onManualRefreshTriggered = { viewModel.setManualRefreshTriggered(it) },
                     )
@@ -590,7 +663,9 @@ private fun totalCount(data: LazyPagingItems<PagedFollowerItem>?) =
 private fun ProfileHeader(
     isOwnProfile: Boolean,
     userName: String?,
+    showShareProfile: Boolean,
     isWalletEnabled: Boolean,
+    onShareProfileClicked: () -> Unit,
     openAccount: () -> Unit,
     onBack: () -> Unit,
 ) {
@@ -602,10 +677,7 @@ private fun ProfileHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Top,
     ) {
-        Row(
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.Top,
-        ) {
+        Row(horizontalArrangement = Arrangement.Start, verticalAlignment = Alignment.Top) {
             if (!isOwnProfile) {
                 Icon(
                     painter = painterResource(DesignRes.drawable.arrow_left),
@@ -628,13 +700,29 @@ private fun ProfileHeader(
                 color = YralColors.NeutralTextPrimary,
             )
         }
-        if (isWalletEnabled) {
-            Icon(
-                painter = painterResource(DesignRes.drawable.account_nav),
-                contentDescription = "Account",
-                tint = Color.White,
-                modifier = Modifier.size(32.dp).clickable { openAccount() },
-            )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (showShareProfile) {
+                Icon(
+                    painter = painterResource(DesignRes.drawable.ic_share),
+                    contentDescription = stringResource(DesignRes.string.share_profile),
+                    tint = Color.White,
+                    modifier =
+                        Modifier
+                            .size(24.dp)
+                            .clickable { onShareProfileClicked() },
+                )
+            }
+            if (isWalletEnabled) {
+                Icon(
+                    painter = painterResource(DesignRes.drawable.account_nav),
+                    contentDescription = "Account",
+                    tint = Color.White,
+                    modifier = Modifier.size(32.dp).clickable { openAccount() },
+                )
+            }
         }
     }
 }
@@ -672,6 +760,7 @@ private fun ErrorContent(message: String) {
     }
 }
 
+@Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SuccessContent(
@@ -682,6 +771,7 @@ private fun SuccessContent(
     uploadVideo: () -> Unit,
     openVideoReel: (Int) -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
+    onDownloadVideo: (FeedDetails) -> Unit,
     onViewsClick: (FeedDetails) -> Unit,
     onManualRefreshTriggered: (Boolean) -> Unit,
 ) {
@@ -739,6 +829,7 @@ private fun SuccessContent(
                     deletingVideoId = deletingVideoId,
                     openVideoReel = openVideoReel,
                     onDeleteVideo = onDeleteVideo,
+                    onDownloadVideo = onDownloadVideo,
                     onViewsClick = onViewsClick,
                 )
             }
@@ -859,6 +950,7 @@ private fun VideoGridContent(
     deletingVideoId: String,
     openVideoReel: (Int) -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
+    onDownloadVideo: (FeedDetails) -> Unit,
     onViewsClick: (FeedDetails) -> Unit,
 ) {
     LazyVerticalGrid(
@@ -885,6 +977,7 @@ private fun VideoGridContent(
                     isDeleting = deletingVideoId == video.videoID,
                     openVideoReel = { openVideoReel(index) },
                     onDeleteClick = { onDeleteVideo(video) },
+                    onDownloadClick = { onDownloadVideo(video) },
                     onViewsClick = { onViewsClick(video) },
                 )
             }
@@ -986,6 +1079,7 @@ private fun VideoGridItem(
     isDeleting: Boolean,
     openVideoReel: () -> Unit,
     onDeleteClick: () -> Unit,
+    onDownloadClick: () -> Unit,
     onViewsClick: () -> Unit,
 ) {
     Box(
@@ -1018,6 +1112,7 @@ private fun VideoGridItem(
                 viewCount = video.viewCount,
                 isOwnProfile = isOwnProfile,
                 onDeleteVideo = onDeleteClick,
+                onDownloadVideo = onDownloadClick,
                 onViewsClick = onViewsClick,
             )
         }
@@ -1072,6 +1167,7 @@ private fun BoxScope.VideoGridItemActions(
     isLikeVisible: Boolean = false,
     isOwnProfile: Boolean,
     onDeleteVideo: () -> Unit,
+    onDownloadVideo: () -> Unit,
     onViewsClick: () -> Unit,
 ) {
     val leftIcon =
@@ -1117,14 +1213,70 @@ private fun BoxScope.VideoGridItemActions(
             )
         }
         if (isOwnProfile) {
-            Image(
-                painter = painterResource(DesignRes.drawable.delete),
-                contentDescription = "Delete video",
-                modifier =
-                    Modifier
-                        .size(24.dp)
-                        .clickable { onDeleteVideo() },
+            YralContextMenu(
+                items =
+                    listOf(
+                        YralContextMenuItem(
+                            text = stringResource(Res.string.download),
+                            icon = DesignRes.drawable.ic_download,
+                            onClick = onDownloadVideo,
+                        ),
+                        YralContextMenuItem(
+                            text = stringResource(Res.string.delete),
+                            icon = DesignRes.drawable.delete,
+                            onClick = onDeleteVideo,
+                        ),
+                    ),
+                triggerIcon = DesignRes.drawable.ic_dots_vertical,
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DownloadTriggeredSheet(
+    bottomSheetState: SheetState,
+    onDismissRequest: () -> Unit,
+) {
+    YralBottomSheet(
+        bottomSheetState = bottomSheetState,
+        onDismissRequest = onDismissRequest,
+        dragHandle = { YralDragHandle() },
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(28.dp, Alignment.CenterVertically),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier =
+                Modifier
+                    .background(color = YralColors.Neutral900)
+                    .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 36.dp),
+        ) {
+            Image(
+                painter = painterResource(Res.drawable.download),
+                contentDescription = "Download",
+                contentScale = ContentScale.FillBounds,
+                modifier = Modifier.size(100.dp),
+            )
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
+                horizontalAlignment = Alignment.Start,
+            ) {
+                Text(
+                    text = stringResource(Res.string.downloading_video),
+                    style = LocalAppTopography.current.lgBold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Text(
+                    text = stringResource(Res.string.downloading_video_desc),
+                    style = LocalAppTopography.current.baseRegular,
+                    color = YralColors.NeutralIconsActive,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
 }

@@ -40,6 +40,7 @@ koinBom = "4.1.0"
 kotlinResult = "2.0.1"
 kotlinxCoroutines = "1.10.2"
 kotlinx-datetime = "0.7.1"
+kotlinx-io = "0.8.2"
 kotlinxSerialization = "1.9.0"
 ksp = "2.1.21-2.0.2"
 ktor = "3.3.0"
@@ -164,6 +165,7 @@ kotlinResult-coroutines = { group = "com.michael-bull.kotlin-result", name = "ko
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinx-io" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 kotlinx-serialization-properties = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-properties", version.ref = "kotlinxSerialization" }
 

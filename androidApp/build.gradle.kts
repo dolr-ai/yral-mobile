@@ -15,13 +15,13 @@ android {
     namespace = "com.yral.android"
     defaultConfig {
         applicationId = "com.yral.android"
-        versionCode = 44
-        versionName = "2.0.8"
+        versionCode = 45
+        versionName = "2.1.0"
         ndkVersion = "28.0.13004108"
         buildConfigField(
             type = "String",
             name = "BRANCH_KEY_TEST",
-            value = "\"${System.getenv("YRAL_BRANCH_KEY_TEST")}\"",
+            value = "\"key_test_cuuos6m3G17sHqacdUgoYbpbFBkSpEFs\"",
         )
         buildConfigField(
             type = "String",
