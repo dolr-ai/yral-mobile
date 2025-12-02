@@ -12,7 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.AnnotatedString
@@ -24,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.features.auth.analytics.AuthTelemetry
@@ -57,7 +57,7 @@ fun SignupView(
     headlineText: AnnotatedString? = null,
     disclaimerText: String? = null,
     topIcon: Painter? = null,
-    topIconSize: Size? = null,
+    topIconSize: DpSize? = null,
     authTelemetry: AuthTelemetry = koinInject(),
 ) {
     LaunchedEffect(Unit) { authTelemetry.onSignupViewed(pageName) }
@@ -72,8 +72,8 @@ fun SignupView(
             modifier =
                 Modifier
                     .padding(0.dp)
-                    .width(topIconSize?.width?.dp ?: 240.dp)
-                    .height(topIconSize?.height?.dp ?: 86.dp),
+                    .width(topIconSize?.width ?: 240.dp)
+                    .height(topIconSize?.height ?: 86.dp),
         )
         Column(
             modifier = Modifier.fillMaxWidth(),

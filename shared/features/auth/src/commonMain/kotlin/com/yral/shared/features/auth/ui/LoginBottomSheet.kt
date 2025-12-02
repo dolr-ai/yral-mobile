@@ -13,13 +13,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.shared.analytics.events.SignupPageName
@@ -216,8 +216,8 @@ private fun getTopIcon(type: LoginBottomSheetType) =
 @Composable
 private fun getTopIconSize(type: LoginBottomSheetType) =
     when (type) {
-        LoginBottomSheetType.UPLOAD_AI_VIDEO -> Size(AI_VIDEO_TOP_ICON_WIDTH, AI_VIDEO_TOP_ICON_HEIGHT)
-        LoginBottomSheetType.CREATE_AI_VIDEO -> Size(AI_VIDEO_TOP_ICON_WIDTH, AI_VIDEO_TOP_ICON_HEIGHT)
+        LoginBottomSheetType.UPLOAD_AI_VIDEO -> DpSize(AI_VIDEO_TOP_ICON_WIDTH.dp, AI_VIDEO_TOP_ICON_HEIGHT.dp)
+        LoginBottomSheetType.CREATE_AI_VIDEO -> DpSize(AI_VIDEO_TOP_ICON_WIDTH.dp, AI_VIDEO_TOP_ICON_HEIGHT.dp)
         else -> null
     }
 
