@@ -78,7 +78,6 @@ import org.jetbrains.compose.resources.getString
 import yral_mobile.shared.features.profile.generated.resources.Res
 import yral_mobile.shared.features.profile.generated.resources.download_failed
 import yral_mobile.shared.features.profile.generated.resources.download_successful
-import org.jetbrains.compose.resources.getString
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.profile_share_default_name
@@ -544,10 +543,11 @@ class ProfileViewModel(
         }
     }
 
-    fun shareProfile(accountInfo: AccountInfo) {
+    fun shareProfile() {
         val principal = canisterData.userPrincipalId
         val canisterId = canisterData.canisterId
-        if (principal.isBlank() || canisterId.isBlank()) return
+        val accountInfo = _state.value.accountInfo
+        if (principal.isBlank() || canisterId.isBlank() || accountInfo == null) return
         viewModelScope.launch {
             val route =
                 UserProfileRoute(
