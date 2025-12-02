@@ -22,7 +22,4 @@
     <string name="error_timeout">Unable to load content. Please try again.</string>
     <string name="error_retry">Retry</string>
 
-    <!-- Shared login copy -->
-    <string name="login_to_get_25_tokens">Login to get 25 tokens</string>
-
 </resources>
