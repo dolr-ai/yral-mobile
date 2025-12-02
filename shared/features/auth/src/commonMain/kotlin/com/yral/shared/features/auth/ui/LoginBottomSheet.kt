@@ -87,7 +87,11 @@ fun LoginBottomSheet(
                             onSignupClicked = { provider -> loginViewModel.signInWithSocial(context, provider) },
                             termsLink = termsLink,
                             openTerms = { openTerms(termsLink) },
-                            headlineText = getHeaderText(bottomSheetType),
+                            headlineText =
+                                getHeaderText(
+                                    type = bottomSheetType,
+                                    initialBalanceReward = loginViewModel.getInitialBalanceReward(),
+                                ),
                             disclaimerText = getDisclaimerText(bottomSheetType),
                             topIcon = getTopIcon(bottomSheetType),
                             topIconSize = getTopIconSize(bottomSheetType),
@@ -130,9 +134,15 @@ private object LoginBottomSheetConstants {
 }
 
 @Composable
-private fun getHeaderText(type: LoginBottomSheetType): AnnotatedString? =
+private fun getHeaderText(
+    type: LoginBottomSheetType,
+    initialBalanceReward: Int,
+): AnnotatedString? =
     when (type) {
-        LoginBottomSheetType.FEED -> getAnnotatedHeader(stringResource(Res.string.login_to_get_25_tokens))
+        LoginBottomSheetType.FEED -> {
+            val fullText = stringResource(Res.string.login_to_get_25_tokens, initialBalanceReward)
+            getAnnotatedHeader(fullText)
+        }
         LoginBottomSheetType.UPLOAD_AI_VIDEO -> {
             val fullText = stringResource(Res.string.upload_ai_videos_earn_bitcoin)
             val maskedText = fullText.substringAfter(".")

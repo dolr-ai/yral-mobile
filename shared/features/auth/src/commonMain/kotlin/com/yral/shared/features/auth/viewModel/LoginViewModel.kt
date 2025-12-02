@@ -2,6 +2,7 @@ package com.yral.shared.features.auth.viewModel
 
 import androidx.lifecycle.ViewModel
 import co.touchlab.kermit.Logger
+import com.yral.featureflag.AppFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.shared.crashlytics.core.CrashlyticsManager
@@ -56,4 +57,6 @@ class LoginViewModel(
     }
 
     fun getTncLink(): String = flagManager.get(AccountFeatureFlags.AccountLinks.Links).tnc
+
+    fun getInitialBalanceReward(): Int = flagManager.get(AppFeatureFlags.Common.InitialBalanceReward)
 }
