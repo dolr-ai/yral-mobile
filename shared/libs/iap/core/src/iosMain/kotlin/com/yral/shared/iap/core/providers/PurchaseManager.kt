@@ -11,9 +11,11 @@ import platform.Foundation.NSError
 import platform.Foundation.NSLock
 import platform.Foundation.base64EncodedStringWithOptions
 import platform.Foundation.dataWithContentsOfURL
+import platform.Foundation.timeIntervalSince1970
 import platform.StoreKit.SKPayment
 import platform.StoreKit.SKPaymentQueue
 import platform.StoreKit.SKPaymentTransaction
+import kotlin.time.Duration.Companion.seconds
 import com.yral.shared.iap.core.model.Purchase as IAPPurchase
 
 internal class PurchaseManager(
@@ -207,7 +209,11 @@ internal class PurchaseManager(
     ): IAPPurchase {
         val productId = transaction.payment.productIdentifier
         val transactionId = transaction.transactionIdentifier ?: ""
-        val purchaseTime = 0L
+        val purchaseTime =
+            transaction.transactionDate
+                ?.timeIntervalSince1970
+                ?.seconds
+                ?.inWholeMilliseconds ?: 0L
 
         return IAPPurchase(
             productId = productId,
