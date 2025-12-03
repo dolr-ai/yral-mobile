@@ -132,7 +132,7 @@ internal class AndroidIAPProvider(
                     ),
                 ),
             )
-        } catch (e: kotlinx.coroutines.CancellationException) {
+        } catch (e: CancellationException) {
             cleanupPendingPurchase(productId.productId)
             throw e
         } catch (e: IAPError) {
@@ -156,7 +156,7 @@ internal class AndroidIAPProvider(
                         (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
                 }
             }
-        } catch (e: kotlinx.coroutines.CancellationException) {
+        } catch (e: CancellationException) {
             throw e
         } catch (e: IAPError) {
             Result.failure(e)
@@ -186,9 +186,18 @@ internal class AndroidIAPProvider(
         purchases?.forEach { purchase ->
             val productId = purchase.products.firstOrNull() ?: return@forEach
             val iapPurchase = purchaseManager.convertPurchase(purchase)
-
-            acknowledgePurchaseIfNeeded(purchase)
-
+            callbackScope.launch {
+                try {
+                    val client = connectionManager.ensureReady()
+                    purchaseManager.acknowledgePurchaseIfNeeded(client, purchase)
+                } catch (e: TimeoutCancellationException) {
+                    throw e
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    // The acknowledgment failure is handled in acknowledgePurchaseIfNeeded callback
+                }
+            }
             callbackScope.launch {
                 pendingPurchasesLock.withLock {
                     pendingPurchases.remove(productId)?.let { deferred ->
@@ -252,20 +261,6 @@ internal class AndroidIAPProvider(
                     }
                 }
                 pendingPurchases.clear()
-            }
-        }
-    }
-
-    private fun acknowledgePurchaseIfNeeded(purchase: Purchase) {
-        if (!purchase.isAcknowledged) {
-            callbackScope.launch {
-                val client = connectionManager.ensureReady()
-                val params =
-                    com.android.billingclient.api.AcknowledgePurchaseParams
-                        .newBuilder()
-                        .setPurchaseToken(purchase.purchaseToken)
-                        .build()
-                client.acknowledgePurchase(params) { }
             }
         }
     }
