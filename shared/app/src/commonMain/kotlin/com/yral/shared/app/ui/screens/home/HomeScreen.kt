@@ -62,6 +62,7 @@ import com.yral.shared.features.account.ui.AccountScreen
 import com.yral.shared.features.account.ui.AlertsPermissionController
 import com.yral.shared.features.account.ui.rememberAlertsPermissionController
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
+import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.leaderboard.ui.LeaderboardScreen
@@ -86,7 +87,6 @@ import yral_mobile.shared.app.generated.resources.home_nav_selected
 import yral_mobile.shared.app.generated.resources.home_nav_unselected
 import yral_mobile.shared.app.generated.resources.leaderboard_nav_selected
 import yral_mobile.shared.app.generated.resources.leaderboard_nav_unselected
-import yral_mobile.shared.app.generated.resources.login_to_get_25_tokens
 import yral_mobile.shared.app.generated.resources.new_
 import yral_mobile.shared.app.generated.resources.profile_nav_selected
 import yral_mobile.shared.app.generated.resources.profile_nav_unselected
@@ -509,7 +509,6 @@ private fun LoginIfRequired(
     component: HomeComponent,
 ) {
     val homeState by component.homeViewModel.state.collectAsStateWithLifecycle()
-    val sharedVideoLoginHeadline = stringResource(Res.string.login_to_get_25_tokens)
     val dismissSheet =
         remember {
             {
@@ -523,7 +522,7 @@ private fun LoginIfRequired(
             is HomeComponent.Child.Feed -> {
                 component.showLoginBottomSheet(
                     pageName = SignupPageName.HOME,
-                    headlineText = sharedVideoLoginHeadline,
+                    loginBottomSheetType = LoginBottomSheetType.FEED,
                     onDismissRequest = dismissSheet,
                     onLoginSuccess = dismissSheet,
                 )
@@ -531,7 +530,7 @@ private fun LoginIfRequired(
             is HomeComponent.Child.UploadVideo -> {
                 component.showLoginBottomSheet(
                     pageName = homeState.pageName ?: SignupPageName.UPLOAD_VIDEO,
-                    headlineText = null,
+                    loginBottomSheetType = LoginBottomSheetType.UPLOAD_AI_VIDEO,
                     onDismissRequest = dismissSheet,
                     onLoginSuccess = dismissSheet,
                 )
@@ -539,7 +538,7 @@ private fun LoginIfRequired(
             is HomeComponent.Child.Profile -> {
                 component.showLoginBottomSheet(
                     pageName = homeState.pageName ?: SignupPageName.MENU,
-                    headlineText = null,
+                    loginBottomSheetType = LoginBottomSheetType.DEFAULT,
                     onDismissRequest = dismissSheet,
                     onLoginSuccess = {
                         dismissSheet()
@@ -557,7 +556,7 @@ private fun LoginIfRequired(
                 if (homeState.hasShownSignupPrompt[SignupPageName.LEADERBOARD] != true) {
                     component.showLoginBottomSheet(
                         pageName = SignupPageName.LEADERBOARD,
-                        headlineText = null,
+                        loginBottomSheetType = LoginBottomSheetType.DEFAULT,
                         onDismissRequest = {
                             dismissSheet()
                             component.homeViewModel.onSignupPromptShown(SignupPageName.LEADERBOARD)

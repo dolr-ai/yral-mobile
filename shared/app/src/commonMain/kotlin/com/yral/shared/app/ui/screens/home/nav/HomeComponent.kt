@@ -8,6 +8,7 @@ import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.account.nav.AccountComponent
+import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.root.viewmodels.HomeViewModel
@@ -32,7 +33,7 @@ abstract class HomeComponent {
     abstract fun onNavigationRequest(appRoute: AppRoute)
     abstract fun showLoginBottomSheet(
         pageName: SignupPageName,
-        headlineText: String?,
+        loginBottomSheetType: LoginBottomSheetType,
         onDismissRequest: () -> Unit,
         onLoginSuccess: () -> Unit = {},
     )
@@ -75,7 +76,7 @@ abstract class HomeComponent {
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
             showLoginBottomSheet: (
                 pageName: SignupPageName,
-                headlineText: String?,
+                loginBottomSheetType: LoginBottomSheetType,
                 onDismissRequest: () -> Unit,
                 onLoginSuccess: () -> Unit,
             ) -> Unit,

@@ -259,8 +259,8 @@ private fun SlotContent(component: RootComponent) {
                     onDismissRequest = slotChild.onDismissRequest,
                     onLoginSuccess = slotChild.onLoginSuccess,
                     openTerms = { termsLink = it },
-                    headlineText = slotChild.headlineText,
                     loginViewModel = loginViewModel,
+                    bottomSheetType = slotChild.loginBottomSheetType,
                 )
                 if (termsLink.isNotEmpty()) {
                     YralWebViewBottomSheet(

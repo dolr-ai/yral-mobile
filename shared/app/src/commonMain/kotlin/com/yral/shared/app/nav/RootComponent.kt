@@ -7,6 +7,7 @@ import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
+import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
@@ -35,7 +36,7 @@ interface RootComponent {
 
     fun showLoginBottomSheet(
         pageName: SignupPageName,
-        headlineText: String?,
+        loginBottomSheetType: LoginBottomSheetType,
         onDismissRequest: () -> Unit,
         onLoginSuccess: () -> Unit = {},
     )
@@ -65,7 +66,7 @@ interface RootComponent {
 
         class LoginBottomSheet(
             val pageName: SignupPageName,
-            val headlineText: String?,
+            val loginBottomSheetType: LoginBottomSheetType,
             val onDismissRequest: () -> Unit,
             val onLoginSuccess: () -> Unit,
         ) : SlotChild()
