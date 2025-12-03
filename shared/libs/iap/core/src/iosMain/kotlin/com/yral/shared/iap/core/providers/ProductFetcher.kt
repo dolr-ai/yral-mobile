@@ -20,6 +20,7 @@ import platform.StoreKit.SKProductsResponse
 import platform.StoreKit.SKRequest
 import platform.darwin.NSObject
 import kotlin.coroutines.resume
+import kotlin.math.roundToLong
 
 internal class ProductFetcher {
     private val productCache = mutableMapOf<String, SKProduct>()
@@ -58,7 +59,7 @@ internal class ProductFetcher {
 
                                 val priceString = priceFormatter.stringFromNumber(skProduct.price) ?: ""
                                 val priceAmountMicros =
-                                    (skProduct.price.doubleValue * PRICE_TO_MICROS_FACTOR).toLong()
+                                    (skProduct.price.doubleValue * PRICE_TO_MICROS_FACTOR).roundToLong()
 
                                 val productType =
                                     when {
