@@ -45,6 +45,11 @@ internal class PurchaseManager(
         val payment = SKPayment.paymentWithProduct(skProduct)
         val deferred = CompletableDeferred<Result<IAPPurchase>>()
         pendingPurchasesLock.withLock {
+            pendingPurchases[productIdString]?.let { existing ->
+                if (!existing.isCompleted) {
+                    return existing // Return existing deferred instead
+                }
+            }
             pendingPurchases[productIdString] = deferred
         }
 
