@@ -1,5 +1,6 @@
 package com.yral.shared.iap.core.providers
 
+import co.touchlab.kermit.Logger
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.QueryProductDetailsParams
@@ -29,15 +30,21 @@ internal class ProductFetcher(
                 }
             if (inAppProductIds.isNotEmpty()) {
                 val inAppProducts = fetchInAppProducts(client, inAppProductIds)
-                if (inAppProducts.isSuccess) {
-                    productList.addAll(inAppProducts.getOrNull() ?: emptyList())
-                }
+                inAppProducts.fold(
+                    onSuccess = {
+                        productList.addAll(it)
+                    },
+                    onFailure = { Logger.e("ProductFetcher", it) { "Failed to fetch inApp products" } },
+                )
             }
             if (subscriptionProductIds.isNotEmpty()) {
                 val subscriptionProducts = fetchSubscriptionProducts(client, subscriptionProductIds)
-                if (subscriptionProducts.isSuccess) {
-                    productList.addAll(subscriptionProducts.getOrNull() ?: emptyList())
-                }
+                subscriptionProducts.fold(
+                    onSuccess = {
+                        productList.addAll(it)
+                    },
+                    onFailure = { Logger.e("ProductFetcher", it) { "Failed to fetch subscription products" } },
+                )
             }
             if (productList.isNotEmpty()) {
                 Result.success(productList)
