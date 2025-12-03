@@ -43,6 +43,8 @@ internal class PurchaseManager(
                     ),
                 )
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: IAPError) {
             Result.failure(e)
         } catch (
