@@ -8,15 +8,14 @@ import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.iap.core.model.PurchaseState
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.preferences.Preferences
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 import com.yral.shared.iap.core.model.Purchase as CorePurchase
 import com.yral.shared.iap.core.providers.IAPProvider as CoreIAPProvider
 
 private const val ACCOUNT_IDENTIFIER_PREFIX = "iap_account_identifier_"
-private const val ACCOUNT_IDENTIFIER_SEPARATOR = ","
 
 internal class IAPProviderImpl(
     private val coreProvider: CoreIAPProvider,
@@ -46,20 +45,18 @@ internal class IAPProviderImpl(
             if (accountIdentifier != null) {
                 val userId = sessionManager.userPrincipal
                 if (userId != null) {
-                    callbackScope.launch {
-                        val existing = getAccountIdentifiersForUser(userId)
-                        if (!existing.contains(accountIdentifier)) {
-                            if (existing.isNotEmpty()) {
-                                val message =
-                                    "Account identifier changed for user $userId. " +
-                                        "Existing: ${existing.joinToString()}, " +
-                                        "New: $accountIdentifier. " +
-                                        "Adding new identifier to support multiple accounts."
-                                Logger.w("IAPProviderImpl") { message }
-                                warningNotifier(message)
-                            }
-                            addAccountIdentifierForUser(userId, accountIdentifier)
+                    val existing = getAccountIdentifiersForUser(userId)
+                    if (!existing.contains(accountIdentifier)) {
+                        if (existing.isNotEmpty()) {
+                            val message =
+                                "Account identifier changed for user $userId. " +
+                                    "Existing: ${existing.joinToString()}, " +
+                                    "New: $accountIdentifier. " +
+                                    "Adding new identifier to support multiple accounts."
+                            Logger.w("IAPProviderImpl") { message }
+                            warningNotifier(message)
                         }
+                        addAccountIdentifierForUser(userId, accountIdentifier)
                     }
                 } else {
                     val message =
@@ -164,7 +161,7 @@ internal class IAPProviderImpl(
     private suspend fun getAccountIdentifiersForUser(userId: String): Set<String> {
         val key = "$ACCOUNT_IDENTIFIER_PREFIX$userId"
         val stored = preferences.getString(key) ?: return emptySet()
-        return stored.split(ACCOUNT_IDENTIFIER_SEPARATOR).filter { it.isNotEmpty() }.toSet()
+        return runCatching { Json.decodeFromString<Set<String>>(stored) }.getOrDefault(emptySet())
     }
 
     private suspend fun addAccountIdentifierForUser(
@@ -174,7 +171,7 @@ internal class IAPProviderImpl(
         val existing = getAccountIdentifiersForUser(userId)
         if (!existing.contains(accountIdentifier)) {
             val key = "$ACCOUNT_IDENTIFIER_PREFIX$userId"
-            val updated = (existing + accountIdentifier).joinToString(ACCOUNT_IDENTIFIER_SEPARATOR)
+            val updated = Json.encodeToString(existing + accountIdentifier)
             preferences.putString(key, updated)
         }
     }
