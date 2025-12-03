@@ -49,8 +49,10 @@ import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
 import com.yral.shared.libs.designsystem.component.lottie.PreloadLottieAnimations
 import com.yral.shared.rust.service.domain.models.toCanisterData
 import com.yral.shared.rust.service.utils.CanisterData
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import yral_mobile.shared.libs.designsystem.generated.resources.shadow
+import kotlin.time.Duration.Companion.seconds
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
@@ -87,9 +89,11 @@ fun FeedScaffoldScreen(
                 openUserProfile = { component.openProfile(it) },
             )
         },
-        bottomOverlay = { pageNo -> OverlayBottom(pageNo, feedState, gameState, gameViewModel) },
+        bottomOverlay = { pageNo, scrollToNext ->
+            OverlayBottom(pageNo, feedState, gameState, gameViewModel, scrollToNext)
+        },
         onPageChanged = { pageNo, currentPageOfFeed ->
-            if (pageNo > 0 && pageNo < feedState.feedDetails.size) {
+            if (pageNo >= 0 && pageNo < feedState.feedDetails.size) {
                 // Set current video ID for the new page
                 gameViewModel.setCurrentVideoId(feedState.feedDetails[pageNo].videoID)
                 // Mark animation as shown for the previous page when changing pages
@@ -371,6 +375,7 @@ private fun OverlayBottom(
     feedState: FeedState,
     gameState: GameState,
     gameViewModel: GameViewModel,
+    scrollToNext: () -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         if (gameState.gameIcons.isNotEmpty()) {
@@ -394,6 +399,19 @@ private fun OverlayBottom(
                 pageNo = pageNo,
                 gameViewModel = gameViewModel,
             )
+            if (gameState.isAutoScrollEnabled) {
+                val resultOfCurrentPage =
+                    gameState.gameResult[feedState.feedDetails[pageNo].videoID]
+                val coinDelta = resultOfCurrentPage?.second?.coinDelta ?: 0
+                val hasShownAnimation = resultOfCurrentPage?.second?.hasShownAnimation ?: false
+                LaunchedEffect(coinDelta, hasShownAnimation, pageNo, gameState.showResultSheet) {
+                    val shouldAutoScroll = coinDelta != 0 && !hasShownAnimation && pageNo == feedState.currentPageOfFeed
+                    if (shouldAutoScroll && !gameState.showResultSheet) {
+                        delay(1.seconds)
+                        scrollToNext()
+                    }
+                }
+            }
         }
     }
 }

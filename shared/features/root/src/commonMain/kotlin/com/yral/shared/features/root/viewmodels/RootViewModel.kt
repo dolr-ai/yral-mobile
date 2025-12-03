@@ -87,6 +87,7 @@ class RootViewModel(
                         walletBalance = properties.coinBalance?.toDouble(),
                         tokenType = TokenType.YRAL,
                         isForcedGamePlayUser = properties.isForcedGamePlayUser,
+                        isAutoScrollEnabled = properties.isAutoScrollEnabled,
                         emailId = properties.emailId,
                         utmParams = utmAttributionStore.get()?.toAnalyticsUtmParams(),
                     )
@@ -181,6 +182,9 @@ class RootViewModel(
             _state.update { it.copy(showSplash = false) }
             sessionManager.updateIsForcedGamePlayUser(
                 isForcedGamePlayUser = flagManager.isEnabled(FeedFeatureFlags.SmileyGame.StopAndVoteNudge),
+            )
+            sessionManager.updateIsAutoScrolledEnabled(
+                isAutoScrollEnabled = flagManager.isEnabled(FeedFeatureFlags.SmileyGame.AutoScrollEnabled),
             )
             sessionManager.updateSocialSignInStatus(
                 isSocialSignIn = preferences.getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false,

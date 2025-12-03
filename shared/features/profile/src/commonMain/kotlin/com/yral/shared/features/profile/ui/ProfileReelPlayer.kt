@@ -100,7 +100,7 @@ fun ProfileReelPlayer(
             didVideoEnd = { },
             getPrefetchListener = getPrefetchListener,
             getVideoListener = { null },
-        ) { pageNo ->
+        ) { pageNo, _ ->
             val currentVideo = reelVideos[pageNo]
             if (currentVideo != null) {
                 ProfileReelOverlay(

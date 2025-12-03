@@ -10,6 +10,7 @@ data class User(
     val walletBalance: Double?,
     val tokenType: TokenType?,
     val isForcedGamePlayUser: Boolean?,
+    val isAutoScrollEnabled: Boolean?,
     val emailId: String?,
     val utmParams: AnalyticsUtmParams?,
 ) {
@@ -24,6 +25,7 @@ data class User(
         walletBalance = null,
         tokenType = null,
         isForcedGamePlayUser = null,
+        isAutoScrollEnabled = null,
         emailId = null,
         utmParams = null,
     )

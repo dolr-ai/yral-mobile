@@ -49,7 +49,7 @@ fun YRALReelPlayer(
     onEdgeScrollAttempt: (pageNo: Int, atStart: Boolean, direction: ReelScrollDirection) -> Unit = { _, _, _ -> },
     getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
     getVideoListener: (reel: Reels) -> VideoListener?,
-    overlayContent: @Composable (pageNo: Int) -> Unit,
+    overlayContent: @Composable (pageNo: Int, scrollToNext: () -> Unit) -> Unit,
 ) {
     YRALReelsPlayerView(
         modifier = modifier.fillMaxSize(),
@@ -93,7 +93,7 @@ internal fun YRALReelsPlayerView(
     onEdgeScrollAttempt: (pageNo: Int, atStart: Boolean, direction: ReelScrollDirection) -> Unit = { _, _, _ -> },
     getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
     getVideoListener: (reel: Reels) -> VideoListener?,
-    overlayContent: @Composable (pageNo: Int) -> Unit,
+    overlayContent: @Composable (pageNo: Int, scrollToNext: () -> Unit) -> Unit,
 ) {
     val pageCount = minOf(reels.size, maxReelsInPager)
     if (pageCount == 0) return
@@ -213,6 +213,16 @@ internal fun YRALReelsPlayerView(
             )
         }
 
+    var autoScrollToNext by remember { mutableStateOf(false) }
+    LaunchedEffect(autoScrollToNext) {
+        if (autoScrollToNext) {
+            if (pagerState.currentPage < pageCount - 1) {
+                pagerState.animateScrollToPage(pagerState.currentPage + 1)
+            }
+            autoScrollToNext = false
+        }
+    }
+
     // Render vertical pager if enabled, otherwise render horizontal pager
     if (playerConfig.reelVerticalScrolling) {
         VerticalPager(
@@ -252,7 +262,7 @@ internal fun YRALReelsPlayerView(
                     playerPool = playerPool,
                     videoListener = getVideoListener(reels[page]),
                 )
-                overlayContent(page)
+                overlayContent(page) { autoScrollToNext = true }
             }
         }
     } else {
@@ -292,7 +302,7 @@ internal fun YRALReelsPlayerView(
                     playerPool = playerPool,
                     videoListener = getVideoListener(reels[page]),
                 )
-                overlayContent(page)
+                overlayContent(page) { autoScrollToNext = true }
             }
         }
     }
