@@ -72,10 +72,16 @@ class GameViewModel(
         }
         viewModelScope.launch {
             sessionManager
-                .observeSessionProperty { it.isFirebaseLoggedIn to it.isForcedGamePlayUser }
-                .collect { (isLoggedIn, isForcedGamePlayUser) ->
+                .observeSessionProperty {
+                    it.isFirebaseLoggedIn to Pair(it.isForcedGamePlayUser, it.isAutoScrollEnabled)
+                }.collect { (isLoggedIn, gameFlags) ->
                     if (isLoggedIn) {
-                        isForcedGamePlayUser?.let { _state.update { it.copy(isStopAndVote = isForcedGamePlayUser) } }
+                        gameFlags.first?.let { isForcedGamePlayUser ->
+                            _state.update { it.copy(isStopAndVote = isForcedGamePlayUser) }
+                        }
+                        gameFlags.second?.let { isAutoScrollEnabled ->
+                            _state.update { it.copy(isAutoScrollEnabled = isAutoScrollEnabled) }
+                        }
                         listOf(
                             async { getGameRules() },
                             async { getGameIcons() },
@@ -459,6 +465,7 @@ data class GameState(
     val refreshBalanceState: RefreshBalanceState = RefreshBalanceState.HIDDEN,
     val lastVotedCount: Int = 1,
     val isStopAndVote: Boolean = false,
+    val isAutoScrollEnabled: Boolean = false,
 )
 
 enum class NudgeType {

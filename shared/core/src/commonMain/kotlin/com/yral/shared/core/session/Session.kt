@@ -15,6 +15,7 @@ data class SessionProperties(
     val isSocialSignIn: Boolean? = null,
     val profileVideosCount: Int? = null,
     val isForcedGamePlayUser: Boolean? = null,
+    val isAutoScrollEnabled: Boolean? = null,
     val emailId: String? = null,
     val isFirebaseLoggedIn: Boolean = false,
     val dailyRank: Long? = null,

@@ -99,7 +99,7 @@ fun FeedScreen(
     modifier: Modifier = Modifier,
     viewModel: FeedViewModel = koinViewModel(),
     topOverlay: @Composable (pageNo: Int) -> Unit,
-    bottomOverlay: @Composable (pageNo: Int) -> Unit,
+    bottomOverlay: @Composable (pageNo: Int, scrollToNext: () -> Unit) -> Unit,
     onPageChanged: (pageNo: Int, currentPage: Int) -> Unit,
     onEdgeScrollAttempt: (pageNo: Int) -> Unit,
     limitReelCount: Int,
@@ -189,13 +189,13 @@ fun FeedScreen(
                         onEdgeScrollAttempt(page)
                     }
                 },
-            ) { pageNo ->
+            ) { pageNo, scrollToNext ->
                 FeedOverlay(
                     pageNo = pageNo,
                     state = state,
                     feedViewModel = viewModel,
                     topOverlay = { topOverlay(pageNo) },
-                    bottomOverlay = { bottomOverlay(pageNo) },
+                    bottomOverlay = { bottomOverlay(pageNo, scrollToNext) },
                     openProfile = { canisterData -> component.openProfile(canisterData) },
                 )
             }
