@@ -121,10 +121,6 @@ internal class BillingClientConnectionManager(
                     if (mainContinuation == continuation) {
                         mainContinuation = null
                         isConnecting = false
-                    } else {
-                        synchronized(pendingContinuations) {
-                            pendingContinuations.remove(continuation)
-                        }
                     }
                 }
             }
