@@ -1,5 +1,6 @@
 package com.yral.shared.iap.core.providers
 
+import android.util.Log
 import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingResult
@@ -8,6 +9,11 @@ import com.android.billingclient.api.QueryPurchasesParams
 import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.PurchaseState
 import com.yral.shared.iap.core.model.SubscriptionStatus
+import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.time.Clock
@@ -16,7 +22,9 @@ import com.yral.shared.iap.core.model.Purchase as IAPPurchase
 
 internal class PurchaseManager(
     private val connectionManager: BillingClientConnectionManager,
+    appDispatchers: AppDispatchers,
 ) {
+    private val acknowledgmentScope = CoroutineScope(SupervisorJob() + appDispatchers.network)
     suspend fun restorePurchases(): Result<List<IAPPurchase>> =
         try {
             val client = connectionManager.ensureReady()
@@ -49,6 +57,8 @@ internal class PurchaseManager(
         purchases: MutableList<IAPPurchase>,
     ): BillingResult =
         suspendCancellableCoroutine { continuation ->
+            val unacknowledgedPurchases = mutableListOf<Purchase>()
+
             client.queryPurchasesAsync(
                 QueryPurchasesParams
                     .newBuilder()
@@ -58,10 +68,29 @@ internal class PurchaseManager(
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                     purchaseList.forEach { purchase ->
                         purchases.add(convertPurchase(purchase, productType))
-                        acknowledgePurchaseIfNeeded(client, purchase)
+                        // Collect purchases that need acknowledgment instead of acknowledging immediately
+                        if (!purchase.isAcknowledged) {
+                            unacknowledgedPurchases.add(purchase)
+                        }
                     }
                 }
+                // Resume immediately without blocking the billing callback
                 continuation.resume(billingResult)
+
+                // After resuming, acknowledge purchases asynchronously
+                if (unacknowledgedPurchases.isNotEmpty()) {
+                    acknowledgmentScope.launch {
+                        unacknowledgedPurchases.forEach { purchase ->
+                            try {
+                                acknowledgePurchaseIfNeeded(client, purchase)
+                            } catch (e: CancellationException) {
+                                throw e
+                            } catch (_: Exception) {
+                                // The acknowledgment failure is handled in acknowledgePurchaseIfNeeded callback
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -126,7 +155,13 @@ internal class PurchaseManager(
                     .newBuilder()
                     .setPurchaseToken(purchase.purchaseToken)
                     .build()
-            client.acknowledgePurchase(params) { }
+            client.acknowledgePurchase(params) { billingResult ->
+                // Handle acknowledgment result
+                if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
+                    // Log error if needed - acknowledgment failure doesn't block the restore operation
+                    Log.d("PurchaseManager", "Failed to acknowledge purchase")
+                }
+            }
         }
     }
 }
