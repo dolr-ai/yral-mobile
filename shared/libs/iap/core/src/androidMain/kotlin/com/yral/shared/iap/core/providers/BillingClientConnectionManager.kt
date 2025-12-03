@@ -9,9 +9,14 @@ import com.yral.shared.iap.core.IAPError
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeout
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+
+private val CONNECTION_TIMEOUT: Duration = 30.seconds
 
 internal class BillingClientConnectionManager(
     context: Context,
@@ -33,29 +38,30 @@ internal class BillingClientConnectionManager(
     @Volatile
     private var mainContinuation: Continuation<BillingClient>? = null
 
-    suspend fun ensureReady(): BillingClient {
-        if (billingClient.isReady) {
-            return billingClient
-        }
-
-        val action =
-            connectionMutex.withLock {
-                if (billingClient.isReady) {
-                    return@withLock ConnectionAction.READY
-                }
-                if (isConnecting) {
-                    return@withLock ConnectionAction.WAIT
-                }
-                isConnecting = true
-                return@withLock ConnectionAction.START
+    suspend fun ensureReady(): BillingClient =
+        withTimeout(CONNECTION_TIMEOUT) {
+            if (billingClient.isReady) {
+                return@withTimeout billingClient
             }
 
-        return when (action) {
-            ConnectionAction.READY -> billingClient
-            ConnectionAction.WAIT -> waitForExistingConnection()
-            ConnectionAction.START -> startNewConnection()
+            val action =
+                connectionMutex.withLock {
+                    if (billingClient.isReady) {
+                        return@withLock ConnectionAction.READY
+                    }
+                    if (isConnecting) {
+                        return@withLock ConnectionAction.WAIT
+                    }
+                    isConnecting = true
+                    return@withLock ConnectionAction.START
+                }
+
+            return@withTimeout when (action) {
+                ConnectionAction.READY -> billingClient
+                ConnectionAction.WAIT -> waitForExistingConnection()
+                ConnectionAction.START -> startNewConnection()
+            }
         }
-    }
 
     private enum class ConnectionAction {
         READY,
