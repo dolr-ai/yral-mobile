@@ -12,14 +12,13 @@ val iapModule =
             val coreProvider: com.yral.shared.iap.core.providers.IAPProvider = get()
             IAPProviderImpl(
                 coreProvider = coreProvider,
-                appDispatchers = get(),
                 preferences = get(),
                 sessionManager = get<SessionManager>(),
             )
         }
         single<IAPManager> {
             val provider: IAPProvider = get()
-            val manager = IAPManager(provider)
+            val manager = IAPManager(provider, get())
             if (provider is IAPProviderImpl) {
                 provider.setWarningNotifier { message ->
                     manager.notifyWarning(message)

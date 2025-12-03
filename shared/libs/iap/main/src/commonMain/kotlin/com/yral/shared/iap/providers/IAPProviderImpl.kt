@@ -6,11 +6,7 @@ import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.Product
 import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.iap.core.model.PurchaseState
-import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.preferences.Preferences
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import com.yral.shared.iap.core.model.Purchase as CorePurchase
 import com.yral.shared.iap.core.providers.IAPProvider as CoreIAPProvider
@@ -19,17 +15,14 @@ private const val ACCOUNT_IDENTIFIER_PREFIX = "iap_account_identifier_"
 
 internal class IAPProviderImpl(
     private val coreProvider: CoreIAPProvider,
-    appDispatchers: AppDispatchers,
     private val preferences: Preferences,
     private val sessionManager: SessionManager,
 ) : IAPProvider {
-    private var warningNotifier: suspend (String) -> Unit = {}
+    private var warningNotifier: (String) -> Unit = {}
 
-    fun setWarningNotifier(notifier: suspend (String) -> Unit) {
+    fun setWarningNotifier(notifier: (String) -> Unit) {
         warningNotifier = notifier
     }
-
-    private val callbackScope = CoroutineScope(SupervisorJob() + appDispatchers.network)
 
     override suspend fun fetchProducts(productIds: List<ProductId>): Result<List<Product>> =
         coreProvider
@@ -64,18 +57,14 @@ internal class IAPProviderImpl(
                             "Account identifier $accountIdentifier not stored. " +
                             "User may need to restore purchases after login."
                     Logger.w("IAPProviderImpl") { message }
-                    callbackScope.launch {
-                        warningNotifier(message)
-                    }
+                    warningNotifier(message)
                 }
             } else {
                 val message =
                     "Purchase completed but account identifier is null. " +
                         "Mapping not stored. User may need backend rehydration."
                 Logger.w("IAPProviderImpl") { message }
-                callbackScope.launch {
-                    warningNotifier(message)
-                }
+                warningNotifier(message)
             }
         }
         return result
@@ -152,9 +141,7 @@ internal class IAPProviderImpl(
                 "Account identifier $accountIdentifier does not match any purchases. " +
                     "Not storing mapping for user $userId."
             Logger.w("IAPProviderImpl") { message }
-            callbackScope.launch {
-                warningNotifier(message)
-            }
+            warningNotifier(message)
         }
     }
 
