@@ -16,6 +16,13 @@ object AppFeatureFlags {
                 description = "Toggle subscription usage on App.",
                 defaultValue = false,
             )
+        val InitialBalanceReward: FeatureFlag<Int> =
+            int(
+                keySuffix = "initialBalanceReward",
+                name = "Initial Balance Reward",
+                description = "Initial balance reward",
+                defaultValue = 25,
+            )
     }
 
     object Android :

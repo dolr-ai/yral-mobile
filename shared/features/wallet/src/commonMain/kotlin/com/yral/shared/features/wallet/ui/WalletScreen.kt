@@ -429,7 +429,7 @@ private fun buildAnnotatedGetText(rewardConfig: BtcRewardConfig): AnnotatedStrin
         if (maskedStart >= 0) {
             withStyle(
                 style = spanStyle.copy(color = YralColors.Neutral300),
-            ) { append(fullText.substring(0, maskedStart)) }
+            ) { append(fullText.take(maskedStart)) }
 
             withStyle(
                 style =

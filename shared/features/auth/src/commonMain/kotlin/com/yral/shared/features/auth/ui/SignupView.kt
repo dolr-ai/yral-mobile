@@ -13,6 +13,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
@@ -22,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.features.auth.analytics.AuthTelemetry
@@ -52,7 +54,10 @@ fun SignupView(
     termsLink: String,
     onSignupClicked: (SocialProvider) -> Unit,
     openTerms: () -> Unit,
-    headlineText: String? = null,
+    headlineText: AnnotatedString? = null,
+    disclaimerText: String? = null,
+    topIcon: Painter? = null,
+    topIconSize: DpSize? = null,
     authTelemetry: AuthTelemetry = koinInject(),
 ) {
     LaunchedEffect(Unit) { authTelemetry.onSignupViewed(pageName) }
@@ -62,13 +67,13 @@ fun SignupView(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Image(
-            painter = painterResource(Res.drawable.join_yral),
+            painter = topIcon ?: painterResource(Res.drawable.join_yral),
             contentDescription = "Join Yral",
             modifier =
                 Modifier
                     .padding(0.dp)
-                    .width(240.dp)
-                    .height(86.dp),
+                    .width(topIconSize?.width ?: 240.dp)
+                    .height(topIconSize?.height ?: 86.dp),
         )
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -80,17 +85,26 @@ fun SignupView(
                 verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
                 horizontalAlignment = Alignment.Start,
             ) {
+                headlineText?.let {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center,
+                        text = headlineText,
+                        style = LocalAppTopography.current.xlSemiBold,
+                        color = Color.White,
+                    )
+                }
+                    ?: Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center,
+                        text = stringResource(Res.string.continue_to_sign_up_for_free),
+                        style = LocalAppTopography.current.xlSemiBold,
+                        color = Color.White,
+                    )
                 Text(
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
-                    text = headlineText ?: stringResource(Res.string.continue_to_sign_up_for_free),
-                    style = LocalAppTopography.current.xlSemiBold,
-                    color = Color.White,
-                )
-                Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    text = stringResource(Res.string.sign_up_disclaimer),
+                    text = disclaimerText ?: stringResource(Res.string.sign_up_disclaimer),
                     style = LocalAppTopography.current.baseRegular,
                     color = Color.White,
                 )
