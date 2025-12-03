@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
+@Suppress("TooManyFunctions")
 class SessionManager {
     private val mutableState = MutableStateFlow<SessionState>(SessionState.Initial)
     private val mutableProperties = MutableStateFlow(SessionProperties())
@@ -83,6 +84,10 @@ class SessionManager {
 
     fun updateIsForcedGamePlayUser(isForcedGamePlayUser: Boolean) {
         mutableProperties.update { it.copy(isForcedGamePlayUser = isForcedGamePlayUser) }
+    }
+
+    fun updateIsAutoScrolledEnabled(isAutoScrollEnabled: Boolean) {
+        mutableProperties.update { it.copy(isAutoScrollEnabled = isAutoScrollEnabled) }
     }
 
     fun updateLoggedInUserEmail(email: String?) {
