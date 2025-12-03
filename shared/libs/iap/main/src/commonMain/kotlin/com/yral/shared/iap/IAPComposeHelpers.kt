@@ -32,10 +32,17 @@ fun IAPManager.rememberPurchase(listener: IAPListener): (ProductId) -> Unit {
     }
 }
 
+/***
+ * Usage Instruction
+ * stable callback to handle frequent listener registration/unregistration cycles
+ * val onSuccess = remember { { purchase: Purchase -> handlePurchase(purchase) } }
+ * val onError = remember { { error: IAPError -> handleError(error) } }
+ * val purchase = iapManager.rememberPurchase(onSuccess, onError)
+ */
 @Composable
 fun IAPManager.rememberPurchase(
-    onSuccess: (Purchase) -> Unit = {},
-    onError: (IAPError) -> Unit = {},
+    onSuccess: (Purchase) -> Unit,
+    onError: (IAPError) -> Unit,
 ): (ProductId) -> Unit {
     val listener =
         remember(onSuccess, onError) {
