@@ -4,4 +4,4 @@ import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 
 @Composable
-internal actual fun getPurchaseContext(): Any? = LocalActivity
+internal actual fun getPurchaseContext(): Any? = LocalActivity.current
