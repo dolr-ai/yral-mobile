@@ -23,7 +23,7 @@ fun IAPManager.rememberPurchase(listener: IAPListener): (ProductId) -> Unit {
             removeListener(listener)
         }
     }
-    return remember(context) {
+    return remember(this, context, scope) {
         { productId: ProductId ->
             scope.launch {
                 purchaseProduct(productId, context)
