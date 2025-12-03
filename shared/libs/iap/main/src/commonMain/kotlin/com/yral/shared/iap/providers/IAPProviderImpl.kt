@@ -2,11 +2,13 @@ package com.yral.shared.iap.providers
 
 import co.touchlab.kermit.Logger
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.Product
 import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.iap.core.model.PurchaseState
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.preferences.Preferences
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
@@ -104,35 +106,43 @@ internal class IAPProviderImpl(
     override suspend fun isProductPurchased(
         productId: ProductId,
         userId: String?,
-    ): Boolean =
-        runCatching {
+    ): Result<Boolean> =
+        try {
             val productIdString = productId.productId
             val restoreResult = restorePurchases(userId)
-            val purchases = restoreResult.getOrNull() ?: return false
-
-            if (userId == null) {
-                return purchases.any { purchase ->
-                    purchase.productId == productIdString &&
-                        purchase.state == PurchaseState.PURCHASED &&
-                        (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
+            restoreResult.map { purchases ->
+                if (userId == null) {
+                    purchases.any { purchase ->
+                        purchase.productId == productIdString &&
+                            purchase.state == PurchaseState.PURCHASED &&
+                            (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
+                    }
+                } else {
+                    val accountIdentifiers = getAccountIdentifiersForUser(userId)
+                    if (accountIdentifiers.isEmpty()) {
+                        false
+                    } else {
+                        purchases
+                            .filter { purchase ->
+                                purchase.accountIdentifier != null &&
+                                    accountIdentifiers.contains(purchase.accountIdentifier)
+                            }.any { purchase ->
+                                purchase.productId == productIdString &&
+                                    purchase.state == PurchaseState.PURCHASED &&
+                                    (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
+                            }
+                    }
                 }
             }
-
-            val accountIdentifiers = getAccountIdentifiersForUser(userId)
-            if (accountIdentifiers.isEmpty()) {
-                return false
-            }
-
-            purchases
-                .filter { purchase ->
-                    purchase.accountIdentifier != null &&
-                        accountIdentifiers.contains(purchase.accountIdentifier)
-                }.any { purchase ->
-                    purchase.productId == productIdString &&
-                        purchase.state == PurchaseState.PURCHASED &&
-                        (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
-                }
-        }.getOrDefault(false)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: IAPError) {
+            Result.failure(e)
+        } catch (
+            @Suppress("TooGenericExceptionCaught") e: Exception,
+        ) {
+            Result.failure(IAPError.UnknownError(e))
+        }
 
     override suspend fun setAccountIdentifier(
         userId: String,

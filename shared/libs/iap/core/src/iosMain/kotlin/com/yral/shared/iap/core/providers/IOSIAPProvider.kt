@@ -4,7 +4,6 @@ import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.Product
 import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.iap.core.model.PurchaseState
-import com.yral.shared.iap.core.model.SubscriptionStatus
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
@@ -139,21 +138,23 @@ internal class IOSIAPProvider : IAPProvider {
         }
     }
 
-    override suspend fun isProductPurchased(productId: ProductId): Boolean =
-        runCatching {
+    override suspend fun isProductPurchased(productId: ProductId): Result<Boolean> =
+        try {
             val productIdString = productId.productId
-            val restoreResult = restorePurchases()
-            restoreResult
-                .getOrNull()
-                ?.any { purchase ->
+            restorePurchases().map { purchases ->
+                purchases.any { purchase ->
                     purchase.productId == productIdString &&
                         purchase.state == PurchaseState.PURCHASED &&
-                        (
-                            purchase.subscriptionStatus == null ||
-                                purchase.subscriptionStatus == SubscriptionStatus.UNKNOWN ||
-                                purchase.isActiveSubscription()
-                        )
+                        (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
                 }
-                ?: false
-        }.getOrDefault(false)
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: IAPError) {
+            Result.failure(e)
+        } catch (
+            @Suppress("TooGenericExceptionCaught") e: Exception,
+        ) {
+            Result.failure(IAPError.UnknownError(e))
+        }
 }

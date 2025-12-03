@@ -12,6 +12,7 @@ import com.yral.shared.iap.core.model.Product
 import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.iap.core.model.PurchaseState
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -145,18 +146,25 @@ internal class AndroidIAPProvider(
 
     override suspend fun restorePurchases(): Result<List<IAPPurchase>> = purchaseManager.restorePurchases()
 
-    override suspend fun isProductPurchased(productId: ProductId): Boolean =
-        runCatching {
+    override suspend fun isProductPurchased(productId: ProductId): Result<Boolean> =
+        try {
             val productIdString = productId.productId
-            val restoreResult = restorePurchases()
-            val purchases = restoreResult.getOrNull() ?: return false
-
-            purchases.any { purchase ->
-                purchase.productId == productIdString &&
-                    purchase.state == PurchaseState.PURCHASED &&
-                    (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
+            restorePurchases().map { purchases ->
+                purchases.any { purchase ->
+                    purchase.productId == productIdString &&
+                        purchase.state == PurchaseState.PURCHASED &&
+                        (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
+                }
             }
-        }.getOrDefault(false)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: IAPError) {
+            Result.failure(e)
+        } catch (
+            @Suppress("TooGenericExceptionCaught") e: Exception,
+        ) {
+            Result.failure(IAPError.UnknownError(e))
+        }
 
     private fun handlePurchaseUpdate(
         billingResult: BillingResult,
