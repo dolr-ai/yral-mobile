@@ -96,13 +96,12 @@ class IAPManager(
     }
 
     private suspend fun notifyListeners(action: IAPListener.() -> Unit) {
-        listenersMutex.withLock {
-            listeners.forEach { listener ->
-                runCatching {
-                    listener.action()
-                }.onFailure {
-                    Logger.e("IAPManager", it) { "Failed to notify listener ${listener::class}" }
-                }
+        val currentListeners = listenersMutex.withLock { listeners.toList() }
+        currentListeners.forEach { listener ->
+            runCatching {
+                listener.action()
+            }.onFailure {
+                Logger.e("IAPManager", it) { "Failed to notify listener ${listener::class}" }
             }
         }
     }
