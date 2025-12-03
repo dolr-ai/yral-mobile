@@ -1,5 +1,6 @@
 package com.yral.shared.iap.core
 
+import co.touchlab.kermit.Logger
 import com.yral.shared.iap.core.model.Product
 import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.iap.core.model.Purchase
@@ -82,7 +83,9 @@ class IAPManager(
                 runCatching {
                     listener.action()
                 }.onFailure {
-                    // Log error but don't throw
+                    Logger.e("IAPManager", it) {
+                        "IAP listener failed while executing action for listener=${listener::class.simpleName}"
+                    }
                 }
             }
         }
