@@ -1,30 +1,28 @@
 package com.yral.shared.iap
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.Product
 import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.iap.core.model.Purchase
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
 
 @Composable
 fun IAPManager.rememberPurchase(listener: IAPListener): (ProductId) -> Unit {
     val context = getPurchaseContext()
     val scope = rememberCoroutineScope()
-    DisposableEffect(this, listener) {
-        scope.launch {
+    LaunchedEffect(this, listener) {
+        try {
             addListener(listener)
-        }
-        onDispose {
-            scope.launch {
-                removeListener(listener)
-            }
+            awaitCancellation()
+        } finally {
+            removeListener(listener)
         }
     }
-
     return remember(context) {
         { productId: ProductId ->
             scope.launch {
