@@ -41,7 +41,7 @@ internal class AndroidIAPProvider(
 
     private val connectionManager = BillingClientConnectionManager(context, purchasesUpdatedListener)
     private val productFetcher = ProductFetcher(connectionManager)
-    private val purchaseManager = PurchaseManager(connectionManager)
+    private val purchaseManager = PurchaseManager(connectionManager, appDispatchers)
 
     override suspend fun fetchProducts(productIds: List<ProductId>): Result<List<Product>> =
         productFetcher
