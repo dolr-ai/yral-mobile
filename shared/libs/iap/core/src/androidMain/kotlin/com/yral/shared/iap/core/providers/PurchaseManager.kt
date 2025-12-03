@@ -13,6 +13,7 @@ import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
@@ -43,6 +44,8 @@ internal class PurchaseManager(
                     ),
                 )
             }
+        } catch (e: TimeoutCancellationException) {
+            throw e
         } catch (e: CancellationException) {
             throw e
         } catch (e: IAPError) {
@@ -85,6 +88,8 @@ internal class PurchaseManager(
                         unacknowledgedPurchases.forEach { purchase ->
                             try {
                                 acknowledgePurchaseIfNeeded(client, purchase)
+                            } catch (e: TimeoutCancellationException) {
+                                throw e
                             } catch (e: CancellationException) {
                                 throw e
                             } catch (_: Exception) {
@@ -147,7 +152,7 @@ internal class PurchaseManager(
         return SubscriptionStatus.ACTIVE
     }
 
-    private fun acknowledgePurchaseIfNeeded(
+    fun acknowledgePurchaseIfNeeded(
         client: BillingClient,
         purchase: Purchase,
     ) {
