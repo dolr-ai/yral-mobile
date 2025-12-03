@@ -8,6 +8,7 @@ import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.Product
 import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.iap.core.model.ProductType
+import kotlinx.coroutines.CancellationException
 
 internal class ProductFetcher(
     private val connectionManager: BillingClientConnectionManager,
@@ -45,6 +46,8 @@ internal class ProductFetcher(
                     ),
                 )
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: IAPError) {
             Result.failure(e)
         } catch (
