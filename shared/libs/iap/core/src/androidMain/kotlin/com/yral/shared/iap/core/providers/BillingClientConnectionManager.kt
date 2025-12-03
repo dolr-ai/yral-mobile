@@ -6,6 +6,7 @@ import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingResult
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.yral.shared.iap.core.IAPError
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.coroutines.Continuation
@@ -63,7 +64,7 @@ internal class BillingClientConnectionManager(
     }
 
     private suspend fun waitForExistingConnection(): BillingClient =
-        kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
+        suspendCancellableCoroutine { continuation ->
             synchronized(pendingContinuations) {
                 pendingContinuations.add(continuation)
             }
@@ -75,7 +76,7 @@ internal class BillingClientConnectionManager(
         }
 
     private suspend fun startNewConnection(): BillingClient =
-        kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
+        suspendCancellableCoroutine { continuation ->
             synchronized(this@BillingClientConnectionManager) {
                 mainContinuation = continuation
             }
