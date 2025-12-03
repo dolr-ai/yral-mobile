@@ -41,6 +41,7 @@ fun IAPManager.rememberPurchase(
         remember(onSuccess, onError) {
             object : IAPListener {
                 override fun onProductsFetched(products: List<Product>) { /* No op */ }
+                override fun onProductsError(error: IAPError) { /* No op */ }
                 override fun onPurchaseSuccess(purchase: Purchase) = onSuccess(purchase)
                 override fun onPurchaseError(error: IAPError) = onError(error)
                 override fun onPurchasesRestored(purchases: List<Purchase>) { /* No op */ }
