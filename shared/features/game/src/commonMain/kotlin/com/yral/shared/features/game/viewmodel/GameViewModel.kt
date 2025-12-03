@@ -419,7 +419,7 @@ class GameViewModel(
             NudgeType.MANDATORY -> {
                 if (feedDetailsSize != currentState.lastVotedCount && currentState.isStopAndVote) {
                     Logger.d("Nudge") { "Showing mandatory nudge" }
-                    _state.update { it.copy(nudgeType = NudgeType.MANDATORY) }
+                    _state.update { it.copy(nudgeType = NudgeType.MANDATORY, isDefaultMandatoryNudgeShown = true) }
                 }
             }
             NudgeType.INTRO -> {
@@ -454,6 +454,7 @@ data class GameState(
     val isResultSheetShown: Boolean = false,
     val isHowToPlayShown: List<Boolean> = List(SHOW_HOW_TO_PLAY_MAX_PAGE) { false },
     val isSmileyGameIntroNudgeShown: Boolean = false,
+    val isDefaultMandatoryNudgeShown: Boolean = false,
     val nudgeType: NudgeType? = null,
     val refreshBalanceState: RefreshBalanceState = RefreshBalanceState.HIDDEN,
     val lastVotedCount: Int = 1,

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -52,7 +53,7 @@ import org.jetbrains.compose.resources.painterResource
 import yral_mobile.shared.libs.designsystem.generated.resources.shadow
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 fun FeedScaffoldScreen(
     component: FeedComponent,
@@ -170,6 +171,18 @@ fun FeedScaffoldScreen(
         PreloadLottieAnimations(
             urls = gameState.gameIcons.map { it.clickAnimation },
         )
+    }
+    LaunchedEffect(feedState.feedDetails.size, gameState.gameIcons.size) {
+        if (feedState.feedDetails.isNotEmpty() &&
+            gameState.gameIcons.isNotEmpty() &&
+            !gameState.isDefaultMandatoryNudgeShown
+        ) {
+            gameViewModel.showNudge(
+                nudgeIntention = NudgeType.MANDATORY,
+                pageNo = feedState.currentPageOfFeed,
+                feedDetailsSize = feedState.feedDetails.size,
+            )
+        }
     }
 }
 
