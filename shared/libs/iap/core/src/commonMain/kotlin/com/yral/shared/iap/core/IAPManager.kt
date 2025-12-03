@@ -74,7 +74,7 @@ class IAPManager(
         return result
     }
 
-    suspend fun isProductPurchased(productId: ProductId): Boolean = provider.isProductPurchased(productId)
+    suspend fun isProductPurchased(productId: ProductId): Result<Boolean> = provider.isProductPurchased(productId)
 
     private suspend fun notifyListeners(action: IAPListener.() -> Unit) {
         listenersMutex.withLock {
