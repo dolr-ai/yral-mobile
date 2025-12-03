@@ -11,5 +11,5 @@ interface IAPProvider {
         context: Any? = null,
     ): Result<Purchase>
     suspend fun restorePurchases(): Result<List<Purchase>>
-    suspend fun isProductPurchased(productId: ProductId): Boolean
+    suspend fun isProductPurchased(productId: ProductId): Result<Boolean>
 }
