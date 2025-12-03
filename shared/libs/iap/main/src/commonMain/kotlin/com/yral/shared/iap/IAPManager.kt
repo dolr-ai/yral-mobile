@@ -35,13 +35,15 @@ class IAPManager(
 
     suspend fun fetchProducts(productIds: List<ProductId>): Result<List<Product>> {
         val result = provider.fetchProducts(productIds)
-        notifyListeners {
-            if (result.isSuccess) {
-                result.getOrNull()?.let { products ->
-                    onProductsFetched(products)
+        result.fold(
+            onSuccess = { notifyListeners { onProductsFetched(it) } },
+            onFailure = {
+                notifyListeners {
+                    val error = it as? IAPError ?: IAPError.UnknownError(it)
+                    onProductsError(error)
                 }
-            }
-        }
+            },
+        )
         return result
     }
 
