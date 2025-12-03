@@ -79,7 +79,7 @@ class IAPManager(
     suspend fun isProductPurchased(
         productId: ProductId,
         userId: String?,
-    ): Boolean = provider.isProductPurchased(productId, userId)
+    ): Result<Boolean> = provider.isProductPurchased(productId, userId)
 
     suspend fun setAccountIdentifier(
         userId: String,

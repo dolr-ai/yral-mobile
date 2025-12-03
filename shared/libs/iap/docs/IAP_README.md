@@ -247,14 +247,18 @@ viewModelScope.launch {
 ```kotlin
 viewModelScope.launch {
     val userId = sessionManager.userPrincipal
-    val isPurchased = iapManager.isProductPurchased(ProductId.PREMIUM_MONTHLY, userId)
-    if (isPurchased) {
-        // User has purchased this product
+    val result = iapManager.isProductPurchased(ProductId.PREMIUM_MONTHLY, userId)
+    result.onSuccess { isPurchased ->
+        if (isPurchased) {
+            // User has purchased this product
+        }
+    }.onFailure { error ->
+        // Handle error checking purchase status
     }
 }
 ```
 
-**Note**: Always pass `userId` from `SessionManager.userPrincipal` to ensure proper account validation.
+**Note**: Always pass `userId` from `SessionManager.userPrincipal` to ensure proper account validation. The method returns `Result<Boolean>` to handle potential errors when checking purchase status.
 
 ### Using IAPListener
 
@@ -453,7 +457,14 @@ The module tracks subscription lifecycle states to handle paused, cancelled, and
 ```kotlin
 // Check if subscription is active
 val userId = sessionManager.userPrincipal
-val isActive = iapManager.isProductPurchased(ProductId.PREMIUM_MONTHLY, userId)
+val result = iapManager.isProductPurchased(ProductId.PREMIUM_MONTHLY, userId)
+result.onSuccess { isActive ->
+    if (isActive) {
+        // Subscription is active
+    }
+}.onFailure { error ->
+    // Handle error checking subscription status
+}
 
 // Or use Purchase helper
 if (purchase.isActiveSubscription()) {
@@ -509,8 +520,9 @@ When users have multiple Google Play accounts on their device, subscriptions are
 
 2. **Purchase Validation**: When checking if a product is purchased (`isProductPurchased`) or restoring purchases (`restorePurchases`):
    - Retrieves the stored account identifier for the given `userId`
-   - If account identifier is **not found**, returns `false` (not purchased) or empty list
+   - If account identifier is **not found**, returns `Result.success(false)` (not purchased) or empty list
    - If account identifier is found, filters purchases to only include those matching the stored identifier
+   - Returns `Result<Boolean>` to handle potential errors during the check
 
 3. **Security**: The module uses a strict validation approach:
    - **No fallback behavior**: If account identifier mapping is missing, access is denied
@@ -524,7 +536,14 @@ When users have multiple Google Play accounts on their device, subscriptions are
 val userId = sessionManager.userPrincipal
 
 // Check if product is purchased (automatically filters by user's Google Play account)
-val isPurchased = iapManager.isProductPurchased(ProductId.PREMIUM_MONTHLY, userId)
+val result = iapManager.isProductPurchased(ProductId.PREMIUM_MONTHLY, userId)
+result.onSuccess { isPurchased ->
+    if (isPurchased) {
+        // Product is purchased
+    }
+}.onFailure { error ->
+    // Handle error checking purchase status
+}
 
 // Restore purchases (automatically filters by user's Google Play account)
 val purchases = iapManager.restorePurchases(userId)
@@ -543,7 +562,14 @@ val accountIdentifier = backendResponse.googlePlayAccountId
 iapManager.setAccountIdentifier(userId, accountIdentifier)
 
 // Now purchases will work correctly
-val isPurchased = iapManager.isProductPurchased(ProductId.PREMIUM_MONTHLY, userId)
+val result = iapManager.isProductPurchased(ProductId.PREMIUM_MONTHLY, userId)
+result.onSuccess { isPurchased ->
+    if (isPurchased) {
+        // Product is purchased
+    }
+}.onFailure { error ->
+    // Handle error checking purchase status
+}
 ```
 
 **Backend Integration:**
@@ -555,7 +581,7 @@ val isPurchased = iapManager.isProductPurchased(ProductId.PREMIUM_MONTHLY, userI
 
 - **Android**: Account validation is fully supported using Google Play Billing Library's account identifiers. Purchases are filtered by the stored account identifier(s) for the current user.
 - **iOS**: `setAccountIdentifier()` is implemented and stores the identifier, but iOS doesn't have account identifiers in purchases (uses a single App Store account per device). The identifier is stored for consistency and potential future use, but filtering is not applicable.
-- **Security**: If account identifier mapping is missing, `isProductPurchased()` returns `false` and `restorePurchases()` returns empty list (no fallback to all purchases).
+- **Security**: If account identifier mapping is missing, `isProductPurchased()` returns `Result.success(false)` and `restorePurchases()` returns empty list (no fallback to all purchases).
 - **Persistence**: Account identifier mappings are stored in Preferences and persist across app restarts.
 - **SessionManager**: Used directly (KMP-compatible) to get the current user ID for account validation.
 
