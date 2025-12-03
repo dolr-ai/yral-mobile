@@ -375,10 +375,12 @@ private fun OverlayBottom(
                 onAnimationComplete = { gameViewModel.setHowToPlayShown(pageNo, feedState.currentPageOfFeed) },
             )
         }
-        Game(
-            feedDetails = feedState.feedDetails[pageNo],
-            pageNo = pageNo,
-            gameViewModel = gameViewModel,
-        )
+        if (pageNo < feedState.feedDetails.size) {
+            Game(
+                feedDetails = feedState.feedDetails[pageNo],
+                pageNo = pageNo,
+                gameViewModel = gameViewModel,
+            )
+        }
     }
 }
