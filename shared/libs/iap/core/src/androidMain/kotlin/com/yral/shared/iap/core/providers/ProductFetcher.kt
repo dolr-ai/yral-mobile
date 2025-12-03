@@ -9,10 +9,12 @@ import com.yral.shared.iap.core.model.Product
 import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.iap.core.model.ProductType
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.TimeoutCancellationException
 
 internal class ProductFetcher(
     private val connectionManager: BillingClientConnectionManager,
 ) {
+    @Suppress("CyclomaticComplexMethod")
     suspend fun fetchProducts(productIds: List<ProductId>): Result<List<Product>> =
         try {
             val client = connectionManager.ensureReady()
@@ -46,6 +48,8 @@ internal class ProductFetcher(
                     ),
                 )
             }
+        } catch (e: TimeoutCancellationException) {
+            throw e
         } catch (e: CancellationException) {
             throw e
         } catch (e: IAPError) {
