@@ -1,6 +1,6 @@
 package com.yral.shared.iap.core.providers
 
-import android.util.Log
+import co.touchlab.kermit.Logger
 import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingResult
@@ -161,7 +161,7 @@ internal class PurchaseManager(
                 // Handle acknowledgment result
                 if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
                     // Log error if needed - acknowledgment failure doesn't block the restore operation
-                    Log.d("PurchaseManager", "Failed to acknowledge purchase")
+                    Logger.d("PurchaseManager") { "Failed to acknowledge purchase" }
                 }
             }
         }

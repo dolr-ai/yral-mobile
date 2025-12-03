@@ -17,6 +17,7 @@ kotlin {
             implementation(projects.shared.libs.koin)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.datetime)
+            implementation(libs.touchlab.logger)
         }
         androidMain.dependencies {
             implementation(libs.googlePlay.billingclient)
