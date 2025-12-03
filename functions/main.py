@@ -8,6 +8,7 @@ from google.api_core.exceptions import AlreadyExists, GoogleAPICallError
 from typing import List, Dict, Any
 import requests
 from requests.exceptions import RequestException
+from tournaments import create_tournaments, update_tournament_status
 import os
 import random
 import collections
