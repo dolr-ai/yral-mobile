@@ -20,7 +20,6 @@ import platform.StoreKit.SKProductsResponse
 import platform.StoreKit.SKRequest
 import platform.darwin.NSObject
 import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 
 internal class ProductFetcher {
     private val productCache = mutableMapOf<String, SKProduct>()
@@ -93,9 +92,11 @@ internal class ProductFetcher {
                         didFailWithError: NSError,
                     ) {
                         request.cancel()
-                        continuation.resumeWithException(
-                            IAPError.NetworkError(
-                                Exception("Failed to fetch products: ${didFailWithError.localizedDescription}"),
+                        continuation.resume(
+                            Result.failure(
+                                IAPError.NetworkError(
+                                    Exception("Failed to fetch products: ${didFailWithError.localizedDescription}"),
+                                ),
                             ),
                         )
                     }
