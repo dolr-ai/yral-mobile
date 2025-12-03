@@ -154,6 +154,9 @@ dependencies {
 
     implementation(libs.googlePlay.inAppUpdate)
 
+    implementation(libs.googlePlay.billingclient)
+    implementation(libs.googlePlay.billingclient.ktx)
+
     implementation(projects.shared.core)
     implementation(projects.shared.data)
     implementation(projects.shared.libs.preferences)
