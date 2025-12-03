@@ -6,12 +6,18 @@ import com.yral.shared.iap.core.model.Product
 import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.iap.core.model.Purchase
 import com.yral.shared.iap.providers.IAPProvider
+import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 class IAPManager(
     private val provider: IAPProvider,
+    appDispatchers: AppDispatchers,
 ) {
+    private val managerScope = CoroutineScope(SupervisorJob() + appDispatchers.network)
     private val listeners = mutableSetOf<IAPListener>()
     private val listenersMutex = Mutex()
 
@@ -88,10 +94,10 @@ class IAPManager(
         provider.setAccountIdentifier(userId, accountIdentifier)
     }
 
-    suspend fun notifyWarning(message: String) {
+    fun notifyWarning(message: String) {
         Logger.w("IAPManager") { message }
-        notifyListeners {
-            onWarning(message)
+        managerScope.launch {
+            notifyListeners { onWarning(message) }
         }
     }
 
