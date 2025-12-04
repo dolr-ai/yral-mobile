@@ -73,6 +73,8 @@ import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import yral_mobile.shared.features.profile.generated.resources.Res
+import yral_mobile.shared.features.profile.generated.resources.msg_principal_id_copied
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.bio
 import yral_mobile.shared.libs.designsystem.generated.resources.copy_profile_name
@@ -243,11 +245,17 @@ fun EditProfileScreen(
                 )
                 Spacer(modifier = Modifier.height(24.dp))
 
+                val copiedMessage = stringResource(Res.string.msg_principal_id_copied)
                 UniqueIdSection(
                     uniqueId = state.uniqueId,
                     onCopy = {
                         if (state.uniqueId.isNotEmpty()) {
                             clipboardManager.setText(AnnotatedString(state.uniqueId))
+                            if (notifyClipboardCopy()) {
+                                ToastManager.showSuccess(
+                                    type = ToastType.Small(copiedMessage),
+                                )
+                            }
                         }
                     },
                 )
@@ -746,3 +754,9 @@ private fun EmailSection(email: String) {
         }
     }
 }
+
+/**
+ * Some platforms like Android natively shows a notification if something is copied to clipboard.
+ * On other platforms like iOS app is responsible for notifying the user
+ */
+internal expect fun notifyClipboardCopy(): Boolean
