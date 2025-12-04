@@ -15,6 +15,11 @@ kotlin {
         iosSimulatorArm64(),
     )
 
+    cocoapods {
+        ios.deploymentTarget = "15.6"
+        noPodspec()
+    }
+
     sourceSets {
         commonMain.dependencies {
             implementation(projects.shared.core)
