@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -33,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -42,6 +44,7 @@ import com.yral.shared.features.leaderboard.ui.LeaderboardRankConstants.TROPHY_O
 import com.yral.shared.features.leaderboard.ui.LeaderboardRankConstants.TROPHY_ROTATION
 import com.yral.shared.features.leaderboard.ui.LeaderboardRankConstants.TROPHY_SCALE
 import com.yral.shared.libs.designsystem.component.formatAbbreviation
+import com.yral.shared.libs.designsystem.component.neonBorder
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.async
@@ -64,6 +67,7 @@ fun DailyRanK(
     position: Long,
     animate: Boolean,
     setAnimate: (Boolean) -> Unit,
+    isShowingNudge: Boolean,
     modifier: Modifier = Modifier,
 ) {
     var previousPosition by remember { mutableLongStateOf(position) }
@@ -75,6 +79,7 @@ fun DailyRanK(
         Position(
             position = position,
             delta = delta,
+            isShowingNudge = isShowingNudge,
             onAnimationComplete = { previousPosition = position },
         )
         Trophy(
@@ -138,6 +143,7 @@ private fun Trophy(
 private fun BoxScope.Position(
     position: Long,
     delta: Long,
+    isShowingNudge: Boolean,
     onAnimationComplete: () -> Unit,
 ) {
     Column(
@@ -146,7 +152,19 @@ private fun BoxScope.Position(
                 .height(32.dp)
                 .widthIn(min = 75.dp)
                 .offset(x = TROPHY_OFFSET_X.dp)
-                .background(
+                .then(
+                    if (isShowingNudge) {
+                        Modifier
+                            .neonBorder(
+                                paddingValues = PaddingValues(start = 0.dp),
+                                cornerRadius = 16.dp,
+                                containerColor = Color.Transparent,
+                                animationDuration = 600L,
+                            )
+                    } else {
+                        Modifier
+                    },
+                ).background(
                     brush =
                         Brush.linearGradient(
                             listOf(

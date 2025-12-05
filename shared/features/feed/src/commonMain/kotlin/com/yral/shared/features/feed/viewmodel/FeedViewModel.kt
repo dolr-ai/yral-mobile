@@ -41,6 +41,8 @@ import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.libs.sharing.LinkGenerator
 import com.yral.shared.libs.sharing.LinkInput
 import com.yral.shared.libs.sharing.ShareService
+import com.yral.shared.preferences.PrefKeys
+import com.yral.shared.preferences.Preferences
 import com.yral.shared.reportVideo.domain.ReportRequestParams
 import com.yral.shared.reportVideo.domain.ReportVideoUseCase
 import com.yral.shared.reportVideo.domain.models.ReportSheetState
@@ -50,6 +52,7 @@ import com.yral.shared.rust.service.domain.usecases.FollowUserUseCase
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -76,6 +79,7 @@ class FeedViewModel(
     private val urlBuilder: UrlBuilder,
     private val linkGenerator: LinkGenerator,
     private val flagManager: FeatureFlagManager,
+    private val preferences: Preferences,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
@@ -108,9 +112,16 @@ class FeedViewModel(
     private val feedEventsChannel = Channel<FeedEvents>(Channel.CONFLATED)
     val feedEvents = feedEventsChannel.receiveAsFlow()
 
+    private var dismissOnboardingJob: Job? = null
+
     init {
         initAvailableFeeds()
         loadCachedFeedDetails()
+        viewModelScope.launch {
+            if (preferences.getBoolean(PrefKeys.IS_ONBOARDING_COMPLETE.name) != true) {
+                _state.update { it.copy(currentOnboardingStep = OnboardingStep.INTRO_GAME) }
+            }
+        }
         viewModelScope.launch {
             sessionManager
                 .observeSessionProperty { it.followedPrincipals to it.unFollowedPrincipals }
@@ -981,6 +992,30 @@ class FeedViewModel(
         feedTelemetry.followClicked(publisherUserId)
     }
 
+    fun dismissOnboardingStep() {
+        dismissOnboardingJob?.cancel()
+        dismissOnboardingJob =
+            viewModelScope.launch {
+                delay(500.milliseconds)
+                _state.update { currentState ->
+                    val nextStep =
+                        when (currentState.currentOnboardingStep) {
+                            OnboardingStep.INTRO_GAME -> OnboardingStep.INTRO_BALANCE
+                            OnboardingStep.INTRO_BALANCE -> OnboardingStep.INTRO_RANK
+                            OnboardingStep.INTRO_RANK -> OnboardingStep.INTRO_GAME_END
+                            OnboardingStep.INTRO_GAME_END -> null // Onboarding complete
+                            null -> null
+                        }
+                    if (nextStep == null) {
+                        viewModelScope.launch {
+                            preferences.putBoolean(PrefKeys.IS_ONBOARDING_COMPLETE.name, true)
+                        }
+                    }
+                    currentState.copy(currentOnboardingStep = nextStep)
+                }
+            }
+    }
+
     data class RequiredUseCases(
         val getInitialFeedUseCase: GetInitialFeedUseCase,
         val fetchMoreFeedUseCase: FetchMoreFeedUseCase,
@@ -1015,6 +1050,7 @@ data class FeedState(
     val availableFeedTypes: List<FeedType> = listOf(FeedType.DEFAULT),
     val feedType: FeedType = FeedType.DEFAULT,
     val isFollowInProgress: Boolean = false,
+    val currentOnboardingStep: OnboardingStep? = null,
 )
 
 enum class OverlayType {
@@ -1040,6 +1076,13 @@ sealed class FeedEvents {
     data class Failed(
         val message: String,
     ) : FeedEvents()
+}
+
+enum class OnboardingStep {
+    INTRO_GAME, // Step 1
+    INTRO_BALANCE, // Step 2
+    INTRO_RANK, // Step 3
+    INTRO_GAME_END, // Step 4
 }
 
 @Suppress("MagicNumber")
