@@ -1000,20 +1000,19 @@ class FeedViewModel(
         dismissOnboardingJob =
             viewModelScope.launch {
                 delay(500.milliseconds)
-                _state.update { currentState ->
-                    val nextStep =
-                        when (currentState.currentOnboardingStep) {
-                            OnboardingStep.INTRO_GAME -> OnboardingStep.INTRO_BALANCE
-                            OnboardingStep.INTRO_BALANCE -> OnboardingStep.INTRO_RANK
-                            OnboardingStep.INTRO_RANK -> OnboardingStep.INTRO_GAME_END
-                            OnboardingStep.INTRO_GAME_END -> null // Onboarding complete
-                            null -> null
-                        }
-                    if (nextStep == null) {
-                        viewModelScope.launch { preferences.putBoolean(PrefKeys.IS_ONBOARDING_COMPLETE.name, true) }
+                val currentStep = _state.value.currentOnboardingStep
+                val nextStep =
+                    when (currentStep) {
+                        OnboardingStep.INTRO_GAME -> OnboardingStep.INTRO_BALANCE
+                        OnboardingStep.INTRO_BALANCE -> OnboardingStep.INTRO_RANK
+                        OnboardingStep.INTRO_RANK -> OnboardingStep.INTRO_GAME_END
+                        OnboardingStep.INTRO_GAME_END -> null
+                        null -> null
                     }
-                    currentState.copy(currentOnboardingStep = nextStep)
+                if (nextStep == null && currentStep != null) {
+                    preferences.putBoolean(PrefKeys.IS_ONBOARDING_COMPLETE.name, true)
                 }
+                _state.update { it.copy(currentOnboardingStep = nextStep) }
             }
     }
 
