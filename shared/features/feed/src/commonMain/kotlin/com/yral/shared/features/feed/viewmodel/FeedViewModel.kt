@@ -113,6 +113,7 @@ class FeedViewModel(
     val feedEvents = feedEventsChannel.receiveAsFlow()
 
     private var dismissOnboardingJob: Job? = null
+    private val trackedOnboardingSteps = mutableSetOf<OnboardingStep>()
 
     init {
         initAvailableFeeds()
@@ -155,6 +156,8 @@ class FeedViewModel(
                 }.debounce(1000.milliseconds) // Debounce to avoid too frequent saves
                 .collect { saveCacheToPreferences() }
         }
+        // Track onboarding steps only once when they're first shown
+        viewModelScope.launch { trackOnboardingShown() }
     }
 
     private fun initAvailableFeeds() {
@@ -1007,13 +1010,39 @@ class FeedViewModel(
                             null -> null
                         }
                     if (nextStep == null) {
-                        viewModelScope.launch {
-                            preferences.putBoolean(PrefKeys.IS_ONBOARDING_COMPLETE.name, true)
-                        }
+                        viewModelScope.launch { preferences.putBoolean(PrefKeys.IS_ONBOARDING_COMPLETE.name, true) }
                     }
                     currentState.copy(currentOnboardingStep = nextStep)
                 }
             }
+    }
+
+    private fun trackOnboardingShown() {
+        viewModelScope.launch {
+            _state
+                .distinctUntilChanged { old, new ->
+                    old.currentOnboardingStep == new.currentOnboardingStep &&
+                        old.currentPageOfFeed == new.currentPageOfFeed &&
+                        old.feedDetails.size == new.feedDetails.size
+                }.collect { state ->
+                    if (state.feedDetails.isNotEmpty()) {
+                        state.currentOnboardingStep?.let { step ->
+                            if (step !in trackedOnboardingSteps) {
+                                val shouldTrack =
+                                    when {
+                                        step == OnboardingStep.INTRO_GAME && state.currentPageOfFeed == 0 -> true
+                                        step != OnboardingStep.INTRO_GAME && state.currentPageOfFeed > 0 -> true
+                                        else -> false
+                                    }
+                                if (shouldTrack) {
+                                    trackedOnboardingSteps.add(step)
+                                    feedTelemetry.onboardingStepShown(step)
+                                }
+                            }
+                        }
+                    }
+                }
+        }
     }
 
     data class RequiredUseCases(
