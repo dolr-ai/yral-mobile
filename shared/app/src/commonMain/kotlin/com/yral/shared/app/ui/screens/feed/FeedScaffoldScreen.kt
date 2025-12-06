@@ -25,14 +25,20 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.shared.analytics.events.GameType
+import com.yral.shared.app.ui.screens.feed.FeedScaffoldScreenConstants.TOP_OVERLAY_ITEM_OFFSET_X
 import com.yral.shared.app.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.shared.app.ui.screens.feed.performance.VideoListenerImpl
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.feed.ui.FeedScreen
+import com.yral.shared.features.feed.ui.components.FeedOnboardingNudge
+import com.yral.shared.features.feed.ui.components.FeedTargetBounds
 import com.yral.shared.features.feed.ui.components.UserBrief
+import com.yral.shared.features.feed.ui.components.captureFeedOnboardingBounds
 import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
+import com.yral.shared.features.feed.viewmodel.OnboardingStep
 import com.yral.shared.features.feed.viewmodel.OverlayType
+import com.yral.shared.features.game.domain.models.VoteResult
 import com.yral.shared.features.game.ui.AboutGameSheet
 import com.yral.shared.features.game.ui.CoinBalance
 import com.yral.shared.features.game.ui.Game
@@ -51,8 +57,15 @@ import com.yral.shared.rust.service.domain.models.toCanisterData
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
+import yral_mobile.shared.app.generated.resources.Res
+import yral_mobile.shared.app.generated.resources.onboarding_nudge_balance
+import yral_mobile.shared.app.generated.resources.onboarding_nudge_balance_highlight
+import yral_mobile.shared.app.generated.resources.onboarding_nudge_rank
+import yral_mobile.shared.app.generated.resources.onboarding_nudge_rank_highlight
 import yral_mobile.shared.libs.designsystem.generated.resources.shadow
 import kotlin.time.Duration.Companion.seconds
+import com.yral.shared.features.feed.ui.components.ArrowAlignment as FeedArrowAlignment
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
@@ -87,10 +100,11 @@ fun FeedScaffoldScreen(
                 setPostDescriptionExpanded = { feedViewModel.setPostDescriptionExpanded(it) },
                 updateGameType = { gameViewModel.updateGameType(it) },
                 openUserProfile = { component.openProfile(it) },
+                feedViewModel = feedViewModel,
             )
         },
         bottomOverlay = { pageNo, scrollToNext ->
-            OverlayBottom(pageNo, feedState, gameState, gameViewModel, scrollToNext)
+            OverlayBottom(pageNo, feedState, gameState, gameViewModel, feedViewModel, scrollToNext)
         },
         onPageChanged = { pageNo, currentPageOfFeed ->
             if (pageNo >= 0 && pageNo < feedState.feedDetails.size) {
@@ -110,14 +124,17 @@ fun FeedScaffoldScreen(
             )
         },
         onEdgeScrollAttempt = { pageNo ->
-            gameViewModel.showNudge(
-                nudgeIntention = NudgeType.MANDATORY,
-                pageNo = pageNo,
-                feedDetailsSize = feedState.feedDetails.size,
-            )
+            // Don't show mandatory nudge during onboarding
+            if (feedState.currentOnboardingStep == null) {
+                gameViewModel.showNudge(
+                    nudgeIntention = NudgeType.MANDATORY,
+                    pageNo = pageNo,
+                    feedDetailsSize = feedState.feedDetails.size,
+                )
+            }
         },
         limitReelCount =
-            if (gameState.isStopAndVote) {
+            if (gameState.isStopAndVote || feedState.currentOnboardingStep != null) {
                 gameState.lastVotedCount
             } else {
                 feedState.feedDetails.size
@@ -176,10 +193,17 @@ fun FeedScaffoldScreen(
             urls = gameState.gameIcons.map { it.clickAnimation },
         )
     }
-    LaunchedEffect(feedState.feedDetails.size, gameState.gameIcons.size) {
+    LaunchedEffect(
+        feedState.feedDetails.size,
+        gameState.gameIcons.size,
+        feedState.currentOnboardingStep,
+    ) {
+        @Suppress("ComplexCondition")
+        // Only show mandatory nudge after onboarding is complete
         if (feedState.feedDetails.isNotEmpty() &&
             gameState.gameIcons.isNotEmpty() &&
-            !gameState.isDefaultMandatoryNudgeShown
+            !gameState.isDefaultMandatoryNudgeShown &&
+            feedState.currentOnboardingStep == null
         ) {
             gameViewModel.showNudge(
                 nudgeIntention = NudgeType.MANDATORY,
@@ -190,6 +214,7 @@ fun FeedScaffoldScreen(
     }
 }
 
+@Suppress("LongMethod")
 @Composable
 private fun OverLayTop(
     pageNo: Int,
@@ -201,32 +226,67 @@ private fun OverLayTop(
     setPostDescriptionExpanded: (Boolean) -> Unit,
     updateGameType: (GameType) -> Unit,
     openUserProfile: (canisterData: CanisterData) -> Unit,
+    feedViewModel: FeedViewModel,
 ) {
-    when (feedState.overlayType) {
-        OverlayType.DEFAULT -> {
-            OverlayTopDefault(
-                pageNo = pageNo,
-                feedState = feedState,
-                gameState = gameState,
-                componentInfo = componentAnimationInfo,
-                setPostDescriptionExpanded = setPostDescriptionExpanded,
-                setAnimateCoinBalance = setAnimateCoinBalance,
-                openUserProfile = openUserProfile,
-            )
+    var targetBounds by remember { mutableStateOf<FeedTargetBounds?>(null) }
+    Box(modifier = Modifier.fillMaxSize()) {
+        when (feedState.overlayType) {
+            OverlayType.DEFAULT -> {
+                OverlayTopDefault(
+                    pageNo = pageNo,
+                    feedState = feedState,
+                    gameState = gameState,
+                    componentInfo = componentAnimationInfo,
+                    setPostDescriptionExpanded = setPostDescriptionExpanded,
+                    setAnimateCoinBalance = setAnimateCoinBalance,
+                    openUserProfile = openUserProfile,
+                )
+            }
+            OverlayType.GAME_TOGGLE -> {
+                OverlayTopGameToggle(
+                    gameState = gameState,
+                    setAnimateCoinBalance = setAnimateCoinBalance,
+                    updateGameType = updateGameType,
+                )
+            }
+            OverlayType.DAILY_RANK ->
+                OverlayTopDailyRank(
+                    dailyRank = dailyRank,
+                    feedState = feedState,
+                    gameState = gameState,
+                    setAnimateCoinBalance = setAnimateCoinBalance,
+                    onTargetBoundsCaptured = { targetBounds = it },
+                )
         }
-        OverlayType.GAME_TOGGLE -> {
-            OverlayTopGameToggle(
-                gameState = gameState,
-                setAnimateCoinBalance = setAnimateCoinBalance,
-                updateGameType = updateGameType,
-            )
+        if (feedState.currentPageOfFeed > 0) {
+            when (feedState.currentOnboardingStep) {
+                OnboardingStep.INTRO_RANK -> {
+                    dailyRank?.let {
+                        FeedOnboardingNudge(
+                            text = stringResource(Res.string.onboarding_nudge_rank),
+                            highlightText = stringResource(Res.string.onboarding_nudge_rank_highlight),
+                            arrowAlignment = FeedArrowAlignment.TOP_START,
+                            isDismissible = false,
+                            targetBounds = targetBounds,
+                            onDismiss = { feedViewModel.dismissOnboardingStep() },
+                        )
+                    }
+                }
+
+                OnboardingStep.INTRO_BALANCE -> {
+                    FeedOnboardingNudge(
+                        text = stringResource(Res.string.onboarding_nudge_balance),
+                        highlightText = stringResource(Res.string.onboarding_nudge_balance_highlight),
+                        arrowAlignment = FeedArrowAlignment.TOP_END,
+                        isDismissible = false,
+                        targetBounds = targetBounds,
+                        onDismiss = { feedViewModel.dismissOnboardingStep() },
+                    )
+                }
+
+                else -> {}
+            }
         }
-        OverlayType.DAILY_RANK ->
-            OverlayTopDailyRank(
-                dailyRank = dailyRank,
-                gameState = gameState,
-                setAnimateCoinBalance = setAnimateCoinBalance,
-            )
     }
 }
 
@@ -290,12 +350,18 @@ private fun OverlayTopDefault(
     }
 }
 
+@Suppress("LongMethod")
 @Composable
 private fun OverlayTopDailyRank(
     dailyRank: Long?,
+    feedState: FeedState,
     gameState: GameState,
     setAnimateCoinBalance: (Boolean) -> Unit,
+    onTargetBoundsCaptured: (FeedTargetBounds?) -> Unit,
 ) {
+    val density = LocalDensity.current
+    val isShowingRankNudge = feedState.currentOnboardingStep == OnboardingStep.INTRO_RANK
+    val isShowingBalanceNudge = feedState.currentOnboardingStep == OnboardingStep.INTRO_BALANCE
     Box(
         modifier =
             Modifier
@@ -310,7 +376,30 @@ private fun OverlayTopDailyRank(
                 position = dailyRank,
                 animate = gameState.animateCoinBalance,
                 setAnimate = { setAnimateCoinBalance(it) },
-                modifier = Modifier.padding(vertical = 32.dp).align(Alignment.TopStart),
+                isShowingNudge = isShowingRankNudge,
+                modifier =
+                    Modifier
+                        .padding(vertical = 32.dp)
+                        .align(Alignment.TopStart)
+                        .then(
+                            if (isShowingRankNudge) {
+                                Modifier
+                                    .captureFeedOnboardingBounds(
+                                        targetBounds = { onTargetBoundsCaptured(it) },
+                                        adjustBounds = { bounds ->
+                                            val trophyOffsetPx = with(density) { TOP_OVERLAY_ITEM_OFFSET_X.dp.toPx() }
+                                            FeedTargetBounds(
+                                                left = bounds.left,
+                                                top = bounds.top,
+                                                right = bounds.right + trophyOffsetPx,
+                                                bottom = bounds.bottom,
+                                            )
+                                        },
+                                    )
+                            } else {
+                                Modifier
+                            },
+                        ),
             )
         }
         CoinBalance(
@@ -318,7 +407,30 @@ private fun OverlayTopDailyRank(
             coinDelta = gameState.lastBalanceDifference,
             animateBag = gameState.animateCoinBalance,
             setAnimate = { setAnimateCoinBalance(it) },
-            modifier = Modifier.padding(vertical = 32.dp).align(Alignment.TopEnd),
+            isShowingNudge = isShowingBalanceNudge,
+            modifier =
+                Modifier
+                    .padding(vertical = 32.dp)
+                    .align(Alignment.TopEnd)
+                    .then(
+                        if (isShowingBalanceNudge) {
+                            Modifier
+                                .captureFeedOnboardingBounds(
+                                    targetBounds = { onTargetBoundsCaptured(it) },
+                                    adjustBounds = { bounds ->
+                                        val bagOffsetPx = with(density) { TOP_OVERLAY_ITEM_OFFSET_X.dp.toPx() }
+                                        FeedTargetBounds(
+                                            left = bounds.left - bagOffsetPx,
+                                            top = bounds.top,
+                                            right = bounds.right,
+                                            bottom = bounds.bottom,
+                                        )
+                                    },
+                                )
+                        } else {
+                            Modifier
+                        },
+                    ),
         )
     }
 }
@@ -369,12 +481,14 @@ data class TopComponentAnimationInfo(
     val isTopRightAnimating: Boolean,
 )
 
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 private fun OverlayBottom(
     pageNo: Int,
     feedState: FeedState,
     gameState: GameState,
     gameViewModel: GameViewModel,
+    feedViewModel: FeedViewModel,
     scrollToNext: () -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
@@ -394,19 +508,58 @@ private fun OverlayBottom(
             )
         }
         if (pageNo < feedState.feedDetails.size) {
+            // Map OnboardingStep to NudgeType for game module
+            val onboardingNudgeType =
+                when (feedState.currentOnboardingStep) {
+                    OnboardingStep.INTRO_GAME -> NudgeType.ONBOARDING_START
+                    OnboardingStep.INTRO_GAME_END -> NudgeType.ONBOARDING_END
+                    null -> null
+                    else -> NudgeType.ONBOARDING_OTHERS
+                }
             Game(
                 feedDetails = feedState.feedDetails[pageNo],
                 pageNo = pageNo,
                 gameViewModel = gameViewModel,
+                onboardingNudgeType = onboardingNudgeType,
+                onOnboardingNudgeComplete = { feedViewModel.dismissOnboardingStep() },
             )
-            if (gameState.isAutoScrollEnabled) {
-                val resultOfCurrentPage =
-                    gameState.gameResult[feedState.feedDetails[pageNo].videoID]
-                val coinDelta = resultOfCurrentPage?.second?.coinDelta ?: 0
-                val hasShownAnimation = resultOfCurrentPage?.second?.hasShownAnimation ?: false
-                LaunchedEffect(coinDelta, hasShownAnimation, pageNo, gameState.showResultSheet) {
-                    val shouldAutoScroll = coinDelta != 0 && !hasShownAnimation && pageNo == feedState.currentPageOfFeed
-                    if (shouldAutoScroll && !gameState.showResultSheet) {
+            if (gameState.isAutoScrollEnabled || feedState.currentOnboardingStep != null) {
+                var resultOfCurrentPage by remember { mutableStateOf<VoteResult?>(null) }
+                val currentVideoId = feedState.feedDetails[pageNo].videoID
+                val voteResult = gameState.gameResult[currentVideoId]?.second
+
+                // Track when result becomes available for the current page
+                LaunchedEffect(voteResult?.coinDelta, pageNo) {
+                    if (voteResult != null && pageNo == feedState.currentPageOfFeed) {
+                        resultOfCurrentPage = voteResult
+                    }
+                }
+
+                // Auto-scroll logic: wait for result sheet to be dismissed if it should be shown
+                LaunchedEffect(
+                    resultOfCurrentPage?.coinDelta,
+                    gameState.showResultSheet,
+                    pageNo,
+                ) {
+                    val resultCoinDelta = resultOfCurrentPage?.coinDelta ?: 0
+                    val resultHasShownAnimation = resultOfCurrentPage?.hasShownAnimation ?: false
+                    val isCurrentPage = pageNo == feedState.currentPageOfFeed
+
+                    // Check if result sheet is being shown for this page
+                    val isResultSheetShown = gameState.showResultSheet && resultCoinDelta != 0 && isCurrentPage
+
+                    // Only auto-scroll if:
+                    // 1. There's a result with non-zero coinDelta
+                    // 2. Animation hasn't been shown
+                    // 3. It's the current page
+                    // 4. Result sheet is not currently being shown (has been dismissed or doesn't need to be shown)
+                    val shouldAutoScroll =
+                        resultCoinDelta != 0 &&
+                            !resultHasShownAnimation &&
+                            isCurrentPage &&
+                            !isResultSheetShown
+
+                    if (shouldAutoScroll) {
                         delay(1.seconds)
                         scrollToNext()
                     }
@@ -414,4 +567,8 @@ private fun OverlayBottom(
             }
         }
     }
+}
+
+private object FeedScaffoldScreenConstants {
+    const val TOP_OVERLAY_ITEM_OFFSET_X = 18f
 }

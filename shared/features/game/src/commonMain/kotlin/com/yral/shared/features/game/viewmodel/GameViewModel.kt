@@ -410,6 +410,10 @@ class GameViewModel(
                     }
                 }
             }
+            NudgeType.ONBOARDING_START, NudgeType.ONBOARDING_END, NudgeType.ONBOARDING_OTHERS -> {
+                // Onboarding nudges are handled by feed module, just clear the nudge type
+                _state.update { it.copy(nudgeType = null) }
+            }
             null -> Unit
         }
     }
@@ -433,6 +437,10 @@ class GameViewModel(
                     Logger.d("Nudge") { "Showing intro nudge" }
                     _state.update { it.copy(nudgeType = NudgeType.INTRO) }
                 }
+            }
+            NudgeType.ONBOARDING_START, NudgeType.ONBOARDING_END, NudgeType.ONBOARDING_OTHERS -> {
+                // Onboarding nudges are set externally by feed module, not through showNudge
+                // This case should not be reached, but included for exhaustiveness
             }
         }
     }
@@ -471,6 +479,9 @@ data class GameState(
 enum class NudgeType {
     MANDATORY,
     INTRO,
+    ONBOARDING_START,
+    ONBOARDING_END,
+    ONBOARDING_OTHERS,
 }
 
 enum class RefreshBalanceState {
