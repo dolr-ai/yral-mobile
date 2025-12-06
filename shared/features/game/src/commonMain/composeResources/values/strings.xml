@@ -4,8 +4,13 @@
 
     <!-- Nudges -->
     <string name="smiley_game_nudge_1">Match the vibe, win the coin</string>
-    <string name="smiley_game_nudge_2">Choose the top emojis &amp; get YRAL (Bitcoin)”</string>
+    <string name="smiley_game_nudge_2">Choose the top emojis &amp; get YRAL (Bitcoin)"</string>
     <string name="smiley_game_nudge_mandatory">React to this video to unlock the next one!</string>
+    
+    <!-- Onboarding Nudges -->
+    <string name="onboarding_nudge_game_start">React with the emoji you think fits the video — match the crowd and earn YRAL!</string>
+    <string name="onboarding_nudge_game_start_highlight">match the crowd and earn YRAL!</string>
+    <string name="onboarding_nudge_game_end">Watch the video and react with the right emoji!</string>
 
     <string name="congratulations">Congratulations!</string>
     <string name="since_most_people_not_voted_on">Since most people didn’t vote on</string>

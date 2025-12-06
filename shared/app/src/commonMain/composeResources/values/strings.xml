@@ -22,4 +22,9 @@
     <string name="error_timeout">Unable to load content. Please try again.</string>
     <string name="error_retry">Retry</string>
 
+    <string name="onboarding_nudge_rank">Play more, rank higher. See your position on the leaderboard here.</string>
+    <string name="onboarding_nudge_rank_highlight">See your position on the leaderboard here.</string>
+    <string name="onboarding_nudge_balance">Your YRAL balance, Bitcoin, wins, and losses show up here.</string>
+    <string name="onboarding_nudge_balance_highlight">Your YRAL balance</string>
+
 </resources>
