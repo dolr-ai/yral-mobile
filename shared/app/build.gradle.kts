@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.yral.android.library)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.yral.shared.library.compose)
+    alias(libs.plugins.kotlinCocoapods)
+    alias(libs.plugins.sentryKmp)
 }
 
 version = "1.0"
@@ -12,6 +14,11 @@ kotlin {
         iosArm64(),
         iosSimulatorArm64(),
     )
+
+    cocoapods {
+        ios.deploymentTarget = "15.6"
+        noPodspec()
+    }
 
     sourceSets {
         commonMain.dependencies {
@@ -51,7 +58,6 @@ kotlin {
             implementation(projects.shared.rust.service)
             implementation(libs.coil.compose)
             implementation(libs.coil.ktor3)
-            implementation(libs.sentry.kmp)
 
             implementation(compose.components.resources)
 
