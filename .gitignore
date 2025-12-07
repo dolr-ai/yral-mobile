@@ -133,3 +133,6 @@ iosApp/Pods/
 iosApp/**/Pods/
 Pods/
 **/Pods/
+
+# Sentry Config File
+sentry.properties
