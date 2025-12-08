@@ -15,6 +15,7 @@ import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
+import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
@@ -85,6 +86,7 @@ internal class DefaultHomeComponent(
         }
 
     override val homeViewModel: HomeViewModel = koinInstance.get<HomeViewModel>()
+    override val sessionManager: SessionManager = koinInstance.get<SessionManager>()
 
     private val slotNavigation = SlotNavigation<SlotConfig>()
 
@@ -214,6 +216,13 @@ internal class DefaultHomeComponent(
             componentContext = componentContext,
             snapshot = childSnapshots[Config.Leaderboard] as? LeaderboardComponent.Snapshot,
             navigateToHome = { onFeedTabClick() },
+            openProfile = { canisterData ->
+                if (canisterData.userPrincipalId == sessionManager.userPrincipal) {
+                    onProfileTabClick()
+                } else {
+                    openProfile(canisterData)
+                }
+            },
         )
 
     private fun uploadVideoComponent(componentContext: ComponentContext): UploadVideoRootComponent =

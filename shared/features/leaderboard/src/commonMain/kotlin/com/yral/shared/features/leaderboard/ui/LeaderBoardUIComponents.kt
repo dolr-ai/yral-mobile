@@ -150,6 +150,7 @@ fun LeaderboardRow(
     rewardCurrency: RewardCurrency? = null,
     rewardCurrencyCode: String? = null,
     reward: Double? = null,
+    onClick: (() -> Unit)? = null,
 ) {
     Card(
         modifier =
@@ -166,6 +167,7 @@ fun LeaderboardRow(
                     },
             ),
         shape = RoundedCornerShape(8.dp),
+        onClick = { onClick?.invoke() },
     ) {
         UserBriefWithBorder(position, decorateCurrentUser) {
             UserBriefContent(

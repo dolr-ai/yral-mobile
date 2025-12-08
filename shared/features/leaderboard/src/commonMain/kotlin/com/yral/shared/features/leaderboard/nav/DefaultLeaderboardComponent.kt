@@ -9,6 +9,7 @@ import com.arkivanov.decompose.router.stack.pushNew
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.features.leaderboard.nav.detail.LeaderboardDetailsComponent
 import com.yral.shared.features.leaderboard.nav.main.LeaderboardMainComponent
+import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.serialization.Serializable
 import org.koin.core.component.KoinComponent
 
@@ -16,6 +17,7 @@ internal class DefaultLeaderboardComponent(
     componentContext: ComponentContext,
     private val snapshot: Snapshot?,
     private val navigateToHome: () -> Unit,
+    private val openProfile: (CanisterData) -> Unit,
 ) : LeaderboardComponent(),
     ComponentContext by componentContext,
     KoinComponent {
@@ -75,12 +77,14 @@ internal class DefaultLeaderboardComponent(
             componentContext = componentContext,
             onDailyHistoryClicked = { navigation.pushNew(Config.Details) },
             navigateToHome = navigateToHome,
+            openProfile = openProfile,
         )
 
     private fun detailsComponent(componentContext: ComponentContext): LeaderboardDetailsComponent =
         LeaderboardDetailsComponent.Companion(
             componentContext = componentContext,
             onBack = { navigation.pop() },
+            openProfile = openProfile,
         )
 
     @Serializable
