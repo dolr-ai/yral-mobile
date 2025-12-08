@@ -14,6 +14,10 @@ import com.yral.shared.features.leaderboard.domain.models.GetLeaderboardRequest
 import com.yral.shared.features.leaderboard.domain.models.LeaderboardDailyRankRequest
 import com.yral.shared.features.leaderboard.domain.models.LeaderboardItem
 import com.yral.shared.features.leaderboard.domain.models.RewardCurrency
+import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4Params
+import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4UseCase
+import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,6 +32,7 @@ class LeaderBoardViewModel(
     private val getLeaderboardRankForTodayUseCase: GetLeaderboardRankForTodayUseCase,
     private val sessionManager: SessionManager,
     private val leaderBoardTelemetry: LeaderBoardTelemetry,
+    private val getProfileDetailsV4UseCase: GetProfileDetailsV4UseCase,
 ) : ViewModel() {
     private val _state = MutableStateFlow(LeaderBoardState())
     val state: StateFlow<LeaderBoardState> = _state.asStateFlow()
@@ -186,6 +191,41 @@ class LeaderBoardViewModel(
         }
     }
 
+    fun onUserClick(item: LeaderboardItem) {
+        if (_state.value.isNavigating) return // Prevent multiple clicks
+        viewModelScope.launch {
+            sessionManager.userPrincipal?.let { principal ->
+                _state.update { it.copy(isNavigating = true) }
+                getProfileDetailsV4UseCase(
+                    parameter =
+                        GetProfileDetailsV4Params(
+                            principal = principal,
+                            targetPrincipal = item.userPrincipalId,
+                        ),
+                ).onSuccess { profileDetails ->
+                    // Merge LeaderboardItem data with fetched profile details
+                    val canisterData =
+                        CanisterData(
+                            canisterId = getUserInfoServiceCanister(),
+                            userPrincipalId = item.userPrincipalId,
+                            profilePic = profileDetails.profilePictureUrl ?: item.profileImage,
+                            username = item.username,
+                            isCreatedFromServiceCanister = true,
+                            isFollowing = profileDetails.callerFollowsUser ?: false,
+                        )
+                    _state.update { it.copy(navigationEvent = canisterData, isNavigating = false) }
+                }.onFailure { error ->
+                    Logger.e("LeaderboardNavigation") { "Error fetching profile details: $error" }
+                    _state.update { it.copy(isNavigating = true) }
+                }
+            }
+        }
+    }
+
+    fun onNavigationHandled() {
+        _state.update { it.copy(navigationEvent = null) }
+    }
+
     companion object {
         private const val COUNT_DOWN_BLINK_THRESHOLD = 2 * 60 * 60 * 1000 // Last 2 hours
         const val TOP_N_THRESHOLD = 3
@@ -205,4 +245,6 @@ data class LeaderBoardState(
     val rewardCurrencyCode: String? = null,
     val rewardsTable: Map<Int, Double>? = null,
     val isFirebaseLoggedIn: Boolean = false,
+    val isNavigating: Boolean = false,
+    val navigationEvent: CanisterData? = null,
 )
