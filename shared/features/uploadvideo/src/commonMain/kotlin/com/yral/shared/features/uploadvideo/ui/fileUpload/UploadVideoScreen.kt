@@ -66,7 +66,6 @@ import yral_mobile.shared.features.uploadvideo.generated.resources.Res
 import yral_mobile.shared.features.uploadvideo.generated.resources.add_hashtag
 import yral_mobile.shared.features.uploadvideo.generated.resources.caption
 import yral_mobile.shared.features.uploadvideo.generated.resources.enter_caption_here
-import yral_mobile.shared.features.uploadvideo.generated.resources.upload
 import yral_mobile.shared.features.uploadvideo.generated.resources.uploading_message
 import yral_mobile.shared.features.uploadvideo.generated.resources.uploading_progress
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
@@ -324,7 +323,7 @@ fun Submit(
         horizontalAlignment = Alignment.Start,
     ) {
         YralGradientButton(
-            text = stringResource(Res.string.upload),
+            text = stringResource(DesignRes.string.upload_video),
             buttonState = if (enabled) YralButtonState.Enabled else YralButtonState.Disabled,
             onClick = onClick,
         )
