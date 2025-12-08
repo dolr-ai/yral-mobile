@@ -6,6 +6,7 @@ import com.arkivanov.decompose.value.Value
 import com.yral.shared.features.leaderboard.nav.detail.LeaderboardDetailsComponent
 import com.yral.shared.features.leaderboard.nav.main.LeaderboardMainComponent
 import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
+import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.serialization.Serializable
 
 abstract class LeaderboardComponent : HomeChildSnapshotProvider {
@@ -35,11 +36,13 @@ abstract class LeaderboardComponent : HomeChildSnapshotProvider {
             componentContext: ComponentContext,
             snapshot: Snapshot?,
             navigateToHome: () -> Unit,
+            openProfile: (CanisterData) -> Unit,
         ): LeaderboardComponent =
             DefaultLeaderboardComponent(
                 componentContext = componentContext,
                 snapshot = snapshot,
                 navigateToHome = navigateToHome,
+                openProfile = openProfile,
             )
     }
 }

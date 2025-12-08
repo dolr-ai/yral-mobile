@@ -50,6 +50,7 @@ import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardState
 import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
 import com.yral.shared.libs.designsystem.component.YralButtonType
 import com.yral.shared.libs.designsystem.component.YralGradientButton
+import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
@@ -76,6 +77,13 @@ fun LeaderboardMainScreen(
     val countryCode = Locale.current.region
     val state by viewModel.state.collectAsState()
     LaunchedEffect(Unit) { viewModel.leaderboardPageViewed() }
+
+    LaunchedEffect(state.navigationEvent) {
+        state.navigationEvent?.let { canisterData ->
+            component.openProfile(canisterData)
+            viewModel.onNavigationHandled()
+        }
+    }
 
     var showConfetti by remember(state.isCurrentUserInTop) { mutableStateOf(state.isCurrentUserInTop) }
 
@@ -175,6 +183,7 @@ fun LeaderboardMainScreen(
                                 rewardCurrency = state.rewardCurrency,
                                 rewardCurrencyCode = state.rewardCurrencyCode,
                                 reward = user.reward,
+                                onClick = { viewModel.onUserClick(user) },
                             )
                         }
                     }
@@ -198,6 +207,7 @@ fun LeaderboardMainScreen(
                             rewardCurrency = state.rewardCurrency,
                             rewardCurrencyCode = state.rewardCurrencyCode,
                             reward = item.reward,
+                            onClick = { viewModel.onUserClick(item) },
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                     }
@@ -227,6 +237,15 @@ fun LeaderboardMainScreen(
             }
         }
         LeaderboardConfetti(showConfetti) { showConfetti = false }
+
+        if (state.isNavigating) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                YralLoader()
+            }
+        }
     }
 }
 
