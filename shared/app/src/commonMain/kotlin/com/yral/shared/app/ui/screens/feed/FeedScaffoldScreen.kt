@@ -101,6 +101,8 @@ fun FeedScaffoldScreen(
                 updateGameType = { gameViewModel.updateGameType(it) },
                 openUserProfile = { component.openProfile(it) },
                 feedViewModel = feedViewModel,
+                openLeaderboard = { component.openLeaderboard() },
+                openWallet = { component.openWallet() },
             )
         },
         bottomOverlay = { pageNo, scrollToNext ->
@@ -227,6 +229,8 @@ private fun OverLayTop(
     updateGameType: (GameType) -> Unit,
     openUserProfile: (canisterData: CanisterData) -> Unit,
     feedViewModel: FeedViewModel,
+    openLeaderboard: () -> Unit,
+    openWallet: () -> Unit,
 ) {
     var targetBounds by remember { mutableStateOf<FeedTargetBounds?>(null) }
     Box(modifier = Modifier.fillMaxSize()) {
@@ -240,6 +244,7 @@ private fun OverLayTop(
                     setPostDescriptionExpanded = setPostDescriptionExpanded,
                     setAnimateCoinBalance = setAnimateCoinBalance,
                     openUserProfile = openUserProfile,
+                    openWallet = openWallet,
                 )
             }
             OverlayType.GAME_TOGGLE -> {
@@ -247,6 +252,7 @@ private fun OverLayTop(
                     gameState = gameState,
                     setAnimateCoinBalance = setAnimateCoinBalance,
                     updateGameType = updateGameType,
+                    openWallet = openWallet,
                 )
             }
             OverlayType.DAILY_RANK ->
@@ -256,6 +262,8 @@ private fun OverLayTop(
                     gameState = gameState,
                     setAnimateCoinBalance = setAnimateCoinBalance,
                     onTargetBoundsCaptured = { targetBounds = it },
+                    openLeaderboard = openLeaderboard,
+                    openWallet = openWallet,
                 )
         }
         if (feedState.currentPageOfFeed > 0) {
@@ -300,6 +308,7 @@ private fun OverlayTopDefault(
     setPostDescriptionExpanded: (Boolean) -> Unit,
     setAnimateCoinBalance: (Boolean) -> Unit,
     openUserProfile: (canisterData: CanisterData) -> Unit,
+    openWallet: () -> Unit,
 ) {
     Box(
         modifier =
@@ -344,7 +353,7 @@ private fun OverlayTopDefault(
                 coinDelta = gameState.lastBalanceDifference,
                 animateBag = gameState.animateCoinBalance,
                 setAnimate = { setAnimateCoinBalance(it) },
-                modifier = Modifier.padding(vertical = 22.dp),
+                modifier = Modifier.padding(vertical = 22.dp).clickable { openWallet() },
             )
         }
     }
@@ -358,6 +367,8 @@ private fun OverlayTopDailyRank(
     gameState: GameState,
     setAnimateCoinBalance: (Boolean) -> Unit,
     onTargetBoundsCaptured: (FeedTargetBounds?) -> Unit,
+    openLeaderboard: () -> Unit,
+    openWallet: () -> Unit,
 ) {
     val density = LocalDensity.current
     val isShowingRankNudge = feedState.currentOnboardingStep == OnboardingStep.INTRO_RANK
@@ -381,6 +392,7 @@ private fun OverlayTopDailyRank(
                     Modifier
                         .padding(vertical = 32.dp)
                         .align(Alignment.TopStart)
+                        .clickable { openLeaderboard() }
                         .then(
                             if (isShowingRankNudge) {
                                 Modifier
@@ -412,6 +424,7 @@ private fun OverlayTopDailyRank(
                 Modifier
                     .padding(vertical = 32.dp)
                     .align(Alignment.TopEnd)
+                    .clickable { openWallet() }
                     .then(
                         if (isShowingBalanceNudge) {
                             Modifier
@@ -440,6 +453,7 @@ private fun OverlayTopGameToggle(
     gameState: GameState,
     setAnimateCoinBalance: (Boolean) -> Unit,
     updateGameType: (GameType) -> Unit,
+    openWallet: () -> Unit,
 ) {
     Box(
         modifier =
@@ -471,7 +485,7 @@ private fun OverlayTopGameToggle(
                 coinDelta = gameState.lastBalanceDifference,
                 animateBag = gameState.animateCoinBalance,
                 setAnimate = { setAnimateCoinBalance(it) },
-                modifier = Modifier.padding(vertical = 22.dp),
+                modifier = Modifier.padding(vertical = 22.dp).clickable { openWallet() },
             )
         }
     }
