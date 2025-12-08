@@ -193,6 +193,22 @@ class LeaderBoardViewModel(
 
     fun onUserClick(item: LeaderboardItem) {
         if (_state.value.isNavigating) return // Prevent multiple clicks
+
+        // Check if it's the current user - create CanisterData from session
+        if (isCurrentUser(item.userPrincipalId)) {
+            val canisterData =
+                CanisterData(
+                    canisterId = sessionManager.canisterID ?: getUserInfoServiceCanister(),
+                    userPrincipalId = item.userPrincipalId,
+                    profilePic = sessionManager.profilePic ?: item.profileImage,
+                    username = sessionManager.username,
+                    isCreatedFromServiceCanister = sessionManager.isCreatedFromServiceCanister ?: false,
+                    isFollowing = false,
+                )
+            _state.update { it.copy(navigationEvent = canisterData) }
+            return
+        }
+
         viewModelScope.launch {
             sessionManager.userPrincipal?.let { principal ->
                 _state.update { it.copy(isNavigating = true) }
@@ -216,7 +232,7 @@ class LeaderBoardViewModel(
                     _state.update { it.copy(navigationEvent = canisterData, isNavigating = false) }
                 }.onFailure { error ->
                     Logger.e("LeaderboardNavigation") { "Error fetching profile details: $error" }
-                    _state.update { it.copy(isNavigating = true) }
+                    _state.update { it.copy(isNavigating = false) }
                 }
             }
         }
