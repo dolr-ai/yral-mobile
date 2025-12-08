@@ -205,6 +205,8 @@ internal class DefaultHomeComponent(
                 PendingAppRouteStore.store(it)
                 homeViewModel.showSignupPrompt(true, SignupPageName.HOME)
             },
+            openLeaderboard = { onLeaderboardTabClick() },
+            openWallet = { onWalletTabClick() },
         )
 
     private fun leaderboardComponent(componentContext: ComponentContext): LeaderboardComponent =
