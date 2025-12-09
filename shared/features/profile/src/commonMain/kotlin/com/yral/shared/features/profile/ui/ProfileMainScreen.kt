@@ -179,17 +179,6 @@ fun ProfileMainScreen(
 
     val followers = viewModel.followers.collectAsLazyPagingItems()
     val following = viewModel.following.collectAsLazyPagingItems()
-    val currentAccountInfo = state.accountInfo
-    val onShareProfileClicked =
-        remember(currentAccountInfo, state.shareMessage, state.shareDescription) {
-            {
-                if (currentAccountInfo != null) {
-                    viewModel.shareProfile(currentAccountInfo)
-                } else {
-                    Unit
-                }
-            }
-        }
 
     // Track pending downloads for permission handling
     var pendingDownload by remember { mutableStateOf<FeedDetails?>(null) }
@@ -394,7 +383,7 @@ fun ProfileMainScreen(
                     onFollowersSectionClick = { viewModel.updateFollowSheetTab(tab = it) },
                     promptLogin = { component.promptLogin(SignupPageName.PROFILE) },
                     canShareProfile = state.canShareProfile,
-                    onShareProfileClicked = onShareProfileClicked,
+                    onShareProfileClicked = { viewModel.shareProfile() },
                     showHeaderShareButton = !state.isOwnProfile,
                     onDownloadVideo = onDownloadVideo,
                 )

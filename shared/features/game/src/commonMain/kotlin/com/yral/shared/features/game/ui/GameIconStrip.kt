@@ -34,6 +34,7 @@ fun GameIconStrip(
     onIconClicked: (GameIcon) -> Unit,
     isLoading: Boolean,
     coinDelta: Int = 0,
+    isShowingNudge: Boolean = false,
     onIconPositioned: (Int, Float) -> Unit = { _, _ -> },
     animatingNudgeIconPosition: Int? = null,
     onIconAnimationComplete: () -> Unit = {},
@@ -46,7 +47,7 @@ fun GameIconStrip(
             animatingIcon = gameIcons[index]
         }
     }
-    GameStripBackground(modifier, animatingNudgeIconPosition != null) {
+    GameStripBackground(modifier, animatingNudgeIconPosition != null || isShowingNudge) {
         gameIcons.forEachIndexed { index, icon ->
             val shouldAnimate = animatingIcon?.id == icon.id
             val clickableModifier =

@@ -14,6 +14,13 @@ object FeedFeatureFlags {
                 description = "Block user to scroll to next video until game is played",
                 defaultValue = false,
             )
+        val AutoScrollEnabled: FeatureFlag<Boolean> =
+            boolean(
+                keySuffix = "autoScrollEnabled",
+                name = "Enable auto scroll after game vote",
+                description = "Scrolls to next page after game is played",
+                defaultValue = true,
+            )
     }
     object FeedTypes :
         FlagGroup(keyPrefix = "feed", defaultAudience = FlagAudience.INTERNAL_QA) {

@@ -6,6 +6,7 @@ package com.yral.shared.analytics.constants
 enum class FeatureEvents {
     FIRST_APP_LAUNCH,
     SPLASH_SCREEN_VIEWED,
+    APP_ONBOARDING_SHOWN,
 
     // Auth / Signup / Login
     AUTH_SCREEN_VIEWED,

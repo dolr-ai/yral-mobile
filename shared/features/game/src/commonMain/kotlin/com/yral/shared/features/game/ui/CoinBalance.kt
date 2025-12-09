@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -35,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
@@ -51,6 +53,7 @@ import com.yral.shared.features.game.ui.CoinBagConstants.COIN_OFFSET_Y_START
 import com.yral.shared.features.game.ui.CoinBagConstants.COIN_SCALE
 import com.yral.shared.features.game.ui.CoinBagConstants.COIN_SCALE_MID
 import com.yral.shared.libs.designsystem.component.formatAbbreviation
+import com.yral.shared.libs.designsystem.component.neonBorder
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.async
@@ -82,6 +85,7 @@ fun CoinBalance(
     coinBalance: Long,
     coinDelta: Int,
     animateBag: Boolean,
+    isShowingNudge: Boolean = false,
     setAnimate: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -91,6 +95,7 @@ fun CoinBalance(
     ) {
         Balance(
             coinBalance = coinBalance,
+            isShowingNudge = isShowingNudge,
         )
         CoinBag(
             didWin = coinDelta > 0,
@@ -199,13 +204,28 @@ private fun CoinBag(
 }
 
 @Composable
-private fun BoxScope.Balance(coinBalance: Long) {
+private fun BoxScope.Balance(
+    coinBalance: Long,
+    isShowingNudge: Boolean,
+) {
     Column(
         modifier =
             Modifier
                 .height(32.dp)
                 .widthIn(min = 75.dp)
-                .background(
+                .then(
+                    if (isShowingNudge) {
+                        Modifier
+                            .neonBorder(
+                                paddingValues = PaddingValues(start = 0.dp),
+                                cornerRadius = 16.dp,
+                                containerColor = Color.Transparent,
+                                animationDuration = 600L,
+                            )
+                    } else {
+                        Modifier
+                    },
+                ).background(
                     brush =
                         Brush.linearGradient(
                             listOf(

@@ -22,7 +22,6 @@ kotlin {
             isStatic = true
             export(projects.shared.libs.analytics)
             export(projects.shared.libs.crashlytics)
-            export(libs.sentry.kmp)
             export(projects.shared.app)
             export(projects.shared.libs.featureFlag)
             export(projects.shared.libs.routing.routesApi)
@@ -36,7 +35,6 @@ kotlin {
             api(projects.shared.app)
             api(projects.shared.libs.analytics)
             api(projects.shared.libs.crashlytics)
-            api(libs.sentry.kmp)
             api(projects.shared.libs.featureFlag)
             api(projects.shared.libs.routing.routesApi)
             implementation(compose.components.resources)

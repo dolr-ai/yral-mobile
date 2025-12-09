@@ -32,6 +32,20 @@ data class SplashScreenViewedEventData(
     )
 }
 
+@Serializable
+data class AppOnboardingShownEventData(
+    @SerialName("event") override val event: String = FeatureEvents.APP_ONBOARDING_SHOWN.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+    @SerialName("onboarding_step") val onboardingStep: AnalyticsOnboardingStep,
+) : BaseEventData(),
+    EventData {
+    constructor(step: AnalyticsOnboardingStep) : this(
+        FeatureEvents.APP_ONBOARDING_SHOWN.getEventName(),
+        Features.FEED.getFeatureName(),
+        step,
+    )
+}
+
 // --- Auth / Signup / Login ---
 @Serializable
 data class AuthScreenViewedEventData(
@@ -1608,4 +1622,22 @@ enum class AnalyticsAlertsRequestType {
 
     @SerialName("default")
     DEFAULT,
+}
+
+@Serializable
+enum class AnalyticsOnboardingStep {
+    @SerialName("game_intro_start")
+    INTRO_GAME,
+
+    // Step 1
+    @SerialName("balance_intro")
+    INTRO_BALANCE,
+
+    // Step 2
+    @SerialName("rank_intro")
+    INTRO_RANK,
+
+    // Step 3
+    @SerialName("game_intro_end")
+    INTRO_GAME_END, // Step 4
 }

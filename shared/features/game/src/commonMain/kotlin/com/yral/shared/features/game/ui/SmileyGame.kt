@@ -9,6 +9,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -39,6 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import co.touchlab.kermit.Logger
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.features.game.domain.models.GameIcon
 import com.yral.shared.features.game.ui.SmileyGameConstants.MANDATORY_NUDGE_ANIMATION_ICON_ITERATIONS
@@ -48,10 +50,14 @@ import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.game.viewmodel.NudgeType
 import com.yral.shared.libs.designsystem.component.YralFeedback
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralBrushes
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.game.generated.resources.Res
+import yral_mobile.shared.features.game.generated.resources.onboarding_nudge_game_end
+import yral_mobile.shared.features.game.generated.resources.onboarding_nudge_game_start
+import yral_mobile.shared.features.game.generated.resources.onboarding_nudge_game_start_highlight
 import yral_mobile.shared.features.game.generated.resources.smiley_game_nudge_1
 import yral_mobile.shared.features.game.generated.resources.smiley_game_nudge_2
 import yral_mobile.shared.features.game.generated.resources.smiley_game_nudge_arrow
@@ -64,8 +70,17 @@ fun Game(
     feedDetails: FeedDetails,
     pageNo: Int,
     gameViewModel: GameViewModel,
+    onboardingNudgeType: NudgeType? = null,
+    onOnboardingNudgeComplete: () -> Unit = {},
 ) {
     val gameState by gameViewModel.state.collectAsStateWithLifecycle()
+    val effectiveNudgeType =
+        when {
+            onboardingNudgeType == NudgeType.ONBOARDING_OTHERS -> null
+            onboardingNudgeType != null -> onboardingNudgeType
+            else -> gameState.nudgeType
+        }
+    Logger.d("SmileyGame") { "Current nudge type $effectiveNudgeType" }
     if (gameState.gameIcons.isNotEmpty()) {
         SmileyGame(
             gameIcons = gameState.gameIcons,
@@ -89,10 +104,14 @@ fun Game(
                     videoId = feedDetails.videoID,
                 )
             },
-            nudgeType = gameState.nudgeType,
+            nudgeType = effectiveNudgeType,
             pageNo = pageNo,
             onNudgeAnimationComplete = {
-                gameViewModel.setSmileyGameNudgeShown(feedDetails)
+                if (effectiveNudgeType?.isOnboardingNudge() == true) {
+                    onOnboardingNudgeComplete()
+                } else {
+                    gameViewModel.setSmileyGameNudgeShown(feedDetails)
+                }
             },
         )
     }
@@ -137,20 +156,30 @@ internal fun SmileyGame(
                 )
             }
             else -> {
-                SmileyGameNudge(
-                    modifier = Modifier.align(Alignment.BottomCenter).clickable { onNudgeAnimationComplete() },
-                    pageNo = pageNo,
-                    nudgeType = nudgeType,
-                    animatingNudgeIconPosition = animatingNudgeIconPosition,
-                    startNudgeAnimation = {
-                        animatingNudgeIconPosition = 0
-                        nudgeIterationCount = 0
-                    },
-                    dismissNudgeAnimation = {
-                        animatingNudgeIconPosition = null
-                        nudgeIterationCount = 0
-                    },
-                )
+                if (nudgeType != null) {
+                    SmileyGameNudge(
+                        modifier =
+                            Modifier
+                                .align(Alignment.BottomCenter)
+                                .clickable {
+                                    // Onboarding nudges can't be dismissed without vote
+                                    if (!nudgeType.isOnboardingNudge()) {
+                                        onNudgeAnimationComplete()
+                                    }
+                                },
+                        pageNo = pageNo,
+                        nudgeType = nudgeType,
+                        animatingNudgeIconPosition = animatingNudgeIconPosition,
+                        startNudgeAnimation = {
+                            animatingNudgeIconPosition = 0
+                            nudgeIterationCount = 0
+                        },
+                        dismissNudgeAnimation = {
+                            animatingNudgeIconPosition = null
+                            nudgeIterationCount = 0
+                        },
+                    )
+                }
                 GameIconStrip(
                     modifier = Modifier.align(Alignment.BottomCenter),
                     gameIcons = gameIcons,
@@ -164,22 +193,34 @@ internal fun SmileyGame(
                     onIconPositioned = { id, xPos ->
                         iconPositions = iconPositions.plus(id to xPos)
                     },
+                    isShowingNudge = nudgeType?.isOnboardingNudge() ?: false,
                     animatingNudgeIconPosition = animatingNudgeIconPosition,
                     onIconAnimationComplete = {
                         animatingNudgeIconPosition =
                             animatingNudgeIconPosition?.let { currentIndex ->
                                 when {
                                     currentIndex + 1 < gameIcons.size -> currentIndex + 1
-                                    !isNudgeIterationValid(
-                                        nudgeIteration = ++nudgeIterationCount,
-                                        isMandatory = nudgeType == NudgeType.MANDATORY,
-                                    ) ->
-                                        run {
-                                            nudgeIterationCount = 0
-                                            onNudgeAnimationComplete()
-                                            null
+                                    else -> {
+                                        // Check if we've completed an iteration cycle
+                                        val hasCompletedIteration =
+                                            !isNudgeIterationValid(
+                                                nudgeIteration = ++nudgeIterationCount,
+                                                isMandatory = nudgeType == NudgeType.MANDATORY,
+                                            )
+                                        if (hasCompletedIteration) {
+                                            // For onboarding nudges, restart animation instead of dismissing
+                                            if (nudgeType?.isOnboardingNudge() == true) {
+                                                nudgeIterationCount = 0
+                                                0 // Restart from first icon
+                                            } else {
+                                                nudgeIterationCount = 0
+                                                onNudgeAnimationComplete()
+                                                null
+                                            }
+                                        } else {
+                                            0 // Continue to next iteration
                                         }
-                                    else -> 0
+                                    }
                                 }
                             }
                     },
@@ -214,9 +255,9 @@ fun spilledCoinSoundUri(): String = Res.getUri("files/audio/spilled_coin.mp3")
 private fun isNudgeIterationValid(
     nudgeIteration: Int,
     isMandatory: Boolean,
-) = when (isMandatory) {
-    false -> nudgeIteration < NUDGE_ANIMATION_ICON_ITERATIONS
-    true -> nudgeIteration < MANDATORY_NUDGE_ANIMATION_ICON_ITERATIONS
+) = when {
+    isMandatory -> nudgeIteration < MANDATORY_NUDGE_ANIMATION_ICON_ITERATIONS
+    else -> nudgeIteration < NUDGE_ANIMATION_ICON_ITERATIONS
 }
 
 @Composable
@@ -297,7 +338,7 @@ private fun SmileyGameNudge(
             modifier = modifier,
             alpha = alpha,
             offsetY = offsetY,
-            isNudgeMandatory = nudgeType == NudgeType.MANDATORY,
+            nudgeType = nudgeType,
         )
     }
 }
@@ -308,7 +349,7 @@ private fun SmileyGameNudgeContent(
     modifier: Modifier,
     alpha: Float,
     offsetY: Float,
-    isNudgeMandatory: Boolean,
+    nudgeType: NudgeType?,
 ) {
     Box(
         modifier =
@@ -320,7 +361,7 @@ private fun SmileyGameNudgeContent(
     ) {
         val density = LocalDensity.current
         var textWidth by remember { mutableIntStateOf(0) }
-        if (!isNudgeMandatory) {
+        if (nudgeType != NudgeType.MANDATORY) {
             Image(
                 painter = painterResource(Res.drawable.smiley_game_nudge_stars),
                 contentDescription = null,
@@ -340,6 +381,7 @@ private fun SmileyGameNudgeContent(
                     .padding(bottom = 100.dp, start = 36.dp, end = 36.dp)
                     .offset(y = offsetY.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             val textStyle = LocalAppTopography.current.xlBold
             val spanStyle =
@@ -351,16 +393,45 @@ private fun SmileyGameNudgeContent(
                 )
             Text(
                 text =
-                    if (isNudgeMandatory) {
-                        buildAnnotatedString {
-                            withStyle(spanStyle) { append(stringResource(Res.string.smiley_game_nudge_mandatory)) }
+                    when (nudgeType) {
+                        NudgeType.ONBOARDING_START -> {
+                            buildAnnotatedString {
+                                val text = stringResource(Res.string.onboarding_nudge_game_start)
+                                val highlightText = stringResource(Res.string.onboarding_nudge_game_start_highlight)
+                                if (text.contains(highlightText)) {
+                                    val highlightStart = text.indexOf(highlightText)
+                                    val highlightEnd = highlightStart + highlightText.length
+                                    if (highlightStart > 0) {
+                                        withStyle(spanStyle) { append(text.take(highlightStart)) }
+                                    }
+                                    withStyle(style = spanStyle.copy(brush = YralBrushes.GoldenTextBrush)) {
+                                        append(text.substring(highlightStart, highlightEnd))
+                                    }
+                                    if (highlightEnd < text.length) {
+                                        withStyle(spanStyle) { append(text.substring(highlightEnd)) }
+                                    }
+                                } else {
+                                    withStyle(spanStyle) { append(text) }
+                                }
+                            }
                         }
-                    } else {
-                        buildAnnotatedString {
-                            withStyle(spanStyle) { append(stringResource(Res.string.smiley_game_nudge_1)) }
-                            withStyle(spanStyle) { append("\n") }
-                            withStyle(style = spanStyle.copy(color = YralColors.Yellow200)) {
-                                append(stringResource(Res.string.smiley_game_nudge_2))
+                        NudgeType.ONBOARDING_END -> {
+                            buildAnnotatedString {
+                                withStyle(spanStyle) { append(stringResource(Res.string.onboarding_nudge_game_end)) }
+                            }
+                        }
+                        NudgeType.MANDATORY -> {
+                            buildAnnotatedString {
+                                withStyle(spanStyle) { append(stringResource(Res.string.smiley_game_nudge_mandatory)) }
+                            }
+                        }
+                        else -> {
+                            buildAnnotatedString {
+                                withStyle(spanStyle) { append(stringResource(Res.string.smiley_game_nudge_1)) }
+                                withStyle(spanStyle) { append("\n") }
+                                withStyle(style = spanStyle.copy(brush = YralBrushes.GoldenTextBrush)) {
+                                    append(stringResource(Res.string.smiley_game_nudge_2))
+                                }
                             }
                         }
                     },
@@ -382,6 +453,8 @@ private fun Int.toSignedString(): String =
     } else {
         "$this"
     }
+
+private fun NudgeType.isOnboardingNudge() = this == NudgeType.ONBOARDING_START || this == NudgeType.ONBOARDING_END
 
 object SmileyGameConstants {
     const val NUDGE_ANIMATION_DURATION = 600L

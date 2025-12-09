@@ -15,8 +15,10 @@ import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
+import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.account.nav.AccountComponent
+import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.root.viewmodels.HomeViewModel
@@ -48,7 +50,7 @@ internal class DefaultHomeComponent(
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
     private val showLoginBottomSheet: (
         pageName: SignupPageName,
-        headlineText: String?,
+        loginBottomSheetType: LoginBottomSheetType,
         onDismissRequest: () -> Unit,
         onLoginSuccess: () -> Unit,
     ) -> Unit,
@@ -84,6 +86,7 @@ internal class DefaultHomeComponent(
         }
 
     override val homeViewModel: HomeViewModel = koinInstance.get<HomeViewModel>()
+    override val sessionManager: SessionManager = koinInstance.get<SessionManager>()
 
     private val slotNavigation = SlotNavigation<SlotConfig>()
 
@@ -149,13 +152,13 @@ internal class DefaultHomeComponent(
 
     override fun showLoginBottomSheet(
         pageName: SignupPageName,
-        headlineText: String?,
+        loginBottomSheetType: LoginBottomSheetType,
         onDismissRequest: () -> Unit,
         onLoginSuccess: () -> Unit,
     ) {
         showLoginBottomSheet.invoke(
             pageName,
-            headlineText,
+            loginBottomSheetType,
             onDismissRequest,
             onLoginSuccess,
         )
@@ -204,6 +207,8 @@ internal class DefaultHomeComponent(
                 PendingAppRouteStore.store(it)
                 homeViewModel.showSignupPrompt(true, SignupPageName.HOME)
             },
+            openLeaderboard = { onLeaderboardTabClick() },
+            openWallet = { onWalletTabClick() },
         )
 
     private fun leaderboardComponent(componentContext: ComponentContext): LeaderboardComponent =
@@ -211,6 +216,13 @@ internal class DefaultHomeComponent(
             componentContext = componentContext,
             snapshot = childSnapshots[Config.Leaderboard] as? LeaderboardComponent.Snapshot,
             navigateToHome = { onFeedTabClick() },
+            openProfile = { canisterData ->
+                if (canisterData.userPrincipalId == sessionManager.userPrincipal) {
+                    onProfileTabClick()
+                } else {
+                    openProfile(canisterData)
+                }
+            },
         )
 
     private fun uploadVideoComponent(componentContext: ComponentContext): UploadVideoRootComponent =
