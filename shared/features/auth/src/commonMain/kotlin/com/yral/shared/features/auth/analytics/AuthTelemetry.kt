@@ -1,6 +1,7 @@
 package com.yral.shared.features.auth.analytics
 
 import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.analytics.events.AnonymousAuthFailedEventData
 import com.yral.shared.analytics.events.AuthFailedEventData
 import com.yral.shared.analytics.events.AuthJourney
 import com.yral.shared.analytics.events.AuthScreenViewedEventData
@@ -67,9 +68,23 @@ class AuthTelemetry(
         )
     }
 
+    fun anonymousAuthFailed(reason: String?) {
+        val affiliate = affiliateAttributionStore.peek()
+        analyticsManager.forceTrackEvent(
+            AnonymousAuthFailedEventData(
+                affiliate = affiliate,
+                reason = reason?.take(MAX_ERROR_MESSAGE_LENGTH),
+            ),
+        )
+    }
+
     private fun SocialProvider.toAuthJourney(): AuthJourney =
         when (this) {
             SocialProvider.GOOGLE -> AuthJourney.GOOGLE
             SocialProvider.APPLE -> AuthJourney.APPLE
         }
+
+    companion object {
+        private const val MAX_ERROR_MESSAGE_LENGTH = 50
+    }
 }
