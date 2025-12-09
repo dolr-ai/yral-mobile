@@ -13,31 +13,42 @@ import com.yral.shared.rust.service.domain.models.UserProfileDetails
 import com.yral.shared.rust.service.domain.models.toDomain
 import com.yral.shared.rust.service.domain.models.toFollowerPageResult
 import com.yral.shared.rust.service.domain.models.toFollowingPageResult
+import com.yral.shared.rust.service.domain.performance.RustApiPerformanceTracer
+import com.yral.shared.rust.service.domain.performance.traceApiCall
 import com.yral.shared.uniffi.generated.Principal
 
 class UserInfoRepositoryImpl(
     private val dataSource: UserInfoDataSource,
     private val followersMetadataDataSource: FollowersMetadataDataSource,
+    private val performanceTracer: RustApiPerformanceTracer,
 ) : UserInfoRepository {
     private val logger = Logger.withTag("UserInfoRepository")
 
     override suspend fun followUser(
         principal: Principal,
         targetPrincipal: Principal,
-    ): Unit = dataSource.followUser(principal, targetPrincipal)
+    ): Unit =
+        traceApiCall(performanceTracer, "followUser") {
+            dataSource.followUser(principal, targetPrincipal)
+        }
 
     override suspend fun unfollowUser(
         principal: Principal,
         targetPrincipal: Principal,
-    ): Unit = dataSource.unfollowUser(principal, targetPrincipal)
+    ): Unit =
+        traceApiCall(performanceTracer, "unfollowUser") {
+            dataSource.unfollowUser(principal, targetPrincipal)
+        }
 
     override suspend fun getProfileDetailsV4(
         principal: Principal,
         targetPrincipal: Principal,
     ): UserProfileDetails =
-        dataSource
-            .getProfileDetailsV4(principal, targetPrincipal)
-            .toDomain()
+        traceApiCall(performanceTracer, "getProfileDetailsV4") {
+            dataSource
+                .getProfileDetailsV4(principal, targetPrincipal)
+                .toDomain()
+        }
 
     override suspend fun getFollowers(
         principal: Principal,
@@ -45,29 +56,30 @@ class UserInfoRepositoryImpl(
         cursorPrincipal: Principal?,
         limit: ULong,
         withCallerFollows: Boolean?,
-    ): FollowersPageResult {
-        val response =
-            dataSource.getFollowers(
-                principal = principal,
-                targetPrincipal = targetPrincipal,
-                cursorPrincipal = cursorPrincipal,
-                limit = limit,
-                withCallerFollows = withCallerFollows,
-            )
+    ): FollowersPageResult =
+        traceApiCall(performanceTracer, "getFollowers") {
+            val response =
+                dataSource.getFollowers(
+                    principal = principal,
+                    targetPrincipal = targetPrincipal,
+                    cursorPrincipal = cursorPrincipal,
+                    limit = limit,
+                    withCallerFollows = withCallerFollows,
+                )
 
-        val usernames =
-            runSuspendCatching {
-                val principalTexts =
-                    response.followers
-                        .map { it.principalId }
-                        .filter { it.isNotBlank() }
-                        .distinct()
-                followersMetadataDataSource.fetchUsernames(principalTexts)
-            }.onFailure { logger.w(throwable = it) { "Failed to fetch follower usernames" } }
-                .getOrElse { emptyMap() }
+            val usernames =
+                runSuspendCatching {
+                    val principalTexts =
+                        response.followers
+                            .map { it.principalId }
+                            .filter { it.isNotBlank() }
+                            .distinct()
+                    followersMetadataDataSource.fetchUsernames(principalTexts)
+                }.onFailure { logger.w(throwable = it) { "Failed to fetch follower usernames" } }
+                    .getOrElse { emptyMap() }
 
-        return response.toFollowerPageResult(usernames)
-    }
+            response.toFollowerPageResult(usernames)
+        }
 
     override suspend fun getFollowing(
         principal: Principal,
@@ -75,32 +87,35 @@ class UserInfoRepositoryImpl(
         cursorPrincipal: Principal?,
         limit: ULong,
         withCallerFollows: Boolean?,
-    ): FollowingPageResult {
-        val response =
-            dataSource.getFollowing(
-                principal = principal,
-                targetPrincipal = targetPrincipal,
-                cursorPrincipal = cursorPrincipal,
-                limit = limit,
-                withCallerFollows = withCallerFollows,
-            )
+    ): FollowingPageResult =
+        traceApiCall(performanceTracer, "getFollowing") {
+            val response =
+                dataSource.getFollowing(
+                    principal = principal,
+                    targetPrincipal = targetPrincipal,
+                    cursorPrincipal = cursorPrincipal,
+                    limit = limit,
+                    withCallerFollows = withCallerFollows,
+                )
 
-        val usernames =
-            runSuspendCatching {
-                val principalTexts =
-                    response.following
-                        .map { it.principalId }
-                        .filter { it.isNotBlank() }
-                        .distinct()
-                followersMetadataDataSource.fetchUsernames(principalTexts)
-            }.onFailure { logger.w(throwable = it) { "Failed to fetch following usernames" } }
-                .getOrElse { emptyMap() }
+            val usernames =
+                runSuspendCatching {
+                    val principalTexts =
+                        response.following
+                            .map { it.principalId }
+                            .filter { it.isNotBlank() }
+                            .distinct()
+                    followersMetadataDataSource.fetchUsernames(principalTexts)
+                }.onFailure { logger.w(throwable = it) { "Failed to fetch following usernames" } }
+                    .getOrElse { emptyMap() }
 
-        return response.toFollowingPageResult(usernames)
-    }
+            response.toFollowingPageResult(usernames)
+        }
 
     override suspend fun updateProfileDetails(
         principal: Principal,
         details: ProfileUpdateDetails,
-    ) = dataSource.updateProfileDetails(principal, details)
+    ) = traceApiCall(performanceTracer, "updateProfileDetails") {
+        dataSource.updateProfileDetails(principal, details)
+    }
 }
