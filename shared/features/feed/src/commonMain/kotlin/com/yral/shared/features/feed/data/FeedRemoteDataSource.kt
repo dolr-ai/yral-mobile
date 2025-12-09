@@ -5,6 +5,7 @@ import com.yral.shared.core.AppConfigurations.FEED_BASE_URL
 import com.yral.shared.features.feed.data.models.AIFeedRequestDto
 import com.yral.shared.features.feed.data.models.AIPostResponseDTO
 import com.yral.shared.features.feed.data.models.FeedRequestDTO
+import com.yral.shared.features.feed.data.models.GlobalCachePostResponseDTO
 import com.yral.shared.features.feed.data.models.PostResponseDTO
 import com.yral.shared.http.httpGet
 import com.yral.shared.http.httpPost
@@ -54,9 +55,23 @@ class FeedRemoteDataSource(
             }
         }
 
+    override suspend fun getInitialCachedFeeds(feedRequestDTO: FeedRequestDTO): GlobalCachePostResponseDTO =
+        httpGet(
+            httpClient = client,
+            json = json,
+        ) {
+            url {
+                host = AI_FEED_BASE_URL
+                path(GLOBAL_CACHED_FEED_PATH)
+                parameters.append("count", feedRequestDTO.numResults.toString())
+                parameters.append("include_metadata", true.toString())
+            }
+        }
+
     companion object {
         private const val CACHED_FEED_PATH = "v3/recommendations/cache"
         private const val ML_FEED_PATH = "v3/recommendations"
         private const val AI_ML_FEED_PATH = "v2/recommend-with-metadata"
+        private const val GLOBAL_CACHED_FEED_PATH = "global-cache"
     }
 }
