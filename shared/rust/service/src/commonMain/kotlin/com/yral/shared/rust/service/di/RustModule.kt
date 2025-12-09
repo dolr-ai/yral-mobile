@@ -13,6 +13,8 @@ import com.yral.shared.rust.service.domain.IndividualUserRepository
 import com.yral.shared.rust.service.domain.RateLimitRepository
 import com.yral.shared.rust.service.domain.UserInfoRepository
 import com.yral.shared.rust.service.domain.pagedDataSource.UserInfoPagingSourceFactory
+import com.yral.shared.rust.service.domain.performance.FirebaseRustApiTracer
+import com.yral.shared.rust.service.domain.performance.RustApiPerformanceTracer
 import com.yral.shared.rust.service.domain.usecases.FollowUserUseCase
 import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4UseCase
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserUseCase
@@ -28,6 +30,7 @@ import org.koin.core.module.Module
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
+import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val rustModule: Module =
@@ -62,4 +65,5 @@ val rustModule: Module =
         factoryOf(::UserInfoPagingSourceFactory)
 
         singleOf(::LogForwardingService)
+        singleOf(::FirebaseRustApiTracer) bind RustApiPerformanceTracer::class
     }
