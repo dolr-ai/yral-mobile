@@ -64,6 +64,13 @@ fun LeaderboardDetailsScreen(
     val state by viewModel.state.collectAsState()
     var showConfetti by remember(state.selectedIndex, state.history) { mutableStateOf(viewModel.isCurrentUserInTop()) }
     LaunchedEffect(Unit) { viewModel.fetchHistory(countryCode) }
+
+    LaunchedEffect(state.navigationEvent) {
+        state.navigationEvent?.let { canisterData ->
+            component.openProfile(canisterData)
+            viewModel.onNavigationHandled()
+        }
+    }
     val listState = rememberLazyListState()
     var pageLoadedReported by remember(state.selectedIndex) { mutableStateOf(false) }
     LaunchedEffect(state.isLoading, state.selectedIndex) {
@@ -147,6 +154,7 @@ fun LeaderboardDetailsScreen(
                                     rewardCurrency = selected.rewardCurrency,
                                     rewardCurrencyCode = selected.rewardCurrencyCode,
                                     reward = userRow.reward,
+                                    onClick = { viewModel.onUserClick(userRow) },
                                 )
                                 Spacer(Modifier.height(12.dp))
                             }
@@ -163,6 +171,7 @@ fun LeaderboardDetailsScreen(
                                 rewardCurrency = selected.rewardCurrency,
                                 rewardCurrencyCode = selected.rewardCurrencyCode,
                                 reward = row.reward,
+                                onClick = { viewModel.onUserClick(row) },
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                         }
@@ -183,8 +192,11 @@ fun LeaderboardDetailsScreen(
                 }
             }
         }
-        if (state.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        if (state.isLoading || state.isNavigating) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
                 YralLoader()
             }
         }

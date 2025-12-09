@@ -72,10 +72,16 @@ class GameViewModel(
         }
         viewModelScope.launch {
             sessionManager
-                .observeSessionProperty { it.isFirebaseLoggedIn to it.isForcedGamePlayUser }
-                .collect { (isLoggedIn, isForcedGamePlayUser) ->
+                .observeSessionProperty {
+                    it.isFirebaseLoggedIn to Pair(it.isForcedGamePlayUser, it.isAutoScrollEnabled)
+                }.collect { (isLoggedIn, gameFlags) ->
                     if (isLoggedIn) {
-                        isForcedGamePlayUser?.let { _state.update { it.copy(isStopAndVote = isForcedGamePlayUser) } }
+                        gameFlags.first?.let { isForcedGamePlayUser ->
+                            _state.update { it.copy(isStopAndVote = isForcedGamePlayUser) }
+                        }
+                        gameFlags.second?.let { isAutoScrollEnabled ->
+                            _state.update { it.copy(isAutoScrollEnabled = isAutoScrollEnabled) }
+                        }
                         listOf(
                             async { getGameRules() },
                             async { getGameIcons() },
@@ -404,6 +410,10 @@ class GameViewModel(
                     }
                 }
             }
+            NudgeType.ONBOARDING_START, NudgeType.ONBOARDING_END, NudgeType.ONBOARDING_OTHERS -> {
+                // Onboarding nudges are handled by feed module, just clear the nudge type
+                _state.update { it.copy(nudgeType = null) }
+            }
             null -> Unit
         }
     }
@@ -419,7 +429,7 @@ class GameViewModel(
             NudgeType.MANDATORY -> {
                 if (feedDetailsSize != currentState.lastVotedCount && currentState.isStopAndVote) {
                     Logger.d("Nudge") { "Showing mandatory nudge" }
-                    _state.update { it.copy(nudgeType = NudgeType.MANDATORY) }
+                    _state.update { it.copy(nudgeType = NudgeType.MANDATORY, isDefaultMandatoryNudgeShown = true) }
                 }
             }
             NudgeType.INTRO -> {
@@ -427,6 +437,10 @@ class GameViewModel(
                     Logger.d("Nudge") { "Showing intro nudge" }
                     _state.update { it.copy(nudgeType = NudgeType.INTRO) }
                 }
+            }
+            NudgeType.ONBOARDING_START, NudgeType.ONBOARDING_END, NudgeType.ONBOARDING_OTHERS -> {
+                // Onboarding nudges are set externally by feed module, not through showNudge
+                // This case should not be reached, but included for exhaustiveness
             }
         }
     }
@@ -454,15 +468,20 @@ data class GameState(
     val isResultSheetShown: Boolean = false,
     val isHowToPlayShown: List<Boolean> = List(SHOW_HOW_TO_PLAY_MAX_PAGE) { false },
     val isSmileyGameIntroNudgeShown: Boolean = false,
+    val isDefaultMandatoryNudgeShown: Boolean = false,
     val nudgeType: NudgeType? = null,
     val refreshBalanceState: RefreshBalanceState = RefreshBalanceState.HIDDEN,
     val lastVotedCount: Int = 1,
     val isStopAndVote: Boolean = false,
+    val isAutoScrollEnabled: Boolean = false,
 )
 
 enum class NudgeType {
     MANDATORY,
     INTRO,
+    ONBOARDING_START,
+    ONBOARDING_END,
+    ONBOARDING_OTHERS,
 }
 
 enum class RefreshBalanceState {

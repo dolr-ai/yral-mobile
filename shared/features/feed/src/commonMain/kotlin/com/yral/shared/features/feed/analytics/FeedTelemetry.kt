@@ -1,6 +1,8 @@
 package com.yral.shared.features.feed.analytics
 
 import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.analytics.events.AnalyticsOnboardingStep
+import com.yral.shared.analytics.events.AppOnboardingShownEventData
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.CtaType
 import com.yral.shared.analytics.events.FeedToggleClickedEventData
@@ -19,6 +21,7 @@ import com.yral.shared.analytics.events.VideoStartedEventData
 import com.yral.shared.analytics.events.VideoViewedEventData
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.domain.models.FeedDetails
+import com.yral.shared.features.feed.viewmodel.OnboardingStep
 import com.yral.shared.features.feed.viewmodel.percentageOf
 import com.yral.shared.preferences.stores.AffiliateAttributionStore
 import com.yral.shared.reportVideo.domain.models.VideoReportReason
@@ -200,6 +203,20 @@ class FeedTelemetry(
                 publisherUserId = publisherUserId,
                 source = SourceScreen.HOMEFEED,
                 ctaType = CtaType.FOLLOW,
+            ),
+        )
+    }
+
+    fun onboardingStepShown(step: OnboardingStep) {
+        analyticsManager.trackEvent(
+            AppOnboardingShownEventData(
+                step =
+                    when (step) {
+                        OnboardingStep.INTRO_GAME -> AnalyticsOnboardingStep.INTRO_GAME
+                        OnboardingStep.INTRO_BALANCE -> AnalyticsOnboardingStep.INTRO_BALANCE
+                        OnboardingStep.INTRO_RANK -> AnalyticsOnboardingStep.INTRO_RANK
+                        OnboardingStep.INTRO_GAME_END -> AnalyticsOnboardingStep.INTRO_GAME_END
+                    },
             ),
         )
     }

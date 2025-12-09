@@ -16,6 +16,8 @@ internal class DefaultFeedComponent(
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
     override val promptLogin: (pendingRoute: AppRoute) -> Unit,
+    override val openLeaderboard: () -> Unit,
+    override val openWallet: () -> Unit,
 ) : FeedComponent,
     ComponentContext by componentContext,
     KoinComponent {

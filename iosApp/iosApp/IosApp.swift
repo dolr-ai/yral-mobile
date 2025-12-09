@@ -244,6 +244,7 @@ struct IosApp: App {
     AppDIKt.doInitKoin { coreApplication in
       coreApplication.installExternalDependencyModule(provider: IosDependencyProvider())
     }
+    AppSetupKt.initializeApp()
   }
 
   var body: some Scene {

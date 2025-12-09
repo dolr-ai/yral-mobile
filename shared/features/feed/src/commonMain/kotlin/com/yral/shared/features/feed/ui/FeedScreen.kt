@@ -45,6 +45,7 @@ import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.FOLLOW_NUDGE_PAGE
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.PRE_FETCH_BEFORE_LAST
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.SIGN_UP_PAGE
+import com.yral.shared.features.feed.viewmodel.OnboardingStep
 import com.yral.shared.features.feed.viewmodel.OverlayType
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
@@ -99,7 +100,7 @@ fun FeedScreen(
     modifier: Modifier = Modifier,
     viewModel: FeedViewModel = koinViewModel(),
     topOverlay: @Composable (pageNo: Int) -> Unit,
-    bottomOverlay: @Composable (pageNo: Int) -> Unit,
+    bottomOverlay: @Composable (pageNo: Int, scrollToNext: () -> Unit) -> Unit,
     onPageChanged: (pageNo: Int, currentPage: Int) -> Unit,
     onEdgeScrollAttempt: (pageNo: Int) -> Unit,
     limitReelCount: Int,
@@ -189,13 +190,13 @@ fun FeedScreen(
                         onEdgeScrollAttempt(page)
                     }
                 },
-            ) { pageNo ->
+            ) { pageNo, scrollToNext ->
                 FeedOverlay(
                     pageNo = pageNo,
                     state = state,
                     feedViewModel = viewModel,
                     topOverlay = { topOverlay(pageNo) },
-                    bottomOverlay = { bottomOverlay(pageNo) },
+                    bottomOverlay = { bottomOverlay(pageNo, scrollToNext) },
                     openProfile = { canisterData -> component.openProfile(canisterData) },
                 )
             }
@@ -304,14 +305,27 @@ private fun FeedOverlay(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.TopStart,
     ) {
-        topOverlay()
-        BottomView(
-            state = state,
-            pageNo = pageNo,
-            feedViewModel = feedViewModel,
-            bottomOverlay = bottomOverlay,
-            openProfile = openProfile,
-        )
+        if (state.currentOnboardingStep == OnboardingStep.INTRO_RANK ||
+            state.currentOnboardingStep == OnboardingStep.INTRO_BALANCE
+        ) {
+            BottomView(
+                state = state,
+                pageNo = pageNo,
+                feedViewModel = feedViewModel,
+                bottomOverlay = bottomOverlay,
+                openProfile = openProfile,
+            )
+            topOverlay()
+        } else {
+            topOverlay()
+            BottomView(
+                state = state,
+                pageNo = pageNo,
+                feedViewModel = feedViewModel,
+                bottomOverlay = bottomOverlay,
+                openProfile = openProfile,
+            )
+        }
         if (!state.isLoggedIn && pageNo != 0 && (pageNo % SIGN_UP_PAGE) == 0) {
             val context = getContext()
             SignupNudge(tncLink = feedViewModel.getTncLink()) { provider ->
