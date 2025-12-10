@@ -47,7 +47,6 @@ ktor = "3.3.0"
 media3Exoplayer = "1.6.1"
 mixpanel = "8.2.0"
 mixpanel-session-replay = "1.0.0"
-onesignal = "5.4.0"
 sentryKmp = "0.21.0"
 sentryAndroid = "8.25.0"
 sentryGradlePlugin = "5.12.2"
@@ -191,7 +190,6 @@ sentry-android-fragment = { module = "io.sentry:sentry-android-fragment" }
 sentry-android-sqlite = { module = "io.sentry:sentry-android-sqlite" }
 sentry-okhttp = { module = "io.sentry:sentry-okhttp" }
 sentry-kotlin-extensions = { module = "io.sentry:sentry-kotlin-extensions" }
-onesignal = { module = "com.onesignal:OneSignal", version.ref = "onesignal" }
 
 moko-permissions = { group = "dev.icerock.moko", name = "permissions", version.ref = "moko-permissions" }
 moko-permissions-bluetooth = { group = "dev.icerock.moko", name = "permissions-bluetooth", version.ref = "moko-permissions" }
