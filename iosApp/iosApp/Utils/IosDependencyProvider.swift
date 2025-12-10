@@ -1,5 +1,4 @@
 //
-//  IosOneSignalKMP.swift
 //  iosApp
 //
 //  Created by Sarvesh Sharma on 14/10/25.
@@ -10,7 +9,4 @@ import Foundation
 import iosSharedUmbrella
 
 class IosDependencyProvider: ExternalDependencyProvider {
-  func createOneSignalKMP() -> any OneSignalKMP {
-    IosOneSignalKMP()
-  }
 }
