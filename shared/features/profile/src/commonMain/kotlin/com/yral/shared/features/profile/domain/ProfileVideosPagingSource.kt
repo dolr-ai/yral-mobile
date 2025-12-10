@@ -33,7 +33,13 @@ class ProfileVideosPagingSource(
                     .getVideoViewsCount(profileVideos.map { it.videoID })
                     .associate { it.videoId to it.allViews }
             if (videoStats.isNotEmpty()) {
-                profileVideos = profileVideos.map { it.copy(viewCount = videoStats[it.videoID] ?: it.viewCount) }
+                profileVideos =
+                    profileVideos.map {
+                        it.copy(
+                            viewCount = videoStats[it.videoID] ?: it.viewCount,
+                            bulkViewCount = videoStats[it.videoID] ?: it.viewCount,
+                        )
+                    }
             }
             LoadResult.Page(
                 data = profileVideos,

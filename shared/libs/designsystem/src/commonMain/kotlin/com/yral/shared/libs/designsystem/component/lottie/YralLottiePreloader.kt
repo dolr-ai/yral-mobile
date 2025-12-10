@@ -26,7 +26,7 @@ fun PreloadLottieAnimation(
     LaunchedEffect(result) {
         try {
             result.await()
-            logger.d { "Successfully preloaded: $url" }
+            // logger.d { "Successfully preloaded: $url" }
         } catch (e: CompottieException) {
             logger.e(e) { "Preload failed with exception: $url" }
             val error = YralException("Failed to preload Lottie animation: $url", e)
