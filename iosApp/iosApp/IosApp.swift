@@ -146,6 +146,8 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     return false
   }
 
+  private var saveUtmParams: Task<Void, Never>?
+
   private func handleAffiliateAttribution(params: [String: Any]) {
     guard isBranchClick(params["+clicked_branch_link"]) else { return }
     guard let channel = (
@@ -156,21 +158,33 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     else { return }
 
     AppDIHelper().getAffiliateAttributionStore().storeIfEmpty(affiliate: channel)
+    saveUtmParams?.cancel()
+    saveUtmParams = Task {
+        do {
+            // Capture UTM parameters (if present) for attribution
+            let utmSource = params[Constants.utmSource] as? String
+            let utmMedium = params[Constants.utmMedium] as? String
+            let utmCampaign = params[Constants.utmCampaign] as? String
+            let utmTerm = params[Constants.utmTerm] as? String
+            let utmContent = params[Constants.utmContent] as? String
 
-    // Capture UTM parameters (if present) for attribution
-    let utmSource = params[Constants.utmSource] as? String
-    let utmMedium = params[Constants.utmMedium] as? String
-    let utmCampaign = params[Constants.utmCampaign] as? String
-    let utmTerm = params[Constants.utmTerm] as? String
-    let utmContent = params[Constants.utmContent] as? String
+            try await AppDIHelper()
+                .getUtmAttributionStore()
+                .storeIfEmpty(
+                    source: utmSource,
+                    medium: utmMedium,
+                    campaign: utmCampaign,
+                    term: utmTerm,
+                    content: utmContent
+                )
+        } catch {
+            debugPrint("Cancelled or Failed")
+        }
+    }
+  }
 
-    AppDIHelper().getUtmAttributionStore().storeIfEmpty(
-      source: utmSource,
-      medium: utmMedium,
-      campaign: utmCampaign,
-      term: utmTerm,
-      content: utmContent
-    )
+  deinit {
+    saveUtmParams?.cancel()
   }
 
   private func isBranchClick(_ value: Any?) -> Bool {
