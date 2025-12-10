@@ -121,9 +121,10 @@ class FeedViewModel(
         initAvailableFeeds()
         loadCachedFeedDetails()
         viewModelScope.launch {
-            if (preferences.getBoolean(PrefKeys.IS_ONBOARDING_COMPLETE.name) != true) {
-                _state.update { it.copy(currentOnboardingStep = OnboardingStep.INTRO_GAME) }
-            }
+//            if (preferences.getBoolean(PrefKeys.IS_ONBOARDING_COMPLETE.name) != true) {
+//                _state.update { it.copy(currentOnboardingStep = OnboardingStep.INTRO_GAME) }
+//            }
+            preferences.remove(PrefKeys.IS_ONBOARDING_COMPLETE.name)
         }
         viewModelScope.launch {
             sessionManager
@@ -187,13 +188,13 @@ class FeedViewModel(
                         val posts = result.posts
                         Logger.d("FeedPagination") { "posts in initialFeed ${posts.size}" }
                         if (posts.isEmpty()) {
-                            setLoadingMore(false)
-                            loadMoreFeed()
-                        } else {
                             crashlyticsManager.recordException(
                                 YralException("Initial cache feed empty"),
                                 ExceptionType.FEED,
                             )
+                            setLoadingMore(false)
+                            loadMoreFeed()
+                        } else {
                             val notVotedCount = filterVotedAndFetchDetails(posts)
                             Logger.d("FeedPagination") { "notVotedCount in initialFeed $notVotedCount" }
                             if (notVotedCount < SUFFICIENT_NEW_REQUIRED) {
