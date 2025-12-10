@@ -15,6 +15,7 @@ import com.yral.shared.analytics.events.FeedType
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.utils.processFirstNSuspendFlow
+import com.yral.shared.core.utils.update
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.data.domain.models.FeedDetails
@@ -405,6 +406,7 @@ class FeedViewModel(
         return false
     }
 
+    @Suppress("LongMethod")
     private suspend fun fetchAndShowDeeplink(
         postId: String,
         canisterId: String,
@@ -440,7 +442,10 @@ class FeedViewModel(
                                 views.firstOrNull()?.allViews?.let { allViews ->
                                     Logger.d("LinkSharing") { "View count : $allViews" }
                                     _state.update { currentState ->
-                                        addDeeplinkData(currentState, detail.copy(viewCount = allViews))
+                                        addDeeplinkData(
+                                            currentState = currentState,
+                                            details = detail.copy(viewCount = allViews, bulkViewCount = allViews),
+                                        )
                                     }
                                 } ?: run {
                                     Logger.d("LinkSharing") { "Failed to fetch view count" }
@@ -697,9 +702,9 @@ class FeedViewModel(
                             } else {
                                 currentState.copy(
                                     feedDetails =
-                                        list
-                                            .toMutableList()
-                                            .apply { this[index] = this[index].copy(viewCount = allViews) },
+                                        list.update(index) {
+                                            it.copy(viewCount = allViews, bulkViewCount = allViews)
+                                        },
                                 )
                             }
                         }

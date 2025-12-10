@@ -88,6 +88,7 @@ import com.yral.shared.libs.designsystem.component.YralDragHandle
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralLoader
+import com.yral.shared.libs.designsystem.component.YralLoadingDots
 import com.yral.shared.libs.designsystem.component.features.AccountInfoView
 import com.yral.shared.libs.designsystem.component.features.DeleteConfirmationSheet
 import com.yral.shared.libs.designsystem.component.features.VideoViewsSheet
@@ -1098,7 +1099,7 @@ private fun VideoGridItem(
             VideoGridItemActions(
                 isLiked = video.isLiked,
                 likeCount = video.likeCount,
-                viewCount = video.viewCount,
+                viewCount = video.bulkViewCount,
                 isOwnProfile = isOwnProfile,
                 onDeleteVideo = onDeleteClick,
                 onDownloadVideo = onDownloadClick,
@@ -1152,7 +1153,7 @@ private fun DeletingOverLay(
 private fun BoxScope.VideoGridItemActions(
     isLiked: Boolean,
     likeCount: ULong,
-    viewCount: ULong,
+    viewCount: ULong?,
     isLikeVisible: Boolean = false,
     isOwnProfile: Boolean,
     onDeleteVideo: () -> Unit,
@@ -1195,11 +1196,17 @@ private fun BoxScope.VideoGridItemActions(
                 contentDescription = leftIconDescription,
                 modifier = Modifier.size(24.dp),
             )
-            Text(
-                text = formatAbbreviation(leftText.toLong()),
-                style = LocalAppTopography.current.baseMedium,
-                color = YralColors.NeutralTextPrimary,
-            )
+            leftText?.let {
+                Text(
+                    text = formatAbbreviation(it.toLong()),
+                    style = LocalAppTopography.current.baseMedium,
+                    color = YralColors.NeutralTextPrimary,
+                )
+            } ?: if (!isLikeVisible) {
+                YralLoadingDots()
+            } else {
+                Unit
+            }
         }
         if (isOwnProfile) {
             YralContextMenu(
