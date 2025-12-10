@@ -121,9 +121,10 @@ class FeedViewModel(
         initAvailableFeeds()
         loadCachedFeedDetails()
         viewModelScope.launch {
-            if (preferences.getBoolean(PrefKeys.IS_ONBOARDING_COMPLETE.name) != true) {
-                _state.update { it.copy(currentOnboardingStep = OnboardingStep.INTRO_GAME) }
-            }
+//            if (preferences.getBoolean(PrefKeys.IS_ONBOARDING_COMPLETE.name) != true) {
+//                _state.update { it.copy(currentOnboardingStep = OnboardingStep.INTRO_GAME) }
+//            }
+            preferences.remove(PrefKeys.IS_ONBOARDING_COMPLETE.name)
         }
         viewModelScope.launch {
             sessionManager
