@@ -14,7 +14,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import co.touchlab.kermit.Logger
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
@@ -87,7 +86,7 @@ fun CMPPlayer(
                 contentDescription = "Thumbnail",
                 contentScale = ContentScale.Fit,
                 onState = { state ->
-                    logger.d { "onState: $state" }
+                    // logger.d { "onState: $state" }
                 },
                 modifier =
                     Modifier
@@ -236,7 +235,7 @@ internal fun PrefetchThumbnail(
     url: String,
     imageLoader: ImageLoader = koinInject(),
 ) {
-    Logger.d { "PrefetchThumbnail: $url" }
+    // Logger.d { "PrefetchThumbnail: $url" }
     val request =
         ImageRequest
             .Builder(LocalPlatformContext.current)

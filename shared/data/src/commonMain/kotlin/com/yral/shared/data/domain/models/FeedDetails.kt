@@ -9,6 +9,7 @@ data class FeedDetails(
     val hashtags: List<String>,
     val thumbnail: String,
     val viewCount: ULong,
+    val bulkViewCount: ULong? = null,
     val displayName: String,
     val postDescription: String,
     var profileImageURL: String?,
