@@ -9,8 +9,6 @@ import coil3.SingletonImageLoader
 import com.yral.shared.analytics.di.IS_DEBUG
 import com.yral.shared.analytics.di.MIXPANEL_TOKEN
 import com.yral.shared.analytics.di.ONESIGNAL_APP_ID
-import com.yral.shared.analytics.providers.onesignal.AndroidOneSignal
-import com.yral.shared.analytics.providers.onesignal.OneSignalKMP
 import com.yral.shared.crashlytics.di.SENTRY_DSN
 import com.yral.shared.crashlytics.di.SENTRY_ENVIRONMENT
 import com.yral.shared.crashlytics.di.SENTRY_RELEASE
@@ -92,7 +90,6 @@ actual val platformModule =
         factory<ScreenFoldStateProvider> { (activityContext: Context) ->
             AndroidScreenFoldStateProvider(activityContext)
         }
-        singleOf(::AndroidOneSignal) bind OneSignalKMP::class
     }
 
 private fun Scope.getSentryRelease(): String {
