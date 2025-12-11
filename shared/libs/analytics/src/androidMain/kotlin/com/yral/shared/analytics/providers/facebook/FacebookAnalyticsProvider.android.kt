@@ -16,12 +16,13 @@ actual class FacebookAnalyticsProvider actual constructor(
 ) : AnalyticsProvider,
     KoinComponent {
     private val context: Context by inject()
+    private val logger = AppEventsLogger.newLogger(context)
+
     override val name: String = "facebook"
 
     override fun shouldTrackEvent(event: EventData): Boolean = eventFilter(event)
 
     override fun trackEvent(event: EventData) {
-        val logger = AppEventsLogger.newLogger(context)
         val map = mapConverter.toMap(event)
         val parameters = toBundle(map)
         logger.logEvent(
@@ -36,6 +37,10 @@ actual class FacebookAnalyticsProvider actual constructor(
 
     override fun reset() {
         AppEventsLogger.clearUserID()
+    }
+
+    override fun flush() {
+        logger.flush()
     }
 
     override fun toValidKeyName(key: String): String = key
