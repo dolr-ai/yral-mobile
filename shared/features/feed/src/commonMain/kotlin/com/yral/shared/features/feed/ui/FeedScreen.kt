@@ -50,6 +50,7 @@ import com.yral.shared.features.feed.viewmodel.OverlayType
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralLoader
+import com.yral.shared.libs.designsystem.component.YralLoadingDots
 import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastType
@@ -463,6 +464,7 @@ private fun ActionsRight(
         )
 
         Column(
+            modifier = Modifier.height(56.dp),
             verticalArrangement = Arrangement.spacedBy(0.dp, Alignment.Top),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -475,11 +477,13 @@ private fun ActionsRight(
                         .size(36.dp)
                         .padding(1.5.dp),
             )
-            Text(
-                text = formatAbbreviation(feedDetails.viewCount.toLong(), 1),
-                style = LocalAppTopography.current.regSemiBold,
-                color = YralColors.NeutralTextPrimary,
-            )
+            feedDetails.bulkViewCount?.let { viewCount ->
+                Text(
+                    text = formatAbbreviation(viewCount.toLong(), 1),
+                    style = LocalAppTopography.current.regSemiBold,
+                    color = YralColors.NeutralTextPrimary,
+                )
+            } ?: YralLoadingDots()
         }
 
         ReportVideo(

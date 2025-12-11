@@ -209,7 +209,13 @@ class ProfileViewModel: ObservableObject {
             flag: FeedFeatureFlags.SmileyGame.shared.StopAndVoteNudge
           )
         ),
-        emailId: analyticsInfo.emailId
+        isAutoScrollEnabled: KotlinBoolean(
+            bool: AppDIHelper().getFeatureFlagManager().isEnabled(
+                flag: FeedFeatureFlags.SmileyGame.shared.AutoScrollEnabled
+            )
+        ),
+        emailId: analyticsInfo.emailId,
+        utmParams: nil,
       )
     )
     AnalyticsModuleKt.getAnalyticsManager().flush()

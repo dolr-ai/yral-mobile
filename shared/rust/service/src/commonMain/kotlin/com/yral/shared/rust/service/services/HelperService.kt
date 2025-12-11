@@ -6,6 +6,7 @@ import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.getOrThrow
 import com.yral.shared.koin.koinInstance
+import com.yral.shared.rust.service.domain.performance.traceApiCall
 import com.yral.shared.uniffi.generated.LoggerException
 
 object HelperService {
@@ -21,9 +22,11 @@ object HelperService {
 
             logger.d { "Registering device with token: $token" }
 
-            // Call the uniffi generated function
-            com.yral.shared.uniffi.generated
-                .registerDevice(identityData, token)
+            traceApiCall(koinInstance.get(), "registerDevice") {
+                // Call the uniffi generated function
+                com.yral.shared.uniffi.generated
+                    .registerDevice(identityData, token)
+            }
 
             Ok(Unit)
         } catch (e: DeviceRegistrationError) {
@@ -46,9 +49,11 @@ object HelperService {
 
             logger.d { "Unregistering device with token: $token" }
 
-            // Call the uniffi generated function
-            com.yral.shared.uniffi.generated
-                .unregisterDevice(identityData, token)
+            traceApiCall(koinInstance.get(), "unregisterDevice") {
+                // Call the uniffi generated function
+                com.yral.shared.uniffi.generated
+                    .unregisterDevice(identityData, token)
+            }
 
             Ok(Unit)
         } catch (e: DeviceRegistrationError) {

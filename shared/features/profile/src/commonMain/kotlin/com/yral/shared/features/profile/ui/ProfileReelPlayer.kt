@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.libs.designsystem.component.YralLoader
+import com.yral.shared.libs.designsystem.component.YralLoadingDots
 import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
@@ -170,7 +171,7 @@ private fun ProfileReelOverlay(
             )
             ActionsRight(
                 modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 89.dp),
-                views = currentVideo.viewCount.toLong(),
+                views = currentVideo.bulkViewCount?.toLong(),
                 isOwnProfile = isOwnProfile,
                 onReportClick = onReportClick,
                 onShareClick = onShareClick,
@@ -263,7 +264,7 @@ private fun Caption(
 @Composable
 private fun ActionsRight(
     modifier: Modifier,
-    views: Long,
+    views: Long?,
     isOwnProfile: Boolean,
     onReportClick: () -> Unit,
     onShareClick: () -> Unit,
@@ -277,6 +278,7 @@ private fun ActionsRight(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         ViewsIcon(
+            modifier = Modifier.size(56.dp),
             views = views,
             onViewsClick = onViewsClick,
         )
@@ -294,7 +296,7 @@ private fun ActionsRight(
 @Composable
 private fun ViewsIcon(
     modifier: Modifier = Modifier,
-    views: Long,
+    views: Long?,
     onViewsClick: () -> Unit,
 ) {
     Column(
@@ -308,11 +310,13 @@ private fun ViewsIcon(
             contentScale = ContentScale.None,
             modifier = Modifier.size(36.dp),
         )
-        Text(
-            text = formatAbbreviation(views, 1),
-            style = LocalAppTopography.current.regSemiBold,
-            color = YralColors.NeutralTextPrimary,
-        )
+        views?.let {
+            Text(
+                text = formatAbbreviation(views, 1),
+                style = LocalAppTopography.current.regSemiBold,
+                color = YralColors.NeutralTextPrimary,
+            )
+        } ?: YralLoadingDots()
     }
 }
 

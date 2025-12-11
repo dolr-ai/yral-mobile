@@ -842,15 +842,13 @@ class ProfileViewModel(
     fun showVideoViews(video: FeedDetails) {
         if (!_state.value.isOwnProfile) return
         viewModelScope.launch {
-            val currentViews = _state.value.viewsData[video.videoID]
             val shouldRefresh =
-                when (currentViews) {
+                when (val currentViews = _state.value.viewsData[video.videoID]) {
                     is UiState.InProgress -> return@launch
                     is UiState.Success -> {
                         val now = Clock.System.now()
                         now - currentViews.data.lastFetched > VIEWS_REFRESH_THRESHOLD
                     }
-
                     else -> true
                 }
             _state.update {
@@ -885,7 +883,13 @@ class ProfileViewModel(
                             current.copy(
                                 updatedDetails =
                                     current.updatedDetails +
-                                        (video.videoID to video.copy(viewCount = viewData.allViews)),
+                                        (
+                                            video.videoID to
+                                                video.copy(
+                                                    viewCount = viewData.allViews,
+                                                    bulkViewCount = viewData.allViews,
+                                                )
+                                        ),
                             )
                         }
                     }
