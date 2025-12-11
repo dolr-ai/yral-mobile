@@ -32,5 +32,10 @@ actual class FacebookAnalyticsProvider actual constructor(
         FBSDKAppEvents.shared().setUserID(null)
     }
 
+    @OptIn(ExperimentalForeignApi::class)
+    override fun flush() {
+        FBSDKAppEvents.shared().flush()
+    }
+
     override fun toValidKeyName(key: String) = key
 }

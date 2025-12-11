@@ -98,6 +98,10 @@ actual class MixpanelAnalyticsProvider actual constructor(
         distinctId.value = mixpanel.distinctId
     }
 
+    override fun flush() {
+        mixpanel.flush()
+    }
+
     override fun toValidKeyName(key: String): String = key
 
     val TokenType.serialName: String
