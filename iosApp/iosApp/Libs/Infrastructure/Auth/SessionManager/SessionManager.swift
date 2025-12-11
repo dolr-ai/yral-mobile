@@ -81,7 +81,13 @@ final class SessionManager: ObservableObject {
               flag: FeedFeatureFlags.SmileyGame.shared.StopAndVoteNudge
             )
           ),
-          emailId: nil
+          isAutoScrollEnabled: KotlinBoolean(
+            bool: AppDIHelper().getFeatureFlagManager().isEnabled(
+                flag: FeedFeatureFlags.SmileyGame.shared.AutoScrollEnabled
+            )
+          ),
+          emailId: nil,
+          utmParams: nil,
         )
       )
     case .permanentAuthentication(let userPrincipal, let email, let canisterPrincipal, _, _, let dailyRank):
@@ -106,7 +112,13 @@ final class SessionManager: ObservableObject {
               flag: FeedFeatureFlags.SmileyGame.shared.StopAndVoteNudge
             )
           ),
-          emailId: ""
+          isAutoScrollEnabled: KotlinBoolean(
+            bool: AppDIHelper().getFeatureFlagManager().isEnabled(
+                flag: FeedFeatureFlags.SmileyGame.shared.AutoScrollEnabled
+            )
+          ),
+          emailId: "",
+          utmParams: nil,
         )
       )
     default:
