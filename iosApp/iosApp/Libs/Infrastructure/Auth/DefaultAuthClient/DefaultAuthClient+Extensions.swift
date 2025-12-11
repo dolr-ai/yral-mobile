@@ -308,7 +308,13 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
             flag: FeedFeatureFlags.SmileyGame.shared.StopAndVoteNudge
           )
         ),
-        emailId: email
+        isAutoScrollEnabled: KotlinBoolean(
+            bool: AppDIHelper().getFeatureFlagManager().isEnabled(
+                flag: FeedFeatureFlags.SmileyGame.shared.AutoScrollEnabled
+            )
+        ),
+        emailId: email,
+        utmParams: nil,
       )
     )
     MPSessionReplay.getInstance()?.identify(distinctId: Mixpanel.sharedInstance()?.distinctId ?? "")
