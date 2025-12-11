@@ -99,7 +99,7 @@ class InstallReferrerAttribution(
         val utmTerm: String? = uri.getQueryParameter(UTM_TERM_PARAM)
         val utmContent: String? = uri.getQueryParameter(UTM_CONTENT_PARAM)
 
-        if (utmSource.isNullOrBlank()) {
+        if (utmSource.isNullOrBlank() || utmSource.contains("not set") || utmSource.contains("not%20set")) {
             utmSource =
                 when {
                     "gclid=" in lower -> "google_ads"
