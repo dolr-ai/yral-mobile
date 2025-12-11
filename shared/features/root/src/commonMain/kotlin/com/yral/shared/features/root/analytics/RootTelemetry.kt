@@ -15,6 +15,7 @@ class RootTelemetry(
     @OptIn(ExperimentalTime::class)
     fun onFirstAppLaunch(now: Instant) {
         analyticsManager.forceTrackEvent(FirstAppLaunchEventData(date = now.toString()))
+        analyticsManager.flush()
     }
 
     fun onSplashScreenViewed() {
