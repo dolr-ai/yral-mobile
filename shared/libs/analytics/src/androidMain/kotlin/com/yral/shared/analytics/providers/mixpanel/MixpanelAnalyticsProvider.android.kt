@@ -24,10 +24,6 @@ actual class MixpanelAnalyticsProvider actual constructor(
     token: String,
 ) : AnalyticsProvider,
     KoinComponent {
-    private companion object {
-        private const val ONE_SIGNAL_PROPERTY = "\$onesignal_user_id"
-    }
-
     private val context: Context by inject()
     private val isDebug: Boolean by inject(IS_DEBUG)
     override val name: String = "mixpanel"
@@ -82,7 +78,6 @@ actual class MixpanelAnalyticsProvider actual constructor(
         // Attach UTM attribution as user-level properties (people + super props)
         val utmParamsMap = user.utmParams?.toMap() ?: emptyMap()
 
-        mixpanel.people.set(ONE_SIGNAL_PROPERTY, user.userId)
         if (user.isLoggedIn == true) {
             mixpanel.identify(user.userId)
             MPSessionReplay.getInstance()?.identify(user.userId)
@@ -98,10 +93,13 @@ actual class MixpanelAnalyticsProvider actual constructor(
     }
 
     override fun reset() {
-        mixpanel.people.unset(ONE_SIGNAL_PROPERTY)
         mixpanel.reset()
         MPSessionReplay.getInstance()?.identify(mixpanel.distinctId)
         distinctId.value = mixpanel.distinctId
+    }
+
+    override fun flush() {
+        mixpanel.flush()
     }
 
     override fun toValidKeyName(key: String): String = key

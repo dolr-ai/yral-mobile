@@ -160,6 +160,25 @@ data class AuthFailedEventData(
     )
 }
 
+@Serializable
+data class AnonymousAuthFailedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.ANONYMOUS_AUTH_FAILED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AUTH.getFeatureName(),
+    @SerialName("affiliate") val affiliate: String? = null,
+    @SerialName("reason") val reason: String? = null,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        affiliate: String? = null,
+        reason: String? = null,
+    ) : this(
+        FeatureEvents.ANONYMOUS_AUTH_FAILED.getEventName(),
+        Features.AUTH.getFeatureName(),
+        affiliate,
+        reason,
+    )
+}
+
 // --- Home ---
 @Serializable
 data class HomePageViewedEventData(

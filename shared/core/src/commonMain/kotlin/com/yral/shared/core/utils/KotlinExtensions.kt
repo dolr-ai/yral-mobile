@@ -132,3 +132,8 @@ fun <P, R> Iterable<P>.processFirstNSuspendFlow(
 }
 
 inline fun <reified T : Enum<T>> safeValueOf(name: String?): T? = enumValues<T>().find { it.name == name }
+
+inline fun <T> List<T>.update(
+    index: Int,
+    transform: (T) -> T,
+): List<T> = toMutableList().also { it[index] = transform(it[index]) }

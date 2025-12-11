@@ -15,6 +15,7 @@ import com.yral.shared.analytics.events.FeedType
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.utils.processFirstNSuspendFlow
+import com.yral.shared.core.utils.update
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.data.domain.models.FeedDetails
@@ -28,6 +29,7 @@ import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsWithCreatorInfoUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetAIFeedUseCase
+import com.yral.shared.features.feed.domain.useCases.GetGlobalCacheFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.LoadCachedFeedDetailsUseCase
 import com.yral.shared.features.feed.domain.useCases.SaveFeedDetailsCacheUseCase
@@ -119,9 +121,10 @@ class FeedViewModel(
         initAvailableFeeds()
         loadCachedFeedDetails()
         viewModelScope.launch {
-            if (preferences.getBoolean(PrefKeys.IS_ONBOARDING_COMPLETE.name) != true) {
-                _state.update { it.copy(currentOnboardingStep = OnboardingStep.INTRO_GAME) }
-            }
+//            if (preferences.getBoolean(PrefKeys.IS_ONBOARDING_COMPLETE.name) != true) {
+//                _state.update { it.copy(currentOnboardingStep = OnboardingStep.INTRO_GAME) }
+//            }
+            preferences.remove(PrefKeys.IS_ONBOARDING_COMPLETE.name)
         }
         viewModelScope.launch {
             sessionManager
@@ -185,13 +188,47 @@ class FeedViewModel(
                         val posts = result.posts
                         Logger.d("FeedPagination") { "posts in initialFeed ${posts.size}" }
                         if (posts.isEmpty()) {
-                            setLoadingMore(false)
-                            loadMoreFeed()
-                        } else {
                             crashlyticsManager.recordException(
                                 YralException("Initial cache feed empty"),
                                 ExceptionType.FEED,
                             )
+                            setLoadingMore(false)
+                            loadMoreFeed()
+                        } else {
+                            val notVotedCount = filterVotedAndFetchDetails(posts)
+                            Logger.d("FeedPagination") { "notVotedCount in initialFeed $notVotedCount" }
+                            if (notVotedCount < SUFFICIENT_NEW_REQUIRED) {
+                                setLoadingMore(false)
+                                loadMoreFeed()
+                            } else {
+                                setLoadingMore(false)
+                            }
+                        }
+                    }.onFailure {
+                        setLoadingMore(false)
+                        loadMoreFeed()
+                    }
+            }
+        }
+    }
+
+    private fun initialRemoteCachedFeedData() {
+        coroutineScope.launch {
+            sessionManager.userPrincipal?.let {
+                setLoadingMore(true)
+                requiredUseCases
+                    .getGlobalCacheFeedUseCase(Unit)
+                    .onSuccess { result ->
+                        val posts = result.posts
+                        Logger.d("FeedPagination") { "posts in initialFeed ${posts.size}" }
+                        if (posts.isEmpty()) {
+                            crashlyticsManager.recordException(
+                                YralException("Initial global cache feed empty"),
+                                ExceptionType.FEED,
+                            )
+                            setLoadingMore(false)
+                            loadMoreFeed()
+                        } else {
                             val notVotedCount = filterVotedAndFetchDetails(posts)
                             Logger.d("FeedPagination") { "notVotedCount in initialFeed $notVotedCount" }
                             if (notVotedCount < SUFFICIENT_NEW_REQUIRED) {
@@ -239,13 +276,7 @@ class FeedViewModel(
 
     private fun initializeFeed() {
         when (_state.value.feedType) {
-            FeedType.AI -> {
-                fetchAIFeed(
-                    currentBatchSize = FEEDS_PAGE_SIZE_AI_FEED,
-                    totalNotVotedCount = 0,
-                    recursionDepth = 0,
-                )
-            }
+            FeedType.AI -> initialRemoteCachedFeedData()
             else -> initialFeedData()
         }
     }
@@ -376,6 +407,7 @@ class FeedViewModel(
         return false
     }
 
+    @Suppress("LongMethod")
     private suspend fun fetchAndShowDeeplink(
         postId: String,
         canisterId: String,
@@ -411,7 +443,10 @@ class FeedViewModel(
                                 views.firstOrNull()?.allViews?.let { allViews ->
                                     Logger.d("LinkSharing") { "View count : $allViews" }
                                     _state.update { currentState ->
-                                        addDeeplinkData(currentState, detail.copy(viewCount = allViews))
+                                        addDeeplinkData(
+                                            currentState = currentState,
+                                            details = detail.copy(viewCount = allViews, bulkViewCount = allViews),
+                                        )
                                     }
                                 } ?: run {
                                     Logger.d("LinkSharing") { "Failed to fetch view count" }
@@ -668,9 +703,9 @@ class FeedViewModel(
                             } else {
                                 currentState.copy(
                                     feedDetails =
-                                        list
-                                            .toMutableList()
-                                            .apply { this[index] = this[index].copy(viewCount = allViews) },
+                                        list.update(index) {
+                                            it.copy(viewCount = allViews, bulkViewCount = allViews)
+                                        },
                                 )
                             }
                         }
@@ -1056,6 +1091,7 @@ class FeedViewModel(
         val videoViewsUseCase: GetVideoViewsUseCase,
         val loadCachedFeedDetailsUseCase: LoadCachedFeedDetailsUseCase,
         val saveFeedDetailsCacheUseCase: SaveFeedDetailsCacheUseCase,
+        val getGlobalCacheFeedUseCase: GetGlobalCacheFeedUseCase,
     )
 }
 

@@ -9,7 +9,6 @@ import com.yral.shared.analytics.providers.bigquery.BigQueryEventsApiService
 import com.yral.shared.analytics.providers.facebook.FacebookAnalyticsProvider
 import com.yral.shared.analytics.providers.firebase.FirebaseAnalyticsProvider
 import com.yral.shared.analytics.providers.mixpanel.MixpanelAnalyticsProvider
-import com.yral.shared.analytics.providers.onesignal.OneSignalAnalyticsProvider
 import com.yral.shared.analytics.providers.yral.AnalyticsApiService
 import com.yral.shared.analytics.providers.yral.CoreService
 import com.yral.shared.koin.koinInstance
@@ -48,14 +47,6 @@ val analyticsModule =
             )
         }
         single {
-            OneSignalAnalyticsProvider(
-                eventFilter = { false },
-                mapConverter = get(),
-                appId = get<String>(ONESIGNAL_APP_ID),
-                oneSignal = get(),
-            )
-        }
-        single {
             FacebookAnalyticsProvider(
                 eventFilter = { it.shouldSendToFacebook() },
                 mapConverter = get(),
@@ -77,7 +68,6 @@ val analyticsModule =
             AnalyticsManager()
                 .addProvider(get<FirebaseAnalyticsProvider>())
                 .addProvider(get<MixpanelAnalyticsProvider>())
-                .addProvider(get<OneSignalAnalyticsProvider>())
                 .addProvider(get<FacebookAnalyticsProvider>())
                 .addProvider(get<BigQueryAnalyticsProvider>())
                 .setCoreService(get<CoreService>())

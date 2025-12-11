@@ -502,8 +502,6 @@
 		ACB09FDE2D92F87E00EE3239 /* MyVideosFeedViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FDC2D92F87000EE3239 /* MyVideosFeedViewModel.swift */; };
 		ACB09FE72D93289000EE3239 /* MyVideosFeedInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FE62D93288400EE3239 /* MyVideosFeedInfo.swift */; };
 		ACB09FE82D93289000EE3239 /* MyVideosFeedInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB09FE62D93288400EE3239 /* MyVideosFeedInfo.swift */; };
-		ACB117462E9EADE20064677F /* IosOneSignalKMP.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB117452E9EADD10064677F /* IosOneSignalKMP.swift */; };
-		ACB117472E9EADE20064677F /* IosOneSignalKMP.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB117452E9EADD10064677F /* IosOneSignalKMP.swift */; };
 		ACB117492E9EAEEE0064677F /* IosDependencyProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB117482E9EAEEE0064677F /* IosDependencyProvider.swift */; };
 		ACB1174A2E9EAEEE0064677F /* IosDependencyProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB117482E9EAEEE0064677F /* IosDependencyProvider.swift */; };
 		ACB3439A2E4357A800EC74A0 /* sats_claim_loading.json in Resources */ = {isa = PBXBuildFile; fileRef = ACB343982E4357A800EC74A0 /* sats_claim_loading.json */; };
@@ -1067,7 +1065,6 @@
 		ACB09FD92D92D6E400EE3239 /* MoreFeedsRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoreFeedsRequest.swift; sourceTree = "<group>"; };
 		ACB09FDC2D92F87000EE3239 /* MyVideosFeedViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyVideosFeedViewModel.swift; sourceTree = "<group>"; };
 		ACB09FE62D93288400EE3239 /* MyVideosFeedInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyVideosFeedInfo.swift; sourceTree = "<group>"; };
-		ACB117452E9EADD10064677F /* IosOneSignalKMP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IosOneSignalKMP.swift; sourceTree = "<group>"; };
 		ACB117482E9EAEEE0064677F /* IosDependencyProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IosDependencyProvider.swift; sourceTree = "<group>"; };
 		ACB343972E4357A800EC74A0 /* sats_claim_failure.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = sats_claim_failure.json; sourceTree = "<group>"; };
 		ACB343982E4357A800EC74A0 /* sats_claim_loading.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = sats_claim_loading.json; sourceTree = "<group>"; };
@@ -1862,7 +1859,6 @@
 		AC26CA662D806501006ADA75 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
-				ACB117452E9EADD10064677F /* IosOneSignalKMP.swift */,
 				ACB117482E9EAEEE0064677F /* IosDependencyProvider.swift */,
 				100540D32E9E6122004F8588 /* UsernameGenerator */,
 				AC1912A62E79855400BA5D78 /* CustomRoundedRectangle.swift */,
@@ -3994,7 +3990,6 @@
 				105E2DA52EB22D400097690E /* VideoInsightsBottomSheet.swift in Sources */,
 				ACC0D45D2D91785B006DCF5C /* SwiftDelegatedIdentityWire.swift in Sources */,
 				AC1912A12E796F3200BA5D78 /* YralTabbar.swift in Sources */,
-				ACB117472E9EADE20064677F /* IosOneSignalKMP.swift in Sources */,
 				ACB09FC92D92CB6400EE3239 /* ProfileRouter.swift in Sources */,
 				ACAA4D602DDC75CB001092A6 /* Notifications.swift in Sources */,
 				ACB46A812D106034002E200C /* FeedsCell.swift in Sources */,
@@ -4339,7 +4334,6 @@
 				105E2DA62EB22D400097690E /* VideoInsightsBottomSheet.swift in Sources */,
 				ACC0D45E2D91785B006DCF5C /* SwiftDelegatedIdentityWire.swift in Sources */,
 				AC1912A02E796F3200BA5D78 /* YralTabbar.swift in Sources */,
-				ACB117462E9EADE20064677F /* IosOneSignalKMP.swift in Sources */,
 				ACB09FCA2D92CB6400EE3239 /* ProfileRouter.swift in Sources */,
 				ACAA4D5F2DDC75CB001092A6 /* Notifications.swift in Sources */,
 				ACB46A802D106034002E200C /* FeedsCell.swift in Sources */,

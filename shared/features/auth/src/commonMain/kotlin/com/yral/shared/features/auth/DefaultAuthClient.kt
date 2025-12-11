@@ -89,7 +89,10 @@ class DefaultAuthClient(
                     resetCanister = true,
                 )
                 sessionManager.updateSocialSignInStatus(false)
-            }.onFailure { throw YralAuthException("obtaining anonymous token failed - ${it.message}") }
+            }.onFailure {
+                authTelemetry.anonymousAuthFailed(it.message)
+                throw YralAuthException("obtaining anonymous token failed - ${it.message}")
+            }
     }
 
     @OptIn(ExperimentalTime::class)
