@@ -104,7 +104,7 @@ class InstallReferrerAttribution(
                 when {
                     "gclid=" in lower -> "google_ads"
                     "fbclid=" in lower -> "meta_ads"
-                    else -> null
+                    else -> utmSource
                 }
         }
 
