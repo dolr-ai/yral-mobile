@@ -61,6 +61,10 @@ actual class MixpanelAnalyticsProvider actual constructor(
         mixpanel.reset()
     }
 
+    override fun flush() {
+        mixpanel.flush()
+    }
+
     override fun toValidKeyName(key: String) = key
 
     val TokenType.serialName: String
