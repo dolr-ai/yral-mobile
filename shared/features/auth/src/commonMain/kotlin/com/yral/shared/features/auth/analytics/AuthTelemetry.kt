@@ -76,6 +76,7 @@ class AuthTelemetry(
                 reason = reason?.take(MAX_ERROR_MESSAGE_LENGTH),
             ),
         )
+        analyticsManager.flush()
     }
 
     private fun SocialProvider.toAuthJourney(): AuthJourney =
