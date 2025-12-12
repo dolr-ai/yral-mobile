@@ -10,8 +10,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
@@ -30,8 +28,8 @@ class MetaInstallReferrerAttribution {
         val json = convertReferrerToJson(referrer) ?: return false
 
         // Check if utm_content contains encrypted data structure (source.data and source.nonce)
-        val utmContent = json["utm_content"]?.jsonObject
-        val source = utmContent?.get("source")?.jsonObject
+        val utmContent = json["utm_content"] as? JsonObject
+        val source = utmContent?.get("source") as? JsonObject
         val hasData = source?.get("data") != null
         val hasNonce = source?.get("nonce") != null
 
@@ -145,20 +143,10 @@ class MetaInstallReferrerAttribution {
     )
 
     internal fun extractEncryptedData(json: JsonObject): EncryptedData? {
-        val utmContent = json["utm_content"] as? JsonObject ?: return null
-        val dataHex =
-            utmContent["source"]
-                ?.jsonObject
-                ?.get("data")
-                ?.jsonPrimitive
-                ?.content
-        val nonceHex =
-            utmContent["source"]
-                ?.jsonObject
-                ?.get("nonce")
-                ?.jsonPrimitive
-                ?.content
-
+        val utmContent = json["utm_content"] as? JsonObject
+        val utmSource = utmContent?.get("source") as? JsonObject
+        val dataHex = (utmSource?.get("data") as? JsonPrimitive)?.content
+        val nonceHex = (utmSource?.get("nonce") as? JsonPrimitive)?.content
         return if (dataHex != null && nonceHex != null) {
             EncryptedData(dataHex, nonceHex)
         } else {

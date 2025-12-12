@@ -169,6 +169,7 @@ class AttributionManager(
                     content = utmParams.content,
                 ),
             )
+            analyticsManager.flush()
             logger.i {
                 "Attribution stored by $processorName: " +
                     "source=${utmParams.source}, campaign=${utmParams.campaign}, " +
