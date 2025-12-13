@@ -44,4 +44,9 @@
     <string name="generate_video">Generate Video</string>
     <string name="play_games">Play Games</string>
     <string name="to_earn_token">to earn %1$s!</string>
+
+    <string name="used_free_ai_video">You’ve used your free AI video!</string>
+    <string name="used_free_ai_video_desc">Why use tokens when you can go Pro? Get 30 AI videos for just ₹1 + access to global content &amp; tournaments.</string>
+    <string name="out_of_token">Out Of tokens ?</string>
+    <string name="out_of_token_desc">Subscribe to YRAL Pro and get 30 AI videos for just ₹1 + access to global content, tournaments &amp; more.</string>
 </resources>
