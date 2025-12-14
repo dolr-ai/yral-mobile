@@ -5,6 +5,11 @@ import com.yral.shared.analytics.events.AnonymousAuthFailedEventData
 import com.yral.shared.analytics.events.AuthFailedEventData
 import com.yral.shared.analytics.events.AuthJourney
 import com.yral.shared.analytics.events.AuthScreenViewedEventData
+import com.yral.shared.analytics.events.AuthSessionCause
+import com.yral.shared.analytics.events.AuthSessionFlow
+import com.yral.shared.analytics.events.AuthSessionInitiator
+import com.yral.shared.analytics.events.AuthSessionState
+import com.yral.shared.analytics.events.AuthSessionStateChangedEventData
 import com.yral.shared.analytics.events.LoginSuccessEventData
 import com.yral.shared.analytics.events.SignupJourneySelected
 import com.yral.shared.analytics.events.SignupPageName
@@ -74,6 +79,25 @@ class AuthTelemetry(
             AnonymousAuthFailedEventData(
                 affiliate = affiliate,
                 reason = reason?.take(MAX_ERROR_MESSAGE_LENGTH),
+            ),
+        )
+        analyticsManager.flush()
+    }
+
+    fun sessionStateChanged(
+        fromState: AuthSessionState,
+        toState: AuthSessionState,
+        initiator: AuthSessionInitiator,
+        cause: AuthSessionCause,
+        flow: AuthSessionFlow? = null,
+    ) {
+        analyticsManager.forceTrackEvent(
+            AuthSessionStateChangedEventData(
+                fromState = fromState,
+                toState = toState,
+                initiator = initiator,
+                cause = cause,
+                flow = flow,
             ),
         )
         analyticsManager.flush()

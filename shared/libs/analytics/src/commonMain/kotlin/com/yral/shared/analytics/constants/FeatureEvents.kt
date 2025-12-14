@@ -17,6 +17,7 @@ enum class FeatureEvents {
     LOGIN_SUCCESS,
     AUTH_FAILED,
     ANONYMOUS_AUTH_FAILED,
+    AUTH_SESSION_STATE_CHANGED,
 
     // Home
     HOME_PAGE_VIEWED,
