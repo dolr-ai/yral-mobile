@@ -6,6 +6,7 @@ import com.mixpanel.android.sessionreplay.MPSessionReplay
 import com.mixpanel.android.sessionreplay.models.MPSessionReplayConfig
 import com.mixpanel.android.sessionreplay.sensitive_views.AutoMaskedView
 import com.yral.shared.analytics.AnalyticsProvider
+import com.yral.shared.analytics.DistinctIdProvider
 import com.yral.shared.analytics.EventToMapConverter
 import com.yral.shared.analytics.User
 import com.yral.shared.analytics.di.IS_DEBUG
@@ -23,6 +24,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
     private val mapConverter: EventToMapConverter,
     token: String,
 ) : AnalyticsProvider,
+    DistinctIdProvider,
     KoinComponent {
     private val context: Context by inject()
     private val isDebug: Boolean by inject(IS_DEBUG)
@@ -58,7 +60,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
     override fun shouldTrackEvent(event: EventData): Boolean = eventFilter(event)
 
     override fun trackEvent(event: EventData) {
-        val properties: MutableMap<String, Any?> = mapConverter.toMap(event).toMutableMap()
+        val properties: Map<String, Any?> = mapConverter.toMap(event)
         mixpanel.trackMap(toValidKeyName(event.event), properties)
     }
 
@@ -98,11 +100,19 @@ actual class MixpanelAnalyticsProvider actual constructor(
         distinctId.value = mixpanel.distinctId
     }
 
+    override fun applyCommonContext(common: Map<String, Any?>) {
+        val commonJson = JSONObject(common)
+        mixpanel.registerSuperProperties(commonJson)
+        mixpanel.people.set(commonJson)
+    }
+
     override fun flush() {
         mixpanel.flush()
     }
 
     override fun toValidKeyName(key: String): String = key
+
+    override fun currentDistinctId(): String = mixpanel.distinctId
 
     val TokenType.serialName: String
         get() =

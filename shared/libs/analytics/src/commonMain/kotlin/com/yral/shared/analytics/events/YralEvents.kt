@@ -246,6 +246,16 @@ enum class AuthSessionFlow {
     TOKEN_REFRESH,
 }
 
+@Serializable
+data class IdentityTransitionEventData(
+    @SerialName("event") override val event: String = FeatureEvents.IDENTITY_TRANSITION.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AUTH.getFeatureName(),
+    @SerialName("previous_distinct_id") val previousDistinctId: String,
+    @SerialName("new_distinct_id") val newDistinctId: String,
+    @SerialName("reset_reason") val resetReason: String,
+) : BaseEventData(),
+    EventData
+
 // --- Home ---
 @Serializable
 data class HomePageViewedEventData(

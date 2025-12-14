@@ -12,5 +12,7 @@ interface AnalyticsProvider {
     fun setUserProperties(user: User)
     fun reset()
 
+    fun applyCommonContext(common: Map<String, Any?>) { }
+
     fun toValidKeyName(key: String): String
 }

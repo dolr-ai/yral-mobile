@@ -1,6 +1,8 @@
 package com.yral.shared.analytics.di
 
+import com.russhwolf.settings.Settings
 import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.analytics.DeviceInstallIdStore
 import com.yral.shared.analytics.EventToMapConverter
 import com.yral.shared.analytics.events.shouldSendToFacebook
 import com.yral.shared.analytics.events.shouldSendToYralBE
@@ -24,6 +26,7 @@ val analyticsModule =
         singleOf(::AnalyticsApiService)
         singleOf(::EventToMapConverter)
         singleOf(::BigQueryEventsApiService)
+        single { DeviceInstallIdStore(get<Settings>()) }
         single {
             CoreService(
                 analyticsApiService = get(),
@@ -65,8 +68,9 @@ val analyticsModule =
             )
         }
         single {
-            AnalyticsManager()
-                .addProvider(get<FirebaseAnalyticsProvider>())
+            AnalyticsManager(
+                deviceInstallIdStore = get(),
+            ).addProvider(get<FirebaseAnalyticsProvider>())
                 .addProvider(get<MixpanelAnalyticsProvider>())
                 .addProvider(get<FacebookAnalyticsProvider>())
                 .addProvider(get<BigQueryAnalyticsProvider>())

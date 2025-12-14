@@ -1,6 +1,7 @@
 package com.yral.shared.analytics
 
 import com.yral.shared.analytics.events.EventData
+import com.yral.shared.analytics.events.IdentityTransitionEventData
 import com.yral.shared.analytics.providers.yral.CoreService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,6 +18,7 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 class AnalyticsManager(
     private val providers: List<AnalyticsProvider> = emptyList(),
     private val coreService: CoreService? = null,
+    private val deviceInstallIdStore: DeviceInstallIdStore? = null,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val eventBus = EventBus()
@@ -32,6 +34,8 @@ class AnalyticsManager(
                     coreService.trackEvent(event)
                 }
             }.launchIn(scope)
+
+        applyCommonContextToProviders()
     }
 
     @Suppress("EmptyFunctionBlock")
@@ -41,12 +45,14 @@ class AnalyticsManager(
         AnalyticsManager(
             providers = providers + provider,
             coreService = coreService,
+            deviceInstallIdStore = deviceInstallIdStore,
         )
 
     internal fun setCoreService(service: CoreService) =
         AnalyticsManager(
             providers = providers,
             coreService = service,
+            deviceInstallIdStore = deviceInstallIdStore,
         )
 
     fun trackEvent(event: EventData) {
@@ -62,11 +68,31 @@ class AnalyticsManager(
     }
 
     private fun trackEventToProviders(event: EventData) {
-        providers.forEach { provider ->
+        trackEventToProviders(event = event, targetProviders = providers)
+    }
+
+    private fun trackEventToProviders(
+        event: EventData,
+        targetProviders: List<AnalyticsProvider>,
+    ) {
+        targetProviders.forEach { provider ->
             if (provider.shouldTrackEvent(event)) {
                 provider.trackEvent(event)
             }
         }
+    }
+
+    private fun commonContext(): Map<String, Any?> {
+        val deviceInstallId = deviceInstallIdStore?.getOrCreate()
+        return buildMap {
+            if (!deviceInstallId.isNullOrBlank()) put("device_install_id", deviceInstallId)
+        }
+    }
+
+    private fun applyCommonContextToProviders() {
+        val context = commonContext()
+        if (context.isEmpty()) return
+        providers.forEach { it.applyCommonContext(context) }
     }
 
     fun flush() {
@@ -100,11 +126,50 @@ class AnalyticsManager(
             user.isForcedGamePlayUser != null
 
     fun reset() {
+        resetInternal(reason = null)
+    }
+
+    fun resetWithReason(reason: String) {
+        resetInternal(reason = reason)
+    }
+
+    private fun resetInternal(reason: String?) {
+        val distinctIdBeforeReset: List<Pair<DistinctIdProvider, String>> =
+            providers
+                .filterIsInstance<DistinctIdProvider>()
+                .map { it to it.currentDistinctId() }
+
         providers.forEach { it.flush() }
         providers.forEach { it.reset() }
+        applyCommonContextToProviders()
+
+        trackIdentityTransition(reason, distinctIdBeforeReset)
+
         coreService?.flush()
         coreService?.reset()
         scope.launch { mutex.withLock { pendingEvents.clear() } }
         isReady.store(false)
+    }
+
+    private fun trackIdentityTransition(
+        reason: String?,
+        distinctIdBeforeReset: List<Pair<DistinctIdProvider, String>>,
+    ) {
+        val resetReason = reason ?: "unknown"
+        distinctIdBeforeReset.forEach { (distinctIdProvider, previousDistinctId) ->
+            val provider = distinctIdProvider as? AnalyticsProvider ?: return@forEach
+            val newDistinctId = distinctIdProvider.currentDistinctId()
+            if (previousDistinctId != newDistinctId) {
+                trackEventToProviders(
+                    event =
+                        IdentityTransitionEventData(
+                            previousDistinctId = previousDistinctId,
+                            newDistinctId = newDistinctId,
+                            resetReason = resetReason,
+                        ),
+                    targetProviders = listOf(provider),
+                )
+            }
+        }
     }
 }

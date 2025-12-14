@@ -154,7 +154,7 @@ class DefaultAuthClient(
             cause = cause,
             flow = flow,
         )
-        logout()
+        logoutInternal("system_${cause.name}")
     }
 
     private suspend fun saveTokens(
@@ -172,6 +172,10 @@ class DefaultAuthClient(
     }
 
     override suspend fun logout() {
+        logoutInternal("user_logout")
+    }
+
+    private suspend fun logoutInternal(analyticsResetReason: String) {
         // clear preferences
         listOf(
             PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name,
@@ -188,7 +192,7 @@ class DefaultAuthClient(
         // clear cached canister data after parsing token
         resetCachedCanisterData()
         // reset analytics manage: flush events and reset user properties
-        analyticsManager.reset()
+        analyticsManager.resetWithReason(analyticsResetReason)
         // reset session manager for properties
         sessionManager.resetSessionProperties()
         // reset crashlytics
