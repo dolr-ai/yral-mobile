@@ -2,6 +2,7 @@ package com.yral.shared.analytics.providers.mixpanel
 
 import cocoapods.Mixpanel.Mixpanel
 import com.yral.shared.analytics.AnalyticsProvider
+import com.yral.shared.analytics.DistinctIdProvider
 import com.yral.shared.analytics.EventToMapConverter
 import com.yral.shared.analytics.User
 import com.yral.shared.analytics.events.EventData
@@ -13,7 +14,8 @@ actual class MixpanelAnalyticsProvider actual constructor(
     private val eventFilter: (EventData) -> Boolean,
     private val mapConverter: EventToMapConverter,
     token: String,
-) : AnalyticsProvider {
+) : AnalyticsProvider,
+    DistinctIdProvider {
     override val name: String = "mixpanel"
     private val mixpanel: Mixpanel = Mixpanel.sharedInstanceWithToken(token, true)
 
@@ -61,11 +63,19 @@ actual class MixpanelAnalyticsProvider actual constructor(
         mixpanel.reset()
     }
 
+    override fun applyCommonContext(common: Map<String, Any?>) {
+        val properties: Map<Any?, *> = common.mapKeys { it.key as Any? }
+        mixpanel.registerSuperProperties(properties)
+        mixpanel.people.set(properties)
+    }
+
     override fun flush() {
         mixpanel.flush()
     }
 
     override fun toValidKeyName(key: String) = key
+
+    override fun currentDistinctId(): String = mixpanel.distinctId
 
     val TokenType.serialName: String
         get() =
