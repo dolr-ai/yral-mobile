@@ -179,6 +179,73 @@ data class AnonymousAuthFailedEventData(
     )
 }
 
+@Serializable
+data class AuthSessionStateChangedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.AUTH_SESSION_STATE_CHANGED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AUTH.getFeatureName(),
+    @SerialName("from_state") val fromState: AuthSessionState,
+    @SerialName("to_state") val toState: AuthSessionState,
+    @SerialName("initiator") val initiator: AuthSessionInitiator,
+    @SerialName("cause") val cause: AuthSessionCause,
+    @SerialName("flow") val flow: AuthSessionFlow? = null,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        fromState: AuthSessionState,
+        toState: AuthSessionState,
+        initiator: AuthSessionInitiator,
+        cause: AuthSessionCause,
+        flow: AuthSessionFlow? = null,
+    ) : this(
+        FeatureEvents.AUTH_SESSION_STATE_CHANGED.getEventName(),
+        Features.AUTH.getFeatureName(),
+        fromState,
+        toState,
+        initiator,
+        cause,
+        flow,
+    )
+}
+
+@Serializable
+enum class AuthSessionState {
+    @SerialName("authenticated")
+    AUTHENTICATED,
+
+    @SerialName("unauthenticated")
+    UNAUTHENTICATED,
+}
+
+@Serializable
+enum class AuthSessionInitiator {
+    @SerialName("user")
+    USER,
+
+    @SerialName("system")
+    SYSTEM,
+}
+
+@Serializable
+enum class AuthSessionCause {
+    @SerialName("refresh_token_missing")
+    REFRESH_TOKEN_MISSING,
+
+    @SerialName("refresh_token_expired_or_invalid")
+    REFRESH_TOKEN_EXPIRED_OR_INVALID,
+
+    @SerialName("refresh_access_token_failed")
+    REFRESH_ACCESS_TOKEN_FAILED,
+}
+
+@Serializable
+enum class AuthSessionFlow {
+    @SerialName("token_validation")
+    TOKEN_VALIDATION,
+
+    @SerialName("token_refresh")
+    TOKEN_REFRESH,
+}
+
 // --- Home ---
 @Serializable
 data class HomePageViewedEventData(

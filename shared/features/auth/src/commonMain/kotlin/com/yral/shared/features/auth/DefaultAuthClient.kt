@@ -5,6 +5,10 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.User
+import com.yral.shared.analytics.events.AuthSessionCause
+import com.yral.shared.analytics.events.AuthSessionFlow
+import com.yral.shared.analytics.events.AuthSessionInitiator
+import com.yral.shared.analytics.events.AuthSessionState
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.DELAY_FOR_SESSION_PROPERTIES
 import com.yral.shared.core.session.Session
@@ -120,10 +124,37 @@ class DefaultAuthClient(
                 if (rTokenClaim.isValid(Clock.System.now().epochSeconds)) {
                     refreshAccessToken()
                 } else {
-                    logout()
+                    trackAndLogoutForTokenExpiry(
+                        cause = AuthSessionCause.REFRESH_TOKEN_EXPIRED_OR_INVALID,
+                        flow = AuthSessionFlow.TOKEN_VALIDATION,
+                    )
                 }
-            } ?: logout()
+            } ?: trackAndLogoutForTokenExpiry(
+                cause = AuthSessionCause.REFRESH_TOKEN_MISSING,
+                flow = AuthSessionFlow.TOKEN_VALIDATION,
+            )
         }
+    }
+
+    private fun readCurrentAuthSessionState(): AuthSessionState =
+        if (sessionManager.userPrincipal != null) {
+            AuthSessionState.AUTHENTICATED
+        } else {
+            AuthSessionState.UNAUTHENTICATED
+        }
+
+    private suspend fun trackAndLogoutForTokenExpiry(
+        cause: AuthSessionCause,
+        flow: AuthSessionFlow,
+    ) {
+        authTelemetry.sessionStateChanged(
+            fromState = readCurrentAuthSessionState(),
+            toState = AuthSessionState.UNAUTHENTICATED,
+            initiator = AuthSessionInitiator.SYSTEM,
+            cause = cause,
+            flow = flow,
+        )
+        logout()
     }
 
     private suspend fun saveTokens(
@@ -365,7 +396,12 @@ class DefaultAuthClient(
                         accessToken = tokenResponse.accessToken,
                         refreshToken = tokenResponse.refreshToken,
                     )
-                }.onFailure { logout() }
+                }.onFailure {
+                    trackAndLogoutForTokenExpiry(
+                        cause = AuthSessionCause.REFRESH_ACCESS_TOKEN_FAILED,
+                        flow = AuthSessionFlow.TOKEN_REFRESH,
+                    )
+                }
         } ?: obtainAnonymousIdentity()
     }
 
