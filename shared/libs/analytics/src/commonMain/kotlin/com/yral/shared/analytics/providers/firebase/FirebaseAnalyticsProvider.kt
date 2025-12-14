@@ -33,6 +33,14 @@ class FirebaseAnalyticsProvider(
         firebaseAnalytics.setUserProperty("emailId", "")
     }
 
+    override fun applyCommonContext(common: Map<String, Any?>) {
+        common.forEach { (key, value) ->
+            value?.toString()?.let {
+                firebaseAnalytics.setUserProperty(key, it)
+            }
+        }
+    }
+
     override fun toValidKeyName(key: String): String {
         if (isEventKeyValid(key)) return key
 
