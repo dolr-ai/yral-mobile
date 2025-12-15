@@ -1,9 +1,12 @@
 import json
 import os
+import random
+import string
+import sys
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import firebase_admin
 from firebase_admin import firestore
@@ -68,6 +71,82 @@ def db() -> firestore.Client:
             firebase_admin.initialize_app()
         _db = firestore.client()
     return _db
+
+
+# ─────────────────────  COIN HELPERS  ────────────────────────
+def _tx_id() -> str:
+    """Generate unique transaction ID."""
+    now = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+    rnd = "".join(random.choices(string.ascii_lowercase + string.digits, k=4))
+    return f"{now}_{rnd}"
+
+
+def _tx_coin_change(principal_id: str, delta: int, reason: str, tournament_id: str | None = None) -> int:
+    """Atomically change user's coin balance and log to ledger."""
+    user_ref = db().document(f"users/{principal_id}")
+    ledger_ref = user_ref.collection("transactions").document(_tx_id())
+
+    @firestore.transactional
+    def _commit(tx: firestore.Transaction):
+        tx.set(user_ref,
+               {"coins": firestore.Increment(delta)},
+               merge=True)
+        tx.set(ledger_ref,
+               {"delta": delta,
+                "reason": reason,
+                "tournament_id": tournament_id,
+                "at": firestore.SERVER_TIMESTAMP})
+
+    _commit(db().transaction())
+    return int(user_ref.get().get("coins") or 0)
+
+
+def _refund_tournament_users(tournament_id: str) -> List[dict]:
+    """
+    Refund all registered users for a cancelled tournament.
+    Returns list of refund results.
+    """
+    users_ref = db().collection(f"tournaments/{tournament_id}/users")
+    registered_users = users_ref.where("status", "==", "registered").stream()
+
+    refund_results = []
+
+    for user_snap in registered_users:
+        principal_id = user_snap.id
+        user_data = user_snap.to_dict() or {}
+        coins_paid = int(user_data.get("coins_paid") or 0)
+
+        if coins_paid <= 0:
+            continue
+
+        try:
+            # Refund coins
+            _tx_coin_change(principal_id, coins_paid, "TOURNAMENT_REFUND", tournament_id)
+
+            # Update registration status
+            user_snap.reference.update({
+                "status": "refunded",
+                "refunded_at": firestore.SERVER_TIMESTAMP,
+                "updated_at": firestore.SERVER_TIMESTAMP
+            })
+
+            refund_results.append({
+                "principal_id": principal_id,
+                "coins_refunded": coins_paid,
+                "success": True
+            })
+            print(f"[refund] {principal_id} refunded {coins_paid} coins for {tournament_id}")
+
+        except Exception as e:
+            refund_results.append({
+                "principal_id": principal_id,
+                "coins_refunded": 0,
+                "success": False,
+                "error": str(e)
+            })
+            print(f"[refund] FAILED for {principal_id}: {e}", file=sys.stderr)
+
+    return refund_results
 
 
 def _today_ist_str() -> str:
@@ -253,7 +332,7 @@ def update_tournament_status(request: Request):
         except Exception:
             current_status = None
 
-        # Simple forward-only guard
+        # Simple forward-only guard (CANCELLED can be set from any state)
         order = [
             TournamentStatus.SCHEDULED,
             TournamentStatus.LIVE,
@@ -263,9 +342,41 @@ def update_tournament_status(request: Request):
         def _order_idx(status: TournamentStatus) -> int:
             return order.index(status) if status in order else -1
 
-        if current_status and _order_idx(target_status) < _order_idx(current_status):
-            return jsonify({"status": "skipped", "reason": f"Current status {current_status.value} ahead of {target_status.value}"}), 200
+        # Allow CANCELLED from any state, otherwise enforce forward-only
+        if target_status != TournamentStatus.CANCELLED:
+            if current_status and _order_idx(target_status) < _order_idx(current_status):
+                return jsonify({"status": "skipped", "reason": f"Current status {current_status.value} ahead of {target_status.value}"}), 200
 
+        # Handle CANCELLED status with refunds
+        if target_status == TournamentStatus.CANCELLED:
+            # Don't refund if already cancelled or settled
+            if current_status in [TournamentStatus.CANCELLED, TournamentStatus.SETTLED]:
+                return jsonify({"status": "skipped", "reason": f"Cannot cancel from {current_status.value}"}), 200
+
+            # Update status first
+            ref.update({
+                "status": target_status.value,
+                "updated_at": firestore.SERVER_TIMESTAMP,
+            })
+
+            # Process refunds
+            refund_results = _refund_tournament_users(doc_id)
+            refunded_count = sum(1 for r in refund_results if r.get("success"))
+            total_refunded = sum(r.get("coins_refunded", 0) for r in refund_results if r.get("success"))
+
+            print(f"[update_tournament_status] {doc_id}: {current_status_raw} -> {target_status.value} (refunded {refunded_count} users, {total_refunded} coins)")
+            return jsonify({
+                "status": "ok",
+                "tournament_id": doc_id,
+                "new_status": target_status.value,
+                "refunds": {
+                    "users_refunded": refunded_count,
+                    "total_coins_refunded": total_refunded,
+                    "details": refund_results
+                }
+            }), 200
+
+        # Normal status update
         ref.update({
             "status": target_status.value,
             "updated_at": firestore.SERVER_TIMESTAMP,
