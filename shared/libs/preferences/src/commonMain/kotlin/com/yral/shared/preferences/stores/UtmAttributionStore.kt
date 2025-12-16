@@ -8,6 +8,7 @@ const val UTM_MEDIUM_PARAM: String = "utm_medium"
 const val UTM_CAMPAIGN_PARAM: String = "utm_campaign"
 const val UTM_TERM_PARAM: String = "utm_term"
 const val UTM_CONTENT_PARAM: String = "utm_content"
+const val RAW_REFERRER: String = "raw_referrer"
 
 private const val INSTALL_REFERRER_COMPLETED_KEY = "install_referrer_completed"
 
@@ -17,6 +18,7 @@ data class UtmParams(
     val campaign: String? = null,
     val term: String? = null,
     val content: String? = null,
+    val raw: String? = null,
 )
 
 class UtmAttributionStore(
@@ -35,12 +37,14 @@ class UtmAttributionStore(
         campaign: String? = null,
         term: String? = null,
         content: String? = null,
+        raw: String? = null,
     ) {
         saveIfEmpty(UTM_SOURCE_PARAM, source)
         saveIfEmpty(UTM_MEDIUM_PARAM, medium)
         saveIfEmpty(UTM_CAMPAIGN_PARAM, campaign)
         saveIfEmpty(UTM_TERM_PARAM, term)
         saveIfEmpty(UTM_CONTENT_PARAM, content)
+        saveIfEmpty(RAW_REFERRER, raw)
         markInstallReferrerCompleted()
     }
 
