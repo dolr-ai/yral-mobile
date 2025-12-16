@@ -1299,6 +1299,37 @@ data class ReferralReceivedEventData(
 }
 
 @Serializable
+data class AttributionFailedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.ATTRIBUTION_FAILED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.REFERRAL.getFeatureName(),
+    @SerialName("reason") val reason: String,
+    @SerialName("error_code") val errorCode: Int? = null,
+    @SerialName("raw_referrer") val rawReferrer: String? = null,
+    @SerialName("processors_checked") val processorsChecked: List<String>? = null,
+    @SerialName("is_enterprise_device") val isEnterpriseDevice: Boolean? = null,
+    @SerialName("has_work_profile") val hasWorkProfile: Boolean? = null,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        reason: String,
+        errorCode: Int? = null,
+        rawReferrer: String? = null,
+        processorsChecked: List<String>? = null,
+        isEnterpriseDevice: Boolean? = null,
+        hasWorkProfile: Boolean? = null,
+    ) : this(
+        FeatureEvents.ATTRIBUTION_FAILED.getEventName(),
+        Features.REFERRAL.getFeatureName(),
+        reason,
+        errorCode,
+        rawReferrer,
+        processorsChecked,
+        isEnterpriseDevice,
+        hasWorkProfile,
+    )
+}
+
+@Serializable
 data class ReferAndEarnPageViewedEventData(
     @SerialName("event") override val event: String = FeatureEvents.REFER_AND_EARN_PAGE_VIEWED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.REFERRAL.getFeatureName(),
