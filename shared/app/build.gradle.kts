@@ -56,7 +56,10 @@ kotlin {
             implementation(projects.shared.features.wallet)
             implementation(projects.shared.features.leaderboard)
             implementation(projects.shared.features.tournament)
+            implementation(projects.shared.features.chat)
+
             implementation(projects.shared.rust.service)
+
             implementation(libs.coil.compose)
             implementation(libs.coil.ktor3)
 
