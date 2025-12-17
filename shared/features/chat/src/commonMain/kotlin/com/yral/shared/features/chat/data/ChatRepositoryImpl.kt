@@ -5,6 +5,7 @@ import com.yral.shared.features.chat.data.models.toDomainActiveOnly
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.models.Conversation
 import com.yral.shared.features.chat.domain.models.ConversationsPageResult
+import com.yral.shared.features.chat.domain.models.DeleteConversationResult
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
 
@@ -40,4 +41,9 @@ class ChatRepositoryImpl(
                 offset = offset,
                 influencerId = influencerId,
             ).toDomain()
+
+    override suspend fun deleteConversation(conversationId: String): DeleteConversationResult =
+        dataSource
+            .deleteConversation(conversationId)
+            .toDomain()
 }

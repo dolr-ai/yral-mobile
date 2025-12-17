@@ -2,6 +2,7 @@ package com.yral.shared.features.chat.domain
 
 import com.yral.shared.features.chat.domain.models.Conversation
 import com.yral.shared.features.chat.domain.models.ConversationsPageResult
+import com.yral.shared.features.chat.domain.models.DeleteConversationResult
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
 
@@ -20,4 +21,6 @@ interface ChatRepository {
         offset: Int,
         influencerId: String? = null,
     ): ConversationsPageResult
+
+    suspend fun deleteConversation(conversationId: String): DeleteConversationResult
 }

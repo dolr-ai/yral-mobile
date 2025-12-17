@@ -5,6 +5,7 @@ import com.yral.shared.features.chat.domain.models.ConversationInfluencer
 import com.yral.shared.features.chat.domain.models.ConversationLastMessage
 import com.yral.shared.features.chat.domain.models.ConversationMessageRole
 import com.yral.shared.features.chat.domain.models.ConversationsPageResult
+import com.yral.shared.features.chat.domain.models.DeleteConversationResult
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
 
@@ -90,3 +91,11 @@ fun ConversationsResponseDto.toDomain(): ConversationsPageResult {
         rawCount = rawCount,
     )
 }
+
+fun DeleteConversationResponseDto.toDomain(): DeleteConversationResult =
+    DeleteConversationResult(
+        success = success,
+        message = message,
+        deletedConversationId = deletedConversationId,
+        deletedMessagesCount = deletedMessagesCount,
+    )

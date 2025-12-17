@@ -4,14 +4,18 @@ import com.yral.shared.core.AppConfigurations.CHAT_BASE_URL
 import com.yral.shared.features.chat.data.models.ConversationDto
 import com.yral.shared.features.chat.data.models.ConversationsResponseDto
 import com.yral.shared.features.chat.data.models.CreateConversationRequestDto
+import com.yral.shared.features.chat.data.models.DeleteConversationResponseDto
 import com.yral.shared.features.chat.data.models.InfluencerDto
 import com.yral.shared.features.chat.data.models.InfluencersResponseDto
 import com.yral.shared.http.httpGet
 import com.yral.shared.http.httpPost
 import io.ktor.client.HttpClient
+import io.ktor.client.request.delete
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.path
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class ChatRemoteDataSource(
     private val httpClient: HttpClient,
@@ -79,6 +83,21 @@ class ChatRemoteDataSource(
                 }
             }
         }
+
+    override suspend fun deleteConversation(conversationId: String): DeleteConversationResponseDto {
+        val response =
+            httpClient.delete {
+                url {
+                    host = CHAT_BASE_URL
+                    path(CONVERSATIONS_PATH, conversationId)
+                }
+            }
+        val deserializer = json.serializersModule.serializer<DeleteConversationResponseDto>()
+        return json.decodeFromString(
+            deserializer = deserializer,
+            string = response.bodyAsText(),
+        )
+    }
 
     private companion object {
         private const val INFLUENCERS_PATH = "api/v1/influencers"
