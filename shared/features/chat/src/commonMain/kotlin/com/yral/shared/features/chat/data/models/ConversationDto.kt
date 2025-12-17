@@ -17,6 +17,8 @@ data class ConversationDto(
     val updatedAt: String,
     @SerialName("message_count")
     val messageCount: Int,
+    @SerialName("last_message")
+    val lastMessage: ConversationLastMessageDto? = null,
 )
 
 @Serializable
@@ -29,4 +31,14 @@ data class ConversationInfluencerDto(
     val displayName: String,
     @SerialName("avatar_url")
     val avatarUrl: String,
+)
+
+@Serializable
+data class ConversationLastMessageDto(
+    @SerialName("content")
+    val content: String,
+    @SerialName("role")
+    val role: String,
+    @SerialName("created_at")
+    val createdAt: String,
 )

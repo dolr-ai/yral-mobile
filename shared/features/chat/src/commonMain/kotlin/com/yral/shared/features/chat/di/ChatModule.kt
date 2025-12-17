@@ -6,6 +6,7 @@ import com.yral.shared.features.chat.data.ChatRepositoryImpl
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.usecases.CreateConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
+import com.yral.shared.features.chat.viewmodel.ChatConversationsViewModel
 import com.yral.shared.features.chat.viewmodel.ChatWallViewModel
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.viewModelOf
@@ -19,4 +20,5 @@ val chatModule =
         factoryOf(::CreateConversationUseCase)
         factoryOf(::GetInfluencerUseCase)
         viewModelOf(::ChatWallViewModel)
+        viewModelOf(::ChatConversationsViewModel)
     }

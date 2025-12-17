@@ -2,6 +2,7 @@ package com.yral.shared.features.chat.data
 
 import com.yral.shared.core.AppConfigurations.CHAT_BASE_URL
 import com.yral.shared.features.chat.data.models.ConversationDto
+import com.yral.shared.features.chat.data.models.ConversationsResponseDto
 import com.yral.shared.features.chat.data.models.CreateConversationRequestDto
 import com.yral.shared.features.chat.data.models.InfluencerDto
 import com.yral.shared.features.chat.data.models.InfluencersResponseDto
@@ -57,6 +58,26 @@ class ChatRemoteDataSource(
                     influencerId = influencerId,
                 ),
             )
+        }
+
+    override suspend fun listConversations(
+        limit: Int,
+        offset: Int,
+        influencerId: String?,
+    ): ConversationsResponseDto =
+        httpGet(
+            httpClient = httpClient,
+            json = json,
+        ) {
+            url {
+                host = CHAT_BASE_URL
+                path(CONVERSATIONS_PATH)
+                parameters.append("limit", limit.toString())
+                parameters.append("offset", offset.toString())
+                if (!influencerId.isNullOrBlank()) {
+                    parameters.append("influencer_id", influencerId)
+                }
+            }
         }
 
     private companion object {

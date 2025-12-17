@@ -7,6 +7,7 @@ data class Conversation(
     val createdAt: String,
     val updatedAt: String,
     val messageCount: Int,
+    val lastMessage: ConversationLastMessage?,
 )
 
 data class ConversationInfluencer(
@@ -15,3 +16,16 @@ data class ConversationInfluencer(
     val displayName: String,
     val avatarUrl: String,
 )
+
+data class ConversationLastMessage(
+    val content: String,
+    val role: ConversationMessageRole,
+    val createdAt: String,
+)
+
+enum class ConversationMessageRole(
+    val apiValue: String,
+) {
+    USER("user"),
+    ASSISTANT("assistant"),
+}
