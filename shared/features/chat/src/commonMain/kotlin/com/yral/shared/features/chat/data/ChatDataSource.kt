@@ -1,5 +1,6 @@
 package com.yral.shared.features.chat.data
 
+import com.yral.shared.features.chat.data.models.ConversationDto
 import com.yral.shared.features.chat.data.models.InfluencerDto
 import com.yral.shared.features.chat.data.models.InfluencersResponseDto
 
@@ -10,4 +11,6 @@ interface ChatDataSource {
     ): InfluencersResponseDto
 
     suspend fun getInfluencer(id: String): InfluencerDto
+
+    suspend fun createConversation(influencerId: String): ConversationDto
 }

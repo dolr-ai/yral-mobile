@@ -1,5 +1,6 @@
 package com.yral.shared.features.chat.domain
 
+import com.yral.shared.features.chat.domain.models.Conversation
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
 
@@ -10,4 +11,6 @@ interface ChatRepository {
     ): InfluencersPageResult
 
     suspend fun getInfluencer(id: String): Influencer
+
+    suspend fun createConversation(influencerId: String): Conversation
 }

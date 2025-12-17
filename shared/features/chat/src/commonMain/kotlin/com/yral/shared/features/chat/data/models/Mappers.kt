@@ -1,5 +1,7 @@
 package com.yral.shared.features.chat.data.models
 
+import com.yral.shared.features.chat.domain.models.Conversation
+import com.yral.shared.features.chat.domain.models.ConversationInfluencer
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
 
@@ -35,3 +37,19 @@ fun InfluencersResponseDto.toDomainActiveOnly(): InfluencersPageResult {
         rawCount = rawCount,
     )
 }
+
+fun ConversationDto.toDomain(): Conversation =
+    Conversation(
+        id = id,
+        userId = userId,
+        influencer =
+            ConversationInfluencer(
+                id = influencer.id,
+                name = influencer.name,
+                displayName = influencer.displayName,
+                avatarUrl = influencer.avatarUrl,
+            ),
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+        messageCount = messageCount,
+    )

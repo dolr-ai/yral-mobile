@@ -3,6 +3,7 @@ package com.yral.shared.features.chat.data
 import com.yral.shared.features.chat.data.models.toDomain
 import com.yral.shared.features.chat.data.models.toDomainActiveOnly
 import com.yral.shared.features.chat.domain.ChatRepository
+import com.yral.shared.features.chat.domain.models.Conversation
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
 
@@ -20,5 +21,10 @@ class ChatRepositoryImpl(
     override suspend fun getInfluencer(id: String): Influencer =
         dataSource
             .getInfluencer(id)
+            .toDomain()
+
+    override suspend fun createConversation(influencerId: String): Conversation =
+        dataSource
+            .createConversation(influencerId)
             .toDomain()
 }
