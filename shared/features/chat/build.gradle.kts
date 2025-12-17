@@ -24,6 +24,8 @@ kotlin {
             implementation(projects.shared.libs.arch)
 
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.io.core)
+            implementation(libs.kotlinx.datetime)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.paging.common)
         }

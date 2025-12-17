@@ -1,13 +1,18 @@
 package com.yral.shared.features.chat.data
 
+import com.yral.shared.features.chat.data.models.SendMessageRequestDto
 import com.yral.shared.features.chat.data.models.toDomain
 import com.yral.shared.features.chat.data.models.toDomainActiveOnly
 import com.yral.shared.features.chat.domain.ChatRepository
+import com.yral.shared.features.chat.domain.models.ChatMessageType
 import com.yral.shared.features.chat.domain.models.Conversation
+import com.yral.shared.features.chat.domain.models.ConversationMessagesPageResult
 import com.yral.shared.features.chat.domain.models.ConversationsPageResult
 import com.yral.shared.features.chat.domain.models.DeleteConversationResult
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
+import com.yral.shared.features.chat.domain.models.SendMessageDraft
+import com.yral.shared.features.chat.domain.models.SendMessageResult
 
 class ChatRepositoryImpl(
     private val dataSource: ChatDataSource,
@@ -46,4 +51,58 @@ class ChatRepositoryImpl(
         dataSource
             .deleteConversation(conversationId)
             .toDomain()
+
+    override suspend fun getConversationMessagesPage(
+        conversationId: String,
+        limit: Int,
+        offset: Int,
+    ): ConversationMessagesPageResult =
+        dataSource
+            .listConversationMessages(
+                conversationId = conversationId,
+                limit = limit,
+                offset = offset,
+                order = "desc",
+            ).toDomain()
+
+    override suspend fun sendMessage(
+        conversationId: String,
+        draft: SendMessageDraft,
+    ): SendMessageResult {
+        val mediaUrls =
+            if (draft.mediaAttachments.isNotEmpty()) {
+                draft.mediaAttachments.map { attachment ->
+                    dataSource
+                        .uploadAttachment(
+                            attachment = attachment,
+                            type = ChatMessageType.IMAGE.apiValue,
+                        ).url
+                }
+            } else {
+                null
+            }
+
+        val audioUrl =
+            draft.audioAttachment?.let { attachment ->
+                dataSource
+                    .uploadAttachment(
+                        attachment = attachment,
+                        type = ChatMessageType.AUDIO.apiValue,
+                    ).url
+            }
+
+        val response =
+            dataSource.sendMessageJson(
+                conversationId = conversationId,
+                request =
+                    SendMessageRequestDto(
+                        content = draft.content,
+                        messageType = draft.messageType.apiValue,
+                        mediaUrls = mediaUrls,
+                        audioUrl = audioUrl,
+                        audioDurationSeconds = draft.audioDurationSeconds,
+                    ),
+            )
+        return response.toDomain(conversationIdFallback = conversationId)
+    }
 }

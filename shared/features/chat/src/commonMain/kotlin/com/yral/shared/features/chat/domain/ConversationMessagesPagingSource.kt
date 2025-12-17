@@ -3,33 +3,33 @@ package com.yral.shared.features.chat.domain
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import co.touchlab.kermit.Logger
-import com.yral.shared.features.chat.domain.models.Conversation
+import com.yral.shared.features.chat.domain.models.ChatMessage
 
-class ConversationsPagingSource(
+class ConversationMessagesPagingSource(
+    private val conversationId: String,
     private val chatRepository: ChatRepository,
-    private val influencerId: String?,
-) : PagingSource<Int, Conversation>() {
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Conversation> =
+) : PagingSource<Int, ChatMessage>() {
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, ChatMessage> =
         runCatching {
             val offset = params.key ?: 0
             val limit = params.loadSize
 
             val result =
-                chatRepository.getConversationsPage(
+                chatRepository.getConversationMessagesPage(
+                    conversationId = conversationId,
                     limit = limit,
                     offset = offset,
-                    influencerId = influencerId,
                 )
 
             LoadResult.Page(
-                data = result.conversations,
+                data = result.messages,
                 prevKey = null,
                 nextKey = result.nextOffset,
             )
         }.getOrElse {
-            Logger.e("ConversationsPaging", it)
+            Logger.e("ConversationMessagesPaging", it)
             LoadResult.Error(it)
         }
 
-    override fun getRefreshKey(state: PagingState<Int, Conversation>): Int? = null
+    override fun getRefreshKey(state: PagingState<Int, ChatMessage>): Int? = null
 }

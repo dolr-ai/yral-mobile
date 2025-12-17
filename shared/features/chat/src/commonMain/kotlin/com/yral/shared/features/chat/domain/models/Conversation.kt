@@ -28,4 +28,14 @@ enum class ConversationMessageRole(
 ) {
     USER("user"),
     ASSISTANT("assistant"),
+    ;
+
+    companion object {
+        fun fromApi(value: String): ConversationMessageRole =
+            when (value.trim().lowercase()) {
+                USER.apiValue -> USER
+                ASSISTANT.apiValue -> ASSISTANT
+                else -> USER
+            }
+    }
 }
