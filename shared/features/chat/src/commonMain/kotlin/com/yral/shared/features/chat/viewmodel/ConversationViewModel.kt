@@ -33,6 +33,7 @@ import kotlinx.coroutines.launch
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 class ConversationViewModel(
     private val chatRepository: ChatRepository,
@@ -105,10 +106,26 @@ class ConversationViewModel(
                     .map { msg -> ConversationMessageItem.Remote(msg) as ConversationMessageItem }
             }.distinctUntilChanged()
 
-    fun setConversationId(id: String) {
+    @OptIn(ExperimentalTime::class)
+    fun setConversationId(
+        id: String,
+        recentMessages: List<ChatMessage> = emptyList(),
+    ) {
         conversationId.value = id
-        _overlay.value = OverlayState()
+        val sentMessages =
+            recentMessages.mapNotNull { message ->
+                runCatching {
+                    Instant.parse(message.createdAt).toEpochMilliseconds()
+                }.getOrNull()?.let { timestampMs ->
+                    SentMessage(insertedAtMs = timestampMs, message = message)
+                }
+            }
+        _overlay.value = OverlayState(sent = sentMessages)
         historyVersion.update { it + 1 } // Refresh paging source
+        // Schedule clearing of recent messages from overlay after TTL
+        if (sentMessages.isNotEmpty()) {
+            scheduleSentOverlayClear()
+        }
     }
 
     @Suppress("LongMethod")

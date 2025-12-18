@@ -68,6 +68,7 @@ fun ConversationDto.toDomain(): Conversation =
                     createdAt = it.createdAt,
                 )
             },
+        recentMessages = recentMessages?.map { it.toDomain(conversationIdFallback = id) } ?: emptyList(),
     )
 
 fun ConversationsResponseDto.toDomain(): ConversationsPageResult {
