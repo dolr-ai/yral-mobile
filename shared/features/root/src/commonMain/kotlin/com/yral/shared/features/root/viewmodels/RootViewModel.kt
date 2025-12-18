@@ -87,7 +87,6 @@ class RootViewModel(
                         walletBalance = properties.coinBalance?.toDouble(),
                         tokenType = TokenType.YRAL,
                         isForcedGamePlayUser = properties.isForcedGamePlayUser,
-                        isAutoScrollEnabled = properties.isAutoScrollEnabled,
                         emailId = properties.emailId,
                         utmParams = utmAttributionStore.get()?.toAnalyticsUtmParams(),
                     )
