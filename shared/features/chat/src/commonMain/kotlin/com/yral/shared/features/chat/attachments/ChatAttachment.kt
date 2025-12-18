@@ -20,7 +20,7 @@ interface ChatAttachment {
 }
 
 class FilePathChatAttachment(
-    private val filePath: String,
+    val filePath: String,
     override val fileName: String,
     override val contentType: String,
 ) : ChatAttachment {

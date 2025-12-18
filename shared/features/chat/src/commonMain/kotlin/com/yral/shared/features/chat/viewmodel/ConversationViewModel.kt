@@ -10,6 +10,8 @@ import androidx.paging.filter
 import androidx.paging.map
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.shared.features.chat.attachments.ChatAttachment
+import com.yral.shared.features.chat.attachments.FilePathChatAttachment
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.ConversationMessagesPagingSource
 import com.yral.shared.features.chat.domain.models.ChatMessage
@@ -39,6 +41,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
+
 class ConversationViewModel(
     private val chatRepository: ChatRepository,
     private val sendMessageUseCase: SendMessageUseCase,
@@ -190,6 +193,14 @@ class ConversationViewModel(
         }
     }
 
+    private fun ChatAttachment.getFilePathOrNull(): String? = (this as? FilePathChatAttachment)?.filePath
+
+    private fun extractMediaUrls(attachments: List<ChatAttachment>): List<String> =
+        attachments
+            .mapNotNull { it.getFilePathOrNull() }
+
+    private fun extractAudioUrl(attachment: ChatAttachment?): String? = attachment?.getFilePathOrNull()
+
     @Suppress("LongMethod")
     @OptIn(ExperimentalTime::class)
     fun sendMessage(draft: SendMessageDraft) {
@@ -205,6 +216,9 @@ class ConversationViewModel(
                 role = ConversationMessageRole.USER,
                 content = draft.content,
                 messageType = draft.messageType,
+                mediaUrls = extractMediaUrls(draft.mediaAttachments),
+                audioUrl = extractAudioUrl(draft.audioAttachment),
+                audioDurationSeconds = draft.audioDurationSeconds,
                 createdAtMs = now,
                 status = LocalMessageStatus.SENDING,
                 isPlaceholder = false,
@@ -403,6 +417,9 @@ data class LocalMessage(
     val role: ConversationMessageRole,
     val content: String?,
     val messageType: ChatMessageType,
+    val mediaUrls: List<String> = emptyList(),
+    val audioUrl: String? = null,
+    val audioDurationSeconds: Int? = null,
     val createdAtMs: Long,
     val status: LocalMessageStatus,
     val isPlaceholder: Boolean,
