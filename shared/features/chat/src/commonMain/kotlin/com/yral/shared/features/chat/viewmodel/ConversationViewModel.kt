@@ -14,8 +14,11 @@ import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.ConversationMessagesPagingSource
 import com.yral.shared.features.chat.domain.models.ChatMessage
 import com.yral.shared.features.chat.domain.models.ChatMessageType
+import com.yral.shared.features.chat.domain.models.ConversationInfluencer
 import com.yral.shared.features.chat.domain.models.ConversationMessageRole
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
+import com.yral.shared.features.chat.domain.usecases.CreateConversationUseCase
+import com.yral.shared.features.chat.domain.usecases.DeleteConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.SendMessageUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -26,7 +29,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -34,10 +39,11 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
-
 class ConversationViewModel(
     private val chatRepository: ChatRepository,
     private val sendMessageUseCase: SendMessageUseCase,
+    private val createConversationUseCase: CreateConversationUseCase,
+    private val deleteConversationUseCase: DeleteConversationUseCase,
 ) : ViewModel() {
     /**
      * Ordering note for UI:
@@ -48,14 +54,17 @@ class ConversationViewModel(
      * With `reverseLayout = true`, the first items (newest) are laid out at the bottom, and paging
      * will naturally load older messages as you scroll upward.
      */
-    private val conversationId = MutableStateFlow<String?>(null)
-    private val historyVersion = MutableStateFlow(0)
+    private val _viewState = MutableStateFlow(ConversationViewState())
+    val viewState: StateFlow<ConversationViewState> = _viewState.asStateFlow()
+
+    private val conversationId: String?
+        get() = _viewState.value.conversationId
 
     private val _overlay = MutableStateFlow(OverlayState())
     val overlay: StateFlow<List<ConversationMessageItem>> =
         _overlay
             .asStateFlow()
-            .combine(conversationId) { overlayState, _ ->
+            .map { overlayState ->
                 // newest-first across BOTH pending and sent (single ordering)
                 buildList {
                     overlayState.pending.forEach { pending ->
@@ -74,10 +83,13 @@ class ConversationViewModel(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val pagedHistory: Flow<PagingData<ChatMessage>> =
-        combine(conversationId, historyVersion) { convId, _ -> convId }
+        _viewState
+            .map { it.conversationId to it.historyVersion }
+            .distinctUntilChanged()
+            .map { (conversationId, _) -> conversationId }
             .flatMapLatest { convId ->
                 if (convId.isNullOrBlank()) {
-                    kotlinx.coroutines.flow.emptyFlow()
+                    emptyFlow()
                 } else {
                     Pager(
                         config =
@@ -107,11 +119,12 @@ class ConversationViewModel(
             }.distinctUntilChanged()
 
     @OptIn(ExperimentalTime::class)
-    fun setConversationId(
+    private fun setConversationId(
         id: String,
+        influencer: ConversationInfluencer? = null,
         recentMessages: List<ChatMessage> = emptyList(),
     ) {
-        conversationId.value = id
+        _viewState.update { it.copy(conversationId = id, influencer = influencer ?: it.influencer) }
         val sentMessages =
             recentMessages.mapNotNull { message ->
                 runCatching {
@@ -121,17 +134,66 @@ class ConversationViewModel(
                 }
             }
         _overlay.value = OverlayState(sent = sentMessages)
-        historyVersion.update { it + 1 } // Refresh paging source
+        _viewState.update { it.copy(historyVersion = it.historyVersion + 1) } // Refresh paging source
         // Schedule clearing of recent messages from overlay after TTL
         if (sentMessages.isNotEmpty()) {
             scheduleSentOverlayClear()
         }
     }
 
+    fun createConversation(influencerId: String) {
+        _viewState.update { it.copy(isCreating = true, error = null) }
+        viewModelScope.launch {
+            createConversationUseCase(CreateConversationUseCase.Params(influencerId = influencerId))
+                .onSuccess { conversation ->
+                    setConversationId(
+                        id = conversation.id,
+                        influencer = conversation.influencer,
+                        recentMessages = conversation.recentMessages,
+                    )
+                    _viewState.update {
+                        it.copy(
+                            isCreating = false,
+                            conversationId = conversation.id,
+                            influencer = conversation.influencer,
+                        )
+                    }
+                }.onFailure { error ->
+                    _viewState.update {
+                        it.copy(
+                            isCreating = false,
+                            error = error.message ?: "Failed to create conversation",
+                        )
+                    }
+                }
+        }
+    }
+
+    fun deleteAndRecreateConversation(influencerId: String) {
+        val currentConversationId = _viewState.value.conversationId ?: return
+        _viewState.update { it.copy(isDeleting = true, error = null) }
+        viewModelScope.launch {
+            deleteConversationUseCase(DeleteConversationUseCase.Params(conversationId = currentConversationId))
+                .onSuccess {
+                    // After successful deletion, create a new conversation
+                    createConversation(influencerId)
+                    _viewState.update { it.copy(isDeleting = false) }
+                }.onFailure { error ->
+                    _viewState.update {
+                        it.copy(
+                            isDeleting = false,
+                            isCreating = false,
+                            error = error.message ?: "Failed to delete conversation",
+                        )
+                    }
+                }
+        }
+    }
+
     @Suppress("LongMethod")
     @OptIn(ExperimentalTime::class)
     fun sendMessage(draft: SendMessageDraft) {
-        val convId = conversationId.value ?: return
+        val convId = conversationId ?: return
 
         val now = Clock.System.now().toEpochMilliseconds()
         val localUserId = "local-user-$now"
@@ -186,7 +248,7 @@ class ConversationViewModel(
                         sent = state.sent + sentMessages,
                     )
                 }
-                historyVersion.update { it + 1 }
+                _viewState.update { it.copy(historyVersion = it.historyVersion + 1) }
                 scheduleSentOverlayClear()
             }.onFailure { error ->
                 _overlay.update { state ->
@@ -211,7 +273,7 @@ class ConversationViewModel(
     @Suppress("LongMethod", "ReturnCount")
     @OptIn(ExperimentalTime::class)
     fun retry(localUserMessageId: String) {
-        val convId = conversationId.value ?: return
+        val convId = conversationId ?: return
         val pending = _overlay.value.pending.firstOrNull { it.localId == localUserMessageId } ?: return
         val draft = pending.draftForRetry ?: return
 
@@ -264,7 +326,7 @@ class ConversationViewModel(
                         sent = state.sent + sentMessages,
                     )
                 }
-                historyVersion.update { it + 1 }
+                _viewState.update { it.copy(historyVersion = it.historyVersion + 1) }
                 scheduleSentOverlayClear()
             }.onFailure { error ->
                 _overlay.update { state ->
@@ -310,6 +372,15 @@ class ConversationViewModel(
         private const val SENT_OVERLAY_TTL_MS = 1_000L
     }
 }
+
+data class ConversationViewState(
+    val isCreating: Boolean = false,
+    val isDeleting: Boolean = false,
+    val error: String? = null,
+    val conversationId: String? = null,
+    val influencer: ConversationInfluencer? = null,
+    val historyVersion: Int = 0,
+)
 
 sealed class ConversationMessageItem {
     data class Remote(
