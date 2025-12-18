@@ -73,7 +73,6 @@ actual class MixpanelAnalyticsProvider actual constructor(
                 "wallet_token_type" to (user.tokenType?.serialName ?: ""),
                 "canister_id" to user.canisterId,
                 "is_forced_gameplay_test_user" to user.isForcedGamePlayUser,
-                "is_auto_scroll_enabled" to user.isAutoScrollEnabled,
                 "email_id" to user.emailId,
             )
 
