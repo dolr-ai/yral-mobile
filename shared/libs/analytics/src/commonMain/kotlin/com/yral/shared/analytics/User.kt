@@ -9,7 +9,6 @@ data class User(
     val isCreator: Boolean?,
     val walletBalance: Double?,
     val tokenType: TokenType?,
-    val isForcedGamePlayUser: Boolean?,
     val emailId: String?,
     val utmParams: AnalyticsUtmParams?,
 ) {
@@ -23,7 +22,6 @@ data class User(
         isCreator = null,
         walletBalance = null,
         tokenType = null,
-        isForcedGamePlayUser = null,
         emailId = null,
         utmParams = null,
     )
