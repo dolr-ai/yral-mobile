@@ -31,10 +31,10 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.paging.common)
-            implementation(libs.androidx.paging.compose)
-            implementation(libs.koin.compose.viewmodel)
-            implementation(compose.components.resources)
-            implementation(compose.material3)
+
+            implementation(libs.moko.permissions)
+            implementation(libs.moko.permissions.compose)
+            implementation(libs.moko.permissions.camera)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
