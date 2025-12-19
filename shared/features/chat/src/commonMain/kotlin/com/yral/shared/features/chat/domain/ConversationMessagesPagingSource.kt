@@ -8,10 +8,11 @@ import com.yral.shared.features.chat.domain.models.ChatMessage
 class ConversationMessagesPagingSource(
     private val conversationId: String,
     private val chatRepository: ChatRepository,
+    private val initialOffset: Int? = null,
 ) : PagingSource<Int, ChatMessage>() {
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, ChatMessage> =
         runCatching {
-            val offset = params.key ?: 0
+            val offset = params.key ?: initialOffset ?: 0
             val limit = params.loadSize
 
             val result =

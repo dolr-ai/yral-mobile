@@ -6,7 +6,6 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import androidx.paging.filter
 import androidx.paging.map
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
@@ -19,11 +18,11 @@ import com.yral.shared.features.chat.domain.models.ChatMessageType
 import com.yral.shared.features.chat.domain.models.ConversationInfluencer
 import com.yral.shared.features.chat.domain.models.ConversationMessageRole
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
+import com.yral.shared.features.chat.domain.models.SendMessageResult
 import com.yral.shared.features.chat.domain.usecases.CreateConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.DeleteConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.SendMessageUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -62,38 +61,24 @@ class ConversationViewModel(
 
     private val conversationId: String?
         get() = _viewState.value.conversationId
-
-    private val _overlay = MutableStateFlow(OverlayState())
-    val overlay: StateFlow<List<ConversationMessageItem>> =
-        _overlay
-            .asStateFlow()
-            .map { overlayState ->
-                // newest-first across BOTH pending and sent (single ordering)
-                buildList {
-                    overlayState.pending.forEach { pending ->
-                        add(pending.createdAtMs to ConversationMessageItem.Local(pending))
-                    }
-                    overlayState.sent.forEach { sent ->
-                        add(sent.insertedAtMs to ConversationMessageItem.Remote(sent.message))
-                    }
-                }.sortedWith(compareByDescending { it.first }).map { it.second }
-            }.distinctUntilChanged()
-            .stateIn(
-                viewModelScope,
-                SharingStarted.WhileSubscribed(5.seconds.inWholeMilliseconds),
-                emptyList(),
-            )
+    private val loadedMessageIds = MutableStateFlow<Set<String>>(emptySet())
+    private val initialOffset = MutableStateFlow<Int?>(null)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val pagedHistory: Flow<PagingData<ChatMessage>> =
         _viewState
-            .map { it.conversationId to it.historyVersion }
+            .map { it.conversationId }
             .distinctUntilChanged()
-            .map { (conversationId, _) -> conversationId }
             .flatMapLatest { convId ->
                 if (convId.isNullOrBlank()) {
                     emptyFlow()
                 } else {
+                    loadedMessageIds.value = emptySet()
+                    // Capture and reset initialOffset (one-time use per conversation)
+                    val initialOffset =
+                        initialOffset.value
+                            .takeIf { initialOffset.value != null }
+                            .also { initialOffset.value = null }
                     Pager(
                         config =
                             PagingConfig(
@@ -106,42 +91,87 @@ class ConversationViewModel(
                             ConversationMessagesPagingSource(
                                 conversationId = convId,
                                 chatRepository = chatRepository,
+                                initialOffset = initialOffset,
                             )
                         },
                     ).flow
                 }
             }.cachedIn(viewModelScope)
-
     val history: Flow<PagingData<ConversationMessageItem>> =
-        pagedHistory
-            .combine(_overlay) { pagingData, overlayState ->
-                val sentIds = overlayState.sent.mapTo(HashSet()) { it.message.id }
-                pagingData
-                    .filter { msg -> msg.id !in sentIds }
-                    .map { msg -> ConversationMessageItem.Remote(msg) as ConversationMessageItem }
-            }.distinctUntilChanged()
+        pagedHistory.map { pagingData ->
+            pagingData.map { message ->
+                val currentIds = loadedMessageIds.value
+                if (message.id !in currentIds) {
+                    loadedMessageIds.update { it + message.id }
+                }
+                ConversationMessageItem.Remote(message) as ConversationMessageItem
+            }
+        }
+
+    private val _overlay = MutableStateFlow(OverlayState())
+    val overlay: StateFlow<List<ConversationMessageItem>> =
+        combine(_overlay, loadedMessageIds) { overlayState, loadedIds ->
+            val filteredSent = overlayState.sent.filterNot { it.message.id in loadedIds }
+            buildList {
+                overlayState.pending.forEach { pending ->
+                    add(pending.createdAtMs to ConversationMessageItem.Local(pending))
+                }
+                filteredSent.forEach { sent ->
+                    add(sent.insertedAtMs to ConversationMessageItem.Remote(sent.message))
+                }
+            }.sortedWith(compareByDescending { it.first }).map { it.second }
+        }.distinctUntilChanged()
+            .stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(5.seconds.inWholeMilliseconds),
+                emptyList(),
+            )
+
+    init {
+        createConversation(TEST_INFLUENCER_ID)
+    }
 
     @OptIn(ExperimentalTime::class)
+    private fun parseTimestampToEpochMs(timestamp: String): Long? =
+        runCatching {
+            val normalizedTimestamp =
+                if (timestamp.endsWith('Z') || timestamp.matches(Regex(".*[+-]\\d{2}:\\d{2}$"))) {
+                    timestamp
+                } else {
+                    "${timestamp}Z"
+                }
+            Instant.parse(normalizedTimestamp).toEpochMilliseconds()
+        }.getOrNull()
+
     private fun setConversationId(
         id: String,
         influencer: ConversationInfluencer? = null,
         recentMessages: List<ChatMessage> = emptyList(),
     ) {
+        val previousConversationId = _viewState.value.conversationId
+
+        // Set initial offset BEFORE updating conversationId to ensure it's captured when Pager is created
+        // This prevents duplicate API call for the first page
+        if (recentMessages.isNotEmpty()) {
+            initialOffset.value = recentMessages.size
+            // Mark recentMessages as loaded so they're filtered from overlay once pagedHistory loads
+            val recentMessageIds = recentMessages.mapTo(HashSet()) { it.id }
+            loadedMessageIds.update { it + recentMessageIds }
+        }
+
         _viewState.update { it.copy(conversationId = id, influencer = influencer ?: it.influencer) }
+
+        if (previousConversationId != id) {
+            _overlay.value = OverlayState()
+        }
+
         val sentMessages =
             recentMessages.mapNotNull { message ->
-                runCatching {
-                    Instant.parse(message.createdAt).toEpochMilliseconds()
-                }.getOrNull()?.let { timestampMs ->
+                parseTimestampToEpochMs(message.createdAt)?.let { timestampMs ->
                     SentMessage(insertedAtMs = timestampMs, message = message)
                 }
             }
-        _overlay.value = OverlayState(sent = sentMessages)
-        _viewState.update { it.copy(historyVersion = it.historyVersion + 1) } // Refresh paging source
-        // Schedule clearing of recent messages from overlay after TTL
-        if (sentMessages.isNotEmpty()) {
-            scheduleSentOverlayClear()
-        }
+        _overlay.update { it.copy(sent = it.sent + sentMessages) }
     }
 
     fun createConversation(influencerId: String) {
@@ -154,13 +184,7 @@ class ConversationViewModel(
                         influencer = conversation.influencer,
                         recentMessages = conversation.recentMessages,
                     )
-                    _viewState.update {
-                        it.copy(
-                            isCreating = false,
-                            conversationId = conversation.id,
-                            influencer = conversation.influencer,
-                        )
-                    }
+                    _viewState.update { it.copy(isCreating = false) }
                 }.onFailure { error ->
                     _viewState.update {
                         it.copy(
@@ -201,7 +225,71 @@ class ConversationViewModel(
 
     private fun extractAudioUrl(attachment: ChatAttachment?): String? = attachment?.getFilePathOrNull()
 
-    @Suppress("LongMethod")
+    private fun createAssistantPlaceholder(timestampMs: Long): LocalMessage =
+        LocalMessage(
+            localId = "local-assistant-$timestampMs",
+            role = ConversationMessageRole.ASSISTANT,
+            content = null,
+            messageType = ChatMessageType.TEXT,
+            createdAtMs = timestampMs + 1,
+            status = LocalMessageStatus.WAITING,
+            isPlaceholder = true,
+            draftForRetry = null,
+        )
+
+    private fun buildSentMessages(
+        userMessage: ChatMessage,
+        assistantMessage: ChatMessage?,
+    ): List<SentMessage> =
+        buildList {
+            parseTimestampToEpochMs(userMessage.createdAt)?.let {
+                add(SentMessage(insertedAtMs = it, message = userMessage))
+            }
+            assistantMessage?.let { message ->
+                parseTimestampToEpochMs(message.createdAt)?.let {
+                    add(SentMessage(insertedAtMs = it, message = message))
+                }
+            }
+        }
+
+    private fun handleSendSuccess(
+        result: SendMessageResult,
+        userLocalId: String,
+        assistantLocalId: String,
+    ) {
+        val sentMessages = buildSentMessages(result.userMessage, result.assistantMessage)
+        _overlay.update { state ->
+            val remainingPending =
+                state.pending.filterNot { it.localId == userLocalId || it.localId == assistantLocalId }
+            state.copy(
+                pending = remainingPending,
+                sent = state.sent + sentMessages,
+            )
+        }
+    }
+
+    private fun handleSendFailure(
+        error: Throwable,
+        userLocalId: String,
+        assistantLocalId: String,
+    ) {
+        _overlay.update { state ->
+            val updatedPending =
+                state.pending.mapNotNull { msg ->
+                    when (msg.localId) {
+                        assistantLocalId -> null
+                        userLocalId ->
+                            msg.copy(
+                                status = LocalMessageStatus.FAILED,
+                                errorMessage = error.message,
+                            )
+                        else -> msg
+                    }
+                }
+            state.copy(pending = updatedPending)
+        }
+    }
+
     @OptIn(ExperimentalTime::class)
     fun sendMessage(draft: SendMessageDraft) {
         val convId = conversationId ?: return
@@ -224,21 +312,9 @@ class ConversationViewModel(
                 isPlaceholder = false,
                 draftForRetry = draft,
             )
-        val assistantPlaceholder =
-            LocalMessage(
-                localId = localAssistantId,
-                role = ConversationMessageRole.ASSISTANT,
-                content = null,
-                messageType = ChatMessageType.TEXT,
-                createdAtMs = now + 1,
-                status = LocalMessageStatus.WAITING,
-                isPlaceholder = true,
-                draftForRetry = null,
-            )
+        val assistantPlaceholder = createAssistantPlaceholder(now)
 
-        _overlay.update {
-            it.copy(pending = it.pending + userLocal + assistantPlaceholder)
-        }
+        _overlay.update { it.copy(pending = it.pending + userLocal + assistantPlaceholder) }
 
         viewModelScope.launch {
             sendMessageUseCase(
@@ -247,119 +323,53 @@ class ConversationViewModel(
                     draft = draft,
                 ),
             ).onSuccess { result ->
-                _overlay.update { state ->
-                    val remainingPending =
-                        state.pending.filterNot { it.localId == localUserId || it.localId == localAssistantId }
-                    val sentAt = Clock.System.now().toEpochMilliseconds()
-                    val sentMessages =
-                        buildList {
-                            add(SentMessage(insertedAtMs = sentAt, message = result.userMessage))
-                            // Ensure assistant message is newer than user message for correct ordering.
-                            result.assistantMessage?.let { add(SentMessage(insertedAtMs = sentAt + 1, message = it)) }
-                        }
-                    state.copy(
-                        pending = remainingPending,
-                        sent = state.sent + sentMessages,
-                    )
-                }
-                _viewState.update { it.copy(historyVersion = it.historyVersion + 1) }
-                scheduleSentOverlayClear()
+                handleSendSuccess(result, localUserId, localAssistantId)
             }.onFailure { error ->
-                _overlay.update { state ->
-                    val updatedPending =
-                        state.pending.mapNotNull { msg ->
-                            when (msg.localId) {
-                                localAssistantId -> null // remove placeholder
-                                localUserId ->
-                                    msg.copy(
-                                        status = LocalMessageStatus.FAILED,
-                                        errorMessage = error.message,
-                                    )
-                                else -> msg
-                            }
-                        }
-                    state.copy(pending = updatedPending)
-                }
+                handleSendFailure(error, localUserId, localAssistantId)
             }
         }
     }
 
-    @Suppress("LongMethod", "ReturnCount")
     @OptIn(ExperimentalTime::class)
     fun retry(localUserMessageId: String) {
         val convId = conversationId ?: return
-        val pending = _overlay.value.pending.firstOrNull { it.localId == localUserMessageId } ?: return
-        val draft = pending.draftForRetry ?: return
+        _overlay
+            .value
+            .pending
+            .firstOrNull { it.localId == localUserMessageId }
+            ?.draftForRetry
+            ?.let { draft ->
+                val now = Clock.System.now().toEpochMilliseconds()
+                val localAssistantId = "local-assistant-$now"
+                val assistantPlaceholder = createAssistantPlaceholder(now)
 
-        val now = Clock.System.now().toEpochMilliseconds()
-        val localAssistantId = "local-assistant-$now"
-        val assistantPlaceholder =
-            LocalMessage(
-                localId = localAssistantId,
-                role = ConversationMessageRole.ASSISTANT,
-                content = null,
-                messageType = ChatMessageType.TEXT,
-                createdAtMs = now + 1,
-                status = LocalMessageStatus.WAITING,
-                isPlaceholder = true,
-                draftForRetry = null,
-            )
-
-        _overlay.update { state ->
-            state.copy(
-                pending =
-                    state.pending
-                        .map { msg ->
-                            if (msg.localId == localUserMessageId) {
-                                msg.copy(status = LocalMessageStatus.SENDING, errorMessage = null)
-                            } else {
-                                msg
-                            }
-                        } + assistantPlaceholder,
-            )
-        }
-
-        viewModelScope.launch {
-            sendMessageUseCase(
-                SendMessageUseCase.Params(
-                    conversationId = convId,
-                    draft = draft,
-                ),
-            ).onSuccess { result ->
                 _overlay.update { state ->
-                    val remainingPending =
-                        state.pending.filterNot { it.localId == localUserMessageId || it.localId == localAssistantId }
-                    val sentAt = Clock.System.now().toEpochMilliseconds()
-                    val sentMessages =
-                        buildList {
-                            add(SentMessage(insertedAtMs = sentAt, message = result.userMessage))
-                            result.assistantMessage?.let { add(SentMessage(insertedAtMs = sentAt + 1, message = it)) }
-                        }
                     state.copy(
-                        pending = remainingPending,
-                        sent = state.sent + sentMessages,
+                        pending =
+                            state.pending
+                                .map { msg ->
+                                    if (msg.localId == localUserMessageId) {
+                                        msg.copy(status = LocalMessageStatus.SENDING, errorMessage = null)
+                                    } else {
+                                        msg
+                                    }
+                                } + assistantPlaceholder,
                     )
                 }
-                _viewState.update { it.copy(historyVersion = it.historyVersion + 1) }
-                scheduleSentOverlayClear()
-            }.onFailure { error ->
-                _overlay.update { state ->
-                    val updatedPending =
-                        state.pending.mapNotNull { msg ->
-                            when (msg.localId) {
-                                localAssistantId -> null
-                                localUserMessageId ->
-                                    msg.copy(
-                                        status = LocalMessageStatus.FAILED,
-                                        errorMessage = error.message,
-                                    )
-                                else -> msg
-                            }
-                        }
-                    state.copy(pending = updatedPending)
+
+                viewModelScope.launch {
+                    sendMessageUseCase(
+                        SendMessageUseCase.Params(
+                            conversationId = convId,
+                            draft = draft,
+                        ),
+                    ).onSuccess { result ->
+                        handleSendSuccess(result, localUserMessageId, localAssistantId)
+                    }.onFailure { error ->
+                        handleSendFailure(error, localUserMessageId, localAssistantId)
+                    }
                 }
             }
-        }
     }
 
     private data class OverlayState(
@@ -372,18 +382,10 @@ class ConversationViewModel(
         val message: ChatMessage,
     )
 
-    private fun scheduleSentOverlayClear() {
-        // Clear transient sent overlay after a short delay so history can show messages.
-        viewModelScope.launch {
-            delay(SENT_OVERLAY_TTL_MS)
-            _overlay.update { it.copy(sent = emptyList()) }
-        }
-    }
-
-    private companion object {
-        private const val PAGE_SIZE = 50
-        private const val PREFETCH_DISTANCE = 10
-        private const val SENT_OVERLAY_TTL_MS = 1_000L
+    companion object {
+        private const val PAGE_SIZE = 10
+        private const val PREFETCH_DISTANCE = 5
+        const val TEST_INFLUENCER_ID = "qg2pi-g3xl4-uprdd-macwr-64q7r-plotv-xm3bg-iayu3-rnpux-7ikkz-hqe"
     }
 }
 
@@ -393,7 +395,6 @@ data class ConversationViewState(
     val error: String? = null,
     val conversationId: String? = null,
     val influencer: ConversationInfluencer? = null,
-    val historyVersion: Int = 0,
 )
 
 sealed class ConversationMessageItem {
