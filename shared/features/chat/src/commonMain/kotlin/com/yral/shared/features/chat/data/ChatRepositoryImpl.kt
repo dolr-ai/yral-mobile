@@ -76,7 +76,7 @@ class ChatRepositoryImpl(
                         .uploadAttachment(
                             attachment = attachment,
                             type = ChatMessageType.IMAGE.apiValue,
-                        ).url
+                        ).storageKey
                 }
             } else {
                 null
@@ -88,7 +88,7 @@ class ChatRepositoryImpl(
                     .uploadAttachment(
                         attachment = attachment,
                         type = ChatMessageType.AUDIO.apiValue,
-                    ).url
+                    ).storageKey
             }
 
         val response =
