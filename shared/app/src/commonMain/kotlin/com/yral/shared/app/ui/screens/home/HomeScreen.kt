@@ -99,6 +99,7 @@ import yral_mobile.shared.app.generated.resources.wallet_nav_unselected
 import yral_mobile.shared.libs.designsystem.generated.resources.account_nav
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
+@Suppress("CyclomaticComplexMethod")
 @Composable
 internal fun HomeScreen(
     component: HomeComponent,
@@ -225,6 +226,7 @@ private fun HomeScreenContent(
 
             is HomeComponent.Child.Tournament ->
                 TournamentScreen(
+                    component = child.component,
                     viewModel = tournamentViewModel,
                 )
 
@@ -520,7 +522,7 @@ private fun SessionState.getCanisterData(): CanisterData =
             )
     }
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 private fun LoginIfRequired(
     currentChild: HomeComponent.Child,
@@ -564,6 +566,15 @@ private fun LoginIfRequired(
                     },
                 )
             }
+            is HomeComponent.Child.Tournament -> {
+                component.showLoginBottomSheet(
+                    pageName = homeState.pageName ?: SignupPageName.TOURNAMENT,
+                    loginBottomSheetType = LoginBottomSheetType.TOURNAMENT,
+                    onDismissRequest = dismissSheet,
+                    onLoginSuccess = dismissSheet,
+                )
+            }
+
             else -> Unit
         }
     }

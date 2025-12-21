@@ -1,10 +1,15 @@
 package com.yral.shared.features.tournament.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.yral.shared.features.tournament.domain.model.Tournament
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class TournamentViewModel : ViewModel() {
     private val _state: MutableStateFlow<TournamentUiState> =
@@ -14,6 +19,9 @@ class TournamentViewModel : ViewModel() {
             ),
         )
     val state: StateFlow<TournamentUiState> = _state
+
+    private val eventChannel = Channel<Event>(Channel.BUFFERED)
+    val eventsFlow: Flow<Event> = eventChannel.receiveAsFlow()
 
     fun onTabSelected(tab: TournamentUiState.Tab) {
         _state.update {
@@ -40,5 +48,13 @@ class TournamentViewModel : ViewModel() {
 
     @Suppress("EmptyFunctionBlock", "UnusedParameter")
     fun onTournamentCtaClick(tournament: Tournament) {
+    }
+
+    private fun send(event: Event) {
+        viewModelScope.launch { eventChannel.send(event) }
+    }
+
+    sealed class Event {
+        data object Login : Event()
     }
 }

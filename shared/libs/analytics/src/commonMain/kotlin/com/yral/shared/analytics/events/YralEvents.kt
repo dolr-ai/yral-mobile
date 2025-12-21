@@ -1536,6 +1536,9 @@ enum class SignupPageName {
 
     @SerialName("leaderboard")
     LEADERBOARD,
+
+    @SerialName("tournament")
+    TOURNAMENT,
 }
 
 @Serializable
