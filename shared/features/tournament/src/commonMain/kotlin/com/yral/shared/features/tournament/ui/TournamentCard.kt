@@ -22,8 +22,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
@@ -39,20 +37,16 @@ import com.yral.shared.features.tournament.domain.model.TournamentParticipationS
 import com.yral.shared.features.tournament.domain.model.TournamentStatus
 import com.yral.shared.libs.designsystem.modifierx.conditional
 import com.yral.shared.libs.designsystem.modifierx.grayScale
-import com.yral.shared.libs.designsystem.theme.GradientAngleConvention
-import com.yral.shared.libs.designsystem.theme.GradientLengthMode
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.angledGradientBackground
 import com.yral.shared.libs.designsystem.theme.appTypoGraphy
-import com.yral.shared.libs.designsystem.theme.linearGradientBrush
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import yral_mobile.shared.features.tournament.generated.resources.bitcoin
-import yral_mobile.shared.features.tournament.generated.resources.check_tick
 import yral_mobile.shared.features.tournament.generated.resources.dela_gothic_one_regular
 import yral_mobile.shared.features.tournament.generated.resources.ended
 import yral_mobile.shared.features.tournament.generated.resources.ends_in
@@ -62,13 +56,7 @@ import yral_mobile.shared.features.tournament.generated.resources.ic_ranking
 import yral_mobile.shared.features.tournament.generated.resources.ic_share
 import yral_mobile.shared.features.tournament.generated.resources.ic_timer
 import yral_mobile.shared.features.tournament.generated.resources.ic_users
-import yral_mobile.shared.features.tournament.generated.resources.join_now
-import yral_mobile.shared.features.tournament.generated.resources.join_now_with_tokens
-import yral_mobile.shared.features.tournament.generated.resources.register_with_tokens
-import yral_mobile.shared.features.tournament.generated.resources.registered
 import yral_mobile.shared.features.tournament.generated.resources.starts_in
-import yral_mobile.shared.features.tournament.generated.resources.view_leaderboard
-import yral_mobile.shared.features.tournament.generated.resources.yral_coin
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
@@ -333,166 +321,9 @@ private fun RankingIconButton(onClick: () -> Unit) {
 }
 
 @Composable
-private fun ctaLabel(
-    status: TournamentStatus,
-    participationState: TournamentParticipationState,
-): String =
-    when (status) {
-        TournamentStatus.Ended -> stringResource(TournamentRes.string.view_leaderboard)
-        else ->
-            when (participationState) {
-                is TournamentParticipationState.Registered -> stringResource(TournamentRes.string.registered)
-                is TournamentParticipationState.JoinNow -> stringResource(TournamentRes.string.join_now)
-                is TournamentParticipationState.JoinNowWithTokens ->
-                    stringResource(
-                        TournamentRes.string.join_now_with_tokens,
-                        participationState.tokensRequired,
-                    )
-                is TournamentParticipationState.JoinNowDisabled -> stringResource(TournamentRes.string.join_now)
-                is TournamentParticipationState.RegistrationRequired ->
-                    stringResource(
-                        TournamentRes.string.register_with_tokens,
-                        participationState.tokensRequired,
-                    )
-            }
-    }
-
-@Suppress("LongMethod", "CyclomaticComplexMethod")
-@Composable
-private fun TournamentCtaButton(
-    modifier: Modifier = Modifier,
-    status: TournamentStatus,
-    participationState: TournamentParticipationState,
-    onClick: () -> Unit,
-) {
-    val shape = RoundedCornerShape(8.dp)
-
-    Box(
-        modifier =
-            modifier
-                .clip(shape)
-                .then(
-                    when (status) {
-                        is TournamentStatus.Ended ->
-                            Modifier
-                                .background(YralColors.Neutral50)
-                                .border(1.dp, YralColors.Neutral700, shape)
-
-                        else ->
-                            when (participationState) {
-                                TournamentParticipationState.JoinNow,
-                                TournamentParticipationState.JoinNowDisabled,
-                                is TournamentParticipationState.JoinNowWithTokens,
-                                -> {
-                                    Modifier.angledGradientBackground(
-                                        degrees = 218f,
-                                        colorStops = tournamentPinkGradientStops(),
-                                        angleConvention = GradientAngleConvention.CssDegrees,
-                                        lengthMode = GradientLengthMode.Diagonal,
-                                    )
-                                }
-                                TournamentParticipationState.Registered -> {
-                                    Modifier
-                                        .background(YralColors.Neutral700)
-                                        .border(1.dp, YralColors.Neutral700, shape)
-                                }
-                                is TournamentParticipationState.RegistrationRequired -> {
-                                    Modifier
-                                        .background(YralColors.Neutral50)
-                                        .border(1.dp, YralColors.Neutral700, shape)
-                                }
-                            }
-                    },
-                ).clickable(onClick = onClick)
-                .padding(horizontal = 20.dp, vertical = 10.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            if (status != TournamentStatus.Ended && participationState is TournamentParticipationState.Registered) {
-                Image(
-                    modifier = Modifier.size(20.dp),
-                    painter = painterResource(TournamentRes.drawable.check_tick),
-                    contentDescription = null,
-                )
-            }
-
-            val labelStyle =
-                LocalAppTopography.current.baseSemiBold.copy(
-                    color = Color.Unspecified,
-                )
-
-            val labelBrush =
-                when (status) {
-                    TournamentStatus.Ended -> tournamentPinkGradientBrush(angleDegrees = 198.93394f)
-                    else -> {
-                        when (participationState) {
-                            is TournamentParticipationState.RegistrationRequired -> {
-                                tournamentPinkGradientBrush(angleDegrees = 188.3126f)
-                            }
-                            else -> null
-                        }
-                    }
-                }
-
-            Text(
-                text = ctaLabel(status, participationState),
-                style =
-                    if (labelBrush == null) {
-                        labelStyle.copy(color = YralColors.NeutralIconsActive)
-                    } else {
-                        labelStyle.copy(brush = labelBrush)
-                    },
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-
-            if (status != TournamentStatus.Ended) {
-                val coinRes =
-                    when (participationState) {
-                        is TournamentParticipationState.RegistrationRequired,
-                        is TournamentParticipationState.JoinNowWithTokens,
-                        -> {
-                            TournamentRes.drawable.yral_coin
-                        }
-
-                        else -> null
-                    }
-                if (coinRes != null) {
-                    Image(
-                        modifier = Modifier.size(width = 15.dp, height = 16.dp),
-                        painter = painterResource(coinRes),
-                        contentDescription = null,
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun delaGothicOneFontFamily(): FontFamily =
     FontFamily(
         Font(TournamentRes.font.dela_gothic_one_regular, FontWeight.Normal),
-    )
-
-@Suppress("MagicNumber")
-private fun tournamentPinkGradientStops(): Array<Pair<Float, Color>> =
-    arrayOf(
-        0.0983f to Color(0xFFFF78C1),
-        0.4479f to YralColors.Pink300,
-        0.7848f to Color(0xFFAD005E),
-    )
-
-private fun tournamentPinkGradientBrush(angleDegrees: Float): Brush? =
-    linearGradientBrush(
-        angleDegrees = angleDegrees,
-        size = Size(width = 240f, height = 40f),
-        colorStops = tournamentPinkGradientStops(),
-        angleConvention = GradientAngleConvention.CssDegrees,
-        lengthMode = GradientLengthMode.Diagonal,
     )
 
 private fun titleSize(status: TournamentStatus) =
