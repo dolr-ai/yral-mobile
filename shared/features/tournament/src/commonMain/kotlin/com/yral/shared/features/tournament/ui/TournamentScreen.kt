@@ -82,6 +82,17 @@ fun TournamentScreen(viewModel: TournamentViewModel) {
             }
         }
     }
+
+    val selected = uiState.prizeBreakdownTournament
+    if (selected != null) {
+        PrizeBreakdownBottomSheet(
+            rows = selected.prizeBreakdown,
+            onDismissRequest = viewModel::closePrizeBreakdown,
+            status = selected.status,
+            participationState = selected.participationState,
+            onCtaClicked = { viewModel.onTournamentCtaClick(selected) },
+        )
+    }
 }
 
 @Composable

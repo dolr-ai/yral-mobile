@@ -8,6 +8,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
 
+@Suppress("MagicNumber")
 @OptIn(ExperimentalTime::class)
 internal fun sampleAllTournaments(): List<Tournament> =
     listOf(
@@ -18,7 +19,7 @@ internal fun sampleAllTournaments(): List<Tournament> =
             participantsLabel = "32 Playing",
             scheduleLabel = "Dec 4th • 6:00-6:30 pm",
             status = TournamentStatus.Live(Clock.System.now() + 10.minutes),
-            participationState = TournamentParticipationState.Registered,
+            participationState = TournamentParticipationState.RegistrationRequired(20),
             prizeBreakdown = samplePrizeRows(),
         ),
         Tournament(
