@@ -46,4 +46,6 @@
     <string name="winner_rank_format">Rank #%1$d</string>
     <string name="winner_body_suffix">Register for the next round tomorrow.</string>
     <string name="claim_prize">Claim Prize</string>
+    <string name="tournament_fail_title">So Close... Try Again Tomorrow!</string>
+    <string name="tournament_fail_body">You finished at Rank #%1$d.\nCome back tomorrow at %2$s\nand give it another shot.</string>
 </resources>
