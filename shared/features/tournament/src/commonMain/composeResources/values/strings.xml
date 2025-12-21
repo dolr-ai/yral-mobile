@@ -1,0 +1,10 @@
+<resources>
+    <string name="view_leaderboard">View Leaderboard</string>
+    <string name="register_with_tokens">Register with %1$d</string>
+    <string name="join_now">Join Now</string>
+    <string name="join_now_with_tokens">Join Now with %1$d</string>
+    <string name="registered">Registered</string>
+    <string name="starts_in">Starts in %1$s</string>
+    <string name="ends_in">Ends in %1$s</string>
+    <string name="ended">Ended</string>
+</resources>
