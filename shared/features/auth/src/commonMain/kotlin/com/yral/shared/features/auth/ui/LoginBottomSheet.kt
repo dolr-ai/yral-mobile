@@ -38,13 +38,17 @@ import yral_mobile.shared.features.auth.generated.resources.Res
 import yral_mobile.shared.features.auth.generated.resources.continue_to_sign_up_for_free
 import yral_mobile.shared.features.auth.generated.resources.create_ai_videos_earn_bitcoin
 import yral_mobile.shared.features.auth.generated.resources.create_ai_videos_earn_bitcoin_dis
+import yral_mobile.shared.features.auth.generated.resources.join_tournament
+import yral_mobile.shared.features.auth.generated.resources.join_tournament_disclaimer
 import yral_mobile.shared.features.auth.generated.resources.login_to_get_25_tokens
+import yral_mobile.shared.features.auth.generated.resources.login_to_join_tournament
 import yral_mobile.shared.features.auth.generated.resources.upload_ai_videos_earn_bitcoin
 import yral_mobile.shared.features.auth.generated.resources.upload_ai_videos_earn_bitcoin_dis
 import yral_mobile.shared.libs.designsystem.generated.resources.btc_giftbox
 import yral_mobile.shared.libs.designsystem.generated.resources.could_not_login
 import yral_mobile.shared.libs.designsystem.generated.resources.could_not_login_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.ok
+import yral_mobile.shared.libs.designsystem.generated.resources.victory_cup
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -153,6 +157,11 @@ private fun getHeaderText(
             val maskedText = fullText.substringAfter(".")
             getAnnotatedHeader(fullText, maskedText)
         }
+        LoginBottomSheetType.TOURNAMENT -> {
+            val fullText = stringResource(Res.string.login_to_join_tournament)
+            val maskedText = stringResource(Res.string.join_tournament)
+            getAnnotatedHeader(fullText, maskedText)
+        }
         else -> getAnnotatedHeader(stringResource(Res.string.continue_to_sign_up_for_free))
     }
 
@@ -202,6 +211,7 @@ private fun getDisclaimerText(type: LoginBottomSheetType) =
     when (type) {
         LoginBottomSheetType.UPLOAD_AI_VIDEO -> stringResource(Res.string.upload_ai_videos_earn_bitcoin_dis)
         LoginBottomSheetType.CREATE_AI_VIDEO -> stringResource(Res.string.create_ai_videos_earn_bitcoin_dis)
+        LoginBottomSheetType.TOURNAMENT -> stringResource(Res.string.join_tournament_disclaimer)
         else -> null
     }
 
@@ -210,6 +220,7 @@ private fun getTopIcon(type: LoginBottomSheetType) =
     when (type) {
         LoginBottomSheetType.UPLOAD_AI_VIDEO -> painterResource(DesignRes.drawable.btc_giftbox)
         LoginBottomSheetType.CREATE_AI_VIDEO -> painterResource(DesignRes.drawable.btc_giftbox)
+        LoginBottomSheetType.TOURNAMENT -> painterResource(DesignRes.drawable.victory_cup)
         else -> null
     }
 
@@ -218,6 +229,7 @@ private fun getTopIconSize(type: LoginBottomSheetType) =
     when (type) {
         LoginBottomSheetType.UPLOAD_AI_VIDEO -> DpSize(AI_VIDEO_TOP_ICON_WIDTH.dp, AI_VIDEO_TOP_ICON_HEIGHT.dp)
         LoginBottomSheetType.CREATE_AI_VIDEO -> DpSize(AI_VIDEO_TOP_ICON_WIDTH.dp, AI_VIDEO_TOP_ICON_HEIGHT.dp)
+        LoginBottomSheetType.TOURNAMENT -> DpSize(TOURNAMENT_TOP_ICON_WIDTH.dp, TOURNAMENT_TOP_ICON_HEIGHT.dp)
         else -> null
     }
 
@@ -227,7 +239,10 @@ enum class LoginBottomSheetType {
     FEED,
     CREATE_AI_VIDEO,
     UPLOAD_AI_VIDEO,
+    TOURNAMENT,
 }
 
 private const val AI_VIDEO_TOP_ICON_WIDTH = 200f
 private const val AI_VIDEO_TOP_ICON_HEIGHT = 165f
+private const val TOURNAMENT_TOP_ICON_WIDTH = 176f
+private const val TOURNAMENT_TOP_ICON_HEIGHT = 156f

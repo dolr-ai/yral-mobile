@@ -43,8 +43,8 @@ import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import yral_mobile.shared.features.tournament.generated.resources.Res
 import yral_mobile.shared.features.tournament.generated.resources.title_price_breakdown
-import yral_mobile.shared.features.tournament.generated.resources.victory_cup
 import yral_mobile.shared.libs.designsystem.generated.resources.bitcoin
+import yral_mobile.shared.libs.designsystem.generated.resources.victory_cup
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
@@ -73,8 +73,8 @@ internal fun PrizeBreakdownBottomSheet(
         ) {
             Image(
                 modifier = Modifier.size(80.dp),
-                painter = painterResource(Res.drawable.victory_cup),
-                contentDescription = "image description",
+                painter = painterResource(DesignRes.drawable.victory_cup),
+                contentDescription = null,
                 contentScale = ContentScale.FillBounds,
             )
             Spacer(modifier = Modifier.height(19.dp))

@@ -125,8 +125,11 @@ internal class DefaultHomeComponent(
             is PostDetailsRoute ->
                 navigation
                     .replaceAll(Config.Feed) {
-                        (stack.value.active.instance as? Child.Feed)?.component?.openPostDetails(appRoute)
+                        (stack.value.active.instance as? Child.Feed)?.component?.openPostDetails(
+                            appRoute,
+                        )
                     }.also { Logger.d("LinkSharing") { "Link details received $appRoute" } }
+
             is Wallet -> onWalletTabClick()
             is Leaderboard -> onLeaderboardTabClick()
             is Tournaments -> onTournamentTabClick()
@@ -134,17 +137,29 @@ internal class DefaultHomeComponent(
             is AddVideo -> onUploadVideoTabClick()
             is GenerateAIVideo ->
                 navigation.replaceKeepingFeed(Config.UploadVideo) {
-                    (stack.value.active.instance as? Child.UploadVideo)?.component?.handleNavigation(appRoute)
+                    (stack.value.active.instance as? Child.UploadVideo)?.component?.handleNavigation(
+                        appRoute,
+                    )
                 }
+
             is RewardsReceived -> {
                 when (appRoute.rewardOn) {
-                    RewardOn.VIDEO_VIEWS -> showSlot(SlotConfig.VideoViewsRewardsBottomSheet(appRoute))
+                    RewardOn.VIDEO_VIEWS ->
+                        showSlot(
+                            SlotConfig.VideoViewsRewardsBottomSheet(
+                                appRoute,
+                            ),
+                        )
                 }
             }
+
             is VideoUploadSuccessful ->
                 navigation.replaceKeepingFeed(Config.Profile) {
-                    (stack.value.active.instance as? Child.Profile)?.component?.onNavigationRequest(appRoute)
+                    (stack.value.active.instance as? Child.Profile)?.component?.onNavigationRequest(
+                        appRoute,
+                    )
                 }
+
             else -> Unit
         }
     }
@@ -235,7 +250,10 @@ internal class DefaultHomeComponent(
         )
 
     private fun tournamentComponent(componentContext: ComponentContext): TournamentComponent =
-        TournamentComponent(componentContext = componentContext)
+        TournamentComponent(
+            componentContext = componentContext,
+            promptLogin = { homeViewModel.showSignupPrompt(true, it) },
+        )
 
     private fun uploadVideoComponent(componentContext: ComponentContext): UploadVideoRootComponent =
         UploadVideoRootComponent.Companion(
