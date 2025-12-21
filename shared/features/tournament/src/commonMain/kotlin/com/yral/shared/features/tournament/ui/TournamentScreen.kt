@@ -136,7 +136,7 @@ private fun SegmentedTab(
     ) {
         Text(
             text = text,
-            style = LocalAppTopography.current.regSemiBold,
+            style = LocalAppTopography.current.baseBold,
             color = contentColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
