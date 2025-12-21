@@ -62,53 +62,61 @@ fun TournamentScreen(
         }
     }
 
-    Column(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .background(YralColors.Neutral950),
-    ) {
-        Text(
+    val showHowToPlayTournament = uiState.showHowToPlayTournament
+    if (showHowToPlayTournament != null) {
+        TournamentHowToPlayScreen(
+            title = showHowToPlayTournament.title,
+            onStartPlaying = viewModel::onStartPlayingClicked,
+        )
+    } else {
+        Column(
             modifier =
                 Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-            text = stringResource(Res.string.screen_heading),
-            textAlign = TextAlign.Center,
-            style = LocalAppTopography.current.xlBold,
-            color = YralColors.NeutralTextPrimary,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+                    .fillMaxSize()
+                    .background(YralColors.Neutral950),
+        ) {
+            Text(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                text = stringResource(Res.string.screen_heading),
+                textAlign = TextAlign.Center,
+                style = LocalAppTopography.current.xlBold,
+                color = YralColors.NeutralTextPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
 
-        TournamentTabs(
-            selectedTab = uiState.selectedTab,
-            onTabSelected = viewModel::onTabSelected,
-        )
+            TournamentTabs(
+                selectedTab = uiState.selectedTab,
+                onTabSelected = viewModel::onTabSelected,
+            )
 
-        if (uiState.selectedTab == TournamentUiState.Tab.History && uiState.tournaments.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                NoTournamentHistory(
-                    isLoggedIn = uiState.isLoggedIn,
-                    onClick = viewModel::onNoHistoryCtaClicked,
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                items(uiState.tournaments) { tournament ->
-                    TournamentCard(
-                        tournament = tournament,
-                        onPrizeBreakdownClick = { viewModel.openPrizeBreakdown(tournament) },
-                        onShareClick = { viewModel.onShareClicked(tournament) },
-                        onTournamentCtaClick = { viewModel.onTournamentCtaClick(tournament) },
+            if (uiState.selectedTab == TournamentUiState.Tab.History && uiState.tournaments.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    NoTournamentHistory(
+                        isLoggedIn = uiState.isLoggedIn,
+                        onClick = viewModel::onNoHistoryCtaClicked,
                     )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    items(uiState.tournaments) { tournament ->
+                        TournamentCard(
+                            tournament = tournament,
+                            onPrizeBreakdownClick = { viewModel.openPrizeBreakdown(tournament) },
+                            onShareClick = { viewModel.onShareClicked(tournament) },
+                            onTournamentCtaClick = { viewModel.onTournamentCtaClick(tournament) },
+                        )
+                    }
                 }
             }
         }

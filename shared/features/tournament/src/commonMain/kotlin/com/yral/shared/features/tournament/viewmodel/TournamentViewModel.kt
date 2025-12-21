@@ -73,6 +73,10 @@ class TournamentViewModel(
         }
     }
 
+    fun onStartPlayingClicked() {
+        _state.update { it.copy(showHowToPlayTournament = null) }
+    }
+
     private fun send(event: Event) {
         viewModelScope.launch { eventChannel.send(event) }
     }
