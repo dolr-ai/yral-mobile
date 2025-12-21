@@ -11,4 +11,9 @@
     <string name="tab_all">All</string>
     <string name="tab_history">History</string>
     <string name="title_price_breakdown">Prize Breakdown</string>
+    <string name="login_and_join_tournament">Login &amp; Join Tournament</string>
+    <string name="no_tournament_history_yet">No tournament history yet.</string>
+    <string name="msg_login_to_join_tournament">Login to join tournaments and start building your winning streak.</string>
+    <string name="msg_join_tournament">Join tournaments and start building your winning streak.</string>
+    <string name="join_tournament">Join Tournament</string>
 </resources>
