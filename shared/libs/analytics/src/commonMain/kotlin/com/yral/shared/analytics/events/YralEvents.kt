@@ -1546,6 +1546,9 @@ enum class CategoryName {
     @SerialName("leaderboard")
     LEADERBOARD,
 
+    @SerialName("tournaments")
+    TOURNAMENTS,
+
     @SerialName("profile")
     PROFILE,
 

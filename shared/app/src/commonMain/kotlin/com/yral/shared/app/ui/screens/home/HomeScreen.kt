@@ -68,6 +68,8 @@ import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.leaderboard.ui.LeaderboardScreen
 import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
+import com.yral.shared.features.tournament.ui.TournamentScreen
+import com.yral.shared.features.tournament.viewmodel.TournamentViewModel
 import com.yral.shared.features.wallet.ui.WalletScreen
 import com.yral.shared.features.wallet.ui.btcRewards.VideoViewsRewardsBottomSheet
 import com.yral.shared.libs.designsystem.component.YralFeedback
@@ -115,6 +117,7 @@ internal fun HomeScreen(
                     is HomeComponent.Child.Account -> HomeTab.ACCOUNT
                     is HomeComponent.Child.Feed -> HomeTab.HOME
                     is HomeComponent.Child.Leaderboard -> HomeTab.LEADER_BOARD
+                    is HomeComponent.Child.Tournament -> HomeTab.TOURNAMENT
                     is HomeComponent.Child.Profile -> HomeTab.PROFILE
                     is HomeComponent.Child.UploadVideo -> HomeTab.UPLOAD_VIDEO
                     is HomeComponent.Child.Wallet -> HomeTab.WALLET
@@ -124,6 +127,7 @@ internal fun HomeScreen(
                     HomeTab.ACCOUNT -> component.onAccountTabClick()
                     HomeTab.HOME -> component.onFeedTabClick()
                     HomeTab.LEADER_BOARD -> component.onLeaderboardTabClick()
+                    HomeTab.TOURNAMENT -> component.onTournamentTabClick()
                     HomeTab.PROFILE -> component.onProfileTabClick()
                     HomeTab.UPLOAD_VIDEO -> component.onUploadVideoTabClick()
                     HomeTab.WALLET -> component.onWalletTabClick()
@@ -185,6 +189,7 @@ private fun HomeScreenContent(
         }
     val accountViewModel = koinViewModel<AccountsViewModel>(key = "account-$sessionKey")
     val leaderBoardViewModel = koinViewModel<LeaderBoardViewModel>(key = "leaderboard-$sessionKey")
+    val tournamentViewModel = koinViewModel<TournamentViewModel>(key = "tournament-$sessionKey")
 
     val profileVideos = getProfileVideos(profileViewModel, sessionKey, updateProfileVideosCount)
 
@@ -216,6 +221,11 @@ private fun HomeScreenContent(
                 LeaderboardScreen(
                     component = child.component,
                     leaderBoardViewModel = leaderBoardViewModel,
+                )
+
+            is HomeComponent.Child.Tournament ->
+                TournamentScreen(
+                    viewModel = tournamentViewModel,
                 )
 
             is HomeComponent.Child.UploadVideo ->
@@ -311,6 +321,7 @@ private fun HomeNavigationBar(
                 when (it) {
                     HomeTab.ACCOUNT -> !isWalletEnabled
                     HomeTab.WALLET -> isWalletEnabled
+                    HomeTab.TOURNAMENT -> false
                     else -> true
                 }
             }
@@ -452,6 +463,13 @@ private enum class HomeTab(
         categoryName = CategoryName.LEADERBOARD,
         icon = Res.drawable.leaderboard_nav_selected,
         unSelectedIcon = Res.drawable.leaderboard_nav_unselected,
+    ),
+    TOURNAMENT(
+        title = "Tournament",
+        categoryName = CategoryName.TOURNAMENTS,
+        icon = Res.drawable.leaderboard_nav_selected,
+        unSelectedIcon = Res.drawable.leaderboard_nav_unselected,
+        isNew = true,
     ),
     UPLOAD_VIDEO(
         title = "UploadVideo",
