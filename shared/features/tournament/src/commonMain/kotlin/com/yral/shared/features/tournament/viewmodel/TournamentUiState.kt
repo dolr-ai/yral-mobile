@@ -7,6 +7,7 @@ data class TournamentUiState(
     val tournaments: List<Tournament> = emptyList(),
     val prizeBreakdownTournament: Tournament? = null,
     val isLoggedIn: Boolean = false,
+    val showHowToPlayTournament: Tournament? = null,
 ) {
     enum class Tab { All, History }
 }

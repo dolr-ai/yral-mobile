@@ -16,4 +16,19 @@
     <string name="msg_login_to_join_tournament">Login to join tournaments and start building your winning streak.</string>
     <string name="msg_join_tournament">Join tournaments and start building your winning streak.</string>
     <string name="join_tournament">Join Tournament</string>
+    <string name="you_are_starting_with">You're starting with %1$d</string>
+    <string name="how_to_play">How to play?</string>
+    <string name="title_watch_video">Watch the video</string>
+    <string name="body_watch_video">Watch the reel and pay attention to the vibe.</string>
+    <string name="title_pick_emoji">Pick the Best Emoji</string>
+    <string name="body_pick_emoji">Choose the emoji that fits the video the BEST.</string>
+    <string name="body_pick_emoji_right_choice">Right choice -&gt; </string>
+    <string name="body_pick_emoji_right_choice_result">earn diamonds</string>
+    <string name="body_pick_emoji_wrong_choice">Wrong choice -&gt; </string>
+    <string name="body_pick_emoji_wrong_choice_result">lose diamonds</string>
+    <string name="title_live_leaderboard">Live Leaderboard</string>
+    <string name="body_live_leaderboard">Win diamonds, climb the leaderboard, and finish in the Top 5 to win.</string>
+    <string name="each_tournament_line_one">Each tournament lasts 30 minutes.</string>
+    <string name="each_tournament_line_two">Watch. Play. Win. Repeat.</string>
+    <string name="start_playing">Start Playing</string>
 </resources>
