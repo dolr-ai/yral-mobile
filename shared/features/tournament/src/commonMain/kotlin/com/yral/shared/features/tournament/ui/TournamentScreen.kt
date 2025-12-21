@@ -17,6 +17,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -25,11 +26,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.yral.shared.features.tournament.nav.TournamentComponent
 import com.yral.shared.features.tournament.viewmodel.TournamentUiState
 import com.yral.shared.features.tournament.viewmodel.TournamentViewModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.appTypoGraphy
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import yral_mobile.shared.features.tournament.generated.resources.Res
@@ -38,8 +41,17 @@ import yral_mobile.shared.features.tournament.generated.resources.tab_all
 import yral_mobile.shared.features.tournament.generated.resources.tab_history
 
 @Composable
-fun TournamentScreen(viewModel: TournamentViewModel) {
+fun TournamentScreen(
+    component: TournamentComponent,
+    viewModel: TournamentViewModel,
+) {
     val uiState by viewModel.state.collectAsState()
+
+    LaunchedEffect(key1 = Unit) {
+        viewModel.eventsFlow.collectLatest { value ->
+            component.processEvent(value)
+        }
+    }
 
     Column(
         modifier =
@@ -159,7 +171,13 @@ private fun SegmentedTab(
 @Preview
 @Composable
 private fun TournamentScreenPreview() {
+    val component =
+        object : TournamentComponent {
+            override fun processEvent(value: TournamentViewModel.Event) {
+                // no-op
+            }
+        }
     CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
-        TournamentScreen(viewModel = TournamentViewModel())
+        TournamentScreen(component = component, viewModel = TournamentViewModel())
     }
 }
