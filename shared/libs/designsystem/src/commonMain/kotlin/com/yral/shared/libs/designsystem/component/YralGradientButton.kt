@@ -3,13 +3,17 @@ package com.yral.shared.libs.designsystem.component
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
@@ -21,8 +25,13 @@ import androidx.compose.ui.unit.dp
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
+import org.jetbrains.compose.ui.tooling.preview.PreviewParameterProvider
 import yral_mobile.shared.libs.designsystem.generated.resources.Res
 import yral_mobile.shared.libs.designsystem.generated.resources.pink_gradient_background
 import yral_mobile.shared.libs.designsystem.generated.resources.pink_gradient_background_disabled
@@ -162,3 +171,45 @@ private fun getButtonBackground(
                 YralButtonState.Loading -> Res.drawable.transparent_background
             }
     }
+
+@Suppress("UnusedPrivateMember")
+@Preview
+@Composable
+private fun YralGradientButtonPreview(
+    @PreviewParameter(YralGradientButtonPreviewParameterProvider::class)
+    parameter: YralGradientButtonPreviewParameter,
+) {
+    CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
+        Box(
+            modifier =
+                Modifier
+                    .background(YralColors.Neutral950)
+                    .padding(16.dp),
+        ) {
+            YralGradientButton(
+                text = parameter.text,
+                buttonState = parameter.state,
+                buttonType = parameter.type,
+                buttonHeight = parameter.height,
+                onClick = {},
+            )
+        }
+    }
+}
+
+private data class YralGradientButtonPreviewParameter(
+    val type: YralButtonType,
+    val state: YralButtonState,
+    val text: String,
+    val height: Dp = 45.dp,
+)
+
+@Suppress("MaxLineLength")
+private class YralGradientButtonPreviewParameterProvider : PreviewParameterProvider<YralGradientButtonPreviewParameter> {
+    override val values =
+        YralButtonType.entries.asSequence().flatMap { buttonType ->
+            YralButtonState.entries.asSequence().map { buttonState ->
+                YralGradientButtonPreviewParameter(buttonType, buttonState, "Continue")
+            }
+        }
+}
