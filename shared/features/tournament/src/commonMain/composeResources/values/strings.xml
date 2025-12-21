@@ -35,4 +35,8 @@
     <string name="leave_tournament_message">If you exit now you will NOT be able to re-enter this game. All progress will be lost!</string>
     <string name="leave_tournament_keep_playing">Keep Playing</string>
     <string name="leave_tournament_exit_anyway">Exit Anyway</string>
+    <string name="out_of_diamonds_title">Out Of Diamonds!</string>
+    <string name="out_of_diamonds_message">No worries, your next chance to play is %1$s. Register now and try your luck again.</string>
+    <string name="out_of_diamonds_register_now">Register Now With %1$d</string>
+    <string name="out_of_diamonds_exit_anyway">Exit Anyway</string>
 </resources>
