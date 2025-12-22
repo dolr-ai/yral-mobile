@@ -5,6 +5,10 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.User
+import com.yral.shared.analytics.events.AuthSessionCause
+import com.yral.shared.analytics.events.AuthSessionFlow
+import com.yral.shared.analytics.events.AuthSessionInitiator
+import com.yral.shared.analytics.events.AuthSessionState
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.DELAY_FOR_SESSION_PROPERTIES
 import com.yral.shared.core.session.Session
@@ -38,6 +42,7 @@ import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.YralFfiException
 import com.yral.shared.rust.service.utils.authenticateWithNetwork
+import com.yral.shared.rust.service.utils.getSessionFromIdentity
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -120,10 +125,37 @@ class DefaultAuthClient(
                 if (rTokenClaim.isValid(Clock.System.now().epochSeconds)) {
                     refreshAccessToken()
                 } else {
-                    logout()
+                    trackAndLogoutForTokenExpiry(
+                        cause = AuthSessionCause.REFRESH_TOKEN_EXPIRED_OR_INVALID,
+                        flow = AuthSessionFlow.TOKEN_VALIDATION,
+                    )
                 }
-            } ?: logout()
+            } ?: trackAndLogoutForTokenExpiry(
+                cause = AuthSessionCause.REFRESH_TOKEN_MISSING,
+                flow = AuthSessionFlow.TOKEN_VALIDATION,
+            )
         }
+    }
+
+    private fun readCurrentAuthSessionState(): AuthSessionState =
+        if (sessionManager.userPrincipal != null) {
+            AuthSessionState.AUTHENTICATED
+        } else {
+            AuthSessionState.UNAUTHENTICATED
+        }
+
+    private suspend fun trackAndLogoutForTokenExpiry(
+        cause: AuthSessionCause,
+        flow: AuthSessionFlow,
+    ) {
+        authTelemetry.sessionStateChanged(
+            fromState = readCurrentAuthSessionState(),
+            toState = AuthSessionState.UNAUTHENTICATED,
+            initiator = AuthSessionInitiator.SYSTEM,
+            cause = cause,
+            flow = flow,
+        )
+        logoutInternal("system_${cause.name}")
     }
 
     private suspend fun saveTokens(
@@ -141,6 +173,10 @@ class DefaultAuthClient(
     }
 
     override suspend fun logout() {
+        logoutInternal("user_logout")
+    }
+
+    private suspend fun logoutInternal(analyticsResetReason: String) {
         // clear preferences
         listOf(
             PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name,
@@ -157,7 +193,7 @@ class DefaultAuthClient(
         // clear cached canister data after parsing token
         resetCachedCanisterData()
         // reset analytics manage: flush events and reset user properties
-        analyticsManager.reset()
+        analyticsManager.resetWithReason(analyticsResetReason)
         // reset session manager for properties
         sessionManager.resetSessionProperties()
         // reset crashlytics
@@ -194,7 +230,9 @@ class DefaultAuthClient(
         try {
             var cachedSession = getCachedSession()
             if (cachedSession == null) {
-                val canisterWrapper = authenticateWithNetwork(data)
+                // Use getSessionFromIdentity to get principal without network call
+                // Uses USER_INFO_SERVICE_ID as default canister
+                val canisterWrapper = getSessionFromIdentity(data)
                 cacheSession(data, canisterWrapper)
                 cachedSession =
                     Session(
@@ -208,14 +246,13 @@ class DefaultAuthClient(
             }
             cachedSession.userPrincipal?.let { crashlyticsManager.setUserId(it) }
             sessionManager.updateCoinBalance(0)
-            if (!cachedSession.isCreatedFromServiceCanister) {
-                val reAuthenticatedSession = refreshAuthenticateWithNetwork(data)
-                reAuthenticatedSession?.let { cachedSession = reAuthenticatedSession }
-            }
-            setSession(session = cachedSession)
-            if (auth.currentUser?.uid == cachedSession.userPrincipal) {
+            // Always refresh with network to get actual canister and profile info
+            val reAuthenticatedSession = refreshAuthenticateWithNetwork(data)
+            val finalSession = reAuthenticatedSession ?: cachedSession
+            setSession(session = finalSession)
+            if (auth.currentUser?.uid == finalSession.userPrincipal) {
                 sessionManager.updateFirebaseLoginState(true)
-                postFirebaseLogin(cachedSession)
+                postFirebaseLogin(finalSession)
             } else {
                 sessionManager.updateFirebaseLoginState(false)
             }
@@ -365,7 +402,12 @@ class DefaultAuthClient(
                         accessToken = tokenResponse.accessToken,
                         refreshToken = tokenResponse.refreshToken,
                     )
-                }.onFailure { logout() }
+                }.onFailure {
+                    trackAndLogoutForTokenExpiry(
+                        cause = AuthSessionCause.REFRESH_ACCESS_TOKEN_FAILED,
+                        flow = AuthSessionFlow.TOKEN_REFRESH,
+                    )
+                }
         } ?: obtainAnonymousIdentity()
     }
 

@@ -249,6 +249,16 @@ fn propic_from_principal(principal: Principal) -> String {
     yral_canisters_common::utils::profile::propic_from_principal(principal)
 }
 
+/// Gets the principal ID from the identity data using the Identity trait's sender() method.
+/// This extracts the principal without making any network calls.
+#[uniffi::export]
+pub fn get_principal_from_identity(identity_data: Vec<u8>) -> std::result::Result<Principal, FFIError> {
+    let identity = delegated_identity_from_bytes(&identity_data)
+        .map_err(|e| FFIError::UnknownError(format!("Failed to parse identity: {:?}", e)))?;
+    identity.sender()
+        .map_err(|e| FFIError::UnknownError(format!("Failed to get sender principal: {:?}", e)))
+}
+
 #[uniffi::export]
 fn yral_auth_login_hint(data: &[u8]) -> std::result::Result<String, FFIError> {
     let identity = delegated_identity_from_bytes(data)

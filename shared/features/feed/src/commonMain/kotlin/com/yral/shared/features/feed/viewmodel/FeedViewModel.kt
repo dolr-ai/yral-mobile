@@ -49,6 +49,7 @@ import com.yral.shared.reportVideo.domain.ReportRequestParams
 import com.yral.shared.reportVideo.domain.ReportVideoUseCase
 import com.yral.shared.reportVideo.domain.models.ReportSheetState
 import com.yral.shared.reportVideo.domain.models.ReportVideoData
+import com.yral.shared.rust.service.domain.models.toPartialFeedDetails
 import com.yral.shared.rust.service.domain.usecases.FollowUserParams
 import com.yral.shared.rust.service.domain.usecases.FollowUserUseCase
 import com.yral.shared.rust.service.utils.CanisterData
@@ -508,23 +509,39 @@ class FeedViewModel(
         val newPosts = posts.filter { post -> post.videoID !in fetchedIds }
         _state.update { it.copy(posts = it.posts + newPosts) }
         Logger.d("FeedPagination") { "no of duplicate posts ${posts.size - newPosts.size}" }
+
+        // Immediately add partial feed details so videos can start playing right away
+        val existingVideoIds = _state.value.feedDetails.mapTo(HashSet()) { it.videoID }
+        val partialDetails =
+            newPosts
+                .filter { it.videoID !in existingVideoIds }
+                .map { it.toPartialFeedDetails() }
+
+        if (partialDetails.isNotEmpty()) {
+            _state.update { currentState ->
+                currentState.copy(feedDetails = currentState.feedDetails + partialDetails)
+            }
+            Logger.d("FeedPagination") { "Added ${partialDetails.size} partial feed details immediately" }
+        }
+
         val count = MutableStateFlow(0)
         newPosts
             .processFirstNSuspendFlow(
                 n = newPosts.size,
                 process = { post ->
+                    println("Sarvesh post: $post")
                     _state.update { it.copy(pendingFetchDetails = it.pendingFetchDetails + 1) }
                     requiredUseCases.fetchVideoDetailsWithCreatorInfoUseCase
                         .invoke(post)
                         .map { detail ->
                             if (detail == null) {
-                                // Logger.e("FeedPagination") { "Detail is null for ${post.postID}" }
+                                println("Sarvesh post null")
                                 crashlyticsManager.recordException(
                                     YralException("Detail is null for ${post.postID}"),
                                     ExceptionType.FEED,
                                 )
                             }
-                            Logger.e("FeedPagination") {
+                            Logger.d("FeedPagination") {
                                 "${post.videoID} view count " +
                                     "in post ${post.numViewsAll} " +
                                     "in feed details ${detail?.viewCount}"
@@ -542,32 +559,29 @@ class FeedViewModel(
             ).collect { result ->
                 result
                     .onSuccess { (detail, isVoted) ->
-                        val existingDetailIds =
-                            _state.value.feedDetails.mapTo(HashSet()) { it.videoID }
+                        println("Sarvesh post details: $detail")
                         detail?.let {
-                            if (detail.videoID !in existingDetailIds) {
-                                if (isVoted == false) {
-                                    count.update { it + 1 }
-                                    _state.update { currentState ->
-                                        // Check if this feedDetail already exists to prevent duplicates
-                                        val existingDetailIds =
-                                            currentState.feedDetails.mapTo(HashSet()) { it.videoID }
-                                        val updatedFeedDetails =
-                                            if (detail.videoID !in existingDetailIds) {
-                                                currentState.feedDetails + detail
-                                            } else {
-                                                currentState.feedDetails
-                                            }
-                                        currentState.copy(
-                                            feedDetails = updatedFeedDetails,
-                                            pendingFetchDetails = currentState.pendingFetchDetails - 1,
-                                        )
-                                    }
-                                } else {
-                                    _state.update { it.copy(pendingFetchDetails = it.pendingFetchDetails - 1) }
+                            if (isVoted == false) {
+                                count.update { it + 1 }
+                                _state.update { currentState ->
+                                    // Update existing partial entry with full details
+                                    val updatedFeedDetails =
+                                        currentState.feedDetails.map { existing ->
+                                            if (existing.videoID == detail.videoID) detail else existing
+                                        }
+                                    currentState.copy(
+                                        feedDetails = updatedFeedDetails,
+                                        pendingFetchDetails = currentState.pendingFetchDetails - 1,
+                                    )
                                 }
                             } else {
-                                _state.update { it.copy(pendingFetchDetails = it.pendingFetchDetails - 1) }
+                                // Video was already voted, remove the partial entry
+                                _state.update { currentState ->
+                                    currentState.copy(
+                                        feedDetails = currentState.feedDetails.filter { it.videoID != detail.videoID },
+                                        pendingFetchDetails = currentState.pendingFetchDetails - 1,
+                                    )
+                                }
                             }
                         } ?: _state.update { it.copy(pendingFetchDetails = it.pendingFetchDetails - 1) }
                     }.onFailure {
