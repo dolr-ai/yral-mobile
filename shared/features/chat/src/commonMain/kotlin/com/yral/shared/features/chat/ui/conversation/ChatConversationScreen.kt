@@ -132,7 +132,7 @@ fun ChatConversationScreen(
                     component.openProfile(canisterData)
                 },
                 onClearChat = { viewModel.deleteAndRecreateConversation(component.influencerId) },
-                onShareProfile = { /* No op */ },
+                onShareProfile = { viewModel.shareProfile() },
             )
 
             Column(

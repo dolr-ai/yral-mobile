@@ -7,8 +7,13 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.map
+import co.touchlab.kermit.Logger
+import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.chat.attachments.ChatAttachment
 import com.yral.shared.features.chat.attachments.FilePathChatAttachment
 import com.yral.shared.features.chat.domain.ChatRepository
@@ -24,6 +29,13 @@ import com.yral.shared.features.chat.domain.usecases.CreateConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.DeleteConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.SendMessageUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
+import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
+import com.yral.shared.libs.routing.routes.api.UserProfileRoute
+import com.yral.shared.libs.sharing.LinkGenerator
+import com.yral.shared.libs.sharing.LinkInput
+import com.yral.shared.libs.sharing.ShareService
+import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
+import com.yral.shared.rust.service.utils.propicFromPrincipal
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,10 +49,15 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
+import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share
+import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share_desc
+import yral_mobile.shared.libs.designsystem.generated.resources.profile_share_default_name
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 class ConversationViewModel(
     private val chatRepository: ChatRepository,
@@ -48,6 +65,10 @@ class ConversationViewModel(
     private val sendMessageUseCase: SendMessageUseCase,
     private val createConversationUseCase: CreateConversationUseCase,
     private val deleteConversationUseCase: DeleteConversationUseCase,
+    private val shareService: ShareService,
+    private val urlBuilder: UrlBuilder,
+    private val linkGenerator: LinkGenerator,
+    private val crashlyticsManager: CrashlyticsManager,
 ) : ViewModel() {
     /**
      * Ordering note for UI:
@@ -181,6 +202,30 @@ class ConversationViewModel(
                 paginatedHistoryAvailable = paginatedHistoryAvailable,
             )
         }
+
+        // Refresh share copy when influencer is set
+        if (influencer != null) {
+            refreshShareCopy()
+        }
+    }
+
+    private fun refreshShareCopy() {
+        viewModelScope.launch {
+            val influencer = _viewState.value.influencer
+            val displayName =
+                influencer?.displayName?.takeIf { it.isNotBlank() }
+                    ?: influencer?.name
+                    ?: getString(DesignRes.string.profile_share_default_name)
+            val message = getString(DesignRes.string.msg_profile_share, displayName)
+            val description = getString(DesignRes.string.msg_profile_share_desc, displayName)
+            _viewState.update { current ->
+                current.copy(
+                    shareDisplayName = displayName,
+                    shareMessage = message,
+                    shareDescription = description,
+                )
+            }
+        }
     }
 
     fun initializeForInfluencer(influencerId: String) {
@@ -212,6 +257,9 @@ class ConversationViewModel(
                 conversationId = null,
                 influencer = null,
                 paginatedHistoryAvailable = false,
+                shareDisplayName = "",
+                shareMessage = "",
+                shareDescription = "",
             )
         }
         _overlay.value = OverlayState()
@@ -261,6 +309,55 @@ class ConversationViewModel(
                         )
                     }
                 }
+        }
+    }
+
+    fun shareProfile() {
+        val influencer = _viewState.value.influencer ?: return
+        val principal = influencer.id
+        if (principal.isBlank()) return
+
+        viewModelScope.launch {
+            val canisterId = getUserInfoServiceCanister()
+            val route =
+                UserProfileRoute(
+                    canisterId = canisterId,
+                    userPrincipalId = principal,
+                    profilePic = influencer.avatarUrl.takeIf { it.isNotBlank() },
+                    username = influencer.displayName.takeIf { it.isNotBlank() } ?: influencer.name,
+                    isFromServiceCanister = true,
+                )
+            val internalUrl = urlBuilder.build(route) ?: return@launch
+            runSuspendCatching {
+                val imageUrl =
+                    influencer.avatarUrl
+                        .takeIf { it.isNotBlank() }
+                        ?: propicFromPrincipal(principal)
+                val shareState = _viewState.value
+                val link =
+                    linkGenerator.generateShareLink(
+                        LinkInput(
+                            internalUrl = internalUrl,
+                            title = shareState.shareMessage,
+                            description = shareState.shareDescription,
+                            feature = "share_profile",
+                            tags = listOf("organic", "profile_share"),
+                            contentImageUrl = imageUrl,
+                            metadata = mapOf("user_principal_id" to principal),
+                        ),
+                    )
+                val text = "${shareState.shareMessage} $link"
+                shareService.shareImageWithText(
+                    imageUrl = imageUrl,
+                    text = text,
+                )
+            }.onFailure {
+                Logger.e(ConversationViewModel::class.simpleName!!, it) { "Failed to share profile" }
+                crashlyticsManager.recordException(
+                    YralException(it),
+                    ExceptionType.DEEPLINK,
+                )
+            }
         }
     }
 
@@ -442,6 +539,9 @@ data class ConversationViewState(
     val conversationId: String? = null,
     val influencer: ConversationInfluencer? = null,
     val paginatedHistoryAvailable: Boolean = false,
+    val shareDisplayName: String = "",
+    val shareMessage: String = "",
+    val shareDescription: String = "",
 )
 
 sealed class ConversationMessageItem {
