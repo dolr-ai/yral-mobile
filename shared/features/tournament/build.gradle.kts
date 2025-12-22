@@ -14,6 +14,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.koin.compose.viewmodel)
 
@@ -25,6 +26,9 @@ kotlin {
             implementation(projects.shared.libs.arch)
             implementation(projects.shared.libs.coroutinesX)
             implementation(projects.shared.libs.analytics)
+            implementation(projects.shared.libs.firebaseStore)
+            implementation(projects.shared.libs.firebaseAuth)
+            implementation(projects.shared.libs.http)
             implementation(projects.shared.libs.designsystem)
         }
         commonTest.dependencies {

@@ -1113,7 +1113,7 @@ data class FeedState(
     val posts: List<Post> = emptyList(),
     val feedDetails: List<FeedDetails> = emptyList(),
     val currentPageOfFeed: Int = 0,
-    val maxPageReached: Int = 0, // Track the highest page user has scrolled to
+    val maxPageReached: Int = 0,
     val isLoadingMore: Boolean = false,
     val pendingFetchDetails: Int = 0,
     val isPostDescriptionExpanded: Boolean = false,

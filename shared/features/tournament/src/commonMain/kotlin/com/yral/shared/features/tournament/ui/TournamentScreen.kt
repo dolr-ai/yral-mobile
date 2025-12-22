@@ -17,7 +17,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -27,17 +26,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.tournament.nav.TournamentComponent
 import com.yral.shared.features.tournament.viewmodel.TournamentUiState
 import com.yral.shared.features.tournament.viewmodel.TournamentViewModel
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
-import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import yral_mobile.shared.features.tournament.generated.resources.Res
 import yral_mobile.shared.features.tournament.generated.resources.join_tournament
 import yral_mobile.shared.features.tournament.generated.resources.login_and_join_tournament
@@ -231,17 +227,4 @@ private fun NoTournamentHistory(
     }
 }
 
-@Suppress("UnusedPrivateMember")
-@Preview
-@Composable
-private fun TournamentScreenPreview() {
-    val component =
-        object : TournamentComponent {
-            override fun processEvent(value: TournamentViewModel.Event) {
-                // no-op
-            }
-        }
-    CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
-        TournamentScreen(component = component, viewModel = TournamentViewModel(SessionManager()))
-    }
-}
+// Preview removed - TournamentViewModel now requires DI injection
