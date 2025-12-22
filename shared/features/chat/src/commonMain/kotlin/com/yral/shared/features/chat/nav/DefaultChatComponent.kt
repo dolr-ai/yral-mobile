@@ -7,15 +7,16 @@ import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.pushNew
 import com.arkivanov.decompose.value.Value
-import com.yral.shared.features.chat.nav.ChatComponent.Child
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.chat.nav.wall.ChatWallComponent
+import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.serialization.Serializable
 import org.koin.core.component.KoinComponent
 
 internal class DefaultChatComponent(
     componentContext: ComponentContext,
-    private val snapshot: ChatComponent.Snapshot?,
+    private val snapshot: Snapshot?,
+    private val openProfile: (userCanisterData: CanisterData) -> Unit,
 ) : ChatComponent(),
     ComponentContext by componentContext,
     KoinComponent {
@@ -47,25 +48,25 @@ internal class DefaultChatComponent(
         }
     }
 
-    override fun createHomeSnapshot(): ChatComponent.Snapshot =
-        ChatComponent.Snapshot(
+    override fun createHomeSnapshot(): Snapshot =
+        Snapshot(
             routes =
                 stack.value.items.map { item ->
                     when (val configuration = item.configuration) {
-                        is Config.Wall -> ChatComponent.Snapshot.Route.Wall
+                        is Config.Wall -> Snapshot.Route.Wall
                         is Config.Conversation ->
-                            ChatComponent.Snapshot.Route.Conversation(
+                            Snapshot.Route.Conversation(
                                 influencerId = configuration.influencerId,
                             )
-                        else -> ChatComponent.Snapshot.Route.Wall
+                        else -> Snapshot.Route.Wall
                     }
                 },
         )
 
-    private fun ChatComponent.Snapshot.Route.toConfig(): Config =
+    private fun Snapshot.Route.toConfig(): Config =
         when (this) {
-            ChatComponent.Snapshot.Route.Wall -> Config.Wall
-            is ChatComponent.Snapshot.Route.Conversation ->
+            Snapshot.Route.Wall -> Config.Wall
+            is Snapshot.Route.Conversation ->
                 Config.Conversation(influencerId = influencerId)
         }
 
@@ -94,6 +95,7 @@ internal class DefaultChatComponent(
             componentContext = componentContext,
             influencerId = config.influencerId,
             onBack = { navigation.pop() },
+            openProfile = openProfile,
         )
 
     @Serializable

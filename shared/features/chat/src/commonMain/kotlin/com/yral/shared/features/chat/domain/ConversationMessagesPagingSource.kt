@@ -49,3 +49,14 @@ class ConversationMessagesPagingSource(
 
     override fun getRefreshKey(state: PagingState<Int, ChatMessage>): Int? = null
 }
+
+class EmptyMessagesPagingSource : PagingSource<Int, ChatMessage>() {
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, ChatMessage> =
+        LoadResult.Page(
+            data = emptyList(),
+            prevKey = null,
+            nextKey = null,
+        )
+
+    override fun getRefreshKey(state: PagingState<Int, ChatMessage>): Int? = null
+}

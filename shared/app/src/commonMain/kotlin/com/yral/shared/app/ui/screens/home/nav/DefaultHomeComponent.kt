@@ -323,6 +323,7 @@ internal class DefaultHomeComponent(
         ChatComponent.Companion(
             componentContext = componentContext,
             snapshot = childSnapshots[Config.Chat] as? ChatComponent.Snapshot,
+            openProfile = openProfile,
         )
 
     private fun slotChild(

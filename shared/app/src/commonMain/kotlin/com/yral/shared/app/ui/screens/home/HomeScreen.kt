@@ -256,6 +256,7 @@ private fun HomeScreenContent(
             is HomeComponent.Child.Chat ->
                 ChatScreen(
                     component = child.component,
+                    bottomPadding = innerPadding.calculateBottomPadding(),
                 )
         }
         LoginIfRequired(

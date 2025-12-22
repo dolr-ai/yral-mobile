@@ -13,6 +13,7 @@ import com.yral.shared.features.chat.attachments.ChatAttachment
 import com.yral.shared.features.chat.attachments.FilePathChatAttachment
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.ConversationMessagesPagingSource
+import com.yral.shared.features.chat.domain.EmptyMessagesPagingSource
 import com.yral.shared.features.chat.domain.models.ChatMessage
 import com.yral.shared.features.chat.domain.models.ChatMessageType
 import com.yral.shared.features.chat.domain.models.ConversationInfluencer
@@ -31,7 +32,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -66,14 +66,26 @@ class ConversationViewModel(
     private val loadedMessageIds = MutableStateFlow<Set<String>>(emptySet())
     private val initialOffset = MutableStateFlow<Int?>(null)
 
+    private val pagingConfig =
+        PagingConfig(
+            pageSize = PAGE_SIZE,
+            initialLoadSize = PAGE_SIZE,
+            prefetchDistance = PREFETCH_DISTANCE,
+            enablePlaceholders = false,
+        )
+
     @OptIn(ExperimentalCoroutinesApi::class)
     private val pagedHistory: Flow<PagingData<ChatMessage>> =
         _viewState
-            .map { it.conversationId }
+            .map { it.conversationId to it.paginatedHistoryAvailable }
             .distinctUntilChanged()
-            .flatMapLatest { convId ->
-                if (convId.isNullOrBlank()) {
-                    emptyFlow()
+            .flatMapLatest { (convId, hasMoreMessages) ->
+                if (convId.isNullOrBlank() || !hasMoreMessages) {
+                    // Return an empty Pager flow to clear cached state
+                    Pager(
+                        config = pagingConfig,
+                        pagingSourceFactory = { EmptyMessagesPagingSource() },
+                    ).flow
                 } else {
                     loadedMessageIds.value = emptySet()
                     // Capture and reset initialOffset (one-time use per conversation)
@@ -82,13 +94,7 @@ class ConversationViewModel(
                             .takeIf { initialOffset.value != null }
                             .also { initialOffset.value = null }
                     Pager(
-                        config =
-                            PagingConfig(
-                                pageSize = PAGE_SIZE,
-                                initialLoadSize = PAGE_SIZE,
-                                prefetchDistance = PREFETCH_DISTANCE,
-                                enablePlaceholders = false,
-                            ),
+                        config = pagingConfig,
                         pagingSourceFactory = {
                             ConversationMessagesPagingSource(
                                 conversationId = convId,
@@ -130,10 +136,6 @@ class ConversationViewModel(
                 emptyList(),
             )
 
-    init {
-        createConversation(TEST_INFLUENCER_ID)
-    }
-
     @OptIn(ExperimentalTime::class)
     private fun parseTimestampToEpochMs(timestamp: String): Long? =
         runCatching {
@@ -150,19 +152,9 @@ class ConversationViewModel(
         id: String,
         influencer: ConversationInfluencer? = null,
         recentMessages: List<ChatMessage> = emptyList(),
+        messageCount: Int,
     ) {
         val previousConversationId = _viewState.value.conversationId
-
-        // Set initial offset BEFORE updating conversationId to ensure it's captured when Pager is created
-        // This prevents duplicate API call for the first page
-        if (recentMessages.isNotEmpty()) {
-            initialOffset.value = recentMessages.size
-            // Mark recentMessages as loaded so they're filtered from overlay once pagedHistory loads
-            val recentMessageIds = recentMessages.mapTo(HashSet()) { it.id }
-            loadedMessageIds.update { it + recentMessageIds }
-        }
-
-        _viewState.update { it.copy(conversationId = id, influencer = influencer ?: it.influencer) }
 
         if (previousConversationId != id) {
             _overlay.value = OverlayState()
@@ -175,9 +167,59 @@ class ConversationViewModel(
                 }
             }
         _overlay.update { it.copy(sent = it.sent + sentMessages) }
+
+        val paginatedHistoryAvailable = messageCount > PAGE_SIZE
+
+        if (recentMessages.isNotEmpty() && paginatedHistoryAvailable) {
+            initialOffset.value = recentMessages.size
+        }
+
+        _viewState.update {
+            it.copy(
+                conversationId = id,
+                influencer = influencer ?: it.influencer,
+                paginatedHistoryAvailable = paginatedHistoryAvailable,
+            )
+        }
     }
 
-    fun createConversation(influencerId: String) {
+    fun initializeForInfluencer(influencerId: String) {
+        val currentState = _viewState.value
+        val currentInfluencerId = currentState.influencer?.id
+
+        // Early return: same influencer and conversation already exists
+        if (currentInfluencerId == influencerId && currentState.conversationId != null) {
+            return
+        }
+
+        // Reset state if influencer changed
+        if (currentInfluencerId != null && currentInfluencerId != influencerId) {
+            resetState()
+        }
+
+        // Create conversation if we don't have one
+        if (_viewState.value.conversationId == null) {
+            createConversation(influencerId)
+        }
+    }
+
+    private fun resetState() {
+        _viewState.update {
+            ConversationViewState(
+                isCreating = false,
+                isDeleting = false,
+                error = null,
+                conversationId = null,
+                influencer = null,
+                paginatedHistoryAvailable = false,
+            )
+        }
+        _overlay.value = OverlayState()
+        loadedMessageIds.value = emptySet()
+        initialOffset.value = null
+    }
+
+    private fun createConversation(influencerId: String) {
         _viewState.update { it.copy(isCreating = true, error = null) }
         viewModelScope.launch {
             createConversationUseCase(CreateConversationUseCase.Params(influencerId = influencerId))
@@ -186,6 +228,7 @@ class ConversationViewModel(
                         id = conversation.id,
                         influencer = conversation.influencer,
                         recentMessages = conversation.recentMessages,
+                        messageCount = conversation.messageCount,
                     )
                     _viewState.update { it.copy(isCreating = false) }
                 }.onFailure { error ->
@@ -205,7 +248,8 @@ class ConversationViewModel(
         viewModelScope.launch {
             deleteConversationUseCase(DeleteConversationUseCase.Params(conversationId = currentConversationId))
                 .onSuccess {
-                    // After successful deletion, create a new conversation
+                    // Reset state after successful deletion, then create a new conversation
+                    resetState()
                     createConversation(influencerId)
                     _viewState.update { it.copy(isDeleting = false) }
                 }.onFailure { error ->
@@ -388,7 +432,6 @@ class ConversationViewModel(
     companion object {
         private const val PAGE_SIZE = 10
         private const val PREFETCH_DISTANCE = 5
-        const val TEST_INFLUENCER_ID = "qg2pi-g3xl4-uprdd-macwr-64q7r-plotv-xm3bg-iayu3-rnpux-7ikkz-hqe"
     }
 }
 
@@ -398,6 +441,7 @@ data class ConversationViewState(
     val error: String? = null,
     val conversationId: String? = null,
     val influencer: ConversationInfluencer? = null,
+    val paginatedHistoryAvailable: Boolean = false,
 )
 
 sealed class ConversationMessageItem {

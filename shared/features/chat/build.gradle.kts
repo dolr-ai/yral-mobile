@@ -26,15 +26,23 @@ kotlin {
             implementation(projects.shared.libs.designsystem)
             implementation(projects.shared.libs.preferences)
 
+            implementation(projects.shared.rust.service)
+
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.io.core)
             implementation(libs.kotlinx.datetime)
             implementation(libs.androidx.lifecycle.viewmodel)
+
             implementation(libs.androidx.paging.common)
+            implementation(libs.androidx.paging.compose)
 
             implementation(libs.moko.permissions)
             implementation(libs.moko.permissions.compose)
             implementation(libs.moko.permissions.camera)
+
+            implementation(libs.coil.compose)
+
+            implementation(compose.components.resources)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
