@@ -179,6 +179,83 @@ data class AnonymousAuthFailedEventData(
     )
 }
 
+@Serializable
+data class AuthSessionStateChangedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.AUTH_SESSION_STATE_CHANGED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AUTH.getFeatureName(),
+    @SerialName("from_state") val fromState: AuthSessionState,
+    @SerialName("to_state") val toState: AuthSessionState,
+    @SerialName("initiator") val initiator: AuthSessionInitiator,
+    @SerialName("cause") val cause: AuthSessionCause,
+    @SerialName("flow") val flow: AuthSessionFlow? = null,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        fromState: AuthSessionState,
+        toState: AuthSessionState,
+        initiator: AuthSessionInitiator,
+        cause: AuthSessionCause,
+        flow: AuthSessionFlow? = null,
+    ) : this(
+        FeatureEvents.AUTH_SESSION_STATE_CHANGED.getEventName(),
+        Features.AUTH.getFeatureName(),
+        fromState,
+        toState,
+        initiator,
+        cause,
+        flow,
+    )
+}
+
+@Serializable
+enum class AuthSessionState {
+    @SerialName("authenticated")
+    AUTHENTICATED,
+
+    @SerialName("unauthenticated")
+    UNAUTHENTICATED,
+}
+
+@Serializable
+enum class AuthSessionInitiator {
+    @SerialName("user")
+    USER,
+
+    @SerialName("system")
+    SYSTEM,
+}
+
+@Serializable
+enum class AuthSessionCause {
+    @SerialName("refresh_token_missing")
+    REFRESH_TOKEN_MISSING,
+
+    @SerialName("refresh_token_expired_or_invalid")
+    REFRESH_TOKEN_EXPIRED_OR_INVALID,
+
+    @SerialName("refresh_access_token_failed")
+    REFRESH_ACCESS_TOKEN_FAILED,
+}
+
+@Serializable
+enum class AuthSessionFlow {
+    @SerialName("token_validation")
+    TOKEN_VALIDATION,
+
+    @SerialName("token_refresh")
+    TOKEN_REFRESH,
+}
+
+@Serializable
+data class IdentityTransitionEventData(
+    @SerialName("event") override val event: String = FeatureEvents.IDENTITY_TRANSITION.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AUTH.getFeatureName(),
+    @SerialName("previous_distinct_id") val previousDistinctId: String,
+    @SerialName("new_distinct_id") val newDistinctId: String,
+    @SerialName("reset_reason") val resetReason: String,
+) : BaseEventData(),
+    EventData
+
 // --- Home ---
 @Serializable
 data class HomePageViewedEventData(
@@ -1218,6 +1295,37 @@ data class ReferralReceivedEventData(
         campaign,
         term,
         content,
+    )
+}
+
+@Serializable
+data class AttributionFailedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.ATTRIBUTION_FAILED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.REFERRAL.getFeatureName(),
+    @SerialName("reason") val reason: String,
+    @SerialName("error_code") val errorCode: Int? = null,
+    @SerialName("raw_referrer") val rawReferrer: String? = null,
+    @SerialName("processors_checked") val processorsChecked: List<String>? = null,
+    @SerialName("is_enterprise_device") val isEnterpriseDevice: Boolean? = null,
+    @SerialName("has_work_profile") val hasWorkProfile: Boolean? = null,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        reason: String,
+        errorCode: Int? = null,
+        rawReferrer: String? = null,
+        processorsChecked: List<String>? = null,
+        isEnterpriseDevice: Boolean? = null,
+        hasWorkProfile: Boolean? = null,
+    ) : this(
+        FeatureEvents.ATTRIBUTION_FAILED.getEventName(),
+        Features.REFERRAL.getFeatureName(),
+        reason,
+        errorCode,
+        rawReferrer,
+        processorsChecked,
+        isEnterpriseDevice,
+        hasWorkProfile,
     )
 }
 

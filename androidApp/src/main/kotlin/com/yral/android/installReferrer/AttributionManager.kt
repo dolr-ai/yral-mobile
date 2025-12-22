@@ -3,6 +3,7 @@ package com.yral.android.installReferrer
 import co.touchlab.kermit.LogWriter
 import co.touchlab.kermit.Logger
 import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.analytics.events.AttributionFailedEventData
 import com.yral.shared.analytics.events.ReferralReceivedEventData
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.koin.koinInstance
@@ -117,6 +118,16 @@ class AttributionManager(
                 return
             }
         }
+
+        // If we reach here, no processor returned valid data
+        logger.w { "All attribution processors completed without returning valid UTM data" }
+        analyticsManager.trackEvent(
+            AttributionFailedEventData(
+                reason = "all_processors_returned_null",
+                processorsChecked = processorsToProcess.map { it.name },
+            ),
+        )
+        analyticsManager.flush()
     }
 
     private suspend fun processSingleProcessor(processor: AttributionProcessor): UtmParams? {

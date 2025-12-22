@@ -86,8 +86,6 @@ class RootViewModel(
                         isCreator = properties.profileVideosCount?.let { it > 0 },
                         walletBalance = properties.coinBalance?.toDouble(),
                         tokenType = TokenType.YRAL,
-                        isForcedGamePlayUser = properties.isForcedGamePlayUser,
-                        isAutoScrollEnabled = properties.isAutoScrollEnabled,
                         emailId = properties.emailId,
                         utmParams = utmAttributionStore.get()?.toAnalyticsUtmParams(),
                     )

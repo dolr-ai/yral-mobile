@@ -3,6 +3,7 @@ package com.yral.shared.rust.service.domain.models
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.data.domain.models.FeedDetails
+import com.yral.shared.data.domain.models.Post
 import com.yral.shared.rust.service.data.IndividualUserDataSourceImpl.Companion.thumbnailUrl
 import com.yral.shared.rust.service.data.IndividualUserDataSourceImpl.Companion.videoUrl
 import com.yral.shared.rust.service.utils.CanisterData
@@ -103,4 +104,25 @@ fun FeedDetails.toCanisterData(): CanisterData =
         username = resolveUsername(userName, principalID),
         isCreatedFromServiceCanister = isFromServiceCanister,
         isFollowing = isFollowing,
+    )
+
+fun Post.toPartialFeedDetails(): FeedDetails =
+    FeedDetails(
+        postID = postID,
+        videoID = videoID,
+        canisterID = canisterID,
+        principalID = publisherUserId,
+        url = videoUrl(videoID),
+        hashtags = emptyList(),
+        thumbnail = thumbnailUrl(videoID),
+        viewCount = numViewsAll ?: 0u,
+        displayName = "",
+        postDescription = "",
+        profileImageURL = propicFromPrincipal(publisherUserId),
+        likeCount = 0u,
+        isLiked = false,
+        nsfwProbability = nsfwProbability,
+        isFollowing = false,
+        isFromServiceCanister = canisterID == getUserInfoServiceCanister(),
+        userName = null,
     )
