@@ -32,6 +32,9 @@ import com.yral.shared.libs.designsystem.component.YralLoadingDots
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
+import yral_mobile.shared.features.chat.generated.resources.Res
+import yral_mobile.shared.features.chat.generated.resources.message_failed_tap_to_resend
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_bubble_tip_black
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_bubble_tip_pink
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_exclamation_circle
@@ -186,7 +189,7 @@ private fun MessageInBubble(
         }
         if (isFailed) {
             Text(
-                text = "Message Failed. Tap to resend",
+                text = stringResource(Res.string.message_failed_tap_to_resend),
                 style = LocalAppTopography.current.regRegular,
                 color = YralColors.RedButtonPrimary,
                 textAlign = TextAlign.End,

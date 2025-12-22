@@ -25,6 +25,12 @@ import com.yral.shared.libs.designsystem.component.YralContextMenuItem
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
+import yral_mobile.shared.features.chat.generated.resources.Res
+import yral_mobile.shared.features.chat.generated.resources.back
+import yral_mobile.shared.features.chat.generated.resources.clear_chat
+import yral_mobile.shared.features.chat.generated.resources.share_profile
+import yral_mobile.shared.features.chat.generated.resources.view_profile
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_more
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_share
@@ -72,7 +78,7 @@ private fun LeftPart(
     ) {
         Image(
             painter = painterResource(DesignRes.drawable.arrow_left),
-            contentDescription = "Back",
+            contentDescription = stringResource(Res.string.back),
             modifier =
                 Modifier
                     .size(24.dp)
@@ -103,7 +109,7 @@ private fun LeftPart(
                         modifier = Modifier.clickable { onProfileClick(inf) },
                     ) {
                         androidx.compose.material3.Text(
-                            text = "View Profile",
+                            text = stringResource(Res.string.view_profile),
                             style = LocalAppTopography.current.baseRegular,
                             color = YralColors.BlueTextPrimary,
                         )
@@ -137,12 +143,12 @@ private fun RightPart(
             items =
                 listOf(
                     YralContextMenuItem(
-                        text = "Share Profile",
+                        text = stringResource(Res.string.share_profile),
                         icon = DesignRes.drawable.ic_share,
                         onClick = onShareProfile,
                     ),
                     YralContextMenuItem(
-                        text = "Clear Chat",
+                        text = stringResource(Res.string.clear_chat),
                         icon = DesignRes.drawable.ic_x_circle,
                         onClick = onClearChat,
                     ),

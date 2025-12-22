@@ -40,7 +40,10 @@ import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import yral_mobile.shared.features.chat.generated.resources.Res
+import yral_mobile.shared.features.chat.generated.resources.no_conversation_id
 
 /**
  * Chat screen for testing conversation functionality.
@@ -162,7 +165,10 @@ fun ChatConversationScreen(
                     }
 
                     viewState.conversationId == null -> {
-                        Text(text = "No conversation id", color = MaterialTheme.colorScheme.error)
+                        Text(
+                            text = stringResource(Res.string.no_conversation_id),
+                            color = MaterialTheme.colorScheme.error,
+                        )
                     }
 
                     else -> {

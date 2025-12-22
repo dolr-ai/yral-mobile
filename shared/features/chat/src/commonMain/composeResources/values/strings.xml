@@ -3,4 +3,26 @@
     <string name="chat_wall_subtitle">Chat, learn, and vibe with your favorite creators.</string>
     <string name="chat_wall_coming_soon">coming soon...</string>
     <string name="chat_wall_talk_to_me">Talk To Me</string>
+
+    <!-- Chat Conversation Screen -->
+    <string name="no_conversation_id">No conversation id</string>
+
+    <!-- Chat Header -->
+    <string name="back">Back</string>
+    <string name="view_profile">View Profile</string>
+    <string name="share_profile">Share Profile</string>
+    <string name="clear_chat">Clear Chat</string>
+
+    <!-- Chat Input Area -->
+    <string name="message_placeholder">Message...</string>
+    <string name="camera">Camera</string>
+    <string name="photo_library">Photo Library</string>
+    <string name="send">Send</string>
+
+    <!-- Message Bubble -->
+    <string name="message_failed_tap_to_resend">Message Failed. Tap to resend</string>
+
+    <!-- Image Preview Overlay -->
+    <string name="message_optional">Message (optional)</string>
+    <string name="close">Close</string>
 </resources>

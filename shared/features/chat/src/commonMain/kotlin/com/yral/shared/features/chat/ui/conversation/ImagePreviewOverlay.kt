@@ -36,6 +36,10 @@ import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.getLocalImageModel
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
+import yral_mobile.shared.features.chat.generated.resources.Res
+import yral_mobile.shared.features.chat.generated.resources.close
+import yral_mobile.shared.features.chat.generated.resources.message_optional
 import yral_mobile.shared.libs.designsystem.generated.resources.cross
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
@@ -97,7 +101,7 @@ fun ImagePreviewOverlay(
                         onDismiss()
                     },
                     showAttachmentMenu = false,
-                    placeholder = "Message (optional)",
+                    placeholder = stringResource(Res.string.message_optional),
                 )
             }
         }
@@ -120,7 +124,7 @@ private fun BoxScope.CloseButton(onDismiss: () -> Unit) {
     ) {
         Image(
             painter = painterResource(DesignRes.drawable.cross),
-            contentDescription = "Close",
+            contentDescription = stringResource(Res.string.close),
             modifier = Modifier.size(24.dp),
             contentScale = ContentScale.None,
         )

@@ -25,6 +25,12 @@ import com.yral.shared.libs.designsystem.component.YralContextMenuItem
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
+import yral_mobile.shared.features.chat.generated.resources.Res
+import yral_mobile.shared.features.chat.generated.resources.camera
+import yral_mobile.shared.features.chat.generated.resources.message_placeholder
+import yral_mobile.shared.features.chat.generated.resources.photo_library
+import yral_mobile.shared.features.chat.generated.resources.send
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_camera
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_gallery
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_plus_circle
@@ -42,8 +48,10 @@ internal fun ChatInputArea(
     onCameraClick: (() -> Unit)? = null,
     onGalleryClick: (() -> Unit)? = null,
     showAttachmentMenu: Boolean = true,
-    placeholder: String = "Message...",
+    placeholder: String? = null,
 ) {
+    val defaultPlaceholder = stringResource(Res.string.message_placeholder)
+    val finalPlaceholder = placeholder ?: defaultPlaceholder
     // Input field
     Row(
         modifier =
@@ -75,7 +83,7 @@ internal fun ChatInputArea(
                 Box(modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)) {
                     if (input.isEmpty()) {
                         Text(
-                            text = placeholder,
+                            text = finalPlaceholder,
                             color = YralColors.NeutralTextTertiary,
                             style = LocalAppTopography.current.baseRegular,
                         )
@@ -110,12 +118,12 @@ private fun InputActions(
                 items =
                     listOf(
                         YralContextMenuItem(
-                            text = "Camera",
+                            text = stringResource(Res.string.camera),
                             icon = DesignRes.drawable.ic_camera,
                             onClick = onCameraClick,
                         ),
                         YralContextMenuItem(
-                            text = "Photo Library",
+                            text = stringResource(Res.string.photo_library),
                             icon = DesignRes.drawable.ic_gallery,
                             onClick = onGalleryClick,
                         ),
@@ -139,7 +147,7 @@ private fun SendButton(
 ) {
     Image(
         painter = painterResource(DesignRes.drawable.ic_send),
-        contentDescription = "Send",
+        contentDescription = stringResource(Res.string.send),
         modifier =
             Modifier
                 .size(24.dp)
