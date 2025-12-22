@@ -45,8 +45,6 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
-import com.yral.featureflag.FeatureFlagManager
-import com.yral.featureflag.WalletFeatureFlags
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.app.ui.screens.feed.FeedScaffoldScreen
@@ -63,6 +61,9 @@ import com.yral.shared.features.account.ui.AlertsPermissionController
 import com.yral.shared.features.account.ui.rememberAlertsPermissionController
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
+import com.yral.shared.features.chat.ui.ChatScreen
+import com.yral.shared.features.chat.viewmodel.ChatWallViewModel
+import com.yral.shared.features.chat.viewmodel.ConversationViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.leaderboard.ui.LeaderboardScreen
@@ -115,23 +116,23 @@ internal fun HomeScreen(
             val activeComponent = stack.active.instance
             val currentTab =
                 when (activeComponent) {
-                    is HomeComponent.Child.Account -> HomeTab.ACCOUNT
                     is HomeComponent.Child.Feed -> HomeTab.HOME
                     is HomeComponent.Child.Leaderboard -> HomeTab.LEADER_BOARD
                     is HomeComponent.Child.Tournament -> HomeTab.TOURNAMENT
                     is HomeComponent.Child.Profile -> HomeTab.PROFILE
                     is HomeComponent.Child.UploadVideo -> HomeTab.UPLOAD_VIDEO
-                    is HomeComponent.Child.Wallet -> HomeTab.WALLET
+                    is HomeComponent.Child.Chat -> HomeTab.CHAT
+                    is HomeComponent.Child.Account -> HomeTab.HOME
+                    is HomeComponent.Child.Wallet -> HomeTab.HOME
                 }
             val updateCurrentTab: (tab: HomeTab) -> Unit = { tab ->
                 when (tab) {
-                    HomeTab.ACCOUNT -> component.onAccountTabClick()
                     HomeTab.HOME -> component.onFeedTabClick()
                     HomeTab.LEADER_BOARD -> component.onLeaderboardTabClick()
                     HomeTab.TOURNAMENT -> component.onTournamentTabClick()
                     HomeTab.PROFILE -> component.onProfileTabClick()
                     HomeTab.UPLOAD_VIDEO -> component.onUploadVideoTabClick()
-                    HomeTab.WALLET -> component.onWalletTabClick()
+                    HomeTab.CHAT -> component.onChatTabClick()
                 }
             }
             HomeNavigationBar(
@@ -210,14 +211,6 @@ private fun HomeScreenContent(
                     leaderBoardViewModel = leaderBoardViewModel,
                 )
 
-            is HomeComponent.Child.Account -> {
-                AccountScreen(
-                    component = child.component,
-                    viewModel = accountViewModel,
-                    onAlertsToggleRequest = alertsPermissionController.toggle,
-                )
-            }
-
             is HomeComponent.Child.Leaderboard ->
                 LeaderboardScreen(
                     component = child.component,
@@ -236,6 +229,18 @@ private fun HomeScreenContent(
                     bottomPadding = innerPadding.calculateBottomPadding(),
                 )
 
+            is HomeComponent.Child.Account ->
+                AccountScreen(
+                    component = child.component,
+                    viewModel = accountViewModel,
+                    onAlertsToggleRequest = alertsPermissionController.toggle,
+                )
+
+            is HomeComponent.Child.Wallet ->
+                WalletScreen(
+                    component = child.component,
+                )
+
             is HomeComponent.Child.Profile ->
                 profileVideos?.let {
                     ProfileScreen(
@@ -247,9 +252,11 @@ private fun HomeScreenContent(
                     )
                 }
 
-            is HomeComponent.Child.Wallet ->
-                WalletScreen(
+            is HomeComponent.Child.Chat ->
+                ChatScreen(
                     component = child.component,
+                    chatWallViewModel = chatWallViewModel,
+                    conversationViewModel = conversationViewModel,
                 )
         }
         LoginIfRequired(
@@ -315,18 +322,7 @@ private fun HomeNavigationBar(
     bottomNavigationClicked: (categoryName: CategoryName) -> Unit,
 ) {
     var playSound by remember { mutableStateOf(false) }
-    val flagManager = koinInject<FeatureFlagManager>()
-    val isWalletEnabled = flagManager.isEnabled(WalletFeatureFlags.Wallet.Enabled)
-    val tabs =
-        HomeTab.entries
-            .filter {
-                when (it) {
-                    HomeTab.ACCOUNT -> !isWalletEnabled
-                    HomeTab.WALLET -> isWalletEnabled
-//                    HomeTab.TOURNAMENT -> false
-                    else -> true
-                }
-            }
+    val tabs = HomeTab.entries
     val insetHeightPx = NavigationBarDefaults.windowInsets.getBottom(LocalDensity.current)
     val insetHeightDp = with(LocalDensity.current) { insetHeightPx.toDp() }
     NavigationBar(
@@ -460,6 +456,18 @@ private enum class HomeTab(
         icon = Res.drawable.home_nav_selected,
         unSelectedIcon = Res.drawable.home_nav_unselected,
     ),
+    CHAT(
+        title = "Chat",
+        categoryName = CategoryName.CHAT,
+        icon = Res.drawable.wallet_nav,
+        unSelectedIcon = Res.drawable.wallet_nav_unselected,
+    ),
+    UPLOAD_VIDEO(
+        title = "UploadVideo",
+        categoryName = CategoryName.UPLOAD_VIDEO,
+        icon = Res.drawable.upload_video_nav_selected,
+        unSelectedIcon = Res.drawable.upload_video_nav_unselected,
+    ),
     LEADER_BOARD(
         title = "LeaderBoard",
         categoryName = CategoryName.LEADERBOARD,
@@ -473,30 +481,11 @@ private enum class HomeTab(
         unSelectedIcon = Res.drawable.leaderboard_nav_unselected,
         isNew = true,
     ),
-    UPLOAD_VIDEO(
-        title = "UploadVideo",
-        categoryName = CategoryName.UPLOAD_VIDEO,
-        icon = Res.drawable.upload_video_nav_selected,
-        unSelectedIcon = Res.drawable.upload_video_nav_unselected,
-    ),
-    WALLET(
-        title = "Wallet",
-        categoryName = CategoryName.WALLET,
-        icon = Res.drawable.wallet_nav,
-        unSelectedIcon = Res.drawable.wallet_nav_unselected,
-        isNew = true,
-    ),
     PROFILE(
         title = "Profile",
         categoryName = CategoryName.PROFILE,
         icon = Res.drawable.profile_nav_selected,
         unSelectedIcon = Res.drawable.profile_nav_unselected,
-    ),
-    ACCOUNT(
-        title = "Account",
-        categoryName = CategoryName.MENU,
-        icon = DesignRes.drawable.account_nav,
-        unSelectedIcon = DesignRes.drawable.account_nav,
     ),
 }
 
