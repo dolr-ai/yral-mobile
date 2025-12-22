@@ -47,7 +47,6 @@ import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.SignupPageName
-import com.yral.shared.app.nav.RootComponent
 import com.yral.shared.app.ui.screens.feed.FeedScaffoldScreen
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent.SlotChild
@@ -63,8 +62,6 @@ import com.yral.shared.features.account.ui.rememberAlertsPermissionController
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.chat.ui.ChatScreen
-import com.yral.shared.features.chat.viewmodel.ChatWallViewModel
-import com.yral.shared.features.chat.viewmodel.ConversationViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.leaderboard.ui.LeaderboardScreen
@@ -83,7 +80,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import yral_mobile.shared.app.generated.resources.Res
@@ -329,6 +325,7 @@ private fun HomeNavigationBar(
                 when (it) {
                     HomeTab.ACCOUNT -> false
                     HomeTab.WALLET -> false
+                    HomeTab.LEADER_BOARD -> false
                     else -> true
                 }
             }
