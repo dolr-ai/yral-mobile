@@ -12,13 +12,14 @@ import com.yral.shared.features.chat.ui.conversation.ConversationScreen
 import com.yral.shared.features.chat.ui.wall.ChatWallScreen
 import com.yral.shared.features.chat.viewmodel.ChatWallViewModel
 import com.yral.shared.features.chat.viewmodel.ConversationViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
     component: ChatComponent,
-    chatWallViewModel: ChatWallViewModel,
-    conversationViewModel: ConversationViewModel,
+    chatWallViewModel: ChatWallViewModel = koinViewModel(),
+    conversationViewModel: ConversationViewModel = koinViewModel(),
     modifier: Modifier = Modifier,
     conversationModifier: Modifier = Modifier,
 ) {

@@ -47,6 +47,7 @@ import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.SignupPageName
+import com.yral.shared.app.nav.RootComponent
 import com.yral.shared.app.ui.screens.feed.FeedScaffoldScreen
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent.SlotChild
@@ -122,8 +123,8 @@ internal fun HomeScreen(
                     is HomeComponent.Child.Profile -> HomeTab.PROFILE
                     is HomeComponent.Child.UploadVideo -> HomeTab.UPLOAD_VIDEO
                     is HomeComponent.Child.Chat -> HomeTab.CHAT
-                    is HomeComponent.Child.Account -> HomeTab.HOME
-                    is HomeComponent.Child.Wallet -> HomeTab.HOME
+                    is HomeComponent.Child.Account -> HomeTab.ACCOUNT
+                    is HomeComponent.Child.Wallet -> HomeTab.WALLET
                 }
             val updateCurrentTab: (tab: HomeTab) -> Unit = { tab ->
                 when (tab) {
@@ -133,6 +134,8 @@ internal fun HomeScreen(
                     HomeTab.PROFILE -> component.onProfileTabClick()
                     HomeTab.UPLOAD_VIDEO -> component.onUploadVideoTabClick()
                     HomeTab.CHAT -> component.onChatTabClick()
+                    HomeTab.ACCOUNT -> component.onAccountTabClick()
+                    HomeTab.WALLET -> component.onWalletTabClick()
                 }
             }
             HomeNavigationBar(
@@ -255,8 +258,6 @@ private fun HomeScreenContent(
             is HomeComponent.Child.Chat ->
                 ChatScreen(
                     component = child.component,
-                    chatWallViewModel = chatWallViewModel,
-                    conversationViewModel = conversationViewModel,
                 )
         }
         LoginIfRequired(
@@ -322,7 +323,15 @@ private fun HomeNavigationBar(
     bottomNavigationClicked: (categoryName: CategoryName) -> Unit,
 ) {
     var playSound by remember { mutableStateOf(false) }
-    val tabs = HomeTab.entries
+    val tabs =
+        HomeTab.entries
+            .filter {
+                when (it) {
+                    HomeTab.ACCOUNT -> false
+                    HomeTab.WALLET -> false
+                    else -> true
+                }
+            }
     val insetHeightPx = NavigationBarDefaults.windowInsets.getBottom(LocalDensity.current)
     val insetHeightDp = with(LocalDensity.current) { insetHeightPx.toDp() }
     NavigationBar(
@@ -486,6 +495,19 @@ private enum class HomeTab(
         categoryName = CategoryName.PROFILE,
         icon = Res.drawable.profile_nav_selected,
         unSelectedIcon = Res.drawable.profile_nav_unselected,
+    ),
+    WALLET(
+        title = "Wallet",
+        categoryName = CategoryName.WALLET,
+        icon = Res.drawable.wallet_nav,
+        unSelectedIcon = Res.drawable.wallet_nav_unselected,
+        isNew = true,
+    ),
+    ACCOUNT(
+        title = "Account",
+        categoryName = CategoryName.MENU,
+        icon = DesignRes.drawable.account_nav,
+        unSelectedIcon = DesignRes.drawable.account_nav,
     ),
 }
 

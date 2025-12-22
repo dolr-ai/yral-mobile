@@ -28,15 +28,8 @@ fun ConversationScreen(
                 .padding(16.dp),
     ) {
         Text(
-            text = "Conversation with ${component.userId}",
+            text = "Conversation with ${component.influencerId}",
             modifier = Modifier.padding(bottom = 12.dp),
         )
-        Text(
-            text = "Messages loaded: ${viewState.historyVersion}",
-            modifier = Modifier.padding(bottom = 12.dp),
-        )
-        Button(onClick = component::onBack) {
-            Text(text = "Back")
-        }
     }
 }

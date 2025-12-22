@@ -7,6 +7,7 @@ import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.pushNew
 import com.arkivanov.decompose.value.Value
+import com.yral.shared.features.chat.domain.models.ConversationInfluencer
 import com.yral.shared.features.chat.nav.ChatComponent.Child
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.chat.nav.wall.ChatWallComponent
@@ -55,7 +56,7 @@ internal class DefaultChatComponent(
                         is Config.Wall -> ChatComponent.Snapshot.Route.Wall
                         is Config.Conversation ->
                             ChatComponent.Snapshot.Route.Conversation(
-                                userId = configuration.userId,
+                                influencerId = configuration.influencerId,
                             )
                         else -> ChatComponent.Snapshot.Route.Wall
                     }
@@ -66,7 +67,7 @@ internal class DefaultChatComponent(
         when (this) {
             ChatComponent.Snapshot.Route.Wall -> Config.Wall
             is ChatComponent.Snapshot.Route.Conversation ->
-                Config.Conversation(userId = userId)
+                Config.Conversation(influencerId = influencerId)
         }
 
     private fun child(
@@ -81,8 +82,8 @@ internal class DefaultChatComponent(
     private fun chatWallComponent(componentContext: ComponentContext): ChatWallComponent =
         ChatWallComponent.Companion(
             componentContext = componentContext,
-            openConversation = { userId ->
-                navigation.pushNew(Config.Conversation(userId = userId))
+            openConversation = { influencerId ->
+                navigation.pushNew(Config.Conversation(influencerId = influencerId))
             },
         )
 
@@ -92,7 +93,7 @@ internal class DefaultChatComponent(
     ): ConversationComponent =
         ConversationComponent.Companion(
             componentContext = componentContext,
-            userId = config.userId,
+            influencerId = config.influencerId,
             onBack = { navigation.pop() },
         )
 
@@ -103,7 +104,7 @@ internal class DefaultChatComponent(
 
         @Serializable
         data class Conversation(
-            val userId: String,
+            val influencerId: String,
         ) : Config
     }
 }

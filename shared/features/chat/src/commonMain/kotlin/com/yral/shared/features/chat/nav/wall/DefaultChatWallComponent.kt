@@ -9,7 +9,7 @@ internal class DefaultChatWallComponent(
 ) : ChatWallComponent(),
     ComponentContext by componentContext,
     KoinComponent {
-    override fun openConversation(userId: String) {
-        openConversation.invoke(userId)
+    override fun openConversation(influencerId: String) {
+        openConversation.invoke(influencerId)
     }
 }

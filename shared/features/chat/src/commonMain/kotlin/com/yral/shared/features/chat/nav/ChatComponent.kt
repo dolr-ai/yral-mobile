@@ -33,7 +33,7 @@ abstract class ChatComponent : HomeChildSnapshotProvider {
 
             @Serializable
             data class Conversation(
-                val userId: String,
+                val influencerId: String,
             ) : Route
         }
     }
