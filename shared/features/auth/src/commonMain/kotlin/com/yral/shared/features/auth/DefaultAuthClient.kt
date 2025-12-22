@@ -9,6 +9,7 @@ import com.yral.shared.analytics.events.AuthSessionCause
 import com.yral.shared.analytics.events.AuthSessionFlow
 import com.yral.shared.analytics.events.AuthSessionInitiator
 import com.yral.shared.analytics.events.AuthSessionState
+import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.DELAY_FOR_SESSION_PROPERTIES
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
@@ -40,6 +41,7 @@ import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.YralFfiException
+import com.yral.shared.rust.service.utils.authenticateWithNetwork
 import com.yral.shared.rust.service.utils.getSessionFromIdentity
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
@@ -202,6 +204,28 @@ class DefaultAuthClient(
         sessionManager.updateState(SessionState.Initial)
     }
 
+    private suspend fun refreshAuthenticateWithNetwork(data: ByteArray): Session? =
+        try {
+            Logger.d("DefaultAuthClient") { "Refreshing authenticateWithNetwork" }
+            val canisterWrapper = authenticateWithNetwork(data)
+            cacheSession(data, canisterWrapper)
+            Logger.d("DefaultAuthClient") { "Reauthenticated: ${canisterWrapper.isCreatedFromServiceCanister} " }
+            Session(
+                identity = data,
+                canisterId = canisterWrapper.canisterId,
+                userPrincipal = canisterWrapper.userPrincipalId,
+                profilePic = canisterWrapper.profilePic,
+                username = resolveUsername(canisterWrapper.username, canisterWrapper.userPrincipalId),
+                isCreatedFromServiceCanister = canisterWrapper.isCreatedFromServiceCanister,
+            )
+        } catch (e: YralFfiException) {
+            crashlyticsManager.recordException(
+                YralException("Reauthenticate failed $e"),
+                ExceptionType.AUTH,
+            )
+            null
+        }
+
     private suspend fun handleExtractIdentityResponse(data: ByteArray) {
         try {
             var cachedSession = getCachedSession()
@@ -222,10 +246,13 @@ class DefaultAuthClient(
             }
             cachedSession.userPrincipal?.let { crashlyticsManager.setUserId(it) }
             sessionManager.updateCoinBalance(0)
-            setSession(session = cachedSession)
-            if (auth.currentUser?.uid == cachedSession.userPrincipal) {
+            // Always refresh with network to get actual canister and profile info
+            val reAuthenticatedSession = refreshAuthenticateWithNetwork(data)
+            val finalSession = reAuthenticatedSession ?: cachedSession
+            setSession(session = finalSession)
+            if (auth.currentUser?.uid == finalSession.userPrincipal) {
                 sessionManager.updateFirebaseLoginState(true)
-                postFirebaseLogin(cachedSession)
+                postFirebaseLogin(finalSession)
             } else {
                 sessionManager.updateFirebaseLoginState(false)
             }

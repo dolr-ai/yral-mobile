@@ -122,8 +122,7 @@ class AnalyticsManager(
     private fun isUsePropertiesComplete(user: User): Boolean =
         user.isLoggedIn != null &&
             user.isCreator != null &&
-            user.walletBalance != null &&
-            user.isForcedGamePlayUser != null
+            user.walletBalance != null
 
     fun reset() {
         resetInternal(reason = null)
