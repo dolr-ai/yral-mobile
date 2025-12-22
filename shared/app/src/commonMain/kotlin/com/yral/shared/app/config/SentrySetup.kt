@@ -15,6 +15,9 @@ fun initializeSentry(
         options.attachScreenshot = true
         options.attachViewHierarchy = true
         options.tracesSampleRate = 0.1
+        // Enable Session Replay (whole session + on-error replays).
+        options.sessionReplay.sessionSampleRate = 0.1
+        options.sessionReplay.onErrorSampleRate = 1.0
         options.debug = false
     }
 }
