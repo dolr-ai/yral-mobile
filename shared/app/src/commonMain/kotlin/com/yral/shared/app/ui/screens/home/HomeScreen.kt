@@ -323,7 +323,7 @@ private fun HomeNavigationBar(
                 when (it) {
                     HomeTab.ACCOUNT -> !isWalletEnabled
                     HomeTab.WALLET -> isWalletEnabled
-                    HomeTab.TOURNAMENT -> false
+//                    HomeTab.TOURNAMENT -> false
                     else -> true
                 }
             }

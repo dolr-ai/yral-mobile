@@ -12,7 +12,6 @@ data class TournamentUiState(
     val isLoading: Boolean = false,
     val error: TournamentError? = null,
     val isRegistering: Boolean = false,
-    val registrationError: TournamentError? = null,
 ) {
     enum class Tab { All, History }
 }

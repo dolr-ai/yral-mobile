@@ -10,12 +10,14 @@ import com.yral.shared.features.tournament.data.models.TournamentVoteRequestDto
 data class GetTournamentsRequest(
     val date: String? = null,
     val status: String? = null,
+    val principalId: String? = null,
 )
 
 fun GetTournamentsRequest.toDto(): TournamentListRequestDto =
     TournamentListRequestDto(
         date = date,
         status = status,
+        principalId = principalId,
     )
 
 data class GetTournamentStatusRequest(

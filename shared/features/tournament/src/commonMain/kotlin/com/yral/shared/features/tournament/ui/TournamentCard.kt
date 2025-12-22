@@ -223,8 +223,8 @@ private fun StatusChip(
 
     val label =
         when (status) {
-            is TournamentStatus.Live -> stringResource(TournamentRes.string.starts_in, "temp")
-            is TournamentStatus.Upcoming -> stringResource(TournamentRes.string.ends_in, "temp")
+            is TournamentStatus.Live -> stringResource(TournamentRes.string.ends_in, "temp")
+            is TournamentStatus.Upcoming -> stringResource(TournamentRes.string.starts_in, "temp")
             TournamentStatus.Ended -> stringResource(TournamentRes.string.ended)
         }
 
