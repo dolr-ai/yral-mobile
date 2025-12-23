@@ -33,8 +33,10 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.yral.shared.features.chat.attachments.FilePathChatAttachment
 import com.yral.shared.features.chat.domain.models.ChatMessageType
+import com.yral.shared.features.chat.domain.models.ConversationMessageRole
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
+import com.yral.shared.features.chat.viewmodel.ConversationMessageItem
 import com.yral.shared.features.chat.viewmodel.ConversationViewModel
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -182,6 +184,36 @@ fun ChatConversationScreen(
                         )
 
                         Spacer(modifier = Modifier.height(12.dp))
+
+                        // Check if there are any user messages
+                        // Only check overlay items and snapshot of loaded history items for performance
+                        val hasUserMessages by derivedStateOf {
+                            overlayItems.any { item ->
+                                when (item) {
+                                    is ConversationMessageItem.Local ->
+                                        item.message.role == ConversationMessageRole.USER
+                                    is ConversationMessageItem.Remote ->
+                                        item.message.role == ConversationMessageRole.USER
+                                }
+                            }
+                        }
+                        val suggestions = viewState.influencer?.suggestedMessages.orEmpty()
+                        val shouldShowSuggestions = !hasUserMessages && suggestions.isNotEmpty()
+                        // Show suggestion messages if there are no user messages
+                        if (shouldShowSuggestions) {
+                            SuggestionMessagesRow(
+                                suggestions = suggestions,
+                                onSuggestionClick = { suggestion ->
+                                    viewModel.sendMessage(
+                                        SendMessageDraft(
+                                            messageType = ChatMessageType.TEXT,
+                                            content = suggestion,
+                                        ),
+                                    )
+                                },
+                                modifier = Modifier.padding(bottom = 12.dp),
+                            )
+                        }
 
                         // Input area with dropdown menu
                         ChatInputArea(

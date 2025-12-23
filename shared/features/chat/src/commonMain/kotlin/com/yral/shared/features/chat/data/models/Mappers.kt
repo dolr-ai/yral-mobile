@@ -60,6 +60,7 @@ fun ConversationDto.toDomain(): Conversation =
                 name = influencer.name,
                 displayName = influencer.displayName,
                 avatarUrl = influencer.avatarUrl,
+                suggestedMessages = influencer.suggestedMessages.orEmpty(),
             ),
         createdAt = createdAt,
         updatedAt = updatedAt,
