@@ -293,7 +293,13 @@ class TournamentViewModel(
         }
         // Navigate to tournament details or start playing
         if (tournament.status is TournamentStatus.Ended) {
-            send(Event.NavigateToLeaderboard(tournamentId = tournament.id))
+            send(
+                Event.NavigateToLeaderboard(
+                    tournamentId = tournament.id,
+                    participantsLabel = tournament.participantsLabel,
+                    scheduleLabel = tournament.scheduleLabel,
+                ),
+            )
         } else {
             when (tournament.participationState) {
                 is TournamentParticipationState.JoinNowWithTokens ->
@@ -350,6 +356,8 @@ class TournamentViewModel(
 
         data class NavigateToLeaderboard(
             val tournamentId: String,
+            val participantsLabel: String,
+            val scheduleLabel: String,
         ) : Event()
     }
 }

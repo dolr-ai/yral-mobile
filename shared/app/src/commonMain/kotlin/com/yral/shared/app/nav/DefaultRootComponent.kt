@@ -75,6 +75,12 @@ class DefaultRootComponent(
             is Config.Home -> RootComponent.Child.Home(homeComponent(componentContext))
             is Config.EditProfile -> RootComponent.Child.EditProfile(editProfileComponent(componentContext))
             is Config.UserProfile -> RootComponent.Child.UserProfile(profileComponent(componentContext, config))
+            is Config.TournamentLeaderboard ->
+                RootComponent.Child.TournamentLeaderboard(
+                    tournamentId = config.tournamentId,
+                    participantsLabel = config.participantsLabel,
+                    scheduleLabel = config.scheduleLabel,
+                )
         }
 
     private val slotNavigation = SlotNavigation<SlotConfig>()
@@ -99,6 +105,7 @@ class DefaultRootComponent(
                 componentContext = componentContext,
                 openEditProfile = this::openEditProfile,
                 openProfile = this::openProfile,
+                openTournamentLeaderboard = this::openTournamentLeaderboard,
                 showAlertsOnDialog = { this.showSlot(SlotConfig.AlertsRequestBottomSheet(it)) },
                 showLoginBottomSheet = this::showLoginBottomSheet,
                 hideLoginBottomSheetIfVisible = this::hideLoginBottomSheetIfVisible,
@@ -213,6 +220,20 @@ class DefaultRootComponent(
         navigation.pushToFront(Config.UserProfile(userCanisterData))
     }
 
+    override fun openTournamentLeaderboard(
+        tournamentId: String,
+        participantsLabel: String,
+        scheduleLabel: String,
+    ) {
+        navigation.pushToFront(
+            Config.TournamentLeaderboard(
+                tournamentId = tournamentId,
+                participantsLabel = participantsLabel,
+                scheduleLabel = scheduleLabel,
+            ),
+        )
+    }
+
     override fun showLoginBottomSheet(
         pageName: SignupPageName,
         loginBottomSheetType: LoginBottomSheetType,
@@ -294,6 +315,13 @@ class DefaultRootComponent(
         @Serializable
         data class UserProfile(
             val userCanisterData: CanisterData,
+        ) : Config
+
+        @Serializable
+        data class TournamentLeaderboard(
+            val tournamentId: String,
+            val participantsLabel: String,
+            val scheduleLabel: String,
         ) : Config
     }
 

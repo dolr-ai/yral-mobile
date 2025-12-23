@@ -80,6 +80,11 @@ abstract class HomeComponent {
             componentContext: ComponentContext,
             openEditProfile: () -> Unit,
             openProfile: (userCanisterData: CanisterData) -> Unit,
+            openTournamentLeaderboard: (
+                tournamentId: String,
+                participantsLabel: String,
+                scheduleLabel: String,
+            ) -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
             showLoginBottomSheet: (
                 pageName: SignupPageName,
@@ -93,6 +98,7 @@ abstract class HomeComponent {
                 componentContext,
                 openEditProfile,
                 openProfile,
+                openTournamentLeaderboard,
                 showAlertsOnDialog,
                 showLoginBottomSheet,
                 hideLoginBottomSheetIfVisible,
