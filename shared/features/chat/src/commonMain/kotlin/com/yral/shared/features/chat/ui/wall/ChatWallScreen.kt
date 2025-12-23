@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -33,6 +34,7 @@ import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.nav.wall.ChatWallComponent
 import com.yral.shared.features.chat.viewmodel.ChatWallViewModel
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
+import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.component.getSVGImageModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -117,47 +119,55 @@ private fun InfluencerCard(
                 Modifier
                     .align(Alignment.BottomStart)
                     .fillMaxWidth()
-                    .padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+                    .padding(10.dp),
         ) {
             Text(
                 text = influencer.displayName.ifBlank { influencer.name },
-                style =
-                    MaterialTheme.typography.titleMedium.copy(
-                        color = Color.White,
-                        fontWeight = FontWeight.SemiBold,
-                    ),
+                style = LocalAppTopography.current.mdSemiBold,
+                color = YralColors.Grey0,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
                 text = "@${influencer.name}",
-                style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.9f)),
+                style = LocalAppTopography.current.smRegular,
+                color = YralColors.Grey0,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(bottom = 10.dp),
             )
             Text(
                 text = influencer.description,
-                style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.85f)),
+                style = LocalAppTopography.current.smMedium,
+                color = YralColors.Grey0,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            Button(
-                onClick = onClick,
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor = Color.White,
-                        contentColor = YralColors.Pink300,
-                    ),
-                modifier =
-                    Modifier
-                        .padding(top = 6.dp)
-                        .fillMaxWidth(),
-            ) {
+            if (influencer.isActive == "coming_soon") {
                 Text(
+                    text = "coming soon...",
+                    style = LocalAppTopography.current.smMedium,
+                    color = YralColors.Grey0,
+                    maxLines = 1,
+                )
+            } else {
+                YralButton(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 6.dp),
                     text = "Talk To Me",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    backgroundColor = YralColors.Grey50,
+                    textStyle =
+                        LocalAppTopography
+                            .current
+                            .smSemiBold
+                            .copy(
+                                color = YralColors.Pink300,
+                            ),
+                    paddingValues = PaddingValues(vertical = 6.dp),
+                    buttonHeight = 26.dp,
+                    onClick = onClick,
                 )
             }
         }
