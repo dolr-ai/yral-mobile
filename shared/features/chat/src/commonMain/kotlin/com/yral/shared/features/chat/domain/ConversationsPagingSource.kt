@@ -6,6 +6,7 @@ import co.touchlab.kermit.Logger
 import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.chat.domain.models.Conversation
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
+import kotlinx.coroutines.CancellationException
 
 class ConversationsPagingSource(
     private val chatRepository: ChatRepository,
@@ -13,7 +14,7 @@ class ConversationsPagingSource(
     private val influencerId: String?,
 ) : PagingSource<Int, Conversation>() {
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Conversation> =
-        runCatching {
+        try {
             val offset = params.key ?: 0
             val limit = params.loadSize
 
@@ -29,15 +30,20 @@ class ConversationsPagingSource(
                 prevKey = null,
                 nextKey = result.nextOffset,
             )
-        }.getOrElse {
-            Logger.e("ConversationsPaging", it)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (
+            @Suppress("TooGenericExceptionCaught")
+            e: Exception,
+        ) {
+            Logger.e("ConversationsPaging", e)
             useCaseFailureListener.onFailure(
-                it,
+                e,
                 tag = this::class.simpleName!!,
-                message = { "failed to fetch influencers" },
+                message = { "failed to fetch conversations" },
                 exceptionType = ExceptionType.CHAT.name,
             )
-            LoadResult.Error(it)
+            LoadResult.Error(e)
         }
 
     override fun getRefreshKey(state: PagingState<Int, Conversation>): Int? = null

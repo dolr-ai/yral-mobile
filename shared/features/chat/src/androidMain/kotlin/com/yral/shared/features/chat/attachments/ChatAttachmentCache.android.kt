@@ -29,7 +29,13 @@ fun persistUriToChatCache(
     val safeBaseName =
         (displayName?.substringBeforeLast('.') ?: "attachment_${System.currentTimeMillis()}")
             .replace(Regex("[^A-Za-z0-9._-]"), "_")
-    val fileName = if (extension.isNullOrBlank()) safeBaseName else "$safeBaseName.$extension"
+    val uniqueSuffix = "_${System.currentTimeMillis()}"
+    val fileName =
+        if (extension.isNullOrBlank()) {
+            "$safeBaseName$uniqueSuffix"
+        } else {
+            "$safeBaseName$uniqueSuffix.$extension"
+        }
 
     val destFile = File(cacheDir, fileName)
 

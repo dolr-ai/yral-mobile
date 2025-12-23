@@ -99,7 +99,9 @@ fun DeleteConversationResponseDto.toDomain(): DeleteConversationResult =
     )
 
 fun ChatMessageDto.toDomain(conversationIdFallback: String? = null): ChatMessage {
-    val resolvedConversationId = conversationId ?: conversationIdFallback.orEmpty()
+    val resolvedConversationId =
+        conversationId ?: conversationIdFallback
+            ?: error("ChatMessage requires a valid conversationId")
     return ChatMessage(
         id = id,
         conversationId = resolvedConversationId,

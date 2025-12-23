@@ -22,7 +22,6 @@ kotlin {
             implementation(projects.shared.libs.preferences)
             implementation(projects.shared.libs.http)
             implementation(projects.shared.libs.arch)
-            implementation(projects.shared.libs.preferences)
 
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.io.core)

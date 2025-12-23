@@ -25,10 +25,8 @@ import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.headers
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
-import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
-import io.ktor.http.contentType
 import io.ktor.http.path
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
@@ -196,8 +194,6 @@ class ChatRemoteDataSource(
                         )
                     },
             ) {
-                // server expects multipart; keep default request headers + force multipart
-                contentType(ContentType.MultiPart.FormData)
                 headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
             }
         val deserializer = json.serializersModule.serializer<UploadResponseDto>()

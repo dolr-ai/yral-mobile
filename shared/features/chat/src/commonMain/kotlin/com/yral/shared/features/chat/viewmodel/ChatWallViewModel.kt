@@ -13,6 +13,7 @@ import com.yral.shared.features.chat.domain.InfluencersPagingSource
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +29,8 @@ class ChatWallViewModel(
     private val _state = MutableStateFlow(ChatWallState())
     val state: StateFlow<ChatWallState> = _state.asStateFlow()
 
+    private var loadInfluencerJob: Job? = null
+
     val influencers: Flow<PagingData<Influencer>> =
         Pager(
             config =
@@ -41,6 +44,7 @@ class ChatWallViewModel(
         ).flow.cachedIn(viewModelScope)
 
     fun selectInfluencer(influencerId: String) {
+        loadInfluencerJob?.cancel()
         _state.update {
             it.copy(
                 selectedInfluencerId = influencerId,
@@ -49,31 +53,32 @@ class ChatWallViewModel(
                 influencerError = null,
             )
         }
-
-        viewModelScope.launch {
-            getInfluencerUseCase(
-                GetInfluencerUseCase.Params(id = influencerId),
-            ).onSuccess { influencer ->
-                _state.update {
-                    it.copy(
-                        influencerDetail = influencer,
-                        isInfluencerLoading = false,
-                        influencerError = null,
-                    )
-                }
-            }.onFailure { error ->
-                _state.update {
-                    it.copy(
-                        influencerDetail = null,
-                        isInfluencerLoading = false,
-                        influencerError = error.message ?: "Failed to load influencer",
-                    )
+        loadInfluencerJob =
+            viewModelScope.launch {
+                getInfluencerUseCase(
+                    GetInfluencerUseCase.Params(id = influencerId),
+                ).onSuccess { influencer ->
+                    _state.update {
+                        it.copy(
+                            influencerDetail = influencer,
+                            isInfluencerLoading = false,
+                            influencerError = null,
+                        )
+                    }
+                }.onFailure { error ->
+                    _state.update {
+                        it.copy(
+                            influencerDetail = null,
+                            isInfluencerLoading = false,
+                            influencerError = error.message ?: "Failed to load influencer",
+                        )
+                    }
                 }
             }
-        }
     }
 
     fun clearSelection() {
+        loadInfluencerJob?.cancel()
         _state.update {
             it.copy(
                 selectedInfluencerId = null,
