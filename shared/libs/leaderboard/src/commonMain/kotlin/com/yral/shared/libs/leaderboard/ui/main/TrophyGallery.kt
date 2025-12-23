@@ -1,4 +1,4 @@
-package com.yral.shared.features.leaderboard.ui.main
+package com.yral.shared.libs.leaderboard.ui.main
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -33,33 +33,33 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import com.yral.shared.features.leaderboard.data.models.LeaderboardMode
-import com.yral.shared.features.leaderboard.domain.models.LeaderboardItem
-import com.yral.shared.features.leaderboard.domain.models.RewardCurrency
-import com.yral.shared.features.leaderboard.ui.LeaderboardReward
-import com.yral.shared.features.leaderboard.ui.UserBriefProfileImage
-import com.yral.shared.features.leaderboard.ui.main.LeaderboardHelpers.POS_BRONZE
-import com.yral.shared.features.leaderboard.ui.main.LeaderboardHelpers.POS_GOLD
-import com.yral.shared.features.leaderboard.ui.main.LeaderboardHelpers.POS_SILVER
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.libs.leaderboard.model.LeaderboardEntry
+import com.yral.shared.libs.leaderboard.model.LeaderboardMode
+import com.yral.shared.libs.leaderboard.model.RewardCurrency
+import com.yral.shared.libs.leaderboard.ui.LeaderboardReward
+import com.yral.shared.libs.leaderboard.ui.UserBriefProfileImage
+import com.yral.shared.libs.leaderboard.ui.main.LeaderboardHelpers.POS_BRONZE
+import com.yral.shared.libs.leaderboard.ui.main.LeaderboardHelpers.POS_GOLD
+import com.yral.shared.libs.leaderboard.ui.main.LeaderboardHelpers.POS_SILVER
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import yral_mobile.shared.features.leaderboard.generated.resources.Res
-import yral_mobile.shared.features.leaderboard.generated.resources.bronze_trophy
-import yral_mobile.shared.features.leaderboard.generated.resources.games_won
-import yral_mobile.shared.features.leaderboard.generated.resources.golden_trophy
-import yral_mobile.shared.features.leaderboard.generated.resources.silver_trophy
+import yral_mobile.shared.libs.leaderboard.generated.resources.Res
+import yral_mobile.shared.libs.leaderboard.generated.resources.bronze_trophy
+import yral_mobile.shared.libs.leaderboard.generated.resources.games_won
+import yral_mobile.shared.libs.leaderboard.generated.resources.golden_trophy
+import yral_mobile.shared.libs.leaderboard.generated.resources.silver_trophy
 
 @Suppress("MagicNumber", "LongMethod", "CyclomaticComplexMethod")
 @Composable
 fun TrophyGallery(
     isLoading: Boolean,
-    leaderboard: List<LeaderboardItem>,
+    leaderboard: List<LeaderboardEntry>,
     countDownMs: Long?,
     blinkCountDown: Boolean,
     selectedMode: LeaderboardMode,
@@ -147,7 +147,7 @@ fun TrophyGallery(
 
 @Composable
 private fun ColumnScope.TrophyImages(
-    leaderboard: List<LeaderboardItem>,
+    leaderboard: List<LeaderboardEntry>,
     rewardCurrency: RewardCurrency?,
     rewardCurrencyCode: String?,
     rewardsTable: Map<Int, Double>?,
@@ -186,7 +186,7 @@ private fun ColumnScope.TrophyImages(
 
 private fun getProfileImageForTrophy(
     position: Int,
-    leaderboard: List<LeaderboardItem>,
+    leaderboard: List<LeaderboardEntry>,
 ): String =
     if (leaderboard.filter { it.position == position }.size == 1) {
         // users[0].profileImage
@@ -197,7 +197,7 @@ private fun getProfileImageForTrophy(
 
 @Composable
 private fun ColumnScope.TrophyDetails(
-    leaderboard: List<LeaderboardItem>,
+    leaderboard: List<LeaderboardEntry>,
     leaderboardMode: LeaderboardMode,
     isLoading: Boolean,
 ) {
@@ -245,7 +245,7 @@ private fun ColumnScope.TrophyDetails(
 
 private fun getTrophyDetailItem(
     position: Int,
-    leaderboard: List<LeaderboardItem>,
+    leaderboard: List<LeaderboardEntry>,
 ): Pair<String, Long> {
     val users = leaderboard.filter { it.position == position }
     return if (users.isNotEmpty()) {
@@ -255,7 +255,7 @@ private fun getTrophyDetailItem(
     }
 }
 
-private fun getTrophyDetailsUserTexts(user: List<LeaderboardItem>): String =
+private fun getTrophyDetailsUserTexts(user: List<LeaderboardEntry>): String =
     when (user.size) {
         1 -> user[0].username
         else ->
