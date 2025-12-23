@@ -61,10 +61,7 @@ fun TournamentData.toUiTournament(): Tournament {
             prizeMap.entries
                 .sortedBy { it.key }
                 .map { (rank, amount) ->
-                    PrizeBreakdownRow(
-                        rankLabel = formatRankLabel(rank),
-                        amountLabel = "₹$amount",
-                    )
+                    PrizeBreakdownRow(rank = rank, amount = amount)
                 },
     )
 }
@@ -122,7 +119,7 @@ private fun formatScheduleLabel(
     return "$monthName $day$daySuffix • $startTime-$endTime"
 }
 
-private fun getOrdinalSuffix(number: Int): String =
+internal fun getOrdinalSuffix(number: Int): String =
     when {
         number in ORDINAL_TEEN_START..ORDINAL_TEEN_END -> "th"
         number % ORDINAL_DIVISOR == ORDINAL_FIRST -> "st"
@@ -140,5 +137,3 @@ private fun formatParticipantsLabel(
         is TournamentStatus.Live -> "$count Playing"
         is TournamentStatus.Upcoming -> "$count Registered"
     }
-
-private fun formatRankLabel(rank: Int): String = "$rank${getOrdinalSuffix(rank)} Place"
