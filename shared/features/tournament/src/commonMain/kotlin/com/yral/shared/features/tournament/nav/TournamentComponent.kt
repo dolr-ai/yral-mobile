@@ -39,6 +39,8 @@ internal class DefaultTournamentComponent(
             is TournamentViewModel.Event.RegistrationFailed -> {
                 // Handle registration failure - could show an error dialog
             }
+            is TournamentViewModel.Event.NavigateToLeaderboard -> {
+            }
         }
     }
 }

@@ -12,7 +12,11 @@ import com.yral.shared.features.tournament.domain.model.GetMyTournamentsRequest
 import com.yral.shared.features.tournament.domain.model.GetTournamentsRequest
 import com.yral.shared.features.tournament.domain.model.RegisterForTournamentRequest
 import com.yral.shared.features.tournament.domain.model.Tournament
+import com.yral.shared.features.tournament.domain.model.TournamentErrorCodes
+import com.yral.shared.features.tournament.domain.model.TournamentParticipationState
+import com.yral.shared.features.tournament.domain.model.TournamentStatus
 import com.yral.shared.features.tournament.domain.model.toUiTournament
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,6 +24,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 class TournamentViewModel(
     private val sessionManager: SessionManager,
@@ -32,6 +40,8 @@ class TournamentViewModel(
 
     private val eventChannel = Channel<Event>(Channel.BUFFERED)
     val eventsFlow: Flow<Event> = eventChannel.receiveAsFlow()
+    private var loadJob: Job? = null
+    private var loadRequestId = 0
 
     init {
         observeSessionState()
@@ -51,20 +61,36 @@ class TournamentViewModel(
     }
 
     fun loadTournaments() {
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, error = null) }
+        loadJob?.cancel()
+        val requestId = ++loadRequestId
+        loadJob =
+            viewModelScope.launch {
+                _state.update { it.copy(isLoading = true, error = null) }
 
-            when (_state.value.selectedTab) {
-                TournamentUiState.Tab.All -> loadAllTournaments()
-                TournamentUiState.Tab.History -> loadMyTournaments()
+                when (_state.value.selectedTab) {
+                    TournamentUiState.Tab.All -> loadAllTournaments(requestId)
+                    TournamentUiState.Tab.History -> loadMyTournaments(requestId)
+                }
             }
-        }
     }
 
-    private suspend fun loadAllTournaments() {
+    private fun isLatestRequest(requestId: Int): Boolean = requestId == loadRequestId
+
+    @OptIn(ExperimentalTime::class)
+    private suspend fun loadAllTournaments(requestId: Int) {
+        val today =
+            Clock.System
+                .now()
+                .toLocalDateTime(TimeZone.currentSystemDefault())
+                .date
+                .toString()
+        val principalId = sessionManager.userPrincipal
         getTournamentsUseCase
-            .invoke(GetTournamentsRequest())
+            .invoke(GetTournamentsRequest(date = today, principalId = principalId))
             .onSuccess { tournamentDataList ->
+                if (!isLatestRequest(requestId)) {
+                    return@onSuccess
+                }
                 val tournaments = tournamentDataList.map { it.toUiTournament() }
                 _state.update {
                     it.copy(
@@ -74,6 +100,9 @@ class TournamentViewModel(
                     )
                 }
             }.onFailure { error ->
+                if (!isLatestRequest(requestId)) {
+                    return@onFailure
+                }
                 _state.update {
                     it.copy(
                         tournaments = emptyList(),
@@ -84,14 +113,16 @@ class TournamentViewModel(
             }
     }
 
-    private suspend fun loadMyTournaments() {
+    private suspend fun loadMyTournaments(requestId: Int) {
         val principalId = sessionManager.userPrincipal
         if (principalId.isNullOrEmpty()) {
-            _state.update {
-                it.copy(
-                    tournaments = emptyList(),
-                    isLoading = false,
-                )
+            if (isLatestRequest(requestId)) {
+                _state.update {
+                    it.copy(
+                        tournaments = emptyList(),
+                        isLoading = false,
+                    )
+                }
             }
             return
         }
@@ -99,6 +130,9 @@ class TournamentViewModel(
         getMyTournamentsUseCase
             .invoke(GetMyTournamentsRequest(principalId))
             .onSuccess { tournamentDataList ->
+                if (!isLatestRequest(requestId)) {
+                    return@onSuccess
+                }
                 val tournaments = tournamentDataList.map { it.toUiTournament(isRegistered = true) }
                 _state.update {
                     it.copy(
@@ -108,6 +142,9 @@ class TournamentViewModel(
                     )
                 }
             }.onFailure { error ->
+                if (!isLatestRequest(requestId)) {
+                    return@onFailure
+                }
                 _state.update {
                     it.copy(
                         tournaments = emptyList(),
@@ -129,9 +166,30 @@ class TournamentViewModel(
             send(Event.Login)
             return
         }
+        if (_state.value.isRegistering) {
+            return
+        }
 
         viewModelScope.launch {
-            _state.update { it.copy(isRegistering = true, registrationError = null) }
+            _state.update { it.copy(isRegistering = true) }
+            val tokensRequired =
+                when (val state = tournament.participationState) {
+                    is TournamentParticipationState.JoinNowWithTokens -> state.tokensRequired
+                    is TournamentParticipationState.RegistrationRequired -> state.tokensRequired
+                    else -> 0
+                }
+            if (tokensRequired > 0) {
+                val currentBalance =
+                    sessionManager.readLatestSessionPropertyWithDefault(
+                        selector = { it.coinBalance },
+                        defaultValue = 0L,
+                    )
+                if (currentBalance < tokensRequired) {
+                    _state.update { it.copy(isRegistering = false) }
+                    send(Event.RegistrationFailed(code = TournamentErrorCodes.INSUFFICIENT_COINS, message = null))
+                    return@launch
+                }
+            }
 
             registerForTournamentUseCase
                 .invoke(
@@ -148,10 +206,9 @@ class TournamentViewModel(
                     _state.update {
                         it.copy(
                             isRegistering = false,
-                            registrationError = error,
                         )
                     }
-                    send(Event.RegistrationFailed(error.message))
+                    send(Event.RegistrationFailed(code = error.code, message = error.message))
                 }
         }
     }
@@ -175,7 +232,16 @@ class TournamentViewModel(
             return
         }
         // Navigate to tournament details or start playing
-        send(Event.NavigateToTournament(tournament.id))
+        if (tournament.status is TournamentStatus.Ended) {
+            send(Event.NavigateToLeaderboard(tournamentId = tournament.id))
+        } else {
+            when (tournament.participationState) {
+                is TournamentParticipationState.JoinNowWithTokens -> registerForTournament(tournament)
+                is TournamentParticipationState.RegistrationRequired -> registerForTournament(tournament)
+                TournamentParticipationState.JoinNow -> send(Event.NavigateToTournament(tournament.id))
+                else -> {}
+            }
+        }
     }
 
     fun onNoHistoryCtaClicked() {
@@ -191,7 +257,7 @@ class TournamentViewModel(
     }
 
     fun clearError() {
-        _state.update { it.copy(error = null, registrationError = null) }
+        _state.update { it.copy(error = null) }
     }
 
     private fun send(event: Event) {
@@ -205,9 +271,13 @@ class TournamentViewModel(
             val coinsPaid: Int,
         ) : Event()
         data class RegistrationFailed(
-            val message: String,
+            val code: TournamentErrorCodes,
+            val message: String?,
         ) : Event()
         data class NavigateToTournament(
+            val tournamentId: String,
+        ) : Event()
+        data class NavigateToLeaderboard(
             val tournamentId: String,
         ) : Event()
     }
