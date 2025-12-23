@@ -83,6 +83,8 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import yral_mobile.shared.app.generated.resources.Res
+import yral_mobile.shared.app.generated.resources.chat_nav
+import yral_mobile.shared.app.generated.resources.chat_nav_unselected
 import yral_mobile.shared.app.generated.resources.home_nav_selected
 import yral_mobile.shared.app.generated.resources.home_nav_unselected
 import yral_mobile.shared.app.generated.resources.leaderboard_nav_selected
@@ -465,8 +467,8 @@ private enum class HomeTab(
     CHAT(
         title = "Chat",
         categoryName = CategoryName.CHAT,
-        icon = Res.drawable.wallet_nav,
-        unSelectedIcon = Res.drawable.wallet_nav_unselected,
+        icon = Res.drawable.chat_nav,
+        unSelectedIcon = Res.drawable.chat_nav_unselected,
     ),
     UPLOAD_VIDEO(
         title = "UploadVideo",
