@@ -29,6 +29,21 @@ class AndroidShareService(
         }
     }
 
+    override suspend fun shareText(text: String) {
+        withContext(appDispatchers.main) {
+            val intent =
+                Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, text)
+                }
+            val chooser =
+                Intent.createChooser(intent, "Share Via").apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+            context.startActivity(chooser)
+        }
+    }
+
     @OptIn(ExperimentalCoilApi::class)
     private suspend fun downloadImage(imageUrl: String): File? =
         withContext(appDispatchers.network) {

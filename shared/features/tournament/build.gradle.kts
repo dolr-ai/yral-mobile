@@ -30,6 +30,9 @@ kotlin {
             implementation(projects.shared.libs.firebaseAuth)
             implementation(projects.shared.libs.http)
             implementation(projects.shared.libs.designsystem)
+            implementation(projects.shared.libs.sharing)
+            implementation(projects.shared.libs.routing.routesApi)
+            implementation(projects.shared.libs.routing.deeplinkEngine)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
