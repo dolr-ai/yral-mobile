@@ -13,6 +13,8 @@ import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
 import com.yral.shared.features.chat.domain.models.SendMessageResult
 
+private val ACTIVE_INFLUENCER_STATUSES = setOf("active", "coming_soon")
+
 fun InfluencerDto.toDomain(): Influencer =
     Influencer(
         id = id,
@@ -28,7 +30,10 @@ fun InfluencerDto.toDomain(): Influencer =
 
 fun InfluencersResponseDto.toDomainActiveOnly(): InfluencersPageResult {
     val rawCount = influencers.size
-    val activeInfluencers = influencers.filter { it.isActive }.map { it.toDomain() }
+    val activeInfluencers =
+        influencers
+            .filter { it.isActive in ACTIVE_INFLUENCER_STATUSES }
+            .map { it.toDomain() }
     val nextOffset =
         if (rawCount > 0 && offset + rawCount < total) {
             offset + rawCount

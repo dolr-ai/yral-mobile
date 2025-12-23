@@ -18,7 +18,7 @@ data class InfluencerDto(
     @SerialName("category")
     val category: String,
     @SerialName("is_active")
-    val isActive: Boolean,
+    val isActive: String,
     @SerialName("created_at")
     val createdAt: String,
     @SerialName("conversation_count")
