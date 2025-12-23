@@ -2,15 +2,24 @@ package com.yral.shared.features.tournament.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.tournament.domain.GetTournamentLeaderboardUseCase
 import com.yral.shared.features.tournament.domain.model.GetTournamentLeaderboardRequest
 import com.yral.shared.features.tournament.domain.model.LeaderboardRow
+import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4Params
+import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4UseCase
+import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
+import com.yral.shared.rust.service.utils.propicFromPrincipal
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -20,14 +29,18 @@ data class TournamentLeaderboardUiState(
     val prizeMap: Map<Int, Int> = emptyMap(),
     val isLoading: Boolean = false,
     val error: String? = null,
+    val isNavigating: Boolean = false,
 )
 
 class TournamentLeaderboardViewModel(
     private val getTournamentLeaderboardUseCase: GetTournamentLeaderboardUseCase,
     private val sessionManager: SessionManager,
+    private val getProfileDetailsV4UseCase: GetProfileDetailsV4UseCase,
 ) : ViewModel() {
     private val _state = MutableStateFlow(TournamentLeaderboardUiState())
     val state: StateFlow<TournamentLeaderboardUiState> = _state.asStateFlow()
+    private val eventChannel = Channel<Event>(Channel.BUFFERED)
+    val eventsFlow: Flow<Event> = eventChannel.receiveAsFlow()
 
     fun loadLeaderboard(tournamentId: String) {
         viewModelScope.launch {
@@ -53,4 +66,56 @@ class TournamentLeaderboardViewModel(
     }
 
     fun isCurrentUser(principalId: String): Boolean = principalId == sessionManager.userPrincipal
+
+    fun onUserClick(row: LeaderboardRow) {
+        if (_state.value.isNavigating) return // Prevent multiple clicks
+
+        if (isCurrentUser(row.principalId)) {
+            val canisterData =
+                CanisterData(
+                    canisterId = sessionManager.canisterID ?: getUserInfoServiceCanister(),
+                    userPrincipalId = row.principalId,
+                    profilePic = sessionManager.profilePic ?: propicFromPrincipal(row.principalId),
+                    username = sessionManager.username,
+                    isCreatedFromServiceCanister = sessionManager.isCreatedFromServiceCanister ?: false,
+                    isFollowing = false,
+                )
+            viewModelScope.launch { eventChannel.send(Event.OpenProfile(canisterData)) }
+            return
+        }
+
+        viewModelScope.launch {
+            sessionManager.userPrincipal?.let { principal ->
+                _state.update { it.copy(isNavigating = true) }
+                getProfileDetailsV4UseCase(
+                    parameter =
+                        GetProfileDetailsV4Params(
+                            principal = principal,
+                            targetPrincipal = row.principalId,
+                        ),
+                ).onSuccess { profileDetails ->
+                    val canisterData =
+                        CanisterData(
+                            canisterId = getUserInfoServiceCanister(),
+                            userPrincipalId = row.principalId,
+                            profilePic = profileDetails.profilePictureUrl ?: propicFromPrincipal(row.principalId),
+                            username = row.username,
+                            isCreatedFromServiceCanister = true,
+                            isFollowing = profileDetails.callerFollowsUser ?: false,
+                        )
+                    viewModelScope.launch { eventChannel.send(Event.OpenProfile(canisterData)) }
+                    _state.update { it.copy(isNavigating = false) }
+                }.onFailure { error ->
+                    Logger.e("TournamentLeaderboardNavigation") { "Error fetching profile details: $error" }
+                    _state.update { it.copy(isNavigating = false) }
+                }
+            }
+        }
+    }
+
+    sealed class Event {
+        data class OpenProfile(
+            val canisterData: CanisterData,
+        ) : Event()
+    }
 }

@@ -137,6 +137,7 @@ fun RootScreen(
                             participantsLabel = child.participantsLabel,
                             scheduleLabel = child.scheduleLabel,
                             onBack = rootComponent::onBackClicked,
+                            onOpenProfile = rootComponent::openProfile,
                         )
                     }
                 }
