@@ -337,6 +337,7 @@ def tournaments(request: Request):
                     tournament_entry["user_stats"] = {
                         "registered_at": reg_data.get("registered_at"),
                         "coins_paid": reg_data.get("coins_paid"),
+                        "diamonds": reg_data.get("diamonds", 0),
                         "tournament_wins": reg_data.get("tournament_wins", 0),
                         "tournament_losses": reg_data.get("tournament_losses", 0),
                         "status": reg_data.get("status")
@@ -483,10 +484,12 @@ def register_for_tournament(request: Request):
             # Deduct coins
             tx.update(user_ref, {"coins": firestore.Increment(-entry_cost)})
 
-            # Create registration
+            # Create registration with diamonds (5x entry cost)
+            initial_diamonds = entry_cost * 5
             tx.set(reg_ref, {
                 "registered_at": firestore.SERVER_TIMESTAMP,
                 "coins_paid": entry_cost,
+                "diamonds": initial_diamonds,
                 "tournament_wins": 0,
                 "tournament_losses": 0,
                 "status": "registered",
@@ -502,7 +505,7 @@ def register_for_tournament(request: Request):
                 "at": firestore.SERVER_TIMESTAMP
             })
 
-            return {"success": True, "entry_cost": entry_cost}
+            return {"success": True, "entry_cost": entry_cost, "diamonds": initial_diamonds}
 
         result = _register_tx(db().transaction())
 
@@ -523,7 +526,8 @@ def register_for_tournament(request: Request):
             "status": "registered",
             "tournament_id": tournament_id,
             "coins_paid": result["entry_cost"],
-            "coins_remaining": coins_remaining
+            "coins_remaining": coins_remaining,
+            "diamonds": result["diamonds"]
         }), 200
 
     except auth.InvalidIdTokenError:
@@ -607,6 +611,7 @@ def my_tournaments(request: Request):
                             "user_stats": {
                                 "registered_at": reg_data.get("registered_at"),
                                 "coins_paid": reg_data.get("coins_paid"),
+                                "diamonds": reg_data.get("diamonds", 0),
                                 "tournament_wins": tournament_wins,
                                 "tournament_losses": tournament_losses,
                                 "status": reg_data.get("status")
@@ -647,8 +652,15 @@ def tournament_vote(request: Request):
             "smiley": {...},
             "tournament_wins": 6,
             "tournament_losses": 3,
+            "diamonds": 124,
             "position": 15
         }
+
+    Diamond System:
+        - Diamonds are initialized at registration (entry_cost * 5)
+        - Win: +3 diamonds
+        - Loss: -1 diamond
+        - Cannot vote if diamonds = 0
     """
     try:
         if request.method != "POST":
@@ -710,6 +722,12 @@ def tournament_vote(request: Request):
             if not reg_snap.exists:
                 return {"error": "NOT_REGISTERED", "message": "You are not registered for this tournament"}
 
+            # Check diamond balance
+            reg_data = reg_snap.to_dict() or {}
+            current_diamonds = int(reg_data.get("diamonds") or 0)
+            if current_diamonds <= 0:
+                return {"error": "NO_DIAMONDS", "message": "You have no diamonds left. Cannot play anymore."}
+
             vote_snap = vote_ref.get(transaction=tx)
             if vote_snap.exists:
                 return {"error": "DUPLICATE_VOTE", "message": "You have already voted on this video"}
@@ -758,6 +776,8 @@ def tournament_vote(request: Request):
                 return error_response(404, error_code, tx_result["message"])
             elif error_code == "NOT_REGISTERED":
                 return error_response(403, error_code, tx_result["message"])
+            elif error_code == "NO_DIAMONDS":
+                return error_response(403, error_code, tx_result["message"])
             else:
                 return error_response(409, error_code, tx_result["message"])
 
@@ -771,15 +791,18 @@ def tournament_vote(request: Request):
             "updated_at": firestore.SERVER_TIMESTAMP
         })
 
-        # Update user's tournament stats
+        # Update user's tournament stats and diamonds
+        # Win: +3 diamonds, Loss: -1 diamond
         if outcome == "WIN":
             reg_ref.update({
                 "tournament_wins": firestore.Increment(1),
+                "diamonds": firestore.Increment(3),
                 "updated_at": firestore.SERVER_TIMESTAMP
             })
         else:
             reg_ref.update({
                 "tournament_losses": firestore.Increment(1),
+                "diamonds": firestore.Increment(-1),
                 "updated_at": firestore.SERVER_TIMESTAMP
             })
 
@@ -788,6 +811,7 @@ def tournament_vote(request: Request):
         reg_data = updated_reg.to_dict() or {}
         tournament_wins = int(reg_data.get("tournament_wins") or 0)
         tournament_losses = int(reg_data.get("tournament_losses") or 0)
+        diamonds = int(reg_data.get("diamonds") or 0)
 
         # Calculate position
         top_rows = _compute_tournament_leaderboard(tournament_id, limit=10)
@@ -807,6 +831,7 @@ def tournament_vote(request: Request):
             },
             "tournament_wins": tournament_wins,
             "tournament_losses": tournament_losses,
+            "diamonds": diamonds,
             "position": position
         }), 200
 
