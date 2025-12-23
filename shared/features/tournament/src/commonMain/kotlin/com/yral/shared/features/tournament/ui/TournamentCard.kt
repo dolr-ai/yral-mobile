@@ -461,7 +461,7 @@ private fun TournamentCardEndedPreview() {
 
 private fun previewPrizeRows(): List<PrizeBreakdownRow> =
     listOf(
-        PrizeBreakdownRow(rankLabel = "1st Place", amountLabel = "₹10,000 worth of"),
-        PrizeBreakdownRow(rankLabel = "2nd Place", amountLabel = "₹5,000 in"),
-        PrizeBreakdownRow(rankLabel = "3rd Place", amountLabel = "₹4,000 in"),
+        PrizeBreakdownRow(rank = 1, amount = 10000),
+        PrizeBreakdownRow(rank = 2, amount = 5000),
+        PrizeBreakdownRow(rank = 3, amount = 4000),
     )

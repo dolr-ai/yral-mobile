@@ -157,7 +157,10 @@ fun TournamentScreen(
             onDismissRequest = viewModel::closePrizeBreakdown,
             status = selected.status,
             participationState = selected.participationState,
-            onCtaClicked = { viewModel.onTournamentCtaClick(selected) },
+            onCtaClicked = {
+                viewModel.closePrizeBreakdown()
+                viewModel.onTournamentCtaClick(selected)
+            },
         )
     }
 }
