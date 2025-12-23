@@ -19,6 +19,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,6 +43,7 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.angledGradientBackground
 import com.yral.shared.libs.designsystem.theme.appTypoGraphy
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
@@ -59,7 +62,9 @@ import yral_mobile.shared.features.tournament.generated.resources.ic_users
 import yral_mobile.shared.features.tournament.generated.resources.starts_in
 import yral_mobile.shared.features.tournament.generated.resources.win_upto_prize
 import kotlin.time.Clock
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import yral_mobile.shared.features.tournament.generated.resources.Res as TournamentRes
 
@@ -211,10 +216,22 @@ fun TournamentCard(
 }
 
 @Composable
+@OptIn(ExperimentalTime::class)
 private fun StatusChip(
     status: TournamentStatus,
     modifier: Modifier = Modifier,
 ) {
+    val now by
+        produceState(initialValue = Clock.System.now(), status) {
+            if (status is TournamentStatus.Ended) {
+                return@produceState
+            }
+            while (true) {
+                value = Clock.System.now()
+                delay(1.seconds)
+            }
+        }
+
     val bg =
         when (status) {
             is TournamentStatus.Live -> YralColors.Red400
@@ -224,8 +241,16 @@ private fun StatusChip(
 
     val label =
         when (status) {
-            is TournamentStatus.Live -> stringResource(TournamentRes.string.ends_in, "temp")
-            is TournamentStatus.Upcoming -> stringResource(TournamentRes.string.starts_in, "temp")
+            is TournamentStatus.Live ->
+                stringResource(
+                    TournamentRes.string.ends_in,
+                    formatRemainingDuration(status.endTime - now),
+                )
+            is TournamentStatus.Upcoming ->
+                stringResource(
+                    TournamentRes.string.starts_in,
+                    formatRemainingDuration(status.startTime - now),
+                )
             TournamentStatus.Ended -> stringResource(TournamentRes.string.ended)
         }
 
@@ -252,6 +277,21 @@ private fun StatusChip(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+    }
+}
+
+@Suppress("MagicNumber")
+private fun formatRemainingDuration(duration: Duration): String {
+    val totalSeconds = duration.inWholeSeconds.coerceAtLeast(0)
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+    fun Long.twoDigits(): String = this.toString().padStart(2, '0')
+
+    return when {
+        hours > 0 -> "${hours.twoDigits()}:${minutes.twoDigits()}:${seconds.twoDigits()}"
+        minutes > 0 -> "$minutes:${seconds.twoDigits()}"
+        else -> seconds.toString()
     }
 }
 
