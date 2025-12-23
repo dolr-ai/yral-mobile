@@ -100,6 +100,22 @@ def _time_left_ms(end_epoch_ms: int) -> int:
     return max(0, end_epoch_ms - now_ms)
 
 
+def _compute_status(start_epoch_ms: int, end_epoch_ms: int) -> str:
+    """Compute tournament status based on current time vs epochs.
+
+    - If current time < start_epoch_ms: scheduled
+    - If start_epoch_ms <= current time <= end_epoch_ms: live
+    - If current time > end_epoch_ms: ended
+    """
+    now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+    if now_ms < start_epoch_ms:
+        return "scheduled"
+    elif now_ms <= end_epoch_ms:
+        return "live"
+    else:
+        return "ended"
+
+
 # ─────────────────────  TOURNAMENT HELPERS  ────────────────────────
 def _get_tournament(tournament_id: str) -> tuple[Any, dict]:
     """Fetch tournament doc. Returns (snapshot, data). Raises if not found."""
@@ -300,16 +316,23 @@ def tournaments(request: Request):
                 valid = [s.value for s in TournamentStatus]
                 return error_response(400, "INVALID_STATUS", f"status must be one of: {valid}")
 
-        # Query tournaments
+        # Query tournaments for the date (status is computed dynamically)
         query = db().collection("tournaments").where("date", "==", date_filter)
-        if status_filter:
-            query = query.where("status", "==", status_filter)
-
         snaps = list(query.stream())
 
         result = []
         for snap in snaps:
             t_data = snap.to_dict() or {}
+
+            # Compute status dynamically based on current time vs epochs
+            start_epoch_ms = t_data.get("start_epoch_ms", 0)
+            end_epoch_ms = t_data.get("end_epoch_ms", 0)
+            computed_status = _compute_status(start_epoch_ms, end_epoch_ms)
+
+            # Filter by status if provided
+            if status_filter and computed_status != status_filter:
+                continue
+
             participant_count = _get_participant_count(snap.id)
 
             tournament_entry = {
@@ -318,11 +341,11 @@ def tournaments(request: Request):
                 "date": t_data.get("date"),
                 "start_time": t_data.get("start_time"),
                 "end_time": t_data.get("end_time"),
-                "start_epoch_ms": t_data.get("start_epoch_ms"),
-                "end_epoch_ms": t_data.get("end_epoch_ms"),
+                "start_epoch_ms": start_epoch_ms,
+                "end_epoch_ms": end_epoch_ms,
                 "entry_cost": t_data.get("entryCost"),
                 "total_prize_pool": t_data.get("totalPrizePool"),
-                "status": t_data.get("status"),
+                "status": computed_status,
                 "prize_map": t_data.get("prizeMap", {}),
                 "participant_count": participant_count,
                 "is_registered": False,
@@ -345,11 +368,12 @@ def tournaments(request: Request):
 
             result.append(tournament_entry)
 
-        # Sort: live/scheduled first, then ended; within each group sort by start_time
+        # Sort: live first, then scheduled, then ended; within each group sort by start_time
         def sort_key(t):
             status = t.get("status", "").lower()
-            is_ended = status in ["ended", "settled", "cancelled"]
-            return (is_ended, t.get("start_time", ""))
+            # Priority: live=0, scheduled=1, ended=2
+            status_priority = {"live": 0, "scheduled": 1, "ended": 2}.get(status, 3)
+            return (status_priority, t.get("start_time", ""))
 
         result.sort(key=sort_key)
 
@@ -464,10 +488,14 @@ def register_for_tournament(request: Request):
                 return {"error": "TOURNAMENT_NOT_FOUND", "message": f"Tournament {tournament_id} not found"}
 
             t_data = t_snap.to_dict() or {}
-            status = t_data.get("status")
             entry_cost = int(t_data.get("entryCost") or 0)
 
-            if status not in [TournamentStatus.SCHEDULED.value, TournamentStatus.LIVE.value]:
+            # Compute status dynamically from epochs
+            start_epoch_ms = t_data.get("start_epoch_ms", 0)
+            end_epoch_ms = t_data.get("end_epoch_ms", 0)
+            status = _compute_status(start_epoch_ms, end_epoch_ms)
+
+            if status not in ["scheduled", "live"]:
                 return {"error": "TOURNAMENT_NOT_OPEN", "message": f"Tournament is {status}, registration closed"}
 
             user_snap = user_ref.get(transaction=tx)
@@ -595,17 +623,22 @@ def my_tournaments(request: Request):
                         t_data = t_snap.to_dict() or {}
                         participant_count = _get_participant_count(t_snap.id)
 
+                        # Compute status dynamically
+                        start_epoch_ms = t_data.get("start_epoch_ms", 0)
+                        end_epoch_ms = t_data.get("end_epoch_ms", 0)
+                        computed_status = _compute_status(start_epoch_ms, end_epoch_ms)
+
                         result.append({
                             "id": t_snap.id,
                             "title": t_data.get("title", "SMILEY SHOWDOWN"),
                             "date": t_data.get("date"),
                             "start_time": t_data.get("start_time"),
                             "end_time": t_data.get("end_time"),
-                            "start_epoch_ms": t_data.get("start_epoch_ms"),
-                            "end_epoch_ms": t_data.get("end_epoch_ms"),
+                            "start_epoch_ms": start_epoch_ms,
+                            "end_epoch_ms": end_epoch_ms,
                             "entry_cost": t_data.get("entryCost"),
                             "total_prize_pool": t_data.get("totalPrizePool"),
-                            "status": t_data.get("status"),
+                            "status": computed_status,
                             "prize_map": t_data.get("prizeMap", {}),
                             "participant_count": participant_count,
                             "user_stats": {
@@ -713,9 +746,13 @@ def tournament_vote(request: Request):
                 return {"error": "TOURNAMENT_NOT_FOUND", "message": f"Tournament {tournament_id} not found"}
 
             t_data = t_snap.to_dict() or {}
-            status = t_data.get("status")
 
-            if status != TournamentStatus.LIVE.value:
+            # Compute status dynamically from epochs
+            start_epoch_ms = t_data.get("start_epoch_ms", 0)
+            end_epoch_ms = t_data.get("end_epoch_ms", 0)
+            status = _compute_status(start_epoch_ms, end_epoch_ms)
+
+            if status != "live":
                 return {"error": "TOURNAMENT_NOT_LIVE", "message": f"Tournament is {status}, voting not allowed"}
 
             reg_snap = reg_ref.get(transaction=tx)
