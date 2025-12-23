@@ -3,6 +3,7 @@ package com.yral.shared.features.tournament.domain.model
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -10,7 +11,7 @@ import kotlin.time.Instant
  * Maps API TournamentData to UI Tournament model.
  */
 @OptIn(ExperimentalTime::class)
-fun TournamentData.toUiTournament(isRegistered: Boolean = false): Tournament {
+fun TournamentData.toUiTournament(): Tournament {
     val startTime = Instant.fromEpochMilliseconds(startEpochMs)
     val endTime = Instant.fromEpochMilliseconds(endEpochMs)
     val currentTime = Clock.System.now()
@@ -23,9 +24,17 @@ fun TournamentData.toUiTournament(isRegistered: Boolean = false): Tournament {
 
     val participationState =
         when {
-            isRegistered || userStats != null -> {
+            userStats != null -> {
                 when (tournamentStatus) {
                     is TournamentStatus.Live -> TournamentParticipationState.JoinNow
+                    is TournamentStatus.Upcoming -> {
+                        val timeLeft = startTime - currentTime
+                        if (timeLeft <= 10.minutes) {
+                            TournamentParticipationState.JoinNowDisabled
+                        } else {
+                            TournamentParticipationState.Registered
+                        }
+                    }
                     else -> TournamentParticipationState.Registered
                 }
             }

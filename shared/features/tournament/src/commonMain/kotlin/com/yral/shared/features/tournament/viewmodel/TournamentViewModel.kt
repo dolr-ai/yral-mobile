@@ -13,6 +13,7 @@ import com.yral.shared.features.tournament.domain.model.GetMyTournamentsRequest
 import com.yral.shared.features.tournament.domain.model.GetTournamentsRequest
 import com.yral.shared.features.tournament.domain.model.RegisterForTournamentRequest
 import com.yral.shared.features.tournament.domain.model.Tournament
+import com.yral.shared.features.tournament.domain.model.TournamentData
 import com.yral.shared.features.tournament.domain.model.TournamentErrorCodes
 import com.yral.shared.features.tournament.domain.model.TournamentParticipationState
 import com.yral.shared.features.tournament.domain.model.TournamentStatus
@@ -24,12 +25,15 @@ import com.yral.shared.libs.sharing.LinkInput
 import com.yral.shared.libs.sharing.ShareService
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class TournamentViewModel(
@@ -41,6 +45,9 @@ class TournamentViewModel(
     private val urlBuilder: UrlBuilder,
     private val linkGenerator: LinkGenerator,
 ) : ViewModel() {
+    private val tournamentDataListFlow: MutableStateFlow<List<TournamentData>> =
+        MutableStateFlow(emptyList())
+
     private val _state: MutableStateFlow<TournamentUiState> = MutableStateFlow(TournamentUiState())
     val state: StateFlow<TournamentUiState> = _state
 
@@ -52,7 +59,40 @@ class TournamentViewModel(
     init {
         observeSessionState()
         loadTournaments()
+        tournamentListUpdater()
     }
+
+    @OptIn(ExperimentalTime::class)
+    private fun tournamentListUpdater() {
+        viewModelScope.launch {
+            tournamentDataListFlow.collectLatest { tournamentDataList ->
+                while (true) {
+                    val currentTimeMs = Clock.System.now().toEpochMilliseconds()
+                    val tournaments = tournamentDataList.map { it.toUiTournament() }
+                    _state.update { it.copy(tournaments = tournaments) }
+
+                    val nextBoundaryMs = findNextBoundaryTime(tournamentDataList, currentTimeMs)
+                    if (nextBoundaryMs == null) {
+                        break
+                    }
+
+                    val delayMs = nextBoundaryMs - currentTimeMs
+                    if (delayMs > 0) {
+                        delay(delayMs)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun findNextBoundaryTime(
+        tournamentDataList: List<TournamentData>,
+        currentTimeMs: Long,
+    ): Long? =
+        tournamentDataList
+            .flatMap { listOf(it.startEpochMs, it.endEpochMs) }
+            .filter { it > currentTimeMs }
+            .minOrNull()
 
     private fun observeSessionState() {
         viewModelScope.launch {
@@ -91,10 +131,9 @@ class TournamentViewModel(
                 if (!isLatestRequest(requestId)) {
                     return@onSuccess
                 }
-                val tournaments = tournamentDataList.map { it.toUiTournament() }
+                tournamentDataListFlow.value = tournamentDataList
                 _state.update {
                     it.copy(
-                        tournaments = tournaments,
                         isLoading = false,
                         error = null,
                     )
@@ -103,9 +142,9 @@ class TournamentViewModel(
                 if (!isLatestRequest(requestId)) {
                     return@onFailure
                 }
+                tournamentDataListFlow.value = emptyList()
                 _state.update {
                     it.copy(
-                        tournaments = emptyList(),
                         isLoading = false,
                         error = error,
                     )
@@ -133,10 +172,9 @@ class TournamentViewModel(
                 if (!isLatestRequest(requestId)) {
                     return@onSuccess
                 }
-                val tournaments = tournamentDataList.map { it.toUiTournament(isRegistered = true) }
+                tournamentDataListFlow.value = tournamentDataList
                 _state.update {
                     it.copy(
-                        tournaments = tournaments,
                         isLoading = false,
                         error = null,
                     )
@@ -146,8 +184,8 @@ class TournamentViewModel(
                     return@onFailure
                 }
                 _state.update {
+                    tournamentDataListFlow.value = emptyList()
                     it.copy(
-                        tournaments = emptyList(),
                         isLoading = false,
                         error = error,
                     )
@@ -186,7 +224,12 @@ class TournamentViewModel(
                     )
                 if (currentBalance < tokensRequired) {
                     _state.update { it.copy(isRegistering = false) }
-                    send(Event.RegistrationFailed(code = TournamentErrorCodes.INSUFFICIENT_COINS, message = null))
+                    send(
+                        Event.RegistrationFailed(
+                            code = TournamentErrorCodes.INSUFFICIENT_COINS,
+                            message = null,
+                        ),
+                    )
                     return@launch
                 }
             }
@@ -253,8 +296,16 @@ class TournamentViewModel(
             send(Event.NavigateToLeaderboard(tournamentId = tournament.id))
         } else {
             when (tournament.participationState) {
-                is TournamentParticipationState.JoinNowWithTokens -> registerForTournament(tournament)
-                is TournamentParticipationState.RegistrationRequired -> registerForTournament(tournament)
+                is TournamentParticipationState.JoinNowWithTokens ->
+                    registerForTournament(
+                        tournament,
+                    )
+
+                is TournamentParticipationState.RegistrationRequired ->
+                    registerForTournament(
+                        tournament,
+                    )
+
                 TournamentParticipationState.JoinNow -> send(Event.NavigateToTournament(tournament.id))
                 else -> {}
             }
@@ -287,13 +338,16 @@ class TournamentViewModel(
             val tournamentId: String,
             val coinsPaid: Int,
         ) : Event()
+
         data class RegistrationFailed(
             val code: TournamentErrorCodes,
             val message: String?,
         ) : Event()
+
         data class NavigateToTournament(
             val tournamentId: String,
         ) : Event()
+
         data class NavigateToLeaderboard(
             val tournamentId: String,
         ) : Event()

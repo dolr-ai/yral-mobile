@@ -15,9 +15,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.paint
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.yral.shared.features.tournament.domain.model.TournamentParticipationState
@@ -38,6 +40,8 @@ import yral_mobile.shared.features.tournament.generated.resources.register_with_
 import yral_mobile.shared.features.tournament.generated.resources.registered
 import yral_mobile.shared.features.tournament.generated.resources.view_leaderboard
 import yral_mobile.shared.features.tournament.generated.resources.yral_coin
+import yral_mobile.shared.libs.designsystem.generated.resources.pink_gradient_background_disabled
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
@@ -63,7 +67,6 @@ internal fun TournamentCtaButton(
                         else ->
                             when (participationState) {
                                 TournamentParticipationState.JoinNow,
-                                TournamentParticipationState.JoinNowDisabled,
                                 is TournamentParticipationState.JoinNowWithTokens,
                                 -> {
                                     Modifier.angledGradientBackground(
@@ -71,6 +74,12 @@ internal fun TournamentCtaButton(
                                         colorStops = tournamentPinkGradientStops(),
                                         angleConvention = GradientAngleConvention.CssDegrees,
                                         lengthMode = GradientLengthMode.Diagonal,
+                                    )
+                                }
+                                TournamentParticipationState.JoinNowDisabled -> {
+                                    Modifier.paint(
+                                        painter = painterResource(DesignRes.drawable.pink_gradient_background_disabled),
+                                        contentScale = ContentScale.FillBounds,
                                     )
                                 }
 
@@ -126,7 +135,13 @@ internal fun TournamentCtaButton(
                 text = ctaLabel(status, participationState),
                 style =
                     if (labelBrush == null) {
-                        labelStyle.copy(color = YralColors.NeutralIconsActive)
+                        val color =
+                            if (participationState is TournamentParticipationState.JoinNowDisabled) {
+                                YralColors.Pink100
+                            } else {
+                                YralColors.NeutralIconsActive
+                            }
+                        labelStyle.copy(color = color)
                     } else {
                         labelStyle.copy(brush = labelBrush)
                     },

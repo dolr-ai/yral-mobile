@@ -290,8 +290,8 @@ private fun formatRemainingDuration(duration: Duration): String {
 
     return when {
         hours > 0 -> "${hours.twoDigits()}:${minutes.twoDigits()}:${seconds.twoDigits()}"
-        minutes > 0 -> "$minutes:${seconds.twoDigits()}"
-        else -> seconds.toString()
+        minutes > 0 -> "${minutes.twoDigits()}:${seconds.twoDigits()}"
+        else -> "${minutes.twoDigits()}:${seconds.twoDigits()}"
     }
 }
 
