@@ -5,15 +5,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,9 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -35,7 +31,6 @@ import com.yral.shared.features.chat.nav.wall.ChatWallComponent
 import com.yral.shared.features.chat.viewmodel.ChatWallViewModel
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralButton
-import com.yral.shared.libs.designsystem.component.getSVGImageModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 
@@ -78,6 +73,7 @@ fun ChatWallScreen(
                     InfluencerCard(
                         influencer = influencer,
                         onClick = { component.openConversation(influencer.id) },
+                        style = influencerCardStyles[index % influencerCardStyles.size],
                     )
                 }
             }
@@ -90,8 +86,10 @@ fun ChatWallScreen(
 private fun InfluencerCard(
     influencer: Influencer,
     onClick: () -> Unit,
+    style: InfluencerCardStyle,
 ) {
     val cardShape = MaterialTheme.shapes.medium
+    val gradientStartTransparent = style.gradientStart.copy(alpha = 0f)
 
     Box(
         modifier =
@@ -114,6 +112,37 @@ private fun InfluencerCard(
                     .fillMaxSize()
                     .clip(cardShape),
         )
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .clip(cardShape),
+        ) {
+            Spacer(modifier = Modifier.weight(ChatWallScreenConstants.TOP_FILL_WEIGHT))
+            Box(
+                modifier =
+                    Modifier
+                        .weight(ChatWallScreenConstants.GRADIENT_WEIGHT)
+                        .fillMaxWidth()
+                        .background(
+                            brush =
+                                Brush.verticalGradient(
+                                    colors =
+                                        listOf(
+                                            gradientStartTransparent,
+                                            style.gradientEnd,
+                                        ),
+                                ),
+                        ),
+            )
+            Box(
+                modifier =
+                    Modifier
+                        .weight(ChatWallScreenConstants.SOLID_WEIGHT)
+                        .fillMaxWidth()
+                        .background(style.solidColor),
+            )
+        }
         Column(
             modifier =
                 Modifier
@@ -177,4 +206,7 @@ private fun InfluencerCard(
 @Suppress("MagicNumber")
 object ChatWallScreenConstants {
     const val CARD_ASPECT_RATIO = 0.75f
+    const val TOP_FILL_WEIGHT = 40f
+    const val GRADIENT_WEIGHT = 40f
+    const val SOLID_WEIGHT = 20f
 }
