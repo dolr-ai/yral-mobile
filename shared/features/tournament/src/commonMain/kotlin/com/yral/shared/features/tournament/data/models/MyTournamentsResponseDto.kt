@@ -28,6 +28,8 @@ sealed class MyTournamentsResponseDto {
 data class MyTournamentDto(
     @SerialName("id")
     val id: String,
+    @SerialName("title")
+    val title: String,
     @SerialName("date")
     val date: String,
     @SerialName("start_time")
@@ -46,6 +48,8 @@ data class MyTournamentDto(
     val status: String,
     @SerialName("prize_map")
     val prizeMap: Map<String, Int>,
+    @SerialName("participant_count")
+    val participantCount: Int = 0,
     @SerialName("user_stats")
     val userStats: UserStatsDto,
 )
@@ -75,6 +79,7 @@ fun MyTournamentsResponseDto.toTournamentDataList(): Result<List<TournamentData>
 fun MyTournamentDto.toTournamentData(): TournamentData =
     TournamentData(
         id = id,
+        title = title,
         date = date,
         startTime = startTime,
         endTime = endTime,
@@ -88,7 +93,7 @@ fun MyTournamentDto.toTournamentData(): TournamentData =
                 .mapNotNull { (key, value) ->
                     key.toIntOrNull()?.let { it to value }
                 }.toMap(),
-        participantCount = 0,
+        participantCount = participantCount,
         userStats =
             UserTournamentStats(
                 coinsPaid = userStats.coinsPaid ?: 0,

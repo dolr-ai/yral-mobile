@@ -42,7 +42,7 @@ fun TournamentData.toUiTournament(isRegistered: Boolean = false): Tournament {
 
     return Tournament(
         id = id,
-        title = "SMILEY SHOWDOWN",
+        title = title,
         subtitle = "Win up to ₹$totalPrizePool",
         participantsLabel = participantsLabel,
         scheduleLabel = scheduleLabel,
