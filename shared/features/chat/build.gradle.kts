@@ -1,5 +1,3 @@
-import org.gradle.kotlin.dsl.implementation
-
 plugins {
     alias(libs.plugins.yral.shared.feature)
     alias(libs.plugins.yral.android.feature)
@@ -22,9 +20,14 @@ kotlin {
             implementation(projects.shared.libs.coroutinesX)
             implementation(projects.shared.libs.featureFlag)
             implementation(projects.shared.libs.preferences)
+            implementation(projects.shared.libs.http)
+            implementation(projects.shared.libs.arch)
 
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.io.core)
+            implementation(libs.kotlinx.datetime)
             implementation(libs.androidx.lifecycle.viewmodel)
+            implementation(libs.androidx.paging.common)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
