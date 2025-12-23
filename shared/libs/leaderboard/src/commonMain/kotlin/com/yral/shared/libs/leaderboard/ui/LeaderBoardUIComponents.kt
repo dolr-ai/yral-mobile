@@ -18,6 +18,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -34,6 +35,7 @@ import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
 import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import com.yral.shared.libs.designsystem.windowInfo.rememberScreenFoldStateProvider
 import com.yral.shared.libs.leaderboard.model.RewardCurrency
 import com.yral.shared.libs.leaderboard.ui.main.LeaderboardHelpers
@@ -43,6 +45,7 @@ import com.yral.shared.libs.leaderboard.ui.main.LeaderboardUiConstants.LEADERBOA
 import com.yral.shared.libs.leaderboard.ui.main.LeaderboardUiConstants.LEADERBOARD_ROW_WEIGHTS
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import yral_mobile.shared.libs.designsystem.generated.resources.bitcoin
 import yral_mobile.shared.libs.designsystem.generated.resources.yral
 import yral_mobile.shared.libs.leaderboard.generated.resources.Res
@@ -380,6 +383,7 @@ fun LeaderboardReward(
     reward: Double?,
     isBackgroundVisible: Boolean,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
+    backgroundColor: Color = YralColors.GameRewardChipBackground,
 ) {
     val rewardIcon =
         when (rewardCurrency) {
@@ -401,7 +405,7 @@ fun LeaderboardReward(
             modifier
                 .height(24.dp)
                 .background(
-                    color = if (isBackgroundVisible) YralColors.GameRewardChipBackground else Color.Transparent,
+                    color = if (isBackgroundVisible) backgroundColor else Color.Transparent,
                     shape = RoundedCornerShape(size = 38.dp),
                 ).padding(start = 7.dp, top = 3.5.dp, end = 3.5.dp, bottom = 3.5.dp),
     ) {
@@ -433,3 +437,18 @@ private fun Double.toCurrencyString(currencyCode: String) =
             minimumFractionDigits = 2,
             maximumFractionDigits = 2,
         )
+
+@Suppress("UnusedPrivateMember")
+@Preview
+@Composable
+private fun LeaderboardRewardPreview() {
+    CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
+        LeaderboardReward(
+            modifier = Modifier,
+            rewardCurrency = RewardCurrency.BTC,
+            rewardCurrencyCode = "INR",
+            reward = 100.0,
+            isBackgroundVisible = true,
+        )
+    }
+}

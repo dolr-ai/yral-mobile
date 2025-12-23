@@ -49,6 +49,11 @@ internal class DefaultHomeComponent(
     componentContext: ComponentContext,
     private val openEditProfile: () -> Unit,
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
+    private val openTournamentLeaderboard: (
+        tournamentId: String,
+        participantsLabel: String,
+        scheduleLabel: String,
+    ) -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
     private val showLoginBottomSheet: (
         pageName: SignupPageName,
@@ -253,6 +258,9 @@ internal class DefaultHomeComponent(
         TournamentComponent(
             componentContext = componentContext,
             promptLogin = { homeViewModel.showSignupPrompt(true, it) },
+            navigateToLeaderboard = { tournamentId, participantsLabel, scheduleLabel ->
+                openTournamentLeaderboard(tournamentId, participantsLabel, scheduleLabel)
+            },
         )
 
     private fun uploadVideoComponent(componentContext: ComponentContext): UploadVideoRootComponent =

@@ -12,11 +12,17 @@ interface TournamentComponent {
             componentContext: ComponentContext,
             promptLogin: (pageName: SignupPageName) -> Unit,
             navigateToTournament: (tournamentId: String) -> Unit = {},
+            navigateToLeaderboard: (
+                tournamentId: String,
+                participantsLabel: String,
+                scheduleLabel: String,
+            ) -> Unit = { _, _, _ -> },
         ): TournamentComponent =
             DefaultTournamentComponent(
                 componentContext,
                 promptLogin,
                 navigateToTournament,
+                navigateToLeaderboard,
             )
     }
 }
@@ -25,6 +31,11 @@ internal class DefaultTournamentComponent(
     componentContext: ComponentContext,
     private val promptLogin: (pageName: SignupPageName) -> Unit,
     private val navigateToTournament: (tournamentId: String) -> Unit,
+    private val navigateToLeaderboard: (
+        tournamentId: String,
+        participantsLabel: String,
+        scheduleLabel: String,
+    ) -> Unit,
 ) : TournamentComponent,
     ComponentContext by componentContext {
     override fun processEvent(value: TournamentViewModel.Event) {
@@ -40,6 +51,11 @@ internal class DefaultTournamentComponent(
                 // Handle registration failure - could show an error dialog
             }
             is TournamentViewModel.Event.NavigateToLeaderboard -> {
+                navigateToLeaderboard(
+                    value.tournamentId,
+                    value.participantsLabel,
+                    value.scheduleLabel,
+                )
             }
         }
     }

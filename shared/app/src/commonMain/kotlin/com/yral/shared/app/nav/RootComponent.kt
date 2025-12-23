@@ -34,6 +34,12 @@ interface RootComponent {
 
     fun openProfile(userCanisterData: CanisterData)
 
+    fun openTournamentLeaderboard(
+        tournamentId: String,
+        participantsLabel: String,
+        scheduleLabel: String,
+    )
+
     fun showLoginBottomSheet(
         pageName: SignupPageName,
         loginBottomSheetType: LoginBottomSheetType,
@@ -56,6 +62,11 @@ interface RootComponent {
         ) : Child()
         class UserProfile(
             val component: ProfileMainComponent,
+        ) : Child()
+        class TournamentLeaderboard(
+            val tournamentId: String,
+            val participantsLabel: String,
+            val scheduleLabel: String,
         ) : Child()
     }
 
