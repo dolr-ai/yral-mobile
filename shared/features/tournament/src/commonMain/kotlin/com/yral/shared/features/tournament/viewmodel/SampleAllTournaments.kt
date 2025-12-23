@@ -15,7 +15,7 @@ internal fun sampleAllTournaments(): List<Tournament> =
         Tournament(
             id = "t1",
             title = "SMILY SHOWDOWN",
-            subtitle = "Win up to ₹10,000 in",
+            totalPrizePool = 10000,
             participantsLabel = "32 Playing",
             scheduleLabel = "Dec 4th • 6:00-6:30 pm",
             status = TournamentStatus.Live(Clock.System.now() + 10.minutes),
@@ -25,7 +25,7 @@ internal fun sampleAllTournaments(): List<Tournament> =
         Tournament(
             id = "t2",
             title = "SMILY SHOWDOWN",
-            subtitle = "Win up to ₹10,000 in",
+            totalPrizePool = 10000,
             participantsLabel = "15 Registered",
             scheduleLabel = "Dec 5th • 6:00-6:30 pm",
             status = TournamentStatus.Upcoming(Clock.System.now() + 10.minutes),
@@ -35,7 +35,7 @@ internal fun sampleAllTournaments(): List<Tournament> =
         Tournament(
             id = "t3",
             title = "SMILY SHOWDOWN",
-            subtitle = "Win up to ₹10,000 in",
+            totalPrizePool = 10000,
             participantsLabel = "15 Participants",
             scheduleLabel = "Dec 5th • 6:00-6:30 pm",
             status = TournamentStatus.Ended,
@@ -49,7 +49,7 @@ internal fun sampleHistoryTournaments(): List<Tournament> =
         Tournament(
             id = "h1",
             title = "SMILY SHOWDOWN",
-            subtitle = "Win up to ₹10,000 in",
+            totalPrizePool = 10000,
             participantsLabel = "15 Participants",
             scheduleLabel = "Dec 5th • 6:00-6:30 pm",
             status = TournamentStatus.Ended,
