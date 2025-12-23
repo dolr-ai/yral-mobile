@@ -50,4 +50,5 @@
     <string name="claim_prize">Claim Prize</string>
     <string name="tournament_fail_title">So Close... Try Again Tomorrow!</string>
     <string name="tournament_fail_body">You finished at Rank #%1$d.\nCome back tomorrow at %2$s\nand give it another shot.</string>
+    <string name="win_upto_prize">Win up to ₹%1$d</string>
 </resources>
