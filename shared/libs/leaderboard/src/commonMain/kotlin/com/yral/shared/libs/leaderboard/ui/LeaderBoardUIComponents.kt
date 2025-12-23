@@ -1,4 +1,4 @@
-package com.yral.shared.features.leaderboard.ui
+package com.yral.shared.libs.leaderboard.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -28,12 +28,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.yral.shared.features.leaderboard.domain.models.RewardCurrency
-import com.yral.shared.features.leaderboard.ui.main.LeaderboardHelpers
-import com.yral.shared.features.leaderboard.ui.main.LeaderboardMainScreenConstants
-import com.yral.shared.features.leaderboard.ui.main.LeaderboardMainScreenConstants.LEADERBOARD_HEADER_WEIGHTS
-import com.yral.shared.features.leaderboard.ui.main.LeaderboardMainScreenConstants.LEADERBOARD_HEADER_WEIGHTS_FOLD
-import com.yral.shared.features.leaderboard.ui.main.LeaderboardMainScreenConstants.LEADERBOARD_ROW_WEIGHTS
 import com.yral.shared.libs.CurrencyFormatter
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
@@ -41,16 +35,22 @@ import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.windowInfo.rememberScreenFoldStateProvider
+import com.yral.shared.libs.leaderboard.model.RewardCurrency
+import com.yral.shared.libs.leaderboard.ui.main.LeaderboardHelpers
+import com.yral.shared.libs.leaderboard.ui.main.LeaderboardUiConstants
+import com.yral.shared.libs.leaderboard.ui.main.LeaderboardUiConstants.LEADERBOARD_HEADER_WEIGHTS
+import com.yral.shared.libs.leaderboard.ui.main.LeaderboardUiConstants.LEADERBOARD_HEADER_WEIGHTS_FOLD
+import com.yral.shared.libs.leaderboard.ui.main.LeaderboardUiConstants.LEADERBOARD_ROW_WEIGHTS
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import yral_mobile.shared.features.leaderboard.generated.resources.Res
-import yral_mobile.shared.features.leaderboard.generated.resources.player
-import yral_mobile.shared.features.leaderboard.generated.resources.rank
-import yral_mobile.shared.features.leaderboard.generated.resources.rewards
-import yral_mobile.shared.features.leaderboard.generated.resources.wins
-import yral_mobile.shared.features.leaderboard.generated.resources.you
 import yral_mobile.shared.libs.designsystem.generated.resources.bitcoin
 import yral_mobile.shared.libs.designsystem.generated.resources.yral
+import yral_mobile.shared.libs.leaderboard.generated.resources.Res
+import yral_mobile.shared.libs.leaderboard.generated.resources.player
+import yral_mobile.shared.libs.leaderboard.generated.resources.rank
+import yral_mobile.shared.libs.leaderboard.generated.resources.rewards
+import yral_mobile.shared.libs.leaderboard.generated.resources.wins
+import yral_mobile.shared.libs.leaderboard.generated.resources.you
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Suppress("LongMethod", "MagicNumber")
@@ -306,7 +306,7 @@ private fun UserBriefProfileName(
         if (isCurrentUser) {
             stringResource(Res.string.you)
         } else {
-            name.take(LeaderboardMainScreenConstants.MAX_CHAR_OF_NAME).plus("...")
+            name.take(LeaderboardUiConstants.MAX_CHAR_OF_NAME).plus("...")
         }
     if (decorateCurrentUser) {
         Text(

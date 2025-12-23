@@ -1,4 +1,4 @@
-package com.yral.shared.features.leaderboard.ui.main
+package com.yral.shared.libs.leaderboard.ui.main
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

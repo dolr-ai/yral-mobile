@@ -1,4 +1,4 @@
-package com.yral.shared.features.leaderboard.ui.main
+package com.yral.shared.libs.leaderboard.ui.main
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -7,16 +7,16 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.DrawableResource
-import yral_mobile.shared.features.leaderboard.generated.resources.Res
-import yral_mobile.shared.features.leaderboard.generated.resources.bronze_border
-import yral_mobile.shared.features.leaderboard.generated.resources.bronze_ring
-import yral_mobile.shared.features.leaderboard.generated.resources.golden_border
-import yral_mobile.shared.features.leaderboard.generated.resources.golden_ring
-import yral_mobile.shared.features.leaderboard.generated.resources.silver_border
-import yral_mobile.shared.features.leaderboard.generated.resources.silver_ring
 import yral_mobile.shared.libs.designsystem.generated.resources.bronze_gradient
 import yral_mobile.shared.libs.designsystem.generated.resources.golden_gradient
 import yral_mobile.shared.libs.designsystem.generated.resources.silver_gradient
+import yral_mobile.shared.libs.leaderboard.generated.resources.Res
+import yral_mobile.shared.libs.leaderboard.generated.resources.bronze_border
+import yral_mobile.shared.libs.leaderboard.generated.resources.bronze_ring
+import yral_mobile.shared.libs.leaderboard.generated.resources.golden_border
+import yral_mobile.shared.libs.leaderboard.generated.resources.golden_ring
+import yral_mobile.shared.libs.leaderboard.generated.resources.silver_border
+import yral_mobile.shared.libs.leaderboard.generated.resources.silver_ring
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 object LeaderboardHelpers {
