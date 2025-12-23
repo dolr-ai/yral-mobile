@@ -15,6 +15,7 @@ import com.yral.shared.crashlytics.di.crashlyticsModule
 import com.yral.shared.data.di.commonDataModule
 import com.yral.shared.features.account.di.accountsModule
 import com.yral.shared.features.auth.di.authModule
+import com.yral.shared.features.chat.di.chatModule
 import com.yral.shared.features.feed.di.feedModule
 import com.yral.shared.features.game.di.gameModule
 import com.yral.shared.features.leaderboard.di.leaderboardModule
@@ -86,6 +87,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             uploadVideoModule,
             profileModule,
             walletModule,
+            chatModule,
         )
     }
 }

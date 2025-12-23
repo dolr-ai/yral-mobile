@@ -18,4 +18,5 @@ enum class ExceptionType {
     AUTH,
     FEED,
     DEEPLINK,
+    CHAT,
 }
