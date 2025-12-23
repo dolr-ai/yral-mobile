@@ -512,8 +512,8 @@ def register_for_tournament(request: Request):
             # Deduct coins
             tx.update(user_ref, {"coins": firestore.Increment(-entry_cost)})
 
-            # Create registration with diamonds (5x entry cost)
-            initial_diamonds = entry_cost * 5
+            # Create registration with diamonds (1.5x entry cost)
+            initial_diamonds = int(entry_cost * 1.5)
             tx.set(reg_ref, {
                 "registered_at": firestore.SERVER_TIMESTAMP,
                 "coins_paid": entry_cost,
@@ -690,8 +690,8 @@ def tournament_vote(request: Request):
         }
 
     Diamond System:
-        - Diamonds are initialized at registration (entry_cost * 5)
-        - Win: +3 diamonds
+        - Diamonds are initialized at registration (entry_cost * 1.5)
+        - Win: +1 diamond
         - Loss: -1 diamond
         - Cannot vote if diamonds = 0
     """
@@ -829,11 +829,11 @@ def tournament_vote(request: Request):
         })
 
         # Update user's tournament stats and diamonds
-        # Win: +3 diamonds, Loss: -1 diamond
+        # Win: +1 diamond, Loss: -1 diamond
         if outcome == "WIN":
             reg_ref.update({
                 "tournament_wins": firestore.Increment(1),
-                "diamonds": firestore.Increment(3),
+                "diamonds": firestore.Increment(1),
                 "updated_at": firestore.SERVER_TIMESTAMP
             })
         else:
