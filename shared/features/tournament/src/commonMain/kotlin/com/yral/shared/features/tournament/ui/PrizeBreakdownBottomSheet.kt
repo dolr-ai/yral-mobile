@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import com.yral.shared.features.tournament.domain.model.PrizeBreakdownRow
 import com.yral.shared.features.tournament.domain.model.TournamentParticipationState
 import com.yral.shared.features.tournament.domain.model.TournamentStatus
+import com.yral.shared.features.tournament.domain.model.getOrdinalSuffix
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.modifierx.conditional
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
@@ -90,9 +91,9 @@ internal fun PrizeBreakdownBottomSheet(
             Text(
                 text =
                     buildAnnotatedString {
-                        append("Top 10 players win ")
+                        append("Top ${rows.count()} players win ")
                         withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                            append("BTC rewards worth up to ₹10,000.")
+                            append("BTC rewards worth up to ₹${rows.maxOf { it.amount }}.")
                         }
                     },
                 style = LocalAppTopography.current.baseRegular,
@@ -157,7 +158,7 @@ private fun PrizeRow(
     ) {
         val textColor = if (isHighlighted) YralColors.Red400 else YralColors.NeutralTextPrimary
         Text(
-            text = row.rankLabel,
+            text = formatRankLabel(row.rank),
             style = LocalAppTopography.current.baseBold,
             color = textColor,
             maxLines = 1,
@@ -168,7 +169,7 @@ private fun PrizeRow(
             horizontalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             Text(
-                text = row.amountLabel,
+                text = "₹${row.amount}",
                 style = LocalAppTopography.current.baseBold,
                 color = textColor,
                 maxLines = 1,
@@ -189,6 +190,8 @@ private fun PrizeRow(
     }
 }
 
+private fun formatRankLabel(rank: Int): String = "$rank${getOrdinalSuffix(rank)} Place"
+
 @OptIn(ExperimentalTime::class)
 @Suppress("UnusedPrivateMember", "MagicNumber")
 @Preview
@@ -198,16 +201,16 @@ private fun PrizeBreakdownBottomSheetPreview() {
         PrizeBreakdownBottomSheet(
             rows =
                 listOf(
-                    PrizeBreakdownRow(rankLabel = "1st Place", amountLabel = "₹10,000 worth of"),
-                    PrizeBreakdownRow(rankLabel = "2nd Place", amountLabel = "₹5,000 in"),
-                    PrizeBreakdownRow(rankLabel = "3rd Place", amountLabel = "₹4,000 in"),
-                    PrizeBreakdownRow(rankLabel = "4th Place", amountLabel = "₹3,000 in"),
-                    PrizeBreakdownRow(rankLabel = "5th Place", amountLabel = "₹2,000 in"),
-                    PrizeBreakdownRow(rankLabel = "6th Place", amountLabel = "₹1,000 in"),
-                    PrizeBreakdownRow(rankLabel = "7th Place", amountLabel = "₹500 in"),
-                    PrizeBreakdownRow(rankLabel = "8th Place", amountLabel = "₹400 in"),
-                    PrizeBreakdownRow(rankLabel = "9th Place", amountLabel = "₹300 in"),
-                    PrizeBreakdownRow(rankLabel = "10th Place", amountLabel = "₹100 in"),
+                    PrizeBreakdownRow(rank = 1, amount = 10000),
+                    PrizeBreakdownRow(rank = 2, amount = 5000),
+                    PrizeBreakdownRow(rank = 3, amount = 4000),
+                    PrizeBreakdownRow(rank = 4, amount = 3000),
+                    PrizeBreakdownRow(rank = 5, amount = 2000),
+                    PrizeBreakdownRow(rank = 6, amount = 1000),
+                    PrizeBreakdownRow(rank = 7, amount = 500),
+                    PrizeBreakdownRow(rank = 8, amount = 400),
+                    PrizeBreakdownRow(rank = 9, amount = 300),
+                    PrizeBreakdownRow(rank = 10, amount = 100),
                 ),
             status = TournamentStatus.Upcoming(Clock.System.now() + 10.minutes),
             participationState = TournamentParticipationState.RegistrationRequired(20),
