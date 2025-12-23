@@ -1,4 +1,4 @@
-package com.yral.shared.features.leaderboard.ui.main
+package com.yral.shared.libs.leaderboard.ui.main
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.FastOutLinearInEasing
@@ -34,22 +34,22 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import com.yral.shared.features.leaderboard.data.models.LeaderboardMode
 import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
 import com.yral.shared.libs.designsystem.component.neonBorder
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.libs.leaderboard.model.LeaderboardMode
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import yral_mobile.shared.features.leaderboard.generated.resources.Res
-import yral_mobile.shared.features.leaderboard.generated.resources.all_wins
-import yral_mobile.shared.features.leaderboard.generated.resources.daily_wins
-import yral_mobile.shared.features.leaderboard.generated.resources.end_in
-import yral_mobile.shared.features.leaderboard.generated.resources.ic_calander_week_1
-import yral_mobile.shared.features.leaderboard.generated.resources.ic_clock
-import yral_mobile.shared.features.leaderboard.generated.resources.ic_gradient_clock
 import yral_mobile.shared.libs.designsystem.generated.resources.count_down_timer
+import yral_mobile.shared.libs.leaderboard.generated.resources.Res
+import yral_mobile.shared.libs.leaderboard.generated.resources.all_wins
+import yral_mobile.shared.libs.leaderboard.generated.resources.daily_wins
+import yral_mobile.shared.libs.leaderboard.generated.resources.end_in
+import yral_mobile.shared.libs.leaderboard.generated.resources.ic_calander_week_1
+import yral_mobile.shared.libs.leaderboard.generated.resources.ic_clock
+import yral_mobile.shared.libs.leaderboard.generated.resources.ic_gradient_clock
 import kotlin.time.Duration.Companion.milliseconds
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
@@ -134,7 +134,7 @@ fun ColumnScope.LeaderboardCountdown(
     LaunchedEffect(blinkCountDown) {
         if (blinkCountDown) {
             while (true) {
-                delay(LeaderboardMainScreenConstants.COUNT_DOWN_ANIMATION_DURATION.toLong())
+                delay(LeaderboardUiConstants.COUNT_DOWN_ANIMATION_DURATION.toLong())
                 neon = !neon
             }
         }
@@ -149,7 +149,7 @@ fun ColumnScope.LeaderboardCountdown(
         }
         LaunchedEffect(blinkCountDown) {
             if (blinkCountDown) {
-                delay(LeaderboardMainScreenConstants.COUNT_DOWN_ANIMATION_DURATION.toLong())
+                delay(LeaderboardUiConstants.COUNT_DOWN_ANIMATION_DURATION.toLong())
                 showWhiteBorder = true
             }
         }
@@ -161,7 +161,7 @@ fun ColumnScope.LeaderboardCountdown(
                     Modifier
                         .height(26.dp)
                         .width(115.dp)
-                        .alpha(LeaderboardMainScreenConstants.COUNT_DOWN_BG_ALPHA)
+                        .alpha(LeaderboardUiConstants.COUNT_DOWN_BG_ALPHA)
                         .background(
                             color = YralColors.Neutral950,
                             shape = RoundedCornerShape(size = 39.dp),
@@ -173,7 +173,7 @@ fun ColumnScope.LeaderboardCountdown(
                         fadeIn(
                             animationSpec =
                                 tween(
-                                    durationMillis = LeaderboardMainScreenConstants.COUNT_DOWN_ANIMATION_DURATION / 2,
+                                    durationMillis = LeaderboardUiConstants.COUNT_DOWN_ANIMATION_DURATION / 2,
                                     easing = FastOutLinearInEasing,
                                 ),
                         ) togetherWith
@@ -181,7 +181,7 @@ fun ColumnScope.LeaderboardCountdown(
                                 animationSpec =
                                     tween(
                                         durationMillis =
-                                            LeaderboardMainScreenConstants.COUNT_DOWN_ANIMATION_DURATION / 2,
+                                            LeaderboardUiConstants.COUNT_DOWN_ANIMATION_DURATION / 2,
                                         easing = FastOutLinearInEasing,
                                     ),
                             )
@@ -207,7 +207,7 @@ private fun BoxScope.LeaderboardCountdownBorder(borderColor: Color) {
                     paddingValues = paddingValues,
                     cornerRadius = cornerRadius,
                     containerColor = containerColor,
-                    animationDuration = LeaderboardMainScreenConstants.COUNT_DOWN_BORDER_ANIMATION_DURATION.toLong(),
+                    animationDuration = LeaderboardUiConstants.COUNT_DOWN_BORDER_ANIMATION_DURATION.toLong(),
                     neonColor = neonColor,
                 ),
     )
