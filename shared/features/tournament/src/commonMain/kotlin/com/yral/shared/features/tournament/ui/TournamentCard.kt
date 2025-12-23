@@ -57,6 +57,7 @@ import yral_mobile.shared.features.tournament.generated.resources.ic_share
 import yral_mobile.shared.features.tournament.generated.resources.ic_timer
 import yral_mobile.shared.features.tournament.generated.resources.ic_users
 import yral_mobile.shared.features.tournament.generated.resources.starts_in
+import yral_mobile.shared.features.tournament.generated.resources.win_upto_prize
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
@@ -137,7 +138,7 @@ fun TournamentCard(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         Text(
-                            text = tournament.subtitle,
+                            text = stringResource(TournamentRes.string.win_upto_prize, tournament.totalPrizePool),
                             style = LocalAppTopography.current.xlBold,
                             color = YralColors.Yellow200,
                             maxLines = 1,
@@ -355,7 +356,7 @@ private fun TournamentCardLivePreview() {
                 Tournament(
                     id = "t_live",
                     title = "SMILY SHOWDOWN",
-                    subtitle = "Win up to ₹10,000 in",
+                    totalPrizePool = 10000,
                     participantsLabel = "32 Playing",
                     scheduleLabel = "Dec 4th • 6:00-6:30 pm",
                     status = TournamentStatus.Live(Clock.System.now() + 10.minutes),
@@ -380,7 +381,7 @@ private fun TournamentCardUpcomingPreview() {
                 Tournament(
                     id = "t_upcoming",
                     title = "SMILY SHOWDOWN",
-                    subtitle = "Win up to ₹10,000 in",
+                    totalPrizePool = 10000,
                     participantsLabel = "15 Registered",
                     scheduleLabel = "Dec 5th • 6:00-6:30 pm",
                     status = TournamentStatus.Upcoming(Clock.System.now() + 10.minutes),
@@ -404,7 +405,7 @@ private fun TournamentCardEndedPreview() {
                 Tournament(
                     id = "t_ended",
                     title = "SMILY SHOWDOWN",
-                    subtitle = "Win up to ₹10,000 in",
+                    totalPrizePool = 10000,
                     participantsLabel = "15 Participants",
                     scheduleLabel = "Dec 5th • 6:00-6:30 pm",
                     status = TournamentStatus.Ended,

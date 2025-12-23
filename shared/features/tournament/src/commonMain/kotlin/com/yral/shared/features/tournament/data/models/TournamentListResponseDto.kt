@@ -33,10 +33,6 @@ data class TournamentDto(
     val title: String,
     @SerialName("date")
     val date: String,
-    @SerialName("start_time")
-    val startTime: String,
-    @SerialName("end_time")
-    val endTime: String,
     @SerialName("start_epoch_ms")
     val startEpochMs: Long,
     @SerialName("end_epoch_ms")
@@ -45,8 +41,6 @@ data class TournamentDto(
     val entryCost: Int,
     @SerialName("total_prize_pool")
     val totalPrizePool: Int,
-    @SerialName("status")
-    val status: String,
     @SerialName("prize_map")
     val prizeMap: Map<String, Int>,
     @SerialName("participant_count")
@@ -72,13 +66,10 @@ fun TournamentDto.toTournamentData(): TournamentData =
         id = id,
         title = title,
         date = date,
-        startTime = startTime,
-        endTime = endTime,
         startEpochMs = startEpochMs,
         endEpochMs = endEpochMs,
         entryCost = entryCost,
         totalPrizePool = totalPrizePool,
-        status = status,
         prizeMap =
             prizeMap
                 .mapNotNull { (key, value) ->

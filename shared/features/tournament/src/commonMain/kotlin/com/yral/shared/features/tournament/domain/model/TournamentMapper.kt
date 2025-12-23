@@ -1,5 +1,8 @@
 package com.yral.shared.features.tournament.domain.model
 
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -8,28 +11,25 @@ import kotlin.time.Instant
  */
 @OptIn(ExperimentalTime::class)
 fun TournamentData.toUiTournament(isRegistered: Boolean = false): Tournament {
+    val startTime = Instant.fromEpochMilliseconds(startEpochMs)
+    val endTime = Instant.fromEpochMilliseconds(endEpochMs)
+    val currentTime = Clock.System.now()
     val tournamentStatus =
-        when (status.lowercase()) {
-            "live" ->
-                TournamentStatus.Live(
-                    endTime = Instant.fromEpochMilliseconds(endEpochMs),
-                )
-            "ended", "settled", "cancelled" -> TournamentStatus.Ended
-            else ->
-                TournamentStatus.Upcoming(
-                    startTime = Instant.fromEpochMilliseconds(startEpochMs),
-                )
+        when {
+            currentTime < startTime -> TournamentStatus.Upcoming(startTime = startTime)
+            currentTime > endTime -> TournamentStatus.Ended
+            else -> TournamentStatus.Live(endTime = endTime)
         }
 
     val participationState =
         when {
             isRegistered || userStats != null -> {
-                when (status.lowercase()) {
-                    "live" -> TournamentParticipationState.JoinNow
+                when (tournamentStatus) {
+                    is TournamentStatus.Live -> TournamentParticipationState.JoinNow
                     else -> TournamentParticipationState.Registered
                 }
             }
-            status.lowercase() == "live" -> {
+            tournamentStatus is TournamentStatus.Live -> {
                 TournamentParticipationState.JoinNowWithTokens(entryCost)
             }
             else -> {
@@ -37,13 +37,13 @@ fun TournamentData.toUiTournament(isRegistered: Boolean = false): Tournament {
             }
         }
 
-    val scheduleLabel = formatScheduleLabel(date, startTime, endTime)
-    val participantsLabel = formatParticipantsLabel(participantCount, status)
+    val scheduleLabel = formatScheduleLabel(date, startTime.toHourMinute12h(), endTime.toHourMinute12h())
+    val participantsLabel = formatParticipantsLabel(participantCount, tournamentStatus)
 
     return Tournament(
         id = id,
         title = title,
-        subtitle = "Win up to ₹$totalPrizePool",
+        totalPrizePool = totalPrizePool,
         participantsLabel = participantsLabel,
         scheduleLabel = scheduleLabel,
         status = tournamentStatus,
@@ -58,6 +58,16 @@ fun TournamentData.toUiTournament(isRegistered: Boolean = false): Tournament {
                     )
                 },
     )
+}
+
+@Suppress("MagicNumber")
+@OptIn(ExperimentalTime::class)
+private fun Instant.toHourMinute12h(timeZone: TimeZone = TimeZone.currentSystemDefault()): String {
+    val dt = this.toLocalDateTime(timeZone)
+    val hour12 = ((dt.hour + 11) % 12 + 1)
+    val amPm = if (dt.hour < 12) "am" else "pm"
+
+    return "${hour12.toString().padStart(2, '0')}:${dt.minute.toString().padStart(2, '0')} $amPm"
 }
 
 private val MONTH_NAMES =
@@ -114,12 +124,12 @@ private fun getOrdinalSuffix(number: Int): String =
 
 private fun formatParticipantsLabel(
     count: Int,
-    status: String,
+    status: TournamentStatus,
 ): String =
-    when (status.lowercase()) {
-        "live" -> "$count Playing"
-        "ended", "settled" -> "$count Participants"
-        else -> "$count Registered"
+    when (status) {
+        TournamentStatus.Ended -> "$count Participants"
+        is TournamentStatus.Live -> "$count Playing"
+        is TournamentStatus.Upcoming -> "$count Registered"
     }
 
 private fun formatRankLabel(rank: Int): String = "$rank${getOrdinalSuffix(rank)} Place"

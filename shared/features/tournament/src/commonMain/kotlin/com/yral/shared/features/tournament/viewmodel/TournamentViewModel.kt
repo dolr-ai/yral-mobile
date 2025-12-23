@@ -24,9 +24,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class TournamentViewModel(
@@ -78,15 +75,9 @@ class TournamentViewModel(
 
     @OptIn(ExperimentalTime::class)
     private suspend fun loadAllTournaments(requestId: Int) {
-        val today =
-            Clock.System
-                .now()
-                .toLocalDateTime(TimeZone.currentSystemDefault())
-                .date
-                .toString()
         val principalId = sessionManager.userPrincipal
         getTournamentsUseCase
-            .invoke(GetTournamentsRequest(date = today, principalId = principalId))
+            .invoke(GetTournamentsRequest(principalId = principalId))
             .onSuccess { tournamentDataList ->
                 if (!isLatestRequest(requestId)) {
                     return@onSuccess
