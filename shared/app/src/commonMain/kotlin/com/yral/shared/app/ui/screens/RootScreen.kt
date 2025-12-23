@@ -47,6 +47,7 @@ import com.yral.shared.features.profile.viewmodel.EditProfileViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.root.viewmodels.RootError
 import com.yral.shared.features.root.viewmodels.RootViewModel
+import com.yral.shared.features.tournament.ui.TournamentLeaderboardScreen
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
@@ -125,6 +126,17 @@ fun RootScreen(
                             viewModel = profileViewModel,
                             profileVideos = profileVideos,
                             getPrefetchListener = { reel -> PrefetchVideoListenerImpl(reel) },
+                        )
+                    }
+
+                    is Child.TournamentLeaderboard -> {
+                        HandleSystemBars(show = true)
+                        TournamentLeaderboardScreen(
+                            tournamentId = child.tournamentId,
+                            tournamentTitle = "",
+                            participantsLabel = child.participantsLabel,
+                            scheduleLabel = child.scheduleLabel,
+                            onBack = rootComponent::onBackClicked,
                         )
                     }
                 }
