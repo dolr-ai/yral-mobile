@@ -12,6 +12,8 @@ import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.core.session.SessionManager
+import com.yral.shared.core.session.SessionState
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.chat.attachments.ChatAttachment
@@ -59,6 +61,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
+@Suppress("LongParameterList")
 class ConversationViewModel(
     private val chatRepository: ChatRepository,
     private val useCaseFailureListener: UseCaseFailureListener,
@@ -69,17 +72,16 @@ class ConversationViewModel(
     private val urlBuilder: UrlBuilder,
     private val linkGenerator: LinkGenerator,
     private val crashlyticsManager: CrashlyticsManager,
+    private val sessionManager: SessionManager,
 ) : ViewModel() {
     /**
-     * Ordering note for UI:
-     * - Network paging uses `order=desc` (latest-first) so the initial page contains the newest messages.
-     * - To render chats as **oldest at top / newest at bottom**, the UI should use
-     *   `LazyColumn(reverseLayout = true)` and render **overlay first**, then **history**.
-     *
-     * With `reverseLayout = true`, the first items (newest) are laid out at the bottom, and paging
-     * will naturally load older messages as you scroll upward.
+     * Message ordering:
+     * - Network paging uses `order=desc` (latest-first)
+     * - UI uses `LazyColumn(reverseLayout = true)` to display oldest at top, newest at bottom
+     * - Render overlay first, then history
      */
-    private val _viewState = MutableStateFlow(ConversationViewState())
+    private val _viewState =
+        MutableStateFlow(ConversationViewState(currentUserPrincipal = sessionManager.userPrincipal))
     val viewState: StateFlow<ConversationViewState> = _viewState.asStateFlow()
 
     private val conversationId: String?
@@ -102,15 +104,13 @@ class ConversationViewModel(
             .distinctUntilChanged()
             .flatMapLatest { (convId, hasMoreMessages) ->
                 if (convId.isNullOrBlank() || !hasMoreMessages) {
-                    // Return an empty Pager flow to clear cached state
                     Pager(
                         config = pagingConfig,
                         pagingSourceFactory = { EmptyMessagesPagingSource() },
                     ).flow
                 } else {
                     loadedMessageIds.value = emptySet()
-                    // Capture and reset initialOffset (one-time use per conversation)
-                    val initialOffset =
+                    val offset =
                         initialOffset.value
                             .takeIf { initialOffset.value != null }
                             .also { initialOffset.value = null }
@@ -121,7 +121,7 @@ class ConversationViewModel(
                                 conversationId = convId,
                                 chatRepository = chatRepository,
                                 useCaseFailureListener = useCaseFailureListener,
-                                initialOffset = initialOffset,
+                                initialOffset = offset,
                             )
                         },
                     ).flow
@@ -156,6 +156,36 @@ class ConversationViewModel(
                 SharingStarted.WhileSubscribed(5.seconds.inWholeMilliseconds),
                 emptyList(),
             )
+
+    init {
+        // Observe user principal changes and reset conversation when it changes
+        viewModelScope.launch {
+            sessionManager
+                .observeSessionState { sessionState ->
+                    when (sessionState) {
+                        is SessionState.SignedIn -> sessionState.session.userPrincipal
+                        else -> null
+                    }
+                }.collect { newPrincipal ->
+                    val currentPrincipal = _viewState.value.currentUserPrincipal
+                    if (currentPrincipal != newPrincipal) {
+                        // User principal changed - reset conversation state
+                        val currentInfluencerId = _viewState.value.influencer?.id
+                        val hadConversation = _viewState.value.conversationId != null
+
+                        resetState()
+                        _viewState.update { it.copy(currentUserPrincipal = newPrincipal) }
+
+                        // Recreate conversation if user logged in and had an active conversation
+                        if (newPrincipal != null && hadConversation && currentInfluencerId != null) {
+                            createConversation(currentInfluencerId)
+                        }
+                    } else {
+                        _viewState.update { it.copy(currentUserPrincipal = newPrincipal) }
+                    }
+                }
+        }
+    }
 
     @OptIn(ExperimentalTime::class)
     private fun parseTimestampToEpochMs(timestamp: String): Long? =
@@ -203,7 +233,6 @@ class ConversationViewModel(
             )
         }
 
-        // Refresh share copy when influencer is set
         if (influencer != null) {
             refreshShareCopy()
         }
@@ -229,26 +258,21 @@ class ConversationViewModel(
     }
 
     fun initializeForInfluencer(influencerId: String) {
-        val currentState = _viewState.value
-        val currentInfluencerId = currentState.influencer?.id
-
-        // Early return: same influencer and conversation already exists
-        if (currentInfluencerId == influencerId && currentState.conversationId != null) {
+        val currentInfluencerId = _viewState.value.influencer?.id
+        val currentConversationId = _viewState.value.conversationId
+        if (currentInfluencerId == influencerId && currentConversationId != null) {
             return
         }
-
-        // Reset state if influencer changed
         if (currentInfluencerId != null && currentInfluencerId != influencerId) {
             resetState()
         }
-
-        // Create conversation if we don't have one
         if (_viewState.value.conversationId == null) {
             createConversation(influencerId)
         }
     }
 
     private fun resetState() {
+        val currentPrincipal = _viewState.value.currentUserPrincipal
         _viewState.update {
             ConversationViewState(
                 isCreating = false,
@@ -260,6 +284,7 @@ class ConversationViewModel(
                 shareDisplayName = "",
                 shareMessage = "",
                 shareDescription = "",
+                currentUserPrincipal = currentPrincipal,
             )
         }
         _overlay.value = OverlayState()
@@ -542,6 +567,7 @@ data class ConversationViewState(
     val shareDisplayName: String = "",
     val shareMessage: String = "",
     val shareDescription: String = "",
+    val currentUserPrincipal: String? = null,
 )
 
 sealed class ConversationMessageItem {
