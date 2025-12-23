@@ -6,6 +6,7 @@ import com.github.michaelbull.result.Result
 import com.yral.shared.features.tournament.domain.model.TournamentData
 import com.yral.shared.features.tournament.domain.model.TournamentError
 import com.yral.shared.features.tournament.domain.model.TournamentErrorCodes
+import com.yral.shared.features.tournament.domain.model.UserTournamentStats
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -48,6 +49,10 @@ data class TournamentDto(
     val prizeMap: Map<String, Int>,
     @SerialName("participant_count")
     val participantCount: Int,
+    @SerialName("is_registered")
+    val isRegistered: Boolean = false,
+    @SerialName("user_stats")
+    val userStats: UserStatsDto? = null,
 )
 
 fun TournamentListResponseDto.toTournamentList(): Result<List<TournamentData>, TournamentError> =
@@ -77,6 +82,17 @@ fun TournamentDto.toTournamentData(): TournamentData =
                     key.toIntOrNull()?.let { it to value }
                 }.toMap(),
         participantCount = participantCount,
+        userStats =
+            if (isRegistered && userStats != null) {
+                UserTournamentStats(
+                    coinsPaid = userStats.coinsPaid ?: 0,
+                    tournamentWins = userStats.tournamentWins,
+                    tournamentLosses = userStats.tournamentLosses,
+                    registrationStatus = userStats.status ?: "registered",
+                )
+            } else {
+                null
+            },
     )
 
 fun TournamentErrorDto.toTournamentError(): TournamentError =

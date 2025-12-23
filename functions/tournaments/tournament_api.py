@@ -264,11 +264,12 @@ def tournaments(request: Request):
 
     POST /tournaments
     Request:
-        { "data": { "date": "2025-12-14", "status": "scheduled" } }
-        Both fields optional. Defaults to today's date if not provided.
+        { "data": { "date": "2025-12-14", "status": "scheduled", "principal_id": "..." } }
+        All fields optional. Defaults to today's date if not provided.
+        If principal_id is provided, includes is_registered and user_stats for each tournament.
 
     Response:
-        { "tournaments": [ {...}, ... ] }
+        { "tournaments": [ {..., "is_registered": true, "user_stats": {...}}, ... ] }
     """
     try:
         if request.method != "POST":
@@ -277,8 +278,9 @@ def tournaments(request: Request):
         body = request.get_json(silent=True) or {}
         data = body.get("data", {}) or {}
 
-        date_filter = str(data.get("date", "")).strip()
-        status_filter = str(data.get("status", "")).strip().lower()
+        date_filter = str(data.get("date") or "").strip()
+        status_filter = str(data.get("status") or "").strip().lower()
+        principal_id = str(data.get("principal_id") or "").strip()
 
         # Default to today if no date provided
         if not date_filter:
@@ -303,13 +305,14 @@ def tournaments(request: Request):
         if status_filter:
             query = query.where("status", "==", status_filter)
 
-        snaps = query.stream()
+        snaps = list(query.stream())
 
         result = []
         for snap in snaps:
             t_data = snap.to_dict() or {}
             participant_count = _get_participant_count(snap.id)
-            result.append({
+
+            tournament_entry = {
                 "id": snap.id,
                 "date": t_data.get("date"),
                 "start_time": t_data.get("start_time"),
@@ -320,8 +323,25 @@ def tournaments(request: Request):
                 "total_prize_pool": t_data.get("totalPrizePool"),
                 "status": t_data.get("status"),
                 "prize_map": t_data.get("prizeMap", {}),
-                "participant_count": participant_count
-            })
+                "participant_count": participant_count,
+                "is_registered": False,
+                "user_stats": None
+            }
+
+            # Check if user is registered (if principal_id provided)
+            if principal_id:
+                reg_data = _get_user_registration(snap.id, principal_id)
+                if reg_data:
+                    tournament_entry["is_registered"] = True
+                    tournament_entry["user_stats"] = {
+                        "registered_at": reg_data.get("registered_at"),
+                        "coins_paid": reg_data.get("coins_paid"),
+                        "tournament_wins": reg_data.get("tournament_wins", 0),
+                        "tournament_losses": reg_data.get("tournament_losses", 0),
+                        "status": reg_data.get("status")
+                    }
+
+            result.append(tournament_entry)
 
         # Sort by start_time
         result.sort(key=lambda x: x.get("start_time", ""))
@@ -510,7 +530,7 @@ def register_for_tournament(request: Request):
 @https_fn.on_request(region="us-central1")
 def my_tournaments(request: Request):
     """
-    List tournaments user has registered for.
+    List tournaments user has played in (has at least one vote).
 
     POST /my_tournaments
     Request:
@@ -518,6 +538,8 @@ def my_tournaments(request: Request):
 
     Response:
         { "tournaments": [ {...}, ... ] }
+
+    Note: Only returns tournaments where user has actually played (has wins or losses).
     """
     try:
         if request.method != "POST":
@@ -536,9 +558,9 @@ def my_tournaments(request: Request):
         if not principal_id:
             return error_response(400, "MISSING_PRINCIPAL_ID", "principal_id required")
 
-        # Query recent tournaments (last 7 days + today + next 7 days)
+        # Query recent tournaments (last 30 days)
         today = datetime.now(IST).date()
-        date_range = [today + timedelta(days=d) for d in range(-7, 8)]
+        date_range = [today + timedelta(days=d) for d in range(-30, 1)]
         date_strings = [d.strftime("%Y-%m-%d") for d in date_range]
 
         result = []
@@ -553,28 +575,36 @@ def my_tournaments(request: Request):
                 reg_snap = reg_ref.get()
 
                 if reg_snap.exists:
-                    t_data = t_snap.to_dict() or {}
                     reg_data = reg_snap.to_dict() or {}
 
-                    result.append({
-                        "id": t_snap.id,
-                        "date": t_data.get("date"),
-                        "start_time": t_data.get("start_time"),
-                        "end_time": t_data.get("end_time"),
-                        "start_epoch_ms": t_data.get("start_epoch_ms"),
-                        "end_epoch_ms": t_data.get("end_epoch_ms"),
-                        "entry_cost": t_data.get("entryCost"),
-                        "total_prize_pool": t_data.get("totalPrizePool"),
-                        "status": t_data.get("status"),
-                        "prize_map": t_data.get("prizeMap", {}),
-                        "user_stats": {
-                            "registered_at": reg_data.get("registered_at"),
-                            "coins_paid": reg_data.get("coins_paid"),
-                            "tournament_wins": reg_data.get("tournament_wins", 0),
-                            "tournament_losses": reg_data.get("tournament_losses", 0),
-                            "status": reg_data.get("status")
-                        }
-                    })
+                    # Only include tournaments where user has actually played
+                    tournament_wins = reg_data.get("tournament_wins", 0) or 0
+                    tournament_losses = reg_data.get("tournament_losses", 0) or 0
+
+                    if tournament_wins > 0 or tournament_losses > 0:
+                        t_data = t_snap.to_dict() or {}
+                        participant_count = _get_participant_count(t_snap.id)
+
+                        result.append({
+                            "id": t_snap.id,
+                            "date": t_data.get("date"),
+                            "start_time": t_data.get("start_time"),
+                            "end_time": t_data.get("end_time"),
+                            "start_epoch_ms": t_data.get("start_epoch_ms"),
+                            "end_epoch_ms": t_data.get("end_epoch_ms"),
+                            "entry_cost": t_data.get("entryCost"),
+                            "total_prize_pool": t_data.get("totalPrizePool"),
+                            "status": t_data.get("status"),
+                            "prize_map": t_data.get("prizeMap", {}),
+                            "participant_count": participant_count,
+                            "user_stats": {
+                                "registered_at": reg_data.get("registered_at"),
+                                "coins_paid": reg_data.get("coins_paid"),
+                                "tournament_wins": tournament_wins,
+                                "tournament_losses": tournament_losses,
+                                "status": reg_data.get("status")
+                            }
+                        })
 
         # Sort by date and start_time (newest first)
         result.sort(key=lambda x: (x.get("date", ""), x.get("start_time", "")), reverse=True)

@@ -26,10 +26,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.yral.shared.features.tournament.domain.model.TournamentErrorCodes
 import com.yral.shared.features.tournament.nav.TournamentComponent
 import com.yral.shared.features.tournament.viewmodel.TournamentUiState
 import com.yral.shared.features.tournament.viewmodel.TournamentViewModel
 import com.yral.shared.libs.designsystem.component.YralGradientButton
+import com.yral.shared.libs.designsystem.component.YralLoader
+import com.yral.shared.libs.designsystem.component.toast.ToastManager
+import com.yral.shared.libs.designsystem.component.toast.ToastType
+import com.yral.shared.libs.designsystem.component.toast.showError
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.flow.collectLatest
@@ -43,6 +48,8 @@ import yral_mobile.shared.features.tournament.generated.resources.no_tournament_
 import yral_mobile.shared.features.tournament.generated.resources.screen_heading
 import yral_mobile.shared.features.tournament.generated.resources.tab_all
 import yral_mobile.shared.features.tournament.generated.resources.tab_history
+import yral_mobile.shared.features.tournament.generated.resources.tournament_insufficient_balance
+import yral_mobile.shared.features.tournament.generated.resources.tournament_registration_failed
 
 @Suppress("LongMethod")
 @Composable
@@ -51,69 +58,94 @@ fun TournamentScreen(
     viewModel: TournamentViewModel,
 ) {
     val uiState by viewModel.state.collectAsState()
+    val insufficientBalanceMessage = stringResource(Res.string.tournament_insufficient_balance)
+    val registrationFailedMessage = stringResource(Res.string.tournament_registration_failed)
 
     LaunchedEffect(key1 = Unit) {
         viewModel.eventsFlow.collectLatest { value ->
+            if (value is TournamentViewModel.Event.RegistrationFailed) {
+                val message =
+                    when (value.code) {
+                        TournamentErrorCodes.INSUFFICIENT_COINS -> insufficientBalanceMessage
+                        else -> value.message?.takeIf { it.isNotBlank() } ?: registrationFailedMessage
+                    }
+                ToastManager.showError(ToastType.Small(message))
+            }
             component.processEvent(value)
         }
     }
 
     val showHowToPlayTournament = uiState.showHowToPlayTournament
-    if (showHowToPlayTournament != null) {
-        TournamentHowToPlayScreen(
-            title = showHowToPlayTournament.title,
-            onStartPlaying = viewModel::onStartPlayingClicked,
-        )
-    } else {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .background(YralColors.Neutral950),
-        ) {
-            Text(
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (showHowToPlayTournament != null) {
+            TournamentHowToPlayScreen(
+                title = showHowToPlayTournament.title,
+                onStartPlaying = viewModel::onStartPlayingClicked,
+            )
+        } else {
+            Column(
                 modifier =
                     Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                text = stringResource(Res.string.screen_heading),
-                textAlign = TextAlign.Center,
-                style = LocalAppTopography.current.xlBold,
-                color = YralColors.NeutralTextPrimary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+                        .fillMaxSize()
+                        .background(YralColors.Neutral950),
+            ) {
+                Text(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                    text = stringResource(Res.string.screen_heading),
+                    textAlign = TextAlign.Center,
+                    style = LocalAppTopography.current.xlBold,
+                    color = YralColors.NeutralTextPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
 
-            TournamentTabs(
-                selectedTab = uiState.selectedTab,
-                onTabSelected = viewModel::onTabSelected,
-            )
+                TournamentTabs(
+                    selectedTab = uiState.selectedTab,
+                    onTabSelected = viewModel::onTabSelected,
+                )
 
-            if (uiState.selectedTab == TournamentUiState.Tab.History && uiState.tournaments.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    NoTournamentHistory(
-                        isLoggedIn = uiState.isLoggedIn,
-                        onClick = viewModel::onNoHistoryCtaClicked,
-                    )
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    items(uiState.tournaments) { tournament ->
-                        TournamentCard(
-                            tournament = tournament,
-                            onPrizeBreakdownClick = { viewModel.openPrizeBreakdown(tournament) },
-                            onShareClick = { viewModel.onShareClicked(tournament) },
-                            onTournamentCtaClick = { viewModel.onTournamentCtaClick(tournament) },
+                if (uiState.selectedTab == TournamentUiState.Tab.History && uiState.tournaments.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        NoTournamentHistory(
+                            isLoggedIn = uiState.isLoggedIn,
+                            onClick = viewModel::onNoHistoryCtaClicked,
                         )
                     }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        items(uiState.tournaments) { tournament ->
+                            TournamentCard(
+                                tournament = tournament,
+                                onPrizeBreakdownClick = { viewModel.openPrizeBreakdown(tournament) },
+                                onShareClick = { viewModel.onShareClicked(tournament) },
+                                onTournamentCtaClick = { viewModel.onTournamentCtaClick(tournament) },
+                            )
+                        }
+                    }
                 }
+            }
+        }
+
+        if (uiState.isLoading || uiState.isRegistering) {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .clickable {}
+                        .background(YralColors.Neutral950.copy(alpha = 0.6f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                YralLoader(size = 48.dp)
             }
         }
     }

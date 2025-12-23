@@ -9,4 +9,6 @@ data class TournamentListRequestDto(
     val date: String? = null,
     @SerialName("status")
     val status: String? = null,
+    @SerialName("principal_id")
+    val principalId: String? = null,
 )

@@ -16,6 +16,8 @@
     <string name="msg_login_to_join_tournament">Login to join tournaments and start building your winning streak.</string>
     <string name="msg_join_tournament">Join tournaments and start building your winning streak.</string>
     <string name="join_tournament">Join Tournament</string>
+    <string name="tournament_insufficient_balance">Insufficient balance.</string>
+    <string name="tournament_registration_failed">Could not register. Please try again.</string>
     <string name="you_are_starting_with">You're starting with %1$d</string>
     <string name="how_to_play">How to play?</string>
     <string name="title_watch_video">Watch the video</string>
