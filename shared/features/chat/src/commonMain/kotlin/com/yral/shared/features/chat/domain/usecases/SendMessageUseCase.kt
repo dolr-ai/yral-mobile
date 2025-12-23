@@ -13,7 +13,7 @@ class SendMessageUseCase(
     appDispatchers: AppDispatchers,
     useCaseFailureListener: UseCaseFailureListener,
 ) : SuspendUseCase<SendMessageUseCase.Params, SendMessageResult>(appDispatchers.network, useCaseFailureListener) {
-    override val exceptionType: String = ExceptionType.UNKNOWN.name
+    override val exceptionType: String = ExceptionType.CHAT.name
 
     override suspend fun execute(parameter: Params): SendMessageResult =
         chatRepository.sendMessage(

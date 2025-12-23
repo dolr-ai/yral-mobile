@@ -15,7 +15,7 @@ class DeleteConversationUseCase(
         appDispatchers.network,
         useCaseFailureListener,
     ) {
-    override val exceptionType: String = ExceptionType.UNKNOWN.name
+    override val exceptionType: String = ExceptionType.CHAT.name
 
     override suspend fun execute(parameter: Params): DeleteConversationResult =
         chatRepository.deleteConversation(conversationId = parameter.conversationId)

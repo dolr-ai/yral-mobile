@@ -12,6 +12,7 @@ import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.InfluencersPagingSource
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
+import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +22,7 @@ import kotlinx.coroutines.launch
 
 class ChatWallViewModel(
     private val chatRepository: ChatRepository,
+    private val useCaseFailureListener: UseCaseFailureListener,
     private val getInfluencerUseCase: GetInfluencerUseCase,
 ) : ViewModel() {
     private val _state = MutableStateFlow(ChatWallState())
@@ -35,7 +37,7 @@ class ChatWallViewModel(
                     prefetchDistance = PREFETCH_DISTANCE,
                     enablePlaceholders = false,
                 ),
-            pagingSourceFactory = { InfluencersPagingSource(chatRepository) },
+            pagingSourceFactory = { InfluencersPagingSource(chatRepository, useCaseFailureListener) },
         ).flow.cachedIn(viewModelScope)
 
     fun selectInfluencer(influencerId: String) {

@@ -12,7 +12,7 @@ class CreateConversationUseCase(
     appDispatchers: AppDispatchers,
     useCaseFailureListener: UseCaseFailureListener,
 ) : SuspendUseCase<CreateConversationUseCase.Params, Conversation>(appDispatchers.network, useCaseFailureListener) {
-    override val exceptionType: String = ExceptionType.UNKNOWN.name
+    override val exceptionType: String = ExceptionType.CHAT.name
 
     override suspend fun execute(parameter: Params): Conversation =
         chatRepository

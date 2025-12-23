@@ -9,6 +9,7 @@ import androidx.paging.cachedIn
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.ConversationsPagingSource
 import com.yral.shared.features.chat.domain.models.Conversation
+import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 
 class ChatConversationsViewModel(
     private val chatRepository: ChatRepository,
+    private val useCaseFailureListener: UseCaseFailureListener,
 ) : ViewModel() {
     private val influencerFilter = MutableStateFlow<String?>(null)
 
@@ -34,6 +36,7 @@ class ChatConversationsViewModel(
                     pagingSourceFactory = {
                         ConversationsPagingSource(
                             chatRepository = chatRepository,
+                            useCaseFailureListener = useCaseFailureListener,
                             influencerId = influencerId,
                         )
                     },

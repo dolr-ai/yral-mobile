@@ -12,7 +12,7 @@ class GetInfluencerUseCase(
     appDispatchers: AppDispatchers,
     useCaseFailureListener: UseCaseFailureListener,
 ) : SuspendUseCase<GetInfluencerUseCase.Params, Influencer>(appDispatchers.network, useCaseFailureListener) {
-    override val exceptionType: String = ExceptionType.UNKNOWN.name
+    override val exceptionType: String = ExceptionType.CHAT.name
 
     override suspend fun execute(parameter: Params): Influencer = chatRepository.getInfluencer(id = parameter.id)
 

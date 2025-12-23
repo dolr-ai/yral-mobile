@@ -22,6 +22,7 @@ import com.yral.shared.features.chat.domain.models.SendMessageResult
 import com.yral.shared.features.chat.domain.usecases.CreateConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.DeleteConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.SendMessageUseCase
+import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,6 +44,7 @@ import kotlin.time.Instant
 
 class ConversationViewModel(
     private val chatRepository: ChatRepository,
+    private val useCaseFailureListener: UseCaseFailureListener,
     private val sendMessageUseCase: SendMessageUseCase,
     private val createConversationUseCase: CreateConversationUseCase,
     private val deleteConversationUseCase: DeleteConversationUseCase,
@@ -91,6 +93,7 @@ class ConversationViewModel(
                             ConversationMessagesPagingSource(
                                 conversationId = convId,
                                 chatRepository = chatRepository,
+                                useCaseFailureListener = useCaseFailureListener,
                                 initialOffset = initialOffset,
                             )
                         },
