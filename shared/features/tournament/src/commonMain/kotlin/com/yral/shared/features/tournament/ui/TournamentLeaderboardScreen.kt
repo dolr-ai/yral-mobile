@@ -61,7 +61,9 @@ import com.yral.shared.libs.leaderboard.model.RewardCurrency
 import com.yral.shared.libs.leaderboard.ui.LeaderboardReward
 import com.yral.shared.libs.leaderboard.ui.main.LeaderboardHelpers
 import com.yral.shared.libs.leaderboard.ui.main.LeaderboardUiConstants
+import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.propicFromPrincipal
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -90,12 +92,21 @@ fun TournamentLeaderboardScreen(
     participantsLabel: String,
     scheduleLabel: String,
     onBack: () -> Unit,
+    onOpenProfile: (CanisterData) -> Unit,
     viewModel: TournamentLeaderboardViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
 
     LaunchedEffect(tournamentId) {
         viewModel.loadLeaderboard(tournamentId)
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.eventsFlow.collectLatest { event ->
+            when (event) {
+                is TournamentLeaderboardViewModel.Event.OpenProfile -> onOpenProfile(event.canisterData)
+            }
+        }
     }
 
     val listState = rememberLazyListState()
@@ -142,6 +153,7 @@ fun TournamentLeaderboardScreen(
                         row = currentUser,
                         isCurrentUser = true,
                         fallbackPrize = state.prizeMap[currentUser.position],
+                        onClick = { viewModel.onUserClick(currentUser) },
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                     )
                 }
@@ -152,6 +164,7 @@ fun TournamentLeaderboardScreen(
                     row = row,
                     isCurrentUser = viewModel.isCurrentUser(row.principalId),
                     fallbackPrize = state.prizeMap[row.position],
+                    onClick = { viewModel.onUserClick(row) },
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
                 )
             }
@@ -485,6 +498,7 @@ private fun TournamentLeaderboardRow(
     row: LeaderboardRow,
     isCurrentUser: Boolean,
     fallbackPrize: Int?,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val borderColor =
@@ -502,7 +516,7 @@ private fun TournamentLeaderboardRow(
             YralColors.Neutral900
         }
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().clickable { onClick() },
         shape = RoundedCornerShape(8.dp),
         color = containerColor,
         border =
