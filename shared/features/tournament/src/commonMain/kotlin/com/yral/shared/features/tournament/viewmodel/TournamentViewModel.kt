@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.github.michaelbull.result.runCatching
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.tournament.domain.GetMyTournamentsUseCase
 import com.yral.shared.features.tournament.domain.GetTournamentsUseCase
@@ -16,6 +17,11 @@ import com.yral.shared.features.tournament.domain.model.TournamentErrorCodes
 import com.yral.shared.features.tournament.domain.model.TournamentParticipationState
 import com.yral.shared.features.tournament.domain.model.TournamentStatus
 import com.yral.shared.features.tournament.domain.model.toUiTournament
+import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
+import com.yral.shared.libs.routing.routes.api.Tournaments
+import com.yral.shared.libs.sharing.LinkGenerator
+import com.yral.shared.libs.sharing.LinkInput
+import com.yral.shared.libs.sharing.ShareService
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -31,6 +37,9 @@ class TournamentViewModel(
     private val getTournamentsUseCase: GetTournamentsUseCase,
     private val getMyTournamentsUseCase: GetMyTournamentsUseCase,
     private val registerForTournamentUseCase: RegisterForTournamentUseCase,
+    private val shareService: ShareService,
+    private val urlBuilder: UrlBuilder,
+    private val linkGenerator: LinkGenerator,
 ) : ViewModel() {
     private val _state: MutableStateFlow<TournamentUiState> = MutableStateFlow(TournamentUiState())
     val state: StateFlow<TournamentUiState> = _state
@@ -212,9 +221,26 @@ class TournamentViewModel(
         _state.update { it.copy(prizeBreakdownTournament = null) }
     }
 
-    @Suppress("UnusedParameter")
     fun onShareClicked(tournament: Tournament) {
-        // Share functionality will be implemented with platform-specific sharing
+        viewModelScope.launch {
+            val internalUrl = urlBuilder.build(Tournaments) ?: return@launch
+            runCatching {
+                val description = "Win up to ₹${tournament.totalPrizePool}"
+                val link =
+                    linkGenerator.generateShareLink(
+                        LinkInput(
+                            internalUrl = internalUrl,
+                            title = "Join me in ${tournament.title}!",
+                            description = description,
+                            feature = "share_tournament",
+                            tags = listOf("organic", "tournament_share"),
+                            metadata = mapOf("tournament_id" to tournament.id),
+                        ),
+                    )
+                val text = "Join me in ${tournament.title}! $description $link"
+                shareService.shareText(text)
+            }
+        }
     }
 
     fun onTournamentCtaClick(tournament: Tournament) {
