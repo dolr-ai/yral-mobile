@@ -6,6 +6,7 @@ package com.yral.shared.features.tournament.domain.model
  */
 data class TournamentData(
     val id: String,
+    val title: String,
     val date: String,
     val startTime: String,
     val endTime: String,

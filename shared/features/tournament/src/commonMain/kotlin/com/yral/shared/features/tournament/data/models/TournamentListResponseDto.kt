@@ -29,6 +29,8 @@ sealed class TournamentListResponseDto {
 data class TournamentDto(
     @SerialName("id")
     val id: String,
+    @SerialName("title")
+    val title: String,
     @SerialName("date")
     val date: String,
     @SerialName("start_time")
@@ -68,6 +70,7 @@ fun TournamentListResponseDto.toTournamentList(): Result<List<TournamentData>, T
 fun TournamentDto.toTournamentData(): TournamentData =
     TournamentData(
         id = id,
+        title = title,
         date = date,
         startTime = startTime,
         endTime = endTime,
