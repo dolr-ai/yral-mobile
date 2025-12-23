@@ -55,6 +55,9 @@ data class AppTopography(
     val regBold: TextStyle,
     val regSemiBold: TextStyle,
     val xxlBold: TextStyle,
+    val smRegular: TextStyle,
+    val smMedium: TextStyle,
+    val smSemiBold: TextStyle,
 )
 
 val LocalAppTopography =
@@ -80,6 +83,9 @@ val LocalAppTopography =
             regBold = TextStyle.Default,
             regSemiBold = TextStyle.Default,
             xxlBold = TextStyle.Default,
+            smRegular = TextStyle.Default,
+            smMedium = TextStyle.Default,
+            smSemiBold = TextStyle.Default,
         )
     }
 
@@ -226,6 +232,27 @@ fun appTypoGraphy(): AppTopography {
                 lineHeight = 33.6.sp,
                 fontFamily = fontFamily,
                 fontWeight = FontWeight.Bold,
+            ),
+        smRegular =
+            TextStyle(
+                fontSize = 10.sp,
+                lineHeight = 16.8.sp,
+                fontFamily = fontFamily,
+                fontWeight = FontWeight.Normal,
+            ),
+        smMedium =
+            TextStyle(
+                fontSize = 10.sp,
+                lineHeight = 16.8.sp,
+                fontFamily = fontFamily,
+                fontWeight = FontWeight(500),
+            ),
+        smSemiBold =
+            TextStyle(
+                fontSize = 10.sp,
+                lineHeight = 19.6.sp,
+                fontFamily = fontFamily,
+                fontWeight = FontWeight(600),
             ),
     )
 }
