@@ -314,6 +314,7 @@ def tournaments(request: Request):
 
             tournament_entry = {
                 "id": snap.id,
+                "title": t_data.get("title", "SMILEY SHOWDOWN"),
                 "date": t_data.get("date"),
                 "start_time": t_data.get("start_time"),
                 "end_time": t_data.get("end_time"),
@@ -343,8 +344,13 @@ def tournaments(request: Request):
 
             result.append(tournament_entry)
 
-        # Sort by start_time
-        result.sort(key=lambda x: x.get("start_time", ""))
+        # Sort: live/scheduled first, then ended; within each group sort by start_time
+        def sort_key(t):
+            status = t.get("status", "").lower()
+            is_ended = status in ["ended", "settled", "cancelled"]
+            return (is_ended, t.get("start_time", ""))
+
+        result.sort(key=sort_key)
 
         return jsonify({"tournaments": result}), 200
 
@@ -587,6 +593,7 @@ def my_tournaments(request: Request):
 
                         result.append({
                             "id": t_snap.id,
+                            "title": t_data.get("title", "SMILEY SHOWDOWN"),
                             "date": t_data.get("date"),
                             "start_time": t_data.get("start_time"),
                             "end_time": t_data.get("end_time"),
