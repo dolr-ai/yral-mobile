@@ -1,6 +1,5 @@
 package com.yral.shared.features.chat.ui.conversation
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +24,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.paint
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -39,12 +40,13 @@ import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.chat.viewmodel.ConversationMessageItem
 import com.yral.shared.features.chat.viewmodel.ConversationViewModel
 import com.yral.shared.libs.designsystem.component.YralLoader
-import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.features.chat.generated.resources.Res
+import yral_mobile.shared.features.chat.generated.resources.chat_background
 import yral_mobile.shared.features.chat.generated.resources.no_conversation_id
 
 /**
@@ -113,13 +115,16 @@ fun ChatConversationScreen(
     val imeBottomDp = with(density) { WindowInsets.ime.getBottom(this).toDp() }
     val keyboardAwareBottomPadding = (imeBottomDp - bottomPadding).coerceAtLeast(0.dp)
 
-    Box(modifier = modifier.fillMaxSize()) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .background(YralColors.PrimaryContainer),
-        ) {
+    Box(
+        modifier =
+            modifier
+                .fillMaxSize()
+                .paint(
+                    painter = painterResource(Res.drawable.chat_background),
+                    contentScale = ContentScale.FillBounds,
+                ),
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
             // Header
             ChatHeader(
                 influencer = viewState.influencer,
