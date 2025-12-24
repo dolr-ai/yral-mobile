@@ -46,7 +46,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.features.chat.generated.resources.Res
-import yral_mobile.shared.features.chat.generated.resources.chat_background
+import yral_mobile.shared.features.chat.generated.resources.chat_background_inverted
 import yral_mobile.shared.features.chat.generated.resources.no_conversation_id
 
 /**
@@ -125,7 +125,7 @@ fun ChatConversationScreen(
             modifier
                 .fillMaxSize()
                 .paint(
-                    painter = painterResource(Res.drawable.chat_background),
+                    painter = painterResource(Res.drawable.chat_background_inverted),
                     contentScale = ContentScale.Crop,
                 ),
     ) {
