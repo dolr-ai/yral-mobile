@@ -260,6 +260,79 @@ private fun TournamentGameIcons(
 }
 
 /**
+ * Dialog shown when tournament has ended.
+ */
+@Composable
+fun TournamentEndedDialog(
+    onViewLeaderboard: () -> Unit,
+    onExit: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.7f))
+            .clickable { },
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(32.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color.White)
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Text(
+                text = "\uD83C\uDFC6", // Trophy emoji
+                fontSize = 48.sp,
+            )
+            Text(
+                text = "Tournament Ended!",
+                color = Color.Black,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = "The tournament has ended. Check the leaderboard to see your final ranking!",
+                color = Color.Gray,
+                fontSize = 14.sp,
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color.Gray.copy(alpha = 0.3f))
+                        .clickable { onExit() }
+                        .padding(horizontal = 24.dp, vertical = 12.dp),
+                ) {
+                    Text(
+                        text = "Exit",
+                        color = Color.Black,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(YralColors.Pink300)
+                        .clickable { onViewLeaderboard() }
+                        .padding(horizontal = 24.dp, vertical = 12.dp),
+                ) {
+                    Text(
+                        text = "View Leaderboard",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
  * Dialog shown when user runs out of diamonds.
  */
 @Composable

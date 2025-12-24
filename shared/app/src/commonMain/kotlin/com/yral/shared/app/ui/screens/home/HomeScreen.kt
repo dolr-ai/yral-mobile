@@ -71,6 +71,7 @@ import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.tournament.ui.NoDiamondsDialog
 import com.yral.shared.features.tournament.ui.TournamentBottomOverlay
+import com.yral.shared.features.tournament.ui.TournamentEndedDialog
 import com.yral.shared.features.tournament.ui.TournamentScreen
 import com.yral.shared.features.tournament.ui.TournamentTopOverlay
 import com.yral.shared.features.tournament.viewmodel.TournamentGameViewModel
@@ -294,6 +295,20 @@ private fun HomeScreenContent(
                     NoDiamondsDialog(
                         onDismiss = { tournamentGameViewModel.clearNoDiamondsError() },
                         onExit = { child.component.onTimeUp() },
+                    )
+                }
+
+                // Show tournament ended dialog
+                if (gameState.tournamentEndedError) {
+                    TournamentEndedDialog(
+                        onViewLeaderboard = {
+                            tournamentGameViewModel.clearTournamentEndedError()
+                            child.component.onLeaderboardClick()
+                        },
+                        onExit = {
+                            tournamentGameViewModel.clearTournamentEndedError()
+                            child.component.onTimeUp()
+                        },
                     )
                 }
             }

@@ -123,6 +123,10 @@ class TournamentGameViewModel(
         _state.update { it.copy(noDiamondsError = false) }
     }
 
+    fun clearTournamentEndedError() {
+        _state.update { it.copy(tournamentEndedError = false) }
+    }
+
     fun clearLastVoteOutcome() {
         _state.update { it.copy(lastVoteOutcome = null, lastDiamondDelta = 0) }
     }
@@ -143,4 +147,5 @@ data class TournamentGameState(
     val voteResults: Map<String, VoteResult> = emptyMap(),
     val lastVotedCount: Int = 1,
     val noDiamondsError: Boolean = false,
+    val tournamentEndedError: Boolean = false,
 )
