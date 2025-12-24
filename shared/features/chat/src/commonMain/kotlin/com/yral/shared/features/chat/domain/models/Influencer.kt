@@ -7,7 +7,7 @@ data class Influencer(
     val avatarUrl: String,
     val description: String,
     val category: String,
-    val isActive: Boolean,
+    val isActive: String,
     val createdAt: String,
     val conversationCount: Int?,
 )

@@ -19,6 +19,7 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
+import com.yral.shared.features.chat.nav.ChatComponent
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.root.viewmodels.HomeViewModel
@@ -177,6 +178,10 @@ internal class DefaultHomeComponent(
         navigation.replaceKeepingFeed(Config.Wallet)
     }
 
+    override fun onChatTabClick() {
+        navigation.replaceKeepingFeed(Config.Chat)
+    }
+
     override fun showLoginBottomSheet(
         pageName: SignupPageName,
         loginBottomSheetType: LoginBottomSheetType,
@@ -214,6 +219,7 @@ internal class DefaultHomeComponent(
             is Config.Profile -> Child.Profile(profileComponent(componentContext))
             is Config.Account -> Child.Account(accountComponent(componentContext))
             is Config.Wallet -> Child.Wallet(walletComponent(componentContext))
+            is Config.Chat -> Child.Chat(chatComponent(componentContext))
         }
 
     private fun mapActiveChild(child: Child): Pair<Config, HomeChildSnapshotProvider?> =
@@ -225,6 +231,7 @@ internal class DefaultHomeComponent(
             is Child.Profile -> Config.Profile to (child.component as? HomeChildSnapshotProvider)
             is Child.Account -> Config.Account to (child.component as? HomeChildSnapshotProvider)
             is Child.Wallet -> Config.Wallet to (child.component as? HomeChildSnapshotProvider)
+            is Child.Chat -> Config.Chat to (child.component as? HomeChildSnapshotProvider)
         }
 
     private fun feedComponent(componentContext: ComponentContext): FeedComponent =
@@ -297,6 +304,12 @@ internal class DefaultHomeComponent(
             showAlertsOnDialog = showAlertsOnDialog,
         )
 
+    private fun chatComponent(componentContext: ComponentContext): ChatComponent =
+        ChatComponent.Companion(
+            componentContext = componentContext,
+            snapshot = childSnapshots[Config.Chat] as? ChatComponent.Snapshot,
+        )
+
     private fun slotChild(
         config: SlotConfig,
         componentContext: ComponentContext,
@@ -349,6 +362,9 @@ internal class DefaultHomeComponent(
 
         @Serializable
         data object Wallet : Config
+
+        @Serializable
+        data object Chat : Config
     }
 
     @Serializable

@@ -64,6 +64,11 @@ object Profile : AppRoute, ExternallyExposedRoute {
 }
 
 @Serializable
+object Chat : AppRoute, ExternallyExposedRoute {
+    const val PATH = "/chat"
+}
+
+@Serializable
 data class UserProfileRoute(
     val canisterId: String,
     val userPrincipalId: String,

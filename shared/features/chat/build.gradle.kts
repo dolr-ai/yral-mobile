@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.yral.shared.feature)
     alias(libs.plugins.yral.android.feature)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.yral.shared.library.compose)
 }
 
 kotlin {
@@ -22,12 +23,18 @@ kotlin {
             implementation(projects.shared.libs.preferences)
             implementation(projects.shared.libs.http)
             implementation(projects.shared.libs.arch)
+            implementation(projects.shared.libs.designsystem)
+            implementation(projects.shared.libs.preferences)
 
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.io.core)
             implementation(libs.kotlinx.datetime)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.paging.common)
+            implementation(libs.androidx.paging.compose)
+            implementation(libs.koin.compose.viewmodel)
+            implementation(compose.components.resources)
+            implementation(compose.material3)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
