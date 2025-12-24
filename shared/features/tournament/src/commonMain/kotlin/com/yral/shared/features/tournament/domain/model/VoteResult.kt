@@ -5,6 +5,7 @@ data class VoteResult(
     val smiley: VotedSmiley,
     val tournamentWins: Int,
     val tournamentLosses: Int,
+    val diamonds: Int,
     val position: Int,
 )
 

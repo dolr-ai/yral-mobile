@@ -9,4 +9,11 @@ data class Tournament(
     val status: TournamentStatus,
     val participationState: TournamentParticipationState,
     val prizeBreakdown: List<PrizeBreakdownRow>,
-)
+    val endEpochMs: Long,
+    val entryCost: Int,
+) {
+    /**
+     * Calculate initial diamonds for the game (1.5x entry cost).
+     */
+    val initialDiamonds: Int get() = (entryCost * 1.5).toInt()
+}

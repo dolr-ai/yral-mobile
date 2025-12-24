@@ -63,6 +63,8 @@ fun TournamentData.toUiTournament(): Tournament {
                 .map { (rank, amount) ->
                     PrizeBreakdownRow(rank = rank, amount = amount)
                 },
+        endEpochMs = endEpochMs,
+        entryCost = entryCost,
     )
 }
 

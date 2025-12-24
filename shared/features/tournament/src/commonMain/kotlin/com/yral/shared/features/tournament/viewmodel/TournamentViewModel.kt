@@ -312,7 +312,14 @@ class TournamentViewModel(
                         tournament,
                     )
 
-                TournamentParticipationState.JoinNow -> send(Event.NavigateToTournament(tournament.id))
+                TournamentParticipationState.JoinNow ->
+                    send(
+                        Event.NavigateToTournament(
+                            tournamentId = tournament.id,
+                            initialDiamonds = tournament.initialDiamonds,
+                            endEpochMs = tournament.endEpochMs,
+                        ),
+                    )
                 else -> {}
             }
         }
@@ -352,6 +359,8 @@ class TournamentViewModel(
 
         data class NavigateToTournament(
             val tournamentId: String,
+            val initialDiamonds: Int,
+            val endEpochMs: Long,
         ) : Event()
 
         data class NavigateToLeaderboard(

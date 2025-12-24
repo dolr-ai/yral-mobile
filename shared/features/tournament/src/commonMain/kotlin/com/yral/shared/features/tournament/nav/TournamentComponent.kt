@@ -11,7 +11,7 @@ interface TournamentComponent {
         operator fun invoke(
             componentContext: ComponentContext,
             promptLogin: (pageName: SignupPageName) -> Unit,
-            navigateToTournament: (tournamentId: String) -> Unit = {},
+            navigateToTournament: (tournamentId: String, initialDiamonds: Int, endEpochMs: Long) -> Unit = { _, _, _ -> },
             navigateToLeaderboard: (
                 tournamentId: String,
                 participantsLabel: String,
@@ -30,7 +30,7 @@ interface TournamentComponent {
 internal class DefaultTournamentComponent(
     componentContext: ComponentContext,
     private val promptLogin: (pageName: SignupPageName) -> Unit,
-    private val navigateToTournament: (tournamentId: String) -> Unit,
+    private val navigateToTournament: (tournamentId: String, initialDiamonds: Int, endEpochMs: Long) -> Unit,
     private val navigateToLeaderboard: (
         tournamentId: String,
         participantsLabel: String,
@@ -42,7 +42,7 @@ internal class DefaultTournamentComponent(
         when (value) {
             TournamentViewModel.Event.Login -> promptLogin(SignupPageName.TOURNAMENT)
             is TournamentViewModel.Event.NavigateToTournament -> {
-                navigateToTournament(value.tournamentId)
+                navigateToTournament(value.tournamentId, value.initialDiamonds, value.endEpochMs)
             }
             is TournamentViewModel.Event.RegistrationSuccess -> {
                 // Handle registration success - could show a toast or navigate

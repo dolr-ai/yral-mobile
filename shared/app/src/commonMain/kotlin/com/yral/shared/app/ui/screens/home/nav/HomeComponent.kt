@@ -15,6 +15,7 @@ import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.root.viewmodels.HomeViewModel
 import com.yral.shared.features.tournament.nav.TournamentComponent
+import com.yral.shared.features.tournament.nav.TournamentGameComponent
 import com.yral.shared.features.uploadvideo.nav.UploadVideoRootComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.features.wallet.ui.btcRewards.nav.VideoViewRewardsComponent
@@ -54,6 +55,9 @@ abstract class HomeComponent {
         ) : Child()
         class Tournament(
             val component: TournamentComponent,
+        ) : Child()
+        class TournamentGame(
+            val component: TournamentGameComponent,
         ) : Child()
         class UploadVideo(
             val component: UploadVideoRootComponent,

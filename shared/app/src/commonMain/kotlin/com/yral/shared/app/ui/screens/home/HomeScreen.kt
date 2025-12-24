@@ -48,6 +48,7 @@ import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.app.ui.screens.feed.FeedScaffoldScreen
+import com.yral.shared.app.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent.SlotChild
 import com.yral.shared.app.ui.screens.profile.ProfileScreen
@@ -62,12 +63,17 @@ import com.yral.shared.features.account.ui.rememberAlertsPermissionController
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.chat.ui.ChatScreen
+import com.yral.shared.features.feed.ui.FeedScreen
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.leaderboard.ui.LeaderboardScreen
 import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
+import com.yral.shared.features.tournament.ui.NoDiamondsDialog
+import com.yral.shared.features.tournament.ui.TournamentBottomOverlay
 import com.yral.shared.features.tournament.ui.TournamentScreen
+import com.yral.shared.features.tournament.ui.TournamentTopOverlay
+import com.yral.shared.features.tournament.viewmodel.TournamentGameViewModel
 import com.yral.shared.features.tournament.viewmodel.TournamentViewModel
 import com.yral.shared.features.wallet.ui.WalletScreen
 import com.yral.shared.features.wallet.ui.btcRewards.VideoViewsRewardsBottomSheet
@@ -118,12 +124,15 @@ internal fun HomeScreen(
                     is HomeComponent.Child.Feed -> HomeTab.HOME
                     is HomeComponent.Child.Leaderboard -> HomeTab.LEADER_BOARD
                     is HomeComponent.Child.Tournament -> HomeTab.TOURNAMENT
+                    is HomeComponent.Child.TournamentGame -> HomeTab.TOURNAMENT
                     is HomeComponent.Child.Profile -> HomeTab.PROFILE
                     is HomeComponent.Child.UploadVideo -> HomeTab.UPLOAD_VIDEO
                     is HomeComponent.Child.Chat -> HomeTab.CHAT
                     is HomeComponent.Child.Account -> HomeTab.ACCOUNT
                     is HomeComponent.Child.Wallet -> HomeTab.WALLET
                 }
+            // Hide bottom navigation bar during tournament game
+            val showNavBar = activeComponent !is HomeComponent.Child.TournamentGame
             val updateCurrentTab: (tab: HomeTab) -> Unit = { tab ->
                 when (tab) {
                     HomeTab.HOME -> component.onFeedTabClick()
@@ -136,11 +145,13 @@ internal fun HomeScreen(
                     HomeTab.WALLET -> component.onWalletTabClick()
                 }
             }
-            HomeNavigationBar(
-                currentTab = currentTab,
-                updateCurrentTab = updateCurrentTab,
-                bottomNavigationClicked = bottomNavigationAnalytics,
-            )
+            if (showNavBar) {
+                HomeNavigationBar(
+                    currentTab = currentTab,
+                    updateCurrentTab = updateCurrentTab,
+                    bottomNavigationClicked = bottomNavigationAnalytics,
+                )
+            }
         },
     ) { innerPadding ->
         HomeScreenContent(
@@ -223,6 +234,69 @@ private fun HomeScreenContent(
                     component = child.component,
                     viewModel = tournamentViewModel,
                 )
+
+            is HomeComponent.Child.TournamentGame -> {
+                val tournamentGameViewModel =
+                    koinViewModel<TournamentGameViewModel>(
+                        key = "tournament-game-${child.component.tournamentId}-$sessionKey",
+                    )
+                val tournamentFeedViewModel =
+                    koinViewModel<FeedViewModel>(
+                        key = "tournament-feed-${child.component.tournamentId}-$sessionKey",
+                    )
+                val gameState by tournamentGameViewModel.state.collectAsStateWithLifecycle()
+                val feedState by tournamentFeedViewModel.state.collectAsStateWithLifecycle()
+
+                // Initialize the game view model with tournament data
+                LaunchedEffect(child.component.tournamentId) {
+                    tournamentGameViewModel.setTournament(
+                        tournamentId = child.component.tournamentId,
+                        initialDiamonds = child.component.initialDiamonds,
+                        endEpochMs = child.component.endEpochMs,
+                    )
+                }
+
+                FeedScreen(
+                    component = child.component,
+                    viewModel = tournamentFeedViewModel,
+                    topOverlay = { _ ->
+                        TournamentTopOverlay(
+                            gameState = gameState,
+                            onLeaderboardClick = { child.component.onLeaderboardClick() },
+                            onTimeUp = { child.component.onTimeUp() },
+                        )
+                    },
+                    bottomOverlay = { pageNo, scrollToNext ->
+                        if (pageNo < feedState.feedDetails.size) {
+                            TournamentBottomOverlay(
+                                feedDetails = feedState.feedDetails[pageNo],
+                                gameState = gameState,
+                                gameViewModel = tournamentGameViewModel,
+                                scrollToNext = scrollToNext,
+                            )
+                        }
+                    },
+                    onPageChanged = { pageNo, _ ->
+                        if (pageNo >= 0 && pageNo < feedState.feedDetails.size) {
+                            tournamentGameViewModel.setCurrentVideoId(
+                                feedState.feedDetails[pageNo].videoID,
+                            )
+                        }
+                    },
+                    onEdgeScrollAttempt = { _ -> },
+                    limitReelCount = gameState.lastVotedCount,
+                    getPrefetchListener = { reel -> PrefetchVideoListenerImpl(reel) },
+                    getVideoListener = { null },
+                )
+
+                // Show no diamonds dialog
+                if (gameState.noDiamondsError) {
+                    NoDiamondsDialog(
+                        onDismiss = { tournamentGameViewModel.clearNoDiamondsError() },
+                        onExit = { child.component.onTimeUp() },
+                    )
+                }
+            }
 
             is HomeComponent.Child.UploadVideo ->
                 UploadVideoRootScreen(
