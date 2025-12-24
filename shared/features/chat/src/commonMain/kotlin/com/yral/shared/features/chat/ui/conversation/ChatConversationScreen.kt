@@ -115,6 +115,11 @@ fun ChatConversationScreen(
     val imeBottomDp = with(density) { WindowInsets.ime.getBottom(this).toDp() }
     val keyboardAwareBottomPadding = (imeBottomDp - bottomPadding).coerceAtLeast(0.dp)
 
+    // Check if there's a waiting assistant message in overlay
+    val hasWaitingAssistant by derivedStateOf {
+        overlayItems.any { it.isWaitingAssistant() }
+    }
+
     Box(
         modifier =
             modifier
@@ -237,6 +242,7 @@ fun ChatConversationScreen(
                             },
                             onCameraClick = imageCaptureLauncher,
                             onGalleryClick = imagePickerLauncher,
+                            hasWaitingAssistant = hasWaitingAssistant,
                         )
                     }
                 }
@@ -253,6 +259,7 @@ fun ChatConversationScreen(
                 },
                 onDismiss = { selectedImage = null },
                 bottomPadding = bottomPadding,
+                hasWaitingAssistant = hasWaitingAssistant,
                 modifier = Modifier.fillMaxSize(),
             )
         }

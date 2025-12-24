@@ -51,6 +51,7 @@ fun ImagePreviewOverlay(
     onSend: (SendMessageDraft) -> Unit,
     onDismiss: () -> Unit,
     bottomPadding: Dp = 0.dp,
+    hasWaitingAssistant: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     var input by remember { mutableStateOf("") }
@@ -101,6 +102,7 @@ fun ImagePreviewOverlay(
                         onDismiss()
                     },
                     showAttachmentMenu = false,
+                    hasWaitingAssistant = hasWaitingAssistant,
                     placeholder = stringResource(Res.string.message_optional),
                 )
             }

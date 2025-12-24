@@ -35,6 +35,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.ic_camera
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_gallery
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_plus_circle
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_send
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_send_disabled
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 private const val MAX_CHARACTER_LIMIT = 4000
@@ -49,6 +50,7 @@ internal fun ChatInputArea(
     onGalleryClick: (() -> Unit)? = null,
     showAttachmentMenu: Boolean = true,
     placeholder: String? = null,
+    hasWaitingAssistant: Boolean = false,
 ) {
     val defaultPlaceholder = stringResource(Res.string.message_placeholder)
     val finalPlaceholder = placeholder ?: defaultPlaceholder
@@ -93,7 +95,14 @@ internal fun ChatInputArea(
             },
         )
 
-        InputActions(input, onSendClick, showAttachmentMenu, onCameraClick, onGalleryClick)
+        InputActions(
+            input,
+            onSendClick,
+            showAttachmentMenu,
+            onCameraClick,
+            onGalleryClick,
+            hasWaitingAssistant,
+        )
     }
 }
 
@@ -104,6 +113,7 @@ private fun InputActions(
     showAttachmentMenu: Boolean,
     onCameraClick: (() -> Unit)?,
     onGalleryClick: (() -> Unit)?,
+    hasWaitingAssistant: Boolean,
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -111,7 +121,10 @@ private fun InputActions(
     ) {
         if (input.isNotBlank()) {
             // Send button when text is entered
-            SendButton(enabled = input.isNotBlank(), onSendClick = onSendClick)
+            SendButton(
+                enabled = input.isNotBlank() && !hasWaitingAssistant,
+                onSendClick = onSendClick,
+            )
         } else if (showAttachmentMenu && onCameraClick != null && onGalleryClick != null) {
             // Show attachment menu only if enabled and callbacks are provided
             YralContextMenu(
@@ -135,7 +148,10 @@ private fun InputActions(
             )
         } else if (!showAttachmentMenu) {
             // Always show send button when attachment menu is disabled (for image preview)
-            SendButton(enabled = true, onSendClick = onSendClick)
+            SendButton(
+                enabled = !hasWaitingAssistant,
+                onSendClick = onSendClick,
+            )
         }
     }
 }
@@ -146,7 +162,14 @@ private fun SendButton(
     onSendClick: () -> Unit,
 ) {
     Image(
-        painter = painterResource(DesignRes.drawable.ic_send),
+        painter =
+            painterResource(
+                if (enabled) {
+                    DesignRes.drawable.ic_send
+                } else {
+                    DesignRes.drawable.ic_send_disabled
+                },
+            ),
         contentDescription = stringResource(Res.string.send),
         modifier =
             Modifier
