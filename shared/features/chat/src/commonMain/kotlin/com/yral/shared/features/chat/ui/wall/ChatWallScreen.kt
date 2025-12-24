@@ -21,10 +21,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.nav.wall.ChatWallComponent
@@ -33,6 +31,12 @@ import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import org.jetbrains.compose.resources.stringResource
+import yral_mobile.shared.features.chat.generated.resources.Res
+import yral_mobile.shared.features.chat.generated.resources.chat_wall_coming_soon
+import yral_mobile.shared.features.chat.generated.resources.chat_wall_subtitle
+import yral_mobile.shared.features.chat.generated.resources.chat_wall_talk_to_me
+import yral_mobile.shared.features.chat.generated.resources.chat_wall_title
 
 @Composable
 fun ChatWallScreen(
@@ -50,13 +54,13 @@ fun ChatWallScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         Text(
-            text = "Chat with Influencers",
+            text = stringResource(Res.string.chat_wall_title),
             style = LocalAppTopography.current.xlBold,
             color = YralColors.Grey50,
             modifier = Modifier.padding(bottom = 22.dp),
         )
         Text(
-            text = "Chat, learn, and vibe with your favorite creators.",
+            text = stringResource(Res.string.chat_wall_subtitle),
             style = LocalAppTopography.current.baseRegular,
             color = YralColors.Grey0,
             modifier = Modifier.padding(bottom = 20.dp),
@@ -174,7 +178,7 @@ private fun InfluencerCard(
             )
             if (influencer.isActive == "coming_soon") {
                 Text(
-                    text = "coming soon...",
+                    text = stringResource(Res.string.chat_wall_coming_soon),
                     style = LocalAppTopography.current.smMedium,
                     color = YralColors.Grey0,
                     maxLines = 1,
@@ -185,7 +189,7 @@ private fun InfluencerCard(
                         Modifier
                             .fillMaxWidth()
                             .padding(top = 6.dp),
-                    text = "Talk To Me",
+                    text = stringResource(Res.string.chat_wall_talk_to_me),
                     backgroundColor = YralColors.Grey50,
                     textStyle =
                         LocalAppTopography
