@@ -21,6 +21,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.BottomCenter
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -65,19 +66,18 @@ fun ImagePreviewOverlay(
                 .background(Color.Black)
                 .clickable {},
     ) {
+        YralAsyncImage(
+            imageUrl = getLocalImageModel(imageAttachment.filePath),
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Fit,
+            shape = RectangleShape,
+        )
         Column(
             modifier =
                 Modifier
-                    .fillMaxSize()
+                    .align(BottomCenter)
                     .padding(bottom = keyboardAwareBottomPadding),
         ) {
-            YralAsyncImage(
-                imageUrl = getLocalImageModel(imageAttachment.filePath),
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-                contentScale = ContentScale.Fit,
-                shape = RectangleShape,
-            )
-
             Box(
                 modifier =
                     Modifier
@@ -115,7 +115,7 @@ private fun BoxScope.CloseButton(onDismiss: () -> Unit) {
         modifier =
             Modifier
                 .align(Alignment.TopEnd)
-                .padding(top = 85.dp, end = 16.dp)
+                .padding(top = 16.dp, end = 16.dp)
                 .width(32.dp)
                 .height(32.dp)
                 .background(color = YralColors.Neutral600, CircleShape)

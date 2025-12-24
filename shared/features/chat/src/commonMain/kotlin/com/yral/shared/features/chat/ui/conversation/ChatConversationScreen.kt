@@ -121,7 +121,7 @@ fun ChatConversationScreen(
                 .fillMaxSize()
                 .paint(
                     painter = painterResource(Res.drawable.chat_background),
-                    contentScale = ContentScale.FillBounds,
+                    contentScale = ContentScale.Crop,
                 ),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
