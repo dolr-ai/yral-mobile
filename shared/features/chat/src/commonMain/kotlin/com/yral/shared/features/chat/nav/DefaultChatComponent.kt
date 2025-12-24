@@ -5,7 +5,6 @@ import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
-import com.arkivanov.decompose.router.stack.pushNew
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.chat.nav.wall.ChatWallComponent
@@ -17,6 +16,7 @@ internal class DefaultChatComponent(
     componentContext: ComponentContext,
     private val snapshot: Snapshot?,
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
+    private val openConversation: (influencerId: String) -> Unit,
 ) : ChatComponent(),
     ComponentContext by componentContext,
     KoinComponent {
@@ -83,7 +83,9 @@ internal class DefaultChatComponent(
         ChatWallComponent.Companion(
             componentContext = componentContext,
             openConversation = { influencerId ->
-                navigation.pushNew(Config.Conversation(influencerId = influencerId))
+                // Use root navigation instead of local navigation
+                // navigation.pushNew(Config.Conversation(influencerId = influencerId))
+                openConversation.invoke(influencerId)
             },
         )
 

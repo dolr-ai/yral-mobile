@@ -37,6 +37,7 @@ abstract class HomeComponent {
     abstract fun onWalletTabClick()
     abstract fun onChatTabClick()
     abstract fun onNavigationRequest(appRoute: AppRoute)
+    abstract fun openConversation(influencerId: String)
     abstract fun showLoginBottomSheet(
         pageName: SignupPageName,
         loginBottomSheetType: LoginBottomSheetType,
@@ -96,6 +97,7 @@ abstract class HomeComponent {
                 endEpochMs: Long,
                 totalPrizePool: Int,
             ) -> Unit,
+            openConversation: (influencerId: String) -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
             showLoginBottomSheet: (
                 pageName: SignupPageName,
@@ -109,6 +111,7 @@ abstract class HomeComponent {
                 componentContext,
                 openEditProfile,
                 openProfile,
+                openConversation,
                 openTournamentLeaderboard,
                 openTournamentGame,
                 showAlertsOnDialog,

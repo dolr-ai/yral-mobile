@@ -50,6 +50,7 @@ internal class DefaultHomeComponent(
     componentContext: ComponentContext,
     private val openEditProfile: () -> Unit,
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
+    private val openConversation: (influencerId: String) -> Unit,
     private val openTournamentLeaderboard: (
         tournamentId: String,
         showResult: Boolean,
@@ -188,6 +189,10 @@ internal class DefaultHomeComponent(
         navigation.replaceKeepingFeed(Config.Chat)
     }
 
+    override fun openConversation(influencerId: String) {
+        openConversation.invoke(influencerId)
+    }
+
     override fun showLoginBottomSheet(
         pageName: SignupPageName,
         loginBottomSheetType: LoginBottomSheetType,
@@ -324,6 +329,7 @@ internal class DefaultHomeComponent(
             componentContext = componentContext,
             snapshot = childSnapshots[Config.Chat] as? ChatComponent.Snapshot,
             openProfile = openProfile,
+            openConversation = openConversation,
         )
 
     private fun slotChild(

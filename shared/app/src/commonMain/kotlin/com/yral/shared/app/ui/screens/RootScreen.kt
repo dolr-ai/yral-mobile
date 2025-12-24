@@ -42,6 +42,8 @@ import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.session.getKey
 import com.yral.shared.features.auth.ui.LoginBottomSheet
 import com.yral.shared.features.auth.viewModel.LoginViewModel
+import com.yral.shared.features.chat.ui.conversation.ChatConversationScreen
+import com.yral.shared.features.chat.viewmodel.ConversationViewModel
 import com.yral.shared.features.profile.ui.EditProfileScreen
 import com.yral.shared.features.profile.ui.ProfileMainScreen
 import com.yral.shared.features.profile.viewmodel.EditProfileViewModel
@@ -147,6 +149,16 @@ fun RootScreen(
                         TournamentGameScaffoldScreen(
                             component = child.component,
                             sessionKey = sessionKey,
+                        )
+                    }
+
+                    is Child.Conversation -> {
+                        HandleSystemBars(show = true)
+                        ChatConversationScreen(
+                            component = child.component,
+                            viewModel = koinViewModel<ConversationViewModel>(),
+                            modifier = Modifier.fillMaxSize().statusBarsPadding(),
+                            bottomPadding = 0.dp,
                         )
                     }
                 }

@@ -22,6 +22,7 @@ import com.yral.shared.app.ui.screens.home.nav.HomeComponent
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
+import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.tournament.nav.TournamentGameComponent
@@ -92,6 +93,7 @@ class DefaultRootComponent(
                         config.totalPrizePool,
                     ),
                 )
+            is Config.Conversation -> RootComponent.Child.Conversation(conversationComponent(componentContext, config))
         }
 
     private val slotNavigation = SlotNavigation<SlotConfig>()
@@ -118,6 +120,7 @@ class DefaultRootComponent(
                 openProfile = this::openProfile,
                 openTournamentLeaderboard = this::openTournamentLeaderboard,
                 openTournamentGame = this::openTournamentGame,
+                openConversation = this::openConversation,
                 showAlertsOnDialog = { this.showSlot(SlotConfig.AlertsRequestBottomSheet(it)) },
                 showLoginBottomSheet = this::showLoginBottomSheet,
                 hideLoginBottomSheetIfVisible = this::hideLoginBottomSheetIfVisible,
@@ -262,6 +265,21 @@ class DefaultRootComponent(
         )
     }
 
+    override fun openConversation(influencerId: String) {
+        navigation.pushToFront(Config.Conversation(influencerId))
+    }
+
+    private fun conversationComponent(
+        componentContext: ComponentContext,
+        config: Config.Conversation,
+    ): ConversationComponent =
+        ConversationComponent.Companion(
+            componentContext = componentContext,
+            influencerId = config.influencerId,
+            onBack = { navigation.pop() },
+            openProfile = this::openProfile,
+        )
+
     override fun showLoginBottomSheet(
         pageName: SignupPageName,
         loginBottomSheetType: LoginBottomSheetType,
@@ -389,6 +407,11 @@ class DefaultRootComponent(
             val initialDiamonds: Int,
             val endEpochMs: Long,
             val totalPrizePool: Int,
+        ) : Config
+
+        @Serializable
+        data class Conversation(
+            val influencerId: String,
         ) : Config
     }
 

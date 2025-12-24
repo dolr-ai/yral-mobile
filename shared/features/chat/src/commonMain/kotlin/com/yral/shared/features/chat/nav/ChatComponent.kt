@@ -44,11 +44,13 @@ abstract class ChatComponent : HomeChildSnapshotProvider {
             componentContext: ComponentContext,
             snapshot: Snapshot?,
             openProfile: (userCanisterData: CanisterData) -> Unit,
+            openConversation: (influencerId: String) -> Unit,
         ): ChatComponent =
             DefaultChatComponent(
                 componentContext = componentContext,
                 snapshot = snapshot,
                 openProfile = openProfile,
+                openConversation = openConversation,
             )
     }
 }
