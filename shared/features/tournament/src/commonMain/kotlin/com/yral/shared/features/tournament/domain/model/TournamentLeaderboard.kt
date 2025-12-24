@@ -6,6 +6,11 @@ data class TournamentLeaderboard(
     val topRows: List<LeaderboardRow>,
     val userRow: LeaderboardRow?,
     val prizeMap: Map<Int, Int>,
+    val participantCount: Int,
+    val date: String,
+    val startEpochMs: Long,
+    val endEpochMs: Long,
+    val title: String,
 )
 
 data class LeaderboardRow(

@@ -894,7 +894,12 @@ def tournament_leaderboard(request: Request):
             "status": "ended",
             "top_rows": [ {...}, ... ],
             "user_row": {...},
-            "prize_map": {...}
+            "prize_map": {...},
+            "participant_count": 42,
+            "date": "2025-12-24",
+            "start_epoch_ms": 1234567890000,
+            "end_epoch_ms": 1234567899000,
+            "title": "Tournament Name"
         }
     """
     try:
@@ -949,7 +954,12 @@ def tournament_leaderboard(request: Request):
             "status": status,
             "top_rows": top_rows,
             "user_row": user_row,
-            "prize_map": prize_map
+            "prize_map": prize_map,
+            "participant_count": t_data.get("participant_count", 0),
+            "date": t_data.get("date", ""),
+            "start_epoch_ms": t_data.get("start_epoch_ms", 0),
+            "end_epoch_ms": t_data.get("end_epoch_ms", 0),
+            "title": t_data.get("title", "Tournament"),
         }), 200
 
     except auth.InvalidIdTokenError:
