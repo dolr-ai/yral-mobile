@@ -1566,6 +1566,9 @@ enum class CategoryName {
 
     @SerialName("wallet")
     WALLET,
+
+    @SerialName("chat")
+    CHAT,
 }
 
 @Serializable

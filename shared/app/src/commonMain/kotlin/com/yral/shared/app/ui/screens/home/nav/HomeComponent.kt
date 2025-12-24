@@ -10,6 +10,7 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
+import com.yral.shared.features.chat.nav.ChatComponent
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.root.viewmodels.HomeViewModel
@@ -34,6 +35,7 @@ abstract class HomeComponent {
     abstract fun onProfileTabClick()
     abstract fun onAccountTabClick()
     abstract fun onWalletTabClick()
+    abstract fun onChatTabClick()
     abstract fun onNavigationRequest(appRoute: AppRoute)
     abstract fun showLoginBottomSheet(
         pageName: SignupPageName,
@@ -64,6 +66,9 @@ abstract class HomeComponent {
         ) : Child()
         class Wallet(
             val component: WalletComponent,
+        ) : Child()
+        class Chat(
+            val component: ChatComponent,
         ) : Child()
     }
 
