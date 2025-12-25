@@ -93,6 +93,6 @@ fun MyTournamentDto.toTournamentData(): TournamentData =
                 tournamentWins = userStats.tournamentWins,
                 tournamentLosses = userStats.tournamentLosses,
                 registrationStatus = userStats.status ?: "",
-                diamonds = userStats.diamonds
+                diamonds = userStats.diamonds,
             ),
     )

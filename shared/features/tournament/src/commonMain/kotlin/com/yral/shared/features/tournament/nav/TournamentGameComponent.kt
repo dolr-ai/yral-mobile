@@ -34,13 +34,14 @@ interface TournamentGameComponent : FeedComponent {
         ): TournamentGameComponent =
             DefaultTournamentGameComponent(
                 componentContext = componentContext,
-                gameConfig = TournamentGameConfig(
-                    tournamentId = tournamentId,
-                    tournamentTitle = tournamentTitle,
-                    initialDiamonds = initialDiamonds,
-                    totalPrizePool = totalPrizePool,
-                    endEpochMs = endEpochMs
-                ),
+                gameConfig =
+                    TournamentGameConfig(
+                        tournamentId = tournamentId,
+                        tournamentTitle = tournamentTitle,
+                        initialDiamonds = initialDiamonds,
+                        totalPrizePool = totalPrizePool,
+                        endEpochMs = endEpochMs,
+                    ),
                 onLeaderboardClickCallback = onLeaderboardClick,
                 onTimeUpCallback = onTimeUp,
                 onBackCallback = onBack,

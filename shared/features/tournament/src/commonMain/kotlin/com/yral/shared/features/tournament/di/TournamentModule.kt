@@ -10,8 +10,8 @@ import com.yral.shared.features.tournament.domain.GetTournamentStatusUseCase
 import com.yral.shared.features.tournament.domain.GetTournamentsUseCase
 import com.yral.shared.features.tournament.domain.ITournamentRepository
 import com.yral.shared.features.tournament.domain.RegisterForTournamentUseCase
-import com.yral.shared.features.tournament.viewmodel.TournamentLeaderboardViewModel
 import com.yral.shared.features.tournament.viewmodel.TournamentGameViewModel
+import com.yral.shared.features.tournament.viewmodel.TournamentLeaderboardViewModel
 import com.yral.shared.features.tournament.viewmodel.TournamentViewModel
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf

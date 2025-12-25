@@ -40,7 +40,6 @@ import yral_mobile.shared.features.tournament.generated.resources.tournament_exi
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LeaveTournamentBottomSheet(
-    tournamentTitle: String,
     totalPrizePool: Int,
     onDismissRequest: () -> Unit,
     onKeepPlayingClick: () -> Unit,
@@ -116,7 +115,6 @@ private fun ExitAnywayButton(onClick: () -> Unit) {
 private fun LeaveTournamentBottomSheetPreview() {
     CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
         LeaveTournamentBottomSheet(
-            tournamentTitle = "Smily Showdown",
             totalPrizePool = 10000,
             onDismissRequest = {},
             onKeepPlayingClick = {},

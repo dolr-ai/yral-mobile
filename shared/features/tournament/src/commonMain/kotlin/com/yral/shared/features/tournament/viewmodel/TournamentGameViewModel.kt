@@ -115,8 +115,7 @@ class TournamentGameViewModel(
 
     fun getVoteResult(videoId: String): VoteResult? = _state.value.voteResults[videoId]
 
-    fun hasShownCoinDeltaAnimation(videoId: String): Boolean =
-        _state.value.shownCoinDeltaAnimations.contains(videoId)
+    fun hasShownCoinDeltaAnimation(videoId: String): Boolean = _state.value.shownCoinDeltaAnimations.contains(videoId)
 
     fun markCoinDeltaAnimationShown(videoId: String) {
         _state.update {

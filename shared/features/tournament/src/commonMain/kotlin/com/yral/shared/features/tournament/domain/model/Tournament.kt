@@ -15,5 +15,6 @@ data class Tournament(
     /**
      * Calculate initial diamonds for the game (1.5x entry cost).
      */
+    @Suppress("MagicNumber")
     val initialDiamonds: Int get() = (entryCost * 1.5).toInt()
 }

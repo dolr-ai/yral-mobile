@@ -56,6 +56,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.pink_gradient_ba
 import kotlin.time.Duration.Companion.seconds
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
+@Suppress("LongMethod")
 @Composable
 fun ColumnScope.FeedActionsRight(
     pageNo: Int,
@@ -136,7 +137,7 @@ fun ColumnScope.FeedActionsRight(
                     feedViewModel.onShareClicked(
                         feedDetails,
                         msgFeedVideoShare,
-                        msgFeedVideoShareDesc
+                        msgFeedVideoShareDesc,
                     )
                 },
         painter = painterResource(DesignRes.drawable.ic_share),

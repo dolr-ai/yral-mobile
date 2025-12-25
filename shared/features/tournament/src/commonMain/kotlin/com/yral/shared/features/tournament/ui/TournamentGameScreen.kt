@@ -46,7 +46,6 @@ import yral_mobile.shared.features.tournament.generated.resources.exit
 import yral_mobile.shared.features.tournament.generated.resources.ic_timer
 import yral_mobile.shared.features.tournament.generated.resources.tournament_diamond
 import yral_mobile.shared.features.tournament.generated.resources.tournament_ingame_rank
-import yral_mobile.shared.features.tournament.generated.resources.tournament_leaderboard
 import yral_mobile.shared.features.tournament.generated.resources.trophy
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.exclamation
@@ -67,13 +66,13 @@ fun TournamentTopOverlay(
     onBack: () -> Unit,
 ) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .paint(
-                painter = painterResource(DesignRes.drawable.shadow),
-                contentScale = ContentScale.FillBounds,
-            )
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .paint(
+                    painter = painterResource(DesignRes.drawable.shadow),
+                    contentScale = ContentScale.FillBounds,
+                ).padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         TournamentHeader(
             tournamentTitle = tournamentTitle,
@@ -122,21 +121,20 @@ private fun TournamentHeader(
     }
 }
 
+@Suppress("MagicNumber")
 @Composable
-private fun TournamentTitlePill(
-    title: String,
-) {
+private fun TournamentTitlePill(title: String) {
     Box(contentAlignment = Alignment.CenterStart) {
         Text(
-            modifier = Modifier
-                .padding(start = 14.dp)
-                .background(
-                    brush =
-                        Brush.horizontalGradient(
-                            colors = listOf(YralColors.Yellow400, Color.Transparent),
-                        ),
-                )
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier =
+                Modifier
+                    .padding(start = 14.dp)
+                    .background(
+                        brush =
+                            Brush.horizontalGradient(
+                                colors = listOf(YralColors.Yellow400, Color.Transparent),
+                            ),
+                    ).padding(horizontal = 16.dp, vertical = 8.dp),
             text = title.ifBlank { "Tournament" },
             style = LocalAppTopography.current.mdBold,
             color = Color(0xFFFFF9EB),
@@ -145,9 +143,10 @@ private fun TournamentTitlePill(
         Image(
             painter = painterResource(TournamentRes.drawable.trophy),
             contentDescription = null,
-            modifier = Modifier
-                .width(28.dp)
-                .height(33.dp),
+            modifier =
+                Modifier
+                    .width(28.dp)
+                    .height(33.dp),
         )
     }
 }
@@ -211,6 +210,7 @@ private fun TournamentLeaderboardBadge(
 /**
  * Bottom overlay for tournament game screen showing game icons and vote results.
  */
+@Suppress("LongMethod")
 @Composable
 fun TournamentBottomOverlay(
     pageNo: Int,
@@ -260,11 +260,12 @@ fun TournamentBottomOverlay(
             painter = painterResource(DesignRes.drawable.ic_how_to_play),
             contentDescription = "how to play",
             contentScale = ContentScale.None,
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(start = 20.dp, bottom = overlayBottomPadding + 8.dp)
-                .size(32.dp)
-                .clickable { onHowToPlayClick() },
+            modifier =
+                Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = 20.dp, bottom = overlayBottomPadding + 8.dp)
+                    .size(32.dp)
+                    .clickable { onHowToPlayClick() },
         )
         TournamentTimerPill(
             timeLeftMs = timeLeftMs,
@@ -278,12 +279,14 @@ fun TournamentBottomOverlay(
     // Auto-scroll after vote
     LaunchedEffect(hasVoted) {
         if (hasVoted) {
+            @Suppress("MagicNumber")
             delay(1500L)
             scrollToNext()
         }
     }
 }
 
+@Suppress("MagicNumber")
 @Composable
 private fun TournamentTimerPill(
     timeLeftMs: Long,
@@ -306,7 +309,7 @@ private fun TournamentTimerPill(
         Text(
             text = "Tournament ends in ${formatRemainingDuration(timeLeftMs.milliseconds)}",
             style = LocalAppTopography.current.regMedium,
-            color = Color(0xFFD4D4D4),
+            color = YralColors.Neutral300,
             maxLines = 1,
         )
     }
@@ -341,24 +344,27 @@ fun ColumnScope.TournamentGameActionsRight(
 /**
  * Dialog shown when tournament has ended.
  */
+@Suppress("LongMethod")
 @Composable
 fun TournamentEndedDialog(
     onViewLeaderboard: () -> Unit,
     onExit: () -> Unit,
 ) {
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.7f))
-            .clickable { },
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.7f))
+                .clickable { },
         contentAlignment = Alignment.Center,
     ) {
         Column(
-            modifier = Modifier
-                .padding(32.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(Color.White)
-                .padding(24.dp),
+            modifier =
+                Modifier
+                    .padding(32.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color.White)
+                    .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
@@ -381,11 +387,12 @@ fun TournamentEndedDialog(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color.Gray.copy(alpha = 0.3f))
-                        .clickable { onExit() }
-                        .padding(horizontal = 24.dp, vertical = 12.dp),
+                    modifier =
+                        Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.Gray.copy(alpha = 0.3f))
+                            .clickable { onExit() }
+                            .padding(horizontal = 24.dp, vertical = 12.dp),
                 ) {
                     Text(
                         text = "Exit",
@@ -394,11 +401,12 @@ fun TournamentEndedDialog(
                     )
                 }
                 Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(YralColors.Pink300)
-                        .clickable { onViewLeaderboard() }
-                        .padding(horizontal = 24.dp, vertical = 12.dp),
+                    modifier =
+                        Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(YralColors.Pink300)
+                            .clickable { onViewLeaderboard() }
+                            .padding(horizontal = 24.dp, vertical = 12.dp),
                 ) {
                     Text(
                         text = "View Leaderboard",
@@ -406,62 +414,6 @@ fun TournamentEndedDialog(
                         fontWeight = FontWeight.Bold,
                     )
                 }
-            }
-        }
-    }
-}
-
-/**
- * Dialog shown when user runs out of diamonds.
- */
-@Composable
-fun NoDiamondsDialog(
-    onDismiss: () -> Unit,
-    onExit: () -> Unit,
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.7f))
-            .clickable { },
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(32.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(Color.White)
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Text(
-                text = "\uD83D\uDC8E",
-                fontSize = 48.sp,
-            )
-            Text(
-                text = "No Diamonds Left!",
-                color = Color.Black,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = "You've used all your diamonds. Wait for the tournament to end to see your final ranking.",
-                color = Color.Gray,
-                fontSize = 14.sp,
-            )
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(YralColors.Pink300)
-                    .clickable { onExit() }
-                    .padding(horizontal = 32.dp, vertical = 12.dp),
-            ) {
-                Text(
-                    text = "Exit Tournament",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                )
             }
         }
     }

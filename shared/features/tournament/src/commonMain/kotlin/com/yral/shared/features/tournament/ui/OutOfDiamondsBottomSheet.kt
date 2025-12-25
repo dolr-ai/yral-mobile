@@ -96,6 +96,7 @@ fun OutOfDiamondsBottomSheet(
     }
 }
 
+@Suppress("UnusedPrivateMember")
 @OptIn(ExperimentalTime::class)
 @Composable
 private fun RegisterNowButton(

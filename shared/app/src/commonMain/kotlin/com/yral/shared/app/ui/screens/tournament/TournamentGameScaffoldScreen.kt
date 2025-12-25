@@ -29,6 +29,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
+@Suppress("LongMethod")
 @OptIn(ExperimentalTime::class, ExperimentalComposeUiApi::class)
 @Composable
 fun TournamentGameScaffoldScreen(
@@ -63,6 +64,7 @@ fun TournamentGameScaffoldScreen(
 
     LaunchedEffect(gameConfig.endEpochMs) {
         while (timeLeftMs > 0) {
+            @Suppress("MagicNumber")
             delay(1000L)
             timeLeftMs = maxOf(0L, gameConfig.endEpochMs - Clock.System.now().toEpochMilliseconds())
         }
@@ -172,7 +174,6 @@ fun TournamentGameScaffoldScreen(
 
     if (showLeaveTournamentConfirmation) {
         LeaveTournamentBottomSheet(
-            tournamentTitle = gameConfig.tournamentTitle,
             onDismissRequest = { showLeaveTournamentConfirmation = false },
             onKeepPlayingClick = { showLeaveTournamentConfirmation = false },
             totalPrizePool = component.gameConfig.totalPrizePool,

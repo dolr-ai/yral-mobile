@@ -163,7 +163,7 @@ fun FeedScreen(
                     feedViewModel = viewModel,
                     topOverlay = { topOverlay(pageNo) },
                     bottomOverlay = { bottomOverlay(pageNo, scrollToNext) },
-                    actionsRight = { actionsRight(pageNo) }
+                    actionsRight = { actionsRight(pageNo) },
                 )
             }
             // Show loader at the bottom when loading more content AND no new items have been added yet
@@ -276,14 +276,14 @@ private fun FeedOverlay(
         ) {
             BottomView(
                 bottomOverlay = bottomOverlay,
-                actionsRight = actionsRight
+                actionsRight = actionsRight,
             )
             topOverlay()
         } else {
             topOverlay()
             BottomView(
                 bottomOverlay = bottomOverlay,
-                actionsRight = actionsRight
+                actionsRight = actionsRight,
             )
         }
         if (!state.isLoggedIn && pageNo != 0 && (pageNo % SIGN_UP_PAGE) == 0) {

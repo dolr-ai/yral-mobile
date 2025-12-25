@@ -226,7 +226,7 @@ internal class DefaultHomeComponent(
                         config.tournamentTitle,
                         config.initialDiamonds,
                         config.endEpochMs,
-                        config.totalPrizePool
+                        config.totalPrizePool,
                     ),
                 )
             is Config.UploadVideo -> Child.UploadVideo(uploadVideoComponent(componentContext))
@@ -319,7 +319,7 @@ internal class DefaultHomeComponent(
             totalPrizePool = totalPrizePool,
             endEpochMs = endEpochMs,
             onLeaderboardClick = { _ ->
-                // TODO: Navigate to leaderboard with tournament filter
+//                openTournamentLeaderboard()
             },
             onTimeUp = { navigation.pop() },
             onBack = { navigation.pop() },
@@ -412,7 +412,7 @@ internal class DefaultHomeComponent(
             val tournamentTitle: String = "",
             val initialDiamonds: Int,
             val endEpochMs: Long,
-            val totalPrizePool: Int
+            val totalPrizePool: Int,
         ) : Config
 
         @Serializable

@@ -63,8 +63,6 @@ import yral_mobile.shared.features.tournament.generated.resources.tournament_han
 import yral_mobile.shared.features.tournament.generated.resources.tournament_leaderboard
 import yral_mobile.shared.features.tournament.generated.resources.you_are_starting_with
 
-enum class PlayType {START, CONTINUE}
-
 @Suppress("LongMethod", "MagicNumber")
 @Composable
 fun TournamentHowToPlayScreen(
@@ -182,18 +180,21 @@ fun TournamentHowToPlayScreen(
 
             YralGradientButton(
                 modifier = Modifier.fillMaxWidth(),
-                text = stringResource(
-                    when (playType) {
-                        PlayType.START -> Res.string.start_playing
-                        PlayType.CONTINUE -> Res.string.continue_playing
-                    }
-                ),
+                text =
+                    stringResource(
+                        when (playType) {
+                            PlayType.START -> Res.string.start_playing
+                            PlayType.CONTINUE -> Res.string.continue_playing
+                        },
+                    ),
                 buttonHeight = 48.dp,
                 onClick = onStartPlaying,
             )
         }
     }
 }
+
+enum class PlayType { START, CONTINUE }
 
 @Composable
 private fun HowToPlayCard(
