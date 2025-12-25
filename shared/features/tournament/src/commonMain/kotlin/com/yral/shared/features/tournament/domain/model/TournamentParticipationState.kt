@@ -7,7 +7,7 @@ sealed class TournamentParticipationState {
 
     data object Registered : TournamentParticipationState()
 
-    data object JoinNow : TournamentParticipationState()
+    data class JoinNow(val userDiamonds: Int) : TournamentParticipationState()
 
     data class JoinNowWithTokens(
         val tokensRequired: Int,

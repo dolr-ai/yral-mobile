@@ -312,12 +312,12 @@ class TournamentViewModel(
                         tournament,
                     )
 
-                TournamentParticipationState.JoinNow ->
+                is TournamentParticipationState.JoinNow ->
                     send(
                         Event.NavigateToTournament(
                             tournamentId = tournament.id,
                             title = tournament.title,
-                            initialDiamonds = tournament.initialDiamonds,
+                            initialDiamonds = tournament.participationState.userDiamonds,
                             totalPrizePool = tournament.totalPrizePool,
                             endEpochMs = tournament.endEpochMs,
                         ),

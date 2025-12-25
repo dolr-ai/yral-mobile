@@ -52,6 +52,8 @@ data class MyTournamentDto(
 data class UserStatsDto(
     @SerialName("coins_paid")
     val coinsPaid: Int? = null,
+    @SerialName("diamonds")
+    val diamonds: Int = 0,
     @SerialName("tournament_wins")
     val tournamentWins: Int = 0,
     @SerialName("tournament_losses")
@@ -91,5 +93,6 @@ fun MyTournamentDto.toTournamentData(): TournamentData =
                 tournamentWins = userStats.tournamentWins,
                 tournamentLosses = userStats.tournamentLosses,
                 registrationStatus = userStats.status ?: "",
+                diamonds = userStats.diamonds
             ),
     )

@@ -66,7 +66,7 @@ internal fun TournamentCtaButton(
 
                         else ->
                             when (participationState) {
-                                TournamentParticipationState.JoinNow,
+                                is TournamentParticipationState.JoinNow,
                                 is TournamentParticipationState.JoinNowWithTokens,
                                 -> {
                                     Modifier.angledGradientBackground(

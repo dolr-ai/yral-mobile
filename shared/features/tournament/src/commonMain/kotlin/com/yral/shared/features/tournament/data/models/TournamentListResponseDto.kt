@@ -83,6 +83,7 @@ fun TournamentDto.toTournamentData(): TournamentData =
                     tournamentWins = userStats.tournamentWins,
                     tournamentLosses = userStats.tournamentLosses,
                     registrationStatus = userStats.status ?: "registered",
+                    diamonds = userStats.diamonds
                 )
             } else {
                 null
