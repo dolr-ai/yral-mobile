@@ -26,7 +26,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -49,10 +48,10 @@ import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.app.ui.screens.feed.FeedScaffoldScreen
-import com.yral.shared.app.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent.SlotChild
 import com.yral.shared.app.ui.screens.profile.ProfileScreen
+import com.yral.shared.app.ui.screens.tournament.TournamentGameScaffoldScreen
 import com.yral.shared.app.ui.screens.uploadVideo.UploadVideoRootScreen
 import com.yral.shared.core.session.SessionKey
 import com.yral.shared.core.session.SessionState
@@ -64,18 +63,12 @@ import com.yral.shared.features.account.ui.rememberAlertsPermissionController
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.chat.ui.ChatScreen
-import com.yral.shared.features.feed.ui.FeedScreen
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.leaderboard.ui.LeaderboardScreen
 import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
-import com.yral.shared.features.tournament.ui.NoDiamondsDialog
-import com.yral.shared.features.tournament.ui.TournamentBottomOverlay
-import com.yral.shared.features.tournament.ui.TournamentEndedDialog
 import com.yral.shared.features.tournament.ui.TournamentScreen
-import com.yral.shared.features.tournament.ui.TournamentTopOverlay
-import com.yral.shared.features.tournament.viewmodel.TournamentGameViewModel
 import com.yral.shared.features.tournament.viewmodel.TournamentViewModel
 import com.yral.shared.features.wallet.ui.WalletScreen
 import com.yral.shared.features.wallet.ui.btcRewards.VideoViewsRewardsBottomSheet
@@ -85,7 +78,6 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -239,98 +231,10 @@ private fun HomeScreenContent(
                 )
 
             is HomeComponent.Child.TournamentGame -> {
-                val gameConfig = child.component.gameConfig
-                val tournamentGameViewModel =
-                    koinViewModel<TournamentGameViewModel>(
-                        key = "tournament-game-${gameConfig.tournamentId}-$sessionKey",
-                    )
-                val tournamentFeedViewModel =
-                    koinViewModel<FeedViewModel>(
-                        key = "tournament-feed-${gameConfig.tournamentId}-$sessionKey",
-                    )
-                val gameState by tournamentGameViewModel.state.collectAsStateWithLifecycle()
-                val feedState by tournamentFeedViewModel.state.collectAsStateWithLifecycle()
-                var timeLeftMs by remember(gameConfig.endEpochMs) {
-                    mutableLongStateOf(
-                        maxOf(0L, gameConfig.endEpochMs - System.currentTimeMillis()),
-                    )
-                }
-
-                LaunchedEffect(gameConfig.endEpochMs) {
-                    while (timeLeftMs > 0) {
-                        delay(1000L)
-                        timeLeftMs = maxOf(0L, gameConfig.endEpochMs - System.currentTimeMillis())
-                    }
-                    if (timeLeftMs <= 0 && gameConfig.endEpochMs > 0) {
-                        child.component.onTimeUp()
-                    }
-                }
-
-                // Initialize the game view model with tournament data
-                LaunchedEffect(gameConfig) {
-                    tournamentGameViewModel.setTournament(
-                        tournamentId = gameConfig.tournamentId,
-                        initialDiamonds = gameConfig.initialDiamonds,
-                        endEpochMs = gameConfig.endEpochMs,
-                    )
-                }
-
-                FeedScreen(
+                TournamentGameScaffoldScreen(
                     component = child.component,
-                    viewModel = tournamentFeedViewModel,
-                    topOverlay = { _ ->
-                        TournamentTopOverlay(
-                            gameState = gameState,
-                            tournamentTitle = gameConfig.tournamentTitle,
-                            onLeaderboardClick = { child.component.onLeaderboardClick() },
-                            onBack = { child.component.onBack() },
-                        )
-                    },
-                    bottomOverlay = { pageNo, scrollToNext ->
-                        if (pageNo < feedState.feedDetails.size) {
-                            TournamentBottomOverlay(
-                                feedDetails = feedState.feedDetails[pageNo],
-                                gameState = gameState,
-                                gameViewModel = tournamentGameViewModel,
-                                timeLeftMs = timeLeftMs,
-                                scrollToNext = scrollToNext,
-                            )
-                        }
-                    },
-                    onPageChanged = { pageNo, _ ->
-                        if (pageNo >= 0 && pageNo < feedState.feedDetails.size) {
-                            tournamentGameViewModel.setCurrentVideoId(
-                                feedState.feedDetails[pageNo].videoID,
-                            )
-                        }
-                    },
-                    onEdgeScrollAttempt = { _ -> },
-                    limitReelCount = gameState.lastVotedCount,
-                    getPrefetchListener = { reel -> PrefetchVideoListenerImpl(reel) },
-                    getVideoListener = { null },
+                    sessionKey = sessionKey,
                 )
-
-                // Show no diamonds dialog
-                if (gameState.noDiamondsError) {
-                    NoDiamondsDialog(
-                        onDismiss = { tournamentGameViewModel.clearNoDiamondsError() },
-                        onExit = { child.component.onTimeUp() },
-                    )
-                }
-
-                // Show tournament ended dialog
-                if (gameState.tournamentEndedError) {
-                    TournamentEndedDialog(
-                        onViewLeaderboard = {
-                            tournamentGameViewModel.clearTournamentEndedError()
-                            child.component.onLeaderboardClick()
-                        },
-                        onExit = {
-                            tournamentGameViewModel.clearTournamentEndedError()
-                            child.component.onTimeUp()
-                        },
-                    )
-                }
             }
 
             is HomeComponent.Child.UploadVideo ->

@@ -41,10 +41,10 @@ import com.yral.shared.features.tournament.viewmodel.TournamentGameViewModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.delay
-import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import yral_mobile.shared.features.tournament.generated.resources.ic_timer
 import yral_mobile.shared.features.tournament.generated.resources.tournament_diamond
+import yral_mobile.shared.features.tournament.generated.resources.tournament_exit
 import yral_mobile.shared.features.tournament.generated.resources.tournament_leaderboard
 import yral_mobile.shared.features.tournament.generated.resources.trophy
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
@@ -215,9 +215,12 @@ private fun TournamentLeaderboardBadge(
 @Composable
 fun TournamentBottomOverlay(
     feedDetails: FeedDetails,
+    pageNo: Int,
     gameState: TournamentGameState,
     gameViewModel: TournamentGameViewModel,
     timeLeftMs: Long,
+    onExit: () -> Unit,
+    onReport: () -> Unit,
     scrollToNext: () -> Unit,
 ) {
     val hasVoted = gameViewModel.hasVotedOnVideo(feedDetails.videoID)
@@ -253,15 +256,9 @@ fun TournamentBottomOverlay(
                     .align(Alignment.BottomCenter)
                     .padding(bottom = overlayBottomPadding + 12.dp),
         )
-        OverlayIconButton(
-            text = "?",
-            modifier =
-                Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(start = 16.dp, bottom = overlayBottomPadding + 4.dp),
-        )
-        OverlayIconButton(
-            iconRes = DesignRes.drawable.exclamation,
+        ActionsRight(
+            onExit = onExit,
+            onReport = onReport,
             modifier =
                 Modifier
                     .align(Alignment.BottomEnd)
@@ -362,35 +359,32 @@ private fun TournamentTimerPill(
 }
 
 @Composable
-private fun OverlayIconButton(
+private fun ActionsRight(
     modifier: Modifier = Modifier,
-    text: String? = null,
-    iconRes: DrawableResource? = null,
-    onClick: () -> Unit = {},
+    onExit: () -> Unit,
+    onReport: () -> Unit,
 ) {
-    Box(
-        modifier =
-            modifier
-                .size(36.dp)
-                .clip(RoundedCornerShape(49.dp))
-                .background(Color(0x66000000))
-                .clickable { onClick() },
-        contentAlignment = Alignment.Center,
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        when {
-            iconRes != null ->
-                Image(
-                    painter = painterResource(iconRes),
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                )
-            text != null ->
-                Text(
-                    text = text,
-                    style = LocalAppTopography.current.mdBold,
-                    color = Color.White,
-                )
-        }
+        Image(
+            painter = painterResource(TournamentRes.drawable.tournament_exit),
+            contentDescription = "exit tournament",
+            modifier =
+                Modifier
+                    .size(36.dp)
+                    .clickable { onExit() },
+        )
+        Image(
+            painter = painterResource(DesignRes.drawable.exclamation),
+            contentDescription = "report video",
+            modifier =
+                Modifier
+                    .size(36.dp)
+                    .clickable { onReport() },
+        )
     }
 }
 
