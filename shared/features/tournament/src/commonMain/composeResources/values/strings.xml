@@ -38,6 +38,7 @@
     <string name="each_tournament_line_one">Each tournament lasts 30 minutes.</string>
     <string name="each_tournament_line_two">Watch. Play. Win. Repeat.</string>
     <string name="start_playing">Start Playing</string>
+    <string name="continue_playing">Continue Playing</string>
     <string name="leave_tournament_title">Leave %1$s?</string>
     <string name="leave_tournament_message">If you exit now you will NOT be able to re-enter this game. All progress will be lost!</string>
     <string name="leave_tournament_keep_playing">Keep Playing</string>

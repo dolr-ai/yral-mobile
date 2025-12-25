@@ -46,17 +46,16 @@ import org.jetbrains.compose.resources.painterResource
 import yral_mobile.shared.features.tournament.generated.resources.exit
 import yral_mobile.shared.features.tournament.generated.resources.ic_timer
 import yral_mobile.shared.features.tournament.generated.resources.tournament_diamond
-import yral_mobile.shared.features.tournament.generated.resources.tournament_exit
+import yral_mobile.shared.features.tournament.generated.resources.tournament_ingame_rank
 import yral_mobile.shared.features.tournament.generated.resources.tournament_leaderboard
 import yral_mobile.shared.features.tournament.generated.resources.trophy
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.exclamation
-import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_how_to_play
 import yral_mobile.shared.libs.designsystem.generated.resources.shadow
-import yral_mobile.shared.libs.designsystem.generated.resources.shadow_bottom
-import yral_mobile.shared.libs.designsystem.generated.resources.victory_cup
 import kotlin.time.Duration.Companion.milliseconds
 import yral_mobile.shared.features.tournament.generated.resources.Res as TournamentRes
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 /**
  * Top overlay for tournament game screen showing header, leaderboard, and diamonds.
@@ -187,20 +186,19 @@ private fun TournamentLeaderboardBadge(
     val rankText = if (position > 0) "#$position" else "--"
     Box(
         modifier = modifier.clickable { onClick() },
-        contentAlignment = Alignment.BottomEnd,
+        contentAlignment = Alignment.BottomCenter,
     ) {
         Image(
-            painter = painterResource(TournamentRes.drawable.tournament_leaderboard),
+            painter = painterResource(TournamentRes.drawable.tournament_ingame_rank),
             contentDescription = null,
             modifier = Modifier.size(50.dp),
         )
         Box(
             modifier =
                 Modifier
-                    .padding(end = 2.dp, bottom = 2.dp)
                     .border(2.dp, Color.White, RoundedCornerShape(10.dp))
-                    .background(Color(0xFFF14331), RoundedCornerShape(10.dp))
-                    .padding(horizontal = 6.dp, vertical = 2.dp),
+                    .background(YralColors.Red300, RoundedCornerShape(10.dp))
+                    .padding(horizontal = 12.dp, vertical = 4.dp),
         ) {
             Text(
                 text = rankText,
@@ -220,6 +218,7 @@ fun TournamentBottomOverlay(
     gameState: TournamentGameState,
     gameViewModel: TournamentGameViewModel,
     timeLeftMs: Long,
+    onHowToPlayClick: () -> Unit,
     scrollToNext: () -> Unit,
 ) {
     val hasVoted = gameViewModel.hasVotedOnVideo(feedDetails.videoID)
@@ -237,16 +236,15 @@ fun TournamentBottomOverlay(
     val overlayBottomPadding = 120.dp
 
     Box(modifier = Modifier.fillMaxSize()) {
-        Box(
-            modifier =
-                Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .height(260.dp)
-                    .paint(
-                        painter = painterResource(DesignRes.drawable.shadow_bottom),
-                        contentScale = ContentScale.FillBounds,
-                    ),
+        Image(
+            painter = painterResource(DesignRes.drawable.ic_how_to_play),
+            contentDescription = "how to play",
+            contentScale = ContentScale.None,
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(start = 20.dp, bottom = overlayBottomPadding + 8.dp)
+                .size(32.dp)
+                .clickable { onHowToPlayClick() },
         )
         TournamentTimerPill(
             timeLeftMs = timeLeftMs,

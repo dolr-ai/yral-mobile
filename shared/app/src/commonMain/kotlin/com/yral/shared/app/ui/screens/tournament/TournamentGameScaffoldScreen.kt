@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -12,12 +13,15 @@ import com.yral.shared.features.feed.ui.FeedScreen
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.tournament.nav.TournamentGameComponent
 import com.yral.shared.features.tournament.ui.NoDiamondsDialog
+import com.yral.shared.features.tournament.ui.PlayType
 import com.yral.shared.features.tournament.ui.TournamentBottomOverlay
 import com.yral.shared.features.tournament.ui.TournamentEndedDialog
 import com.yral.shared.features.tournament.ui.TournamentGameActionsRight
+import com.yral.shared.features.tournament.ui.TournamentHowToPlayScreen
 import com.yral.shared.features.tournament.ui.TournamentTopOverlay
 import com.yral.shared.features.tournament.viewmodel.TournamentGameViewModel
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -43,6 +47,12 @@ fun TournamentGameScaffoldScreen(
         mutableLongStateOf(
             maxOf(0L, gameConfig.endEpochMs - Clock.System.now().toEpochMilliseconds()),
         )
+    }
+    var showHowToPlay by remember(gameConfig.tournamentId) {
+        mutableStateOf(true)
+    }
+    var howToPlayOpenedFromButton by remember(gameConfig.tournamentId) {
+        mutableStateOf(false)
     }
 
     LaunchedEffect(gameConfig.endEpochMs) {
@@ -82,6 +92,10 @@ fun TournamentGameScaffoldScreen(
                     gameState = gameState,
                     gameViewModel = tournamentGameViewModel,
                     timeLeftMs = timeLeftMs,
+                    onHowToPlayClick = {
+                        howToPlayOpenedFromButton = true
+                        showHowToPlay = true
+                    },
                     scrollToNext = scrollToNext,
                 )
             }
@@ -104,6 +118,15 @@ fun TournamentGameScaffoldScreen(
         getPrefetchListener = { reel -> PrefetchVideoListenerImpl(reel) },
         getVideoListener = { null },
     )
+
+    if (showHowToPlay) {
+        TournamentHowToPlayScreen(
+            title = gameConfig.tournamentTitle,
+            onStartPlaying = { showHowToPlay = false },
+            startingDiamonds = component.gameConfig.initialDiamonds,
+            playType = if (howToPlayOpenedFromButton) PlayType.CONTINUE else PlayType.START,
+        )
+    }
 
     // Show no diamonds dialog
     if (gameState.noDiamondsError) {

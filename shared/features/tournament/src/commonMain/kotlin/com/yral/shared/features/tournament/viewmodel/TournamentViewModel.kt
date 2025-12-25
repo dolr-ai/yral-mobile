@@ -334,10 +334,6 @@ class TournamentViewModel(
         }
     }
 
-    fun onStartPlayingClicked() {
-        _state.update { it.copy(showHowToPlayTournament = null) }
-    }
-
     fun clearError() {
         _state.update { it.copy(error = null) }
     }

@@ -49,6 +49,7 @@ import yral_mobile.shared.features.tournament.generated.resources.body_pick_emoj
 import yral_mobile.shared.features.tournament.generated.resources.body_pick_emoji_wrong_choice
 import yral_mobile.shared.features.tournament.generated.resources.body_pick_emoji_wrong_choice_result
 import yral_mobile.shared.features.tournament.generated.resources.body_watch_video
+import yral_mobile.shared.features.tournament.generated.resources.continue_playing
 import yral_mobile.shared.features.tournament.generated.resources.each_tournament_line_one
 import yral_mobile.shared.features.tournament.generated.resources.each_tournament_line_two
 import yral_mobile.shared.features.tournament.generated.resources.how_to_play
@@ -62,13 +63,16 @@ import yral_mobile.shared.features.tournament.generated.resources.tournament_han
 import yral_mobile.shared.features.tournament.generated.resources.tournament_leaderboard
 import yral_mobile.shared.features.tournament.generated.resources.you_are_starting_with
 
+enum class PlayType {START, CONTINUE}
+
 @Suppress("LongMethod", "MagicNumber")
 @Composable
 fun TournamentHowToPlayScreen(
     title: String,
     onStartPlaying: () -> Unit,
     modifier: Modifier = Modifier,
-    startingDiamonds: Int = 100,
+    startingDiamonds: Int,
+    playType: PlayType = PlayType.START,
 ) {
     Box(
         modifier =
@@ -76,7 +80,7 @@ fun TournamentHowToPlayScreen(
                 Brush.verticalGradient(
                     colors =
                         listOf(
-                            Color(0xB3000000),
+//                            Color(0xB3000000),
                             Color(0xCC000000),
                             Color(0xFF000000),
                         ),
@@ -178,7 +182,12 @@ fun TournamentHowToPlayScreen(
 
             YralGradientButton(
                 modifier = Modifier.fillMaxWidth(),
-                text = stringResource(Res.string.start_playing),
+                text = stringResource(
+                    when (playType) {
+                        PlayType.START -> Res.string.start_playing
+                        PlayType.CONTINUE -> Res.string.continue_playing
+                    }
+                ),
                 buttonHeight = 48.dp,
                 onClick = onStartPlaying,
             )
@@ -290,6 +299,6 @@ private fun buildPickEmojiBody(): AnnotatedString {
 @Composable
 private fun TournamentHowToPlayScreenPreview() {
     CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
-        TournamentHowToPlayScreen(title = "THE SMILY SHOWDOWN", onStartPlaying = {})
+        TournamentHowToPlayScreen(title = "THE SMILY SHOWDOWN", onStartPlaying = {}, startingDiamonds = 100)
     }
 }
