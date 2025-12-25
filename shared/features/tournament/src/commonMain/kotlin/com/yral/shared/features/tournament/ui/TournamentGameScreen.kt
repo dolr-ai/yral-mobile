@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,6 +43,7 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
+import yral_mobile.shared.features.tournament.generated.resources.exit
 import yral_mobile.shared.features.tournament.generated.resources.ic_timer
 import yral_mobile.shared.features.tournament.generated.resources.tournament_diamond
 import yral_mobile.shared.features.tournament.generated.resources.tournament_exit
@@ -215,12 +217,9 @@ private fun TournamentLeaderboardBadge(
 @Composable
 fun TournamentBottomOverlay(
     feedDetails: FeedDetails,
-    pageNo: Int,
     gameState: TournamentGameState,
     gameViewModel: TournamentGameViewModel,
     timeLeftMs: Long,
-    onExit: () -> Unit,
-    onReport: () -> Unit,
     scrollToNext: () -> Unit,
 ) {
     val hasVoted = gameViewModel.hasVotedOnVideo(feedDetails.videoID)
@@ -255,14 +254,6 @@ fun TournamentBottomOverlay(
                 Modifier
                     .align(Alignment.BottomCenter)
                     .padding(bottom = overlayBottomPadding + 12.dp),
-        )
-        ActionsRight(
-            onExit = onExit,
-            onReport = onReport,
-            modifier =
-                Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = overlayBottomPadding + 4.dp),
         )
         Column(
             modifier = Modifier
@@ -359,33 +350,29 @@ private fun TournamentTimerPill(
 }
 
 @Composable
-private fun ActionsRight(
-    modifier: Modifier = Modifier,
+fun ColumnScope.TournamentGameActionsRight(
     onExit: () -> Unit,
     onReport: () -> Unit,
 ) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Image(
-            painter = painterResource(TournamentRes.drawable.tournament_exit),
-            contentDescription = "exit tournament",
-            modifier =
-                Modifier
-                    .size(36.dp)
-                    .clickable { onExit() },
-        )
-        Image(
-            painter = painterResource(DesignRes.drawable.exclamation),
-            contentDescription = "report video",
-            modifier =
-                Modifier
-                    .size(36.dp)
-                    .clickable { onReport() },
-        )
-    }
+    Image(
+        painter = painterResource(TournamentRes.drawable.exit),
+        contentDescription = "exit tournament",
+        colorFilter = ColorFilter.tint(Color.White),
+        modifier =
+            Modifier
+                .size(36.dp)
+                .clickable { onExit() },
+    )
+    Image(
+        painter = painterResource(DesignRes.drawable.exclamation),
+        contentDescription = "report video",
+        colorFilter = ColorFilter.tint(Color.White),
+        modifier =
+            Modifier
+                .size(36.dp)
+                .clickable { onReport() },
+    )
+    Spacer(modifier = Modifier.height(0.dp))
 }
 
 @Composable

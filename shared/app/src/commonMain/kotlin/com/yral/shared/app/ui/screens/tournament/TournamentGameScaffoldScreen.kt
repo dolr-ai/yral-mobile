@@ -14,6 +14,7 @@ import com.yral.shared.features.tournament.nav.TournamentGameComponent
 import com.yral.shared.features.tournament.ui.NoDiamondsDialog
 import com.yral.shared.features.tournament.ui.TournamentBottomOverlay
 import com.yral.shared.features.tournament.ui.TournamentEndedDialog
+import com.yral.shared.features.tournament.ui.TournamentGameActionsRight
 import com.yral.shared.features.tournament.ui.TournamentTopOverlay
 import com.yral.shared.features.tournament.viewmodel.TournamentGameViewModel
 import kotlinx.coroutines.delay
@@ -78,15 +79,18 @@ fun TournamentGameScaffoldScreen(
             if (pageNo < feedState.feedDetails.size) {
                 TournamentBottomOverlay(
                     feedDetails = feedState.feedDetails[pageNo],
-                    pageNo = pageNo,
                     gameState = gameState,
                     gameViewModel = tournamentGameViewModel,
                     timeLeftMs = timeLeftMs,
-                    onExit = { component.onBack() },
-                    onReport = { tournamentFeedViewModel.toggleReportSheet(true, pageNo) },
                     scrollToNext = scrollToNext,
                 )
             }
+        },
+        actionsRight = { pageNo ->
+            TournamentGameActionsRight(
+                onExit = { component.onBack() },
+                onReport = { tournamentFeedViewModel.toggleReportSheet(true, pageNo) },
+            )
         },
         onPageChanged = { pageNo, _ ->
             if (pageNo >= 0 && pageNo < feedState.feedDetails.size) {
