@@ -22,6 +22,8 @@ sealed class TournamentVoteResponseDto {
         val tournamentWins: Int,
         @SerialName("tournament_losses")
         val tournamentLosses: Int,
+        @SerialName("diamonds")
+        val diamonds: Int,
         @SerialName("position")
         val position: Int,
     ) : TournamentVoteResponseDto()
@@ -63,6 +65,7 @@ fun TournamentVoteResponseDto.toVoteResult(): Result<VoteResult, TournamentError
                         ),
                     tournamentWins = tournamentWins,
                     tournamentLosses = tournamentLosses,
+                    diamonds = diamonds,
                     position = position,
                 ),
             )

@@ -9,6 +9,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 import firebase_admin
+import requests
 from firebase_admin import firestore
 from firebase_functions import https_fn
 from flask import Request, jsonify
@@ -62,6 +63,11 @@ class Tournament:
 
 IST = timezone(timedelta(hours=5, minutes=30))
 _db = None
+
+# BTC Settlement Constants
+BALANCE_URL_CKBTC = "https://yral-hot-or-not.go-bazzinga.workers.dev/v2/transfer_ckbtc"
+TICKER_URL = "https://blockchain.info/ticker"
+SATOSHIS_PER_BTC = 100_000_000
 
 
 def db() -> firestore.Client:
@@ -147,6 +153,179 @@ def _refund_tournament_users(tournament_id: str) -> List[dict]:
             print(f"[refund] FAILED for {principal_id}: {e}", file=sys.stderr)
 
     return refund_results
+
+
+# ─────────────────────  BTC SETTLEMENT HELPERS  ────────────────────────
+def _fetch_btc_price_inr() -> float:
+    """Fetch current BTC price in INR from blockchain.info ticker."""
+    resp = requests.get(TICKER_URL, timeout=10)
+    resp.raise_for_status()
+    data = resp.json()
+    last = float(data["INR"]["last"])
+    if last <= 0:
+        raise ValueError("BTC price must be positive")
+    return last
+
+
+def _inr_to_ckbtc(amount_inr: int, btc_price_inr: float) -> int:
+    """Convert INR amount to ckBTC (satoshis)."""
+    satoshis = amount_inr * (SATOSHIS_PER_BTC / btc_price_inr)
+    # At least 1 satoshi to avoid zero-value transfers
+    return max(1, int(round(satoshis)))
+
+
+def _send_ckbtc(token: str, principal_id: str, amount_ckbtc: int, memo: str) -> tuple[bool, str | None]:
+    """Send ckBTC to a principal. Returns (success, error_message)."""
+    headers = {
+        "Authorization": token,
+        "Content-Type": "application/json",
+    }
+    body = {
+        "amount": amount_ckbtc,
+        "recipient_principal": principal_id,
+        "memo_text": memo,
+    }
+    try:
+        resp = requests.post(BALANCE_URL_CKBTC, json=body, timeout=30, headers=headers)
+    except requests.RequestException as e:
+        return False, str(e)
+    if resp.status_code != 200:
+        return False, f"Status {resp.status_code}: {resp.text}"
+    payload = resp.json()
+    if payload.get("success"):
+        return True, None
+    return False, str(payload)
+
+
+def _compute_settlement_leaderboard(tournament_id: str, limit: int = 10) -> List[dict]:
+    """Compute top N users by tournament_wins with dense ranking for settlement."""
+    users_ref = db().collection(f"tournaments/{tournament_id}/users")
+    snaps = (
+        users_ref.where("tournament_wins", ">", 0)
+                 .order_by("tournament_wins", direction=firestore.Query.DESCENDING)
+                 .limit(limit)
+                 .stream()
+    )
+
+    rows = []
+    current_rank, last_wins = 0, None
+
+    for snap in snaps:
+        data = snap.to_dict() or {}
+        wins = int(data.get("tournament_wins") or 0)
+        if wins != last_wins:
+            current_rank += 1
+            last_wins = wins
+        rows.append({
+            "principal_id": snap.id,
+            "wins": wins,
+            "position": current_rank
+        })
+
+    return rows
+
+
+def _settle_tournament_prizes(tournament_id: str, prize_map: Dict[str, int]) -> Dict[str, Any]:
+    """
+    Settle tournament prizes by sending BTC equivalent to winners.
+
+    Args:
+        tournament_id: The tournament to settle
+        prize_map: Map of position (str) to INR prize amount
+
+    Returns:
+        Settlement results including successes and failures
+    """
+    token = os.environ.get("BALANCE_UPDATE_TOKEN")
+    if not token:
+        return {
+            "success": False,
+            "error": "BALANCE_UPDATE_TOKEN not configured",
+            "rewards_sent": 0,
+            "rewards_failed": 0,
+            "details": []
+        }
+
+    # Fetch current BTC price
+    try:
+        btc_price_inr = _fetch_btc_price_inr()
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Failed to fetch BTC price: {e}",
+            "rewards_sent": 0,
+            "rewards_failed": 0,
+            "details": []
+        }
+
+    print(f"[settlement] Tournament {tournament_id}: BTC price INR = {btc_price_inr}")
+
+    # Get leaderboard (top positions that have prizes)
+    max_prize_position = max((int(p) for p in prize_map.keys()), default=10)
+    leaderboard = _compute_settlement_leaderboard(tournament_id, limit=max_prize_position)
+
+    results = []
+    rewards_sent = 0
+    rewards_failed = 0
+    total_inr = 0
+    total_ckbtc = 0
+
+    for row in leaderboard:
+        position = str(row["position"])
+        principal_id = row["principal_id"]
+        prize_inr = prize_map.get(position)
+
+        if not prize_inr:
+            continue
+
+        # Convert INR to ckBTC
+        prize_ckbtc = _inr_to_ckbtc(prize_inr, btc_price_inr)
+        memo = f"Tournament prize #{position} - {tournament_id}"
+
+        # Send ckBTC
+        success, error = _send_ckbtc(token, principal_id, prize_ckbtc, memo)
+
+        result = {
+            "principal_id": principal_id,
+            "position": int(position),
+            "prize_inr": prize_inr,
+            "prize_ckbtc": prize_ckbtc,
+            "success": success,
+            "error": error
+        }
+        results.append(result)
+
+        if success:
+            rewards_sent += 1
+            total_inr += prize_inr
+            total_ckbtc += prize_ckbtc
+            print(f"[settlement] Sent {prize_ckbtc} ckBTC (INR {prize_inr}) to {principal_id} (#{position})")
+
+            # Record settlement in user's tournament registration
+            try:
+                user_ref = db().document(f"tournaments/{tournament_id}/users/{principal_id}")
+                user_ref.update({
+                    "prize_inr": prize_inr,
+                    "prize_ckbtc": prize_ckbtc,
+                    "prize_sent_at": firestore.SERVER_TIMESTAMP,
+                    "status": "rewarded",
+                    "updated_at": firestore.SERVER_TIMESTAMP
+                })
+            except Exception as e:
+                print(f"[settlement] Failed to update user record: {e}", file=sys.stderr)
+        else:
+            rewards_failed += 1
+            print(f"[settlement] FAILED to send to {principal_id}: {error}", file=sys.stderr)
+
+    return {
+        "success": rewards_failed == 0,
+        "btc_price_inr": btc_price_inr,
+        "rewards_sent": rewards_sent,
+        "rewards_failed": rewards_failed,
+        "total_inr": total_inr,
+        "total_ckbtc": total_ckbtc,
+        "details": results
+    }
 
 
 def _today_ist_str() -> str:
@@ -301,10 +480,11 @@ def create_tournaments(cloud_event):
         return jsonify({"error": "INTERNAL", "message": str(e)}), 500
 
 
-@https_fn.on_request(region="us-central1")
+@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
 def update_tournament_status(request: Request):
     """
     Cloud Task target to advance a tournament's status.
+    Automatically settles prizes (sends BTC to winners) when transitioning to ENDED.
     """
     try:
         if request.method != "POST":
@@ -376,7 +556,52 @@ def update_tournament_status(request: Request):
                 }
             }), 200
 
-        # Normal status update
+        # Handle ENDED status with settlement
+        if target_status == TournamentStatus.ENDED:
+            # Update status to ENDED first
+            ref.update({
+                "status": target_status.value,
+                "updated_at": firestore.SERVER_TIMESTAMP,
+            })
+            print(f"[update_tournament_status] {doc_id}: {current_status_raw} -> {target_status.value}")
+
+            # Get prize map for settlement
+            prize_map = _normalize_prize_map(snap.to_dict().get("prizeMap", {}))
+
+            if prize_map:
+                # Settle tournament prizes (send BTC to winners)
+                settlement_result = _settle_tournament_prizes(doc_id, prize_map)
+
+                # Update status to SETTLED after settlement
+                ref.update({
+                    "status": TournamentStatus.SETTLED.value,
+                    "settlement_result": settlement_result,
+                    "settled_at": firestore.SERVER_TIMESTAMP,
+                    "updated_at": firestore.SERVER_TIMESTAMP,
+                })
+                print(f"[update_tournament_status] {doc_id}: {target_status.value} -> {TournamentStatus.SETTLED.value} (settled)")
+
+                return jsonify({
+                    "status": "ok",
+                    "tournament_id": doc_id,
+                    "new_status": TournamentStatus.SETTLED.value,
+                    "settlement": settlement_result
+                }), 200
+            else:
+                # No prize map, just mark as settled without rewards
+                ref.update({
+                    "status": TournamentStatus.SETTLED.value,
+                    "updated_at": firestore.SERVER_TIMESTAMP,
+                })
+                print(f"[update_tournament_status] {doc_id}: {target_status.value} -> {TournamentStatus.SETTLED.value} (no prize map)")
+                return jsonify({
+                    "status": "ok",
+                    "tournament_id": doc_id,
+                    "new_status": TournamentStatus.SETTLED.value,
+                    "settlement": {"message": "No prize map configured"}
+                }), 200
+
+        # Normal status update (SCHEDULED -> LIVE, etc.)
         ref.update({
             "status": target_status.value,
             "updated_at": firestore.SERVER_TIMESTAMP,

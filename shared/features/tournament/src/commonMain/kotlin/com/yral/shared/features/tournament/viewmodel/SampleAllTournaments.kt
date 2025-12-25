@@ -21,6 +21,8 @@ internal fun sampleAllTournaments(): List<Tournament> =
             status = TournamentStatus.Live(Clock.System.now() + 10.minutes),
             participationState = TournamentParticipationState.RegistrationRequired(20),
             prizeBreakdown = samplePrizeRows(),
+            endEpochMs = (Clock.System.now() + 10.minutes).toEpochMilliseconds(),
+            entryCost = 20,
         ),
         Tournament(
             id = "t2",
@@ -31,6 +33,8 @@ internal fun sampleAllTournaments(): List<Tournament> =
             status = TournamentStatus.Upcoming(Clock.System.now() + 10.minutes),
             participationState = TournamentParticipationState.Registered,
             prizeBreakdown = samplePrizeRows(),
+            endEpochMs = (Clock.System.now() + 10.minutes).toEpochMilliseconds(),
+            entryCost = 20,
         ),
         Tournament(
             id = "t3",
@@ -41,9 +45,12 @@ internal fun sampleAllTournaments(): List<Tournament> =
             status = TournamentStatus.Ended,
             participationState = TournamentParticipationState.Registered,
             prizeBreakdown = samplePrizeRows(),
+            endEpochMs = (Clock.System.now() - 10.minutes).toEpochMilliseconds(),
+            entryCost = 20,
         ),
     )
 
+@OptIn(ExperimentalTime::class)
 internal fun sampleHistoryTournaments(): List<Tournament> =
     listOf(
         Tournament(
@@ -55,6 +62,8 @@ internal fun sampleHistoryTournaments(): List<Tournament> =
             status = TournamentStatus.Ended,
             participationState = TournamentParticipationState.Registered,
             prizeBreakdown = samplePrizeRows(),
+            endEpochMs = (Clock.System.now() - 10.minutes).toEpochMilliseconds(),
+            entryCost = 20,
         ),
     )
 

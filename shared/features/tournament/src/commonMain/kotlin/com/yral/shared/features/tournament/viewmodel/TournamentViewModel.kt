@@ -312,7 +312,16 @@ class TournamentViewModel(
                         tournament,
                     )
 
-                TournamentParticipationState.JoinNow -> send(Event.NavigateToTournament(tournament.id))
+                is TournamentParticipationState.JoinNow ->
+                    send(
+                        Event.NavigateToTournament(
+                            tournamentId = tournament.id,
+                            title = tournament.title,
+                            initialDiamonds = tournament.participationState.userDiamonds,
+                            totalPrizePool = tournament.totalPrizePool,
+                            endEpochMs = tournament.endEpochMs,
+                        ),
+                    )
                 else -> {}
             }
         }
@@ -324,10 +333,6 @@ class TournamentViewModel(
         } else {
             send(Event.Login)
         }
-    }
-
-    fun onStartPlayingClicked() {
-        _state.update { it.copy(showHowToPlayTournament = null) }
     }
 
     fun clearError() {
@@ -352,6 +357,10 @@ class TournamentViewModel(
 
         data class NavigateToTournament(
             val tournamentId: String,
+            val title: String,
+            val initialDiamonds: Int,
+            val endEpochMs: Long,
+            val totalPrizePool: Int,
         ) : Event()
 
         data class NavigateToLeaderboard(

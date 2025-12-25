@@ -119,7 +119,7 @@ fun Game(
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
-internal fun SmileyGame(
+fun SmileyGame(
     gameIcons: List<GameIcon>,
     clickedIcon: GameIcon?,
     isLoading: Boolean,

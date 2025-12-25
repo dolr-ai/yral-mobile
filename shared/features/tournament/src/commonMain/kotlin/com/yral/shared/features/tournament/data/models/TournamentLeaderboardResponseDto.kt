@@ -23,6 +23,16 @@ sealed class TournamentLeaderboardResponseDto {
         val userRow: LeaderboardRowDto? = null,
         @SerialName("prize_map")
         val prizeMap: Map<String, Int>,
+        @SerialName("participant_count")
+        val participantCount: Int = 0,
+        @SerialName("date")
+        val date: String = "",
+        @SerialName("start_epoch_ms")
+        val startEpochMs: Long = 0,
+        @SerialName("end_epoch_ms")
+        val endEpochMs: Long = 0,
+        @SerialName("title")
+        val title: String = "",
     ) : TournamentLeaderboardResponseDto()
 
     @Serializable
@@ -62,6 +72,11 @@ fun TournamentLeaderboardResponseDto.toTournamentLeaderboard(): Result<Tournamen
                             .mapNotNull { (key, value) ->
                                 key.toIntOrNull()?.let { it to value }
                             }.toMap(),
+                    participantCount = participantCount,
+                    date = date,
+                    startEpochMs = startEpochMs,
+                    endEpochMs = endEpochMs,
+                    title = title,
                 ),
             )
         }

@@ -26,7 +26,7 @@ fun TournamentData.toUiTournament(): Tournament {
         when {
             userStats != null -> {
                 when (tournamentStatus) {
-                    is TournamentStatus.Live -> TournamentParticipationState.JoinNow
+                    is TournamentStatus.Live -> TournamentParticipationState.JoinNow(userStats.diamonds)
                     is TournamentStatus.Upcoming -> {
                         val timeLeft = startTime - currentTime
                         if (timeLeft <= 10.minutes) {
@@ -63,6 +63,8 @@ fun TournamentData.toUiTournament(): Tournament {
                 .map { (rank, amount) ->
                     PrizeBreakdownRow(rank = rank, amount = amount)
                 },
+        endEpochMs = endEpochMs,
+        entryCost = entryCost,
     )
 }
 

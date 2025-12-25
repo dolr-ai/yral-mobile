@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.yral.shared.features.tournament.domain.model.TournamentParticipationState
 import com.yral.shared.features.tournament.domain.model.TournamentStatus
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
+import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.appTypoGraphy
@@ -35,19 +36,16 @@ import yral_mobile.shared.features.tournament.generated.resources.Res
 import yral_mobile.shared.features.tournament.generated.resources.out_of_diamonds_exit_anyway
 import yral_mobile.shared.features.tournament.generated.resources.out_of_diamonds_message
 import yral_mobile.shared.features.tournament.generated.resources.out_of_diamonds_title
+import yral_mobile.shared.features.tournament.generated.resources.out_of_diamonds_view_tournaments
 import yral_mobile.shared.features.tournament.generated.resources.tournament_out_of_diamonds
-import kotlin.time.Clock
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
 @Composable
-internal fun OutOfDiamondsBottomSheet(
-    nextTournamentStartTime: Instant,
-    tokensRequired: Int,
+fun OutOfDiamondsBottomSheet(
     onDismissRequest: () -> Unit,
-    onRegisterNowClick: () -> Unit,
+    onViewTournamentsClick: () -> Unit,
     onExitAnywayClick: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -81,21 +79,16 @@ internal fun OutOfDiamondsBottomSheet(
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text =
-                    stringResource(
-                        Res.string.out_of_diamonds_message,
-                        nextTournamentStartTime.toString(),
-                    ),
+                text = stringResource(Res.string.out_of_diamonds_message),
                 style = LocalAppTopography.current.mdRegular,
                 color = YralColors.Neutral300,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(modifier = Modifier.height(40.dp))
-            RegisterNowButton(
-                nextTournamentStartTime = nextTournamentStartTime,
-                tokensRequired = tokensRequired,
-                onClick = onRegisterNowClick,
+            YralGradientButton(
+                text = stringResource(Res.string.out_of_diamonds_view_tournaments),
+                onClick = onViewTournamentsClick,
             )
             Spacer(modifier = Modifier.height(12.dp))
             ExitAnywayButton(onClick = onExitAnywayClick)
@@ -103,6 +96,7 @@ internal fun OutOfDiamondsBottomSheet(
     }
 }
 
+@Suppress("UnusedPrivateMember")
 @OptIn(ExperimentalTime::class)
 @Composable
 private fun RegisterNowButton(
@@ -146,10 +140,8 @@ private fun ExitAnywayButton(onClick: () -> Unit) {
 private fun OutOfDiamondsBottomSheetPreview() {
     CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
         OutOfDiamondsBottomSheet(
-            nextTournamentStartTime = Clock.System.now() + 10.minutes,
-            tokensRequired = 20,
             onDismissRequest = {},
-            onRegisterNowClick = {},
+            onViewTournamentsClick = {},
             onExitAnywayClick = {},
         )
     }

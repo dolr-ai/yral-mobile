@@ -34,6 +34,8 @@ kotlin {
             implementation(projects.shared.libs.sharing)
             implementation(projects.shared.libs.routing.routesApi)
             implementation(projects.shared.libs.routing.deeplinkEngine)
+            implementation(projects.shared.features.feed)
+            implementation(projects.shared.features.game)
             implementation(projects.shared.rust.service)
         }
         commonTest.dependencies {

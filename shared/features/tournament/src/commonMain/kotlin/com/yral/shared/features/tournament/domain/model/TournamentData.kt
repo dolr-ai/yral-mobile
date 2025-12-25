@@ -19,6 +19,7 @@ data class TournamentData(
 
 data class UserTournamentStats(
     val coinsPaid: Int,
+    val diamonds: Int,
     val tournamentWins: Int,
     val tournamentLosses: Int,
     val registrationStatus: String,
