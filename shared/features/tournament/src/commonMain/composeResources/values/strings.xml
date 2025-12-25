@@ -39,13 +39,14 @@
     <string name="each_tournament_line_two">Watch. Play. Win. Repeat.</string>
     <string name="start_playing">Start Playing</string>
     <string name="continue_playing">Continue Playing</string>
-    <string name="leave_tournament_title">Leave %1$s?</string>
-    <string name="leave_tournament_message">If you exit now you will NOT be able to re-enter this game. All progress will be lost!</string>
+    <string name="leave_tournament_title">Are you sure you want to exit?</string>
+    <string name="leave_tournament_message">Keep playing to hold your rank and win ₹%1$d worth of Bitcoin.</string>
     <string name="leave_tournament_keep_playing">Keep Playing</string>
     <string name="leave_tournament_exit_anyway">Exit Anyway</string>
     <string name="out_of_diamonds_title">Out Of Diamonds!</string>
-    <string name="out_of_diamonds_message">No worries, your next chance to play is %1$s. Register now and try your luck again.</string>
+    <string name="out_of_diamonds_message">No worries, Check out upcoming tournaments to register and play again.</string>
     <string name="out_of_diamonds_register_now">Register Now With %1$d</string>
+    <string name="out_of_diamonds_view_tournaments">View Tournaments</string>
     <string name="out_of_diamonds_exit_anyway">Exit Anyway</string>
     <string name="winner_title">You Won</string>
     <string name="winner_amount_prefix">₹</string>

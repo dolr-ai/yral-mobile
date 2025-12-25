@@ -11,13 +11,12 @@ interface TournamentComponent {
         operator fun invoke(
             componentContext: ComponentContext,
             promptLogin: (pageName: SignupPageName) -> Unit,
-            navigateToTournament: (tournamentId: String, title: String, initialDiamonds: Int, endEpochMs: Long) -> Unit =
-                { _, _, _, _ -> },
+            navigateToTournament: (tournamentId: String, title: String, initialDiamonds: Int, endEpochMs: Long, totalPrizePool: Int) -> Unit,
             navigateToLeaderboard: (
                 tournamentId: String,
                 participantsLabel: String,
                 scheduleLabel: String,
-            ) -> Unit = { _, _, _ -> },
+            ) -> Unit,
         ): TournamentComponent =
             DefaultTournamentComponent(
                 componentContext,
@@ -31,7 +30,7 @@ interface TournamentComponent {
 internal class DefaultTournamentComponent(
     componentContext: ComponentContext,
     private val promptLogin: (pageName: SignupPageName) -> Unit,
-    private val navigateToTournament: (tournamentId: String, title: String, initialDiamonds: Int, endEpochMs: Long) -> Unit,
+    private val navigateToTournament: (tournamentId: String, title: String, initialDiamonds: Int, endEpochMs: Long, totalPrizePool: Int) -> Unit,
     private val navigateToLeaderboard: (
         tournamentId: String,
         participantsLabel: String,
@@ -43,7 +42,7 @@ internal class DefaultTournamentComponent(
         when (value) {
             TournamentViewModel.Event.Login -> promptLogin(SignupPageName.TOURNAMENT)
             is TournamentViewModel.Event.NavigateToTournament -> {
-                navigateToTournament(value.tournamentId, value.title, value.initialDiamonds, value.endEpochMs)
+                navigateToTournament(value.tournamentId, value.title, value.initialDiamonds, value.endEpochMs, value.totalPrizePool)
             }
             is TournamentViewModel.Event.RegistrationSuccess -> {
                 // Handle registration success - could show a toast or navigate

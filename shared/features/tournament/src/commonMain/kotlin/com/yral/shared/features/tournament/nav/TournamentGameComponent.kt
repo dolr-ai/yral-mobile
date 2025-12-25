@@ -27,6 +27,7 @@ interface TournamentGameComponent : FeedComponent {
             tournamentTitle: String,
             initialDiamonds: Int,
             endEpochMs: Long,
+            totalPrizePool: Int,
             onLeaderboardClick: (tournamentId: String) -> Unit,
             onTimeUp: () -> Unit,
             onBack: () -> Unit,
@@ -37,6 +38,7 @@ interface TournamentGameComponent : FeedComponent {
                     tournamentId = tournamentId,
                     tournamentTitle = tournamentTitle,
                     initialDiamonds = initialDiamonds,
+                    totalPrizePool = totalPrizePool,
                     endEpochMs = endEpochMs
                 ),
                 onLeaderboardClickCallback = onLeaderboardClick,
@@ -49,6 +51,7 @@ interface TournamentGameComponent : FeedComponent {
         val tournamentId: String,
         val tournamentTitle: String = "",
         val initialDiamonds: Int,
+        val totalPrizePool: Int,
         val endEpochMs: Long,
     )
 }

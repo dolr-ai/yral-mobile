@@ -318,6 +318,7 @@ class TournamentViewModel(
                             tournamentId = tournament.id,
                             title = tournament.title,
                             initialDiamonds = tournament.initialDiamonds,
+                            totalPrizePool = tournament.totalPrizePool,
                             endEpochMs = tournament.endEpochMs,
                         ),
                     )
@@ -359,6 +360,7 @@ class TournamentViewModel(
             val title: String,
             val initialDiamonds: Int,
             val endEpochMs: Long,
+            val totalPrizePool: Int,
         ) : Event()
 
         data class NavigateToLeaderboard(

@@ -226,6 +226,7 @@ internal class DefaultHomeComponent(
                         config.tournamentTitle,
                         config.initialDiamonds,
                         config.endEpochMs,
+                        config.totalPrizePool
                     ),
                 )
             is Config.UploadVideo -> Child.UploadVideo(uploadVideoComponent(componentContext))
@@ -246,6 +247,7 @@ internal class DefaultHomeComponent(
                     child.component.gameConfig.tournamentTitle,
                     child.component.gameConfig.initialDiamonds,
                     child.component.gameConfig.endEpochMs,
+                    child.component.gameConfig.totalPrizePool,
                 ) to null
             is Child.UploadVideo -> Config.UploadVideo to child.component
             is Child.Profile -> Config.Profile to (child.component as? HomeChildSnapshotProvider)
@@ -288,13 +290,14 @@ internal class DefaultHomeComponent(
             navigateToLeaderboard = { tournamentId, participantsLabel, scheduleLabel ->
                 openTournamentLeaderboard(tournamentId, participantsLabel, scheduleLabel)
             },
-            navigateToTournament = { tournamentId, title, initialDiamonds, endEpochMs ->
+            navigateToTournament = { tournamentId, title, initialDiamonds, endEpochMs, totalPrizePool ->
                 navigation.pushNew(
                     Config.TournamentGame(
                         tournamentId = tournamentId,
                         tournamentTitle = title,
                         initialDiamonds = initialDiamonds,
                         endEpochMs = endEpochMs,
+                        totalPrizePool = totalPrizePool,
                     ),
                 )
             },
@@ -306,12 +309,14 @@ internal class DefaultHomeComponent(
         tournamentTitle: String,
         initialDiamonds: Int,
         endEpochMs: Long,
+        totalPrizePool: Int,
     ): TournamentGameComponent =
         TournamentGameComponent(
             componentContext = componentContext,
             tournamentId = tournamentId,
             tournamentTitle = tournamentTitle,
             initialDiamonds = initialDiamonds,
+            totalPrizePool = totalPrizePool,
             endEpochMs = endEpochMs,
             onLeaderboardClick = { _ ->
                 // TODO: Navigate to leaderboard with tournament filter
@@ -407,6 +412,7 @@ internal class DefaultHomeComponent(
             val tournamentTitle: String = "",
             val initialDiamonds: Int,
             val endEpochMs: Long,
+            val totalPrizePool: Int
         ) : Config
 
         @Serializable

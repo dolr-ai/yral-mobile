@@ -15,7 +15,7 @@ import com.yral.shared.features.feed.ui.FeedScreen
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.tournament.nav.TournamentGameComponent
 import com.yral.shared.features.tournament.ui.LeaveTournamentBottomSheet
-import com.yral.shared.features.tournament.ui.NoDiamondsDialog
+import com.yral.shared.features.tournament.ui.OutOfDiamondsBottomSheet
 import com.yral.shared.features.tournament.ui.PlayType
 import com.yral.shared.features.tournament.ui.TournamentBottomOverlay
 import com.yral.shared.features.tournament.ui.TournamentEndedDialog
@@ -141,11 +141,18 @@ fun TournamentGameScaffoldScreen(
         )
     }
 
-    // Show no diamonds dialog
+    // Show no diamonds bottom sheet
     if (gameState.noDiamondsError) {
-        NoDiamondsDialog(
-            onDismiss = { tournamentGameViewModel.clearNoDiamondsError() },
-            onExit = { component.onTimeUp() },
+        OutOfDiamondsBottomSheet(
+            onDismissRequest = { tournamentGameViewModel.clearNoDiamondsError() },
+            onViewTournamentsClick = {
+                tournamentGameViewModel.clearNoDiamondsError()
+                component.onTimeUp()
+            },
+            onExitAnywayClick = {
+                tournamentGameViewModel.clearNoDiamondsError()
+                component.onTimeUp()
+            },
         )
     }
 
@@ -168,6 +175,7 @@ fun TournamentGameScaffoldScreen(
             tournamentTitle = gameConfig.tournamentTitle,
             onDismissRequest = { showLeaveTournamentConfirmation = false },
             onKeepPlayingClick = { showLeaveTournamentConfirmation = false },
+            totalPrizePool = component.gameConfig.totalPrizePool,
             onExitAnywayClick = {
                 showLeaveTournamentConfirmation = false
                 component.onBack()
