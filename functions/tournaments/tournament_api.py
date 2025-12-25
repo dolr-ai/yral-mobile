@@ -192,7 +192,10 @@ def _get_user_tournament_position(
     principal_id: str,
     top_rows: List[dict]
 ) -> dict:
-    """Get user's position in tournament leaderboard."""
+    """Get user's position in tournament leaderboard.
+
+    Positions start from 1 (never 0). Users with 0 wins are ranked after all users with wins.
+    """
     # Check if in top rows first
     for row in top_rows:
         if row["principal_id"] == principal_id:
@@ -207,25 +210,23 @@ def _get_user_tournament_position(
     profile_snap = profile_ref.get()
     username = (profile_snap.to_dict() or {}).get("username") if profile_snap.exists else None
 
-    if not user_snap.exists:
-        return {
-            "principal_id": principal_id,
-            "wins": 0,
-            "losses": 0,
-            "position": 0,
-            "username": username
-        }
-
-    user_data = user_snap.to_dict() or {}
+    user_data = user_snap.to_dict() or {} if user_snap.exists else {}
     user_wins = int(user_data.get("tournament_wins") or 0)
     user_losses = int(user_data.get("tournament_losses") or 0)
 
     if user_wins == 0:
+        # Users with 0 wins are ranked after all users with wins
+        # Count distinct win values (for dense ranking) + 1
+        users_ref = db().collection(f"tournaments/{tournament_id}/users")
+        count_q = users_ref.where("tournament_wins", ">", 0).count().get()
+        ranked_count = int(count_q[0][0].value) if count_q else 0
+        # Position after all ranked users (at least 1)
+        position = max(1, ranked_count + 1)
         return {
             "principal_id": principal_id,
             "wins": 0,
             "losses": user_losses,
-            "position": 0,
+            "position": position,
             "username": username
         }
 
@@ -894,7 +895,12 @@ def tournament_leaderboard(request: Request):
             "status": "ended",
             "top_rows": [ {...}, ... ],
             "user_row": {...},
-            "prize_map": {...}
+            "prize_map": {...},
+            "participant_count": 42,
+            "date": "2025-12-24",
+            "start_epoch_ms": 1234567890000,
+            "end_epoch_ms": 1234567899000,
+            "title": "Tournament Name"
         }
     """
     try:
@@ -949,7 +955,12 @@ def tournament_leaderboard(request: Request):
             "status": status,
             "top_rows": top_rows,
             "user_row": user_row,
-            "prize_map": prize_map
+            "prize_map": prize_map,
+            "participant_count": t_data.get("participant_count", 0),
+            "date": t_data.get("date", ""),
+            "start_epoch_ms": t_data.get("start_epoch_ms", 0),
+            "end_epoch_ms": t_data.get("end_epoch_ms", 0),
+            "title": t_data.get("title", "Tournament"),
         }), 200
 
     except auth.InvalidIdTokenError:

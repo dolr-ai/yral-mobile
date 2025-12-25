@@ -8,7 +8,6 @@ data class TournamentUiState(
     val tournaments: List<Tournament> = emptyList(),
     val prizeBreakdownTournament: Tournament? = null,
     val isLoggedIn: Boolean = false,
-    val showHowToPlayTournament: Tournament? = null,
     val isLoading: Boolean = false,
     val error: TournamentError? = null,
     val isRegistering: Boolean = false,

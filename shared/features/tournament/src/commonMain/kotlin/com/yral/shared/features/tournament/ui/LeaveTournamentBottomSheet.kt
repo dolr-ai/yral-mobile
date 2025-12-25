@@ -39,8 +39,8 @@ import yral_mobile.shared.features.tournament.generated.resources.tournament_exi
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun LeaveTournamentBottomSheet(
-    tournamentTitle: String,
+fun LeaveTournamentBottomSheet(
+    totalPrizePool: Int,
     onDismissRequest: () -> Unit,
     onKeepPlayingClick: () -> Unit,
     onExitAnywayClick: () -> Unit,
@@ -65,13 +65,13 @@ internal fun LeaveTournamentBottomSheet(
             )
             Spacer(modifier = Modifier.height(40.dp))
             Text(
-                text = stringResource(Res.string.leave_tournament_title, tournamentTitle),
+                text = stringResource(Res.string.leave_tournament_title),
                 style = LocalAppTopography.current.lgBold,
                 color = YralColors.NeutralTextPrimary,
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = stringResource(Res.string.leave_tournament_message),
+                text = stringResource(Res.string.leave_tournament_message, totalPrizePool),
                 style = LocalAppTopography.current.mdRegular,
                 color = YralColors.Neutral300,
                 textAlign = TextAlign.Center,
@@ -115,7 +115,7 @@ private fun ExitAnywayButton(onClick: () -> Unit) {
 private fun LeaveTournamentBottomSheetPreview() {
     CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
         LeaveTournamentBottomSheet(
-            tournamentTitle = "Smily Showdown",
+            totalPrizePool = 10000,
             onDismissRequest = {},
             onKeepPlayingClick = {},
             onExitAnywayClick = {},

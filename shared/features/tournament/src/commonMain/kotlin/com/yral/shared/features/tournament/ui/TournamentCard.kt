@@ -281,7 +281,7 @@ private fun StatusChip(
 }
 
 @Suppress("MagicNumber")
-private fun formatRemainingDuration(duration: Duration): String {
+internal fun formatRemainingDuration(duration: Duration): String {
     val totalSeconds = duration.inWholeSeconds.coerceAtLeast(0)
     val hours = totalSeconds / 3600
     val minutes = (totalSeconds % 3600) / 60
@@ -402,6 +402,8 @@ private fun TournamentCardLivePreview() {
                     status = TournamentStatus.Live(Clock.System.now() + 10.minutes),
                     participationState = TournamentParticipationState.RegistrationRequired(20),
                     prizeBreakdown = previewPrizeRows(),
+                    endEpochMs = (Clock.System.now() + 10.minutes).toEpochMilliseconds(),
+                    entryCost = 20,
                 ),
             onShareClick = {},
             onTournamentCtaClick = {},
@@ -427,6 +429,8 @@ private fun TournamentCardUpcomingPreview() {
                     status = TournamentStatus.Upcoming(Clock.System.now() + 10.minutes),
                     participationState = TournamentParticipationState.RegistrationRequired(20),
                     prizeBreakdown = previewPrizeRows(),
+                    endEpochMs = (Clock.System.now() + 30.minutes).toEpochMilliseconds(),
+                    entryCost = 20,
                 ),
             onShareClick = {},
             onTournamentCtaClick = {},
@@ -436,6 +440,7 @@ private fun TournamentCardUpcomingPreview() {
 }
 
 @Suppress("MagicNumber", "UnusedPrivateMember")
+@OptIn(ExperimentalTime::class)
 @Preview
 @Composable
 private fun TournamentCardEndedPreview() {
@@ -451,6 +456,8 @@ private fun TournamentCardEndedPreview() {
                     status = TournamentStatus.Ended,
                     participationState = TournamentParticipationState.RegistrationRequired(20),
                     prizeBreakdown = previewPrizeRows(),
+                    endEpochMs = (Clock.System.now() - 10.minutes).toEpochMilliseconds(),
+                    entryCost = 20,
                 ),
             onShareClick = {},
             onTournamentCtaClick = {},

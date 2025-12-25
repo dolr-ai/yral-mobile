@@ -29,6 +29,7 @@ import com.yral.shared.app.ui.screens.feed.FeedScaffoldScreenConstants.TOP_OVERL
 import com.yral.shared.app.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.shared.app.ui.screens.feed.performance.VideoListenerImpl
 import com.yral.shared.features.feed.nav.FeedComponent
+import com.yral.shared.features.feed.ui.FeedActionsRight
 import com.yral.shared.features.feed.ui.FeedScreen
 import com.yral.shared.features.feed.ui.components.FeedOnboardingNudge
 import com.yral.shared.features.feed.ui.components.FeedTargetBounds
@@ -107,6 +108,9 @@ fun FeedScaffoldScreen(
         },
         bottomOverlay = { pageNo, scrollToNext ->
             OverlayBottom(pageNo, feedState, gameState, gameViewModel, feedViewModel, scrollToNext)
+        },
+        actionsRight = { pageNo ->
+            FeedActionsRight(pageNo, feedState, feedViewModel, component::openProfile)
         },
         onPageChanged = { pageNo, currentPageOfFeed ->
             if (pageNo >= 0 && pageNo < feedState.feedDetails.size) {
