@@ -39,7 +39,7 @@ import yral_mobile.shared.features.tournament.generated.resources.tournament_exi
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun LeaveTournamentBottomSheet(
+fun LeaveTournamentBottomSheet(
     tournamentTitle: String,
     onDismissRequest: () -> Unit,
     onKeepPlayingClick: () -> Unit,

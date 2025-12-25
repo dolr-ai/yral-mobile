@@ -7,11 +7,14 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.shared.app.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.shared.features.feed.ui.FeedScreen
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.tournament.nav.TournamentGameComponent
+import com.yral.shared.features.tournament.ui.LeaveTournamentBottomSheet
 import com.yral.shared.features.tournament.ui.NoDiamondsDialog
 import com.yral.shared.features.tournament.ui.PlayType
 import com.yral.shared.features.tournament.ui.TournamentBottomOverlay
@@ -26,7 +29,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class)
+@OptIn(ExperimentalTime::class, ExperimentalComposeUiApi::class)
 @Composable
 fun TournamentGameScaffoldScreen(
     component: TournamentGameComponent,
@@ -52,6 +55,9 @@ fun TournamentGameScaffoldScreen(
         mutableStateOf(true)
     }
     var howToPlayOpenedFromButton by remember(gameConfig.tournamentId) {
+        mutableStateOf(false)
+    }
+    var showLeaveTournamentConfirmation by remember(gameConfig.tournamentId) {
         mutableStateOf(false)
     }
 
@@ -82,7 +88,7 @@ fun TournamentGameScaffoldScreen(
                 gameState = gameState,
                 tournamentTitle = gameConfig.tournamentTitle,
                 onLeaderboardClick = { component.onLeaderboardClick() },
-                onBack = { component.onBack() },
+                onBack = { showLeaveTournamentConfirmation = true },
             )
         },
         bottomOverlay = { pageNo, scrollToNext ->
@@ -103,7 +109,7 @@ fun TournamentGameScaffoldScreen(
         },
         actionsRight = { pageNo ->
             TournamentGameActionsRight(
-                onExit = { component.onBack() },
+                onExit = { showLeaveTournamentConfirmation = true },
                 onReport = { tournamentFeedViewModel.toggleReportSheet(true, pageNo) },
             )
         },
@@ -119,6 +125,7 @@ fun TournamentGameScaffoldScreen(
         getPrefetchListener = { reel -> PrefetchVideoListenerImpl(reel) },
         getVideoListener = { null },
     )
+    BackHandler(onBack = { showLeaveTournamentConfirmation = true })
     if (gameState.gameIcons.isNotEmpty()) {
         PreloadLottieAnimations(
             urls = gameState.gameIcons.map { it.clickAnimation },
@@ -152,6 +159,18 @@ fun TournamentGameScaffoldScreen(
             onExit = {
                 tournamentGameViewModel.clearTournamentEndedError()
                 component.onTimeUp()
+            },
+        )
+    }
+
+    if (showLeaveTournamentConfirmation) {
+        LeaveTournamentBottomSheet(
+            tournamentTitle = gameConfig.tournamentTitle,
+            onDismissRequest = { showLeaveTournamentConfirmation = false },
+            onKeepPlayingClick = { showLeaveTournamentConfirmation = false },
+            onExitAnywayClick = {
+                showLeaveTournamentConfirmation = false
+                component.onBack()
             },
         )
     }
