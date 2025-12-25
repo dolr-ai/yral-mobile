@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -84,6 +85,7 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -237,23 +239,39 @@ private fun HomeScreenContent(
                 )
 
             is HomeComponent.Child.TournamentGame -> {
+                val gameConfig = child.component.gameConfig
                 val tournamentGameViewModel =
                     koinViewModel<TournamentGameViewModel>(
-                        key = "tournament-game-${child.component.tournamentId}-$sessionKey",
+                        key = "tournament-game-${gameConfig.tournamentId}-$sessionKey",
                     )
                 val tournamentFeedViewModel =
                     koinViewModel<FeedViewModel>(
-                        key = "tournament-feed-${child.component.tournamentId}-$sessionKey",
+                        key = "tournament-feed-${gameConfig.tournamentId}-$sessionKey",
                     )
                 val gameState by tournamentGameViewModel.state.collectAsStateWithLifecycle()
                 val feedState by tournamentFeedViewModel.state.collectAsStateWithLifecycle()
+                var timeLeftMs by remember(gameConfig.endEpochMs) {
+                    mutableLongStateOf(
+                        maxOf(0L, gameConfig.endEpochMs - System.currentTimeMillis()),
+                    )
+                }
+
+                LaunchedEffect(gameConfig.endEpochMs) {
+                    while (timeLeftMs > 0) {
+                        delay(1000L)
+                        timeLeftMs = maxOf(0L, gameConfig.endEpochMs - System.currentTimeMillis())
+                    }
+                    if (timeLeftMs <= 0 && gameConfig.endEpochMs > 0) {
+                        child.component.onTimeUp()
+                    }
+                }
 
                 // Initialize the game view model with tournament data
-                LaunchedEffect(child.component.tournamentId) {
+                LaunchedEffect(gameConfig) {
                     tournamentGameViewModel.setTournament(
-                        tournamentId = child.component.tournamentId,
-                        initialDiamonds = child.component.initialDiamonds,
-                        endEpochMs = child.component.endEpochMs,
+                        tournamentId = gameConfig.tournamentId,
+                        initialDiamonds = gameConfig.initialDiamonds,
+                        endEpochMs = gameConfig.endEpochMs,
                     )
                 }
 
@@ -263,8 +281,9 @@ private fun HomeScreenContent(
                     topOverlay = { _ ->
                         TournamentTopOverlay(
                             gameState = gameState,
+                            tournamentTitle = gameConfig.tournamentTitle,
                             onLeaderboardClick = { child.component.onLeaderboardClick() },
-                            onTimeUp = { child.component.onTimeUp() },
+                            onBack = { child.component.onBack() },
                         )
                     },
                     bottomOverlay = { pageNo, scrollToNext ->
@@ -273,6 +292,7 @@ private fun HomeScreenContent(
                                 feedDetails = feedState.feedDetails[pageNo],
                                 gameState = gameState,
                                 gameViewModel = tournamentGameViewModel,
+                                timeLeftMs = timeLeftMs,
                                 scrollToNext = scrollToNext,
                             )
                         }

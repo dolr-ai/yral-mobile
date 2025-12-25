@@ -316,6 +316,7 @@ class TournamentViewModel(
                     send(
                         Event.NavigateToTournament(
                             tournamentId = tournament.id,
+                            title = tournament.title,
                             initialDiamonds = tournament.initialDiamonds,
                             endEpochMs = tournament.endEpochMs,
                         ),
@@ -359,6 +360,7 @@ class TournamentViewModel(
 
         data class NavigateToTournament(
             val tournamentId: String,
+            val title: String,
             val initialDiamonds: Int,
             val endEpochMs: Long,
         ) : Event()

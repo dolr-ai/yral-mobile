@@ -223,6 +223,7 @@ internal class DefaultHomeComponent(
                     tournamentGameComponent(
                         componentContext,
                         config.tournamentId,
+                        config.tournamentTitle,
                         config.initialDiamonds,
                         config.endEpochMs,
                     ),
@@ -241,9 +242,10 @@ internal class DefaultHomeComponent(
             is Child.Tournament -> Config.Tournament to (child.component as? HomeChildSnapshotProvider)
             is Child.TournamentGame ->
                 Config.TournamentGame(
-                    child.component.tournamentId,
-                    child.component.initialDiamonds,
-                    child.component.endEpochMs,
+                    child.component.gameConfig.tournamentId,
+                    child.component.gameConfig.tournamentTitle,
+                    child.component.gameConfig.initialDiamonds,
+                    child.component.gameConfig.endEpochMs,
                 ) to null
             is Child.UploadVideo -> Config.UploadVideo to child.component
             is Child.Profile -> Config.Profile to (child.component as? HomeChildSnapshotProvider)
@@ -286,10 +288,11 @@ internal class DefaultHomeComponent(
             navigateToLeaderboard = { tournamentId, participantsLabel, scheduleLabel ->
                 openTournamentLeaderboard(tournamentId, participantsLabel, scheduleLabel)
             },
-            navigateToTournament = { tournamentId, initialDiamonds, endEpochMs ->
+            navigateToTournament = { tournamentId, title, initialDiamonds, endEpochMs ->
                 navigation.pushNew(
                     Config.TournamentGame(
                         tournamentId = tournamentId,
+                        tournamentTitle = title,
                         initialDiamonds = initialDiamonds,
                         endEpochMs = endEpochMs,
                     ),
@@ -300,12 +303,14 @@ internal class DefaultHomeComponent(
     private fun tournamentGameComponent(
         componentContext: ComponentContext,
         tournamentId: String,
+        tournamentTitle: String,
         initialDiamonds: Int,
         endEpochMs: Long,
     ): TournamentGameComponent =
         TournamentGameComponent(
             componentContext = componentContext,
             tournamentId = tournamentId,
+            tournamentTitle = tournamentTitle,
             initialDiamonds = initialDiamonds,
             endEpochMs = endEpochMs,
             onLeaderboardClick = { _ ->
@@ -399,6 +404,7 @@ internal class DefaultHomeComponent(
         @Serializable
         data class TournamentGame(
             val tournamentId: String,
+            val tournamentTitle: String = "",
             val initialDiamonds: Int,
             val endEpochMs: Long,
         ) : Config

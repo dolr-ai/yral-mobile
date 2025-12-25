@@ -12,9 +12,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import org.koin.core.component.KoinComponent
 
 interface TournamentGameComponent : FeedComponent {
-    val tournamentId: String
-    val initialDiamonds: Int
-    val endEpochMs: Long
+    val gameConfig: TournamentGameConfig
 
     fun onLeaderboardClick()
 
@@ -26,6 +24,7 @@ interface TournamentGameComponent : FeedComponent {
         operator fun invoke(
             componentContext: ComponentContext,
             tournamentId: String,
+            tournamentTitle: String,
             initialDiamonds: Int,
             endEpochMs: Long,
             onLeaderboardClick: (tournamentId: String) -> Unit,
@@ -34,21 +33,29 @@ interface TournamentGameComponent : FeedComponent {
         ): TournamentGameComponent =
             DefaultTournamentGameComponent(
                 componentContext = componentContext,
-                tournamentId = tournamentId,
-                initialDiamonds = initialDiamonds,
-                endEpochMs = endEpochMs,
+                gameConfig = TournamentGameConfig(
+                    tournamentId = tournamentId,
+                    tournamentTitle = tournamentTitle,
+                    initialDiamonds = initialDiamonds,
+                    endEpochMs = endEpochMs
+                ),
                 onLeaderboardClickCallback = onLeaderboardClick,
                 onTimeUpCallback = onTimeUp,
                 onBackCallback = onBack,
             )
     }
+
+    data class TournamentGameConfig(
+        val tournamentId: String,
+        val tournamentTitle: String = "",
+        val initialDiamonds: Int,
+        val endEpochMs: Long,
+    )
 }
 
 internal class DefaultTournamentGameComponent(
     componentContext: ComponentContext,
-    override val tournamentId: String,
-    override val initialDiamonds: Int,
-    override val endEpochMs: Long,
+    override val gameConfig: TournamentGameComponent.TournamentGameConfig,
     private val onLeaderboardClickCallback: (tournamentId: String) -> Unit,
     private val onTimeUpCallback: () -> Unit,
     private val onBackCallback: () -> Unit,
@@ -72,7 +79,7 @@ internal class DefaultTournamentGameComponent(
     }
 
     override fun onLeaderboardClick() {
-        onLeaderboardClickCallback(tournamentId)
+        onLeaderboardClickCallback(gameConfig.tournamentId)
     }
 
     override fun onTimeUp() {

@@ -2,29 +2,32 @@
 
 package com.yral.shared.features.tournament.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -35,37 +38,34 @@ import com.yral.shared.features.game.ui.GameIconStrip
 import com.yral.shared.features.tournament.domain.model.VoteOutcome
 import com.yral.shared.features.tournament.viewmodel.TournamentGameState
 import com.yral.shared.features.tournament.viewmodel.TournamentGameViewModel
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import yral_mobile.shared.features.tournament.generated.resources.ic_timer
+import yral_mobile.shared.features.tournament.generated.resources.tournament_diamond
+import yral_mobile.shared.features.tournament.generated.resources.tournament_leaderboard
+import yral_mobile.shared.features.tournament.generated.resources.trophy
+import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
+import yral_mobile.shared.libs.designsystem.generated.resources.exclamation
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 import yral_mobile.shared.libs.designsystem.generated.resources.shadow
+import yral_mobile.shared.libs.designsystem.generated.resources.shadow_bottom
+import yral_mobile.shared.libs.designsystem.generated.resources.victory_cup
+import kotlin.time.Duration.Companion.milliseconds
+import yral_mobile.shared.features.tournament.generated.resources.Res as TournamentRes
 
 /**
- * Top overlay for tournament game screen showing rank, timer, and diamonds.
+ * Top overlay for tournament game screen showing header, leaderboard, and diamonds.
  */
 @Composable
 fun TournamentTopOverlay(
     gameState: TournamentGameState,
+    tournamentTitle: String,
     onLeaderboardClick: () -> Unit,
-    onTimeUp: () -> Unit,
+    onBack: () -> Unit,
 ) {
-    var timeLeftMs by remember(gameState.endEpochMs) {
-        mutableLongStateOf(
-            maxOf(0L, gameState.endEpochMs - System.currentTimeMillis()),
-        )
-    }
-
-    LaunchedEffect(gameState.endEpochMs) {
-        while (timeLeftMs > 0) {
-            delay(1000L)
-            timeLeftMs = maxOf(0L, gameState.endEpochMs - System.currentTimeMillis())
-        }
-        if (timeLeftMs <= 0 && gameState.endEpochMs > 0) {
-            onTimeUp()
-        }
-    }
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -73,94 +73,139 @@ fun TournamentTopOverlay(
                 painter = painterResource(DesignRes.drawable.shadow),
                 contentScale = ContentScale.FillBounds,
             )
-            .padding(horizontal = 16.dp, vertical = 16.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            // Leaderboard / Rank
-            Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Color.Black.copy(alpha = 0.5f))
-                    .clickable { onLeaderboardClick() }
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text(
-                    text = "#${gameState.position}",
-                    color = Color(0xFFFFD700), // Gold color
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-
-            // Timer
-            TimeRemaining(timeLeftMs = timeLeftMs)
-
-            // Diamonds
-            DiamondBalance(diamonds = gameState.diamonds)
-        }
-    }
-}
-
-@Composable
-private fun TimeRemaining(timeLeftMs: Long) {
-    val hours = (timeLeftMs / 3600000).toInt()
-    val minutes = ((timeLeftMs % 3600000) / 60000).toInt()
-    val seconds = ((timeLeftMs % 60000) / 1000).toInt()
-
-    val timeText = if (hours > 0) {
-        String.format("%02d:%02d:%02d", hours, minutes, seconds)
-    } else {
-        String.format("%02d:%02d", minutes, seconds)
-    }
-
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(Color.Black.copy(alpha = 0.5f))
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-    ) {
-        Text(
-            text = timeText,
-            color = if (timeLeftMs < 60000) Color.Red else Color.White,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
+        TournamentHeader(
+            tournamentTitle = tournamentTitle,
+            diamonds = gameState.diamonds,
+            onBack = onBack,
+            modifier = Modifier.align(Alignment.TopStart),
+        )
+        TournamentLeaderboardBadge(
+            position = gameState.position,
+            onClick = onLeaderboardClick,
+            modifier =
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 72.dp),
         )
     }
 }
 
 @Composable
-private fun DiamondBalance(diamonds: Int) {
+private fun TournamentHeader(
+    tournamentTitle: String,
+    diamonds: Int,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Row(
-        modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(
-                Brush.horizontalGradient(
-                    colors = listOf(
-                        Color(0xFF1E88E5),
-                        Color(0xFF42A5F5),
-                    ),
-                ),
-            )
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+        modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Text(
-            text = "\uD83D\uDC8E", // Diamond emoji
-            fontSize = 14.sp,
+        Image(
+            painter = painterResource(DesignRes.drawable.arrow_left),
+            contentDescription = "back",
+            colorFilter = ColorFilter.tint(Color.White),
+            modifier =
+                Modifier
+                    .size(24.dp)
+                    .clickable { onBack() },
         )
+        Spacer(modifier = Modifier.width(8.dp))
+        TournamentTitlePill(
+            title = tournamentTitle,
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.width(12.dp))
+        TournamentDiamondPill(diamonds = diamonds)
+    }
+}
+
+@Composable
+private fun TournamentTitlePill(
+    title: String,
+) {
+    Box(contentAlignment = Alignment.CenterStart) {
+        Text(
+            modifier = Modifier
+                .padding(start = 14.dp)
+                .background(
+                    brush =
+                        Brush.horizontalGradient(
+                            colors = listOf(YralColors.Yellow400, Color.Transparent),
+                        ),
+                )
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            text = title.ifBlank { "Tournament" },
+            style = LocalAppTopography.current.mdBold,
+            color = Color(0xFFFFF9EB),
+            maxLines = 1,
+        )
+        Image(
+            painter = painterResource(TournamentRes.drawable.trophy),
+            contentDescription = null,
+            modifier = Modifier
+                .width(28.dp)
+                .height(33.dp),
+        )
+    }
+}
+
+@Composable
+private fun TournamentDiamondPill(diamonds: Int) {
+    Row(
+        modifier =
+            Modifier
+                .clip(RoundedCornerShape(100.dp))
+                .background(YralColors.Yellow400)
+                .padding(horizontal = 16.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         Text(
             text = diamonds.toString(),
-            color = Color.White,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
+            style = LocalAppTopography.current.mdSemiBold,
+            color = YralColors.Neutral50,
         )
+        Image(
+            painter = painterResource(TournamentRes.drawable.tournament_diamond),
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+        )
+    }
+}
+
+@Composable
+private fun TournamentLeaderboardBadge(
+    position: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val rankText = if (position > 0) "#$position" else "--"
+    Box(
+        modifier = modifier.clickable { onClick() },
+        contentAlignment = Alignment.BottomEnd,
+    ) {
+        Image(
+            painter = painterResource(TournamentRes.drawable.tournament_leaderboard),
+            contentDescription = null,
+            modifier = Modifier.size(50.dp),
+        )
+        Box(
+            modifier =
+                Modifier
+                    .padding(end = 2.dp, bottom = 2.dp)
+                    .border(2.dp, Color.White, RoundedCornerShape(10.dp))
+                    .background(Color(0xFFF14331), RoundedCornerShape(10.dp))
+                    .padding(horizontal = 6.dp, vertical = 2.dp),
+        ) {
+            Text(
+                text = rankText,
+                style = LocalAppTopography.current.baseBold,
+                color = Color.White,
+            )
+        }
     }
 }
 
@@ -172,17 +217,61 @@ fun TournamentBottomOverlay(
     feedDetails: FeedDetails,
     gameState: TournamentGameState,
     gameViewModel: TournamentGameViewModel,
+    timeLeftMs: Long,
     scrollToNext: () -> Unit,
 ) {
     val hasVoted = gameViewModel.hasVotedOnVideo(feedDetails.videoID)
     val voteResult = gameViewModel.getVoteResult(feedDetails.videoID)
+    val selectedIcon =
+        voteResult?.smiley?.id?.let { voteId ->
+            gameState.gameIcons.firstOrNull { it.id == voteId }
+        }
+    val diamondDelta =
+        when (voteResult?.outcome) {
+            VoteOutcome.WIN -> 1
+            VoteOutcome.LOSS -> -1
+            null -> 0
+        }
+    val overlayBottomPadding = 120.dp
 
     Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(260.dp)
+                    .paint(
+                        painter = painterResource(DesignRes.drawable.shadow_bottom),
+                        contentScale = ContentScale.FillBounds,
+                    ),
+        )
+        TournamentTimerPill(
+            timeLeftMs = timeLeftMs,
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = overlayBottomPadding + 12.dp),
+        )
+        OverlayIconButton(
+            text = "?",
+            modifier =
+                Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = 16.dp, bottom = overlayBottomPadding + 4.dp),
+        )
+        OverlayIconButton(
+            iconRes = DesignRes.drawable.exclamation,
+            modifier =
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = overlayBottomPadding + 4.dp),
+        )
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .padding(bottom = 32.dp),
+                .padding(bottom = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             // Show result indicator after voting
@@ -197,8 +286,10 @@ fun TournamentBottomOverlay(
             if (gameState.gameIcons.isNotEmpty()) {
                 TournamentGameIcons(
                     gameIcons = gameState.gameIcons,
+                    selectedIcon = selectedIcon,
                     isLoading = gameState.isLoading,
                     hasVoted = hasVoted,
+                    diamondDelta = diamondDelta,
                     onIconClick = { icon ->
                         gameViewModel.setClickedIcon(icon, feedDetails)
                     },
@@ -243,19 +334,82 @@ private fun VoteResultIndicator(
 }
 
 @Composable
+private fun TournamentTimerPill(
+    timeLeftMs: Long,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color(0x660A0A0A))
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Image(
+            painter = painterResource(TournamentRes.drawable.ic_timer),
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+        )
+        Text(
+            text = "Tournament ends in ${formatRemainingDuration(timeLeftMs.milliseconds)}",
+            style = LocalAppTopography.current.regMedium,
+            color = Color(0xFFD4D4D4),
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
+private fun OverlayIconButton(
+    modifier: Modifier = Modifier,
+    text: String? = null,
+    iconRes: DrawableResource? = null,
+    onClick: () -> Unit = {},
+) {
+    Box(
+        modifier =
+            modifier
+                .size(36.dp)
+                .clip(RoundedCornerShape(49.dp))
+                .background(Color(0x66000000))
+                .clickable { onClick() },
+        contentAlignment = Alignment.Center,
+    ) {
+        when {
+            iconRes != null ->
+                Image(
+                    painter = painterResource(iconRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                )
+            text != null ->
+                Text(
+                    text = text,
+                    style = LocalAppTopography.current.mdBold,
+                    color = Color.White,
+                )
+        }
+    }
+}
+
+@Composable
 private fun TournamentGameIcons(
     gameIcons: List<GameIcon>,
+    selectedIcon: GameIcon?,
     isLoading: Boolean,
     hasVoted: Boolean,
+    diamondDelta: Int,
     onIconClick: (GameIcon) -> Unit,
 ) {
     GameIconStrip(
         modifier = Modifier,
         gameIcons = gameIcons,
-        clickedIcon = null,
+        clickedIcon = selectedIcon,
         onIconClicked = { icon -> onIconClick(icon) },
         isLoading = isLoading || hasVoted,
-        coinDelta = 0,
+        coinDelta = diamondDelta,
     )
 }
 
