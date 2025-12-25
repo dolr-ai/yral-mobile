@@ -115,6 +115,19 @@ class TournamentGameViewModel(
 
     fun getVoteResult(videoId: String): VoteResult? = _state.value.voteResults[videoId]
 
+    fun hasShownCoinDeltaAnimation(videoId: String): Boolean =
+        _state.value.shownCoinDeltaAnimations.contains(videoId)
+
+    fun markCoinDeltaAnimationShown(videoId: String) {
+        _state.update {
+            if (it.shownCoinDeltaAnimations.contains(videoId)) {
+                it
+            } else {
+                it.copy(shownCoinDeltaAnimations = it.shownCoinDeltaAnimations + videoId)
+            }
+        }
+    }
+
     fun setCurrentVideoId(videoId: String) {
         _state.update { it.copy(currentVideoId = videoId) }
     }
@@ -145,6 +158,7 @@ data class TournamentGameState(
     val lastVoteOutcome: VoteOutcome? = null,
     val lastDiamondDelta: Int = 0,
     val voteResults: Map<String, VoteResult> = emptyMap(),
+    val shownCoinDeltaAnimations: Set<String> = emptySet(),
     val lastVotedCount: Int = 1,
     val noDiamondsError: Boolean = false,
     val tournamentEndedError: Boolean = false,

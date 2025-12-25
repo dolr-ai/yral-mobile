@@ -34,8 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yral.shared.data.domain.models.FeedDetails
-import com.yral.shared.features.game.domain.models.GameIcon
-import com.yral.shared.features.game.ui.GameIconStrip
+import com.yral.shared.features.game.ui.SmileyGame
 import com.yral.shared.features.tournament.domain.model.VoteOutcome
 import com.yral.shared.features.tournament.viewmodel.TournamentGameState
 import com.yral.shared.features.tournament.viewmodel.TournamentGameViewModel
@@ -214,6 +213,7 @@ private fun TournamentLeaderboardBadge(
  */
 @Composable
 fun TournamentBottomOverlay(
+    pageNo: Int,
     feedDetails: FeedDetails,
     gameState: TournamentGameState,
     gameViewModel: TournamentGameViewModel,
@@ -236,6 +236,26 @@ fun TournamentBottomOverlay(
     val overlayBottomPadding = 120.dp
 
     Box(modifier = Modifier.fillMaxSize()) {
+        if (gameState.gameIcons.isNotEmpty()) {
+            SmileyGame(
+                gameIcons = gameState.gameIcons,
+                clickedIcon = selectedIcon,
+                isLoading = gameState.isLoading,
+                coinDelta = diamondDelta,
+                errorMessage = "",
+                onIconClicked = { icon, _ ->
+                    gameViewModel.setClickedIcon(icon, feedDetails)
+                },
+                hasShownCoinDeltaAnimation =
+                    gameViewModel.hasShownCoinDeltaAnimation(feedDetails.videoID),
+                onDeltaAnimationComplete = {
+                    gameViewModel.markCoinDeltaAnimationShown(feedDetails.videoID)
+                },
+                nudgeType = null,
+                pageNo = pageNo,
+                onNudgeAnimationComplete = {},
+            )
+        }
         Image(
             painter = painterResource(DesignRes.drawable.ic_how_to_play),
             contentDescription = "how to play",
@@ -253,35 +273,6 @@ fun TournamentBottomOverlay(
                     .align(Alignment.BottomCenter)
                     .padding(bottom = overlayBottomPadding + 12.dp),
         )
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(bottom = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            // Show result indicator after voting
-            if (hasVoted && voteResult != null) {
-                VoteResultIndicator(
-                    outcome = voteResult.outcome,
-                    diamondDelta = if (voteResult.outcome == VoteOutcome.WIN) 1 else -1,
-                )
-            }
-
-            // Game icons strip
-            if (gameState.gameIcons.isNotEmpty()) {
-                TournamentGameIcons(
-                    gameIcons = gameState.gameIcons,
-                    selectedIcon = selectedIcon,
-                    isLoading = gameState.isLoading,
-                    hasVoted = hasVoted,
-                    diamondDelta = diamondDelta,
-                    onIconClick = { icon ->
-                        gameViewModel.setClickedIcon(icon, feedDetails)
-                    },
-                )
-            }
-        }
     }
 
     // Auto-scroll after vote
@@ -290,32 +281,6 @@ fun TournamentBottomOverlay(
             delay(1500L)
             scrollToNext()
         }
-    }
-}
-
-@Composable
-private fun VoteResultIndicator(
-    outcome: VoteOutcome,
-    diamondDelta: Int,
-) {
-    val (color, text) = when (outcome) {
-        VoteOutcome.WIN -> Color(0xFF4CAF50) to "+$diamondDelta \uD83D\uDC8E"
-        VoteOutcome.LOSS -> Color(0xFFF44336) to "$diamondDelta \uD83D\uDC8E"
-    }
-
-    Box(
-        modifier = Modifier
-            .padding(bottom = 16.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(color.copy(alpha = 0.9f))
-            .padding(horizontal = 24.dp, vertical = 8.dp),
-    ) {
-        Text(
-            text = text,
-            color = Color.White,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-        )
     }
 }
 
@@ -371,25 +336,6 @@ fun ColumnScope.TournamentGameActionsRight(
                 .clickable { onReport() },
     )
     Spacer(modifier = Modifier.height(0.dp))
-}
-
-@Composable
-private fun TournamentGameIcons(
-    gameIcons: List<GameIcon>,
-    selectedIcon: GameIcon?,
-    isLoading: Boolean,
-    hasVoted: Boolean,
-    diamondDelta: Int,
-    onIconClick: (GameIcon) -> Unit,
-) {
-    GameIconStrip(
-        modifier = Modifier,
-        gameIcons = gameIcons,
-        clickedIcon = selectedIcon,
-        onIconClicked = { icon -> onIconClick(icon) },
-        isLoading = isLoading || hasVoted,
-        coinDelta = diamondDelta,
-    )
 }
 
 /**

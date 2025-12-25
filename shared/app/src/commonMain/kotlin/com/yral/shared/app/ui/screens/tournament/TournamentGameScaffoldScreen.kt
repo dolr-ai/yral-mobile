@@ -20,8 +20,8 @@ import com.yral.shared.features.tournament.ui.TournamentGameActionsRight
 import com.yral.shared.features.tournament.ui.TournamentHowToPlayScreen
 import com.yral.shared.features.tournament.ui.TournamentTopOverlay
 import com.yral.shared.features.tournament.viewmodel.TournamentGameViewModel
+import com.yral.shared.libs.designsystem.component.lottie.PreloadLottieAnimations
 import kotlinx.coroutines.delay
-import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -88,6 +88,7 @@ fun TournamentGameScaffoldScreen(
         bottomOverlay = { pageNo, scrollToNext ->
             if (pageNo < feedState.feedDetails.size) {
                 TournamentBottomOverlay(
+                    pageNo = pageNo,
                     feedDetails = feedState.feedDetails[pageNo],
                     gameState = gameState,
                     gameViewModel = tournamentGameViewModel,
@@ -118,6 +119,11 @@ fun TournamentGameScaffoldScreen(
         getPrefetchListener = { reel -> PrefetchVideoListenerImpl(reel) },
         getVideoListener = { null },
     )
+    if (gameState.gameIcons.isNotEmpty()) {
+        PreloadLottieAnimations(
+            urls = gameState.gameIcons.map { it.clickAnimation },
+        )
+    }
 
     if (showHowToPlay) {
         TournamentHowToPlayScreen(
