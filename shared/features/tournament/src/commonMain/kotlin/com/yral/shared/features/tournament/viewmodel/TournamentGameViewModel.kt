@@ -19,9 +19,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-private const val TOURNAMENT_WIN_DIAMOND_DELTA = 3
-private const val TOURNAMENT_LOSS_DIAMOND_DELTA = -1
-
 class TournamentGameViewModel(
     private val sessionManager: SessionManager,
     private val gameIconsUseCase: GetGameIconsUseCase,
@@ -87,15 +84,16 @@ class TournamentGameViewModel(
                     smileyId = icon.id,
                 ),
             ).onSuccess { result ->
-                val diamondDelta =
-                    if (result.outcome == VoteOutcome.WIN) {
-                        TOURNAMENT_WIN_DIAMOND_DELTA
+                val diamondDelta = result.diamondDelta ?: (result.diamonds - currentState.diamonds)
+                val resolvedResult =
+                    if (result.diamondDelta == null) {
+                        result.copy(diamondDelta = diamondDelta)
                     } else {
-                        TOURNAMENT_LOSS_DIAMOND_DELTA
+                        result
                     }
                 _state.update {
                     val updatedResults = it.voteResults.toMutableMap()
-                    updatedResults[feedDetails.videoID] = result
+                    updatedResults[feedDetails.videoID] = resolvedResult
                     it.copy(
                         isLoading = false,
                         diamonds = result.diamonds,

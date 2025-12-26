@@ -45,7 +45,6 @@ import androidx.compose.ui.unit.sp
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.features.game.domain.models.GameIconNames
 import com.yral.shared.features.game.ui.SmileyGame
-import com.yral.shared.features.tournament.domain.model.VoteOutcome
 import com.yral.shared.features.tournament.viewmodel.TournamentGameState
 import com.yral.shared.features.tournament.viewmodel.TournamentGameViewModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
@@ -69,9 +68,6 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.math.abs
 import yral_mobile.shared.features.tournament.generated.resources.Res as TournamentRes
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
-
-private const val TOURNAMENT_WIN_DIAMOND_DELTA = 3
-private const val TOURNAMENT_LOSS_DIAMOND_DELTA = -1
 
 /**
  * Top overlay for tournament game screen showing header, leaderboard, and diamonds.
@@ -244,12 +240,7 @@ fun TournamentBottomOverlay(
         voteResult?.smiley?.id?.let { voteId ->
             gameState.gameIcons.firstOrNull { it.id == voteId }
         }
-    val diamondDelta =
-        when (voteResult?.outcome) {
-            VoteOutcome.WIN -> TOURNAMENT_WIN_DIAMOND_DELTA
-            VoteOutcome.LOSS -> TOURNAMENT_LOSS_DIAMOND_DELTA
-            null -> 0
-        }
+    val diamondDelta = voteResult?.diamondDelta ?: 0
     val overlayBottomPadding = 120.dp
 
     Box(modifier = Modifier.fillMaxSize()) {
