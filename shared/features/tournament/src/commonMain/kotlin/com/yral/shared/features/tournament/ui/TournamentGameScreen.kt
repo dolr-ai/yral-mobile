@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,7 +39,6 @@ import com.yral.shared.features.tournament.viewmodel.TournamentGameState
 import com.yral.shared.features.tournament.viewmodel.TournamentGameViewModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
-import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import yral_mobile.shared.features.tournament.generated.resources.exit
 import yral_mobile.shared.features.tournament.generated.resources.ic_timer
@@ -219,9 +217,8 @@ fun TournamentBottomOverlay(
     gameViewModel: TournamentGameViewModel,
     timeLeftMs: Long,
     onHowToPlayClick: () -> Unit,
-    scrollToNext: () -> Unit,
 ) {
-    val hasVoted = gameViewModel.hasVotedOnVideo(feedDetails.videoID)
+    gameViewModel.hasVotedOnVideo(feedDetails.videoID)
     val voteResult = gameViewModel.getVoteResult(feedDetails.videoID)
     val selectedIcon =
         voteResult?.smiley?.id?.let { voteId ->
@@ -275,15 +272,6 @@ fun TournamentBottomOverlay(
                     .align(Alignment.BottomCenter)
                     .padding(bottom = overlayBottomPadding + 12.dp),
         )
-    }
-
-    // Auto-scroll after vote
-    LaunchedEffect(hasVoted) {
-        if (hasVoted) {
-            @Suppress("MagicNumber")
-            delay(1500L)
-            scrollToNext()
-        }
     }
 }
 

@@ -109,7 +109,7 @@ fun TournamentGameScaffoldScreen(
                         onBack = { showLeaveTournamentConfirmation = true },
                     )
                 },
-                bottomOverlay = { pageNo, scrollToNext ->
+                bottomOverlay = { pageNo, _ ->
                     if (pageNo < feedState.feedDetails.size) {
                         TournamentBottomOverlay(
                             pageNo = pageNo,
@@ -121,7 +121,6 @@ fun TournamentGameScaffoldScreen(
                                 howToPlayOpenedFromButton = true
                                 showHowToPlay = true
                             },
-                            scrollToNext = scrollToNext,
                         )
                     }
                 },
