@@ -48,8 +48,6 @@ import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.features.tournament.domain.model.LeaderboardRow
-import com.yral.shared.features.tournament.ui.TournamentFailScreen
-import com.yral.shared.features.tournament.ui.TournamentWinnerScreen
 import com.yral.shared.features.tournament.viewmodel.TournamentLeaderboardViewModel
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralLoader
@@ -209,6 +207,8 @@ fun TournamentLeaderboardScreen(
                 val prizeAmountValue = currentUser.prize ?: state.prizeMap[rank] ?: 0
                 val prizeAmount =
                     stringResource(Res.string.winner_amount_prefix) + prizeAmountValue.toString()
+                val totalPrizePoolAmount =
+                    stringResource(Res.string.winner_amount_prefix) + state.prizeMap.maxOf { it.value }.toString()
                 val shouldShowWinner = rank > 0 && (currentUser.prize != null || state.prizeMap.containsKey(rank))
                 val dismissResult = { showResultOverlay = false }
                 if (shouldShowWinner) {
@@ -216,13 +216,11 @@ fun TournamentLeaderboardScreen(
                         prizeAmount = prizeAmount,
                         rank = rank,
                         onClose = dismissResult,
-                        onClaimPrize = dismissResult,
                         onViewLeaderboard = dismissResult,
                     )
                 } else {
                     TournamentFailScreen(
-                        rank = rank,
-                        nextTournamentTime = formatNextTournamentTime(state.endEpochMs),
+                        totalPrizePoolAmount = totalPrizePoolAmount,
                         onClose = dismissResult,
                         onViewLeaderboard = dismissResult,
                     )
