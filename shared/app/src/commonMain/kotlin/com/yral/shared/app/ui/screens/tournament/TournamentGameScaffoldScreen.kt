@@ -123,7 +123,7 @@ fun TournamentGameScaffoldScreen(
             }
         },
         onEdgeScrollAttempt = { _ -> },
-        limitReelCount = gameState.lastVotedCount,
+        limitReelCount = feedState.feedDetails.size,
         getPrefetchListener = { reel -> PrefetchVideoListenerImpl(reel) },
         getVideoListener = { null },
     )
