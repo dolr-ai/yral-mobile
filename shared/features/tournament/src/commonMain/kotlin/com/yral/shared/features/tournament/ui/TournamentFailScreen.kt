@@ -41,8 +41,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 @Suppress("LongMethod", "MagicNumber")
 @Composable
 fun TournamentFailScreen(
-    rank: Int,
-    nextTournamentTime: String,
+    totalPrizePoolAmount: String,
     onClose: () -> Unit,
     onViewLeaderboard: () -> Unit,
     modifier: Modifier = Modifier,
@@ -108,12 +107,7 @@ fun TournamentFailScreen(
                         modifier = Modifier.fillMaxWidth(),
                     )
                     Text(
-                        text =
-                            stringResource(
-                                Res.string.tournament_fail_body,
-                                rank,
-                                nextTournamentTime,
-                            ),
+                        text = stringResource(Res.string.tournament_fail_body, totalPrizePoolAmount),
                         style = LocalAppTopography.current.mdRegular,
                         color = YralColors.Neutral300,
                         textAlign = TextAlign.Center,
@@ -141,8 +135,7 @@ private fun ViewLeaderboardButton(onClick: () -> Unit) {
 private fun TournamentFailScreenPreview() {
     CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
         TournamentFailScreen(
-            rank = 12,
-            nextTournamentTime = "6:00 PM",
+            totalPrizePoolAmount = "₹10,000",
             onClose = {},
             onViewLeaderboard = {},
         )
