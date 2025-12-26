@@ -81,6 +81,7 @@ class DefaultRootComponent(
                     tournamentId = config.tournamentId,
                     participantsLabel = config.participantsLabel,
                     scheduleLabel = config.scheduleLabel,
+                    showResult = config.showResult,
                 )
             is Config.TournamentGame ->
                 RootComponent.Child.TournamentGame(
@@ -237,12 +238,14 @@ class DefaultRootComponent(
         tournamentId: String,
         participantsLabel: String,
         scheduleLabel: String,
+        showResult: Boolean,
     ) {
         navigation.pushToFront(
             Config.TournamentLeaderboard(
                 tournamentId = tournamentId,
                 participantsLabel = participantsLabel,
                 scheduleLabel = scheduleLabel,
+                showResult = showResult,
             ),
         )
     }
@@ -343,14 +346,23 @@ class DefaultRootComponent(
             initialDiamonds = initialDiamonds,
             totalPrizePool = totalPrizePool,
             endEpochMs = endEpochMs,
-            onLeaderboardClick = { clickedTournamentId ->
+            onLeaderboardClick = { clickedTournamentId, showResult ->
                 openTournamentLeaderboard(
                     tournamentId = clickedTournamentId,
                     participantsLabel = "",
                     scheduleLabel = "",
+                    showResult = showResult,
                 )
             },
-            onTimeUp = { navigation.pop() },
+            onTimeUp = {
+                navigation.pop()
+                openTournamentLeaderboard(
+                    tournamentId = tournamentId,
+                    participantsLabel = "",
+                    scheduleLabel = "",
+                    showResult = true,
+                )
+            },
             onBack = { navigation.pop() },
         )
 
@@ -379,6 +391,7 @@ class DefaultRootComponent(
             val tournamentId: String,
             val participantsLabel: String,
             val scheduleLabel: String,
+            val showResult: Boolean = false,
         ) : Config
 
         @Serializable

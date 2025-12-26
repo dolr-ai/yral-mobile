@@ -89,6 +89,7 @@ abstract class HomeComponent {
                 tournamentId: String,
                 participantsLabel: String,
                 scheduleLabel: String,
+                showResult: Boolean,
             ) -> Unit,
             openTournamentGame: (
                 tournamentId: String,

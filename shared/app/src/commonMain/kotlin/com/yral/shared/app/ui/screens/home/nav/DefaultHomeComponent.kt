@@ -54,6 +54,7 @@ internal class DefaultHomeComponent(
         tournamentId: String,
         participantsLabel: String,
         scheduleLabel: String,
+        showResult: Boolean,
     ) -> Unit,
     private val openTournamentGame: (
         tournamentId: String,
@@ -273,7 +274,7 @@ internal class DefaultHomeComponent(
             componentContext = componentContext,
             promptLogin = { homeViewModel.showSignupPrompt(true, it) },
             navigateToLeaderboard = { tournamentId, participantsLabel, scheduleLabel ->
-                openTournamentLeaderboard(tournamentId, participantsLabel, scheduleLabel)
+                openTournamentLeaderboard(tournamentId, participantsLabel, scheduleLabel, false)
             },
             navigateToTournament = { tournamentId, title, initialDiamonds, endEpochMs, totalPrizePool ->
                 openTournamentGame(
