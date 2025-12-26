@@ -213,17 +213,18 @@ fun TournamentLeaderboardScreen(
                     stringResource(Res.string.winner_amount_prefix) + state.prizeMap.maxOf { it.value }.toString()
                 val shouldShowWinner = rank > 0 && (currentUser.prize != null || state.prizeMap.containsKey(rank))
                 val dismissResult = { showResultOverlay = false }
+                val closeResult = { onBack() }
                 if (shouldShowWinner) {
                     TournamentWinnerScreen(
                         prizeAmount = prizeAmount,
                         rank = rank,
-                        onClose = dismissResult,
+                        onClose = closeResult,
                         onViewLeaderboard = dismissResult,
                     )
                 } else {
                     TournamentFailScreen(
                         totalPrizePoolAmount = totalPrizePoolAmount,
-                        onClose = dismissResult,
+                        onClose = closeResult,
                         onViewLeaderboard = dismissResult,
                     )
                 }
