@@ -131,6 +131,7 @@ fun SmileyGame(
     nudgeType: NudgeType?,
     pageNo: Int,
     onNudgeAnimationComplete: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var animateBubbles by remember { mutableStateOf(false) }
     var iconPositions by remember { mutableStateOf(mapOf<Int, Float>()) }
@@ -141,7 +142,7 @@ fun SmileyGame(
     var animatingNudgeIconPosition by remember { mutableStateOf<Int?>(null) }
     var nudgeIterationCount by remember { mutableIntStateOf(0) }
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.BottomCenter,
     ) {
         when {
