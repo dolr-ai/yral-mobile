@@ -254,6 +254,7 @@ fun TournamentBottomOverlay(
                 nudgeType = null,
                 pageNo = pageNo,
                 onNudgeAnimationComplete = {},
+                modifier = Modifier.padding(bottom = 24.dp)
             )
         }
         Image(
