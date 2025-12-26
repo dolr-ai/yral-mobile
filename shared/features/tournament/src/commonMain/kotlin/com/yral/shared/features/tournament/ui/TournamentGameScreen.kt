@@ -32,14 +32,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.capitalize
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.text.Placeholder
-import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yral.shared.data.domain.models.FeedDetails
@@ -65,8 +65,8 @@ import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.exclamation
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_how_to_play
 import yral_mobile.shared.libs.designsystem.generated.resources.shadow
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.math.abs
+import kotlin.time.Duration.Companion.milliseconds
 import yral_mobile.shared.features.tournament.generated.resources.Res as TournamentRes
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
@@ -270,7 +270,7 @@ fun TournamentBottomOverlay(
                 nudgeType = null,
                 pageNo = pageNo,
                 onNudgeAnimationComplete = {},
-                modifier = Modifier.padding(bottom = 24.dp)
+                modifier = Modifier.padding(bottom = 24.dp),
             )
         }
         Image(
@@ -294,6 +294,7 @@ fun TournamentBottomOverlay(
     }
 }
 
+@Suppress("LongMethod")
 @Composable
 private fun TournamentGameResultContent(
     iconName: GameIconNames,

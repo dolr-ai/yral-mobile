@@ -67,12 +67,13 @@ fun TournamentData.toUiTournament(): Tournament {
 internal fun tournamentStatus(
     currentTime: Instant,
     startTime: Instant,
-    endTime: Instant
-): TournamentStatus = when {
-    currentTime < startTime -> TournamentStatus.Upcoming(startTime = startTime)
-    currentTime > endTime -> TournamentStatus.Ended
-    else -> TournamentStatus.Live(endTime = endTime)
-}
+    endTime: Instant,
+): TournamentStatus =
+    when {
+        currentTime < startTime -> TournamentStatus.Upcoming(startTime = startTime)
+        currentTime > endTime -> TournamentStatus.Ended
+        else -> TournamentStatus.Live(endTime = endTime)
+    }
 
 @Suppress("MagicNumber")
 @OptIn(ExperimentalTime::class)
@@ -113,9 +114,7 @@ internal fun formatScheduleLabel(
     date: String,
     startTime: Instant,
     endTime: Instant,
-): String {
-   return formatScheduleLabel(date, startTime.toHourMinute12h(), endTime.toHourMinute12h())
-}
+): String = formatScheduleLabel(date, startTime.toHourMinute12h(), endTime.toHourMinute12h())
 
 @Suppress("ReturnCount")
 private fun formatScheduleLabel(

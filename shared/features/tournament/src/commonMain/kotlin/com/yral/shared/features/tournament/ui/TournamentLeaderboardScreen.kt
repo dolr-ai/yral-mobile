@@ -65,9 +65,6 @@ import com.yral.shared.libs.leaderboard.ui.main.LeaderboardUiConstants.TOURNAMEN
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.propicFromPrincipal
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -86,12 +83,10 @@ import yral_mobile.shared.libs.leaderboard.generated.resources.bronze_trophy
 import yral_mobile.shared.libs.leaderboard.generated.resources.golden_trophy
 import yral_mobile.shared.libs.leaderboard.generated.resources.silver_trophy
 import yral_mobile.shared.libs.leaderboard.generated.resources.yellow_leaderboard
-import kotlin.time.Duration.Companion.days
-import kotlin.time.ExperimentalTime
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 import yral_mobile.shared.libs.leaderboard.generated.resources.Res as LeaderboardRes
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 fun TournamentLeaderboardScreen(
     tournamentId: String,
@@ -732,14 +727,4 @@ private fun formatUsername(row: LeaderboardRow?): String {
     if (row == null) return "-"
     val resolved = resolveUsername(row.username, row.principalId) ?: row.principalId
     return if (resolved.startsWith("@")) resolved else "@$resolved"
-}
-
-@OptIn(ExperimentalTime::class)
-private fun formatNextTournamentTime(endEpochMs: Long): String {
-    if (endEpochMs <= 0L) return "12:00 am"
-    val nextTournamentTime = Instant.fromEpochMilliseconds(endEpochMs) + 1.days
-    val dt = nextTournamentTime.toLocalDateTime(TimeZone.currentSystemDefault())
-    val hour12 = ((dt.hour + 11) % 12 + 1)
-    val amPm = if (dt.hour < 12) "am" else "pm"
-    return "${hour12.toString().padStart(2, '0')}:${dt.minute.toString().padStart(2, '0')} $amPm"
 }

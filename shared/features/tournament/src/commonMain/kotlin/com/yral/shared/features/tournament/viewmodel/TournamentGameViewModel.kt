@@ -144,7 +144,6 @@ class TournamentGameViewModel(
     fun clearTournamentEndedError() {
         _state.update { it.copy(tournamentEndedError = false) }
     }
-
 }
 
 data class TournamentGameState(
