@@ -125,6 +125,7 @@ fun SmileyGame(
     isLoading: Boolean,
     coinDelta: Int = 0,
     errorMessage: String = "",
+    resultContent: @Composable ((icon: GameIcon, coinDelta: Int, errorMessage: String) -> Unit)? = null,
     onIconClicked: (emoji: GameIcon, isTutorialVote: Boolean) -> Unit,
     hasShownCoinDeltaAnimation: Boolean,
     onDeltaAnimationComplete: () -> Unit,
@@ -154,6 +155,7 @@ fun SmileyGame(
                     originalPos = iconPositions[gameIcons.indexOf(clickedIcon)] ?: 0f,
                     hasShownCoinDeltaAnimation = hasShownCoinDeltaAnimation,
                     onAnimationComplete = onDeltaAnimationComplete,
+                    resultContent = resultContent,
                 )
             }
             else -> {
@@ -269,6 +271,7 @@ private fun BoxScope.SmileyGameResult(
     originalPos: Float,
     hasShownCoinDeltaAnimation: Boolean,
     onAnimationComplete: () -> Unit,
+    resultContent: @Composable ((icon: GameIcon, coinDelta: Int, errorMessage: String) -> Unit)?,
 ) {
     clickedIcon?.let {
         GameResultView(
@@ -277,6 +280,10 @@ private fun BoxScope.SmileyGameResult(
             coinDelta = coinDelta,
             errorMessage = errorMessage,
             originalPos = originalPos,
+            resultContent =
+                resultContent?.let { content ->
+                    { content(it, coinDelta, errorMessage) }
+                },
         )
     }
     if (!hasShownCoinDeltaAnimation && errorMessage.isEmpty()) {
