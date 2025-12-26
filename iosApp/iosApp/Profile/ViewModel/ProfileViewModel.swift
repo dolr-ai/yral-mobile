@@ -204,16 +204,6 @@ class ProfileViewModel: ObservableObject {
         isCreator: KotlinBoolean(bool: self.feeds.count >= .one),
         walletBalance: KotlinDouble(value: analyticsInfo.walletBalance),
         tokenType: .yral,
-        isForcedGamePlayUser: KotlinBoolean(
-          bool: AppDIHelper().getFeatureFlagManager().isEnabled(
-            flag: FeedFeatureFlags.SmileyGame.shared.StopAndVoteNudge
-          )
-        ),
-        isAutoScrollEnabled: KotlinBoolean(
-            bool: AppDIHelper().getFeatureFlagManager().isEnabled(
-                flag: FeedFeatureFlags.SmileyGame.shared.AutoScrollEnabled
-            )
-        ),
         emailId: analyticsInfo.emailId,
         utmParams: nil,
       )
