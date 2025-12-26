@@ -87,15 +87,15 @@ fun TournamentGameScaffoldScreen(
         )
     }
 
-
     Scaffold(
         containerColor = MaterialTheme.colorScheme.primaryContainer,
         modifier = Modifier.fillMaxSize(),
     ) { innerPadding ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
         ) {
             FeedScreen(
                 component = component,

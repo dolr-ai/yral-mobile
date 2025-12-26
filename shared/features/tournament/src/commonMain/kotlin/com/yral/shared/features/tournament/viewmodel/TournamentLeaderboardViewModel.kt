@@ -65,7 +65,11 @@ class TournamentLeaderboardViewModel(
                             val currentTime = Clock.System.now()
                             val scheduleLabel = formatScheduleLabel(leaderboard.date, startTime, endTime)
                             val tournamentStatus = tournamentStatus(currentTime, startTime, endTime)
-                            val participantsLabel = formatParticipantsLabel(leaderboard.participantCount, tournamentStatus)
+                            val participantsLabel =
+                                formatParticipantsLabel(
+                                    leaderboard.participantCount,
+                                    tournamentStatus,
+                                )
                             it.copy(
                                 leaderboard = leaderboard.topRows,
                                 currentUser = leaderboard.userRow,

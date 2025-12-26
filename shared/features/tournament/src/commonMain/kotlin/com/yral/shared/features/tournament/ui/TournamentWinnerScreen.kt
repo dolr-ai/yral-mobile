@@ -26,12 +26,9 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
@@ -51,17 +48,14 @@ import yral_mobile.shared.features.tournament.generated.resources.bitcoin
 import yral_mobile.shared.features.tournament.generated.resources.confettie
 import yral_mobile.shared.features.tournament.generated.resources.tournament_noise_texture
 import yral_mobile.shared.features.tournament.generated.resources.view_leaderboard
-import yral_mobile.shared.features.tournament.generated.resources.winner_body_prefix
-import yral_mobile.shared.features.tournament.generated.resources.winner_body_suffix
 import yral_mobile.shared.features.tournament.generated.resources.winner_celebration_message
 import yral_mobile.shared.features.tournament.generated.resources.winner_celebration_title
-import yral_mobile.shared.features.tournament.generated.resources.winner_rank_format
 import yral_mobile.shared.features.tournament.generated.resources.winner_title
 import yral_mobile.shared.libs.designsystem.generated.resources.cross
 import yral_mobile.shared.libs.designsystem.generated.resources.golden_gradient
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "MagicNumber")
 @Composable
 fun TournamentWinnerScreen(
     prizeAmount: String,
@@ -198,23 +192,6 @@ private fun WinnerPrizeCard(
         }
     }
 }
-
-@Composable
-private fun buildWinnerBody(rank: Int) =
-    buildAnnotatedString {
-        append(stringResource(Res.string.winner_body_prefix))
-        withStyle(
-            style =
-                SpanStyle(
-                    fontWeight = FontWeight.Bold,
-                    color = YralColors.NeutralTextPrimary,
-                ),
-        ) {
-            append(stringResource(Res.string.winner_rank_format, rank))
-        }
-        append("\n")
-        append(stringResource(Res.string.winner_body_suffix))
-    }
 
 @Composable
 private fun ViewLeaderboardButton(onClick: () -> Unit) {
