@@ -27,6 +27,7 @@ data class TournamentLeaderboardUiState(
     val leaderboard: List<LeaderboardRow> = emptyList(),
     val currentUser: LeaderboardRow? = null,
     val prizeMap: Map<Int, Int> = emptyMap(),
+    val endEpochMs: Long = 0,
     val isLoading: Boolean = false,
     val error: String? = null,
     val isNavigating: Boolean = false,
@@ -54,6 +55,7 @@ class TournamentLeaderboardViewModel(
                                 leaderboard = leaderboard.topRows,
                                 currentUser = leaderboard.userRow,
                                 prizeMap = leaderboard.prizeMap,
+                                endEpochMs = leaderboard.endEpochMs,
                                 isLoading = false,
                                 error = null,
                             )

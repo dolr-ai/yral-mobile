@@ -14,7 +14,7 @@ import org.koin.core.component.KoinComponent
 interface TournamentGameComponent : FeedComponent {
     val gameConfig: TournamentGameConfig
 
-    fun onLeaderboardClick()
+    fun onLeaderboardClick(showResult: Boolean = false)
 
     fun onTimeUp()
 
@@ -28,7 +28,7 @@ interface TournamentGameComponent : FeedComponent {
             initialDiamonds: Int,
             endEpochMs: Long,
             totalPrizePool: Int,
-            onLeaderboardClick: (tournamentId: String) -> Unit,
+            onLeaderboardClick: (tournamentId: String, showResult: Boolean) -> Unit,
             onTimeUp: () -> Unit,
             onBack: () -> Unit,
         ): TournamentGameComponent =
@@ -60,7 +60,7 @@ interface TournamentGameComponent : FeedComponent {
 internal class DefaultTournamentGameComponent(
     componentContext: ComponentContext,
     override val gameConfig: TournamentGameComponent.TournamentGameConfig,
-    private val onLeaderboardClickCallback: (tournamentId: String) -> Unit,
+    private val onLeaderboardClickCallback: (tournamentId: String, showResult: Boolean) -> Unit,
     private val onTimeUpCallback: () -> Unit,
     private val onBackCallback: () -> Unit,
 ) : TournamentGameComponent,
@@ -82,8 +82,8 @@ internal class DefaultTournamentGameComponent(
         // Not implemented for tournament game
     }
 
-    override fun onLeaderboardClick() {
-        onLeaderboardClickCallback(gameConfig.tournamentId)
+    override fun onLeaderboardClick(showResult: Boolean) {
+        onLeaderboardClickCallback(gameConfig.tournamentId, showResult)
     }
 
     override fun onTimeUp() {

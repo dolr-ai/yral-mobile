@@ -48,6 +48,8 @@ import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.features.tournament.domain.model.LeaderboardRow
+import com.yral.shared.features.tournament.ui.TournamentFailScreen
+import com.yral.shared.features.tournament.ui.TournamentWinnerScreen
 import com.yral.shared.features.tournament.viewmodel.TournamentLeaderboardViewModel
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralLoader
@@ -64,6 +66,9 @@ import com.yral.shared.libs.leaderboard.ui.main.LeaderboardUiConstants
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.propicFromPrincipal
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -76,6 +81,7 @@ import yral_mobile.shared.features.tournament.generated.resources.tournament_lea
 import yral_mobile.shared.features.tournament.generated.resources.tournament_leaderboard_rank
 import yral_mobile.shared.features.tournament.generated.resources.tournament_leaderboard_rewards
 import yral_mobile.shared.features.tournament.generated.resources.tournament_leaderboard_title
+import yral_mobile.shared.features.tournament.generated.resources.winner_amount_prefix
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.leaderboard.generated.resources.bronze_trophy
 import yral_mobile.shared.libs.leaderboard.generated.resources.golden_trophy
@@ -83,6 +89,8 @@ import yral_mobile.shared.libs.leaderboard.generated.resources.silver_trophy
 import yral_mobile.shared.libs.leaderboard.generated.resources.yellow_leaderboard
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 import yral_mobile.shared.libs.leaderboard.generated.resources.Res as LeaderboardRes
+import kotlin.time.Duration.Companion.days
+import kotlin.time.ExperimentalTime
 
 @Suppress("LongMethod")
 @Composable
@@ -91,11 +99,13 @@ fun TournamentLeaderboardScreen(
     tournamentTitle: String,
     participantsLabel: String,
     scheduleLabel: String,
+    showResult: Boolean = false,
     onBack: () -> Unit,
     onOpenProfile: (CanisterData) -> Unit,
     viewModel: TournamentLeaderboardViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    var showResultOverlay by remember(showResult) { mutableStateOf(showResult) }
 
     LaunchedEffect(tournamentId) {
         viewModel.loadLeaderboard(tournamentId)
@@ -116,76 +126,108 @@ fun TournamentLeaderboardScreen(
         containerColor = MaterialTheme.colorScheme.primaryContainer,
         modifier = Modifier.fillMaxSize(),
     ) {
-        LazyColumn(
-            state = listState,
+        Box(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .padding(it)
-                    .nestedScroll(
-                        object : NestedScrollConnection {
-                            override suspend fun onPostFling(
-                                consumed: Velocity,
-                                available: Velocity,
-                            ): Velocity {
-                                isTrophyVisible = consumed.y > 0
-                                return super.onPostFling(consumed, available)
-                            }
-                        },
-                    ),
+                    .padding(it),
         ) {
-            stickyHeader {
-                TournamentLeaderboardHeader(
-                    tournamentTitle = tournamentTitle,
-                    participantsLabel = participantsLabel,
-                    scheduleLabel = scheduleLabel,
-                    leaderboard = state.leaderboard,
-                    prizeMap = state.prizeMap,
-                    onBack = onBack,
-                    isTrophyVisible = isTrophyVisible,
-                )
-            }
-
-            val currentUser = state.currentUser
-            if (currentUser != null) {
-                item {
-                    TournamentLeaderboardRow(
-                        row = currentUser,
-                        isCurrentUser = true,
-                        fallbackPrize = state.prizeMap[currentUser.position],
-                        onClick = { viewModel.onUserClick(currentUser) },
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            LazyColumn(
+                state = listState,
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .nestedScroll(
+                            object : NestedScrollConnection {
+                                override suspend fun onPostFling(
+                                    consumed: Velocity,
+                                    available: Velocity,
+                                ): Velocity {
+                                    isTrophyVisible = consumed.y > 0
+                                    return super.onPostFling(consumed, available)
+                                }
+                            },
+                        ),
+            ) {
+                stickyHeader {
+                    TournamentLeaderboardHeader(
+                        tournamentTitle = tournamentTitle,
+                        participantsLabel = participantsLabel,
+                        scheduleLabel = scheduleLabel,
+                        leaderboard = state.leaderboard,
+                        prizeMap = state.prizeMap,
+                        onBack = onBack,
+                        isTrophyVisible = isTrophyVisible,
                     )
                 }
-            }
 
-            items(state.leaderboard) { row ->
-                TournamentLeaderboardRow(
-                    row = row,
-                    isCurrentUser = viewModel.isCurrentUser(row.principalId),
-                    fallbackPrize = state.prizeMap[row.position],
-                    onClick = { viewModel.onUserClick(row) },
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-                )
-            }
-
-            if (!state.isLoading && state.error != null) {
-                item {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = state.error ?: "",
-                            style = LocalAppTopography.current.baseMedium,
-                            color = YralColors.Neutral500,
-                            textAlign = TextAlign.Center,
+                val currentUser = state.currentUser
+                if (currentUser != null) {
+                    item {
+                        TournamentLeaderboardRow(
+                            row = currentUser,
+                            isCurrentUser = true,
+                            fallbackPrize = state.prizeMap[currentUser.position],
+                            onClick = { viewModel.onUserClick(currentUser) },
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                         )
                     }
                 }
+
+                items(state.leaderboard) { row ->
+                    TournamentLeaderboardRow(
+                        row = row,
+                        isCurrentUser = viewModel.isCurrentUser(row.principalId),
+                        fallbackPrize = state.prizeMap[row.position],
+                        onClick = { viewModel.onUserClick(row) },
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+                    )
+                }
+
+                if (!state.isLoading && state.error != null) {
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = state.error ?: "",
+                                style = LocalAppTopography.current.baseMedium,
+                                color = YralColors.Neutral500,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                    }
+                }
+
+                item { Spacer(modifier = Modifier.height(24.dp)) }
             }
 
-            item { Spacer(modifier = Modifier.height(24.dp)) }
+            val currentUser = state.currentUser
+            if (showResultOverlay && !state.isLoading && currentUser != null) {
+                val rank = currentUser.position
+                val prizeAmountValue = currentUser.prize ?: state.prizeMap[rank] ?: 0
+                val prizeAmount =
+                    stringResource(Res.string.winner_amount_prefix) + prizeAmountValue.toString()
+                val shouldShowWinner = rank > 0 && (currentUser.prize != null || state.prizeMap.containsKey(rank))
+                val dismissResult = { showResultOverlay = false }
+                if (shouldShowWinner) {
+                    TournamentWinnerScreen(
+                        prizeAmount = prizeAmount,
+                        rank = rank,
+                        onClose = dismissResult,
+                        onClaimPrize = dismissResult,
+                        onViewLeaderboard = dismissResult,
+                    )
+                } else {
+                    TournamentFailScreen(
+                        rank = rank,
+                        nextTournamentTime = formatNextTournamentTime(state.endEpochMs),
+                        onClose = dismissResult,
+                        onViewLeaderboard = dismissResult,
+                    )
+                }
+            }
         }
 
         if (state.isLoading) {
@@ -690,4 +732,14 @@ private fun formatUsername(row: LeaderboardRow?): String {
     if (row == null) return "-"
     val resolved = resolveUsername(row.username, row.principalId) ?: row.principalId
     return if (resolved.startsWith("@")) resolved else "@$resolved"
+}
+
+@OptIn(ExperimentalTime::class)
+private fun formatNextTournamentTime(endEpochMs: Long): String {
+    if (endEpochMs <= 0L) return "12:00 am"
+    val nextTournamentTime = Instant.fromEpochMilliseconds(endEpochMs) + 1.days
+    val dt = nextTournamentTime.toLocalDateTime(TimeZone.currentSystemDefault())
+    val hour12 = ((dt.hour + 11) % 12 + 1)
+    val amPm = if (dt.hour < 12) "am" else "pm"
+    return "${hour12.toString().padStart(2, '0')}:${dt.minute.toString().padStart(2, '0')} $amPm"
 }

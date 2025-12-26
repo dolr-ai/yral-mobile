@@ -24,7 +24,6 @@ import com.yral.shared.features.tournament.ui.LeaveTournamentBottomSheet
 import com.yral.shared.features.tournament.ui.OutOfDiamondsBottomSheet
 import com.yral.shared.features.tournament.ui.PlayType
 import com.yral.shared.features.tournament.ui.TournamentBottomOverlay
-import com.yral.shared.features.tournament.ui.TournamentEndedDialog
 import com.yral.shared.features.tournament.ui.TournamentGameActionsRight
 import com.yral.shared.features.tournament.ui.TournamentHowToPlayScreen
 import com.yral.shared.features.tournament.ui.TournamentTopOverlay
@@ -105,7 +104,7 @@ fun TournamentGameScaffoldScreen(
                     TournamentTopOverlay(
                         gameState = gameState,
                         tournamentTitle = gameConfig.tournamentTitle,
-                        onLeaderboardClick = { component.onLeaderboardClick() },
+                        onLeaderboardClick = { /*component.onLeaderboardClick()*/ },
                         onBack = { showLeaveTournamentConfirmation = true },
                     )
                 },
@@ -164,27 +163,21 @@ fun TournamentGameScaffoldScreen(
                     onDismissRequest = { tournamentGameViewModel.clearNoDiamondsError() },
                     onViewTournamentsClick = {
                         tournamentGameViewModel.clearNoDiamondsError()
-                        component.onTimeUp()
+                        component.onBack()
                     },
                     onExitAnywayClick = {
                         tournamentGameViewModel.clearNoDiamondsError()
-                        component.onTimeUp()
+                        component.onBack()
                     },
                 )
             }
 
-            // Show tournament ended dialog
+            // Navigate to leaderboard to show results when tournament ends
             if (gameState.tournamentEndedError) {
-                TournamentEndedDialog(
-                    onViewLeaderboard = {
-                        tournamentGameViewModel.clearTournamentEndedError()
-                        component.onLeaderboardClick()
-                    },
-                    onExit = {
-                        tournamentGameViewModel.clearTournamentEndedError()
-                        component.onTimeUp()
-                    },
-                )
+                LaunchedEffect(gameState.tournamentEndedError) {
+                    tournamentGameViewModel.clearTournamentEndedError()
+                    component.onTimeUp()
+                }
             }
 
             if (showLeaveTournamentConfirmation) {
