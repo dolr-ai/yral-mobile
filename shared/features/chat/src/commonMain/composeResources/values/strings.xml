@@ -5,7 +5,7 @@
     <string name="chat_wall_talk_to_me">Talk To Me</string>
 
     <!-- Chat Conversation Screen -->
-    <string name="no_conversation_id">No conversation id</string>
+    <string name="no_conversation_id">No conversation ID</string>
 
     <!-- Chat Header -->
     <string name="back">Back</string>

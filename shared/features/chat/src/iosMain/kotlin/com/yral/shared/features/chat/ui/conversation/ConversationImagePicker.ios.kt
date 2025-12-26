@@ -151,14 +151,21 @@ private class IosChatImagePickerCoordinator(
     @Suppress("ReturnCount")
     @OptIn(ExperimentalForeignApi::class, ExperimentalTime::class)
     private fun imageToTempUrl(image: UIImage): NSURL? {
-        val imageData = UIImageJPEGRepresentation(image, 1.0) ?: UIImagePNGRepresentation(image)
+        val jpegData = UIImageJPEGRepresentation(image, 1.0)
+        val (imageData, extension) =
+            if (jpegData != null) {
+                jpegData to "jpg"
+            } else {
+                UIImagePNGRepresentation(image) to "png"
+            }
+
         if (imageData == null) {
             chatImagePickerLogger.e { "Failed to convert image to data" }
             return null
         }
 
         val tempDir = NSTemporaryDirectory()
-        val fileName = "chat_image_${Clock.System.now().toEpochMilliseconds()}.jpg"
+        val fileName = "chat_image_${Clock.System.now().toEpochMilliseconds()}.$extension"
         val tempUrl = NSURL.fileURLWithPath("$tempDir$fileName")
 
         if (imageData.writeToURL(tempUrl, atomically = true)) {

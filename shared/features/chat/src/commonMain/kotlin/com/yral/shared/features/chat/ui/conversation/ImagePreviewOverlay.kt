@@ -92,14 +92,17 @@ fun ImagePreviewOverlay(
                         keyboardController?.hide()
                         val text = input.trim()
                         input = ""
-                        onSend(
-                            SendMessageDraft(
-                                messageType = ChatMessageType.IMAGE,
-                                content = text.takeIf { it.isNotBlank() },
-                                mediaAttachments = listOf(imageAttachment),
-                            ),
-                        )
-                        onDismiss()
+                        try {
+                            onSend(
+                                SendMessageDraft(
+                                    messageType = ChatMessageType.IMAGE,
+                                    content = text.takeIf { it.isNotBlank() },
+                                    mediaAttachments = listOf(imageAttachment),
+                                ),
+                            )
+                        } finally {
+                            onDismiss()
+                        }
                     },
                     showAttachmentMenu = false,
                     hasWaitingAssistant = hasWaitingAssistant,

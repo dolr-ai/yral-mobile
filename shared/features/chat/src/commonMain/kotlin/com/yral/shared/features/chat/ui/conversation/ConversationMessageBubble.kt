@@ -163,7 +163,7 @@ private fun MessageInBubble(
                 Image(
                     painter = painterResource(DesignRes.drawable.ic_exclamation_circle),
                     modifier = Modifier.size(24.dp),
-                    contentDescription = null,
+                    contentDescription = stringResource(Res.string.message_failed_tap_to_resend),
                 )
             }
             Box {

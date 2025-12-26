@@ -86,6 +86,7 @@ abstract class HomeComponent {
             componentContext: ComponentContext,
             openEditProfile: () -> Unit,
             openProfile: (userCanisterData: CanisterData) -> Unit,
+            openConversation: (influencerId: String) -> Unit,
             openTournamentLeaderboard: (
                 tournamentId: String,
                 showResult: Boolean,
@@ -97,7 +98,6 @@ abstract class HomeComponent {
                 endEpochMs: Long,
                 totalPrizePool: Int,
             ) -> Unit,
-            openConversation: (influencerId: String) -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
             showLoginBottomSheet: (
                 pageName: SignupPageName,
