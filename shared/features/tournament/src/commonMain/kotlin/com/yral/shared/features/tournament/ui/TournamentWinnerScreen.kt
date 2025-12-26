@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,15 +26,11 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
@@ -48,25 +45,22 @@ import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import yral_mobile.shared.features.tournament.generated.resources.Res
 import yral_mobile.shared.features.tournament.generated.resources.bitcoin
-import yral_mobile.shared.features.tournament.generated.resources.claim_prize
+import yral_mobile.shared.features.tournament.generated.resources.confettie
 import yral_mobile.shared.features.tournament.generated.resources.tournament_noise_texture
 import yral_mobile.shared.features.tournament.generated.resources.view_leaderboard
-import yral_mobile.shared.features.tournament.generated.resources.winner_body_prefix
-import yral_mobile.shared.features.tournament.generated.resources.winner_body_suffix
+import yral_mobile.shared.features.tournament.generated.resources.winner_celebration_message
 import yral_mobile.shared.features.tournament.generated.resources.winner_celebration_title
-import yral_mobile.shared.features.tournament.generated.resources.winner_rank_format
 import yral_mobile.shared.features.tournament.generated.resources.winner_title
 import yral_mobile.shared.libs.designsystem.generated.resources.cross
 import yral_mobile.shared.libs.designsystem.generated.resources.golden_gradient
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "MagicNumber")
 @Composable
 fun TournamentWinnerScreen(
     prizeAmount: String,
     rank: Int,
     onClose: () -> Unit,
-    onClaimPrize: () -> Unit,
     onViewLeaderboard: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -81,6 +75,12 @@ fun TournamentWinnerScreen(
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.matchParentSize(),
+        )
+        Image(
+            painter = painterResource(Res.drawable.confettie),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxWidth().fillMaxHeight(0.5f),
         )
         YralLottieAnimation(
             rawRes = LottieRes.COLORFUL_CONFETTI_BRUST,
@@ -116,29 +116,24 @@ fun TournamentWinnerScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    text = stringResource(Res.string.winner_celebration_title),
+                    text = stringResource(Res.string.winner_celebration_title, rank),
                     style = LocalAppTopography.current.xxlBold,
                     color = YralColors.Yellow200,
                     textAlign = TextAlign.Center,
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = buildWinnerBody(rank),
+                    modifier = Modifier.padding(horizontal = 24.dp),
+                    text = stringResource(Res.string.winner_celebration_message, prizeAmount),
                     style = LocalAppTopography.current.mdRegular,
                     color = YralColors.Neutral300,
                     textAlign = TextAlign.Center,
                 )
-                Spacer(modifier = Modifier.height(60.dp))
+                Spacer(modifier = Modifier.height(38.dp))
 
-                YralGradientButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    text = stringResource(Res.string.claim_prize),
-                    buttonHeight = 48.dp,
-                    onClick = onClaimPrize,
-                )
-                Spacer(modifier = Modifier.height(20.dp))
                 ViewLeaderboardButton(onClick = onViewLeaderboard)
             }
+            Spacer(modifier = Modifier.height(4.dp))
         }
     }
 }
@@ -199,23 +194,6 @@ private fun WinnerPrizeCard(
 }
 
 @Composable
-private fun buildWinnerBody(rank: Int) =
-    buildAnnotatedString {
-        append(stringResource(Res.string.winner_body_prefix))
-        withStyle(
-            style =
-                SpanStyle(
-                    fontWeight = FontWeight.Bold,
-                    color = YralColors.NeutralTextPrimary,
-                ),
-        ) {
-            append(stringResource(Res.string.winner_rank_format, rank))
-        }
-        append("\n")
-        append(stringResource(Res.string.winner_body_suffix))
-    }
-
-@Composable
 private fun ViewLeaderboardButton(onClick: () -> Unit) {
     val shape = RoundedCornerShape(8.dp)
     Box(
@@ -266,7 +244,6 @@ private fun TournamentWinnerScreenPreview() {
             prizeAmount = "₹10,000",
             rank = 1,
             onClose = {},
-            onClaimPrize = { },
             onViewLeaderboard = { },
         )
     }

@@ -15,7 +15,6 @@ import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.root.viewmodels.HomeViewModel
 import com.yral.shared.features.tournament.nav.TournamentComponent
-import com.yral.shared.features.tournament.nav.TournamentGameComponent
 import com.yral.shared.features.uploadvideo.nav.UploadVideoRootComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.features.wallet.ui.btcRewards.nav.VideoViewRewardsComponent
@@ -56,9 +55,6 @@ abstract class HomeComponent {
         class Tournament(
             val component: TournamentComponent,
         ) : Child()
-        class TournamentGame(
-            val component: TournamentGameComponent,
-        ) : Child()
         class UploadVideo(
             val component: UploadVideoRootComponent,
         ) : Child()
@@ -91,8 +87,14 @@ abstract class HomeComponent {
             openProfile: (userCanisterData: CanisterData) -> Unit,
             openTournamentLeaderboard: (
                 tournamentId: String,
-                participantsLabel: String,
-                scheduleLabel: String,
+                showResult: Boolean,
+            ) -> Unit,
+            openTournamentGame: (
+                tournamentId: String,
+                tournamentTitle: String,
+                initialDiamonds: Int,
+                endEpochMs: Long,
+                totalPrizePool: Int,
             ) -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
             showLoginBottomSheet: (
@@ -108,6 +110,7 @@ abstract class HomeComponent {
                 openEditProfile,
                 openProfile,
                 openTournamentLeaderboard,
+                openTournamentGame,
                 showAlertsOnDialog,
                 showLoginBottomSheet,
                 hideLoginBottomSheetIfVisible,

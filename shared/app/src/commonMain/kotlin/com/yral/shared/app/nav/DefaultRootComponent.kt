@@ -24,6 +24,7 @@ import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
+import com.yral.shared.features.tournament.nav.TournamentGameComponent
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.libs.routing.routes.api.UserProfileRoute
@@ -78,8 +79,18 @@ class DefaultRootComponent(
             is Config.TournamentLeaderboard ->
                 RootComponent.Child.TournamentLeaderboard(
                     tournamentId = config.tournamentId,
-                    participantsLabel = config.participantsLabel,
-                    scheduleLabel = config.scheduleLabel,
+                    showResult = config.showResult,
+                )
+            is Config.TournamentGame ->
+                RootComponent.Child.TournamentGame(
+                    tournamentGameComponent(
+                        componentContext,
+                        config.tournamentId,
+                        config.tournamentTitle,
+                        config.initialDiamonds,
+                        config.endEpochMs,
+                        config.totalPrizePool,
+                    ),
                 )
         }
 
@@ -106,6 +117,7 @@ class DefaultRootComponent(
                 openEditProfile = this::openEditProfile,
                 openProfile = this::openProfile,
                 openTournamentLeaderboard = this::openTournamentLeaderboard,
+                openTournamentGame = this::openTournamentGame,
                 showAlertsOnDialog = { this.showSlot(SlotConfig.AlertsRequestBottomSheet(it)) },
                 showLoginBottomSheet = this::showLoginBottomSheet,
                 hideLoginBottomSheetIfVisible = this::hideLoginBottomSheetIfVisible,
@@ -222,14 +234,30 @@ class DefaultRootComponent(
 
     override fun openTournamentLeaderboard(
         tournamentId: String,
-        participantsLabel: String,
-        scheduleLabel: String,
+        showResult: Boolean,
     ) {
         navigation.pushToFront(
             Config.TournamentLeaderboard(
                 tournamentId = tournamentId,
-                participantsLabel = participantsLabel,
-                scheduleLabel = scheduleLabel,
+                showResult = showResult,
+            ),
+        )
+    }
+
+    override fun openTournamentGame(
+        tournamentId: String,
+        tournamentTitle: String,
+        initialDiamonds: Int,
+        endEpochMs: Long,
+        totalPrizePool: Int,
+    ) {
+        navigation.pushToFront(
+            Config.TournamentGame(
+                tournamentId = tournamentId,
+                tournamentTitle = tournamentTitle,
+                initialDiamonds = initialDiamonds,
+                endEpochMs = endEpochMs,
+                totalPrizePool = totalPrizePool,
             ),
         )
     }
@@ -297,6 +325,37 @@ class DefaultRootComponent(
             onDismissed = slotNavigation::dismiss,
         )
 
+    private fun tournamentGameComponent(
+        componentContext: ComponentContext,
+        tournamentId: String,
+        tournamentTitle: String,
+        initialDiamonds: Int,
+        endEpochMs: Long,
+        totalPrizePool: Int,
+    ): TournamentGameComponent =
+        TournamentGameComponent(
+            componentContext = componentContext,
+            tournamentId = tournamentId,
+            tournamentTitle = tournamentTitle,
+            initialDiamonds = initialDiamonds,
+            totalPrizePool = totalPrizePool,
+            endEpochMs = endEpochMs,
+            onLeaderboardClick = { clickedTournamentId, showResult ->
+                openTournamentLeaderboard(
+                    tournamentId = clickedTournamentId,
+                    showResult = showResult,
+                )
+            },
+            onTimeUp = {
+                navigation.pop()
+                openTournamentLeaderboard(
+                    tournamentId = tournamentId,
+                    showResult = true,
+                )
+            },
+            onBack = { navigation.pop() },
+        )
+
     private fun showSlot(slotConfig: SlotConfig) {
         slotNavigation.activate(slotConfig)
     }
@@ -320,8 +379,16 @@ class DefaultRootComponent(
         @Serializable
         data class TournamentLeaderboard(
             val tournamentId: String,
-            val participantsLabel: String,
-            val scheduleLabel: String,
+            val showResult: Boolean = false,
+        ) : Config
+
+        @Serializable
+        data class TournamentGame(
+            val tournamentId: String,
+            val tournamentTitle: String = "",
+            val initialDiamonds: Int,
+            val endEpochMs: Long,
+            val totalPrizePool: Int,
         ) : Config
     }
 

@@ -10,6 +10,7 @@ import com.yral.shared.app.ui.screens.home.nav.HomeComponent
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
+import com.yral.shared.features.tournament.nav.TournamentGameComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.rust.service.utils.CanisterData
 
@@ -36,8 +37,15 @@ interface RootComponent {
 
     fun openTournamentLeaderboard(
         tournamentId: String,
-        participantsLabel: String,
-        scheduleLabel: String,
+        showResult: Boolean = false,
+    )
+
+    fun openTournamentGame(
+        tournamentId: String,
+        tournamentTitle: String,
+        initialDiamonds: Int,
+        endEpochMs: Long,
+        totalPrizePool: Int,
     )
 
     fun showLoginBottomSheet(
@@ -65,8 +73,10 @@ interface RootComponent {
         ) : Child()
         class TournamentLeaderboard(
             val tournamentId: String,
-            val participantsLabel: String,
-            val scheduleLabel: String,
+            val showResult: Boolean,
+        ) : Child()
+        class TournamentGame(
+            val component: TournamentGameComponent,
         ) : Child()
     }
 

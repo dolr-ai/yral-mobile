@@ -7,6 +7,8 @@ object LeaderboardUiConstants {
     val LEADERBOARD_HEADER_WEIGHTS = listOf(0.27f, 0.32f, 0.40f, 0.29f)
     val LEADERBOARD_HEADER_WEIGHTS_FOLD = listOf(0.27f, 0.34f, 0.40f, 0.27f)
     val LEADERBOARD_ROW_WEIGHTS = listOf(0.27f, 0.35f, 0.40f, 0.26f)
+    val TOURNAMENT_LEADERBOARD_HEADER_WEIGHTS = listOf(0.2f, 0.42f, 0.22f, 0.16f)
+    val TOURNAMENT_LEADERBOARD_ROW_WEIGHTS = listOf(0.2f, 0.42f, 0.16f, 0.22f)
     const val MAX_CHAR_OF_NAME = 9
     const val COUNT_DOWN_BG_ALPHA = 0.8f
     const val COUNT_DOWN_ANIMATION_DURATION = 500

@@ -50,12 +50,18 @@
     <string name="out_of_diamonds_exit_anyway">Exit Anyway</string>
     <string name="winner_title">You Won</string>
     <string name="winner_amount_prefix">₹</string>
-    <string name="winner_celebration_title">You did it!</string>
+    <string name="winner_celebration_title">Rank #%1$d secured!</string>
+    <string name="winner_celebration_message">%1$s worth of Bitcoin will be credited to your wallet. Check out and register for upcoming tournaments.</string>
     <string name="winner_body_prefix">Congratulations! You finished at </string>
     <string name="winner_rank_format">Rank #%1$d</string>
     <string name="winner_body_suffix">Register for the next round tomorrow.</string>
     <string name="claim_prize">Claim Prize</string>
     <string name="tournament_fail_title">So Close... Try Again Tomorrow!</string>
-    <string name="tournament_fail_body">You finished at Rank #%1$d.\nCome back tomorrow at %2$s\nand give it another shot.</string>
+    <string name="tournament_fail_body">Good news! %1$s worth of Bitcoin is waiting for you. Register now to take part in our upcoming tournaments.</string>
     <string name="win_upto_prize">Win up to ₹%1$d</string>
+    <string name="tournament_most_people_chose">Most people chose %1$s!</string>
+    <string name="tournament_not_most_popular_pick">Not the most popular pick!</string>
+    <string name="tournament_you_win_diamonds">You win %1$d</string>
+    <string name="tournament_you_lost_diamonds">You lost %1$d</string>
+    <string name="tournament_ends_in">Tournament ends in %1$s</string>
 </resources>

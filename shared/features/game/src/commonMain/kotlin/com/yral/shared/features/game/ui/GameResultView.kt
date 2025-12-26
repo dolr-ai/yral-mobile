@@ -44,6 +44,7 @@ fun GameResultView(
     coinDelta: Int,
     errorMessage: String = "",
     originalPos: Float,
+    resultContent: @Composable (() -> Unit)? = null,
 ) {
     val iconOffsetX = remember { Animatable(originalPos) }
     GameStripBackground(
@@ -56,9 +57,13 @@ fun GameResultView(
     ) {
         GameResultViewIcon(icon, originalPos, iconOffsetX)
         if (iconOffsetX.value == 0f) {
-            Text(
-                text = gameResultText(icon.imageName, coinDelta, errorMessage),
-            )
+            if (resultContent != null) {
+                resultContent()
+            } else {
+                Text(
+                    text = gameResultText(icon.imageName, coinDelta, errorMessage),
+                )
+            }
         }
     }
 }
