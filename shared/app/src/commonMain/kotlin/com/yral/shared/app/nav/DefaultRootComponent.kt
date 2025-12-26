@@ -79,8 +79,6 @@ class DefaultRootComponent(
             is Config.TournamentLeaderboard ->
                 RootComponent.Child.TournamentLeaderboard(
                     tournamentId = config.tournamentId,
-                    participantsLabel = config.participantsLabel,
-                    scheduleLabel = config.scheduleLabel,
                     showResult = config.showResult,
                 )
             is Config.TournamentGame ->
@@ -236,15 +234,11 @@ class DefaultRootComponent(
 
     override fun openTournamentLeaderboard(
         tournamentId: String,
-        participantsLabel: String,
-        scheduleLabel: String,
         showResult: Boolean,
     ) {
         navigation.pushToFront(
             Config.TournamentLeaderboard(
                 tournamentId = tournamentId,
-                participantsLabel = participantsLabel,
-                scheduleLabel = scheduleLabel,
                 showResult = showResult,
             ),
         )
@@ -349,8 +343,6 @@ class DefaultRootComponent(
             onLeaderboardClick = { clickedTournamentId, showResult ->
                 openTournamentLeaderboard(
                     tournamentId = clickedTournamentId,
-                    participantsLabel = "",
-                    scheduleLabel = "",
                     showResult = showResult,
                 )
             },
@@ -358,8 +350,6 @@ class DefaultRootComponent(
                 navigation.pop()
                 openTournamentLeaderboard(
                     tournamentId = tournamentId,
-                    participantsLabel = "",
-                    scheduleLabel = "",
                     showResult = true,
                 )
             },
@@ -389,8 +379,6 @@ class DefaultRootComponent(
         @Serializable
         data class TournamentLeaderboard(
             val tournamentId: String,
-            val participantsLabel: String,
-            val scheduleLabel: String,
             val showResult: Boolean = false,
         ) : Config
 

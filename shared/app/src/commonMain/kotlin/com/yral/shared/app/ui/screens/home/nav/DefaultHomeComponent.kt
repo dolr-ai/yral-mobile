@@ -52,8 +52,6 @@ internal class DefaultHomeComponent(
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
     private val openTournamentLeaderboard: (
         tournamentId: String,
-        participantsLabel: String,
-        scheduleLabel: String,
         showResult: Boolean,
     ) -> Unit,
     private val openTournamentGame: (
@@ -273,8 +271,8 @@ internal class DefaultHomeComponent(
         TournamentComponent(
             componentContext = componentContext,
             promptLogin = { homeViewModel.showSignupPrompt(true, it) },
-            navigateToLeaderboard = { tournamentId, participantsLabel, scheduleLabel ->
-                openTournamentLeaderboard(tournamentId, participantsLabel, scheduleLabel, false)
+            navigateToLeaderboard = { tournamentId ->
+                openTournamentLeaderboard(tournamentId, false)
             },
             navigateToTournament = { tournamentId, title, initialDiamonds, endEpochMs, totalPrizePool ->
                 openTournamentGame(

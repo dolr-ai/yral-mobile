@@ -296,8 +296,6 @@ class TournamentViewModel(
             send(
                 Event.NavigateToLeaderboard(
                     tournamentId = tournament.id,
-                    participantsLabel = tournament.participantsLabel,
-                    scheduleLabel = tournament.scheduleLabel,
                 ),
             )
         } else {
@@ -365,8 +363,6 @@ class TournamentViewModel(
 
         data class NavigateToLeaderboard(
             val tournamentId: String,
-            val participantsLabel: String,
-            val scheduleLabel: String,
         ) : Event()
     }
 }
