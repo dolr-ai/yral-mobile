@@ -51,7 +51,6 @@ import com.yral.shared.app.ui.screens.feed.FeedScaffoldScreen
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent.SlotChild
 import com.yral.shared.app.ui.screens.profile.ProfileScreen
-import com.yral.shared.app.ui.screens.tournament.TournamentGameScaffoldScreen
 import com.yral.shared.app.ui.screens.uploadVideo.UploadVideoRootScreen
 import com.yral.shared.core.session.SessionKey
 import com.yral.shared.core.session.SessionState
@@ -119,15 +118,12 @@ internal fun HomeScreen(
                     is HomeComponent.Child.Feed -> HomeTab.HOME
                     is HomeComponent.Child.Leaderboard -> HomeTab.LEADER_BOARD
                     is HomeComponent.Child.Tournament -> HomeTab.TOURNAMENT
-                    is HomeComponent.Child.TournamentGame -> HomeTab.TOURNAMENT
                     is HomeComponent.Child.Profile -> HomeTab.PROFILE
                     is HomeComponent.Child.UploadVideo -> HomeTab.UPLOAD_VIDEO
                     is HomeComponent.Child.Chat -> HomeTab.CHAT
                     is HomeComponent.Child.Account -> HomeTab.ACCOUNT
                     is HomeComponent.Child.Wallet -> HomeTab.WALLET
                 }
-            // Hide bottom navigation bar during tournament game
-            val showNavBar = activeComponent !is HomeComponent.Child.TournamentGame
             val updateCurrentTab: (tab: HomeTab) -> Unit = { tab ->
                 when (tab) {
                     HomeTab.HOME -> component.onFeedTabClick()
@@ -140,13 +136,11 @@ internal fun HomeScreen(
                     HomeTab.WALLET -> component.onWalletTabClick()
                 }
             }
-            if (showNavBar) {
-                HomeNavigationBar(
-                    currentTab = currentTab,
-                    updateCurrentTab = updateCurrentTab,
-                    bottomNavigationClicked = bottomNavigationAnalytics,
-                )
-            }
+            HomeNavigationBar(
+                currentTab = currentTab,
+                updateCurrentTab = updateCurrentTab,
+                bottomNavigationClicked = bottomNavigationAnalytics,
+            )
         },
     ) { innerPadding ->
         HomeScreenContent(
@@ -229,13 +223,6 @@ private fun HomeScreenContent(
                     component = child.component,
                     viewModel = tournamentViewModel,
                 )
-
-            is HomeComponent.Child.TournamentGame -> {
-                TournamentGameScaffoldScreen(
-                    component = child.component,
-                    sessionKey = sessionKey,
-                )
-            }
 
             is HomeComponent.Child.UploadVideo ->
                 UploadVideoRootScreen(

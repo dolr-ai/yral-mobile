@@ -11,8 +11,6 @@ import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.decompose.router.stack.childStack
-import com.arkivanov.decompose.router.stack.pop
-import com.arkivanov.decompose.router.stack.pushNew
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.analytics.events.SignupPageName
@@ -26,7 +24,6 @@ import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.root.viewmodels.HomeViewModel
 import com.yral.shared.features.tournament.nav.TournamentComponent
-import com.yral.shared.features.tournament.nav.TournamentGameComponent
 import com.yral.shared.features.uploadvideo.nav.UploadVideoRootComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.features.wallet.ui.btcRewards.nav.DefaultVideoViewRewardsComponent
@@ -57,6 +54,13 @@ internal class DefaultHomeComponent(
         tournamentId: String,
         participantsLabel: String,
         scheduleLabel: String,
+    ) -> Unit,
+    private val openTournamentGame: (
+        tournamentId: String,
+        tournamentTitle: String,
+        initialDiamonds: Int,
+        endEpochMs: Long,
+        totalPrizePool: Int,
     ) -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
     private val showLoginBottomSheet: (
@@ -218,17 +222,6 @@ internal class DefaultHomeComponent(
             is Config.Feed -> Child.Feed(feedComponent(componentContext))
             is Config.Leaderboard -> Child.Leaderboard(leaderboardComponent(componentContext))
             is Config.Tournament -> Child.Tournament(tournamentComponent(componentContext))
-            is Config.TournamentGame ->
-                Child.TournamentGame(
-                    tournamentGameComponent(
-                        componentContext,
-                        config.tournamentId,
-                        config.tournamentTitle,
-                        config.initialDiamonds,
-                        config.endEpochMs,
-                        config.totalPrizePool,
-                    ),
-                )
             is Config.UploadVideo -> Child.UploadVideo(uploadVideoComponent(componentContext))
             is Config.Profile -> Child.Profile(profileComponent(componentContext))
             is Config.Account -> Child.Account(accountComponent(componentContext))
@@ -241,14 +234,6 @@ internal class DefaultHomeComponent(
             is Child.Feed -> Config.Feed to (child.component as? HomeChildSnapshotProvider)
             is Child.Leaderboard -> Config.Leaderboard to (child.component as? HomeChildSnapshotProvider)
             is Child.Tournament -> Config.Tournament to (child.component as? HomeChildSnapshotProvider)
-            is Child.TournamentGame ->
-                Config.TournamentGame(
-                    child.component.gameConfig.tournamentId,
-                    child.component.gameConfig.tournamentTitle,
-                    child.component.gameConfig.initialDiamonds,
-                    child.component.gameConfig.endEpochMs,
-                    child.component.gameConfig.totalPrizePool,
-                ) to null
             is Child.UploadVideo -> Config.UploadVideo to child.component
             is Child.Profile -> Config.Profile to (child.component as? HomeChildSnapshotProvider)
             is Child.Account -> Config.Account to (child.component as? HomeChildSnapshotProvider)
@@ -291,38 +276,14 @@ internal class DefaultHomeComponent(
                 openTournamentLeaderboard(tournamentId, participantsLabel, scheduleLabel)
             },
             navigateToTournament = { tournamentId, title, initialDiamonds, endEpochMs, totalPrizePool ->
-                navigation.pushNew(
-                    Config.TournamentGame(
-                        tournamentId = tournamentId,
-                        tournamentTitle = title,
-                        initialDiamonds = initialDiamonds,
-                        endEpochMs = endEpochMs,
-                        totalPrizePool = totalPrizePool,
-                    ),
+                openTournamentGame(
+                    tournamentId,
+                    title,
+                    initialDiamonds,
+                    endEpochMs,
+                    totalPrizePool,
                 )
             },
-        )
-
-    private fun tournamentGameComponent(
-        componentContext: ComponentContext,
-        tournamentId: String,
-        tournamentTitle: String,
-        initialDiamonds: Int,
-        endEpochMs: Long,
-        totalPrizePool: Int,
-    ): TournamentGameComponent =
-        TournamentGameComponent(
-            componentContext = componentContext,
-            tournamentId = tournamentId,
-            tournamentTitle = tournamentTitle,
-            initialDiamonds = initialDiamonds,
-            totalPrizePool = totalPrizePool,
-            endEpochMs = endEpochMs,
-            onLeaderboardClick = { _ ->
-//                openTournamentLeaderboard()
-            },
-            onTimeUp = { navigation.pop() },
-            onBack = { navigation.pop() },
         )
 
     private fun uploadVideoComponent(componentContext: ComponentContext): UploadVideoRootComponent =
@@ -405,15 +366,6 @@ internal class DefaultHomeComponent(
 
         @Serializable
         data object Tournament : Config
-
-        @Serializable
-        data class TournamentGame(
-            val tournamentId: String,
-            val tournamentTitle: String = "",
-            val initialDiamonds: Int,
-            val endEpochMs: Long,
-            val totalPrizePool: Int,
-        ) : Config
 
         @Serializable
         data object UploadVideo : Config

@@ -139,9 +139,6 @@ class TournamentGameViewModel(
         _state.update { it.copy(tournamentEndedError = false) }
     }
 
-    fun clearLastVoteOutcome() {
-        _state.update { it.copy(lastVoteOutcome = null, lastDiamondDelta = 0) }
-    }
 }
 
 data class TournamentGameState(
