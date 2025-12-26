@@ -33,6 +33,7 @@ import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.shared.app.nav.RootComponent
 import com.yral.shared.app.nav.RootComponent.Child
+import com.yral.shared.app.ui.screens.tournament.TournamentGameScaffoldScreen
 import com.yral.shared.app.ui.components.UpdateNotificationHost
 import com.yral.shared.app.ui.screens.alertsrequest.AlertsRequestBottomSheet
 import com.yral.shared.app.ui.screens.feed.performance.PrefetchVideoListenerImpl
@@ -138,6 +139,15 @@ fun RootScreen(
                             scheduleLabel = child.scheduleLabel,
                             onBack = rootComponent::onBackClicked,
                             onOpenProfile = rootComponent::openProfile,
+                        )
+                    }
+
+                    is Child.TournamentGame -> {
+                        val sessionKey = state.sessionState.getKey()
+                        HandleSystemBars(show = true)
+                        TournamentGameScaffoldScreen(
+                            component = child.component,
+                            sessionKey = sessionKey,
                         )
                     }
                 }
