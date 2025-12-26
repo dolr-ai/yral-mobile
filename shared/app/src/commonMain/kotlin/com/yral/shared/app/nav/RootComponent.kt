@@ -37,8 +37,6 @@ interface RootComponent {
 
     fun openTournamentLeaderboard(
         tournamentId: String,
-        participantsLabel: String,
-        scheduleLabel: String,
         showResult: Boolean = false,
     )
 
@@ -75,8 +73,6 @@ interface RootComponent {
         ) : Child()
         class TournamentLeaderboard(
             val tournamentId: String,
-            val participantsLabel: String,
-            val scheduleLabel: String,
             val showResult: Boolean,
         ) : Child()
         class TournamentGame(

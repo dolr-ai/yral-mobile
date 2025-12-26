@@ -135,8 +135,6 @@ fun RootScreen(
                         TournamentLeaderboardScreen(
                             tournamentId = child.tournamentId,
                             tournamentTitle = "",
-                            participantsLabel = child.participantsLabel,
-                            scheduleLabel = child.scheduleLabel,
                             showResult = child.showResult,
                             onBack = rootComponent::onBackClicked,
                             onOpenProfile = rootComponent::openProfile,

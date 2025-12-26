@@ -96,8 +96,6 @@ import yral_mobile.shared.libs.leaderboard.generated.resources.Res as Leaderboar
 fun TournamentLeaderboardScreen(
     tournamentId: String,
     tournamentTitle: String,
-    participantsLabel: String,
-    scheduleLabel: String,
     showResult: Boolean = false,
     onBack: () -> Unit,
     onOpenProfile: (CanisterData) -> Unit,
@@ -152,8 +150,8 @@ fun TournamentLeaderboardScreen(
                     stickyHeader {
                         TournamentLeaderboardHeader(
                             tournamentTitle = tournamentTitle,
-                            participantsLabel = participantsLabel,
-                            scheduleLabel = scheduleLabel,
+                            participantsLabel = state.participantsLabel.orEmpty(),
+                            scheduleLabel = state.scheduleLabel.orEmpty(),
                             leaderboard = state.leaderboard,
                             prizeMap = state.prizeMap,
                             onBack = onBack,

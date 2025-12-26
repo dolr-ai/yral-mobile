@@ -9,6 +9,9 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.tournament.domain.GetTournamentLeaderboardUseCase
 import com.yral.shared.features.tournament.domain.model.GetTournamentLeaderboardRequest
 import com.yral.shared.features.tournament.domain.model.LeaderboardRow
+import com.yral.shared.features.tournament.domain.model.formatParticipantsLabel
+import com.yral.shared.features.tournament.domain.model.formatScheduleLabel
+import com.yral.shared.features.tournament.domain.model.tournamentStatus
 import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4Params
 import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4UseCase
 import com.yral.shared.rust.service.utils.CanisterData
@@ -22,6 +25,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 data class TournamentLeaderboardUiState(
     val leaderboard: List<LeaderboardRow> = emptyList(),
@@ -31,6 +37,8 @@ data class TournamentLeaderboardUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val isNavigating: Boolean = false,
+    val participantsLabel: String? = null,
+    val scheduleLabel: String? = null,
 )
 
 class TournamentLeaderboardViewModel(
@@ -43,6 +51,7 @@ class TournamentLeaderboardViewModel(
     private val eventChannel = Channel<Event>(Channel.BUFFERED)
     val eventsFlow: Flow<Event> = eventChannel.receiveAsFlow()
 
+    @OptIn(ExperimentalTime::class)
     fun loadLeaderboard(tournamentId: String) {
         viewModelScope.launch {
             sessionManager.userPrincipal?.let { userPrincipal ->
@@ -51,6 +60,12 @@ class TournamentLeaderboardViewModel(
                     .invoke(GetTournamentLeaderboardRequest(principalId = userPrincipal, tournamentId = tournamentId))
                     .onSuccess { leaderboard ->
                         _state.update {
+                            val startTime = Instant.fromEpochMilliseconds(leaderboard.startEpochMs)
+                            val endTime = Instant.fromEpochMilliseconds(leaderboard.endEpochMs)
+                            val currentTime = Clock.System.now()
+                            val scheduleLabel = formatScheduleLabel(leaderboard.date, startTime, endTime)
+                            val tournamentStatus = tournamentStatus(currentTime, startTime, endTime)
+                            val participantsLabel = formatParticipantsLabel(leaderboard.participantCount, tournamentStatus)
                             it.copy(
                                 leaderboard = leaderboard.topRows,
                                 currentUser = leaderboard.userRow,
@@ -58,6 +73,8 @@ class TournamentLeaderboardViewModel(
                                 endEpochMs = leaderboard.endEpochMs,
                                 isLoading = false,
                                 error = null,
+                                scheduleLabel = scheduleLabel,
+                                participantsLabel = participantsLabel,
                             )
                         }
                     }.onFailure { error ->

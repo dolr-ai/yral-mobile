@@ -87,8 +87,6 @@ abstract class HomeComponent {
             openProfile: (userCanisterData: CanisterData) -> Unit,
             openTournamentLeaderboard: (
                 tournamentId: String,
-                participantsLabel: String,
-                scheduleLabel: String,
                 showResult: Boolean,
             ) -> Unit,
             openTournamentGame: (

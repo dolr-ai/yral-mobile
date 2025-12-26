@@ -20,8 +20,6 @@ interface TournamentComponent {
             ) -> Unit,
             navigateToLeaderboard: (
                 tournamentId: String,
-                participantsLabel: String,
-                scheduleLabel: String,
             ) -> Unit,
         ): TournamentComponent =
             DefaultTournamentComponent(
@@ -45,8 +43,6 @@ internal class DefaultTournamentComponent(
     ) -> Unit,
     private val navigateToLeaderboard: (
         tournamentId: String,
-        participantsLabel: String,
-        scheduleLabel: String,
     ) -> Unit,
 ) : TournamentComponent,
     ComponentContext by componentContext {
@@ -69,11 +65,7 @@ internal class DefaultTournamentComponent(
                 // Handle registration failure - could show an error dialog
             }
             is TournamentViewModel.Event.NavigateToLeaderboard -> {
-                navigateToLeaderboard(
-                    value.tournamentId,
-                    value.participantsLabel,
-                    value.scheduleLabel,
-                )
+                navigateToLeaderboard(value.tournamentId)
             }
         }
     }

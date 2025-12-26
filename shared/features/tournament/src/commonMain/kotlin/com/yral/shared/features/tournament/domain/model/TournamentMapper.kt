@@ -15,12 +15,7 @@ fun TournamentData.toUiTournament(): Tournament {
     val startTime = Instant.fromEpochMilliseconds(startEpochMs)
     val endTime = Instant.fromEpochMilliseconds(endEpochMs)
     val currentTime = Clock.System.now()
-    val tournamentStatus =
-        when {
-            currentTime < startTime -> TournamentStatus.Upcoming(startTime = startTime)
-            currentTime > endTime -> TournamentStatus.Ended
-            else -> TournamentStatus.Live(endTime = endTime)
-        }
+    val tournamentStatus = tournamentStatus(currentTime, startTime, endTime)
 
     val participationState =
         when {
@@ -68,6 +63,17 @@ fun TournamentData.toUiTournament(): Tournament {
     )
 }
 
+@OptIn(ExperimentalTime::class)
+internal fun tournamentStatus(
+    currentTime: Instant,
+    startTime: Instant,
+    endTime: Instant
+): TournamentStatus = when {
+    currentTime < startTime -> TournamentStatus.Upcoming(startTime = startTime)
+    currentTime > endTime -> TournamentStatus.Ended
+    else -> TournamentStatus.Live(endTime = endTime)
+}
+
 @Suppress("MagicNumber")
 @OptIn(ExperimentalTime::class)
 private fun Instant.toHourMinute12h(timeZone: TimeZone = TimeZone.currentSystemDefault()): String {
@@ -102,6 +108,15 @@ private const val ORDINAL_FIRST = 1
 private const val ORDINAL_SECOND = 2
 private const val ORDINAL_THIRD = 3
 
+@OptIn(ExperimentalTime::class)
+internal fun formatScheduleLabel(
+    date: String,
+    startTime: Instant,
+    endTime: Instant,
+): String {
+   return formatScheduleLabel(date, startTime.toHourMinute12h(), endTime.toHourMinute12h())
+}
+
 @Suppress("ReturnCount")
 private fun formatScheduleLabel(
     date: String,
@@ -130,7 +145,7 @@ internal fun getOrdinalSuffix(number: Int): String =
         else -> "th"
     }
 
-private fun formatParticipantsLabel(
+internal fun formatParticipantsLabel(
     count: Int,
     status: TournamentStatus,
 ): String =
