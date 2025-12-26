@@ -37,6 +37,7 @@ import com.yral.shared.app.ui.components.UpdateNotificationHost
 import com.yral.shared.app.ui.screens.alertsrequest.AlertsRequestBottomSheet
 import com.yral.shared.app.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.shared.app.ui.screens.home.HomeScreen
+import com.yral.shared.app.ui.screens.tournament.TournamentGameScaffoldScreen
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.session.getKey
 import com.yral.shared.features.auth.ui.LoginBottomSheet
@@ -134,10 +135,18 @@ fun RootScreen(
                         TournamentLeaderboardScreen(
                             tournamentId = child.tournamentId,
                             tournamentTitle = "",
-                            participantsLabel = child.participantsLabel,
-                            scheduleLabel = child.scheduleLabel,
+                            showResult = child.showResult,
                             onBack = rootComponent::onBackClicked,
                             onOpenProfile = rootComponent::openProfile,
+                        )
+                    }
+
+                    is Child.TournamentGame -> {
+                        val sessionKey = state.sessionState.getKey()
+                        HandleSystemBars(show = true)
+                        TournamentGameScaffoldScreen(
+                            component = child.component,
+                            sessionKey = sessionKey,
                         )
                     }
                 }

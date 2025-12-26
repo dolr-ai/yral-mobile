@@ -84,10 +84,16 @@ class TournamentGameViewModel(
                     smileyId = icon.id,
                 ),
             ).onSuccess { result ->
-                val diamondDelta = if (result.outcome == VoteOutcome.WIN) 1 else -1
+                val diamondDelta = result.diamondDelta ?: (result.diamonds - currentState.diamonds)
+                val resolvedResult =
+                    if (result.diamondDelta == null) {
+                        result.copy(diamondDelta = diamondDelta)
+                    } else {
+                        result
+                    }
                 _state.update {
                     val updatedResults = it.voteResults.toMutableMap()
-                    updatedResults[feedDetails.videoID] = result
+                    updatedResults[feedDetails.videoID] = resolvedResult
                     it.copy(
                         isLoading = false,
                         diamonds = result.diamonds,
@@ -137,10 +143,6 @@ class TournamentGameViewModel(
 
     fun clearTournamentEndedError() {
         _state.update { it.copy(tournamentEndedError = false) }
-    }
-
-    fun clearLastVoteOutcome() {
-        _state.update { it.copy(lastVoteOutcome = null, lastDiamondDelta = 0) }
     }
 }
 

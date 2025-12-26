@@ -19,9 +19,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,27 +31,41 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yral.shared.data.domain.models.FeedDetails
+import com.yral.shared.features.game.domain.models.GameIconNames
 import com.yral.shared.features.game.ui.SmileyGame
-import com.yral.shared.features.tournament.domain.model.VoteOutcome
 import com.yral.shared.features.tournament.viewmodel.TournamentGameState
 import com.yral.shared.features.tournament.viewmodel.TournamentGameViewModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
-import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.tournament.generated.resources.exit
 import yral_mobile.shared.features.tournament.generated.resources.ic_timer
 import yral_mobile.shared.features.tournament.generated.resources.tournament_diamond
+import yral_mobile.shared.features.tournament.generated.resources.tournament_ends_in
 import yral_mobile.shared.features.tournament.generated.resources.tournament_ingame_rank
+import yral_mobile.shared.features.tournament.generated.resources.tournament_most_people_chose
+import yral_mobile.shared.features.tournament.generated.resources.tournament_not_most_popular_pick
+import yral_mobile.shared.features.tournament.generated.resources.tournament_you_lost_diamonds
+import yral_mobile.shared.features.tournament.generated.resources.tournament_you_win_diamonds
 import yral_mobile.shared.features.tournament.generated.resources.trophy
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.exclamation
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_how_to_play
 import yral_mobile.shared.libs.designsystem.generated.resources.shadow
+import kotlin.math.abs
 import kotlin.time.Duration.Companion.milliseconds
 import yral_mobile.shared.features.tournament.generated.resources.Res as TournamentRes
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
@@ -219,20 +234,14 @@ fun TournamentBottomOverlay(
     gameViewModel: TournamentGameViewModel,
     timeLeftMs: Long,
     onHowToPlayClick: () -> Unit,
-    scrollToNext: () -> Unit,
 ) {
-    val hasVoted = gameViewModel.hasVotedOnVideo(feedDetails.videoID)
+    gameViewModel.hasVotedOnVideo(feedDetails.videoID)
     val voteResult = gameViewModel.getVoteResult(feedDetails.videoID)
     val selectedIcon =
         voteResult?.smiley?.id?.let { voteId ->
             gameState.gameIcons.firstOrNull { it.id == voteId }
         }
-    val diamondDelta =
-        when (voteResult?.outcome) {
-            VoteOutcome.WIN -> 1
-            VoteOutcome.LOSS -> -1
-            null -> 0
-        }
+    val diamondDelta = voteResult?.diamondDelta ?: 0
     val overlayBottomPadding = 120.dp
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -243,6 +252,13 @@ fun TournamentBottomOverlay(
                 isLoading = gameState.isLoading,
                 coinDelta = diamondDelta,
                 errorMessage = "",
+                resultContent = { icon, coinDelta, errorMessage ->
+                    TournamentGameResultContent(
+                        iconName = icon.imageName,
+                        coinDelta = coinDelta,
+                        errorMessage = errorMessage,
+                    )
+                },
                 onIconClicked = { icon, _ ->
                     gameViewModel.setClickedIcon(icon, feedDetails)
                 },
@@ -254,6 +270,7 @@ fun TournamentBottomOverlay(
                 nudgeType = null,
                 pageNo = pageNo,
                 onNudgeAnimationComplete = {},
+                modifier = Modifier.padding(bottom = 24.dp),
             )
         }
         Image(
@@ -275,15 +292,93 @@ fun TournamentBottomOverlay(
                     .padding(bottom = overlayBottomPadding + 12.dp),
         )
     }
+}
 
-    // Auto-scroll after vote
-    LaunchedEffect(hasVoted) {
-        if (hasVoted) {
-            @Suppress("MagicNumber")
-            delay(1500L)
-            scrollToNext()
-        }
+@Suppress("LongMethod")
+@Composable
+private fun TournamentGameResultContent(
+    iconName: GameIconNames,
+    coinDelta: Int,
+    errorMessage: String,
+) {
+    val textStyle = LocalAppTopography.current.mdBold
+    val baseStyle =
+        SpanStyle(
+            fontSize = textStyle.fontSize,
+            fontFamily = textStyle.fontFamily,
+            fontWeight = textStyle.fontWeight,
+            color = YralColors.Green50,
+        )
+    if (errorMessage.isNotEmpty()) {
+        Text(
+            text = errorMessage,
+            style = textStyle,
+            color = YralColors.Red300,
+        )
+        return
     }
+    val density = LocalDensity.current
+    val placeholderSize = with(density) { 16.dp.toSp() }
+    val inlineContent =
+        mapOf(
+            "diamond" to
+                InlineTextContent(
+                    Placeholder(
+                        width = placeholderSize,
+                        height = placeholderSize,
+                        placeholderVerticalAlign = PlaceholderVerticalAlign.Center,
+                    ),
+                ) {
+                    Image(
+                        painter = painterResource(TournamentRes.drawable.tournament_diamond),
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                    )
+                },
+        )
+    val resultText =
+        buildAnnotatedString {
+            if (coinDelta > 0) {
+                withStyle(baseStyle) {
+                    append(
+                        stringResource(
+                            TournamentRes.string.tournament_most_people_chose,
+                            iconName.name.lowercase().capitalize(Locale.current),
+                        ),
+                    )
+                    append(" ")
+                }
+                withStyle(baseStyle.plus(SpanStyle(color = YralColors.Green300))) {
+                    append(
+                        stringResource(
+                            TournamentRes.string.tournament_you_win_diamonds,
+                            abs(coinDelta),
+                        ),
+                    )
+                    append(" ")
+                }
+            } else {
+                withStyle(baseStyle) {
+                    append(
+                        stringResource(
+                            TournamentRes.string.tournament_not_most_popular_pick,
+                        ),
+                    )
+                    append(" ")
+                }
+                withStyle(baseStyle.plus(SpanStyle(color = YralColors.Red300))) {
+                    append(
+                        stringResource(
+                            TournamentRes.string.tournament_you_lost_diamonds,
+                            abs(coinDelta),
+                        ),
+                    )
+                    append(" ")
+                }
+            }
+            appendInlineContent("diamond", "[diamond]")
+        }
+    Text(text = resultText, inlineContent = inlineContent)
 }
 
 @Suppress("MagicNumber")
@@ -292,6 +387,13 @@ private fun TournamentTimerPill(
     timeLeftMs: Long,
     modifier: Modifier = Modifier,
 ) {
+    val timeLeftColor =
+        when {
+            timeLeftMs <= 60_000L -> Color(0xFFFF6353)
+            timeLeftMs <= 300_000L -> YralColors.Yellow200
+            else -> YralColors.Neutral300
+        }
+    val remainingDuration = formatRemainingDuration(timeLeftMs.milliseconds)
     Row(
         modifier =
             modifier
@@ -307,7 +409,19 @@ private fun TournamentTimerPill(
             modifier = Modifier.size(16.dp),
         )
         Text(
-            text = "Tournament ends in ${formatRemainingDuration(timeLeftMs.milliseconds)}",
+            text =
+                buildAnnotatedString {
+                    append(
+                        stringResource(
+                            TournamentRes.string.tournament_ends_in,
+                            "",
+                        ).trim(),
+                    )
+                    append(" ")
+                    withStyle(SpanStyle(color = timeLeftColor)) {
+                        append(remainingDuration)
+                    }
+                },
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral300,
             maxLines = 1,

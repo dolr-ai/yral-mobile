@@ -61,7 +61,7 @@ fun TournamentScreen(
     val insufficientBalanceMessage = stringResource(Res.string.tournament_insufficient_balance)
     val registrationFailedMessage = stringResource(Res.string.tournament_registration_failed)
 
-    LaunchedEffect(key1 = Unit) {
+    LaunchedEffect(key1 = component, viewModel) {
         viewModel.eventsFlow.collectLatest { value ->
             if (value is TournamentViewModel.Event.RegistrationFailed) {
                 val message =
