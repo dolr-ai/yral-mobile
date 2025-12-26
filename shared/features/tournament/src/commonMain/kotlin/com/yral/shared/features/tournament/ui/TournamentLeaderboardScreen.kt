@@ -130,75 +130,77 @@ fun TournamentLeaderboardScreen(
                     .fillMaxSize()
                     .padding(it),
         ) {
-            LazyColumn(
-                state = listState,
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .nestedScroll(
-                            object : NestedScrollConnection {
-                                override suspend fun onPostFling(
-                                    consumed: Velocity,
-                                    available: Velocity,
-                                ): Velocity {
-                                    isTrophyVisible = consumed.y > 0
-                                    return super.onPostFling(consumed, available)
-                                }
-                            },
-                        ),
-            ) {
-                stickyHeader {
-                    TournamentLeaderboardHeader(
-                        tournamentTitle = tournamentTitle,
-                        participantsLabel = participantsLabel,
-                        scheduleLabel = scheduleLabel,
-                        leaderboard = state.leaderboard,
-                        prizeMap = state.prizeMap,
-                        onBack = onBack,
-                        isTrophyVisible = isTrophyVisible,
-                    )
-                }
-
-                val currentUser = state.currentUser
-                if (currentUser != null) {
-                    item {
-                        TournamentLeaderboardRow(
-                            row = currentUser,
-                            isCurrentUser = true,
-                            fallbackPrize = state.prizeMap[currentUser.position],
-                            onClick = { viewModel.onUserClick(currentUser) },
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            if (!showResultOverlay) {
+                LazyColumn(
+                    state = listState,
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .nestedScroll(
+                                object : NestedScrollConnection {
+                                    override suspend fun onPostFling(
+                                        consumed: Velocity,
+                                        available: Velocity,
+                                    ): Velocity {
+                                        isTrophyVisible = consumed.y > 0
+                                        return super.onPostFling(consumed, available)
+                                    }
+                                },
+                            ),
+                ) {
+                    stickyHeader {
+                        TournamentLeaderboardHeader(
+                            tournamentTitle = tournamentTitle,
+                            participantsLabel = participantsLabel,
+                            scheduleLabel = scheduleLabel,
+                            leaderboard = state.leaderboard,
+                            prizeMap = state.prizeMap,
+                            onBack = onBack,
+                            isTrophyVisible = isTrophyVisible,
                         )
                     }
-                }
 
-                items(state.leaderboard) { row ->
-                    TournamentLeaderboardRow(
-                        row = row,
-                        isCurrentUser = viewModel.isCurrentUser(row.principalId),
-                        fallbackPrize = state.prizeMap[row.position],
-                        onClick = { viewModel.onUserClick(row) },
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-                    )
-                }
-
-                if (!state.isLoading && state.error != null) {
-                    item {
-                        Box(
-                            modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(
-                                text = state.error ?: "",
-                                style = LocalAppTopography.current.baseMedium,
-                                color = YralColors.Neutral500,
-                                textAlign = TextAlign.Center,
+                    val currentUser = state.currentUser
+                    if (currentUser != null) {
+                        item {
+                            TournamentLeaderboardRow(
+                                row = currentUser,
+                                isCurrentUser = true,
+                                fallbackPrize = state.prizeMap[currentUser.position],
+                                onClick = { viewModel.onUserClick(currentUser) },
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                             )
                         }
                     }
-                }
 
-                item { Spacer(modifier = Modifier.height(24.dp)) }
+                    items(state.leaderboard) { row ->
+                        TournamentLeaderboardRow(
+                            row = row,
+                            isCurrentUser = viewModel.isCurrentUser(row.principalId),
+                            fallbackPrize = state.prizeMap[row.position],
+                            onClick = { viewModel.onUserClick(row) },
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+                        )
+                    }
+
+                    if (!state.isLoading && state.error != null) {
+                        item {
+                            Box(
+                                modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = state.error ?: "",
+                                    style = LocalAppTopography.current.baseMedium,
+                                    color = YralColors.Neutral500,
+                                    textAlign = TextAlign.Center,
+                                )
+                            }
+                        }
+                    }
+
+                    item { Spacer(modifier = Modifier.height(24.dp)) }
+                }
             }
 
             val currentUser = state.currentUser
