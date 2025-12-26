@@ -54,6 +54,7 @@ import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.tournament.generated.resources.exit
 import yral_mobile.shared.features.tournament.generated.resources.ic_timer
 import yral_mobile.shared.features.tournament.generated.resources.tournament_diamond
+import yral_mobile.shared.features.tournament.generated.resources.tournament_ends_in
 import yral_mobile.shared.features.tournament.generated.resources.tournament_ingame_rank
 import yral_mobile.shared.features.tournament.generated.resources.tournament_most_people_chose
 import yral_mobile.shared.features.tournament.generated.resources.tournament_not_most_popular_pick
@@ -385,6 +386,13 @@ private fun TournamentTimerPill(
     timeLeftMs: Long,
     modifier: Modifier = Modifier,
 ) {
+    val timeLeftColor =
+        when {
+            timeLeftMs <= 60_000L -> Color(0xFFFF6353)
+            timeLeftMs <= 300_000L -> YralColors.Yellow200
+            else -> YralColors.Neutral300
+        }
+    val remainingDuration = formatRemainingDuration(timeLeftMs.milliseconds)
     Row(
         modifier =
             modifier
@@ -400,7 +408,19 @@ private fun TournamentTimerPill(
             modifier = Modifier.size(16.dp),
         )
         Text(
-            text = "Tournament ends in ${formatRemainingDuration(timeLeftMs.milliseconds)}",
+            text =
+                buildAnnotatedString {
+                    append(
+                        stringResource(
+                            TournamentRes.string.tournament_ends_in,
+                            "",
+                        ).trim(),
+                    )
+                    append(" ")
+                    withStyle(SpanStyle(color = timeLeftColor)) {
+                        append(remainingDuration)
+                    }
+                },
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral300,
             maxLines = 1,
