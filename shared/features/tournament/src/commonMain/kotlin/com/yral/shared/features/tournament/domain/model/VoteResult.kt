@@ -7,6 +7,7 @@ data class VoteResult(
     val tournamentLosses: Int,
     val diamonds: Int,
     val position: Int,
+    val diamondDelta: Int? = null,
 )
 
 enum class VoteOutcome {
