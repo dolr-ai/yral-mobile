@@ -61,6 +61,7 @@ import com.yral.shared.libs.leaderboard.model.RewardCurrency
 import com.yral.shared.libs.leaderboard.ui.LeaderboardReward
 import com.yral.shared.libs.leaderboard.ui.main.LeaderboardHelpers
 import com.yral.shared.libs.leaderboard.ui.main.LeaderboardUiConstants
+import com.yral.shared.libs.leaderboard.ui.main.LeaderboardUiConstants.TOURNAMENT_LEADERBOARD_HEADER_WEIGHTS
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.propicFromPrincipal
 import kotlinx.coroutines.flow.collectLatest
@@ -85,10 +86,10 @@ import yral_mobile.shared.libs.leaderboard.generated.resources.bronze_trophy
 import yral_mobile.shared.libs.leaderboard.generated.resources.golden_trophy
 import yral_mobile.shared.libs.leaderboard.generated.resources.silver_trophy
 import yral_mobile.shared.libs.leaderboard.generated.resources.yellow_leaderboard
-import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
-import yral_mobile.shared.libs.leaderboard.generated.resources.Res as LeaderboardRes
 import kotlin.time.Duration.Companion.days
 import kotlin.time.ExperimentalTime
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
+import yral_mobile.shared.libs.leaderboard.generated.resources.Res as LeaderboardRes
 
 @Suppress("LongMethod")
 @Composable
@@ -158,6 +159,12 @@ fun TournamentLeaderboardScreen(
                             onBack = onBack,
                             isTrophyVisible = isTrophyVisible,
                         )
+                    }
+
+                    if (state.leaderboard.isNotEmpty()) {
+                        item {
+                            TournamentLeaderboardTableHeader(isTrophyVisible = isTrophyVisible)
+                        }
                     }
 
                     val currentUser = state.currentUser
@@ -294,9 +301,6 @@ private fun TournamentLeaderboardHeader(
             Spacer(modifier = Modifier.height(16.dp))
             AnimatedVisibility(visible = isTrophyVisible) {
                 TournamentPodium(leaderboard, prizeMap)
-            }
-            if (leaderboard.isNotEmpty()) {
-                TournamentLeaderboardTableHeader(isTrophyVisible = isTrophyVisible)
             }
         }
     }
@@ -472,6 +476,8 @@ private fun TournamentTrophy(position: Int) {
 @Suppress("MagicNumber", "LongMethod")
 @Composable
 private fun TournamentLeaderboardTableHeader(isTrophyVisible: Boolean) {
+    val headerWeights = TOURNAMENT_LEADERBOARD_HEADER_WEIGHTS
+
     Row(
         modifier =
             Modifier
@@ -488,7 +494,7 @@ private fun TournamentLeaderboardTableHeader(isTrophyVisible: Boolean) {
     ) {
         Text(
             text = stringResource(Res.string.tournament_leaderboard_rank),
-            modifier = Modifier.weight(LeaderboardUiConstants.LEADERBOARD_HEADER_WEIGHTS[0]),
+            modifier = Modifier.weight(headerWeights[0]),
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral500,
             maxLines = 1,
@@ -498,17 +504,26 @@ private fun TournamentLeaderboardTableHeader(isTrophyVisible: Boolean) {
             text = stringResource(Res.string.tournament_leaderboard_player),
             modifier =
                 Modifier
-                    .weight(LeaderboardUiConstants.LEADERBOARD_HEADER_WEIGHTS[1])
+                    .weight(headerWeights[1])
                     .padding(start = 6.dp),
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral500,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+        Text(
+            text = stringResource(Res.string.tournament_leaderboard_games_won),
+            modifier = Modifier.weight(headerWeights[2]),
+            style = LocalAppTopography.current.regMedium,
+            color = YralColors.Neutral500,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Start,
+        )
         Row(
             horizontalArrangement = Arrangement.spacedBy(3.5.dp, Alignment.End),
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.weight(LeaderboardUiConstants.LEADERBOARD_HEADER_WEIGHTS[2]),
+            modifier = Modifier.weight(headerWeights[3]),
         ) {
             Text(
                 text = stringResource(Res.string.tournament_leaderboard_rewards),
@@ -516,22 +531,7 @@ private fun TournamentLeaderboardTableHeader(isTrophyVisible: Boolean) {
                 textAlign = TextAlign.Center,
                 color = YralColors.NeutralTextSecondary,
             )
-            Image(
-                painter = painterResource(Res.drawable.bitcoin),
-                contentDescription = null,
-                contentScale = ContentScale.FillBounds,
-                modifier = Modifier.size(14.dp),
-            )
         }
-        Text(
-            text = stringResource(Res.string.tournament_leaderboard_games_won),
-            modifier = Modifier.weight(LeaderboardUiConstants.LEADERBOARD_HEADER_WEIGHTS[3]),
-            style = LocalAppTopography.current.regMedium,
-            color = YralColors.Neutral500,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.End,
-        )
     }
 }
 
@@ -578,14 +578,15 @@ private fun TournamentLeaderboardRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
         ) {
+            val rowWeights = LeaderboardUiConstants.TOURNAMENT_LEADERBOARD_ROW_WEIGHTS
             Box(
-                modifier = Modifier.weight(LeaderboardUiConstants.LEADERBOARD_ROW_WEIGHTS[0]),
+                modifier = Modifier.weight(rowWeights[0]),
                 contentAlignment = Alignment.CenterStart,
             ) {
                 TournamentPosition(position = row.position, decorateCurrentUser = isCurrentUser)
             }
             Row(
-                modifier = Modifier.weight(LeaderboardUiConstants.LEADERBOARD_ROW_WEIGHTS[1]),
+                modifier = Modifier.weight(rowWeights[1]),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
             ) {
@@ -596,13 +597,9 @@ private fun TournamentLeaderboardRow(
                     isCurrentUser = isCurrentUser,
                 )
             }
-            RewardsCell(
-                amount = row.prize ?: fallbackPrize,
-                modifier = Modifier.weight(LeaderboardUiConstants.LEADERBOARD_ROW_WEIGHTS[2]),
-            )
             Box(
-                modifier = Modifier.weight(LeaderboardUiConstants.LEADERBOARD_ROW_WEIGHTS[3]),
-                contentAlignment = Alignment.CenterEnd,
+                modifier = Modifier.weight(rowWeights[2]),
+                contentAlignment = Alignment.CenterStart,
             ) {
                 Text(
                     text = formatAbbreviation(row.wins.toLong()),
@@ -612,6 +609,10 @@ private fun TournamentLeaderboardRow(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
+            RewardsCell(
+                amount = row.prize ?: fallbackPrize,
+                modifier = Modifier.weight(rowWeights[3]),
+            )
         }
     }
 }
