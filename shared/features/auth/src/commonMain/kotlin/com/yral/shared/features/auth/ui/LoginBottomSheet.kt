@@ -45,6 +45,7 @@ import yral_mobile.shared.features.auth.generated.resources.create_ai_videos_ear
 import yral_mobile.shared.features.auth.generated.resources.create_ai_videos_earn_bitcoin_dis
 import yral_mobile.shared.features.auth.generated.resources.join_tournament
 import yral_mobile.shared.features.auth.generated.resources.join_tournament_disclaimer
+import yral_mobile.shared.features.auth.generated.resources.login_to_chat_with_influencer
 import yral_mobile.shared.features.auth.generated.resources.login_to_get_25_tokens
 import yral_mobile.shared.features.auth.generated.resources.login_to_join_tournament
 import yral_mobile.shared.features.auth.generated.resources.upload_ai_videos_earn_bitcoin
@@ -169,7 +170,8 @@ private fun getHeaderText(
         }
         is LoginBottomSheetType.CONVERSATION -> {
             val name = type.influencerName
-            getAnnotatedHeader("Login to continue chatting with $name.")
+            val fullText = stringResource(Res.string.login_to_chat_with_influencer, name)
+            getAnnotatedHeader(fullText)
         }
         else -> getAnnotatedHeader(stringResource(Res.string.continue_to_sign_up_for_free))
     }
