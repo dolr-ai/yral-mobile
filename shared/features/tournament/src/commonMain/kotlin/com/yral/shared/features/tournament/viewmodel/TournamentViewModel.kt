@@ -6,6 +6,7 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.github.michaelbull.result.runCatching
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.features.game.domain.GetBalanceUseCase
 import com.yral.shared.features.tournament.domain.GetMyTournamentsUseCase
 import com.yral.shared.features.tournament.domain.GetTournamentsUseCase
 import com.yral.shared.features.tournament.domain.RegisterForTournamentUseCase
@@ -41,6 +42,7 @@ class TournamentViewModel(
     private val getTournamentsUseCase: GetTournamentsUseCase,
     private val getMyTournamentsUseCase: GetMyTournamentsUseCase,
     private val registerForTournamentUseCase: RegisterForTournamentUseCase,
+    private val getBalanceUseCase: GetBalanceUseCase,
     private val shareService: ShareService,
     private val urlBuilder: UrlBuilder,
     private val linkGenerator: LinkGenerator,
@@ -242,6 +244,8 @@ class TournamentViewModel(
                     ),
                 ).onSuccess { result ->
                     _state.update { it.copy(isRegistering = false) }
+                    // Refresh balance from server after entry fee was deducted
+                    refreshBalance(principalId)
                     send(Event.RegistrationSuccess(result.tournamentId, result.coinsPaid))
                     // Refresh tournaments to update registration state
                     loadTournaments()
@@ -335,6 +339,16 @@ class TournamentViewModel(
 
     fun clearError() {
         _state.update { it.copy(error = null) }
+    }
+
+    private fun refreshBalance(principalId: String) {
+        viewModelScope.launch {
+            getBalanceUseCase
+                .invoke(principalId)
+                .onSuccess { newBalance ->
+                    sessionManager.updateCoinBalance(newBalance)
+                }
+        }
     }
 
     private fun send(event: Event) {
