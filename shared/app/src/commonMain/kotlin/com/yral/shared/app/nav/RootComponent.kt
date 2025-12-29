@@ -12,6 +12,7 @@ import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.tournament.nav.TournamentGameComponent
+import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.rust.service.utils.CanisterData
 
@@ -51,6 +52,8 @@ interface RootComponent {
 
     fun openConversation(influencerId: String)
 
+    fun openWallet()
+
     fun showLoginBottomSheet(
         pageName: SignupPageName,
         loginBottomSheetType: LoginBottomSheetType,
@@ -83,6 +86,9 @@ interface RootComponent {
         ) : Child()
         class Conversation(
             val component: ConversationComponent,
+        ) : Child()
+        class Wallet(
+            val component: WalletComponent,
         ) : Child()
     }
 

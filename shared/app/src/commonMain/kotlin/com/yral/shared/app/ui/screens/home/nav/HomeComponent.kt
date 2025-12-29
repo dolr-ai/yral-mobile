@@ -4,6 +4,9 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
+import com.yral.featureflag.ChatFeatureFlags
+import com.yral.featureflag.FeatureFlagManager
+import com.yral.featureflag.WalletFeatureFlags
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.core.session.SessionManager
@@ -38,6 +41,7 @@ abstract class HomeComponent {
     abstract fun onChatTabClick()
     abstract fun onNavigationRequest(appRoute: AppRoute)
     abstract fun openConversation(influencerId: String)
+    abstract fun openWallet()
     abstract fun showLoginBottomSheet(
         pageName: SignupPageName,
         loginBottomSheetType: LoginBottomSheetType,
@@ -87,6 +91,7 @@ abstract class HomeComponent {
             openEditProfile: () -> Unit,
             openProfile: (userCanisterData: CanisterData) -> Unit,
             openConversation: (influencerId: String) -> Unit,
+            openWallet: () -> Unit,
             openTournamentLeaderboard: (
                 tournamentId: String,
                 showResult: Boolean,
@@ -112,6 +117,7 @@ abstract class HomeComponent {
                 openEditProfile,
                 openProfile,
                 openConversation,
+                openWallet,
                 openTournamentLeaderboard,
                 openTournamentGame,
                 showAlertsOnDialog,
@@ -119,4 +125,12 @@ abstract class HomeComponent {
                 hideLoginBottomSheetIfVisible,
             )
     }
+}
+
+internal fun FeatureFlagManager.getChatAndWalletConfig(): Pair<Boolean, Boolean> {
+    val isWalletEnabled = isEnabled(WalletFeatureFlags.Wallet.Enabled)
+    val isChatEnabled = isEnabled(ChatFeatureFlags.Chat.Enabled)
+    // Show chat if enabled, otherwise show wallet if enabled
+    // Chat takes precedence if both are enabled
+    return isChatEnabled to (isWalletEnabled && !isChatEnabled)
 }

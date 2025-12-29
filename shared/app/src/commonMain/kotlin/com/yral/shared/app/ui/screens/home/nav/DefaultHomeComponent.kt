@@ -13,6 +13,7 @@ import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
+import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.core.session.SessionManager
@@ -45,12 +46,13 @@ import com.yral.shared.libs.routing.routes.api.Wallet
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.serialization.Serializable
 
-@Suppress("TooManyFunctions")
+@Suppress("TooManyFunctions", "LongParameterList")
 internal class DefaultHomeComponent(
     componentContext: ComponentContext,
     private val openEditProfile: () -> Unit,
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
     private val openConversation: (influencerId: String) -> Unit,
+    private val openWallet: () -> Unit,
     private val openTournamentLeaderboard: (
         tournamentId: String,
         showResult: Boolean,
@@ -76,6 +78,8 @@ internal class DefaultHomeComponent(
     private val childSnapshots: MutableMap<Config, Any> = LinkedHashMap()
     private var lastActiveConfig: Config? = null
     private var lastActiveProvider: HomeChildSnapshotProvider? = null
+
+    private val flagManager = koinInstance.get<FeatureFlagManager>()
 
     override val stack: Value<ChildStack<*, Child>> =
         childStack(
@@ -182,7 +186,12 @@ internal class DefaultHomeComponent(
     }
 
     override fun onWalletTabClick() {
-        navigation.replaceKeepingFeed(Config.Wallet)
+        val chatWalletConfig = flagManager.getChatAndWalletConfig()
+        if (chatWalletConfig.second) {
+            navigation.replaceKeepingFeed(Config.Wallet)
+        } else {
+            openWallet.invoke()
+        }
     }
 
     override fun onChatTabClick() {
@@ -191,6 +200,10 @@ internal class DefaultHomeComponent(
 
     override fun openConversation(influencerId: String) {
         openConversation.invoke(influencerId)
+    }
+
+    override fun openWallet() {
+        openWallet.invoke()
     }
 
     override fun showLoginBottomSheet(
