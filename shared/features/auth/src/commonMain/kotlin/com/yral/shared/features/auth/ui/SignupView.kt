@@ -2,7 +2,6 @@ package com.yral.shared.features.auth.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,7 +13,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
@@ -24,7 +22,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.features.auth.analytics.AuthTelemetry
@@ -57,8 +54,6 @@ fun SignupView(
     openTerms: () -> Unit,
     headlineText: AnnotatedString? = null,
     disclaimerText: String? = null,
-    topIcon: Painter? = null,
-    topIconSize: DpSize? = null,
     topIconContent: (@Composable () -> Unit)? = null,
     authTelemetry: AuthTelemetry = koinInject(),
 ) {
@@ -68,25 +63,16 @@ fun SignupView(
         verticalArrangement = Arrangement.spacedBy(46.dp, Alignment.Top),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        val topIconModifier =
-            Modifier
-                .padding(0.dp)
-                .width(topIconSize?.width ?: 240.dp)
-                .height(topIconSize?.height ?: 86.dp)
-        if (topIconContent != null) {
-            Box(
-                modifier = topIconModifier,
-                contentAlignment = Alignment.Center,
-            ) {
-                topIconContent()
-            }
-        } else {
-            Image(
-                painter = topIcon ?: painterResource(Res.drawable.join_yral),
+        topIconContent?.invoke()
+            ?: Image(
+                painter = painterResource(Res.drawable.join_yral),
                 contentDescription = "Join Yral",
-                modifier = topIconModifier,
+                modifier =
+                    Modifier
+                        .padding(0.dp)
+                        .width(240.dp)
+                        .height(86.dp),
             )
-        }
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(28.dp, Alignment.Top),

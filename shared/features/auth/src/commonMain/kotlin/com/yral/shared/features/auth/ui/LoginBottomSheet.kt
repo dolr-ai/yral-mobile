@@ -1,12 +1,13 @@
 package com.yral.shared.features.auth.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
@@ -100,9 +101,7 @@ fun LoginBottomSheet(
                                     initialBalanceReward = loginViewModel.getInitialBalanceReward(),
                                 ),
                             disclaimerText = getDisclaimerText(bottomSheetType),
-                            topIcon = getTopIcon(bottomSheetType),
-                            topIconSize = getTopIconSize(bottomSheetType),
-                            topIconContent = getTopIconContent(bottomSheetType),
+                            topIconContent = { TopIconContent(bottomSheetType) },
                         )
                         Spacer(modifier = Modifier.height(adaptiveHeight))
                     }
@@ -234,21 +233,35 @@ private fun getTopIcon(type: LoginBottomSheetType) =
     }
 
 @Composable
-private fun getTopIconContent(type: LoginBottomSheetType): (@Composable () -> Unit)? =
+private fun TopIconContent(type: LoginBottomSheetType) {
+    val topIconSize = getTopIconSize(type)
+    val topIconModifier =
+        Modifier
+            .padding(0.dp)
+            .width(topIconSize?.width ?: 240.dp)
+            .height(topIconSize?.height ?: 86.dp)
     when (type) {
         is LoginBottomSheetType.CONVERSATION ->
             type.influencerAvatarUrl
                 .takeIf { it.isNotBlank() }
                 ?.let { avatarUrl ->
-                    {
-                        YralAsyncImage(
-                            imageUrl = avatarUrl,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
+                    YralAsyncImage(
+                        imageUrl = avatarUrl,
+                        modifier = topIconModifier,
+                    )
                 }
-        else -> null
+        else -> {
+            val topIcon = getTopIcon(type)
+            topIcon?.let {
+                Image(
+                    painter = topIcon,
+                    contentDescription = "",
+                    modifier = topIconModifier,
+                )
+            }
+        }
     }
+}
 
 @Composable
 private fun getTopIconSize(type: LoginBottomSheetType) =
