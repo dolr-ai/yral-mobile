@@ -16,19 +16,25 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.BottomEnd
 import androidx.compose.ui.Alignment.Companion.BottomStart
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.mikepenz.markdown.compose.Markdown
+import com.mikepenz.markdown.model.DefaultMarkdownColors
+import com.mikepenz.markdown.model.DefaultMarkdownTypography
 import com.yral.shared.features.chat.domain.models.ConversationMessageRole
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralLoadingDots
+import com.yral.shared.libs.designsystem.theme.AppTopography
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
@@ -50,15 +56,8 @@ internal fun MessageContent(
     isWaiting: Boolean = false,
     onRetry: (() -> Unit)? = null,
 ) {
-    val displayText: AnnotatedString? =
-        content
-            ?.takeIf { it.isNotBlank() }
-            ?.let { nonBlank ->
-                buildAnnotatedString { append(nonBlank) }
-            }
-
     MessageBubble(
-        text = displayText,
+        content = content,
         mediaUrls = mediaUrls,
         isUser = role == ConversationMessageRole.USER,
         maxWidth = maxWidth,
@@ -70,7 +69,7 @@ internal fun MessageContent(
 
 @Composable
 internal fun MessageBubble(
-    text: AnnotatedString?,
+    content: String?,
     mediaUrls: List<String>,
     isUser: Boolean,
     maxWidth: Dp,
@@ -91,7 +90,7 @@ internal fun MessageBubble(
             WaitingBubble()
         } else {
             RegularBubble(
-                text = text,
+                content = content,
                 mediaUrls = mediaUrls,
                 isUser = isUser,
                 isFailed = isFailed,
@@ -111,28 +110,78 @@ private fun WaitingBubble() {
 
 @Composable
 private fun RegularBubble(
-    text: AnnotatedString?,
+    content: String?,
     mediaUrls: List<String>,
     isUser: Boolean,
     isFailed: Boolean,
 ) {
-    val onlyMedia = text.isNullOrBlank()
+    val onlyMedia = content.isNullOrBlank()
+    val appTypography = LocalAppTopography.current
+    val textColor = YralColors.NeutralTextPrimary
+
+    val markdownColors = markDownColors(textColor)
+    val markdownTypography = markdownTypography(appTypography)
+
     MessageInBubble(
         isUser = isUser,
         isFailed = isFailed,
         isOnlyMedia = onlyMedia,
     ) {
-        if (!text.isNullOrBlank()) {
-            Text(
-                text = text,
-                style = LocalAppTopography.current.baseRegular,
-                color = YralColors.NeutralTextPrimary,
+        if (!content.isNullOrBlank()) {
+            Markdown(
+                content = content,
+                colors = markdownColors,
+                typography = markdownTypography,
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
             )
         }
         MessageImages(mediaUrls)
     }
 }
+
+@Composable
+private fun markdownTypography(appTypography: AppTopography): DefaultMarkdownTypography =
+    remember(appTypography) {
+        DefaultMarkdownTypography(
+            h1 = appTypography.xxlBold,
+            h2 = appTypography.xlBold,
+            h3 = appTypography.lgBold,
+            h4 = appTypography.mdBold,
+            h5 = appTypography.baseBold,
+            h6 = appTypography.smSemiBold,
+            text = appTypography.baseRegular,
+            code = appTypography.smRegular,
+            inlineCode = appTypography.smRegular,
+            quote = appTypography.baseRegular,
+            paragraph = appTypography.baseRegular,
+            ordered = appTypography.baseRegular,
+            bullet = appTypography.baseRegular,
+            list = appTypography.baseRegular,
+            textLink =
+                TextLinkStyles(
+                    style =
+                        SpanStyle(
+                            fontSize = appTypography.baseRegular.fontSize,
+                            fontFamily = appTypography.baseRegular.fontFamily,
+                            fontWeight = appTypography.baseRegular.fontWeight,
+                            color = YralColors.BlueTextPrimary,
+                        ),
+                ),
+            table = appTypography.baseRegular,
+        )
+    }
+
+@Composable
+private fun markDownColors(textColor: Color): DefaultMarkdownColors =
+    remember(textColor) {
+        DefaultMarkdownColors(
+            text = textColor,
+            codeBackground = YralColors.Neutral900,
+            inlineCodeBackground = textColor,
+            dividerColor = YralColors.Divider,
+            tableBackground = YralColors.Neutral900,
+        )
+    }
 
 @Composable
 private fun MessageInBubble(

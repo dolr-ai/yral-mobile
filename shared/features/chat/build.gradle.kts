@@ -43,6 +43,9 @@ kotlin {
 
             implementation(libs.coil.compose)
 
+            implementation(libs.multiplatform.markdown.renderer)
+            implementation(libs.multiplatform.markdown.renderer.m3)
+
             implementation(compose.components.resources)
         }
         commonTest.dependencies {
