@@ -69,10 +69,11 @@ fun ChatConversationScreen(
     component: ConversationComponent,
     viewModel: ConversationViewModel = koinViewModel(),
 ) {
-    LaunchedEffect(component.influencerId) {
+    val viewState by viewModel.viewState.collectAsState()
+
+    LaunchedEffect(component.influencerId, viewState.isSocialSignedIn) {
         viewModel.initializeForInfluencer(component.influencerId)
     }
-    val viewState by viewModel.viewState.collectAsState()
 
     val overlayItems by viewModel.overlay.collectAsState()
     val historyPagingItems = viewModel.history.collectAsLazyPagingItems()
@@ -125,45 +126,34 @@ fun ChatConversationScreen(
         overlayItems.any { it.isWaitingAssistant() }
     }
 
-    val overlayUserCount by derivedStateOf {
-        overlayItems.count { item ->
-            when (item) {
-                is ConversationMessageItem.Local -> item.message.role == ConversationMessageRole.USER
-                is ConversationMessageItem.Remote -> item.message.role == ConversationMessageRole.USER
-            }
-        }
-    }
+    val overlayUserCount by derivedStateOf { overlayItems.count { item -> item.isUser() } }
     val historyUserCount by produceState(initialValue = 0, historyPagingItems) {
         snapshotFlow { historyPagingItems.itemSnapshotList.items }
-            .map { items ->
-                items.count { item ->
-                    when (item) {
-                        is ConversationMessageItem.Local -> item.message.role == ConversationMessageRole.USER
-                        is ConversationMessageItem.Remote -> item.message.role == ConversationMessageRole.USER
-                        null -> false
-                    }
-                }
-            }.collect { value = it }
+            .map { items -> items.count { item -> item.isUser() } }
+            .collect { value = it }
     }
-    val userMessagesCount = overlayUserCount + historyUserCount
-    val shouldPromptForLogin =
-        !viewState.isSocialSignedIn &&
-            userMessagesCount >= LOGIN_PROMPT_MESSAGE_LIMIT
-    val promptLogin: () -> Unit = {
-        val influencer = viewState.influencer
-        val influencerName = influencer?.displayName ?: ""
-        val influencerAvatarUrl = influencer?.avatarUrl ?: ""
-        component.showLoginBottomSheet(
-            pageName = SignupPageName.CONVERSATION,
-            loginBottomSheetType =
-                LoginBottomSheetType.CONVERSATION(
-                    influencerName = influencerName,
-                    influencerAvatarUrl = influencerAvatarUrl,
-                ),
-            onDismissRequest = { component.hideLoginBottomSheetIfVisible() },
-            onLoginSuccess = { component.hideLoginBottomSheetIfVisible() },
-        )
+    val shouldPromptForLogin by derivedStateOf {
+        !viewState.isSocialSignedIn && (overlayUserCount + historyUserCount) >= LOGIN_PROMPT_MESSAGE_LIMIT
     }
+    val promptLogin: () -> Unit =
+        remember(viewState.influencer) {
+            {
+                val influencer = viewState.influencer
+                val influencerName = influencer?.displayName ?: ""
+                val influencerAvatarUrl = influencer?.avatarUrl ?: ""
+                component.showLoginBottomSheet(
+                    pageName = SignupPageName.CONVERSATION,
+                    loginBottomSheetType =
+                        LoginBottomSheetType.CONVERSATION(
+                            influencerName = influencerName,
+                            influencerAvatarUrl = influencerAvatarUrl,
+                        ),
+                    onDismissRequest = { component.hideLoginBottomSheetIfVisible() },
+                    onLoginSuccess = { component.hideLoginBottomSheetIfVisible() },
+                )
+            }
+        }
+
     fun sendMessageIfAllowed(
         draft: SendMessageDraft,
         onBeforeSend: () -> Unit = {},

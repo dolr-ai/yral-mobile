@@ -13,7 +13,6 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
-import com.yral.shared.core.session.SessionState
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.chat.attachments.ChatAttachment
@@ -80,8 +79,7 @@ class ConversationViewModel(
      * - UI uses `LazyColumn(reverseLayout = true)` to display oldest at top, newest at bottom
      * - Render overlay first, then history
      */
-    private val _viewState =
-        MutableStateFlow(ConversationViewState(currentUserPrincipal = sessionManager.userPrincipal))
+    private val _viewState = MutableStateFlow(ConversationViewState())
     val viewState: StateFlow<ConversationViewState> = _viewState.asStateFlow()
 
     private val conversationId: String?
@@ -158,44 +156,14 @@ class ConversationViewModel(
             )
 
     init {
-        // Observe user principal changes and reset conversation when it changes
-        viewModelScope.launch {
-            sessionManager
-                .observeSessionState { sessionState ->
-                    when (sessionState) {
-                        is SessionState.SignedIn -> sessionState.session.userPrincipal
-                        else -> null
-                    }
-                }.collect { newPrincipal ->
-                    val currentPrincipal = _viewState.value.currentUserPrincipal
-                    if (currentPrincipal != newPrincipal) {
-                        // User principal changed - reset conversation state
-                        val currentInfluencerId = _viewState.value.influencer?.id
-                        val hadConversation = _viewState.value.conversationId != null
-
-                        resetState()
-                        _viewState.update { it.copy(currentUserPrincipal = newPrincipal) }
-
-                        // Recreate conversation if user logged in and had an active conversation
-                        if (newPrincipal != null && hadConversation && currentInfluencerId != null) {
-                            createConversation(currentInfluencerId)
-                        }
-                    } else {
-                        _viewState.update { it.copy(currentUserPrincipal = newPrincipal) }
-                    }
-                }
-        }
-
-        // Observe social sign-in status for gating login prompts
         viewModelScope.launch {
             sessionManager
                 .observeSessionPropertyWithDefault(
                     selector = { it.isSocialSignIn },
                     defaultValue = false,
-                ).collect { isSocialSignedIn ->
-                    _viewState.update { state ->
-                        state.copy(isSocialSignedIn = isSocialSignedIn)
-                    }
+                ).collect { isSocialSignIn ->
+                    resetState()
+                    _viewState.update { it.copy(isSocialSignedIn = isSocialSignIn) }
                 }
         }
     }
@@ -273,9 +241,11 @@ class ConversationViewModel(
     fun initializeForInfluencer(influencerId: String) {
         val currentInfluencerId = _viewState.value.influencer?.id
         val currentConversationId = _viewState.value.conversationId
+        // same influencer and conversation exists
         if (currentInfluencerId == influencerId && currentConversationId != null) {
             return
         }
+        // current influencer is different from influencerId
         if (currentInfluencerId != null && currentInfluencerId != influencerId) {
             resetState()
         }
@@ -285,7 +255,6 @@ class ConversationViewModel(
     }
 
     private fun resetState() {
-        val currentPrincipal = _viewState.value.currentUserPrincipal
         val isSocialSignedIn = _viewState.value.isSocialSignedIn
         _viewState.update {
             ConversationViewState(
@@ -298,7 +267,6 @@ class ConversationViewModel(
                 shareDisplayName = "",
                 shareMessage = "",
                 shareDescription = "",
-                currentUserPrincipal = currentPrincipal,
                 isSocialSignedIn = isSocialSignedIn,
             )
         }
@@ -582,7 +550,6 @@ data class ConversationViewState(
     val shareDisplayName: String = "",
     val shareMessage: String = "",
     val shareDescription: String = "",
-    val currentUserPrincipal: String? = null,
     val isSocialSignedIn: Boolean = false,
 )
 
