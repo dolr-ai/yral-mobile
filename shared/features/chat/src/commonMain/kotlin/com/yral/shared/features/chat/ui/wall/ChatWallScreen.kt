@@ -52,7 +52,7 @@ fun ChatWallScreen(
             modifier
                 .fillMaxSize()
                 .background(Color.Black)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp),
     ) {
         Text(
             text = stringResource(Res.string.chat_wall_title),
