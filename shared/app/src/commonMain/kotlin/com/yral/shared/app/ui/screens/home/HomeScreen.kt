@@ -569,9 +569,15 @@ private fun LoginIfRequired(
                 )
             }
             is HomeComponent.Child.UploadVideo -> {
+                val pageName = homeState.pageName ?: SignupPageName.UPLOAD_VIDEO
+                val loginBottomSheetType =
+                    when (pageName) {
+                        SignupPageName.VIDEO_CREATION -> LoginBottomSheetType.CREATE_AI_VIDEO
+                        else -> LoginBottomSheetType.UPLOAD_AI_VIDEO
+                    }
                 component.showLoginBottomSheet(
-                    pageName = homeState.pageName ?: SignupPageName.UPLOAD_VIDEO,
-                    loginBottomSheetType = LoginBottomSheetType.UPLOAD_AI_VIDEO,
+                    pageName = pageName,
+                    loginBottomSheetType = loginBottomSheetType,
                     onDismissRequest = dismissSheet,
                     onLoginSuccess = dismissSheet,
                 )

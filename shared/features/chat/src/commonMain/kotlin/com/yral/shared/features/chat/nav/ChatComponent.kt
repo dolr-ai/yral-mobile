@@ -3,6 +3,8 @@ package com.yral.shared.features.chat.nav
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
+import com.yral.shared.analytics.events.SignupPageName
+import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.chat.nav.wall.ChatWallComponent
 import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
@@ -45,12 +47,21 @@ abstract class ChatComponent : HomeChildSnapshotProvider {
             snapshot: Snapshot?,
             openProfile: (userCanisterData: CanisterData) -> Unit,
             openConversation: (influencerId: String) -> Unit,
+            showLoginBottomSheet: (
+                pageName: SignupPageName,
+                loginBottomSheetType: LoginBottomSheetType,
+                onDismissRequest: () -> Unit,
+                onLoginSuccess: () -> Unit,
+            ) -> Unit,
+            hideLoginBottomSheetIfVisible: () -> Unit,
         ): ChatComponent =
             DefaultChatComponent(
                 componentContext = componentContext,
                 snapshot = snapshot,
                 openProfile = openProfile,
                 openConversation = openConversation,
+                showLoginBottomSheet = showLoginBottomSheet,
+                hideLoginBottomSheetIfVisible = hideLoginBottomSheetIfVisible,
             )
     }
 }

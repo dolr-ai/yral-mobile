@@ -1525,6 +1525,9 @@ enum class SignupPageName {
     @SerialName("menu")
     MENU,
 
+    @SerialName("conversation")
+    CONVERSATION,
+
     @SerialName("profile")
     PROFILE,
 

@@ -10,7 +10,7 @@ import BranchSDK
 
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate, MessagingDelegate {
   let root: RootComponent = DefaultRootComponent(
-      componentContext: DefaultComponentContext(lifecycle: ApplicationLifecycle())
+    componentContext: DefaultComponentContext(lifecycle: ApplicationLifecycle())
   )
   func application(
     _ application: UIApplication,
@@ -19,9 +19,9 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     if UIApplication.shared.isProtectedDataAvailable {
       migrateKeychain()
     }
-    #if DEBUG
+#if DEBUG
     Branch.setUseTestBranchKey(true)
-    #endif
+#endif
 
     Branch.getInstance().initSession(launchOptions: launchOptions) { [weak self] (params, error) in
       if let error = error {
@@ -152,34 +152,36 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     guard isBranchClick(params["+clicked_branch_link"]) else { return }
     guard let channel = (
       params["~channel"] as? String
-        ?? params["channel"] as? String
+      ?? params["channel"] as? String
     )?.trimmingCharacters(in: .whitespacesAndNewlines),
-      !channel.isEmpty
+          !channel.isEmpty
     else { return }
 
     AppDIHelper().getAffiliateAttributionStore().storeIfEmpty(affiliate: channel)
     saveUtmParams?.cancel()
     saveUtmParams = Task {
-        do {
-            // Capture UTM parameters (if present) for attribution
-            let utmSource = params[Constants.utmSource] as? String
-            let utmMedium = params[Constants.utmMedium] as? String
-            let utmCampaign = params[Constants.utmCampaign] as? String
-            let utmTerm = params[Constants.utmTerm] as? String
-            let utmContent = params[Constants.utmContent] as? String
+      do {
+        // Capture UTM parameters (if present) for attribution
+        let utmSource = params[Constants.utmSource] as? String
+        let utmMedium = params[Constants.utmMedium] as? String
+        let utmCampaign = params[Constants.utmCampaign] as? String
+        let utmTerm = params[Constants.utmTerm] as? String
+        let utmContent = params[Constants.utmContent] as? String
+        let rawReferrer = params[Constants.rawReferrer] as? String
 
-            try await AppDIHelper()
-                .getUtmAttributionStore()
-                .storeIfEmpty(
-                    source: utmSource,
-                    medium: utmMedium,
-                    campaign: utmCampaign,
-                    term: utmTerm,
-                    content: utmContent
-                )
-        } catch {
-            debugPrint("Cancelled or Failed")
-        }
+        try await AppDIHelper()
+          .getUtmAttributionStore()
+          .storeIfEmpty(
+            source: utmSource,
+            medium: utmMedium,
+            campaign: utmCampaign,
+            term: utmTerm,
+            content: utmContent,
+            raw: rawReferrer
+          )
+      } catch {
+        debugPrint("Cancelled or Failed")
+      }
     }
   }
 
@@ -263,58 +265,58 @@ struct IosApp: App {
 
   var body: some Scene {
     WindowGroup {
-       RootView(root: delegate.root)
-           .ignoresSafeArea(edges: .all)
-           .ignoresSafeArea(.keyboard)
-           .edgesIgnoringSafeArea(.all)
-         .environmentObject(deepLinkRouter)
-         .onReceive(deepLinkRouter.$appRoute.compactMap { $0 }) { route in
-           delegate.root.onNavigationRequest(appRoute: route)
-           deepLinkRouter.clearResolution()
-         }
-         .onOpenURL { url in
-           Branch.getInstance().application(UIApplication.shared, open: url, options: [:])
-         }
-         .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
-           Branch.getInstance().continue(activity)
-         }
-       .fullScreenCover(isPresented: $showEULA) {
-             EULAPopupView(isPresented: $showEULA) {
-               UserDefaultsManager.shared.set(true, for: .eulaAccepted)
-             }
-             .background( ClearBackgroundView() )
-           }
-           .fullScreenCover(isPresented: $showRecommendedAppUpdate) {
-             RecommendedUpdatePopUp {
-               showRecommendedAppUpdate = false
-             }
-             .background( ClearBackgroundView() )
-           }
-           .fullScreenCover(isPresented: $showMandatoryAppUpdate) {
-             MandatoryUpdateView()
-           }
-           .onAppear {
-             let status = AppUpdateHandler.shared.getAppUpdateStatus()
-             switch status {
-             case .none:
-               break
-             case .force:
-               self.showMandatoryAppUpdate = true
-             case .recommended:
-               self.showRecommendedAppUpdate = true
-             }
-           }
+      RootView(root: delegate.root)
+        .ignoresSafeArea(edges: .all)
+        .ignoresSafeArea(.keyboard)
+        .edgesIgnoringSafeArea(.all)
+        .environmentObject(deepLinkRouter)
+        .onReceive(deepLinkRouter.$appRoute.compactMap { $0 }) { route in
+          delegate.root.onNavigationRequest(appRoute: route)
+          deepLinkRouter.clearResolution()
+        }
+        .onOpenURL { url in
+          Branch.getInstance().application(UIApplication.shared, open: url, options: [:])
+        }
+        .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
+          Branch.getInstance().continue(activity)
+        }
+        .fullScreenCover(isPresented: $showEULA) {
+          EULAPopupView(isPresented: $showEULA) {
+            UserDefaultsManager.shared.set(true, for: .eulaAccepted)
+          }
+          .background( ClearBackgroundView() )
+        }
+        .fullScreenCover(isPresented: $showRecommendedAppUpdate) {
+          RecommendedUpdatePopUp {
+            showRecommendedAppUpdate = false
+          }
+          .background( ClearBackgroundView() )
+        }
+        .fullScreenCover(isPresented: $showMandatoryAppUpdate) {
+          MandatoryUpdateView()
+        }
+        .onAppear {
+          let status = AppUpdateHandler.shared.getAppUpdateStatus()
+          switch status {
+          case .none:
+            break
+          case .force:
+            self.showMandatoryAppUpdate = true
+          case .recommended:
+            self.showRecommendedAppUpdate = true
+          }
+        }
 
-//     contentView()
-//       .environmentObject(deepLinkRouter)
-//       .environmentObject(eventBus)
-//       .environment(\.appDIContainer, appDIContainer)
-//       .onOpenURL { url in
-//         Branch.getInstance().application(UIApplication.shared, open: url, options: [:])
-//       }
-//       .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
-//         Branch.getInstance().continue(activity)
-//       }
+      //     contentView()
+      //       .environmentObject(deepLinkRouter)
+      //       .environmentObject(eventBus)
+      //       .environment(\.appDIContainer, appDIContainer)
+      //       .onOpenURL { url in
+      //         Branch.getInstance().application(UIApplication.shared, open: url, options: [:])
+      //       }
+      //       .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
+      //         Branch.getInstance().continue(activity)
+      //       }
     }
   }
 
@@ -385,5 +387,6 @@ extension AppDelegate {
     static let utmCampaign = "utm_campaign"
     static let utmTerm = "utm_term"
     static let utmContent = "utm_content"
+    static let rawReferrer = "raw_referrer"
   }
 }

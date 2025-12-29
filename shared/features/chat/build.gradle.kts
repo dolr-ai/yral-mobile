@@ -29,6 +29,8 @@ kotlin {
 
             implementation(projects.shared.rust.service)
 
+            implementation(projects.shared.features.auth)
+
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.io.core)
             implementation(libs.kotlinx.datetime)
