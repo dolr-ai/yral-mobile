@@ -11,8 +11,10 @@ internal actual fun sha256(data: ByteArray): ByteArray {
     val digest = UByteArray(CC_SHA256_DIGEST_LENGTH.toInt())
     data.usePinned { inputPinned ->
         digest.usePinned { digestPinned ->
+            // `addressOf(0)` throws when array is empty; pass null pointer instead.
+            val dataPointer = if (data.isNotEmpty()) inputPinned.addressOf(0) else null
             CC_SHA256(
-                inputPinned.addressOf(0),
+                dataPointer,
                 data.size.toUInt(),
                 digestPinned.addressOf(0),
             )
