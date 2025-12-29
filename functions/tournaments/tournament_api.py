@@ -10,12 +10,14 @@ All HTTP function exports for tournament operations:
 - tournament_leaderboard: Get leaderboard
 """
 
+import os
 import random
 import sys
 from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 
 import firebase_admin
+import requests
 from firebase_admin import auth, firestore
 from firebase_functions import https_fn
 from flask import Request, jsonify, make_response
@@ -29,6 +31,7 @@ except ImportError:
 IST = timezone(timedelta(hours=5, minutes=30))
 TOURNAMENT_SHARDS = 5
 SMILEY_GAME_CONFIG_PATH = "config/smiley_game_v2"
+BALANCE_URL_YRAL_TOKEN = "https://yral-hot-or-not.go-bazzinga.workers.dev/update_balance/"
 
 # ─────────────────────  DATABASE HELPER  ────────────────────────
 _db = None
@@ -59,6 +62,36 @@ def get_smileys() -> List[Dict[str, str]]:
 def error_response(status: int, code: str, message: str):
     payload = {"error": {"code": code, "message": message}}
     return make_response(jsonify(payload), status)
+
+
+# ─────────────────────  YRAL TOKEN BALANCE HELPER  ────────────────────────
+def _push_delta_yral_token(token: str, principal_id: str, delta: int) -> tuple[bool, str | None]:
+    """Update YRAL token balance via external API.
+
+    Args:
+        token: The BALANCE_UPDATE_TOKEN secret
+        principal_id: User's principal ID
+        delta: Amount to add (positive) or deduct (negative)
+
+    Returns:
+        Tuple of (success, error_message)
+    """
+    url = f"{BALANCE_URL_YRAL_TOKEN}{principal_id}"
+    headers = {
+        "Authorization": token,
+        "Content-Type": "application/json",
+    }
+    body = {
+        "delta": str(delta),  # radix-10 string, e.g. "-100"
+        "is_airdropped": False
+    }
+    try:
+        resp = requests.post(url, json=body, timeout=30, headers=headers)
+        if resp.status_code == 200:
+            return True, None
+        return False, f"Status: {resp.status_code}, Body: {resp.text}"
+    except requests.RequestException as e:
+        return False, str(e)
 
 
 # ─────────────────────  COIN HELPER  ────────────────────────
@@ -438,7 +471,7 @@ def tournament_status(request: Request):
         return error_response(500, "INTERNAL", "Internal server error")
 
 
-@https_fn.on_request(region="us-central1")
+@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
 def register_for_tournament(request: Request):
     """
     Register user for a tournament (pay entry fee).
@@ -455,6 +488,7 @@ def register_for_tournament(request: Request):
             "coins_remaining": 400
         }
     """
+    balance_update_token = os.environ.get("BALANCE_UPDATE_TOKEN")
     try:
         if request.method != "POST":
             return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
@@ -476,87 +510,72 @@ def register_for_tournament(request: Request):
         if not principal_id:
             return error_response(400, "MISSING_PRINCIPAL_ID", "principal_id required")
 
-        # Get tournament
+        # Get tournament and validate
         tournament_ref = db().collection("tournaments").document(tournament_id)
-        user_ref = db().document(f"users/{principal_id}")
         reg_ref = db().document(f"tournaments/{tournament_id}/users/{principal_id}")
 
-        @firestore.transactional
-        def _register_tx(tx: firestore.Transaction) -> dict:
-            # READS first
-            t_snap = tournament_ref.get(transaction=tx)
-            if not t_snap.exists:
-                return {"error": "TOURNAMENT_NOT_FOUND", "message": f"Tournament {tournament_id} not found"}
+        # Check tournament exists and is open
+        t_snap = tournament_ref.get()
+        if not t_snap.exists:
+            return error_response(404, "TOURNAMENT_NOT_FOUND", f"Tournament {tournament_id} not found")
 
-            t_data = t_snap.to_dict() or {}
-            entry_cost = int(t_data.get("entryCost") or 0)
+        t_data = t_snap.to_dict() or {}
+        entry_cost = int(t_data.get("entryCost") or 0)
 
-            # Compute status dynamically from epochs
-            start_epoch_ms = t_data.get("start_epoch_ms", 0)
-            end_epoch_ms = t_data.get("end_epoch_ms", 0)
-            status = _compute_status(start_epoch_ms, end_epoch_ms)
+        # Compute status dynamically from epochs
+        start_epoch_ms = t_data.get("start_epoch_ms", 0)
+        end_epoch_ms = t_data.get("end_epoch_ms", 0)
+        status = _compute_status(start_epoch_ms, end_epoch_ms)
 
-            if status not in ["scheduled", "live"]:
-                return {"error": "TOURNAMENT_NOT_OPEN", "message": f"Tournament is {status}, registration closed"}
+        if status not in ["scheduled", "live"]:
+            return error_response(409, "TOURNAMENT_NOT_OPEN", f"Tournament is {status}, registration closed")
 
-            user_snap = user_ref.get(transaction=tx)
-            user_coins = int((user_snap.to_dict() or {}).get("coins") or 0)
+        # Check if already registered
+        reg_snap = reg_ref.get()
+        if reg_snap.exists:
+            return error_response(409, "ALREADY_REGISTERED", "Already registered for this tournament")
 
-            if user_coins < entry_cost:
-                return {"error": "INSUFFICIENT_COINS", "message": f"Balance {user_coins} < {entry_cost} required"}
+        # Deduct YRAL tokens from actual balance via external API
+        if entry_cost > 0:
+            if not balance_update_token:
+                print("BALANCE_UPDATE_TOKEN not configured", file=sys.stderr)
+                return error_response(500, "CONFIG_ERROR", "Balance update not configured")
 
-            reg_snap = reg_ref.get(transaction=tx)
-            if reg_snap.exists:
-                return {"error": "ALREADY_REGISTERED", "message": "Already registered for this tournament"}
+            success, error_msg = _push_delta_yral_token(balance_update_token, principal_id, -entry_cost)
+            if not success:
+                print(f"Failed to deduct YRAL tokens for {principal_id}: {error_msg}", file=sys.stderr)
+                return error_response(402, "INSUFFICIENT_COINS", "Failed to deduct entry fee. Please check your balance.")
 
-            # WRITES
-            # Deduct coins
-            tx.update(user_ref, {"coins": firestore.Increment(-entry_cost)})
+        # Create registration in Firestore
+        initial_diamonds = int(entry_cost * 1.5)
+        reg_ref.set({
+            "registered_at": firestore.SERVER_TIMESTAMP,
+            "coins_paid": entry_cost,
+            "diamonds": initial_diamonds,
+            "tournament_wins": 0,
+            "tournament_losses": 0,
+            "status": "registered",
+            "updated_at": firestore.SERVER_TIMESTAMP
+        })
 
-            # Create registration with diamonds (1.5x entry cost)
-            initial_diamonds = int(entry_cost * 1.5)
-            tx.set(reg_ref, {
-                "registered_at": firestore.SERVER_TIMESTAMP,
-                "coins_paid": entry_cost,
-                "diamonds": initial_diamonds,
-                "tournament_wins": 0,
-                "tournament_losses": 0,
-                "status": "registered",
-                "updated_at": firestore.SERVER_TIMESTAMP
-            })
+        # Log transaction in Firestore for audit
+        user_ref = db().document(f"users/{principal_id}")
+        ledger_ref = user_ref.collection("transactions").document(_tx_id())
+        ledger_ref.set({
+            "delta": -entry_cost,
+            "reason": "TOURNAMENT_ENTRY",
+            "tournament_id": tournament_id,
+            "at": firestore.SERVER_TIMESTAMP
+        })
 
-            # Log transaction
-            ledger_ref = user_ref.collection("transactions").document(_tx_id())
-            tx.set(ledger_ref, {
-                "delta": -entry_cost,
-                "reason": "TOURNAMENT_ENTRY",
-                "tournament_id": tournament_id,
-                "at": firestore.SERVER_TIMESTAMP
-            })
-
-            return {"success": True, "entry_cost": entry_cost, "diamonds": initial_diamonds}
-
-        result = _register_tx(db().transaction())
-
-        if "error" in result:
-            error_code = result["error"]
-            if error_code == "TOURNAMENT_NOT_FOUND":
-                return error_response(404, error_code, result["message"])
-            elif error_code == "INSUFFICIENT_COINS":
-                return error_response(402, error_code, result["message"])
-            else:
-                return error_response(409, error_code, result["message"])
-
-        # Get updated balance
-        updated_user = user_ref.get()
-        coins_remaining = int((updated_user.to_dict() or {}).get("coins") or 0)
-
+        # Note: coins_remaining is no longer accurate from Firestore
+        # The client should fetch the actual balance from the YRAL API
         return jsonify({
             "status": "registered",
             "tournament_id": tournament_id,
-            "coins_paid": result["entry_cost"],
-            "coins_remaining": coins_remaining,
-            "diamonds": result["diamonds"]
+            "coins_paid": entry_cost,
+            "coins_remaining": 0,  # Client should refresh balance from YRAL API
+            "diamonds": initial_diamonds
         }), 200
 
     except auth.InvalidIdTokenError:
