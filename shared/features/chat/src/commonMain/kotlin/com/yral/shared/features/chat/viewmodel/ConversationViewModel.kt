@@ -7,12 +7,20 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.map
+import co.touchlab.kermit.Logger
+import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.core.session.SessionManager
+import com.yral.shared.core.session.SessionState
+import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.chat.attachments.ChatAttachment
 import com.yral.shared.features.chat.attachments.FilePathChatAttachment
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.ConversationMessagesPagingSource
+import com.yral.shared.features.chat.domain.EmptyMessagesPagingSource
 import com.yral.shared.features.chat.domain.models.ChatMessage
 import com.yral.shared.features.chat.domain.models.ChatMessageType
 import com.yral.shared.features.chat.domain.models.ConversationInfluencer
@@ -23,6 +31,13 @@ import com.yral.shared.features.chat.domain.usecases.CreateConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.DeleteConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.SendMessageUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
+import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
+import com.yral.shared.libs.routing.routes.api.UserProfileRoute
+import com.yral.shared.libs.sharing.LinkGenerator
+import com.yral.shared.libs.sharing.LinkInput
+import com.yral.shared.libs.sharing.ShareService
+import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
+import com.yral.shared.rust.service.utils.propicFromPrincipal
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,34 +46,42 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
+import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share
+import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share_desc
+import yral_mobile.shared.libs.designsystem.generated.resources.profile_share_default_name
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
+@Suppress("LongParameterList")
 class ConversationViewModel(
     private val chatRepository: ChatRepository,
     private val useCaseFailureListener: UseCaseFailureListener,
     private val sendMessageUseCase: SendMessageUseCase,
     private val createConversationUseCase: CreateConversationUseCase,
     private val deleteConversationUseCase: DeleteConversationUseCase,
+    private val shareService: ShareService,
+    private val urlBuilder: UrlBuilder,
+    private val linkGenerator: LinkGenerator,
+    private val crashlyticsManager: CrashlyticsManager,
+    private val sessionManager: SessionManager,
 ) : ViewModel() {
     /**
-     * Ordering note for UI:
-     * - Network paging uses `order=desc` (latest-first) so the initial page contains the newest messages.
-     * - To render chats as **oldest at top / newest at bottom**, the UI should use
-     *   `LazyColumn(reverseLayout = true)` and render **overlay first**, then **history**.
-     *
-     * With `reverseLayout = true`, the first items (newest) are laid out at the bottom, and paging
-     * will naturally load older messages as you scroll upward.
+     * Message ordering:
+     * - Network paging uses `order=desc` (latest-first)
+     * - UI uses `LazyColumn(reverseLayout = true)` to display oldest at top, newest at bottom
+     * - Render overlay first, then history
      */
-    private val _viewState = MutableStateFlow(ConversationViewState())
+    private val _viewState =
+        MutableStateFlow(ConversationViewState(currentUserPrincipal = sessionManager.userPrincipal))
     val viewState: StateFlow<ConversationViewState> = _viewState.asStateFlow()
 
     private val conversationId: String?
@@ -66,35 +89,39 @@ class ConversationViewModel(
     private val loadedMessageIds = MutableStateFlow<Set<String>>(emptySet())
     private val initialOffset = MutableStateFlow<Int?>(null)
 
+    private val pagingConfig =
+        PagingConfig(
+            pageSize = PAGE_SIZE,
+            initialLoadSize = PAGE_SIZE,
+            prefetchDistance = PREFETCH_DISTANCE,
+            enablePlaceholders = false,
+        )
+
     @OptIn(ExperimentalCoroutinesApi::class)
     private val pagedHistory: Flow<PagingData<ChatMessage>> =
         _viewState
-            .map { it.conversationId }
+            .map { it.conversationId to it.paginatedHistoryAvailable }
             .distinctUntilChanged()
-            .flatMapLatest { convId ->
-                if (convId.isNullOrBlank()) {
-                    emptyFlow()
+            .flatMapLatest { (convId, hasMoreMessages) ->
+                if (convId.isNullOrBlank() || !hasMoreMessages) {
+                    Pager(
+                        config = pagingConfig,
+                        pagingSourceFactory = { EmptyMessagesPagingSource() },
+                    ).flow
                 } else {
                     loadedMessageIds.value = emptySet()
-                    // Capture and reset initialOffset (one-time use per conversation)
-                    val initialOffset =
+                    val offset =
                         initialOffset.value
                             .takeIf { initialOffset.value != null }
                             .also { initialOffset.value = null }
                     Pager(
-                        config =
-                            PagingConfig(
-                                pageSize = PAGE_SIZE,
-                                initialLoadSize = PAGE_SIZE,
-                                prefetchDistance = PREFETCH_DISTANCE,
-                                enablePlaceholders = false,
-                            ),
+                        config = pagingConfig,
                         pagingSourceFactory = {
                             ConversationMessagesPagingSource(
                                 conversationId = convId,
                                 chatRepository = chatRepository,
                                 useCaseFailureListener = useCaseFailureListener,
-                                initialOffset = initialOffset,
+                                initialOffset = offset,
                             )
                         },
                     ).flow
@@ -131,7 +158,33 @@ class ConversationViewModel(
             )
 
     init {
-        createConversation(TEST_INFLUENCER_ID)
+        // Observe user principal changes and reset conversation when it changes
+        viewModelScope.launch {
+            sessionManager
+                .observeSessionState { sessionState ->
+                    when (sessionState) {
+                        is SessionState.SignedIn -> sessionState.session.userPrincipal
+                        else -> null
+                    }
+                }.collect { newPrincipal ->
+                    val currentPrincipal = _viewState.value.currentUserPrincipal
+                    if (currentPrincipal != newPrincipal) {
+                        // User principal changed - reset conversation state
+                        val currentInfluencerId = _viewState.value.influencer?.id
+                        val hadConversation = _viewState.value.conversationId != null
+
+                        resetState()
+                        _viewState.update { it.copy(currentUserPrincipal = newPrincipal) }
+
+                        // Recreate conversation if user logged in and had an active conversation
+                        if (newPrincipal != null && hadConversation && currentInfluencerId != null) {
+                            createConversation(currentInfluencerId)
+                        }
+                    } else {
+                        _viewState.update { it.copy(currentUserPrincipal = newPrincipal) }
+                    }
+                }
+        }
     }
 
     @OptIn(ExperimentalTime::class)
@@ -150,19 +203,9 @@ class ConversationViewModel(
         id: String,
         influencer: ConversationInfluencer? = null,
         recentMessages: List<ChatMessage> = emptyList(),
+        messageCount: Int,
     ) {
         val previousConversationId = _viewState.value.conversationId
-
-        // Set initial offset BEFORE updating conversationId to ensure it's captured when Pager is created
-        // This prevents duplicate API call for the first page
-        if (recentMessages.isNotEmpty()) {
-            initialOffset.value = recentMessages.size
-            // Mark recentMessages as loaded so they're filtered from overlay once pagedHistory loads
-            val recentMessageIds = recentMessages.mapTo(HashSet()) { it.id }
-            loadedMessageIds.update { it + recentMessageIds }
-        }
-
-        _viewState.update { it.copy(conversationId = id, influencer = influencer ?: it.influencer) }
 
         if (previousConversationId != id) {
             _overlay.value = OverlayState()
@@ -175,9 +218,81 @@ class ConversationViewModel(
                 }
             }
         _overlay.update { it.copy(sent = it.sent + sentMessages) }
+
+        val paginatedHistoryAvailable = messageCount > PAGE_SIZE
+
+        if (recentMessages.isNotEmpty() && paginatedHistoryAvailable) {
+            initialOffset.value = recentMessages.size
+        }
+
+        _viewState.update {
+            it.copy(
+                conversationId = id,
+                influencer = influencer ?: it.influencer,
+                paginatedHistoryAvailable = paginatedHistoryAvailable,
+            )
+        }
+
+        if (influencer != null) {
+            refreshShareCopy()
+        }
     }
 
-    fun createConversation(influencerId: String) {
+    private fun refreshShareCopy() {
+        viewModelScope.launch {
+            val influencer = _viewState.value.influencer
+            val displayName =
+                influencer?.displayName?.takeIf { it.isNotBlank() }
+                    ?: influencer?.name
+                    ?: getString(DesignRes.string.profile_share_default_name)
+            val message = getString(DesignRes.string.msg_profile_share, displayName)
+            val description = getString(DesignRes.string.msg_profile_share_desc, displayName)
+            _viewState.update { current ->
+                current.copy(
+                    shareDisplayName = displayName,
+                    shareMessage = message,
+                    shareDescription = description,
+                )
+            }
+        }
+    }
+
+    fun initializeForInfluencer(influencerId: String) {
+        val currentInfluencerId = _viewState.value.influencer?.id
+        val currentConversationId = _viewState.value.conversationId
+        if (currentInfluencerId == influencerId && currentConversationId != null) {
+            return
+        }
+        if (currentInfluencerId != null && currentInfluencerId != influencerId) {
+            resetState()
+        }
+        if (_viewState.value.conversationId == null) {
+            createConversation(influencerId)
+        }
+    }
+
+    private fun resetState() {
+        val currentPrincipal = _viewState.value.currentUserPrincipal
+        _viewState.update {
+            ConversationViewState(
+                isCreating = false,
+                isDeleting = false,
+                error = null,
+                conversationId = null,
+                influencer = null,
+                paginatedHistoryAvailable = false,
+                shareDisplayName = "",
+                shareMessage = "",
+                shareDescription = "",
+                currentUserPrincipal = currentPrincipal,
+            )
+        }
+        _overlay.value = OverlayState()
+        loadedMessageIds.value = emptySet()
+        initialOffset.value = null
+    }
+
+    private fun createConversation(influencerId: String) {
         _viewState.update { it.copy(isCreating = true, error = null) }
         viewModelScope.launch {
             createConversationUseCase(CreateConversationUseCase.Params(influencerId = influencerId))
@@ -186,6 +301,7 @@ class ConversationViewModel(
                         id = conversation.id,
                         influencer = conversation.influencer,
                         recentMessages = conversation.recentMessages,
+                        messageCount = conversation.messageCount,
                     )
                     _viewState.update { it.copy(isCreating = false) }
                 }.onFailure { error ->
@@ -205,7 +321,8 @@ class ConversationViewModel(
         viewModelScope.launch {
             deleteConversationUseCase(DeleteConversationUseCase.Params(conversationId = currentConversationId))
                 .onSuccess {
-                    // After successful deletion, create a new conversation
+                    // Reset state after successful deletion, then create a new conversation
+                    resetState()
                     createConversation(influencerId)
                     _viewState.update { it.copy(isDeleting = false) }
                 }.onFailure { error ->
@@ -217,6 +334,55 @@ class ConversationViewModel(
                         )
                     }
                 }
+        }
+    }
+
+    fun shareProfile() {
+        val influencer = _viewState.value.influencer ?: return
+        val principal = influencer.id
+        if (principal.isBlank()) return
+
+        viewModelScope.launch {
+            val canisterId = getUserInfoServiceCanister()
+            val route =
+                UserProfileRoute(
+                    canisterId = canisterId,
+                    userPrincipalId = principal,
+                    profilePic = influencer.avatarUrl.takeIf { it.isNotBlank() },
+                    username = influencer.displayName.takeIf { it.isNotBlank() } ?: influencer.name,
+                    isFromServiceCanister = true,
+                )
+            val internalUrl = urlBuilder.build(route) ?: return@launch
+            runSuspendCatching {
+                val imageUrl =
+                    influencer.avatarUrl
+                        .takeIf { it.isNotBlank() }
+                        ?: propicFromPrincipal(principal)
+                val shareState = _viewState.value
+                val link =
+                    linkGenerator.generateShareLink(
+                        LinkInput(
+                            internalUrl = internalUrl,
+                            title = shareState.shareMessage,
+                            description = shareState.shareDescription,
+                            feature = "share_profile",
+                            tags = listOf("organic", "profile_share"),
+                            contentImageUrl = imageUrl,
+                            metadata = mapOf("user_principal_id" to principal),
+                        ),
+                    )
+                val text = "${shareState.shareMessage} $link"
+                shareService.shareImageWithText(
+                    imageUrl = imageUrl,
+                    text = text,
+                )
+            }.onFailure {
+                Logger.e(ConversationViewModel::class.simpleName!!, it) { "Failed to share profile" }
+                crashlyticsManager.recordException(
+                    YralException(it),
+                    ExceptionType.DEEPLINK,
+                )
+            }
         }
     }
 
@@ -388,7 +554,6 @@ class ConversationViewModel(
     companion object {
         private const val PAGE_SIZE = 10
         private const val PREFETCH_DISTANCE = 5
-        const val TEST_INFLUENCER_ID = "qg2pi-g3xl4-uprdd-macwr-64q7r-plotv-xm3bg-iayu3-rnpux-7ikkz-hqe"
     }
 }
 
@@ -398,6 +563,11 @@ data class ConversationViewState(
     val error: String? = null,
     val conversationId: String? = null,
     val influencer: ConversationInfluencer? = null,
+    val paginatedHistoryAvailable: Boolean = false,
+    val shareDisplayName: String = "",
+    val shareMessage: String = "",
+    val shareDescription: String = "",
+    val currentUserPrincipal: String? = null,
 )
 
 sealed class ConversationMessageItem {

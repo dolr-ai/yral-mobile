@@ -14,4 +14,5 @@
     <string name="start_playing">Start Playing</string>
     <string name="rank">Rank</string>
     <string name="wins">Wins</string>
+    <string name="leaderboard">Leaderboard</string>
 </resources>

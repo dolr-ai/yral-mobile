@@ -6,6 +6,7 @@ import com.arkivanov.decompose.value.Value
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.chat.nav.wall.ChatWallComponent
 import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
+import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.serialization.Serializable
 
 abstract class ChatComponent : HomeChildSnapshotProvider {
@@ -42,10 +43,14 @@ abstract class ChatComponent : HomeChildSnapshotProvider {
         operator fun invoke(
             componentContext: ComponentContext,
             snapshot: Snapshot?,
+            openProfile: (userCanisterData: CanisterData) -> Unit,
+            openConversation: (influencerId: String) -> Unit,
         ): ChatComponent =
             DefaultChatComponent(
                 componentContext = componentContext,
                 snapshot = snapshot,
+                openProfile = openProfile,
+                openConversation = openConversation,
             )
     }
 }

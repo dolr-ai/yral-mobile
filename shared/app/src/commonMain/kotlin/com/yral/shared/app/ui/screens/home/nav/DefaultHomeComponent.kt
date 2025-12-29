@@ -11,8 +11,10 @@ import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.decompose.router.stack.childStack
+import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
+import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.core.session.SessionManager
@@ -45,11 +47,14 @@ import com.yral.shared.libs.routing.routes.api.Wallet
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.serialization.Serializable
 
-@Suppress("TooManyFunctions")
+@Suppress("TooManyFunctions", "LongParameterList")
 internal class DefaultHomeComponent(
     componentContext: ComponentContext,
     private val openEditProfile: () -> Unit,
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
+    private val openConversation: (influencerId: String) -> Unit,
+    private val openWallet: () -> Unit,
+    private val openLeaderboard: () -> Unit,
     private val openTournamentLeaderboard: (
         tournamentId: String,
         showResult: Boolean,
@@ -75,6 +80,8 @@ internal class DefaultHomeComponent(
     private val childSnapshots: MutableMap<Config, Any> = LinkedHashMap()
     private var lastActiveConfig: Config? = null
     private var lastActiveProvider: HomeChildSnapshotProvider? = null
+
+    private val flagManager = koinInstance.get<FeatureFlagManager>()
 
     override val stack: Value<ChildStack<*, Child>> =
         childStack(
@@ -117,7 +124,8 @@ internal class DefaultHomeComponent(
     }
 
     override fun onLeaderboardTabClick() {
-        navigation.replaceKeepingFeed(Config.Leaderboard)
+        openLeaderboard.invoke()
+        // navigation.replaceKeepingFeed(Config.Leaderboard)
     }
 
     override fun onTournamentTabClick() {
@@ -181,11 +189,28 @@ internal class DefaultHomeComponent(
     }
 
     override fun onWalletTabClick() {
-        navigation.replaceKeepingFeed(Config.Wallet)
+        val chatWalletConfig = flagManager.getChatAndWalletConfig()
+        if (chatWalletConfig.second) {
+            navigation.replaceKeepingFeed(Config.Wallet)
+        } else {
+            openWallet.invoke()
+        }
     }
 
     override fun onChatTabClick() {
         navigation.replaceKeepingFeed(Config.Chat)
+    }
+
+    override fun openConversation(influencerId: String) {
+        openConversation.invoke(influencerId)
+    }
+
+    override fun openWallet() {
+        openWallet.invoke()
+    }
+
+    override fun openLeaderboard() {
+        openLeaderboard.invoke()
     }
 
     override fun showLoginBottomSheet(
@@ -265,6 +290,8 @@ internal class DefaultHomeComponent(
                     openProfile(canisterData)
                 }
             },
+            showBackIcon = false,
+            onBack = { navigation.pop() },
         )
 
     private fun tournamentComponent(componentContext: ComponentContext): TournamentComponent =
@@ -323,6 +350,8 @@ internal class DefaultHomeComponent(
         ChatComponent.Companion(
             componentContext = componentContext,
             snapshot = childSnapshots[Config.Chat] as? ChatComponent.Snapshot,
+            openProfile = openProfile,
+            openConversation = openConversation,
         )
 
     private fun slotChild(

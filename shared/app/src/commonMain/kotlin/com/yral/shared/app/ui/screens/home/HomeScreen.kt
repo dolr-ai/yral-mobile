@@ -45,11 +45,13 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
+import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.app.ui.screens.feed.FeedScaffoldScreen
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent.SlotChild
+import com.yral.shared.app.ui.screens.home.nav.getChatAndWalletConfig
 import com.yral.shared.app.ui.screens.profile.ProfileScreen
 import com.yral.shared.app.ui.screens.uploadVideo.UploadVideoRootScreen
 import com.yral.shared.core.session.SessionKey
@@ -80,6 +82,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import yral_mobile.shared.app.generated.resources.Res
@@ -256,6 +259,7 @@ private fun HomeScreenContent(
             is HomeComponent.Child.Chat ->
                 ChatScreen(
                     component = child.component,
+                    bottomPadding = innerPadding.calculateBottomPadding(),
                 )
         }
         LoginIfRequired(
@@ -313,7 +317,24 @@ private fun getProfileVideos(
     }
 }
 
-@Suppress("LongMethod")
+@Composable
+private fun getVisibleTabs(): List<HomeTab> {
+    val flagManager = koinInject<FeatureFlagManager>()
+    val chatWalletConfig = flagManager.getChatAndWalletConfig()
+    return buildList {
+        add(HomeTab.HOME)
+        add(HomeTab.TOURNAMENT)
+        add(HomeTab.UPLOAD_VIDEO)
+
+        when {
+            chatWalletConfig.first -> add(HomeTab.CHAT)
+            chatWalletConfig.second -> add(HomeTab.WALLET)
+        }
+
+        add(HomeTab.PROFILE)
+    }
+}
+
 @Composable
 private fun HomeNavigationBar(
     currentTab: HomeTab,
@@ -321,16 +342,7 @@ private fun HomeNavigationBar(
     bottomNavigationClicked: (categoryName: CategoryName) -> Unit,
 ) {
     var playSound by remember { mutableStateOf(false) }
-    val tabs =
-        HomeTab.entries
-            .filter {
-                when (it) {
-                    HomeTab.ACCOUNT -> false
-                    HomeTab.WALLET -> false
-                    HomeTab.LEADER_BOARD -> false
-                    else -> true
-                }
-            }
+    val tabs = getVisibleTabs()
     val insetHeightPx = NavigationBarDefaults.windowInsets.getBottom(LocalDensity.current)
     val insetHeightDp = with(LocalDensity.current) { insetHeightPx.toDp() }
     NavigationBar(
@@ -500,7 +512,6 @@ private enum class HomeTab(
         categoryName = CategoryName.WALLET,
         icon = Res.drawable.wallet_nav,
         unSelectedIcon = Res.drawable.wallet_nav_unselected,
-        isNew = true,
     ),
     ACCOUNT(
         title = "Account",

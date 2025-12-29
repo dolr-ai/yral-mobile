@@ -2,18 +2,23 @@ package com.yral.shared.features.leaderboard.ui.main
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -57,7 +62,9 @@ import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.leaderboard.generated.resources.Res
+import yral_mobile.shared.libs.leaderboard.generated.resources.leaderboard
 import yral_mobile.shared.libs.leaderboard.generated.resources.play_games_to_claim_your_spot
 import yral_mobile.shared.libs.leaderboard.generated.resources.purple_leaderboard
 import yral_mobile.shared.libs.leaderboard.generated.resources.start_playing
@@ -66,6 +73,7 @@ import kotlin.math.max
 import kotlin.math.min
 import com.yral.shared.libs.leaderboard.model.LeaderboardMode as SharedLeaderboardMode
 import com.yral.shared.libs.leaderboard.model.RewardCurrency as SharedRewardCurrency
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Suppress("LongMethod", "UnusedParameter", "CyclomaticComplexMethod")
 @Composable
@@ -162,6 +170,8 @@ fun LeaderboardMainScreen(
                     viewModel = viewModel,
                     leaderboardBG = leaderboardBG,
                     trackOpenHistory = { viewModel.leaderboardCalendarClicked() },
+                    showBack = component.showBackIcon,
+                    onBack = component.onBack,
                 )
             }
             if (!state.isLoading && state.error == null) {
@@ -283,6 +293,34 @@ private fun EmptyState(
 }
 
 @Composable
+private fun LeaderboardTitle(onBack: () -> Unit) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            painter = painterResource(DesignRes.drawable.arrow_left),
+            contentDescription = "back",
+            tint = YralColors.Neutral950,
+            modifier =
+                Modifier
+                    .size(24.dp)
+                    .clickable { onBack() },
+        )
+        Text(
+            text = stringResource(Res.string.leaderboard),
+            style = LocalAppTopography.current.xlBold,
+            color = YralColors.Neutral950,
+            modifier = Modifier.weight(1f).offset(x = (-12).dp),
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
 private fun LeaderboardHeader(
     countryCode: String,
     state: LeaderBoardState,
@@ -292,6 +330,8 @@ private fun LeaderboardHeader(
     viewModel: LeaderBoardViewModel,
     leaderboardBG: DrawableResource,
     trackOpenHistory: () -> Unit,
+    showBack: Boolean,
+    onBack: () -> Unit,
 ) {
     val brushColors =
         when (state.selectedMode) {
@@ -318,6 +358,9 @@ private fun LeaderboardHeader(
                     .background(Brush.verticalGradient(colors = brushColors)),
         )
         Column {
+            if (showBack) {
+                LeaderboardTitle(onBack)
+            }
             TrophyGallery(
                 isLoading = loading,
                 leaderboard = if (loading) emptyList() else state.leaderboard.map { it.toSharedEntry() },
@@ -333,6 +376,7 @@ private fun LeaderboardHeader(
                 rewardCurrency = sharedRewardCurrency,
                 rewardCurrencyCode = state.rewardCurrencyCode,
                 rewardsTable = state.rewardsTable,
+                isTitleVisible = showBack,
             )
             if (state.leaderboard.isNotEmpty()) {
                 LeaderboardTableHeader(
