@@ -46,6 +46,8 @@ import com.yral.shared.features.auth.ui.LoginBottomSheet
 import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.features.chat.ui.conversation.ChatConversationScreen
 import com.yral.shared.features.chat.viewmodel.ConversationViewModel
+import com.yral.shared.features.leaderboard.ui.LeaderboardScreen
+import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
 import com.yral.shared.features.profile.ui.EditProfileScreen
 import com.yral.shared.features.profile.ui.ProfileMainScreen
 import com.yral.shared.features.profile.viewmodel.EditProfileViewModel
@@ -176,6 +178,17 @@ fun RootScreen(
                         HandleSystemBars(show = true)
                         WalletScreen(
                             component = child.component,
+                            modifier = Modifier.fillMaxSize().safeDrawingPadding(),
+                        )
+                    }
+
+                    is Child.Leaderboard -> {
+                        HandleSystemBars(show = true)
+                        val sessionKey = state.sessionState.getKey()
+                        val leaderBoardViewModel = koinViewModel<LeaderBoardViewModel>(key = "leaderboard-$sessionKey")
+                        LeaderboardScreen(
+                            component = child.component,
+                            leaderBoardViewModel = leaderBoardViewModel,
                             modifier = Modifier.fillMaxSize().safeDrawingPadding(),
                         )
                     }

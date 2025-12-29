@@ -23,6 +23,7 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
+import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.tournament.nav.TournamentGameComponent
@@ -97,6 +98,7 @@ class DefaultRootComponent(
                 )
             is Config.Conversation -> RootComponent.Child.Conversation(conversationComponent(componentContext, config))
             is Config.Wallet -> RootComponent.Child.Wallet(walletComponent(componentContext))
+            is Config.Leaderboard -> RootComponent.Child.Leaderboard(leaderboardComponent(componentContext))
         }
 
     private val slotNavigation = SlotNavigation<SlotConfig>()
@@ -125,6 +127,7 @@ class DefaultRootComponent(
                 openTournamentGame = this::openTournamentGame,
                 openConversation = this::openConversation,
                 openWallet = this::openWallet,
+                openLeaderboard = this::openLeaderboard,
                 showAlertsOnDialog = { this.showSlot(SlotConfig.AlertsRequestBottomSheet(it)) },
                 showLoginBottomSheet = this::showLoginBottomSheet,
                 hideLoginBottomSheetIfVisible = this::hideLoginBottomSheetIfVisible,
@@ -277,6 +280,10 @@ class DefaultRootComponent(
         navigation.pushToFront(Config.Wallet)
     }
 
+    override fun openLeaderboard() {
+        navigation.pushToFront(Config.Leaderboard)
+    }
+
     private fun conversationComponent(
         componentContext: ComponentContext,
         config: Config.Conversation,
@@ -292,6 +299,19 @@ class DefaultRootComponent(
         WalletComponent(
             componentContext = componentContext,
             showAlertsOnDialog = { this.showSlot(SlotConfig.AlertsRequestBottomSheet(it)) },
+            showBackIcon = true,
+            onBack = { navigation.pop() },
+        )
+
+    private fun leaderboardComponent(componentContext: ComponentContext): LeaderboardComponent =
+        LeaderboardComponent.Companion(
+            componentContext = componentContext,
+            snapshot = null,
+            navigateToHome = {
+                navigation.pop()
+                homeComponent?.onFeedTabClick()
+            },
+            openProfile = this::openProfile,
             showBackIcon = true,
             onBack = { navigation.pop() },
         )
@@ -432,6 +452,9 @@ class DefaultRootComponent(
 
         @Serializable
         data object Wallet : Config
+
+        @Serializable
+        data object Leaderboard : Config
     }
 
     @Serializable

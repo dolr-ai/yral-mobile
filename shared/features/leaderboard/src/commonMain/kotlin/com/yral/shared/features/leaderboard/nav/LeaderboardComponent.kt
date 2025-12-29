@@ -14,6 +14,9 @@ abstract class LeaderboardComponent : HomeChildSnapshotProvider {
 
     abstract fun onBackClicked(): Boolean
 
+    abstract val showBackIcon: Boolean
+    abstract val onBack: () -> Unit
+
     sealed class Child {
         class Main(
             val component: LeaderboardMainComponent,
@@ -37,12 +40,16 @@ abstract class LeaderboardComponent : HomeChildSnapshotProvider {
             snapshot: Snapshot?,
             navigateToHome: () -> Unit,
             openProfile: (CanisterData) -> Unit,
+            showBackIcon: Boolean = false,
+            onBack: () -> Unit = {},
         ): LeaderboardComponent =
             DefaultLeaderboardComponent(
                 componentContext = componentContext,
                 snapshot = snapshot,
                 navigateToHome = navigateToHome,
                 openProfile = openProfile,
+                showBackIcon = showBackIcon,
+                onBack = onBack,
             )
     }
 }

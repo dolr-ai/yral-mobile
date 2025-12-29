@@ -69,6 +69,7 @@ fun TrophyGallery(
     rewardCurrency: RewardCurrency? = null,
     rewardCurrencyCode: String? = null,
     rewardsTable: Map<Int, Double>? = null,
+    isTitleVisible: Boolean = false,
 ) {
     val trophyPaddingTop =
         when {
@@ -101,7 +102,15 @@ fun TrophyGallery(
                 )
             }
         }
-        Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 23.dp)) {
+        Column(
+            modifier =
+                Modifier.padding(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = if (isTitleVisible) 0.dp else 16.dp,
+                    bottom = 23.dp,
+                ),
+        ) {
             LeaderboardModeSelection(selectedMode, selectMode)
             Row {
                 if (selectedMode.showCountDown) {

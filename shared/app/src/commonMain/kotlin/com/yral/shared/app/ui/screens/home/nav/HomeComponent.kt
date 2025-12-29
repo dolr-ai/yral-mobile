@@ -42,6 +42,7 @@ abstract class HomeComponent {
     abstract fun onNavigationRequest(appRoute: AppRoute)
     abstract fun openConversation(influencerId: String)
     abstract fun openWallet()
+    abstract fun openLeaderboard()
     abstract fun showLoginBottomSheet(
         pageName: SignupPageName,
         loginBottomSheetType: LoginBottomSheetType,
@@ -92,6 +93,7 @@ abstract class HomeComponent {
             openProfile: (userCanisterData: CanisterData) -> Unit,
             openConversation: (influencerId: String) -> Unit,
             openWallet: () -> Unit,
+            openLeaderboard: () -> Unit,
             openTournamentLeaderboard: (
                 tournamentId: String,
                 showResult: Boolean,
@@ -118,6 +120,7 @@ abstract class HomeComponent {
                 openProfile,
                 openConversation,
                 openWallet,
+                openLeaderboard,
                 openTournamentLeaderboard,
                 openTournamentGame,
                 showAlertsOnDialog,

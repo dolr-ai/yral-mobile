@@ -9,6 +9,7 @@ import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
+import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.tournament.nav.TournamentGameComponent
@@ -54,6 +55,8 @@ interface RootComponent {
 
     fun openWallet()
 
+    fun openLeaderboard()
+
     fun showLoginBottomSheet(
         pageName: SignupPageName,
         loginBottomSheetType: LoginBottomSheetType,
@@ -89,6 +92,9 @@ interface RootComponent {
         ) : Child()
         class Wallet(
             val component: WalletComponent,
+        ) : Child()
+        class Leaderboard(
+            val component: LeaderboardComponent,
         ) : Child()
     }
 

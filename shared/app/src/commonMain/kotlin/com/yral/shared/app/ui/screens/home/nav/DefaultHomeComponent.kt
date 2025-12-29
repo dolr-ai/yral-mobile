@@ -11,6 +11,7 @@ import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.decompose.router.stack.childStack
+import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import com.yral.featureflag.FeatureFlagManager
@@ -53,6 +54,7 @@ internal class DefaultHomeComponent(
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
     private val openConversation: (influencerId: String) -> Unit,
     private val openWallet: () -> Unit,
+    private val openLeaderboard: () -> Unit,
     private val openTournamentLeaderboard: (
         tournamentId: String,
         showResult: Boolean,
@@ -122,7 +124,8 @@ internal class DefaultHomeComponent(
     }
 
     override fun onLeaderboardTabClick() {
-        navigation.replaceKeepingFeed(Config.Leaderboard)
+        openLeaderboard.invoke()
+        // navigation.replaceKeepingFeed(Config.Leaderboard)
     }
 
     override fun onTournamentTabClick() {
@@ -206,6 +209,10 @@ internal class DefaultHomeComponent(
         openWallet.invoke()
     }
 
+    override fun openLeaderboard() {
+        openLeaderboard.invoke()
+    }
+
     override fun showLoginBottomSheet(
         pageName: SignupPageName,
         loginBottomSheetType: LoginBottomSheetType,
@@ -283,6 +290,8 @@ internal class DefaultHomeComponent(
                     openProfile(canisterData)
                 }
             },
+            showBackIcon = false,
+            onBack = { navigation.pop() },
         )
 
     private fun tournamentComponent(componentContext: ComponentContext): TournamentComponent =
