@@ -4,7 +4,7 @@ enum class InfluencerStatus(
     val value: String,
 ) {
     ACTIVE("active"),
-    COMING_SOON("coming soon"),
+    COMING_SOON("coming_soon"),
     DISCONTINUED("discontinued"),
     UNKNOWN(""),
     ;
