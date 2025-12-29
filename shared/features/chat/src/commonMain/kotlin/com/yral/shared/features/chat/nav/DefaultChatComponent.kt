@@ -6,6 +6,8 @@ import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.value.Value
+import com.yral.shared.analytics.events.SignupPageName
+import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.chat.nav.wall.ChatWallComponent
 import com.yral.shared.rust.service.utils.CanisterData
@@ -17,6 +19,13 @@ internal class DefaultChatComponent(
     private val snapshot: Snapshot?,
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
     private val openConversation: (influencerId: String) -> Unit,
+    private val showLoginBottomSheet: (
+        pageName: SignupPageName,
+        loginBottomSheetType: LoginBottomSheetType,
+        onDismissRequest: () -> Unit,
+        onLoginSuccess: () -> Unit,
+    ) -> Unit,
+    private val hideLoginBottomSheetIfVisible: () -> Unit,
 ) : ChatComponent(),
     ComponentContext by componentContext,
     KoinComponent {
@@ -98,6 +107,8 @@ internal class DefaultChatComponent(
             influencerId = config.influencerId,
             onBack = { navigation.pop() },
             openProfile = openProfile,
+            showLoginBottomSheet = showLoginBottomSheet,
+            hideLoginBottomSheetIfVisible = hideLoginBottomSheetIfVisible,
         )
 
     @Serializable

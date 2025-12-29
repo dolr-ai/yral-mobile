@@ -23,6 +23,12 @@ internal fun ConversationMessageItem.isWaitingAssistant() =
         message.role == ConversationMessageRole.ASSISTANT &&
         message.status == LocalMessageStatus.WAITING
 
+internal fun ConversationMessageItem.isUser() =
+    when (this) {
+        is ConversationMessageItem.Remote -> message.role == ConversationMessageRole.USER
+        is ConversationMessageItem.Local -> message.role == ConversationMessageRole.USER
+    }
+
 internal fun ConversationMessageItem.isPendingUser() =
     this is ConversationMessageItem.Local &&
         message.role == ConversationMessageRole.USER &&

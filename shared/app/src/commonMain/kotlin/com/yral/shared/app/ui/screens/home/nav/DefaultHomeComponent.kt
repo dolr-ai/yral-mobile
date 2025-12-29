@@ -352,6 +352,8 @@ internal class DefaultHomeComponent(
             snapshot = childSnapshots[Config.Chat] as? ChatComponent.Snapshot,
             openProfile = openProfile,
             openConversation = openConversation,
+            showLoginBottomSheet = showLoginBottomSheet,
+            hideLoginBottomSheetIfVisible = hideLoginBottomSheetIfVisible,
         )
 
     private fun slotChild(

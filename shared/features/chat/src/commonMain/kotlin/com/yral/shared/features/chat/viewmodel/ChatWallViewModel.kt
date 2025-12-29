@@ -9,7 +9,6 @@ import androidx.paging.cachedIn
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.session.SessionManager
-import com.yral.shared.core.session.SessionState
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.InfluencersPagingSource
 import com.yral.shared.features.chat.domain.models.Influencer
@@ -48,14 +47,12 @@ class ChatWallViewModel(
     @OptIn(ExperimentalCoroutinesApi::class)
     val influencers: Flow<PagingData<Influencer>> =
         sessionManager
-            .observeSessionState { sessionState ->
-                when (sessionState) {
-                    is SessionState.SignedIn -> sessionState.session.userPrincipal
-                    else -> null
-                }
-            }.distinctUntilChanged()
+            .observeSessionPropertyWithDefault(
+                selector = { it.isSocialSignIn },
+                defaultValue = false,
+            ).distinctUntilChanged()
             .flatMapLatest {
-                // Create a new Pager when user principal changes to refresh influencers
+                // Create a new Pager when social sign-in status changes to refresh influencers
                 Pager(
                     config = pagingConfig,
                     pagingSourceFactory = { InfluencersPagingSource(chatRepository, useCaseFailureListener) },

@@ -1,5 +1,6 @@
 package com.yral.shared.features.chat.di
 
+import com.yral.shared.analytics.di.IS_DEBUG
 import com.yral.shared.features.chat.data.ChatDataSource
 import com.yral.shared.features.chat.data.ChatRemoteDataSource
 import com.yral.shared.features.chat.data.ChatRepositoryImpl
@@ -18,7 +19,19 @@ import org.koin.dsl.module
 val chatModule =
     module {
         factoryOf(::ChatRepositoryImpl) bind ChatRepository::class
-        factoryOf(::ChatRemoteDataSource) bind ChatDataSource::class
+        factory<ChatDataSource> {
+            ChatRemoteDataSource(
+                httpClient = get(),
+                json = get(),
+                preferences = get(),
+                environmentPrefix =
+                    if (get(IS_DEBUG)) {
+                        "staging"
+                    } else {
+                        ""
+                    },
+            )
+        }
         factoryOf(::CreateConversationUseCase)
         factoryOf(::DeleteConversationUseCase)
         factoryOf(::GetInfluencerUseCase)
