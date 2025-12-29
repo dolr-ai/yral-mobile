@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.features.auth.ui.LoginBottomSheetConstants.BOTTOM_SHEET_SPACER_PERCENT_TO_SCREEN
+import com.yral.shared.features.auth.ui.SignupViewConstants.DEFAULT_TOP_CONTENT_HEIGHT
+import com.yral.shared.features.auth.ui.SignupViewConstants.DEFAULT_TOP_CONTENT_WIDTH
 import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
@@ -238,8 +240,8 @@ private fun TopIconContent(type: LoginBottomSheetType) {
     val topIconModifier =
         Modifier
             .padding(0.dp)
-            .width(topIconSize?.width ?: 240.dp)
-            .height(topIconSize?.height ?: 86.dp)
+            .width(topIconSize?.width ?: DEFAULT_TOP_CONTENT_WIDTH)
+            .height(topIconSize?.height ?: DEFAULT_TOP_CONTENT_HEIGHT)
     when (type) {
         is LoginBottomSheetType.CONVERSATION ->
             type.influencerAvatarUrl
@@ -258,7 +260,7 @@ private fun TopIconContent(type: LoginBottomSheetType) {
                     contentDescription = "",
                     modifier = topIconModifier,
                 )
-            }
+            } ?: DefaultTopContent()
         }
     }
 }
