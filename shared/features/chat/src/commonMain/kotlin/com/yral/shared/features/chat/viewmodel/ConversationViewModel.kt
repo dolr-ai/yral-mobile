@@ -185,6 +185,19 @@ class ConversationViewModel(
                     }
                 }
         }
+
+        // Observe social sign-in status for gating login prompts
+        viewModelScope.launch {
+            sessionManager
+                .observeSessionPropertyWithDefault(
+                    selector = { it.isSocialSignIn },
+                    defaultValue = false,
+                ).collect { isSocialSignedIn ->
+                    _viewState.update { state ->
+                        state.copy(isSocialSignedIn = isSocialSignedIn)
+                    }
+                }
+        }
     }
 
     @OptIn(ExperimentalTime::class)
@@ -273,6 +286,7 @@ class ConversationViewModel(
 
     private fun resetState() {
         val currentPrincipal = _viewState.value.currentUserPrincipal
+        val isSocialSignedIn = _viewState.value.isSocialSignedIn
         _viewState.update {
             ConversationViewState(
                 isCreating = false,
@@ -285,6 +299,7 @@ class ConversationViewModel(
                 shareMessage = "",
                 shareDescription = "",
                 currentUserPrincipal = currentPrincipal,
+                isSocialSignedIn = isSocialSignedIn,
             )
         }
         _overlay.value = OverlayState()
@@ -568,6 +583,7 @@ data class ConversationViewState(
     val shareMessage: String = "",
     val shareDescription: String = "",
     val currentUserPrincipal: String? = null,
+    val isSocialSignedIn: Boolean = false,
 )
 
 sealed class ConversationMessageItem {

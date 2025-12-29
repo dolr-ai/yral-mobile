@@ -208,8 +208,8 @@ class ChatRemoteDataSource(
             ?: throw YralException("Authorisation not found")
 
     private companion object {
-        private const val INFLUENCERS_PATH = "api/v1/influencers"
-        private const val CONVERSATIONS_PATH = "api/v1/chat/conversations"
+        private const val INFLUENCERS_PATH = "staging/api/v1/influencers"
+        private const val CONVERSATIONS_PATH = "staging/api/v1/chat/conversations"
         private const val MESSAGES_PATH = "messages"
         private const val UPLOAD_PATH = "api/v1/media/upload"
     }

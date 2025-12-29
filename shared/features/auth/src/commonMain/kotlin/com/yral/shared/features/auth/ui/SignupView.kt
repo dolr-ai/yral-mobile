@@ -2,6 +2,7 @@ package com.yral.shared.features.auth.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -58,6 +59,7 @@ fun SignupView(
     disclaimerText: String? = null,
     topIcon: Painter? = null,
     topIconSize: DpSize? = null,
+    topIconContent: (@Composable () -> Unit)? = null,
     authTelemetry: AuthTelemetry = koinInject(),
 ) {
     LaunchedEffect(Unit) { authTelemetry.onSignupViewed(pageName) }
@@ -66,15 +68,25 @@ fun SignupView(
         verticalArrangement = Arrangement.spacedBy(46.dp, Alignment.Top),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Image(
-            painter = topIcon ?: painterResource(Res.drawable.join_yral),
-            contentDescription = "Join Yral",
-            modifier =
-                Modifier
-                    .padding(0.dp)
-                    .width(topIconSize?.width ?: 240.dp)
-                    .height(topIconSize?.height ?: 86.dp),
-        )
+        val topIconModifier =
+            Modifier
+                .padding(0.dp)
+                .width(topIconSize?.width ?: 240.dp)
+                .height(topIconSize?.height ?: 86.dp)
+        if (topIconContent != null) {
+            Box(
+                modifier = topIconModifier,
+                contentAlignment = Alignment.Center,
+            ) {
+                topIconContent()
+            }
+        } else {
+            Image(
+                painter = topIcon ?: painterResource(Res.drawable.join_yral),
+                contentDescription = "Join Yral",
+                modifier = topIconModifier,
+            )
+        }
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(28.dp, Alignment.Top),

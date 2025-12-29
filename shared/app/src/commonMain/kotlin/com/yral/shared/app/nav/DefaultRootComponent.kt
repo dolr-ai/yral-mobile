@@ -293,6 +293,8 @@ class DefaultRootComponent(
             influencerId = config.influencerId,
             onBack = { navigation.pop() },
             openProfile = this::openProfile,
+            showLoginBottomSheet = this::showLoginBottomSheet,
+            hideLoginBottomSheetIfVisible = this::hideLoginBottomSheetIfVisible,
         )
 
     private fun walletComponent(componentContext: ComponentContext): WalletComponent =

@@ -20,8 +20,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
@@ -32,6 +34,8 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.yral.shared.analytics.events.SignupPageName
+import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.chat.attachments.FilePathChatAttachment
 import com.yral.shared.features.chat.domain.models.ChatMessageType
 import com.yral.shared.features.chat.domain.models.ConversationMessageRole
@@ -42,6 +46,7 @@ import com.yral.shared.features.chat.viewmodel.ConversationViewModel
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
+import kotlinx.coroutines.flow.map
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -56,7 +61,7 @@ import yral_mobile.shared.features.chat.generated.resources.no_conversation_id
  * - Shows messages (oldest at top / newest at bottom) using LazyColumn(reverseLayout = true)
  * - Supports sending TEXT and IMAGE messages and retrying failed messages
  */
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 fun ChatConversationScreen(
     modifier: Modifier = Modifier,
@@ -118,6 +123,57 @@ fun ChatConversationScreen(
     // Check if there's a waiting assistant message in overlay
     val hasWaitingAssistant by derivedStateOf {
         overlayItems.any { it.isWaitingAssistant() }
+    }
+
+    val overlayUserCount by derivedStateOf {
+        overlayItems.count { item ->
+            when (item) {
+                is ConversationMessageItem.Local -> item.message.role == ConversationMessageRole.USER
+                is ConversationMessageItem.Remote -> item.message.role == ConversationMessageRole.USER
+            }
+        }
+    }
+    val historyUserCount by produceState(initialValue = 0, historyPagingItems) {
+        snapshotFlow { historyPagingItems.itemSnapshotList.items }
+            .map { items ->
+                items.count { item ->
+                    when (item) {
+                        is ConversationMessageItem.Local -> item.message.role == ConversationMessageRole.USER
+                        is ConversationMessageItem.Remote -> item.message.role == ConversationMessageRole.USER
+                        null -> false
+                    }
+                }
+            }.collect { value = it }
+    }
+    val userMessagesCount = overlayUserCount + historyUserCount
+    val shouldPromptForLogin =
+        !viewState.isSocialSignedIn &&
+            userMessagesCount >= LOGIN_PROMPT_MESSAGE_LIMIT
+    val promptLogin: () -> Unit = {
+        val influencer = viewState.influencer
+        val influencerName = influencer?.displayName ?: ""
+        val influencerAvatarUrl = influencer?.avatarUrl ?: ""
+        component.showLoginBottomSheet(
+            pageName = SignupPageName.CONVERSATION,
+            loginBottomSheetType =
+                LoginBottomSheetType.CONVERSATION(
+                    influencerName = influencerName,
+                    influencerAvatarUrl = influencerAvatarUrl,
+                ),
+            onDismissRequest = { component.hideLoginBottomSheetIfVisible() },
+            onLoginSuccess = { component.hideLoginBottomSheetIfVisible() },
+        )
+    }
+    fun sendMessageIfAllowed(
+        draft: SendMessageDraft,
+        onBeforeSend: () -> Unit = {},
+    ) {
+        if (shouldPromptForLogin) {
+            promptLogin()
+            return
+        }
+        onBeforeSend()
+        viewModel.sendMessage(draft)
     }
 
     Box(
@@ -214,7 +270,7 @@ fun ChatConversationScreen(
                             SuggestionMessagesRow(
                                 suggestions = suggestions,
                                 onSuggestionClick = { suggestion ->
-                                    viewModel.sendMessage(
+                                    sendMessageIfAllowed(
                                         SendMessageDraft(
                                             messageType = ChatMessageType.TEXT,
                                             content = suggestion,
@@ -232,13 +288,14 @@ fun ChatConversationScreen(
                             onSendClick = {
                                 keyboardController?.hide()
                                 val text = input.trim()
-                                input = ""
-                                viewModel.sendMessage(
+                                sendMessageIfAllowed(
                                     SendMessageDraft(
                                         messageType = ChatMessageType.TEXT,
                                         content = text,
                                     ),
-                                )
+                                ) {
+                                    input = ""
+                                }
                             },
                             onCameraClick = imageCaptureLauncher,
                             onGalleryClick = imagePickerLauncher,
@@ -254,8 +311,9 @@ fun ChatConversationScreen(
             ImagePreviewOverlay(
                 imageAttachment = imageAttachment,
                 onSend = { draft ->
-                    viewModel.sendMessage(draft)
-                    selectedImage = null
+                    sendMessageIfAllowed(draft) {
+                        selectedImage = null
+                    }
                 },
                 onDismiss = { selectedImage = null },
                 bottomPadding = bottomPadding,
@@ -265,3 +323,5 @@ fun ChatConversationScreen(
         }
     }
 }
+
+private const val LOGIN_PROMPT_MESSAGE_LIMIT = 1
