@@ -18,6 +18,8 @@ internal class DefaultLeaderboardComponent(
     private val snapshot: Snapshot?,
     private val navigateToHome: () -> Unit,
     private val openProfile: (CanisterData) -> Unit,
+    override val showBackIcon: Boolean,
+    override val onBack: () -> Unit,
 ) : LeaderboardComponent(),
     ComponentContext by componentContext,
     KoinComponent {
@@ -78,6 +80,8 @@ internal class DefaultLeaderboardComponent(
             onDailyHistoryClicked = { navigation.pushNew(Config.Details) },
             navigateToHome = navigateToHome,
             openProfile = openProfile,
+            showBackIcon = showBackIcon,
+            onBack = onBack,
         )
 
     private fun detailsComponent(componentContext: ComponentContext): LeaderboardDetailsComponent =

@@ -22,11 +22,15 @@ import com.yral.shared.app.ui.screens.home.nav.HomeComponent
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
+import com.yral.shared.features.chat.nav.conversation.ConversationComponent
+import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.tournament.nav.TournamentGameComponent
+import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.libs.routing.routes.api.AppRoute
+import com.yral.shared.libs.routing.routes.api.Profile
 import com.yral.shared.libs.routing.routes.api.UserProfileRoute
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
@@ -92,6 +96,9 @@ class DefaultRootComponent(
                         config.totalPrizePool,
                     ),
                 )
+            is Config.Conversation -> RootComponent.Child.Conversation(conversationComponent(componentContext, config))
+            is Config.Wallet -> RootComponent.Child.Wallet(walletComponent(componentContext))
+            is Config.Leaderboard -> RootComponent.Child.Leaderboard(leaderboardComponent(componentContext))
         }
 
     private val slotNavigation = SlotNavigation<SlotConfig>()
@@ -118,6 +125,9 @@ class DefaultRootComponent(
                 openProfile = this::openProfile,
                 openTournamentLeaderboard = this::openTournamentLeaderboard,
                 openTournamentGame = this::openTournamentGame,
+                openConversation = this::openConversation,
+                openWallet = this::openWallet,
+                openLeaderboard = this::openLeaderboard,
                 showAlertsOnDialog = { this.showSlot(SlotConfig.AlertsRequestBottomSheet(it)) },
                 showLoginBottomSheet = this::showLoginBottomSheet,
                 hideLoginBottomSheetIfVisible = this::hideLoginBottomSheetIfVisible,
@@ -195,9 +205,9 @@ class DefaultRootComponent(
         val currentUser = sessionManager.userPrincipal
         if (!currentUser.isNullOrBlank() && currentUser == appRoute.userPrincipalId) {
             // Navigate to Profile tab inside Home to keep bottom nav visible
-            homeComponent?.onNavigationRequest(com.yral.shared.libs.routing.routes.api.Profile)
+            homeComponent?.onNavigationRequest(Profile)
                 ?: run {
-                    pendingNavRoute = com.yral.shared.libs.routing.routes.api.Profile
+                    pendingNavRoute = Profile
                     navigation.replaceAll(Config.Home)
                 }
             return
@@ -261,6 +271,50 @@ class DefaultRootComponent(
             ),
         )
     }
+
+    override fun openConversation(influencerId: String) {
+        navigation.pushToFront(Config.Conversation(influencerId))
+    }
+
+    override fun openWallet() {
+        navigation.pushToFront(Config.Wallet)
+    }
+
+    override fun openLeaderboard() {
+        navigation.pushToFront(Config.Leaderboard)
+    }
+
+    private fun conversationComponent(
+        componentContext: ComponentContext,
+        config: Config.Conversation,
+    ): ConversationComponent =
+        ConversationComponent.Companion(
+            componentContext = componentContext,
+            influencerId = config.influencerId,
+            onBack = { navigation.pop() },
+            openProfile = this::openProfile,
+        )
+
+    private fun walletComponent(componentContext: ComponentContext): WalletComponent =
+        WalletComponent(
+            componentContext = componentContext,
+            showAlertsOnDialog = { this.showSlot(SlotConfig.AlertsRequestBottomSheet(it)) },
+            showBackIcon = true,
+            onBack = { navigation.pop() },
+        )
+
+    private fun leaderboardComponent(componentContext: ComponentContext): LeaderboardComponent =
+        LeaderboardComponent.Companion(
+            componentContext = componentContext,
+            snapshot = null,
+            navigateToHome = {
+                navigation.pop()
+                homeComponent?.onFeedTabClick()
+            },
+            openProfile = this::openProfile,
+            showBackIcon = true,
+            onBack = { navigation.pop() },
+        )
 
     override fun showLoginBottomSheet(
         pageName: SignupPageName,
@@ -390,6 +444,17 @@ class DefaultRootComponent(
             val endEpochMs: Long,
             val totalPrizePool: Int,
         ) : Config
+
+        @Serializable
+        data class Conversation(
+            val influencerId: String,
+        ) : Config
+
+        @Serializable
+        data object Wallet : Config
+
+        @Serializable
+        data object Leaderboard : Config
     }
 
     @Serializable

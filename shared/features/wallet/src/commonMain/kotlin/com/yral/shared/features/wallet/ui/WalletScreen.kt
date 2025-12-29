@@ -3,6 +3,7 @@ package com.yral.shared.features.wallet.ui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -63,13 +65,14 @@ import yral_mobile.shared.features.wallet.generated.resources.how_to_earn_bitcoi
 import yral_mobile.shared.features.wallet.generated.resources.how_to_earn_bitcoins
 import yral_mobile.shared.features.wallet.generated.resources.ic_rupee
 import yral_mobile.shared.features.wallet.generated.resources.my_wallet
+import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.coins
 import yral_mobile.shared.libs.designsystem.generated.resources.current_balance
 import yral_mobile.shared.libs.designsystem.generated.resources.n_engaged_views
 import yral_mobile.shared.libs.designsystem.generated.resources.yral
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
-@Suppress("UnusedParameter", "LongMethod")
+@Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WalletScreen(
@@ -85,7 +88,7 @@ fun WalletScreen(
     }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     Column(modifier = modifier.fillMaxSize()) {
-        WalletHeader()
+        WalletHeader(component = component)
         Spacer(modifier = Modifier.height(4.dp))
         state.accountInfo?.let { info ->
             // Defaults since login not required on wallet
@@ -137,12 +140,23 @@ fun WalletScreen(
 }
 
 @Composable
-private fun WalletHeader() {
+private fun WalletHeader(component: WalletComponent) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(16.dp),
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (component.showBackIcon) {
+            Icon(
+                painter = painterResource(DesignRes.drawable.arrow_left),
+                contentDescription = "back",
+                tint = Color.White,
+                modifier =
+                    Modifier
+                        .size(24.dp)
+                        .clickable { component.onBack() },
+            )
+        }
         Text(
             text = stringResource(Res.string.my_wallet),
             style = LocalAppTopography.current.xlBold,
@@ -369,7 +383,6 @@ private fun Double.toCurrencyString(currencyCode: String) =
             maximumFractionDigits = 2,
         )
 
-@Suppress("LongMethod", "UnusedParameter")
 @Composable
 private fun HowToEarnBitcoinSheet(config: BtcRewardConfig) {
     val rewardViews = formatAbbreviation(config.viewMileStone, 0)

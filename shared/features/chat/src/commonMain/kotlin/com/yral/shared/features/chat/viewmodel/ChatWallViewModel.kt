@@ -8,16 +8,21 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.shared.core.session.SessionManager
+import com.yral.shared.core.session.SessionState
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.InfluencersPagingSource
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -25,23 +30,37 @@ class ChatWallViewModel(
     private val chatRepository: ChatRepository,
     private val useCaseFailureListener: UseCaseFailureListener,
     private val getInfluencerUseCase: GetInfluencerUseCase,
+    private val sessionManager: SessionManager,
 ) : ViewModel() {
     private val _state = MutableStateFlow(ChatWallState())
     val state: StateFlow<ChatWallState> = _state.asStateFlow()
 
     private var loadInfluencerJob: Job? = null
 
+    private val pagingConfig =
+        PagingConfig(
+            pageSize = PAGE_SIZE,
+            initialLoadSize = PAGE_SIZE,
+            prefetchDistance = PREFETCH_DISTANCE,
+            enablePlaceholders = false,
+        )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     val influencers: Flow<PagingData<Influencer>> =
-        Pager(
-            config =
-                PagingConfig(
-                    pageSize = PAGE_SIZE,
-                    initialLoadSize = PAGE_SIZE,
-                    prefetchDistance = PREFETCH_DISTANCE,
-                    enablePlaceholders = false,
-                ),
-            pagingSourceFactory = { InfluencersPagingSource(chatRepository, useCaseFailureListener) },
-        ).flow.cachedIn(viewModelScope)
+        sessionManager
+            .observeSessionState { sessionState ->
+                when (sessionState) {
+                    is SessionState.SignedIn -> sessionState.session.userPrincipal
+                    else -> null
+                }
+            }.distinctUntilChanged()
+            .flatMapLatest {
+                // Create a new Pager when user principal changes to refresh influencers
+                Pager(
+                    config = pagingConfig,
+                    pagingSourceFactory = { InfluencersPagingSource(chatRepository, useCaseFailureListener) },
+                ).flow
+            }.cachedIn(viewModelScope)
 
     fun selectInfluencer(influencerId: String) {
         loadInfluencerJob?.cancel()

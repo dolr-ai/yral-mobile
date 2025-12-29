@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.yral.shared.features.chat.domain.models.Influencer
+import com.yral.shared.features.chat.domain.models.InfluencerStatus
 import com.yral.shared.features.chat.nav.wall.ChatWallComponent
 import com.yral.shared.features.chat.viewmodel.ChatWallViewModel
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
@@ -51,7 +52,7 @@ fun ChatWallScreen(
             modifier
                 .fillMaxSize()
                 .background(Color.Black)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp),
     ) {
         Text(
             text = stringResource(Res.string.chat_wall_title),
@@ -176,7 +177,7 @@ private fun InfluencerCard(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
-            if (influencer.isActive == "coming_soon") {
+            if (influencer.status == InfluencerStatus.COMING_SOON) {
                 Text(
                     text = stringResource(Res.string.chat_wall_coming_soon),
                     style = LocalAppTopography.current.smMedium,
