@@ -104,8 +104,40 @@ class TournamentViewModel(
                     defaultValue = false,
                 ).collect { isSocialSignIn ->
                     _state.update { it.copy(isLoggedIn = isSocialSignIn) }
+
+                    if (isSocialSignIn) {
+                        processPendingTournamentRegistration()
+                    }
                 }
         }
+    }
+
+    private fun processPendingTournamentRegistration() {
+        viewModelScope.launch {
+            // Wait for tournaments to load and balance to be fetched
+            repeat(MAX_PENDING_TOURNAMENT_RETRIES) {
+                val pendingTournamentId =
+                    sessionManager.consumePendingTournamentRegistrationId() ?: return@launch
+
+                val pendingTournament = _state.value.tournaments.find { it.id == pendingTournamentId }
+                val balanceLoaded = sessionManager.isCoinBalanceLoaded()
+
+                if (pendingTournament != null && balanceLoaded) {
+                    onTournamentCtaClick(pendingTournament)
+                    return@launch
+                }
+                // Tournament not found or balance not loaded yet, put the ID back and wait
+                sessionManager.setPendingTournamentRegistrationId(pendingTournamentId)
+                delay(PENDING_TOURNAMENT_RETRY_DELAY_MS)
+            }
+            // After retries, clear pending to avoid stuck state
+            sessionManager.consumePendingTournamentRegistrationId()
+        }
+    }
+
+    companion object {
+        private const val MAX_PENDING_TOURNAMENT_RETRIES = 10
+        private const val PENDING_TOURNAMENT_RETRY_DELAY_MS = 500L
     }
 
     fun loadTournaments() {
@@ -201,11 +233,7 @@ class TournamentViewModel(
     }
 
     fun registerForTournament(tournament: Tournament) {
-        val principalId = sessionManager.userPrincipal
-        if (principalId.isNullOrEmpty()) {
-            send(Event.Login)
-            return
-        }
+        val principalId = sessionManager.userPrincipal ?: return
         if (_state.value.isRegistering) {
             return
         }
@@ -292,6 +320,8 @@ class TournamentViewModel(
 
     fun onTournamentCtaClick(tournament: Tournament) {
         if (!_state.value.isLoggedIn) {
+            // Store tournament ID in SessionManager (survives ViewModel recreation)
+            sessionManager.setPendingTournamentRegistrationId(tournament.id)
             send(Event.Login)
             return
         }

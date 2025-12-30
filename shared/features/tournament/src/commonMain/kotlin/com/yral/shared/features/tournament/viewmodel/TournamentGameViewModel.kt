@@ -94,15 +94,18 @@ class TournamentGameViewModel(
                 _state.update {
                     val updatedResults = it.voteResults.toMutableMap()
                     updatedResults[feedDetails.videoID] = resolvedResult
+                    val updatedPendingDiamonds = it.pendingDiamondUpdates.toMutableMap()
+                    updatedPendingDiamonds[feedDetails.videoID] = result.diamonds
                     it.copy(
                         isLoading = false,
-                        diamonds = result.diamonds,
+                        // Don't update diamonds here - wait for animation to complete
                         position = result.position,
                         wins = result.tournamentWins,
                         losses = result.tournamentLosses,
                         lastVoteOutcome = result.outcome,
                         lastDiamondDelta = diamondDelta,
                         voteResults = updatedResults,
+                        pendingDiamondUpdates = updatedPendingDiamonds,
                         lastVotedCount = it.lastVotedCount + 1,
                     )
                 }
@@ -128,7 +131,15 @@ class TournamentGameViewModel(
             if (it.shownCoinDeltaAnimations.contains(videoId)) {
                 it
             } else {
-                it.copy(shownCoinDeltaAnimations = it.shownCoinDeltaAnimations + videoId)
+                // Apply pending diamond update when animation completes
+                val pendingDiamonds = it.pendingDiamondUpdates[videoId]
+                val updatedPending = it.pendingDiamondUpdates.toMutableMap()
+                updatedPending.remove(videoId)
+                it.copy(
+                    shownCoinDeltaAnimations = it.shownCoinDeltaAnimations + videoId,
+                    diamonds = pendingDiamonds ?: it.diamonds,
+                    pendingDiamondUpdates = updatedPending,
+                )
             }
         }
     }
@@ -160,6 +171,7 @@ data class TournamentGameState(
     val lastDiamondDelta: Int = 0,
     val voteResults: Map<String, VoteResult> = emptyMap(),
     val shownCoinDeltaAnimations: Set<String> = emptySet(),
+    val pendingDiamondUpdates: Map<String, Int> = emptyMap(),
     val lastVotedCount: Int = 1,
     val noDiamondsError: Boolean = false,
     val tournamentEndedError: Boolean = false,

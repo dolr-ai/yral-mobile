@@ -67,7 +67,10 @@ class SessionManager {
 
     fun updateState(state: SessionState) {
         mutableState.update { state }
-        mutableProperties.update { SessionProperties() }
+        mutableProperties.update {
+            // Preserve pending tournament registration across session changes
+            SessionProperties(pendingTournamentRegistrationId = it.pendingTournamentRegistrationId)
+        }
     }
 
     fun updateCoinBalance(newBalance: Long) {
@@ -132,6 +135,18 @@ class SessionManager {
         mutableProperties.update { it.copy(dailyRank = dailyRank) }
     }
 
+    fun setPendingTournamentRegistrationId(tournamentId: String?) {
+        mutableProperties.update { it.copy(pendingTournamentRegistrationId = tournamentId) }
+    }
+
+    fun consumePendingTournamentRegistrationId(): String? {
+        val pending = mutableProperties.value.pendingTournamentRegistrationId
+        if (pending != null) {
+            mutableProperties.update { it.copy(pendingTournamentRegistrationId = null) }
+        }
+        return pending
+    }
+
     fun addPrincipalToFollow(principal: String) {
         mutableProperties.update {
             it.copy(
@@ -177,12 +192,16 @@ class SessionManager {
         .map { selector(it) ?: defaultValue }
         .first()
 
+    fun isCoinBalanceLoaded(): Boolean = mutableProperties.value.coinBalance != null
+
     fun resetSessionProperties() {
         mutableProperties.update {
             SessionProperties(
                 coinBalance = 0,
                 profileVideosCount = 0,
                 isSocialSignIn = false,
+                // Preserve pending tournament registration across session resets
+                pendingTournamentRegistrationId = it.pendingTournamentRegistrationId,
             )
         }
     }

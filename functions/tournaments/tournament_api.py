@@ -77,8 +77,10 @@ def _push_delta_yral_token(token: str, principal_id: str, delta: int) -> tuple[b
         Tuple of (success, error_message)
     """
     url = f"{BALANCE_URL_YRAL_TOKEN}{principal_id}"
+    # API expects Bearer prefix if not already present
+    auth_value = token if token.startswith("Bearer ") else f"Bearer {token}"
     headers = {
-        "Authorization": token,
+        "Authorization": auth_value,
         "Content-Type": "application/json",
     }
     body = {
@@ -450,7 +452,10 @@ def tournament_status(request: Request):
         if not snap:
             return error_response(404, "TOURNAMENT_NOT_FOUND", f"Tournament {tournament_id} not found")
 
-        status = t_data.get("status")
+        # Compute status dynamically based on current time vs epochs
+        start_epoch_ms = t_data.get("start_epoch_ms", 0)
+        end_epoch_ms = t_data.get("end_epoch_ms", 0)
+        status = _compute_status(start_epoch_ms, end_epoch_ms)
         participant_count = _get_participant_count(tournament_id)
 
         response = {
@@ -461,7 +466,6 @@ def tournament_status(request: Request):
 
         # Add time_left_ms only for LIVE tournaments
         if status == TournamentStatus.LIVE.value:
-            end_epoch_ms = t_data.get("end_epoch_ms", 0)
             response["time_left_ms"] = _time_left_ms(end_epoch_ms)
 
         return jsonify(response), 200
@@ -948,7 +952,10 @@ def tournament_leaderboard(request: Request):
         if not snap:
             return error_response(404, "TOURNAMENT_NOT_FOUND", f"Tournament {tournament_id} not found")
 
-        status = t_data.get("status")
+        # Compute status dynamically based on current time vs epochs
+        start_epoch_ms = t_data.get("start_epoch_ms", 0)
+        end_epoch_ms = t_data.get("end_epoch_ms", 0)
+        status = _compute_status(start_epoch_ms, end_epoch_ms)
         prize_map = t_data.get("prizeMap", {})
 
         # Allow leaderboard viewing after ENDED or SETTLED
@@ -959,15 +966,21 @@ def tournament_leaderboard(request: Request):
         # Get top rows
         top_rows = _compute_tournament_leaderboard(tournament_id, limit=10)
 
+        # Get user row (before filtering top_rows)
+        user_row = _get_user_tournament_position(tournament_id, principal_id, top_rows)
+
+        # Remove current user from top_rows (they're shown separately in user_row)
+        top_rows = [row for row in top_rows if row["principal_id"] != principal_id]
+
         # Add prizes to top rows
         for row in top_rows:
             position = str(row["position"])
             row["prize"] = prize_map.get(position)
-
-        # Get user row
-        user_row = _get_user_tournament_position(tournament_id, principal_id, top_rows)
         user_position = str(user_row.get("position", 0))
         user_row["prize"] = prize_map.get(user_position) if user_position != "0" else None
+
+        # Get actual participant count from registered users
+        participant_count = _get_participant_count(tournament_id)
 
         return jsonify({
             "tournament_id": tournament_id,
@@ -975,7 +988,7 @@ def tournament_leaderboard(request: Request):
             "top_rows": top_rows,
             "user_row": user_row,
             "prize_map": prize_map,
-            "participant_count": t_data.get("participant_count", 0),
+            "participant_count": participant_count,
             "date": t_data.get("date", ""),
             "start_epoch_ms": t_data.get("start_epoch_ms", 0),
             "end_epoch_ms": t_data.get("end_epoch_ms", 0),
