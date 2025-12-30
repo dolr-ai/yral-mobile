@@ -15,6 +15,7 @@ interface TournamentComponent {
                 tournamentId: String,
                 title: String,
                 initialDiamonds: Int,
+                startEpochMs: Long,
                 endEpochMs: Long,
                 totalPrizePool: Int,
             ) -> Unit,
@@ -38,6 +39,7 @@ internal class DefaultTournamentComponent(
         tournamentId: String,
         title: String,
         initialDiamonds: Int,
+        startEpochMs: Long,
         endEpochMs: Long,
         totalPrizePool: Int,
     ) -> Unit,
@@ -54,6 +56,7 @@ internal class DefaultTournamentComponent(
                     value.tournamentId,
                     value.title,
                     value.initialDiamonds,
+                    value.startEpochMs,
                     value.endEpochMs,
                     value.totalPrizePool,
                 )

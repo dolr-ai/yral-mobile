@@ -71,6 +71,7 @@ fun TournamentHowToPlayScreen(
     modifier: Modifier = Modifier,
     startingDiamonds: Int,
     playType: PlayType = PlayType.START,
+    tournamentDurationMinutes: Int,
 ) {
     Box(
         modifier =
@@ -168,7 +169,7 @@ fun TournamentHowToPlayScreen(
             Text(
                 text =
                     listOf(
-                        stringResource(Res.string.each_tournament_line_one),
+                        stringResource(Res.string.each_tournament_line_one, tournamentDurationMinutes),
                         stringResource(Res.string.each_tournament_line_two),
                     ).joinToString("\n"),
                 style = LocalAppTopography.current.mdSemiBold,
@@ -300,6 +301,11 @@ private fun buildPickEmojiBody(): AnnotatedString {
 @Composable
 private fun TournamentHowToPlayScreenPreview() {
     CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
-        TournamentHowToPlayScreen(title = "THE SMILY SHOWDOWN", onStartPlaying = {}, startingDiamonds = 100)
+        TournamentHowToPlayScreen(
+            title = "THE SMILY SHOWDOWN",
+            onStartPlaying = {},
+            startingDiamonds = 100,
+            tournamentDurationMinutes = 5,
+        )
     }
 }
