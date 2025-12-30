@@ -15,6 +15,11 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencerStatus
@@ -46,6 +52,15 @@ fun ChatWallScreen(
     modifier: Modifier = Modifier,
 ) {
     val influencers = viewModel.influencers.collectAsLazyPagingItems()
+    var trackedCardsViewed by remember { mutableStateOf(false) }
+
+    LaunchedEffect(influencers.loadState.refresh, influencers.itemSnapshotList.items.size) {
+        val items = influencers.itemSnapshotList.items.filterNotNull()
+        if (!trackedCardsViewed && influencers.loadState.refresh is LoadState.NotLoading) {
+            trackedCardsViewed = true
+            viewModel.trackInfluencerCardsViewed(items)
+        }
+    }
 
     Column(
         modifier =

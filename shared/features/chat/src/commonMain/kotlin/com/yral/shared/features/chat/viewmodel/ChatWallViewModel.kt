@@ -58,6 +58,13 @@ class ChatWallViewModel(
         }
     }
 
+    fun trackInfluencerCardsViewed(influencers: List<Influencer>) {
+        chatTelemetry.influencerCardsViewed(
+            influencersShown = influencers.map { it.category },
+            totalCards = influencers.size,
+        )
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val influencers: Flow<PagingData<Influencer>> =
         sessionManager
