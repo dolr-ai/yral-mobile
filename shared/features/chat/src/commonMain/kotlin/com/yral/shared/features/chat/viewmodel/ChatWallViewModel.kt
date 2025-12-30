@@ -49,17 +49,6 @@ class ChatWallViewModel(
             enablePlaceholders = false,
         )
 
-    init {
-        viewModelScope.launch {
-            val isLoggedIn =
-                sessionManager.readLatestSessionPropertyWithDefault(
-                    selector = { props -> props.isSocialSignIn },
-                    defaultValue = false,
-                )
-            chatTelemetry.chatTabViewed(isLoggedIn)
-        }
-    }
-
     fun trackInfluencerCardsViewed(influencers: List<Influencer>) {
         chatTelemetry.influencerCardsViewed(
             influencersShown = influencers.map { it.category },
