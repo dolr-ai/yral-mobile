@@ -151,33 +151,33 @@ private fun getHeaderText(
     when (type) {
         LoginBottomSheetType.FEED -> {
             val fullText = stringResource(Res.string.login_to_get_25_tokens, initialBalanceReward)
-            getAnnotatedHeader(fullText)
+            getAnnotatedHeaderForLogin(fullText)
         }
         LoginBottomSheetType.UPLOAD_AI_VIDEO -> {
             val fullText = stringResource(Res.string.upload_ai_videos_earn_bitcoin)
             val maskedText = fullText.substringAfter(".")
-            getAnnotatedHeader(fullText, maskedText)
+            getAnnotatedHeaderForLogin(fullText, maskedText)
         }
         LoginBottomSheetType.CREATE_AI_VIDEO -> {
             val fullText = stringResource(Res.string.create_ai_videos_earn_bitcoin)
             val maskedText = fullText.substringAfter(".")
-            getAnnotatedHeader(fullText, maskedText)
+            getAnnotatedHeaderForLogin(fullText, maskedText)
         }
         LoginBottomSheetType.TOURNAMENT -> {
             val fullText = stringResource(Res.string.login_to_join_tournament)
             val maskedText = stringResource(Res.string.join_tournament)
-            getAnnotatedHeader(fullText, maskedText)
+            getAnnotatedHeaderForLogin(fullText, maskedText)
         }
         is LoginBottomSheetType.CONVERSATION -> {
             val name = type.influencerName
             val fullText = stringResource(Res.string.login_to_chat_with_influencer, name)
-            getAnnotatedHeader(fullText)
+            getAnnotatedHeaderForLogin(fullText)
         }
-        else -> getAnnotatedHeader(stringResource(Res.string.continue_to_sign_up_for_free))
+        else -> getAnnotatedHeaderForLogin(stringResource(Res.string.continue_to_sign_up_for_free))
     }
 
 @Composable
-private fun getAnnotatedHeader(
+fun getAnnotatedHeaderForLogin(
     fullText: String,
     maskedText: String = "",
 ) = buildAnnotatedString {

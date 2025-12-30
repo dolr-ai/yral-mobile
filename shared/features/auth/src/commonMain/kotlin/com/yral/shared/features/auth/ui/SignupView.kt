@@ -92,6 +92,7 @@ fun SignupView(
                         style = LocalAppTopography.current.xlSemiBold,
                         color = Color.White,
                     )
+                if (disclaimerText?.isEmpty() == true) return@Column
                 Text(
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,

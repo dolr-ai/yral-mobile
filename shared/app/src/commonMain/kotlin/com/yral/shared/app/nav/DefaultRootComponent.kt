@@ -100,6 +100,7 @@ class DefaultRootComponent(
             is Config.Conversation -> RootComponent.Child.Conversation(conversationComponent(componentContext, config))
             is Config.Wallet -> RootComponent.Child.Wallet(walletComponent(componentContext))
             is Config.Leaderboard -> RootComponent.Child.Leaderboard(leaderboardComponent(componentContext))
+            is Config.MandatoryLogin -> RootComponent.Child.MandatoryLogin
         }
 
     private val slotNavigation = SlotNavigation<SlotConfig>()
@@ -171,16 +172,27 @@ class DefaultRootComponent(
         navigation.pop()
     }
 
-    override fun setSplashActive(active: Boolean) {
-        if (active == isSplashActive()) return
-        val config = if (active) Config.Splash else Config.Home
-        navigation.replaceAll(config)
-    }
-
     override fun isSplashActive(): Boolean = stack.active.instance is RootComponent.Child.Splash
 
+    override fun isLoginActive(): Boolean = stack.active.instance is RootComponent.Child.MandatoryLogin
+
+    override fun navigateToSplash() {
+        if (stack.active.instance is RootComponent.Child.Splash) return
+        navigation.replaceAll(Config.Splash)
+    }
+
+    override fun navigateToMandatoryLogin() {
+        if (stack.active.instance is RootComponent.Child.MandatoryLogin) return
+        navigation.replaceAll(Config.MandatoryLogin)
+    }
+
+    override fun navigateToHome() {
+        if (stack.active.instance is RootComponent.Child.Home) return
+        navigation.replaceAll(Config.Home)
+    }
+
     override fun onNavigationRequest(appRoute: AppRoute) {
-        if (isSplashActive()) {
+        if (isSplashActive() || isLoginActive()) {
             pendingNavRoute = appRoute
             return
         }
@@ -468,6 +480,9 @@ class DefaultRootComponent(
 
         @Serializable
         data object Leaderboard : Config
+
+        @Serializable
+        data object MandatoryLogin : Config
     }
 
     @Serializable

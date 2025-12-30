@@ -2,6 +2,7 @@ package com.yral.shared.features.root.viewmodels
 
 import androidx.lifecycle.ViewModel
 import co.touchlab.kermit.Logger
+import com.yral.featureflag.AppFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.FeedFeatureFlags
 import com.yral.shared.analytics.AnalyticsUtmParams
@@ -11,12 +12,14 @@ import com.yral.shared.analytics.events.TokenType
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
+import com.yral.shared.core.session.hasSameUserPrincipal
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.YralAuthException
 import com.yral.shared.features.auth.YralFBAuthException
 import com.yral.shared.features.root.analytics.RootTelemetry
+import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
@@ -34,10 +37,17 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
 enum class RootError {
     TIMEOUT,
+}
+
+sealed interface NavigationTarget {
+    data object Splash : NavigationTarget
+    data object Home : NavigationTarget
+    data object MandatoryLogin : NavigationTarget
 }
 
 @OptIn(ExperimentalTime::class)
@@ -94,6 +104,7 @@ class RootViewModel(
         }
 
     private var initialisationJob: Job? = null
+    private var firebaseJob: Job? = null
 
     init {
         coroutineScope.launch {
@@ -101,38 +112,24 @@ class RootViewModel(
                 .observeSessionState(transform = { it })
                 .collect { sessionState ->
                     if (sessionState != _state.value.sessionState) {
-                        _state.update { it.copy(sessionState = sessionState) }
+                        // session may be updated with user profile details while principal remains same
+                        val isSessionPrincipalSame = sessionState.hasSameUserPrincipal(_state.value.sessionState)
+                        _state.update {
+                            it.copy(
+                                sessionState = sessionState,
+                                isPendingLogin =
+                                    if (isSessionPrincipalSame) {
+                                        it.isPendingLogin
+                                    } else {
+                                        UiState.InProgress()
+                                    },
+                            )
+                        }
                         when (sessionState) {
                             is SessionState.Initial -> initialize()
-                            is SessionState.SignedIn -> initialize()
+                            is SessionState.SignedIn -> initialize(isSessionPrincipalSame)
                             else -> Unit
                         }
-                    }
-                }
-        }
-        coroutineScope.launch {
-            var firebaseJob: Job? = null
-            sessionManager
-                .observeSessionStateWithProperty { state, properties ->
-                    (state as? SessionState.SignedIn)?.session to properties.isFirebaseLoggedIn
-                }.collect { (session, isAuthenticated) ->
-                    if (session != null && !isAuthenticated) {
-                        firebaseJob?.cancel()
-                        firebaseJob =
-                            coroutineScope.launch {
-                                try {
-                                    authClient.fetchBalance(session)
-                                    authClient.authorizeFirebase(session)
-                                } catch (e: YralFBAuthException) {
-                                    // Do not update error in state since no error message required
-                                    Logger.e("Firebase Auth error - $e")
-                                    crashlyticsManager.recordException(e, ExceptionType.AUTH)
-                                } catch (e: YralAuthException) {
-                                    // can be triggered in postFirebaseLogin when getting balance
-                                    Logger.e("Fetch Balance error - $e")
-                                    crashlyticsManager.recordException(e, ExceptionType.AUTH)
-                                }
-                            }
                     }
                 }
         }
@@ -148,14 +145,14 @@ class RootViewModel(
         }
     }
 
-    fun initialize() {
+    fun initialize(isSessionPrincipalSame: Boolean = false) {
         initialisationJob?.cancel()
         initialisationJob =
             coroutineScope.launch {
                 _state.update { it.copy(error = null) }
                 try {
                     withTimeout(splashScreenTimeout) {
-                        checkLoginAndInitialize()
+                        checkLoginAndInitialize(isSessionPrincipalSame)
                     }
                 } catch (e: TimeoutCancellationException) {
                     _state.update { it.copy(error = RootError.TIMEOUT) }
@@ -174,10 +171,9 @@ class RootViewModel(
             }
     }
 
-    private suspend fun checkLoginAndInitialize() {
+    private suspend fun checkLoginAndInitialize(isSessionPrincipalSame: Boolean) {
         delay(initialDelayForSetup)
         sessionManager.identity?.let {
-            _state.update { it.copy(showSplash = false) }
             sessionManager.updateIsForcedGamePlayUser(
                 isForcedGamePlayUser = flagManager.isEnabled(FeedFeatureFlags.SmileyGame.StopAndVoteNudge),
             )
@@ -187,7 +183,70 @@ class RootViewModel(
             sessionManager.updateSocialSignInStatus(
                 isSocialSignIn = preferences.getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false,
             )
+            if (!isSessionPrincipalSame) {
+                resolveNavigationTarget()
+                initializeFirebase()
+            }
         } ?: authClient.initialize()
+    }
+
+    private suspend fun initializeFirebase() {
+        val isFirebaseAuthenticated =
+            sessionManager.readLatestSessionPropertyWithDefault(
+                selector = { it.isFirebaseLoggedIn },
+                defaultValue = false,
+            )
+        if (isFirebaseAuthenticated || isPendingLogin()) return
+        firebaseJob?.cancel()
+        val session = (_state.value.sessionState as? SessionState.SignedIn)?.session ?: return
+        firebaseJob =
+            coroutineScope.launch {
+                try {
+                    authClient.fetchBalance(session)
+                    authClient.authorizeFirebase(session)
+                } catch (e: YralFBAuthException) {
+                    // Do not update error in state since no error message required
+                    Logger.e("Firebase Auth error - $e")
+                    crashlyticsManager.recordException(e, ExceptionType.AUTH)
+                } catch (e: YralAuthException) {
+                    // can be triggered in postFirebaseLogin when getting balance
+                    Logger.e("Fetch Balance error - $e")
+                    crashlyticsManager.recordException(e, ExceptionType.AUTH)
+                }
+            }
+    }
+
+    private suspend fun resolveNavigationTarget() {
+        // Wait for remote config and check MandatoryLogin flag
+        val isSocialSignedIn = preferences.getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false
+        val remoteConfigReady = flagManager.awaitRemoteFetch(5.seconds)
+        val navigationTarget =
+            if (remoteConfigReady) {
+                val isMandatoryLoginEnabled = flagManager.isEnabled(AppFeatureFlags.Common.MandatoryLogin)
+                if (isMandatoryLoginEnabled) {
+                    if (!isSocialSignedIn) {
+                        NavigationTarget.MandatoryLogin to true
+                    } else {
+                        NavigationTarget.Home to false
+                    }
+                } else {
+                    NavigationTarget.Home to false
+                }
+            } else {
+                // On timeout, default to Home
+                NavigationTarget.Home to false
+            }
+        _state.update {
+            if (it.navigationTarget != navigationTarget) {
+                it.copy(
+                    navigationTarget = navigationTarget.first,
+                    isLoginMandatory = navigationTarget.second,
+                    isPendingLogin = UiState.Success(navigationTarget.second && !isSocialSignedIn),
+                )
+            } else {
+                it
+            }
+        }
     }
 
     fun onSplashAnimationComplete() {
@@ -214,11 +273,18 @@ class RootViewModel(
             term = term,
             content = content,
         )
+
+    fun isPendingLogin(): Boolean =
+        with(_state.value) {
+            isPendingLogin !is UiState.Success || isPendingLogin.data
+        }
 }
 
 data class RootState(
-    val showSplash: Boolean = true,
     val initialAnimationComplete: Boolean = false,
     val sessionState: SessionState = SessionState.Loading,
     val error: RootError? = null,
+    val navigationTarget: NavigationTarget = NavigationTarget.Splash,
+    val isLoginMandatory: Boolean = false,
+    val isPendingLogin: UiState<Boolean> = UiState.Initial,
 )
