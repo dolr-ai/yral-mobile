@@ -1584,24 +1584,6 @@ data class AIMessageDeliveredEventData(
 }
 
 @Serializable
-data class InfluencerChattedEventData(
-    @SerialName("event") override val event: String = FeatureEvents.INFLUENCER_CHATTED.getEventName(),
-    @SerialName("feature_name") override val featureName: String = Features.AI_CHATBOT.getFeatureName(),
-    @SerialName("influencer_id") val influencerId: String,
-    @SerialName("influencer_type") val influencerType: String,
-    @SerialName("date") val date: String,
-) : BaseEventData(),
-    EventData {
-    constructor(influencerId: String, influencerType: String, date: String) : this(
-        FeatureEvents.INFLUENCER_CHATTED.getEventName(),
-        Features.AI_CHATBOT.getFeatureName(),
-        influencerId,
-        influencerType,
-        date,
-    )
-}
-
-@Serializable
 data class LeaderBoardPageViewedEventData(
     @SerialName("event") override val event: String = FeatureEvents.LEADERBOARD_PAGE_VIEWED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.LEADERBOARD.getFeatureName(),

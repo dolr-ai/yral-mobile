@@ -195,6 +195,30 @@ class ConversationViewModel(
             _overlay.value = OverlayState()
         }
 
+        // Merge incoming influencer with any existing data to preserve category from the wall
+        val existingInfluencer = _viewState.value.influencer
+        val resolvedInfluencer =
+            when {
+                influencer == null -> existingInfluencer
+                existingInfluencer == null -> influencer
+                else ->
+                    influencer.copy(
+                        category = influencer.category.ifBlank { existingInfluencer.category },
+                        displayName =
+                            influencer.displayName.ifBlank {
+                                existingInfluencer.displayName
+                            },
+                        name = influencer.name.ifBlank { existingInfluencer.name },
+                        avatarUrl = influencer.avatarUrl.ifBlank { existingInfluencer.avatarUrl },
+                        suggestedMessages =
+                            if (influencer.suggestedMessages.isNotEmpty()) {
+                                influencer.suggestedMessages
+                            } else {
+                                existingInfluencer.suggestedMessages
+                            },
+                    )
+            }
+
         val sentMessages =
             recentMessages.mapNotNull { message ->
                 parseTimestampToEpochMs(message.createdAt)?.let { timestampMs ->
@@ -212,19 +236,19 @@ class ConversationViewModel(
         _viewState.update {
             it.copy(
                 conversationId = id,
-                influencer = influencer ?: it.influencer,
+                influencer = resolvedInfluencer,
                 paginatedHistoryAvailable = paginatedHistoryAvailable,
             )
         }
 
-        if (influencer != null) {
+        if (resolvedInfluencer != null) {
             refreshShareCopy()
         }
 
         if (previousConversationId != id) {
             chatTelemetry.chatSessionStarted(
-                influencerId = influencer?.id ?: "",
-                influencerType = influencer?.category.orEmpty(),
+                influencerId = resolvedInfluencer?.id.orEmpty(),
+                influencerType = resolvedInfluencer?.category.orEmpty(),
                 chatSessionId = id,
                 source = InfluencerSource.CARD,
             )
@@ -250,7 +274,10 @@ class ConversationViewModel(
         }
     }
 
-    fun initializeForInfluencer(influencerId: String) {
+    fun initializeForInfluencer(
+        influencerId: String,
+        influencerCategory: String,
+    ) {
         val currentInfluencerId = _viewState.value.influencer?.id
         val currentConversationId = _viewState.value.conversationId
         // same influencer and conversation exists
@@ -262,6 +289,18 @@ class ConversationViewModel(
             resetState()
         }
         if (_viewState.value.conversationId == null) {
+            _viewState.update {
+                it.copy(
+                    influencer =
+                        ConversationInfluencer(
+                            id = influencerId,
+                            name = "",
+                            displayName = "",
+                            avatarUrl = "",
+                            category = influencerCategory,
+                        ),
+                )
+            }
             createConversation(influencerId)
         }
     }

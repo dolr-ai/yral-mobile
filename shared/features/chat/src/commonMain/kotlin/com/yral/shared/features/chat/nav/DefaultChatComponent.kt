@@ -18,7 +18,7 @@ internal class DefaultChatComponent(
     componentContext: ComponentContext,
     private val snapshot: Snapshot?,
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
-    private val openConversation: (influencerId: String) -> Unit,
+    private val openConversation: (influencerId: String, influencerCategory: String) -> Unit,
     private val showLoginBottomSheet: (
         pageName: SignupPageName,
         loginBottomSheetType: LoginBottomSheetType,
@@ -66,6 +66,7 @@ internal class DefaultChatComponent(
                         is Config.Conversation ->
                             Snapshot.Route.Conversation(
                                 influencerId = configuration.influencerId,
+                                influencerCategory = configuration.influencerCategory,
                             )
                         else -> Snapshot.Route.Wall
                     }
@@ -76,7 +77,7 @@ internal class DefaultChatComponent(
         when (this) {
             Snapshot.Route.Wall -> Config.Wall
             is Snapshot.Route.Conversation ->
-                Config.Conversation(influencerId = influencerId)
+                Config.Conversation(influencerId = influencerId, influencerCategory = influencerCategory)
         }
 
     private fun child(
@@ -91,10 +92,10 @@ internal class DefaultChatComponent(
     private fun chatWallComponent(componentContext: ComponentContext): ChatWallComponent =
         ChatWallComponent.Companion(
             componentContext = componentContext,
-            openConversation = { influencerId ->
+            openConversation = { influencerId, influencerCategory ->
                 // Use root navigation instead of local navigation
                 // navigation.pushNew(Config.Conversation(influencerId = influencerId))
-                openConversation.invoke(influencerId)
+                openConversation.invoke(influencerId, influencerCategory)
             },
         )
 
@@ -105,6 +106,7 @@ internal class DefaultChatComponent(
         ConversationComponent.Companion(
             componentContext = componentContext,
             influencerId = config.influencerId,
+            influencerCategory = config.influencerCategory,
             onBack = { navigation.pop() },
             openProfile = openProfile,
             showLoginBottomSheet = showLoginBottomSheet,
@@ -119,6 +121,7 @@ internal class DefaultChatComponent(
         @Serializable
         data class Conversation(
             val influencerId: String,
+            val influencerCategory: String,
         ) : Config
     }
 }

@@ -112,7 +112,6 @@ enum class FeatureEvents {
     CHAT_SESSION_STARTED,
     USER_MESSAGE_SENT,
     AI_MESSAGE_DELIVERED,
-    INFLUENCER_CHATTED,
 
     ;
 

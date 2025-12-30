@@ -7,7 +7,6 @@ import com.yral.shared.analytics.events.ChatSessionStartedEventData
 import com.yral.shared.analytics.events.ChatTabViewedEventData
 import com.yral.shared.analytics.events.InfluencerCardClickedEventData
 import com.yral.shared.analytics.events.InfluencerCardsViewedEventData
-import com.yral.shared.analytics.events.InfluencerChattedEventData
 import com.yral.shared.analytics.events.InfluencerClickType
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.UserMessageSentEventData
@@ -109,20 +108,6 @@ class ChatTelemetry(
                 chatSessionId = chatSessionId,
                 responseLatencyMs = responseLatencyMs,
                 responseLength = responseLength,
-            ),
-        )
-    }
-
-    fun influencerChatted(
-        influencerId: String,
-        influencerType: String,
-        date: String,
-    ) {
-        analyticsManager.trackEvent(
-            InfluencerChattedEventData(
-                influencerId = influencerId,
-                influencerType = influencerType,
-                date = date,
             ),
         )
     }
