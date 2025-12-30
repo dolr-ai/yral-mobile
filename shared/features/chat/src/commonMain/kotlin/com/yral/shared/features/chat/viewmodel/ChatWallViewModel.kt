@@ -8,6 +8,7 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.shared.analytics.events.InfluencerClickType
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.features.chat.analytics.ChatTelemetry
@@ -62,6 +63,18 @@ class ChatWallViewModel(
         chatTelemetry.influencerCardsViewed(
             influencersShown = influencers.map { it.category },
             totalCards = influencers.size,
+        )
+    }
+
+    fun trackInfluencerCardClicked(
+        influencer: Influencer,
+        position: Int,
+    ) {
+        chatTelemetry.influencerCardClicked(
+            influencerId = influencer.id,
+            influencerType = influencer.category,
+            clickType = InfluencerClickType.TALK,
+            position = position,
         )
     }
 

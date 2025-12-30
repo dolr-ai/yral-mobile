@@ -92,7 +92,10 @@ fun ChatWallScreen(
                 influencers[index]?.let { influencer ->
                     InfluencerCard(
                         influencer = influencer,
-                        onClick = { component.openConversation(influencer.id) },
+                        onClick = {
+                            viewModel.trackInfluencerCardClicked(influencer, index)
+                            component.openConversation(influencer.id)
+                        },
                         style = influencerCardStyles[index % influencerCardStyles.size],
                     )
                 }
