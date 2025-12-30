@@ -480,6 +480,16 @@ class ConversationViewModel(
 
         _overlay.update { it.copy(pending = it.pending + userLocal + assistantPlaceholder) }
 
+        _viewState.value.influencer?.let { influencer ->
+            chatTelemetry.userMessageSent(
+                influencerId = influencer.id,
+                influencerType = influencer.category,
+                chatSessionId = convId,
+                messageLength = draft.content?.length ?: 0,
+                messageType = draft.messageType.name.lowercase(),
+            )
+        }
+
         viewModelScope.launch {
             sendMessageUseCase(
                 SendMessageUseCase.Params(
@@ -487,15 +497,6 @@ class ConversationViewModel(
                     draft = draft,
                 ),
             ).onSuccess { result ->
-                _viewState.value.influencer?.let { influencer ->
-                    chatTelemetry.userMessageSent(
-                        influencerId = influencer.id,
-                        influencerType = influencer.category,
-                        chatSessionId = convId,
-                        messageLength = draft.content?.length ?: 0,
-                        messageType = draft.messageType.name.lowercase(),
-                    )
-                }
                 handleSendSuccess(result, localUserId, localAssistantId)
             }.onFailure { error ->
                 handleSendFailure(error, localUserId, localAssistantId)
