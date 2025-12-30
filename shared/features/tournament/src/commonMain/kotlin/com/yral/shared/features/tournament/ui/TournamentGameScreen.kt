@@ -23,6 +23,11 @@ import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,6 +54,7 @@ import com.yral.shared.features.tournament.viewmodel.TournamentGameState
 import com.yral.shared.features.tournament.viewmodel.TournamentGameViewModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.tournament.generated.resources.exit
@@ -166,8 +172,19 @@ private fun TournamentTitlePill(title: String) {
     }
 }
 
+private const val DIAMOND_UPDATE_DELAY_MS = 2000L
+
 @Composable
 private fun TournamentDiamondPill(diamonds: Int) {
+    var displayedDiamonds by remember { mutableIntStateOf(diamonds) }
+
+    LaunchedEffect(diamonds) {
+        if (displayedDiamonds != diamonds) {
+            delay(DIAMOND_UPDATE_DELAY_MS)
+            displayedDiamonds = diamonds
+        }
+    }
+
     Row(
         modifier =
             Modifier
@@ -178,7 +195,7 @@ private fun TournamentDiamondPill(diamonds: Int) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
-            text = diamonds.toString(),
+            text = displayedDiamonds.toString(),
             style = LocalAppTopography.current.mdSemiBold,
             color = YralColors.Neutral50,
         )

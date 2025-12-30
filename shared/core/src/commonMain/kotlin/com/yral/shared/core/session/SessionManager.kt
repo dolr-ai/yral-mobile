@@ -194,6 +194,8 @@ class SessionManager {
 
     fun isCoinBalanceLoaded(): Boolean = mutableProperties.value.coinBalance != null
 
+    fun isFirebaseLoggedIn(): Boolean = mutableProperties.value.isFirebaseLoggedIn
+
     fun resetSessionProperties() {
         mutableProperties.update {
             SessionProperties(

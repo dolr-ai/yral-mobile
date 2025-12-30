@@ -312,12 +312,13 @@ def _determine_outcome(smiley_id: str, tallies: dict) -> str:
 @https_fn.on_request(region="us-central1")
 def tournaments(request: Request):
     """
-    List tournaments with optional date/status filters.
+    List tournaments with optional date/status/tournament_id filters.
 
     POST /tournaments
     Request:
-        { "data": { "date": "2025-12-14", "status": "scheduled", "principal_id": "..." } }
+        { "data": { "date": "2025-12-14", "status": "scheduled", "principal_id": "...", "tournament_id": "..." } }
         All fields optional. Defaults to today's date if not provided.
+        If tournament_id is provided, returns only that tournament (ignores date filter).
         If principal_id is provided, includes is_registered and user_stats for each tournament.
 
     Response:
@@ -333,31 +334,39 @@ def tournaments(request: Request):
         date_filter = str(data.get("date") or "").strip()
         status_filter = str(data.get("status") or "").strip().lower()
         principal_id = str(data.get("principal_id") or "").strip()
+        tournament_id = str(data.get("tournament_id") or "").strip()
 
-        # Default to today if no date provided
-        if not date_filter:
-            date_filter = _today_ist_str()
+        # If tournament_id is provided, fetch that specific tournament
+        if tournament_id:
+            snap = db().collection("tournaments").document(tournament_id).get()
+            if not snap.exists:
+                return jsonify({"tournaments": []}), 200
+            docs = [snap]
+        else:
+            # Default to today if no date provided
+            if not date_filter:
+                date_filter = _today_ist_str()
 
-        # Validate date format
-        try:
-            datetime.strptime(date_filter, "%Y-%m-%d")
-        except ValueError:
-            return error_response(400, "INVALID_DATE", "date must be YYYY-MM-DD format")
-
-        # Validate status if provided
-        if status_filter:
+            # Validate date format
             try:
-                TournamentStatus(status_filter)
+                datetime.strptime(date_filter, "%Y-%m-%d")
             except ValueError:
-                valid = [s.value for s in TournamentStatus]
-                return error_response(400, "INVALID_STATUS", f"status must be one of: {valid}")
+                return error_response(400, "INVALID_DATE", "date must be YYYY-MM-DD format")
 
-        # Query tournaments for the date (status is computed dynamically)
-        query = db().collection("tournaments").where("date", "==", date_filter)
-        snaps = list(query.stream())
+            # Validate status if provided
+            if status_filter:
+                try:
+                    TournamentStatus(status_filter)
+                except ValueError:
+                    valid = [s.value for s in TournamentStatus]
+                    return error_response(400, "INVALID_STATUS", f"status must be one of: {valid}")
+
+            # Query tournaments for the date (status is computed dynamically)
+            query = db().collection("tournaments").where("date", "==", date_filter)
+            docs = query.stream()
 
         result = []
-        for snap in snaps:
+        for snap in docs:
             t_data = snap.to_dict() or {}
 
             # Compute status dynamically based on current time vs epochs
