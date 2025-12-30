@@ -966,16 +966,13 @@ def tournament_leaderboard(request: Request):
         # Get top rows
         top_rows = _compute_tournament_leaderboard(tournament_id, limit=10)
 
-        # Get user row (before filtering top_rows)
-        user_row = _get_user_tournament_position(tournament_id, principal_id, top_rows)
-
-        # Remove current user from top_rows (they're shown separately in user_row)
-        top_rows = [row for row in top_rows if row["principal_id"] != principal_id]
-
         # Add prizes to top rows
         for row in top_rows:
             position = str(row["position"])
             row["prize"] = prize_map.get(position)
+
+        # Get user row
+        user_row = _get_user_tournament_position(tournament_id, principal_id, top_rows)
         user_position = str(user_row.get("position", 0))
         user_row["prize"] = prize_map.get(user_position) if user_position != "0" else None
 

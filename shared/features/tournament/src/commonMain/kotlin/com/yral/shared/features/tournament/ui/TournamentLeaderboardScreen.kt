@@ -83,6 +83,7 @@ import yral_mobile.shared.libs.leaderboard.generated.resources.bronze_trophy
 import yral_mobile.shared.libs.leaderboard.generated.resources.golden_trophy
 import yral_mobile.shared.libs.leaderboard.generated.resources.silver_trophy
 import yral_mobile.shared.libs.leaderboard.generated.resources.yellow_leaderboard
+import yral_mobile.shared.libs.leaderboard.generated.resources.you
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 import yral_mobile.shared.libs.leaderboard.generated.resources.Res as LeaderboardRes
 
@@ -176,7 +177,7 @@ fun TournamentLeaderboardScreen(
                     items(state.leaderboard) { row ->
                         TournamentLeaderboardRow(
                             row = row,
-                            isCurrentUser = viewModel.isCurrentUser(row.principalId),
+                            isCurrentUser = false,
                             fallbackPrize = state.prizeMap[row.position],
                             onClick = { viewModel.onUserClick(row) },
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
@@ -679,7 +680,7 @@ private fun TournamentUsername(
         )
     } else {
         Text(
-            text = username,
+            text = stringResource(LeaderboardRes.string.you),
             style = textStyle,
             color = YralColors.NeutralTextPrimary,
             maxLines = 1,

@@ -92,6 +92,7 @@ class DefaultRootComponent(
                         config.tournamentId,
                         config.tournamentTitle,
                         config.initialDiamonds,
+                        config.startEpochMs,
                         config.endEpochMs,
                         config.totalPrizePool,
                     ),
@@ -258,6 +259,7 @@ class DefaultRootComponent(
         tournamentId: String,
         tournamentTitle: String,
         initialDiamonds: Int,
+        startEpochMs: Long,
         endEpochMs: Long,
         totalPrizePool: Int,
     ) {
@@ -266,6 +268,7 @@ class DefaultRootComponent(
                 tournamentId = tournamentId,
                 tournamentTitle = tournamentTitle,
                 initialDiamonds = initialDiamonds,
+                startEpochMs = startEpochMs,
                 endEpochMs = endEpochMs,
                 totalPrizePool = totalPrizePool,
             ),
@@ -390,6 +393,7 @@ class DefaultRootComponent(
         tournamentId: String,
         tournamentTitle: String,
         initialDiamonds: Int,
+        startEpochMs: Long,
         endEpochMs: Long,
         totalPrizePool: Int,
     ): TournamentGameComponent =
@@ -399,6 +403,7 @@ class DefaultRootComponent(
             tournamentTitle = tournamentTitle,
             initialDiamonds = initialDiamonds,
             totalPrizePool = totalPrizePool,
+            startEpochMs = startEpochMs,
             endEpochMs = endEpochMs,
             onLeaderboardClick = { clickedTournamentId, showResult ->
                 openTournamentLeaderboard(
@@ -447,6 +452,7 @@ class DefaultRootComponent(
             val tournamentId: String,
             val tournamentTitle: String = "",
             val initialDiamonds: Int,
+            val startEpochMs: Long,
             val endEpochMs: Long,
             val totalPrizePool: Int,
         ) : Config

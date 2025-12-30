@@ -34,7 +34,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "MagicNumber")
 @OptIn(ExperimentalTime::class, ExperimentalComposeUiApi::class)
 @Composable
 fun TournamentGameScaffoldScreen(
@@ -149,11 +149,13 @@ fun TournamentGameScaffoldScreen(
             }
 
             if (showHowToPlay) {
+                val tournamentDurationMinutes = ((gameConfig.endEpochMs - gameConfig.startEpochMs) / 60_000).toInt()
                 TournamentHowToPlayScreen(
                     title = gameConfig.tournamentTitle,
                     onStartPlaying = { showHowToPlay = false },
                     startingDiamonds = component.gameConfig.initialDiamonds,
                     playType = if (howToPlayOpenedFromButton) PlayType.CONTINUE else PlayType.START,
+                    tournamentDurationMinutes = tournamentDurationMinutes,
                 )
             }
 

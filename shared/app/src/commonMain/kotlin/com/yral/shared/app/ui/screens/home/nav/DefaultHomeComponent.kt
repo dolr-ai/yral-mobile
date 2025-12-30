@@ -66,6 +66,7 @@ internal class DefaultHomeComponent(
         tournamentId: String,
         tournamentTitle: String,
         initialDiamonds: Int,
+        startEpochMs: Long,
         endEpochMs: Long,
         totalPrizePool: Int,
     ) -> Unit,
@@ -307,11 +308,12 @@ internal class DefaultHomeComponent(
             navigateToLeaderboard = { tournamentId ->
                 openTournamentLeaderboard(tournamentId, false)
             },
-            navigateToTournament = { tournamentId, title, initialDiamonds, endEpochMs, totalPrizePool ->
+            navigateToTournament = { tournamentId, title, initialDiamonds, startEpochMs, endEpochMs, totalPrizePool ->
                 openTournamentGame(
                     tournamentId,
                     title,
                     initialDiamonds,
+                    startEpochMs,
                     endEpochMs,
                     totalPrizePool,
                 )

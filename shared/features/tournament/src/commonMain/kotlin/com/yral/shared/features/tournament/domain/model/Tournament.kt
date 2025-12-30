@@ -9,6 +9,7 @@ data class Tournament(
     val status: TournamentStatus,
     val participationState: TournamentParticipationState,
     val prizeBreakdown: List<PrizeBreakdownRow>,
+    val startEpochMs: Long,
     val endEpochMs: Long,
     val entryCost: Int,
 ) {
