@@ -21,4 +21,5 @@ data class SessionProperties(
     val dailyRank: Long? = null,
     val followedPrincipals: Set<String> = setOf(),
     val unFollowedPrincipals: Set<String> = setOf(),
+    val pendingTournamentRegistrationId: String? = null,
 )
