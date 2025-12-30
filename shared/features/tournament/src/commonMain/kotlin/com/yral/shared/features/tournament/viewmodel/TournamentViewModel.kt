@@ -114,19 +114,20 @@ class TournamentViewModel(
 
     private fun processPendingTournamentRegistration() {
         viewModelScope.launch {
-            // Wait for tournaments to load and balance to be fetched
+            // Wait for tournaments to load, balance to be fetched, and Firebase login
             repeat(MAX_PENDING_TOURNAMENT_RETRIES) {
                 val pendingTournamentId =
                     sessionManager.consumePendingTournamentRegistrationId() ?: return@launch
 
                 val pendingTournament = _state.value.tournaments.find { it.id == pendingTournamentId }
                 val balanceLoaded = sessionManager.isCoinBalanceLoaded()
+                val firebaseLoggedIn = sessionManager.isFirebaseLoggedIn()
 
-                if (pendingTournament != null && balanceLoaded) {
+                if (pendingTournament != null && balanceLoaded && firebaseLoggedIn) {
                     onTournamentCtaClick(pendingTournament)
                     return@launch
                 }
-                // Tournament not found or balance not loaded yet, put the ID back and wait
+                // Not ready yet, put the ID back and wait
                 sessionManager.setPendingTournamentRegistrationId(pendingTournamentId)
                 delay(PENDING_TOURNAMENT_RETRY_DELAY_MS)
             }

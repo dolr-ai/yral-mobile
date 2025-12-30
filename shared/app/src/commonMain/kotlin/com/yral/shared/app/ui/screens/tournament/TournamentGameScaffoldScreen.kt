@@ -34,7 +34,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-@Suppress("LongMethod", "MagicNumber")
+@Suppress("LongMethod", "MagicNumber", "CyclomaticComplexMethod")
 @OptIn(ExperimentalTime::class, ExperimentalComposeUiApi::class)
 @Composable
 fun TournamentGameScaffoldScreen(
@@ -57,11 +57,16 @@ fun TournamentGameScaffoldScreen(
             maxOf(0L, gameConfig.endEpochMs - Clock.System.now().toEpochMilliseconds()),
         )
     }
-    var showHowToPlay by remember(gameConfig.tournamentId) {
-        mutableStateOf(true)
-    }
-    var howToPlayOpenedFromButton by remember(gameConfig.tournamentId) {
-        mutableStateOf(false)
+    // Show how-to-play only if user hasn't played yet in this tournament (from API)
+    // Start with true, then hide once API confirms user has played before
+    var showHowToPlay by remember(gameConfig.tournamentId) { mutableStateOf(true) }
+    var howToPlayOpenedFromButton by remember(gameConfig.tournamentId) { mutableStateOf(false) }
+
+    // Auto-hide how-to-play if API says user has played before
+    LaunchedEffect(gameState.hasPlayedBefore) {
+        if (gameState.hasPlayedBefore && !howToPlayOpenedFromButton) {
+            showHowToPlay = false
+        }
     }
     var showLeaveTournamentConfirmation by remember(gameConfig.tournamentId) {
         mutableStateOf(false)
