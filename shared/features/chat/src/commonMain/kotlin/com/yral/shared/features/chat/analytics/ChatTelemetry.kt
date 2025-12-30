@@ -25,7 +25,7 @@ class ChatTelemetry(
     ) {
         analyticsManager.trackEvent(
             InfluencerCardsViewedEventData(
-                influencersShown = influencersShown.toTypedArray(),
+                influencersShown = influencersShown,
                 totalCards = totalCards,
             ),
         )

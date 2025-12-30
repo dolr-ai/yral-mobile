@@ -1443,11 +1443,11 @@ data class ChatTabViewedEventData(
 data class InfluencerCardsViewedEventData(
     @SerialName("event") override val event: String = FeatureEvents.INFLUENCER_CARDS_VIEWED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.AI_CHATBOT.getFeatureName(),
-    @SerialName("influencers_shown") val influencersShown: Array<String>,
+    @SerialName("influencers_shown") val influencersShown: List<String>,
     @SerialName("total_cards") val totalCards: Int,
 ) : BaseEventData(),
     EventData {
-    constructor(influencersShown: Array<String>, totalCards: Int) : this(
+    constructor(influencersShown: List<String>, totalCards: Int) : this(
         FeatureEvents.INFLUENCER_CARDS_VIEWED.getEventName(),
         Features.AI_CHATBOT.getFeatureName(),
         influencersShown,
@@ -1764,7 +1764,7 @@ enum class CategoryName {
     @SerialName("wallet")
     WALLET,
 
-    @SerialName("chat")
+    @SerialName("chatbot")
     CHAT,
 }
 

@@ -416,10 +416,12 @@ class ConversationViewModel(
             }
         }
 
+    @OptIn(ExperimentalTime::class)
     private fun handleSendSuccess(
         result: SendMessageResult,
         userLocalId: String,
         assistantLocalId: String,
+        sentAtMs: Long?,
     ) {
         val sentMessages = buildSentMessages(result.userMessage, result.assistantMessage)
         _overlay.update { state ->
@@ -430,6 +432,21 @@ class ConversationViewModel(
                 sent = state.sent + sentMessages,
             )
         }
+
+        val convId = conversationId ?: return
+        val influencer = _viewState.value.influencer ?: return
+        val responseLength = result.assistantMessage?.content?.length ?: 0
+        val responseLatencyMs =
+            sentAtMs?.let { start ->
+                (Clock.System.now().toEpochMilliseconds() - start).coerceAtLeast(0)
+            } ?: 0
+        chatTelemetry.aiMessageDelivered(
+            influencerId = influencer.id,
+            influencerType = influencer.category,
+            chatSessionId = convId,
+            responseLatencyMs = responseLatencyMs.toInt(),
+            responseLength = responseLength,
+        )
     }
 
     private fun handleSendFailure(
@@ -497,7 +514,7 @@ class ConversationViewModel(
                     draft = draft,
                 ),
             ).onSuccess { result ->
-                handleSendSuccess(result, localUserId, localAssistantId)
+                handleSendSuccess(result, localUserId, localAssistantId, now)
             }.onFailure { error ->
                 handleSendFailure(error, localUserId, localAssistantId)
             }
@@ -538,7 +555,7 @@ class ConversationViewModel(
                             draft = draft,
                         ),
                     ).onSuccess { result ->
-                        handleSendSuccess(result, localUserMessageId, localAssistantId)
+                        handleSendSuccess(result, localUserMessageId, localAssistantId, now)
                     }.onFailure { error ->
                         handleSendFailure(error, localUserMessageId, localAssistantId)
                     }
