@@ -1441,14 +1441,14 @@ data class ChatTabViewedEventData(
 
 @Serializable
 data class InfluencerCardsViewedEventData(
-    @SerialName("event") override val event: String = FeatureEvents.INFLUECNER_CARDS_VIEWED.getEventName(),
+    @SerialName("event") override val event: String = FeatureEvents.INFLUENCER_CARDS_VIEWED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.AI_CHATBOT.getFeatureName(),
     @SerialName("influencers_shown") val influencersShown: Array<String>,
     @SerialName("total_cards") val totalCards: Int,
 ) : BaseEventData(),
     EventData {
     constructor(influencersShown: Array<String>, totalCards: Int) : this(
-        FeatureEvents.INFLUECNER_CARDS_VIEWED.getEventName(),
+        FeatureEvents.INFLUENCER_CARDS_VIEWED.getEventName(),
         Features.AI_CHATBOT.getFeatureName(),
         influencersShown,
         totalCards,

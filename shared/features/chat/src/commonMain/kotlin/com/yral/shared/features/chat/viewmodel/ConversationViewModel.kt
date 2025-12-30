@@ -11,10 +11,12 @@ import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
+import com.yral.shared.features.chat.analytics.ChatTelemetry
 import com.yral.shared.features.chat.attachments.ChatAttachment
 import com.yral.shared.features.chat.attachments.FilePathChatAttachment
 import com.yral.shared.features.chat.domain.ChatRepository
@@ -72,6 +74,7 @@ class ConversationViewModel(
     private val linkGenerator: LinkGenerator,
     private val crashlyticsManager: CrashlyticsManager,
     private val sessionManager: SessionManager,
+    private val chatTelemetry: ChatTelemetry,
 ) : ViewModel() {
     /**
      * Message ordering:
@@ -216,6 +219,15 @@ class ConversationViewModel(
 
         if (influencer != null) {
             refreshShareCopy()
+        }
+
+        if (previousConversationId != id) {
+            chatTelemetry.chatSessionStarted(
+                influencerId = influencer?.id ?: "",
+                influencerType = influencer?.category.orEmpty(),
+                chatSessionId = id,
+                source = InfluencerSource.CARD,
+            )
         }
     }
 
