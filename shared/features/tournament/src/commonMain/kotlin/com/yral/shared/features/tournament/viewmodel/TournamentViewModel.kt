@@ -7,6 +7,7 @@ import com.github.michaelbull.result.onSuccess
 import com.github.michaelbull.result.runCatching
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.game.domain.GetBalanceUseCase
+import com.yral.shared.features.tournament.analytics.TournamentTelemetry
 import com.yral.shared.features.tournament.domain.GetMyTournamentsUseCase
 import com.yral.shared.features.tournament.domain.GetTournamentsUseCase
 import com.yral.shared.features.tournament.domain.RegisterForTournamentUseCase
@@ -46,6 +47,7 @@ class TournamentViewModel(
     private val shareService: ShareService,
     private val urlBuilder: UrlBuilder,
     private val linkGenerator: LinkGenerator,
+    private val telemetry: TournamentTelemetry,
 ) : ViewModel() {
     private val tournamentDataListFlow: MutableStateFlow<List<TournamentData>> =
         MutableStateFlow(emptyList())
@@ -64,13 +66,39 @@ class TournamentViewModel(
         tournamentListUpdater()
     }
 
+    fun trackScreenViewed(tournamentId: String) {
+        telemetry.onTournamentScreenViewed(tournamentId)
+    }
+
+    fun trackJoinCtaViewed(
+        tournamentId: String,
+        isActive: Boolean,
+        timeToStartSec: Int,
+    ) {
+        telemetry.onJoinCtaViewed(
+            tournamentId = tournamentId,
+            isActive = isActive,
+            timeToStartSec = timeToStartSec,
+        )
+    }
+
+    fun trackJoinCtaActivated(tournamentId: String) {
+        telemetry.onJoinCtaActivated(tournamentId)
+    }
+
     @OptIn(ExperimentalTime::class)
     private fun tournamentListUpdater() {
         viewModelScope.launch {
             tournamentDataListFlow.collectLatest { tournamentDataList ->
+                var previousTournaments: List<Tournament> = emptyList()
                 while (true) {
                     val currentTimeMs = Clock.System.now().toEpochMilliseconds()
                     val tournaments = tournamentDataList.map { it.toUiTournament() }
+
+                    // Track CTA activated when tournament transitions from Upcoming to Live
+                    trackNewlyActivatedTournaments(previousTournaments, tournaments)
+                    previousTournaments = tournaments
+
                     _state.update { it.copy(tournaments = tournaments) }
 
                     val nextBoundaryMs = findNextBoundaryTime(tournamentDataList, currentTimeMs)
@@ -83,6 +111,20 @@ class TournamentViewModel(
                         delay(delayMs)
                     }
                 }
+            }
+        }
+    }
+
+    private fun trackNewlyActivatedTournaments(
+        previousTournaments: List<Tournament>,
+        currentTournaments: List<Tournament>,
+    ) {
+        val previousStatusMap = previousTournaments.associate { it.id to it.status }
+        currentTournaments.forEach { tournament ->
+            val previousStatus = previousStatusMap[tournament.id]
+            // Track when tournament transitions from Upcoming to Live (CTA becomes active)
+            if (previousStatus is TournamentStatus.Upcoming && tournament.status is TournamentStatus.Live) {
+                trackJoinCtaActivated(tournament.id)
             }
         }
     }
@@ -247,22 +289,30 @@ class TournamentViewModel(
                     is TournamentParticipationState.RegistrationRequired -> state.tokensRequired
                     else -> 0
                 }
-            if (tokensRequired > 0) {
-                val currentBalance =
-                    sessionManager.readLatestSessionPropertyWithDefault(
-                        selector = { it.coinBalance },
-                        defaultValue = 0L,
-                    )
-                if (currentBalance < tokensRequired) {
-                    _state.update { it.copy(isRegistering = false) }
-                    send(
-                        Event.RegistrationFailed(
-                            code = TournamentErrorCodes.INSUFFICIENT_COINS,
-                            message = null,
-                        ),
-                    )
-                    return@launch
-                }
+
+            // Track registration initiated
+            val currentBalance =
+                sessionManager.readLatestSessionPropertyWithDefault(
+                    selector = { it.coinBalance },
+                    defaultValue = 0L,
+                )
+            val durationMinutes = ((tournament.endEpochMs - tournament.startEpochMs) / 60000).toInt()
+            telemetry.onRegistrationInitiated(
+                tournamentId = tournament.id,
+                entryFeePoints = tokensRequired,
+                userPointBalance = currentBalance.toInt(),
+                tournamentDurationMinutes = durationMinutes,
+            )
+
+            if (tokensRequired > 0 && currentBalance < tokensRequired) {
+                _state.update { it.copy(isRegistering = false) }
+                send(
+                    Event.RegistrationFailed(
+                        code = TournamentErrorCodes.INSUFFICIENT_COINS,
+                        message = null,
+                    ),
+                )
+                return@launch
             }
 
             registerForTournamentUseCase
@@ -273,6 +323,11 @@ class TournamentViewModel(
                     ),
                 ).onSuccess { result ->
                     _state.update { it.copy(isRegistering = false) }
+                    // Track registration success
+                    telemetry.onTournamentRegistered(
+                        tournamentId = result.tournamentId,
+                        entryFeePoints = result.coinsPaid,
+                    )
                     // Refresh balance from server after entry fee was deducted
                     refreshBalance(principalId)
                     send(Event.RegistrationSuccess(result.tournamentId, result.coinsPaid))

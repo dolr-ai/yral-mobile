@@ -79,6 +79,7 @@ fun TournamentGameScaffoldScreen(
             timeLeftMs = maxOf(0L, gameConfig.endEpochMs - Clock.System.now().toEpochMilliseconds())
         }
         if (timeLeftMs <= 0 && gameConfig.endEpochMs > 0) {
+            tournamentGameViewModel.trackTournamentEnded(gameConfig.tournamentTitle)
             component.onTimeUp()
         }
     }
@@ -110,7 +111,10 @@ fun TournamentGameScaffoldScreen(
                         gameState = gameState,
                         tournamentTitle = gameConfig.tournamentTitle,
                         onLeaderboardClick = { /*component.onLeaderboardClick()*/ },
-                        onBack = { showLeaveTournamentConfirmation = true },
+                        onBack = {
+                            tournamentGameViewModel.trackExitAttempted()
+                            showLeaveTournamentConfirmation = true
+                        },
                     )
                 },
                 bottomOverlay = { pageNo, _ ->
@@ -130,7 +134,10 @@ fun TournamentGameScaffoldScreen(
                 },
                 actionsRight = { pageNo ->
                     TournamentGameActionsRight(
-                        onExit = { showLeaveTournamentConfirmation = true },
+                        onExit = {
+                            tournamentGameViewModel.trackExitAttempted()
+                            showLeaveTournamentConfirmation = true
+                        },
                         onReport = { tournamentFeedViewModel.toggleReportSheet(true, pageNo) },
                     )
                 },
@@ -188,11 +195,16 @@ fun TournamentGameScaffoldScreen(
             }
 
             if (showLeaveTournamentConfirmation) {
+                // Track that the exit nudge is shown
+                LaunchedEffect(Unit) {
+                    tournamentGameViewModel.trackExitNudgeShown()
+                }
                 LeaveTournamentBottomSheet(
                     onDismissRequest = { showLeaveTournamentConfirmation = false },
                     onKeepPlayingClick = { showLeaveTournamentConfirmation = false },
                     totalPrizePool = component.gameConfig.totalPrizePool,
                     onExitAnywayClick = {
+                        tournamentGameViewModel.trackExitConfirmed()
                         showLeaveTournamentConfirmation = false
                         component.onBack()
                     },
