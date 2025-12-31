@@ -177,7 +177,7 @@ def _inr_to_ckbtc(amount_inr: int, btc_price_inr: float) -> int:
 def _send_ckbtc(token: str, principal_id: str, amount_ckbtc: int, memo: str) -> tuple[bool, str | None]:
     """Send ckBTC to a principal. Returns (success, error_message)."""
     headers = {
-        "Authorization": token,
+        "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
     }
     body = {
@@ -195,6 +195,26 @@ def _send_ckbtc(token: str, principal_id: str, amount_ckbtc: int, memo: str) -> 
     if payload.get("success"):
         return True, None
     return False, str(payload)
+
+
+def _count_players_who_played(tournament_id: str) -> int:
+    """Count users who actually played (cast at least one vote) in the tournament."""
+    users_ref = db().collection(f"tournaments/{tournament_id}/users")
+    # A player "played" if they have any wins or losses (i.e., cast at least one vote)
+    # We check for tournament_wins > 0 OR tournament_losses > 0
+    # Firestore doesn't support OR queries easily, so we count both separately
+
+    # Count users with at least 1 win
+    wins_snaps = list(users_ref.where("tournament_wins", ">", 0).stream())
+    players_with_wins = {snap.id for snap in wins_snaps}
+
+    # Count users with at least 1 loss but no wins (they played but didn't win any)
+    losses_snaps = list(users_ref.where("tournament_losses", ">", 0).stream())
+    players_with_losses = {snap.id for snap in losses_snaps}
+
+    # Union of both sets = all players who played
+    all_players = players_with_wins | players_with_losses
+    return len(all_players)
 
 
 def _compute_settlement_leaderboard(tournament_id: str, limit: int = 10) -> List[dict]:
@@ -430,7 +450,7 @@ def create_tournaments(cloud_event):
             "10": 50
         }
 
-        slots = [("12:45", "13:15"), ("14:00", "14:30"), ("16:00", "16:30")]
+        slots = [("12:45", "12:55"), ("14:00", "14:10"), ("16:00", "16:10")]  # 10 min each
 
         created, skipped, errors = [], [], []
 
@@ -568,9 +588,54 @@ def update_tournament_status(request: Request):
             # Get prize map for settlement
             prize_map = _normalize_prize_map(snap.to_dict().get("prizeMap", {}))
 
+            # Check if enough players played (at least 2 required for a valid competition)
+            players_who_played = _count_players_who_played(doc_id)
+            print(f"[update_tournament_status] {doc_id}: {players_who_played} players played")
+
+            if players_who_played < 2:
+                # Not enough players - refund all registered users
+                print(f"[update_tournament_status] {doc_id}: insufficient players ({players_who_played}), refunding all")
+                refund_results = _refund_tournament_users(doc_id)
+                refunded_count = sum(1 for r in refund_results if r.get("success"))
+                total_refunded = sum(r.get("coins_refunded", 0) for r in refund_results if r.get("success"))
+
+                # Mark as settled (no prizes distributed)
+                ref.update({
+                    "status": TournamentStatus.SETTLED.value,
+                    "settlement_result": {
+                        "success": True,
+                        "message": f"Insufficient players ({players_who_played}), refunded all entry fees",
+                        "players_who_played": players_who_played,
+                        "refunds": {
+                            "users_refunded": refunded_count,
+                            "total_coins_refunded": total_refunded,
+                        }
+                    },
+                    "settled_at": firestore.SERVER_TIMESTAMP,
+                    "updated_at": firestore.SERVER_TIMESTAMP,
+                })
+                print(f"[update_tournament_status] {doc_id}: -> {TournamentStatus.SETTLED.value} (refunded {refunded_count} users, {total_refunded} coins)")
+
+                return jsonify({
+                    "status": "ok",
+                    "tournament_id": doc_id,
+                    "new_status": TournamentStatus.SETTLED.value,
+                    "settlement": {
+                        "message": f"Insufficient players ({players_who_played}), minimum 2 required",
+                        "players_who_played": players_who_played,
+                        "prizes_distributed": False
+                    },
+                    "refunds": {
+                        "users_refunded": refunded_count,
+                        "total_coins_refunded": total_refunded,
+                        "details": refund_results
+                    }
+                }), 200
+
             if prize_map:
                 # Settle tournament prizes (send BTC to winners)
                 settlement_result = _settle_tournament_prizes(doc_id, prize_map)
+                settlement_result["players_who_played"] = players_who_played
 
                 # Update status to SETTLED after settlement
                 ref.update({

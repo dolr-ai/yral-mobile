@@ -7,6 +7,7 @@ import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.features.game.domain.GetGameIconsUseCase
+import com.yral.shared.features.tournament.analytics.TournamentTelemetry
 import com.yral.shared.features.game.domain.models.GameIcon
 import com.yral.shared.features.tournament.domain.CastTournamentVoteUseCase
 import com.yral.shared.features.tournament.domain.GetTournamentsUseCase
@@ -26,6 +27,7 @@ class TournamentGameViewModel(
     private val gameIconsUseCase: GetGameIconsUseCase,
     private val castTournamentVoteUseCase: CastTournamentVoteUseCase,
     private val getTournamentsUseCase: GetTournamentsUseCase,
+    private val telemetry: TournamentTelemetry,
 ) : ViewModel() {
     private val _state = MutableStateFlow(TournamentGameState())
     val state: StateFlow<TournamentGameState> = _state.asStateFlow()
@@ -55,6 +57,13 @@ class TournamentGameViewModel(
                 endEpochMs = endEpochMs,
             )
         }
+
+        // Track tournament joined
+        telemetry.onTournamentJoined(
+            tournamentId = tournamentId,
+            diamondsAllocated = initialDiamonds,
+        )
+
         // Fetch fresh diamond balance from API
         refreshDiamondsFromApi(tournamentId)
     }
@@ -98,6 +107,8 @@ class TournamentGameViewModel(
         if (currentState.isLoading) return
         if (currentState.diamonds <= 0) {
             _state.update { it.copy(noDiamondsError = true) }
+            // Track out of diamonds nudge shown
+            telemetry.onOutOfDiamondsShown(tournamentId = currentState.tournamentId)
             return
         }
         viewModelScope.launch { castVote(icon, feedDetails) }
@@ -128,6 +139,16 @@ class TournamentGameViewModel(
                     } else {
                         result
                     }
+
+                // Track answer submitted
+                val isCorrect = result.outcome == VoteOutcome.WIN
+                telemetry.onAnswerSubmitted(
+                    tournamentId = currentState.tournamentId,
+                    isCorrect = isCorrect,
+                    scoreDelta = diamondDelta,
+                    diamondsRemaining = result.diamonds,
+                )
+
                 _state.update {
                     val updatedResults = it.voteResults.toMutableMap()
                     updatedResults[feedDetails.videoID] = resolvedResult
@@ -180,6 +201,34 @@ class TournamentGameViewModel(
 
     fun clearTournamentEndedError() {
         _state.update { it.copy(tournamentEndedError = false) }
+    }
+
+    // Telemetry tracking methods
+    fun trackExitAttempted() {
+        val currentState = _state.value
+        telemetry.onExitAttempted(
+            tournamentId = currentState.tournamentId,
+            diamondsRemaining = currentState.diamonds,
+        )
+    }
+
+    fun trackExitNudgeShown() {
+        telemetry.onExitNudgeShown(tournamentId = _state.value.tournamentId)
+    }
+
+    fun trackExitConfirmed() {
+        val currentState = _state.value
+        telemetry.onExitConfirmed(
+            tournamentId = currentState.tournamentId,
+            diamondsRemaining = currentState.diamonds,
+        )
+    }
+
+    fun trackTournamentEnded(tournamentName: String) {
+        telemetry.onTournamentEnded(
+            tournamentId = _state.value.tournamentId,
+            tournamentName = tournamentName,
+        )
     }
 }
 

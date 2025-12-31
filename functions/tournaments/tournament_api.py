@@ -560,7 +560,7 @@ def register_for_tournament(request: Request):
                 return error_response(402, "INSUFFICIENT_COINS", "Failed to deduct entry fee. Please check your balance.")
 
         # Create registration in Firestore
-        initial_diamonds = int(entry_cost * 1.5)
+        initial_diamonds = 20  # Fixed 20 diamonds for all tournaments
         reg_ref.set({
             "registered_at": firestore.SERVER_TIMESTAMP,
             "coins_paid": entry_cost,

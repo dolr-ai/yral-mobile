@@ -215,6 +215,17 @@ fun TournamentLeaderboardScreen(
                 val shouldShowWinner = rank > 0 && (currentUser.prize != null || state.prizeMap.containsKey(rank))
                 val dismissResult = { showResultOverlay = false }
                 val closeResult = { onBack() }
+
+                // Track result screen viewed
+                LaunchedEffect(shouldShowWinner, rank) {
+                    viewModel.trackResultScreenViewed(
+                        tournamentId = tournamentId,
+                        isWin = shouldShowWinner,
+                        finalScore = currentUser.wins,
+                        rank = rank,
+                    )
+                }
+
                 if (shouldShowWinner) {
                     TournamentWinnerScreen(
                         prizeAmount = prizeAmount,

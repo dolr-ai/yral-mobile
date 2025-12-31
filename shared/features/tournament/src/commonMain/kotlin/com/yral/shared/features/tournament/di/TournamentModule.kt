@@ -1,5 +1,6 @@
 package com.yral.shared.features.tournament.di
 
+import com.yral.shared.features.tournament.analytics.TournamentTelemetry
 import com.yral.shared.features.tournament.data.ITournamentRemoteDataSource
 import com.yral.shared.features.tournament.data.TournamentRemoteDataSource
 import com.yral.shared.features.tournament.data.TournamentRepository
@@ -15,11 +16,15 @@ import com.yral.shared.features.tournament.viewmodel.TournamentLeaderboardViewMo
 import com.yral.shared.features.tournament.viewmodel.TournamentViewModel
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
+import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 val tournamentModule =
     module {
+        // Analytics
+        singleOf(::TournamentTelemetry)
+
         // Data Source
         factoryOf(::TournamentRemoteDataSource) { bind<ITournamentRemoteDataSource>() }
 
