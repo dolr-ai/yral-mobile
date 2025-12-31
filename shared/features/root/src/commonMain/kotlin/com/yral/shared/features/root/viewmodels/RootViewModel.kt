@@ -220,7 +220,14 @@ class RootViewModel(
     private suspend fun resolveNavigationTarget() {
         // Wait for remote config and check MandatoryLogin flag
         val isSocialSignedIn = preferences.getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false
-        val remoteConfigReady = flagManager.awaitRemoteFetch(5.seconds)
+        val remoteConfigReady =
+            if (preferences.getBoolean(PrefKeys.IS_REMOTE_CONFIG_FORCE_SYNCED.name) == true) {
+                true
+            } else {
+                flagManager.awaitRemoteFetch(5.seconds)
+                preferences.putBoolean(PrefKeys.IS_REMOTE_CONFIG_FORCE_SYNCED.name, true)
+                true
+            }
         val navigationTarget =
             if (remoteConfigReady) {
                 val isMandatoryLoginEnabled = flagManager.isEnabled(AppFeatureFlags.Common.MandatoryLogin)
