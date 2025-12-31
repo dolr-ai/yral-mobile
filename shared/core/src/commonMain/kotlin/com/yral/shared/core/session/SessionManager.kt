@@ -219,7 +219,7 @@ sealed interface SessionState {
     data class SignedIn(
         val session: Session,
     ) : SessionState {
-        override fun toString(): String = "SingedIn ${session.userPrincipal ?: ""}"
+        override fun toString(): String = "SignedIn ${session.userPrincipal ?: ""}"
     }
 }
 

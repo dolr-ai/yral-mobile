@@ -224,8 +224,10 @@ class RootViewModel(
             if (preferences.getBoolean(PrefKeys.IS_REMOTE_CONFIG_FORCE_SYNCED.name) == true) {
                 true
             } else {
-                flagManager.awaitRemoteFetch(5.seconds)
-                preferences.putBoolean(PrefKeys.IS_REMOTE_CONFIG_FORCE_SYNCED.name, true)
+                val fetched = flagManager.awaitRemoteFetch(5.seconds)
+                if (fetched) {
+                    preferences.putBoolean(PrefKeys.IS_REMOTE_CONFIG_FORCE_SYNCED.name, true)
+                }
                 true
             }
         val navigationTarget =
@@ -246,15 +248,11 @@ class RootViewModel(
                 NavigationTarget.Home to false
             }
         _state.update {
-            if (it.navigationTarget != navigationTarget) {
-                it.copy(
-                    navigationTarget = navigationTarget.first,
-                    isLoginMandatory = navigationTarget.second,
-                    isPendingLogin = UiState.Success(navigationTarget.second && !isSocialSignedIn),
-                )
-            } else {
-                it
-            }
+            it.copy(
+                navigationTarget = navigationTarget.first,
+                isLoginMandatory = navigationTarget.second,
+                isPendingLogin = UiState.Success(navigationTarget.second && !isSocialSignedIn),
+            )
         }
     }
 

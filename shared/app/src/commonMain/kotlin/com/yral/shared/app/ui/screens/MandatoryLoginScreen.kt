@@ -52,7 +52,7 @@ fun MandatoryLoginScreen(modifier: Modifier) {
         Image(
             painter = painterResource(Res.drawable.login_top_shadow),
             modifier = Modifier.align(Alignment.TopCenter),
-            contentDescription = "",
+            contentDescription = null,
             contentScale = ContentScale.None,
         )
         Box(
