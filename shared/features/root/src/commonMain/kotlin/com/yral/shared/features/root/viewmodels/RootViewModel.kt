@@ -98,6 +98,7 @@ class RootViewModel(
                         tokenType = TokenType.YRAL,
                         emailId = properties.emailId,
                         utmParams = utmAttributionStore.get()?.toAnalyticsUtmParams(),
+                        isMandatoryLogin = properties.isMandatoryLogin,
                     )
                 }
             }
@@ -223,6 +224,7 @@ class RootViewModel(
         val navigationTarget =
             if (remoteConfigReady) {
                 val isMandatoryLoginEnabled = flagManager.isEnabled(AppFeatureFlags.Common.MandatoryLogin)
+                sessionManager.updateIsMandatoryLogin(isMandatoryLoginEnabled)
                 if (isMandatoryLoginEnabled) {
                     if (!isSocialSignedIn) {
                         NavigationTarget.MandatoryLogin to true

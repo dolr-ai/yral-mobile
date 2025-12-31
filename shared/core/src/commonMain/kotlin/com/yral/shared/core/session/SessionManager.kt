@@ -93,6 +93,10 @@ class SessionManager {
         mutableProperties.update { it.copy(isAutoScrollEnabled = isAutoScrollEnabled) }
     }
 
+    fun updateIsMandatoryLogin(isMandatoryLogin: Boolean) {
+        mutableProperties.update { it.copy(isMandatoryLogin = isMandatoryLogin) }
+    }
+
     fun updateLoggedInUserEmail(email: String?) {
         mutableProperties.update { it.copy(emailId = email) }
     }
