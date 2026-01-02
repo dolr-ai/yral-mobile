@@ -474,7 +474,8 @@ class ConversationViewModel(
 
         val convId = conversationId ?: return
         val influencer = _viewState.value.influencer ?: return
-        val responseLength = result.assistantMessage?.content?.length ?: 0
+        val response = result.assistantMessage?.content.orEmpty()
+        val responseLength = response.length
         val responseLatencyMs =
             sentAtMs?.let { start ->
                 (Clock.System.now().toEpochMilliseconds() - start).coerceAtLeast(0)
@@ -485,6 +486,7 @@ class ConversationViewModel(
             chatSessionId = convId,
             responseLatencyMs = responseLatencyMs.toInt(),
             responseLength = responseLength,
+            message = response,
         )
     }
 
@@ -543,6 +545,7 @@ class ConversationViewModel(
                 chatSessionId = convId,
                 messageLength = draft.content?.length ?: 0,
                 messageType = draft.messageType.name.lowercase(),
+                message = draft.content.orEmpty(),
             )
         }
 

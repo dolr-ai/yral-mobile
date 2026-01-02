@@ -1426,20 +1426,6 @@ enum class SourceScreen {
 }
 
 @Serializable
-data class ChatTabViewedEventData(
-    @SerialName("event") override val event: String = FeatureEvents.CHAT_TAB_VIEWED.getEventName(),
-    @SerialName("feature_name") override val featureName: String = Features.AI_CHATBOT.getFeatureName(),
-    @SerialName("is_logged_in") val isLoggedIn: Boolean,
-) : BaseEventData(),
-    EventData {
-    constructor(isLoggedIn: Boolean) : this(
-        FeatureEvents.CHAT_TAB_VIEWED.getEventName(),
-        Features.AI_CHATBOT.getFeatureName(),
-        isLoggedIn,
-    )
-}
-
-@Serializable
 data class InfluencerCardsViewedEventData(
     @SerialName("event") override val event: String = FeatureEvents.INFLUENCER_CARDS_VIEWED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.AI_CHATBOT.getFeatureName(),
@@ -1536,6 +1522,7 @@ data class UserMessageSentEventData(
     @SerialName("chat_session_id") val chatSessionId: String,
     @SerialName("message_length") val messageLength: Int,
     @SerialName("message_type") val messageType: String,
+    @SerialName("message") val message: String,
 ) : BaseEventData(),
     EventData {
     constructor(
@@ -1544,6 +1531,7 @@ data class UserMessageSentEventData(
         chatSessionId: String,
         messageLength: Int,
         messageType: String,
+        message: String,
     ) : this(
         FeatureEvents.USER_MESSAGE_SENT.getEventName(),
         Features.AI_CHATBOT.getFeatureName(),
@@ -1552,6 +1540,7 @@ data class UserMessageSentEventData(
         chatSessionId,
         messageLength,
         messageType,
+        message,
     )
 }
 
@@ -1564,6 +1553,7 @@ data class AIMessageDeliveredEventData(
     @SerialName("chat_session_id") val chatSessionId: String,
     @SerialName("response_latency_ms") val responseLatencyMs: Int,
     @SerialName("response_length") val responseLength: Int,
+    @SerialName("message") val message: String,
 ) : BaseEventData(),
     EventData {
     constructor(
@@ -1572,6 +1562,7 @@ data class AIMessageDeliveredEventData(
         chatSessionId: String,
         responseLatencyMs: Int,
         responseLength: Int,
+        message: String,
     ) : this(
         FeatureEvents.AI_MESSAGE_DELIVERED.getEventName(),
         Features.AI_CHATBOT.getFeatureName(),
@@ -1580,6 +1571,7 @@ data class AIMessageDeliveredEventData(
         chatSessionId,
         responseLatencyMs,
         responseLength,
+        message,
     )
 }
 

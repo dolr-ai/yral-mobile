@@ -21,7 +21,6 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
-import com.yral.shared.features.chat.analytics.ChatTelemetry
 import com.yral.shared.features.chat.nav.ChatComponent
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
@@ -46,7 +45,6 @@ import com.yral.shared.libs.routing.routes.api.Tournaments
 import com.yral.shared.libs.routing.routes.api.VideoUploadSuccessful
 import com.yral.shared.libs.routing.routes.api.Wallet
 import com.yral.shared.rust.service.utils.CanisterData
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 
 @Suppress("TooManyFunctions", "LongParameterList")
@@ -113,7 +111,6 @@ internal class DefaultHomeComponent(
 
     override val homeViewModel: HomeViewModel = koinInstance.get<HomeViewModel>()
     override val sessionManager: SessionManager = koinInstance.get<SessionManager>()
-    private val chatTelemetry: ChatTelemetry = koinInstance.get()
 
     private val slotNavigation = SlotNavigation<SlotConfig>()
 
@@ -204,14 +201,6 @@ internal class DefaultHomeComponent(
     }
 
     override fun onChatTabClick() {
-        val isLoggedIn =
-            runBlocking {
-                sessionManager.readLatestSessionPropertyWithDefault(
-                    selector = { props -> props.isSocialSignIn },
-                    defaultValue = false,
-                )
-            }
-        chatTelemetry.chatTabViewed(isLoggedIn)
         navigation.replaceKeepingFeed(Config.Chat)
     }
 

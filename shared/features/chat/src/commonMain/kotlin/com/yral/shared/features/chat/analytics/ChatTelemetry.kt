@@ -4,7 +4,6 @@ import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.events.AIMessageDeliveredEventData
 import com.yral.shared.analytics.events.ChatInfluencerClickedEventData
 import com.yral.shared.analytics.events.ChatSessionStartedEventData
-import com.yral.shared.analytics.events.ChatTabViewedEventData
 import com.yral.shared.analytics.events.InfluencerCardClickedEventData
 import com.yral.shared.analytics.events.InfluencerCardsViewedEventData
 import com.yral.shared.analytics.events.InfluencerClickType
@@ -14,10 +13,6 @@ import com.yral.shared.analytics.events.UserMessageSentEventData
 class ChatTelemetry(
     private val analyticsManager: AnalyticsManager,
 ) {
-    fun chatTabViewed(isLoggedIn: Boolean) {
-        analyticsManager.trackEvent(ChatTabViewedEventData(isLoggedIn))
-    }
-
     fun influencerCardsViewed(
         influencersShown: List<String>,
         totalCards: Int,
@@ -82,6 +77,7 @@ class ChatTelemetry(
         chatSessionId: String,
         messageLength: Int,
         messageType: String,
+        message: String,
     ) {
         analyticsManager.trackEvent(
             UserMessageSentEventData(
@@ -90,6 +86,7 @@ class ChatTelemetry(
                 chatSessionId = chatSessionId,
                 messageLength = messageLength,
                 messageType = messageType,
+                message = message,
             ),
         )
     }
@@ -100,6 +97,7 @@ class ChatTelemetry(
         chatSessionId: String,
         responseLatencyMs: Int,
         responseLength: Int,
+        message: String,
     ) {
         analyticsManager.trackEvent(
             AIMessageDeliveredEventData(
@@ -108,6 +106,7 @@ class ChatTelemetry(
                 chatSessionId = chatSessionId,
                 responseLatencyMs = responseLatencyMs,
                 responseLength = responseLength,
+                message = message,
             ),
         )
     }
