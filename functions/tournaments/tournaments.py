@@ -256,27 +256,27 @@ def _count_players_who_played(tournament_id: str) -> int:
 
 
 def _compute_settlement_leaderboard(tournament_id: str, limit: int = 10) -> List[dict]:
-    """Compute top N users by tournament_wins with dense ranking for settlement."""
+    """Compute top N users by diamond balance with dense ranking for settlement."""
     users_ref = db().collection(f"tournaments/{tournament_id}/users")
     snaps = (
-        users_ref.where("tournament_wins", ">", 0)
-                 .order_by("tournament_wins", direction=firestore.Query.DESCENDING)
+        users_ref.order_by("diamonds", direction=firestore.Query.DESCENDING)
                  .limit(limit)
                  .stream()
     )
 
     rows = []
-    current_rank, last_wins = 0, None
+    current_rank, last_diamonds = 0, None
 
     for snap in snaps:
         data = snap.to_dict() or {}
-        wins = int(data.get("tournament_wins") or 0)
-        if wins != last_wins:
+        diamonds = int(data.get("diamonds") or 0)
+        if diamonds != last_diamonds:
             current_rank += 1
-            last_wins = wins
+            last_diamonds = diamonds
         rows.append({
             "principal_id": snap.id,
-            "wins": wins,
+            "diamonds": diamonds,
+            "wins": int(data.get("tournament_wins") or 0),
             "position": current_rank
         })
 

@@ -181,29 +181,35 @@ def _vote_doc_id(principal_id: str, video_id: str) -> str:
 
 
 # ─────────────────────  LEADERBOARD HELPERS  ────────────────────────
+# Initial diamonds given at registration
+INITIAL_DIAMONDS = 20
+
+
 def _compute_tournament_leaderboard(tournament_id: str, limit: int = 10) -> List[dict]:
-    """Compute top N users by tournament_wins with dense ranking."""
+    """Compute top N users by diamond balance with dense ranking."""
     users_ref = db().collection(f"tournaments/{tournament_id}/users")
+    # Get users who have played (diamonds != initial value means they played)
+    # Order by diamonds descending
     snaps = (
-        users_ref.where("tournament_wins", ">", 0)
-                 .order_by("tournament_wins", direction=firestore.Query.DESCENDING)
+        users_ref.order_by("diamonds", direction=firestore.Query.DESCENDING)
                  .limit(limit)
                  .stream()
     )
 
     rows = []
-    current_rank, last_wins = 0, None
+    current_rank, last_diamonds = 0, None
     principal_ids = []
 
     for snap in snaps:
         data = snap.to_dict() or {}
-        wins = int(data.get("tournament_wins") or 0)
-        if wins != last_wins:
+        diamonds = int(data.get("diamonds") or 0)
+        if diamonds != last_diamonds:
             current_rank += 1
-            last_wins = wins
+            last_diamonds = diamonds
         rows.append({
             "principal_id": snap.id,
-            "wins": wins,
+            "diamonds": diamonds,
+            "wins": int(data.get("tournament_wins") or 0),
             "losses": int(data.get("tournament_losses") or 0),
             "position": current_rank
         })
@@ -229,7 +235,7 @@ def _get_user_tournament_position(
 ) -> dict:
     """Get user's position in tournament leaderboard.
 
-    Positions start from 1 (never 0). Users with 0 wins are ranked after all users with wins.
+    Positions are based on diamond balance. Higher diamonds = better rank.
     """
     # Check if in top rows first
     for row in top_rows:
@@ -246,32 +252,18 @@ def _get_user_tournament_position(
     username = (profile_snap.to_dict() or {}).get("username") if profile_snap.exists else None
 
     user_data = user_snap.to_dict() or {} if user_snap.exists else {}
+    user_diamonds = int(user_data.get("diamonds") or 0)
     user_wins = int(user_data.get("tournament_wins") or 0)
     user_losses = int(user_data.get("tournament_losses") or 0)
 
-    if user_wins == 0:
-        # Users with 0 wins are ranked after all users with wins
-        # Count distinct win values (for dense ranking) + 1
-        users_ref = db().collection(f"tournaments/{tournament_id}/users")
-        count_q = users_ref.where("tournament_wins", ">", 0).count().get()
-        ranked_count = int(count_q[0][0].value) if count_q else 0
-        # Position after all ranked users (at least 1)
-        position = max(1, ranked_count + 1)
-        return {
-            "principal_id": principal_id,
-            "wins": 0,
-            "losses": user_losses,
-            "position": position,
-            "username": username
-        }
-
-    # Count users with more wins
+    # Count users with more diamonds
     users_ref = db().collection(f"tournaments/{tournament_id}/users")
-    count_q = users_ref.where("tournament_wins", ">", user_wins).count().get()
-    higher = int(count_q[0][0].value)
+    count_q = users_ref.where("diamonds", ">", user_diamonds).count().get()
+    higher = int(count_q[0][0].value) if count_q else 0
 
     return {
         "principal_id": principal_id,
+        "diamonds": user_diamonds,
         "wins": user_wins,
         "losses": user_losses,
         "position": higher + 1,

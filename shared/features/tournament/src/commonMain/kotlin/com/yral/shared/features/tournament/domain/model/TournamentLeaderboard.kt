@@ -16,6 +16,7 @@ data class TournamentLeaderboard(
 data class LeaderboardRow(
     val principalId: String,
     val username: String?,
+    val diamonds: Int,
     val wins: Int,
     val losses: Int,
     val position: Int,

@@ -31,7 +31,7 @@
     <string name="title_live_leaderboard">Live Leaderboard</string>
     <string name="body_live_leaderboard">Win diamonds, climb the leaderboard, and finish in the Top 5 to win.</string>
     <string name="tournament_leaderboard_title">Leaderboard</string>
-    <string name="tournament_leaderboard_games_won">Games Won</string>
+    <string name="tournament_leaderboard_diamonds">Diamonds</string>
     <string name="tournament_leaderboard_rank">Rank</string>
     <string name="tournament_leaderboard_player">Player</string>
     <string name="tournament_leaderboard_rewards">Rewards</string>
