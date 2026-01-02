@@ -169,8 +169,10 @@ def exchange_principal_id(request: Request):
 
 def _push_delta_yral_token(token: str, principal_id: str, delta: int) -> tuple[bool, str | None]:
     url = f"{BALANCE_URL_YRAL_TOKEN}{principal_id}"
+    # API expects Bearer prefix if not already present
+    auth_value = token if token.startswith("Bearer ") else f"Bearer {token}"
     headers = {
-        "Authorization": token,
+        "Authorization": auth_value,
         "Content-Type": "application/json",
     }
     body = {
@@ -262,7 +264,9 @@ def tap_to_recharge(request: Request):
 
         # 6️⃣ Push to wallet first
         DELTA = 100
-        if not _push_delta_yral_token(os.environ["BALANCE_UPDATE_TOKEN"], pid, DELTA):
+        success, error_msg = _push_delta_yral_token(os.environ["BALANCE_UPDATE_TOKEN"], pid, DELTA)
+        if not success:
+            print(f"Failed to update YRAL balance for {pid}: {error_msg}", file=sys.stderr)
             return error_response(
                 502, "UPSTREAM_FAILED",
                 "Wallet update failed, try again later.")
@@ -464,9 +468,11 @@ def cast_vote_v2(request: Request):
         delta  = WIN_REWARD if outcome == "WIN" else LOSS_PENALTY
         coins  = tx_coin_change(pid, vid, delta, outcome)
 
-        if not _push_delta_yral_token(balance_update_token, pid, delta):
+        success, error_msg = _push_delta_yral_token(balance_update_token, pid, delta)
+        if not success:
+            print(f"Failed to update YRAL balance for {pid}: {error_msg}", file=sys.stderr)
             _ = tx_coin_change(pid, vid, -delta, "ROLLBACK")
-            return error_response(502, "UPSTREAM_FAILED", "We couldn’t record your vote. Please try voting again after sometime.")
+            return error_response(502, "UPSTREAM_FAILED", "We couldn't record your vote. Please try voting again after sometime.")
 
         vote_ref.update({
             "outcome": outcome,
@@ -479,7 +485,8 @@ def cast_vote_v2(request: Request):
             user_ref.update({"smiley_game_losses": firestore.Increment(1)})
 
         if is_banned and coins > 0:
-            if _push_delta_yral_token(balance_update_token, pid, -coins):
+            success, _ = _push_delta_yral_token(balance_update_token, pid, -coins)
+            if success:
                 coins = tx_coin_change(pid, vid, -coins, "BANNED")
             else:
                 print(f"Failed to set balance 0 for banned user {pid}")

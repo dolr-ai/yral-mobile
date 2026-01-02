@@ -108,6 +108,7 @@ abstract class HomeComponent {
                 tournamentId: String,
                 tournamentTitle: String,
                 initialDiamonds: Int,
+                startEpochMs: Long,
                 endEpochMs: Long,
                 totalPrizePool: Int,
             ) -> Unit,

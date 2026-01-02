@@ -31,11 +31,11 @@
     <string name="title_live_leaderboard">Live Leaderboard</string>
     <string name="body_live_leaderboard">Win diamonds, climb the leaderboard, and finish in the Top 5 to win.</string>
     <string name="tournament_leaderboard_title">Leaderboard</string>
-    <string name="tournament_leaderboard_games_won">Games Won</string>
+    <string name="tournament_leaderboard_diamonds">Diamonds</string>
     <string name="tournament_leaderboard_rank">Rank</string>
     <string name="tournament_leaderboard_player">Player</string>
     <string name="tournament_leaderboard_rewards">Rewards</string>
-    <string name="each_tournament_line_one">Each tournament lasts 30 minutes.</string>
+    <string name="each_tournament_line_one">This tournament lasts %1$d minutes.</string>
     <string name="each_tournament_line_two">Watch. Play. Win. Repeat.</string>
     <string name="start_playing">Start Playing</string>
     <string name="continue_playing">Continue Playing</string>

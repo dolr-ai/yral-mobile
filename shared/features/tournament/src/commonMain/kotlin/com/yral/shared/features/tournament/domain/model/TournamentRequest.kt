@@ -11,6 +11,7 @@ data class GetTournamentsRequest(
     val date: String? = null,
     val status: String? = null,
     val principalId: String? = null,
+    val tournamentId: String? = null,
 )
 
 fun GetTournamentsRequest.toDto(): TournamentListRequestDto =
@@ -18,6 +19,7 @@ fun GetTournamentsRequest.toDto(): TournamentListRequestDto =
         date = date,
         status = status,
         principalId = principalId,
+        tournamentId = tournamentId,
     )
 
 data class GetTournamentStatusRequest(

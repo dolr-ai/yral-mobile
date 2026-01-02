@@ -8,8 +8,11 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.features.game.domain.GetGameIconsUseCase
 import com.yral.shared.features.game.domain.models.GameIcon
+import com.yral.shared.features.tournament.analytics.TournamentTelemetry
 import com.yral.shared.features.tournament.domain.CastTournamentVoteUseCase
+import com.yral.shared.features.tournament.domain.GetTournamentsUseCase
 import com.yral.shared.features.tournament.domain.model.CastTournamentVoteRequest
+import com.yral.shared.features.tournament.domain.model.GetTournamentsRequest
 import com.yral.shared.features.tournament.domain.model.TournamentErrorCodes
 import com.yral.shared.features.tournament.domain.model.VoteOutcome
 import com.yral.shared.features.tournament.domain.model.VoteResult
@@ -23,6 +26,8 @@ class TournamentGameViewModel(
     private val sessionManager: SessionManager,
     private val gameIconsUseCase: GetGameIconsUseCase,
     private val castTournamentVoteUseCase: CastTournamentVoteUseCase,
+    private val getTournamentsUseCase: GetTournamentsUseCase,
+    private val telemetry: TournamentTelemetry,
 ) : ViewModel() {
     private val _state = MutableStateFlow(TournamentGameState())
     val state: StateFlow<TournamentGameState> = _state.asStateFlow()
@@ -36,12 +41,53 @@ class TournamentGameViewModel(
         initialDiamonds: Int,
         endEpochMs: Long,
     ) {
+        val currentState = _state.value
+        // If already set up for this tournament, just refresh diamonds from API
+        if (currentState.tournamentId == tournamentId && currentState.diamonds > 0) {
+            // Refresh diamonds from API to get current balance
+            refreshDiamondsFromApi(tournamentId)
+            return
+        }
+
+        // First time setup - use initial diamonds then refresh from API
         _state.update {
             it.copy(
                 tournamentId = tournamentId,
                 diamonds = initialDiamonds,
                 endEpochMs = endEpochMs,
             )
+        }
+
+        // Track tournament joined
+        telemetry.onTournamentJoined(
+            tournamentId = tournamentId,
+            diamondsAllocated = initialDiamonds,
+        )
+
+        // Fetch fresh diamond balance from API
+        refreshDiamondsFromApi(tournamentId)
+    }
+
+    private fun refreshDiamondsFromApi(tournamentId: String) {
+        val principalId = sessionManager.userPrincipal ?: return
+        viewModelScope.launch {
+            getTournamentsUseCase
+                .invoke(
+                    GetTournamentsRequest(
+                        tournamentId = tournamentId,
+                        principalId = principalId,
+                    ),
+                ).onSuccess { tournaments ->
+                    val tournament = tournaments.firstOrNull() ?: return@onSuccess
+                    val userStats = tournament.userStats ?: return@onSuccess
+                    val hasPlayed = (userStats.tournamentWins + userStats.tournamentLosses) > 0
+                    _state.update {
+                        it.copy(
+                            diamonds = userStats.diamonds,
+                            hasPlayedBefore = hasPlayed,
+                        )
+                    }
+                }
         }
     }
 
@@ -61,6 +107,8 @@ class TournamentGameViewModel(
         if (currentState.isLoading) return
         if (currentState.diamonds <= 0) {
             _state.update { it.copy(noDiamondsError = true) }
+            // Track out of diamonds nudge shown
+            telemetry.onOutOfDiamondsShown(tournamentId = currentState.tournamentId)
             return
         }
         viewModelScope.launch { castVote(icon, feedDetails) }
@@ -91,6 +139,16 @@ class TournamentGameViewModel(
                     } else {
                         result
                     }
+
+                // Track answer submitted
+                val isCorrect = result.outcome == VoteOutcome.WIN
+                telemetry.onAnswerSubmitted(
+                    tournamentId = currentState.tournamentId,
+                    isCorrect = isCorrect,
+                    scoreDelta = diamondDelta,
+                    diamondsRemaining = result.diamonds,
+                )
+
                 _state.update {
                     val updatedResults = it.voteResults.toMutableMap()
                     updatedResults[feedDetails.videoID] = resolvedResult
@@ -144,6 +202,34 @@ class TournamentGameViewModel(
     fun clearTournamentEndedError() {
         _state.update { it.copy(tournamentEndedError = false) }
     }
+
+    // Telemetry tracking methods
+    fun trackExitAttempted() {
+        val currentState = _state.value
+        telemetry.onExitAttempted(
+            tournamentId = currentState.tournamentId,
+            diamondsRemaining = currentState.diamonds,
+        )
+    }
+
+    fun trackExitNudgeShown() {
+        telemetry.onExitNudgeShown(tournamentId = _state.value.tournamentId)
+    }
+
+    fun trackExitConfirmed() {
+        val currentState = _state.value
+        telemetry.onExitConfirmed(
+            tournamentId = currentState.tournamentId,
+            diamondsRemaining = currentState.diamonds,
+        )
+    }
+
+    fun trackTournamentEnded(tournamentName: String) {
+        telemetry.onTournamentEnded(
+            tournamentId = _state.value.tournamentId,
+            tournamentName = tournamentName,
+        )
+    }
 }
 
 data class TournamentGameState(
@@ -163,4 +249,5 @@ data class TournamentGameState(
     val lastVotedCount: Int = 1,
     val noDiamondsError: Boolean = false,
     val tournamentEndedError: Boolean = false,
+    val hasPlayedBefore: Boolean = false,
 )
