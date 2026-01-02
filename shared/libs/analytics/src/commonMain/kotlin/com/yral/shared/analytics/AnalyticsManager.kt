@@ -8,13 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlin.concurrent.atomics.AtomicBoolean
-import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
-@OptIn(ExperimentalAtomicApi::class)
 class AnalyticsManager(
     private val providers: List<AnalyticsProvider> = emptyList(),
     private val coreService: CoreService? = null,
@@ -22,9 +16,6 @@ class AnalyticsManager(
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val eventBus = EventBus()
-    private val pendingEvents = mutableListOf<EventData>()
-    private val isReady = AtomicBoolean(false)
-    private val mutex = Mutex()
 
     init {
         eventBus.events
@@ -56,14 +47,6 @@ class AnalyticsManager(
         )
 
     fun trackEvent(event: EventData) {
-        if (isReady.load()) {
-            eventBus.publish(event)
-        } else {
-            scope.launch { mutex.withLock { pendingEvents += event } }
-        }
-    }
-
-    fun forceTrackEvent(event: EventData) {
         eventBus.publish(event)
     }
 
@@ -103,26 +86,7 @@ class AnalyticsManager(
     fun setUserProperties(user: User) {
         providers.forEach { it.setUserProperties(user) }
         coreService?.setUserProperties(user)
-        isReady.store(isUsePropertiesComplete(user = user))
-        if (isReady.load()) {
-            flushOnReady()
-        }
     }
-
-    private fun flushOnReady() {
-        scope.launch {
-            val toSend =
-                mutex.withLock {
-                    pendingEvents.toList().also { pendingEvents.clear() }
-                }
-            toSend.forEach { eventBus.publish(it) }
-        }
-    }
-
-    private fun isUsePropertiesComplete(user: User): Boolean =
-        user.isLoggedIn != null &&
-            user.isCreator != null &&
-            user.walletBalance != null
 
     fun reset() {
         resetInternal(reason = null)
@@ -146,8 +110,6 @@ class AnalyticsManager(
 
         coreService?.flush()
         coreService?.reset()
-        scope.launch { mutex.withLock { pendingEvents.clear() } }
-        isReady.store(false)
     }
 
     private fun trackIdentityTransition(
