@@ -16,6 +16,7 @@ data class ConversationInfluencer(
     val name: String,
     val displayName: String,
     val avatarUrl: String,
+    val category: String = "",
     val suggestedMessages: List<String> = emptyList(),
 )
 

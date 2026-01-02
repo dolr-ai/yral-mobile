@@ -52,7 +52,10 @@ internal class DefaultHomeComponent(
     componentContext: ComponentContext,
     private val openEditProfile: () -> Unit,
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
-    private val openConversation: (influencerId: String) -> Unit,
+    private val openConversation: (
+        influencerId: String,
+        influencerCategory: String,
+    ) -> Unit,
     private val openWallet: () -> Unit,
     private val openLeaderboard: () -> Unit,
     private val openTournamentLeaderboard: (
@@ -201,8 +204,11 @@ internal class DefaultHomeComponent(
         navigation.replaceKeepingFeed(Config.Chat)
     }
 
-    override fun openConversation(influencerId: String) {
-        openConversation.invoke(influencerId)
+    override fun openConversation(
+        influencerId: String,
+        influencerCategory: String,
+    ) {
+        openConversation.invoke(influencerId, influencerCategory)
     }
 
     override fun openWallet() {

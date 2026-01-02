@@ -8,7 +8,11 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.shared.analytics.events.InfluencerClickType
+import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.core.session.SessionState
+import com.yral.shared.features.chat.analytics.ChatTelemetry
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.InfluencersPagingSource
 import com.yral.shared.features.chat.domain.models.Influencer
@@ -30,6 +34,7 @@ class ChatWallViewModel(
     private val useCaseFailureListener: UseCaseFailureListener,
     private val getInfluencerUseCase: GetInfluencerUseCase,
     private val sessionManager: SessionManager,
+    private val chatTelemetry: ChatTelemetry,
 ) : ViewModel() {
     private val _state = MutableStateFlow(ChatWallState())
     val state: StateFlow<ChatWallState> = _state.asStateFlow()
@@ -43,6 +48,30 @@ class ChatWallViewModel(
             prefetchDistance = PREFETCH_DISTANCE,
             enablePlaceholders = false,
         )
+
+    fun trackInfluencerCardsViewed(influencers: List<Influencer>) {
+        chatTelemetry.influencerCardsViewed(
+            influencersShown = influencers.map { it.category },
+            totalCards = influencers.size,
+        )
+    }
+
+    fun trackInfluencerCardClicked(
+        influencer: Influencer,
+        position: Int,
+    ) {
+        chatTelemetry.influencerCardClicked(
+            influencerId = influencer.id,
+            influencerType = influencer.category,
+            clickType = InfluencerClickType.TALK,
+            position = position,
+        )
+        chatTelemetry.chatInfluencerClicked(
+            influencerId = influencer.id,
+            influencerType = influencer.category,
+            source = InfluencerSource.CARD,
+        )
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val influencers: Flow<PagingData<Influencer>> =

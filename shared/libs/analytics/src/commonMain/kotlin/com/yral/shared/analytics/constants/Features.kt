@@ -10,6 +10,7 @@ enum class Features {
     WALLET,
     REFERRAL,
     LEADERBOARD,
+    AI_CHATBOT,
     ;
 
     fun getFeatureName(): String = name.lowercase()

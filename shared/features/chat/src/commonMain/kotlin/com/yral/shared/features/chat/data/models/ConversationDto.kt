@@ -33,6 +33,8 @@ data class ConversationInfluencerDto(
     val displayName: String,
     @SerialName("avatar_url")
     val avatarUrl: String,
+    @SerialName("category")
+    val category: String? = null,
     @SerialName("suggested_messages")
     val suggestedMessages: List<String>? = null,
 )

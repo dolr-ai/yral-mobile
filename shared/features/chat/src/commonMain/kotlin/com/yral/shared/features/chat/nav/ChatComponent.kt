@@ -37,6 +37,7 @@ abstract class ChatComponent : HomeChildSnapshotProvider {
             @Serializable
             data class Conversation(
                 val influencerId: String,
+                val influencerCategory: String = "",
             ) : Route
         }
     }
@@ -46,7 +47,7 @@ abstract class ChatComponent : HomeChildSnapshotProvider {
             componentContext: ComponentContext,
             snapshot: Snapshot?,
             openProfile: (userCanisterData: CanisterData) -> Unit,
-            openConversation: (influencerId: String) -> Unit,
+            openConversation: (influencerId: String, influencerCategory: String) -> Unit,
             showLoginBottomSheet: (
                 pageName: SignupPageName,
                 loginBottomSheetType: LoginBottomSheetType,

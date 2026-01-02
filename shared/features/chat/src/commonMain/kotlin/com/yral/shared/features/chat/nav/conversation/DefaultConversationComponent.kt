@@ -9,6 +9,7 @@ import org.koin.core.component.KoinComponent
 internal class DefaultConversationComponent(
     componentContext: ComponentContext,
     override val influencerId: String,
+    override val influencerCategory: String,
     private val onBack: () -> Unit,
     override val openProfile: (userCanisterData: CanisterData) -> Unit,
     private val showLoginBottomSheet: (

@@ -72,7 +72,10 @@ fun ChatConversationScreen(
     val viewState by viewModel.viewState.collectAsState()
 
     LaunchedEffect(component.influencerId, viewState.isSocialSignedIn) {
-        viewModel.initializeForInfluencer(component.influencerId)
+        viewModel.initializeForInfluencer(
+            influencerId = component.influencerId,
+            influencerCategory = component.influencerCategory,
+        )
     }
 
     val overlayItems by viewModel.overlay.collectAsState()
@@ -314,4 +317,4 @@ fun ChatConversationScreen(
     }
 }
 
-private const val LOGIN_PROMPT_MESSAGE_LIMIT = 1
+private const val LOGIN_PROMPT_MESSAGE_LIMIT = 5
