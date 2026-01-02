@@ -26,6 +26,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+@Suppress("TooManyFunctions")
 @OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
 class TournamentTelemetry(
     private val analyticsManager: AnalyticsManager,
