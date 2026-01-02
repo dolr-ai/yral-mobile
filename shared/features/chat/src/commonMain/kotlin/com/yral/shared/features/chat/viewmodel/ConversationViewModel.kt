@@ -11,10 +11,12 @@ import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
+import com.yral.shared.features.chat.analytics.ChatTelemetry
 import com.yral.shared.features.chat.attachments.ChatAttachment
 import com.yral.shared.features.chat.attachments.FilePathChatAttachment
 import com.yral.shared.features.chat.domain.ChatRepository
@@ -72,6 +74,7 @@ class ConversationViewModel(
     private val linkGenerator: LinkGenerator,
     private val crashlyticsManager: CrashlyticsManager,
     private val sessionManager: SessionManager,
+    private val chatTelemetry: ChatTelemetry,
 ) : ViewModel() {
     /**
      * Message ordering:
@@ -192,6 +195,30 @@ class ConversationViewModel(
             _overlay.value = OverlayState()
         }
 
+        // Merge incoming influencer with any existing data to preserve category from the wall
+        val existingInfluencer = _viewState.value.influencer
+        val resolvedInfluencer =
+            when {
+                influencer == null -> existingInfluencer
+                existingInfluencer == null -> influencer
+                else ->
+                    influencer.copy(
+                        category = influencer.category.ifBlank { existingInfluencer.category },
+                        displayName =
+                            influencer.displayName.ifBlank {
+                                existingInfluencer.displayName
+                            },
+                        name = influencer.name.ifBlank { existingInfluencer.name },
+                        avatarUrl = influencer.avatarUrl.ifBlank { existingInfluencer.avatarUrl },
+                        suggestedMessages =
+                            if (influencer.suggestedMessages.isNotEmpty()) {
+                                influencer.suggestedMessages
+                            } else {
+                                existingInfluencer.suggestedMessages
+                            },
+                    )
+            }
+
         val sentMessages =
             recentMessages.mapNotNull { message ->
                 parseTimestampToEpochMs(message.createdAt)?.let { timestampMs ->
@@ -209,13 +236,22 @@ class ConversationViewModel(
         _viewState.update {
             it.copy(
                 conversationId = id,
-                influencer = influencer ?: it.influencer,
+                influencer = resolvedInfluencer,
                 paginatedHistoryAvailable = paginatedHistoryAvailable,
             )
         }
 
-        if (influencer != null) {
+        if (resolvedInfluencer != null) {
             refreshShareCopy()
+        }
+
+        if (previousConversationId != id) {
+            chatTelemetry.chatSessionStarted(
+                influencerId = resolvedInfluencer?.id.orEmpty(),
+                influencerType = resolvedInfluencer?.category.orEmpty(),
+                chatSessionId = id,
+                source = InfluencerSource.CARD,
+            )
         }
     }
 
@@ -238,7 +274,10 @@ class ConversationViewModel(
         }
     }
 
-    fun initializeForInfluencer(influencerId: String) {
+    fun initializeForInfluencer(
+        influencerId: String,
+        influencerCategory: String,
+    ) {
         val currentInfluencerId = _viewState.value.influencer?.id
         val currentConversationId = _viewState.value.conversationId
         // same influencer and conversation exists
@@ -250,6 +289,18 @@ class ConversationViewModel(
             resetState()
         }
         if (_viewState.value.conversationId == null) {
+            _viewState.update {
+                it.copy(
+                    influencer =
+                        ConversationInfluencer(
+                            id = influencerId,
+                            name = "",
+                            displayName = "",
+                            avatarUrl = "",
+                            category = influencerCategory,
+                        ),
+                )
+            }
             createConversation(influencerId)
         }
     }
@@ -404,10 +455,12 @@ class ConversationViewModel(
             }
         }
 
+    @OptIn(ExperimentalTime::class)
     private fun handleSendSuccess(
         result: SendMessageResult,
         userLocalId: String,
         assistantLocalId: String,
+        sentAtMs: Long?,
     ) {
         val sentMessages = buildSentMessages(result.userMessage, result.assistantMessage)
         _overlay.update { state ->
@@ -418,6 +471,23 @@ class ConversationViewModel(
                 sent = state.sent + sentMessages,
             )
         }
+
+        val convId = conversationId ?: return
+        val influencer = _viewState.value.influencer ?: return
+        val response = result.assistantMessage?.content.orEmpty()
+        val responseLength = response.length
+        val responseLatencyMs =
+            sentAtMs?.let { start ->
+                (Clock.System.now().toEpochMilliseconds() - start).coerceAtLeast(0)
+            } ?: 0
+        chatTelemetry.aiMessageDelivered(
+            influencerId = influencer.id,
+            influencerType = influencer.category,
+            chatSessionId = convId,
+            responseLatencyMs = responseLatencyMs.toInt(),
+            responseLength = responseLength,
+            message = response,
+        )
     }
 
     private fun handleSendFailure(
@@ -468,6 +538,17 @@ class ConversationViewModel(
 
         _overlay.update { it.copy(pending = it.pending + userLocal + assistantPlaceholder) }
 
+        _viewState.value.influencer?.let { influencer ->
+            chatTelemetry.userMessageSent(
+                influencerId = influencer.id,
+                influencerType = influencer.category,
+                chatSessionId = convId,
+                messageLength = draft.content?.length ?: 0,
+                messageType = draft.messageType.name.lowercase(),
+                message = draft.content.orEmpty(),
+            )
+        }
+
         viewModelScope.launch {
             sendMessageUseCase(
                 SendMessageUseCase.Params(
@@ -475,7 +556,7 @@ class ConversationViewModel(
                     draft = draft,
                 ),
             ).onSuccess { result ->
-                handleSendSuccess(result, localUserId, localAssistantId)
+                handleSendSuccess(result, localUserId, localAssistantId, now)
             }.onFailure { error ->
                 handleSendFailure(error, localUserId, localAssistantId)
             }
@@ -516,7 +597,7 @@ class ConversationViewModel(
                             draft = draft,
                         ),
                     ).onSuccess { result ->
-                        handleSendSuccess(result, localUserMessageId, localAssistantId)
+                        handleSendSuccess(result, localUserMessageId, localAssistantId, now)
                     }.onFailure { error ->
                         handleSendFailure(error, localUserMessageId, localAssistantId)
                     }

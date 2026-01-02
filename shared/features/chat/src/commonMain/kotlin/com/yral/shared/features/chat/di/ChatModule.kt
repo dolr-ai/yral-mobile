@@ -1,6 +1,7 @@
 package com.yral.shared.features.chat.di
 
 import com.yral.shared.analytics.di.IS_DEBUG
+import com.yral.shared.features.chat.analytics.ChatTelemetry
 import com.yral.shared.features.chat.data.ChatDataSource
 import com.yral.shared.features.chat.data.ChatRemoteDataSource
 import com.yral.shared.features.chat.data.ChatRepositoryImpl
@@ -36,6 +37,7 @@ val chatModule =
         factoryOf(::DeleteConversationUseCase)
         factoryOf(::GetInfluencerUseCase)
         factoryOf(::SendMessageUseCase)
+        factoryOf(::ChatTelemetry)
         viewModelOf(::ChatWallViewModel)
         viewModelOf(::ConversationViewModel)
     }

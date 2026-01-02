@@ -104,6 +104,14 @@ enum class FeatureEvents {
     USER_UNFOLLOWED,
     FOLLOWERS_LIST_VIEWED,
 
+    // AI Chatbot
+    INFLUENCER_CARDS_VIEWED,
+    INFLUENCER_CARD_CLICKED,
+    CHAT_INFLUENCER_CLICKED,
+    CHAT_SESSION_STARTED,
+    USER_MESSAGE_SENT,
+    AI_MESSAGE_DELIVERED,
+
     ;
 
     fun getEventName(): String =

@@ -51,7 +51,10 @@ interface RootComponent {
         totalPrizePool: Int,
     )
 
-    fun openConversation(influencerId: String)
+    fun openConversation(
+        influencerId: String,
+        influencerCategory: String = "",
+    )
 
     fun openWallet()
 

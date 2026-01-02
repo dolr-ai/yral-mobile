@@ -272,8 +272,11 @@ class DefaultRootComponent(
         )
     }
 
-    override fun openConversation(influencerId: String) {
-        navigation.pushToFront(Config.Conversation(influencerId))
+    override fun openConversation(
+        influencerId: String,
+        influencerCategory: String,
+    ) {
+        navigation.pushToFront(Config.Conversation(influencerId, influencerCategory))
     }
 
     override fun openWallet() {
@@ -291,6 +294,7 @@ class DefaultRootComponent(
         ConversationComponent.Companion(
             componentContext = componentContext,
             influencerId = config.influencerId,
+            influencerCategory = config.influencerCategory,
             onBack = { navigation.pop() },
             openProfile = this::openProfile,
             showLoginBottomSheet = this::showLoginBottomSheet,
@@ -450,6 +454,7 @@ class DefaultRootComponent(
         @Serializable
         data class Conversation(
             val influencerId: String,
+            val influencerCategory: String,
         ) : Config
 
         @Serializable

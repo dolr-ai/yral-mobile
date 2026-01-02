@@ -7,6 +7,7 @@ import com.yral.shared.rust.service.utils.CanisterData
 
 abstract class ConversationComponent {
     abstract val influencerId: String
+    abstract val influencerCategory: String
     abstract val openProfile: (userCanisterData: CanisterData) -> Unit
     abstract fun onBack()
     abstract fun showLoginBottomSheet(
@@ -22,6 +23,7 @@ abstract class ConversationComponent {
         operator fun invoke(
             componentContext: ComponentContext,
             influencerId: String,
+            influencerCategory: String,
             onBack: () -> Unit,
             openProfile: (userCanisterData: CanisterData) -> Unit,
             showLoginBottomSheet: (
@@ -35,6 +37,7 @@ abstract class ConversationComponent {
             DefaultConversationComponent(
                 componentContext = componentContext,
                 influencerId = influencerId,
+                influencerCategory = influencerCategory,
                 onBack = onBack,
                 openProfile = openProfile,
                 showLoginBottomSheet = showLoginBottomSheet,

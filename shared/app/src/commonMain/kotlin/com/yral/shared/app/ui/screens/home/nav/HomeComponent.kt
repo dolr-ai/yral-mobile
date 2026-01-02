@@ -40,7 +40,10 @@ abstract class HomeComponent {
     abstract fun onWalletTabClick()
     abstract fun onChatTabClick()
     abstract fun onNavigationRequest(appRoute: AppRoute)
-    abstract fun openConversation(influencerId: String)
+    abstract fun openConversation(
+        influencerId: String,
+        influencerCategory: String = "",
+    )
     abstract fun openWallet()
     abstract fun openLeaderboard()
     abstract fun showLoginBottomSheet(
@@ -91,7 +94,10 @@ abstract class HomeComponent {
             componentContext: ComponentContext,
             openEditProfile: () -> Unit,
             openProfile: (userCanisterData: CanisterData) -> Unit,
-            openConversation: (influencerId: String) -> Unit,
+            openConversation: (
+                influencerId: String,
+                influencerCategory: String,
+            ) -> Unit,
             openWallet: () -> Unit,
             openLeaderboard: () -> Unit,
             openTournamentLeaderboard: (

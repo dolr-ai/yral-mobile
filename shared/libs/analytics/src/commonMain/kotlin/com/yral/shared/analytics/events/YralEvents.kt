@@ -1426,6 +1426,156 @@ enum class SourceScreen {
 }
 
 @Serializable
+data class InfluencerCardsViewedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.INFLUENCER_CARDS_VIEWED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AI_CHATBOT.getFeatureName(),
+    @SerialName("influencers_shown") val influencersShown: List<String>,
+    @SerialName("total_cards") val totalCards: Int,
+) : BaseEventData(),
+    EventData {
+    constructor(influencersShown: List<String>, totalCards: Int) : this(
+        FeatureEvents.INFLUENCER_CARDS_VIEWED.getEventName(),
+        Features.AI_CHATBOT.getFeatureName(),
+        influencersShown,
+        totalCards,
+    )
+}
+
+@Serializable
+data class InfluencerCardClickedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.INFLUENCER_CARD_CLICKED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AI_CHATBOT.getFeatureName(),
+    @SerialName("influencer_id") val influencerId: String,
+    @SerialName("influencer_type") val influencerType: String,
+    @SerialName("click_type") val clickType: InfluencerClickType,
+    @SerialName("position") val position: Int,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        influencerId: String,
+        influencerType: String,
+        clickType: InfluencerClickType,
+        position: Int,
+    ) : this(
+        FeatureEvents.INFLUENCER_CARD_CLICKED.getEventName(),
+        Features.AI_CHATBOT.getFeatureName(),
+        influencerId,
+        influencerType,
+        clickType,
+        position,
+    )
+}
+
+@Serializable
+data class ChatInfluencerClickedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.CHAT_INFLUENCER_CLICKED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AI_CHATBOT.getFeatureName(),
+    @SerialName("influencer_id") val influencerId: String,
+    @SerialName("influencer_type") val influencerType: String,
+    @SerialName("source") val source: InfluencerSource,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        influencerId: String,
+        influencerType: String,
+        source: InfluencerSource,
+    ) : this(
+        FeatureEvents.CHAT_INFLUENCER_CLICKED.getEventName(),
+        Features.AI_CHATBOT.getFeatureName(),
+        influencerId,
+        influencerType,
+        source,
+    )
+}
+
+@Serializable
+data class ChatSessionStartedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.CHAT_SESSION_STARTED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AI_CHATBOT.getFeatureName(),
+    @SerialName("influencer_id") val influencerId: String,
+    @SerialName("influencer_type") val influencerType: String,
+    @SerialName("chat_session_id") val chatSessionId: String,
+    @SerialName("source") val source: InfluencerSource,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        influencerId: String,
+        influencerType: String,
+        chatSessionId: String,
+        source: InfluencerSource,
+    ) : this(
+        FeatureEvents.CHAT_SESSION_STARTED.getEventName(),
+        Features.AI_CHATBOT.getFeatureName(),
+        influencerId,
+        influencerType,
+        chatSessionId,
+        source,
+    )
+}
+
+@Serializable
+data class UserMessageSentEventData(
+    @SerialName("event") override val event: String = FeatureEvents.USER_MESSAGE_SENT.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AI_CHATBOT.getFeatureName(),
+    @SerialName("influencer_id") val influencerId: String,
+    @SerialName("influencer_type") val influencerType: String,
+    @SerialName("chat_session_id") val chatSessionId: String,
+    @SerialName("message_length") val messageLength: Int,
+    @SerialName("message_type") val messageType: String,
+    @SerialName("message") val message: String,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        influencerId: String,
+        influencerType: String,
+        chatSessionId: String,
+        messageLength: Int,
+        messageType: String,
+        message: String,
+    ) : this(
+        FeatureEvents.USER_MESSAGE_SENT.getEventName(),
+        Features.AI_CHATBOT.getFeatureName(),
+        influencerId,
+        influencerType,
+        chatSessionId,
+        messageLength,
+        messageType,
+        message,
+    )
+}
+
+@Serializable
+data class AIMessageDeliveredEventData(
+    @SerialName("event") override val event: String = FeatureEvents.AI_MESSAGE_DELIVERED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AI_CHATBOT.getFeatureName(),
+    @SerialName("influencer_id") val influencerId: String,
+    @SerialName("influencer_type") val influencerType: String,
+    @SerialName("chat_session_id") val chatSessionId: String,
+    @SerialName("response_latency_ms") val responseLatencyMs: Int,
+    @SerialName("response_length") val responseLength: Int,
+    @SerialName("message") val message: String,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        influencerId: String,
+        influencerType: String,
+        chatSessionId: String,
+        responseLatencyMs: Int,
+        responseLength: Int,
+        message: String,
+    ) : this(
+        FeatureEvents.AI_MESSAGE_DELIVERED.getEventName(),
+        Features.AI_CHATBOT.getFeatureName(),
+        influencerId,
+        influencerType,
+        chatSessionId,
+        responseLatencyMs,
+        responseLength,
+        message,
+    )
+}
+
+@Serializable
 data class LeaderBoardPageViewedEventData(
     @SerialName("event") override val event: String = FeatureEvents.LEADERBOARD_PAGE_VIEWED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.LEADERBOARD.getFeatureName(),
@@ -1509,6 +1659,24 @@ data class LeaderBoardDaySelectedEventData(
 
 // Helper enums
 @Serializable
+enum class InfluencerClickType {
+    @SerialName("talk")
+    TALK,
+
+    @SerialName("view_profile")
+    VIEW_PROFILE,
+}
+
+@Serializable
+enum class InfluencerSource {
+    @SerialName("card")
+    CARD,
+
+    @SerialName("profile")
+    PROFILE,
+}
+
+@Serializable
 enum class AuthJourney {
     @SerialName("google")
     GOOGLE,
@@ -1570,7 +1738,7 @@ enum class CategoryName {
     @SerialName("wallet")
     WALLET,
 
-    @SerialName("chat")
+    @SerialName("chatbot")
     CHAT,
 }
 
