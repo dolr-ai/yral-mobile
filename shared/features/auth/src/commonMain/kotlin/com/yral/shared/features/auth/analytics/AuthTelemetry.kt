@@ -75,7 +75,7 @@ class AuthTelemetry(
 
     fun anonymousAuthFailed(reason: String?) {
         val affiliate = affiliateAttributionStore.peek()
-        analyticsManager.forceTrackEvent(
+        analyticsManager.trackEvent(
             AnonymousAuthFailedEventData(
                 affiliate = affiliate,
                 reason = reason?.take(MAX_ERROR_MESSAGE_LENGTH),
@@ -91,7 +91,7 @@ class AuthTelemetry(
         cause: AuthSessionCause,
         flow: AuthSessionFlow? = null,
     ) {
-        analyticsManager.forceTrackEvent(
+        analyticsManager.trackEvent(
             AuthSessionStateChangedEventData(
                 fromState = fromState,
                 toState = toState,
