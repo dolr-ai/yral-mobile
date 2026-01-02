@@ -182,7 +182,7 @@ extension ProfileOptionsView {
     static let toggleHeight = 30.0
     static let loaderName = "Yral_Loader"
     // swiftlint: disable line_length
-    static let whatsappId = AccountDetailsUtility.shared.getDetails()?.support ?? "https://chat.whatsapp.com/LMLykiRUrJD13oUtM61JJX?mode=ems_share_t"
+    static let whatsappId = AccountDetailsUtility.shared.getDetails()?.support ?? "https://chat.whatsapp.com/DNjTKgCVZhc75qsAHto4n7"
     static let tncIosId = AccountDetailsUtility.shared.getDetails()?.tnc ?? "https://yral.com/terms-ios"
     static let privacyPolicyId = AccountDetailsUtility.shared.getDetails()?.privacyPolicy ??  "https://yral.com/privacy-policy"
     // swiftlint: enable line_length
