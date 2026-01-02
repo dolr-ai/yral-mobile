@@ -18,7 +18,9 @@ import com.yral.shared.analytics.events.TournamentRewardEarnedEventData
 import com.yral.shared.analytics.events.TournamentScreenViewedEventData
 import com.yral.shared.analytics.events.TournamentState
 import com.yral.shared.analytics.events.TournamentStateChangedEventData
+import com.yral.shared.features.tournament.domain.model.Tournament
 import com.yral.shared.features.tournament.domain.model.TournamentParticipationState
+import com.yral.shared.features.tournament.domain.model.TournamentStatus
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
@@ -75,18 +77,33 @@ class TournamentTelemetry(
         )
     }
 
-    fun onTournamentParticipationStateChanged(
-        tournamentId: String,
-        fromState: TournamentParticipationState,
-        toState: TournamentParticipationState,
+    fun onTournamentStateChangedIfChanged(
+        previousTournament: Tournament,
+        currentTournament: Tournament,
     ) {
+        val previousState = previousTournament.toAnalyticsState()
+        val currentState = currentTournament.toAnalyticsState()
+        if (previousState == currentState) return
+
+        val tokensRequired =
+            if (currentState == TournamentState.ENDED) {
+                null
+            } else {
+                currentTournament.participationState.tokensRequired()
+            }
+        val userDiamonds =
+            if (currentState == TournamentState.ENDED) {
+                null
+            } else {
+                currentTournament.participationState.userDiamonds()
+            }
         analyticsManager.trackEvent(
             TournamentStateChangedEventData(
-                tournamentId = tournamentId,
-                fromState = fromState.toAnalyticsState(),
-                toState = toState.toAnalyticsState(),
-                tokensRequired = toState.tokensRequired(),
-                userDiamonds = toState.userDiamonds(),
+                tournamentId = currentTournament.id,
+                fromState = previousState,
+                toState = currentState,
+                tokensRequired = tokensRequired,
+                userDiamonds = userDiamonds,
                 sessionId = getSessionId(),
             ),
         )
@@ -234,6 +251,13 @@ class TournamentTelemetry(
             is TournamentParticipationState.JoinNow -> TournamentState.JOIN_NOW
             is TournamentParticipationState.JoinNowWithTokens -> TournamentState.JOIN_NOW_WITH_TOKENS
             is TournamentParticipationState.JoinNowDisabled -> TournamentState.JOIN_NOW_DISABLED
+        }
+
+    private fun Tournament.toAnalyticsState(): TournamentState =
+        if (status is TournamentStatus.Ended) {
+            TournamentState.ENDED
+        } else {
+            participationState.toAnalyticsState()
         }
 
     private fun TournamentParticipationState.tokensRequired(): Int? =

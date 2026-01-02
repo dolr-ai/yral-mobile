@@ -2088,6 +2088,9 @@ enum class TournamentState {
 
     @SerialName("join_now_disabled")
     JOIN_NOW_DISABLED,
+
+    @SerialName("ended")
+    ENDED,
 }
 
 @Serializable

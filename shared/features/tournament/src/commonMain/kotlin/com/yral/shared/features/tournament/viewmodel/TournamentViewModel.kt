@@ -103,17 +103,13 @@ class TournamentViewModel(
         previousTournaments: List<Tournament>,
         currentTournaments: List<Tournament>,
     ) {
-        val previousStateMap = previousTournaments.associate { it.id to it.participationState }
+        val previousStateMap = previousTournaments.associateBy { it.id }
         currentTournaments.forEach { tournament ->
-            val previousState = previousStateMap[tournament.id] ?: return@forEach
-            val currentState = tournament.participationState
-            if (previousState != currentState) {
-                telemetry.onTournamentParticipationStateChanged(
-                    tournamentId = tournament.id,
-                    fromState = previousState,
-                    toState = currentState,
-                )
-            }
+            val previousTournament = previousStateMap[tournament.id] ?: return@forEach
+            telemetry.onTournamentStateChangedIfChanged(
+                previousTournament = previousTournament,
+                currentTournament = tournament,
+            )
         }
     }
 
