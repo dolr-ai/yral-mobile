@@ -188,7 +188,7 @@ def _refund_tournament_users(tournament_id: str) -> List[dict]:
                 "principal_id": principal_id,
                 "coins_refunded": 0,
                 "success": False,
-                "error": str(e)
+                "error": "Refund failed"
             })
             print(f"[refund] FAILED for {principal_id}: {e}", file=sys.stderr)
 
@@ -228,13 +228,19 @@ def _send_ckbtc(token: str, principal_id: str, amount_ckbtc: int, memo: str) -> 
     try:
         resp = requests.post(BALANCE_URL_CKBTC, json=body, timeout=30, headers=headers)
     except requests.RequestException as e:
-        return False, str(e)
+        print(f"[settlement] Request failed for {principal_id}: {e}", file=sys.stderr)
+        return False, "Transfer request failed"
     if resp.status_code != 200:
-        return False, f"Status {resp.status_code}: {resp.text}"
+        print(
+            f"[settlement] Transfer failed for {principal_id}: status={resp.status_code} body={resp.text}",
+            file=sys.stderr,
+        )
+        return False, "Transfer failed"
     payload = resp.json()
     if payload.get("success"):
         return True, None
-    return False, str(payload)
+    print(f"[settlement] Transfer unsuccessful for {principal_id}: {payload}", file=sys.stderr)
+    return False, "Transfer failed"
 
 
 def _count_players_who_played(tournament_id: str) -> int:
@@ -310,9 +316,10 @@ def _settle_tournament_prizes(tournament_id: str, prize_map: Dict[str, int]) -> 
     try:
         btc_price_inr = _fetch_btc_price_inr()
     except Exception as e:
+        print(f"[settlement] Failed to fetch BTC price: {e}", file=sys.stderr)
         return {
             "success": False,
-            "error": f"Failed to fetch BTC price: {e}",
+            "error": "Failed to fetch BTC price",
             "rewards_sent": 0,
             "rewards_failed": 0,
             "details": []
@@ -476,7 +483,8 @@ def create_tournaments(cloud_event):
     try:
         backend_admin_key = os.environ.get("BACKEND_ADMIN_KEY")
         if not backend_admin_key:
-            return jsonify({"error": "BACKEND_ADMIN_KEY not configured"}), 500
+            print("[create_tournaments] BACKEND_ADMIN_KEY not configured", file=sys.stderr)
+            return jsonify({"error": "INTERNAL", "message": "An internal error occurred"}), 500
 
         date_str = _today_ist_str()
         entry_cost = 100
@@ -537,7 +545,8 @@ def create_tournaments(cloud_event):
             except AlreadyExists:
                 skipped.append({"id": tournament_id, "reason": "Already exists"})
             except Exception as e:
-                errors.append({"id": tournament_id, "reason": str(e)})
+                print(f"[create_tournaments] Failed to create {tournament_id}: {e}", file=sys.stderr)
+                errors.append({"id": tournament_id, "reason": "Internal error"})
 
         status_code = 200 if not errors else 207
         print(f"[create_tournaments] date={date_str} created={created} skipped={skipped} errors={errors}")
@@ -551,7 +560,8 @@ def create_tournaments(cloud_event):
         }), status_code
 
     except Exception as e:
-        return jsonify({"error": "INTERNAL", "message": str(e)}), 500
+        print(f"[create_tournaments] Unexpected error: {e}", file=sys.stderr)
+        return jsonify({"error": "INTERNAL", "message": "An internal error occurred"}), 500
 
 
 @https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
@@ -729,4 +739,5 @@ def update_tournament_status(request: Request):
         return jsonify({"status": "ok", "tournament_id": doc_id, "new_status": target_status.value}), 200
 
     except Exception as e:  # noqa: BLE001
-        return jsonify({"error": "INTERNAL", "message": str(e)}), 500
+        print(f"[update_tournament_status] Unexpected error: {e}", file=sys.stderr)
+        return jsonify({"error": "INTERNAL", "message": "An internal error occurred"}), 500
