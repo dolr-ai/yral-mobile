@@ -114,7 +114,9 @@ def _register_tournament_backend(admin_key: str, video_count: int = DEFAULT_VIDE
             return None, "No tournament_id in response"
         return None, f"Status: {resp.status_code}, Body: {resp.text}"
     except requests.RequestException as e:
-        return None, str(e)
+        # Log detailed backend exception server-side, but return a generic error message
+        print(f"[backend] Tournament registration request failed: {e}", file=sys.stderr)
+        return None, "Backend request failed"
 
 
 # ─────────────────────  COIN HELPERS  ────────────────────────
@@ -504,8 +506,9 @@ def create_tournaments(cloud_event):
             tournament_id, backend_error = _register_tournament_backend(backend_admin_key, video_count=DEFAULT_VIDEO_COUNT)
             if backend_error:
                 fallback_id = _make_doc_id(date_str, start_time, end_time)
+                # Log detailed backend error server-side, but keep user-visible reason generic
                 print(f"[create_tournaments] Backend registration failed for {fallback_id}: {backend_error}", file=sys.stderr)
-                errors.append({"id": fallback_id, "reason": f"Backend registration failed: {backend_error}"})
+                errors.append({"id": fallback_id, "reason": "Backend registration failed"})
                 continue
 
             tour = Tournament(
