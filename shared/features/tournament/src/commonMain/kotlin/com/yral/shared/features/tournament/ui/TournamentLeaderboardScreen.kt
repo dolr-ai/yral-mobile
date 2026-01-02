@@ -72,7 +72,7 @@ import yral_mobile.shared.features.tournament.generated.resources.Res
 import yral_mobile.shared.features.tournament.generated.resources.bitcoin
 import yral_mobile.shared.features.tournament.generated.resources.ic_calendar
 import yral_mobile.shared.features.tournament.generated.resources.ic_users
-import yral_mobile.shared.features.tournament.generated.resources.tournament_leaderboard_games_won
+import yral_mobile.shared.features.tournament.generated.resources.tournament_leaderboard_diamonds
 import yral_mobile.shared.features.tournament.generated.resources.tournament_leaderboard_player
 import yral_mobile.shared.features.tournament.generated.resources.tournament_leaderboard_rank
 import yral_mobile.shared.features.tournament.generated.resources.tournament_leaderboard_rewards
@@ -221,7 +221,7 @@ fun TournamentLeaderboardScreen(
                     viewModel.trackResultScreenViewed(
                         tournamentId = tournamentId,
                         isWin = shouldShowWinner,
-                        finalScore = currentUser.wins,
+                        finalScore = currentUser.diamonds,
                         rank = rank,
                     )
                 }
@@ -517,7 +517,7 @@ private fun TournamentLeaderboardTableHeader(isTrophyVisible: Boolean) {
             overflow = TextOverflow.Ellipsis,
         )
         Text(
-            text = stringResource(Res.string.tournament_leaderboard_games_won),
+            text = stringResource(Res.string.tournament_leaderboard_diamonds),
             modifier = Modifier.weight(headerWeights[2]),
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral500,
@@ -607,7 +607,7 @@ private fun TournamentLeaderboardRow(
                 contentAlignment = Alignment.CenterStart,
             ) {
                 Text(
-                    text = formatAbbreviation(row.wins.toLong()),
+                    text = formatAbbreviation(row.diamonds.toLong()),
                     style = LocalAppTopography.current.baseBold,
                     color = YralColors.Neutral50,
                     maxLines = 1,
