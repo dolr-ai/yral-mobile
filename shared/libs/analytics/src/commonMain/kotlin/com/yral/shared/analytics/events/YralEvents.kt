@@ -1926,7 +1926,8 @@ data class TournamentScreenViewedEventData(
     @SerialName("feature_name") override val featureName: String = Features.TOURNAMENT.getFeatureName(),
     @SerialName("tournament_id") val tournamentId: String,
     @SerialName("session_id") val sessionId: String,
-) : BaseEventData(), EventData
+) : BaseEventData(),
+    EventData
 
 @Serializable
 data class TournamentRegistrationInitiatedEventData(
@@ -1937,7 +1938,8 @@ data class TournamentRegistrationInitiatedEventData(
     @SerialName("user_point_balance") val userPointBalance: Int,
     @SerialName("tournament_duration") val tournamentDuration: Int,
     @SerialName("session_id") val sessionId: String,
-) : BaseEventData(), EventData
+) : BaseEventData(),
+    EventData
 
 @Serializable
 data class TournamentRegisteredEventData(
@@ -1947,7 +1949,8 @@ data class TournamentRegisteredEventData(
     @SerialName("entry_fee_points") val entryFeePoints: Int,
     @SerialName("registration_time") val registrationTime: String,
     @SerialName("session_id") val sessionId: String,
-) : BaseEventData(), EventData
+) : BaseEventData(),
+    EventData
 
 @Serializable
 data class TournamentJoinCtaViewedEventData(
@@ -1957,7 +1960,8 @@ data class TournamentJoinCtaViewedEventData(
     @SerialName("cta_state") val ctaState: TournamentCtaState,
     @SerialName("time_to_start_sec") val timeToStartSec: Int,
     @SerialName("session_id") val sessionId: String,
-) : BaseEventData(), EventData
+) : BaseEventData(),
+    EventData
 
 @Serializable
 data class TournamentJoinCtaActivatedEventData(
@@ -1966,7 +1970,8 @@ data class TournamentJoinCtaActivatedEventData(
     @SerialName("tournament_id") val tournamentId: String,
     @SerialName("cta_state") val ctaState: TournamentCtaState,
     @SerialName("session_id") val sessionId: String,
-) : BaseEventData(), EventData
+) : BaseEventData(),
+    EventData
 
 @Serializable
 data class TournamentJoinedEventData(
@@ -1976,7 +1981,8 @@ data class TournamentJoinedEventData(
     @SerialName("join_time") val joinTime: String,
     @SerialName("diamonds_allocated") val diamondsAllocated: Int,
     @SerialName("session_id") val sessionId: String,
-) : BaseEventData(), EventData
+) : BaseEventData(),
+    EventData
 
 @Serializable
 data class TournamentAnswerSubmittedEventData(
@@ -1987,7 +1993,8 @@ data class TournamentAnswerSubmittedEventData(
     @SerialName("score_delta") val scoreDelta: Int,
     @SerialName("diamonds_remaining") val diamondsRemaining: Int,
     @SerialName("session_id") val sessionId: String,
-) : BaseEventData(), EventData
+) : BaseEventData(),
+    EventData
 
 @Serializable
 data class TournamentExitAttemptedEventData(
@@ -1996,7 +2003,8 @@ data class TournamentExitAttemptedEventData(
     @SerialName("tournament_id") val tournamentId: String,
     @SerialName("diamonds_remaining") val diamondsRemaining: Int,
     @SerialName("session_id") val sessionId: String,
-) : BaseEventData(), EventData
+) : BaseEventData(),
+    EventData
 
 @Serializable
 data class TournamentExitNudgeShownEventData(
@@ -2005,7 +2013,8 @@ data class TournamentExitNudgeShownEventData(
     @SerialName("tournament_id") val tournamentId: String,
     @SerialName("nudge_type") val nudgeType: String = "Exit Warning",
     @SerialName("session_id") val sessionId: String,
-) : BaseEventData(), EventData
+) : BaseEventData(),
+    EventData
 
 @Serializable
 data class TournamentExitConfirmedEventData(
@@ -2014,7 +2023,8 @@ data class TournamentExitConfirmedEventData(
     @SerialName("tournament_id") val tournamentId: String,
     @SerialName("diamonds_remaining") val diamondsRemaining: Int,
     @SerialName("session_id") val sessionId: String,
-) : BaseEventData(), EventData
+) : BaseEventData(),
+    EventData
 
 @Serializable
 data class TournamentOutOfDiamondsShownEventData(
@@ -2023,7 +2033,8 @@ data class TournamentOutOfDiamondsShownEventData(
     @SerialName("tournament_id") val tournamentId: String,
     @SerialName("diamonds_remaining") val diamondsRemaining: Int = 0,
     @SerialName("session_id") val sessionId: String,
-) : BaseEventData(), EventData
+) : BaseEventData(),
+    EventData
 
 @Serializable
 data class TournamentEndedEventData(
@@ -2032,7 +2043,8 @@ data class TournamentEndedEventData(
     @SerialName("tournament_id") val tournamentId: String,
     @SerialName("tournament_name") val tournamentName: String,
     @SerialName("session_id") val sessionId: String,
-) : BaseEventData(), EventData
+) : BaseEventData(),
+    EventData
 
 @Serializable
 data class TournamentResultScreenViewedEventData(
@@ -2043,7 +2055,8 @@ data class TournamentResultScreenViewedEventData(
     @SerialName("final_score") val finalScore: Int,
     @SerialName("rank") val rank: Int,
     @SerialName("session_id") val sessionId: String,
-) : BaseEventData(), EventData
+) : BaseEventData(),
+    EventData
 
 @Serializable
 data class TournamentLeaderboardViewedEventData(
@@ -2053,7 +2066,8 @@ data class TournamentLeaderboardViewedEventData(
     @SerialName("user_rank") val userRank: Int,
     @SerialName("is_winner") val isWinner: Boolean,
     @SerialName("session_id") val sessionId: String,
-) : BaseEventData(), EventData
+) : BaseEventData(),
+    EventData
 
 @Serializable
 data class TournamentRewardEarnedEventData(
@@ -2063,7 +2077,8 @@ data class TournamentRewardEarnedEventData(
     @SerialName("reward_amount_inr") val rewardAmountInr: Int,
     @SerialName("reward_currency") val rewardCurrency: String = "BTC",
     @SerialName("rank") val rank: Int,
-) : BaseEventData(), EventData
+) : BaseEventData(),
+    EventData
 
 @Serializable
 enum class TournamentCtaState {

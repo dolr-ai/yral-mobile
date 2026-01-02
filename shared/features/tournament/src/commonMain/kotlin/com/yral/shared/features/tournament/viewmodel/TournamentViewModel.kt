@@ -38,6 +38,7 @@ import kotlinx.coroutines.launch
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
+@Suppress("TooManyFunctions")
 class TournamentViewModel(
     private val sessionManager: SessionManager,
     private val getTournamentsUseCase: GetTournamentsUseCase,
@@ -275,6 +276,7 @@ class TournamentViewModel(
         loadTournaments()
     }
 
+    @Suppress("LongMethod", "MagicNumber")
     fun registerForTournament(tournament: Tournament) {
         val principalId = sessionManager.userPrincipal ?: return
         if (_state.value.isRegistering) {
