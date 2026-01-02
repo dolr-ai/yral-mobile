@@ -71,22 +71,6 @@ class TournamentViewModel(
         telemetry.onTournamentScreenViewed(tournamentId)
     }
 
-    fun trackJoinCtaViewed(
-        tournamentId: String,
-        isActive: Boolean,
-        timeToStartSec: Int,
-    ) {
-        telemetry.onJoinCtaViewed(
-            tournamentId = tournamentId,
-            isActive = isActive,
-            timeToStartSec = timeToStartSec,
-        )
-    }
-
-    fun trackJoinCtaActivated(tournamentId: String) {
-        telemetry.onJoinCtaActivated(tournamentId)
-    }
-
     @OptIn(ExperimentalTime::class)
     private fun tournamentListUpdater() {
         viewModelScope.launch {
@@ -96,8 +80,7 @@ class TournamentViewModel(
                     val currentTimeMs = Clock.System.now().toEpochMilliseconds()
                     val tournaments = tournamentDataList.map { it.toUiTournament() }
 
-                    // Track CTA activated when tournament transitions from Upcoming to Live
-                    trackNewlyActivatedTournaments(previousTournaments, tournaments)
+                    trackTournamentStateChanges(previousTournaments, tournaments)
                     previousTournaments = tournaments
 
                     _state.update { it.copy(tournaments = tournaments) }
@@ -116,16 +99,20 @@ class TournamentViewModel(
         }
     }
 
-    private fun trackNewlyActivatedTournaments(
+    private fun trackTournamentStateChanges(
         previousTournaments: List<Tournament>,
         currentTournaments: List<Tournament>,
     ) {
-        val previousStatusMap = previousTournaments.associate { it.id to it.status }
+        val previousStateMap = previousTournaments.associate { it.id to it.participationState }
         currentTournaments.forEach { tournament ->
-            val previousStatus = previousStatusMap[tournament.id]
-            // Track when tournament transitions from Upcoming to Live (CTA becomes active)
-            if (previousStatus is TournamentStatus.Upcoming && tournament.status is TournamentStatus.Live) {
-                trackJoinCtaActivated(tournament.id)
+            val previousState = previousStateMap[tournament.id] ?: return@forEach
+            val currentState = tournament.participationState
+            if (previousState != currentState) {
+                telemetry.onTournamentParticipationStateChanged(
+                    tournamentId = tournament.id,
+                    fromState = previousState,
+                    toState = currentState,
+                )
             }
         }
     }
