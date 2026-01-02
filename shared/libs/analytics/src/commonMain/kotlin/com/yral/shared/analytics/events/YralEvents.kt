@@ -1953,22 +1953,14 @@ data class TournamentRegisteredEventData(
     EventData
 
 @Serializable
-data class TournamentJoinCtaViewedEventData(
-    @SerialName("event") override val event: String = FeatureEvents.TOURNAMENT_JOIN_CTA_VIEWED.getEventName(),
+data class TournamentStateChangedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.TOURNAMENT_STATE_CHANGED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.TOURNAMENT.getFeatureName(),
     @SerialName("tournament_id") val tournamentId: String,
-    @SerialName("cta_state") val ctaState: TournamentCtaState,
-    @SerialName("time_to_start_sec") val timeToStartSec: Int,
-    @SerialName("session_id") val sessionId: String,
-) : BaseEventData(),
-    EventData
-
-@Serializable
-data class TournamentJoinCtaActivatedEventData(
-    @SerialName("event") override val event: String = FeatureEvents.TOURNAMENT_JOIN_CTA_ACTIVATED.getEventName(),
-    @SerialName("feature_name") override val featureName: String = Features.TOURNAMENT.getFeatureName(),
-    @SerialName("tournament_id") val tournamentId: String,
-    @SerialName("cta_state") val ctaState: TournamentCtaState,
+    @SerialName("from_state") val fromState: TournamentState,
+    @SerialName("to_state") val toState: TournamentState,
+    @SerialName("tokens_required") val tokensRequired: Int? = null,
+    @SerialName("user_diamonds") val userDiamonds: Int? = null,
     @SerialName("session_id") val sessionId: String,
 ) : BaseEventData(),
     EventData
@@ -2081,12 +2073,21 @@ data class TournamentRewardEarnedEventData(
     EventData
 
 @Serializable
-enum class TournamentCtaState {
-    @SerialName("inactive")
-    INACTIVE,
+enum class TournamentState {
+    @SerialName("registration_required")
+    REGISTRATION_REQUIRED,
 
-    @SerialName("active")
-    ACTIVE,
+    @SerialName("registered")
+    REGISTERED,
+
+    @SerialName("join_now")
+    JOIN_NOW,
+
+    @SerialName("join_now_with_tokens")
+    JOIN_NOW_WITH_TOKENS,
+
+    @SerialName("join_now_disabled")
+    JOIN_NOW_DISABLED,
 }
 
 @Serializable

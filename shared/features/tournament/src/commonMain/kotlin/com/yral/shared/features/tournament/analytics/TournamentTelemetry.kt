@@ -3,13 +3,10 @@ package com.yral.shared.features.tournament.analytics
 import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.events.TournamentAnswerResult
 import com.yral.shared.analytics.events.TournamentAnswerSubmittedEventData
-import com.yral.shared.analytics.events.TournamentCtaState
 import com.yral.shared.analytics.events.TournamentEndedEventData
 import com.yral.shared.analytics.events.TournamentExitAttemptedEventData
 import com.yral.shared.analytics.events.TournamentExitConfirmedEventData
 import com.yral.shared.analytics.events.TournamentExitNudgeShownEventData
-import com.yral.shared.analytics.events.TournamentJoinCtaActivatedEventData
-import com.yral.shared.analytics.events.TournamentJoinCtaViewedEventData
 import com.yral.shared.analytics.events.TournamentJoinedEventData
 import com.yral.shared.analytics.events.TournamentLeaderboardViewedEventData
 import com.yral.shared.analytics.events.TournamentOutOfDiamondsShownEventData
@@ -19,6 +16,9 @@ import com.yral.shared.analytics.events.TournamentResult
 import com.yral.shared.analytics.events.TournamentResultScreenViewedEventData
 import com.yral.shared.analytics.events.TournamentRewardEarnedEventData
 import com.yral.shared.analytics.events.TournamentScreenViewedEventData
+import com.yral.shared.analytics.events.TournamentState
+import com.yral.shared.analytics.events.TournamentStateChangedEventData
+import com.yral.shared.features.tournament.domain.model.TournamentParticipationState
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
@@ -75,26 +75,18 @@ class TournamentTelemetry(
         )
     }
 
-    fun onJoinCtaViewed(
+    fun onTournamentParticipationStateChanged(
         tournamentId: String,
-        isActive: Boolean,
-        timeToStartSec: Int,
+        fromState: TournamentParticipationState,
+        toState: TournamentParticipationState,
     ) {
         analyticsManager.trackEvent(
-            TournamentJoinCtaViewedEventData(
+            TournamentStateChangedEventData(
                 tournamentId = tournamentId,
-                ctaState = if (isActive) TournamentCtaState.ACTIVE else TournamentCtaState.INACTIVE,
-                timeToStartSec = timeToStartSec,
-                sessionId = getSessionId(),
-            ),
-        )
-    }
-
-    fun onJoinCtaActivated(tournamentId: String) {
-        analyticsManager.trackEvent(
-            TournamentJoinCtaActivatedEventData(
-                tournamentId = tournamentId,
-                ctaState = TournamentCtaState.ACTIVE,
+                fromState = fromState.toAnalyticsState(),
+                toState = toState.toAnalyticsState(),
+                tokensRequired = toState.tokensRequired(),
+                userDiamonds = toState.userDiamonds(),
                 sessionId = getSessionId(),
             ),
         )
@@ -234,4 +226,33 @@ class TournamentTelemetry(
             ),
         )
     }
+
+    private fun TournamentParticipationState.toAnalyticsState(): TournamentState =
+        when (this) {
+            is TournamentParticipationState.RegistrationRequired -> TournamentState.REGISTRATION_REQUIRED
+            is TournamentParticipationState.Registered -> TournamentState.REGISTERED
+            is TournamentParticipationState.JoinNow -> TournamentState.JOIN_NOW
+            is TournamentParticipationState.JoinNowWithTokens -> TournamentState.JOIN_NOW_WITH_TOKENS
+            is TournamentParticipationState.JoinNowDisabled -> TournamentState.JOIN_NOW_DISABLED
+        }
+
+    private fun TournamentParticipationState.tokensRequired(): Int? =
+        when (this) {
+            is TournamentParticipationState.RegistrationRequired -> tokensRequired
+            is TournamentParticipationState.JoinNowWithTokens -> tokensRequired
+            is TournamentParticipationState.JoinNow,
+            is TournamentParticipationState.JoinNowDisabled,
+            is TournamentParticipationState.Registered,
+            -> null
+        }
+
+    private fun TournamentParticipationState.userDiamonds(): Int? =
+        when (this) {
+            is TournamentParticipationState.JoinNow -> userDiamonds
+            is TournamentParticipationState.RegistrationRequired,
+            is TournamentParticipationState.Registered,
+            is TournamentParticipationState.JoinNowWithTokens,
+            is TournamentParticipationState.JoinNowDisabled,
+            -> null
+        }
 }
