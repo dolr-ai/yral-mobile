@@ -18,6 +18,7 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.shared.app.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.shared.features.feed.ui.FeedScreen
+import com.yral.shared.features.feed.viewmodel.FeedContext
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.tournament.nav.TournamentGameComponent
 import com.yral.shared.features.tournament.ui.LeaveTournamentBottomSheet
@@ -31,10 +32,11 @@ import com.yral.shared.features.tournament.viewmodel.TournamentGameViewModel
 import com.yral.shared.libs.designsystem.component.lottie.PreloadLottieAnimations
 import kotlinx.coroutines.delay
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "MagicNumber", "CyclomaticComplexMethod")
 @OptIn(ExperimentalTime::class, ExperimentalComposeUiApi::class)
 @Composable
 fun TournamentGameScaffoldScreen(
@@ -49,6 +51,7 @@ fun TournamentGameScaffoldScreen(
     val tournamentFeedViewModel =
         koinViewModel<FeedViewModel>(
             key = "tournament-feed-${gameConfig.tournamentId}-$sessionKey",
+            parameters = { parametersOf(FeedContext.Tournament(gameConfig.tournamentId, sessionKey)) },
         )
     val gameState by tournamentGameViewModel.state.collectAsStateWithLifecycle()
     val feedState by tournamentFeedViewModel.state.collectAsStateWithLifecycle()
@@ -57,11 +60,16 @@ fun TournamentGameScaffoldScreen(
             maxOf(0L, gameConfig.endEpochMs - Clock.System.now().toEpochMilliseconds()),
         )
     }
-    var showHowToPlay by remember(gameConfig.tournamentId) {
-        mutableStateOf(true)
-    }
-    var howToPlayOpenedFromButton by remember(gameConfig.tournamentId) {
-        mutableStateOf(false)
+    // Show how-to-play only if user hasn't played yet in this tournament (from API)
+    // Start with true, then hide once API confirms user has played before
+    var showHowToPlay by remember(gameConfig.tournamentId) { mutableStateOf(true) }
+    var howToPlayOpenedFromButton by remember(gameConfig.tournamentId) { mutableStateOf(false) }
+
+    // Auto-hide how-to-play if API says user has played before
+    LaunchedEffect(gameState.hasPlayedBefore) {
+        if (gameState.hasPlayedBefore && !howToPlayOpenedFromButton) {
+            showHowToPlay = false
+        }
     }
     var showLeaveTournamentConfirmation by remember(gameConfig.tournamentId) {
         mutableStateOf(false)
@@ -74,6 +82,7 @@ fun TournamentGameScaffoldScreen(
             timeLeftMs = maxOf(0L, gameConfig.endEpochMs - Clock.System.now().toEpochMilliseconds())
         }
         if (timeLeftMs <= 0 && gameConfig.endEpochMs > 0) {
+            tournamentGameViewModel.trackTournamentEnded(gameConfig.tournamentTitle)
             component.onTimeUp()
         }
     }
@@ -105,7 +114,10 @@ fun TournamentGameScaffoldScreen(
                         gameState = gameState,
                         tournamentTitle = gameConfig.tournamentTitle,
                         onLeaderboardClick = { /*component.onLeaderboardClick()*/ },
-                        onBack = { showLeaveTournamentConfirmation = true },
+                        onBack = {
+                            tournamentGameViewModel.trackExitAttempted()
+                            showLeaveTournamentConfirmation = true
+                        },
                     )
                 },
                 bottomOverlay = { pageNo, _ ->
@@ -125,7 +137,10 @@ fun TournamentGameScaffoldScreen(
                 },
                 actionsRight = { pageNo ->
                     TournamentGameActionsRight(
-                        onExit = { showLeaveTournamentConfirmation = true },
+                        onExit = {
+                            tournamentGameViewModel.trackExitAttempted()
+                            showLeaveTournamentConfirmation = true
+                        },
                         onReport = { tournamentFeedViewModel.toggleReportSheet(true, pageNo) },
                     )
                 },
@@ -149,11 +164,13 @@ fun TournamentGameScaffoldScreen(
             }
 
             if (showHowToPlay) {
+                val tournamentDurationMinutes = ((gameConfig.endEpochMs - gameConfig.startEpochMs) / 60_000).toInt()
                 TournamentHowToPlayScreen(
                     title = gameConfig.tournamentTitle,
                     onStartPlaying = { showHowToPlay = false },
                     startingDiamonds = component.gameConfig.initialDiamonds,
                     playType = if (howToPlayOpenedFromButton) PlayType.CONTINUE else PlayType.START,
+                    tournamentDurationMinutes = tournamentDurationMinutes,
                 )
             }
 
@@ -181,11 +198,16 @@ fun TournamentGameScaffoldScreen(
             }
 
             if (showLeaveTournamentConfirmation) {
+                // Track that the exit nudge is shown
+                LaunchedEffect(Unit) {
+                    tournamentGameViewModel.trackExitNudgeShown()
+                }
                 LeaveTournamentBottomSheet(
                     onDismissRequest = { showLeaveTournamentConfirmation = false },
                     onKeepPlayingClick = { showLeaveTournamentConfirmation = false },
                     totalPrizePool = component.gameConfig.totalPrizePool,
                     onExitAnywayClick = {
+                        tournamentGameViewModel.trackExitConfirmed()
                         showLeaveTournamentConfirmation = false
                         component.onBack()
                     },

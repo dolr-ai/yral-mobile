@@ -6,6 +6,8 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.github.michaelbull.result.runCatching
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.features.game.domain.GetBalanceUseCase
+import com.yral.shared.features.tournament.analytics.TournamentTelemetry
 import com.yral.shared.features.tournament.domain.GetMyTournamentsUseCase
 import com.yral.shared.features.tournament.domain.GetTournamentsUseCase
 import com.yral.shared.features.tournament.domain.RegisterForTournamentUseCase
@@ -36,14 +38,17 @@ import kotlinx.coroutines.launch
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
+@Suppress("TooManyFunctions")
 class TournamentViewModel(
     private val sessionManager: SessionManager,
     private val getTournamentsUseCase: GetTournamentsUseCase,
     private val getMyTournamentsUseCase: GetMyTournamentsUseCase,
     private val registerForTournamentUseCase: RegisterForTournamentUseCase,
+    private val getBalanceUseCase: GetBalanceUseCase,
     private val shareService: ShareService,
     private val urlBuilder: UrlBuilder,
     private val linkGenerator: LinkGenerator,
+    private val telemetry: TournamentTelemetry,
 ) : ViewModel() {
     private val tournamentDataListFlow: MutableStateFlow<List<TournamentData>> =
         MutableStateFlow(emptyList())
@@ -62,13 +67,22 @@ class TournamentViewModel(
         tournamentListUpdater()
     }
 
+    fun trackScreenViewed(tournamentId: String) {
+        telemetry.onTournamentScreenViewed(tournamentId)
+    }
+
     @OptIn(ExperimentalTime::class)
     private fun tournamentListUpdater() {
         viewModelScope.launch {
             tournamentDataListFlow.collectLatest { tournamentDataList ->
+                var previousTournaments: List<Tournament> = emptyList()
                 while (true) {
                     val currentTimeMs = Clock.System.now().toEpochMilliseconds()
                     val tournaments = tournamentDataList.map { it.toUiTournament() }
+
+                    trackTournamentStateChanges(previousTournaments, tournaments)
+                    previousTournaments = tournaments
+
                     _state.update { it.copy(tournaments = tournaments) }
 
                     val nextBoundaryMs = findNextBoundaryTime(tournamentDataList, currentTimeMs)
@@ -82,6 +96,20 @@ class TournamentViewModel(
                     }
                 }
             }
+        }
+    }
+
+    private fun trackTournamentStateChanges(
+        previousTournaments: List<Tournament>,
+        currentTournaments: List<Tournament>,
+    ) {
+        val previousStateMap = previousTournaments.associateBy { it.id }
+        currentTournaments.forEach { tournament ->
+            val previousTournament = previousStateMap[tournament.id] ?: return@forEach
+            telemetry.onTournamentStateChangedIfChanged(
+                previousTournament = previousTournament,
+                currentTournament = tournament,
+            )
         }
     }
 
@@ -102,8 +130,41 @@ class TournamentViewModel(
                     defaultValue = false,
                 ).collect { isSocialSignIn ->
                     _state.update { it.copy(isLoggedIn = isSocialSignIn) }
+
+                    if (isSocialSignIn) {
+                        processPendingTournamentRegistration()
+                    }
                 }
         }
+    }
+
+    private fun processPendingTournamentRegistration() {
+        viewModelScope.launch {
+            // Wait for tournaments to load, balance to be fetched, and Firebase login
+            repeat(MAX_PENDING_TOURNAMENT_RETRIES) {
+                val pendingTournamentId =
+                    sessionManager.consumePendingTournamentRegistrationId() ?: return@launch
+
+                val pendingTournament = _state.value.tournaments.find { it.id == pendingTournamentId }
+                val balanceLoaded = sessionManager.isCoinBalanceLoaded()
+                val firebaseLoggedIn = sessionManager.isFirebaseLoggedIn()
+
+                if (pendingTournament != null && balanceLoaded && firebaseLoggedIn) {
+                    onTournamentCtaClick(pendingTournament)
+                    return@launch
+                }
+                // Not ready yet, put the ID back and wait
+                sessionManager.setPendingTournamentRegistrationId(pendingTournamentId)
+                delay(PENDING_TOURNAMENT_RETRY_DELAY_MS)
+            }
+            // After retries, clear pending to avoid stuck state
+            sessionManager.consumePendingTournamentRegistrationId()
+        }
+    }
+
+    companion object {
+        private const val MAX_PENDING_TOURNAMENT_RETRIES = 10
+        private const val PENDING_TOURNAMENT_RETRY_DELAY_MS = 500L
     }
 
     fun loadTournaments() {
@@ -198,12 +259,9 @@ class TournamentViewModel(
         loadTournaments()
     }
 
+    @Suppress("LongMethod", "MagicNumber")
     fun registerForTournament(tournament: Tournament) {
-        val principalId = sessionManager.userPrincipal
-        if (principalId.isNullOrEmpty()) {
-            send(Event.Login)
-            return
-        }
+        val principalId = sessionManager.userPrincipal ?: return
         if (_state.value.isRegistering) {
             return
         }
@@ -216,22 +274,30 @@ class TournamentViewModel(
                     is TournamentParticipationState.RegistrationRequired -> state.tokensRequired
                     else -> 0
                 }
-            if (tokensRequired > 0) {
-                val currentBalance =
-                    sessionManager.readLatestSessionPropertyWithDefault(
-                        selector = { it.coinBalance },
-                        defaultValue = 0L,
-                    )
-                if (currentBalance < tokensRequired) {
-                    _state.update { it.copy(isRegistering = false) }
-                    send(
-                        Event.RegistrationFailed(
-                            code = TournamentErrorCodes.INSUFFICIENT_COINS,
-                            message = null,
-                        ),
-                    )
-                    return@launch
-                }
+
+            // Track registration initiated
+            val currentBalance =
+                sessionManager.readLatestSessionPropertyWithDefault(
+                    selector = { it.coinBalance },
+                    defaultValue = 0L,
+                )
+            val durationMinutes = ((tournament.endEpochMs - tournament.startEpochMs) / 60000).toInt()
+            telemetry.onRegistrationInitiated(
+                tournamentId = tournament.id,
+                entryFeePoints = tokensRequired,
+                userPointBalance = currentBalance.toInt(),
+                tournamentDurationMinutes = durationMinutes,
+            )
+
+            if (tokensRequired > 0 && currentBalance < tokensRequired) {
+                _state.update { it.copy(isRegistering = false) }
+                send(
+                    Event.RegistrationFailed(
+                        code = TournamentErrorCodes.INSUFFICIENT_COINS,
+                        message = null,
+                    ),
+                )
+                return@launch
             }
 
             registerForTournamentUseCase
@@ -242,6 +308,13 @@ class TournamentViewModel(
                     ),
                 ).onSuccess { result ->
                     _state.update { it.copy(isRegistering = false) }
+                    // Track registration success
+                    telemetry.onTournamentRegistered(
+                        tournamentId = result.tournamentId,
+                        entryFeePoints = result.coinsPaid,
+                    )
+                    // Refresh balance from server after entry fee was deducted
+                    refreshBalance(principalId)
                     send(Event.RegistrationSuccess(result.tournamentId, result.coinsPaid))
                     // Refresh tournaments to update registration state
                     loadTournaments()
@@ -288,6 +361,8 @@ class TournamentViewModel(
 
     fun onTournamentCtaClick(tournament: Tournament) {
         if (!_state.value.isLoggedIn) {
+            // Store tournament ID in SessionManager (survives ViewModel recreation)
+            sessionManager.setPendingTournamentRegistrationId(tournament.id)
             send(Event.Login)
             return
         }
@@ -316,8 +391,9 @@ class TournamentViewModel(
                             tournamentId = tournament.id,
                             title = tournament.title,
                             initialDiamonds = tournament.participationState.userDiamonds,
-                            totalPrizePool = tournament.totalPrizePool,
+                            startEpochMs = tournament.startEpochMs,
                             endEpochMs = tournament.endEpochMs,
+                            totalPrizePool = tournament.totalPrizePool,
                         ),
                     )
                 else -> {}
@@ -335,6 +411,16 @@ class TournamentViewModel(
 
     fun clearError() {
         _state.update { it.copy(error = null) }
+    }
+
+    private fun refreshBalance(principalId: String) {
+        viewModelScope.launch {
+            getBalanceUseCase
+                .invoke(principalId)
+                .onSuccess { newBalance ->
+                    sessionManager.updateCoinBalance(newBalance)
+                }
+        }
     }
 
     private fun send(event: Event) {
@@ -357,6 +443,7 @@ class TournamentViewModel(
             val tournamentId: String,
             val title: String,
             val initialDiamonds: Int,
+            val startEpochMs: Long,
             val endEpochMs: Long,
             val totalPrizePool: Int,
         ) : Event()

@@ -48,10 +48,12 @@ data class LeaderboardRowDto(
     val principalId: String,
     @SerialName("username")
     val username: String? = null,
+    @SerialName("diamonds")
+    val diamonds: Int = 0,
     @SerialName("wins")
-    val wins: Int,
+    val wins: Int = 0,
     @SerialName("losses")
-    val losses: Int,
+    val losses: Int = 0,
     @SerialName("position")
     val position: Int,
     @SerialName("prize")
@@ -89,6 +91,7 @@ fun LeaderboardRowDto.toLeaderboardRow(): LeaderboardRow =
     LeaderboardRow(
         principalId = principalId,
         username = username,
+        diamonds = diamonds,
         wins = wins,
         losses = losses,
         position = position,

@@ -6,6 +6,7 @@ import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.features.tournament.analytics.TournamentTelemetry
 import com.yral.shared.features.tournament.domain.GetTournamentLeaderboardUseCase
 import com.yral.shared.features.tournament.domain.model.GetTournamentLeaderboardRequest
 import com.yral.shared.features.tournament.domain.model.LeaderboardRow
@@ -45,6 +46,7 @@ class TournamentLeaderboardViewModel(
     private val getTournamentLeaderboardUseCase: GetTournamentLeaderboardUseCase,
     private val sessionManager: SessionManager,
     private val getProfileDetailsV4UseCase: GetProfileDetailsV4UseCase,
+    private val telemetry: TournamentTelemetry,
 ) : ViewModel() {
     private val _state = MutableStateFlow(TournamentLeaderboardUiState())
     val state: StateFlow<TournamentLeaderboardUiState> = _state.asStateFlow()
@@ -59,6 +61,25 @@ class TournamentLeaderboardViewModel(
                 getTournamentLeaderboardUseCase
                     .invoke(GetTournamentLeaderboardRequest(principalId = userPrincipal, tournamentId = tournamentId))
                     .onSuccess { leaderboard ->
+                        // Track leaderboard viewed
+                        val userRank = leaderboard.userRow?.position ?: 0
+                        val userPrize = leaderboard.userRow?.prize ?: leaderboard.prizeMap[userRank]
+                        val isWinner = userRank > 0 && userPrize != null
+                        telemetry.onLeaderboardViewed(
+                            tournamentId = tournamentId,
+                            userRank = userRank,
+                            isWinner = isWinner,
+                        )
+
+                        // Track reward earned if user won a prize
+                        if (isWinner) {
+                            telemetry.onRewardEarned(
+                                tournamentId = tournamentId,
+                                rewardAmountInr = userPrize ?: 0,
+                                rank = userRank,
+                            )
+                        }
+
                         _state.update {
                             val startTime = Instant.fromEpochMilliseconds(leaderboard.startEpochMs)
                             val endTime = Instant.fromEpochMilliseconds(leaderboard.endEpochMs)
@@ -134,6 +155,21 @@ class TournamentLeaderboardViewModel(
                 }
             }
         }
+    }
+
+    // Telemetry tracking methods
+    fun trackResultScreenViewed(
+        tournamentId: String,
+        isWin: Boolean,
+        finalScore: Int,
+        rank: Int,
+    ) {
+        telemetry.onResultScreenViewed(
+            tournamentId = tournamentId,
+            isWin = isWin,
+            finalScore = finalScore,
+            rank = rank,
+        )
     }
 
     sealed class Event {

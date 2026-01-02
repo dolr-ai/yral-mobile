@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -72,7 +74,7 @@ import yral_mobile.shared.features.tournament.generated.resources.Res
 import yral_mobile.shared.features.tournament.generated.resources.bitcoin
 import yral_mobile.shared.features.tournament.generated.resources.ic_calendar
 import yral_mobile.shared.features.tournament.generated.resources.ic_users
-import yral_mobile.shared.features.tournament.generated.resources.tournament_leaderboard_games_won
+import yral_mobile.shared.features.tournament.generated.resources.tournament_leaderboard_diamonds
 import yral_mobile.shared.features.tournament.generated.resources.tournament_leaderboard_player
 import yral_mobile.shared.features.tournament.generated.resources.tournament_leaderboard_rank
 import yral_mobile.shared.features.tournament.generated.resources.tournament_leaderboard_rewards
@@ -83,6 +85,7 @@ import yral_mobile.shared.libs.leaderboard.generated.resources.bronze_trophy
 import yral_mobile.shared.libs.leaderboard.generated.resources.golden_trophy
 import yral_mobile.shared.libs.leaderboard.generated.resources.silver_trophy
 import yral_mobile.shared.libs.leaderboard.generated.resources.yellow_leaderboard
+import yral_mobile.shared.libs.leaderboard.generated.resources.you
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 import yral_mobile.shared.libs.leaderboard.generated.resources.Res as LeaderboardRes
 
@@ -176,7 +179,7 @@ fun TournamentLeaderboardScreen(
                     items(state.leaderboard) { row ->
                         TournamentLeaderboardRow(
                             row = row,
-                            isCurrentUser = viewModel.isCurrentUser(row.principalId),
+                            isCurrentUser = false,
                             fallbackPrize = state.prizeMap[row.position],
                             onClick = { viewModel.onUserClick(row) },
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
@@ -214,6 +217,17 @@ fun TournamentLeaderboardScreen(
                 val shouldShowWinner = rank > 0 && (currentUser.prize != null || state.prizeMap.containsKey(rank))
                 val dismissResult = { showResultOverlay = false }
                 val closeResult = { onBack() }
+
+                // Track result screen viewed
+                LaunchedEffect(shouldShowWinner, rank) {
+                    viewModel.trackResultScreenViewed(
+                        tournamentId = tournamentId,
+                        isWin = shouldShowWinner,
+                        finalScore = currentUser.diamonds,
+                        rank = rank,
+                    )
+                }
+
                 if (shouldShowWinner) {
                     TournamentWinnerScreen(
                         prizeAmount = prizeAmount,
@@ -291,7 +305,7 @@ private fun TournamentLeaderboardHeader(
             HeaderBar(title = tournamentTitle, onBack = onBack)
             Spacer(modifier = Modifier.height(8.dp))
             TournamentMetaRow(participantsLabel = participantsLabel, scheduleLabel = scheduleLabel)
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             AnimatedVisibility(visible = isTrophyVisible) {
                 TournamentPodium(leaderboard, prizeMap)
             }
@@ -395,13 +409,29 @@ private fun TournamentPodium(
     val third = leaderboard.firstOrNull { it.position == LeaderboardHelpers.POS_BRONZE }
 
     Row(
-        horizontalArrangement = Arrangement.spacedBy(42.dp, Alignment.CenterHorizontally),
+        horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.Bottom,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        TournamentPodiumEntry(position = LeaderboardHelpers.POS_SILVER, row = second, prize = prizeMap[2])
-        TournamentPodiumEntry(position = LeaderboardHelpers.POS_GOLD, row = first, prize = prizeMap[1])
-        TournamentPodiumEntry(position = LeaderboardHelpers.POS_BRONZE, row = third, prize = prizeMap[3])
+        TournamentPodiumSlot {
+            TournamentPodiumEntry(position = LeaderboardHelpers.POS_SILVER, row = second, prize = prizeMap[2])
+        }
+        TournamentPodiumSlot {
+            TournamentPodiumEntry(position = LeaderboardHelpers.POS_GOLD, row = first, prize = prizeMap[1])
+        }
+        TournamentPodiumSlot {
+            TournamentPodiumEntry(position = LeaderboardHelpers.POS_BRONZE, row = third, prize = prizeMap[3])
+        }
+    }
+}
+
+@Composable
+private fun RowScope.TournamentPodiumSlot(content: @Composable () -> Unit) {
+    Box(
+        modifier = Modifier.weight(1f),
+        contentAlignment = Alignment.BottomCenter,
+    ) {
+        content()
     }
 }
 
@@ -414,12 +444,15 @@ private fun TournamentPodiumEntry(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.width(93.dp),
+        modifier = Modifier.widthIn(max = 93.dp),
     ) {
         TournamentTrophy(position = position)
         (row?.prize ?: prize)?.let { amount ->
             LeaderboardReward(
-                modifier = Modifier.align(Alignment.CenterHorizontally),
+                modifier =
+                    Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .widthIn(max = 93.dp),
                 rewardCurrency = RewardCurrency.BTC,
                 rewardCurrencyCode = "INR",
                 reward = amount.toDouble(),
@@ -433,6 +466,8 @@ private fun TournamentPodiumEntry(
             color = YralColors.Neutral950,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.widthIn(max = 93.dp),
         )
     }
 }
@@ -505,7 +540,7 @@ private fun TournamentLeaderboardTableHeader(isTrophyVisible: Boolean) {
             overflow = TextOverflow.Ellipsis,
         )
         Text(
-            text = stringResource(Res.string.tournament_leaderboard_games_won),
+            text = stringResource(Res.string.tournament_leaderboard_diamonds),
             modifier = Modifier.weight(headerWeights[2]),
             style = LocalAppTopography.current.regMedium,
             color = YralColors.Neutral500,
@@ -595,7 +630,7 @@ private fun TournamentLeaderboardRow(
                 contentAlignment = Alignment.CenterStart,
             ) {
                 Text(
-                    text = formatAbbreviation(row.wins.toLong()),
+                    text = formatAbbreviation(row.diamonds.toLong()),
                     style = LocalAppTopography.current.baseBold,
                     color = YralColors.Neutral50,
                     maxLines = 1,
@@ -679,7 +714,7 @@ private fun TournamentUsername(
         )
     } else {
         Text(
-            text = username,
+            text = if (isCurrentUser) stringResource(LeaderboardRes.string.you) else username,
             style = textStyle,
             color = YralColors.NeutralTextPrimary,
             maxLines = 1,
