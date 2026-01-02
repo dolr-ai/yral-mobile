@@ -18,6 +18,7 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.shared.app.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.shared.features.feed.ui.FeedScreen
+import com.yral.shared.features.feed.viewmodel.FeedContext
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.tournament.nav.TournamentGameComponent
 import com.yral.shared.features.tournament.ui.LeaveTournamentBottomSheet
@@ -31,6 +32,7 @@ import com.yral.shared.features.tournament.viewmodel.TournamentGameViewModel
 import com.yral.shared.libs.designsystem.component.lottie.PreloadLottieAnimations
 import kotlinx.coroutines.delay
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -49,6 +51,7 @@ fun TournamentGameScaffoldScreen(
     val tournamentFeedViewModel =
         koinViewModel<FeedViewModel>(
             key = "tournament-feed-${gameConfig.tournamentId}-$sessionKey",
+            parameters = { parametersOf(FeedContext.Tournament(gameConfig.tournamentId, sessionKey)) },
         )
     val gameState by tournamentGameViewModel.state.collectAsStateWithLifecycle()
     val feedState by tournamentFeedViewModel.state.collectAsStateWithLifecycle()
