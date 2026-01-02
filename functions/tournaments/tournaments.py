@@ -41,6 +41,7 @@ class Tournament:
     prize_map: Dict[str, int] = field(default_factory=dict)
     created_at: Optional[Any] = None
     updated_at: Optional[Any] = None
+    title: str = "SMILEY SHOWDOWN"
 
     def to_firestore(self) -> Dict[str, Any]:
         """Serialize to a dict ready for Firestore writes."""
@@ -58,6 +59,7 @@ class Tournament:
             "prizeMap": self.prize_map,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
+            "title": self.title,
         }
 
 
@@ -69,6 +71,10 @@ BALANCE_URL_CKBTC = "https://yral-hot-or-not.go-bazzinga.workers.dev/v2/transfer
 TICKER_URL = "https://blockchain.info/ticker"
 SATOSHIS_PER_BTC = 100_000_000
 
+# Backend API Constants
+BACKEND_TOURNAMENT_REGISTER_URL = "https://stage-recsys-on-premise.fly.dev/tournament/register"
+DEFAULT_VIDEO_COUNT = 500
+
 
 def db() -> firestore.Client:
     global _db
@@ -77,6 +83,38 @@ def db() -> firestore.Client:
             firebase_admin.initialize_app()
         _db = firestore.client()
     return _db
+
+
+# ─────────────────────  BACKEND API HELPERS  ────────────────────────
+def _register_tournament_backend(admin_key: str, video_count: int = DEFAULT_VIDEO_COUNT) -> tuple[str | None, str | None]:
+    """
+    Register tournament with backend API to get videos for the tournament.
+
+    Args:
+        admin_key: The backend admin API key
+        video_count: Number of videos to associate with the tournament
+
+    Returns:
+        Tuple of (backend_tournament_id, error_message)
+    """
+    headers = {
+        "x-admin-key": admin_key,
+        "Content-Type": "application/json",
+    }
+    body = {"video_count": video_count}
+
+    try:
+        resp = requests.post(BACKEND_TOURNAMENT_REGISTER_URL, json=body, timeout=30, headers=headers)
+        if resp.status_code == 200:
+            data = resp.json()
+            backend_tournament_id = data.get("tournament_id")
+            if backend_tournament_id:
+                print(f"[backend] Registered tournament: {backend_tournament_id} with {video_count} videos")
+                return backend_tournament_id, None
+            return None, "No tournament_id in response"
+        return None, f"Status: {resp.status_code}, Body: {resp.text}"
+    except requests.RequestException as e:
+        return None, str(e)
 
 
 # ─────────────────────  COIN HELPERS  ────────────────────────
@@ -428,12 +466,16 @@ def _schedule_status_task(doc_id: str, target_status: TournamentStatus, run_at: 
     print(f"[tasks] scheduled {target_status.value} for {doc_id} at {run_at.isoformat()} ({response.name})")
 
 
-@https_fn.on_request(region="us-central1")
+@https_fn.on_request(region="us-central1", secrets=["BACKEND_ADMIN_KEY"])
 def create_tournaments(cloud_event):
     """
     Cloud Scheduler target (run daily at 12am IST) to create tournaments
     """
     try:
+        backend_admin_key = os.environ.get("BACKEND_ADMIN_KEY")
+        if not backend_admin_key:
+            return jsonify({"error": "BACKEND_ADMIN_KEY not configured"}), 500
+
         date_str = _today_ist_str()
         entry_cost = 100
         total_prize_pool = 1500
@@ -455,9 +497,17 @@ def create_tournaments(cloud_event):
         created, skipped, errors = [], [], []
 
         for start_time, end_time in slots:
-            doc_id = _make_doc_id(date_str, start_time, end_time)
             start_dt = _ist_datetime(date_str, start_time)
             end_dt = _ist_datetime(date_str, end_time)
+
+            # Register with backend to get tournament ID and videos
+            tournament_id, backend_error = _register_tournament_backend(backend_admin_key, video_count=DEFAULT_VIDEO_COUNT)
+            if backend_error:
+                fallback_id = _make_doc_id(date_str, start_time, end_time)
+                print(f"[create_tournaments] Backend registration failed for {fallback_id}: {backend_error}", file=sys.stderr)
+                errors.append({"id": fallback_id, "reason": f"Backend registration failed: {backend_error}"})
+                continue
+
             tour = Tournament(
                 date=date_str,
                 start_time=start_time,
@@ -474,16 +524,17 @@ def create_tournaments(cloud_event):
                 updated_at=firestore.SERVER_TIMESTAMP,
             )
 
-            ref = db().collection("tournaments").document(doc_id)
+            # Use backend tournament ID as Firestore document ID
+            ref = db().collection("tournaments").document(tournament_id)
             try:
                 ref.create(tour.to_firestore())
-                created.append(doc_id)
-                _schedule_status_task(doc_id, TournamentStatus.LIVE, start_dt)
-                _schedule_status_task(doc_id, TournamentStatus.ENDED, end_dt)
+                created.append(tournament_id)
+                _schedule_status_task(tournament_id, TournamentStatus.LIVE, start_dt)
+                _schedule_status_task(tournament_id, TournamentStatus.ENDED, end_dt)
             except AlreadyExists:
-                skipped.append({"id": doc_id, "reason": "Already exists"})
+                skipped.append({"id": tournament_id, "reason": "Already exists"})
             except Exception as e:
-                errors.append({"id": doc_id, "reason": str(e)})
+                errors.append({"id": tournament_id, "reason": str(e)})
 
         status_code = 200 if not errors else 207
         print(f"[create_tournaments] date={date_str} created={created} skipped={skipped} errors={errors}")
