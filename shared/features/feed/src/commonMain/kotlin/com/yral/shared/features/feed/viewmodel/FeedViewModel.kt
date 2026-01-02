@@ -322,8 +322,7 @@ class FeedViewModel(
         tournamentId: String,
         userSeed: String,
         videoId: String,
-    ): Int =
-        "$tournamentId|$userSeed|$videoId".hashCode()
+    ): Int = "$tournamentId|$userSeed|$videoId".hashCode()
 
     private suspend fun saveCacheToPreferences() {
         sessionManager.userPrincipal?.let { userPrincipal ->
