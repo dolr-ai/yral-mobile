@@ -394,7 +394,7 @@ def tournaments(request: Request):
                 "prize_map": t_data.get("prizeMap", {}),
                 "participant_count": participant_count,
                 "is_registered": False,
-                "user_stats": None
+                "user_stats": None,
             }
 
             # Check if user is registered (if principal_id provided)
