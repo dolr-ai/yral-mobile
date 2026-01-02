@@ -691,7 +691,7 @@ private fun TournamentUsername(
         )
     } else {
         Text(
-            text = stringResource(LeaderboardRes.string.you),
+            text = if (isCurrentUser) stringResource(LeaderboardRes.string.you) else username,
             style = textStyle,
             color = YralColors.NeutralTextPrimary,
             maxLines = 1,
