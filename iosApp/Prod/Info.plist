@@ -17,7 +17,7 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>3.0.0</string>
+	<string>3.1.0</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -59,10 +59,10 @@
 	<string>Yral requires camera access to allow you to record and upload videos. Your camera will only be used when you choose to create a new video.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Yral requires microphone access to capture audio while recording videos. Your microphone will only be used during video recording.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Yral needs access to your photo library so you can choose a profile picture.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Yral needs permission to save downloaded videos and photos to your photo library.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Yral needs access to your photo library so you can choose a profile picture.</string>
 	<key>SENTRY_DSN</key>
 	<string>https://673c701dcea89017a3cfa26059ac10cc@apm.yral.com/14</string>
 	<key>SENTRY_ENVIRONMENT</key>
