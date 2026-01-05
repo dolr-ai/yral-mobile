@@ -155,6 +155,7 @@ private fun annotateText(
 ): AnnotatedString {
     val consentText = stringResource(Res.string.signup_consent)
     val termOfServiceText = stringResource(Res.string.terms_of_service_signup_consent)
+    val defaultColor = YralColors.NeutralTextSecondary
     return buildAnnotatedString {
         val termsStart = consentText.indexOf(termOfServiceText)
         val termsEnd = termsStart + termOfServiceText.length
@@ -167,9 +168,9 @@ private fun annotateText(
             )
         if (termsStart >= 0) {
             withStyle(
-                style = spanStyle.copy(color = Color.White),
+                style = spanStyle.copy(color = defaultColor),
             ) {
-                append(consentText.substring(0, termsStart))
+                append(consentText.take(termsStart))
             }
             withLink(
                 LinkAnnotation.Url(
@@ -188,14 +189,14 @@ private fun annotateText(
             ) { append(consentText.substring(termsStart, termsEnd)) }
             if (termsEnd < consentText.length) {
                 withStyle(
-                    style = spanStyle.copy(color = Color.White),
+                    style = spanStyle.copy(color = defaultColor),
                 ) {
                     append(consentText.substring(termsEnd))
                 }
             }
         } else {
             withStyle(
-                style = spanStyle.copy(color = Color.White),
+                style = spanStyle.copy(color = defaultColor),
             ) {
                 append(consentText)
             }
