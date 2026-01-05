@@ -1,11 +1,17 @@
 package com.yral.shared.features.auth.data
 
 import com.yral.shared.core.AppConfigurations.OAUTH_BASE_URL
+import com.yral.shared.features.auth.YralAuthException
+import com.yral.shared.features.auth.data.models.AuthClientQuery
+import com.yral.shared.features.auth.data.models.PhoneAuthLoginResponseDto
+import com.yral.shared.features.auth.data.models.VerifyRequestDto
 import com.yral.shared.features.auth.data.models.toExchangePrincipalResponse
+import com.yral.shared.features.auth.data.models.toPhoneAuthVerifyResponse
 import com.yral.shared.features.auth.data.models.toTokenResponse
 import com.yral.shared.features.auth.di.AuthEnv
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.models.ExchangePrincipalResponse
+import com.yral.shared.features.auth.domain.models.PhoneAuthVerifyResponse
 import com.yral.shared.features.auth.domain.models.TokenResponse
 import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.features.auth.utils.SocialProvider
@@ -91,4 +97,40 @@ class AuthRepositoryImpl(
     override suspend fun deregisterForNotifications(token: String) {
         dataSource.deregisterForNotifications(token)
     }
+
+    override suspend fun phoneAuthLogin(phoneNumber: String): String {
+        val codeVerifier = oAuthUtilsHelper.generateCodeVerifier()
+        val codeChallenge = oAuthUtilsHelper.generateCodeChallenge(codeVerifier)
+        val authClientQuery =
+            AuthClientQuery(
+                responseType = "code",
+                clientId = authEnv.clientId,
+                redirectUri = authEnv.redirectUri.uriString,
+                state = codeChallenge,
+                codeChallenge = codeChallenge,
+                codeChallengeMethod = "S256",
+            )
+        return when (val response = dataSource.phoneAuthLogin(phoneNumber, authClientQuery)) {
+            is PhoneAuthLoginResponseDto.Success -> codeChallenge
+            is PhoneAuthLoginResponseDto.Error -> {
+                val errorMessage = response.error.entries.joinToString(", ") { "${it.key}: ${it.value}" }
+                throw YralAuthException("$errorMessage - ${response.errorDescription}")
+            }
+        }
+    }
+
+    override suspend fun verifyPhoneAuth(
+        phoneNumber: String,
+        code: String,
+        clientState: String,
+    ): PhoneAuthVerifyResponse =
+        dataSource
+            .verifyPhoneAuth(
+                verifyRequest =
+                    VerifyRequestDto(
+                        phoneNumber = phoneNumber,
+                        code = code,
+                        clientState = clientState,
+                    ),
+            ).toPhoneAuthVerifyResponse()
 }
