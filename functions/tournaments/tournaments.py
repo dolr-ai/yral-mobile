@@ -72,8 +72,24 @@ TICKER_URL = "https://blockchain.info/ticker"
 SATOSHIS_PER_BTC = 100_000_000
 
 # Backend API Constants
-BACKEND_TOURNAMENT_REGISTER_URL = "https://stage-recsys-on-premise.fly.dev/tournament/register"
+BACKEND_TOURNAMENT_REGISTER_URL = "https://recsys-on-premise.fly.dev/tournament/register"
 DEFAULT_VIDEO_COUNT = 500
+
+# Environment detection
+GCLOUD_PROJECT = os.environ.get("GCLOUD_PROJECT", "")
+IS_PRODUCTION = GCLOUD_PROJECT == "yral-mobile"
+
+# Environment-specific tournament configuration
+if IS_PRODUCTION:
+    # Production: Single tournament at 7 PM IST
+    TOURNAMENT_SLOTS = [("19:00", "19:10")]
+    TOURNAMENT_TITLE = "Daily Showdown"
+    TOURNAMENT_ENTRY_COST = 15
+else:
+    # Staging: Multiple tournaments throughout day
+    TOURNAMENT_SLOTS = [("12:45", "12:55"), ("14:00", "14:10"), ("16:00", "16:10")]
+    TOURNAMENT_TITLE = "SMILEY SHOWDOWN"
+    TOURNAMENT_ENTRY_COST = 100
 
 
 def db() -> firestore.Client:
@@ -486,8 +502,11 @@ def create_tournaments(cloud_event):
             print("[create_tournaments] BACKEND_ADMIN_KEY not configured", file=sys.stderr)
             return jsonify({"error": "INTERNAL", "message": "An internal error occurred"}), 500
 
+        env_name = "production" if IS_PRODUCTION else "staging"
+        print(f"[create_tournaments] Running in {env_name} mode (project: {GCLOUD_PROJECT})")
+
         date_str = _today_ist_str()
-        entry_cost = 100
+        entry_cost = TOURNAMENT_ENTRY_COST
         total_prize_pool = 1500
         prize_map: Dict[str, int] = {
             "1": 400,
@@ -502,7 +521,7 @@ def create_tournaments(cloud_event):
             "10": 50
         }
 
-        slots = [("12:45", "12:55"), ("14:00", "14:10"), ("16:00", "16:10")]  # 10 min each
+        slots = TOURNAMENT_SLOTS
 
         created, skipped, errors = [], [], []
 
@@ -533,6 +552,7 @@ def create_tournaments(cloud_event):
                 status=TournamentStatus.SCHEDULED,
                 created_at=firestore.SERVER_TIMESTAMP,
                 updated_at=firestore.SERVER_TIMESTAMP,
+                title=TOURNAMENT_TITLE,
             )
 
             # Use backend tournament ID as Firestore document ID
