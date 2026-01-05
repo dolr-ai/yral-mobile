@@ -16,6 +16,7 @@ from flask import Request, jsonify
 from google.api_core.exceptions import AlreadyExists
 from google.cloud import tasks_v2
 from google.protobuf import timestamp_pb2
+from mixpanel import Mixpanel
 
 
 class TournamentStatus(str, Enum):
@@ -99,6 +100,60 @@ def db() -> firestore.Client:
             firebase_admin.initialize_app()
         _db = firestore.client()
     return _db
+
+
+# ─────────────────────  MIXPANEL HELPERS  ────────────────────────
+def _get_username(principal_id: str) -> Optional[str]:
+    """Get username from user's Firestore document."""
+    try:
+        user_doc = db().document(f"users/{principal_id}").get()
+        if user_doc.exists:
+            return user_doc.to_dict().get("username")
+    except Exception as e:
+        print(f"[mixpanel] Failed to get username for {principal_id}: {e}", file=sys.stderr)
+    return None
+
+
+def _track_reward_event(
+    principal_id: str,
+    username: Optional[str],
+    reward_amount: float,
+    tournament_id: str,
+    position: int,
+    reward_type: str,  # "prize" or "refund"
+    currency: str = "INR"
+) -> None:
+    """
+    Track tournament reward distribution event in Mixpanel.
+
+    Args:
+        principal_id: User's principal ID
+        username: User's username (if available)
+        reward_amount: Amount rewarded
+        tournament_id: Tournament ID
+        position: User's position (0 for refunds)
+        reward_type: "prize" for winners, "refund" for cancelled/insufficient
+        currency: Currency of reward (INR, BTC, COINS)
+    """
+    mixpanel_token = os.environ.get("MIXPANEL_TOKEN")
+    if not mixpanel_token:
+        print("[mixpanel] MIXPANEL_TOKEN not configured, skipping event", file=sys.stderr)
+        return
+
+    try:
+        mp = Mixpanel(mixpanel_token)
+        mp.track(principal_id, "tournament_reward_distributed", {
+            "principal_id": principal_id,
+            "username": username or "",
+            "reward_amount": reward_amount,
+            "tournament_id": tournament_id,
+            "position": position,
+            "reward_type": reward_type,
+            "currency": currency,
+        })
+        print(f"[mixpanel] Tracked reward event: {principal_id}, {reward_type}, {reward_amount} {currency}")
+    except Exception as e:
+        print(f"[mixpanel] Failed to track event: {e}", file=sys.stderr)
 
 
 # ─────────────────────  BACKEND API HELPERS  ────────────────────────
@@ -198,6 +253,18 @@ def _refund_tournament_users(tournament_id: str) -> List[dict]:
                 "success": True
             })
             print(f"[refund] {principal_id} refunded {coins_paid} coins for {tournament_id}")
+
+            # Track Mixpanel event for refund
+            username = _get_username(principal_id)
+            _track_reward_event(
+                principal_id=principal_id,
+                username=username,
+                reward_amount=coins_paid,
+                tournament_id=tournament_id,
+                position=0,  # 0 indicates refund, not a position
+                reward_type="refund",
+                currency="COINS"
+            )
 
         except Exception as e:
             refund_results.append({
@@ -396,6 +463,18 @@ def _settle_tournament_prizes(tournament_id: str, prize_map: Dict[str, int]) -> 
                 })
             except Exception as e:
                 print(f"[settlement] Failed to update user record: {e}", file=sys.stderr)
+
+            # Track Mixpanel event for successful reward
+            username = _get_username(principal_id)
+            _track_reward_event(
+                principal_id=principal_id,
+                username=username,
+                reward_amount=prize_inr,
+                tournament_id=tournament_id,
+                position=int(position),
+                reward_type="prize",
+                currency="INR"
+            )
         else:
             rewards_failed += 1
             print(f"[settlement] FAILED to send to {principal_id}: {error}", file=sys.stderr)
@@ -584,7 +663,7 @@ def create_tournaments(cloud_event):
         return jsonify({"error": "INTERNAL", "message": "An internal error occurred"}), 500
 
 
-@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
+@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN", "MIXPANEL_TOKEN"])
 def update_tournament_status(request: Request):
     """
     Cloud Task target to advance a tournament's status.
