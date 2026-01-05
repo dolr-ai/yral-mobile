@@ -72,7 +72,7 @@ TICKER_URL = "https://blockchain.info/ticker"
 SATOSHIS_PER_BTC = 100_000_000
 
 # Backend API Constants
-BACKEND_TOURNAMENT_REGISTER_URL = "https://stage-recsys-on-premise.fly.dev/tournament/register"
+BACKEND_TOURNAMENT_REGISTER_URL = "https://recsys-on-premise.fly.dev/tournament/register"
 DEFAULT_VIDEO_COUNT = 500
 
 
