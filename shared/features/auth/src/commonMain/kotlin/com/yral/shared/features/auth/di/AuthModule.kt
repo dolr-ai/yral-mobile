@@ -13,9 +13,11 @@ import com.yral.shared.features.auth.domain.useCases.DeleteAccountUseCase
 import com.yral.shared.features.auth.domain.useCases.DeregisterNotificationTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.ExchangePrincipalIdUseCase
 import com.yral.shared.features.auth.domain.useCases.ObtainAnonymousIdentityUseCase
+import com.yral.shared.features.auth.domain.useCases.PhoneAuthLoginUseCase
 import com.yral.shared.features.auth.domain.useCases.RefreshTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.RegisterNotificationTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.UpdateSessionAsRegisteredUseCase
+import com.yral.shared.features.auth.domain.useCases.VerifyPhoneAuthUseCase
 import com.yral.shared.features.auth.viewModel.LoginViewModel
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
@@ -34,6 +36,8 @@ val authModule =
         factoryOf(::UpdateSessionAsRegisteredUseCase)
         factoryOf(::ExchangePrincipalIdUseCase)
         factoryOf(::DeleteAccountUseCase)
+        factoryOf(::PhoneAuthLoginUseCase)
+        factoryOf(::VerifyPhoneAuthUseCase)
         factoryOf(::RequiredUseCases)
         factoryOf(::AuthTelemetry)
         factoryOf(::RegisterNotificationTokenUseCase)
