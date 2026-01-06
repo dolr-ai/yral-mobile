@@ -30,4 +30,14 @@ class FeedRepository(
         feedRemoteDataSource
             .getInitialCachedFeeds(feedRequest.toDTO())
             .toPostResponse()
+
+    override suspend fun getTournamentFeeds(
+        tournamentId: String,
+        withMetadata: Boolean,
+    ): PostResponse =
+        feedRemoteDataSource
+            .getTournamentFeeds(
+                tournamentId = tournamentId,
+                withMetadata = withMetadata,
+            ).toPostResponse()
 }

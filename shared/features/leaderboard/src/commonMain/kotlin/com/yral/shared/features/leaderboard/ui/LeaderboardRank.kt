@@ -51,8 +51,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
-import yral_mobile.shared.features.leaderboard.generated.resources.Res
-import yral_mobile.shared.features.leaderboard.generated.resources.rank_golden_trophy
+import yral_mobile.shared.libs.leaderboard.generated.resources.Res
+import yral_mobile.shared.libs.leaderboard.generated.resources.rank_golden_trophy
 
 private object LeaderboardRankConstants {
     const val STATIC_TROPHY_SIZE = 36

@@ -96,6 +96,13 @@ fun getSVGImageModel(url: String) =
         .decoderFactory(SvgDecoder.Factory())
         .build()
 
+@Composable
+fun getLocalImageModel(filePath: String) =
+    ImageRequest
+        .Builder(LocalPlatformContext.current)
+        .data("file://$filePath")
+        .build()
+
 const val DEFAULT_LOADER_SIZE = 20
 const val DEFAULT_LOADER_PERCENTAGE = 0.25f
 

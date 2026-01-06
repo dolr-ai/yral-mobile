@@ -19,6 +19,7 @@ import com.yral.android.installReferrer.processors.MetaAttributionProcessor
 import com.yral.android.installReferrer.processors.PlayInstallReferrerProcessor
 import com.yral.featureflag.AppFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
+import com.yral.shared.analytics.di.IS_DEBUG
 import com.yral.shared.analytics.providers.mixpanel.MixpanelAnalyticsProvider
 import com.yral.shared.app.di.initKoin
 import com.yral.shared.app.initializeApp
@@ -31,6 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidContext
+import org.koin.dsl.module
 
 class YralApp : Application() {
     private val appCoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -45,6 +47,11 @@ class YralApp : Application() {
         initKoin {
             androidContext(this@YralApp)
             modules(videoWidgetModule)
+            modules(
+                module {
+                    single<Boolean>(IS_DEBUG) { BuildConfig.DEBUG }
+                },
+            )
         }
         initializeApp()
         setupFirebase()

@@ -46,12 +46,12 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.featureflag.FeatureFlagManager
-import com.yral.featureflag.WalletFeatureFlags
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.app.ui.screens.feed.FeedScaffoldScreen
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent.SlotChild
+import com.yral.shared.app.ui.screens.home.nav.getChatAndWalletConfig
 import com.yral.shared.app.ui.screens.profile.ProfileScreen
 import com.yral.shared.app.ui.screens.uploadVideo.UploadVideoRootScreen
 import com.yral.shared.core.session.SessionKey
@@ -63,11 +63,14 @@ import com.yral.shared.features.account.ui.AlertsPermissionController
 import com.yral.shared.features.account.ui.rememberAlertsPermissionController
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
+import com.yral.shared.features.chat.ui.ChatScreen
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.leaderboard.ui.LeaderboardScreen
 import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
+import com.yral.shared.features.tournament.ui.TournamentScreen
+import com.yral.shared.features.tournament.viewmodel.TournamentViewModel
 import com.yral.shared.features.wallet.ui.WalletScreen
 import com.yral.shared.features.wallet.ui.btcRewards.VideoViewsRewardsBottomSheet
 import com.yral.shared.libs.designsystem.component.YralFeedback
@@ -83,6 +86,8 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import yral_mobile.shared.app.generated.resources.Res
+import yral_mobile.shared.app.generated.resources.chat_nav
+import yral_mobile.shared.app.generated.resources.chat_nav_unselected
 import yral_mobile.shared.app.generated.resources.home_nav_selected
 import yral_mobile.shared.app.generated.resources.home_nav_unselected
 import yral_mobile.shared.app.generated.resources.leaderboard_nav_selected
@@ -97,6 +102,7 @@ import yral_mobile.shared.app.generated.resources.wallet_nav_unselected
 import yral_mobile.shared.libs.designsystem.generated.resources.account_nav
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
+@Suppress("CyclomaticComplexMethod")
 @Composable
 internal fun HomeScreen(
     component: HomeComponent,
@@ -112,20 +118,24 @@ internal fun HomeScreen(
             val activeComponent = stack.active.instance
             val currentTab =
                 when (activeComponent) {
-                    is HomeComponent.Child.Account -> HomeTab.ACCOUNT
                     is HomeComponent.Child.Feed -> HomeTab.HOME
                     is HomeComponent.Child.Leaderboard -> HomeTab.LEADER_BOARD
+                    is HomeComponent.Child.Tournament -> HomeTab.TOURNAMENT
                     is HomeComponent.Child.Profile -> HomeTab.PROFILE
                     is HomeComponent.Child.UploadVideo -> HomeTab.UPLOAD_VIDEO
+                    is HomeComponent.Child.Chat -> HomeTab.CHAT
+                    is HomeComponent.Child.Account -> HomeTab.ACCOUNT
                     is HomeComponent.Child.Wallet -> HomeTab.WALLET
                 }
             val updateCurrentTab: (tab: HomeTab) -> Unit = { tab ->
                 when (tab) {
-                    HomeTab.ACCOUNT -> component.onAccountTabClick()
                     HomeTab.HOME -> component.onFeedTabClick()
                     HomeTab.LEADER_BOARD -> component.onLeaderboardTabClick()
+                    HomeTab.TOURNAMENT -> component.onTournamentTabClick()
                     HomeTab.PROFILE -> component.onProfileTabClick()
                     HomeTab.UPLOAD_VIDEO -> component.onUploadVideoTabClick()
+                    HomeTab.CHAT -> component.onChatTabClick()
+                    HomeTab.ACCOUNT -> component.onAccountTabClick()
                     HomeTab.WALLET -> component.onWalletTabClick()
                 }
             }
@@ -185,6 +195,7 @@ private fun HomeScreenContent(
         }
     val accountViewModel = koinViewModel<AccountsViewModel>(key = "account-$sessionKey")
     val leaderBoardViewModel = koinViewModel<LeaderBoardViewModel>(key = "leaderboard-$sessionKey")
+    val tournamentViewModel = koinViewModel<TournamentViewModel>(key = "tournament-$sessionKey")
 
     val profileVideos = getProfileVideos(profileViewModel, sessionKey, updateProfileVideosCount)
 
@@ -204,24 +215,34 @@ private fun HomeScreenContent(
                     leaderBoardViewModel = leaderBoardViewModel,
                 )
 
-            is HomeComponent.Child.Account -> {
-                AccountScreen(
-                    component = child.component,
-                    viewModel = accountViewModel,
-                    onAlertsToggleRequest = alertsPermissionController.toggle,
-                )
-            }
-
             is HomeComponent.Child.Leaderboard ->
                 LeaderboardScreen(
                     component = child.component,
                     leaderBoardViewModel = leaderBoardViewModel,
                 )
 
+            is HomeComponent.Child.Tournament ->
+                TournamentScreen(
+                    component = child.component,
+                    viewModel = tournamentViewModel,
+                )
+
             is HomeComponent.Child.UploadVideo ->
                 UploadVideoRootScreen(
                     component = child.component,
                     bottomPadding = innerPadding.calculateBottomPadding(),
+                )
+
+            is HomeComponent.Child.Account ->
+                AccountScreen(
+                    component = child.component,
+                    viewModel = accountViewModel,
+                    onAlertsToggleRequest = alertsPermissionController.toggle,
+                )
+
+            is HomeComponent.Child.Wallet ->
+                WalletScreen(
+                    component = child.component,
                 )
 
             is HomeComponent.Child.Profile ->
@@ -235,9 +256,10 @@ private fun HomeScreenContent(
                     )
                 }
 
-            is HomeComponent.Child.Wallet ->
-                WalletScreen(
+            is HomeComponent.Child.Chat ->
+                ChatScreen(
                     component = child.component,
+                    bottomPadding = innerPadding.calculateBottomPadding(),
                 )
         }
         LoginIfRequired(
@@ -295,7 +317,24 @@ private fun getProfileVideos(
     }
 }
 
-@Suppress("LongMethod")
+@Composable
+private fun getVisibleTabs(): List<HomeTab> {
+    val flagManager = koinInject<FeatureFlagManager>()
+    val chatWalletConfig = flagManager.getChatAndWalletConfig()
+    return buildList {
+        add(HomeTab.HOME)
+        add(HomeTab.TOURNAMENT)
+        add(HomeTab.UPLOAD_VIDEO)
+
+        when {
+            chatWalletConfig.first -> add(HomeTab.CHAT)
+            chatWalletConfig.second -> add(HomeTab.WALLET)
+        }
+
+        add(HomeTab.PROFILE)
+    }
+}
+
 @Composable
 private fun HomeNavigationBar(
     currentTab: HomeTab,
@@ -303,17 +342,7 @@ private fun HomeNavigationBar(
     bottomNavigationClicked: (categoryName: CategoryName) -> Unit,
 ) {
     var playSound by remember { mutableStateOf(false) }
-    val flagManager = koinInject<FeatureFlagManager>()
-    val isWalletEnabled = flagManager.isEnabled(WalletFeatureFlags.Wallet.Enabled)
-    val tabs =
-        HomeTab.entries
-            .filter {
-                when (it) {
-                    HomeTab.ACCOUNT -> !isWalletEnabled
-                    HomeTab.WALLET -> isWalletEnabled
-                    else -> true
-                }
-            }
+    val tabs = getVisibleTabs()
     val insetHeightPx = NavigationBarDefaults.windowInsets.getBottom(LocalDensity.current)
     val insetHeightDp = with(LocalDensity.current) { insetHeightPx.toDp() }
     NavigationBar(
@@ -447,11 +476,11 @@ private enum class HomeTab(
         icon = Res.drawable.home_nav_selected,
         unSelectedIcon = Res.drawable.home_nav_unselected,
     ),
-    LEADER_BOARD(
-        title = "LeaderBoard",
-        categoryName = CategoryName.LEADERBOARD,
-        icon = Res.drawable.leaderboard_nav_selected,
-        unSelectedIcon = Res.drawable.leaderboard_nav_unselected,
+    CHAT(
+        title = "Chat",
+        categoryName = CategoryName.CHAT,
+        icon = Res.drawable.chat_nav,
+        unSelectedIcon = Res.drawable.chat_nav_unselected,
     ),
     UPLOAD_VIDEO(
         title = "UploadVideo",
@@ -459,11 +488,17 @@ private enum class HomeTab(
         icon = Res.drawable.upload_video_nav_selected,
         unSelectedIcon = Res.drawable.upload_video_nav_unselected,
     ),
-    WALLET(
-        title = "Wallet",
-        categoryName = CategoryName.WALLET,
-        icon = Res.drawable.wallet_nav,
-        unSelectedIcon = Res.drawable.wallet_nav_unselected,
+    LEADER_BOARD(
+        title = "LeaderBoard",
+        categoryName = CategoryName.LEADERBOARD,
+        icon = Res.drawable.leaderboard_nav_selected,
+        unSelectedIcon = Res.drawable.leaderboard_nav_unselected,
+    ),
+    TOURNAMENT(
+        title = "Tournament",
+        categoryName = CategoryName.TOURNAMENTS,
+        icon = Res.drawable.leaderboard_nav_selected,
+        unSelectedIcon = Res.drawable.leaderboard_nav_unselected,
         isNew = true,
     ),
     PROFILE(
@@ -471,6 +506,12 @@ private enum class HomeTab(
         categoryName = CategoryName.PROFILE,
         icon = Res.drawable.profile_nav_selected,
         unSelectedIcon = Res.drawable.profile_nav_unselected,
+    ),
+    WALLET(
+        title = "Wallet",
+        categoryName = CategoryName.WALLET,
+        icon = Res.drawable.wallet_nav,
+        unSelectedIcon = Res.drawable.wallet_nav_unselected,
     ),
     ACCOUNT(
         title = "Account",
@@ -502,7 +543,7 @@ private fun SessionState.getCanisterData(): CanisterData =
             )
     }
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 private fun LoginIfRequired(
     currentChild: HomeComponent.Child,
@@ -528,9 +569,15 @@ private fun LoginIfRequired(
                 )
             }
             is HomeComponent.Child.UploadVideo -> {
+                val pageName = homeState.pageName ?: SignupPageName.UPLOAD_VIDEO
+                val loginBottomSheetType =
+                    when (pageName) {
+                        SignupPageName.VIDEO_CREATION -> LoginBottomSheetType.CREATE_AI_VIDEO
+                        else -> LoginBottomSheetType.UPLOAD_AI_VIDEO
+                    }
                 component.showLoginBottomSheet(
-                    pageName = homeState.pageName ?: SignupPageName.UPLOAD_VIDEO,
-                    loginBottomSheetType = LoginBottomSheetType.UPLOAD_AI_VIDEO,
+                    pageName = pageName,
+                    loginBottomSheetType = loginBottomSheetType,
                     onDismissRequest = dismissSheet,
                     onLoginSuccess = dismissSheet,
                 )
@@ -546,6 +593,15 @@ private fun LoginIfRequired(
                     },
                 )
             }
+            is HomeComponent.Child.Tournament -> {
+                component.showLoginBottomSheet(
+                    pageName = homeState.pageName ?: SignupPageName.TOURNAMENT,
+                    loginBottomSheetType = LoginBottomSheetType.TOURNAMENT,
+                    onDismissRequest = dismissSheet,
+                    onLoginSuccess = dismissSheet,
+                )
+            }
+
             else -> Unit
         }
     }

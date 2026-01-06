@@ -36,22 +36,24 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.yral.shared.features.leaderboard.domain.models.RewardCurrency
 import com.yral.shared.features.leaderboard.nav.detail.LeaderboardDetailsComponent
-import com.yral.shared.features.leaderboard.ui.LeaderboardRow
-import com.yral.shared.features.leaderboard.ui.LeaderboardTableHeader
-import com.yral.shared.features.leaderboard.ui.main.LeaderboardConfetti
 import com.yral.shared.features.leaderboard.viewmodel.LeaderboardHistoryViewModel
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.libs.leaderboard.ui.LeaderboardConfetti
+import com.yral.shared.libs.leaderboard.ui.LeaderboardRow
+import com.yral.shared.libs.leaderboard.ui.LeaderboardTableHeader
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import yral_mobile.shared.features.leaderboard.generated.resources.Res
-import yral_mobile.shared.features.leaderboard.generated.resources.weekly_wins
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
+import yral_mobile.shared.libs.leaderboard.generated.resources.Res
+import yral_mobile.shared.libs.leaderboard.generated.resources.weekly_wins
 import kotlin.math.max
 import kotlin.math.min
+import com.yral.shared.libs.leaderboard.model.RewardCurrency as SharedRewardCurrency
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
@@ -109,6 +111,7 @@ fun LeaderboardDetailsScreen(
         ) {
             val selected = state.history.getOrNull(state.selectedIndex)
             stickyHeader {
+                val sharedRewardCurrency = selected?.rewardCurrency?.toSharedRewardCurrency()
                 Column(Modifier.background(MaterialTheme.colorScheme.primaryContainer)) {
                     Header { component.onBack() }
                     Spacer(Modifier.height(22.dp))
@@ -135,12 +138,13 @@ fun LeaderboardDetailsScreen(
                     Spacer(Modifier.height(16.dp))
                     LeaderboardTableHeader(
                         isTrophyVisible = false,
-                        rewardCurrency = selected?.rewardCurrency,
+                        rewardCurrency = sharedRewardCurrency,
                     )
                 }
             }
             if (!state.isLoading && state.error == null && state.history.isNotEmpty()) {
                 selected?.let { day ->
+                    val sharedRewardCurrency = day.rewardCurrency?.toSharedRewardCurrency()
                     day.userRow?.let { userRow ->
                         item(contentType = "leaderboardRow") {
                             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -151,7 +155,7 @@ fun LeaderboardDetailsScreen(
                                     wins = userRow.wins,
                                     isCurrentUser = true,
                                     decorateCurrentUser = true,
-                                    rewardCurrency = selected.rewardCurrency,
+                                    rewardCurrency = sharedRewardCurrency,
                                     rewardCurrencyCode = selected.rewardCurrencyCode,
                                     reward = userRow.reward,
                                     onClick = { viewModel.onUserClick(userRow) },
@@ -168,7 +172,7 @@ fun LeaderboardDetailsScreen(
                                 profileImageUrl = row.profileImage,
                                 wins = row.wins,
                                 isCurrentUser = viewModel.isCurrentUser(row.userPrincipalId),
-                                rewardCurrency = selected.rewardCurrency,
+                                rewardCurrency = sharedRewardCurrency,
                                 rewardCurrencyCode = selected.rewardCurrencyCode,
                                 reward = row.reward,
                                 onClick = { viewModel.onUserClick(row) },
@@ -268,3 +272,9 @@ private fun DateChip(
         )
     }
 }
+
+private fun RewardCurrency.toSharedRewardCurrency(): SharedRewardCurrency =
+    when (this) {
+        RewardCurrency.YRAL -> SharedRewardCurrency.YRAL
+        RewardCurrency.BTC -> SharedRewardCurrency.BTC
+    }

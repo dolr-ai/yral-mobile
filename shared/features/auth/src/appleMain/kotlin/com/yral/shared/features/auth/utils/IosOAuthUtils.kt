@@ -296,8 +296,10 @@ class IosOAuthUtilsHelper(
         val digest = UByteArray(CC_SHA256_DIGEST_LENGTH)
         data.usePinned { inputPinned ->
             digest.usePinned { digestPinned ->
+                // Avoid addressOf(0) on empty arrays; CommonCrypto tolerates null when length is zero.
+                val dataPointer = if (data.isNotEmpty()) inputPinned.addressOf(0) else null
                 CC_SHA256(
-                    inputPinned.addressOf(0),
+                    dataPointer,
                     data.size.toUInt(),
                     digestPinned.addressOf(0),
                 )

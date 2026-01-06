@@ -11,4 +11,8 @@
     <string name="upload_ai_videos_earn_bitcoin_dis">Log in to start uploading AI videos and Earn Bitcoin every time your videos get engaged views.</string>
     <string name="create_ai_videos_earn_bitcoin">Create AI Video. Earn Bitcoin.</string>
     <string name="create_ai_videos_earn_bitcoin_dis">Log in to start creating AI videos and earn Bitcoin every time your videos get engaged views.</string>
+    <string name="login_to_join_tournament">Log in to Join the Tournament</string>
+    <string name="join_tournament">Join the Tournament</string>
+    <string name="join_tournament_disclaimer">You need to login to register and jump into the tournament for a chance to win Bitcoin!</string>
+    <string name="login_to_chat_with_influencer">Login to continue chatting with %1$s</string>
 </resources>

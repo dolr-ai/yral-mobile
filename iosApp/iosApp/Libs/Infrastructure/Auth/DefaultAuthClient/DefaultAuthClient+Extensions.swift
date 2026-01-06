@@ -303,16 +303,6 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
         isCreator: KotlinBoolean(bool: isCreator),
         walletBalance: KotlinDouble(value: Double(coins)),
         tokenType: .yral,
-        isForcedGamePlayUser: KotlinBoolean(
-          bool: AppDIHelper().getFeatureFlagManager().isEnabled(
-            flag: FeedFeatureFlags.SmileyGame.shared.StopAndVoteNudge
-          )
-        ),
-        isAutoScrollEnabled: KotlinBoolean(
-            bool: AppDIHelper().getFeatureFlagManager().isEnabled(
-                flag: FeedFeatureFlags.SmileyGame.shared.AutoScrollEnabled
-            )
-        ),
         emailId: email,
         utmParams: nil,
       )

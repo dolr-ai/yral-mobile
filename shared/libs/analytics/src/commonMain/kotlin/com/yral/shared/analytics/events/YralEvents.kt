@@ -1426,6 +1426,156 @@ enum class SourceScreen {
 }
 
 @Serializable
+data class InfluencerCardsViewedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.INFLUENCER_CARDS_VIEWED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AI_CHATBOT.getFeatureName(),
+    @SerialName("influencers_shown") val influencersShown: List<String>,
+    @SerialName("total_cards") val totalCards: Int,
+) : BaseEventData(),
+    EventData {
+    constructor(influencersShown: List<String>, totalCards: Int) : this(
+        FeatureEvents.INFLUENCER_CARDS_VIEWED.getEventName(),
+        Features.AI_CHATBOT.getFeatureName(),
+        influencersShown,
+        totalCards,
+    )
+}
+
+@Serializable
+data class InfluencerCardClickedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.INFLUENCER_CARD_CLICKED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AI_CHATBOT.getFeatureName(),
+    @SerialName("influencer_id") val influencerId: String,
+    @SerialName("influencer_type") val influencerType: String,
+    @SerialName("click_type") val clickType: InfluencerClickType,
+    @SerialName("position") val position: Int,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        influencerId: String,
+        influencerType: String,
+        clickType: InfluencerClickType,
+        position: Int,
+    ) : this(
+        FeatureEvents.INFLUENCER_CARD_CLICKED.getEventName(),
+        Features.AI_CHATBOT.getFeatureName(),
+        influencerId,
+        influencerType,
+        clickType,
+        position,
+    )
+}
+
+@Serializable
+data class ChatInfluencerClickedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.CHAT_INFLUENCER_CLICKED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AI_CHATBOT.getFeatureName(),
+    @SerialName("influencer_id") val influencerId: String,
+    @SerialName("influencer_type") val influencerType: String,
+    @SerialName("source") val source: InfluencerSource,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        influencerId: String,
+        influencerType: String,
+        source: InfluencerSource,
+    ) : this(
+        FeatureEvents.CHAT_INFLUENCER_CLICKED.getEventName(),
+        Features.AI_CHATBOT.getFeatureName(),
+        influencerId,
+        influencerType,
+        source,
+    )
+}
+
+@Serializable
+data class ChatSessionStartedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.CHAT_SESSION_STARTED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AI_CHATBOT.getFeatureName(),
+    @SerialName("influencer_id") val influencerId: String,
+    @SerialName("influencer_type") val influencerType: String,
+    @SerialName("chat_session_id") val chatSessionId: String,
+    @SerialName("source") val source: InfluencerSource,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        influencerId: String,
+        influencerType: String,
+        chatSessionId: String,
+        source: InfluencerSource,
+    ) : this(
+        FeatureEvents.CHAT_SESSION_STARTED.getEventName(),
+        Features.AI_CHATBOT.getFeatureName(),
+        influencerId,
+        influencerType,
+        chatSessionId,
+        source,
+    )
+}
+
+@Serializable
+data class UserMessageSentEventData(
+    @SerialName("event") override val event: String = FeatureEvents.USER_MESSAGE_SENT.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AI_CHATBOT.getFeatureName(),
+    @SerialName("influencer_id") val influencerId: String,
+    @SerialName("influencer_type") val influencerType: String,
+    @SerialName("chat_session_id") val chatSessionId: String,
+    @SerialName("message_length") val messageLength: Int,
+    @SerialName("message_type") val messageType: String,
+    @SerialName("message") val message: String,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        influencerId: String,
+        influencerType: String,
+        chatSessionId: String,
+        messageLength: Int,
+        messageType: String,
+        message: String,
+    ) : this(
+        FeatureEvents.USER_MESSAGE_SENT.getEventName(),
+        Features.AI_CHATBOT.getFeatureName(),
+        influencerId,
+        influencerType,
+        chatSessionId,
+        messageLength,
+        messageType,
+        message,
+    )
+}
+
+@Serializable
+data class AIMessageDeliveredEventData(
+    @SerialName("event") override val event: String = FeatureEvents.AI_MESSAGE_DELIVERED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AI_CHATBOT.getFeatureName(),
+    @SerialName("influencer_id") val influencerId: String,
+    @SerialName("influencer_type") val influencerType: String,
+    @SerialName("chat_session_id") val chatSessionId: String,
+    @SerialName("response_latency_ms") val responseLatencyMs: Int,
+    @SerialName("response_length") val responseLength: Int,
+    @SerialName("message") val message: String,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        influencerId: String,
+        influencerType: String,
+        chatSessionId: String,
+        responseLatencyMs: Int,
+        responseLength: Int,
+        message: String,
+    ) : this(
+        FeatureEvents.AI_MESSAGE_DELIVERED.getEventName(),
+        Features.AI_CHATBOT.getFeatureName(),
+        influencerId,
+        influencerType,
+        chatSessionId,
+        responseLatencyMs,
+        responseLength,
+        message,
+    )
+}
+
+@Serializable
 data class LeaderBoardPageViewedEventData(
     @SerialName("event") override val event: String = FeatureEvents.LEADERBOARD_PAGE_VIEWED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.LEADERBOARD.getFeatureName(),
@@ -1509,6 +1659,24 @@ data class LeaderBoardDaySelectedEventData(
 
 // Helper enums
 @Serializable
+enum class InfluencerClickType {
+    @SerialName("talk")
+    TALK,
+
+    @SerialName("view_profile")
+    VIEW_PROFILE,
+}
+
+@Serializable
+enum class InfluencerSource {
+    @SerialName("card")
+    CARD,
+
+    @SerialName("profile")
+    PROFILE,
+}
+
+@Serializable
 enum class AuthJourney {
     @SerialName("google")
     GOOGLE,
@@ -1525,6 +1693,9 @@ enum class SignupPageName {
     @SerialName("menu")
     MENU,
 
+    @SerialName("conversation")
+    CONVERSATION,
+
     @SerialName("profile")
     PROFILE,
 
@@ -1536,6 +1707,9 @@ enum class SignupPageName {
 
     @SerialName("leaderboard")
     LEADERBOARD,
+
+    @SerialName("tournament")
+    TOURNAMENT,
 }
 
 @Serializable
@@ -1545,6 +1719,9 @@ enum class CategoryName {
 
     @SerialName("leaderboard")
     LEADERBOARD,
+
+    @SerialName("tournaments")
+    TOURNAMENTS,
 
     @SerialName("profile")
     PROFILE,
@@ -1560,6 +1737,9 @@ enum class CategoryName {
 
     @SerialName("wallet")
     WALLET,
+
+    @SerialName("chatbot")
+    CHAT,
 }
 
 @Serializable
@@ -1737,6 +1917,198 @@ enum class FollowersListTab {
 
     @SerialName("followers")
     FOLLOWERS,
+}
+
+// --- Tournament ---
+@Serializable
+data class TournamentScreenViewedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.TOURNAMENT_SCREEN_VIEWED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.TOURNAMENT.getFeatureName(),
+    @SerialName("tournament_id") val tournamentId: String,
+    @SerialName("session_id") val sessionId: String,
+) : BaseEventData(),
+    EventData
+
+@Serializable
+data class TournamentRegistrationInitiatedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.TOURNAMENT_REGISTRATION_INITIATED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.TOURNAMENT.getFeatureName(),
+    @SerialName("tournament_id") val tournamentId: String,
+    @SerialName("entry_fee_points") val entryFeePoints: Int,
+    @SerialName("user_point_balance") val userPointBalance: Int,
+    @SerialName("tournament_duration") val tournamentDuration: Int,
+    @SerialName("session_id") val sessionId: String,
+) : BaseEventData(),
+    EventData
+
+@Serializable
+data class TournamentRegisteredEventData(
+    @SerialName("event") override val event: String = FeatureEvents.TOURNAMENT_REGISTERED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.TOURNAMENT.getFeatureName(),
+    @SerialName("tournament_id") val tournamentId: String,
+    @SerialName("entry_fee_points") val entryFeePoints: Int,
+    @SerialName("registration_time") val registrationTime: String,
+    @SerialName("session_id") val sessionId: String,
+) : BaseEventData(),
+    EventData
+
+@Serializable
+data class TournamentStateChangedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.TOURNAMENT_STATE_CHANGED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.TOURNAMENT.getFeatureName(),
+    @SerialName("tournament_id") val tournamentId: String,
+    @SerialName("from_state") val fromState: TournamentState,
+    @SerialName("to_state") val toState: TournamentState,
+    @SerialName("tokens_required") val tokensRequired: Int? = null,
+    @SerialName("user_diamonds") val userDiamonds: Int? = null,
+    @SerialName("session_id") val sessionId: String,
+) : BaseEventData(),
+    EventData
+
+@Serializable
+data class TournamentJoinedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.TOURNAMENT_JOINED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.TOURNAMENT.getFeatureName(),
+    @SerialName("tournament_id") val tournamentId: String,
+    @SerialName("join_time") val joinTime: String,
+    @SerialName("diamonds_allocated") val diamondsAllocated: Int,
+    @SerialName("session_id") val sessionId: String,
+) : BaseEventData(),
+    EventData
+
+@Serializable
+data class TournamentAnswerSubmittedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.TOURNAMENT_ANSWER_SUBMITTED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.TOURNAMENT.getFeatureName(),
+    @SerialName("tournament_id") val tournamentId: String,
+    @SerialName("answer_result") val answerResult: TournamentAnswerResult,
+    @SerialName("score_delta") val scoreDelta: Int,
+    @SerialName("diamonds_remaining") val diamondsRemaining: Int,
+    @SerialName("session_id") val sessionId: String,
+) : BaseEventData(),
+    EventData
+
+@Serializable
+data class TournamentExitAttemptedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.TOURNAMENT_EXIT_ATTEMPTED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.TOURNAMENT.getFeatureName(),
+    @SerialName("tournament_id") val tournamentId: String,
+    @SerialName("diamonds_remaining") val diamondsRemaining: Int,
+    @SerialName("session_id") val sessionId: String,
+) : BaseEventData(),
+    EventData
+
+@Serializable
+data class TournamentExitNudgeShownEventData(
+    @SerialName("event") override val event: String = FeatureEvents.TOURNAMENT_EXIT_NUDGE_SHOWN.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.TOURNAMENT.getFeatureName(),
+    @SerialName("tournament_id") val tournamentId: String,
+    @SerialName("nudge_type") val nudgeType: String = "Exit Warning",
+    @SerialName("session_id") val sessionId: String,
+) : BaseEventData(),
+    EventData
+
+@Serializable
+data class TournamentExitConfirmedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.TOURNAMENT_EXIT_CONFIRMED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.TOURNAMENT.getFeatureName(),
+    @SerialName("tournament_id") val tournamentId: String,
+    @SerialName("diamonds_remaining") val diamondsRemaining: Int,
+    @SerialName("session_id") val sessionId: String,
+) : BaseEventData(),
+    EventData
+
+@Serializable
+data class TournamentOutOfDiamondsShownEventData(
+    @SerialName("event") override val event: String = FeatureEvents.TOURNAMENT_OUT_OF_DIAMONDS_SHOWN.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.TOURNAMENT.getFeatureName(),
+    @SerialName("tournament_id") val tournamentId: String,
+    @SerialName("diamonds_remaining") val diamondsRemaining: Int = 0,
+    @SerialName("session_id") val sessionId: String,
+) : BaseEventData(),
+    EventData
+
+@Serializable
+data class TournamentEndedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.TOURNAMENT_ENDED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.TOURNAMENT.getFeatureName(),
+    @SerialName("tournament_id") val tournamentId: String,
+    @SerialName("tournament_name") val tournamentName: String,
+    @SerialName("session_id") val sessionId: String,
+) : BaseEventData(),
+    EventData
+
+@Serializable
+data class TournamentResultScreenViewedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.TOURNAMENT_RESULT_SCREEN_VIEWED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.TOURNAMENT.getFeatureName(),
+    @SerialName("tournament_id") val tournamentId: String,
+    @SerialName("result") val result: TournamentResult,
+    @SerialName("final_score") val finalScore: Int,
+    @SerialName("rank") val rank: Int,
+    @SerialName("session_id") val sessionId: String,
+) : BaseEventData(),
+    EventData
+
+@Serializable
+data class TournamentLeaderboardViewedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.TOURNAMENT_LEADERBOARD_VIEWED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.TOURNAMENT.getFeatureName(),
+    @SerialName("tournament_id") val tournamentId: String,
+    @SerialName("user_rank") val userRank: Int,
+    @SerialName("is_winner") val isWinner: Boolean,
+    @SerialName("session_id") val sessionId: String,
+) : BaseEventData(),
+    EventData
+
+@Serializable
+data class TournamentRewardEarnedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.TOURNAMENT_REWARD_EARNED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.TOURNAMENT.getFeatureName(),
+    @SerialName("tournament_id") val tournamentId: String,
+    @SerialName("reward_amount_inr") val rewardAmountInr: Int,
+    @SerialName("reward_currency") val rewardCurrency: String = "BTC",
+    @SerialName("rank") val rank: Int,
+) : BaseEventData(),
+    EventData
+
+@Serializable
+enum class TournamentState {
+    @SerialName("registration_required")
+    REGISTRATION_REQUIRED,
+
+    @SerialName("registered")
+    REGISTERED,
+
+    @SerialName("join_now")
+    JOIN_NOW,
+
+    @SerialName("join_now_with_tokens")
+    JOIN_NOW_WITH_TOKENS,
+
+    @SerialName("join_now_disabled")
+    JOIN_NOW_DISABLED,
+
+    @SerialName("ended")
+    ENDED,
+}
+
+@Serializable
+enum class TournamentAnswerResult {
+    @SerialName("correct")
+    CORRECT,
+
+    @SerialName("wrong")
+    WRONG,
+}
+
+@Serializable
+enum class TournamentResult {
+    @SerialName("win")
+    WIN,
+
+    @SerialName("lose")
+    LOSE,
 }
 
 @Serializable

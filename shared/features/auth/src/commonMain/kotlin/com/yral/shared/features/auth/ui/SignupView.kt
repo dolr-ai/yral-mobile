@@ -13,7 +13,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
@@ -23,10 +22,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.features.auth.analytics.AuthTelemetry
+import com.yral.shared.features.auth.ui.SignupViewConstants.DEFAULT_TOP_CONTENT_HEIGHT
+import com.yral.shared.features.auth.ui.SignupViewConstants.DEFAULT_TOP_CONTENT_WIDTH
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.auth.utils.defaultSocialProviders
 import com.yral.shared.libs.designsystem.component.YralButton
@@ -56,8 +56,7 @@ fun SignupView(
     openTerms: () -> Unit,
     headlineText: AnnotatedString? = null,
     disclaimerText: String? = null,
-    topIcon: Painter? = null,
-    topIconSize: DpSize? = null,
+    topIconContent: (@Composable () -> Unit) = { DefaultTopContent() },
     authTelemetry: AuthTelemetry = koinInject(),
 ) {
     LaunchedEffect(Unit) { authTelemetry.onSignupViewed(pageName) }
@@ -66,15 +65,7 @@ fun SignupView(
         verticalArrangement = Arrangement.spacedBy(46.dp, Alignment.Top),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Image(
-            painter = topIcon ?: painterResource(Res.drawable.join_yral),
-            contentDescription = "Join Yral",
-            modifier =
-                Modifier
-                    .padding(0.dp)
-                    .width(topIconSize?.width ?: 240.dp)
-                    .height(topIconSize?.height ?: 86.dp),
-        )
+        topIconContent()
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(28.dp, Alignment.Top),
@@ -144,6 +135,19 @@ fun SignupView(
 }
 
 @Composable
+fun DefaultTopContent() {
+    Image(
+        painter = painterResource(Res.drawable.join_yral),
+        contentDescription = "Join Yral",
+        modifier =
+            Modifier
+                .padding(0.dp)
+                .width(DEFAULT_TOP_CONTENT_WIDTH)
+                .height(DEFAULT_TOP_CONTENT_HEIGHT),
+    )
+}
+
+@Composable
 private fun annotateText(
     termsLink: String,
     openTerms: () -> Unit,
@@ -196,4 +200,9 @@ private fun annotateText(
             }
         }
     }
+}
+
+object SignupViewConstants {
+    val DEFAULT_TOP_CONTENT_WIDTH = 240.dp
+    val DEFAULT_TOP_CONTENT_HEIGHT = 86.dp
 }

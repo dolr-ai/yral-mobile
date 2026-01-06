@@ -119,18 +119,20 @@ fun Game(
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
-internal fun SmileyGame(
+fun SmileyGame(
     gameIcons: List<GameIcon>,
     clickedIcon: GameIcon?,
     isLoading: Boolean,
     coinDelta: Int = 0,
     errorMessage: String = "",
+    resultContent: @Composable ((icon: GameIcon, coinDelta: Int, errorMessage: String) -> Unit)? = null,
     onIconClicked: (emoji: GameIcon, isTutorialVote: Boolean) -> Unit,
     hasShownCoinDeltaAnimation: Boolean,
     onDeltaAnimationComplete: () -> Unit,
     nudgeType: NudgeType?,
     pageNo: Int,
     onNudgeAnimationComplete: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var animateBubbles by remember { mutableStateOf(false) }
     var iconPositions by remember { mutableStateOf(mapOf<Int, Float>()) }
@@ -141,7 +143,7 @@ internal fun SmileyGame(
     var animatingNudgeIconPosition by remember { mutableStateOf<Int?>(null) }
     var nudgeIterationCount by remember { mutableIntStateOf(0) }
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.BottomCenter,
     ) {
         when {
@@ -153,6 +155,7 @@ internal fun SmileyGame(
                     originalPos = iconPositions[gameIcons.indexOf(clickedIcon)] ?: 0f,
                     hasShownCoinDeltaAnimation = hasShownCoinDeltaAnimation,
                     onAnimationComplete = onDeltaAnimationComplete,
+                    resultContent = resultContent,
                 )
             }
             else -> {
@@ -268,6 +271,7 @@ private fun BoxScope.SmileyGameResult(
     originalPos: Float,
     hasShownCoinDeltaAnimation: Boolean,
     onAnimationComplete: () -> Unit,
+    resultContent: @Composable ((icon: GameIcon, coinDelta: Int, errorMessage: String) -> Unit)?,
 ) {
     clickedIcon?.let {
         GameResultView(
@@ -276,6 +280,10 @@ private fun BoxScope.SmileyGameResult(
             coinDelta = coinDelta,
             errorMessage = errorMessage,
             originalPos = originalPos,
+            resultContent =
+                resultContent?.let { content ->
+                    { content(it, coinDelta, errorMessage) }
+                },
         )
     }
     if (!hasShownCoinDeltaAnimation && errorMessage.isEmpty()) {
