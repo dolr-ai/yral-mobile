@@ -1,5 +1,8 @@
 package com.yral.shared.analytics
 
+import co.touchlab.kermit.Logger
+import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.events.EventData
 import com.yral.shared.analytics.events.IdentityTransitionEventData
 import com.yral.shared.analytics.providers.yral.CoreService
@@ -8,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 
 class AnalyticsManager(
     private val providers: List<AnalyticsProvider> = emptyList(),
@@ -31,20 +35,6 @@ class AnalyticsManager(
 
     @Suppress("EmptyFunctionBlock")
     fun initialise() {}
-
-    internal fun addProvider(provider: AnalyticsProvider) =
-        AnalyticsManager(
-            providers = providers + provider,
-            coreService = coreService,
-            deviceInstallIdStore = deviceInstallIdStore,
-        )
-
-    internal fun setCoreService(service: CoreService) =
-        AnalyticsManager(
-            providers = providers,
-            coreService = service,
-            deviceInstallIdStore = deviceInstallIdStore,
-        )
 
     fun trackEvent(event: EventData) {
         eventBus.publish(event)
@@ -76,6 +66,23 @@ class AnalyticsManager(
         val context = commonContext()
         if (context.isEmpty()) return
         providers.forEach { it.applyCommonContext(context) }
+        initializeAdContext()
+    }
+
+    private fun initializeAdContext() {
+        scope.launch {
+            Logger.d("AdTracking") { "Starting fetching advertising id" }
+            getAdvertisingID()
+                .onSuccess { id ->
+                    Logger.d("AdTracking") { "Advertising ID: $id" }
+                    id?.let {
+                        val common = saveADIDtoProperties(id)
+                        providers.forEach { it.applyCommonContext(common) }
+                    }
+                }.onFailure {
+                    Logger.e("AdTracking", it) { "Failed to fetch advertising id" }
+                }
+        }
     }
 
     fun flush() {

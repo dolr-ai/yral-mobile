@@ -69,13 +69,17 @@ val analyticsModule =
         }
         single {
             AnalyticsManager(
+                providers =
+                    listOf(
+                        get<FirebaseAnalyticsProvider>(),
+                        get<MixpanelAnalyticsProvider>(),
+                        get<FacebookAnalyticsProvider>(),
+                        get<BigQueryAnalyticsProvider>(),
+                    ),
+                coreService = get<CoreService>(),
                 deviceInstallIdStore = get(),
-            ).addProvider(get<FirebaseAnalyticsProvider>())
-                .addProvider(get<MixpanelAnalyticsProvider>())
-                .addProvider(get<FacebookAnalyticsProvider>())
-                .addProvider(get<BigQueryAnalyticsProvider>())
-                .setCoreService(get<CoreService>())
+            )
         }
     }
 
-public fun getAnalyticsManager(): AnalyticsManager = koinInstance.get()
+fun getAnalyticsManager(): AnalyticsManager = koinInstance.get()

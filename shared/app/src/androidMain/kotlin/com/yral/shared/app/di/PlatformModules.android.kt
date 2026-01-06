@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import coil3.ImageLoader
 import coil3.SingletonImageLoader
+import com.yral.shared.analytics.GetGAIDUseCase
 import com.yral.shared.analytics.di.MIXPANEL_TOKEN
 import com.yral.shared.analytics.di.ONESIGNAL_APP_ID
 import com.yral.shared.crashlytics.di.SENTRY_DSN
@@ -84,6 +85,13 @@ actual val platformModule =
         single<ImageLoader> { SingletonImageLoader.get(get()) }
         factory<ScreenFoldStateProvider> { (activityContext: Context) ->
             AndroidScreenFoldStateProvider(activityContext)
+        }
+        single {
+            GetGAIDUseCase(
+                appDispatchers = get(),
+                useCaseFailureListener = get(),
+                context = androidContext(),
+            )
         }
     }
 
