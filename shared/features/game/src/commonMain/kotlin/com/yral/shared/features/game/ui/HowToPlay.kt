@@ -36,8 +36,9 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.game.generated.resources.Res
 import yral_mobile.shared.features.game.generated.resources.how_to_play
-import yral_mobile.shared.features.game.generated.resources.ic_how_to_play
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_how_to_play
 import kotlin.coroutines.cancellation.CancellationException
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Composable
 fun HowToPlay(
@@ -58,7 +59,7 @@ fun HowToPlay(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Image(
-            painter = painterResource(Res.drawable.ic_how_to_play),
+            painter = painterResource(DesignRes.drawable.ic_how_to_play),
             contentDescription = "how to play",
             contentScale = ContentScale.None,
             modifier = Modifier.size(32.dp),

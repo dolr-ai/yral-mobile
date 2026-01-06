@@ -5,4 +5,6 @@ interface ShareService {
         imageUrl: String,
         text: String,
     )
+
+    suspend fun shareText(text: String)
 }

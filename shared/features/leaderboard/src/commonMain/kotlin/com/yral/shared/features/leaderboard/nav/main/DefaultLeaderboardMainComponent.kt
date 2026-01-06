@@ -9,6 +9,8 @@ internal class DefaultLeaderboardMainComponent(
     private val onDailyHistoryClicked: () -> Unit,
     private val navigateToHome: () -> Unit,
     private val openProfile: (CanisterData) -> Unit,
+    override val showBackIcon: Boolean,
+    override val onBack: () -> Unit,
 ) : LeaderboardMainComponent,
     ComponentContext by componentContext,
     KoinComponent {

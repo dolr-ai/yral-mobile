@@ -31,6 +31,7 @@ import com.yral.shared.features.feed.domain.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetAIFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetGlobalCacheFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
+import com.yral.shared.features.feed.domain.useCases.GetTournamentFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.LoadCachedFeedDetailsUseCase
 import com.yral.shared.features.feed.domain.useCases.SaveFeedDetailsCacheUseCase
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
@@ -83,6 +84,7 @@ class FeedViewModel(
     private val linkGenerator: LinkGenerator,
     private val flagManager: FeatureFlagManager,
     private val preferences: Preferences,
+    private val feedContext: FeedContext,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
@@ -119,13 +121,17 @@ class FeedViewModel(
     private val trackedOnboardingSteps = mutableSetOf<OnboardingStep>()
 
     init {
-        initAvailableFeeds()
-        loadCachedFeedDetails()
-        viewModelScope.launch {
+        if (feedContext is FeedContext.Default) {
+            initAvailableFeeds()
+            loadCachedFeedDetails()
+            viewModelScope.launch {
 //            if (preferences.getBoolean(PrefKeys.IS_ONBOARDING_COMPLETE.name) != true) {
 //                _state.update { it.copy(currentOnboardingStep = OnboardingStep.INTRO_GAME) }
 //            }
-            preferences.remove(PrefKeys.IS_ONBOARDING_COMPLETE.name)
+                preferences.remove(PrefKeys.IS_ONBOARDING_COMPLETE.name)
+            }
+        } else {
+            initializeFeed()
         }
         viewModelScope.launch {
             sessionManager
@@ -152,16 +158,18 @@ class FeedViewModel(
                     defaultValue = false,
                 ).collect { isSocialSignIn -> _state.update { it.copy(isLoggedIn = isSocialSignIn) } }
         }
-        // Save cache whenever feed details or max page reached changes
-        viewModelScope.launch {
-            _state
-                .distinctUntilChanged { old, new ->
-                    old.feedDetails == new.feedDetails && old.maxPageReached == new.maxPageReached
-                }.debounce(1000.milliseconds) // Debounce to avoid too frequent saves
-                .collect { saveCacheToPreferences() }
+        if (feedContext is FeedContext.Default) {
+            // Save cache whenever feed details or max page reached changes
+            viewModelScope.launch {
+                _state
+                    .distinctUntilChanged { old, new ->
+                        old.feedDetails == new.feedDetails && old.maxPageReached == new.maxPageReached
+                    }.debounce(1000.milliseconds) // Debounce to avoid too frequent saves
+                    .collect { saveCacheToPreferences() }
+            }
+            // Track onboarding steps only once when they're first shown
+            viewModelScope.launch { trackOnboardingShown() }
         }
-        // Track onboarding steps only once when they're first shown
-        viewModelScope.launch { trackOnboardingShown() }
     }
 
     private fun initAvailableFeeds() {
@@ -276,11 +284,45 @@ class FeedViewModel(
     }
 
     private fun initializeFeed() {
-        when (_state.value.feedType) {
-            FeedType.AI -> initialRemoteCachedFeedData()
-            else -> initialFeedData()
+        when (val context = feedContext) {
+            is FeedContext.Tournament -> initialTournamentFeedData(context.tournamentId)
+            FeedContext.Default ->
+                when (_state.value.feedType) {
+                    FeedType.AI -> initialRemoteCachedFeedData()
+                    else -> initialFeedData()
+                }
         }
     }
+
+    private fun initialTournamentFeedData(tournamentId: String) {
+        coroutineScope.launch {
+            setLoadingMore(true)
+            requiredUseCases.getTournamentFeedUseCase
+                .invoke(GetTournamentFeedUseCase.Params(tournamentId = tournamentId))
+                .onSuccess { result ->
+                    val userSeed =
+                        sessionManager.userPrincipal
+                            ?: (feedContext as? FeedContext.Tournament)?.sessionKey
+                            ?: "anonymous"
+                    val posts =
+                        result.posts
+                            .distinctBy { it.videoID }
+                            .sortedBy { stableTournamentOrderKey(tournamentId, userSeed, it.videoID) }
+                    if (posts.isNotEmpty()) {
+                        filterVotedAndFetchDetails(posts)
+                    }
+                    setLoadingMore(false)
+                }.onFailure {
+                    setLoadingMore(false)
+                }
+        }
+    }
+
+    private fun stableTournamentOrderKey(
+        tournamentId: String,
+        userSeed: String,
+        videoId: String,
+    ): Int = "$tournamentId|$userSeed|$videoId".hashCode()
 
     private suspend fun saveCacheToPreferences() {
         sessionManager.userPrincipal?.let { userPrincipal ->
@@ -605,6 +647,7 @@ class FeedViewModel(
 
     fun loadMoreFeed() {
         if (_state.value.isLoadingMore) return
+        if (feedContext is FeedContext.Tournament) return
         coroutineScope.launch {
             if (_state.value.feedType == FeedType.AI) {
                 fetchAIFeed(
@@ -1101,6 +1144,7 @@ class FeedViewModel(
         val reportVideoUseCase: ReportVideoUseCase,
         val checkVideoVoteUseCase: CheckVideoVoteUseCase,
         val getAIFeedUseCase: GetAIFeedUseCase,
+        val getTournamentFeedUseCase: GetTournamentFeedUseCase,
         val followUserUseCase: FollowUserUseCase,
         val videoViewsUseCase: GetVideoViewsUseCase,
         val loadCachedFeedDetailsUseCase: LoadCachedFeedDetailsUseCase,
@@ -1113,7 +1157,7 @@ data class FeedState(
     val posts: List<Post> = emptyList(),
     val feedDetails: List<FeedDetails> = emptyList(),
     val currentPageOfFeed: Int = 0,
-    val maxPageReached: Int = 0, // Track the highest page user has scrolled to
+    val maxPageReached: Int = 0,
     val isLoadingMore: Boolean = false,
     val pendingFetchDetails: Int = 0,
     val isPostDescriptionExpanded: Boolean = false,

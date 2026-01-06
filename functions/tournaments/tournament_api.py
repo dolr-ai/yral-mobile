@@ -10,12 +10,14 @@ All HTTP function exports for tournament operations:
 - tournament_leaderboard: Get leaderboard
 """
 
+import os
 import random
 import sys
 from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 
 import firebase_admin
+import requests
 from firebase_admin import auth, firestore
 from firebase_functions import https_fn
 from flask import Request, jsonify, make_response
@@ -29,6 +31,7 @@ except ImportError:
 IST = timezone(timedelta(hours=5, minutes=30))
 TOURNAMENT_SHARDS = 5
 SMILEY_GAME_CONFIG_PATH = "config/smiley_game_v2"
+BALANCE_URL_YRAL_TOKEN = "https://yral-hot-or-not.go-bazzinga.workers.dev/update_balance/"
 
 # ─────────────────────  DATABASE HELPER  ────────────────────────
 _db = None
@@ -59,6 +62,38 @@ def get_smileys() -> List[Dict[str, str]]:
 def error_response(status: int, code: str, message: str):
     payload = {"error": {"code": code, "message": message}}
     return make_response(jsonify(payload), status)
+
+
+# ─────────────────────  YRAL TOKEN BALANCE HELPER  ────────────────────────
+def _push_delta_yral_token(token: str, principal_id: str, delta: int) -> tuple[bool, str | None]:
+    """Update YRAL token balance via external API.
+
+    Args:
+        token: The BALANCE_UPDATE_TOKEN secret
+        principal_id: User's principal ID
+        delta: Amount to add (positive) or deduct (negative)
+
+    Returns:
+        Tuple of (success, error_message)
+    """
+    url = f"{BALANCE_URL_YRAL_TOKEN}{principal_id}"
+    # API expects Bearer prefix if not already present
+    auth_value = token if token.startswith("Bearer ") else f"Bearer {token}"
+    headers = {
+        "Authorization": auth_value,
+        "Content-Type": "application/json",
+    }
+    body = {
+        "delta": str(delta),  # radix-10 string, e.g. "-100"
+        "is_airdropped": False
+    }
+    try:
+        resp = requests.post(url, json=body, timeout=30, headers=headers)
+        if resp.status_code == 200:
+            return True, None
+        return False, f"Status: {resp.status_code}, Body: {resp.text}"
+    except requests.RequestException as e:
+        return False, str(e)
 
 
 # ─────────────────────  COIN HELPER  ────────────────────────
@@ -100,6 +135,22 @@ def _time_left_ms(end_epoch_ms: int) -> int:
     return max(0, end_epoch_ms - now_ms)
 
 
+def _compute_status(start_epoch_ms: int, end_epoch_ms: int) -> str:
+    """Compute tournament status based on current time vs epochs.
+
+    - If current time < start_epoch_ms: scheduled
+    - If start_epoch_ms <= current time <= end_epoch_ms: live
+    - If current time > end_epoch_ms: ended
+    """
+    now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+    if now_ms < start_epoch_ms:
+        return "scheduled"
+    elif now_ms <= end_epoch_ms:
+        return "live"
+    else:
+        return "ended"
+
+
 # ─────────────────────  TOURNAMENT HELPERS  ────────────────────────
 def _get_tournament(tournament_id: str) -> tuple[Any, dict]:
     """Fetch tournament doc. Returns (snapshot, data). Raises if not found."""
@@ -130,29 +181,35 @@ def _vote_doc_id(principal_id: str, video_id: str) -> str:
 
 
 # ─────────────────────  LEADERBOARD HELPERS  ────────────────────────
+# Initial diamonds given at registration
+INITIAL_DIAMONDS = 20
+
+
 def _compute_tournament_leaderboard(tournament_id: str, limit: int = 10) -> List[dict]:
-    """Compute top N users by tournament_wins with dense ranking."""
+    """Compute top N users by diamond balance with dense ranking."""
     users_ref = db().collection(f"tournaments/{tournament_id}/users")
+    # Get users who have played (diamonds != initial value means they played)
+    # Order by diamonds descending
     snaps = (
-        users_ref.where("tournament_wins", ">", 0)
-                 .order_by("tournament_wins", direction=firestore.Query.DESCENDING)
+        users_ref.order_by("diamonds", direction=firestore.Query.DESCENDING)
                  .limit(limit)
                  .stream()
     )
 
     rows = []
-    current_rank, last_wins = 0, None
+    current_rank, last_diamonds = 0, None
     principal_ids = []
 
     for snap in snaps:
         data = snap.to_dict() or {}
-        wins = int(data.get("tournament_wins") or 0)
-        if wins != last_wins:
+        diamonds = int(data.get("diamonds") or 0)
+        if diamonds != last_diamonds:
             current_rank += 1
-            last_wins = wins
+            last_diamonds = diamonds
         rows.append({
             "principal_id": snap.id,
-            "wins": wins,
+            "diamonds": diamonds,
+            "wins": int(data.get("tournament_wins") or 0),
             "losses": int(data.get("tournament_losses") or 0),
             "position": current_rank
         })
@@ -176,7 +233,10 @@ def _get_user_tournament_position(
     principal_id: str,
     top_rows: List[dict]
 ) -> dict:
-    """Get user's position in tournament leaderboard."""
+    """Get user's position in tournament leaderboard.
+
+    Positions are based on diamond balance. Higher diamonds = better rank.
+    """
     # Check if in top rows first
     for row in top_rows:
         if row["principal_id"] == principal_id:
@@ -191,35 +251,19 @@ def _get_user_tournament_position(
     profile_snap = profile_ref.get()
     username = (profile_snap.to_dict() or {}).get("username") if profile_snap.exists else None
 
-    if not user_snap.exists:
-        return {
-            "principal_id": principal_id,
-            "wins": 0,
-            "losses": 0,
-            "position": 0,
-            "username": username
-        }
-
-    user_data = user_snap.to_dict() or {}
+    user_data = user_snap.to_dict() or {} if user_snap.exists else {}
+    user_diamonds = int(user_data.get("diamonds") or 0)
     user_wins = int(user_data.get("tournament_wins") or 0)
     user_losses = int(user_data.get("tournament_losses") or 0)
 
-    if user_wins == 0:
-        return {
-            "principal_id": principal_id,
-            "wins": 0,
-            "losses": user_losses,
-            "position": 0,
-            "username": username
-        }
-
-    # Count users with more wins
+    # Count users with more diamonds
     users_ref = db().collection(f"tournaments/{tournament_id}/users")
-    count_q = users_ref.where("tournament_wins", ">", user_wins).count().get()
-    higher = int(count_q[0][0].value)
+    count_q = users_ref.where("diamonds", ">", user_diamonds).count().get()
+    higher = int(count_q[0][0].value) if count_q else 0
 
     return {
         "principal_id": principal_id,
+        "diamonds": user_diamonds,
         "wins": user_wins,
         "losses": user_losses,
         "position": higher + 1,
@@ -260,15 +304,17 @@ def _determine_outcome(smiley_id: str, tallies: dict) -> str:
 @https_fn.on_request(region="us-central1")
 def tournaments(request: Request):
     """
-    List tournaments with optional date/status filters.
+    List tournaments with optional date/status/tournament_id filters.
 
     POST /tournaments
     Request:
-        { "data": { "date": "2025-12-14", "status": "scheduled" } }
-        Both fields optional. Defaults to today's date if not provided.
+        { "data": { "date": "2025-12-14", "status": "scheduled", "principal_id": "...", "tournament_id": "..." } }
+        All fields optional. Defaults to today's date if not provided.
+        If tournament_id is provided, returns only that tournament (ignores date filter).
+        If principal_id is provided, includes is_registered and user_stats for each tournament.
 
     Response:
-        { "tournaments": [ {...}, ... ] }
+        { "tournaments": [ {..., "is_registered": true, "user_stats": {...}}, ... ] }
     """
     try:
         if request.method != "POST":
@@ -277,54 +323,96 @@ def tournaments(request: Request):
         body = request.get_json(silent=True) or {}
         data = body.get("data", {}) or {}
 
-        date_filter = str(data.get("date", "")).strip()
-        status_filter = str(data.get("status", "")).strip().lower()
+        date_filter = str(data.get("date") or "").strip()
+        status_filter = str(data.get("status") or "").strip().lower()
+        principal_id = str(data.get("principal_id") or "").strip()
+        tournament_id = str(data.get("tournament_id") or "").strip()
 
-        # Default to today if no date provided
-        if not date_filter:
-            date_filter = _today_ist_str()
+        # If tournament_id is provided, fetch that specific tournament
+        if tournament_id:
+            snap = db().collection("tournaments").document(tournament_id).get()
+            if not snap.exists:
+                return jsonify({"tournaments": []}), 200
+            docs = [snap]
+        else:
+            # Default to today if no date provided
+            if not date_filter:
+                date_filter = _today_ist_str()
 
-        # Validate date format
-        try:
-            datetime.strptime(date_filter, "%Y-%m-%d")
-        except ValueError:
-            return error_response(400, "INVALID_DATE", "date must be YYYY-MM-DD format")
-
-        # Validate status if provided
-        if status_filter:
+            # Validate date format
             try:
-                TournamentStatus(status_filter)
+                datetime.strptime(date_filter, "%Y-%m-%d")
             except ValueError:
-                valid = [s.value for s in TournamentStatus]
-                return error_response(400, "INVALID_STATUS", f"status must be one of: {valid}")
+                return error_response(400, "INVALID_DATE", "date must be YYYY-MM-DD format")
 
-        # Query tournaments
-        query = db().collection("tournaments").where("date", "==", date_filter)
-        if status_filter:
-            query = query.where("status", "==", status_filter)
+            # Validate status if provided
+            if status_filter:
+                try:
+                    TournamentStatus(status_filter)
+                except ValueError:
+                    valid = [s.value for s in TournamentStatus]
+                    return error_response(400, "INVALID_STATUS", f"status must be one of: {valid}")
 
-        snaps = query.stream()
+            # Query tournaments for the date (status is computed dynamically)
+            query = db().collection("tournaments").where("date", "==", date_filter)
+            docs = query.stream()
 
         result = []
-        for snap in snaps:
+        for snap in docs:
             t_data = snap.to_dict() or {}
+
+            # Compute status dynamically based on current time vs epochs
+            start_epoch_ms = t_data.get("start_epoch_ms", 0)
+            end_epoch_ms = t_data.get("end_epoch_ms", 0)
+            computed_status = _compute_status(start_epoch_ms, end_epoch_ms)
+
+            # Filter by status if provided
+            if status_filter and computed_status != status_filter:
+                continue
+
             participant_count = _get_participant_count(snap.id)
-            result.append({
+
+            tournament_entry = {
                 "id": snap.id,
+                "title": t_data.get("title", "SMILEY SHOWDOWN"),
                 "date": t_data.get("date"),
                 "start_time": t_data.get("start_time"),
                 "end_time": t_data.get("end_time"),
-                "start_epoch_ms": t_data.get("start_epoch_ms"),
-                "end_epoch_ms": t_data.get("end_epoch_ms"),
+                "start_epoch_ms": start_epoch_ms,
+                "end_epoch_ms": end_epoch_ms,
                 "entry_cost": t_data.get("entryCost"),
                 "total_prize_pool": t_data.get("totalPrizePool"),
-                "status": t_data.get("status"),
+                "status": computed_status,
                 "prize_map": t_data.get("prizeMap", {}),
-                "participant_count": participant_count
-            })
+                "participant_count": participant_count,
+                "is_registered": False,
+                "user_stats": None,
+            }
 
-        # Sort by start_time
-        result.sort(key=lambda x: x.get("start_time", ""))
+            # Check if user is registered (if principal_id provided)
+            if principal_id:
+                reg_data = _get_user_registration(snap.id, principal_id)
+                if reg_data:
+                    tournament_entry["is_registered"] = True
+                    tournament_entry["user_stats"] = {
+                        "registered_at": reg_data.get("registered_at"),
+                        "coins_paid": reg_data.get("coins_paid"),
+                        "diamonds": reg_data.get("diamonds", 0),
+                        "tournament_wins": reg_data.get("tournament_wins", 0),
+                        "tournament_losses": reg_data.get("tournament_losses", 0),
+                        "status": reg_data.get("status")
+                    }
+
+            result.append(tournament_entry)
+
+        # Sort: live first, then scheduled, then ended; within each group sort by start_time
+        def sort_key(t):
+            status = t.get("status", "").lower()
+            # Priority: live=0, scheduled=1, ended=2
+            status_priority = {"live": 0, "scheduled": 1, "ended": 2}.get(status, 3)
+            return (status_priority, t.get("start_time", ""))
+
+        result.sort(key=sort_key)
 
         return jsonify({"tournaments": result}), 200
 
@@ -365,7 +453,10 @@ def tournament_status(request: Request):
         if not snap:
             return error_response(404, "TOURNAMENT_NOT_FOUND", f"Tournament {tournament_id} not found")
 
-        status = t_data.get("status")
+        # Compute status dynamically based on current time vs epochs
+        start_epoch_ms = t_data.get("start_epoch_ms", 0)
+        end_epoch_ms = t_data.get("end_epoch_ms", 0)
+        status = _compute_status(start_epoch_ms, end_epoch_ms)
         participant_count = _get_participant_count(tournament_id)
 
         response = {
@@ -376,7 +467,6 @@ def tournament_status(request: Request):
 
         # Add time_left_ms only for LIVE tournaments
         if status == TournamentStatus.LIVE.value:
-            end_epoch_ms = t_data.get("end_epoch_ms", 0)
             response["time_left_ms"] = _time_left_ms(end_epoch_ms)
 
         return jsonify(response), 200
@@ -386,7 +476,7 @@ def tournament_status(request: Request):
         return error_response(500, "INTERNAL", "Internal server error")
 
 
-@https_fn.on_request(region="us-central1")
+@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
 def register_for_tournament(request: Request):
     """
     Register user for a tournament (pay entry fee).
@@ -403,6 +493,7 @@ def register_for_tournament(request: Request):
             "coins_remaining": 400
         }
     """
+    balance_update_token = os.environ.get("BALANCE_UPDATE_TOKEN")
     try:
         if request.method != "POST":
             return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
@@ -424,80 +515,72 @@ def register_for_tournament(request: Request):
         if not principal_id:
             return error_response(400, "MISSING_PRINCIPAL_ID", "principal_id required")
 
-        # Get tournament
+        # Get tournament and validate
         tournament_ref = db().collection("tournaments").document(tournament_id)
-        user_ref = db().document(f"users/{principal_id}")
         reg_ref = db().document(f"tournaments/{tournament_id}/users/{principal_id}")
 
-        @firestore.transactional
-        def _register_tx(tx: firestore.Transaction) -> dict:
-            # READS first
-            t_snap = tournament_ref.get(transaction=tx)
-            if not t_snap.exists:
-                return {"error": "TOURNAMENT_NOT_FOUND", "message": f"Tournament {tournament_id} not found"}
+        # Check tournament exists and is open
+        t_snap = tournament_ref.get()
+        if not t_snap.exists:
+            return error_response(404, "TOURNAMENT_NOT_FOUND", f"Tournament {tournament_id} not found")
 
-            t_data = t_snap.to_dict() or {}
-            status = t_data.get("status")
-            entry_cost = int(t_data.get("entryCost") or 0)
+        t_data = t_snap.to_dict() or {}
+        entry_cost = int(t_data.get("entryCost") or 0)
 
-            if status not in [TournamentStatus.SCHEDULED.value, TournamentStatus.LIVE.value]:
-                return {"error": "TOURNAMENT_NOT_OPEN", "message": f"Tournament is {status}, registration closed"}
+        # Compute status dynamically from epochs
+        start_epoch_ms = t_data.get("start_epoch_ms", 0)
+        end_epoch_ms = t_data.get("end_epoch_ms", 0)
+        status = _compute_status(start_epoch_ms, end_epoch_ms)
 
-            user_snap = user_ref.get(transaction=tx)
-            user_coins = int((user_snap.to_dict() or {}).get("coins") or 0)
+        if status not in ["scheduled", "live"]:
+            return error_response(409, "TOURNAMENT_NOT_OPEN", f"Tournament is {status}, registration closed")
 
-            if user_coins < entry_cost:
-                return {"error": "INSUFFICIENT_COINS", "message": f"Balance {user_coins} < {entry_cost} required"}
+        # Check if already registered
+        reg_snap = reg_ref.get()
+        if reg_snap.exists:
+            return error_response(409, "ALREADY_REGISTERED", "Already registered for this tournament")
 
-            reg_snap = reg_ref.get(transaction=tx)
-            if reg_snap.exists:
-                return {"error": "ALREADY_REGISTERED", "message": "Already registered for this tournament"}
+        # Deduct YRAL tokens from actual balance via external API
+        if entry_cost > 0:
+            if not balance_update_token:
+                print("BALANCE_UPDATE_TOKEN not configured", file=sys.stderr)
+                return error_response(500, "CONFIG_ERROR", "Balance update not configured")
 
-            # WRITES
-            # Deduct coins
-            tx.update(user_ref, {"coins": firestore.Increment(-entry_cost)})
+            success, error_msg = _push_delta_yral_token(balance_update_token, principal_id, -entry_cost)
+            if not success:
+                print(f"Failed to deduct YRAL tokens for {principal_id}: {error_msg}", file=sys.stderr)
+                return error_response(402, "INSUFFICIENT_COINS", "Failed to deduct entry fee. Please check your balance.")
 
-            # Create registration
-            tx.set(reg_ref, {
-                "registered_at": firestore.SERVER_TIMESTAMP,
-                "coins_paid": entry_cost,
-                "tournament_wins": 0,
-                "tournament_losses": 0,
-                "status": "registered",
-                "updated_at": firestore.SERVER_TIMESTAMP
-            })
+        # Create registration in Firestore
+        initial_diamonds = 20  # Fixed 20 diamonds for all tournaments
+        reg_ref.set({
+            "registered_at": firestore.SERVER_TIMESTAMP,
+            "coins_paid": entry_cost,
+            "diamonds": initial_diamonds,
+            "tournament_wins": 0,
+            "tournament_losses": 0,
+            "status": "registered",
+            "updated_at": firestore.SERVER_TIMESTAMP
+        })
 
-            # Log transaction
-            ledger_ref = user_ref.collection("transactions").document(_tx_id())
-            tx.set(ledger_ref, {
-                "delta": -entry_cost,
-                "reason": "TOURNAMENT_ENTRY",
-                "tournament_id": tournament_id,
-                "at": firestore.SERVER_TIMESTAMP
-            })
+        # Log transaction in Firestore for audit
+        user_ref = db().document(f"users/{principal_id}")
+        ledger_ref = user_ref.collection("transactions").document(_tx_id())
+        ledger_ref.set({
+            "delta": -entry_cost,
+            "reason": "TOURNAMENT_ENTRY",
+            "tournament_id": tournament_id,
+            "at": firestore.SERVER_TIMESTAMP
+        })
 
-            return {"success": True, "entry_cost": entry_cost}
-
-        result = _register_tx(db().transaction())
-
-        if "error" in result:
-            error_code = result["error"]
-            if error_code == "TOURNAMENT_NOT_FOUND":
-                return error_response(404, error_code, result["message"])
-            elif error_code == "INSUFFICIENT_COINS":
-                return error_response(402, error_code, result["message"])
-            else:
-                return error_response(409, error_code, result["message"])
-
-        # Get updated balance
-        updated_user = user_ref.get()
-        coins_remaining = int((updated_user.to_dict() or {}).get("coins") or 0)
-
+        # Note: coins_remaining is no longer accurate from Firestore
+        # The client should fetch the actual balance from the YRAL API
         return jsonify({
             "status": "registered",
             "tournament_id": tournament_id,
-            "coins_paid": result["entry_cost"],
-            "coins_remaining": coins_remaining
+            "coins_paid": entry_cost,
+            "coins_remaining": 0,  # Client should refresh balance from YRAL API
+            "diamonds": initial_diamonds
         }), 200
 
     except auth.InvalidIdTokenError:
@@ -510,7 +593,7 @@ def register_for_tournament(request: Request):
 @https_fn.on_request(region="us-central1")
 def my_tournaments(request: Request):
     """
-    List tournaments user has registered for.
+    List tournaments user has played in (has at least one vote).
 
     POST /my_tournaments
     Request:
@@ -518,6 +601,8 @@ def my_tournaments(request: Request):
 
     Response:
         { "tournaments": [ {...}, ... ] }
+
+    Note: Only returns tournaments where user has actually played (has wins or losses).
     """
     try:
         if request.method != "POST":
@@ -536,9 +621,9 @@ def my_tournaments(request: Request):
         if not principal_id:
             return error_response(400, "MISSING_PRINCIPAL_ID", "principal_id required")
 
-        # Query recent tournaments (last 7 days + today + next 7 days)
+        # Query recent tournaments (last 30 days)
         today = datetime.now(IST).date()
-        date_range = [today + timedelta(days=d) for d in range(-7, 8)]
+        date_range = [today + timedelta(days=d) for d in range(-30, 1)]
         date_strings = [d.strftime("%Y-%m-%d") for d in date_range]
 
         result = []
@@ -553,28 +638,43 @@ def my_tournaments(request: Request):
                 reg_snap = reg_ref.get()
 
                 if reg_snap.exists:
-                    t_data = t_snap.to_dict() or {}
                     reg_data = reg_snap.to_dict() or {}
 
-                    result.append({
-                        "id": t_snap.id,
-                        "date": t_data.get("date"),
-                        "start_time": t_data.get("start_time"),
-                        "end_time": t_data.get("end_time"),
-                        "start_epoch_ms": t_data.get("start_epoch_ms"),
-                        "end_epoch_ms": t_data.get("end_epoch_ms"),
-                        "entry_cost": t_data.get("entryCost"),
-                        "total_prize_pool": t_data.get("totalPrizePool"),
-                        "status": t_data.get("status"),
-                        "prize_map": t_data.get("prizeMap", {}),
-                        "user_stats": {
-                            "registered_at": reg_data.get("registered_at"),
-                            "coins_paid": reg_data.get("coins_paid"),
-                            "tournament_wins": reg_data.get("tournament_wins", 0),
-                            "tournament_losses": reg_data.get("tournament_losses", 0),
-                            "status": reg_data.get("status")
-                        }
-                    })
+                    # Only include tournaments where user has actually played
+                    tournament_wins = reg_data.get("tournament_wins", 0) or 0
+                    tournament_losses = reg_data.get("tournament_losses", 0) or 0
+
+                    if tournament_wins > 0 or tournament_losses > 0:
+                        t_data = t_snap.to_dict() or {}
+                        participant_count = _get_participant_count(t_snap.id)
+
+                        # Compute status dynamically
+                        start_epoch_ms = t_data.get("start_epoch_ms", 0)
+                        end_epoch_ms = t_data.get("end_epoch_ms", 0)
+                        computed_status = _compute_status(start_epoch_ms, end_epoch_ms)
+
+                        result.append({
+                            "id": t_snap.id,
+                            "title": t_data.get("title", "SMILEY SHOWDOWN"),
+                            "date": t_data.get("date"),
+                            "start_time": t_data.get("start_time"),
+                            "end_time": t_data.get("end_time"),
+                            "start_epoch_ms": start_epoch_ms,
+                            "end_epoch_ms": end_epoch_ms,
+                            "entry_cost": t_data.get("entryCost"),
+                            "total_prize_pool": t_data.get("totalPrizePool"),
+                            "status": computed_status,
+                            "prize_map": t_data.get("prizeMap", {}),
+                            "participant_count": participant_count,
+                            "user_stats": {
+                                "registered_at": reg_data.get("registered_at"),
+                                "coins_paid": reg_data.get("coins_paid"),
+                                "diamonds": reg_data.get("diamonds", 0),
+                                "tournament_wins": tournament_wins,
+                                "tournament_losses": tournament_losses,
+                                "status": reg_data.get("status")
+                            }
+                        })
 
         # Sort by date and start_time (newest first)
         result.sort(key=lambda x: (x.get("date", ""), x.get("start_time", "")), reverse=True)
@@ -610,8 +710,15 @@ def tournament_vote(request: Request):
             "smiley": {...},
             "tournament_wins": 6,
             "tournament_losses": 3,
+            "diamonds": 124,
             "position": 15
         }
+
+    Diamond System:
+        - Diamonds are initialized at registration (entry_cost * 1.5)
+        - Win: +1 diamond
+        - Loss: -1 diamond
+        - Cannot vote if diamonds = 0
     """
     try:
         if request.method != "POST":
@@ -664,14 +771,24 @@ def tournament_vote(request: Request):
                 return {"error": "TOURNAMENT_NOT_FOUND", "message": f"Tournament {tournament_id} not found"}
 
             t_data = t_snap.to_dict() or {}
-            status = t_data.get("status")
 
-            if status != TournamentStatus.LIVE.value:
+            # Compute status dynamically from epochs
+            start_epoch_ms = t_data.get("start_epoch_ms", 0)
+            end_epoch_ms = t_data.get("end_epoch_ms", 0)
+            status = _compute_status(start_epoch_ms, end_epoch_ms)
+
+            if status != "live":
                 return {"error": "TOURNAMENT_NOT_LIVE", "message": f"Tournament is {status}, voting not allowed"}
 
             reg_snap = reg_ref.get(transaction=tx)
             if not reg_snap.exists:
                 return {"error": "NOT_REGISTERED", "message": "You are not registered for this tournament"}
+
+            # Check diamond balance
+            reg_data = reg_snap.to_dict() or {}
+            current_diamonds = int(reg_data.get("diamonds") or 0)
+            if current_diamonds <= 0:
+                return {"error": "NO_DIAMONDS", "message": "You have no diamonds left. Cannot play anymore."}
 
             vote_snap = vote_ref.get(transaction=tx)
             if vote_snap.exists:
@@ -721,6 +838,8 @@ def tournament_vote(request: Request):
                 return error_response(404, error_code, tx_result["message"])
             elif error_code == "NOT_REGISTERED":
                 return error_response(403, error_code, tx_result["message"])
+            elif error_code == "NO_DIAMONDS":
+                return error_response(403, error_code, tx_result["message"])
             else:
                 return error_response(409, error_code, tx_result["message"])
 
@@ -734,15 +853,18 @@ def tournament_vote(request: Request):
             "updated_at": firestore.SERVER_TIMESTAMP
         })
 
-        # Update user's tournament stats
+        # Update user's tournament stats and diamonds
+        # Win: +1 diamond, Loss: -1 diamond
         if outcome == "WIN":
             reg_ref.update({
                 "tournament_wins": firestore.Increment(1),
+                "diamonds": firestore.Increment(1),
                 "updated_at": firestore.SERVER_TIMESTAMP
             })
         else:
             reg_ref.update({
                 "tournament_losses": firestore.Increment(1),
+                "diamonds": firestore.Increment(-1),
                 "updated_at": firestore.SERVER_TIMESTAMP
             })
 
@@ -751,6 +873,7 @@ def tournament_vote(request: Request):
         reg_data = updated_reg.to_dict() or {}
         tournament_wins = int(reg_data.get("tournament_wins") or 0)
         tournament_losses = int(reg_data.get("tournament_losses") or 0)
+        diamonds = int(reg_data.get("diamonds") or 0)
 
         # Calculate position
         top_rows = _compute_tournament_leaderboard(tournament_id, limit=10)
@@ -770,6 +893,7 @@ def tournament_vote(request: Request):
             },
             "tournament_wins": tournament_wins,
             "tournament_losses": tournament_losses,
+            "diamonds": diamonds,
             "position": position
         }), 200
 
@@ -795,7 +919,12 @@ def tournament_leaderboard(request: Request):
             "status": "ended",
             "top_rows": [ {...}, ... ],
             "user_row": {...},
-            "prize_map": {...}
+            "prize_map": {...},
+            "participant_count": 42,
+            "date": "2025-12-24",
+            "start_epoch_ms": 1234567890000,
+            "end_epoch_ms": 1234567899000,
+            "title": "Tournament Name"
         }
     """
     try:
@@ -824,7 +953,10 @@ def tournament_leaderboard(request: Request):
         if not snap:
             return error_response(404, "TOURNAMENT_NOT_FOUND", f"Tournament {tournament_id} not found")
 
-        status = t_data.get("status")
+        # Compute status dynamically based on current time vs epochs
+        start_epoch_ms = t_data.get("start_epoch_ms", 0)
+        end_epoch_ms = t_data.get("end_epoch_ms", 0)
+        status = _compute_status(start_epoch_ms, end_epoch_ms)
         prize_map = t_data.get("prizeMap", {})
 
         # Allow leaderboard viewing after ENDED or SETTLED
@@ -845,12 +977,20 @@ def tournament_leaderboard(request: Request):
         user_position = str(user_row.get("position", 0))
         user_row["prize"] = prize_map.get(user_position) if user_position != "0" else None
 
+        # Get actual participant count from registered users
+        participant_count = _get_participant_count(tournament_id)
+
         return jsonify({
             "tournament_id": tournament_id,
             "status": status,
             "top_rows": top_rows,
             "user_row": user_row,
-            "prize_map": prize_map
+            "prize_map": prize_map,
+            "participant_count": participant_count,
+            "date": t_data.get("date", ""),
+            "start_epoch_ms": t_data.get("start_epoch_ms", 0),
+            "end_epoch_ms": t_data.get("end_epoch_ms", 0),
+            "title": t_data.get("title", "Tournament"),
         }), 200
 
     except auth.InvalidIdTokenError:

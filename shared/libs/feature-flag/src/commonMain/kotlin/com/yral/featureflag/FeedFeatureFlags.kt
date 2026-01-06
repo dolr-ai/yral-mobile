@@ -19,7 +19,7 @@ object FeedFeatureFlags {
                 keySuffix = "autoScrollEnabled",
                 name = "Enable auto scroll after game vote",
                 description = "Scrolls to next page after game is played",
-                defaultValue = true,
+                defaultValue = false,
             )
     }
     object FeedTypes :

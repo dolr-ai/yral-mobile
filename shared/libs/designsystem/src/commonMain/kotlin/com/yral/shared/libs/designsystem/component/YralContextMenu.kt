@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
@@ -46,6 +47,7 @@ fun YralContextMenu(
     triggerSize: Dp = DEFAULT_TRIGGER_SIZE.dp,
     menuIconSize: Dp = DEFAULT_MENU_ICON_SIZE.dp,
     modifier: Modifier = Modifier,
+    menuPadding: PaddingValues = PaddingValues(0.dp),
 ) {
     if (items.isEmpty()) return
     var showMenu by remember { mutableStateOf(false) }
@@ -64,6 +66,7 @@ fun YralContextMenu(
             containerColor = Color.Transparent,
             modifier =
                 Modifier
+                    .padding(menuPadding)
                     .border(
                         width = 1.dp,
                         color = YralColors.Neutral700,

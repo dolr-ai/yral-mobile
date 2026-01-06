@@ -2,7 +2,7 @@ package com.yral.featureflag.accountFeatureFlags
 
 internal actual object AccountDefaultLinks {
     actual val TALK_TO_TEAM_URL: String
-        get() = "https://chat.whatsapp.com/LMLykiRUrJD13oUtM61JJX?mode=ems_share_t"
+        get() = "https://chat.whatsapp.com/DNjTKgCVZhc75qsAHto4n7"
     actual val TERMS_OF_SERVICE_URL: String
         get() = "https://yral.com/terms-android"
     actual val PRIVACY_POLICY_URL: String

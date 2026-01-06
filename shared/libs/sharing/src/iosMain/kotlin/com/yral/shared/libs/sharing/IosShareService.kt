@@ -20,7 +20,7 @@ class IosShareService(
         shareText(text)
     }
 
-    private suspend fun shareText(text: String) =
+    override suspend fun shareText(text: String) {
         withContext(appDispatchers.main) {
             val rootController = findRootViewController()
             if (rootController == null) {
@@ -39,6 +39,7 @@ class IosShareService(
                 completion = null,
             )
         }
+    }
 }
 
 @Suppress("ReturnCount")

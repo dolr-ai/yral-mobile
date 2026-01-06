@@ -1,0 +1,40 @@
+package com.yral.shared.features.chat.domain
+
+import com.yral.shared.features.chat.domain.models.Conversation
+import com.yral.shared.features.chat.domain.models.ConversationMessagesPageResult
+import com.yral.shared.features.chat.domain.models.ConversationsPageResult
+import com.yral.shared.features.chat.domain.models.DeleteConversationResult
+import com.yral.shared.features.chat.domain.models.Influencer
+import com.yral.shared.features.chat.domain.models.InfluencersPageResult
+import com.yral.shared.features.chat.domain.models.SendMessageDraft
+import com.yral.shared.features.chat.domain.models.SendMessageResult
+
+interface ChatRepository {
+    suspend fun getInfluencersPage(
+        limit: Int,
+        offset: Int,
+    ): InfluencersPageResult
+
+    suspend fun getInfluencer(id: String): Influencer
+
+    suspend fun createConversation(influencerId: String): Conversation
+
+    suspend fun getConversationsPage(
+        limit: Int,
+        offset: Int,
+        influencerId: String? = null,
+    ): ConversationsPageResult
+
+    suspend fun deleteConversation(conversationId: String): DeleteConversationResult
+
+    suspend fun getConversationMessagesPage(
+        conversationId: String,
+        limit: Int,
+        offset: Int,
+    ): ConversationMessagesPageResult
+
+    suspend fun sendMessage(
+        conversationId: String,
+        draft: SendMessageDraft,
+    ): SendMessageResult
+}

@@ -44,6 +44,11 @@ object Leaderboard : AppRoute, ExternallyExposedRoute {
 }
 
 @Serializable
+object Tournaments : AppRoute, ExternallyExposedRoute {
+    const val PATH = "/tournaments"
+}
+
+@Serializable
 object AddVideo : AppRoute, ExternallyExposedRoute {
     const val PATH = "/addVideo"
 }
@@ -56,6 +61,11 @@ object GenerateAIVideo : AppRoute, ExternallyExposedRoute {
 @Serializable
 object Profile : AppRoute, ExternallyExposedRoute {
     const val PATH = "/profile"
+}
+
+@Serializable
+object Chat : AppRoute, ExternallyExposedRoute {
+    const val PATH = "/chat"
 }
 
 @Serializable

@@ -31,7 +31,6 @@ final class SessionManager: ObservableObject {
       .store(in: &bag)
   }
 
-  // swiftlint: disable function_body_length
   func update(dailyRank: Int) {
     switch state {
     case .ephemeralAuthentication(let userPrincipal, let canisterPrincipal, let coins, _, _):
@@ -76,16 +75,6 @@ final class SessionManager: ObservableObject {
           isCreator: nil,
           walletBalance: KotlinDouble(value: Double(coins)),
           tokenType: .yral,
-          isForcedGamePlayUser: KotlinBoolean(
-            bool: AppDIHelper().getFeatureFlagManager().isEnabled(
-              flag: FeedFeatureFlags.SmileyGame.shared.StopAndVoteNudge
-            )
-          ),
-          isAutoScrollEnabled: KotlinBoolean(
-            bool: AppDIHelper().getFeatureFlagManager().isEnabled(
-                flag: FeedFeatureFlags.SmileyGame.shared.AutoScrollEnabled
-            )
-          ),
           emailId: nil,
           utmParams: nil,
         )
@@ -107,16 +96,6 @@ final class SessionManager: ObservableObject {
           isCreator: nil,
           walletBalance: KotlinDouble(value: Double(coins)),
           tokenType: .yral,
-          isForcedGamePlayUser: KotlinBoolean(
-            bool: AppDIHelper().getFeatureFlagManager().isEnabled(
-              flag: FeedFeatureFlags.SmileyGame.shared.StopAndVoteNudge
-            )
-          ),
-          isAutoScrollEnabled: KotlinBoolean(
-            bool: AppDIHelper().getFeatureFlagManager().isEnabled(
-                flag: FeedFeatureFlags.SmileyGame.shared.AutoScrollEnabled
-            )
-          ),
           emailId: "",
           utmParams: nil,
         )
@@ -125,7 +104,6 @@ final class SessionManager: ObservableObject {
       break
     }
   }
-  // swiftlint: enable function_body_length
 }
 
 extension SessionManager {

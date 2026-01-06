@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.fade
+import com.arkivanov.decompose.extensions.compose.stack.animation.plus
+import com.arkivanov.decompose.extensions.compose.stack.animation.slide
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.shared.app.nav.RootComponent
@@ -37,16 +39,23 @@ import com.yral.shared.app.ui.components.UpdateNotificationHost
 import com.yral.shared.app.ui.screens.alertsrequest.AlertsRequestBottomSheet
 import com.yral.shared.app.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.shared.app.ui.screens.home.HomeScreen
+import com.yral.shared.app.ui.screens.tournament.TournamentGameScaffoldScreen
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.session.getKey
 import com.yral.shared.features.auth.ui.LoginBottomSheet
 import com.yral.shared.features.auth.viewModel.LoginViewModel
+import com.yral.shared.features.chat.ui.conversation.ChatConversationScreen
+import com.yral.shared.features.chat.viewmodel.ConversationViewModel
+import com.yral.shared.features.leaderboard.ui.LeaderboardScreen
+import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
 import com.yral.shared.features.profile.ui.EditProfileScreen
 import com.yral.shared.features.profile.ui.ProfileMainScreen
 import com.yral.shared.features.profile.viewmodel.EditProfileViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.root.viewmodels.RootError
 import com.yral.shared.features.root.viewmodels.RootViewModel
+import com.yral.shared.features.tournament.ui.TournamentLeaderboardScreen
+import com.yral.shared.features.wallet.ui.WalletScreen
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
@@ -61,7 +70,7 @@ import yral_mobile.shared.app.generated.resources.error_retry
 import yral_mobile.shared.app.generated.resources.error_timeout
 import yral_mobile.shared.app.generated.resources.error_timeout_title
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RootScreen(
@@ -78,7 +87,14 @@ fun RootScreen(
             Children(
                 stack = rootComponent.stack,
                 modifier = Modifier.fillMaxSize(),
-                animation = stackAnimation(fade()),
+                animation =
+                    stackAnimation { child ->
+                        when (child.instance) {
+                            is Child.Splash -> fade()
+                            is Child.Home -> fade()
+                            else -> fade() + slide()
+                        }
+                    },
             ) {
                 when (val child = it.instance) {
                     is Child.Splash -> {
@@ -125,6 +141,55 @@ fun RootScreen(
                             viewModel = profileViewModel,
                             profileVideos = profileVideos,
                             getPrefetchListener = { reel -> PrefetchVideoListenerImpl(reel) },
+                        )
+                    }
+
+                    is Child.TournamentLeaderboard -> {
+                        HandleSystemBars(show = true)
+                        TournamentLeaderboardScreen(
+                            tournamentId = child.tournamentId,
+                            tournamentTitle = "",
+                            showResult = child.showResult,
+                            onBack = rootComponent::onBackClicked,
+                            onOpenProfile = rootComponent::openProfile,
+                        )
+                    }
+
+                    is Child.TournamentGame -> {
+                        val sessionKey = state.sessionState.getKey()
+                        HandleSystemBars(show = true)
+                        TournamentGameScaffoldScreen(
+                            component = child.component,
+                            sessionKey = sessionKey,
+                        )
+                    }
+
+                    is Child.Conversation -> {
+                        HandleSystemBars(show = true)
+                        ChatConversationScreen(
+                            component = child.component,
+                            viewModel = koinViewModel<ConversationViewModel>(),
+                            modifier = Modifier.fillMaxSize().statusBarsPadding(),
+                            bottomPadding = 0.dp,
+                        )
+                    }
+
+                    is Child.Wallet -> {
+                        HandleSystemBars(show = true)
+                        WalletScreen(
+                            component = child.component,
+                            modifier = Modifier.fillMaxSize().safeDrawingPadding(),
+                        )
+                    }
+
+                    is Child.Leaderboard -> {
+                        HandleSystemBars(show = true)
+                        val sessionKey = state.sessionState.getKey()
+                        val leaderBoardViewModel = koinViewModel<LeaderBoardViewModel>(key = "leaderboard-$sessionKey")
+                        LeaderboardScreen(
+                            component = child.component,
+                            leaderBoardViewModel = leaderBoardViewModel,
+                            modifier = Modifier.fillMaxSize().safeDrawingPadding(),
                         )
                     }
                 }
