@@ -2,3 +2,4 @@ firebase-admin==6.8.0
 functions-framework==3.*
 firebase-functions==0.4.3
 google-cloud-tasks==2.20.0
+mixpanel==4.10.1
