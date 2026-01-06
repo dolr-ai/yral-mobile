@@ -531,19 +531,19 @@ def _tasks_client() -> tasks_v2.CloudTasksClient:
 
 
 def _queue_path(client: tasks_v2.CloudTasksClient) -> str:
-    project = os.environ.get("GOOGLE_CLOUD_PROJECT", "yral-staging")
+    project = os.environ.get("GCLOUD_PROJECT") or os.environ.get("GOOGLE_CLOUD_PROJECT")
     location = os.environ.get("TASKS_LOCATION", "us-central1")
     queue = os.environ.get("TASKS_QUEUE", "tournament-status-updates")
     if not project:
-        raise RuntimeError("GOOGLE_CLOUD_PROJECT env var missing")
+        raise RuntimeError("GCLOUD_PROJECT/GOOGLE_CLOUD_PROJECT env var missing")
     return client.queue_path(project, location, queue)
 
 
 def _function_url(fn_name: str) -> str:
-    project = os.environ.get("GOOGLE_CLOUD_PROJECT", "yral-staging")
+    project = os.environ.get("GCLOUD_PROJECT") or os.environ.get("GOOGLE_CLOUD_PROJECT")
     region = os.environ.get("FUNCTION_REGION", "us-central1")
     if not project:
-        raise RuntimeError("GOOGLE_CLOUD_PROJECT env var missing")
+        raise RuntimeError("GCLOUD_PROJECT/GOOGLE_CLOUD_PROJECT env var missing")
     return f"https://{region}-{project}.cloudfunctions.net/{fn_name}"
 
 
