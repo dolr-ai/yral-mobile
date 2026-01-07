@@ -347,28 +347,62 @@ def _count_players_who_played(tournament_id: str) -> int:
 
 
 def _compute_settlement_leaderboard(tournament_id: str, limit: int = 10) -> List[dict]:
-    """Compute top N users by diamond balance with dense ranking for settlement."""
+    """Compute top N users by diamond balance with strict ranking for settlement.
+
+    Only includes users who have played at least 1 game (wins > 0 or losses > 0).
+
+    Ranking order:
+    1. Diamonds DESC (more diamonds = higher rank)
+    2. Total games (wins + losses) DESC (tiebreaker: more games = higher rank)
+    3. updated_at ASC (second tiebreaker: earlier = higher rank)
+    """
     users_ref = db().collection(f"tournaments/{tournament_id}/users")
+    # Fetch extra users to account for filtering out those who never played
     snaps = (
         users_ref.order_by("diamonds", direction=firestore.Query.DESCENDING)
-                 .limit(limit)
+                 .limit(limit * 5)
                  .stream()
     )
 
-    rows = []
-    current_rank, last_diamonds = 0, None
-
+    # Collect all qualifying users first
+    candidates = []
     for snap in snaps:
         data = snap.to_dict() or {}
+        wins = int(data.get("tournament_wins") or 0)
+        losses = int(data.get("tournament_losses") or 0)
+
+        # Skip users who never played
+        if wins == 0 and losses == 0:
+            continue
+
         diamonds = int(data.get("diamonds") or 0)
-        if diamonds != last_diamonds:
-            current_rank += 1
-            last_diamonds = diamonds
-        rows.append({
+        total_games = wins + losses
+        updated_at = data.get("updated_at")  # Firestore timestamp
+
+        candidates.append({
             "principal_id": snap.id,
             "diamonds": diamonds,
-            "wins": int(data.get("tournament_wins") or 0),
-            "position": current_rank
+            "wins": wins,
+            "total_games": total_games,
+            "updated_at": updated_at,
+        })
+
+    # Sort by: diamonds DESC, total_games DESC, updated_at ASC
+    def sort_key(x):
+        updated = x.get("updated_at")
+        updated_ts = updated.timestamp() if updated else float('inf')
+        return (-x["diamonds"], -x["total_games"], updated_ts)
+
+    candidates.sort(key=sort_key)
+
+    # Take top N and assign strict positions (1, 2, 3, ...)
+    rows = []
+    for i, candidate in enumerate(candidates[:limit], start=1):
+        rows.append({
+            "principal_id": candidate["principal_id"],
+            "diamonds": candidate["diamonds"],
+            "wins": candidate["wins"],
+            "position": i
         })
 
     return rows

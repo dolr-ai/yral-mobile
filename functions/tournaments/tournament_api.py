@@ -186,34 +186,69 @@ INITIAL_DIAMONDS = 20
 
 
 def _compute_tournament_leaderboard(tournament_id: str, limit: int = 10) -> List[dict]:
-    """Compute top N users by diamond balance with dense ranking."""
+    """Compute top N users by diamond balance with strict ranking.
+
+    Only includes users who have played at least 1 game (wins > 0 or losses > 0).
+
+    Ranking order:
+    1. Diamonds DESC (more diamonds = higher rank)
+    2. Total games (wins + losses) DESC (tiebreaker: more games = higher rank)
+    3. updated_at ASC (second tiebreaker: earlier = higher rank)
+    """
     users_ref = db().collection(f"tournaments/{tournament_id}/users")
-    # Get users who have played (diamonds != initial value means they played)
-    # Order by diamonds descending
+    # Fetch extra users to account for filtering out those who never played
     snaps = (
         users_ref.order_by("diamonds", direction=firestore.Query.DESCENDING)
-                 .limit(limit)
+                 .limit(limit * 5)
                  .stream()
     )
 
-    rows = []
-    current_rank, last_diamonds = 0, None
-    principal_ids = []
-
+    # Collect all qualifying users first
+    candidates = []
     for snap in snaps:
         data = snap.to_dict() or {}
+        wins = int(data.get("tournament_wins") or 0)
+        losses = int(data.get("tournament_losses") or 0)
+
+        # Skip users who never played
+        if wins == 0 and losses == 0:
+            continue
+
         diamonds = int(data.get("diamonds") or 0)
-        if diamonds != last_diamonds:
-            current_rank += 1
-            last_diamonds = diamonds
-        rows.append({
+        total_games = wins + losses
+        updated_at = data.get("updated_at")  # Firestore timestamp
+
+        candidates.append({
             "principal_id": snap.id,
             "diamonds": diamonds,
-            "wins": int(data.get("tournament_wins") or 0),
-            "losses": int(data.get("tournament_losses") or 0),
-            "position": current_rank
+            "wins": wins,
+            "losses": losses,
+            "total_games": total_games,
+            "updated_at": updated_at,
         })
-        principal_ids.append(snap.id)
+
+    # Sort by: diamonds DESC, total_games DESC, updated_at ASC
+    # For updated_at ASC, we use a large default for None values
+    def sort_key(x):
+        updated = x.get("updated_at")
+        # Convert to timestamp for comparison, use max value if None
+        updated_ts = updated.timestamp() if updated else float('inf')
+        return (-x["diamonds"], -x["total_games"], updated_ts)
+
+    candidates.sort(key=sort_key)
+
+    # Take top N and assign strict positions (1, 2, 3, ...)
+    rows = []
+    principal_ids = []
+    for i, candidate in enumerate(candidates[:limit], start=1):
+        rows.append({
+            "principal_id": candidate["principal_id"],
+            "diamonds": candidate["diamonds"],
+            "wins": candidate["wins"],
+            "losses": candidate["losses"],
+            "position": i
+        })
+        principal_ids.append(candidate["principal_id"])
 
     # Fetch usernames
     if principal_ids:
@@ -235,7 +270,13 @@ def _get_user_tournament_position(
 ) -> dict:
     """Get user's position in tournament leaderboard.
 
-    Positions are based on diamond balance. Higher diamonds = better rank.
+    Ranking order:
+    1. Diamonds DESC (more diamonds = higher rank)
+    2. Total games (wins + losses) DESC (tiebreaker: more games = higher rank)
+    3. updated_at ASC (second tiebreaker: earlier = higher rank)
+
+    Only users who have played at least 1 game are ranked.
+    Users who haven't played return position = 0.
     """
     # Check if in top rows first
     for row in top_rows:
@@ -255,11 +296,55 @@ def _get_user_tournament_position(
     user_diamonds = int(user_data.get("diamonds") or 0)
     user_wins = int(user_data.get("tournament_wins") or 0)
     user_losses = int(user_data.get("tournament_losses") or 0)
+    user_total_games = user_wins + user_losses
+    user_updated_at = user_data.get("updated_at")
 
-    # Count users with more diamonds
+    # If user hasn't played, return position 0 (not ranked)
+    if user_wins == 0 and user_losses == 0:
+        return {
+            "principal_id": principal_id,
+            "diamonds": user_diamonds,
+            "wins": user_wins,
+            "losses": user_losses,
+            "position": 0,
+            "username": username
+        }
+
+    # Count users who rank higher using tiebreaker logic
+    # Fetch users with diamonds >= user_diamonds (need to check tiebreakers for equal diamonds)
     users_ref = db().collection(f"tournaments/{tournament_id}/users")
-    count_q = users_ref.where("diamonds", ">", user_diamonds).count().get()
-    higher = int(count_q[0][0].value) if count_q else 0
+    snaps = users_ref.where("diamonds", ">=", user_diamonds).limit(1000).stream()
+
+    user_updated_ts = user_updated_at.timestamp() if user_updated_at else float('inf')
+
+    higher = 0
+    for snap in snaps:
+        if snap.id == principal_id:
+            continue  # Skip self
+
+        data = snap.to_dict() or {}
+        w = int(data.get("tournament_wins") or 0)
+        l = int(data.get("tournament_losses") or 0)
+
+        # Only count users who have played
+        if w == 0 and l == 0:
+            continue
+
+        diamonds = int(data.get("diamonds") or 0)
+        total_games = w + l
+        updated_at = data.get("updated_at")
+        updated_ts = updated_at.timestamp() if updated_at else float('inf')
+
+        # Check if this user ranks higher
+        # Higher rank = more diamonds, or same diamonds + more games, or same both + earlier updated_at
+        if diamonds > user_diamonds:
+            higher += 1
+        elif diamonds == user_diamonds:
+            if total_games > user_total_games:
+                higher += 1
+            elif total_games == user_total_games:
+                if updated_ts < user_updated_ts:
+                    higher += 1
 
     return {
         "principal_id": principal_id,
