@@ -5,4 +5,4 @@ import com.yral.shared.koin.koinInstance
 
 actual suspend fun getAdvertisingID(): Result<String?, Throwable> = koinInstance.get<GetGAIDUseCase>().invoke()
 
-internal actual fun saveADIDtoProperties(id: String): Map<String, String> = buildMap { put("GAID", id) }
+internal actual fun createAdvertisingIdProperties(id: String): Map<String, String> = buildMap { put("GAID", id) }

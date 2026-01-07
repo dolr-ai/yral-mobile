@@ -76,7 +76,7 @@ class AnalyticsManager(
                 .onSuccess { id ->
                     Logger.d("AdTracking") { "Advertising ID: $id" }
                     id?.let {
-                        val common = saveADIDtoProperties(id)
+                        val common = createAdvertisingIdProperties(id)
                         providers.forEach { it.applyCommonContext(common) }
                     }
                 }.onFailure {
