@@ -1124,6 +1124,22 @@ class FeedViewModel(
             }
     }
 
+    fun checkAndShowTournamentIntroSheet() {
+        viewModelScope.launch {
+            val hasSeenIntro = preferences.getBoolean(PrefKeys.TOURNAMENT_INTRO_SHOWN.name) ?: false
+            if (!hasSeenIntro && _state.value.feedDetails.isNotEmpty()) {
+                _state.update { it.copy(showTournamentIntroSheet = true) }
+            }
+        }
+    }
+
+    fun dismissTournamentIntroSheet() {
+        viewModelScope.launch {
+            preferences.putBoolean(PrefKeys.TOURNAMENT_INTRO_SHOWN.name, true)
+            _state.update { it.copy(showTournamentIntroSheet = false) }
+        }
+    }
+
     private fun trackOnboardingShown() {
         viewModelScope.launch {
             _state
@@ -1189,6 +1205,7 @@ data class FeedState(
     val feedType: FeedType = FeedType.DEFAULT,
     val isFollowInProgress: Boolean = false,
     val currentOnboardingStep: OnboardingStep? = null,
+    val showTournamentIntroSheet: Boolean = false,
     val isMandatoryLogin: Boolean = false,
 )
 

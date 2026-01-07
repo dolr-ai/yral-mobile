@@ -197,9 +197,11 @@ def _compute_tournament_leaderboard(tournament_id: str, limit: int = 10) -> List
     """
     users_ref = db().collection(f"tournaments/{tournament_id}/users")
     # Fetch extra users to account for filtering out those who never played
+    # Need high multiplier because many non-players have 20 diamonds (initial balance)
+    # which ranks higher than players who lost (< 20 diamonds)
     snaps = (
         users_ref.order_by("diamonds", direction=firestore.Query.DESCENDING)
-                 .limit(limit * 5)
+                 .limit(limit * 50)
                  .stream()
     )
 
