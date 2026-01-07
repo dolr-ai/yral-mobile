@@ -3,6 +3,8 @@ package com.yral.shared.analytics
 import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.shared.analytics.adTracking.createAdvertisingIdProperties
+import com.yral.shared.analytics.adTracking.getAdvertisingID
 import com.yral.shared.analytics.events.EventData
 import com.yral.shared.analytics.events.IdentityTransitionEventData
 import com.yral.shared.analytics.providers.yral.CoreService

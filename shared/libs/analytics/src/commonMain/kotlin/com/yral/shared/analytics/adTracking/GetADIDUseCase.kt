@@ -1,10 +1,10 @@
-package com.yral.shared.analytics
+package com.yral.shared.analytics.adTracking
 
 import com.yral.shared.libs.arch.domain.UnitSuspendUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 
-class GetGAIDUseCase(
+class GetADIDUseCase(
     appDispatchers: AppDispatchers,
     useCaseFailureListener: UseCaseFailureListener,
     private val advertisingIdProvider: AdvertisingIdProvider,

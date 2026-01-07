@@ -1,4 +1,4 @@
-package com.yral.shared.analytics
+package com.yral.shared.analytics.adTracking
 
 import com.github.michaelbull.result.Result
 

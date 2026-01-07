@@ -1,4 +1,4 @@
-package com.yral.shared.analytics
+package com.yral.shared.analytics.adTracking
 
 import android.content.Context
 import com.google.android.gms.ads.identifier.AdvertisingIdClient

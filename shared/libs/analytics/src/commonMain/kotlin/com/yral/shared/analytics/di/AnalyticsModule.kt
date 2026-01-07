@@ -4,6 +4,7 @@ import com.russhwolf.settings.Settings
 import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.DeviceInstallIdStore
 import com.yral.shared.analytics.EventToMapConverter
+import com.yral.shared.analytics.adTracking.GetADIDUseCase
 import com.yral.shared.analytics.events.shouldSendToFacebook
 import com.yral.shared.analytics.events.shouldSendToYralBE
 import com.yral.shared.analytics.providers.bigquery.BigQueryAnalyticsProvider
@@ -80,6 +81,7 @@ val analyticsModule =
                 deviceInstallIdStore = get(),
             )
         }
+        singleOf(::GetADIDUseCase)
     }
 
 fun getAnalyticsManager(): AnalyticsManager = koinInstance.get()
