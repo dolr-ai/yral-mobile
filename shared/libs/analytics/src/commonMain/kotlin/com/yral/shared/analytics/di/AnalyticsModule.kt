@@ -4,6 +4,7 @@ import com.russhwolf.settings.Settings
 import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.DeviceInstallIdStore
 import com.yral.shared.analytics.EventToMapConverter
+import com.yral.shared.analytics.adTracking.GetADIDUseCase
 import com.yral.shared.analytics.events.shouldSendToFacebook
 import com.yral.shared.analytics.events.shouldSendToYralBE
 import com.yral.shared.analytics.providers.bigquery.BigQueryAnalyticsProvider
@@ -69,13 +70,18 @@ val analyticsModule =
         }
         single {
             AnalyticsManager(
+                providers =
+                    listOf(
+                        get<FirebaseAnalyticsProvider>(),
+                        get<MixpanelAnalyticsProvider>(),
+                        get<FacebookAnalyticsProvider>(),
+                        get<BigQueryAnalyticsProvider>(),
+                    ),
+                coreService = get<CoreService>(),
                 deviceInstallIdStore = get(),
-            ).addProvider(get<FirebaseAnalyticsProvider>())
-                .addProvider(get<MixpanelAnalyticsProvider>())
-                .addProvider(get<FacebookAnalyticsProvider>())
-                .addProvider(get<BigQueryAnalyticsProvider>())
-                .setCoreService(get<CoreService>())
+            )
         }
+        singleOf(::GetADIDUseCase)
     }
 
-public fun getAnalyticsManager(): AnalyticsManager = koinInstance.get()
+fun getAnalyticsManager(): AnalyticsManager = koinInstance.get()
