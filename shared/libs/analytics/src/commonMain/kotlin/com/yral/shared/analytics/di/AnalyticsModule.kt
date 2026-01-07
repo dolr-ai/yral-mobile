@@ -8,8 +8,7 @@ import com.yral.shared.analytics.adTracking.GetADIDUseCase
 import com.yral.shared.analytics.events.shouldSendToBranch
 import com.yral.shared.analytics.events.shouldSendToFacebook
 import com.yral.shared.analytics.events.shouldSendToYralBE
-import com.yral.shared.analytics.providers.bigquery.BigQueryAnalyticsProvider
-import com.yral.shared.analytics.providers.bigquery.BigQueryEventsApiService
+import com.yral.shared.analytics.events.shouldSendViaCore
 import com.yral.shared.analytics.providers.branch.BranchAnalyticsProvider
 import com.yral.shared.analytics.providers.facebook.FacebookAnalyticsProvider
 import com.yral.shared.analytics.providers.firebase.FirebaseAnalyticsProvider
@@ -20,7 +19,6 @@ import com.yral.shared.koin.koinInstance
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.analytics.analytics
 import dev.gitlive.firebase.app
-import kotlinx.serialization.json.buildJsonObject
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
@@ -28,13 +26,13 @@ val analyticsModule =
     module {
         singleOf(::AnalyticsApiService)
         singleOf(::EventToMapConverter)
-        singleOf(::BigQueryEventsApiService)
         single { DeviceInstallIdStore(get<Settings>()) }
         single {
+            val isDebug: Boolean = get(IS_DEBUG)
             CoreService(
                 analyticsApiService = get(),
                 crashlyticsManager = get(),
-                eventFilter = { it.shouldSendToYralBE() },
+                eventFilter = { it.shouldSendViaCore(isDebug) },
             )
         }
         factory { Firebase.analytics(Firebase.app) }
@@ -59,18 +57,6 @@ val analyticsModule =
             )
         }
         single {
-            val isDebug: Boolean = get(IS_DEBUG)
-            BigQueryAnalyticsProvider(
-                apiService = get(),
-                crashlyticsService = get(),
-                json = get(),
-                eventFilter = { !it.shouldSendToYralBE() },
-                extraFieldsProvider = { buildJsonObject { } },
-                dryRun = isDebug,
-                log = { },
-            )
-        }
-        single {
             BranchAnalyticsProvider(
                 eventFilter = { it.shouldSendToBranch() },
                 mapConverter = get(),
@@ -83,7 +69,6 @@ val analyticsModule =
                         get<FirebaseAnalyticsProvider>(),
                         get<MixpanelAnalyticsProvider>(),
                         get<FacebookAnalyticsProvider>(),
-                        get<BigQueryAnalyticsProvider>(),
                         get<BranchAnalyticsProvider>(),
                     ),
                 coreService = get<CoreService>(),
