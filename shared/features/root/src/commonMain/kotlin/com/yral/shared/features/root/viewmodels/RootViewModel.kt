@@ -220,31 +220,22 @@ class RootViewModel(
     private suspend fun resolveNavigationTarget() {
         // Wait for remote config and check MandatoryLogin flag
         val isSocialSignedIn = preferences.getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false
-        val remoteConfigReady =
-            if (preferences.getBoolean(PrefKeys.IS_REMOTE_CONFIG_FORCE_SYNCED.name) == true) {
-                true
-            } else {
-                val fetched = flagManager.awaitRemoteFetch(5.seconds)
-                if (fetched) {
-                    preferences.putBoolean(PrefKeys.IS_REMOTE_CONFIG_FORCE_SYNCED.name, true)
-                }
-                true
+        if (preferences.getBoolean(PrefKeys.IS_REMOTE_CONFIG_FORCE_SYNCED.name) != true) {
+            val fetched = flagManager.awaitRemoteFetch(5.seconds)
+            if (fetched) {
+                preferences.putBoolean(PrefKeys.IS_REMOTE_CONFIG_FORCE_SYNCED.name, true)
             }
+        }
+        val isMandatoryLoginEnabled = flagManager.isEnabled(AppFeatureFlags.Common.MandatoryLogin)
+        sessionManager.updateIsMandatoryLogin(isMandatoryLoginEnabled)
         val navigationTarget =
-            if (remoteConfigReady) {
-                val isMandatoryLoginEnabled = flagManager.isEnabled(AppFeatureFlags.Common.MandatoryLogin)
-                sessionManager.updateIsMandatoryLogin(isMandatoryLoginEnabled)
-                if (isMandatoryLoginEnabled) {
-                    if (!isSocialSignedIn) {
-                        NavigationTarget.MandatoryLogin to true
-                    } else {
-                        NavigationTarget.Home to false
-                    }
+            if (isMandatoryLoginEnabled) {
+                if (!isSocialSignedIn) {
+                    NavigationTarget.MandatoryLogin to true
                 } else {
                     NavigationTarget.Home to false
                 }
             } else {
-                // On timeout, default to Home
                 NavigationTarget.Home to false
             }
         _state.update {

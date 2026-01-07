@@ -174,7 +174,7 @@ class DefaultRootComponent(
 
     override fun isSplashActive(): Boolean = stack.active.instance is RootComponent.Child.Splash
 
-    override fun isLoginActive(): Boolean = stack.active.instance is RootComponent.Child.MandatoryLogin
+    override fun isMandatoryLoginActive(): Boolean = stack.active.instance is RootComponent.Child.MandatoryLogin
 
     override fun navigateToSplash() {
         if (stack.active.instance is RootComponent.Child.Splash) return
@@ -192,7 +192,7 @@ class DefaultRootComponent(
     }
 
     override fun onNavigationRequest(appRoute: AppRoute) {
-        if (isSplashActive() || isLoginActive()) {
+        if (isSplashActive() || isMandatoryLoginActive()) {
             pendingNavRoute = appRoute
             return
         }

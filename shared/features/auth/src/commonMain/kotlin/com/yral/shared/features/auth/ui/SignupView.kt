@@ -31,6 +31,7 @@ import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.auth.utils.defaultSocialProviders
 import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralBrushes
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -76,22 +77,17 @@ fun SignupView(
                 verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
                 horizontalAlignment = Alignment.Start,
             ) {
-                headlineText?.let {
-                    Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center,
-                        text = headlineText,
-                        style = LocalAppTopography.current.xlSemiBold,
-                        color = Color.White,
-                    )
-                }
-                    ?: Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center,
-                        text = stringResource(Res.string.continue_to_sign_up_for_free),
-                        style = LocalAppTopography.current.xlSemiBold,
-                        color = Color.White,
-                    )
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    text =
+                        headlineText
+                            ?: getAnnotatedHeaderForLogin(
+                                fullText = stringResource(Res.string.continue_to_sign_up_for_free),
+                            ),
+                    style = LocalAppTopography.current.xlSemiBold,
+                    color = Color.White,
+                )
                 if (disclaimerText?.isEmpty() == true) return@Column
                 Text(
                     modifier = Modifier.fillMaxWidth(),
@@ -146,6 +142,47 @@ fun DefaultTopContent() {
                 .width(DEFAULT_TOP_CONTENT_WIDTH)
                 .height(DEFAULT_TOP_CONTENT_HEIGHT),
     )
+}
+
+@Composable
+fun getAnnotatedHeaderForLogin(
+    fullText: String,
+    maskedText: String = "",
+) = buildAnnotatedString {
+    val maskedStart = fullText.indexOf(maskedText)
+    val maskedEnd = maskedStart + maskedText.length
+    val textStyle = LocalAppTopography.current.xlSemiBold
+    val spanStyle =
+        SpanStyle(
+            fontSize = textStyle.fontSize,
+            fontFamily = textStyle.fontFamily,
+            fontWeight = textStyle.fontWeight,
+        )
+    if (maskedStart >= 0) {
+        withStyle(
+            style = spanStyle.copy(color = Color.White),
+        ) { append(fullText.take(maskedStart)) }
+
+        withStyle(
+            style =
+                spanStyle.copy(
+                    brush = YralBrushes.GoldenTextBrush,
+                    fontWeight = FontWeight.Bold,
+                ),
+        ) { append(fullText.substring(maskedStart, maskedEnd)) }
+
+        if (maskedEnd < fullText.length) {
+            withStyle(
+                style = spanStyle.copy(color = Color.White),
+            ) { append(fullText.substring(maskedEnd)) }
+        }
+    } else {
+        withStyle(
+            style = spanStyle.copy(color = Color.White),
+        ) {
+            append(fullText)
+        }
+    }
 }
 
 @Composable

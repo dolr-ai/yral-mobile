@@ -26,7 +26,7 @@ interface RootComponent {
 
     fun isSplashActive(): Boolean
 
-    fun isLoginActive(): Boolean
+    fun isMandatoryLoginActive(): Boolean
 
     fun navigateToSplash()
 
