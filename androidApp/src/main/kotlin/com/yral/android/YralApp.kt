@@ -49,7 +49,8 @@ class YralApp : Application() {
             modules(videoWidgetModule)
             modules(
                 module {
-                    single<Boolean>(IS_DEBUG) { BuildConfig.DEBUG }
+                    val pkg = this@YralApp.packageName
+                    single<Boolean>(IS_DEBUG) { pkg != "com.yral.android.app" }
                 },
             )
         }
