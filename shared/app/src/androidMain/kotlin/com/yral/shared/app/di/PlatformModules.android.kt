@@ -5,6 +5,8 @@ import android.content.pm.PackageManager
 import android.os.Build
 import coil3.ImageLoader
 import coil3.SingletonImageLoader
+import com.yral.shared.analytics.AdvertisingIdProvider
+import com.yral.shared.analytics.AndroidAdvertisingIdProvider
 import com.yral.shared.analytics.GetGAIDUseCase
 import com.yral.shared.analytics.di.MIXPANEL_TOKEN
 import com.yral.shared.analytics.di.ONESIGNAL_APP_ID
@@ -86,13 +88,10 @@ actual val platformModule =
         factory<ScreenFoldStateProvider> { (activityContext: Context) ->
             AndroidScreenFoldStateProvider(activityContext)
         }
-        single {
-            GetGAIDUseCase(
-                appDispatchers = get(),
-                useCaseFailureListener = get(),
-                context = androidContext(),
-            )
+        single<AdvertisingIdProvider> {
+            AndroidAdvertisingIdProvider(applicationContext = androidContext().applicationContext)
         }
+        singleOf(::GetGAIDUseCase)
     }
 
 private fun Scope.getSentryRelease(): String {

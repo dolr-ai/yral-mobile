@@ -4,4 +4,4 @@ import com.github.michaelbull.result.Result
 
 expect suspend fun getAdvertisingID(): Result<String?, Throwable>
 
-expect fun saveADIDtoProperties(id: String): Map<String, String>
+internal expect fun saveADIDtoProperties(id: String): Map<String, String>
