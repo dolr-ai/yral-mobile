@@ -64,7 +64,7 @@
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Yral needs permission to save downloaded videos and photos to your photo library.</string>
 	<key>NSUserTrackingUsageDescription</key>
-	<string>Yral uses this identifier to provide personalized content and improve your experience. Your data is used only for analytics and will not be shared with third parties.</string>
+	<string>This helps Yral personalise content that we show you.</string>
 	<key>SENTRY_DSN</key>
 	<string>https://673c701dcea89017a3cfa26059ac10cc@apm.yral.com/14</string>
 	<key>SENTRY_ENVIRONMENT</key>
