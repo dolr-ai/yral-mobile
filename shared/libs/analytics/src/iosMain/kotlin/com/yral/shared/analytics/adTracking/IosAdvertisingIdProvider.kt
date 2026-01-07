@@ -4,11 +4,13 @@ import co.touchlab.kermit.Logger
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import platform.AdSupport.ASIdentifierManager
 import platform.AppTrackingTransparency.ATTrackingManager
 import kotlin.coroutines.resume
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * iOS implementation of AdvertisingIdProvider.
@@ -27,6 +29,7 @@ class IosAdvertisingIdProvider(
 
     override suspend fun getAdvertisingId(): String? =
         withContext(appDispatchers.main) {
+            delay(1.seconds)
             if (!permissionRequested) {
                 logger.d { "Requesting tracking permission" }
                 requestTrackingPermissionIfNeeded()
