@@ -48,6 +48,10 @@ import yral_mobile.shared.libs.designsystem.generated.resources.apple
 import yral_mobile.shared.libs.designsystem.generated.resources.google
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
+/**
+ * @param disclaimerText if null will show default disclaimer text, please pass "" to hide
+ */
+
 @Suppress("LongMethod")
 @Composable
 fun SignupView(
