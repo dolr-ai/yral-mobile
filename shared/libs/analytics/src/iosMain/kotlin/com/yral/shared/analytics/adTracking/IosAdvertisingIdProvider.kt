@@ -2,8 +2,8 @@ package com.yral.shared.analytics.adTracking
 
 import co.touchlab.kermit.Logger
 import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import platform.AdSupport.ASIdentifierManager
@@ -18,79 +18,78 @@ import kotlin.coroutines.resume
  */
 @Suppress("TooGenericExceptionCaught")
 @OptIn(ExperimentalForeignApi::class)
-class IosAdvertisingIdProvider : AdvertisingIdProvider {
-    private val logger = Logger.withTag("IosAdvertisingIdProvider")
+class IosAdvertisingIdProvider(
+    private val appDispatchers: AppDispatchers,
+) : AdvertisingIdProvider {
+    private val logger = Logger.withTag("AdTracking")
     private var permissionRequested = false
     private val restrictedTrackingId = "00000000-0000-0000-0000-000000000000"
 
-    override suspend fun getAdvertisingId(): String? {
-        // Request permission on background thread first (iOS version check, status check)
-        if (!permissionRequested) {
-            requestTrackingPermissionIfNeeded()
-            permissionRequested = true
-        }
+    override suspend fun getAdvertisingId(): String? =
+        withContext(appDispatchers.main) {
+            if (!permissionRequested) {
+                logger.d { "Requesting tracking permission" }
+                requestTrackingPermissionIfNeeded()
+                permissionRequested = true
+            }
 
-        // Only switch to main thread for the actual API calls that require it
-        return withContext(Dispatchers.Main) {
-            val manager = ASIdentifierManager.sharedManager()
-            if (!manager.advertisingTrackingEnabled) {
+            val status = ATTrackingManager.trackingAuthorizationStatus
+            logger.d { "Tracking authorization status: $status" }
+
+            if (status != ATTrackingAuthorizationStatus.AUTHORIZED) {
+                logger.d { "Tracking not authorized (status: $status)" }
                 return@withContext null
             }
 
-            val uuidString = manager.advertisingIdentifier.UUIDString
+            val uuidString =
+                ASIdentifierManager.sharedManager().advertisingIdentifier.UUIDString
             if (uuidString == restrictedTrackingId) {
+                logger.d { "Advertising ID is restricted" }
                 return@withContext null
             }
 
             uuidString
         }
-    }
 
     private suspend fun requestTrackingPermissionIfNeeded() {
-        val majorVersion =
-            platform.UIKit.UIDevice.currentDevice.systemVersion
-                .split(".")
-                .firstOrNull()
-                ?.toIntOrNull() ?: 0
-
-        if (majorVersion < MIN_OS_FOR_AD_TRACKING_PERMISSION) return
-
         try {
-            // Check status on main thread (required by iOS)
-            val status =
-                withContext(Dispatchers.Main) {
-                    ATTrackingManager.trackingAuthorizationStatus
-                }
-
-            // Only request if status is notDetermined
+            val status = ATTrackingManager.trackingAuthorizationStatus
+            logger.d { "Tracking authorization status: $status" }
             if (status == ATTrackingAuthorizationStatus.NOT_DETERMINED) {
-                requestTrackingAuthorization()
+                logger.d { "Status is NOT_DETERMINED, requesting tracking authorization dialog" }
+                val newStatus = requestTrackingAuthorization()
+                logger.d { "Tracking authorization dialog completed with status: $newStatus" }
+            } else {
+                logger.d { "Status is not NOT_DETERMINED ($status), skipping permission request" }
             }
         } catch (e: Exception) {
-            logger.w(e) { "ATT framework not available" }
+            logger.e(e) { "ATT framework not available or error checking status" }
         }
     }
 
-    private suspend fun requestTrackingAuthorization() =
-        withContext(Dispatchers.Main) {
-            suspendCancellableCoroutine { continuation ->
+    private suspend fun requestTrackingAuthorization(): ULong =
+        suspendCancellableCoroutine { continuation ->
+            try {
+                logger.d { "Calling requestTrackingAuthorizationWithCompletionHandler" }
+                ATTrackingManager.requestTrackingAuthorizationWithCompletionHandler { status ->
+                    logger.d { "Tracking authorization completion handler called with status: $status" }
+                    continuation.resume(status)
+                }
+            } catch (e: Exception) {
+                logger.e(e) { "Error requesting tracking authorization: ${e.message}" }
                 try {
-                    ATTrackingManager.requestTrackingAuthorizationWithCompletionHandler { status ->
-                        continuation.resume(status)
-                    }
-                } catch (e: Exception) {
-                    logger.w(e) { "Error requesting tracking authorization proceeding with current status" }
-                    try {
-                        continuation.resume(ATTrackingManager.trackingAuthorizationStatus)
-                    } catch (fallbackError: Exception) {
-                        continuation.cancel(
-                            cause =
-                                YralException(
-                                    message = "Failed to request tracking authorization",
-                                    cause = fallbackError,
-                                ),
-                        )
-                    }
+                    val currentStatus = ATTrackingManager.trackingAuthorizationStatus
+                    logger.w { "Resuming with current status: $currentStatus" }
+                    continuation.resume(currentStatus)
+                } catch (fallbackError: Exception) {
+                    logger.e(fallbackError) { "Failed to get current status, cancelling" }
+                    continuation.cancel(
+                        cause =
+                            YralException(
+                                message = "Failed to request tracking authorization",
+                                cause = fallbackError,
+                            ),
+                    )
                 }
             }
         }
@@ -102,5 +101,3 @@ private object ATTrackingAuthorizationStatus {
     const val DENIED: ULong = 2UL
     const val AUTHORIZED: ULong = 3UL
 }
-
-private const val MIN_OS_FOR_AD_TRACKING_PERMISSION = 14

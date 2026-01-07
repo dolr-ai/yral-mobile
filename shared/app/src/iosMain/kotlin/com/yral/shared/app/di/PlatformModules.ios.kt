@@ -57,5 +57,5 @@ actual val platformModule =
         factoryOf(::IosOAuthUtilsHelper) bind OAuthUtilsHelper::class
         single<ScreenFoldStateProvider> { IOSScreenFoldStateProvider() }
         single<ImageLoader> { SingletonImageLoader.get(PlatformContext.INSTANCE) }
-        single<AdvertisingIdProvider> { IosAdvertisingIdProvider() }
+        single<AdvertisingIdProvider> { IosAdvertisingIdProvider(get()) }
     }
