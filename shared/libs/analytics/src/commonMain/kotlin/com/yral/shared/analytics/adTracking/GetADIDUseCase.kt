@@ -4,7 +4,7 @@ import com.yral.shared.libs.arch.domain.UnitSuspendUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 
-class GetADIDUseCase(
+internal class GetADIDUseCase(
     appDispatchers: AppDispatchers,
     useCaseFailureListener: UseCaseFailureListener,
     private val advertisingIdProvider: AdvertisingIdProvider,

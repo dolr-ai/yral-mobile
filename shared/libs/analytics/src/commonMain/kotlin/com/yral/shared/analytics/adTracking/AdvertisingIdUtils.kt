@@ -1,7 +1,8 @@
 package com.yral.shared.analytics.adTracking
 
 import com.github.michaelbull.result.Result
+import com.yral.shared.koin.koinInstance
 
-expect suspend fun getAdvertisingID(): Result<String?, Throwable>
+suspend fun getAdvertisingID(): Result<String?, Throwable> = koinInstance.get<GetADIDUseCase>().invoke()
 
-internal expect fun createAdvertisingIdProperties(id: String): Map<String, String>
+fun getAdvertisingIdKey(): String = koinInstance.get<AdvertisingIdProvider>().getAdvertisingIdKey()

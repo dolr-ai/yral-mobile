@@ -10,4 +10,6 @@ class AndroidAdvertisingIdProvider(
         AdvertisingIdClient
             .getAdvertisingIdInfo(applicationContext)
             .id
+
+    override fun getAdvertisingIdKey(): String = "GAID"
 }

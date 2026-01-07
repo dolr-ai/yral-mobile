@@ -93,6 +93,8 @@ class IosAdvertisingIdProvider(
                 }
             }
         }
+
+    override fun getAdvertisingIdKey(): String = "IDFA"
 }
 
 private object ATTrackingAuthorizationStatus {
