@@ -41,11 +41,14 @@ kotlin {
             api(libs.gitlive.firebase.kotlin.anlaytics)
             implementation(projects.shared.libs.preferences)
             implementation(projects.shared.rust.service)
+            implementation(projects.shared.libs.arch)
+            implementation(projects.shared.libs.coroutinesX)
         }
         androidMain.dependencies {
             implementation(libs.facebook.sdk.android.core)
             implementation(libs.mixpanel.android)
             implementation(libs.mixpanel.session.replay.android)
+            implementation(libs.play.services.ads.identifier)
         }
     }
 }

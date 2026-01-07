@@ -3,6 +3,8 @@ package com.yral.shared.app.di
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
+import com.yral.shared.analytics.adTracking.AdvertisingIdProvider
+import com.yral.shared.analytics.adTracking.IosAdvertisingIdProvider
 import com.yral.shared.analytics.di.IS_DEBUG
 import com.yral.shared.analytics.di.MIXPANEL_TOKEN
 import com.yral.shared.analytics.di.ONESIGNAL_APP_ID
@@ -55,4 +57,5 @@ actual val platformModule =
         factoryOf(::IosOAuthUtilsHelper) bind OAuthUtilsHelper::class
         single<ScreenFoldStateProvider> { IOSScreenFoldStateProvider() }
         single<ImageLoader> { SingletonImageLoader.get(PlatformContext.INSTANCE) }
+        single<AdvertisingIdProvider> { IosAdvertisingIdProvider(get()) }
     }

@@ -178,7 +178,7 @@ class FeedViewModel(
                 .get(FeedFeatureFlags.FeedTypes.AvailableTypes)
                 .split(",")
                 .mapNotNull { name -> FeedType.entries.firstOrNull { it.name.equals(name.trim(), ignoreCase = true) } }
-        val selectedType = availableFeedTypes.firstOrNull() ?: FeedType.DEFAULT
+        val selectedType = availableFeedTypes.firstOrNull() ?: FeedType.AI
         _state.update {
             it.copy(
                 availableFeedTypes = availableFeedTypes,
