@@ -15,7 +15,7 @@ kotlin {
 
     cocoapods {
         version = "1.0"
-        summary = "Analytics module with Firebase, Mixpanel, Branch and OneSignal"
+        summary = "Analytics module with Firebase, Mixpanel and OneSignal"
         homepage = "https://github.com/dolr-ai/yral-mobile"
         ios.deploymentTarget = "15.6"
 
@@ -30,10 +30,6 @@ kotlin {
             version = "18.0.0"
             extraOpts += listOf("-compiler-option", "-fmodules")
         }
-        pod("BranchSDK") {
-            extraOpts += listOf("-compiler-option", "-fmodules")
-            version = "3.12.1"
-        }
     }
 
     sourceSets {
@@ -47,13 +43,12 @@ kotlin {
             implementation(projects.shared.rust.service)
             implementation(projects.shared.libs.arch)
             implementation(projects.shared.libs.coroutinesX)
+            implementation(projects.shared.libs.branch)
         }
         androidMain.dependencies {
             implementation(libs.facebook.sdk.android.core)
             implementation(libs.mixpanel.android)
             implementation(libs.mixpanel.session.replay.android)
-            implementation(libs.play.services.ads.identifier)
-            implementation(libs.branch)
         }
     }
 }
