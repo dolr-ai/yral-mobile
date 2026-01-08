@@ -596,6 +596,7 @@ private fun MainContent(
                 showFollow = !state.isOwnProfile && state.isLoggedIn,
                 isFollowing = state.isFollowing,
                 isFollowInProgress = state.isFollowInProgress,
+                isAiInfluencer = state.isAiInfluencer,
                 onFollowClicked = { viewModel.followUnfollow() },
                 onFollowersClick = { onFollowersSectionClick(FollowersSheetTab.Followers) },
                 onFollowingClick = { onFollowersSectionClick(FollowersSheetTab.Following) },

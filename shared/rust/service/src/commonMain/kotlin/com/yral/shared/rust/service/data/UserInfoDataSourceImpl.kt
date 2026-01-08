@@ -1,12 +1,14 @@
 package com.yral.shared.rust.service.data
 
-import com.yral.shared.rust.service.domain.models.ProfileUpdateDetails
+import com.yral.shared.rust.service.domain.models.ProfileUpdateDetailsV2
 import com.yral.shared.rust.service.services.UserInfoServiceFactory
 import com.yral.shared.uniffi.generated.Principal
 import com.yral.shared.uniffi.generated.UisFollowersResponse
 import com.yral.shared.uniffi.generated.UisFollowingResponse
-import com.yral.shared.uniffi.generated.UisProfileUpdateDetails
-import com.yral.shared.uniffi.generated.UisUserProfileDetailsForFrontendV4
+import com.yral.shared.uniffi.generated.UisNsfwInfo
+import com.yral.shared.uniffi.generated.UisProfilePictureData
+import com.yral.shared.uniffi.generated.UisProfileUpdateDetailsV2
+import com.yral.shared.uniffi.generated.UisUserProfileDetailsForFrontendV6
 
 class UserInfoDataSourceImpl(
     private val userInfoServiceFactory: UserInfoServiceFactory,
@@ -27,13 +29,13 @@ class UserInfoDataSourceImpl(
             .service(principal)
             .unfollowUser(targetPrincipal)
 
-    override suspend fun getProfileDetailsV4(
+    override suspend fun getUserProfileDetailsV6(
         principal: Principal,
         targetPrincipal: Principal,
-    ): UisUserProfileDetailsForFrontendV4 =
+    ): UisUserProfileDetailsForFrontendV6 =
         userInfoServiceFactory
             .service(principal)
-            .getProfileDetailsV4(targetPrincipal)
+            .getUserProfileDetailsV6(targetPrincipal)
 
     override suspend fun getFollowers(
         principal: Principal,
@@ -67,17 +69,31 @@ class UserInfoDataSourceImpl(
                 withCallerFollows = withCallerFollows,
             )
 
-    override suspend fun updateProfileDetails(
+    override suspend fun updateProfileDetailsV2(
         principal: Principal,
-        details: ProfileUpdateDetails,
+        details: ProfileUpdateDetailsV2,
     ) {
         userInfoServiceFactory
             .service(principal)
-            .updateProfileDetails(
-                UisProfileUpdateDetails(
+            .updateProfileDetailsV2(
+                UisProfileUpdateDetailsV2(
                     bio = details.bio?.takeUnless { it.isBlank() },
                     websiteUrl = details.websiteUrl,
-                    profilePictureUrl = details.profilePictureUrl,
+                    profilePicture =
+                        details.profilePictureUrl
+                            ?.takeUnless { it.isBlank() }
+                            ?.let { url ->
+                                UisProfilePictureData(
+                                    url = url,
+                                    nsfwInfo =
+                                        UisNsfwInfo(
+                                            isNsfw = false,
+                                            nsfwEc = "",
+                                            nsfwGore = "",
+                                            csamDetected = false,
+                                        ),
+                                )
+                            },
                 ),
             )
     }

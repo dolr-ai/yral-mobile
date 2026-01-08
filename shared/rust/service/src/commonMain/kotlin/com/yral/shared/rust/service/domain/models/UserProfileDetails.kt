@@ -9,7 +9,7 @@ data class UserProfileDetails(
     val userFollowsCaller: Boolean?,
     val profilePictureUrl: String?,
     val principalId: Principal,
-    val profileStats: UserProfileGlobalStats,
     val followersCount: ULong,
     val callerFollowsUser: Boolean?,
+    val isAiInfluencer: Boolean?,
 )

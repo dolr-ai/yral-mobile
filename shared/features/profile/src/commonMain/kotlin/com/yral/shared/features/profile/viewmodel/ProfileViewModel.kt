@@ -56,8 +56,8 @@ import com.yral.shared.rust.service.domain.models.PagedFollowerItem
 import com.yral.shared.rust.service.domain.pagedDataSource.UserInfoPagingSourceFactory
 import com.yral.shared.rust.service.domain.usecases.FollowUserParams
 import com.yral.shared.rust.service.domain.usecases.FollowUserUseCase
-import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4Params
-import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4UseCase
+import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV6Params
+import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV6UseCase
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserParams
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserUseCase
 import com.yral.shared.rust.service.utils.CanisterData
@@ -105,7 +105,7 @@ class ProfileViewModel(
     private val crashlyticsManager: CrashlyticsManager,
     private val flagManager: FeatureFlagManager,
     private val userInfoPagingSourceFactory: UserInfoPagingSourceFactory,
-    private val getProfileDetailsV4UseCase: GetProfileDetailsV4UseCase,
+    private val getUserProfileDetailsV6UseCase: GetUserProfileDetailsV6UseCase,
     private val fileDownloader: FileDownloader,
 ) : ViewModel() {
     companion object {
@@ -321,8 +321,8 @@ class ProfileViewModel(
     private fun refreshOwnProfileDetails() {
         viewModelScope.launch {
             val principal = sessionManager.userPrincipal ?: return@launch
-            getProfileDetailsV4UseCase(
-                GetProfileDetailsV4Params(
+            getUserProfileDetailsV6UseCase(
+                GetUserProfileDetailsV6Params(
                     principal = principal,
                     targetPrincipal = principal,
                 ),
@@ -342,7 +342,7 @@ class ProfileViewModel(
                                     ?: currentInfo.profilePic,
                             bio = bio?.takeUnless { it.isBlank() } ?: currentInfo.bio,
                         )
-                    current.copy(accountInfo = newInfo)
+                    current.copy(accountInfo = newInfo, isAiInfluencer = details.isAiInfluencer == true)
                 }
             }.onFailure { error ->
                 Logger.e("refreshOwnProfileDetails") { "Failed to fetch profile details $error" }
@@ -356,8 +356,8 @@ class ProfileViewModel(
         if (targetPrincipal.isBlank()) return
         viewModelScope.launch {
             val callerPrincipal = sessionManager.userPrincipal ?: return@launch
-            getProfileDetailsV4UseCase(
-                GetProfileDetailsV4Params(
+            getUserProfileDetailsV6UseCase(
+                GetUserProfileDetailsV6Params(
                     principal = callerPrincipal,
                     targetPrincipal = targetPrincipal,
                 ),
@@ -374,6 +374,7 @@ class ProfileViewModel(
                     current.copy(
                         accountInfo = updatedInfo,
                         isFollowing = details.callerFollowsUser ?: current.isFollowing,
+                        isAiInfluencer = details.isAiInfluencer == true,
                     )
                 }
             }.onFailure { error ->
@@ -951,6 +952,7 @@ data class ViewState(
     val shareMessage: String = "",
     val shareDescription: String = "",
     val canShareProfile: Boolean = false,
+    val isAiInfluencer: Boolean = false,
 )
 
 sealed interface ProfileBottomSheet {
