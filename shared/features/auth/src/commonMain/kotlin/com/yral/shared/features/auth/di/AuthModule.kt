@@ -19,6 +19,7 @@ import com.yral.shared.features.auth.domain.useCases.RegisterNotificationTokenUs
 import com.yral.shared.features.auth.domain.useCases.UpdateSessionAsRegisteredUseCase
 import com.yral.shared.features.auth.domain.useCases.VerifyPhoneAuthUseCase
 import com.yral.shared.features.auth.viewModel.LoginViewModel
+import com.yral.shared.libs.phonevalidation.countries.CountryRepository
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
@@ -43,6 +44,7 @@ val authModule =
         factoryOf(::RegisterNotificationTokenUseCase)
         factoryOf(::DeregisterNotificationTokenUseCase)
         singleOf(::LoginViewModel)
+        singleOf(::CountryRepository)
         single { createAuthEnv() }
     }
 
