@@ -23,6 +23,13 @@ object AppFeatureFlags {
                 description = "Initial balance reward",
                 defaultValue = 25,
             )
+        val MandatoryLogin: FeatureFlag<Boolean> =
+            boolean(
+                keySuffix = "mandatoryLogin",
+                name = "Mandatory Login",
+                description = "Require users to sign in before accessing the app",
+                defaultValue = false,
+            )
     }
 
     object Android :

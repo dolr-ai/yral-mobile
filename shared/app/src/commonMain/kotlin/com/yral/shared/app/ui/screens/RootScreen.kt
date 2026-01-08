@@ -52,6 +52,7 @@ import com.yral.shared.features.profile.ui.EditProfileScreen
 import com.yral.shared.features.profile.ui.ProfileMainScreen
 import com.yral.shared.features.profile.viewmodel.EditProfileViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
+import com.yral.shared.features.root.viewmodels.NavigationTarget
 import com.yral.shared.features.root.viewmodels.RootError
 import com.yral.shared.features.root.viewmodels.RootViewModel
 import com.yral.shared.features.tournament.ui.TournamentLeaderboardScreen
@@ -78,7 +79,14 @@ fun RootScreen(
     viewModel: RootViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
-    rootComponent.setSplashActive(state.showSplash)
+    LaunchedEffect(state.navigationTarget) {
+        when (state.navigationTarget) {
+            is NavigationTarget.Splash -> rootComponent.navigateToSplash()
+            is NavigationTarget.MandatoryLogin -> rootComponent.navigateToMandatoryLogin()
+            is NavigationTarget.Home -> rootComponent.navigateToHome()
+        }
+    }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.primaryContainer,
         modifier = Modifier.fillMaxSize(),
@@ -92,6 +100,7 @@ fun RootScreen(
                         when (child.instance) {
                             is Child.Splash -> fade()
                             is Child.Home -> fade()
+                            is Child.MandatoryLogin -> fade()
                             else -> fade() + slide()
                         }
                     },
@@ -114,6 +123,7 @@ fun RootScreen(
                             sessionState = state.sessionState,
                             bottomNavigationAnalytics = { viewModel.bottomNavigationClicked(it) },
                             updateProfileVideosCount = { viewModel.updateProfileVideosCount(it) },
+                            isPendingLogin = viewModel.isPendingLogin(),
                         )
                     }
 
@@ -192,6 +202,13 @@ fun RootScreen(
                             modifier = Modifier.fillMaxSize().safeDrawingPadding(),
                         )
                     }
+
+                    is Child.MandatoryLogin -> {
+                        HandleSystemBars(show = false)
+                        MandatoryLoginScreen(
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
                 }
             }
 
@@ -216,7 +233,7 @@ fun RootScreen(
             // 1. after logout on account screen during anonymous sign in
             // 2. after social sign in
             // 3. after delete account during anonymous sign in
-            if (!state.showSplash && state.sessionState is SessionState.Loading) {
+            if (state.navigationTarget !is NavigationTarget.Splash && state.sessionState is SessionState.Loading) {
                 BlockingLoader()
             }
 

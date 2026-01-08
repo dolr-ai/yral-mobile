@@ -270,7 +270,7 @@ private fun OverLayTop(
                     openWallet = openWallet,
                 )
         }
-        if (feedState.currentPageOfFeed > 0) {
+        if (feedState.currentPageOfFeed >= 0) {
             when (feedState.currentOnboardingStep) {
                 OnboardingStep.INTRO_RANK -> {
                     dailyRank?.let {
@@ -290,9 +290,10 @@ private fun OverLayTop(
                         text = stringResource(Res.string.onboarding_nudge_balance),
                         highlightText = stringResource(Res.string.onboarding_nudge_balance_highlight),
                         arrowAlignment = FeedArrowAlignment.TOP_END,
-                        isDismissible = false,
+                        isDismissible = feedState.isMandatoryLogin,
                         targetBounds = targetBounds,
                         onDismiss = { feedViewModel.dismissOnboardingStep() },
+                        isShowNext = !feedState.isMandatoryLogin,
                     )
                 }
 

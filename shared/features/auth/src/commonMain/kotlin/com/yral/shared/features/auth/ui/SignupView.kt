@@ -31,6 +31,7 @@ import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.auth.utils.defaultSocialProviders
 import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralBrushes
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -46,6 +47,10 @@ import yral_mobile.shared.features.auth.generated.resources.terms_of_service_sig
 import yral_mobile.shared.libs.designsystem.generated.resources.apple
 import yral_mobile.shared.libs.designsystem.generated.resources.google
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
+
+/**
+ * @param disclaimerText if null will show default disclaimer text, please pass "" to hide
+ */
 
 @Suppress("LongMethod")
 @Composable
@@ -76,22 +81,18 @@ fun SignupView(
                 verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
                 horizontalAlignment = Alignment.Start,
             ) {
-                headlineText?.let {
-                    Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center,
-                        text = headlineText,
-                        style = LocalAppTopography.current.xlSemiBold,
-                        color = Color.White,
-                    )
-                }
-                    ?: Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center,
-                        text = stringResource(Res.string.continue_to_sign_up_for_free),
-                        style = LocalAppTopography.current.xlSemiBold,
-                        color = Color.White,
-                    )
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    text =
+                        headlineText
+                            ?: getAnnotatedHeaderForLogin(
+                                fullText = stringResource(Res.string.continue_to_sign_up_for_free),
+                            ),
+                    style = LocalAppTopography.current.xlSemiBold,
+                    color = Color.White,
+                )
+                if (disclaimerText?.isEmpty() == true) return@Column
                 Text(
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
@@ -148,12 +149,54 @@ fun DefaultTopContent() {
 }
 
 @Composable
+fun getAnnotatedHeaderForLogin(
+    fullText: String,
+    maskedText: String = "",
+) = buildAnnotatedString {
+    val maskedStart = fullText.indexOf(maskedText)
+    val maskedEnd = maskedStart + maskedText.length
+    val textStyle = LocalAppTopography.current.xlSemiBold
+    val spanStyle =
+        SpanStyle(
+            fontSize = textStyle.fontSize,
+            fontFamily = textStyle.fontFamily,
+            fontWeight = textStyle.fontWeight,
+        )
+    if (maskedStart >= 0) {
+        withStyle(
+            style = spanStyle.copy(color = Color.White),
+        ) { append(fullText.take(maskedStart)) }
+
+        withStyle(
+            style =
+                spanStyle.copy(
+                    brush = YralBrushes.GoldenTextBrush,
+                    fontWeight = FontWeight.Bold,
+                ),
+        ) { append(fullText.substring(maskedStart, maskedEnd)) }
+
+        if (maskedEnd < fullText.length) {
+            withStyle(
+                style = spanStyle.copy(color = Color.White),
+            ) { append(fullText.substring(maskedEnd)) }
+        }
+    } else {
+        withStyle(
+            style = spanStyle.copy(color = Color.White),
+        ) {
+            append(fullText)
+        }
+    }
+}
+
+@Composable
 private fun annotateText(
     termsLink: String,
     openTerms: () -> Unit,
 ): AnnotatedString {
     val consentText = stringResource(Res.string.signup_consent)
     val termOfServiceText = stringResource(Res.string.terms_of_service_signup_consent)
+    val defaultColor = YralColors.NeutralTextSecondary
     return buildAnnotatedString {
         val termsStart = consentText.indexOf(termOfServiceText)
         val termsEnd = termsStart + termOfServiceText.length
@@ -166,9 +209,9 @@ private fun annotateText(
             )
         if (termsStart >= 0) {
             withStyle(
-                style = spanStyle.copy(color = Color.White),
+                style = spanStyle.copy(color = defaultColor),
             ) {
-                append(consentText.substring(0, termsStart))
+                append(consentText.take(termsStart))
             }
             withLink(
                 LinkAnnotation.Url(
@@ -187,14 +230,14 @@ private fun annotateText(
             ) { append(consentText.substring(termsStart, termsEnd)) }
             if (termsEnd < consentText.length) {
                 withStyle(
-                    style = spanStyle.copy(color = Color.White),
+                    style = spanStyle.copy(color = defaultColor),
                 ) {
                     append(consentText.substring(termsEnd))
                 }
             }
         } else {
             withStyle(
-                style = spanStyle.copy(color = Color.White),
+                style = spanStyle.copy(color = defaultColor),
             ) {
                 append(consentText)
             }
