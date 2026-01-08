@@ -1126,18 +1126,28 @@ class FeedViewModel(
 
     fun checkAndShowTournamentIntroSheet() {
         viewModelScope.launch {
-            val hasSeenIntro = preferences.getBoolean(PrefKeys.TOURNAMENT_INTRO_SHOWN.name) ?: false
-            if (!hasSeenIntro && _state.value.feedDetails.isNotEmpty()) {
-                _state.update { it.copy(showTournamentIntroSheet = true) }
+            // Only check once per app session
+            if (_state.value.tournamentIntroCheckedThisSession) return@launch
+
+            val shownCount = preferences.getInt(PrefKeys.TOURNAMENT_INTRO_SHOWN.name) ?: 0
+            if (shownCount < 2 && _state.value.feedDetails.isNotEmpty()) {
+                // Increment counter when showing
+                preferences.putInt(PrefKeys.TOURNAMENT_INTRO_SHOWN.name, shownCount + 1)
+                _state.update {
+                    it.copy(
+                        showTournamentIntroSheet = true,
+                        tournamentIntroCheckedThisSession = true,
+                    )
+                }
+            } else {
+                // Mark as checked even if not showing
+                _state.update { it.copy(tournamentIntroCheckedThisSession = true) }
             }
         }
     }
 
     fun dismissTournamentIntroSheet() {
-        viewModelScope.launch {
-            preferences.putBoolean(PrefKeys.TOURNAMENT_INTRO_SHOWN.name, true)
-            _state.update { it.copy(showTournamentIntroSheet = false) }
-        }
+        _state.update { it.copy(showTournamentIntroSheet = false) }
     }
 
     private fun trackOnboardingShown() {
@@ -1206,6 +1216,7 @@ data class FeedState(
     val isFollowInProgress: Boolean = false,
     val currentOnboardingStep: OnboardingStep? = null,
     val showTournamentIntroSheet: Boolean = false,
+    val tournamentIntroCheckedThisSession: Boolean = false,
     val isMandatoryLogin: Boolean = false,
 )
 

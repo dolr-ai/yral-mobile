@@ -15,7 +15,7 @@
     <string name="turn_on_alerts">Turn on Alerts</string>
     <string name="not_now">Not Now</string>
     <string name="tournament_nudge_title">Ready for The Smily Showdown?</string>
-    <string name="tournament_nudge_subtitle">The tournament starts at 7 PM. Enable notifications to stay in the game and never miss an update.</string>
+    <string name="tournament_nudge_subtitle">The tournament will begin soon. Enable notifications to stay in the game and never miss an update.</string>
     <string name="turn_on_notifications">Turn on Notifications</string>
 
     <string name="new_">New</string>
