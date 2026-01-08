@@ -26,7 +26,13 @@ interface RootComponent {
 
     fun isSplashActive(): Boolean
 
-    fun setSplashActive(active: Boolean)
+    fun isMandatoryLoginActive(): Boolean
+
+    fun navigateToSplash()
+
+    fun navigateToMandatoryLogin()
+
+    fun navigateToHome()
 
     fun onNavigationRequest(appRoute: AppRoute)
 
@@ -100,6 +106,7 @@ interface RootComponent {
         class Leaderboard(
             val component: LeaderboardComponent,
         ) : Child()
+        data object MandatoryLogin : Child()
     }
 
     sealed class SlotChild {

@@ -86,6 +86,7 @@ fun FeedOnboardingNudge(
     isDismissible: Boolean = false,
     onDismiss: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
+    isShowNext: Boolean = true,
 ) {
     val (offsetY, alpha) = rememberNudgeAnimation()
 
@@ -122,6 +123,7 @@ fun FeedOnboardingNudge(
                     offsetY = offsetY,
                     alpha = alpha,
                     onDismiss = onDismiss,
+                    isShowNext = isShowNext,
                 )
             },
         )
@@ -273,6 +275,7 @@ private fun BoxScope.OnboardingTextContent(
     offsetY: Float,
     alpha: Float,
     onDismiss: (() -> Unit)?,
+    isShowNext: Boolean = true,
 ) {
     Box(
         modifier =
@@ -309,15 +312,17 @@ private fun BoxScope.OnboardingTextContent(
                         .padding(horizontal = 48.dp)
                         .onGloballyPositioned { textWidth = it.size.width },
             )
-            YralButton(
-                modifier = Modifier.wrapContentSize().widthIn(min = 120.dp),
-                text = stringResource(Res.string.next),
-                borderColor = YralColors.Neutral700,
-                borderWidth = 1.dp,
-                backgroundColor = YralColors.Neutral800,
-                textStyle = TextStyle(color = YralColors.NeutralTextPrimary),
-                onClick = onDismiss ?: {},
-            )
+            if (isShowNext) {
+                YralButton(
+                    modifier = Modifier.wrapContentSize().widthIn(min = 120.dp),
+                    text = stringResource(Res.string.next),
+                    borderColor = YralColors.Neutral700,
+                    borderWidth = 1.dp,
+                    backgroundColor = YralColors.Neutral800,
+                    textStyle = TextStyle(color = YralColors.NeutralTextPrimary),
+                    onClick = onDismiss ?: {},
+                )
+            }
         }
     }
 }

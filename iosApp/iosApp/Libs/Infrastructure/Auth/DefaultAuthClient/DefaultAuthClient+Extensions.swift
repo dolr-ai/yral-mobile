@@ -305,6 +305,11 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
         tokenType: .yral,
         emailId: email,
         utmParams: nil,
+        isMandatoryLogin: KotlinBoolean(
+            bool: AppDIHelper().getFeatureFlagManager().isEnabled(
+                flag: AppFeatureFlags.Common.shared.MandatoryLogin
+            )
+        ),
       )
     )
     MPSessionReplay.getInstance()?.identify(distinctId: Mixpanel.sharedInstance()?.distinctId ?? "")

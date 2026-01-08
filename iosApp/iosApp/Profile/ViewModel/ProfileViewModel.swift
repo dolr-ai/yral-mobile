@@ -206,6 +206,11 @@ class ProfileViewModel: ObservableObject {
         tokenType: .yral,
         emailId: analyticsInfo.emailId,
         utmParams: nil,
+        isMandatoryLogin: KotlinBoolean(
+            bool: AppDIHelper().getFeatureFlagManager().isEnabled(
+                flag: AppFeatureFlags.Common.shared.MandatoryLogin
+            )
+        ),
       )
     )
     AnalyticsModuleKt.getAnalyticsManager().flush()

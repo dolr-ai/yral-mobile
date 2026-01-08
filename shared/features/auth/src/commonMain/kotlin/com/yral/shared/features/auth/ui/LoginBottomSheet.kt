@@ -15,12 +15,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -33,8 +28,6 @@ import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
-import com.yral.shared.libs.designsystem.theme.LocalAppTopography
-import com.yral.shared.libs.designsystem.theme.YralBrushes
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -151,71 +144,30 @@ private fun getHeaderText(
     when (type) {
         LoginBottomSheetType.FEED -> {
             val fullText = stringResource(Res.string.login_to_get_25_tokens, initialBalanceReward)
-            getAnnotatedHeader(fullText)
+            getAnnotatedHeaderForLogin(fullText)
         }
         LoginBottomSheetType.UPLOAD_AI_VIDEO -> {
             val fullText = stringResource(Res.string.upload_ai_videos_earn_bitcoin)
             val maskedText = fullText.substringAfter(".")
-            getAnnotatedHeader(fullText, maskedText)
+            getAnnotatedHeaderForLogin(fullText, maskedText)
         }
         LoginBottomSheetType.CREATE_AI_VIDEO -> {
             val fullText = stringResource(Res.string.create_ai_videos_earn_bitcoin)
             val maskedText = fullText.substringAfter(".")
-            getAnnotatedHeader(fullText, maskedText)
+            getAnnotatedHeaderForLogin(fullText, maskedText)
         }
         LoginBottomSheetType.TOURNAMENT -> {
             val fullText = stringResource(Res.string.login_to_join_tournament)
             val maskedText = stringResource(Res.string.join_tournament)
-            getAnnotatedHeader(fullText, maskedText)
+            getAnnotatedHeaderForLogin(fullText, maskedText)
         }
         is LoginBottomSheetType.CONVERSATION -> {
             val name = type.influencerName
             val fullText = stringResource(Res.string.login_to_chat_with_influencer, name)
-            getAnnotatedHeader(fullText)
+            getAnnotatedHeaderForLogin(fullText)
         }
-        else -> getAnnotatedHeader(stringResource(Res.string.continue_to_sign_up_for_free))
+        else -> getAnnotatedHeaderForLogin(stringResource(Res.string.continue_to_sign_up_for_free))
     }
-
-@Composable
-private fun getAnnotatedHeader(
-    fullText: String,
-    maskedText: String = "",
-) = buildAnnotatedString {
-    val maskedStart = fullText.indexOf(maskedText)
-    val maskedEnd = maskedStart + maskedText.length
-    val textStyle = LocalAppTopography.current.xlSemiBold
-    val spanStyle =
-        SpanStyle(
-            fontSize = textStyle.fontSize,
-            fontFamily = textStyle.fontFamily,
-            fontWeight = textStyle.fontWeight,
-        )
-    if (maskedStart >= 0) {
-        withStyle(
-            style = spanStyle.copy(color = Color.White),
-        ) { append(fullText.take(maskedStart)) }
-
-        withStyle(
-            style =
-                spanStyle.copy(
-                    brush = YralBrushes.GoldenTextBrush,
-                    fontWeight = FontWeight.Bold,
-                ),
-        ) { append(fullText.substring(maskedStart, maskedEnd)) }
-
-        if (maskedEnd < fullText.length) {
-            withStyle(
-                style = spanStyle.copy(color = Color.White),
-            ) { append(fullText.substring(maskedEnd)) }
-        }
-    } else {
-        withStyle(
-            style = spanStyle.copy(color = Color.White),
-        ) {
-            append(fullText)
-        }
-    }
-}
 
 @Composable
 private fun getDisclaimerText(type: LoginBottomSheetType) =
