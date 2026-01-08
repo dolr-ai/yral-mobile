@@ -31,6 +31,7 @@ enum class LottieRes(
     BTC_REWARDS_COINS_ANIMATION("btc_rewards_coins.json"),
     BTC_CREDITED("btc_credited.json"),
     LOADING_DOTS("loading_dots.json"),
+    EMOJI_SCALE("emoji_scale.json"),
     ;
 
     val path: String = "files/lottie/$filename"

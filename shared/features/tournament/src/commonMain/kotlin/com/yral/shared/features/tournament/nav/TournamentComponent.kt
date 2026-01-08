@@ -2,6 +2,7 @@ package com.yral.shared.features.tournament.nav
 
 import com.arkivanov.decompose.ComponentContext
 import com.yral.shared.analytics.events.SignupPageName
+import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.tournament.viewmodel.TournamentViewModel
 
 interface TournamentComponent {
@@ -22,12 +23,14 @@ interface TournamentComponent {
             navigateToLeaderboard: (
                 tournamentId: String,
             ) -> Unit,
+            showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
         ): TournamentComponent =
             DefaultTournamentComponent(
                 componentContext,
                 promptLogin,
                 navigateToTournament,
                 navigateToLeaderboard,
+                showAlertsOnDialog,
             )
     }
 }
@@ -46,6 +49,7 @@ internal class DefaultTournamentComponent(
     private val navigateToLeaderboard: (
         tournamentId: String,
     ) -> Unit,
+    private val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
 ) : TournamentComponent,
     ComponentContext by componentContext {
     override fun processEvent(value: TournamentViewModel.Event) {
@@ -62,7 +66,7 @@ internal class DefaultTournamentComponent(
                 )
             }
             is TournamentViewModel.Event.RegistrationSuccess -> {
-                // Handle registration success - could show a toast or navigate
+                showAlertsOnDialog(AlertsRequestType.TOURNAMENT)
             }
             is TournamentViewModel.Event.RegistrationFailed -> {
                 // Handle registration failure - could show an error dialog

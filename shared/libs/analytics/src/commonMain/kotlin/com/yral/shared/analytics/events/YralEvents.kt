@@ -2124,6 +2124,9 @@ enum class AnalyticsAlertsRequestType {
 
     @SerialName("default")
     DEFAULT,
+
+    @SerialName("tournament")
+    TOURNAMENT,
 }
 
 @Serializable
