@@ -217,6 +217,7 @@ private fun HomeScreenContent(
                     feedViewModel = feedViewModel,
                     gameViewModel = gameViewModel,
                     leaderBoardViewModel = leaderBoardViewModel,
+                    onNavigateToTournaments = { component.onTournamentTabClick() },
                 )
 
             is HomeComponent.Child.Leaderboard ->

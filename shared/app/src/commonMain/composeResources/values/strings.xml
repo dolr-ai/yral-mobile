@@ -14,6 +14,9 @@
     <string name="enable_follow_back_nudge_msg">Get notified when they follow you back or share something fresh.</string>
     <string name="turn_on_alerts">Turn on Alerts</string>
     <string name="not_now">Not Now</string>
+    <string name="tournament_nudge_title">Ready for The Smily Showdown?</string>
+    <string name="tournament_nudge_subtitle">The tournament will begin soon. Enable notifications to stay in the game and never miss an update.</string>
+    <string name="turn_on_notifications">Turn on Notifications</string>
 
     <string name="new_">New</string>
 
