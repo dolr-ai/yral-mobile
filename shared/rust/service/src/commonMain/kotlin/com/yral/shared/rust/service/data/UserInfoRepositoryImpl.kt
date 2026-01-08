@@ -8,7 +8,7 @@ import com.yral.shared.rust.service.domain.UserInfoRepository
 import com.yral.shared.rust.service.domain.metadata.FollowersMetadataDataSource
 import com.yral.shared.rust.service.domain.models.FollowersPageResult
 import com.yral.shared.rust.service.domain.models.FollowingPageResult
-import com.yral.shared.rust.service.domain.models.ProfileUpdateDetails
+import com.yral.shared.rust.service.domain.models.ProfileUpdateDetailsV2
 import com.yral.shared.rust.service.domain.models.UserProfileDetails
 import com.yral.shared.rust.service.domain.models.toDomain
 import com.yral.shared.rust.service.domain.models.toFollowerPageResult
@@ -40,13 +40,13 @@ class UserInfoRepositoryImpl(
             dataSource.unfollowUser(principal, targetPrincipal)
         }
 
-    override suspend fun getProfileDetailsV4(
+    override suspend fun getUserProfileDetailsV6(
         principal: Principal,
         targetPrincipal: Principal,
     ): UserProfileDetails =
-        traceApiCall(performanceTracer, "getProfileDetailsV4") {
+        traceApiCall(performanceTracer, "getUserProfileDetailsV6") {
             dataSource
-                .getProfileDetailsV4(principal, targetPrincipal)
+                .getUserProfileDetailsV6(principal, targetPrincipal)
                 .toDomain()
         }
 
@@ -112,10 +112,10 @@ class UserInfoRepositoryImpl(
             response.toFollowingPageResult(usernames)
         }
 
-    override suspend fun updateProfileDetails(
+    override suspend fun updateProfileDetailsV2(
         principal: Principal,
-        details: ProfileUpdateDetails,
-    ) = traceApiCall(performanceTracer, "updateProfileDetails") {
-        dataSource.updateProfileDetails(principal, details)
+        details: ProfileUpdateDetailsV2,
+    ) = traceApiCall(performanceTracer, "updateProfileDetailsV2") {
+        dataSource.updateProfileDetailsV2(principal, details)
     }
 }
