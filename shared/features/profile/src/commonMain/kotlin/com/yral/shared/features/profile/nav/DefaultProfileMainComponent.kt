@@ -17,6 +17,7 @@ internal class DefaultProfileMainComponent(
     private val openAccount: () -> Unit,
     private val openEditProfile: () -> Unit,
     private val openProfile: (CanisterData) -> Unit,
+    private val openConversation: (influencerId: String, influencerCategory: String) -> Unit,
     private val onBackClicked: () -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
 ) : ProfileMainComponent,
@@ -36,6 +37,13 @@ internal class DefaultProfileMainComponent(
 
     override fun openProfile(userCanisterData: CanisterData) {
         openProfile.invoke(userCanisterData)
+    }
+
+    override fun openConversation(
+        influencerId: String,
+        influencerCategory: String,
+    ) {
+        openConversation.invoke(influencerId, influencerCategory)
     }
 
     override fun onBackClicked() {

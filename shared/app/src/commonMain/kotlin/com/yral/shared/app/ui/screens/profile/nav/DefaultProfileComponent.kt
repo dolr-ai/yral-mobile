@@ -31,6 +31,10 @@ internal class DefaultProfileComponent(
     private val onUploadVideoClicked: () -> Unit,
     private val openEditProfile: () -> Unit,
     private val openProfile: (CanisterData) -> Unit,
+    private val openConversation: (
+        influencerId: String,
+        influencerCategory: String,
+    ) -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
     override val promptLogin: (pageName: SignupPageName) -> Unit,
 ) : ProfileComponent(),
@@ -132,6 +136,7 @@ internal class DefaultProfileComponent(
             openAccount = this::openAccount,
             openEditProfile = this::openEditProfile,
             openProfile = openProfile,
+            openConversation = openConversation,
             onBackClicked = {},
             showAlertsOnDialog = showAlertsOnDialog,
         )

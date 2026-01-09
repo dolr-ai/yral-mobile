@@ -56,6 +56,10 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
             onUploadVideoClicked: () -> Unit,
             openEditProfile: () -> Unit,
             openProfile: (CanisterData) -> Unit,
+            openConversation: (
+                influencerId: String,
+                influencerCategory: String,
+            ) -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
             promptLogin: (pageName: SignupPageName) -> Unit,
         ): ProfileComponent =
@@ -66,6 +70,7 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
                 onUploadVideoClicked,
                 openEditProfile,
                 openProfile,
+                openConversation,
                 showAlertsOnDialog,
                 promptLogin,
             )

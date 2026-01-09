@@ -18,7 +18,6 @@ import com.yral.shared.features.tournament.nav.TournamentGameComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.libs.phonevalidation.countries.Country
 import kotlinx.coroutines.flow.flowOf
-import kotlin.collections.plus
 
 /**
  * Factory for creating child components.
@@ -73,6 +72,7 @@ internal class ComponentFactory(
             openAccount = {},
             openEditProfile = {},
             openProfile = rootComponent::openProfile,
+            openConversation = rootComponent::openConversation,
             onBackClicked = rootComponent::onBackClicked,
             showAlertsOnDialog = showAlertsOnDialog,
         )
