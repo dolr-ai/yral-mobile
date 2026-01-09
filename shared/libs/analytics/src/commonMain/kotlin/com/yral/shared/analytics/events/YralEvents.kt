@@ -1687,6 +1687,9 @@ enum class AuthJourney {
 
 @Serializable
 enum class SignupPageName {
+    @SerialName("splash")
+    SPLASH,
+
     @SerialName("home")
     HOME,
 
@@ -2121,6 +2124,9 @@ enum class AnalyticsAlertsRequestType {
 
     @SerialName("default")
     DEFAULT,
+
+    @SerialName("tournament")
+    TOURNAMENT,
 }
 
 @Serializable

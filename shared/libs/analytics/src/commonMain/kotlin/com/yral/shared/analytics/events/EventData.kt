@@ -33,3 +33,13 @@ fun EventData.shouldSendToFacebook(): Boolean =
         FeatureEvents.GAME_PLAYED.getEventName() -> true
         else -> false
     }
+
+fun EventData.shouldSendToBranch(): Boolean =
+    when (event) {
+        FeatureEvents.FIRST_APP_LAUNCH.getEventName() -> true
+        FeatureEvents.HOME_PAGE_VIEWED.getEventName() -> true
+        FeatureEvents.GAME_PLAYED.getEventName() -> true
+        FeatureEvents.LOGIN_SUCCESS.getEventName() -> true
+        FeatureEvents.SIGNUP_SUCCESS.getEventName() -> true
+        else -> false
+    }

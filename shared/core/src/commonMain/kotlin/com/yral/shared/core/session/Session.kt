@@ -22,4 +22,5 @@ data class SessionProperties(
     val followedPrincipals: Set<String> = setOf(),
     val unFollowedPrincipals: Set<String> = setOf(),
     val pendingTournamentRegistrationId: String? = null,
+    val isMandatoryLogin: Boolean? = null,
 )

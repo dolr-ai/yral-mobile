@@ -29,7 +29,7 @@ object FeedFeatureFlags {
                 keySuffix = "availableTypes",
                 name = "Feed Type",
                 description = "Available feed types for users",
-                defaultValue = "default",
+                defaultValue = "ai",
             )
     }
 }

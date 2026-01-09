@@ -7,4 +7,5 @@ enum class AlertsRequestType {
     FOLLOW_BACK,
     VIDEO,
     DEFAULT,
+    TOURNAMENT,
 }

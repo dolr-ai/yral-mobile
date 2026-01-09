@@ -15,7 +15,7 @@ kotlin {
 
     cocoapods {
         version = "1.0"
-        summary = "Analytics module with Firebase, Mixpanel, and OneSignal"
+        summary = "Analytics module with Firebase, Mixpanel and OneSignal"
         homepage = "https://github.com/dolr-ai/yral-mobile"
         ios.deploymentTarget = "15.6"
 
@@ -41,6 +41,9 @@ kotlin {
             api(libs.gitlive.firebase.kotlin.anlaytics)
             implementation(projects.shared.libs.preferences)
             implementation(projects.shared.rust.service)
+            implementation(projects.shared.libs.arch)
+            implementation(projects.shared.libs.coroutinesX)
+            implementation(projects.shared.libs.branch)
         }
         androidMain.dependencies {
             implementation(libs.facebook.sdk.android.core)

@@ -93,6 +93,10 @@ class SessionManager {
         mutableProperties.update { it.copy(isAutoScrollEnabled = isAutoScrollEnabled) }
     }
 
+    fun updateIsMandatoryLogin(isMandatoryLogin: Boolean) {
+        mutableProperties.update { it.copy(isMandatoryLogin = isMandatoryLogin) }
+    }
+
     fun updateLoggedInUserEmail(email: String?) {
         mutableProperties.update { it.copy(emailId = email) }
     }
@@ -214,13 +218,24 @@ sealed interface SessionState {
     data object Loading : SessionState
     data class SignedIn(
         val session: Session,
-    ) : SessionState
+    ) : SessionState {
+        override fun toString(): String = "SignedIn ${session.userPrincipal ?: ""}"
+    }
 }
 
 fun SessionState.getKey(): String =
     when (this) {
         is SessionState.SignedIn -> "${SessionKey.SIGNED_IN.name}-${this.session.userPrincipal}"
         else -> SessionKey.INITIAL.name
+    }
+
+fun SessionState.hasSameUserPrincipal(other: SessionState): Boolean =
+    when {
+        this::class != other::class -> false
+        this is SessionState.SignedIn && other is SessionState.SignedIn -> {
+            this.session.userPrincipal == other.session.userPrincipal
+        }
+        else -> true
     }
 
 enum class SessionKey {

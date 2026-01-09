@@ -109,6 +109,7 @@ internal fun HomeScreen(
     updateProfileVideosCount: (count: Int) -> Unit,
     bottomNavigationAnalytics: (categoryName: CategoryName) -> Unit,
     sessionState: SessionState,
+    isPendingLogin: Boolean,
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -146,6 +147,9 @@ internal fun HomeScreen(
             )
         },
     ) { innerPadding ->
+        if (isPendingLogin) {
+            return@Scaffold
+        }
         HomeScreenContent(
             component = component,
             modifier =
@@ -213,6 +217,7 @@ private fun HomeScreenContent(
                     feedViewModel = feedViewModel,
                     gameViewModel = gameViewModel,
                     leaderBoardViewModel = leaderBoardViewModel,
+                    onNavigateToTournaments = { component.onTournamentTabClick() },
                 )
 
             is HomeComponent.Child.Leaderboard ->

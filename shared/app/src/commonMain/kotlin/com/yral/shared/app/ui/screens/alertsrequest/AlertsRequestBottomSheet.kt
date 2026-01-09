@@ -1,12 +1,14 @@
 package com.yral.shared.app.ui.screens.alertsrequest
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
@@ -19,9 +21,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.events.AnalyticsAlertsRequestType
@@ -49,7 +58,6 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import yral_mobile.shared.app.generated.resources.Res
 import yral_mobile.shared.app.generated.resources.not_now
-import yral_mobile.shared.app.generated.resources.turn_on_alerts
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -97,6 +105,7 @@ internal fun AlertsRequestBottomSheet(
     }
 }
 
+@Suppress("LongMethod", "MagicNumber")
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun AlertSheet(
@@ -107,48 +116,109 @@ private fun AlertSheet(
     onNotNowClicked: () -> Unit,
 ) {
     val info = getAlertRequestInfo(type)
+    val isTournament = type == AlertsRequestType.TOURNAMENT
+
     YralBottomSheet(
         onDismissRequest = onDismissRequest,
         bottomSheetState = bottomSheetState,
+        containerColor = if (isTournament) Color.Transparent else YralColors.Neutral900,
     ) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 36.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Image(
-                painter = info.icon,
-                contentDescription = null,
-                modifier = Modifier.size(134.dp),
-            )
-            Spacer(Modifier.height(30.dp))
-            Text(
-                text = info.title,
-                style = LocalAppTopography.current.xlSemiBold,
-            )
-            Spacer(Modifier.height(16.dp))
-            Text(
-                text = info.subTitle,
-                style = LocalAppTopography.current.baseRegular,
-                textAlign = TextAlign.Center,
-            )
-            Spacer(Modifier.height(28.dp))
-            YralGradientButton(
-                text = stringResource(Res.string.turn_on_alerts),
-                onClick = onTurnOnAlertsClicked,
-            )
-            if (info.isNotNowButtonVisible) {
-                Spacer(Modifier.height(12.dp))
-                YralButton(
-                    text = stringResource(Res.string.not_now),
-                    borderColor = YralColors.Neutral700,
-                    borderWidth = 1.dp,
-                    backgroundColor = YralColors.Neutral800,
-                    textStyle = TextStyle(color = YralColors.NeutralTextPrimary),
-                    onClick = onNotNowClicked,
+        if (isTournament) {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .background(
+                            brush =
+                                Brush.linearGradient(
+                                    colorStops =
+                                        arrayOf(
+                                            0.0f to Color(0xFF0D5F3D),
+                                            0.4f to Color(0xFF171717),
+                                            1.0f to Color(0xFF171717),
+                                        ),
+                                ),
+                        ).padding(horizontal = 30.dp, vertical = 36.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Spacer(Modifier.height(60.dp))
+                Image(
+                    painter = info.icon,
+                    contentDescription = null,
+                    modifier = Modifier.width(196.dp).height(150.dp),
                 )
+                Spacer(Modifier.height(30.dp))
+                Text(
+                    text =
+                        buildAnnotatedString {
+                            withStyle(SpanStyle(color = Color.White)) {
+                                append("Ready for ")
+                            }
+                            withStyle(SpanStyle(color = Color(0xFFFFC33A))) {
+                                append("The Smily Showdown?")
+                            }
+                        },
+                    style =
+                        TextStyle(
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                        ),
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = info.subTitle,
+                    style = LocalAppTopography.current.baseRegular,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(Modifier.height(30.dp))
+                YralGradientButton(
+                    text = info.buttonText,
+                    buttonType = info.buttonType,
+                    onClick = onTurnOnAlertsClicked,
+                )
+            }
+        } else {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 36.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Image(
+                    painter = info.icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(134.dp),
+                )
+                Spacer(Modifier.height(30.dp))
+                Text(
+                    text = info.title,
+                    style = LocalAppTopography.current.xlSemiBold,
+                )
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    text = info.subTitle,
+                    style = LocalAppTopography.current.baseRegular,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(Modifier.height(28.dp))
+                YralGradientButton(
+                    text = info.buttonText,
+                    buttonType = info.buttonType,
+                    onClick = onTurnOnAlertsClicked,
+                )
+                if (info.isNotNowButtonVisible) {
+                    Spacer(Modifier.height(12.dp))
+                    YralButton(
+                        text = stringResource(Res.string.not_now),
+                        borderColor = YralColors.Neutral700,
+                        borderWidth = 1.dp,
+                        backgroundColor = YralColors.Neutral800,
+                        textStyle = TextStyle(color = YralColors.NeutralTextPrimary),
+                        onClick = onNotNowClicked,
+                    )
+                }
             }
         }
     }
@@ -192,4 +262,5 @@ fun AlertsRequestType.toAnalyticsType(): AnalyticsAlertsRequestType =
         AlertsRequestType.FOLLOW_BACK -> AnalyticsAlertsRequestType.FOLLOW_BACK
         AlertsRequestType.VIDEO -> AnalyticsAlertsRequestType.VIDEO
         AlertsRequestType.DEFAULT -> AnalyticsAlertsRequestType.DEFAULT
+        AlertsRequestType.TOURNAMENT -> AnalyticsAlertsRequestType.TOURNAMENT
     }

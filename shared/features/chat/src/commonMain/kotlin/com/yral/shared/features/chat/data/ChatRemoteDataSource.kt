@@ -27,6 +27,8 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
+import io.ktor.http.URLBuilder
+import io.ktor.http.appendPathSegments
 import io.ktor.http.path
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
@@ -174,7 +176,15 @@ class ChatRemoteDataSource(
         type: String,
     ): UploadResponseDto {
         val idToken = getIdToken()
-        val url = "https://$CHAT_BASE_URL/$environmentPrefix/$UPLOAD_PATH"
+        val url =
+            URLBuilder("https://$CHAT_BASE_URL")
+                .apply {
+                    if (environmentPrefix.isNotEmpty()) {
+                        appendPathSegments(environmentPrefix.split('/').filter { it.isNotBlank() })
+                    }
+                    appendPathSegments(UPLOAD_PATH.split('/'))
+                }.build()
+                .toString()
         val response =
             httpClient.submitFormWithBinaryData(
                 url = url,

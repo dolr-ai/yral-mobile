@@ -4,10 +4,13 @@ import com.russhwolf.settings.Settings
 import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.DeviceInstallIdStore
 import com.yral.shared.analytics.EventToMapConverter
+import com.yral.shared.analytics.adTracking.GetADIDUseCase
+import com.yral.shared.analytics.events.shouldSendToBranch
 import com.yral.shared.analytics.events.shouldSendToFacebook
 import com.yral.shared.analytics.events.shouldSendToYralBE
 import com.yral.shared.analytics.providers.bigquery.BigQueryAnalyticsProvider
 import com.yral.shared.analytics.providers.bigquery.BigQueryEventsApiService
+import com.yral.shared.analytics.providers.branch.BranchAnalyticsProvider
 import com.yral.shared.analytics.providers.facebook.FacebookAnalyticsProvider
 import com.yral.shared.analytics.providers.firebase.FirebaseAnalyticsProvider
 import com.yral.shared.analytics.providers.mixpanel.MixpanelAnalyticsProvider
@@ -68,14 +71,26 @@ val analyticsModule =
             )
         }
         single {
-            AnalyticsManager(
-                deviceInstallIdStore = get(),
-            ).addProvider(get<FirebaseAnalyticsProvider>())
-                .addProvider(get<MixpanelAnalyticsProvider>())
-                .addProvider(get<FacebookAnalyticsProvider>())
-                .addProvider(get<BigQueryAnalyticsProvider>())
-                .setCoreService(get<CoreService>())
+            BranchAnalyticsProvider(
+                eventFilter = { it.shouldSendToBranch() },
+                mapConverter = get(),
+            )
         }
+        single {
+            AnalyticsManager(
+                providers =
+                    listOf(
+                        get<FirebaseAnalyticsProvider>(),
+                        get<MixpanelAnalyticsProvider>(),
+                        get<FacebookAnalyticsProvider>(),
+                        get<BigQueryAnalyticsProvider>(),
+                        get<BranchAnalyticsProvider>(),
+                    ),
+                coreService = get<CoreService>(),
+                deviceInstallIdStore = get(),
+            )
+        }
+        singleOf(::GetADIDUseCase)
     }
 
-public fun getAnalyticsManager(): AnalyticsManager = koinInstance.get()
+fun getAnalyticsManager(): AnalyticsManager = koinInstance.get()
