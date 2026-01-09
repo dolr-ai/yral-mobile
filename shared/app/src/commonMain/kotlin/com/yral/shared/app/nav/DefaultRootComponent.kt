@@ -155,6 +155,7 @@ class DefaultRootComponent(
             openAccount = {},
             openEditProfile = {},
             openProfile = this::openProfile,
+            openConversation = this::openConversation,
             onBackClicked = this::onBackClicked,
             showAlertsOnDialog = { this.showSlot(SlotConfig.AlertsRequestBottomSheet(it)) },
             promptLogin = {

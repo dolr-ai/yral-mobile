@@ -63,9 +63,11 @@ fun AccountInfoView(
     isFollowing: Boolean = false,
     isFollowInProgress: Boolean = false,
     isAiInfluencer: Boolean = false,
+    isTalkToMeInProgress: Boolean = false,
     onFollowClicked: () -> Unit = {},
     onFollowersClick: (() -> Unit)? = null,
     onFollowingClick: (() -> Unit)? = null,
+    onTalkToMeClicked: () -> Unit = {},
 ) {
     Column(
         modifier =
@@ -241,9 +243,12 @@ fun AccountInfoView(
                         )
                     }
                     if (isAiInfluencer) {
+                        val talkButtonState =
+                            if (isTalkToMeInProgress) YralButtonState.Loading else YralButtonState.Enabled
+                        val talkText = if (isTalkToMeInProgress) "" else "Talk To Me"
                         YralButton(
                             modifier = Modifier.weight(1f),
-                            text = "Talk To Me",
+                            text = talkText,
                             backgroundColor = YralColors.Grey50,
                             textStyle =
                                 LocalAppTopography
@@ -252,7 +257,8 @@ fun AccountInfoView(
                                     .copy(
                                         color = YralColors.Pink300,
                                     ),
-                            onClick = {},
+                            onClick = onTalkToMeClicked,
+                            buttonState = talkButtonState,
                             buttonHeight = 40.dp,
                         )
                     }

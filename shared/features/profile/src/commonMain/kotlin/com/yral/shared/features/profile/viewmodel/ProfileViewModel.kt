@@ -30,6 +30,8 @@ import com.yral.shared.data.domain.CommonApis
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.data.domain.models.VideoViews
 import com.yral.shared.data.domain.useCases.GetVideoViewsUseCase
+import com.yral.shared.features.chat.domain.models.Influencer
+import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
 import com.yral.shared.features.profile.analytics.ProfileTelemetry
 import com.yral.shared.features.profile.domain.DeleteVideoUseCase
 import com.yral.shared.features.profile.domain.FollowNotificationUseCase
@@ -81,6 +83,7 @@ import yral_mobile.shared.features.profile.generated.resources.download_successf
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.profile_share_default_name
+import yral_mobile.shared.libs.designsystem.generated.resources.something_went_wrong
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
@@ -106,6 +109,7 @@ class ProfileViewModel(
     private val flagManager: FeatureFlagManager,
     private val userInfoPagingSourceFactory: UserInfoPagingSourceFactory,
     private val getUserProfileDetailsV6UseCase: GetUserProfileDetailsV6UseCase,
+    private val getInfluencerUseCase: GetInfluencerUseCase,
     private val fileDownloader: FileDownloader,
 ) : ViewModel() {
     companion object {
@@ -379,6 +383,28 @@ class ProfileViewModel(
                 }
             }.onFailure { error ->
                 Logger.e("refreshOtherProfileDetails") { "Failed to fetch profile details $error" }
+            }
+        }
+    }
+
+    fun fetchInfluencerDetails() {
+        val influencerId = canisterData.userPrincipalId
+        if (influencerId.isBlank()) return
+        viewModelScope.launch {
+            _state.update { it.copy(isTalkToMeInProgress = true) }
+            try {
+                getInfluencerUseCase(GetInfluencerUseCase.Params(id = influencerId))
+                    .onSuccess { influencer ->
+                        profileEventsChannel.trySend(ProfileEvents.InfluencerDetailsFetched(influencer))
+                    }.onFailure { error ->
+                        Logger.e("fetchInfluencerDetails") { "Failed to fetch influencer details $error" }
+                        val message =
+                            error.message
+                                ?: getString(DesignRes.string.something_went_wrong)
+                        profileEventsChannel.trySend(ProfileEvents.Failed(message))
+                    }
+            } finally {
+                _state.update { it.copy(isTalkToMeInProgress = false) }
             }
         }
     }
@@ -953,6 +979,7 @@ data class ViewState(
     val shareDescription: String = "",
     val canShareProfile: Boolean = false,
     val isAiInfluencer: Boolean = false,
+    val isTalkToMeInProgress: Boolean = false,
 )
 
 sealed interface ProfileBottomSheet {
@@ -992,6 +1019,9 @@ sealed class VideoViewState {
 sealed class ProfileEvents {
     data object FollowedSuccessfully : ProfileEvents()
     data object UnfollowedSuccessfully : ProfileEvents()
+    data class InfluencerDetailsFetched(
+        val influencer: Influencer,
+    ) : ProfileEvents()
     data class Failed(
         val message: String,
     ) : ProfileEvents()

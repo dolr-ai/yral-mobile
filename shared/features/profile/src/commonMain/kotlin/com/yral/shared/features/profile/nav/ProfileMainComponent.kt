@@ -15,6 +15,10 @@ interface ProfileMainComponent {
     fun openAccount()
     fun openEditProfile()
     fun openProfile(userCanisterData: CanisterData)
+    fun openConversation(
+        influencerId: String,
+        influencerCategory: String,
+    )
     fun onBackClicked()
     companion object Companion {
         operator fun invoke(
@@ -25,6 +29,7 @@ interface ProfileMainComponent {
             openAccount: () -> Unit,
             openEditProfile: () -> Unit,
             openProfile: (CanisterData) -> Unit,
+            openConversation: (influencerId: String, influencerCategory: String) -> Unit,
             onBackClicked: () -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
             promptLogin: (pageName: SignupPageName) -> Unit,
@@ -37,6 +42,7 @@ interface ProfileMainComponent {
                 openAccount = openAccount,
                 openEditProfile = openEditProfile,
                 openProfile = openProfile,
+                openConversation = openConversation,
                 onBackClicked = onBackClicked,
                 showAlertsOnDialog = showAlertsOnDialog,
                 promptLogin = promptLogin,
