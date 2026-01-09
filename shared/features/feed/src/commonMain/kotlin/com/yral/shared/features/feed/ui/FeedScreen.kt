@@ -134,6 +134,7 @@ fun FeedScreen(
 
     Column(modifier = modifier) {
         if (state.feedDetails.isNotEmpty()) {
+            KeepScreenOnEffect(true)
             YRALReelPlayer(
                 modifier = Modifier.weight(1f),
                 reels = getReels(state),
@@ -344,3 +345,6 @@ private fun ActionsRight(
 
 @Composable
 internal expect fun getContext(): Any
+
+@Composable
+internal expect fun KeepScreenOnEffect(keepScreenOn: Boolean)
