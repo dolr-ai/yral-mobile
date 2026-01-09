@@ -44,7 +44,7 @@ kotlinx-io = "0.8.2"
 kotlinxSerialization = "1.9.0"
 ksp = "2.1.21-2.0.2"
 ktor = "3.3.0"
-media3Exoplayer = "1.6.1"
+media3Exoplayer = "1.9.0"
 mixpanel = "8.2.0"
 mixpanel-session-replay = "1.0.0"
 sentryKmp = "0.23.0"
@@ -92,6 +92,7 @@ androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", versi
 androidx-media3-exoplayer-dash = { module = "androidx.media3:media3-exoplayer-dash", version.ref = "media3Exoplayer" }
 androidx-media3-exoplayer-hls = { group = "androidx.media3", name = "media3-exoplayer-hls", version.ref = "media3Exoplayer" }
 androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3Exoplayer" }
+androidx-media3-ui-compose-material3 = { module = "androidx.media3:media3-ui-compose-material3", version.ref = "media3Exoplayer" }
 
 androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "androidx-security-crypto" }
 
