@@ -12,8 +12,8 @@ import com.yral.shared.features.profile.domain.UploadProfileImageUseCase
 import com.yral.shared.features.profile.domain.UploadProfileImageUseCase.UploadProfileImageParams
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
-import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4Params
-import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4UseCase
+import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV6Params
+import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV6UseCase
 import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsParams
 import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsUseCase
 import com.yral.shared.rust.service.services.HelperService
@@ -33,7 +33,7 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 class EditProfileViewModel(
     private val sessionManager: SessionManager,
     private val preferences: Preferences,
-    private val getProfileDetailsV4UseCase: GetProfileDetailsV4UseCase,
+    private val getUserProfileDetailsV6UseCase: GetUserProfileDetailsV6UseCase,
     private val updateProfileDetailsUseCase: UpdateProfileDetailsUseCase,
     private val uploadProfileImageUseCase: UploadProfileImageUseCase,
     private val profileTelemetry: ProfileTelemetry,
@@ -82,8 +82,8 @@ class EditProfileViewModel(
     private fun fetchProfileDetails() {
         sessionManager.userPrincipal?.let { principalText ->
             viewModelScope.launch {
-                getProfileDetailsV4UseCase(
-                    GetProfileDetailsV4Params(
+                getUserProfileDetailsV6UseCase(
+                    GetUserProfileDetailsV6Params(
                         principal = principalText,
                         targetPrincipal = principalText,
                     ),

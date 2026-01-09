@@ -338,6 +338,7 @@ internal class DefaultHomeComponent(
             onUploadVideoClicked = { onUploadVideoTabClick() },
             openEditProfile = openEditProfile,
             openProfile = openProfile,
+            openConversation = openConversation,
             snapshot = childSnapshots[Config.Profile] as? ProfileComponent.Snapshot,
             showAlertsOnDialog = showAlertsOnDialog,
             promptLogin = { homeViewModel.showSignupPrompt(true, it) },

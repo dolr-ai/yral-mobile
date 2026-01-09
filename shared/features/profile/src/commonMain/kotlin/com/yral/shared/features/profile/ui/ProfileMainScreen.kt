@@ -231,6 +231,13 @@ fun ProfileMainScreen(
                     }
                 }
 
+                is ProfileEvents.InfluencerDetailsFetched -> {
+                    component.openConversation(
+                        influencerId = event.influencer.id,
+                        influencerCategory = event.influencer.category,
+                    )
+                }
+
                 is ProfileEvents.Failed -> {
                     ToastManager.showError(type = ToastType.Small(message = event.message))
                 }
@@ -582,9 +589,12 @@ private fun MainContent(
                 showFollow = !state.isOwnProfile && state.isLoggedIn,
                 isFollowing = state.isFollowing,
                 isFollowInProgress = state.isFollowInProgress,
+                isAiInfluencer = state.isAiInfluencer,
+                isTalkToMeInProgress = state.isTalkToMeInProgress,
                 onFollowClicked = { viewModel.followUnfollow() },
                 onFollowersClick = { onFollowersSectionClick(FollowersSheetTab.Followers) },
                 onFollowingClick = { onFollowersSectionClick(FollowersSheetTab.Following) },
+                onTalkToMeClicked = viewModel::fetchInfluencerDetails,
             )
         }
         when (profileVideos.loadState.refresh) {

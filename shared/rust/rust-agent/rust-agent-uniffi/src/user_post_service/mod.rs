@@ -8,7 +8,7 @@ use crate::uni_ffi_helpers::*;
 use crate::RUNTIME;
 use crate::commons::SystemTime;
 
-use yral_canisters_client::user_post_service::Result1;
+use yral_canisters_client::user_post_service::Result2;
 use yral_canisters_client::user_post_service::Post;
 use yral_canisters_client::user_post_service::PostStatus;
 
@@ -44,17 +44,33 @@ impl ServiceCanistersDetails {
 #[derive(CandidType, Deserialize, Enum)]
 pub enum UPSResult3 {
     Ok(Vec<UPSPostDetailsForFrontend>),
-    Err(UPSGetPostsOfUserProfileError),
+    Err(String),
 }
 
 impl From<yral_canisters_client::user_post_service::Result3> for UPSResult3 {
     fn from(result: yral_canisters_client::user_post_service::Result3) -> Self {
         match result {
-            yral_canisters_client::user_post_service::Result3::Ok(posts) => {
-                UPSResult3::Ok(posts.into_iter().map(|post| UPSPostDetailsForFrontend::from_post(post, &Principal::anonymous())).collect())
+            yral_canisters_client::user_post_service::Result3::Ok(post_details) => {
+                UPSResult3::Ok(vec![UPSPostDetailsForFrontend::from_post_details(post_details)])
             }
             yral_canisters_client::user_post_service::Result3::Err(err) => {
-                UPSResult3::Err(err.into())
+                UPSResult3::Err(format!("{:?}", err))
+            }
+        }
+    }
+}
+
+impl From<yral_canisters_client::user_post_service::Result1> for UPSResult3 {
+    fn from(result: yral_canisters_client::user_post_service::Result1) -> Self {
+        match result {
+            yral_canisters_client::user_post_service::Result1::Ok(posts) => UPSResult3::Ok(
+                posts
+                    .into_iter()
+                    .map(|post| UPSPostDetailsForFrontend::from_post(post, &Principal::anonymous()))
+                    .collect(),
+            ),
+            yral_canisters_client::user_post_service::Result1::Err(err) => {
+                UPSResult3::Err(format!("{:?}", err))
             }
         }
     }
@@ -108,6 +124,22 @@ impl UPSPostDetailsForFrontend {
             liked_by_me: post.likes.contains(current_user),
         }
     }
+
+    pub fn from_post_details(details: yral_canisters_client::user_post_service::PostDetailsForFrontend) -> Self {
+        Self {
+            id: details.id,
+            status: UPSPostStatus::from(yral_canisters_client::user_post_service::PostStatus::ReadyToView),
+            hashtags: details.hashtags,
+            like_count: details.like_count,
+            description: details.description,
+            total_view_count: details.total_view_count,
+            created_at: SystemTime::from(details.created_at),
+            video_uid: details.video_uid,
+            created_by_user_principal_id: details.created_by_user_principal_id,
+            creator_principal: details.creator_principal,
+            liked_by_me: details.liked_by_me,
+        }
+    }
 }
 
 #[derive(CandidType, Deserialize, Enum)]
@@ -115,6 +147,7 @@ pub enum UPSPostStatus {
     BannedForExplicitness,
     BannedDueToUserReporting,
     Uploaded,
+    Draft,
     CheckingExplicitness,
     ReadyToView,
     Transcoding,
@@ -127,6 +160,7 @@ impl From<PostStatus> for UPSPostStatus {
             PostStatus::BannedForExplicitness => UPSPostStatus::BannedForExplicitness,
             PostStatus::BannedDueToUserReporting => UPSPostStatus::BannedDueToUserReporting,
             PostStatus::Uploaded => UPSPostStatus::Uploaded,
+            PostStatus::Draft => UPSPostStatus::Draft,
             PostStatus::CheckingExplicitness => UPSPostStatus::CheckingExplicitness,
             PostStatus::ReadyToView => UPSPostStatus::ReadyToView,
             PostStatus::Transcoding => UPSPostStatus::Transcoding,
@@ -189,10 +223,12 @@ impl UserPostService {
                 .get_individual_post_details_by_id(arg0)
                 .await
                 .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?;
-            match details {
-                Result1::Ok(post_details) => Ok(UPSPostDetailsForFrontend::from_post(post_details, &principal)),
-                Result1::Err(err) => Err(FFIError::UnknownError(format!("Details not found {:?}", err))),
-            }
+                match details {
+                    Result2::Ok(post_details) => {
+                        Ok(UPSPostDetailsForFrontend::from_post(post_details, &principal))
+                    }
+                    Result2::Err(err) => Err(FFIError::UnknownError(format!("Details not found {:?}", err))),
+                }
         }).await.map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
     }
 
