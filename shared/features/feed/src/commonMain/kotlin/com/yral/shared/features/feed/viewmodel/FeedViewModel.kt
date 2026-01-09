@@ -7,6 +7,7 @@ import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.map
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.featureflag.AppFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.FeedFeatureFlags
 import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
@@ -125,10 +126,10 @@ class FeedViewModel(
             initAvailableFeeds()
             loadCachedFeedDetails()
             viewModelScope.launch {
-//            if (preferences.getBoolean(PrefKeys.IS_ONBOARDING_COMPLETE.name) != true) {
-//                _state.update { it.copy(currentOnboardingStep = OnboardingStep.INTRO_GAME) }
-//            }
-                preferences.remove(PrefKeys.IS_ONBOARDING_COMPLETE.name)
+//                if (preferences.getBoolean(PrefKeys.IS_ONBOARDING_COMPLETE.name) != true) {
+//                    _state.update { it.copy(currentOnboardingStep = OnboardingStep.INTRO_GAME) }
+//                }
+//                preferences.remove(PrefKeys.IS_ONBOARDING_COMPLETE.name)
             }
         } else {
             initializeFeed()
@@ -156,7 +157,15 @@ class FeedViewModel(
                 .observeSessionPropertyWithDefault(
                     selector = { it.isSocialSignIn },
                     defaultValue = false,
-                ).collect { isSocialSignIn -> _state.update { it.copy(isLoggedIn = isSocialSignIn) } }
+                ).collect { isSocialSignIn ->
+                    _state.update { it.copy(isLoggedIn = isSocialSignIn) }
+                    if (isSocialSignIn &&
+                        _state.value.isMandatoryLogin &&
+                        preferences.getBoolean(PrefKeys.IS_ONBOARDING_COMPLETE.name) != true
+                    ) {
+                        _state.update { it.copy(currentOnboardingStep = OnboardingStep.INTRO_BALANCE) }
+                    }
+                }
         }
         if (feedContext is FeedContext.Default) {
             // Save cache whenever feed details or max page reached changes
@@ -178,11 +187,13 @@ class FeedViewModel(
                 .get(FeedFeatureFlags.FeedTypes.AvailableTypes)
                 .split(",")
                 .mapNotNull { name -> FeedType.entries.firstOrNull { it.name.equals(name.trim(), ignoreCase = true) } }
-        val selectedType = availableFeedTypes.firstOrNull() ?: FeedType.DEFAULT
+        val selectedType = availableFeedTypes.firstOrNull() ?: FeedType.AI
+        val isLoginMandatory = flagManager.isEnabled(AppFeatureFlags.Common.MandatoryLogin)
         _state.update {
             it.copy(
                 availableFeedTypes = availableFeedTypes,
                 feedType = selectedType,
+                isMandatoryLogin = isLoginMandatory,
             )
         }
     }
@@ -1104,8 +1115,39 @@ class FeedViewModel(
                 if (nextStep == null && currentStep != null) {
                     preferences.putBoolean(PrefKeys.IS_ONBOARDING_COMPLETE.name, true)
                 }
+                if (currentStep == OnboardingStep.INTRO_BALANCE && _state.value.isMandatoryLogin) {
+                    preferences.putBoolean(PrefKeys.IS_ONBOARDING_COMPLETE.name, true)
+                    _state.update { it.copy(currentOnboardingStep = null) }
+                    return@launch
+                }
                 _state.update { it.copy(currentOnboardingStep = nextStep) }
             }
+    }
+
+    fun checkAndShowTournamentIntroSheet() {
+        viewModelScope.launch {
+            // Only check once per app session
+            if (_state.value.tournamentIntroCheckedThisSession) return@launch
+
+            val shownCount = preferences.getInt(PrefKeys.TOURNAMENT_INTRO_SHOWN.name) ?: 0
+            if (shownCount < 2 && _state.value.feedDetails.isNotEmpty()) {
+                // Increment counter when showing
+                preferences.putInt(PrefKeys.TOURNAMENT_INTRO_SHOWN.name, shownCount + 1)
+                _state.update {
+                    it.copy(
+                        showTournamentIntroSheet = true,
+                        tournamentIntroCheckedThisSession = true,
+                    )
+                }
+            } else {
+                // Mark as checked even if not showing
+                _state.update { it.copy(tournamentIntroCheckedThisSession = true) }
+            }
+        }
+    }
+
+    fun dismissTournamentIntroSheet() {
+        _state.update { it.copy(showTournamentIntroSheet = false) }
     }
 
     private fun trackOnboardingShown() {
@@ -1173,6 +1215,9 @@ data class FeedState(
     val feedType: FeedType = FeedType.DEFAULT,
     val isFollowInProgress: Boolean = false,
     val currentOnboardingStep: OnboardingStep? = null,
+    val showTournamentIntroSheet: Boolean = false,
+    val tournamentIntroCheckedThisSession: Boolean = false,
+    val isMandatoryLogin: Boolean = false,
 )
 
 enum class OverlayType {

@@ -54,6 +54,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun PrizeBreakdownBottomSheet(
+    totalPrizePool: Int,
     rows: List<PrizeBreakdownRow>,
     status: TournamentStatus,
     participationState: TournamentParticipationState,
@@ -93,7 +94,7 @@ internal fun PrizeBreakdownBottomSheet(
                     buildAnnotatedString {
                         append("Top ${rows.count()} players win ")
                         withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                            append("BTC rewards worth up to ₹${rows.maxOf { it.amount }}.")
+                            append("BTC rewards worth up to ₹$totalPrizePool.")
                         }
                     },
                 style = LocalAppTopography.current.baseRegular,
@@ -198,20 +199,22 @@ private fun formatRankLabel(rank: Int): String = "$rank${getOrdinalSuffix(rank)}
 @Composable
 private fun PrizeBreakdownBottomSheetPreview() {
     CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
+        val rows =
+            listOf(
+                PrizeBreakdownRow(rank = 1, amount = 1000),
+                PrizeBreakdownRow(rank = 2, amount = 500),
+                PrizeBreakdownRow(rank = 3, amount = 400),
+                PrizeBreakdownRow(rank = 4, amount = 300),
+                PrizeBreakdownRow(rank = 5, amount = 200),
+                PrizeBreakdownRow(rank = 6, amount = 100),
+                PrizeBreakdownRow(rank = 7, amount = 50),
+                PrizeBreakdownRow(rank = 8, amount = 40),
+                PrizeBreakdownRow(rank = 9, amount = 30),
+                PrizeBreakdownRow(rank = 10, amount = 10),
+            )
         PrizeBreakdownBottomSheet(
-            rows =
-                listOf(
-                    PrizeBreakdownRow(rank = 1, amount = 10000),
-                    PrizeBreakdownRow(rank = 2, amount = 5000),
-                    PrizeBreakdownRow(rank = 3, amount = 4000),
-                    PrizeBreakdownRow(rank = 4, amount = 3000),
-                    PrizeBreakdownRow(rank = 5, amount = 2000),
-                    PrizeBreakdownRow(rank = 6, amount = 1000),
-                    PrizeBreakdownRow(rank = 7, amount = 500),
-                    PrizeBreakdownRow(rank = 8, amount = 400),
-                    PrizeBreakdownRow(rank = 9, amount = 300),
-                    PrizeBreakdownRow(rank = 10, amount = 100),
-                ),
+            totalPrizePool = rows.sumOf { it.amount },
+            rows = rows,
             status = TournamentStatus.Upcoming(Clock.System.now() + 10.minutes),
             participationState = TournamentParticipationState.RegistrationRequired(20),
             onCtaClicked = {},

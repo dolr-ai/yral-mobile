@@ -150,6 +150,7 @@ fun TournamentScreen(
     val selected = uiState.prizeBreakdownTournament
     if (selected != null) {
         PrizeBreakdownBottomSheet(
+            totalPrizePool = selected.totalPrizePool,
             rows = selected.prizeBreakdown,
             onDismissRequest = viewModel::closePrizeBreakdown,
             status = selected.status,

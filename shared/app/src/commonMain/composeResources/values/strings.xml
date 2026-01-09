@@ -14,6 +14,9 @@
     <string name="enable_follow_back_nudge_msg">Get notified when they follow you back or share something fresh.</string>
     <string name="turn_on_alerts">Turn on Alerts</string>
     <string name="not_now">Not Now</string>
+    <string name="tournament_nudge_title">Ready for The Smily Showdown?</string>
+    <string name="tournament_nudge_subtitle">The tournament will begin soon. Enable notifications to stay in the game and never miss an update.</string>
+    <string name="turn_on_notifications">Turn on Notifications</string>
 
     <string name="new_">New</string>
 
@@ -26,5 +29,8 @@
     <string name="onboarding_nudge_rank_highlight">See your position on the leaderboard here.</string>
     <string name="onboarding_nudge_balance">Your YRAL balance, Bitcoin, wins, and losses show up here.</string>
     <string name="onboarding_nudge_balance_highlight">Your YRAL balance</string>
+
+    <string name="login_to_unlock_tokens">Log in to unlock %1$d YRAL instantly and start playing.</string>
+    <string name="reward_tokens">%1$d YRAL</string>
 
 </resources>

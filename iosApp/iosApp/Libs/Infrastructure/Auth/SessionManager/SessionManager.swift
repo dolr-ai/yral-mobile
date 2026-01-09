@@ -58,6 +58,9 @@ final class SessionManager: ObservableObject {
   }
 
   func update(coins: UInt64) {
+    let isMandatoryLogin = KotlinBoolean(
+        bool: AppDIHelper().getFeatureFlagManager().isEnabled(flag: AppFeatureFlags.Common.shared.MandatoryLogin)
+    )
     switch state {
     case .ephemeralAuthentication(let userPrincipal, let canisterPrincipal, _, _, let dailyRank):
       state = .ephemeralAuthentication(
@@ -77,6 +80,7 @@ final class SessionManager: ObservableObject {
           tokenType: .yral,
           emailId: nil,
           utmParams: nil,
+          isMandatoryLogin: isMandatoryLogin,
         )
       )
     case .permanentAuthentication(let userPrincipal, let email, let canisterPrincipal, _, _, let dailyRank):
@@ -98,6 +102,7 @@ final class SessionManager: ObservableObject {
           tokenType: .yral,
           emailId: "",
           utmParams: nil,
+          isMandatoryLogin: isMandatoryLogin,
         )
       )
     default:

@@ -64,4 +64,8 @@
     <string name="tournament_you_win_diamonds">You win %1$d</string>
     <string name="tournament_you_lost_diamonds">You lost %1$d</string>
     <string name="tournament_ends_in">Tournament ends in %1$s</string>
+    <string name="tournament_intro_introducing">INTRODUCING</string>
+    <string name="tournament_intro_reward">Win upto ₹10,000 worth of Bitcoin</string>
+    <string name="tournament_intro_description">Play tournaments, rank up, and earn rewards.</string>
+    <string name="tournament_intro_view_button">View Tournaments</string>
 </resources>

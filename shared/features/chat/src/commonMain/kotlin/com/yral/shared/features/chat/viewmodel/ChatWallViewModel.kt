@@ -11,7 +11,6 @@ import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.events.InfluencerClickType
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.core.session.SessionManager
-import com.yral.shared.core.session.SessionState
 import com.yral.shared.features.chat.analytics.ChatTelemetry
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.InfluencersPagingSource

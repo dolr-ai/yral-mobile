@@ -53,6 +53,7 @@ import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.game.viewmodel.NudgeType
 import com.yral.shared.features.leaderboard.ui.DailyRanK
 import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
+import com.yral.shared.features.tournament.ui.TournamentIntroBottomSheet
 import com.yral.shared.libs.designsystem.component.lottie.PreloadLottieAnimations
 import com.yral.shared.rust.service.domain.models.toCanisterData
 import com.yral.shared.rust.service.utils.CanisterData
@@ -76,6 +77,7 @@ fun FeedScaffoldScreen(
     feedViewModel: FeedViewModel,
     gameViewModel: GameViewModel,
     leaderBoardViewModel: LeaderBoardViewModel,
+    onNavigateToTournaments: () -> Unit,
 ) {
     val gameState by gameViewModel.state.collectAsStateWithLifecycle()
     val feedState by feedViewModel.state.collectAsStateWithLifecycle()
@@ -218,6 +220,22 @@ fun FeedScaffoldScreen(
             )
         }
     }
+    // Check and show tournament intro bottom sheet after feed loads
+    LaunchedEffect(feedState.feedDetails.size, feedState.currentOnboardingStep) {
+        if (feedState.feedDetails.isNotEmpty() && feedState.currentOnboardingStep == null) {
+            feedViewModel.checkAndShowTournamentIntroSheet()
+        }
+    }
+    // Tournament intro bottom sheet
+    if (feedState.showTournamentIntroSheet) {
+        TournamentIntroBottomSheet(
+            onDismissRequest = { feedViewModel.dismissTournamentIntroSheet() },
+            onViewTournamentsClick = {
+                feedViewModel.dismissTournamentIntroSheet()
+                onNavigateToTournaments()
+            },
+        )
+    }
 }
 
 @Suppress("LongMethod")
@@ -270,7 +288,7 @@ private fun OverLayTop(
                     openWallet = openWallet,
                 )
         }
-        if (feedState.currentPageOfFeed > 0) {
+        if (feedState.currentPageOfFeed >= 0) {
             when (feedState.currentOnboardingStep) {
                 OnboardingStep.INTRO_RANK -> {
                     dailyRank?.let {
@@ -290,9 +308,10 @@ private fun OverLayTop(
                         text = stringResource(Res.string.onboarding_nudge_balance),
                         highlightText = stringResource(Res.string.onboarding_nudge_balance_highlight),
                         arrowAlignment = FeedArrowAlignment.TOP_END,
-                        isDismissible = false,
+                        isDismissible = feedState.isMandatoryLogin,
                         targetBounds = targetBounds,
                         onDismiss = { feedViewModel.dismissOnboardingStep() },
+                        isShowNext = !feedState.isMandatoryLogin,
                     )
                 }
 

@@ -19,6 +19,7 @@ import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import com.yral.shared.libs.designsystem.theme.YralColors
 
@@ -28,6 +29,7 @@ fun YralBottomSheet(
     onDismissRequest: () -> Unit,
     bottomSheetState: SheetState,
     dragHandle: @Composable (() -> Unit)? = null,
+    containerColor: Color = YralColors.Neutral900,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
@@ -45,7 +47,7 @@ fun YralBottomSheet(
             onDismissRequest = onDismissRequest,
             sheetState = bottomSheetState,
             scrimColor = YralColors.ScrimColor,
-            containerColor = YralColors.Neutral900,
+            containerColor = containerColor,
             dragHandle = dragHandle,
             content = content,
             modifier = Modifier.padding(WindowInsets.statusBars.only(WindowInsetsSides.Top).asPaddingValues()),

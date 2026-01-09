@@ -318,6 +318,7 @@ internal class DefaultHomeComponent(
                     totalPrizePool,
                 )
             },
+            showAlertsOnDialog = showAlertsOnDialog,
         )
 
     private fun uploadVideoComponent(componentContext: ComponentContext): UploadVideoRootComponent =
