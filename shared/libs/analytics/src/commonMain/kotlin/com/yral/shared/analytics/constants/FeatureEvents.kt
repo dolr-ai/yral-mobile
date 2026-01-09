@@ -130,9 +130,5 @@ enum class FeatureEvents {
 
     ;
 
-    fun getEventName(): String =
-        when (this) {
-            VIDEO_DURATION_WATCHED -> "VideoDurationWatched"
-            else -> name.lowercase()
-        }
+    fun getEventName(): String = name.lowercase()
 }
