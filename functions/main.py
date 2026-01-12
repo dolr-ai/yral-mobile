@@ -251,8 +251,9 @@ def tap_to_recharge(request: Request):
         # 5️⃣ Ensure balance is zero
         user_ref = db().document(f"users/{pid}")
         user_snapshot = user_ref.get()
-        current  = user_snapshot.get("coins") or 0
-        airdrops = int(user_snapshot.get("number_of_airdrops") or 0)
+        user_data = user_snapshot.to_dict() or {}
+        current = int(user_data.get("coins") or 0)
+        airdrops = int(user_data.get("number_of_airdrops") or 0)
         if current > 0:
             return error_response(
                 409, "NON_ZERO_BALANCE",
@@ -273,7 +274,7 @@ def tap_to_recharge(request: Request):
 
         # 7️⃣ Book it in Firestore (reason TAP_RECHARGE)
         coins = tx_coin_change(pid, None, DELTA, "TAP_RECHARGE")
-        user_ref.update({"number_of_airdrops": firestore.Increment(1)})
+        user_ref.set({"number_of_airdrops": firestore.Increment(1)}, merge=True)
 
         # 8️⃣ Success → return new total only
         return jsonify({"coins": coins}), 200
