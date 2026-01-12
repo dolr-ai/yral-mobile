@@ -37,7 +37,7 @@ fun EventData.shouldSendToFacebook(): Boolean =
 fun EventData.shouldSendViaCore(isDebug: Boolean): Boolean =
     when {
         shouldSendToYralBE() -> true
-        isDebug -> true
+        isDebug -> false
         else -> true
     }
 
