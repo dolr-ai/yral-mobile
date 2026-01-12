@@ -7,6 +7,7 @@ import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.features.auth.ui.RequestLoginFactory
+import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.chat.nav.wall.ChatWallComponent
 import com.yral.shared.rust.service.utils.CanisterData
@@ -18,7 +19,11 @@ internal class DefaultChatComponent(
     override val requestLoginFactory: RequestLoginFactory,
     private val snapshot: Snapshot?,
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
-    private val openConversation: (influencerId: String, influencerCategory: String) -> Unit,
+    private val openConversation: (
+        influencerId: String,
+        influencerCategory: String,
+        influencerSource: InfluencerSource,
+    ) -> Unit,
 ) : ChatComponent(),
     ComponentContext by componentContext,
     KoinComponent {
@@ -60,6 +65,7 @@ internal class DefaultChatComponent(
                             Snapshot.Route.Conversation(
                                 influencerId = configuration.influencerId,
                                 influencerCategory = configuration.influencerCategory,
+                                influencerSource = configuration.influencerSource,
                             )
                         else -> Snapshot.Route.Wall
                     }
@@ -70,7 +76,11 @@ internal class DefaultChatComponent(
         when (this) {
             Snapshot.Route.Wall -> Config.Wall
             is Snapshot.Route.Conversation ->
-                Config.Conversation(influencerId = influencerId, influencerCategory = influencerCategory)
+                Config.Conversation(
+                    influencerId = influencerId,
+                    influencerCategory = influencerCategory,
+                    influencerSource = influencerSource,
+                )
         }
 
     private fun child(
@@ -85,10 +95,10 @@ internal class DefaultChatComponent(
     private fun chatWallComponent(componentContext: ComponentContext): ChatWallComponent =
         ChatWallComponent.Companion(
             componentContext = componentContext,
-            openConversation = { influencerId, influencerCategory ->
+            openConversation = { influencerId, influencerCategory, influencerSource ->
                 // Use root navigation instead of local navigation
                 // navigation.pushNew(Config.Conversation(influencerId = influencerId))
-                openConversation.invoke(influencerId, influencerCategory)
+                openConversation.invoke(influencerId, influencerCategory, influencerSource)
             },
         )
 
@@ -101,6 +111,7 @@ internal class DefaultChatComponent(
             requestLoginFactory = requestLoginFactory,
             influencerId = config.influencerId,
             influencerCategory = config.influencerCategory,
+            influencerSource = config.influencerSource,
             onBack = { navigation.pop() },
             openProfile = openProfile,
         )
@@ -114,6 +125,7 @@ internal class DefaultChatComponent(
         data class Conversation(
             val influencerId: String,
             val influencerCategory: String,
+            val influencerSource: InfluencerSource = InfluencerSource.CARD,
         ) : Config
     }
 }

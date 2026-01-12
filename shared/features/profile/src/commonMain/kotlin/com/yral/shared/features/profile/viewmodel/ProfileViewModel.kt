@@ -18,6 +18,8 @@ import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.shared.analytics.events.CtaType
 import com.yral.shared.analytics.events.EditProfileSource
 import com.yral.shared.analytics.events.FollowersListTab
+import com.yral.shared.analytics.events.InfluencerClickType
+import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.AccountInfo
@@ -30,6 +32,7 @@ import com.yral.shared.data.domain.CommonApis
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.data.domain.models.VideoViews
 import com.yral.shared.data.domain.useCases.GetVideoViewsUseCase
+import com.yral.shared.features.chat.analytics.ChatTelemetry
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
 import com.yral.shared.features.profile.analytics.ProfileTelemetry
@@ -102,6 +105,7 @@ class ProfileViewModel(
     private val followNotificationUseCase: FollowNotificationUseCase,
     private val getVideoViewsUseCase: GetVideoViewsUseCase,
     private val profileTelemetry: ProfileTelemetry,
+    private val chatTelemetry: ChatTelemetry,
     private val shareService: ShareService,
     private val urlBuilder: UrlBuilder,
     private val linkGenerator: LinkGenerator,
@@ -395,6 +399,17 @@ class ProfileViewModel(
             try {
                 getInfluencerUseCase(GetInfluencerUseCase.Params(id = influencerId))
                     .onSuccess { influencer ->
+                        chatTelemetry.influencerCardClicked(
+                            influencerId = influencer.id,
+                            influencerType = influencer.category,
+                            clickType = InfluencerClickType.TALK,
+                            position = 0,
+                        )
+                        chatTelemetry.chatInfluencerClicked(
+                            influencerId = influencer.id,
+                            influencerType = influencer.category,
+                            source = InfluencerSource.PROFILE,
+                        )
                         profileEventsChannel.trySend(ProfileEvents.InfluencerDetailsFetched(influencer))
                     }.onFailure { error ->
                         Logger.e("fetchInfluencerDetails") { "Failed to fetch influencer details $error" }

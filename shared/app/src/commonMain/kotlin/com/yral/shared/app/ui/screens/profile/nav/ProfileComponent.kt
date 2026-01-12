@@ -3,6 +3,7 @@ package com.yral.shared.app.ui.screens.profile.nav
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
+import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.account.nav.AccountComponent
@@ -27,6 +28,11 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
     abstract fun openEditProfile()
     abstract fun onBackClicked(): Boolean
     abstract fun openProfile()
+    abstract fun openConversation(
+        influencerId: String,
+        influencerCategory: String,
+        influencerSource: InfluencerSource = InfluencerSource.CARD,
+    )
 
     sealed class Child {
         class Main(
@@ -59,6 +65,7 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
             openConversation: (
                 influencerId: String,
                 influencerCategory: String,
+                influencerSource: InfluencerSource,
             ) -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
             promptLogin: (pageName: SignupPageName) -> Unit,

@@ -3,6 +3,7 @@ package com.yral.shared.app.nav
 import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
+import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
@@ -75,6 +76,7 @@ interface RootComponent {
     fun openConversation(
         influencerId: String,
         influencerCategory: String = "",
+        influencerSource: InfluencerSource = InfluencerSource.CARD,
     )
 
     fun openWallet()

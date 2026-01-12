@@ -76,6 +76,8 @@ class ConversationViewModel(
     private val sessionManager: SessionManager,
     private val chatTelemetry: ChatTelemetry,
 ) : ViewModel() {
+    private var influencerSource: InfluencerSource = InfluencerSource.CARD
+
     /**
      * Message ordering:
      * - Network paging uses `order=desc` (latest-first)
@@ -250,7 +252,7 @@ class ConversationViewModel(
                 influencerId = resolvedInfluencer?.id.orEmpty(),
                 influencerType = resolvedInfluencer?.category.orEmpty(),
                 chatSessionId = id,
-                source = InfluencerSource.CARD,
+                source = influencerSource,
             )
         }
     }
@@ -277,7 +279,9 @@ class ConversationViewModel(
     fun initializeForInfluencer(
         influencerId: String,
         influencerCategory: String,
+        influencerSource: InfluencerSource = InfluencerSource.CARD,
     ) {
+        this.influencerSource = influencerSource
         val currentInfluencerId = _viewState.value.influencer?.id
         val currentConversationId = _viewState.value.conversationId
         // same influencer and conversation exists

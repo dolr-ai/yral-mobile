@@ -1,5 +1,6 @@
 package com.yral.shared.app.nav
 
+import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.serialization.Serializable
 
@@ -40,6 +41,7 @@ internal sealed interface Config {
     data class Conversation(
         val influencerId: String,
         val influencerCategory: String,
+        val influencerSource: InfluencerSource = InfluencerSource.CARD,
     ) : Config
 
     @Serializable

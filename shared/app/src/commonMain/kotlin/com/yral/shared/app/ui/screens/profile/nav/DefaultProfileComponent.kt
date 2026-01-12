@@ -9,6 +9,7 @@ import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.pushToFront
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
+import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.account.nav.AccountComponent
@@ -34,6 +35,7 @@ internal class DefaultProfileComponent(
     private val openConversation: (
         influencerId: String,
         influencerCategory: String,
+        influencerSource: InfluencerSource,
     ) -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
     override val promptLogin: (pageName: SignupPageName) -> Unit,
@@ -85,6 +87,14 @@ internal class DefaultProfileComponent(
     override fun openEditProfile() {
         openEditProfile.invoke()
         // navigation.pushToFront(Config.EditProfile)
+    }
+
+    override fun openConversation(
+        influencerId: String,
+        influencerCategory: String,
+        influencerSource: InfluencerSource,
+    ) {
+        openConversation.invoke(influencerId, influencerCategory, influencerSource)
     }
 
     override fun onBackClicked(): Boolean {

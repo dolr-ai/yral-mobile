@@ -86,6 +86,7 @@ internal class ComponentFactory(
             requestLoginFactory = rootComponent.createLoginRequestFactory(),
             influencerId = config.influencerId,
             influencerCategory = config.influencerCategory,
+            influencerSource = config.influencerSource,
             onBack = rootComponent::onBackClicked,
             openProfile = rootComponent::openProfile,
         )

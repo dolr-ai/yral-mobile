@@ -63,6 +63,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import com.yral.shared.analytics.events.EditProfileSource
+import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.data.AlertsRequestType
@@ -241,6 +242,7 @@ fun ProfileMainScreen(
                     component.openConversation(
                         influencerId = event.influencer.id,
                         influencerCategory = event.influencer.category,
+                        influencerSource = InfluencerSource.PROFILE,
                     )
                 }
 
