@@ -7,6 +7,9 @@ object CardStackConstants {
     /** Fraction of screen width/height required to dismiss a card (0.35 = 35%) */
     const val SWIPE_THRESHOLD_FRACTION = 0.35f
 
+    /** Fraction of swipe threshold at which to commit video transition (0.5 = 50% of threshold) */
+    const val SWIPE_COMMIT_THRESHOLD = 0.5f
+
     /** Maximum rotation angle in degrees when card is dragged horizontally */
     const val ROTATION_MULTIPLIER = 15f
 
@@ -20,7 +23,7 @@ object CardStackConstants {
     const val VISIBLE_CARDS = 3
 
     /** Duration for card dismiss animation in milliseconds */
-    const val DISMISS_ANIMATION_DURATION_MS = 300
+    const val DISMISS_ANIMATION_DURATION_MS = 250
 
     /** Duration for snap-back animation in milliseconds */
     const val SNAP_BACK_DURATION_MS = 200
@@ -55,8 +58,8 @@ object CardStackConstants {
     /** Spring stiffness for snap-back animation */
     const val SNAP_BACK_STIFFNESS = 400f
 
-    /** Base visual progress when touching (before drag) */
-    const val TOUCH_BASE_PROGRESS = 0.3f
+    /** Base visual progress when touching (before drag) - set to 0 to disable pop animation */
+    const val TOUCH_BASE_PROGRESS = 0f
 
     /** Shadow elevation decay factor per card in stack */
     const val SHADOW_ELEVATION_DECAY = 0.2f

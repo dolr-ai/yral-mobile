@@ -65,6 +65,9 @@ class SwipeableCardState(
     var isAnimating by mutableStateOf(false)
         private set
 
+    /** Whether the swipe has been committed (passed 50% threshold) - next video should start */
+    var isSwipeCommitted by mutableStateOf(false)
+
     /** Animatable for smooth offset transitions */
     private val offsetAnimatable = Animatable(Offset.Zero, Offset.VectorConverter)
 
@@ -172,6 +175,7 @@ class SwipeableCardState(
             rotation = (offsetX / CardStackConstants.SNAP_BACK_STIFFNESS) * CardStackConstants.ROTATION_MULTIPLIER
         }
         swipeDirection = SwipeDirection.NONE
+        isSwipeCommitted = false
         isAnimating = false
     }
 
@@ -205,5 +209,6 @@ class SwipeableCardState(
         swipeDirection = SwipeDirection.NONE
         isTouching = false
         isDragging = false
+        isSwipeCommitted = false
     }
 }

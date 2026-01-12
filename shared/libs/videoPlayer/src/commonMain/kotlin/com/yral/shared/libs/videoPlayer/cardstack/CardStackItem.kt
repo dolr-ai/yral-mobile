@@ -50,11 +50,13 @@ internal fun CardStackItem(
     swipeState: SwipeableCardState,
     screenWidth: Float,
     screenHeight: Float,
+    showVideoPlayer: Boolean,
     modifier: Modifier = Modifier,
     overlayContent: @Composable () -> Unit,
 ) {
     val density = LocalDensity.current
     val isFrontCard = stackIndex == 0
+    val isNextCard = stackIndex == 1
 
     // Calculate visual progress: show card stack on touch, increase on drag
     // Base progress when touching (shows initial card pop-out effect)
@@ -63,13 +65,23 @@ internal fun CardStackItem(
     // Combined progress: touch gives base visibility, drag adds more
     val visualProgress = maxOf(touchBaseProgress, dragProgress).coerceIn(0f, 1f)
 
-    // For front card, apply drag transforms; for others, reveal stack based on visual progress
+    // For front card, apply drag transforms
+    // For next card, keep full screen (no transforms) so it appears ready
+    // For other cards, apply stacked appearance
     val cardTransforms =
         if (isFrontCard) {
             CardTransforms(
                 offsetX = swipeState.offsetX,
                 offsetY = swipeState.offsetY,
                 rotation = swipeState.rotation,
+                scale = 1f,
+            )
+        } else if (isNextCard) {
+            // Next card is full screen, no transforms
+            CardTransforms(
+                offsetX = 0f,
+                offsetY = 0f,
+                rotation = 0f,
                 scale = 1f,
             )
         } else {
@@ -96,14 +108,21 @@ internal fun CardStackItem(
     // Z-index: front card on top
     val zIndex = (CardStackConstants.VISIBLE_CARDS + 1 - stackIndex).toFloat()
 
-    // Shadow elevation decreases for cards further back
+    // Shadow elevation decreases for cards further back (none for next card)
     val shadowElevation =
-        CardStackConstants.CARD_SHADOW_ELEVATION_DP * (1f - stackIndex * CardStackConstants.SHADOW_ELEVATION_DECAY)
+        if (isNextCard) {
+            0f
+        } else {
+            CardStackConstants.CARD_SHADOW_ELEVATION_DP * (1f - stackIndex * CardStackConstants.SHADOW_ELEVATION_DECAY)
+        }
 
     // Front card: no padding/rounding when idle, reveal card style based on visual progress
+    // Next card: full screen, no padding/rounding
     val horizontalPadding =
         if (isFrontCard) {
             (CardStackConstants.CARD_HORIZONTAL_PADDING_DP * visualProgress).dp
+        } else if (isNextCard) {
+            0.dp
         } else {
             CardStackConstants.CARD_HORIZONTAL_PADDING_DP.dp
         }
@@ -111,6 +130,8 @@ internal fun CardStackItem(
     val cornerRadius =
         if (isFrontCard) {
             (CardStackConstants.CARD_CORNER_RADIUS_DP * visualProgress).dp
+        } else if (isNextCard) {
+            0.dp
         } else {
             CardStackConstants.CARD_CORNER_RADIUS_DP.dp
         }
@@ -148,8 +169,8 @@ internal fun CardStackItem(
             )
         }
 
-        // Video player only for front card
-        if (isFrontCard) {
+        // Video player: show based on activeVideoId from parent
+        if (showVideoPlayer) {
             key(playerData.videoId) {
                 YRALVideoPlayerWithControl(
                     modifier = Modifier.fillMaxSize(),
@@ -160,7 +181,10 @@ internal fun CardStackItem(
                     videoListener = videoListener,
                 )
             }
+        }
 
+        // Swipe feedback overlay for front card only
+        if (isFrontCard) {
             // Swipe feedback overlay
             val progress = swipeState.calculateSwipeProgress(screenWidth, screenHeight)
             SwipeFeedbackOverlay(
@@ -168,10 +192,10 @@ internal fun CardStackItem(
                 progress = progress,
                 modifier = Modifier.fillMaxSize(),
             )
-
-            // UI overlay content
-            overlayContent()
         }
+
+        // UI overlay content - show on all cards for pre-loading
+        overlayContent()
     }
 }
 

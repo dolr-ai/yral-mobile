@@ -30,7 +30,6 @@ import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
 import com.yral.shared.libs.videoPlayer.util.evictPrefetchedVideo
 import com.yral.shared.libs.videoPlayer.util.nextN
 import com.yral.shared.libs.videoPlayer.util.rememberPrefetchPlayerWithLifecycle
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 /**
@@ -166,20 +165,22 @@ internal fun SwipeableCardStack(
 
     // Page change to start/stop playback
     var lastPage by remember { mutableIntStateOf(-1) }
-    LaunchedEffect(swipeState.currentIndex, reels) {
-        snapshotFlow { swipeState.currentIndex to reels }
+    LaunchedEffect(swipeState.currentIndex) {
+        snapshotFlow { swipeState.currentIndex }
             .distinctUntilChanged()
-            .collect { (page, currentReels) ->
+            .collect { page ->
                 if (lastPage != page) {
-                    if (currentReels.size > lastPage && lastPage >= 0) {
+                    // Stop old video
+                    if (reels.size > lastPage && lastPage >= 0) {
                         playerPool.onPlayBackStopped(
-                            playerData = currentReels[lastPage].toPlayerData(),
+                            playerData = reels[lastPage].toPlayerData(),
                         )
                     }
-                    delay(CardStackConstants.PLAYER_SETUP_DELAY_MS)
-                    if (currentReels.size > page && page >= 0) {
+                    // Start new video
+                    val newVideo = reels.getOrNull(page)
+                    if (newVideo != null) {
                         playerPool.onPlayBackStarted(
-                            playerData = currentReels[page].toPlayerData(),
+                            playerData = newVideo.toPlayerData(),
                         )
                     }
                     lastPage = page
@@ -189,10 +190,14 @@ internal fun SwipeableCardStack(
 
     // Pause state for current video
     var isPause by remember { mutableStateOf(false) }
+
+    // Track playback positions by videoId (for resuming after transition)
+    val videoPositions = remember { mutableStateMapOf<String, Int>() }
+
+    // Reset pause state when page changes (ensures new video plays)
     LaunchedEffect(swipeState.currentIndex) {
         isPause = false
     }
-
     // Trigger scroll to next (for overlay button)
     var autoScrollToNext by remember { mutableStateOf(false) }
 
@@ -200,8 +205,8 @@ internal fun SwipeableCardStack(
         val screenWidth = constraints.maxWidth.toFloat()
         val screenHeight = constraints.maxHeight.toFloat()
 
-        // Render cards in reverse order (back to front) for proper z-ordering
-        val visibleCardCount = minOf(CardStackConstants.VISIBLE_CARDS + 1, pageCount - swipeState.currentIndex)
+        // Only render 2 cards: front card + next card (next is full screen, hides others)
+        val visibleCardCount = minOf(2, pageCount - swipeState.currentIndex)
 
         Box(
             modifier =
@@ -210,7 +215,12 @@ internal fun SwipeableCardStack(
                     .swipeableCard(
                         state = swipeState,
                         enabled = !swipeState.isAnimating && visibleCardCount > 0,
+                        onSwipeCommitted = { direction ->
+                            // Video is already paused via isTouching/isDragging during drag
+                        },
                         onSwipeComplete = { direction ->
+                            // Animation finished - ensure video plays and notify
+                            isPause = false
                             onPageLoaded(swipeState.currentIndex)
                         },
                         onEdgeReached = { direction ->
@@ -234,6 +244,12 @@ internal fun SwipeableCardStack(
                 val reel = reels[reelIndex]
                 val isFrontCard = stackOffset == 0
 
+                // Show video player only on front card
+                val showVideoPlayer = isFrontCard
+
+                // Get stored position for this video (for resuming after transition)
+                val storedPosition = videoPositions[reel.videoId]
+
                 // Key by videoId ensures Compose doesn't mix up cards during transitions
                 key(reel.videoId) {
                     CardStackItem(
@@ -242,21 +258,27 @@ internal fun SwipeableCardStack(
                         playerConfig = playerConfig,
                         playerControls =
                             PlayerControls(
-                                isPause = if (isFrontCard) isPause || swipeState.isTouching else true,
+                                isPause = if (showVideoPlayer) isPause else true,
                                 onPauseToggle = { isPause = !isPause },
-                                recordTime = recordTime,
+                                recordTime = { currentTime, totalTime ->
+                                    // Store position for this video
+                                    videoPositions[reel.videoId] = currentTime
+                                    // Also call the original callback
+                                    recordTime(currentTime, totalTime)
+                                },
+                                initialSeekPosition = storedPosition,
                             ),
                         playerPool = playerPool,
                         videoListener = getVideoListener(reel),
                         swipeState = swipeState,
                         screenWidth = screenWidth,
                         screenHeight = screenHeight,
+                        showVideoPlayer = showVideoPlayer,
                         modifier = Modifier.fillMaxSize(),
                         overlayContent = {
-                            if (isFrontCard) {
-                                overlayContent(reelIndex) {
-                                    autoScrollToNext = true
-                                }
+                            // Always render overlay content so it's pre-loaded for next card
+                            overlayContent(reelIndex) {
+                                autoScrollToNext = true
                             }
                         },
                     )

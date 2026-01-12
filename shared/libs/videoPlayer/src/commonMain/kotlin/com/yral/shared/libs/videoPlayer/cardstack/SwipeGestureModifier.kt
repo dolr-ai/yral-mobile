@@ -18,13 +18,17 @@ import kotlin.math.abs
  *
  * @param state The [SwipeableCardState] to update during gestures.
  * @param enabled Whether gestures are enabled.
- * @param onSwipeComplete Callback invoked when a card is successfully swiped away.
+ * @param commitThreshold Fraction of swipe threshold at which to commit (0.5 = 50% of threshold).
+ * @param onSwipeCommitted Callback invoked when drag exceeds commitThreshold (during drag, before release).
+ * @param onSwipeComplete Callback invoked when a card dismiss animation finishes.
  * @param onEdgeReached Callback invoked when user tries to swipe at the last card.
  */
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 fun Modifier.swipeableCard(
     state: SwipeableCardState,
     enabled: Boolean = true,
+    commitThreshold: Float = CardStackConstants.SWIPE_COMMIT_THRESHOLD,
+    onSwipeCommitted: (SwipeDirection) -> Unit = {},
     onSwipeComplete: (SwipeDirection) -> Unit,
     onEdgeReached: (SwipeDirection) -> Unit = {},
 ): Modifier =
@@ -49,6 +53,7 @@ fun Modifier.swipeableCard(
                 velocityTracker.addPosition(down.uptimeMillis, down.position)
 
                 var lastChange: PointerInputChange? = down
+                var hasCommittedThisGesture = false
 
                 // Track drag movements
                 @Suppress("LoopWithTooManyJumpStatements")
@@ -71,6 +76,16 @@ fun Modifier.swipeableCard(
                             dragAmount = dragAmount,
                             screenWidth = screenWidth,
                         )
+
+                        // Check if we should commit the video transition during drag
+                        if (!hasCommittedThisGesture && !state.isAtEnd()) {
+                            val progress = state.calculateSwipeProgress(screenWidth, screenHeight)
+                            if (progress >= commitThreshold && state.swipeDirection != SwipeDirection.NONE) {
+                                hasCommittedThisGesture = true
+                                state.isSwipeCommitted = true
+                                onSwipeCommitted(state.swipeDirection)
+                            }
+                        }
                     }
 
                     lastChange = change
@@ -97,6 +112,11 @@ fun Modifier.swipeableCard(
                         }
                     } else {
                         // Dismiss the card
+                        // Fire commit callback if not already fired during drag (e.g., for flings)
+                        if (!hasCommittedThisGesture) {
+                            state.isSwipeCommitted = true
+                            onSwipeCommitted(direction)
+                        }
                         coroutineScope.launch {
                             state.animateDismiss(screenWidth, screenHeight) {
                                 onSwipeComplete(direction)
