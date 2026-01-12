@@ -38,11 +38,10 @@ import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastType
 import com.yral.shared.libs.designsystem.component.toast.showError
 import com.yral.shared.libs.designsystem.component.toast.showSuccess
-import com.yral.shared.libs.videoPlayer.YRALReelPlayer
+import com.yral.shared.libs.videoPlayer.YRALReelPlayerCardStack
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.pool.VideoListener
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
-import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
 import com.yral.shared.reportVideo.domain.models.ReportSheetState
 import com.yral.shared.reportVideo.ui.ReportVideoSheet
 import kotlinx.coroutines.flow.collectLatest
@@ -135,7 +134,7 @@ fun FeedScreen(
     Column(modifier = modifier) {
         if (state.feedDetails.isNotEmpty()) {
             KeepScreenOnEffect(true)
-            YRALReelPlayer(
+            YRALReelPlayerCardStack(
                 modifier = Modifier.weight(1f),
                 reels = getReels(state),
                 maxReelsInPager = limitReelCount,
@@ -153,9 +152,8 @@ fun FeedScreen(
                 getPrefetchListener = getPrefetchListener,
                 getVideoListener = getVideoListener,
                 onEdgeScrollAttempt = { page, atFirst, direction ->
-                    if (!atFirst && direction == ReelScrollDirection.Up) {
-                        onEdgeScrollAttempt(page)
-                    }
+                    // For card stack, any edge swipe attempt should trigger load more
+                    onEdgeScrollAttempt(page)
                 },
             ) { pageNo, scrollToNext ->
                 FeedOverlay(

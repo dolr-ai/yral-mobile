@@ -61,7 +61,7 @@ internal fun YRALVideoPlayerWithControl(
     var selectedSpeed by remember { mutableStateOf(PlayerSpeed.X1) } // Selected playback speed
     var showSpeedSelection by remember { mutableStateOf(false) } // Selected playback speed
     var isScreenLocked by remember { mutableStateOf(false) }
-    var screenSize by remember { mutableStateOf(ScreenResize.FIT) }
+    var screenSize by remember { mutableStateOf(playerConfig.defaultScreenResize) }
     var isBuffering by remember { mutableStateOf(true) }
     var isFullScreen by remember { mutableStateOf(false) }
     var showControls by remember { mutableStateOf(true) } // State for showing/hiding controls

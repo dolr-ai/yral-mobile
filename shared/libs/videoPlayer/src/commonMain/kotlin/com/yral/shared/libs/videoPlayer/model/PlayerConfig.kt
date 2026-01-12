@@ -60,6 +60,7 @@ data class PlayerConfig(
     var isPause: Boolean? = null,
     var pauseCallback: ((Boolean) -> Unit)? = null,
     var isScreenResizeEnabled: Boolean = true,
+    var defaultScreenResize: ScreenResize = ScreenResize.FIT,
     var bufferCallback: ((Boolean) -> Unit)? = null,
     var didEndVideo: (() -> Unit)? = null,
     var loop: Boolean = true,
