@@ -34,6 +34,13 @@ fun EventData.shouldSendToFacebook(): Boolean =
         else -> false
     }
 
+fun EventData.shouldSendViaCore(isDebug: Boolean): Boolean =
+    when {
+        shouldSendToYralBE() -> true
+        isDebug -> false
+        else -> true
+    }
+
 fun EventData.shouldSendToBranch(): Boolean =
     when (event) {
         FeatureEvents.FIRST_APP_LAUNCH.getEventName() -> true
