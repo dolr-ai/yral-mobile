@@ -15,4 +15,12 @@
     <string name="join_tournament">Join the Tournament</string>
     <string name="join_tournament_disclaimer">You need to login to register and jump into the tournament for a chance to win Bitcoin!</string>
     <string name="login_to_chat_with_influencer">Login to continue chatting with %1$s</string>
+
+    <string name="country">Country</string>
+    <string name="search_by_country_name">Search by country name...</string>
+    <string name="enter_mobile_number">Enter Mobile Number</string>
+    <string name="otp_verification">OTP Verification</string>
+    <string name="otp_sent_to">OTP sent to %1$s</string>
+    <string name="resend_otp_in">Resend OTP in %1$ss</string>
+    <string name="resend_otp">Resend OTP</string>
 </resources>
