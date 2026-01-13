@@ -18,6 +18,14 @@ from tournaments import (
     tournament_vote,
     tournament_leaderboard
 )
+from hot_or_not_tournament import (
+    create_hot_or_not_tournament,
+    register_hot_or_not_tournament,
+    hot_or_not_tournament_vote,
+    hot_or_not_tournament_leaderboard,
+    hot_or_not_tournaments,
+    hot_or_not_tournament_videos
+)
 import os
 import random
 import collections
@@ -38,6 +46,11 @@ DAILY_COLL = "leaderboards_daily"
 BANNED_USERS_COLL = "smiley_game_banned_users"
 SMILEY_GAME_BAN_THRESHOLD = 15000
 SMILEY_GAME_BAN_THRESHOLD_LAST_60_MINS = 1500
+
+# Hot or Not Game constants
+HOT_OR_NOT_WIN_REWARD = 1
+HOT_OR_NOT_LOSS_PENALTY = -1
+HOT_OR_NOT_COLL = "hot_or_not_videos"
 
 BALANCE_URL_YRAL_TOKEN = "https://yral-hot-or-not.go-bazzinga.workers.dev/update_balance/"
 BALANCE_URL_CKBTC = "https://yral-hot-or-not.go-bazzinga.workers.dev/v2/transfer_ckbtc"
@@ -528,6 +541,158 @@ def cast_vote_v2(request: Request):
         return error_response(500, "FIRESTORE_ERROR", str(e))
     except Exception as e:                                 # fallback
         print("Unhandled error:", e, file=sys.stderr)
+        return error_response(500, "INTERNAL", "Internal server error")
+
+
+############################## Hot or Not Game ##############################
+@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
+def cast_hot_or_not_vote(request: Request):
+    """
+    Hot or Not voting game.
+    User swipes LEFT (not) or RIGHT (hot) on videos.
+    If vote matches majority → +1 token, else -1 token.
+    """
+    balance_update_token = os.environ["BALANCE_UPDATE_TOKEN"]
+    try:
+        # 1. validation & auth ────────────────────────────────────────────
+        if request.method != "POST":
+            return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
+
+        body = request.get_json(silent=True) or {}
+        data = body.get("data", {})
+        pid  = str(body.get("principal_id") or data.get("principal_id") or "").strip()
+        vid  = str(body.get("video_id") or data.get("video_id") or "").strip()
+        vote = str(body.get("vote") or data.get("vote") or "").strip().lower()
+
+        if not PID_REGEX.fullmatch(pid):
+            return error_response(400, "INVALID_PRINCIPAL_ID",
+                                  "principal_id must be 6–64 chars A-Z a-z 0-9 _-")
+
+        if not vid:
+            return error_response(400, "INVALID_VIDEO_ID", "video_id is required")
+
+        if vote not in ("hot", "not"):
+            return error_response(400, "INVALID_VOTE", "vote must be 'hot' or 'not'")
+
+        # TODO: Re-enable auth after testing
+        # auth_header = request.headers.get("Authorization", "")
+        # if not auth_header.startswith("Bearer "):
+        #     return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
+        # auth.verify_id_token(auth_header.split(" ", 1)[1])
+
+        # 2. references ───────────────────────────────────────────────────
+        vid_ref   = db().collection(HOT_OR_NOT_COLL).document(vid)
+        vote_ref  = vid_ref.collection("votes").document(pid)
+        user_ref  = db().document(f"users/{pid}")
+
+        # 3. transaction: check balance, check duplicate, record vote ─────
+        @firestore.transactional
+        def _vote_tx(tx: firestore.Transaction) -> dict:
+            # TODO: Re-enable coin check after testing
+            # # Check user balance
+            # user_snapshot = user_ref.get(transaction=tx)
+            # balance = user_snapshot.get("coins") or 0
+            # if balance < abs(HOT_OR_NOT_LOSS_PENALTY):
+            #     return {"result": "INSUFFICIENT", "coins": balance}
+
+            # Check duplicate vote
+            if vote_ref.get(transaction=tx).exists:
+                return {"result": "DUP"}
+
+            # Get current video counts
+            vid_snap = vid_ref.get(transaction=tx)
+            if vid_snap.exists:
+                vid_data = vid_snap.to_dict() or {}
+                hot_count = vid_data.get("hot_count", 0)
+                not_count = vid_data.get("not_count", 0)
+            else:
+                hot_count = 0
+                not_count = 0
+
+            # Record user's vote
+            tx.set(vote_ref, {
+                "vote": vote,
+                "at": firestore.SERVER_TIMESTAMP
+            })
+
+            # Update video counts (create doc if doesn't exist)
+            if vote == "hot":
+                update_data = {"hot_count": firestore.Increment(1)}
+                if not vid_snap.exists:
+                    update_data["not_count"] = 0
+                    update_data["created_at"] = firestore.SERVER_TIMESTAMP
+            else:
+                update_data = {"not_count": firestore.Increment(1)}
+                if not vid_snap.exists:
+                    update_data["hot_count"] = 0
+                    update_data["created_at"] = firestore.SERVER_TIMESTAMP
+
+            tx.set(vid_ref, update_data, merge=True)
+
+            return {
+                "result": "OK",
+                "hot_count": hot_count,
+                "not_count": not_count
+            }
+
+        tx_out = _vote_tx(db().transaction())
+
+        if tx_out["result"] == "DUP":
+            return error_response(409, "DUPLICATE_VOTE", "You have already voted on this video.")
+
+        if tx_out["result"] == "INSUFFICIENT":
+            return error_response(402, "INSUFFICIENT_COINS",
+                                  f"Balance {tx_out['coins']} < {abs(HOT_OR_NOT_LOSS_PENALTY)} required")
+
+        # 4. determine outcome based on majority ──────────────────────────
+        hot_count = tx_out["hot_count"]
+        not_count = tx_out["not_count"]
+
+        # Determine majority (before this vote was counted)
+        # If tied or no votes yet, user wins (first-vote advantage)
+        if hot_count == not_count:
+            outcome = "WIN"  # Tie or first vote - user wins
+        elif hot_count > not_count:
+            majority = "hot"
+            outcome = "WIN" if vote == majority else "LOSS"
+        else:
+            majority = "not"
+            outcome = "WIN" if vote == majority else "LOSS"
+
+        # 5. coin mutation ────────────────────────────────────────────────
+        delta = HOT_OR_NOT_WIN_REWARD if outcome == "WIN" else HOT_OR_NOT_LOSS_PENALTY
+
+        # TODO: Re-enable after testing
+        # coins = tx_coin_change(pid, vid, delta, f"HOT_OR_NOT_{outcome}")
+        # # Push to external YRAL token service
+        # success, error_msg = _push_delta_yral_token(balance_update_token, pid, delta)
+        # if not success:
+        #     print(f"Failed to update YRAL balance for {pid}: {error_msg}", file=sys.stderr)
+        #     _ = tx_coin_change(pid, vid, -delta, "HOT_OR_NOT_ROLLBACK")
+        #     return error_response(502, "UPSTREAM_FAILED",
+        #                           "We couldn't record your vote. Please try again.")
+        coins = 100  # Dummy value for testing
+
+        # Update vote document with outcome
+        vote_ref.update({
+            "outcome": outcome,
+            "coin_delta": delta
+        })
+
+        # 6. success payload ──────────────────────────────────────────────
+        return jsonify({
+            "outcome": outcome,
+            "coins": coins,
+            "coin_delta": delta
+        }), 200
+
+    # known error wrappers ───────────────────────────────────────────────
+    except auth.InvalidIdTokenError:
+        return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
+    except GoogleAPICallError as e:
+        return error_response(500, "FIRESTORE_ERROR", str(e))
+    except Exception as e:
+        print("Unhandled error in cast_hot_or_not_vote:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
 
