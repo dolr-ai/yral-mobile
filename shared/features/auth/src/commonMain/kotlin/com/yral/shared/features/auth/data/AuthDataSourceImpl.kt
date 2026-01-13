@@ -254,7 +254,7 @@ class AuthDataSourceImpl(
                 )
             } else {
                 PhoneAuthVerifyResponseDto.Error(
-                    error = mapOf("error" to "Missing all required keys"),
+                    error = "Missing all required keys",
                     errorDescription = apiResponseString,
                 )
             }
@@ -272,7 +272,7 @@ class AuthDataSourceImpl(
         private const val EXCHANGE_PRINCIPAL_PATH = "exchange_principal_id"
         private const val HEADER_X_FIREBASE_APPCHECK = "X-Firebase-AppCheck"
         private const val DELETE_ACCOUNT = "api/v1/user"
-        private const val PATH_PHONE_AUTH_LOGIN = "phone_auth_login"
-        private const val PATH_VERIFY_PHONE_AUTH = "verify_phone_auth"
+        private const val PATH_PHONE_AUTH_LOGIN = "api/phone_auth_login"
+        private const val PATH_VERIFY_PHONE_AUTH = "api/verify_phone_auth"
     }
 }

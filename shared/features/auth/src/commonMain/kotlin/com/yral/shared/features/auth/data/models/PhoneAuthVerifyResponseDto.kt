@@ -14,7 +14,7 @@ sealed class PhoneAuthVerifyResponseDto {
 
     @Serializable
     data class Error(
-        @SerialName("error") val error: Map<String, String>,
+        @SerialName("error") val error: String,
         @SerialName("error_description") val errorDescription: String,
     ) : PhoneAuthVerifyResponseDto()
 }
@@ -28,11 +28,10 @@ fun PhoneAuthVerifyResponseDto.toPhoneAuthVerifyResponse(): PhoneAuthVerifyRespo
             )
 
         is PhoneAuthVerifyResponseDto.Error -> {
-            val errorMessage = error.entries.joinToString(", ") { "${it.key}: ${it.value}" }
             PhoneAuthVerifyResponse.Error(
                 error = error,
                 errorDescription = errorDescription,
-                errorMessage = "$errorMessage - $errorDescription",
+                errorMessage = "$error - $errorDescription",
             )
         }
     }

@@ -19,7 +19,6 @@ val networkModule =
                 get(),
                 get(),
                 get(),
-                get(),
             )
         }
         single {

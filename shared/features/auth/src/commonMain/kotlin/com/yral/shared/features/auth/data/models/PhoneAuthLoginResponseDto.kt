@@ -6,11 +6,11 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed class PhoneAuthLoginResponseDto {
     @Serializable
-    object Success : PhoneAuthLoginResponseDto()
+    data object Success : PhoneAuthLoginResponseDto()
 
     @Serializable
     data class Error(
-        @SerialName("error") val error: Map<String, String>,
+        @SerialName("error") val error: String,
         @SerialName("error_description") val errorDescription: String,
     ) : PhoneAuthLoginResponseDto()
 }

@@ -2,6 +2,7 @@ package com.yral.shared.features.auth.data.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
 @Serializable
 data class AuthClientQuery(
@@ -11,6 +12,7 @@ data class AuthClientQuery(
     @SerialName("state") val state: String,
     @SerialName("code_challenge") val codeChallenge: String,
     @SerialName("code_challenge_method") val codeChallengeMethod: String,
+    @SerialName("login_hint") val loginHint: JsonElement,
 )
 
 @Serializable
