@@ -134,6 +134,7 @@ dependencies {
     implementation(libs.firebase.appcheck.playintegrity)
     implementation(libs.firebase.appcheck.debug)
     implementation(libs.firebase.messaging)
+    implementation(libs.firebase.inappmessaging.display)
     implementation(libs.coil.compose)
     implementation(libs.coil.ktor3)
     implementation(libs.coil.svg)
