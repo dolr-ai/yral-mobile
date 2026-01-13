@@ -1,6 +1,7 @@
 package com.yral.shared.features.chat.ui.wall
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -113,6 +114,7 @@ private fun InfluencerCard(
 ) {
     val cardShape = MaterialTheme.shapes.medium
     val gradientStartTransparent = style.gradientStart.copy(alpha = 0f)
+    val isClickable = influencer.status != InfluencerStatus.COMING_SOON
 
     Box(
         modifier =
@@ -120,7 +122,10 @@ private fun InfluencerCard(
                 .fillMaxWidth()
                 .aspectRatio(ChatWallScreenConstants.CARD_ASPECT_RATIO)
                 .clip(cardShape)
-                .background(
+                .clickable(
+                    enabled = isClickable,
+                    onClick = onClick,
+                ).background(
                     color = Color.Transparent,
                     shape = cardShape,
                 ),
