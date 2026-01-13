@@ -34,6 +34,13 @@ fun rememberPooledPlatformPlayer(
         }
     }
 
+    // Pause player when composable is disposed (e.g., card swiped away)
+    DisposableEffect(playerData.url) {
+        onDispose {
+            platformPlayer?.pause()
+        }
+    }
+
     // Note: Performance tracing is now handled internally by the PlayerPool
     // No need for additional tracing here to avoid duplicates
 

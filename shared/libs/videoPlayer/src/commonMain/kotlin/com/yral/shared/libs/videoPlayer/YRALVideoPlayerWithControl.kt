@@ -56,12 +56,13 @@ internal fun YRALVideoPlayerWithControl(
     var totalTime by remember { mutableIntStateOf(0) } // Total duration of the video
     var currentTime by remember { mutableIntStateOf(0) } // Current playback time
     var isSliding by remember { mutableStateOf(false) } // Flag indicating if the seek bar is being slid
-    var sliderTime: Int? by remember { mutableStateOf(null) } // Time indicated by the seek bar
+    // Initialize with stored position for resuming, will be cleared after seek
+    var sliderTime: Int? by remember { mutableStateOf(playerControls.initialSeekPosition) }
     var isMute by remember { mutableStateOf(false) } // Flag indicating if the audio is muted
     var selectedSpeed by remember { mutableStateOf(PlayerSpeed.X1) } // Selected playback speed
     var showSpeedSelection by remember { mutableStateOf(false) } // Selected playback speed
     var isScreenLocked by remember { mutableStateOf(false) }
-    var screenSize by remember { mutableStateOf(ScreenResize.FIT) }
+    var screenSize by remember { mutableStateOf(playerConfig.defaultScreenResize) }
     var isBuffering by remember { mutableStateOf(true) }
     var isFullScreen by remember { mutableStateOf(false) }
     var showControls by remember { mutableStateOf(true) } // State for showing/hiding controls

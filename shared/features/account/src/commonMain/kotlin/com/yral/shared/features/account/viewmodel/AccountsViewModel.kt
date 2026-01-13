@@ -129,7 +129,7 @@ class AccountsViewModel internal constructor(
             mutableListOf(
                 AccountHelpLink(
                     type = AccountHelpLinkType.TALK_TO_TEAM,
-                    link = accountLinks.support,
+                    link = accountLinks.support.trim(),
                     linkText = accountLinks.supportText,
                     linkRemoteIcon = _state.value.supportIcon,
                     openInExternalBrowser = true,
