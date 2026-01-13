@@ -107,6 +107,7 @@ class AuthTelemetry(
         when (this) {
             SocialProvider.GOOGLE -> AuthJourney.GOOGLE
             SocialProvider.APPLE -> AuthJourney.APPLE
+            SocialProvider.PHONE_NUMBER -> AuthJourney.PHONE
         }
 
     companion object {
