@@ -7,7 +7,7 @@ sealed class PhoneAuthVerifyResponse {
     ) : PhoneAuthVerifyResponse()
 
     data class Error(
-        val error: Map<String, String>,
+        val error: String,
         val errorDescription: String,
         val errorMessage: String,
     ) : PhoneAuthVerifyResponse()

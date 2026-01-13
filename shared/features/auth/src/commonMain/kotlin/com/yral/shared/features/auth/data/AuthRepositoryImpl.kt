@@ -11,6 +11,7 @@ import com.yral.shared.features.auth.data.models.toTokenResponse
 import com.yral.shared.features.auth.di.AuthEnv
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.models.ExchangePrincipalResponse
+import com.yral.shared.features.auth.domain.models.PhoneAuthLoginResponse
 import com.yral.shared.features.auth.domain.models.PhoneAuthVerifyResponse
 import com.yral.shared.features.auth.domain.models.TokenResponse
 import com.yral.shared.features.auth.utils.OAuthUtilsHelper
@@ -20,11 +21,13 @@ import io.ktor.http.Parameters
 import io.ktor.http.URLBuilder
 import io.ktor.http.URLProtocol
 import io.ktor.http.Url
+import kotlinx.serialization.json.Json
 
 class AuthRepositoryImpl(
     private val dataSource: AuthDataSource,
     private val oAuthUtilsHelper: OAuthUtilsHelper,
     private val authEnv: AuthEnv,
+    private val json: Json,
 ) : AuthRepository {
     private var verifier: String = ""
 
@@ -98,9 +101,13 @@ class AuthRepositoryImpl(
         dataSource.deregisterForNotifications(token)
     }
 
-    override suspend fun phoneAuthLogin(phoneNumber: String): String {
-        val codeVerifier = oAuthUtilsHelper.generateCodeVerifier()
-        val codeChallenge = oAuthUtilsHelper.generateCodeChallenge(codeVerifier)
+    override suspend fun phoneAuthLogin(
+        phoneNumber: String,
+        identity: ByteArray,
+    ): PhoneAuthLoginResponse {
+        verifier = oAuthUtilsHelper.generateCodeVerifier()
+        val codeChallenge = oAuthUtilsHelper.generateCodeChallenge(verifier)
+        val loginHint = yralAuthLoginHint(identity)
         val authClientQuery =
             AuthClientQuery(
                 responseType = "code",
@@ -109,12 +116,13 @@ class AuthRepositoryImpl(
                 state = codeChallenge,
                 codeChallenge = codeChallenge,
                 codeChallengeMethod = "S256",
+                loginHint = json.parseToJsonElement(loginHint),
             )
         return when (val response = dataSource.phoneAuthLogin(phoneNumber, authClientQuery)) {
-            is PhoneAuthLoginResponseDto.Success -> codeChallenge
+            is PhoneAuthLoginResponseDto.Success ->
+                PhoneAuthLoginResponse(codeChallenge = codeChallenge)
             is PhoneAuthLoginResponseDto.Error -> {
-                val errorMessage = response.error.entries.joinToString(", ") { "${it.key}: ${it.value}" }
-                throw YralAuthException("$errorMessage - ${response.errorDescription}")
+                throw YralAuthException("${response.error} - ${response.errorDescription}")
             }
         }
     }

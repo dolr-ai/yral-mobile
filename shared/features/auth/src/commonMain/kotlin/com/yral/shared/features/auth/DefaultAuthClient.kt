@@ -21,6 +21,7 @@ import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.auth.analytics.AuthTelemetry
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.models.ExchangePrincipalResponse
+import com.yral.shared.features.auth.domain.models.PhoneAuthLoginResponse
 import com.yral.shared.features.auth.domain.models.PhoneAuthVerifyResponse
 import com.yral.shared.features.auth.domain.useCases.AuthenticateTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.DeregisterNotificationTokenUseCase
@@ -600,23 +601,31 @@ class DefaultAuthClient(
         preferences.remove(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name)
     }
 
-    override suspend fun phoneAuthLogin(phoneNumber: String): String =
-        requiredUseCases.phoneAuthLoginUseCase
-            .invoke(phoneNumber)
-            .onSuccess { codeChallenge ->
+    override suspend fun phoneAuthLogin(phoneNumber: String): PhoneAuthLoginResponse {
+        val identity =
+            sessionManager.identity
+                ?: throw YralAuthException("Phone auth login failed - identity not available")
+        return requiredUseCases.phoneAuthLoginUseCase
+            .invoke(
+                PhoneAuthLoginUseCase.Params(
+                    phoneNumber = phoneNumber,
+                    identity = identity,
+                ),
+            ).onSuccess { result ->
                 Logger.d("DefaultAuthClient") { "Phone auth login initiated for $phoneNumber" }
-                currentState = codeChallenge
-                return codeChallenge
+                currentState = result.codeChallenge
+                return result
             }.onFailure { error ->
                 authTelemetry.authFailed(SocialProvider.PHONE_NUMBER) // Use generic telemetry
                 Logger.e("DefaultAuthClient") { "Phone auth login failed: ${error.message}" }
                 throw YralAuthException("Phone auth login failed - ${error.message}")
             }.getOrThrow()
+    }
 
     override suspend fun verifyPhoneAuth(
         phoneNumber: String,
         code: String,
-    ): PhoneAuthVerifyResponse =
+    ) {
         currentState?.let { currentState ->
             requiredUseCases.verifyPhoneAuthUseCase
                 .invoke(
@@ -627,12 +636,22 @@ class DefaultAuthClient(
                     ),
                 ).onSuccess { response ->
                     Logger.d("DefaultAuthClient") { "Phone auth verification completed" }
-                    return response
+                    when (response) {
+                        is PhoneAuthVerifyResponse.Error -> {
+                            throw YralAuthException("Phone auth verification failed - ${response.errorMessage}")
+                        }
+                        is PhoneAuthVerifyResponse.Success -> {
+                            sessionManager.userPrincipal?.let { userPrincipal ->
+                                authenticate(response.idTokenCode, userPrincipal)
+                            }
+                        }
+                    }
                 }.onFailure { error ->
                     Logger.e("DefaultAuthClient") { "Phone auth verification failed: ${error.message}" }
                     throw YralAuthException("Phone auth verification failed - ${error.message}")
                 }.getOrThrow()
         } ?: throw YralAuthException("Phone auth verification failed - no state found")
+    }
 }
 
 class SecurityException(
