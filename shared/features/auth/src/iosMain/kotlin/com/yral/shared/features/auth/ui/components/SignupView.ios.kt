@@ -1,4 +1,4 @@
-package com.yral.shared.app.ui.screens
+package com.yral.shared.features.auth.ui.components
 
 import androidx.compose.runtime.Composable
 
