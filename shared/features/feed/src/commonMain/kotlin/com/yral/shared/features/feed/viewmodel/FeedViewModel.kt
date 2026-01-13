@@ -112,7 +112,12 @@ class FeedViewModel(
         const val FOLLOW_NUDGE_PAGE = 5
     }
 
-    private val _state = MutableStateFlow(FeedState())
+    private val _state =
+        MutableStateFlow(
+            FeedState(
+                isCardLayoutEnabled = flagManager.isEnabled(FeedFeatureFlags.CardLayout.Enabled),
+            ),
+        )
     val state: StateFlow<FeedState> = _state.asStateFlow()
 
     private val feedEventsChannel = Channel<FeedEvents>(Channel.CONFLATED)
@@ -1218,6 +1223,7 @@ data class FeedState(
     val showTournamentIntroSheet: Boolean = false,
     val tournamentIntroCheckedThisSession: Boolean = false,
     val isMandatoryLogin: Boolean = false,
+    val isCardLayoutEnabled: Boolean = true,
 )
 
 enum class OverlayType {

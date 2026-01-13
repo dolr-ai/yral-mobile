@@ -39,6 +39,7 @@ import com.yral.shared.libs.designsystem.component.toast.ToastType
 import com.yral.shared.libs.designsystem.component.toast.showError
 import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
+import com.yral.shared.libs.videoPlayer.YRALReelPlayerCardStack
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.pool.VideoListener
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
@@ -135,37 +136,70 @@ fun FeedScreen(
     Column(modifier = modifier) {
         if (state.feedDetails.isNotEmpty()) {
             KeepScreenOnEffect(true)
-            YRALReelPlayer(
-                modifier = Modifier.weight(1f),
-                reels = getReels(state),
-                maxReelsInPager = limitReelCount,
-                initialPage = state.currentPageOfFeed,
-                onPageLoaded = { page ->
-                    // call onPageChanged before changing page in FeedViewModel
-                    onPageChanged(page, state.currentPageOfFeed)
-                    viewModel.onCurrentPageChange(page)
-                    viewModel.setPostDescriptionExpanded(false)
-                },
-                recordTime = { currentTime, totalTime ->
-                    viewModel.recordTime(currentTime, totalTime)
-                },
-                didVideoEnd = { viewModel.didCurrentVideoEnd() },
-                getPrefetchListener = getPrefetchListener,
-                getVideoListener = getVideoListener,
-                onEdgeScrollAttempt = { page, atFirst, direction ->
-                    if (!atFirst && direction == ReelScrollDirection.Up) {
+            if (state.isCardLayoutEnabled) {
+                YRALReelPlayerCardStack(
+                    modifier = Modifier.weight(1f),
+                    reels = getReels(state),
+                    maxReelsInPager = limitReelCount,
+                    initialPage = state.currentPageOfFeed,
+                    onPageLoaded = { page ->
+                        // call onPageChanged before changing page in FeedViewModel
+                        onPageChanged(page, state.currentPageOfFeed)
+                        viewModel.onCurrentPageChange(page)
+                        viewModel.setPostDescriptionExpanded(false)
+                    },
+                    recordTime = { currentTime, totalTime ->
+                        viewModel.recordTime(currentTime, totalTime)
+                    },
+                    didVideoEnd = { viewModel.didCurrentVideoEnd() },
+                    getPrefetchListener = getPrefetchListener,
+                    getVideoListener = getVideoListener,
+                    onEdgeScrollAttempt = { page, atFirst, direction ->
+                        // For card stack, any edge swipe attempt should trigger load more
                         onEdgeScrollAttempt(page)
-                    }
-                },
-            ) { pageNo, scrollToNext ->
-                FeedOverlay(
-                    pageNo = pageNo,
-                    state = state,
-                    feedViewModel = viewModel,
-                    topOverlay = { topOverlay(pageNo) },
-                    bottomOverlay = { bottomOverlay(pageNo, scrollToNext) },
-                    actionsRight = { actionsRight(pageNo) },
-                )
+                    },
+                ) { pageNo, scrollToNext ->
+                    FeedOverlay(
+                        pageNo = pageNo,
+                        state = state,
+                        feedViewModel = viewModel,
+                        topOverlay = { topOverlay(pageNo) },
+                        bottomOverlay = { bottomOverlay(pageNo, scrollToNext) },
+                        actionsRight = { actionsRight(pageNo) },
+                    )
+                }
+            } else {
+                YRALReelPlayer(
+                    modifier = Modifier.weight(1f),
+                    reels = getReels(state),
+                    maxReelsInPager = limitReelCount,
+                    initialPage = state.currentPageOfFeed,
+                    onPageLoaded = { page ->
+                        onPageChanged(page, state.currentPageOfFeed)
+                        viewModel.onCurrentPageChange(page)
+                        viewModel.setPostDescriptionExpanded(false)
+                    },
+                    recordTime = { currentTime, totalTime ->
+                        viewModel.recordTime(currentTime, totalTime)
+                    },
+                    didVideoEnd = { viewModel.didCurrentVideoEnd() },
+                    getPrefetchListener = getPrefetchListener,
+                    getVideoListener = getVideoListener,
+                    onEdgeScrollAttempt = { page, atFirst, direction ->
+                        if (!atFirst && direction == ReelScrollDirection.Up) {
+                            onEdgeScrollAttempt(page)
+                        }
+                    },
+                ) { pageNo, scrollToNext ->
+                    FeedOverlay(
+                        pageNo = pageNo,
+                        state = state,
+                        feedViewModel = viewModel,
+                        topOverlay = { topOverlay(pageNo) },
+                        bottomOverlay = { bottomOverlay(pageNo, scrollToNext) },
+                        actionsRight = { actionsRight(pageNo) },
+                    )
+                }
             }
             // Show loader at the bottom when loading more content AND no new items have been added yet
             if (showLoader) {
