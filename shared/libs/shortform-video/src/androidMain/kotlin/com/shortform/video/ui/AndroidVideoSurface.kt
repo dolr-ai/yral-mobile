@@ -2,17 +2,18 @@ package com.shortform.video.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.media3.ui.AspectRatioFrameLayout
-import androidx.media3.ui.PlayerView
+import androidx.compose.ui.layout.ContentScale
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.ui.compose.ContentFrame
 import com.shortform.video.VideoSurfaceHandle
 import java.util.UUID
 
 internal class AndroidVideoSurfaceHandle(
-    val playerView: PlayerView,
+    val playerState: androidx.compose.runtime.MutableState<Player?>,
     override val id: String = UUID.randomUUID().toString(),
 ) : VideoSurfaceHandle
 
@@ -21,19 +22,14 @@ actual fun VideoSurface(
     modifier: Modifier,
     onHandleReady: (VideoSurfaceHandle) -> Unit,
 ) {
-    val context = LocalContext.current
-    val handle = remember {
-        AndroidVideoSurfaceHandle(
-            PlayerView(context).apply {
-                useController = false
-                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-            },
-        )
-    }
+    val playerState = remember { mutableStateOf<Player?>(null) }
+    val handle = remember { AndroidVideoSurfaceHandle(playerState) }
 
-    AndroidView(
-        factory = { handle.playerView },
+    ContentFrame(
         modifier = modifier,
+        player = playerState.value,
+        contentScale = ContentScale.Crop,
+        shutter = {},
     )
 
     LaunchedEffect(handle) {

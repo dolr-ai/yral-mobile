@@ -35,6 +35,7 @@ kotlin {
             implementation(projects.shared.libs.sharing)
             implementation(projects.shared.libs.designsystem)
             implementation(projects.shared.libs.videoPlayer)
+            implementation(projects.shared.libs.shortformVideo)
             implementation(projects.shared.libs.fileDownloader)
             implementation(projects.shared.data)
 

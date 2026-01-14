@@ -79,6 +79,7 @@ fun ShortformVideoFeed(
         state = pagerState,
         modifier = modifier,
         contentPadding = contentPadding,
+        beyondViewportPageCount = 1,
         key = { index -> items[index].id },
     ) { page ->
         Box(modifier = Modifier.fillMaxSize()) {

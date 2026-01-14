@@ -5,6 +5,7 @@ import com.shortform.video.MediaDescriptor
 import com.shortform.video.PlaybackCoordinator
 import com.shortform.video.VideoSurfaceHandle
 import com.shortform.video.ui.IosVideoSurfaceHandle
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -15,20 +16,27 @@ import platform.AVFoundation.AVPlayerItem
 import platform.AVFoundation.AVPlayerItemDidPlayToEndTimeNotification
 import platform.AVFoundation.AVPlayerItemFailedToPlayToEndTimeNotification
 import platform.AVFoundation.AVPlayerItemPlaybackStalledNotification
-import platform.AVFoundation.AVPlayerItemStatusReadyToPlay
 import platform.AVFoundation.AVPlayerItemStatusFailed
+import platform.AVFoundation.AVPlayerItemStatusReadyToPlay
 import platform.AVFoundation.AVPlayerTimeControlStatusPlaying
 import platform.AVFoundation.AVPlayerTimeControlStatusWaitingToPlayAtSpecifiedRate
 import platform.AVFoundation.AVURLAsset
+import platform.AVFoundation.automaticallyWaitsToMinimizeStalling
+import platform.AVFoundation.currentItem
+import platform.AVFoundation.currentTime
+import platform.AVFoundation.pause
+import platform.AVFoundation.playImmediatelyAtRate
+import platform.AVFoundation.preferredForwardBufferDuration
+import platform.AVFoundation.prerollAtRate
+import platform.AVFoundation.replaceCurrentItemWithPlayerItem
+import platform.AVFoundation.timeControlStatus
 import platform.CoreMedia.CMTimeGetSeconds
 import platform.Foundation.NSNotificationCenter
-import platform.Foundation.NSObjectProtocol
-import platform.Foundation.NSTimer
-import platform.Foundation.NSURL
-import platform.Foundation.scheduledTimerWithTimeInterval
-import platform.AVFoundation.AVURLAssetHTTPHeaderFieldsKey
 import platform.Foundation.NSRunLoop
 import platform.Foundation.NSRunLoopCommonModes
+import platform.Foundation.NSTimer
+import platform.Foundation.NSURL
+import platform.darwin.NSObjectProtocol
 
 fun createIosPlaybackCoordinator(
     deps: CoordinatorDeps = CoordinatorDeps(),
@@ -38,6 +46,7 @@ private class IosPlaybackCoordinator(
     private val deps: CoordinatorDeps,
 ) : PlaybackCoordinator {
     private val analytics = deps.analytics
+    private val policy = deps.policy
     private val nowMs = deps.nowMs
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -61,15 +70,22 @@ private class IosPlaybackCoordinator(
 
     private var preparedPendingIndex: Int? = null
     private var preparedStartMs: Long? = null
+    private var preparedPrerollRequested: Boolean = false
+    private var scheduledPrefetchTargets: Set<Int> = emptySet()
+
+    private val cache = IosDownloadCache(policy.cacheMaxBytes)
 
     private val observers = mutableListOf<NSObjectProtocol>()
 
     init {
+        playerA.automaticallyWaitsToMinimizeStalling = false
+        playerB.automaticallyWaitsToMinimizeStalling = false
         registerObservers()
         startPolling()
     }
 
     override fun setFeed(items: List<MediaDescriptor>) {
+        cancelPrefetch(reason = "feed_update")
         feed = items
         if (activeIndex >= items.size) {
             setActiveIndex(items.lastIndex)
@@ -96,15 +112,17 @@ private class IosPlaybackCoordinator(
         }
 
         attachIfBound(activeSlot)
-        activeSlot.player.play()
+        activeSlot.player.playImmediatelyAtRate(1.0F)
 
         schedulePreparedSlot(index)
+        scheduleDiskPrefetch(index)
     }
 
     override fun setScrollHint(predictedIndex: Int, velocity: Float?) {
         if (predictedIndex !in feed.indices) return
         if (predictedIndex == this.predictedIndex) return
         this.predictedIndex = predictedIndex
+        scheduleDiskPrefetch(predictedIndex)
     }
 
     override fun bindSurface(index: Int, surface: VideoSurfaceHandle) {
@@ -119,24 +137,25 @@ private class IosPlaybackCoordinator(
     override fun unbindSurface(index: Int) {
         val handle = surfaces.remove(index)
         if (handle is IosVideoSurfaceHandle) {
-            if (activeSlot.index == index && handle.playerLayer.player == activeSlot.player) {
-                handle.playerLayer.player = null
+            if (activeSlot.index == index && handle.controller.player == activeSlot.player) {
+                handle.controller.player = null
             }
-            if (preparedSlot.index == index && handle.playerLayer.player == preparedSlot.player) {
-                handle.playerLayer.player = null
+            if (preparedSlot.index == index && handle.controller.player == preparedSlot.player) {
+                handle.controller.player = null
             }
         }
     }
 
     override fun onAppForeground() {
         if (activeSlot.index in feed.indices) {
-            activeSlot.player.play()
+            activeSlot.player.playImmediatelyAtRate(1.0F)
         }
     }
 
     override fun onAppBackground() {
         activeSlot.player.pause()
         preparedSlot.player.pause()
+        cancelPrefetch(reason = "background")
     }
 
     override fun release() {
@@ -146,6 +165,7 @@ private class IosPlaybackCoordinator(
         observers.clear()
         activeSlot.player.pause()
         preparedSlot.player.pause()
+        cancelPrefetch(reason = "release")
         scope.cancel()
     }
 
@@ -156,6 +176,7 @@ private class IosPlaybackCoordinator(
                 prepareSlot(preparedSlot, nextIndex, shouldPlay = false)
                 preparedPendingIndex = nextIndex
                 preparedStartMs = nowMs()
+                preparedPrerollRequested = false
                 analytics.event(
                     "preload_scheduled",
                     mapOf("id" to feed[nextIndex].id, "index" to nextIndex, "distance" to 1, "mode" to "prepared"),
@@ -164,13 +185,73 @@ private class IosPlaybackCoordinator(
         }
     }
 
+    private fun scheduleDiskPrefetch(centerIndex: Int) {
+        if (feed.isEmpty()) return
+        val desired = (centerIndex + 1..centerIndex + policy.diskPrefetchNext)
+            .filter { it in feed.indices }
+            .toSet()
+        val toCancel = scheduledPrefetchTargets - desired
+        val toStart = desired - scheduledPrefetchTargets
+
+        for (index in toCancel) {
+            feed.getOrNull(index)?.let { item ->
+                cache.cancelPrefetch(item)
+                analytics.event(
+                    "preload_canceled",
+                    mapOf("id" to item.id, "index" to index, "reason" to "window_shift"),
+                )
+            }
+        }
+
+        for (index in toStart) {
+            val item = feed.getOrNull(index) ?: continue
+            analytics.event(
+                "preload_scheduled",
+                mapOf("id" to item.id, "index" to index, "distance" to (index - centerIndex), "mode" to "disk"),
+            )
+            cache.prefetch(
+                descriptor = item,
+                onComplete = { bytes, fromCache ->
+                    analytics.event(
+                        "preload_completed",
+                        mapOf("id" to item.id, "index" to index, "bytes" to bytes, "ms" to 0, "fromCache" to fromCache),
+                    )
+                },
+                onError = {
+                    analytics.event(
+                        "preload_canceled",
+                        mapOf("id" to item.id, "index" to index, "reason" to "error"),
+                    )
+                },
+            )
+        }
+
+        scheduledPrefetchTargets = desired
+    }
+
+    private fun cancelPrefetch(reason: String) {
+        val indices = scheduledPrefetchTargets.toList()
+        for (index in indices) {
+            feed.getOrNull(index)?.let { item ->
+                cache.cancelPrefetch(item)
+                analytics.event(
+                    "preload_canceled",
+                    mapOf("id" to item.id, "index" to index, "reason" to reason),
+                )
+            }
+        }
+        scheduledPrefetchTargets = emptySet()
+        cache.cancelAll()
+    }
+
     private fun prepareSlot(slot: PlayerSlot, index: Int, shouldPlay: Boolean) {
         val descriptor = feed[index]
         val item = buildPlayerItem(descriptor)
+        item.preferredForwardBufferDuration = 1.0
         slot.index = index
         slot.player.replaceCurrentItemWithPlayerItem(item)
         if (shouldPlay) {
-            slot.player.play()
+            slot.player.playImmediatelyAtRate(1.0F)
         } else {
             slot.player.pause()
         }
@@ -186,20 +267,26 @@ private class IosPlaybackCoordinator(
         val index = slot.index ?: return
         val handle = surfaces[index]
         if (handle is IosVideoSurfaceHandle) {
-            if (handle.playerLayer.player != slot.player) {
-                handle.playerLayer.player = slot.player
+            if (handle.controller.player != slot.player) {
+                handle.controller.player = slot.player
             }
         }
     }
 
     private fun buildPlayerItem(descriptor: MediaDescriptor): AVPlayerItem {
-        val url = NSURL.URLWithString(descriptor.uri) ?: return AVPlayerItem()
-        val options = if (descriptor.headers.isNotEmpty()) {
-            mapOf(AVURLAssetHTTPHeaderFieldsKey to descriptor.headers)
+        val cachedUrl = cache.cachedFileUrl(descriptor)
+        val url = cachedUrl ?: NSURL.URLWithString(descriptor.uri) ?: return AVPlayerItem()
+        val options: Map<Any?, *>? = if (cachedUrl == null && descriptor.headers.isNotEmpty()) {
+            mapOf("AVURLAssetHTTPHeaderFieldsKey" to descriptor.headers)
         } else {
             null
         }
         val asset = AVURLAsset(uRL = url, options = options)
+        if (cachedUrl != null) {
+            analytics.event("cache_hit", mapOf("id" to descriptor.id, "bytes" to 0))
+        } else {
+            analytics.event("cache_miss", mapOf("id" to descriptor.id, "bytes" to 0))
+        }
         return AVPlayerItem(asset = asset)
     }
 
@@ -251,8 +338,9 @@ private class IosPlaybackCoordinator(
                 val item = feed.getOrNull(index) ?: return@addObserverForName
                 analytics.event("playback_ended", mapOf("id" to item.id, "index" to index))
                 val replacement = buildPlayerItem(item)
+                replacement.preferredForwardBufferDuration = 1.0
                 activeSlot.player.replaceCurrentItemWithPlayerItem(replacement)
-                activeSlot.player.play()
+                activeSlot.player.playImmediatelyAtRate(1.0F)
                 firstFramePendingIndex = index
                 playStartMsById[item.id] = nowMs()
             }
@@ -272,6 +360,7 @@ private class IosPlaybackCoordinator(
         NSRunLoop.mainRunLoop.addTimer(pollTimer!!, NSRunLoopCommonModes)
     }
 
+    @OptIn(ExperimentalForeignApi::class)
     private fun pollPlaybackState() {
         val index = activeSlot.index ?: return
         val item = feed.getOrNull(index) ?: return
@@ -317,6 +406,14 @@ private class IosPlaybackCoordinator(
         if (preparedIndex != null && preparedSlot.index == preparedIndex) {
             val preparedItem = preparedSlot.player.currentItem
             if (preparedItem?.status == AVPlayerItemStatusReadyToPlay) {
+                if (!preparedPrerollRequested) {
+                    preparedPrerollRequested = true
+                    preparedSlot.player.prerollAtRate(1.0F) { _ ->
+                        if (preparedSlot.index == preparedIndex) {
+                            preparedSlot.player.pause()
+                        }
+                    }
+                }
                 val start = preparedStartMs ?: nowMs()
                 analytics.event(
                     "preload_completed",

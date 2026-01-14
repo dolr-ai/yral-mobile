@@ -230,11 +230,11 @@ private class AndroidPlaybackCoordinator(
     override fun unbindSurface(index: Int) {
         val handle = surfaces.remove(index)
         if (handle is AndroidVideoSurfaceHandle) {
-            if (activeSlot.index == index && handle.playerView.player == activeSlot.player) {
-                handle.playerView.player = null
+            if (activeSlot.index == index && handle.playerState.value == activeSlot.player) {
+                handle.playerState.value = null
             }
-            if (preparedSlot.index == index && handle.playerView.player == preparedSlot.player) {
-                handle.playerView.player = null
+            if (preparedSlot.index == index && handle.playerState.value == preparedSlot.player) {
+                handle.playerState.value = null
             }
         }
     }
@@ -354,8 +354,8 @@ private class AndroidPlaybackCoordinator(
         val index = slot.index ?: return
         val handle = surfaces[index]
         if (handle is AndroidVideoSurfaceHandle) {
-            if (handle.playerView.player != slot.player) {
-                handle.playerView.player = slot.player
+            if (handle.playerState.value != slot.player) {
+                handle.playerState.value = slot.player
             }
         }
     }
