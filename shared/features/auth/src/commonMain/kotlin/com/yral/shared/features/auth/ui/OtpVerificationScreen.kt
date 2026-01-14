@@ -3,21 +3,22 @@ package com.yral.shared.features.auth.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.shared.features.auth.nav.otpverification.OtpVerificationComponent
@@ -115,29 +116,28 @@ fun OtpVerificationScreen(
 
 @Composable
 private fun Header(component: OtpVerificationComponent) {
-    Box(
+    Row(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 12.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconButton(
-            onClick = component::onBack,
-            modifier = Modifier.align(Alignment.CenterStart),
-        ) {
-            Icon(
-                painter = painterResource(DesignRes.drawable.arrow_left),
-                contentDescription = "Back",
-                tint = YralColors.NeutralIconsActive,
-                modifier = Modifier.size(24.dp),
-            )
-        }
-
+        Icon(
+            painter = painterResource(DesignRes.drawable.arrow_left),
+            contentDescription = "back",
+            tint = Color.White,
+            modifier =
+                Modifier
+                    .size(24.dp)
+                    .clickable { component.onBack() },
+        )
         Text(
             text = stringResource(Res.string.otp_verification),
             style = LocalAppTopography.current.xlBold,
-            color = YralColors.NeutralIconsActive,
-            modifier = Modifier.align(Alignment.Center),
+            color = YralColors.NeutralTextPrimary,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.weight(1f).offset(x = (-12).dp),
         )
     }
 }
