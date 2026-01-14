@@ -1,7 +1,7 @@
 package com.yral.shared.features.auth.ui.components
 
+import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
 
 @Composable
-internal actual fun getContext(): Any = LocalContext.current
+internal actual fun getContext(): Any? = LocalActivity.current

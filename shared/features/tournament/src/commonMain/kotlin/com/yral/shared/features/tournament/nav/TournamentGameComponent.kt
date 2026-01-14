@@ -2,6 +2,7 @@ package com.yral.shared.features.tournament.nav
 
 import com.arkivanov.decompose.ComponentContext
 import com.yral.shared.data.AlertsRequestType
+import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
@@ -23,6 +24,7 @@ interface TournamentGameComponent : FeedComponent {
     companion object {
         operator fun invoke(
             componentContext: ComponentContext,
+            requestLoginFactory: RequestLoginFactory,
             tournamentId: String,
             tournamentTitle: String,
             initialDiamonds: Int,
@@ -35,6 +37,7 @@ interface TournamentGameComponent : FeedComponent {
         ): TournamentGameComponent =
             DefaultTournamentGameComponent(
                 componentContext = componentContext,
+                requestLoginFactory = requestLoginFactory,
                 gameConfig =
                     TournamentGameConfig(
                         tournamentId = tournamentId,
@@ -62,6 +65,7 @@ interface TournamentGameComponent : FeedComponent {
 
 internal class DefaultTournamentGameComponent(
     componentContext: ComponentContext,
+    override val requestLoginFactory: RequestLoginFactory,
     override val gameConfig: TournamentGameComponent.TournamentGameConfig,
     private val onLeaderboardClickCallback: (tournamentId: String, showResult: Boolean) -> Unit,
     private val onTimeUpCallback: () -> Unit,

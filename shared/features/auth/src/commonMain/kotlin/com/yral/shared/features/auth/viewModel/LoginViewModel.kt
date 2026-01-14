@@ -128,7 +128,7 @@ class LoginViewModel(
         }
     }
 
-    fun sheetDismissed() {
+    fun resetState() {
         resendTimerJob?.cancel()
         _state.update {
             it.copy(
@@ -348,7 +348,9 @@ data class LoginState(
     val otpCode: String = "",
     val otpValidationError: String? = null,
     val resendTimerSeconds: Int? = null,
-)
+) {
+    fun isLoginComplete() = socialAuthState is UiState.Success || otpAuthState is UiState.Success
+}
 
 data class PhoneAuthData(
     val phoneNumber: String,
