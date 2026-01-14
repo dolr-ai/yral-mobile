@@ -59,17 +59,17 @@ actual fun VideoSurface(
         factory = { PlayerViewContainer() },
         modifier = modifier,
         update = { view ->
-            val container = view as PlayerViewContainer
+            val container = view
             val current = handle ?: IosVideoSurfaceHandle(container.controller).also {
                 handle = it
             }
             onHandleReady(current)
         },
         onReset = { view ->
-            (view as? PlayerViewContainer)?.controller?.player = null
+            view.controller.player = null
         },
         onRelease = { view ->
-            (view as? PlayerViewContainer)?.controller?.player = null
+            view.controller.player = null
         },
     )
 }
