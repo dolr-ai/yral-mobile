@@ -61,6 +61,7 @@ fun OtpInput(
             ),
         )
     }
+    var previousTextLength by remember { mutableStateOf(0) }
     var isFocused by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     val interactionSource = remember { MutableInteractionSource() }
@@ -74,6 +75,7 @@ fun OtpInput(
                     text = sanitizedValue,
                     selection = TextRange(sanitizedValue.length),
                 )
+            previousTextLength = sanitizedValue.length
         }
     }
 
@@ -83,9 +85,16 @@ fun OtpInput(
             val filtered = newValue.text.filter(Char::isDigit).take(length)
             val selection = newValue.selection.start.coerceIn(0, filtered.length)
             val updatedFieldValue = TextFieldValue(filtered, TextRange(selection))
+
+            // Detect if this was a paste operation (length increased by more than 1)
+            val isPasteOperation = filtered.length - previousTextLength > 1
+
             textFieldValue = updatedFieldValue
+            previousTextLength = filtered.length
             onValueChange(filtered)
-            if (filtered.length == length) {
+
+            // Only call onOtpComplete if code was pasted and is complete
+            if (filtered.length == length && isPasteOperation) {
                 onOtpComplete?.invoke(filtered)
             }
         },
