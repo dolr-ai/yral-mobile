@@ -1,44 +1,28 @@
 package com.yral.shared.features.auth.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.yral.shared.features.auth.nav.otpverification.OtpVerificationComponent
+import com.yral.shared.features.auth.ui.components.OtpInput
+import com.yral.shared.features.auth.ui.components.OtpInputConfig
 import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.YralButtonState
@@ -97,10 +81,11 @@ fun OtpVerificationScreen(
                 textAlign = TextAlign.Center,
             )
 
-            // OTP Input Boxes
-            OtpInputField(
+            OtpInput(
                 value = loginState.otpCode,
                 onValueChange = { loginViewModel.onOtpCodeChanged(it) },
+                onOtpComplete = { loginViewModel.onVerifyOtpClicked() },
+                config = OtpInputConfig(length = 6),
             )
 
             // Resend text / timer
@@ -155,157 +140,6 @@ private fun Header(component: OtpVerificationComponent) {
             modifier = Modifier.align(Alignment.Center),
         )
     }
-}
-
-@Suppress("MagicNumber", "LongMethod")
-@Composable
-private fun OtpInputField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val focusRequester = remember { FocusRequester() }
-
-    // Maintain OTP as a fixed 6-position array (null = empty position, no shifting)
-    var otpArray by remember(value) {
-        val array = Array<Char?>(6) { null }
-        // Map existing value to array positions sequentially
-        value.forEachIndexed { index, char ->
-            if (index < 6) {
-                array[index] = char
-            }
-        }
-        mutableStateOf(array)
-    }
-
-    // Track which box is focused
-    var focusedBoxIndex by remember { mutableStateOf(0) }
-
-    // Sync array changes back to parent (filter out nulls to get actual OTP string)
-    LaunchedEffect(otpArray) {
-        val otpString = otpArray.filterNotNull().joinToString("")
-        if (otpString != value) {
-            onValueChange(otpString)
-        }
-    }
-
-    // Sync value changes from parent to array
-    LaunchedEffect(value) {
-        val newArray = Array<Char?>(6) { null }
-        value.forEachIndexed { index, char ->
-            if (index < 6) {
-                newArray[index] = char
-            }
-        }
-        otpArray = newArray
-    }
-
-    // Auto-focus when composable is first created
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-    }
-
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterHorizontally),
-        modifier = modifier.fillMaxWidth(),
-    ) {
-        repeat(6) { index ->
-            val char = otpArray[index]?.toString() ?: ""
-            val isFocused = focusedBoxIndex == index
-
-            Box(
-                modifier =
-                    Modifier
-                        .width(43.dp)
-                        .height(53.dp)
-                        .clickable {
-                            // Set focused box index
-                            focusedBoxIndex = index
-                            focusRequester.requestFocus()
-                        }.background(
-                            color = YralColors.Neutral900,
-                            shape = RoundedCornerShape(8.dp),
-                        ).border(
-                            width = 1.dp,
-                            color =
-                                if (isFocused) {
-                                    YralColors.Pink300
-                                } else {
-                                    YralColors.Neutral700
-                                },
-                            shape = RoundedCornerShape(8.dp),
-                        ),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = char,
-                    style = LocalAppTopography.current.xlBold,
-                    color = YralColors.Neutral0,
-                )
-            }
-        }
-    }
-
-    // Text field for actual input (positioned off-screen but still functional)
-    // We maintain a string representation for the text field, but map it to the array
-    val textFieldString = otpArray.filterNotNull().joinToString("")
-    var textFieldValue by remember(textFieldString) {
-        mutableStateOf(TextFieldValue(textFieldString, TextRange(textFieldString.length)))
-    }
-
-    BasicTextField(
-        value = textFieldValue,
-        onValueChange = { newTextFieldValue ->
-            val oldText = textFieldValue.text
-            val newText = newTextFieldValue.text
-
-            // Handle deletion (backspace) - detect when text is shorter
-            if (newText.length < oldText.length) {
-                // User deleted a character - clear the digit at focused box position (no shifting)
-                if (focusedBoxIndex < 6) {
-                    otpArray =
-                        otpArray.copyOf().apply {
-                            this[focusedBoxIndex] = null
-                        }
-                }
-
-                // Update text field to reflect the change
-                val updatedText = otpArray.filterNotNull().joinToString("")
-                textFieldValue = TextFieldValue(updatedText, TextRange(updatedText.length))
-            } else {
-                // Handle insertion - filter to only allow digits
-                val digitsOnly = newText.filter { it.isDigit() }
-
-                if (digitsOnly.isNotEmpty() && focusedBoxIndex < 6) {
-                    // Get the new digit (last character typed)
-                    val newDigit = digitsOnly.last()
-
-                    // Update the array at focused box position
-                    otpArray =
-                        otpArray.copyOf().apply {
-                            this[focusedBoxIndex] = newDigit
-                        }
-
-                    // Move focus to next empty box, or next box if all filled
-                    focusedBoxIndex = (focusedBoxIndex + 1).coerceAtMost(5)
-
-                    // Update text field
-                    val updatedText = otpArray.filterNotNull().joinToString("")
-                    textFieldValue = TextFieldValue(updatedText, TextRange(updatedText.length))
-                } else {
-                    // Just update text field value
-                    textFieldValue = newTextFieldValue
-                }
-            }
-        },
-        modifier =
-            Modifier
-                .size(1.dp)
-                .focusRequester(focusRequester),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        singleLine = true,
-        textStyle = TextStyle(fontSize = 0.sp), // Hide text visually
-    )
 }
 
 @Composable
