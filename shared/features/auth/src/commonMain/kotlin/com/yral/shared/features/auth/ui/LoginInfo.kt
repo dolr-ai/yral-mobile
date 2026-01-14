@@ -1,6 +1,7 @@
 package com.yral.shared.features.auth.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -62,7 +63,7 @@ fun rememberLoginInfo(
     key: Any? = null,
 ): LoginInfoState {
     var loginInfo by remember(key) { mutableStateOf<LoginInfo?>(null) }
-    var showAutomatically by remember { mutableStateOf(false) }
+    var showAutomatically by remember(key) { mutableStateOf(false) }
 
     val requestLoginFn: (
         pageName: SignupPageName,
@@ -99,7 +100,7 @@ fun rememberLoginInfo(
         loginInfo?.let { loginInfo ->
             requestLoginFactory(loginInfo)
         }
-        showAutomatically = false
+        SideEffect { showAutomatically = false }
     }
 
     return LoginInfoState(

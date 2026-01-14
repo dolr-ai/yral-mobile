@@ -14,15 +14,12 @@ import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.YralAuthException
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.libs.arch.presentation.UiState
-import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.libs.phonevalidation.DeviceLocaleDetector
 import com.yral.shared.libs.phonevalidation.PhoneNumberFormat
 import com.yral.shared.libs.phonevalidation.PhoneValidator
 import com.yral.shared.libs.phonevalidation.countries.Country
 import com.yral.shared.libs.phonevalidation.countries.CountryRepository
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -42,7 +39,6 @@ import yral_mobile.shared.features.auth.generated.resources.error_please_enter_p
 import yral_mobile.shared.features.auth.generated.resources.error_please_select_country
 
 class LoginViewModel(
-    appDispatchers: AppDispatchers,
     authClientFactory: AuthClientFactory,
     private val crashlyticsManager: CrashlyticsManager,
     private val flagManager: FeatureFlagManager,
@@ -51,8 +47,6 @@ class LoginViewModel(
     private val countryRepository: CountryRepository,
     private val sessionManager: SessionManager,
 ) : ViewModel() {
-    private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.main)
-
     private val _state = MutableStateFlow(LoginState())
     val state: StateFlow<LoginState> = _state.asStateFlow()
 
@@ -60,7 +54,7 @@ class LoginViewModel(
 
     private val authClient =
         authClientFactory
-            .create(coroutineScope) { e ->
+            .create(viewModelScope) { e ->
                 Logger.e("Auth error - $e")
                 _state.update {
                     it.copy(
@@ -124,7 +118,7 @@ class LoginViewModel(
         context: Any,
         provider: SocialProvider,
     ) {
-        coroutineScope.launch {
+        viewModelScope.launch {
             try {
                 _state.update { it.copy(socialAuthState = UiState.InProgress()) }
                 authClient.signInWithSocial(context, provider)
@@ -176,7 +170,7 @@ class LoginViewModel(
     }
 
     private fun validatePhoneNumber() {
-        coroutineScope.launch {
+        viewModelScope.launch {
             val currentState = _state.value
             val country = currentState.selectedCountry ?: return@launch
             val number = currentState.phoneNumber
@@ -201,7 +195,7 @@ class LoginViewModel(
         val currentState = _state.value
         val country = currentState.selectedCountry
         val number = currentState.phoneNumber
-        coroutineScope.launch {
+        viewModelScope.launch {
             if (country == null) {
                 _state.update { it.copy(phoneValidationError = getString(Res.string.error_please_select_country)) }
                 return@launch
@@ -264,7 +258,7 @@ class LoginViewModel(
     private fun startResendTimer() {
         resendTimerJob?.cancel()
         resendTimerJob =
-            coroutineScope.launch {
+            viewModelScope.launch {
                 for (seconds in OTP_RESEND_TIMER_SECONDS downTo 0) {
                     _state.update { it.copy(resendTimerSeconds = seconds) }
                     if (seconds > 0) {
@@ -290,7 +284,7 @@ class LoginViewModel(
         }
         _state.update { it.copy(otpValidationError = null) }
         Logger.d("LoginViewModel") { "Resending OTP for: ${phoneAuthData.phoneNumber}" }
-        coroutineScope.launch {
+        viewModelScope.launch {
             try {
                 authClient.phoneAuthLogin(phoneAuthData.phoneNumber)
                 Logger.d("LoginViewModel") { "OTP resent successfully" }
@@ -321,7 +315,7 @@ class LoginViewModel(
         val currentState = _state.value
         val otpCode = currentState.otpCode
         val phoneAuthData = (currentState.phoneAuthState as? UiState.Success)?.data
-        coroutineScope.launch {
+        viewModelScope.launch {
             if (phoneAuthData == null || otpCode.isBlank()) {
                 cancelResendTimer()
                 _state.update {

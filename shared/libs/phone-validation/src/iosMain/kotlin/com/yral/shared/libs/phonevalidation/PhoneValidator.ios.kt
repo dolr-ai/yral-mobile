@@ -44,9 +44,7 @@ actual class PhoneValidator {
                 val country = countryRepository.getCountryByCode(regionCode)
                 if (country != null) {
                     // Check if number starts with the expected dial code
-                    return cleanNumber.startsWith(country.dialCode) ||
-                        // Or if it's just the national number
-                        digitCount in 7..15
+                    return cleanNumber.startsWith(country.dialCode)
                 }
             }
 
@@ -145,6 +143,7 @@ actual class PhoneValidator {
         val matchingCountry =
             countryRepository
                 .getAllCountries()
+                .sortedByDescending { it.dialCode.length }
                 .firstOrNull { cleanNumber.startsWith(it.dialCode) }
 
         if (matchingCountry != null) {
@@ -232,6 +231,7 @@ actual class PhoneValidator {
             val matchingCountry =
                 countryRepository
                     .getAllCountries()
+                    .sortedByDescending { it.dialCode.length }
                     .firstOrNull { cleanNumber.startsWith(it.dialCode) }
 
             return matchingCountry?.code
@@ -258,19 +258,66 @@ actual class PhoneValidator {
      */
     private fun formatInternational(e164Number: String): String {
         if (!e164Number.startsWith("+")) return e164Number
-        // Basic international formatting: +XX XXX XXX XXXX
+
         val withoutPlus = e164Number.substring(1)
+        if (withoutPlus.isEmpty()) return e164Number
+
+        // Try to find matching country by dial code (sorted by length descending to match longer codes first)
+        val matchingCountry =
+            countryRepository
+                .getAllCountries()
+                .sortedByDescending { it.dialCode.removePrefix("+").length }
+                .firstOrNull { e164Number.startsWith(it.dialCode) }
+
+        val (countryCode, nationalNumber) =
+            if (matchingCountry != null) {
+                val dialCodeWithoutPlus = matchingCountry.dialCode.removePrefix("+")
+                val nationalNum = withoutPlus.substring(dialCodeWithoutPlus.length)
+                Pair(dialCodeWithoutPlus, nationalNum)
+            } else {
+                // Fallback: try 1, 2, 3 digit country codes
+                extractCountryCodeFallback(withoutPlus)
+            }
+
+        // Apply formatting based on national number length
         return when {
-            withoutPlus.length <= 3 -> e164Number
-            withoutPlus.length <= 6 -> "+${withoutPlus.take(2)} ${withoutPlus.substring(2)}"
-            withoutPlus.length <= 10 -> {
-                "+${withoutPlus.take(2)} ${withoutPlus.substring(2, 5)} " +
-                    withoutPlus.substring(5)
+            nationalNumber.isEmpty() -> "+$countryCode"
+            nationalNumber.length <= 3 -> "+$countryCode $nationalNumber"
+            nationalNumber.length <= 6 -> {
+                "+$countryCode ${nationalNumber.take(3)} ${nationalNumber.substring(3)}"
+            }
+            nationalNumber.length <= 10 -> {
+                "+$countryCode ${nationalNumber.take(3)} " +
+                    "${nationalNumber.substring(3, 6)} ${nationalNumber.substring(6)}"
             }
             else -> {
-                "+${withoutPlus.take(2)} ${withoutPlus.substring(2, 5)} " +
-                    "${withoutPlus.substring(5, 8)} ${withoutPlus.substring(8)}"
+                "+$countryCode ${nationalNumber.take(3)} " +
+                    "${nationalNumber.substring(3, 6)} ${nationalNumber.substring(6, 9)} ${nationalNumber.substring(9)}"
             }
+        }
+    }
+
+    /**
+     * Fallback method to extract country code when CountryRepository cannot resolve it.
+     * Tries 1, 2, 3 digit matches and returns the best fit.
+     */
+    private fun extractCountryCodeFallback(withoutPlus: String): Pair<String, String> {
+        // Try 3-digit, 2-digit, then 1-digit country codes
+        for (codeLength in 3 downTo 1) {
+            if (withoutPlus.length > codeLength) {
+                val potentialCode = withoutPlus.substring(0, codeLength)
+                val remainingNumber = withoutPlus.substring(codeLength)
+                // Ensure remaining number has reasonable length (at least 4 digits for a valid phone number)
+                if (remainingNumber.length >= 4) {
+                    return Pair(potentialCode, remainingNumber)
+                }
+            }
+        }
+        // Last resort: treat first digit as country code
+        return if (withoutPlus.length > 1) {
+            Pair(withoutPlus.take(1), withoutPlus.substring(1))
+        } else {
+            Pair(withoutPlus, "")
         }
     }
 }
