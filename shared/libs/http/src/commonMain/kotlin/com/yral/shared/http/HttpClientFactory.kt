@@ -1,11 +1,11 @@
 package com.yral.shared.http
 
-import com.yral.shared.preferences.Preferences
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngineFactory
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.Logging
@@ -30,7 +30,6 @@ expect fun platformApplyEngineConfig(
 fun createClient(
     context: Any,
     httpEventListener: HTTPEventListener,
-    preferences: Preferences,
     json: Json,
     httpLogger: HttpLogger,
 ): HttpClient =
@@ -52,7 +51,7 @@ fun createClient(
             json(json)
         }
         install(HttpCookies) {
-            storage = PersistentCookieStorage(preferences)
+            storage = AcceptAllCookiesStorage()
         }
         expectSuccess = true
         defaultRequest {

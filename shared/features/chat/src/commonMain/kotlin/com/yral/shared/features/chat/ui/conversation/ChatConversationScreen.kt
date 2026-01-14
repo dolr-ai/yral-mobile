@@ -5,11 +5,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
@@ -31,11 +29,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
+import com.yral.shared.features.auth.ui.LoginMode
+import com.yral.shared.features.auth.ui.LoginScreenType
+import com.yral.shared.features.auth.ui.rememberLoginInfo
 import com.yral.shared.features.chat.attachments.FilePathChatAttachment
 import com.yral.shared.features.chat.domain.models.ChatMessageType
 import com.yral.shared.features.chat.domain.models.ConversationMessageRole
@@ -65,7 +65,6 @@ import yral_mobile.shared.features.chat.generated.resources.no_conversation_id
 @Composable
 fun ChatConversationScreen(
     modifier: Modifier = Modifier,
-    bottomPadding: Dp = 0.dp,
     component: ConversationComponent,
     viewModel: ConversationViewModel = koinViewModel(),
 ) {
@@ -121,9 +120,6 @@ fun ChatConversationScreen(
         overlayItems = overlayItems,
     )
 
-    val imeBottomDp = with(density) { WindowInsets.ime.getBottom(this).toDp() }
-    val keyboardAwareBottomPadding = (imeBottomDp - bottomPadding).coerceAtLeast(0.dp)
-
     // Check if there's a waiting assistant message in overlay
     val hasWaitingAssistant by derivedStateOf {
         overlayItems.any { it.isWaitingAssistant() }
@@ -138,22 +134,31 @@ fun ChatConversationScreen(
     val shouldPromptForLogin by derivedStateOf {
         !viewState.isSocialSignedIn && (overlayUserCount + historyUserCount) >= LOGIN_PROMPT_MESSAGE_LIMIT
     }
+
+    val loginState =
+        rememberLoginInfo(
+            requestLoginFactory = component.requestLoginFactory,
+            key = viewState.influencer,
+        )
+
     val promptLogin: () -> Unit =
         remember(viewState.influencer) {
             {
                 val influencer = viewState.influencer
                 val influencerName = influencer?.displayName ?: ""
                 val influencerAvatarUrl = influencer?.avatarUrl ?: ""
-                component.showLoginBottomSheet(
-                    pageName = SignupPageName.CONVERSATION,
-                    loginBottomSheetType =
+                loginState.requestLogin(
+                    SignupPageName.CONVERSATION,
+                    LoginScreenType.BottomSheet(
                         LoginBottomSheetType.CONVERSATION(
                             influencerName = influencerName,
                             influencerAvatarUrl = influencerAvatarUrl,
                         ),
-                    onDismissRequest = { component.hideLoginBottomSheetIfVisible() },
-                    onLoginSuccess = { component.hideLoginBottomSheetIfVisible() },
-                )
+                    ),
+                    LoginMode.BOTH,
+                    null,
+                    null,
+                ) {}
             }
         }
 
@@ -204,8 +209,7 @@ fun ChatConversationScreen(
                     Modifier
                         .fillMaxSize()
                         .padding(horizontal = 16.dp)
-                        .padding(bottom = 16.dp)
-                        .padding(bottom = keyboardAwareBottomPadding),
+                        .padding(bottom = 16.dp),
             ) {
                 when {
                     viewState.isCreating -> {
@@ -309,7 +313,6 @@ fun ChatConversationScreen(
                     }
                 },
                 onDismiss = { selectedImage = null },
-                bottomPadding = bottomPadding,
                 hasWaitingAssistant = hasWaitingAssistant,
                 modifier = Modifier.fillMaxSize(),
             )

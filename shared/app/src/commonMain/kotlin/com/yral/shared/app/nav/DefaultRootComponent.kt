@@ -1,5 +1,9 @@
 package com.yral.shared.app.nav
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.router.slot.SlotNavigation
@@ -15,43 +19,93 @@ import com.arkivanov.decompose.router.stack.pushToFront
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
-import com.yral.shared.analytics.events.SignupPageName
+import com.arkivanov.essenty.instancekeeper.InstanceKeeper
+import com.arkivanov.essenty.instancekeeper.getOrCreate
 import com.yral.shared.app.UpdateState
+import com.yral.shared.app.nav.factories.ComponentFactory
 import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
-import com.yral.shared.features.auth.ui.LoginBottomSheetType
-import com.yral.shared.features.chat.nav.conversation.ConversationComponent
-import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
-import com.yral.shared.features.profile.nav.EditProfileComponent
-import com.yral.shared.features.profile.nav.ProfileMainComponent
-import com.yral.shared.features.tournament.nav.TournamentGameComponent
-import com.yral.shared.features.wallet.nav.WalletComponent
+import com.yral.shared.features.auth.ui.LoginCoordinator
+import com.yral.shared.features.auth.ui.LoginInfo
+import com.yral.shared.features.auth.ui.LoginOverlay
+import com.yral.shared.features.auth.ui.LoginScreenType
+import com.yral.shared.features.auth.ui.RequestLoginFactory
+import com.yral.shared.features.auth.ui.toRequestFactory
+import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.koin.koinInstance
+import com.yral.shared.libs.phonevalidation.countries.Country
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.libs.routing.routes.api.Profile
 import com.yral.shared.libs.routing.routes.api.UserProfileRoute
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.serialization.Serializable
 
 @Suppress("TooManyFunctions")
 class DefaultRootComponent(
     componentContext: ComponentContext,
 ) : RootComponent,
+    LoginCoordinator,
     ComponentContext by componentContext {
+    // ==================== Navigation ====================
     private val navigation = StackNavigation<Config>()
+    private val slotNavigation = SlotNavigation<SlotConfig>()
     private var homeComponent: HomeComponent? = null
+
+    // ==================== Dependencies ====================
     private val sessionManager: SessionManager = koinInstance.get()
+    override val loginViewModel: LoginViewModel = koinInstance.get()
 
+    // ==================== State ====================
     private var pendingNavRoute: AppRoute? = null
-
     private val _updateState = MutableValue<UpdateState>(UpdateState.Idle)
     override val updateState: Value<UpdateState> = _updateState
-
     private var onCompleteUpdateCallback: (() -> Unit)? = null
+
+    // ==================== Login State (preserved across configuration changes) ====================
+    // Holder class to preserve login state across configuration changes
+    private class LoginStateHolder : InstanceKeeper.Instance {
+        var currentLoginInfo: LoginInfo? = null
+        var countrySelectionCallback: ((Country) -> Unit)? = null
+    }
+
+    private val loginStateHolder: LoginStateHolder =
+        instanceKeeper.getOrCreate("loginState") { LoginStateHolder() }
+
+    // Current active login request. Null when no login is in progress.
+    override var currentLoginInfo: LoginInfo?
+        get() = loginStateHolder.currentLoginInfo
+        set(value) {
+            loginStateHolder.currentLoginInfo = value
+        }
+
+    // Callback for country selection during phone auth flow.
+    private var countrySelectionCallback: ((Country) -> Unit)?
+        get() = loginStateHolder.countrySelectionCallback
+        set(value) {
+            loginStateHolder.countrySelectionCallback = value
+        }
+
+    // ==================== Component Factory ====================
+    private val componentFactory =
+        ComponentFactory(
+            rootComponent = this,
+            loginCoordinator = this,
+            setHomeComponent = { homeComponent = it },
+            showAlertsOnDialog = ::showAlertsSlot,
+            onFeedTabClick = { homeComponent?.onFeedTabClick() },
+        )
+
+    // ==================== Navigation Stacks ====================
+    // need to declare slot before stack since onStackChange needs slot
+    override val slot: Value<ChildSlot<*, RootComponent.SlotChild>> =
+        childSlot(
+            source = slotNavigation,
+            serializer = SlotConfig.serializer(),
+            handleBackButton = true,
+            childFactory = ::createSlotChild,
+        )
 
     override val stack: Value<ChildStack<*, RootComponent.Child>> =
         childStack(
@@ -59,27 +113,34 @@ class DefaultRootComponent(
             serializer = Config.serializer(),
             initialConfiguration = Config.Splash,
             handleBackButton = true,
-            childFactory = ::child,
+            childFactory = ::createChild,
         ).also { stackValue ->
-            // Observe stack changes to handle pending navigation
-            stackValue.subscribe { stack ->
-                val navRoute = pendingNavRoute
-                if (navRoute != null && stack.active.instance is RootComponent.Child.Home) {
-                    pendingNavRoute = null
-                    handleAppRoute(navRoute)
-                }
-            }
+            stackValue.subscribe(::onStackChanged)
         }
 
-    private fun child(
+    // ==================== Stack Change Handler ====================
+    private fun onStackChanged(childStack: ChildStack<*, RootComponent.Child>) {
+        val currentChild = childStack.active.instance
+        // Handle pending navigation when Home becomes active
+        pendingNavRoute?.let { route ->
+            if (currentChild is RootComponent.Child.Home) {
+                pendingNavRoute = null
+                handleAppRoute(route)
+            }
+        }
+    }
+
+    // ==================== Child Factories ====================
+    @Suppress("LongMethod", "CyclomaticComplexMethod")
+    private fun createChild(
         config: Config,
-        componentContext: ComponentContext,
+        context: ComponentContext,
     ): RootComponent.Child =
         when (config) {
-            is Config.Splash -> RootComponent.Child.Splash(splashComponent(componentContext))
-            is Config.Home -> RootComponent.Child.Home(homeComponent(componentContext))
-            is Config.EditProfile -> RootComponent.Child.EditProfile(editProfileComponent(componentContext))
-            is Config.UserProfile -> RootComponent.Child.UserProfile(profileComponent(componentContext, config))
+            is Config.Splash -> RootComponent.Child.Splash(componentFactory.createSplash(context))
+            is Config.Home -> RootComponent.Child.Home(componentFactory.createHome(context))
+            is Config.EditProfile -> RootComponent.Child.EditProfile(componentFactory.createEditProfile(context))
+            is Config.UserProfile -> RootComponent.Child.UserProfile(componentFactory.createProfile(context, config))
             is Config.TournamentLeaderboard ->
                 RootComponent.Child.TournamentLeaderboard(
                     tournamentId = config.tournamentId,
@@ -87,8 +148,8 @@ class DefaultRootComponent(
                 )
             is Config.TournamentGame ->
                 RootComponent.Child.TournamentGame(
-                    tournamentGameComponent(
-                        componentContext,
+                    componentFactory.createTournamentGame(
+                        context,
                         config.tournamentId,
                         config.tournamentTitle,
                         config.initialDiamonds,
@@ -97,77 +158,72 @@ class DefaultRootComponent(
                         config.totalPrizePool,
                     ),
                 )
-            is Config.Conversation -> RootComponent.Child.Conversation(conversationComponent(componentContext, config))
-            is Config.Wallet -> RootComponent.Child.Wallet(walletComponent(componentContext))
-            is Config.Leaderboard -> RootComponent.Child.Leaderboard(leaderboardComponent(componentContext))
-            is Config.MandatoryLogin -> RootComponent.Child.MandatoryLogin
+            is Config.Conversation ->
+                RootComponent.Child.Conversation(
+                    componentFactory.createConversation(context, config),
+                )
+            is Config.Wallet -> RootComponent.Child.Wallet(componentFactory.createWallet(context))
+            is Config.Leaderboard -> RootComponent.Child.Leaderboard(componentFactory.createLeaderboard(context))
+            is Config.CountrySelector ->
+                RootComponent.Child.CountrySelector(
+                    componentFactory.createCountrySelector(
+                        componentContext = context,
+                        onCountrySelected = { country ->
+                            countrySelectionCallback?.invoke(country)
+                            navigation.pop()
+                            if (currentLoginInfo?.screenType is LoginScreenType.BottomSheet) {
+                                showLoginSlot(currentLoginInfo!!)
+                            }
+                        },
+                        onBack = {
+                            navigation.pop()
+                            if (currentLoginInfo?.screenType is LoginScreenType.BottomSheet) {
+                                showLoginSlot(currentLoginInfo!!)
+                            }
+                        },
+                    ),
+                )
+            is Config.OtpVerification ->
+                RootComponent.Child.OtpVerification(
+                    componentFactory.createOtpVerification(
+                        componentContext = context,
+                        onBack = {
+                            loginViewModel.resetState()
+                            navigation.pop()
+                            if (currentLoginInfo?.screenType is LoginScreenType.BottomSheet) {
+                                showLoginSlot(currentLoginInfo!!)
+                            }
+                        },
+                    ),
+                )
+            is Config.MandatoryLogin ->
+                RootComponent.Child.MandatoryLogin(
+                    componentFactory.createMandatoryLogin(context),
+                )
         }
 
-    private val slotNavigation = SlotNavigation<SlotConfig>()
-    private var loginSlotCallbacks: LoginSlotCallbacks? = null
-
-    override val slot: Value<ChildSlot<*, RootComponent.SlotChild>> =
-        childSlot(
-            source = slotNavigation,
-            serializer = SlotConfig.serializer(),
-            handleBackButton = true,
-            childFactory = ::slotChild,
-        )
-
-    private fun splashComponent(componentContext: ComponentContext): SplashComponent =
-        SplashComponent(
-            componentContext = componentContext,
-        )
-
-    private fun homeComponent(componentContext: ComponentContext): HomeComponent {
-        val component =
-            HomeComponent.Companion(
-                componentContext = componentContext,
-                openEditProfile = this::openEditProfile,
-                openProfile = this::openProfile,
-                openTournamentLeaderboard = this::openTournamentLeaderboard,
-                openTournamentGame = this::openTournamentGame,
-                openConversation = this::openConversation,
-                openWallet = this::openWallet,
-                openLeaderboard = this::openLeaderboard,
-                showAlertsOnDialog = { this.showSlot(SlotConfig.AlertsRequestBottomSheet(it)) },
-                showLoginBottomSheet = this::showLoginBottomSheet,
-                hideLoginBottomSheetIfVisible = this::hideLoginBottomSheetIfVisible,
-            )
-        homeComponent = component
-        return component
-    }
-
-    private fun editProfileComponent(componentContext: ComponentContext): EditProfileComponent =
-        EditProfileComponent.Companion(
-            componentContext = componentContext,
-            onBack = this::onBackClicked,
-        )
-
-    private fun profileComponent(
-        componentContext: ComponentContext,
-        config: Config.UserProfile,
-    ): ProfileMainComponent =
-        ProfileMainComponent.invoke(
-            componentContext = componentContext,
-            userCanisterData = config.userCanisterData,
-            pendingVideoNavigation = flowOf(null),
-            onUploadVideoClicked = {},
-            openAccount = {},
-            openEditProfile = {},
-            openProfile = this::openProfile,
-            onBackClicked = this::onBackClicked,
-            showAlertsOnDialog = { this.showSlot(SlotConfig.AlertsRequestBottomSheet(it)) },
-            promptLogin = {
-                showLoginBottomSheet(
-                    pageName = SignupPageName.PROFILE,
-                    loginBottomSheetType = LoginBottomSheetType.DEFAULT,
-                    onDismissRequest = { hideLoginBottomSheetIfVisible() },
-                    onLoginSuccess = { hideLoginBottomSheetIfVisible() },
+    private fun createSlotChild(
+        config: SlotConfig,
+        context: ComponentContext,
+    ): RootComponent.SlotChild =
+        when (config) {
+            is SlotConfig.AlertsRequestBottomSheet ->
+                RootComponent.SlotChild.AlertsRequestBottomSheet(
+                    component =
+                        AlertsRequestComponent(
+                            componentContext = context,
+                            type = config.requestType,
+                            onDismissed = slotNavigation::dismiss,
+                        ),
                 )
-            },
-        )
+            is SlotConfig.LoginBottomSheet -> {
+                currentLoginInfo
+                    ?.let { RootComponent.SlotChild.LoginBottomSheet() }
+                    ?: error("LoginInfo not available for slot")
+            }
+        }
 
+    // ==================== RootComponent Navigation ====================
     override fun onBackClicked() {
         navigation.pop()
     }
@@ -177,18 +233,17 @@ class DefaultRootComponent(
     override fun isMandatoryLoginActive(): Boolean = stack.active.instance is RootComponent.Child.MandatoryLogin
 
     override fun navigateToSplash() {
-        if (stack.active.instance is RootComponent.Child.Splash) return
-        navigation.replaceAll(Config.Splash)
+        if (!isSplashActive()) navigation.replaceAll(Config.Splash)
     }
 
     override fun navigateToMandatoryLogin() {
-        if (stack.active.instance is RootComponent.Child.MandatoryLogin) return
-        navigation.replaceAll(Config.MandatoryLogin)
+        if (!isMandatoryLoginActive()) navigation.replaceAll(Config.MandatoryLogin)
     }
 
     override fun navigateToHome() {
-        if (stack.active.instance is RootComponent.Child.Home) return
-        navigation.replaceAll(Config.Home)
+        if (stack.active.instance !is RootComponent.Child.Home) {
+            navigation.replaceAll(Config.Home)
+        }
     }
 
     override fun onNavigationRequest(appRoute: AppRoute) {
@@ -203,6 +258,15 @@ class DefaultRootComponent(
         _updateState.value = state
     }
 
+    override fun onCompleteUpdateClicked() {
+        onCompleteUpdateCallback?.invoke()
+    }
+
+    fun setOnCompleteUpdateCallback(callback: () -> Unit) {
+        onCompleteUpdateCallback = callback
+    }
+
+    // ==================== Route Handling (inline) ====================
     private fun handleAppRoute(appRoute: AppRoute) {
         when (appRoute) {
             is UserProfileRoute -> handleUserProfileRoute(appRoute)
@@ -214,39 +278,30 @@ class DefaultRootComponent(
         }
     }
 
-    private fun handleUserProfileRoute(appRoute: UserProfileRoute) {
+    private fun handleUserProfileRoute(route: UserProfileRoute) {
         val currentUser = sessionManager.userPrincipal
-        if (!currentUser.isNullOrBlank() && currentUser == appRoute.userPrincipalId) {
-            // Navigate to Profile tab inside Home to keep bottom nav visible
-            homeComponent?.onNavigationRequest(Profile)
-                ?: run {
-                    pendingNavRoute = Profile
-                    navigation.replaceAll(Config.Home)
-                }
+        if (!currentUser.isNullOrBlank() && currentUser == route.userPrincipalId) {
+            homeComponent?.onNavigationRequest(Profile) ?: run {
+                pendingNavRoute = Profile
+                navigation.replaceAll(Config.Home)
+            }
             return
         }
-        val canisterData =
+        openProfile(
             CanisterData(
-                canisterId = appRoute.canisterId,
-                userPrincipalId = appRoute.userPrincipalId,
-                profilePic = appRoute.profilePic ?: "",
-                username = appRoute.username,
+                canisterId = route.canisterId,
+                userPrincipalId = route.userPrincipalId,
+                profilePic = route.profilePic ?: "",
+                username = route.username,
                 isCreatedFromServiceCanister =
-                    appRoute.isFromServiceCanister ||
-                        appRoute.canisterId == getUserInfoServiceCanister(),
+                    route.isFromServiceCanister ||
+                        route.canisterId == getUserInfoServiceCanister(),
                 isFollowing = false,
-            )
-        openProfile(canisterData)
+            ),
+        )
     }
 
-    override fun onCompleteUpdateClicked() {
-        onCompleteUpdateCallback?.invoke()
-    }
-
-    fun setOnCompleteUpdateCallback(callback: () -> Unit) {
-        onCompleteUpdateCallback = callback
-    }
-
+    // ==================== Screen Navigation ====================
     override fun openEditProfile() {
         navigation.pushToFront(Config.EditProfile)
     }
@@ -259,12 +314,7 @@ class DefaultRootComponent(
         tournamentId: String,
         showResult: Boolean,
     ) {
-        navigation.pushToFront(
-            Config.TournamentLeaderboard(
-                tournamentId = tournamentId,
-                showResult = showResult,
-            ),
-        )
+        navigation.pushToFront(Config.TournamentLeaderboard(tournamentId, showResult))
     }
 
     override fun openTournamentGame(
@@ -277,12 +327,12 @@ class DefaultRootComponent(
     ) {
         navigation.pushToFront(
             Config.TournamentGame(
-                tournamentId = tournamentId,
-                tournamentTitle = tournamentTitle,
-                initialDiamonds = initialDiamonds,
-                startEpochMs = startEpochMs,
-                endEpochMs = endEpochMs,
-                totalPrizePool = totalPrizePool,
+                tournamentId,
+                tournamentTitle,
+                initialDiamonds,
+                startEpochMs,
+                endEpochMs,
+                totalPrizePool,
             ),
         )
     }
@@ -302,205 +352,89 @@ class DefaultRootComponent(
         navigation.pushToFront(Config.Leaderboard)
     }
 
-    private fun conversationComponent(
-        componentContext: ComponentContext,
-        config: Config.Conversation,
-    ): ConversationComponent =
-        ConversationComponent.Companion(
-            componentContext = componentContext,
-            influencerId = config.influencerId,
-            influencerCategory = config.influencerCategory,
-            onBack = { navigation.pop() },
-            openProfile = this::openProfile,
-            showLoginBottomSheet = this::showLoginBottomSheet,
-            hideLoginBottomSheetIfVisible = this::hideLoginBottomSheetIfVisible,
-        )
+    // ==================== LoginCoordinator Implementation ====================
+    override fun requestLogin(loginInfo: LoginInfo): @Composable () -> Unit {
+        // Store the login info
+        currentLoginInfo = loginInfo
 
-    private fun walletComponent(componentContext: ComponentContext): WalletComponent =
-        WalletComponent(
-            componentContext = componentContext,
-            showAlertsOnDialog = { this.showSlot(SlotConfig.AlertsRequestBottomSheet(it)) },
-            showBackIcon = true,
-            onBack = { navigation.pop() },
-        )
+        // Activate bottom sheet slot if needed
+        if (loginInfo.screenType is LoginScreenType.BottomSheet) {
+            showLoginSlot(loginInfo)
+        }
 
-    private fun leaderboardComponent(componentContext: ComponentContext): LeaderboardComponent =
-        LeaderboardComponent.Companion(
-            componentContext = componentContext,
-            snapshot = null,
-            navigateToHome = {
-                navigation.pop()
-                homeComponent?.onFeedTabClick()
-            },
-            openProfile = this::openProfile,
-            showBackIcon = true,
-            onBack = { navigation.pop() },
-        )
-
-    override fun showLoginBottomSheet(
-        pageName: SignupPageName,
-        loginBottomSheetType: LoginBottomSheetType,
-        onDismissRequest: () -> Unit,
-        onLoginSuccess: () -> Unit,
-    ) {
-        loginSlotCallbacks =
-            LoginSlotCallbacks(
-                onDismissRequest = onDismissRequest,
-                onLoginSuccess = onLoginSuccess,
-            )
-        showSlot(
-            SlotConfig.LoginBottomSheet(
-                pageName = pageName,
-                loginBottomSheetType = loginBottomSheetType,
-            ),
-        )
+        // Return composable based on screen type
+        return when (loginInfo.screenType) {
+            is LoginScreenType.Overlay -> {
+                {
+                    // Watch for auth success
+                    val state by loginViewModel.state.collectAsState()
+                    LaunchedEffect(state) {
+                        if (state.isLoginComplete()) {
+                            loginInfo.onSuccess?.invoke()
+                            clearLoginState()
+                            loginViewModel.resetState()
+                        }
+                    }
+                    LoginOverlay(
+                        pageName = loginInfo.pageName,
+                        tncLink = loginViewModel.getTncLink(),
+                        mode = loginInfo.mode,
+                        onNavigateToCountrySelector = {
+                            navigateToCountrySelector { loginViewModel.onCountrySelected(it) }
+                        },
+                        onNavigateToOtpVerification = { navigateToOtpVerification() },
+                        bottomContent = loginInfo.bottomContent,
+                    )
+                }
+            }
+            is LoginScreenType.BottomSheet -> {
+                { /* Rendered via slot */ }
+            }
+        }
     }
 
-    override fun hideLoginBottomSheetIfVisible() {
-        val currentConfig = slot.value.child?.configuration
-        if (currentConfig is SlotConfig.LoginBottomSheet) {
-            loginSlotCallbacks = null
+    override fun navigateToCountrySelector(onCountrySelected: (Country) -> Unit) {
+        countrySelectionCallback = onCountrySelected
+        dismissLoginSlotIfActive()
+        navigation.pushToFront(Config.CountrySelector)
+    }
+
+    override fun navigateToOtpVerification() {
+        dismissLoginSlotIfActive()
+        navigation.pushToFront(Config.OtpVerification)
+    }
+
+    // ==================== Login Slot Helpers ====================
+    private fun showLoginSlot(loginInfo: LoginInfo) {
+        if (loginInfo.screenType !is LoginScreenType.BottomSheet) return
+        slotNavigation.activate(SlotConfig.LoginBottomSheet)
+    }
+
+    private fun dismissLoginSlotIfActive() {
+        if (slot.value.child?.instance is RootComponent.SlotChild.LoginBottomSheet) {
             slotNavigation.dismiss()
         }
     }
 
-    private fun slotChild(
-        config: SlotConfig,
-        componentContext: ComponentContext,
-    ): RootComponent.SlotChild =
-        when (config) {
-            is SlotConfig.AlertsRequestBottomSheet ->
-                RootComponent.SlotChild.AlertsRequestBottomSheet(
-                    component = alertsRequestComponent(componentContext, config.requestType),
-                )
-            is SlotConfig.LoginBottomSheet ->
-                RootComponent.SlotChild.LoginBottomSheet(
-                    pageName = config.pageName,
-                    loginBottomSheetType = config.loginBottomSheetType,
-                    onDismissRequest = {
-                        loginSlotCallbacks?.onDismissRequest?.invoke()
-                        loginSlotCallbacks = null
-                        slotNavigation.dismiss()
-                    },
-                    onLoginSuccess = {
-                        loginSlotCallbacks?.onLoginSuccess?.invoke()
-                        loginSlotCallbacks = null
-                        slotNavigation.dismiss()
-                    },
-                )
-        }
-
-    private fun alertsRequestComponent(
-        componentContext: ComponentContext,
-        type: AlertsRequestType,
-    ): AlertsRequestComponent =
-        AlertsRequestComponent(
-            componentContext = componentContext,
-            type = type,
-            onDismissed = slotNavigation::dismiss,
-        )
-
-    private fun tournamentGameComponent(
-        componentContext: ComponentContext,
-        tournamentId: String,
-        tournamentTitle: String,
-        initialDiamonds: Int,
-        startEpochMs: Long,
-        endEpochMs: Long,
-        totalPrizePool: Int,
-    ): TournamentGameComponent =
-        TournamentGameComponent(
-            componentContext = componentContext,
-            tournamentId = tournamentId,
-            tournamentTitle = tournamentTitle,
-            initialDiamonds = initialDiamonds,
-            totalPrizePool = totalPrizePool,
-            startEpochMs = startEpochMs,
-            endEpochMs = endEpochMs,
-            onLeaderboardClick = { clickedTournamentId, showResult ->
-                openTournamentLeaderboard(
-                    tournamentId = clickedTournamentId,
-                    showResult = showResult,
-                )
-            },
-            onTimeUp = {
-                navigation.pop()
-                openTournamentLeaderboard(
-                    tournamentId = tournamentId,
-                    showResult = true,
-                )
-            },
-            onBack = { navigation.pop() },
-        )
-
-    private fun showSlot(slotConfig: SlotConfig) {
-        slotNavigation.activate(slotConfig)
+    private fun showAlertsSlot(type: AlertsRequestType) {
+        slotNavigation.activate(SlotConfig.AlertsRequestBottomSheet(type))
     }
 
-    @Serializable
-    private sealed interface Config {
-        @Serializable
-        data object Splash : Config
-
-        @Serializable
-        data object Home : Config
-
-        @Serializable
-        data object EditProfile : Config
-
-        @Serializable
-        data class UserProfile(
-            val userCanisterData: CanisterData,
-        ) : Config
-
-        @Serializable
-        data class TournamentLeaderboard(
-            val tournamentId: String,
-            val showResult: Boolean = false,
-        ) : Config
-
-        @Serializable
-        data class TournamentGame(
-            val tournamentId: String,
-            val tournamentTitle: String = "",
-            val initialDiamonds: Int,
-            val startEpochMs: Long,
-            val endEpochMs: Long,
-            val totalPrizePool: Int,
-        ) : Config
-
-        @Serializable
-        data class Conversation(
-            val influencerId: String,
-            val influencerCategory: String,
-        ) : Config
-
-        @Serializable
-        data object Wallet : Config
-
-        @Serializable
-        data object Leaderboard : Config
-
-        @Serializable
-        data object MandatoryLogin : Config
+    override fun clearLoginState() {
+        currentLoginInfo = null
+        countrySelectionCallback = null
     }
 
-    @Serializable
-    private sealed interface SlotConfig {
-        @Serializable
-        data class AlertsRequestBottomSheet(
-            val requestType: AlertsRequestType,
-        ) : SlotConfig
-
-        @Serializable
-        data class LoginBottomSheet(
-            val pageName: SignupPageName,
-            val loginBottomSheetType: LoginBottomSheetType,
-        ) : SlotConfig
+    // Called by UI when bottom sheet is dismissed by user
+    override fun dismissLoginBottomSheet() {
+        slotNavigation.dismiss()
+        currentLoginInfo?.onDismiss?.invoke()
+        clearLoginState()
+        loginViewModel.resetState()
     }
 
-    private data class LoginSlotCallbacks(
-        val onDismissRequest: () -> Unit,
-        val onLoginSuccess: () -> Unit,
-    )
+    // ==================== LoginCoordinator Access ====================
+    override fun getLoginCoordinator(): LoginCoordinator = this
+
+    override fun createLoginRequestFactory(): RequestLoginFactory = this.toRequestFactory()
 }

@@ -21,14 +21,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.yral.shared.analytics.events.SignupPageName
-import com.yral.shared.features.auth.ui.SignupView
-import com.yral.shared.features.auth.ui.getAnnotatedHeaderForLogin
+import com.yral.shared.features.auth.nav.mandatorylogin.MandatoryLoginComponent
+import com.yral.shared.features.auth.ui.components.SignupView
+import com.yral.shared.features.auth.ui.components.getAnnotatedHeaderForLogin
 import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
 import com.yral.shared.libs.designsystem.windowInfo.rememberScreenFoldStateProvider
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.app.generated.resources.Res
 import yral_mobile.shared.app.generated.resources.login_bottom_shadow
 import yral_mobile.shared.app.generated.resources.login_coins
@@ -38,10 +38,11 @@ import yral_mobile.shared.app.generated.resources.reward_tokens
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MandatoryLoginScreen(modifier: Modifier) {
-    val loginViewModel: LoginViewModel = koinViewModel()
-    val termsLink = loginViewModel.getTncLink()
-    val context = getContext()
+fun MandatoryLoginScreen(
+    modifier: Modifier,
+    component: MandatoryLoginComponent,
+    loginViewModel: LoginViewModel,
+) {
     val termsSheetState = rememberModalBottomSheetState()
     var termsLinkState by remember { mutableStateOf("") }
     val fullText =
@@ -55,24 +56,19 @@ fun MandatoryLoginScreen(modifier: Modifier) {
             loginViewModel.getInitialBalanceReward(),
         )
 
-    Box(modifier = modifier) {
+    Box(modifier = Modifier.fillMaxSize()) {
         Background()
         Box(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+            modifier = modifier.padding(horizontal = 16.dp),
             contentAlignment = Center,
         ) {
             SignupView(
                 pageName = SignupPageName.SPLASH,
-                termsLink = termsLink,
-                onSignupClicked = { provider ->
-                    loginViewModel.signInWithSocial(
-                        context,
-                        provider,
-                    )
-                },
-                openTerms = { termsLinkState = termsLink },
+                openTerms = { termsLinkState = loginViewModel.getTncLink() },
                 headlineText = getAnnotatedHeaderForLogin(fullText, rewardText),
                 disclaimerText = "",
+                onNavigateToCountrySelector = component::onNavigateToCountrySelector,
+                onNavigateToOtpVerification = component::onNavigateToOtpVerification,
             )
         }
         if (termsLinkState.isNotEmpty()) {
@@ -124,6 +120,3 @@ private fun Background() {
         }
     }
 }
-
-@Composable
-internal expect fun getContext(): Any

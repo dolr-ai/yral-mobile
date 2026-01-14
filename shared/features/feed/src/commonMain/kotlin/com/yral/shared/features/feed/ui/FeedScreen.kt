@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,10 +23,14 @@ import androidx.compose.ui.draw.paint
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
+import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.domain.models.FeedDetails
+import com.yral.shared.features.auth.ui.LoginMode
+import com.yral.shared.features.auth.ui.LoginScreenType
+import com.yral.shared.features.auth.ui.RequestLoginFactory
+import com.yral.shared.features.auth.ui.rememberLoginInfo
 import com.yral.shared.features.feed.nav.FeedComponent
-import com.yral.shared.features.feed.ui.components.SignupNudge
 import com.yral.shared.features.feed.viewmodel.FeedEvents
 import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
@@ -34,10 +40,14 @@ import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.SIGN_UP_P
 import com.yral.shared.features.feed.viewmodel.OnboardingStep
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralLoader
+import com.yral.shared.libs.designsystem.component.lottie.LottieRes
+import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastType
 import com.yral.shared.libs.designsystem.component.toast.showError
 import com.yral.shared.libs.designsystem.component.toast.showSuccess
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.YRALReelPlayerCardStack
 import com.yral.shared.libs.videoPlayer.model.Reels
@@ -51,6 +61,8 @@ import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import yral_mobile.shared.features.feed.generated.resources.Res
+import yral_mobile.shared.features.feed.generated.resources.scroll_to_next_video
 import yral_mobile.shared.libs.designsystem.generated.resources.could_not_login
 import yral_mobile.shared.libs.designsystem.generated.resources.could_not_login_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.ok
@@ -162,10 +174,10 @@ fun FeedScreen(
                     FeedOverlay(
                         pageNo = pageNo,
                         state = state,
-                        feedViewModel = viewModel,
                         topOverlay = { topOverlay(pageNo) },
                         bottomOverlay = { bottomOverlay(pageNo, scrollToNext) },
                         actionsRight = { actionsRight(pageNo) },
+                        requestLoginFactory = component.requestLoginFactory,
                     )
                 }
             } else {
@@ -194,10 +206,10 @@ fun FeedScreen(
                     FeedOverlay(
                         pageNo = pageNo,
                         state = state,
-                        feedViewModel = viewModel,
                         topOverlay = { topOverlay(pageNo) },
                         bottomOverlay = { bottomOverlay(pageNo, scrollToNext) },
                         actionsRight = { actionsRight(pageNo) },
+                        requestLoginFactory = component.requestLoginFactory,
                     )
                 }
             }
@@ -297,10 +309,10 @@ private fun FeedDetails.toReel() =
 private fun FeedOverlay(
     pageNo: Int,
     state: FeedState,
-    feedViewModel: FeedViewModel,
     topOverlay: @Composable () -> Unit,
     bottomOverlay: @Composable () -> Unit,
     actionsRight: @Composable ColumnScope.() -> Unit,
+    requestLoginFactory: RequestLoginFactory,
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -321,11 +333,26 @@ private fun FeedOverlay(
                 actionsRight = actionsRight,
             )
         }
+    }
+
+    val loginState = rememberLoginInfo(requestLoginFactory = requestLoginFactory)
+    LaunchedEffect(pageNo, state.isLoggedIn) {
+        // Login overlay - rendered after Box to ensure it's on top
         if (!state.isLoggedIn && pageNo != 0 && (pageNo % SIGN_UP_PAGE) == 0) {
-            val context = getContext()
-            SignupNudge(tncLink = feedViewModel.getTncLink()) { provider ->
-                feedViewModel.signInWithSocial(context, provider)
-            }
+            loginState.requestLogin(
+                SignupPageName.HOME,
+                LoginScreenType.Overlay,
+                LoginMode.BOTH,
+                null,
+                null,
+            ) { LoginBottomContent() }
+        } else {
+            loginState.clearLogin()
+        }
+    }
+    loginState.loginInfo?.let { loginInfo ->
+        if (loginInfo.screenType is LoginScreenType.Overlay) {
+            requestLoginFactory(loginInfo)()
         }
     }
 }
@@ -378,7 +405,22 @@ private fun ActionsRight(
 }
 
 @Composable
-internal expect fun getContext(): Any
+private fun LoginBottomContent() {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = stringResource(Res.string.scroll_to_next_video),
+            style = LocalAppTopography.current.mdBold,
+            color = YralColors.NeutralIconsActive,
+        )
+        YralLottieAnimation(
+            modifier = Modifier.size(36.dp),
+            LottieRes.SIGNUP_SCROLL,
+        )
+    }
+}
 
 @Composable
 internal expect fun KeepScreenOnEffect(keepScreenOn: Boolean)

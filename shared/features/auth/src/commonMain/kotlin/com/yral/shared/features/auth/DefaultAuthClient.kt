@@ -1,6 +1,7 @@
 package com.yral.shared.features.auth
 
 import co.touchlab.kermit.Logger
+import com.github.michaelbull.result.getOrThrow
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.AnalyticsManager
@@ -20,13 +21,17 @@ import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.auth.analytics.AuthTelemetry
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.models.ExchangePrincipalResponse
+import com.yral.shared.features.auth.domain.models.PhoneAuthLoginResponse
+import com.yral.shared.features.auth.domain.models.PhoneAuthVerifyResponse
 import com.yral.shared.features.auth.domain.useCases.AuthenticateTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.DeregisterNotificationTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.ExchangePrincipalIdUseCase
 import com.yral.shared.features.auth.domain.useCases.ObtainAnonymousIdentityUseCase
+import com.yral.shared.features.auth.domain.useCases.PhoneAuthLoginUseCase
 import com.yral.shared.features.auth.domain.useCases.RefreshTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.RegisterNotificationTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.UpdateSessionAsRegisteredUseCase
+import com.yral.shared.features.auth.domain.useCases.VerifyPhoneAuthUseCase
 import com.yral.shared.features.auth.utils.OAuthResult
 import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.features.auth.utils.OAuthUtilsHelper
@@ -538,6 +543,8 @@ class DefaultAuthClient(
         val getIdTokenUseCase: GetIdTokenUseCase,
         val registerNotificationTokenUseCase: RegisterNotificationTokenUseCase,
         val deregisterNotificationTokenUseCase: DeregisterNotificationTokenUseCase,
+        val phoneAuthLoginUseCase: PhoneAuthLoginUseCase,
+        val verifyPhoneAuthUseCase: VerifyPhoneAuthUseCase,
     )
 
     private suspend fun getCachedSession(): Session? {
@@ -592,6 +599,61 @@ class DefaultAuthClient(
         preferences.remove(PrefKeys.PROFILE_PIC.name)
         preferences.remove(PrefKeys.USERNAME.name)
         preferences.remove(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name)
+    }
+
+    override suspend fun phoneAuthLogin(phoneNumber: String): PhoneAuthLoginResponse {
+        val identity =
+            sessionManager.identity
+                ?: throw YralAuthException("Phone auth login failed - identity not available")
+        return requiredUseCases.phoneAuthLoginUseCase
+            .invoke(
+                PhoneAuthLoginUseCase.Params(
+                    phoneNumber = phoneNumber,
+                    identity = identity,
+                ),
+            ).onSuccess { result ->
+                Logger.d("DefaultAuthClient") { "Phone auth login initiated for $phoneNumber" }
+                currentState = result.codeChallenge
+                return result
+            }.onFailure { error ->
+                Logger.e("DefaultAuthClient") { "Phone auth login failed: ${error.message}" }
+                throw YralAuthException("Phone auth login failed - ${error.message}")
+            }.getOrThrow()
+    }
+
+    override suspend fun verifyPhoneAuth(
+        phoneNumber: String,
+        code: String,
+    ) {
+        currentState?.let { currentState ->
+            requiredUseCases.verifyPhoneAuthUseCase
+                .invoke(
+                    VerifyPhoneAuthUseCase.Params(
+                        phoneNumber = phoneNumber,
+                        code = code,
+                        clientState = currentState,
+                    ),
+                ).onSuccess { response ->
+                    Logger.d("DefaultAuthClient") { "Phone auth verification completed" }
+                    when (response) {
+                        is PhoneAuthVerifyResponse.Error -> {
+                            throw YralAuthException("Phone auth verification failed - ${response.errorMessage}")
+                        }
+                        is PhoneAuthVerifyResponse.Success -> {
+                            val userPrincipal =
+                                sessionManager.userPrincipal
+                                    ?: throw YralAuthException(
+                                        "Phone auth verification failed - user principal not found",
+                                    )
+                            authenticate(response.idTokenCode, userPrincipal)
+                        }
+                    }
+                }.onFailure { error ->
+                    authTelemetry.authFailed(SocialProvider.PHONE_NUMBER)
+                    Logger.e("DefaultAuthClient") { "Phone auth verification failed: ${error.message}" }
+                    throw YralAuthException("Phone auth verification failed - ${error.message}")
+                }.getOrThrow()
+        } ?: throw YralAuthException("Phone auth verification failed - no state found")
     }
 }
 
