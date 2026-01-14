@@ -246,7 +246,7 @@ fun SignupView(
                         // Icon-only buttons in a row for BOTH mode
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center,
+                            horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             defaultSocialProviders()
