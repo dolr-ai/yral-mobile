@@ -53,9 +53,9 @@ private class AndroidPlaybackCoordinator(
     private val preloadManager = preloadManagerBuilder.build()
 
     private val playerA = createPlayer(preloadManagerBuilder)
-    private val playerB = createPlayer(preloadManagerBuilder)
+    private val playerB = if (policy.usePreparedNextPlayer) createPlayer(preloadManagerBuilder) else null
     private var activeSlot = PlayerSlot(playerA)
-    private var preparedSlot = PlayerSlot(playerB)
+    private var preparedSlot: PlayerSlot? = playerB?.let { PlayerSlot(it) }
 
     private val surfaces = mutableMapOf<Int, VideoSurfaceHandle>()
     private var feed: List<MediaDescriptor> = emptyList()
@@ -156,7 +156,7 @@ private class AndroidPlaybackCoordinator(
 
     init {
         playerA.addListener(listener)
-        playerB.addListener(listener)
+        playerB?.addListener(listener)
         preloadManager.addListener(preloadListener)
     }
 
@@ -197,7 +197,7 @@ private class AndroidPlaybackCoordinator(
         playStartMsById[item.id] = nowMs()
         firstFramePendingIndex = index
 
-        if (preparedSlot.index == index) {
+        if (preparedSlot?.index == index) {
             swapSlots()
         } else {
             prepareSlot(activeSlot, index, playWhenReady = true)
@@ -222,8 +222,8 @@ private class AndroidPlaybackCoordinator(
         surfaces[index] = surface
         if (activeSlot.index == index) {
             attachIfBound(activeSlot)
-        } else if (preparedSlot.index == index) {
-            attachIfBound(preparedSlot)
+        } else if (preparedSlot?.index == index) {
+            preparedSlot?.let { attachIfBound(it) }
         }
     }
 
@@ -233,7 +233,11 @@ private class AndroidPlaybackCoordinator(
             if (activeSlot.index == index && handle.playerState.value == activeSlot.player) {
                 handle.playerState.value = null
             }
-            if (preparedSlot.index == index && handle.playerState.value == preparedSlot.player) {
+            val prepared = preparedSlot
+            if (prepared != null &&
+                prepared.index == index &&
+                handle.playerState.value == prepared.player
+            ) {
                 handle.playerState.value = null
             }
         }
@@ -247,12 +251,12 @@ private class AndroidPlaybackCoordinator(
 
     override fun onAppBackground() {
         activeSlot.player.playWhenReady = false
-        preparedSlot.player.playWhenReady = false
+        preparedSlot?.player?.playWhenReady = false
     }
 
     override fun release() {
         playerA.release()
-        playerB.release()
+        playerB?.release()
         preloadManager.release()
         cache.release()
     }
@@ -317,16 +321,24 @@ private class AndroidPlaybackCoordinator(
     }
 
     private fun schedulePreparedSlot(activeIndex: Int) {
+        val prepared = preparedSlot ?: return
         val nextIndex = activeIndex + 1
         if (nextIndex in feed.indices) {
-            if (preparedSlot.index != nextIndex) {
-                prepareSlot(preparedSlot, nextIndex, playWhenReady = false)
+            if (prepared.index != nextIndex) {
+                prepareSlot(prepared, nextIndex, playWhenReady = false)
                 analytics.event(
                     "preload_scheduled",
                     mapOf("id" to feed[nextIndex].id, "index" to nextIndex, "distance" to 1, "mode" to "prepared"),
                 )
             }
         }
+    }
+
+    private fun swapSlots() {
+        val prepared = preparedSlot ?: return
+        val previousActive = activeSlot
+        activeSlot = prepared
+        preparedSlot = previousActive
     }
 
     private fun prepareSlot(slot: PlayerSlot, index: Int, playWhenReady: Boolean) {
@@ -342,12 +354,6 @@ private class AndroidPlaybackCoordinator(
         slot.player.setMediaSource(mediaSource)
         slot.player.prepare()
         slot.player.playWhenReady = playWhenReady
-    }
-
-    private fun swapSlots() {
-        val previousActive = activeSlot
-        activeSlot = preparedSlot
-        preparedSlot = previousActive
     }
 
     private fun attachIfBound(slot: PlayerSlot) {

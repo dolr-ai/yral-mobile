@@ -53,9 +53,9 @@ private class IosPlaybackCoordinator(
     private var pollTimer: NSTimer? = null
 
     private val playerA = AVPlayer()
-    private val playerB = AVPlayer()
+    private val playerB = if (policy.usePreparedNextPlayer) AVPlayer() else null
     private var activeSlot = PlayerSlot(playerA)
-    private var preparedSlot = PlayerSlot(playerB)
+    private var preparedSlot: PlayerSlot? = playerB?.let { PlayerSlot(it) }
 
     private val surfaces = mutableMapOf<Int, VideoSurfaceHandle>()
     private var feed: List<MediaDescriptor> = emptyList()
@@ -79,7 +79,7 @@ private class IosPlaybackCoordinator(
 
     init {
         playerA.automaticallyWaitsToMinimizeStalling = false
-        playerB.automaticallyWaitsToMinimizeStalling = false
+        playerB?.automaticallyWaitsToMinimizeStalling = false
         registerObservers()
         startPolling()
     }
@@ -105,8 +105,11 @@ private class IosPlaybackCoordinator(
         playStartMsById[item.id] = nowMs()
         firstFramePendingIndex = index
 
-        if (preparedSlot.index == index) {
+        if (preparedSlot?.index == index) {
             swapSlots()
+            preparedPendingIndex = null
+            preparedStartMs = null
+            preparedPrerollRequested = false
         } else {
             prepareSlot(activeSlot, index, shouldPlay = true)
         }
@@ -129,8 +132,8 @@ private class IosPlaybackCoordinator(
         surfaces[index] = surface
         if (activeSlot.index == index) {
             attachIfBound(activeSlot)
-        } else if (preparedSlot.index == index) {
-            attachIfBound(preparedSlot)
+        } else if (preparedSlot?.index == index) {
+            preparedSlot?.let { attachIfBound(it) }
         }
     }
 
@@ -140,7 +143,11 @@ private class IosPlaybackCoordinator(
             if (activeSlot.index == index && handle.controller.player == activeSlot.player) {
                 handle.controller.player = null
             }
-            if (preparedSlot.index == index && handle.controller.player == preparedSlot.player) {
+            val prepared = preparedSlot
+            if (prepared != null &&
+                prepared.index == index &&
+                handle.controller.player == prepared.player
+            ) {
                 handle.controller.player = null
             }
         }
@@ -154,7 +161,7 @@ private class IosPlaybackCoordinator(
 
     override fun onAppBackground() {
         activeSlot.player.pause()
-        preparedSlot.player.pause()
+        preparedSlot?.player?.pause()
         cancelPrefetch(reason = "background")
     }
 
@@ -164,16 +171,17 @@ private class IosPlaybackCoordinator(
         observers.forEach { NSNotificationCenter.defaultCenter.removeObserver(it) }
         observers.clear()
         activeSlot.player.pause()
-        preparedSlot.player.pause()
+        preparedSlot?.player?.pause()
         cancelPrefetch(reason = "release")
         scope.cancel()
     }
 
     private fun schedulePreparedSlot(activeIndex: Int) {
+        val prepared = preparedSlot ?: return
         val nextIndex = activeIndex + 1
         if (nextIndex in feed.indices) {
-            if (preparedSlot.index != nextIndex) {
-                prepareSlot(preparedSlot, nextIndex, shouldPlay = false)
+            if (prepared.index != nextIndex) {
+                prepareSlot(prepared, nextIndex, shouldPlay = false)
                 preparedPendingIndex = nextIndex
                 preparedStartMs = nowMs()
                 preparedPrerollRequested = false
@@ -183,6 +191,13 @@ private class IosPlaybackCoordinator(
                 )
             }
         }
+    }
+
+    private fun swapSlots() {
+        val prepared = preparedSlot ?: return
+        val previousActive = activeSlot
+        activeSlot = prepared
+        preparedSlot = previousActive
     }
 
     private fun scheduleDiskPrefetch(centerIndex: Int) {
@@ -255,12 +270,6 @@ private class IosPlaybackCoordinator(
         } else {
             slot.player.pause()
         }
-    }
-
-    private fun swapSlots() {
-        val previousActive = activeSlot
-        activeSlot = preparedSlot
-        preparedSlot = previousActive
     }
 
     private fun attachIfBound(slot: PlayerSlot) {
@@ -403,21 +412,28 @@ private class IosPlaybackCoordinator(
         }
 
         val preparedIndex = preparedPendingIndex
-        if (preparedIndex != null && preparedSlot.index == preparedIndex) {
-            val preparedItem = preparedSlot.player.currentItem
+        val prepared = preparedSlot
+        if (prepared != null && preparedIndex != null && prepared.index == preparedIndex) {
+            val preparedItem = prepared.player.currentItem
             if (preparedItem?.status == AVPlayerItemStatusReadyToPlay) {
                 if (!preparedPrerollRequested) {
                     preparedPrerollRequested = true
-                    preparedSlot.player.prerollAtRate(1.0F) { _ ->
-                        if (preparedSlot.index == preparedIndex) {
-                            preparedSlot.player.pause()
+                    prepared.player.prerollAtRate(1.0F) { _ ->
+                        if (prepared.index == preparedIndex) {
+                            prepared.player.pause()
                         }
                     }
                 }
                 val start = preparedStartMs ?: nowMs()
                 analytics.event(
                     "preload_completed",
-                    mapOf("id" to feed[preparedIndex].id, "index" to preparedIndex, "bytes" to 0, "ms" to (nowMs() - start), "fromCache" to false),
+                    mapOf(
+                        "id" to feed[preparedIndex].id,
+                        "index" to preparedIndex,
+                        "bytes" to 0,
+                        "ms" to (nowMs() - start),
+                        "fromCache" to false,
+                    ),
                 )
                 preparedPendingIndex = null
                 preparedStartMs = null
