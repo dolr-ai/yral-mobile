@@ -55,6 +55,7 @@ import org.koin.compose.koinInject
 import yral_mobile.shared.features.auth.generated.resources.Res
 import yral_mobile.shared.features.auth.generated.resources.continue_to_sign_up_for_free
 import yral_mobile.shared.features.auth.generated.resources.join_yral
+import yral_mobile.shared.features.auth.generated.resources.or_label
 import yral_mobile.shared.features.auth.generated.resources.sign_up_disclaimer
 import yral_mobile.shared.features.auth.generated.resources.signup_consent
 import yral_mobile.shared.features.auth.generated.resources.signup_with_apple
@@ -381,7 +382,7 @@ private fun OrDivider() {
             color = YralColors.Neutral700,
         )
         Text(
-            text = "or",
+            text = stringResource(Res.string.or_label),
             style = LocalAppTopography.current.baseRegular,
             color = YralColors.Neutral500,
         )

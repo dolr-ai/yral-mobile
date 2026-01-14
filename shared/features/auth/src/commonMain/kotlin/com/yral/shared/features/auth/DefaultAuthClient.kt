@@ -616,7 +616,6 @@ class DefaultAuthClient(
                 currentState = result.codeChallenge
                 return result
             }.onFailure { error ->
-                authTelemetry.authFailed(SocialProvider.PHONE_NUMBER) // Use generic telemetry
                 Logger.e("DefaultAuthClient") { "Phone auth login failed: ${error.message}" }
                 throw YralAuthException("Phone auth login failed - ${error.message}")
             }.getOrThrow()
@@ -641,12 +640,16 @@ class DefaultAuthClient(
                             throw YralAuthException("Phone auth verification failed - ${response.errorMessage}")
                         }
                         is PhoneAuthVerifyResponse.Success -> {
-                            sessionManager.userPrincipal?.let { userPrincipal ->
-                                authenticate(response.idTokenCode, userPrincipal)
-                            }
+                            val userPrincipal =
+                                sessionManager.userPrincipal
+                                    ?: throw YralAuthException(
+                                        "Phone auth verification failed - user principal not found",
+                                    )
+                            authenticate(response.idTokenCode, userPrincipal)
                         }
                     }
                 }.onFailure { error ->
+                    authTelemetry.authFailed(SocialProvider.PHONE_NUMBER)
                     Logger.e("DefaultAuthClient") { "Phone auth verification failed: ${error.message}" }
                     throw YralAuthException("Phone auth verification failed - ${error.message}")
                 }.getOrThrow()

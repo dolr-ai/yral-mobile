@@ -5,6 +5,7 @@
     <string name="signup_with_apple">Sign up with Apple</string>
     <string name="signup_consent">By signing up, you agree to our Terms of Service</string>
     <string name="terms_of_service_signup_consent">Terms of Service</string>
+    <string name="or_label">or</string>
 
     <string name="login_to_get_25_tokens">Login to get %1$d Yral tokens</string>
     <string name="upload_ai_videos_earn_bitcoin">Upload AI Videos. Earn Bitcoin.</string>
@@ -23,7 +24,7 @@
     <string name="otp_sent_to">OTP sent to %1$s</string>
     <string name="resend_otp_in">Resend in %1$s</string>
     <string name="resend_otp">Resend</string>
-    <string name="didnt_receive_otp">Didn't receive the OTP?</string>
+    <string name="didnt_receive_otp">Didn\'t receive the OTP?</string>
     <string name="invalid_otp">Invalid OTP!</string>
     <string name="verify">Verify</string>
 

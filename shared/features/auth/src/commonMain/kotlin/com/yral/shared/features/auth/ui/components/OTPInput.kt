@@ -61,7 +61,7 @@ fun OtpInput(
             ),
         )
     }
-    var previousTextLength by remember { mutableStateOf(0) }
+    var previousTextLength by remember { mutableStateOf(sanitizedValue.length) }
     var isFocused by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     val interactionSource = remember { MutableInteractionSource() }
@@ -145,7 +145,7 @@ private fun OtpBoxes(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .widthIn(max = config.boxWidth * config.length + (config.length * 20).dp),
+                .widthIn(max = config.boxWidth * config.length + config.spacing * (config.length - 1)),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
