@@ -93,7 +93,8 @@ class TournamentViewModel(
 
                     val delayMs = nextBoundaryMs - currentTimeMs
                     if (delayMs > 0) {
-                        delay(delayMs)
+                        // Add small buffer (100ms) to ensure time comparison happens after boundary
+                        delay(delayMs + BOUNDARY_BUFFER_MS)
                     }
                 }
             }
@@ -117,11 +118,21 @@ class TournamentViewModel(
     private fun findNextBoundaryTime(
         tournamentDataList: List<TournamentData>,
         currentTimeMs: Long,
-    ): Long? =
-        tournamentDataList
-            .flatMap { listOf(it.startEpochMs, it.endEpochMs) }
-            .filter { it > currentTimeMs }
+    ): Long? {
+        // Include all boundary times:
+        // - startEpochMs: when tournament goes live
+        // - endEpochMs: when tournament ends
+        // - startEpochMs - 10 minutes: when JoinNowDisabled activates for registered users
+        return tournamentDataList
+            .flatMap {
+                listOf(
+                    it.startEpochMs - TEN_MINUTES_MS, // 10 min before start (JoinNowDisabled boundary)
+                    it.startEpochMs, // tournament goes live
+                    it.endEpochMs, // tournament ends
+                )
+            }.filter { it > currentTimeMs }
             .minOrNull()
+    }
 
     private fun observeSessionState() {
         viewModelScope.launch {
@@ -166,6 +177,8 @@ class TournamentViewModel(
     companion object {
         private const val MAX_PENDING_TOURNAMENT_RETRIES = 10
         private const val PENDING_TOURNAMENT_RETRY_DELAY_MS = 500L
+        private const val BOUNDARY_BUFFER_MS = 100L
+        private const val TEN_MINUTES_MS = 10 * 60 * 1000L
     }
 
     fun loadTournaments() {
