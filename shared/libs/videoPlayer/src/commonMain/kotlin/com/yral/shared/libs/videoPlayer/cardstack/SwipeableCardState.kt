@@ -13,6 +13,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 /**
@@ -70,6 +72,9 @@ class SwipeableCardState(
 
     /** Animatable for smooth offset transitions */
     private val offsetAnimatable = Animatable(Offset.Zero, Offset.VectorConverter)
+
+    /** Animatable for smooth rotation transitions */
+    private val rotationAnimatable = Animatable(0f)
 
     /**
      * Updates the item count when the reels list changes.
@@ -139,14 +144,37 @@ class SwipeableCardState(
                 SwipeDirection.NONE -> Offset.Zero
             }
 
+        // Calculate target rotation (angle based on direction)
+        val targetRotation =
+            when (swipeDirection) {
+                SwipeDirection.LEFT -> -CardStackConstants.ROTATION_MULTIPLIER
+                SwipeDirection.RIGHT -> CardStackConstants.ROTATION_MULTIPLIER
+                else -> 0f
+            }
+
         if (targetOffset != Offset.Zero) {
             offsetAnimatable.snapTo(Offset(offsetX, offsetY))
-            offsetAnimatable.animateTo(
-                targetValue = targetOffset,
-                animationSpec = tween(CardStackConstants.DISMISS_ANIMATION_DURATION_MS),
-            ) {
-                offsetX = value.x
-                offsetY = value.y
+            rotationAnimatable.snapTo(rotation)
+
+            // Animate both offset and rotation in parallel using coroutines
+            coroutineScope {
+                launch {
+                    offsetAnimatable.animateTo(
+                        targetValue = targetOffset,
+                        animationSpec = tween(CardStackConstants.DISMISS_ANIMATION_DURATION_MS),
+                    ) {
+                        offsetX = value.x
+                        offsetY = value.y
+                    }
+                }
+                launch {
+                    rotationAnimatable.animateTo(
+                        targetValue = targetRotation,
+                        animationSpec = tween(CardStackConstants.DISMISS_ANIMATION_DURATION_MS),
+                    ) {
+                        rotation = value
+                    }
+                }
             }
         }
 
@@ -198,6 +226,28 @@ class SwipeableCardState(
      * Checks if current index is at the last item.
      */
     fun isAtEnd(): Boolean = currentIndex >= itemCount - 1
+
+    /**
+     * Programmatically swipes the card in the specified direction.
+     * Used for button-triggered swipes.
+     *
+     * @param direction The direction to swipe.
+     * @param screenWidth Width of the screen for calculating exit position.
+     * @param screenHeight Height of the screen for calculating exit position.
+     * @param onComplete Callback invoked after animation completes.
+     */
+    suspend fun swipeInDirection(
+        direction: SwipeDirection,
+        screenWidth: Float,
+        screenHeight: Float,
+        onComplete: () -> Unit,
+    ) {
+        if (isAnimating || isAtEnd() || direction == SwipeDirection.NONE) return
+
+        swipeDirection = direction
+        isSwipeCommitted = true
+        animateDismiss(screenWidth, screenHeight, onComplete)
+    }
 
     /**
      * Resets all drag/animation state to initial values.

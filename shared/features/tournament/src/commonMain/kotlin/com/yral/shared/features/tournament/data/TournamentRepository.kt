@@ -3,6 +3,7 @@
 package com.yral.shared.features.tournament.data
 
 import com.github.michaelbull.result.Result
+import com.yral.shared.features.tournament.data.models.HotOrNotVoteRequestDto
 import com.yral.shared.features.tournament.data.models.toRegistrationResult
 import com.yral.shared.features.tournament.data.models.toTournamentDataList
 import com.yral.shared.features.tournament.data.models.toTournamentLeaderboard
@@ -15,6 +16,8 @@ import com.yral.shared.features.tournament.domain.model.GetMyTournamentsRequest
 import com.yral.shared.features.tournament.domain.model.GetTournamentLeaderboardRequest
 import com.yral.shared.features.tournament.domain.model.GetTournamentStatusRequest
 import com.yral.shared.features.tournament.domain.model.GetTournamentsRequest
+import com.yral.shared.features.tournament.domain.model.HotOrNotVoteRequest
+import com.yral.shared.features.tournament.domain.model.HotOrNotVoteResult
 import com.yral.shared.features.tournament.domain.model.RegisterForTournamentRequest
 import com.yral.shared.features.tournament.domain.model.RegistrationResult
 import com.yral.shared.features.tournament.domain.model.TournamentData
@@ -23,6 +26,7 @@ import com.yral.shared.features.tournament.domain.model.TournamentLeaderboard
 import com.yral.shared.features.tournament.domain.model.TournamentStatusData
 import com.yral.shared.features.tournament.domain.model.VoteResult
 import com.yral.shared.features.tournament.domain.model.toDto
+import com.yral.shared.features.tournament.data.models.toVoteResult as toHotOrNotVoteResult
 
 class TournamentRepository(
     private val remoteDataSource: ITournamentRemoteDataSource,
@@ -60,6 +64,21 @@ class TournamentRepository(
         remoteDataSource
             .castVote(idToken, request.toDto())
             .toVoteResult()
+
+    override suspend fun castHotOrNotVote(
+        idToken: String,
+        request: HotOrNotVoteRequest,
+    ): Result<HotOrNotVoteResult, TournamentError> =
+        remoteDataSource
+            .castHotOrNotVote(
+                idToken,
+                HotOrNotVoteRequestDto(
+                    tournamentId = request.tournamentId,
+                    principalId = request.principalId,
+                    videoId = request.videoId,
+                    vote = request.vote,
+                ),
+            ).toHotOrNotVoteResult()
 
     override suspend fun getTournamentLeaderboard(
         idToken: String,

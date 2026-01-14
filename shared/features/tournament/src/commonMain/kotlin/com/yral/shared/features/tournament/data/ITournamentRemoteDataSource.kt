@@ -1,5 +1,7 @@
 package com.yral.shared.features.tournament.data
 
+import com.yral.shared.features.tournament.data.models.HotOrNotVoteRequestDto
+import com.yral.shared.features.tournament.data.models.HotOrNotVoteResponseDto
 import com.yral.shared.features.tournament.data.models.MyTournamentsRequestDto
 import com.yral.shared.features.tournament.data.models.MyTournamentsResponseDto
 import com.yral.shared.features.tournament.data.models.RegisterTournamentRequestDto
@@ -45,13 +47,23 @@ interface ITournamentRemoteDataSource {
     ): MyTournamentsResponseDto
 
     /**
-     * Cast vote during live tournament.
+     * Cast vote during live tournament (smiley game).
      * Requires authentication.
      */
     suspend fun castVote(
         idToken: String,
         request: TournamentVoteRequestDto,
     ): TournamentVoteResponseDto
+
+    /**
+     * Cast vote during live Hot or Not tournament.
+     * Vote is compared against AI verdict.
+     * Requires authentication.
+     */
+    suspend fun castHotOrNotVote(
+        idToken: String,
+        request: HotOrNotVoteRequestDto,
+    ): HotOrNotVoteResponseDto
 
     /**
      * Get tournament leaderboard.

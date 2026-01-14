@@ -31,6 +31,7 @@ interface TournamentGameComponent : FeedComponent {
             startEpochMs: Long,
             endEpochMs: Long,
             totalPrizePool: Int,
+            isHotOrNot: Boolean = false,
             onLeaderboardClick: (tournamentId: String, showResult: Boolean) -> Unit,
             onTimeUp: () -> Unit,
             onBack: () -> Unit,
@@ -46,6 +47,7 @@ interface TournamentGameComponent : FeedComponent {
                         totalPrizePool = totalPrizePool,
                         startEpochMs = startEpochMs,
                         endEpochMs = endEpochMs,
+                        isHotOrNot = isHotOrNot,
                     ),
                 onLeaderboardClickCallback = onLeaderboardClick,
                 onTimeUpCallback = onTimeUp,
@@ -60,6 +62,7 @@ interface TournamentGameComponent : FeedComponent {
         val totalPrizePool: Int,
         val startEpochMs: Long,
         val endEpochMs: Long,
+        val isHotOrNot: Boolean = false,
     )
 }
 

@@ -47,6 +47,7 @@ fun TournamentData.toUiTournament(): Tournament {
     return Tournament(
         id = id,
         title = title,
+        type = type,
         totalPrizePool = totalPrizePool,
         participantsLabel = participantsLabel,
         scheduleLabel = scheduleLabel,

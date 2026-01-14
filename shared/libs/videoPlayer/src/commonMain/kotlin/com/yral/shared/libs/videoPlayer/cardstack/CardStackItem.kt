@@ -1,13 +1,16 @@
 package com.yral.shared.libs.videoPlayer.cardstack
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -21,6 +24,10 @@ import com.yral.shared.libs.videoPlayer.model.PlayerControls
 import com.yral.shared.libs.videoPlayer.model.PlayerData
 import com.yral.shared.libs.videoPlayer.pool.PlayerPool
 import com.yral.shared.libs.videoPlayer.pool.VideoListener
+import org.jetbrains.compose.resources.painterResource
+import yral_mobile.shared.libs.videoplayer.generated.resources.Res
+import yral_mobile.shared.libs.videoplayer.generated.resources.bakwaas
+import yral_mobile.shared.libs.videoplayer.generated.resources.mast
 
 /**
  * A single card item in the card stack.
@@ -192,6 +199,38 @@ internal fun CardStackItem(
                 progress = progress,
                 modifier = Modifier.fillMaxSize(),
             )
+
+            // Swipe animation icons - show based on swipe direction
+            val swipeDirection = swipeState.swipeDirection
+            val iconAlpha = (progress * 2f).coerceIn(0f, 1f) // Fade in as swipe progresses
+
+            // MAST animation icon on TOP LEFT when swiping RIGHT (24dp below trophy icon)
+            if (swipeDirection == SwipeDirection.RIGHT) {
+                Image(
+                    painter = painterResource(Res.drawable.mast),
+                    contentDescription = "Mast Animation",
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopStart)
+                            .padding(start = 40.dp, top = 88.dp)
+                            .size(width = 171.dp, height = 165.dp)
+                            .alpha(iconAlpha),
+                )
+            }
+
+            // BAKWAAS animation icon on TOP RIGHT when swiping LEFT (24dp below wallet icon)
+            if (swipeDirection == SwipeDirection.LEFT) {
+                Image(
+                    painter = painterResource(Res.drawable.bakwaas),
+                    contentDescription = "Bakwaas Animation",
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(end = 40.dp, top = 88.dp)
+                            .size(width = 206.dp, height = 115.dp)
+                            .alpha(iconAlpha),
+                )
+            }
         }
 
         // UI overlay content - show on all cards for pre-loading

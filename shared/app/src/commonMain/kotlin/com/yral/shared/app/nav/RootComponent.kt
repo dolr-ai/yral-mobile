@@ -56,6 +56,11 @@ interface RootComponent {
         showResult: Boolean = false,
     )
 
+    fun openTournamentResults(
+        tournamentId: String,
+        showResult: Boolean = false,
+    )
+
     fun openTournamentGame(
         tournamentId: String,
         tournamentTitle: String,
@@ -63,6 +68,7 @@ interface RootComponent {
         startEpochMs: Long,
         endEpochMs: Long,
         totalPrizePool: Int,
+        isHotOrNot: Boolean = false,
     )
 
     fun openConversation(

@@ -30,6 +30,7 @@ import com.yral.shared.features.tournament.ui.TournamentHowToPlayScreen
 import com.yral.shared.features.tournament.ui.TournamentTopOverlay
 import com.yral.shared.features.tournament.viewmodel.TournamentGameViewModel
 import com.yral.shared.libs.designsystem.component.lottie.PreloadLottieAnimations
+import com.yral.shared.libs.videoPlayer.cardstack.SwipeDirection
 import kotlinx.coroutines.delay
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -51,7 +52,15 @@ fun TournamentGameScaffoldScreen(
     val tournamentFeedViewModel =
         koinViewModel<FeedViewModel>(
             key = "tournament-feed-${gameConfig.tournamentId}-$sessionKey",
-            parameters = { parametersOf(FeedContext.Tournament(gameConfig.tournamentId, sessionKey)) },
+            parameters = {
+                parametersOf(
+                    FeedContext.Tournament(
+                        tournamentId = gameConfig.tournamentId,
+                        sessionKey = sessionKey,
+                        isHotOrNot = gameConfig.isHotOrNot,
+                    ),
+                )
+            },
         )
     val gameState by tournamentGameViewModel.state.collectAsStateWithLifecycle()
     val feedState by tournamentFeedViewModel.state.collectAsStateWithLifecycle()
@@ -128,6 +137,7 @@ fun TournamentGameScaffoldScreen(
                             gameState = gameState,
                             gameViewModel = tournamentGameViewModel,
                             timeLeftMs = timeLeftMs,
+                            isHotOrNot = gameConfig.isHotOrNot,
                             onHowToPlayClick = {
                                 howToPlayOpenedFromButton = true
                                 showHowToPlay = true
@@ -155,6 +165,14 @@ fun TournamentGameScaffoldScreen(
                 limitReelCount = feedState.feedDetails.size,
                 getPrefetchListener = { reel -> PrefetchVideoListenerImpl(reel) },
                 getVideoListener = { null },
+                onSwipeVote = { direction, pageIndex ->
+                    // Hot or Not voting: right swipe = hot, left swipe = not
+                    val videoId = feedState.feedDetails.getOrNull(pageIndex)?.videoID
+                    if (videoId != null) {
+                        val isHot = direction == SwipeDirection.RIGHT
+                        tournamentGameViewModel.castSwipeVote(isHot, videoId)
+                    }
+                },
             )
             BackHandler(onBack = { showLeaveTournamentConfirmation = true })
             if (gameState.gameIcons.isNotEmpty()) {

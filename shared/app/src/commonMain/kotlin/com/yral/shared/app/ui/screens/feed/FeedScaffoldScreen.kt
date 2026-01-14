@@ -553,14 +553,19 @@ private fun OverlayBottom(
                     null -> null
                     else -> NudgeType.ONBOARDING_OTHERS
                 }
-            Game(
-                feedDetails = feedState.feedDetails[pageNo],
-                pageNo = pageNo,
-                gameViewModel = gameViewModel,
-                onboardingNudgeType = onboardingNudgeType,
-                onOnboardingNudgeComplete = { feedViewModel.dismissOnboardingStep() },
-            )
-            if (gameState.isAutoScrollEnabled || feedState.currentOnboardingStep != null) {
+            // Hide smiley game when card layout is enabled
+            if (!feedState.isCardLayoutEnabled) {
+                Game(
+                    feedDetails = feedState.feedDetails[pageNo],
+                    pageNo = pageNo,
+                    gameViewModel = gameViewModel,
+                    onboardingNudgeType = onboardingNudgeType,
+                    onOnboardingNudgeComplete = { feedViewModel.dismissOnboardingStep() },
+                )
+            }
+            if (!feedState.isCardLayoutEnabled &&
+                (gameState.isAutoScrollEnabled || feedState.currentOnboardingStep != null)
+            ) {
                 var resultOfCurrentPage by remember { mutableStateOf<VoteResult?>(null) }
                 val currentVideoId = feedState.feedDetails[pageNo].videoID
                 val voteResult = gameState.gameResult[currentVideoId]?.second

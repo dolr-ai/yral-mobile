@@ -5,6 +5,7 @@ import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import com.yral.shared.features.tournament.domain.model.TournamentData
 import com.yral.shared.features.tournament.domain.model.TournamentError
+import com.yral.shared.features.tournament.domain.model.TournamentType
 import com.yral.shared.features.tournament.domain.model.UserTournamentStats
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -30,6 +31,8 @@ data class MyTournamentDto(
     val id: String,
     @SerialName("title")
     val title: String,
+    @SerialName("type")
+    val type: String? = null,
     @SerialName("date")
     val date: String,
     @SerialName("start_epoch_ms")
@@ -76,6 +79,7 @@ fun MyTournamentDto.toTournamentData(): TournamentData =
     TournamentData(
         id = id,
         title = title,
+        type = TournamentType.fromString(type),
         date = date,
         startEpochMs = startEpochMs,
         endEpochMs = endEpochMs,

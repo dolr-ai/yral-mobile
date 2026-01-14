@@ -18,15 +18,17 @@ import kotlin.math.abs
  *
  * @param state The [SwipeableCardState] to update during gestures.
  * @param enabled Whether gestures are enabled.
+ * @param verticalSwipeEnabled Whether vertical (up/down) swipes are allowed.
  * @param commitThreshold Fraction of swipe threshold at which to commit (0.5 = 50% of threshold).
  * @param onSwipeCommitted Callback invoked when drag exceeds commitThreshold (during drag, before release).
  * @param onSwipeComplete Callback invoked when a card dismiss animation finishes.
  * @param onEdgeReached Callback invoked when user tries to swipe at the last card.
  */
-@Suppress("LongMethod", "CyclomaticComplexMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod", "ComplexCondition")
 fun Modifier.swipeableCard(
     state: SwipeableCardState,
     enabled: Boolean = true,
+    verticalSwipeEnabled: Boolean = true,
     commitThreshold: Float = CardStackConstants.SWIPE_COMMIT_THRESHOLD,
     onSwipeCommitted: (SwipeDirection) -> Unit = {},
     onSwipeComplete: (SwipeDirection) -> Unit,
@@ -103,7 +105,11 @@ fun Modifier.swipeableCard(
                 val exceededThreshold = state.hasExceededThreshold(screenWidth, screenHeight)
                 val isFling = velocityMagnitude > CardStackConstants.FLING_VELOCITY_THRESHOLD
 
-                if ((exceededThreshold || isFling) && direction != SwipeDirection.NONE) {
+                // Check if vertical swipe is allowed
+                val isVerticalSwipe = direction.isVertical()
+                val isSwipeAllowed = !isVerticalSwipe || verticalSwipeEnabled
+
+                if ((exceededThreshold || isFling) && direction != SwipeDirection.NONE && isSwipeAllowed) {
                     // Check if at end of list
                     if (state.isAtEnd()) {
                         onEdgeReached(direction)

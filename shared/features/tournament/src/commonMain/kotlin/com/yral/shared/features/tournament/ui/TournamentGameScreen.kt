@@ -23,10 +23,7 @@ import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,7 +51,6 @@ import com.yral.shared.features.tournament.viewmodel.TournamentGameState
 import com.yral.shared.features.tournament.viewmodel.TournamentGameViewModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
-import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.tournament.generated.resources.exit
@@ -172,19 +168,8 @@ private fun TournamentTitlePill(title: String) {
     }
 }
 
-private const val DIAMOND_UPDATE_DELAY_MS = 2000L
-
 @Composable
 private fun TournamentDiamondPill(diamonds: Int) {
-    var displayedDiamonds by remember { mutableIntStateOf(diamonds) }
-
-    LaunchedEffect(diamonds) {
-        if (displayedDiamonds != diamonds) {
-            delay(DIAMOND_UPDATE_DELAY_MS)
-            displayedDiamonds = diamonds
-        }
-    }
-
     Row(
         modifier =
             Modifier
@@ -195,7 +180,7 @@ private fun TournamentDiamondPill(diamonds: Int) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
-            text = displayedDiamonds.toString(),
+            text = diamonds.toString(),
             style = LocalAppTopography.current.mdSemiBold,
             color = YralColors.Neutral50,
         )
@@ -250,6 +235,7 @@ fun TournamentBottomOverlay(
     gameState: TournamentGameState,
     gameViewModel: TournamentGameViewModel,
     timeLeftMs: Long,
+    isHotOrNot: Boolean,
     onHowToPlayClick: () -> Unit,
 ) {
     gameViewModel.hasVotedOnVideo(feedDetails.videoID)
@@ -262,7 +248,8 @@ fun TournamentBottomOverlay(
     val overlayBottomPadding = 120.dp
 
     Box(modifier = Modifier.fillMaxSize()) {
-        if (gameState.gameIcons.isNotEmpty()) {
+        // Only show smiley game for smiley tournaments, not Hot or Not
+        if (gameState.gameIcons.isNotEmpty() && !isHotOrNot) {
             SmileyGame(
                 gameIcons = gameState.gameIcons,
                 clickedIcon = selectedIcon,

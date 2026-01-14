@@ -50,6 +50,7 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.YRALReelPlayerCardStack
+import com.yral.shared.libs.videoPlayer.cardstack.SwipeDirection
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.pool.VideoListener
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
@@ -85,6 +86,7 @@ fun FeedScreen(
     limitReelCount: Int,
     getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
     getVideoListener: (reel: Reels) -> VideoListener?,
+    onSwipeVote: ((direction: SwipeDirection, pageIndex: Int) -> Unit)? = null,
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -170,6 +172,7 @@ fun FeedScreen(
                         // For card stack, any edge swipe attempt should trigger load more
                         onEdgeScrollAttempt(page)
                     },
+                    onSwipeVote = onSwipeVote,
                 ) { pageNo, scrollToNext ->
                     FeedOverlay(
                         pageNo = pageNo,

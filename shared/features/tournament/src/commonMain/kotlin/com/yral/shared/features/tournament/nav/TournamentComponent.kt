@@ -19,6 +19,7 @@ interface TournamentComponent {
                 startEpochMs: Long,
                 endEpochMs: Long,
                 totalPrizePool: Int,
+                isHotOrNot: Boolean,
             ) -> Unit,
             navigateToLeaderboard: (
                 tournamentId: String,
@@ -45,6 +46,7 @@ internal class DefaultTournamentComponent(
         startEpochMs: Long,
         endEpochMs: Long,
         totalPrizePool: Int,
+        isHotOrNot: Boolean,
     ) -> Unit,
     private val navigateToLeaderboard: (
         tournamentId: String,
@@ -63,6 +65,7 @@ internal class DefaultTournamentComponent(
                     value.startEpochMs,
                     value.endEpochMs,
                     value.totalPrizePool,
+                    value.isHotOrNot,
                 )
             }
             is TournamentViewModel.Event.RegistrationSuccess -> {

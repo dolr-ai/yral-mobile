@@ -6,6 +6,8 @@ import com.yral.shared.features.tournament.domain.model.GetMyTournamentsRequest
 import com.yral.shared.features.tournament.domain.model.GetTournamentLeaderboardRequest
 import com.yral.shared.features.tournament.domain.model.GetTournamentStatusRequest
 import com.yral.shared.features.tournament.domain.model.GetTournamentsRequest
+import com.yral.shared.features.tournament.domain.model.HotOrNotVoteRequest
+import com.yral.shared.features.tournament.domain.model.HotOrNotVoteResult
 import com.yral.shared.features.tournament.domain.model.RegisterForTournamentRequest
 import com.yral.shared.features.tournament.domain.model.RegistrationResult
 import com.yral.shared.features.tournament.domain.model.TournamentData
@@ -42,12 +44,21 @@ interface ITournamentRepository {
     ): Result<List<TournamentData>, TournamentError>
 
     /**
-     * Cast vote during live tournament.
+     * Cast vote during live tournament (smiley game).
      */
     suspend fun castVote(
         idToken: String,
         request: CastTournamentVoteRequest,
     ): Result<VoteResult, TournamentError>
+
+    /**
+     * Cast vote during live Hot or Not tournament.
+     * Vote is compared against AI verdict.
+     */
+    suspend fun castHotOrNotVote(
+        idToken: String,
+        request: HotOrNotVoteRequest,
+    ): Result<HotOrNotVoteResult, TournamentError>
 
     /**
      * Get tournament leaderboard.
