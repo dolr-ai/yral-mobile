@@ -8,11 +8,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -33,13 +31,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yral.shared.features.auth.nav.otpverification.OtpVerificationComponent
@@ -65,7 +61,6 @@ fun OtpVerificationScreen(
     component: OtpVerificationComponent,
     loginViewModel: LoginViewModel,
     modifier: Modifier = Modifier,
-    bottomPadding: Dp = 0.dp,
 ) {
     // Collect state from ViewModel
     val loginState by loginViewModel.state.collectAsState()
@@ -73,16 +68,12 @@ fun OtpVerificationScreen(
     val otpAuthState = loginState.otpAuthState
     val resendTimerSeconds = loginState.resendTimerSeconds
 
-    val density = LocalDensity.current
-    val imeBottomDp = with(density) { WindowInsets.ime.getBottom(this).toDp() }
-    val keyboardAwareBottomPadding = (imeBottomDp - bottomPadding).coerceAtLeast(0.dp)
-
     Column(
         modifier =
             modifier
                 .fillMaxSize()
                 .background(YralColors.Neutral950)
-                .padding(bottom = keyboardAwareBottomPadding),
+                .padding(bottom = 16.dp),
     ) {
         // Header with back button
         Header(component)

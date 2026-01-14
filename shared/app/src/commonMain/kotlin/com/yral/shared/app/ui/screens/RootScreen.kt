@@ -175,8 +175,7 @@ fun RootScreen(
                         ChatConversationScreen(
                             component = child.component,
                             viewModel = koinViewModel<ConversationViewModel>(),
-                            modifier = Modifier.fillMaxSize().statusBarsPadding(),
-                            bottomPadding = 0.dp,
+                            modifier = Modifier.fillMaxSize().safeDrawingPadding(),
                         )
                     }
 
@@ -201,17 +200,29 @@ fun RootScreen(
 
                     is Child.CountrySelector -> {
                         HandleSystemBars(show = true)
-                        LoginScreenContent(child = child, rootComponent = rootComponent)
+                        LoginScreenContent(
+                            child = child,
+                            rootComponent = rootComponent,
+                            modifier = Modifier.fillMaxSize().safeDrawingPadding(),
+                        )
                     }
 
                     is Child.OtpVerification -> {
                         HandleSystemBars(show = true)
-                        LoginScreenContent(child = child, rootComponent = rootComponent)
+                        LoginScreenContent(
+                            child = child,
+                            rootComponent = rootComponent,
+                            modifier = Modifier.fillMaxSize().safeDrawingPadding(),
+                        )
                     }
 
                     is Child.MandatoryLogin -> {
                         HandleSystemBars(show = false)
-                        LoginScreenContent(child = child, rootComponent = rootComponent)
+                        LoginScreenContent(
+                            child = child,
+                            rootComponent = rootComponent,
+                            modifier = Modifier.fillMaxSize().safeDrawingPadding(),
+                        )
                     }
                 }
             }
