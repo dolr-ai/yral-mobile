@@ -10,7 +10,6 @@ import com.github.michaelbull.result.onSuccess
 import com.yral.featureflag.AppFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.FeedFeatureFlags
-import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.shared.analytics.events.CtaType
 import com.yral.shared.analytics.events.FeedType
 import com.yral.shared.core.exceptions.YralException
@@ -22,8 +21,6 @@ import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.data.domain.models.Post
 import com.yral.shared.data.domain.useCases.GetVideoViewsUseCase
-import com.yral.shared.features.auth.AuthClientFactory
-import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.features.feed.analytics.FeedTelemetry
 import com.yral.shared.features.feed.domain.useCases.CheckVideoVoteUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsUseCase
@@ -79,7 +76,6 @@ class FeedViewModel(
     private val requiredUseCases: RequiredUseCases,
     private val crashlyticsManager: CrashlyticsManager,
     private val feedTelemetry: FeedTelemetry,
-    authClientFactory: AuthClientFactory,
     private val shareService: ShareService,
     private val urlBuilder: UrlBuilder,
     private val linkGenerator: LinkGenerator,
@@ -88,13 +84,6 @@ class FeedViewModel(
     private val feedContext: FeedContext,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
-
-    private val authClient =
-        authClientFactory
-            .create(coroutineScope) { e ->
-                Logger.e("Auth error - $e")
-                toggleSignupFailed(true)
-            }
 
     companion object {
         const val PRE_FETCH_BEFORE_LAST = 5
@@ -987,7 +976,7 @@ class FeedViewModel(
                     text = text,
                 )
             }.onFailure {
-                Logger.e(FeedViewModel::class.simpleName!!, it) { "Failed to share post" }
+                Logger.e("LinkSharing") { "Failed to share post" }
                 crashlyticsManager.recordException(
                     YralException(it),
                     ExceptionType.DEEPLINK,
@@ -1011,21 +1000,6 @@ class FeedViewModel(
             videoID == it.first && traceType == it.second
         }
 
-    @Suppress("TooGenericExceptionCaught")
-    fun signInWithSocial(
-        context: Any,
-        provider: SocialProvider,
-    ) {
-        coroutineScope.launch {
-            try {
-                authClient.signInWithSocial(context, provider)
-            } catch (e: Exception) {
-                crashlyticsManager.recordException(e, ExceptionType.AUTH)
-                toggleSignupFailed(true)
-            }
-        }
-    }
-
     fun toggleSignupFailed(shouldShow: Boolean) {
         _state.update { it.copy(showSignupFailedSheet = shouldShow) }
     }
@@ -1033,8 +1007,6 @@ class FeedViewModel(
     fun pushScreenView() {
         feedTelemetry.onFeedPageViewed()
     }
-
-    fun getTncLink(): String = flagManager.get(AccountFeatureFlags.AccountLinks.Links).tnc
 
     fun updateFeedType(feedType: FeedType) {
         if (_state.value.isLoadingMore || _state.value.feedType == feedType) return

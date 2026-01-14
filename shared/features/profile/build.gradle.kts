@@ -31,6 +31,7 @@ kotlin {
             implementation(projects.shared.libs.designsystem)
             implementation(projects.shared.libs.videoPlayer)
             implementation(projects.shared.features.reportVideo)
+            implementation(projects.shared.features.auth)
 
             implementation(libs.androidx.paging.common)
             implementation(libs.androidx.paging.compose)

@@ -250,8 +250,10 @@ fun SignupView(
                                     SocialIconButton(
                                         icon = iconRes,
                                         onClick = {
-                                            authTelemetry.onSignupJourneySelected(provider)
-                                            loginViewModel.signInWithSocial(context, provider)
+                                            context?.let {
+                                                authTelemetry.onSignupJourneySelected(provider)
+                                                loginViewModel.signInWithSocial(context, provider)
+                                            }
                                         },
                                     )
                                 }
@@ -277,8 +279,10 @@ fun SignupView(
                                     text = stringResource(buttonTextRes),
                                     icon = iconRes,
                                 ) {
-                                    authTelemetry.onSignupJourneySelected(provider)
-                                    loginViewModel.signInWithSocial(context, provider)
+                                    context?.let {
+                                        authTelemetry.onSignupJourneySelected(provider)
+                                        loginViewModel.signInWithSocial(context, provider)
+                                    }
                                 }
                             }
                     }
@@ -466,4 +470,4 @@ object SignupViewConstants {
 }
 
 @Composable
-internal expect fun getContext(): Any
+internal expect fun getContext(): Any?

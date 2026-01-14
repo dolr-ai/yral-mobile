@@ -6,6 +6,7 @@ import com.arkivanov.decompose.value.Value
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.account.nav.AccountComponent
+import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
@@ -50,6 +51,7 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
     companion object Companion {
         operator fun invoke(
             componentContext: ComponentContext,
+            requestLoginFactory: RequestLoginFactory,
             snapshot: Snapshot?,
             onUploadVideoClicked: () -> Unit,
             openEditProfile: () -> Unit,
@@ -59,6 +61,7 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
         ): ProfileComponent =
             DefaultProfileComponent(
                 componentContext,
+                requestLoginFactory,
                 snapshot,
                 onUploadVideoClicked,
                 openEditProfile,

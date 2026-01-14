@@ -18,9 +18,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -39,11 +36,11 @@ import com.yral.shared.app.ui.components.UpdateNotificationHost
 import com.yral.shared.app.ui.screens.alertsrequest.AlertsRequestBottomSheet
 import com.yral.shared.app.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.shared.app.ui.screens.home.HomeScreen
+import com.yral.shared.app.ui.screens.login.LoginBottomSheetSlotContent
+import com.yral.shared.app.ui.screens.login.LoginScreenContent
 import com.yral.shared.app.ui.screens.tournament.TournamentGameScaffoldScreen
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.session.getKey
-import com.yral.shared.features.auth.ui.LoginBottomSheet
-import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.features.chat.ui.conversation.ChatConversationScreen
 import com.yral.shared.features.chat.viewmodel.ConversationViewModel
 import com.yral.shared.features.leaderboard.ui.LeaderboardScreen
@@ -59,7 +56,6 @@ import com.yral.shared.features.tournament.ui.TournamentLeaderboardScreen
 import com.yral.shared.features.wallet.ui.WalletScreen
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralLoader
-import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.component.toast.ToastHost
@@ -203,11 +199,19 @@ fun RootScreen(
                         )
                     }
 
+                    is Child.CountrySelector -> {
+                        HandleSystemBars(show = true)
+                        LoginScreenContent(child = child, rootComponent = rootComponent)
+                    }
+
+                    is Child.OtpVerification -> {
+                        HandleSystemBars(show = true)
+                        LoginScreenContent(child = child, rootComponent = rootComponent)
+                    }
+
                     is Child.MandatoryLogin -> {
                         HandleSystemBars(show = false)
-                        MandatoryLoginScreen(
-                            modifier = Modifier.fillMaxSize(),
-                        )
+                        LoginScreenContent(child = child, rootComponent = rootComponent)
                     }
                 }
             }
@@ -331,26 +335,7 @@ private fun SlotContent(component: RootComponent) {
                 AlertsRequestBottomSheet(component = slotChild.component)
             }
             is RootComponent.SlotChild.LoginBottomSheet -> {
-                val loginViewModel: LoginViewModel = koinViewModel()
-                val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-                val termsSheetState = rememberModalBottomSheetState()
-                var termsLink by remember { mutableStateOf("") }
-                LoginBottomSheet(
-                    pageName = slotChild.pageName,
-                    bottomSheetState = bottomSheetState,
-                    onDismissRequest = slotChild.onDismissRequest,
-                    onLoginSuccess = slotChild.onLoginSuccess,
-                    openTerms = { termsLink = it },
-                    loginViewModel = loginViewModel,
-                    bottomSheetType = slotChild.loginBottomSheetType,
-                )
-                if (termsLink.isNotEmpty()) {
-                    YralWebViewBottomSheet(
-                        link = termsLink,
-                        bottomSheetState = termsSheetState,
-                        onDismissRequest = { termsLink = "" },
-                    )
-                }
+                LoginBottomSheetSlotContent(rootComponent = component)
             }
         }
     }

@@ -36,6 +36,9 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
+import com.yral.shared.features.auth.ui.LoginMode
+import com.yral.shared.features.auth.ui.LoginScreenType
+import com.yral.shared.features.auth.ui.rememberLoginInfo
 import com.yral.shared.features.chat.attachments.FilePathChatAttachment
 import com.yral.shared.features.chat.domain.models.ChatMessageType
 import com.yral.shared.features.chat.domain.models.ConversationMessageRole
@@ -138,22 +141,31 @@ fun ChatConversationScreen(
     val shouldPromptForLogin by derivedStateOf {
         !viewState.isSocialSignedIn && (overlayUserCount + historyUserCount) >= LOGIN_PROMPT_MESSAGE_LIMIT
     }
+
+    val loginState =
+        rememberLoginInfo(
+            requestLoginFactory = component.requestLoginFactory,
+            key = viewState.influencer,
+        )
+
     val promptLogin: () -> Unit =
         remember(viewState.influencer) {
             {
                 val influencer = viewState.influencer
                 val influencerName = influencer?.displayName ?: ""
                 val influencerAvatarUrl = influencer?.avatarUrl ?: ""
-                component.showLoginBottomSheet(
-                    pageName = SignupPageName.CONVERSATION,
-                    loginBottomSheetType =
+                loginState.requestLogin(
+                    SignupPageName.CONVERSATION,
+                    LoginScreenType.BottomSheet(
                         LoginBottomSheetType.CONVERSATION(
                             influencerName = influencerName,
                             influencerAvatarUrl = influencerAvatarUrl,
                         ),
-                    onDismissRequest = { component.hideLoginBottomSheetIfVisible() },
-                    onLoginSuccess = { component.hideLoginBottomSheetIfVisible() },
-                )
+                    ),
+                    LoginMode.BOTH,
+                    null,
+                    null,
+                ) {}
             }
         }
 
