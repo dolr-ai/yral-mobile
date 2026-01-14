@@ -85,7 +85,7 @@ if IS_PRODUCTION:
     # Production: Single tournament at 7 PM IST
     TOURNAMENT_SLOTS = [("19:00", "19:10")]
     TOURNAMENT_TITLE = "Daily Showdown"
-    TOURNAMENT_ENTRY_COST = 15
+    TOURNAMENT_ENTRY_COST = 10
 else:
     # Staging: Multiple tournaments throughout day
     TOURNAMENT_SLOTS = [("12:45", "12:55"), ("14:00", "14:10"), ("16:00", "16:10")]
@@ -218,12 +218,17 @@ def _tx_coin_change(principal_id: str, delta: int, reason: str, tournament_id: s
     return int(user_ref.get().get("coins") or 0)
 
 
-def _refund_tournament_users(tournament_id: str) -> List[dict]:
+def _refund_tournament_users(tournament_id: str, collection_name: str = "tournaments") -> List[dict]:
     """
     Refund all registered users for a cancelled tournament.
+
+    Args:
+        tournament_id: The tournament document ID
+        collection_name: Either "tournaments" or "hot_or_not_tournaments"
+
     Returns list of refund results.
     """
-    users_ref = db().collection(f"tournaments/{tournament_id}/users")
+    users_ref = db().collection(f"{collection_name}/{tournament_id}/users")
     registered_users = users_ref.where("status", "==", "registered").stream()
 
     refund_results = []
@@ -326,19 +331,28 @@ def _send_ckbtc(token: str, principal_id: str, amount_ckbtc: int, memo: str) -> 
     return False, "Transfer failed"
 
 
-def _count_players_who_played(tournament_id: str) -> int:
-    """Count users who actually played (cast at least one vote) in the tournament."""
-    users_ref = db().collection(f"tournaments/{tournament_id}/users")
+def _count_players_who_played(tournament_id: str, collection_name: str = "tournaments") -> int:
+    """Count users who actually played (cast at least one vote) in the tournament.
+
+    Args:
+        tournament_id: The tournament document ID
+        collection_name: Either "tournaments" or "hot_or_not_tournaments"
+    """
+    users_ref = db().collection(f"{collection_name}/{tournament_id}/users")
     # A player "played" if they have any wins or losses (i.e., cast at least one vote)
-    # We check for tournament_wins > 0 OR tournament_losses > 0
     # Firestore doesn't support OR queries easily, so we count both separately
 
+    # Hot or Not uses "wins"/"losses", smiley uses "tournament_wins"/"tournament_losses"
+    is_hot_or_not = collection_name == "hot_or_not_tournaments"
+    wins_field = "wins" if is_hot_or_not else "tournament_wins"
+    losses_field = "losses" if is_hot_or_not else "tournament_losses"
+
     # Count users with at least 1 win
-    wins_snaps = list(users_ref.where("tournament_wins", ">", 0).stream())
+    wins_snaps = list(users_ref.where(wins_field, ">", 0).stream())
     players_with_wins = {snap.id for snap in wins_snaps}
 
     # Count users with at least 1 loss but no wins (they played but didn't win any)
-    losses_snaps = list(users_ref.where("tournament_losses", ">", 0).stream())
+    losses_snaps = list(users_ref.where(losses_field, ">", 0).stream())
     players_with_losses = {snap.id for snap in losses_snaps}
 
     # Union of both sets = all players who played
@@ -346,7 +360,7 @@ def _count_players_who_played(tournament_id: str) -> int:
     return len(all_players)
 
 
-def _compute_settlement_leaderboard(tournament_id: str, limit: int = 10) -> List[dict]:
+def _compute_settlement_leaderboard(tournament_id: str, limit: int = 10, collection_name: str = "tournaments") -> List[dict]:
     """Compute top N users by diamond balance with strict ranking for settlement.
 
     Only includes users who have played at least 1 game (wins > 0 or losses > 0).
@@ -355,8 +369,13 @@ def _compute_settlement_leaderboard(tournament_id: str, limit: int = 10) -> List
     1. Diamonds DESC (more diamonds = higher rank)
     2. Total games (wins + losses) DESC (tiebreaker: more games = higher rank)
     3. updated_at ASC (second tiebreaker: earlier = higher rank)
+
+    Args:
+        tournament_id: The tournament document ID
+        limit: Number of top users to return
+        collection_name: Either "tournaments" or "hot_or_not_tournaments"
     """
-    users_ref = db().collection(f"tournaments/{tournament_id}/users")
+    users_ref = db().collection(f"{collection_name}/{tournament_id}/users")
     # Fetch extra users to account for filtering out those who never played
     # Need high multiplier because many non-players have 20 diamonds (initial balance)
     # which ranks higher than players who lost (< 20 diamonds)
@@ -366,12 +385,17 @@ def _compute_settlement_leaderboard(tournament_id: str, limit: int = 10) -> List
                  .stream()
     )
 
+    # Hot or Not uses "wins"/"losses", smiley uses "tournament_wins"/"tournament_losses"
+    is_hot_or_not = collection_name == "hot_or_not_tournaments"
+    wins_field = "wins" if is_hot_or_not else "tournament_wins"
+    losses_field = "losses" if is_hot_or_not else "tournament_losses"
+
     # Collect all qualifying users first
     candidates = []
     for snap in snaps:
         data = snap.to_dict() or {}
-        wins = int(data.get("tournament_wins") or 0)
-        losses = int(data.get("tournament_losses") or 0)
+        wins = int(data.get(wins_field) or 0)
+        losses = int(data.get(losses_field) or 0)
 
         # Skip users who never played
         if wins == 0 and losses == 0:
@@ -410,13 +434,14 @@ def _compute_settlement_leaderboard(tournament_id: str, limit: int = 10) -> List
     return rows
 
 
-def _settle_tournament_prizes(tournament_id: str, prize_map: Dict[str, int]) -> Dict[str, Any]:
+def _settle_tournament_prizes(tournament_id: str, prize_map: Dict[str, int], collection_name: str = "tournaments") -> Dict[str, Any]:
     """
     Settle tournament prizes by sending BTC equivalent to winners.
 
     Args:
         tournament_id: The tournament to settle
         prize_map: Map of position (str) to INR prize amount
+        collection_name: Either "tournaments" or "hot_or_not_tournaments"
 
     Returns:
         Settlement results including successes and failures
@@ -448,7 +473,7 @@ def _settle_tournament_prizes(tournament_id: str, prize_map: Dict[str, int]) -> 
 
     # Get leaderboard (top positions that have prizes)
     max_prize_position = max((int(p) for p in prize_map.keys()), default=10)
-    leaderboard = _compute_settlement_leaderboard(tournament_id, limit=max_prize_position)
+    leaderboard = _compute_settlement_leaderboard(tournament_id, limit=max_prize_position, collection_name=collection_name)
 
     results = []
     rewards_sent = 0
@@ -489,7 +514,7 @@ def _settle_tournament_prizes(tournament_id: str, prize_map: Dict[str, int]) -> 
 
             # Record settlement in user's tournament registration
             try:
-                user_ref = db().document(f"tournaments/{tournament_id}/users/{principal_id}")
+                user_ref = db().document(f"{collection_name}/{tournament_id}/users/{principal_id}")
                 user_ref.update({
                     "prize_inr": prize_inr,
                     "prize_ckbtc": prize_ckbtc,
@@ -609,7 +634,8 @@ def _schedule_status_task(doc_id: str, target_status: TournamentStatus, run_at: 
 @https_fn.on_request(region="us-central1", secrets=["BACKEND_ADMIN_KEY"])
 def create_tournaments(cloud_event):
     """
-    Cloud Scheduler target (run daily at 12am IST) to create tournaments
+    Cloud Scheduler target (run daily at 12am IST) to create tournaments.
+    Also accepts manual HTTP POST requests with custom parameters.
     """
     try:
         backend_admin_key = os.environ.get("BACKEND_ADMIN_KEY")
@@ -620,23 +646,47 @@ def create_tournaments(cloud_event):
         env_name = "production" if IS_PRODUCTION else "staging"
         print(f"[create_tournaments] Running in {env_name} mode (project: {GCLOUD_PROJECT})")
 
-        date_str = _today_ist_str()
-        entry_cost = TOURNAMENT_ENTRY_COST
-        total_prize_pool = 1500
-        prize_map: Dict[str, int] = {
-            "1": 400,
-            "2": 250,
-            "3": 200,
-            "4": 150,
-            "5": 120,
-            "6": 100,
-            "7": 90,
-            "8": 80,
-            "9": 60,
-            "10": 50
-        }
+        # Parse request body for custom parameters (manual invocation)
+        body = cloud_event.get_json(silent=True) or {}
 
-        slots = TOURNAMENT_SLOTS
+        # Custom parameter overrides
+        custom_title = body.get("title")
+        custom_entry_cost = body.get("entry_cost")
+        custom_prize_map = body.get("prize_map")
+        custom_total_prize_pool = body.get("total_prize_pool")
+        custom_video_count = body.get("video_count")
+        custom_start_time = body.get("start_time")
+        custom_end_time = body.get("end_time")
+
+        date_str = _today_ist_str()
+        entry_cost = int(custom_entry_cost) if custom_entry_cost is not None else TOURNAMENT_ENTRY_COST
+        total_prize_pool = int(custom_total_prize_pool) if custom_total_prize_pool is not None else 1500
+        title = custom_title if custom_title is not None else TOURNAMENT_TITLE
+        video_count = int(custom_video_count) if custom_video_count is not None else DEFAULT_VIDEO_COUNT
+
+        # Use custom prize map if provided, otherwise use default
+        if custom_prize_map is not None:
+            prize_map = _normalize_prize_map(custom_prize_map)
+        else:
+            prize_map: Dict[str, int] = {
+                "1": 400,
+                "2": 250,
+                "3": 200,
+                "4": 150,
+                "5": 120,
+                "6": 100,
+                "7": 90,
+                "8": 80,
+                "9": 60,
+                "10": 50
+            }
+
+        # Use custom slot if both start_time and end_time provided, otherwise use default slots
+        if custom_start_time and custom_end_time:
+            slots = [(custom_start_time, custom_end_time)]
+            print(f"[create_tournaments] Using custom slot: {custom_start_time} - {custom_end_time}")
+        else:
+            slots = TOURNAMENT_SLOTS
 
         created, skipped, errors = [], [], []
 
@@ -645,7 +695,7 @@ def create_tournaments(cloud_event):
             end_dt = _ist_datetime(date_str, end_time)
 
             # Register with backend to get tournament ID and videos
-            tournament_id, backend_error = _register_tournament_backend(backend_admin_key, video_count=DEFAULT_VIDEO_COUNT)
+            tournament_id, backend_error = _register_tournament_backend(backend_admin_key, video_count=video_count)
             if backend_error:
                 fallback_id = _make_doc_id(date_str, start_time, end_time)
                 # Log detailed backend error server-side, but keep user-visible reason generic
@@ -667,7 +717,7 @@ def create_tournaments(cloud_event):
                 status=TournamentStatus.SCHEDULED,
                 created_at=firestore.SERVER_TIMESTAMP,
                 updated_at=firestore.SERVER_TIMESTAMP,
-                title=TOURNAMENT_TITLE,
+                title=title,
             )
 
             # Use backend tournament ID as Firestore document ID
@@ -720,8 +770,17 @@ def update_tournament_status(request: Request):
         except ValueError:
             return jsonify({"error": "INVALID_STATUS", "message": f"Unknown status {target_status_raw}"}), 400
 
+        # Check both tournament collections
         ref = db().collection("tournaments").document(doc_id)
         snap = ref.get()
+        collection_name = "tournaments"
+
+        if not snap.exists:
+            # Try hot_or_not_tournaments collection
+            ref = db().collection("hot_or_not_tournaments").document(doc_id)
+            snap = ref.get()
+            collection_name = "hot_or_not_tournaments"
+
         if not snap.exists:
             return jsonify({"error": "NOT_FOUND", "message": f"{doc_id} not found"}), 404
 
@@ -759,7 +818,7 @@ def update_tournament_status(request: Request):
             })
 
             # Process refunds
-            refund_results = _refund_tournament_users(doc_id)
+            refund_results = _refund_tournament_users(doc_id, collection_name)
             refunded_count = sum(1 for r in refund_results if r.get("success"))
             total_refunded = sum(r.get("coins_refunded", 0) for r in refund_results if r.get("success"))
 
@@ -788,13 +847,13 @@ def update_tournament_status(request: Request):
             prize_map = _normalize_prize_map(snap.to_dict().get("prizeMap", {}))
 
             # Check if enough players played (at least 2 required for a valid competition)
-            players_who_played = _count_players_who_played(doc_id)
+            players_who_played = _count_players_who_played(doc_id, collection_name)
             print(f"[update_tournament_status] {doc_id}: {players_who_played} players played")
 
             if players_who_played < 2:
                 # Not enough players - refund all registered users
                 print(f"[update_tournament_status] {doc_id}: insufficient players ({players_who_played}), refunding all")
-                refund_results = _refund_tournament_users(doc_id)
+                refund_results = _refund_tournament_users(doc_id, collection_name)
                 refunded_count = sum(1 for r in refund_results if r.get("success"))
                 total_refunded = sum(r.get("coins_refunded", 0) for r in refund_results if r.get("success"))
 
@@ -833,7 +892,7 @@ def update_tournament_status(request: Request):
 
             if prize_map:
                 # Settle tournament prizes (send BTC to winners)
-                settlement_result = _settle_tournament_prizes(doc_id, prize_map)
+                settlement_result = _settle_tournament_prizes(doc_id, prize_map, collection_name)
                 settlement_result["players_who_played"] = players_who_played
 
                 # Update status to SETTLED after settlement

@@ -19,6 +19,7 @@ import com.yral.shared.features.tournament.domain.model.TournamentData
 import com.yral.shared.features.tournament.domain.model.TournamentErrorCodes
 import com.yral.shared.features.tournament.domain.model.TournamentParticipationState
 import com.yral.shared.features.tournament.domain.model.TournamentStatus
+import com.yral.shared.features.tournament.domain.model.TournamentType
 import com.yral.shared.features.tournament.domain.model.toUiTournament
 import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
 import com.yral.shared.libs.routing.routes.api.Tournaments
@@ -394,6 +395,7 @@ class TournamentViewModel(
                             startEpochMs = tournament.startEpochMs,
                             endEpochMs = tournament.endEpochMs,
                             totalPrizePool = tournament.totalPrizePool,
+                            isHotOrNot = tournament.type == TournamentType.HOT_OR_NOT,
                         ),
                     )
                 else -> {}
@@ -446,6 +448,7 @@ class TournamentViewModel(
             val startEpochMs: Long,
             val endEpochMs: Long,
             val totalPrizePool: Int,
+            val isHotOrNot: Boolean,
         ) : Event()
 
         data class NavigateToLeaderboard(

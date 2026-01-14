@@ -2,6 +2,8 @@ package com.yral.shared.features.tournament.data
 
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.data.FirebaseFunctionRequest
+import com.yral.shared.features.tournament.data.models.HotOrNotVoteRequestDto
+import com.yral.shared.features.tournament.data.models.HotOrNotVoteResponseDto
 import com.yral.shared.features.tournament.data.models.MyTournamentsRequestDto
 import com.yral.shared.features.tournament.data.models.MyTournamentsResponseDto
 import com.yral.shared.features.tournament.data.models.RegisterTournamentRequestDto
@@ -180,6 +182,37 @@ class TournamentRemoteDataSource(
     }
 
     @Suppress("SwallowedException", "TooGenericExceptionCaught")
+    override suspend fun castHotOrNotVote(
+        idToken: String,
+        request: HotOrNotVoteRequestDto,
+    ): HotOrNotVoteResponseDto {
+        try {
+            val response: HttpResponse =
+                httpClient.post {
+                    expectSuccess = false
+                    url {
+                        host = cloudFunctionUrl()
+                        path(HOT_OR_NOT_VOTE_PATH)
+                    }
+                    val appCheckToken = firebaseAppCheckToken()
+                    headers {
+                        append(HttpHeaders.Authorization, "Bearer $idToken")
+                        append(HEADER_X_FIREBASE_APPCHECK, appCheckToken)
+                    }
+                    setBody(FirebaseFunctionRequest(request))
+                }
+            val apiResponseString = response.bodyAsText()
+            return if (response.status == HttpStatusCode.OK) {
+                json.decodeFromString<HotOrNotVoteResponseDto.Success>(apiResponseString)
+            } else {
+                json.decodeFromString<HotOrNotVoteResponseDto.Error>(apiResponseString)
+            }
+        } catch (e: Exception) {
+            throw YralException("Error casting hot or not vote: ${e.message}")
+        }
+    }
+
+    @Suppress("SwallowedException", "TooGenericExceptionCaught")
     override suspend fun getTournamentLeaderboard(
         idToken: String,
         request: TournamentLeaderboardRequestDto,
@@ -216,6 +249,7 @@ class TournamentRemoteDataSource(
         private const val REGISTER_FOR_TOURNAMENT_PATH = "register_for_tournament"
         private const val MY_TOURNAMENTS_PATH = "my_tournaments"
         private const val TOURNAMENT_VOTE_PATH = "tournament_vote"
+        private const val HOT_OR_NOT_VOTE_PATH = "hot_or_not_tournament_vote"
         private const val TOURNAMENT_LEADERBOARD_PATH = "tournament_leaderboard"
         private const val HEADER_X_FIREBASE_APPCHECK = "X-Firebase-AppCheck"
     }

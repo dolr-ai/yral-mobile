@@ -70,6 +70,7 @@ internal class DefaultHomeComponent(
         startEpochMs: Long,
         endEpochMs: Long,
         totalPrizePool: Int,
+        isHotOrNot: Boolean,
     ) -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
 ) : HomeComponent(),
@@ -278,6 +279,7 @@ internal class DefaultHomeComponent(
             onBack = { navigation.pop() },
         )
 
+    @Suppress("MaxLineLength")
     private fun tournamentComponent(componentContext: ComponentContext): TournamentComponent =
         TournamentComponent(
             componentContext = componentContext,
@@ -285,7 +287,7 @@ internal class DefaultHomeComponent(
             navigateToLeaderboard = { tournamentId ->
                 openTournamentLeaderboard(tournamentId, false)
             },
-            navigateToTournament = { tournamentId, title, initialDiamonds, startEpochMs, endEpochMs, totalPrizePool ->
+            navigateToTournament = { tournamentId, title, initialDiamonds, startEpochMs, endEpochMs, totalPrizePool, isHotOrNot ->
                 openTournamentGame(
                     tournamentId,
                     title,
@@ -293,6 +295,7 @@ internal class DefaultHomeComponent(
                     startEpochMs,
                     endEpochMs,
                     totalPrizePool,
+                    isHotOrNot,
                 )
             },
             showAlertsOnDialog = showAlertsOnDialog,

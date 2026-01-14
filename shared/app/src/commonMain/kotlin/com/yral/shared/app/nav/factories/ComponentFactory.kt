@@ -18,6 +18,7 @@ import com.yral.shared.features.tournament.nav.TournamentGameComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.libs.phonevalidation.countries.Country
 import kotlinx.coroutines.flow.flowOf
+import kotlin.collections.plus
 
 /**
  * Factory for creating child components.
@@ -149,6 +150,7 @@ internal class ComponentFactory(
         startEpochMs: Long,
         endEpochMs: Long,
         totalPrizePool: Int,
+        isHotOrNot: Boolean,
     ): TournamentGameComponent =
         TournamentGameComponent(
             componentContext = componentContext,
@@ -159,12 +161,12 @@ internal class ComponentFactory(
             totalPrizePool = totalPrizePool,
             startEpochMs = startEpochMs,
             endEpochMs = endEpochMs,
+            isHotOrNot = isHotOrNot,
             onLeaderboardClick = { clickedTournamentId, showResult ->
                 rootComponent.openTournamentLeaderboard(clickedTournamentId, showResult)
             },
             onTimeUp = {
-                rootComponent.onBackClicked()
-                rootComponent.openTournamentLeaderboard(tournamentId, showResult = true)
+                rootComponent.openTournamentResults(tournamentId, true)
             },
             onBack = rootComponent::onBackClicked,
         )

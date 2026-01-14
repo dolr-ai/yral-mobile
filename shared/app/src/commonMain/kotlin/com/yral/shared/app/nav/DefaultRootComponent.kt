@@ -14,6 +14,7 @@ import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.active
 import com.arkivanov.decompose.router.stack.childStack
+import com.arkivanov.decompose.router.stack.navigate
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.pushToFront
 import com.arkivanov.decompose.router.stack.replaceAll
@@ -156,6 +157,7 @@ class DefaultRootComponent(
                         config.startEpochMs,
                         config.endEpochMs,
                         config.totalPrizePool,
+                        config.isHotOrNot,
                     ),
                 )
             is Config.Conversation ->
@@ -317,6 +319,20 @@ class DefaultRootComponent(
         navigation.pushToFront(Config.TournamentLeaderboard(tournamentId, showResult))
     }
 
+    override fun openTournamentResults(
+        tournamentId: String,
+        showResult: Boolean,
+    ) {
+        navigation.navigate { stack ->
+            // Remove TournamentGame from stack and add TournamentLeaderboard
+            stack.dropLast(1) +
+                Config.TournamentLeaderboard(
+                    tournamentId = tournamentId,
+                    showResult = true,
+                )
+        }
+    }
+
     override fun openTournamentGame(
         tournamentId: String,
         tournamentTitle: String,
@@ -324,6 +340,7 @@ class DefaultRootComponent(
         startEpochMs: Long,
         endEpochMs: Long,
         totalPrizePool: Int,
+        isHotOrNot: Boolean,
     ) {
         navigation.pushToFront(
             Config.TournamentGame(
@@ -333,6 +350,7 @@ class DefaultRootComponent(
                 startEpochMs,
                 endEpochMs,
                 totalPrizePool,
+                isHotOrNot = isHotOrNot,
             ),
         )
     }
