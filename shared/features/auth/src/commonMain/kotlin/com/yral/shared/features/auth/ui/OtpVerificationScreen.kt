@@ -19,26 +19,34 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.yral.shared.core.utils.formatRemainingDuration
 import com.yral.shared.features.auth.nav.otpverification.OtpVerificationComponent
 import com.yral.shared.features.auth.ui.components.OtpInput
 import com.yral.shared.features.auth.ui.components.OtpInputConfig
 import com.yral.shared.features.auth.viewModel.LoginViewModel
+import com.yral.shared.features.auth.viewModel.OtpErrorContent
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralGradientButton
+import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.auth.generated.resources.Res
+import yral_mobile.shared.features.auth.generated.resources.didnt_receive_otp
+import yral_mobile.shared.features.auth.generated.resources.invalid_otp
 import yral_mobile.shared.features.auth.generated.resources.otp_sent_to
 import yral_mobile.shared.features.auth.generated.resources.otp_verification
 import yral_mobile.shared.features.auth.generated.resources.resend_otp
 import yral_mobile.shared.features.auth.generated.resources.resend_otp_in
 import yral_mobile.shared.features.auth.generated.resources.verify
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
+import yral_mobile.shared.libs.designsystem.generated.resources.pink_gradient_background
+import kotlin.time.Duration.Companion.seconds
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Composable
@@ -92,7 +100,7 @@ fun OtpVerificationScreen(
             // Resend text / timer
             ResendOtpText(
                 timerSeconds = resendTimerSeconds,
-                hasError = loginState.otpValidationError != null,
+                errorContent = loginViewModel.getOtpErrorContent(),
                 onResendClick = loginViewModel::onResendOtp,
             )
 
@@ -107,6 +115,7 @@ fun OtpVerificationScreen(
                     when {
                         otpAuthState is UiState.InProgress -> YralButtonState.Loading
                         loginState.otpCode.length < 6 -> YralButtonState.Disabled
+                        loginState.otpValidationError != null -> YralButtonState.Disabled
                         else -> YralButtonState.Enabled
                     },
             )
@@ -145,29 +154,94 @@ private fun Header(component: OtpVerificationComponent) {
 @Composable
 private fun ResendOtpText(
     timerSeconds: Int?,
-    hasError: Boolean,
+    errorContent: OtpErrorContent?,
     onResendClick: () -> Unit,
 ) {
-    val text =
-        when {
-            timerSeconds != null && timerSeconds > 0 -> stringResource(Res.string.resend_otp_in, timerSeconds)
-            hasError -> stringResource(Res.string.resend_otp)
-            else -> stringResource(Res.string.resend_otp)
-        }
-    val isClickable = timerSeconds == null || timerSeconds == 0
-    Text(
-        text = text,
-        style = LocalAppTopography.current.baseRegular,
-        color =
-            if (isClickable) {
-                YralColors.Pink300
-            } else {
-                YralColors.Neutral600
-            },
-        textAlign = TextAlign.Center,
+    val isTimerRunning = timerSeconds != null && timerSeconds > 0
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically,
         modifier =
             Modifier
-                .clickable(enabled = isClickable) { onResendClick() }
+                .fillMaxWidth()
                 .padding(vertical = 8.dp),
-    )
+    ) {
+        when {
+            // Error takes priority over timer
+            errorContent != null -> {
+                ErrorMessage(errorContent, onResendClick)
+            }
+            // Scenario 2: Timer is running - "Resend in 00:12"
+            isTimerRunning -> {
+                Text(
+                    text =
+                        stringResource(
+                            Res.string.resend_otp_in,
+                            formatRemainingDuration(timerSeconds.seconds),
+                        ),
+                    style = LocalAppTopography.current.baseRegular,
+                    color = YralColors.Neutral600,
+                    textAlign = TextAlign.Center,
+                )
+            }
+            // Scenario 1: First time - "Didn't receive the OTP?  Resend"
+            else -> {
+                Text(
+                    text = stringResource(Res.string.didnt_receive_otp).plus("  "),
+                    style = LocalAppTopography.current.baseRegular,
+                    color = YralColors.NeutralTextPrimary,
+                    textAlign = TextAlign.Center,
+                )
+                YralMaskedVectorTextV2(
+                    text = stringResource(Res.string.resend_otp),
+                    drawableRes = DesignRes.drawable.pink_gradient_background,
+                    textStyle =
+                        LocalAppTopography
+                            .current
+                            .baseRegular
+                            .plus(TextStyle(textAlign = TextAlign.Center)),
+                    modifier = Modifier.clickable { onResendClick() },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ErrorMessage(
+    errorContent: OtpErrorContent,
+    onResendClick: () -> Unit,
+) {
+    when (errorContent) {
+        is OtpErrorContent.InvalidOtpWithResend -> {
+            // Scenario: Invalid OTP with resend - "Invalid OTP!  Resend"
+            Text(
+                text = stringResource(Res.string.invalid_otp).plus("  "),
+                style = LocalAppTopography.current.baseRegular,
+                color = YralColors.NeutralTextPrimary,
+                textAlign = TextAlign.Center,
+            )
+            YralMaskedVectorTextV2(
+                text = stringResource(Res.string.resend_otp),
+                drawableRes = DesignRes.drawable.pink_gradient_background,
+                textStyle =
+                    LocalAppTopography
+                        .current
+                        .baseRegular
+                        .plus(TextStyle(textAlign = TextAlign.Center)),
+                modifier = Modifier.clickable { onResendClick() },
+            )
+        }
+
+        is OtpErrorContent.SimpleMessage -> {
+            // Scenario: Simple error message - show message as is
+            Text(
+                text = errorContent.message,
+                style = LocalAppTopography.current.baseRegular,
+                color = YralColors.NeutralTextPrimary,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
 }

@@ -21,8 +21,10 @@
     <string name="enter_mobile_number">Enter Mobile Number</string>
     <string name="otp_verification">OTP Verification</string>
     <string name="otp_sent_to">OTP sent to %1$s</string>
-    <string name="resend_otp_in">Resend OTP in %1$ss</string>
-    <string name="resend_otp">Resend OTP</string>
+    <string name="resend_otp_in">Resend in %1$s</string>
+    <string name="resend_otp">Resend</string>
+    <string name="didnt_receive_otp">Didn't receive the OTP?</string>
+    <string name="invalid_otp">Invalid OTP!</string>
     <string name="verify">Verify</string>
 
     <!-- Validation Error Messages -->
