@@ -32,7 +32,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
 import yral_mobile.shared.features.auth.generated.resources.Res
-import yral_mobile.shared.features.auth.generated.resources.error_failed_to_resend_otp
 import yral_mobile.shared.features.auth.generated.resources.error_failed_to_send_verification_code
 import yral_mobile.shared.features.auth.generated.resources.error_failed_to_verify_otp_code
 import yral_mobile.shared.features.auth.generated.resources.error_invalid_phone_number
@@ -154,6 +153,14 @@ class LoginViewModel(
         }
     }
 
+    fun getOtpErrorContent(): OtpErrorContent? {
+        val error = _state.value.otpValidationError ?: return null
+        return when (error) {
+            is OtpValidationError.InvalidOtp -> OtpErrorContent.InvalidOtpWithResend
+            is OtpValidationError.SimpleMessage -> OtpErrorContent.SimpleMessage(error.message)
+        }
+    }
+
     fun onCountrySelected(country: Country) {
         _state.update { it.copy(selectedCountry = country) }
         validatePhoneNumber()
@@ -268,6 +275,12 @@ class LoginViewModel(
             }
     }
 
+    private fun cancelResendTimer() {
+        resendTimerJob?.cancel()
+        resendTimerJob = null
+        _state.update { it.copy(resendTimerSeconds = null) }
+    }
+
     fun onResendOtp() {
         val currentState = _state.value
         val phoneAuthData = (currentState.phoneAuthState as? UiState.Success)?.data
@@ -288,7 +301,8 @@ class LoginViewModel(
             ) {
                 Logger.e("LoginViewModel", e) { "Failed to resend OTP" }
                 crashlyticsManager.recordException(e, ExceptionType.AUTH)
-                _state.update { it.copy(otpValidationError = getString(Res.string.error_failed_to_resend_otp)) }
+                // Restart timer instead of cancelling for failed resend
+                startResendTimer()
             }
         }
     }
@@ -309,14 +323,28 @@ class LoginViewModel(
         val phoneAuthData = (currentState.phoneAuthState as? UiState.Success)?.data
         coroutineScope.launch {
             if (phoneAuthData == null || otpCode.isBlank()) {
+                cancelResendTimer()
                 _state.update {
-                    it.copy(otpValidationError = getString(Res.string.error_phone_authentication_data_not_found))
+                    it.copy(
+                        otpValidationError =
+                            OtpValidationError.SimpleMessage(
+                                getString(Res.string.error_phone_authentication_data_not_found),
+                            ),
+                    )
                 }
                 return@launch
             }
 
             if (otpCode.isBlank()) {
-                _state.update { it.copy(otpValidationError = getString(Res.string.error_please_enter_otp_code)) }
+                cancelResendTimer()
+                _state.update {
+                    it.copy(
+                        otpValidationError =
+                            OtpValidationError.SimpleMessage(
+                                getString(Res.string.error_please_enter_otp_code),
+                            ),
+                    )
+                }
                 return@launch
             }
 
@@ -336,10 +364,14 @@ class LoginViewModel(
             } catch (e: YralAuthException) {
                 Logger.e("LoginViewModel", e) { "OTP verification failed" }
                 crashlyticsManager.recordException(e, ExceptionType.AUTH)
+                cancelResendTimer()
                 _state.update {
                     it.copy(
                         otpAuthState = UiState.Failure(e),
-                        otpValidationError = getString(Res.string.error_failed_to_verify_otp_code),
+                        otpValidationError =
+                            OtpValidationError.InvalidOtp(
+                                getString(Res.string.error_failed_to_verify_otp_code),
+                            ),
                     )
                 }
             }
@@ -355,6 +387,22 @@ class LoginViewModel(
     fun searchCountries(query: String): List<Country> = countryRepository.searchCountries(query)
 }
 
+sealed class OtpValidationError {
+    data class InvalidOtp(
+        val message: String,
+    ) : OtpValidationError()
+    data class SimpleMessage(
+        val message: String,
+    ) : OtpValidationError()
+}
+
+sealed class OtpErrorContent {
+    object InvalidOtpWithResend : OtpErrorContent()
+    data class SimpleMessage(
+        val message: String,
+    ) : OtpErrorContent()
+}
+
 data class LoginState(
     val socialAuthState: UiState<Unit> = UiState.Initial,
     val phoneAuthState: UiState<PhoneAuthData> = UiState.Initial,
@@ -363,7 +411,7 @@ data class LoginState(
     val phoneNumber: String = "",
     val phoneValidationError: String? = null,
     val otpCode: String = "",
-    val otpValidationError: String? = null,
+    val otpValidationError: OtpValidationError? = null,
     val resendTimerSeconds: Int? = null,
 ) {
     fun isLoginComplete() = socialAuthState is UiState.Success || otpAuthState is UiState.Success
