@@ -1,51 +1,39 @@
 package com.shortform.video.android
 
 import android.content.Context
+import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
-import androidx.media3.datasource.DefaultDataSource
-import androidx.media3.datasource.cache.CacheDataSource
-import androidx.media3.datasource.cache.CacheKeyFactory
-import androidx.media3.datasource.cache.CacheWriter
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
-import androidx.media3.datasource.DataSpec
-import androidx.media3.datasource.DefaultHttpDataSource
-import androidx.media3.datasource.cache.CacheDataSink
-import androidx.media3.datasource.database.ExoDatabaseProvider
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import androidx.media3.exoplayer.source.MediaSource
-import androidx.media3.exoplayer.source.ProgressiveMediaSource
-import androidx.media3.exoplayer.source.dash.DashMediaSource
-import androidx.media3.exoplayer.source.hls.HlsMediaSource
+import androidx.media3.exoplayer.source.preload.DefaultPreloadManager
+import androidx.media3.exoplayer.source.preload.PreloadException
+import androidx.media3.exoplayer.source.preload.PreloadManagerListener
+import androidx.media3.exoplayer.source.preload.TargetPreloadStatusControl
 import com.shortform.video.ContainerHint
 import com.shortform.video.CoordinatorDeps
 import com.shortform.video.MediaDescriptor
 import com.shortform.video.PlaybackCoordinator
+import com.shortform.video.PreloadPolicy
 import com.shortform.video.VideoSurfaceHandle
 import com.shortform.video.ui.AndroidVideoSurfaceHandle
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 import java.io.File
+import kotlin.math.abs
 
+@OptIn(UnstableApi::class)
 fun createAndroidPlaybackCoordinator(
     context: Context,
     deps: CoordinatorDeps = CoordinatorDeps(),
 ): PlaybackCoordinator = AndroidPlaybackCoordinator(context, deps)
 
+@OptIn(UnstableApi::class)
 private class AndroidPlaybackCoordinator(
     context: Context,
     private val deps: CoordinatorDeps,
@@ -55,30 +43,32 @@ private class AndroidPlaybackCoordinator(
     private val policy = deps.policy
     private val nowMs = deps.nowMs
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val cache = createCache(appContext, policy)
+    private val preloadStatusControl = DefaultTargetPreloadStatusControl(policy)
+    private val preloadManagerBuilder =
+        DefaultPreloadManager.Builder(appContext, preloadStatusControl)
+            .setCache(cache)
+            .setLoadControl(createLoadControl())
 
-    private val cache = createCache(appContext)
-    private val cacheKeyFactory = CacheKeyFactory.DEFAULT
-    private val dataSourceFactory = createCacheDataSourceFactory(appContext, cache)
-    private val mediaSourceFactory = DefaultMediaSourceFactory(dataSourceFactory)
+    private val preloadManager = preloadManagerBuilder.build()
 
-    private val playerA = createPlayer(appContext)
-    private val playerB = createPlayer(appContext)
+    private val playerA = createPlayer(preloadManagerBuilder)
+    private val playerB = createPlayer(preloadManagerBuilder)
     private var activeSlot = PlayerSlot(playerA)
     private var preparedSlot = PlayerSlot(playerB)
 
     private val surfaces = mutableMapOf<Int, VideoSurfaceHandle>()
     private var feed: List<MediaDescriptor> = emptyList()
+    private var mediaItems: List<MediaItem> = emptyList()
+    private var mediaIndexById: Map<String, Int> = emptyMap()
+
     private var activeIndex: Int = -1
     private var predictedIndex: Int = -1
+    private var scheduledPreloadTargets: Set<Int> = emptySet()
 
     private val playStartMsById = mutableMapOf<String, Long>()
     private var firstFramePendingIndex: Int? = null
     private var rebuffering = false
-
-    private val prefetchJobs = mutableMapOf<Int, Job>()
-    private val prefetchSemaphore = Semaphore(policy.maxConcurrentPrefetch)
 
     private val listener = object : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
@@ -135,13 +125,54 @@ private class AndroidPlaybackCoordinator(
         }
     }
 
+    private val preloadListener = object : PreloadManagerListener {
+        override fun onCompleted(mediaItem: MediaItem) {
+            val index = mediaIndexById[mediaItem.mediaId] ?: return
+            val descriptor = feed.getOrNull(index) ?: return
+            val cacheKey = mediaItem.localConfiguration?.customCacheKey ?: mediaItem.mediaId
+            val cachedBytes = cache.getCachedBytes(cacheKey, 0, C.LENGTH_UNSET.toLong()).coerceAtLeast(0)
+            analytics.event(
+                "preload_completed",
+                mapOf(
+                    "id" to descriptor.id,
+                    "index" to index,
+                    "bytes" to cachedBytes,
+                    "ms" to 0,
+                    "fromCache" to (cachedBytes > 0),
+                ),
+            )
+        }
+
+        override fun onError(exception: PreloadException) {
+            val mediaItem = exception.mediaItem
+            val index = mediaIndexById[mediaItem.mediaId] ?: return
+            val descriptor = feed.getOrNull(index) ?: return
+            analytics.event(
+                "preload_canceled",
+                mapOf("id" to descriptor.id, "index" to index, "reason" to "error"),
+            )
+        }
+    }
+
     init {
         playerA.addListener(listener)
         playerB.addListener(listener)
+        preloadManager.addListener(preloadListener)
     }
 
     override fun setFeed(items: List<MediaDescriptor>) {
+        if (mediaItems.isNotEmpty()) {
+            preloadManager.removeMediaItems(mediaItems)
+        }
         feed = items
+        mediaItems = items.mapIndexed { index, descriptor -> buildMediaItem(descriptor, index) }
+        mediaIndexById = items.mapIndexed { index, descriptor -> descriptor.id to index }.toMap()
+
+        if (mediaItems.isNotEmpty()) {
+            val ranking = mediaItems.indices.toList()
+            preloadManager.addMediaItems(mediaItems, ranking)
+        }
+
         if (activeIndex >= items.size) {
             setActiveIndex(items.lastIndex)
         }
@@ -153,8 +184,14 @@ private class AndroidPlaybackCoordinator(
 
         activeIndex = index
         predictedIndex = index
-        val item = feed[index]
+        preloadStatusControl.currentPlayingIndex = index
+        preloadStatusControl.predictedIndex = index
+        preloadManager.setCurrentPlayingIndex(index)
+        preloadManager.invalidate()
 
+        updateScheduledPreloads(index)
+
+        val item = feed[index]
         analytics.event("feed_item_impression", mapOf("id" to item.id, "index" to index))
         analytics.event("play_start_request", mapOf("id" to item.id, "index" to index, "reason" to "activeIndex"))
         playStartMsById[item.id] = nowMs()
@@ -170,14 +207,15 @@ private class AndroidPlaybackCoordinator(
         activeSlot.player.playWhenReady = true
 
         schedulePreparedSlot(index)
-        scheduleDiskPrefetch(index)
     }
 
     override fun setScrollHint(predictedIndex: Int, velocity: Float?) {
         if (predictedIndex !in feed.indices) return
         if (predictedIndex == this.predictedIndex) return
         this.predictedIndex = predictedIndex
-        scheduleDiskPrefetch(predictedIndex)
+        preloadStatusControl.predictedIndex = predictedIndex
+        preloadManager.invalidate()
+        updateScheduledPreloads(predictedIndex)
     }
 
     override fun bindSurface(index: Int, surface: VideoSurfaceHandle) {
@@ -210,16 +248,72 @@ private class AndroidPlaybackCoordinator(
     override fun onAppBackground() {
         activeSlot.player.playWhenReady = false
         preparedSlot.player.playWhenReady = false
-        cancelPrefetch(reason = "background")
     }
 
     override fun release() {
-        cancelPrefetch(reason = "release")
-        scope.cancel()
-        ioScope.cancel()
         playerA.release()
         playerB.release()
+        preloadManager.release()
         cache.release()
+    }
+
+    private fun updateScheduledPreloads(centerIndex: Int) {
+        val targets = buildPreloadWindow(centerIndex)
+        val added = targets - scheduledPreloadTargets
+        val removed = scheduledPreloadTargets - targets
+
+        for (index in added) {
+            val item = feed.getOrNull(index) ?: continue
+            analytics.event(
+                "preload_scheduled",
+                mapOf(
+                    "id" to item.id,
+                    "index" to index,
+                    "distance" to (index - centerIndex),
+                    "mode" to preloadMode(centerIndex, index),
+                ),
+            )
+        }
+
+        for (index in removed) {
+            val item = feed.getOrNull(index) ?: continue
+            analytics.event(
+                "preload_canceled",
+                mapOf("id" to item.id, "index" to index, "reason" to "window_shift"),
+            )
+        }
+
+        scheduledPreloadTargets = targets
+    }
+
+    private fun buildPreloadWindow(centerIndex: Int): Set<Int> {
+        if (feed.isEmpty()) return emptySet()
+        val targets = mutableSetOf<Int>()
+        for (offset in 1..policy.preparedPrev) {
+            val index = centerIndex - offset
+            if (index in feed.indices) targets.add(index)
+        }
+        for (offset in 1..policy.preparedNext) {
+            val index = centerIndex + offset
+            if (index in feed.indices) targets.add(index)
+        }
+        for (offset in (policy.preparedNext + 1)..policy.diskPrefetchNext) {
+            val index = centerIndex + offset
+            if (index in feed.indices) targets.add(index)
+        }
+        return targets
+    }
+
+    private fun preloadMode(centerIndex: Int, index: Int): String {
+        val distance = index - centerIndex
+        val absDistance = abs(distance)
+        return if (distance < 0 && absDistance <= policy.preparedPrev) {
+            "prepared"
+        } else if (distance > 0 && absDistance <= policy.preparedNext) {
+            "prepared"
+        } else {
+            "disk"
+        }
     }
 
     private fun schedulePreparedSlot(activeIndex: Int) {
@@ -235,82 +329,17 @@ private class AndroidPlaybackCoordinator(
         }
     }
 
-    private fun scheduleDiskPrefetch(centerIndex: Int) {
-        val start = centerIndex + 1
-        val end = centerIndex + policy.diskPrefetchNext
-        val desired = (start..end).filter { it in feed.indices }
-        val desiredSet = desired.toSet()
-
-        val toCancel = prefetchJobs.keys.filter { it !in desiredSet }
-        for (index in toCancel) {
-            cancelPrefetch(index, "window_shift")
-        }
-
-        for (index in desired) {
-            if (prefetchJobs.containsKey(index)) continue
-            val item = feed[index]
-            analytics.event(
-                "preload_scheduled",
-                mapOf("id" to item.id, "index" to index, "distance" to (index - centerIndex), "mode" to "disk"),
-            )
-            val job = ioScope.launch {
-                prefetchSemaphore.withPermit {
-                    val dataSpec = buildPrefetchDataSpec(item)
-                    val cacheKey = dataSpec.key ?: cacheKeyFactory.buildCacheKey(dataSpec)
-                    val cachedBytes = cache.getCachedBytes(cacheKey, 0, policy.preloadTargetBytes)
-                    if (cachedBytes > 0) {
-                        analytics.event("cache_hit", mapOf("id" to item.id, "bytes" to cachedBytes))
-                    } else {
-                        analytics.event("cache_miss", mapOf("id" to item.id, "bytes" to policy.preloadTargetBytes))
-                    }
-
-                    val startMs = nowMs()
-                    try {
-                        val bytes = cachePrefetch(item)
-                        analytics.event(
-                            "preload_completed",
-                            mapOf(
-                                "id" to item.id,
-                                "index" to index,
-                                "bytes" to bytes,
-                                "ms" to (nowMs() - startMs),
-                                "fromCache" to (bytes <= cachedBytes),
-                            ),
-                        )
-                    } catch (_: Throwable) {
-                        analytics.event(
-                            "preload_canceled",
-                            mapOf("id" to item.id, "index" to index, "reason" to "error"),
-                        )
-                    }
-                }
-            }
-            prefetchJobs[index] = job
-            job.invokeOnCompletion { throwable ->
-                prefetchJobs.remove(index)
-            }
-        }
-    }
-
-    private fun cancelPrefetch(index: Int, reason: String) {
-        prefetchJobs.remove(index)?.cancel()
-        feed.getOrNull(index)?.let { item ->
-            analytics.event("preload_canceled", mapOf("id" to item.id, "index" to index, "reason" to reason))
-        }
-    }
-
-    private fun cancelPrefetch(reason: String) {
-        val indices = prefetchJobs.keys.toList()
-        for (index in indices) {
-            cancelPrefetch(index, reason)
-        }
-    }
-
     private fun prepareSlot(slot: PlayerSlot, index: Int, playWhenReady: Boolean) {
-        val item = feed[index]
-        val source = buildMediaSource(item)
+        val mediaItem = mediaItems.getOrNull(index) ?: return
+        var mediaSource = preloadManager.getMediaSource(mediaItem)
+        if (mediaSource == null) {
+            preloadManager.add(mediaItem, index)
+            preloadManager.invalidate()
+            mediaSource = preloadManager.getMediaSource(mediaItem)
+        }
+        if (mediaSource == null) return
         slot.index = index
-        slot.player.setMediaSource(source)
+        slot.player.setMediaSource(mediaSource)
         slot.player.prepare()
         slot.player.playWhenReady = playWhenReady
     }
@@ -331,20 +360,11 @@ private class AndroidPlaybackCoordinator(
         }
     }
 
-    private fun buildMediaSource(descriptor: MediaDescriptor): MediaSource {
-        val item = buildMediaItem(descriptor)
-        return when (descriptor.containerHint) {
-            ContainerHint.HLS -> HlsMediaSource.Factory(dataSourceFactory).createMediaSource(item)
-            ContainerHint.DASH -> DashMediaSource.Factory(dataSourceFactory).createMediaSource(item)
-            ContainerHint.MP4 -> ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(item)
-            ContainerHint.UNKNOWN -> mediaSourceFactory.createMediaSource(item)
-        }
-    }
-
-    private fun buildMediaItem(descriptor: MediaDescriptor): MediaItem {
+    private fun buildMediaItem(descriptor: MediaDescriptor, index: Int): MediaItem {
         val builder = MediaItem.Builder()
             .setUri(descriptor.uri)
             .setMediaId(descriptor.id)
+            .setCustomCacheKey(descriptor.id)
 
         when (descriptor.containerHint) {
             ContainerHint.MP4 -> builder.setMimeType(MimeTypes.APPLICATION_MP4)
@@ -356,57 +376,33 @@ private class AndroidPlaybackCoordinator(
         return builder.build()
     }
 
-    private suspend fun cachePrefetch(descriptor: MediaDescriptor): Long {
-        val dataSource = dataSourceFactory.createDataSource()
-        val dataSpec = buildPrefetchDataSpec(descriptor)
-        var latestBytes = 0L
-        val cacheWriter = CacheWriter(
-            dataSource,
-            dataSpec,
-            null,
-            CacheWriter.ProgressListener { _, bytesCached, _ ->
-                latestBytes = bytesCached
-            },
-        )
-        return suspendCancellableCoroutine { continuation ->
-            continuation.invokeOnCancellation { cacheWriter.cancel() }
-            try {
-                cacheWriter.cache()
-                continuation.resume(latestBytes)
-            } catch (throwable: Throwable) {
-                continuation.resumeWithException(throwable)
-            }
-        }
-    }
-
-    private fun createPlayer(context: Context): ExoPlayer {
+    private fun createPlayer(preloadManagerBuilder: DefaultPreloadManager.Builder): ExoPlayer {
         val audioAttributes = AudioAttributes.Builder()
             .setUsage(C.USAGE_MEDIA)
             .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
             .build()
-        return ExoPlayer.Builder(context)
-            .setMediaSourceFactory(mediaSourceFactory)
-            .build()
-            .apply {
-                setAudioAttributes(audioAttributes, true)
-                setHandleAudioBecomingNoisy(true)
-            }
+        return preloadManagerBuilder.buildExoPlayer().apply {
+            setAudioAttributes(audioAttributes, true)
+            setHandleAudioBecomingNoisy(true)
+        }
     }
 
-    private fun createCache(context: Context): SimpleCache {
+    private fun createLoadControl(): DefaultLoadControl {
+        return DefaultLoadControl.Builder()
+            .setBufferDurationsMs(
+                5_000,
+                20_000,
+                500,
+                DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS,
+            )
+            .setPrioritizeTimeOverSizeThresholds(true)
+            .build()
+    }
+
+    private fun createCache(context: Context, policy: PreloadPolicy): SimpleCache {
         val cacheDir = File(context.cacheDir, "shortform-video-cache")
         val evictor = LeastRecentlyUsedCacheEvictor(policy.cacheMaxBytes)
-        return SimpleCache(cacheDir, evictor, ExoDatabaseProvider(context))
-    }
-
-    private fun createCacheDataSourceFactory(context: Context, cache: SimpleCache): CacheDataSource.Factory {
-        val httpDataSourceFactory = DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(true)
-        val upstreamFactory = DefaultDataSource.Factory(context, httpDataSourceFactory)
-        return CacheDataSource.Factory()
-            .setCache(cache)
-            .setUpstreamDataSourceFactory(upstreamFactory)
-            .setCacheWriteDataSinkFactory(CacheDataSink.Factory().setCache(cache))
-            .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+        return SimpleCache(cacheDir, evictor, StandaloneDatabaseProvider(context))
     }
 
     private data class PlayerSlot(
@@ -414,19 +410,29 @@ private class AndroidPlaybackCoordinator(
         var index: Int? = null,
     )
 
-    private fun buildPrefetchDataSpec(descriptor: MediaDescriptor): DataSpec {
-        val cacheKey = cacheKeyFactory.buildCacheKey(
-            DataSpec.Builder()
-                .setUri(descriptor.uri)
-                .setPosition(0)
-                .setLength(policy.preloadTargetBytes)
-                .build(),
-        )
-        return DataSpec.Builder()
-            .setUri(descriptor.uri)
-            .setPosition(0)
-            .setLength(policy.preloadTargetBytes)
-            .setKey(cacheKey)
-            .build()
+    private class DefaultTargetPreloadStatusControl(
+        private val policy: PreloadPolicy,
+    ) : TargetPreloadStatusControl<Int, DefaultPreloadManager.PreloadStatus> {
+        var currentPlayingIndex: Int = C.INDEX_UNSET
+        var predictedIndex: Int = C.INDEX_UNSET
+
+        override fun getTargetPreloadStatus(rankingData: Int): DefaultPreloadManager.PreloadStatus {
+            val center = if (predictedIndex != C.INDEX_UNSET) predictedIndex else currentPlayingIndex
+            if (center == C.INDEX_UNSET) {
+                return DefaultPreloadManager.PreloadStatus.PRELOAD_STATUS_NOT_PRELOADED
+            }
+            val distance = rankingData - center
+            val absDistance = abs(distance)
+            return when {
+                distance == 0 -> DefaultPreloadManager.PreloadStatus.PRELOAD_STATUS_NOT_PRELOADED
+                distance < 0 && absDistance <= policy.preparedPrev ->
+                    DefaultPreloadManager.PreloadStatus.specifiedRangeLoaded(1_000L)
+                distance > 0 && absDistance <= policy.preparedNext ->
+                    DefaultPreloadManager.PreloadStatus.specifiedRangeLoaded(1_000L)
+                distance > 0 && absDistance <= policy.diskPrefetchNext ->
+                    DefaultPreloadManager.PreloadStatus.specifiedRangeCached(5_000L)
+                else -> DefaultPreloadManager.PreloadStatus.PRELOAD_STATUS_NOT_PRELOADED
+            }
+        }
     }
 }
