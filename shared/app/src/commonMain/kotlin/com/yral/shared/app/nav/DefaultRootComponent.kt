@@ -19,6 +19,8 @@ import com.arkivanov.decompose.router.stack.pushToFront
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
+import com.arkivanov.essenty.instancekeeper.InstanceKeeper
+import com.arkivanov.essenty.instancekeeper.getOrCreate
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.nav.factories.ComponentFactory
 import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
@@ -61,12 +63,29 @@ class DefaultRootComponent(
     override val updateState: Value<UpdateState> = _updateState
     private var onCompleteUpdateCallback: (() -> Unit)? = null
 
-    // ==================== Login State (inline) ====================
+    // ==================== Login State (preserved across configuration changes) ====================
+    // Holder class to preserve login state across configuration changes
+    private class LoginStateHolder : InstanceKeeper.Instance {
+        var currentLoginInfo: LoginInfo? = null
+        var countrySelectionCallback: ((Country) -> Unit)? = null
+    }
+
+    private val loginStateHolder: LoginStateHolder =
+        instanceKeeper.getOrCreate("loginState") { LoginStateHolder() }
+
     // Current active login request. Null when no login is in progress.
-    override var currentLoginInfo: LoginInfo? = null
+    override var currentLoginInfo: LoginInfo?
+        get() = loginStateHolder.currentLoginInfo
+        set(value) {
+            loginStateHolder.currentLoginInfo = value
+        }
 
     // Callback for country selection during phone auth flow.
-    private var countrySelectionCallback: ((Country) -> Unit)? = null
+    private var countrySelectionCallback: ((Country) -> Unit)?
+        get() = loginStateHolder.countrySelectionCallback
+        set(value) {
+            loginStateHolder.countrySelectionCallback = value
+        }
 
     // ==================== Component Factory ====================
     private val componentFactory =
