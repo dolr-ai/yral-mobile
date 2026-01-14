@@ -42,6 +42,15 @@ import com.yral.shared.app.ui.screens.home.HomeScreen
 import com.yral.shared.app.ui.screens.tournament.TournamentGameScaffoldScreen
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.session.getKey
+import com.yral.shared.features.aibot.ui.description.AIBotDescriptionScreen
+import com.yral.shared.features.aibot.ui.description.AIBotDescriptionUiState
+import com.yral.shared.features.aibot.ui.introduction.AIBotIntroductionScreen
+import com.yral.shared.features.aibot.ui.introduction.AIBotIntroductionUiState
+import com.yral.shared.features.aibot.ui.name.AIBotNameScreen
+import com.yral.shared.features.aibot.ui.name.AIBotNameUiState
+import com.yral.shared.features.aibot.ui.personality.AIBotPersonalityOption
+import com.yral.shared.features.aibot.ui.personality.AIBotPersonalityScreen
+import com.yral.shared.features.aibot.ui.personality.AIBotPersonalityUiState
 import com.yral.shared.features.auth.ui.LoginBottomSheet
 import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.features.chat.ui.conversation.ChatConversationScreen
@@ -71,6 +80,10 @@ import yral_mobile.shared.app.generated.resources.error_retry
 import yral_mobile.shared.app.generated.resources.error_timeout
 import yral_mobile.shared.app.generated.resources.error_timeout_title
 
+private enum class TempAIBotStep { Description, Personality, Name, Introduction }
+private const val TEMP_ROLE_LIMIT = 3
+private const val TEMP_TRAIT_LIMIT = 5
+
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,6 +91,141 @@ fun RootScreen(
     rootComponent: RootComponent,
     viewModel: RootViewModel = koinViewModel(),
 ) {
+    // TEMP: Inline flow for AIBot screens (Description -> Personality) for UI testing with sample data.
+    var currentStep by remember { mutableStateOf(TempAIBotStep.Description) }
+
+    // Sample data mimicking backend fetch.
+    val tempSuggestions =
+        remember {
+            listOf(
+                "A football AI that can talk strategy and banter",
+                "A bookish AI to help curate your reading list",
+                "A travel AI that plans witty itineraries",
+            )
+        }
+    var tempDescription by remember { mutableStateOf("") }
+
+    var selectedRoles by remember { mutableStateOf(setOf<String>()) }
+    var selectedTraits by remember { mutableStateOf(setOf<String>()) }
+    var roleOptions by remember {
+        mutableStateOf(
+            listOf(
+                AIBotPersonalityOption("roleplay", "Roleplaying character"),
+                AIBotPersonalityOption("friend", "Friend"),
+                AIBotPersonalityOption("helper", "Helper"),
+                AIBotPersonalityOption("random", "Random"),
+                AIBotPersonalityOption("coach", "Coach"),
+            ),
+        )
+    }
+    var traitOptions by remember {
+        mutableStateOf(
+            listOf(
+                AIBotPersonalityOption("playful", "Playful"),
+                AIBotPersonalityOption("sassy", "Sassy"),
+                AIBotPersonalityOption("confident", "Confident"),
+                AIBotPersonalityOption("sarcastic", "Sarcastic"),
+                AIBotPersonalityOption("empathetic", "Empathetic"),
+                AIBotPersonalityOption("curious", "Curious"),
+                AIBotPersonalityOption("witty", "Witty"),
+            ),
+        )
+    }
+    var tempName by remember { mutableStateOf("") }
+
+    var tempIntroduction by remember { mutableStateOf("") }
+
+    when (currentStep) {
+        TempAIBotStep.Description ->
+            AIBotDescriptionScreen(
+                state =
+                    AIBotDescriptionUiState(
+                        description = tempDescription,
+                        suggestions = tempSuggestions,
+                    ),
+                onBackClick = { tempDescription = "" },
+                onDescriptionChange = { tempDescription = it },
+                onSuggestionClick = { tempDescription = it },
+                onNextClick = { currentStep = TempAIBotStep.Personality },
+            )
+
+        TempAIBotStep.Personality ->
+            AIBotPersonalityScreen(
+                state =
+                    AIBotPersonalityUiState(
+                        selectedRoles = selectedRoles,
+                        selectedTraits = selectedTraits,
+                        roleOptions = roleOptions,
+                        traitOptions = traitOptions,
+                    ),
+                onBackClick = { currentStep = TempAIBotStep.Description },
+                onRoleToggle = { id ->
+                    selectedRoles =
+                        if (selectedRoles.contains(id)) {
+                            selectedRoles - id
+                        } else {
+                            (selectedRoles + id).take(TEMP_ROLE_LIMIT).toSet()
+                        }
+                },
+                onTraitToggle = { id ->
+                    selectedTraits =
+                        if (selectedTraits.contains(id)) {
+                            selectedTraits - id
+                        } else {
+                            (selectedTraits + id).take(TEMP_TRAIT_LIMIT).toSet()
+                        }
+                },
+                onAddCustomRole = { label ->
+                    val id = "custom_role_${roleOptions.size}"
+                    roleOptions = roleOptions + AIBotPersonalityOption(id, label)
+                    selectedRoles = (selectedRoles + id).take(TEMP_ROLE_LIMIT).toSet()
+                },
+                onAddCustomTrait = { label ->
+                    val id = "custom_trait_${traitOptions.size}"
+                    traitOptions = traitOptions + AIBotPersonalityOption(id, label)
+                    selectedTraits = (selectedTraits + id).take(TEMP_TRAIT_LIMIT).toSet()
+                },
+                onNextClick = { currentStep = TempAIBotStep.Name },
+            )
+
+        TempAIBotStep.Name ->
+            AIBotNameScreen(
+                state =
+                    AIBotNameUiState(
+                        name = tempName,
+                        suggestions = listOf("Sassy Byte", "Mood Swing", "Jester AI"),
+                    ),
+                onBackClick = { currentStep = TempAIBotStep.Personality },
+                onNameChange = { tempName = it },
+                onSuggestionClick = { tempName = it },
+                onNextClick = {
+                    currentStep = TempAIBotStep.Introduction
+                },
+            )
+
+        TempAIBotStep.Introduction ->
+            AIBotIntroductionScreen(
+                state =
+                    AIBotIntroductionUiState(
+                        introduction = tempIntroduction,
+                        suggestions =
+                            listOf(
+                                "Sarcasm mode activated, ready to roast and toast!",
+                                "Ready to slay the conversation game with witty comebacks",
+                                "Warm welcomes and quick quips—meet your new AI buddy",
+                                "Hey there, I’m here to keep chats clever and fun",
+                            ),
+                    ),
+                onBackClick = { currentStep = TempAIBotStep.Name },
+                onIntroductionChange = { tempIntroduction = it },
+                onSuggestionClick = { tempIntroduction = it },
+                onNextClick = {
+                    currentStep = TempAIBotStep.Description // placeholder: loop for now
+                },
+            )
+    }
+    return
+
     val state by viewModel.state.collectAsState()
     LaunchedEffect(state.navigationTarget) {
         when (state.navigationTarget) {
