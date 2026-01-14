@@ -335,7 +335,7 @@ def _analyze_videos_batch(videos: List[Dict], api_key: str, max_workers: int = 5
     return results
 
 # ─────────────────────  TOURNAMENT CREATION  ────────────────────────
-@https_fn.on_request(region="us-central1", timeout_sec=540, memory=512, secrets=["BALANCE_UPDATE_TOKEN", "GEMINI_API_KEY", "BACKEND_ADMIN_KEY"])
+@https_fn.on_request(region="us-central1", timeout_sec=540, memory=1024, secrets=["BALANCE_UPDATE_TOKEN", "GEMINI_API_KEY", "BACKEND_ADMIN_KEY"])
 def create_hot_or_not_tournament(request: Request):
     """
     Create a new Hot or Not tournament with AI-analyzed videos.
