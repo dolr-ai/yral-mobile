@@ -23,7 +23,7 @@ object CardStackConstants {
     const val VISIBLE_CARDS = 3
 
     /** Duration for card dismiss animation in milliseconds */
-    const val DISMISS_ANIMATION_DURATION_MS = 250
+    const val DISMISS_ANIMATION_DURATION_MS = 800
 
     /** Duration for snap-back animation in milliseconds */
     const val SNAP_BACK_DURATION_MS = 200

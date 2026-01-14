@@ -20,12 +20,10 @@ from tournaments import (
 )
 from hot_or_not_tournament import (
     create_hot_or_not_tournament,
-    register_hot_or_not_tournament,
     hot_or_not_tournament_vote,
-    hot_or_not_tournament_leaderboard,
-    hot_or_not_tournaments,
-    hot_or_not_tournament_videos
 )
+# Removed: from create_staging_tournaments import create_staging_test_tournaments
+# Removed: from backfill_participant_counts import backfill_participant_counts
 import os
 import random
 import collections

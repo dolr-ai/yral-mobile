@@ -62,8 +62,8 @@ fun SwipeFeedbackOverlay(
  */
 private fun getSwipeColor(direction: SwipeDirection): Color =
     when (direction) {
-        SwipeDirection.UP -> SwipeFeedbackColors.Pink300
-        SwipeDirection.DOWN -> SwipeFeedbackColors.Yellow200
+        SwipeDirection.UP -> Color.Transparent
+        SwipeDirection.DOWN -> Color.Transparent
         SwipeDirection.LEFT -> SwipeFeedbackColors.Red300
         SwipeDirection.RIGHT -> SwipeFeedbackColors.Green300
         SwipeDirection.NONE -> Color.Transparent

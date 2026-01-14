@@ -3,6 +3,7 @@ package com.yral.shared.libs.videoPlayer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.yral.shared.libs.videoPlayer.cardstack.SwipeDirection
 import com.yral.shared.libs.videoPlayer.cardstack.SwipeableCardStack
 import com.yral.shared.libs.videoPlayer.model.PlayerConfig
 import com.yral.shared.libs.videoPlayer.model.Reels
@@ -36,6 +37,7 @@ import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
  * @param getPrefetchListener Factory for creating prefetch listeners per reel.
  * @param getVideoListener Factory for creating video listeners per reel.
  * @param overlayContent Content to overlay on each video card (UI controls, etc.).
+ * @param onSwipeVote Callback when a swipe vote is registered (direction, pageIndex).
  */
 @Composable
 fun YRALReelPlayerCardStack(
@@ -49,6 +51,7 @@ fun YRALReelPlayerCardStack(
     onEdgeScrollAttempt: (pageNo: Int, atStart: Boolean, direction: ReelScrollDirection) -> Unit = { _, _, _ -> },
     getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
     getVideoListener: (reel: Reels) -> VideoListener?,
+    onSwipeVote: ((direction: SwipeDirection, pageIndex: Int) -> Unit)? = null,
     overlayContent: @Composable (pageNo: Int, scrollToNext: () -> Unit) -> Unit,
 ) {
     SwipeableCardStack(
@@ -79,5 +82,6 @@ fun YRALReelPlayerCardStack(
         getPrefetchListener = getPrefetchListener,
         getVideoListener = { getVideoListener(it) },
         overlayContent = overlayContent,
+        onSwipeVote = onSwipeVote,
     )
 }

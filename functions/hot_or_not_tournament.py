@@ -24,6 +24,8 @@ from firebase_admin import auth, firestore
 from firebase_functions import https_fn
 from flask import Request, jsonify, make_response
 from google.api_core.exceptions import GoogleAPICallError
+from google.cloud import tasks_v2
+from google.protobuf import timestamp_pb2
 
 # ─────────────────────  CONSTANTS  ────────────────────────
 HOT_OR_NOT_TOURNAMENT_COLL = "hot_or_not_tournaments"
@@ -46,13 +48,13 @@ IS_PRODUCTION = GCLOUD_PROJECT == "yral-mobile"
 # Tournament config
 IST = timezone(timedelta(hours=5, minutes=30))
 if IS_PRODUCTION:
-    TOURNAMENT_SLOTS = [("20:00", "20:10")]  # 8 PM IST
-    TOURNAMENT_ENTRY_COST = 15
-    TOURNAMENT_TITLE = "Hot or Not Showdown"
+    TOURNAMENT_SLOTS = [("19:20", "19:30")]  # 7:20 PM IST
+    TOURNAMENT_ENTRY_COST = 10
+    TOURNAMENT_TITLE = "Mast ya Bakwaas?"
 else:
     TOURNAMENT_SLOTS = [("13:00", "13:10"), ("15:00", "15:10"), ("17:00", "17:10")]
     TOURNAMENT_ENTRY_COST = 100
-    TOURNAMENT_TITLE = "HOT OR NOT"
+    TOURNAMENT_TITLE = "Mast ya Bakwaas?"
 
 # Prize distribution
 PRIZE_MAP = {
@@ -71,6 +73,53 @@ def db() -> firestore.Client:
             firebase_admin.initialize_app()
         _db = firestore.client()
     return _db
+
+
+# ─────────────────────  CLOUD TASKS HELPERS  ────────────────────────
+def _tasks_client() -> tasks_v2.CloudTasksClient:
+    return tasks_v2.CloudTasksClient()
+
+
+def _queue_path(client: tasks_v2.CloudTasksClient) -> str:
+    project = os.environ.get("GCLOUD_PROJECT") or os.environ.get("GOOGLE_CLOUD_PROJECT")
+    location = os.environ.get("TASKS_LOCATION", "us-central1")
+    queue = os.environ.get("TASKS_QUEUE", "tournament-status-updates")
+    if not project:
+        raise RuntimeError("GCLOUD_PROJECT/GOOGLE_CLOUD_PROJECT env var missing")
+    return client.queue_path(project, location, queue)
+
+
+def _function_url(fn_name: str) -> str:
+    project = os.environ.get("GCLOUD_PROJECT") or os.environ.get("GOOGLE_CLOUD_PROJECT")
+    region = os.environ.get("FUNCTION_REGION", "us-central1")
+    if not project:
+        raise RuntimeError("GCLOUD_PROJECT/GOOGLE_CLOUD_PROJECT env var missing")
+    return f"https://{region}-{project}.cloudfunctions.net/{fn_name}"
+
+
+def _schedule_status_task(doc_id: str, target_status: str, run_at: datetime):
+    """Schedule a Cloud Task to update tournament status at a specific time."""
+    client = _tasks_client()
+    parent = _queue_path(client)
+    url = _function_url("update_tournament_status")
+
+    payload = json.dumps({"tournament_id": doc_id, "status": target_status}).encode()
+    schedule_ts = timestamp_pb2.Timestamp()
+    schedule_ts.FromDatetime(run_at.astimezone(timezone.utc))
+
+    task = tasks_v2.Task(
+        http_request=tasks_v2.HttpRequest(
+            http_method=tasks_v2.HttpMethod.POST,
+            url=url,
+            headers={"Content-Type": "application/json"},
+            body=payload,
+        ),
+        schedule_time=schedule_ts,
+    )
+
+    response = client.create_task(request={"parent": parent, "task": task})
+    print(f"[tasks] scheduled {target_status} for {doc_id} at {run_at.isoformat()} ({response.name})")
+
 
 # ─────────────────────  HELPERS  ────────────────────────
 def error_response(status: int, code: str, message: str):
@@ -186,6 +235,7 @@ def _analyze_video_with_gemini(video_url: str, api_key: str) -> Dict[str, Any]:
 
         # Step 3: Analyze with Gemini
         prompt = """Determine if this video is mast(hit) or bakwaas(flop).
+Think like a person living in tier 2 and tier 3 cities of India, be a bit frugal in identifying it as mast since most videos are going to be analyzed as mast.                
 Respond with ONLY a JSON object:
 {"verdict": "mast" or "bakwaas", "confidence": 0.0 to 1.0, "reason": "brief explanation"}"""
 
@@ -285,7 +335,7 @@ def _analyze_videos_batch(videos: List[Dict], api_key: str, max_workers: int = 5
     return results
 
 # ─────────────────────  TOURNAMENT CREATION  ────────────────────────
-@https_fn.on_request(region="us-central1", timeout_sec=540, memory=512, secrets=["BALANCE_UPDATE_TOKEN", "GEMINI_API_KEY", "BACKEND_ADMIN_KEY"])
+@https_fn.on_request(region="us-central1", timeout_sec=540, memory=1024, secrets=["BALANCE_UPDATE_TOKEN", "GEMINI_API_KEY", "BACKEND_ADMIN_KEY"])
 def create_hot_or_not_tournament(request: Request):
     """
     Create a new Hot or Not tournament with AI-analyzed videos.
@@ -307,6 +357,12 @@ def create_hot_or_not_tournament(request: Request):
         # Parse request
         body = request.get_json(silent=True) or {}
         video_count = int(body.get("video_count", DEFAULT_VIDEO_COUNT))
+
+        # Custom parameter overrides
+        title = body.get("title", TOURNAMENT_TITLE)
+        entry_cost = int(body.get("entry_cost", TOURNAMENT_ENTRY_COST))
+        prize_map = body.get("prize_map", PRIZE_MAP)
+        total_prize_pool = int(body.get("total_prize_pool", TOTAL_PRIZE_POOL))
 
         # Get tournament timing (next slot or provided)
         now_ist = datetime.now(IST)
@@ -369,11 +425,12 @@ def create_hot_or_not_tournament(request: Request):
             "end_at": end_dt,
             "start_epoch_ms": start_epoch_ms,
             "end_epoch_ms": end_epoch_ms,
-            "entryCost": TOURNAMENT_ENTRY_COST,
-            "totalPrizePool": TOTAL_PRIZE_POOL,
-            "prizeMap": PRIZE_MAP,
+            "entryCost": entry_cost,
+            "totalPrizePool": total_prize_pool,
+            "prizeMap": prize_map,
             "status": "scheduled",
-            "title": TOURNAMENT_TITLE,
+            "title": title,
+            "type": "hot_or_not",
             "video_count": len(analyzed_videos),
             "created_at": firestore.SERVER_TIMESTAMP,
             "updated_at": firestore.SERVER_TIMESTAMP,
@@ -407,6 +464,14 @@ def create_hot_or_not_tournament(request: Request):
         if batch_count > 0:
             batch.commit()
 
+        # 7. Schedule status transitions via Cloud Tasks
+        try:
+            _schedule_status_task(tournament_id, "live", start_dt)
+            _schedule_status_task(tournament_id, "ended", end_dt)
+        except Exception as task_err:
+            print(f"[warning] Failed to schedule status tasks: {task_err}", file=sys.stderr)
+            # Don't fail the whole creation, tasks can be retried
+
         print(f"[tournament] Created Hot or Not tournament {tournament_id} with {len(analyzed_videos)} videos")
 
         return jsonify({
@@ -423,83 +488,51 @@ def create_hot_or_not_tournament(request: Request):
         return error_response(500, "INTERNAL", str(e))
 
 
-# ─────────────────────  REGISTRATION  ────────────────────────
-@https_fn.on_request(region="us-central1", secrets=["BALANCE_UPDATE_TOKEN"])
-def register_hot_or_not_tournament(request: Request):
-    """Register user for a Hot or Not tournament."""
-    balance_update_token = os.environ.get("BALANCE_UPDATE_TOKEN", "")
+def _compute_user_position(tournament_id: str, principal_id: str, user_diamonds: int, user_wins: int, user_losses: int) -> int:
+    """
+    Compute user's live position in Hot or Not tournament leaderboard.
 
-    try:
-        if request.method != "POST":
-            return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
+    Ranking order:
+    1. Diamonds DESC (more diamonds = higher rank)
+    2. Total games (wins + losses) DESC (tiebreaker)
+    3. updated_at ASC (second tiebreaker)
 
-        # Parse request
-        body = request.get_json(silent=True) or {}
-        data = body.get("data", {})
-        tournament_id = str(body.get("tournament_id") or data.get("tournament_id") or "").strip()
-        principal_id = str(body.get("principal_id") or data.get("principal_id") or "").strip()
+    Returns position (1-based) or 0 if user hasn't played.
+    """
+    # If user hasn't played, return 0 (not ranked)
+    if user_wins == 0 and user_losses == 0:
+        return 0
 
-        if not tournament_id:
-            return error_response(400, "MISSING_TOURNAMENT_ID", "tournament_id required")
-        if not principal_id:
-            return error_response(400, "MISSING_PRINCIPAL_ID", "principal_id required")
+    user_total_games = user_wins + user_losses
 
-        # Verify auth
-        auth_header = request.headers.get("Authorization", "")
-        if not auth_header.startswith("Bearer "):
-            return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
-        auth.verify_id_token(auth_header.split(" ", 1)[1])
+    # Count users who rank higher
+    users_ref = db().collection(f"{HOT_OR_NOT_TOURNAMENT_COLL}/{tournament_id}/users")
+    snaps = users_ref.where("diamonds", ">=", user_diamonds).limit(500).stream()
 
-        # Validate tournament
-        tournament_ref = db().collection(HOT_OR_NOT_TOURNAMENT_COLL).document(tournament_id)
-        tournament_snap = tournament_ref.get()
+    higher = 0
+    for snap in snaps:
+        if snap.id == principal_id:
+            continue  # Skip self
 
-        if not tournament_snap.exists:
-            return error_response(404, "TOURNAMENT_NOT_FOUND", "Tournament not found")
+        data = snap.to_dict() or {}
+        w = int(data.get("wins") or 0)
+        l = int(data.get("losses") or 0)
 
-        tournament_data = tournament_snap.to_dict() or {}
-        status = tournament_data.get("status", "")
+        # Only count users who have played
+        if w == 0 and l == 0:
+            continue
 
-        if status not in ("scheduled", "live"):
-            return error_response(400, "TOURNAMENT_NOT_OPEN", f"Tournament is {status}")
+        diamonds = int(data.get("diamonds") or 0)
+        total_games = w + l
 
-        # Check duplicate registration
-        user_ref = tournament_ref.collection("users").document(principal_id)
-        if user_ref.get().exists:
-            return error_response(409, "ALREADY_REGISTERED", "Already registered for this tournament")
+        # Check if this user ranks higher
+        if diamonds > user_diamonds:
+            higher += 1
+        elif diamonds == user_diamonds:
+            if total_games > user_total_games:
+                higher += 1
 
-        # Deduct entry cost
-        entry_cost = tournament_data.get("entryCost", TOURNAMENT_ENTRY_COST)
-        success, err = _push_delta_yral_token(balance_update_token, principal_id, -entry_cost)
-
-        if not success:
-            return error_response(402, "PAYMENT_FAILED", f"Failed to deduct entry cost: {err}")
-
-        # Create registration
-        user_ref.set({
-            "registered_at": firestore.SERVER_TIMESTAMP,
-            "coins_paid": entry_cost,
-            "diamonds": 20,
-            "wins": 0,
-            "losses": 0,
-            "status": "registered",
-            "updated_at": firestore.SERVER_TIMESTAMP,
-        })
-
-        return jsonify({
-            "status": "registered",
-            "tournament_id": tournament_id,
-            "coins_paid": entry_cost,
-            "diamonds": 20,
-        }), 200
-
-    except auth.InvalidIdTokenError:
-        return error_response(401, "ID_TOKEN_INVALID", "Invalid token")
-    except GoogleAPICallError as e:
-        return error_response(500, "FIRESTORE_ERROR", str(e))
-    except Exception as e:
-        print(f"[error] register_hot_or_not_tournament: {e}", file=sys.stderr)
-        return error_response(500, "INTERNAL", str(e))
+    return higher + 1
 
 
 # ─────────────────────  VOTING  ────────────────────────
@@ -625,12 +658,24 @@ def hot_or_not_tournament_vote(request: Request):
             msg, status = messages.get(error_code, ("Unknown error", 500))
             return error_response(status, error_code, msg)
 
+        # Get updated user stats for position calculation
+        user_snap = user_ref.get()
+        user_data = user_snap.to_dict() or {}
+        wins = int(user_data.get("wins") or 0)
+        losses = int(user_data.get("losses") or 0)
+
+        # Calculate live position
+        position = _compute_user_position(tournament_id, principal_id, result["diamonds"], wins, losses)
+
         return jsonify({
             "outcome": result["outcome"],
             "vote": result["vote"],
             "ai_verdict": result["ai_verdict"],
             "diamonds": result["diamonds"],
             "diamond_delta": result["diamond_delta"],
+            "wins": wins,
+            "losses": losses,
+            "position": position,
         }), 200
 
     except auth.InvalidIdTokenError:
@@ -642,161 +687,3 @@ def hot_or_not_tournament_vote(request: Request):
         return error_response(500, "INTERNAL", str(e))
 
 
-# ─────────────────────  LEADERBOARD  ────────────────────────
-@https_fn.on_request(region="us-central1")
-def hot_or_not_tournament_leaderboard(request: Request):
-    """Get leaderboard for a Hot or Not tournament."""
-    try:
-        # Parse request
-        tournament_id = request.args.get("tournament_id") or ""
-        principal_id = request.args.get("principal_id") or ""
-
-        if not tournament_id:
-            return error_response(400, "MISSING_TOURNAMENT_ID", "tournament_id required")
-
-        # Get tournament
-        tournament_ref = db().collection(HOT_OR_NOT_TOURNAMENT_COLL).document(tournament_id)
-        tournament_snap = tournament_ref.get()
-
-        if not tournament_snap.exists:
-            return error_response(404, "TOURNAMENT_NOT_FOUND", "Tournament not found")
-
-        tournament_data = tournament_snap.to_dict() or {}
-
-        # Get all users with stats
-        users_ref = tournament_ref.collection("users")
-        users_query = users_ref.order_by("diamonds", direction=firestore.Query.DESCENDING).limit(100)
-        users_snaps = users_query.stream()
-
-        leaderboard = []
-        user_row = None
-        position = 0
-
-        for snap in users_snaps:
-            position += 1
-            user_data = snap.to_dict() or {}
-
-            row = {
-                "principal_id": snap.id,
-                "diamonds": user_data.get("diamonds", 0),
-                "wins": user_data.get("wins", 0),
-                "losses": user_data.get("losses", 0),
-                "position": position,
-                "prize": PRIZE_MAP.get(str(position)),
-            }
-
-            if position <= 10:
-                leaderboard.append(row)
-
-            if snap.id == principal_id:
-                user_row = row
-
-        return jsonify({
-            "tournament_id": tournament_id,
-            "status": tournament_data.get("status"),
-            "title": tournament_data.get("title", TOURNAMENT_TITLE),
-            "date": tournament_data.get("date"),
-            "start_epoch_ms": tournament_data.get("start_epoch_ms"),
-            "end_epoch_ms": tournament_data.get("end_epoch_ms"),
-            "top_rows": leaderboard,
-            "user_row": user_row,
-            "prize_map": PRIZE_MAP,
-        }), 200
-
-    except Exception as e:
-        print(f"[error] hot_or_not_tournament_leaderboard: {e}", file=sys.stderr)
-        return error_response(500, "INTERNAL", str(e))
-
-
-# ─────────────────────  LIST TOURNAMENTS  ────────────────────────
-@https_fn.on_request(region="us-central1")
-def hot_or_not_tournaments(request: Request):
-    """List Hot or Not tournaments with optional filters."""
-    try:
-        status_filter = request.args.get("status")
-        limit_count = int(request.args.get("limit", 10))
-
-        query = db().collection(HOT_OR_NOT_TOURNAMENT_COLL)
-
-        if status_filter:
-            query = query.where("status", "==", status_filter)
-
-        query = query.order_by("start_epoch_ms", direction=firestore.Query.DESCENDING).limit(limit_count)
-
-        tournaments = []
-        for snap in query.stream():
-            data = snap.to_dict() or {}
-            tournaments.append({
-                "tournament_id": snap.id,
-                "date": data.get("date"),
-                "start_time": data.get("start_time"),
-                "end_time": data.get("end_time"),
-                "start_epoch_ms": data.get("start_epoch_ms"),
-                "end_epoch_ms": data.get("end_epoch_ms"),
-                "status": data.get("status"),
-                "title": data.get("title"),
-                "entryCost": data.get("entryCost"),
-                "totalPrizePool": data.get("totalPrizePool"),
-                "video_count": data.get("video_count"),
-            })
-
-        return jsonify({"tournaments": tournaments}), 200
-
-    except Exception as e:
-        print(f"[error] hot_or_not_tournaments: {e}", file=sys.stderr)
-        return error_response(500, "INTERNAL", str(e))
-
-
-# ─────────────────────  VIDEO ANALYSIS RESULTS  ────────────────────────
-@https_fn.on_request(region="us-central1")
-def hot_or_not_tournament_videos(request: Request):
-    """Get AI analysis results for videos in a tournament."""
-    try:
-        tournament_id = request.args.get("tournament_id") or ""
-
-        if not tournament_id:
-            return error_response(400, "MISSING_TOURNAMENT_ID", "tournament_id required")
-
-        # Get tournament
-        tournament_ref = db().collection(HOT_OR_NOT_TOURNAMENT_COLL).document(tournament_id)
-        tournament_snap = tournament_ref.get()
-
-        if not tournament_snap.exists:
-            return error_response(404, "TOURNAMENT_NOT_FOUND", "Tournament not found")
-
-        # Get videos with analysis
-        videos_ref = tournament_ref.collection("videos")
-        videos_snaps = videos_ref.stream()
-
-        videos = []
-        hot_count = 0
-        not_count = 0
-
-        for snap in videos_snaps:
-            data = snap.to_dict() or {}
-            verdict = data.get("ai_verdict", "not")
-
-            if verdict == "hot":
-                hot_count += 1
-            else:
-                not_count += 1
-
-            videos.append({
-                "video_id": snap.id,
-                "ai_verdict": verdict,
-                "ai_confidence": data.get("ai_confidence", 0.5),
-                "ai_reason": data.get("ai_reason", ""),
-                "video_url": data.get("video_url", ""),
-            })
-
-        return jsonify({
-            "tournament_id": tournament_id,
-            "total_videos": len(videos),
-            "hot_count": hot_count,
-            "not_count": not_count,
-            "videos": videos,
-        }), 200
-
-    except Exception as e:
-        print(f"[error] hot_or_not_tournament_videos: {e}", file=sys.stderr)
-        return error_response(500, "INTERNAL", str(e))

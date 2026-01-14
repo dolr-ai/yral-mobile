@@ -3,6 +3,8 @@ package com.yral.shared.libs.videoPlayer.cardstack
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -14,9 +16,12 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.yral.shared.libs.videoPlayer.model.PREFETCH_NEXT_N_VIDEOS
 import com.yral.shared.libs.videoPlayer.model.PlayerConfig
 import com.yral.shared.libs.videoPlayer.model.PlayerControls
@@ -31,6 +36,7 @@ import com.yral.shared.libs.videoPlayer.util.evictPrefetchedVideo
 import com.yral.shared.libs.videoPlayer.util.nextN
 import com.yral.shared.libs.videoPlayer.util.rememberPrefetchPlayerWithLifecycle
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 
 /**
  * A Tinder-style swipeable card stack for video reels.
@@ -49,6 +55,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
  * @param getPrefetchListener Factory for prefetch listeners.
  * @param getVideoListener Factory for video listeners.
  * @param overlayContent Content to overlay on each video card.
+ * @param onSwipeVote Callback when a swipe vote is registered (direction, pageIndex before swipe).
  */
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
@@ -64,6 +71,7 @@ internal fun SwipeableCardStack(
     getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
     getVideoListener: (reel: Reels) -> VideoListener?,
     overlayContent: @Composable (pageNo: Int, scrollToNext: () -> Unit) -> Unit,
+    onSwipeVote: ((direction: SwipeDirection, pageIndex: Int) -> Unit)? = null,
 ) {
     val pageCount = minOf(reels.size, maxReelsInPager)
     if (pageCount == 0) return
@@ -204,6 +212,7 @@ internal fun SwipeableCardStack(
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val screenWidth = constraints.maxWidth.toFloat()
         val screenHeight = constraints.maxHeight.toFloat()
+        val coroutineScope = rememberCoroutineScope()
 
         // Only render 2 cards: front card + next card (next is full screen, hides others)
         val visibleCardCount = minOf(2, pageCount - swipeState.currentIndex)
@@ -215,6 +224,7 @@ internal fun SwipeableCardStack(
                     .swipeableCard(
                         state = swipeState,
                         enabled = !swipeState.isAnimating && visibleCardCount > 0,
+                        verticalSwipeEnabled = false,
                         onSwipeCommitted = { direction ->
                             // Video is already paused via isTouching/isDragging during drag
                         },
@@ -222,6 +232,14 @@ internal fun SwipeableCardStack(
                             // Animation finished - ensure video plays and notify
                             isPause = false
                             onPageLoaded(swipeState.currentIndex)
+                            // Trigger vote callback for left/right swipes
+                            if (direction == SwipeDirection.LEFT || direction == SwipeDirection.RIGHT) {
+                                // currentIndex has already advanced, so previous card was at currentIndex - 1
+                                val votedCardIndex = swipeState.currentIndex - 1
+                                if (votedCardIndex >= 0) {
+                                    onSwipeVote?.invoke(direction, votedCardIndex)
+                                }
+                            }
                         },
                         onEdgeReached = { direction ->
                             val reelDirection =
@@ -285,6 +303,52 @@ internal fun SwipeableCardStack(
                 }
             }
         }
+
+        // SwipeButtons placed OUTSIDE the swipeable Box so they can receive clicks
+        // Buttons scale up and hide based on swipe direction
+        SwipeButtons(
+            onFlopClick = {
+                if (!swipeState.isAnimating) {
+                    val votedCardIndex = swipeState.currentIndex
+                    coroutineScope.launch {
+                        swipeState.swipeInDirection(
+                            direction = SwipeDirection.LEFT,
+                            screenWidth = screenWidth,
+                            screenHeight = screenHeight,
+                            onComplete = {
+                                isPause = false
+                                onPageLoaded(swipeState.currentIndex)
+                                onSwipeVote?.invoke(SwipeDirection.LEFT, votedCardIndex)
+                            },
+                        )
+                    }
+                }
+            },
+            onHitClick = {
+                if (!swipeState.isAnimating) {
+                    val votedCardIndex = swipeState.currentIndex
+                    coroutineScope.launch {
+                        swipeState.swipeInDirection(
+                            direction = SwipeDirection.RIGHT,
+                            screenWidth = screenWidth,
+                            screenHeight = screenHeight,
+                            onComplete = {
+                                isPause = false
+                                onPageLoaded(swipeState.currentIndex)
+                                onSwipeVote?.invoke(SwipeDirection.RIGHT, votedCardIndex)
+                            },
+                        )
+                    }
+                }
+            },
+            swipeDirection = swipeState.swipeDirection,
+            swipeProgress = swipeState.calculateSwipeProgress(screenWidth, screenHeight),
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(bottom = 50.dp),
+        )
     }
 
     // Handle auto scroll to next (triggered by overlay)
