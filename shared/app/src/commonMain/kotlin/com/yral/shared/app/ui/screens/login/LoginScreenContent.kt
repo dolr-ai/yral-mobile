@@ -1,15 +1,11 @@
 package com.yral.shared.app.ui.screens.login
 
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.shared.app.nav.RootComponent
 import com.yral.shared.app.ui.screens.MandatoryLoginScreen
@@ -21,6 +17,7 @@ import com.yral.shared.features.auth.ui.OtpVerificationScreen
 fun LoginScreenContent(
     child: RootComponent.Child,
     rootComponent: RootComponent,
+    modifier: Modifier,
 ) {
     val state by rootComponent.loginViewModel.state.collectAsState()
     val stack by rootComponent.stack.subscribeAsState()
@@ -42,7 +39,7 @@ fun LoginScreenContent(
             CountrySelectorScreen(
                 component = child.component,
                 loginViewModel = rootComponent.loginViewModel,
-                modifier = Modifier.fillMaxSize().safeDrawingPadding(),
+                modifier = modifier,
             )
         }
 
@@ -50,14 +47,13 @@ fun LoginScreenContent(
             OtpVerificationScreen(
                 component = child.component,
                 loginViewModel = rootComponent.loginViewModel,
-                modifier = Modifier.fillMaxSize().statusBarsPadding(),
-                bottomPadding = 0.dp,
+                modifier = modifier,
             )
         }
 
         is RootComponent.Child.MandatoryLogin -> {
             MandatoryLoginScreen(
-                modifier = Modifier.fillMaxSize(),
+                modifier = modifier,
                 component = child.component,
                 loginViewModel = rootComponent.loginViewModel,
             )

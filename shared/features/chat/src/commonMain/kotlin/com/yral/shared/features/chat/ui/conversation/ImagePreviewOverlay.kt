@@ -6,11 +6,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -26,9 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.yral.shared.features.chat.attachments.FilePathChatAttachment
 import com.yral.shared.features.chat.domain.models.ChatMessageType
@@ -50,15 +46,11 @@ fun ImagePreviewOverlay(
     imageAttachment: FilePathChatAttachment,
     onSend: (SendMessageDraft) -> Unit,
     onDismiss: () -> Unit,
-    bottomPadding: Dp = 0.dp,
     hasWaitingAssistant: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     var input by remember { mutableStateOf("") }
     val keyboardController = LocalSoftwareKeyboardController.current
-    val density = LocalDensity.current
-    val imeBottomDp = with(density) { WindowInsets.ime.getBottom(this).toDp() }
-    val keyboardAwareBottomPadding = (imeBottomDp - bottomPadding).coerceAtLeast(0.dp)
 
     Box(
         modifier =
@@ -73,12 +65,7 @@ fun ImagePreviewOverlay(
             contentScale = ContentScale.Fit,
             shape = RectangleShape,
         )
-        Column(
-            modifier =
-                Modifier
-                    .align(BottomCenter)
-                    .padding(bottom = keyboardAwareBottomPadding),
-        ) {
+        Column(modifier = Modifier.align(BottomCenter)) {
             Box(
                 modifier =
                     Modifier

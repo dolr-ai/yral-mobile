@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -159,7 +158,6 @@ internal fun HomeScreen(
                 Modifier
                     .padding(innerPadding)
                     .background(MaterialTheme.colorScheme.primaryContainer),
-            innerPadding = innerPadding,
             sessionState = sessionState,
             updateProfileVideosCount = updateProfileVideosCount,
         )
@@ -188,7 +186,6 @@ private fun SlotContent(component: HomeComponent) {
 private fun HomeScreenContent(
     component: HomeComponent,
     modifier: Modifier,
-    innerPadding: PaddingValues,
     sessionState: SessionState,
     updateProfileVideosCount: (count: Int) -> Unit,
 ) {
@@ -238,7 +235,6 @@ private fun HomeScreenContent(
             is HomeComponent.Child.UploadVideo ->
                 UploadVideoRootScreen(
                     component = child.component,
-                    bottomPadding = innerPadding.calculateBottomPadding(),
                 )
 
             is HomeComponent.Child.Account ->
@@ -267,7 +263,6 @@ private fun HomeScreenContent(
             is HomeComponent.Child.Chat ->
                 ChatScreen(
                     component = child.component,
-                    bottomPadding = innerPadding.calculateBottomPadding(),
                 )
         }
         LoginIfRequired(
