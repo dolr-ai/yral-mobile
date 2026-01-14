@@ -64,7 +64,15 @@ fun PhoneInputField(
                 onValueChange = { value ->
                     // Only allow digits
                     val filtered = value.filter { it.isDigit() }
-                    onPhoneNumberChange(filtered)
+                    // Enforce max length based on selected country
+                    val maxLength = selectedCountry?.maxLength ?: 15
+                    val limited =
+                        if (filtered.length > maxLength) {
+                            filtered.take(maxLength)
+                        } else {
+                            filtered
+                        }
+                    onPhoneNumberChange(limited)
                 },
                 textStyle = LocalAppTopography.current.baseSemiBold.copy(color = YralColors.NeutralTextPrimary),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),

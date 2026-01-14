@@ -198,10 +198,20 @@ fun SignupView(
                             onClick = loginViewModel::onPhoneLoginClicked,
                             buttonState =
                                 when {
-                                    phoneNumber.trim().isEmpty() -> YralButtonState.Disabled
-                                    phoneValidationError != null -> YralButtonState.Disabled
                                     phoneAuthState is UiState.InProgress -> YralButtonState.Loading
-                                    else -> YralButtonState.Enabled
+                                    phoneNumber.trim().isEmpty() -> YralButtonState.Disabled
+                                    selectedCountry == null -> YralButtonState.Disabled
+                                    phoneValidationError != null -> YralButtonState.Disabled
+                                    else -> {
+                                        val numberLength = phoneNumber.length
+                                        val minLength = selectedCountry.minLength
+                                        val maxLength = selectedCountry.maxLength
+                                        if (numberLength !in minLength..maxLength) {
+                                            YralButtonState.Disabled
+                                        } else {
+                                            YralButtonState.Enabled
+                                        }
+                                    }
                                 },
                         )
 
