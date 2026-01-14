@@ -43,6 +43,7 @@ class Tournament:
     created_at: Optional[Any] = None
     updated_at: Optional[Any] = None
     title: str = "SMILEY SHOWDOWN"
+    type: str = "smiley"
 
     def to_firestore(self) -> Dict[str, Any]:
         """Serialize to a dict ready for Firestore writes."""
@@ -61,6 +62,7 @@ class Tournament:
             "created_at": self.created_at,
             "updated_at": self.updated_at,
             "title": self.title,
+            "type": self.type,
         }
 
 

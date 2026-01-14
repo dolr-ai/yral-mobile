@@ -519,7 +519,7 @@ def tournaments(request: Request):
 
             tournament_entry = {
                 "id": snap.id,
-                "title": t_data.get("title", "SMILEY SHOWDOWN" if tournament_type == "smiley" else "HOT OR NOT"),
+                "title": t_data.get("title", "SMILEY SHOWDOWN" if tournament_type == "smiley" else "Mast ya Bakwaas?"),
                 "type": tournament_type,
                 "date": t_data.get("date"),
                 "start_time": t_data.get("start_time"),
@@ -556,7 +556,11 @@ def tournaments(request: Request):
             status = t.get("status", "").lower()
             # Priority: live=0, scheduled=1, ended=2
             status_priority = {"live": 0, "scheduled": 1, "ended": 2}.get(status, 3)
-            return (status_priority, t.get("start_time", ""))
+            # Normalize start_time to string for comparison (handles both datetime and string)
+            st = t.get("start_time", "")
+            if hasattr(st, "isoformat"):
+                st = st.isoformat()
+            return (status_priority, st or "")
 
         result.sort(key=sort_key)
 
@@ -865,10 +869,14 @@ def my_tournaments(request: Request):
         process_tournaments("tournaments", "smiley", "SMILEY SHOWDOWN")
 
         # Process hot_or_not tournaments
-        process_tournaments("hot_or_not_tournaments", "hot_or_not", "HOT OR NOT")
+        process_tournaments("hot_or_not_tournaments", "hot_or_not", "Mast ya Bakwaas?")
 
         # Sort by date and start_time (newest first)
-        result.sort(key=lambda x: (x.get("date", ""), x.get("start_time", "")), reverse=True)
+        def normalize_start_time(st):
+            if hasattr(st, "isoformat"):
+                return st.isoformat()
+            return st or ""
+        result.sort(key=lambda x: (x.get("date", ""), normalize_start_time(x.get("start_time", ""))), reverse=True)
 
         return jsonify({"tournaments": result}), 200
 

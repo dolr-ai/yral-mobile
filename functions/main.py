@@ -22,8 +22,8 @@ from hot_or_not_tournament import (
     create_hot_or_not_tournament,
     hot_or_not_tournament_vote,
 )
-from create_staging_tournaments import create_staging_test_tournaments
-from backfill_participant_counts import backfill_participant_counts
+# Removed: from create_staging_tournaments import create_staging_test_tournaments
+# Removed: from backfill_participant_counts import backfill_participant_counts
 import os
 import random
 import collections

@@ -50,11 +50,11 @@ IST = timezone(timedelta(hours=5, minutes=30))
 if IS_PRODUCTION:
     TOURNAMENT_SLOTS = [("19:20", "19:30")]  # 7:20 PM IST
     TOURNAMENT_ENTRY_COST = 10
-    TOURNAMENT_TITLE = "Hot or Not Showdown"
+    TOURNAMENT_TITLE = "Mast ya Bakwaas?"
 else:
     TOURNAMENT_SLOTS = [("13:00", "13:10"), ("15:00", "15:10"), ("17:00", "17:10")]
     TOURNAMENT_ENTRY_COST = 100
-    TOURNAMENT_TITLE = "HOT OR NOT"
+    TOURNAMENT_TITLE = "Mast ya Bakwaas?"
 
 # Prize distribution
 PRIZE_MAP = {
@@ -430,6 +430,7 @@ def create_hot_or_not_tournament(request: Request):
             "prizeMap": prize_map,
             "status": "scheduled",
             "title": title,
+            "type": "hot_or_not",
             "video_count": len(analyzed_videos),
             "created_at": firestore.SERVER_TIMESTAMP,
             "updated_at": firestore.SERVER_TIMESTAMP,
