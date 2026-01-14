@@ -4,6 +4,7 @@ import com.shortform.video.CoordinatorDeps
 import com.shortform.video.MediaDescriptor
 import com.shortform.video.PlaybackCoordinator
 import com.shortform.video.VideoSurfaceHandle
+import com.shortform.video.computePreloadWindow
 import com.shortform.video.ui.IosVideoSurfaceHandle
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
@@ -201,10 +202,7 @@ private class IosPlaybackCoordinator(
     }
 
     private fun scheduleDiskPrefetch(centerIndex: Int) {
-        if (feed.isEmpty()) return
-        val desired = (centerIndex + 1..centerIndex + policy.diskPrefetchNext)
-            .filter { it in feed.indices }
-            .toSet()
+        val desired = computePreloadWindow(centerIndex, feed.size, policy).disk
         val toCancel = scheduledPrefetchTargets - desired
         val toStart = desired - scheduledPrefetchTargets
 

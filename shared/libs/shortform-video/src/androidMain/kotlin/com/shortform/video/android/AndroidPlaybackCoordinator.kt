@@ -23,6 +23,8 @@ import com.shortform.video.MediaDescriptor
 import com.shortform.video.PlaybackCoordinator
 import com.shortform.video.PreloadPolicy
 import com.shortform.video.VideoSurfaceHandle
+import com.shortform.video.cacheKey
+import com.shortform.video.computePreloadWindow
 import com.shortform.video.ui.AndroidVideoSurfaceHandle
 import java.io.File
 import kotlin.math.abs
@@ -262,19 +264,21 @@ private class AndroidPlaybackCoordinator(
     }
 
     private fun updateScheduledPreloads(centerIndex: Int) {
-        val targets = buildPreloadWindow(centerIndex)
+        val window = computePreloadWindow(centerIndex, feed.size, policy)
+        val targets = window.all
         val added = targets - scheduledPreloadTargets
         val removed = scheduledPreloadTargets - targets
 
         for (index in added) {
             val item = feed.getOrNull(index) ?: continue
+            val mode = if (index in window.prepared) "prepared" else "disk"
             analytics.event(
                 "preload_scheduled",
                 mapOf(
                     "id" to item.id,
                     "index" to index,
                     "distance" to (index - centerIndex),
-                    "mode" to preloadMode(centerIndex, index),
+                    "mode" to mode,
                 ),
             )
         }
@@ -288,36 +292,6 @@ private class AndroidPlaybackCoordinator(
         }
 
         scheduledPreloadTargets = targets
-    }
-
-    private fun buildPreloadWindow(centerIndex: Int): Set<Int> {
-        if (feed.isEmpty()) return emptySet()
-        val targets = mutableSetOf<Int>()
-        for (offset in 1..policy.preparedPrev) {
-            val index = centerIndex - offset
-            if (index in feed.indices) targets.add(index)
-        }
-        for (offset in 1..policy.preparedNext) {
-            val index = centerIndex + offset
-            if (index in feed.indices) targets.add(index)
-        }
-        for (offset in (policy.preparedNext + 1)..policy.diskPrefetchNext) {
-            val index = centerIndex + offset
-            if (index in feed.indices) targets.add(index)
-        }
-        return targets
-    }
-
-    private fun preloadMode(centerIndex: Int, index: Int): String {
-        val distance = index - centerIndex
-        val absDistance = abs(distance)
-        return if (distance < 0 && absDistance <= policy.preparedPrev) {
-            "prepared"
-        } else if (distance > 0 && absDistance <= policy.preparedNext) {
-            "prepared"
-        } else {
-            "disk"
-        }
     }
 
     private fun schedulePreparedSlot(activeIndex: Int) {
@@ -370,7 +344,7 @@ private class AndroidPlaybackCoordinator(
         val builder = MediaItem.Builder()
             .setUri(descriptor.uri)
             .setMediaId(descriptor.id)
-            .setCustomCacheKey(descriptor.id)
+            .setCustomCacheKey(descriptor.cacheKey())
 
         when (descriptor.containerHint) {
             ContainerHint.MP4 -> builder.setMimeType(MimeTypes.APPLICATION_MP4)
@@ -429,6 +403,14 @@ private class AndroidPlaybackCoordinator(
             }
             val distance = rankingData - center
             val absDistance = abs(distance)
+            if (!policy.usePreparedNextPlayer) {
+                return when {
+                    distance == 0 -> DefaultPreloadManager.PreloadStatus.PRELOAD_STATUS_NOT_PRELOADED
+                    distance > 0 && absDistance <= policy.diskPrefetchNext ->
+                        DefaultPreloadManager.PreloadStatus.specifiedRangeCached(5_000L)
+                    else -> DefaultPreloadManager.PreloadStatus.PRELOAD_STATUS_NOT_PRELOADED
+                }
+            }
             return when {
                 distance == 0 -> DefaultPreloadManager.PreloadStatus.PRELOAD_STATUS_NOT_PRELOADED
                 distance < 0 && absDistance <= policy.preparedPrev ->

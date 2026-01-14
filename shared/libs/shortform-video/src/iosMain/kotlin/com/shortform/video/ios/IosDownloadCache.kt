@@ -1,6 +1,7 @@
 package com.shortform.video.ios
 
 import com.shortform.video.MediaDescriptor
+import com.shortform.video.cacheKey
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.Foundation.NSCachesDirectory
 import platform.Foundation.NSDate
@@ -32,7 +33,7 @@ internal class IosDownloadCache(
     private val activeDownloads = mutableMapOf<String, NSURLSessionDownloadTask>()
 
     fun cachedFileUrl(descriptor: MediaDescriptor): NSURL? {
-        val key = cacheKey(descriptor)
+        val key = descriptor.cacheKey()
         val url = cacheDir.URLByAppendingPathComponent("$key.mp4")
         return if (url?.path != null && fileManager.fileExistsAtPath(url.path ?: "")) {
             touch(url)
@@ -47,7 +48,7 @@ internal class IosDownloadCache(
         onComplete: (bytes: Long, fromCache: Boolean) -> Unit,
         onError: () -> Unit,
     ) {
-        val key = cacheKey(descriptor)
+        val key = descriptor.cacheKey()
         val existing = cachedFileUrl(descriptor)
         if (existing != null) {
             onComplete(fileSize(existing), true)
@@ -102,7 +103,7 @@ internal class IosDownloadCache(
     }
 
     fun cancelPrefetch(descriptor: MediaDescriptor) {
-        val key = cacheKey(descriptor)
+        val key = descriptor.cacheKey()
         activeDownloads.remove(key)?.cancel()
     }
 
@@ -111,14 +112,6 @@ internal class IosDownloadCache(
         for (key in keys) {
             activeDownloads.remove(key)?.cancel()
         }
-    }
-
-    private fun cacheKey(descriptor: MediaDescriptor): String {
-        val headerHash = descriptor.headers.entries
-            .sortedBy { it.key }
-            .joinToString("&") { "${it.key}=${it.value}" }
-            .hashCode()
-        return "${descriptor.uri.hashCode()}-$headerHash"
     }
 
     private fun ensureCacheDir(): NSURL {
