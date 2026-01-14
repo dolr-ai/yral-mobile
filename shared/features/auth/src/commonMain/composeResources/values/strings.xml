@@ -24,4 +24,15 @@
     <string name="resend_otp_in">Resend OTP in %1$ss</string>
     <string name="resend_otp">Resend OTP</string>
     <string name="verify">Verify</string>
+
+    <!-- Validation Error Messages -->
+    <string name="error_invalid_phone_number">Invalid phone number</string>
+    <string name="error_please_select_country">Please select your country</string>
+    <string name="error_please_enter_phone_number">Please enter a phone number</string>
+    <string name="error_invalid_phone_number_format">Invalid phone number</string>
+    <string name="error_failed_to_send_verification_code">Failed to send OTP</string>
+    <string name="error_failed_to_resend_otp">Failed to resend OTP</string>
+    <string name="error_phone_authentication_data_not_found">Phone authentication data not found</string>
+    <string name="error_please_enter_otp_code">Please enter OTP</string>
+    <string name="error_failed_to_verify_otp_code">Failed to verify OTP</string>
 </resources>

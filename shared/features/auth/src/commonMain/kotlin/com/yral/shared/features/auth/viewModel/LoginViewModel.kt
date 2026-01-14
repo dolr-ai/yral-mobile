@@ -30,6 +30,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
+import yral_mobile.shared.features.auth.generated.resources.Res
+import yral_mobile.shared.features.auth.generated.resources.error_failed_to_resend_otp
+import yral_mobile.shared.features.auth.generated.resources.error_failed_to_send_verification_code
+import yral_mobile.shared.features.auth.generated.resources.error_failed_to_verify_otp_code
+import yral_mobile.shared.features.auth.generated.resources.error_invalid_phone_number
+import yral_mobile.shared.features.auth.generated.resources.error_invalid_phone_number_format
+import yral_mobile.shared.features.auth.generated.resources.error_phone_authentication_data_not_found
+import yral_mobile.shared.features.auth.generated.resources.error_please_enter_otp_code
+import yral_mobile.shared.features.auth.generated.resources.error_please_enter_phone_number
+import yral_mobile.shared.features.auth.generated.resources.error_please_select_country
 
 class LoginViewModel(
     appDispatchers: AppDispatchers,
@@ -158,17 +169,21 @@ class LoginViewModel(
     }
 
     private fun validatePhoneNumber() {
-        val currentState = _state.value
-        val country = currentState.selectedCountry ?: return
-        val number = currentState.phoneNumber
-        when {
-            number.isBlank() -> _state.update { it.copy(phoneValidationError = null) }
-            else -> {
-                val isValid = phoneValidator.isValid(number, country.code)
-                if (isValid) {
-                    _state.update { it.copy(phoneValidationError = null) }
-                } else {
-                    _state.update { it.copy(phoneValidationError = "Invalid phone number") }
+        coroutineScope.launch {
+            val currentState = _state.value
+            val country = currentState.selectedCountry ?: return@launch
+            val number = currentState.phoneNumber
+            when {
+                number.isBlank() -> _state.update { it.copy(phoneValidationError = null) }
+                else -> {
+                    val isValid = phoneValidator.isValid(number, country.code)
+                    if (isValid) {
+                        _state.update { it.copy(phoneValidationError = null) }
+                    } else {
+                        _state.update {
+                            it.copy(phoneValidationError = getString(Res.string.error_invalid_phone_number))
+                        }
+                    }
                 }
             }
         }
@@ -179,39 +194,40 @@ class LoginViewModel(
         val currentState = _state.value
         val country = currentState.selectedCountry
         val number = currentState.phoneNumber
-
-        if (country == null) {
-            _state.update { it.copy(phoneValidationError = "Please select a country") }
-            return
-        }
-
-        if (number.isBlank()) {
-            _state.update { it.copy(phoneValidationError = "Please enter a phone number") }
-            return
-        }
-
-        // Validate phone number
-        if (!phoneValidator.isValid(number, country.code)) {
-            _state.update { it.copy(phoneValidationError = "Invalid phone number format") }
-            return
-        }
-
-        // Format to E.164 format
-        val formattedNumber =
-            phoneValidator.format(
-                number,
-                country.code,
-                PhoneNumberFormat.E164,
-            )
-
-        _state.update {
-            it.copy(
-                phoneAuthState = UiState.InProgress(),
-                phoneValidationError = null,
-            )
-        }
-        Logger.d("LoginViewModel") { "Initiating phone auth for: $formattedNumber" }
         coroutineScope.launch {
+            if (country == null) {
+                _state.update { it.copy(phoneValidationError = getString(Res.string.error_please_select_country)) }
+                return@launch
+            }
+
+            if (number.isBlank()) {
+                _state.update { it.copy(phoneValidationError = getString(Res.string.error_please_enter_phone_number)) }
+                return@launch
+            }
+
+            // Validate phone number
+            if (!phoneValidator.isValid(number, country.code)) {
+                _state.update {
+                    it.copy(phoneValidationError = getString(Res.string.error_invalid_phone_number_format))
+                }
+                return@launch
+            }
+
+            // Format to E.164 format
+            val formattedNumber =
+                phoneValidator.format(
+                    number,
+                    country.code,
+                    PhoneNumberFormat.E164,
+                )
+
+            _state.update {
+                it.copy(
+                    phoneAuthState = UiState.InProgress(),
+                    phoneValidationError = null,
+                )
+            }
+            Logger.d("LoginViewModel") { "Initiating phone auth for: $formattedNumber" }
             try {
                 authClient.phoneAuthLogin(formattedNumber)
                 Logger.d("LoginViewModel") { "Phone auth successful for: $formattedNumber" }
@@ -231,7 +247,7 @@ class LoginViewModel(
                 _state.update {
                     it.copy(
                         phoneAuthState = UiState.Failure(e),
-                        phoneValidationError = "Failed to send verification code",
+                        phoneValidationError = getString(Res.string.error_failed_to_send_verification_code),
                     )
                 }
             }
@@ -272,7 +288,7 @@ class LoginViewModel(
             ) {
                 Logger.e("LoginViewModel", e) { "Failed to resend OTP" }
                 crashlyticsManager.recordException(e, ExceptionType.AUTH)
-                _state.update { it.copy(otpValidationError = "Failed to resend OTP") }
+                _state.update { it.copy(otpValidationError = getString(Res.string.error_failed_to_resend_otp)) }
             }
         }
     }
@@ -291,25 +307,26 @@ class LoginViewModel(
         val currentState = _state.value
         val otpCode = currentState.otpCode
         val phoneAuthData = (currentState.phoneAuthState as? UiState.Success)?.data
-
-        if (phoneAuthData == null || otpCode.isBlank()) {
-            _state.update { it.copy(otpValidationError = "Phone authentication data not found") }
-            return
-        }
-
-        if (otpCode.isBlank()) {
-            _state.update { it.copy(otpValidationError = "Please enter OTP code") }
-            return
-        }
-
-        _state.update {
-            it.copy(
-                otpAuthState = UiState.InProgress(),
-                otpValidationError = null,
-            )
-        }
-        Logger.d("LoginViewModel") { "Verifying OTP for: ${phoneAuthData.phoneNumber}" }
         coroutineScope.launch {
+            if (phoneAuthData == null || otpCode.isBlank()) {
+                _state.update {
+                    it.copy(otpValidationError = getString(Res.string.error_phone_authentication_data_not_found))
+                }
+                return@launch
+            }
+
+            if (otpCode.isBlank()) {
+                _state.update { it.copy(otpValidationError = getString(Res.string.error_please_enter_otp_code)) }
+                return@launch
+            }
+
+            _state.update {
+                it.copy(
+                    otpAuthState = UiState.InProgress(),
+                    otpValidationError = null,
+                )
+            }
+            Logger.d("LoginViewModel") { "Verifying OTP for: ${phoneAuthData.phoneNumber}" }
             try {
                 authClient.verifyPhoneAuth(
                     phoneNumber = phoneAuthData.phoneNumber,
@@ -322,7 +339,7 @@ class LoginViewModel(
                 _state.update {
                     it.copy(
                         otpAuthState = UiState.Failure(e),
-                        otpValidationError = "Failed to verify OTP code",
+                        otpValidationError = getString(Res.string.error_failed_to_verify_otp_code),
                     )
                 }
             }
