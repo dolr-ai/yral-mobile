@@ -56,10 +56,10 @@ fun MandatoryLoginScreen(
             loginViewModel.getInitialBalanceReward(),
         )
 
-    Box(modifier = modifier) {
+    Box(modifier = Modifier.fillMaxSize()) {
         Background()
         Box(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+            modifier = modifier.padding(horizontal = 16.dp),
             contentAlignment = Center,
         ) {
             SignupView(
