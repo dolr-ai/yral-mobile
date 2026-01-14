@@ -1,11 +1,18 @@
 package com.yral.shared.features.auth.data
 
 import com.yral.shared.core.AppConfigurations.OAUTH_BASE_URL
+import com.yral.shared.features.auth.YralAuthException
+import com.yral.shared.features.auth.data.models.AuthClientQuery
+import com.yral.shared.features.auth.data.models.PhoneAuthLoginResponseDto
+import com.yral.shared.features.auth.data.models.VerifyRequestDto
 import com.yral.shared.features.auth.data.models.toExchangePrincipalResponse
+import com.yral.shared.features.auth.data.models.toPhoneAuthVerifyResponse
 import com.yral.shared.features.auth.data.models.toTokenResponse
 import com.yral.shared.features.auth.di.AuthEnv
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.models.ExchangePrincipalResponse
+import com.yral.shared.features.auth.domain.models.PhoneAuthLoginResponse
+import com.yral.shared.features.auth.domain.models.PhoneAuthVerifyResponse
 import com.yral.shared.features.auth.domain.models.TokenResponse
 import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.features.auth.utils.SocialProvider
@@ -14,11 +21,13 @@ import io.ktor.http.Parameters
 import io.ktor.http.URLBuilder
 import io.ktor.http.URLProtocol
 import io.ktor.http.Url
+import kotlinx.serialization.json.Json
 
 class AuthRepositoryImpl(
     private val dataSource: AuthDataSource,
     private val oAuthUtilsHelper: OAuthUtilsHelper,
     private val authEnv: AuthEnv,
+    private val json: Json,
 ) : AuthRepository {
     private var verifier: String = ""
 
@@ -91,4 +100,45 @@ class AuthRepositoryImpl(
     override suspend fun deregisterForNotifications(token: String) {
         dataSource.deregisterForNotifications(token)
     }
+
+    override suspend fun phoneAuthLogin(
+        phoneNumber: String,
+        identity: ByteArray,
+    ): PhoneAuthLoginResponse {
+        verifier = oAuthUtilsHelper.generateCodeVerifier()
+        val codeChallenge = oAuthUtilsHelper.generateCodeChallenge(verifier)
+        val loginHint = yralAuthLoginHint(identity)
+        val authClientQuery =
+            AuthClientQuery(
+                responseType = "code",
+                clientId = authEnv.clientId,
+                redirectUri = authEnv.redirectUri.uriString,
+                state = codeChallenge,
+                codeChallenge = codeChallenge,
+                codeChallengeMethod = "S256",
+                loginHint = json.parseToJsonElement(loginHint),
+            )
+        return when (val response = dataSource.phoneAuthLogin(phoneNumber, authClientQuery)) {
+            is PhoneAuthLoginResponseDto.Success ->
+                PhoneAuthLoginResponse(codeChallenge = codeChallenge)
+            is PhoneAuthLoginResponseDto.Error -> {
+                throw YralAuthException("${response.error} - ${response.errorDescription}")
+            }
+        }
+    }
+
+    override suspend fun verifyPhoneAuth(
+        phoneNumber: String,
+        code: String,
+        clientState: String,
+    ): PhoneAuthVerifyResponse =
+        dataSource
+            .verifyPhoneAuth(
+                verifyRequest =
+                    VerifyRequestDto(
+                        phoneNumber = phoneNumber,
+                        code = code,
+                        clientState = clientState,
+                    ),
+            ).toPhoneAuthVerifyResponse()
 }

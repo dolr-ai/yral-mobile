@@ -12,6 +12,7 @@ import com.arkivanov.decompose.value.Value
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.account.nav.AccountComponent
+import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
@@ -25,6 +26,7 @@ import org.koin.core.component.KoinComponent
 
 internal class DefaultProfileComponent(
     componentContext: ComponentContext,
+    private val requestLoginFactory: RequestLoginFactory,
     private val snapshot: Snapshot?,
     private val onUploadVideoClicked: () -> Unit,
     private val openEditProfile: () -> Unit,
@@ -124,6 +126,7 @@ internal class DefaultProfileComponent(
     private fun profileMainComponent(componentContext: ComponentContext): ProfileMainComponent =
         ProfileMainComponent.Companion(
             componentContext = componentContext,
+            requestLoginFactory = requestLoginFactory,
             pendingVideoNavigation = pendingVideoNavigation,
             onUploadVideoClicked = onUploadVideoClicked,
             openAccount = this::openAccount,
@@ -131,7 +134,6 @@ internal class DefaultProfileComponent(
             openProfile = openProfile,
             onBackClicked = {},
             showAlertsOnDialog = showAlertsOnDialog,
-            promptLogin = promptLogin,
         )
 
     private fun accountComponent(componentContext: ComponentContext): AccountComponent =

@@ -1683,6 +1683,9 @@ enum class AuthJourney {
 
     @SerialName("apple")
     APPLE,
+
+    @SerialName("phone")
+    PHONE,
 }
 
 @Serializable

@@ -18,6 +18,8 @@ import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.libs.designsystem.component.AndroidScreenFoldStateProvider
 import com.yral.shared.libs.designsystem.windowInfo.ScreenFoldStateProvider
+import com.yral.shared.libs.phonevalidation.DeviceLocaleDetector
+import com.yral.shared.libs.phonevalidation.PhoneValidator
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
@@ -90,6 +92,8 @@ actual val platformModule =
         single<AdvertisingIdProvider> {
             AndroidAdvertisingIdProvider(applicationContext = androidContext().applicationContext)
         }
+        singleOf(::DeviceLocaleDetector)
+        singleOf(::PhoneValidator)
     }
 
 private fun Scope.getSentryRelease(): String {

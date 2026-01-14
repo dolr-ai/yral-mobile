@@ -6,8 +6,7 @@ import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.value.Value
-import com.yral.shared.analytics.events.SignupPageName
-import com.yral.shared.features.auth.ui.LoginBottomSheetType
+import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.chat.nav.wall.ChatWallComponent
 import com.yral.shared.rust.service.utils.CanisterData
@@ -16,16 +15,10 @@ import org.koin.core.component.KoinComponent
 
 internal class DefaultChatComponent(
     componentContext: ComponentContext,
+    override val requestLoginFactory: RequestLoginFactory,
     private val snapshot: Snapshot?,
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
     private val openConversation: (influencerId: String, influencerCategory: String) -> Unit,
-    private val showLoginBottomSheet: (
-        pageName: SignupPageName,
-        loginBottomSheetType: LoginBottomSheetType,
-        onDismissRequest: () -> Unit,
-        onLoginSuccess: () -> Unit,
-    ) -> Unit,
-    private val hideLoginBottomSheetIfVisible: () -> Unit,
 ) : ChatComponent(),
     ComponentContext by componentContext,
     KoinComponent {
@@ -105,12 +98,11 @@ internal class DefaultChatComponent(
     ): ConversationComponent =
         ConversationComponent.Companion(
             componentContext = componentContext,
+            requestLoginFactory = requestLoginFactory,
             influencerId = config.influencerId,
             influencerCategory = config.influencerCategory,
             onBack = { navigation.pop() },
             openProfile = openProfile,
-            showLoginBottomSheet = showLoginBottomSheet,
-            hideLoginBottomSheetIfVisible = hideLoginBottomSheetIfVisible,
         )
 
     @Serializable

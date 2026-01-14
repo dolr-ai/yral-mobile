@@ -1,4 +1,4 @@
-package com.yral.shared.features.feed.ui.components
+package com.yral.shared.features.auth.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -6,9 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -17,27 +15,27 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.yral.shared.analytics.events.SignupPageName
-import com.yral.shared.features.auth.ui.SignupView
-import com.yral.shared.features.auth.utils.SocialProvider
+import com.yral.shared.features.auth.ui.components.SignupView
 import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
-import com.yral.shared.libs.designsystem.component.lottie.LottieRes
-import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
-import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
-import org.jetbrains.compose.resources.stringResource
-import yral_mobile.shared.features.feed.generated.resources.Res
-import yral_mobile.shared.features.feed.generated.resources.scroll_to_next_video
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SignupNudge(
+fun LoginOverlay(
+    pageName: SignupPageName,
     tncLink: String,
-    onSignupClicked: (SocialProvider) -> Unit,
+    headlineText: AnnotatedString? = null,
+    disclaimerText: String? = null,
+    mode: LoginMode = LoginMode.BOTH,
+    onNavigateToCountrySelector: () -> Unit,
+    onNavigateToOtpVerification: () -> Unit,
+    bottomContent: @Composable () -> Unit = {},
 ) {
-    val sheetState = rememberModalBottomSheetState()
-    var link by remember { mutableStateOf("") }
+    val termsSheetState = rememberModalBottomSheetState()
+    var termsLinkState by remember { mutableStateOf("") }
     Column(
         modifier =
             Modifier
@@ -53,10 +51,13 @@ fun SignupNudge(
             verticalArrangement = Arrangement.Top,
         ) {
             SignupView(
-                pageName = SignupPageName.HOME,
-                termsLink = tncLink,
-                openTerms = { link = tncLink },
-                onSignupClicked = onSignupClicked,
+                pageName = pageName,
+                headlineText = headlineText,
+                disclaimerText = disclaimerText,
+                openTerms = { termsLinkState = tncLink },
+                mode = mode,
+                onNavigateToCountrySelector = onNavigateToCountrySelector,
+                onNavigateToOtpVerification = onNavigateToOtpVerification,
             )
         }
         Column(
@@ -64,22 +65,14 @@ fun SignupNudge(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Bottom,
         ) {
-            Text(
-                text = stringResource(Res.string.scroll_to_next_video),
-                style = LocalAppTopography.current.mdBold,
-                color = YralColors.NeutralIconsActive,
-            )
-            YralLottieAnimation(
-                modifier = Modifier.size(36.dp),
-                LottieRes.SIGNUP_SCROLL,
-            )
+            bottomContent()
         }
     }
-    if (link.isNotEmpty()) {
+    if (termsLinkState.isNotEmpty()) {
         YralWebViewBottomSheet(
-            link = link,
-            bottomSheetState = sheetState,
-            onDismissRequest = { link = "" },
+            link = termsLinkState,
+            bottomSheetState = termsSheetState,
+            onDismissRequest = { termsLinkState = "" },
         )
     }
 }

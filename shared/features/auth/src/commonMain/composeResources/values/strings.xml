@@ -5,6 +5,7 @@
     <string name="signup_with_apple">Sign up with Apple</string>
     <string name="signup_consent">By signing up, you agree to our Terms of Service</string>
     <string name="terms_of_service_signup_consent">Terms of Service</string>
+    <string name="or_label">or</string>
 
     <string name="login_to_get_25_tokens">Login to get %1$d Yral tokens</string>
     <string name="upload_ai_videos_earn_bitcoin">Upload AI Videos. Earn Bitcoin.</string>
@@ -15,4 +16,26 @@
     <string name="join_tournament">Join the Tournament</string>
     <string name="join_tournament_disclaimer">You need to login to register and jump into the tournament for a chance to win Bitcoin!</string>
     <string name="login_to_chat_with_influencer">Login to continue chatting with %1$s</string>
+
+    <string name="country">Country</string>
+    <string name="search_by_country_name">Search by country name...</string>
+    <string name="enter_mobile_number">Enter Mobile Number</string>
+    <string name="otp_verification">OTP Verification</string>
+    <string name="otp_sent_to">OTP sent to %1$s</string>
+    <string name="resend_otp_in">Resend in %1$s</string>
+    <string name="resend_otp">Resend</string>
+    <string name="didnt_receive_otp">Didn\'t receive the OTP?</string>
+    <string name="invalid_otp">Invalid OTP!</string>
+    <string name="verify">Verify</string>
+
+    <!-- Validation Error Messages -->
+    <string name="error_invalid_phone_number">Invalid phone number</string>
+    <string name="error_please_select_country">Please select your country</string>
+    <string name="error_please_enter_phone_number">Please enter a phone number</string>
+    <string name="error_invalid_phone_number_format">Invalid phone number</string>
+    <string name="error_failed_to_send_verification_code">Failed to send OTP</string>
+    <string name="error_failed_to_resend_otp">Failed to resend OTP</string>
+    <string name="error_phone_authentication_data_not_found">Phone authentication data not found</string>
+    <string name="error_please_enter_otp_code">Please enter OTP</string>
+    <string name="error_failed_to_verify_otp_code">Failed to verify OTP</string>
 </resources>

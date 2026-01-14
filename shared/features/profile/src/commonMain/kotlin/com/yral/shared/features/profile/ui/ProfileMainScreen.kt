@@ -67,6 +67,10 @@ import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.domain.models.FeedDetails
+import com.yral.shared.features.auth.ui.LoginBottomSheetType
+import com.yral.shared.features.auth.ui.LoginMode
+import com.yral.shared.features.auth.ui.LoginScreenType
+import com.yral.shared.features.auth.ui.rememberLoginInfo
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.profile.ui.followers.FollowersBottomSheet
 import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
@@ -180,6 +184,8 @@ fun ProfileMainScreen(
 
     val followers = viewModel.followers.collectAsLazyPagingItems()
     val following = viewModel.following.collectAsLazyPagingItems()
+
+    val loginState = rememberLoginInfo(requestLoginFactory = component.requestLoginFactory)
 
     // Track pending downloads for permission handling
     var pendingDownload by remember { mutableStateOf<FeedDetails?>(null) }
@@ -382,7 +388,15 @@ fun ProfileMainScreen(
                     },
                     onBackClicked = { component.onBackClicked() },
                     onFollowersSectionClick = { viewModel.updateFollowSheetTab(tab = it) },
-                    promptLogin = { component.promptLogin(SignupPageName.PROFILE) },
+                    promptLogin = {
+                        loginState.requestLogin(
+                            SignupPageName.PROFILE,
+                            LoginScreenType.BottomSheet(LoginBottomSheetType.DEFAULT),
+                            LoginMode.BOTH,
+                            null,
+                            null,
+                        ) {}
+                    },
                     canShareProfile = state.canShareProfile,
                     onShareProfileClicked = { viewModel.shareProfile() },
                     showHeaderShareButton = !state.isOwnProfile,

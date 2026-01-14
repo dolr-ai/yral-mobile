@@ -36,6 +36,7 @@ kotlin {
             implementation(projects.shared.libs.routing.deeplinkEngine)
             implementation(projects.shared.features.feed)
             implementation(projects.shared.features.game)
+            implementation(projects.shared.features.auth)
             implementation(projects.shared.rust.service)
         }
         commonTest.dependencies {

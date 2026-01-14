@@ -58,7 +58,6 @@ val feedModule =
                 requiredUseCases = get(),
                 crashlyticsManager = get(),
                 feedTelemetry = get(),
-                authClientFactory = get(),
                 shareService = get(),
                 urlBuilder = get(),
                 linkGenerator = get(),
