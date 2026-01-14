@@ -121,7 +121,10 @@ fun TournamentScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    items(uiState.tournaments) { tournament ->
+                    items(
+                        items = uiState.tournaments,
+                        key = { it.id },
+                    ) { tournament ->
                         TournamentCard(
                             tournament = tournament,
                             onPrizeBreakdownClick = { viewModel.openPrizeBreakdown(tournament) },

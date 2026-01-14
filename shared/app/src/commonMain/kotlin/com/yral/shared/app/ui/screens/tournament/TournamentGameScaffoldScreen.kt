@@ -52,7 +52,15 @@ fun TournamentGameScaffoldScreen(
     val tournamentFeedViewModel =
         koinViewModel<FeedViewModel>(
             key = "tournament-feed-${gameConfig.tournamentId}-$sessionKey",
-            parameters = { parametersOf(FeedContext.Tournament(gameConfig.tournamentId, sessionKey)) },
+            parameters = {
+                parametersOf(
+                    FeedContext.Tournament(
+                        tournamentId = gameConfig.tournamentId,
+                        sessionKey = sessionKey,
+                        isHotOrNot = gameConfig.isHotOrNot,
+                    ),
+                )
+            },
         )
     val gameState by tournamentGameViewModel.state.collectAsStateWithLifecycle()
     val feedState by tournamentFeedViewModel.state.collectAsStateWithLifecycle()
