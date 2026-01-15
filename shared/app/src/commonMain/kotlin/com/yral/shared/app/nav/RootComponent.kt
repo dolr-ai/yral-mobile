@@ -22,6 +22,7 @@ import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.rust.service.utils.CanisterData
 
+@Suppress("TooManyFunctions")
 interface RootComponent {
     val stack: Value<ChildStack<*, Child>>
     val slot: Value<ChildSlot<*, SlotChild>>
