@@ -99,6 +99,7 @@ class RootViewModel(
                         emailId = properties.emailId,
                         utmParams = utmAttributionStore.get()?.toAnalyticsUtmParams(),
                         isMandatoryLogin = properties.isMandatoryLogin,
+                        phoneNumber = properties.phoneNumber,
                     )
                 }
             }

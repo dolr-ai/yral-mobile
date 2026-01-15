@@ -6,12 +6,14 @@ import co.touchlab.kermit.Logger
 import com.yral.featureflag.AppFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
+import com.yral.shared.analytics.events.OtpRequestType
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.YralAuthException
+import com.yral.shared.features.auth.analytics.AuthTelemetry
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.phonevalidation.DeviceLocaleDetector
@@ -46,6 +48,7 @@ class LoginViewModel(
     private val deviceLocaleDetector: DeviceLocaleDetector,
     private val countryRepository: CountryRepository,
     private val sessionManager: SessionManager,
+    private val authTelemetry: AuthTelemetry,
 ) : ViewModel() {
     private val _state = MutableStateFlow(LoginState())
     val state: StateFlow<LoginState> = _state.asStateFlow()
@@ -142,6 +145,7 @@ class LoginViewModel(
                 phoneValidationError = null,
                 otpCode = "",
                 otpValidationError = null,
+                otpRequestAttempt = 0,
                 resendTimerSeconds = null,
             )
         }
@@ -190,7 +194,7 @@ class LoginViewModel(
         }
     }
 
-    @Suppress("ReturnCount")
+    @Suppress("ReturnCount", "LongMethod")
     fun onPhoneLoginClicked() {
         val currentState = _state.value
         val country = currentState.selectedCountry
@@ -214,6 +218,8 @@ class LoginViewModel(
                 return@launch
             }
 
+            val attemptNumber = currentState.otpRequestAttempt + 1
+
             // Format to E.164 format
             val formattedNumber =
                 phoneValidator.format(
@@ -226,8 +232,14 @@ class LoginViewModel(
                 it.copy(
                     phoneAuthState = UiState.InProgress(),
                     phoneValidationError = null,
+                    otpRequestAttempt = attemptNumber,
                 )
             }
+
+            authTelemetry.otpRequestInitiated(
+                attemptNumber = attemptNumber,
+                requestType = OtpRequestType.INITIAL,
+            )
             Logger.d("LoginViewModel") { "Initiating phone auth for: $formattedNumber" }
             try {
                 authClient.phoneAuthLogin(formattedNumber)
@@ -282,12 +294,19 @@ class LoginViewModel(
         if (phoneAuthData == null || currentState.resendTimerSeconds != null) {
             return
         }
+
         _state.update { it.copy(otpValidationError = null) }
         Logger.d("LoginViewModel") { "Resending OTP for: ${phoneAuthData.phoneNumber}" }
         viewModelScope.launch {
             try {
                 authClient.phoneAuthLogin(phoneAuthData.phoneNumber)
                 Logger.d("LoginViewModel") { "OTP resent successfully" }
+                val attemptNumber = currentState.otpRequestAttempt + 1
+                _state.update { it.copy(otpRequestAttempt = attemptNumber) }
+                authTelemetry.otpRequestInitiated(
+                    attemptNumber = attemptNumber,
+                    requestType = OtpRequestType.RESEND,
+                )
                 startResendTimer()
             } catch (
                 @Suppress("TooGenericExceptionCaught")
@@ -406,6 +425,7 @@ data class LoginState(
     val phoneValidationError: String? = null,
     val otpCode: String = "",
     val otpValidationError: OtpValidationError? = null,
+    val otpRequestAttempt: Int = 0,
     val resendTimerSeconds: Int? = null,
 ) {
     fun isLoginComplete() = socialAuthState is UiState.Success || otpAuthState is UiState.Success

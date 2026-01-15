@@ -256,6 +256,118 @@ data class IdentityTransitionEventData(
 ) : BaseEventData(),
     EventData
 
+@Serializable
+data class SignupNudgeDismissedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.SIGNUP_NUDGE_DISMISSED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AUTH.getFeatureName(),
+    @SerialName("dismiss_action") val dismissAction: SignupNudgeDismissAction,
+) : BaseEventData(),
+    EventData {
+    constructor(dismissAction: SignupNudgeDismissAction) : this(
+        FeatureEvents.SIGNUP_NUDGE_DISMISSED.getEventName(),
+        Features.AUTH.getFeatureName(),
+        dismissAction,
+    )
+}
+
+@Serializable
+enum class SignupNudgeDismissAction {
+    @SerialName("close")
+    CLOSE,
+
+    @SerialName("skip")
+    SKIP,
+}
+
+@Serializable
+data class PhoneNumberEnteredEventData(
+    @SerialName("event") override val event: String = FeatureEvents.PHONE_NUMBER_ENTERED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AUTH.getFeatureName(),
+    @SerialName("country_code") val countryCode: String,
+    @SerialName("phone_length") val phoneLength: Int,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        countryCode: String,
+        phoneLength: Int,
+    ) : this(
+        FeatureEvents.PHONE_NUMBER_ENTERED.getEventName(),
+        Features.AUTH.getFeatureName(),
+        countryCode,
+        phoneLength,
+    )
+}
+
+@Serializable
+data class OtpRequestInitiatedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.OTP_REQUEST_INITIATED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AUTH.getFeatureName(),
+    @SerialName("attempt_number") val attemptNumber: Int,
+    @SerialName("request_type") val requestType: OtpRequestType,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        attemptNumber: Int,
+        requestType: OtpRequestType,
+    ) : this(
+        FeatureEvents.OTP_REQUEST_INITIATED.getEventName(),
+        Features.AUTH.getFeatureName(),
+        attemptNumber,
+        requestType,
+    )
+}
+
+@Serializable
+enum class OtpRequestType {
+    @SerialName("initial")
+    INITIAL,
+
+    @SerialName("resend")
+    RESEND,
+}
+
+@Serializable
+data class OtpScreenViewedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.OTP_SCREEN_VIEWED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AUTH.getFeatureName(),
+    @SerialName("phone_number") val phoneNumber: String,
+) : BaseEventData(),
+    EventData {
+    constructor(phoneNumber: String) : this(
+        FeatureEvents.OTP_SCREEN_VIEWED.getEventName(),
+        Features.AUTH.getFeatureName(),
+        phoneNumber,
+    )
+}
+
+@Serializable
+data class OtpValidationResultEventData(
+    @SerialName("event") override val event: String = FeatureEvents.OTP_VALIDATION_RESULT.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AUTH.getFeatureName(),
+    @SerialName("validation_status") val validationStatus: OtpValidationStatus,
+    @SerialName("failure_reason") val failureReason: String? = null,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        validationStatus: OtpValidationStatus,
+        failureReason: String? = null,
+    ) : this(
+        FeatureEvents.OTP_VALIDATION_RESULT.getEventName(),
+        Features.AUTH.getFeatureName(),
+        validationStatus,
+        failureReason,
+    )
+}
+
+@Serializable
+enum class OtpValidationStatus {
+    @SerialName("success")
+    SUCCESS,
+
+    @SerialName("failure")
+    FAILURE,
+}
+
 // --- Home ---
 @Serializable
 data class HomePageViewedEventData(
@@ -1376,6 +1488,13 @@ data class VideoDurationWatchedEventData(
     @SerialName("percentage_watched") val percentageWatched: Double = 0.0,
     @SerialName("video_duration") val videoDuration: Double = 0.0,
 ) : EventData
+
+@Serializable
+data class OtpDismissedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.OTP_DISMISSED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AUTH.getFeatureName(),
+) : BaseEventData(),
+    EventData
 
 // --- Share ---
 @Serializable

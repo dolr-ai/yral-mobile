@@ -92,6 +92,7 @@ fun SignupView(
     mode: LoginMode = LoginMode.BOTH,
     onNavigateToCountrySelector: () -> Unit,
     onNavigateToOtpVerification: () -> Unit,
+    onSocialProviderSelected: (SocialProvider) -> Unit = {},
     authTelemetry: AuthTelemetry = koinInject(),
     loginViewModel: LoginViewModel = koinInject(),
 ) {
@@ -180,6 +181,7 @@ fun SignupView(
                             context?.let {
                                 authTelemetry.onSignupJourneySelected(provider)
                                 loginViewModel.signInWithSocial(context, provider)
+                                onSocialProviderSelected(provider)
                             }
                         },
                     )
@@ -392,6 +394,7 @@ private fun PhoneSignupSection(
     onNavigateToCountrySelector: () -> Unit,
     onPhoneNumberChange: (String) -> Unit,
     onPhoneLoginClick: () -> Unit,
+    authTelemetry: AuthTelemetry = koinInject(),
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -415,19 +418,29 @@ private fun PhoneSignupSection(
                 modifier = Modifier.weight(1f),
             )
         }
+        val buttonState =
+            phoneLoginButtonState(
+                phoneNumber = phoneNumber,
+                selectedCountry = selectedCountry,
+                phoneAuthState = phoneAuthState,
+                phoneValidationError = phoneValidationError,
+            )
+
+        LaunchedEffect(phoneNumber) {
+            if (buttonState == YralButtonState.Enabled) {
+                authTelemetry.phoneNumberEntered(
+                    countryCode = selectedCountry?.code ?: "",
+                    phoneLength = phoneNumber.length,
+                )
+            }
+        }
 
         // Login button
         YralGradientButton(
             modifier = Modifier.fillMaxWidth(),
             text = stringResource(DesignRes.string.login),
             onClick = onPhoneLoginClick,
-            buttonState =
-                phoneLoginButtonState(
-                    phoneNumber = phoneNumber,
-                    selectedCountry = selectedCountry,
-                    phoneAuthState = phoneAuthState,
-                    phoneValidationError = phoneValidationError,
-                ),
+            buttonState = buttonState,
         )
 
         // Error message
@@ -469,14 +482,14 @@ private fun SocialProvider.iconRes() =
     when (this) {
         SocialProvider.GOOGLE -> DesignRes.drawable.google
         SocialProvider.APPLE -> DesignRes.drawable.apple
-        SocialProvider.PHONE_NUMBER -> DesignRes.drawable.google
+        SocialProvider.PHONE -> DesignRes.drawable.google
     }
 
 private fun SocialProvider.labelRes() =
     when (this) {
         SocialProvider.GOOGLE -> Res.string.signup_with_google
         SocialProvider.APPLE -> Res.string.signup_with_apple
-        SocialProvider.PHONE_NUMBER -> Res.string.signup_with_google
+        SocialProvider.PHONE -> Res.string.signup_with_google
     }
 
 @Composable
@@ -485,7 +498,7 @@ private fun SocialSignupSection(
     isIconOnly: Boolean,
     onProviderSelected: (SocialProvider) -> Unit,
 ) {
-    val filteredProviders = providers.filter { it != SocialProvider.PHONE_NUMBER }
+    val filteredProviders = providers.filter { it != SocialProvider.PHONE }
     if (isIconOnly && filteredProviders.isNotEmpty()) {
         // Icon-only buttons in a row for BOTH mode
         Row(
