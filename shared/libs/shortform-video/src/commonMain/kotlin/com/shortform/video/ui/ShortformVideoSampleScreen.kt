@@ -12,7 +12,7 @@ fun ShortformVideoSampleScreen(
     deps: CoordinatorDeps = CoordinatorDeps(),
     overlay: @Composable (index: Int, item: MediaDescriptor) -> Unit = { _, _ -> },
 ) {
-    val coordinator = rememberPlaybackCoordinator(deps)
+    val coordinator = rememberPlaybackCoordinatorWithLifecycle(deps)
     ShortformVideoFeed(
         items = items,
         coordinator = coordinator,
