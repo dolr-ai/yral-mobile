@@ -37,6 +37,7 @@ import com.yral.shared.features.tournament.domain.model.PrizeBreakdownRow
 import com.yral.shared.features.tournament.domain.model.Tournament
 import com.yral.shared.features.tournament.domain.model.TournamentParticipationState
 import com.yral.shared.features.tournament.domain.model.TournamentStatus
+import com.yral.shared.features.tournament.domain.model.TournamentType
 import com.yral.shared.libs.designsystem.modifierx.conditional
 import com.yral.shared.libs.designsystem.modifierx.grayScale
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
@@ -53,6 +54,8 @@ import yral_mobile.shared.features.tournament.generated.resources.bitcoin
 import yral_mobile.shared.features.tournament.generated.resources.dela_gothic_one_regular
 import yral_mobile.shared.features.tournament.generated.resources.ended
 import yral_mobile.shared.features.tournament.generated.resources.ends_in
+import yral_mobile.shared.features.tournament.generated.resources.hot_or_not_icon
+import yral_mobile.shared.features.tournament.generated.resources.hot_or_not_icon_disabled
 import yral_mobile.shared.features.tournament.generated.resources.hourly_tournament_emoji
 import yral_mobile.shared.features.tournament.generated.resources.ic_calendar
 import yral_mobile.shared.features.tournament.generated.resources.ic_ranking
@@ -81,8 +84,18 @@ fun TournamentCard(
     val gradientColor =
         when (tournament.status) {
             TournamentStatus.Ended -> Color(0xFF878787)
-            is TournamentStatus.Live -> YralColors.Red400
-            is TournamentStatus.Upcoming -> YralColors.Green400
+            is TournamentStatus.Live,
+            is TournamentStatus.Upcoming,
+            ->
+                when (tournament.type) {
+                    TournamentType.SMILEY ->
+                        if (tournament.status is TournamentStatus.Live) {
+                            YralColors.Red400
+                        } else {
+                            YralColors.Green400
+                        }
+                    TournamentType.HOT_OR_NOT -> Color(0xFFB3A126)
+                }
         }
 
     Box(
@@ -204,13 +217,28 @@ fun TournamentCard(
             modifier =
                 Modifier
                     .align(Alignment.CenterEnd)
-                    .size(100.dp)
+                    .padding(end = 12.dp)
+                    .size(120.dp)
                     .conditional(
-                        condition = tournament.status is TournamentStatus.Ended,
+                        condition =
+                            tournament.status is TournamentStatus.Ended &&
+                                tournament.type == TournamentType.SMILEY,
                         ifTrue = { grayScale() },
                     ),
-            painter = painterResource(TournamentRes.drawable.hourly_tournament_emoji),
+            painter =
+                painterResource(
+                    when (tournament.type) {
+                        TournamentType.SMILEY -> TournamentRes.drawable.hourly_tournament_emoji
+                        TournamentType.HOT_OR_NOT ->
+                            if (tournament.status is TournamentStatus.Ended) {
+                                TournamentRes.drawable.hot_or_not_icon_disabled
+                            } else {
+                                TournamentRes.drawable.hot_or_not_icon
+                            }
+                    },
+                ),
             contentDescription = null,
+            alignment = Alignment.CenterEnd,
         )
     }
 }

@@ -4,6 +4,7 @@ import com.yral.shared.features.tournament.analytics.TournamentTelemetry
 import com.yral.shared.features.tournament.data.ITournamentRemoteDataSource
 import com.yral.shared.features.tournament.data.TournamentRemoteDataSource
 import com.yral.shared.features.tournament.data.TournamentRepository
+import com.yral.shared.features.tournament.domain.CastHotOrNotVoteUseCase
 import com.yral.shared.features.tournament.domain.CastTournamentVoteUseCase
 import com.yral.shared.features.tournament.domain.GetMyTournamentsUseCase
 import com.yral.shared.features.tournament.domain.GetTournamentLeaderboardUseCase
@@ -37,6 +38,7 @@ val tournamentModule =
         factoryOf(::RegisterForTournamentUseCase)
         factoryOf(::GetMyTournamentsUseCase)
         factoryOf(::CastTournamentVoteUseCase)
+        factoryOf(::CastHotOrNotVoteUseCase)
         factoryOf(::GetTournamentLeaderboardUseCase)
 
         // ViewModels

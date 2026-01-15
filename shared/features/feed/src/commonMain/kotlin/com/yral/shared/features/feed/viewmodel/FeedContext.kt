@@ -6,5 +6,6 @@ sealed class FeedContext {
     data class Tournament(
         val tournamentId: String,
         val sessionKey: String? = null,
+        val isHotOrNot: Boolean = false,
     ) : FeedContext()
 }

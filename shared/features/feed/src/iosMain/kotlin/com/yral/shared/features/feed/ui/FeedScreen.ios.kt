@@ -5,9 +5,6 @@ import androidx.compose.runtime.DisposableEffect
 import platform.UIKit.UIApplication
 
 @Composable
-internal actual fun getContext(): Any = Unit // STUB
-
-@Composable
 internal actual fun KeepScreenOnEffect(keepScreenOn: Boolean) {
     DisposableEffect(keepScreenOn) {
         val application = UIApplication.sharedApplication

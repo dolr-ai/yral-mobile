@@ -7,6 +7,7 @@ package com.yral.shared.features.tournament.domain.model
 data class TournamentData(
     val id: String,
     val title: String,
+    val type: TournamentType = TournamentType.SMILEY,
     val date: String,
     val startEpochMs: Long,
     val endEpochMs: Long,

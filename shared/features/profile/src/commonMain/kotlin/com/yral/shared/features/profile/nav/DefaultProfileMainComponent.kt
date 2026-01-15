@@ -1,8 +1,8 @@
 package com.yral.shared.features.profile.nav
 
 import com.arkivanov.decompose.ComponentContext
-import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.data.AlertsRequestType
+import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.flow.Flow
 import org.koin.core.component.KoinComponent
@@ -10,6 +10,7 @@ import org.koin.core.component.KoinComponent
 @Suppress("LongParameterList")
 internal class DefaultProfileMainComponent(
     componentContext: ComponentContext,
+    override val requestLoginFactory: RequestLoginFactory,
     override val pendingVideoNavigation: Flow<String?>,
     override val userCanisterData: CanisterData?,
     private val onUploadVideoClicked: () -> Unit,
@@ -18,7 +19,6 @@ internal class DefaultProfileMainComponent(
     private val openProfile: (CanisterData) -> Unit,
     private val onBackClicked: () -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
-    override val promptLogin: (pageName: SignupPageName) -> Unit,
 ) : ProfileMainComponent,
     ComponentContext by componentContext,
     KoinComponent {

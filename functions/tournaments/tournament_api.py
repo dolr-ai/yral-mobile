@@ -152,25 +152,37 @@ def _compute_status(start_epoch_ms: int, end_epoch_ms: int) -> str:
 
 
 # ─────────────────────  TOURNAMENT HELPERS  ────────────────────────
-def _get_tournament(tournament_id: str) -> tuple[Any, dict]:
-    """Fetch tournament doc. Returns (snapshot, data). Raises if not found."""
+def _get_tournament(tournament_id: str) -> tuple[Any, dict, str]:
+    """Fetch tournament doc from either collection.
+
+    Returns (snapshot, data, collection_name). Raises if not found.
+    Checks 'tournaments' first, then 'hot_or_not_tournaments'.
+    """
+    # Try smiley tournaments first
     ref = db().collection("tournaments").document(tournament_id)
     snap = ref.get()
-    if not snap.exists:
-        return None, {}
-    return snap, snap.to_dict() or {}
+    if snap.exists:
+        return snap, snap.to_dict() or {}, "tournaments"
+
+    # Try hot_or_not_tournaments
+    ref = db().collection("hot_or_not_tournaments").document(tournament_id)
+    snap = ref.get()
+    if snap.exists:
+        return snap, snap.to_dict() or {}, "hot_or_not_tournaments"
+
+    return None, {}, ""
 
 
-def _get_participant_count(tournament_id: str) -> int:
+def _get_participant_count(tournament_id: str, collection_name: str = "tournaments") -> int:
     """Get count of registered users in tournament."""
-    users_ref = db().collection(f"tournaments/{tournament_id}/users")
+    users_ref = db().collection(f"{collection_name}/{tournament_id}/users")
     count_result = users_ref.count().get()
     return int(count_result[0][0].value) if count_result else 0
 
 
-def _get_user_registration(tournament_id: str, principal_id: str) -> Optional[dict]:
+def _get_user_registration(tournament_id: str, principal_id: str, collection_name: str = "tournaments") -> Optional[dict]:
     """Check if user is registered for tournament."""
-    ref = db().document(f"tournaments/{tournament_id}/users/{principal_id}")
+    ref = db().document(f"{collection_name}/{tournament_id}/users/{principal_id}")
     snap = ref.get()
     return snap.to_dict() if snap.exists else None
 
@@ -185,7 +197,7 @@ def _vote_doc_id(principal_id: str, video_id: str) -> str:
 INITIAL_DIAMONDS = 20
 
 
-def _compute_tournament_leaderboard(tournament_id: str, limit: int = 10) -> List[dict]:
+def _compute_tournament_leaderboard(tournament_id: str, limit: int = 10, collection_name: str = "tournaments") -> List[dict]:
     """Compute top N users by diamond balance with strict ranking.
 
     Only includes users who have played at least 1 game (wins > 0 or losses > 0).
@@ -195,7 +207,7 @@ def _compute_tournament_leaderboard(tournament_id: str, limit: int = 10) -> List
     2. Total games (wins + losses) DESC (tiebreaker: more games = higher rank)
     3. updated_at ASC (second tiebreaker: earlier = higher rank)
     """
-    users_ref = db().collection(f"tournaments/{tournament_id}/users")
+    users_ref = db().collection(f"{collection_name}/{tournament_id}/users")
     # Fetch extra users to account for filtering out those who never played
     # Need high multiplier because many non-players have 20 diamonds (initial balance)
     # which ranks higher than players who lost (< 20 diamonds)
@@ -205,12 +217,19 @@ def _compute_tournament_leaderboard(tournament_id: str, limit: int = 10) -> List
                  .stream()
     )
 
+    # Hot or Not uses "wins"/"losses", smiley uses "tournament_wins"/"tournament_losses"
+    is_hot_or_not = collection_name == "hot_or_not_tournaments"
+
     # Collect all qualifying users first
     candidates = []
     for snap in snaps:
         data = snap.to_dict() or {}
-        wins = int(data.get("tournament_wins") or 0)
-        losses = int(data.get("tournament_losses") or 0)
+        if is_hot_or_not:
+            wins = int(data.get("wins") or 0)
+            losses = int(data.get("losses") or 0)
+        else:
+            wins = int(data.get("tournament_wins") or 0)
+            losses = int(data.get("tournament_losses") or 0)
 
         # Skip users who never played
         if wins == 0 and losses == 0:
@@ -268,7 +287,8 @@ def _compute_tournament_leaderboard(tournament_id: str, limit: int = 10) -> List
 def _get_user_tournament_position(
     tournament_id: str,
     principal_id: str,
-    top_rows: List[dict]
+    top_rows: List[dict],
+    collection_name: str = "tournaments"
 ) -> dict:
     """Get user's position in tournament leaderboard.
 
@@ -285,8 +305,11 @@ def _get_user_tournament_position(
         if row["principal_id"] == principal_id:
             return row
 
+    # Hot or Not uses "wins"/"losses", smiley uses "tournament_wins"/"tournament_losses"
+    is_hot_or_not = collection_name == "hot_or_not_tournaments"
+
     # Query user's registration
-    user_ref = db().document(f"tournaments/{tournament_id}/users/{principal_id}")
+    user_ref = db().document(f"{collection_name}/{tournament_id}/users/{principal_id}")
     user_snap = user_ref.get()
 
     # Get username
@@ -296,8 +319,12 @@ def _get_user_tournament_position(
 
     user_data = user_snap.to_dict() or {} if user_snap.exists else {}
     user_diamonds = int(user_data.get("diamonds") or 0)
-    user_wins = int(user_data.get("tournament_wins") or 0)
-    user_losses = int(user_data.get("tournament_losses") or 0)
+    if is_hot_or_not:
+        user_wins = int(user_data.get("wins") or 0)
+        user_losses = int(user_data.get("losses") or 0)
+    else:
+        user_wins = int(user_data.get("tournament_wins") or 0)
+        user_losses = int(user_data.get("tournament_losses") or 0)
     user_total_games = user_wins + user_losses
     user_updated_at = user_data.get("updated_at")
 
@@ -314,7 +341,7 @@ def _get_user_tournament_position(
 
     # Count users who rank higher using tiebreaker logic
     # Fetch users with diamonds >= user_diamonds (need to check tiebreakers for equal diamonds)
-    users_ref = db().collection(f"tournaments/{tournament_id}/users")
+    users_ref = db().collection(f"{collection_name}/{tournament_id}/users")
     snaps = users_ref.where("diamonds", ">=", user_diamonds).limit(1000).stream()
 
     user_updated_ts = user_updated_at.timestamp() if user_updated_at else float('inf')
@@ -325,8 +352,12 @@ def _get_user_tournament_position(
             continue  # Skip self
 
         data = snap.to_dict() or {}
-        w = int(data.get("tournament_wins") or 0)
-        l = int(data.get("tournament_losses") or 0)
+        if is_hot_or_not:
+            w = int(data.get("wins") or 0)
+            l = int(data.get("losses") or 0)
+        else:
+            w = int(data.get("tournament_wins") or 0)
+            l = int(data.get("tournament_losses") or 0)
 
         # Only count users who have played
         if w == 0 and l == 0:
@@ -392,16 +423,18 @@ def _determine_outcome(smiley_id: str, tallies: dict) -> str:
 def tournaments(request: Request):
     """
     List tournaments with optional date/status/tournament_id filters.
+    Returns both smiley and hot_or_not tournaments with a 'type' field.
 
     POST /tournaments
     Request:
-        { "data": { "date": "2025-12-14", "status": "scheduled", "principal_id": "...", "tournament_id": "..." } }
+        { "data": { "date": "2025-12-14", "status": "scheduled", "principal_id": "...", "tournament_id": "...", "type": "..." } }
         All fields optional. Defaults to today's date if not provided.
         If tournament_id is provided, returns only that tournament (ignores date filter).
         If principal_id is provided, includes is_registered and user_stats for each tournament.
+        If type is provided ("smiley" or "hot_or_not"), filters by tournament type.
 
     Response:
-        { "tournaments": [ {..., "is_registered": true, "user_stats": {...}}, ... ] }
+        { "tournaments": [ {..., "type": "smiley", "is_registered": true, "user_stats": {...}}, ... ] }
     """
     try:
         if request.method != "POST":
@@ -414,13 +447,24 @@ def tournaments(request: Request):
         status_filter = str(data.get("status") or "").strip().lower()
         principal_id = str(data.get("principal_id") or "").strip()
         tournament_id = str(data.get("tournament_id") or "").strip()
+        type_filter = str(data.get("type") or "").strip().lower()
+
+        # Validate type filter if provided
+        if type_filter and type_filter not in ("smiley", "hot_or_not"):
+            return error_response(400, "INVALID_TYPE", "type must be 'smiley' or 'hot_or_not'")
 
         # If tournament_id is provided, fetch that specific tournament
         if tournament_id:
+            # Try smiley tournaments first
             snap = db().collection("tournaments").document(tournament_id).get()
+            tournament_type = "smiley"
+            if not snap.exists:
+                # Try hot_or_not_tournaments
+                snap = db().collection("hot_or_not_tournaments").document(tournament_id).get()
+                tournament_type = "hot_or_not"
             if not snap.exists:
                 return jsonify({"tournaments": []}), 200
-            docs = [snap]
+            docs = [(snap, tournament_type)]
         else:
             # Default to today if no date provided
             if not date_filter:
@@ -440,12 +484,22 @@ def tournaments(request: Request):
                     valid = [s.value for s in TournamentStatus]
                     return error_response(400, "INVALID_STATUS", f"status must be one of: {valid}")
 
-            # Query tournaments for the date (status is computed dynamically)
-            query = db().collection("tournaments").where("date", "==", date_filter)
-            docs = query.stream()
+            docs = []
+
+            # Query smiley tournaments (if not filtering for hot_or_not only)
+            if not type_filter or type_filter == "smiley":
+                smiley_query = db().collection("tournaments").where("date", "==", date_filter)
+                for snap in smiley_query.stream():
+                    docs.append((snap, "smiley"))
+
+            # Query hot_or_not tournaments (if not filtering for smiley only)
+            if not type_filter or type_filter == "hot_or_not":
+                hot_or_not_query = db().collection("hot_or_not_tournaments").where("date", "==", date_filter)
+                for snap in hot_or_not_query.stream():
+                    docs.append((snap, "hot_or_not"))
 
         result = []
-        for snap in docs:
+        for snap, tournament_type in docs:
             t_data = snap.to_dict() or {}
 
             # Compute status dynamically based on current time vs epochs
@@ -457,11 +511,16 @@ def tournaments(request: Request):
             if status_filter and computed_status != status_filter:
                 continue
 
-            participant_count = _get_participant_count(snap.id)
+            # Get participant count from denormalized field (fast) or fallback to query
+            collection_name = "tournaments" if tournament_type == "smiley" else "hot_or_not_tournaments"
+            participant_count = t_data.get("participant_count")
+            if participant_count is None:
+                participant_count = _get_participant_count(snap.id, collection_name)
 
             tournament_entry = {
                 "id": snap.id,
-                "title": t_data.get("title", "SMILEY SHOWDOWN"),
+                "title": t_data.get("title", "SMILEY SHOWDOWN" if tournament_type == "smiley" else "Mast ya Bakwaas?"),
+                "type": tournament_type,
                 "date": t_data.get("date"),
                 "start_time": t_data.get("start_time"),
                 "end_time": t_data.get("end_time"),
@@ -478,15 +537,15 @@ def tournaments(request: Request):
 
             # Check if user is registered (if principal_id provided)
             if principal_id:
-                reg_data = _get_user_registration(snap.id, principal_id)
+                reg_data = _get_user_registration(snap.id, principal_id, collection_name)
                 if reg_data:
                     tournament_entry["is_registered"] = True
                     tournament_entry["user_stats"] = {
                         "registered_at": reg_data.get("registered_at"),
                         "coins_paid": reg_data.get("coins_paid"),
                         "diamonds": reg_data.get("diamonds", 0),
-                        "tournament_wins": reg_data.get("tournament_wins", 0),
-                        "tournament_losses": reg_data.get("tournament_losses", 0),
+                        "tournament_wins": reg_data.get("tournament_wins", reg_data.get("wins", 0)),
+                        "tournament_losses": reg_data.get("tournament_losses", reg_data.get("losses", 0)),
                         "status": reg_data.get("status")
                     }
 
@@ -497,7 +556,11 @@ def tournaments(request: Request):
             status = t.get("status", "").lower()
             # Priority: live=0, scheduled=1, ended=2
             status_priority = {"live": 0, "scheduled": 1, "ended": 2}.get(status, 3)
-            return (status_priority, t.get("start_time", ""))
+            # Normalize start_time to string for comparison (handles both datetime and string)
+            st = t.get("start_time", "")
+            if hasattr(st, "isoformat"):
+                st = st.isoformat()
+            return (status_priority, st or "")
 
         result.sort(key=sort_key)
 
@@ -536,7 +599,7 @@ def tournament_status(request: Request):
         if not tournament_id:
             return error_response(400, "MISSING_TOURNAMENT_ID", "tournament_id required")
 
-        snap, t_data = _get_tournament(tournament_id)
+        snap, t_data, collection_name = _get_tournament(tournament_id)
         if not snap:
             return error_response(404, "TOURNAMENT_NOT_FOUND", f"Tournament {tournament_id} not found")
 
@@ -544,7 +607,9 @@ def tournament_status(request: Request):
         start_epoch_ms = t_data.get("start_epoch_ms", 0)
         end_epoch_ms = t_data.get("end_epoch_ms", 0)
         status = _compute_status(start_epoch_ms, end_epoch_ms)
-        participant_count = _get_participant_count(tournament_id)
+        participant_count = t_data.get("participant_count")
+        if participant_count is None:
+            participant_count = _get_participant_count(tournament_id, collection_name)
 
         response = {
             "tournament_id": tournament_id,
@@ -602,14 +667,21 @@ def register_for_tournament(request: Request):
         if not principal_id:
             return error_response(400, "MISSING_PRINCIPAL_ID", "principal_id required")
 
-        # Get tournament and validate
+        # Get tournament and validate - check both collections
         tournament_ref = db().collection("tournaments").document(tournament_id)
-        reg_ref = db().document(f"tournaments/{tournament_id}/users/{principal_id}")
-
-        # Check tournament exists and is open
         t_snap = tournament_ref.get()
+        collection_name = "tournaments"
+
+        # If not found in tournaments, check hot_or_not_tournaments
+        if not t_snap.exists:
+            tournament_ref = db().collection("hot_or_not_tournaments").document(tournament_id)
+            t_snap = tournament_ref.get()
+            collection_name = "hot_or_not_tournaments"
+
         if not t_snap.exists:
             return error_response(404, "TOURNAMENT_NOT_FOUND", f"Tournament {tournament_id} not found")
+
+        reg_ref = db().document(f"{collection_name}/{tournament_id}/users/{principal_id}")
 
         t_data = t_snap.to_dict() or {}
         entry_cost = int(t_data.get("entryCost") or 0)
@@ -640,13 +712,32 @@ def register_for_tournament(request: Request):
 
         # Create registration in Firestore
         initial_diamonds = 20  # Fixed 20 diamonds for all tournaments
-        reg_ref.set({
-            "registered_at": firestore.SERVER_TIMESTAMP,
-            "coins_paid": entry_cost,
-            "diamonds": initial_diamonds,
-            "tournament_wins": 0,
-            "tournament_losses": 0,
-            "status": "registered",
+
+        # Use different field names for Hot or Not tournaments
+        if collection_name == "hot_or_not_tournaments":
+            reg_ref.set({
+                "registered_at": firestore.SERVER_TIMESTAMP,
+                "coins_paid": entry_cost,
+                "diamonds": initial_diamonds,
+                "wins": 0,
+                "losses": 0,
+                "status": "registered",
+                "updated_at": firestore.SERVER_TIMESTAMP
+            })
+        else:
+            reg_ref.set({
+                "registered_at": firestore.SERVER_TIMESTAMP,
+                "coins_paid": entry_cost,
+                "diamonds": initial_diamonds,
+                "tournament_wins": 0,
+                "tournament_losses": 0,
+                "status": "registered",
+                "updated_at": firestore.SERVER_TIMESTAMP
+            })
+
+        # Increment participant count on tournament document (denormalized for fast reads)
+        tournament_ref.update({
+            "participant_count": firestore.Increment(1),
             "updated_at": firestore.SERVER_TIMESTAMP
         })
 
@@ -681,13 +772,14 @@ def register_for_tournament(request: Request):
 def my_tournaments(request: Request):
     """
     List tournaments user has played in (has at least one vote).
+    Returns both smiley and hot_or_not tournaments with a 'type' field.
 
     POST /my_tournaments
     Request:
         { "data": { "principal_id": "..." } }
 
     Response:
-        { "tournaments": [ {...}, ... ] }
+        { "tournaments": [ {..., "type": "smiley"}, {..., "type": "hot_or_not"}, ... ] }
 
     Note: Only returns tournaments where user has actually played (has wins or losses).
     """
@@ -708,63 +800,83 @@ def my_tournaments(request: Request):
         if not principal_id:
             return error_response(400, "MISSING_PRINCIPAL_ID", "principal_id required")
 
-        # Query recent tournaments (last 30 days)
+        # Query recent tournaments (last 7 days only for performance)
         today = datetime.now(IST).date()
-        date_range = [today + timedelta(days=d) for d in range(-30, 1)]
-        date_strings = [d.strftime("%Y-%m-%d") for d in date_range]
+        cutoff_date = (today - timedelta(days=7)).strftime("%Y-%m-%d")
 
         result = []
 
-        for date_str in date_strings:
-            # Get tournaments for this date
-            t_snaps = db().collection("tournaments").where("date", "==", date_str).stream()
+        # Helper function to process tournaments from a collection
+        def process_tournaments(collection_name: str, tournament_type: str, default_title: str):
+            # Single query: get all tournaments from last 7 days
+            t_snaps = list(
+                db().collection(collection_name)
+                .where("date", ">=", cutoff_date)
+                .order_by("date", direction=firestore.Query.DESCENDING)
+                .limit(50)
+                .stream()
+            )
 
+            # Batch check user registrations
             for t_snap in t_snaps:
-                # Check if user is registered
-                reg_ref = db().document(f"tournaments/{t_snap.id}/users/{principal_id}")
+                reg_ref = db().document(f"{collection_name}/{t_snap.id}/users/{principal_id}")
                 reg_snap = reg_ref.get()
 
-                if reg_snap.exists:
-                    reg_data = reg_snap.to_dict() or {}
+                if not reg_snap.exists:
+                    continue
 
-                    # Only include tournaments where user has actually played
-                    tournament_wins = reg_data.get("tournament_wins", 0) or 0
-                    tournament_losses = reg_data.get("tournament_losses", 0) or 0
+                reg_data = reg_snap.to_dict() or {}
 
-                    if tournament_wins > 0 or tournament_losses > 0:
-                        t_data = t_snap.to_dict() or {}
-                        participant_count = _get_participant_count(t_snap.id)
+                # Only include tournaments where user has actually played
+                tournament_wins = reg_data.get("tournament_wins", reg_data.get("wins", 0)) or 0
+                tournament_losses = reg_data.get("tournament_losses", reg_data.get("losses", 0)) or 0
 
-                        # Compute status dynamically
-                        start_epoch_ms = t_data.get("start_epoch_ms", 0)
-                        end_epoch_ms = t_data.get("end_epoch_ms", 0)
-                        computed_status = _compute_status(start_epoch_ms, end_epoch_ms)
+                if tournament_wins == 0 and tournament_losses == 0:
+                    continue
 
-                        result.append({
-                            "id": t_snap.id,
-                            "title": t_data.get("title", "SMILEY SHOWDOWN"),
-                            "date": t_data.get("date"),
-                            "start_time": t_data.get("start_time"),
-                            "end_time": t_data.get("end_time"),
-                            "start_epoch_ms": start_epoch_ms,
-                            "end_epoch_ms": end_epoch_ms,
-                            "entry_cost": t_data.get("entryCost"),
-                            "total_prize_pool": t_data.get("totalPrizePool"),
-                            "status": computed_status,
-                            "prize_map": t_data.get("prizeMap", {}),
-                            "participant_count": participant_count,
-                            "user_stats": {
-                                "registered_at": reg_data.get("registered_at"),
-                                "coins_paid": reg_data.get("coins_paid"),
-                                "diamonds": reg_data.get("diamonds", 0),
-                                "tournament_wins": tournament_wins,
-                                "tournament_losses": tournament_losses,
-                                "status": reg_data.get("status")
-                            }
-                        })
+                t_data = t_snap.to_dict() or {}
+
+                # Compute status dynamically
+                start_epoch_ms = t_data.get("start_epoch_ms", 0)
+                end_epoch_ms = t_data.get("end_epoch_ms", 0)
+                computed_status = _compute_status(start_epoch_ms, end_epoch_ms)
+
+                result.append({
+                    "id": t_snap.id,
+                    "title": t_data.get("title", default_title),
+                    "type": tournament_type,
+                    "date": t_data.get("date"),
+                    "start_time": t_data.get("start_time"),
+                    "end_time": t_data.get("end_time"),
+                    "start_epoch_ms": start_epoch_ms,
+                    "end_epoch_ms": end_epoch_ms,
+                    "entry_cost": t_data.get("entryCost"),
+                    "total_prize_pool": t_data.get("totalPrizePool"),
+                    "status": computed_status,
+                    "prize_map": t_data.get("prizeMap", {}),
+                    "participant_count": t_data.get("participant_count", 0),
+                    "user_stats": {
+                        "registered_at": reg_data.get("registered_at"),
+                        "coins_paid": reg_data.get("coins_paid"),
+                        "diamonds": reg_data.get("diamonds", 0),
+                        "tournament_wins": tournament_wins,
+                        "tournament_losses": tournament_losses,
+                        "status": reg_data.get("status")
+                    }
+                })
+
+        # Process smiley tournaments
+        process_tournaments("tournaments", "smiley", "SMILEY SHOWDOWN")
+
+        # Process hot_or_not tournaments
+        process_tournaments("hot_or_not_tournaments", "hot_or_not", "Mast ya Bakwaas?")
 
         # Sort by date and start_time (newest first)
-        result.sort(key=lambda x: (x.get("date", ""), x.get("start_time", "")), reverse=True)
+        def normalize_start_time(st):
+            if hasattr(st, "isoformat"):
+                return st.isoformat()
+            return st or ""
+        result.sort(key=lambda x: (x.get("date", ""), normalize_start_time(x.get("start_time", ""))), reverse=True)
 
         return jsonify({"tournaments": result}), 200
 
@@ -1036,7 +1148,7 @@ def tournament_leaderboard(request: Request):
             return error_response(400, "MISSING_PRINCIPAL_ID", "principal_id required")
 
         # Get tournament
-        snap, t_data = _get_tournament(tournament_id)
+        snap, t_data, collection_name = _get_tournament(tournament_id)
         if not snap:
             return error_response(404, "TOURNAMENT_NOT_FOUND", f"Tournament {tournament_id} not found")
 
@@ -1052,7 +1164,7 @@ def tournament_leaderboard(request: Request):
                                   f"Leaderboard available after tournament ends (current: {status})")
 
         # Get top rows
-        top_rows = _compute_tournament_leaderboard(tournament_id, limit=10)
+        top_rows = _compute_tournament_leaderboard(tournament_id, limit=10, collection_name=collection_name)
 
         # Add prizes to top rows
         for row in top_rows:
@@ -1060,12 +1172,14 @@ def tournament_leaderboard(request: Request):
             row["prize"] = prize_map.get(position)
 
         # Get user row
-        user_row = _get_user_tournament_position(tournament_id, principal_id, top_rows)
+        user_row = _get_user_tournament_position(tournament_id, principal_id, top_rows, collection_name=collection_name)
         user_position = str(user_row.get("position", 0))
         user_row["prize"] = prize_map.get(user_position) if user_position != "0" else None
 
-        # Get actual participant count from registered users
-        participant_count = _get_participant_count(tournament_id)
+        # Get participant count from denormalized field or fallback to query
+        participant_count = t_data.get("participant_count")
+        if participant_count is None:
+            participant_count = _get_participant_count(tournament_id, collection_name)
 
         return jsonify({
             "tournament_id": tournament_id,

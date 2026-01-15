@@ -10,11 +10,9 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -39,7 +37,6 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -48,7 +45,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.touchlab.kermit.Logger
@@ -103,7 +99,6 @@ import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 fun AiVideoGenScreen(
     component: AiVideoGenComponent,
     modifier: Modifier = Modifier,
-    bottomPadding: Dp,
     viewModel: AiVideoGenViewModel = koinViewModel(),
 ) {
     val viewState by viewModel.state.collectAsStateWithLifecycle()
@@ -138,15 +133,11 @@ fun AiVideoGenScreen(
                     viewModel.cleanup()
                     component.onBack()
                 }
-                val density = LocalDensity.current
-                val imeBottomDp = with(density) { WindowInsets.ime.getBottom(this).toDp() }
-                val keyboardAwareBottomPadding = (imeBottomDp - bottomPadding).coerceAtLeast(0.dp)
                 val focusManager = LocalFocusManager.current
                 Column(
                     modifier =
                         Modifier
                             .verticalScroll(rememberScrollState())
-                            .padding(bottom = keyboardAwareBottomPadding)
                             .clickable { focusManager.clearFocus(true) },
                 ) {
                     PromptScreen(

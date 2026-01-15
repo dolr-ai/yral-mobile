@@ -17,6 +17,8 @@ import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.libs.designsystem.component.IOSScreenFoldStateProvider
 import com.yral.shared.libs.designsystem.windowInfo.ScreenFoldStateProvider
+import com.yral.shared.libs.phonevalidation.DeviceLocaleDetector
+import com.yral.shared.libs.phonevalidation.PhoneValidator
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
@@ -58,4 +60,6 @@ actual val platformModule =
         single<ScreenFoldStateProvider> { IOSScreenFoldStateProvider() }
         single<ImageLoader> { SingletonImageLoader.get(PlatformContext.INSTANCE) }
         single<AdvertisingIdProvider> { IosAdvertisingIdProvider(get()) }
+        singleOf(::DeviceLocaleDetector)
+        singleOf(::PhoneValidator)
     }

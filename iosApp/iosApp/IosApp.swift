@@ -9,7 +9,7 @@ import MixpanelSessionReplay
 import BranchSDK
 
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate, MessagingDelegate {
-  let root: RootComponent = DefaultRootComponent(
+  lazy var root: RootComponent = DefaultRootComponent(
     componentContext: DefaultComponentContext(lifecycle: ApplicationLifecycle())
   )
   func application(
@@ -56,6 +56,8 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 #endif
 
     FirebaseApp.configure()
+    // Initialize root component after Firebase is configured
+    _ = root
     ApplicationDelegate.shared.application(
       application,
       didFinishLaunchingWithOptions: launchOptions

@@ -3,6 +3,7 @@ package com.yral.shared.features.tournament.domain.model
 data class Tournament(
     val id: String,
     val title: String,
+    val type: TournamentType = TournamentType.SMILEY,
     val totalPrizePool: Int,
     val participantsLabel: String,
     val scheduleLabel: String,

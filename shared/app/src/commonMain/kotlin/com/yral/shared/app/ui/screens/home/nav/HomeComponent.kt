@@ -7,12 +7,11 @@ import com.arkivanov.decompose.value.Value
 import com.yral.featureflag.ChatFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.WalletFeatureFlags
-import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.account.nav.AccountComponent
-import com.yral.shared.features.auth.ui.LoginBottomSheetType
+import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.chat.nav.ChatComponent
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
@@ -26,6 +25,7 @@ import com.yral.shared.libs.routing.routes.api.RewardsReceived
 import com.yral.shared.rust.service.utils.CanisterData
 
 abstract class HomeComponent {
+    abstract val requestLoginFactory: RequestLoginFactory
     abstract val stack: Value<ChildStack<*, Child>>
     abstract val showAlertsOnDialog: (type: AlertsRequestType) -> Unit
     abstract val homeViewModel: HomeViewModel
@@ -46,13 +46,6 @@ abstract class HomeComponent {
     )
     abstract fun openWallet()
     abstract fun openLeaderboard()
-    abstract fun showLoginBottomSheet(
-        pageName: SignupPageName,
-        loginBottomSheetType: LoginBottomSheetType,
-        onDismissRequest: () -> Unit,
-        onLoginSuccess: () -> Unit = {},
-    )
-    abstract fun hideLoginBottomSheetIfVisible()
 
     sealed class Child {
         class Feed(
@@ -92,6 +85,7 @@ abstract class HomeComponent {
     companion object {
         operator fun invoke(
             componentContext: ComponentContext,
+            requestLoginFactory: RequestLoginFactory,
             openEditProfile: () -> Unit,
             openProfile: (userCanisterData: CanisterData) -> Unit,
             openConversation: (
@@ -111,18 +105,13 @@ abstract class HomeComponent {
                 startEpochMs: Long,
                 endEpochMs: Long,
                 totalPrizePool: Int,
+                isHotOrNot: Boolean,
             ) -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
-            showLoginBottomSheet: (
-                pageName: SignupPageName,
-                loginBottomSheetType: LoginBottomSheetType,
-                onDismissRequest: () -> Unit,
-                onLoginSuccess: () -> Unit,
-            ) -> Unit,
-            hideLoginBottomSheetIfVisible: () -> Unit,
         ): HomeComponent =
             DefaultHomeComponent(
                 componentContext,
+                requestLoginFactory,
                 openEditProfile,
                 openProfile,
                 openConversation,
@@ -131,8 +120,6 @@ abstract class HomeComponent {
                 openTournamentLeaderboard,
                 openTournamentGame,
                 showAlertsOnDialog,
-                showLoginBottomSheet,
-                hideLoginBottomSheetIfVisible,
             )
     }
 }

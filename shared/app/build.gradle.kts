@@ -46,6 +46,7 @@ kotlin {
             implementation(projects.shared.libs.firebaseAuth)
             implementation(projects.shared.libs.firebasePerf)
             implementation(libs.gitlive.firebase.storage)
+            implementation(projects.shared.libs.phoneValidation)
             implementation(projects.shared.features.auth)
             implementation(projects.shared.features.feed)
             implementation(projects.shared.features.root)

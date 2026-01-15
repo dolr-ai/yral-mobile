@@ -100,9 +100,10 @@ fun TournamentLeaderboardScreen(
     viewModel: TournamentLeaderboardViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
-    var showResultOverlay by remember(showResult) { mutableStateOf(showResult) }
+    val showResultOverlay = state.showResultOverlay
 
-    LaunchedEffect(tournamentId) {
+    LaunchedEffect(tournamentId, showResult) {
+        viewModel.initShowResultOverlay(showResult)
         viewModel.loadLeaderboard(tournamentId)
     }
 
@@ -215,7 +216,7 @@ fun TournamentLeaderboardScreen(
                 val totalPrizePoolAmount =
                     stringResource(Res.string.winner_amount_prefix) + state.prizeMap.maxOf { it.value }.toString()
                 val shouldShowWinner = rank > 0 && (currentUser.prize != null || state.prizeMap.containsKey(rank))
-                val dismissResult = { showResultOverlay = false }
+                val dismissResult = { viewModel.dismissResultOverlay() }
                 val closeResult = { onBack() }
 
                 // Track result screen viewed
