@@ -24,7 +24,7 @@ import com.shortform.video.PlaybackCoordinator
 import com.shortform.video.PreloadPolicy
 import com.shortform.video.VideoSurfaceHandle
 import com.shortform.video.cacheKey
-import com.shortform.video.computePreloadWindow
+import com.shortform.video.PreloadEventScheduler
 import com.shortform.video.ui.AndroidVideoSurfaceHandle
 import java.io.File
 import kotlin.math.abs
@@ -69,7 +69,7 @@ private class AndroidPlaybackCoordinator(
 
     private var activeIndex: Int = -1
     private var predictedIndex: Int = -1
-    private var scheduledPreloadTargets: Set<Int> = emptySet()
+    private val preloadScheduler = PreloadEventScheduler(policy, reporter)
 
     private val playStartMsById = mutableMapOf<String, Long>()
     private var firstFramePendingIndex: Int? = null
@@ -145,6 +145,7 @@ private class AndroidPlaybackCoordinator(
     }
 
     override fun setFeed(items: List<MediaDescriptor>) {
+        preloadScheduler.reset("feed_update") { feed.getOrNull(it)?.id }
         if (mediaItems.isNotEmpty()) {
             preloadManager.removeMediaItems(mediaItems)
         }
@@ -173,7 +174,7 @@ private class AndroidPlaybackCoordinator(
         preloadManager.setCurrentPlayingIndex(index)
         preloadManager.invalidate()
 
-        updateScheduledPreloads(index)
+        preloadScheduler.update(index, feed.size) { feed.getOrNull(it)?.id }
 
         val item = feed[index]
         reporter.feedItemImpression(item.id, index)
@@ -199,7 +200,7 @@ private class AndroidPlaybackCoordinator(
         this.predictedIndex = predictedIndex
         preloadStatusControl.predictedIndex = predictedIndex
         preloadManager.invalidate()
-        updateScheduledPreloads(predictedIndex)
+        preloadScheduler.update(predictedIndex, feed.size) { feed.getOrNull(it)?.id }
     }
 
     override fun bindSurface(index: Int, surface: VideoSurfaceHandle) {
@@ -239,31 +240,14 @@ private class AndroidPlaybackCoordinator(
     }
 
     override fun release() {
+        preloadScheduler.reset("release") { feed.getOrNull(it)?.id }
         playerA.release()
         playerB?.release()
         preloadManager.release()
         cache.release()
     }
 
-    private fun updateScheduledPreloads(centerIndex: Int) {
-        val window = computePreloadWindow(centerIndex, feed.size, policy)
-        val targets = window.all
-        val added = targets - scheduledPreloadTargets
-        val removed = scheduledPreloadTargets - targets
-
-        for (index in added) {
-            val item = feed.getOrNull(index) ?: continue
-            val mode = if (index in window.prepared) "prepared" else "disk"
-            reporter.preloadScheduled(item.id, index, index - centerIndex, mode)
-        }
-
-        for (index in removed) {
-            val item = feed.getOrNull(index) ?: continue
-            reporter.preloadCanceled(item.id, index, "window_shift")
-        }
-
-        scheduledPreloadTargets = targets
-    }
+    
 
     private fun schedulePreparedSlot(activeIndex: Int) {
         val prepared = preparedSlot ?: return
@@ -271,7 +255,6 @@ private class AndroidPlaybackCoordinator(
         if (nextIndex in feed.indices) {
             if (prepared.index != nextIndex) {
                 prepareSlot(prepared, nextIndex, playWhenReady = false)
-                reporter.preloadScheduled(feed[nextIndex].id, nextIndex, 1, "prepared")
             }
         }
     }

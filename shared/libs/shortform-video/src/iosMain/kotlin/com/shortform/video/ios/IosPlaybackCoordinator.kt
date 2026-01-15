@@ -4,7 +4,7 @@ import com.shortform.video.CoordinatorDeps
 import com.shortform.video.MediaDescriptor
 import com.shortform.video.PlaybackCoordinator
 import com.shortform.video.VideoSurfaceHandle
-import com.shortform.video.computePreloadWindow
+import com.shortform.video.PreloadEventScheduler
 import com.shortform.video.ui.IosVideoSurfaceHandle
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
@@ -75,7 +75,7 @@ private class IosPlaybackCoordinator(
     private var preparedPendingIndex: Int? = null
     private var preparedStartMs: Long? = null
     private var preparedPrerollRequested: Boolean = false
-    private var scheduledPrefetchTargets: Set<Int> = emptySet()
+    private val preloadScheduler = PreloadEventScheduler(policy, reporter)
 
     private val cache = IosDownloadCache(policy.cacheMaxBytes)
 
@@ -189,7 +189,6 @@ private class IosPlaybackCoordinator(
                 preparedPendingIndex = nextIndex
                 preparedStartMs = nowMs()
                 preparedPrerollRequested = false
-                reporter.preloadScheduled(feed[nextIndex].id, nextIndex, 1, "prepared")
             }
         }
     }
@@ -202,20 +201,16 @@ private class IosPlaybackCoordinator(
     }
 
     private fun scheduleDiskPrefetch(centerIndex: Int) {
-        val desired = computePreloadWindow(centerIndex, feed.size, policy).disk
-        val toCancel = scheduledPrefetchTargets - desired
-        val toStart = desired - scheduledPrefetchTargets
-
-        for (index in toCancel) {
+        val result = preloadScheduler.update(centerIndex, feed.size) { feed.getOrNull(it)?.id }
+        for (index in result.toCancel) {
             feed.getOrNull(index)?.let { item ->
                 cache.cancelPrefetch(item)
-                reporter.preloadCanceled(item.id, index, "window_shift")
             }
         }
 
-        for (index in toStart) {
+        for (index in result.toStart) {
+            if (index !in result.window.disk) continue
             val item = feed.getOrNull(index) ?: continue
-            reporter.preloadScheduled(item.id, index, index - centerIndex, "disk")
             cache.prefetch(
                 descriptor = item,
                 onComplete = { bytes, fromCache ->
@@ -226,19 +221,10 @@ private class IosPlaybackCoordinator(
                 },
             )
         }
-
-        scheduledPrefetchTargets = desired
     }
 
     private fun cancelPrefetch(reason: String) {
-        val indices = scheduledPrefetchTargets.toList()
-        for (index in indices) {
-            feed.getOrNull(index)?.let { item ->
-                cache.cancelPrefetch(item)
-                reporter.preloadCanceled(item.id, index, reason)
-            }
-        }
-        scheduledPrefetchTargets = emptySet()
+        preloadScheduler.reset(reason) { feed.getOrNull(it)?.id }
         cache.cancelAll()
     }
 
