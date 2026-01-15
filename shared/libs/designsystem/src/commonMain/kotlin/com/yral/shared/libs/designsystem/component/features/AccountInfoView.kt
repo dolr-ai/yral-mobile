@@ -42,6 +42,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.followers
 import yral_mobile.shared.libs.designsystem.generated.resources.following
 import yral_mobile.shared.libs.designsystem.generated.resources.login
 import yral_mobile.shared.libs.designsystem.generated.resources.share_profile
+import yral_mobile.shared.libs.designsystem.generated.resources.talk_to_me
 
 @Suppress("LongMethod", "LongParameterList", "CyclomaticComplexMethod")
 @Composable
@@ -239,13 +240,19 @@ fun AccountInfoView(
                                     .baseSemiBold
                                     .copy(
                                         color = YralColors.Grey50,
+                                        textAlign = TextAlign.Center,
                                     ),
                         )
                     }
                     if (isAiInfluencer) {
                         val talkButtonState =
                             if (isTalkToMeInProgress) YralButtonState.Loading else YralButtonState.Enabled
-                        val talkText = if (isTalkToMeInProgress) "" else "Talk To Me"
+                        val talkText =
+                            if (isTalkToMeInProgress) {
+                                ""
+                            } else {
+                                stringResource(Res.string.talk_to_me)
+                            }
                         YralButton(
                             modifier = Modifier.weight(1f),
                             text = talkText,

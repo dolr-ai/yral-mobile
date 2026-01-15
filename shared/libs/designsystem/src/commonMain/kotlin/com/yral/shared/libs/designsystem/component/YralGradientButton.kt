@@ -83,10 +83,7 @@ fun YralGradientButton(
                 YralMaskedVectorTextV2(
                     text = text,
                     drawableRes = getButtonTextBackground(buttonType, buttonState),
-                    textStyle =
-                        textStyle?.let {
-                            defaultTextStyle.plus(it)
-                        } ?: defaultTextStyle,
+                    textStyle = textStyle ?: defaultTextStyle,
                 )
             }
         }

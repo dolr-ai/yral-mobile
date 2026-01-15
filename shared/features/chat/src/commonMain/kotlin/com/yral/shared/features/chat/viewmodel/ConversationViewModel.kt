@@ -76,8 +76,6 @@ class ConversationViewModel(
     private val sessionManager: SessionManager,
     private val chatTelemetry: ChatTelemetry,
 ) : ViewModel() {
-    private var influencerSource: InfluencerSource = InfluencerSource.CARD
-
     /**
      * Message ordering:
      * - Network paging uses `order=desc` (latest-first)
@@ -252,7 +250,7 @@ class ConversationViewModel(
                 influencerId = resolvedInfluencer?.id.orEmpty(),
                 influencerType = resolvedInfluencer?.category.orEmpty(),
                 chatSessionId = id,
-                source = influencerSource,
+                source = _viewState.value.influencerSource,
             )
         }
     }
@@ -281,7 +279,7 @@ class ConversationViewModel(
         influencerCategory: String,
         influencerSource: InfluencerSource = InfluencerSource.CARD,
     ) {
-        this.influencerSource = influencerSource
+        _viewState.update { it.copy(influencerSource = influencerSource) }
         val currentInfluencerId = _viewState.value.influencer?.id
         val currentConversationId = _viewState.value.conversationId
         // same influencer and conversation exists
@@ -310,7 +308,8 @@ class ConversationViewModel(
     }
 
     private fun resetState() {
-        val isSocialSignedIn = _viewState.value.isSocialSignedIn
+        val currentIsSocialSignedIn = _viewState.value.isSocialSignedIn
+        val currentInfluencerSource = _viewState.value.influencerSource
         _viewState.update {
             ConversationViewState(
                 isCreating = false,
@@ -322,7 +321,8 @@ class ConversationViewModel(
                 shareDisplayName = "",
                 shareMessage = "",
                 shareDescription = "",
-                isSocialSignedIn = isSocialSignedIn,
+                isSocialSignedIn = currentIsSocialSignedIn,
+                influencerSource = currentInfluencerSource,
             )
         }
         _overlay.value = OverlayState()
@@ -636,6 +636,7 @@ data class ConversationViewState(
     val shareMessage: String = "",
     val shareDescription: String = "",
     val isSocialSignedIn: Boolean = false,
+    val influencerSource: InfluencerSource = InfluencerSource.CARD,
 )
 
 sealed class ConversationMessageItem {

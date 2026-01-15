@@ -1,6 +1,7 @@
 package com.yral.shared.features.profile.nav
 
 import com.arkivanov.decompose.ComponentContext
+import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.rust.service.utils.CanisterData
