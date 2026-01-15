@@ -6,8 +6,8 @@ import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.value.Value
-import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.analytics.events.InfluencerSource
+import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.chat.nav.wall.ChatWallComponent
 import com.yral.shared.rust.service.utils.CanisterData

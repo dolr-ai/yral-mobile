@@ -361,13 +361,23 @@ class DefaultRootComponent(
         influencerCategory: String,
         influencerSource: InfluencerSource,
     ) {
-        navigation.pushToFront(
-            Config.Conversation(
-                influencerId = influencerId,
-                influencerCategory = influencerCategory,
-                influencerSource = influencerSource,
-            ),
-        )
+        navigation.navigate { stack ->
+            val existingIndex =
+                stack.indexOfLast { config ->
+                    config is Config.Conversation && config.influencerId == influencerId
+                }
+            if (existingIndex != -1) {
+                // Conversation already in stack (e.g., came from Chat -> Profile -> Talk to Me); just go back to it.
+                stack.take(existingIndex + 1)
+            } else {
+                stack +
+                    Config.Conversation(
+                        influencerId = influencerId,
+                        influencerCategory = influencerCategory,
+                        influencerSource = influencerSource,
+                    )
+            }
+        }
     }
 
     override fun openWallet() {

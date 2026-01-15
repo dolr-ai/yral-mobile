@@ -1,8 +1,8 @@
 package com.yral.shared.features.chat.nav.conversation
 
 import com.arkivanov.decompose.ComponentContext
-import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.analytics.events.InfluencerSource
+import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.rust.service.utils.CanisterData
 import org.koin.core.component.KoinComponent
 
