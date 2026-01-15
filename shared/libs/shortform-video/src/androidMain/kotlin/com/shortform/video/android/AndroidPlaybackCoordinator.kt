@@ -41,7 +41,7 @@ private class AndroidPlaybackCoordinator(
     private val deps: CoordinatorDeps,
 ) : PlaybackCoordinator {
     private val appContext = context.applicationContext
-    private val analytics = deps.analytics
+    private val reporter = deps.reporter
     private val policy = deps.policy
     private val nowMs = deps.nowMs
 
@@ -80,38 +80,29 @@ private class AndroidPlaybackCoordinator(
             if (playbackState == Player.STATE_BUFFERING && activeSlot.player.playWhenReady) {
                 if (!rebuffering) {
                     rebuffering = true
-                    analytics.event(
-                        "rebuffer_start",
-                        mapOf("id" to item.id, "index" to index, "reason" to "buffering"),
-                    )
+                    reporter.rebufferStart(item.id, index, "buffering")
                 }
             }
 
             if (playbackState == Player.STATE_READY && rebuffering) {
                 rebuffering = false
-                analytics.event(
-                    "rebuffer_end",
-                    mapOf("id" to item.id, "index" to index, "reason" to "buffering"),
-                )
+                reporter.rebufferEnd(item.id, index, "buffering")
             }
 
             if (playbackState == Player.STATE_ENDED) {
-                analytics.event("playback_ended", mapOf("id" to item.id, "index" to index))
+                reporter.playbackEnded(item.id, index)
             }
         }
 
         override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
             val index = activeSlot.index ?: return
             val item = feed.getOrNull(index) ?: return
-            analytics.event(
-                "playback_error",
-                mapOf(
-                    "id" to item.id,
-                    "index" to index,
-                    "category" to error.errorCodeName,
-                    "code" to error.errorCode,
-                    "message" to (error.message ?: ""),
-                ),
+            reporter.playbackError(
+                id = item.id,
+                index = index,
+                category = error.errorCodeName,
+                code = error.errorCode,
+                message = error.message,
             )
         }
 
@@ -122,8 +113,8 @@ private class AndroidPlaybackCoordinator(
             firstFramePendingIndex = null
             val start = playStartMsById[item.id] ?: return
             val elapsed = nowMs() - start
-            analytics.event("first_frame_rendered", mapOf("id" to item.id, "index" to index))
-            analytics.timing("time_to_first_frame_ms", elapsed, mapOf("id" to item.id, "index" to index))
+            reporter.firstFrameRendered(item.id, index)
+            reporter.timeToFirstFrame(item.id, index, elapsed)
         }
     }
 
@@ -133,26 +124,14 @@ private class AndroidPlaybackCoordinator(
             val descriptor = feed.getOrNull(index) ?: return
             val cacheKey = mediaItem.localConfiguration?.customCacheKey ?: mediaItem.mediaId
             val cachedBytes = cache.getCachedBytes(cacheKey, 0, C.LENGTH_UNSET.toLong()).coerceAtLeast(0)
-            analytics.event(
-                "preload_completed",
-                mapOf(
-                    "id" to descriptor.id,
-                    "index" to index,
-                    "bytes" to cachedBytes,
-                    "ms" to 0,
-                    "fromCache" to (cachedBytes > 0),
-                ),
-            )
+            reporter.preloadCompleted(descriptor.id, index, cachedBytes, 0, cachedBytes > 0)
         }
 
         override fun onError(exception: PreloadException) {
             val mediaItem = exception.mediaItem
             val index = mediaIndexById[mediaItem.mediaId] ?: return
             val descriptor = feed.getOrNull(index) ?: return
-            analytics.event(
-                "preload_canceled",
-                mapOf("id" to descriptor.id, "index" to index, "reason" to "error"),
-            )
+            reporter.preloadCanceled(descriptor.id, index, "error")
         }
     }
 
@@ -194,8 +173,8 @@ private class AndroidPlaybackCoordinator(
         updateScheduledPreloads(index)
 
         val item = feed[index]
-        analytics.event("feed_item_impression", mapOf("id" to item.id, "index" to index))
-        analytics.event("play_start_request", mapOf("id" to item.id, "index" to index, "reason" to "activeIndex"))
+        reporter.feedItemImpression(item.id, index)
+        reporter.playStartRequest(item.id, index, "activeIndex")
         playStartMsById[item.id] = nowMs()
         firstFramePendingIndex = index
 
@@ -272,23 +251,12 @@ private class AndroidPlaybackCoordinator(
         for (index in added) {
             val item = feed.getOrNull(index) ?: continue
             val mode = if (index in window.prepared) "prepared" else "disk"
-            analytics.event(
-                "preload_scheduled",
-                mapOf(
-                    "id" to item.id,
-                    "index" to index,
-                    "distance" to (index - centerIndex),
-                    "mode" to mode,
-                ),
-            )
+            reporter.preloadScheduled(item.id, index, index - centerIndex, mode)
         }
 
         for (index in removed) {
             val item = feed.getOrNull(index) ?: continue
-            analytics.event(
-                "preload_canceled",
-                mapOf("id" to item.id, "index" to index, "reason" to "window_shift"),
-            )
+            reporter.preloadCanceled(item.id, index, "window_shift")
         }
 
         scheduledPreloadTargets = targets
@@ -300,10 +268,7 @@ private class AndroidPlaybackCoordinator(
         if (nextIndex in feed.indices) {
             if (prepared.index != nextIndex) {
                 prepareSlot(prepared, nextIndex, playWhenReady = false)
-                analytics.event(
-                    "preload_scheduled",
-                    mapOf("id" to feed[nextIndex].id, "index" to nextIndex, "distance" to 1, "mode" to "prepared"),
-                )
+                reporter.preloadScheduled(feed[nextIndex].id, nextIndex, 1, "prepared")
             }
         }
     }

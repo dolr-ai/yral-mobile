@@ -46,7 +46,7 @@ fun createIosPlaybackCoordinator(
 private class IosPlaybackCoordinator(
     private val deps: CoordinatorDeps,
 ) : PlaybackCoordinator {
-    private val analytics = deps.analytics
+    private val reporter = deps.reporter
     private val policy = deps.policy
     private val nowMs = deps.nowMs
 
@@ -101,8 +101,8 @@ private class IosPlaybackCoordinator(
         predictedIndex = index
         val item = feed[index]
 
-        analytics.event("feed_item_impression", mapOf("id" to item.id, "index" to index))
-        analytics.event("play_start_request", mapOf("id" to item.id, "index" to index, "reason" to "activeIndex"))
+        reporter.feedItemImpression(item.id, index)
+        reporter.playStartRequest(item.id, index, "activeIndex")
         playStartMsById[item.id] = nowMs()
         firstFramePendingIndex = index
 
@@ -186,10 +186,7 @@ private class IosPlaybackCoordinator(
                 preparedPendingIndex = nextIndex
                 preparedStartMs = nowMs()
                 preparedPrerollRequested = false
-                analytics.event(
-                    "preload_scheduled",
-                    mapOf("id" to feed[nextIndex].id, "index" to nextIndex, "distance" to 1, "mode" to "prepared"),
-                )
+                reporter.preloadScheduled(feed[nextIndex].id, nextIndex, 1, "prepared")
             }
         }
     }
@@ -209,32 +206,20 @@ private class IosPlaybackCoordinator(
         for (index in toCancel) {
             feed.getOrNull(index)?.let { item ->
                 cache.cancelPrefetch(item)
-                analytics.event(
-                    "preload_canceled",
-                    mapOf("id" to item.id, "index" to index, "reason" to "window_shift"),
-                )
+                reporter.preloadCanceled(item.id, index, "window_shift")
             }
         }
 
         for (index in toStart) {
             val item = feed.getOrNull(index) ?: continue
-            analytics.event(
-                "preload_scheduled",
-                mapOf("id" to item.id, "index" to index, "distance" to (index - centerIndex), "mode" to "disk"),
-            )
+            reporter.preloadScheduled(item.id, index, index - centerIndex, "disk")
             cache.prefetch(
                 descriptor = item,
                 onComplete = { bytes, fromCache ->
-                    analytics.event(
-                        "preload_completed",
-                        mapOf("id" to item.id, "index" to index, "bytes" to bytes, "ms" to 0, "fromCache" to fromCache),
-                    )
+                    reporter.preloadCompleted(item.id, index, bytes, 0, fromCache)
                 },
                 onError = {
-                    analytics.event(
-                        "preload_canceled",
-                        mapOf("id" to item.id, "index" to index, "reason" to "error"),
-                    )
+                    reporter.preloadCanceled(item.id, index, "error")
                 },
             )
         }
@@ -247,10 +232,7 @@ private class IosPlaybackCoordinator(
         for (index in indices) {
             feed.getOrNull(index)?.let { item ->
                 cache.cancelPrefetch(item)
-                analytics.event(
-                    "preload_canceled",
-                    mapOf("id" to item.id, "index" to index, "reason" to reason),
-                )
+                reporter.preloadCanceled(item.id, index, reason)
             }
         }
         scheduledPrefetchTargets = emptySet()
@@ -290,9 +272,9 @@ private class IosPlaybackCoordinator(
         }
         val asset = AVURLAsset(uRL = url, options = options)
         if (cachedUrl != null) {
-            analytics.event("cache_hit", mapOf("id" to descriptor.id, "bytes" to 0))
+            reporter.cacheHit(descriptor.id, 0)
         } else {
-            analytics.event("cache_miss", mapOf("id" to descriptor.id, "bytes" to 0))
+            reporter.cacheMiss(descriptor.id, 0)
         }
         return AVPlayerItem(asset = asset)
     }
@@ -309,10 +291,7 @@ private class IosPlaybackCoordinator(
             if (notification?.`object` == current) {
                 val index = activeSlot.index ?: return@addObserverForName
                 val item = feed.getOrNull(index) ?: return@addObserverForName
-                analytics.event(
-                    "playback_error",
-                    mapOf("id" to item.id, "index" to index, "category" to "failed", "code" to "ios"),
-                )
+                reporter.playbackError(item.id, index, "failed", "ios")
             }
         }
 
@@ -325,10 +304,7 @@ private class IosPlaybackCoordinator(
             if (notification?.`object` == current) {
                 val index = activeSlot.index ?: return@addObserverForName
                 val item = feed.getOrNull(index) ?: return@addObserverForName
-                analytics.event(
-                    "rebuffer_start",
-                    mapOf("id" to item.id, "index" to index, "reason" to "stalled"),
-                )
+                reporter.rebufferStart(item.id, index, "stalled")
                 rebuffering = true
                 rebufferStartMs = nowMs()
             }
@@ -343,7 +319,7 @@ private class IosPlaybackCoordinator(
             if (notification?.`object` == current) {
                 val index = activeSlot.index ?: return@addObserverForName
                 val item = feed.getOrNull(index) ?: return@addObserverForName
-                analytics.event("playback_ended", mapOf("id" to item.id, "index" to index))
+                reporter.playbackEnded(item.id, index)
                 val replacement = buildPlayerItem(item)
                 replacement.preferredForwardBufferDuration = 1.0
                 activeSlot.player.replaceCurrentItemWithPlayerItem(replacement)
@@ -376,25 +352,15 @@ private class IosPlaybackCoordinator(
         if (status == AVPlayerTimeControlStatusWaitingToPlayAtSpecifiedRate && !rebuffering) {
             rebuffering = true
             rebufferStartMs = nowMs()
-            analytics.event(
-                "rebuffer_start",
-                mapOf("id" to item.id, "index" to index, "reason" to "buffering"),
-            )
+            reporter.rebufferStart(item.id, index, "buffering")
         }
 
         if (status == AVPlayerTimeControlStatusPlaying && rebuffering) {
             rebuffering = false
             val start = rebufferStartMs
             if (start != null) {
-                analytics.event(
-                    "rebuffer_end",
-                    mapOf("id" to item.id, "index" to index, "reason" to "buffering"),
-                )
-                analytics.timing(
-                    "rebuffer_total_ms",
-                    nowMs() - start,
-                    mapOf("id" to item.id, "index" to index),
-                )
+                reporter.rebufferEnd(item.id, index, "buffering")
+                reporter.rebufferTotal(item.id, index, nowMs() - start)
             }
             rebufferStartMs = null
         }
@@ -404,8 +370,8 @@ private class IosPlaybackCoordinator(
             if (seconds > 0.01) {
                 firstFramePendingIndex = null
                 val start = playStartMsById[item.id] ?: nowMs()
-                analytics.event("first_frame_rendered", mapOf("id" to item.id, "index" to index))
-                analytics.timing("time_to_first_frame_ms", nowMs() - start, mapOf("id" to item.id, "index" to index))
+                reporter.firstFrameRendered(item.id, index)
+                reporter.timeToFirstFrame(item.id, index, nowMs() - start)
             }
         }
 
@@ -423,24 +389,12 @@ private class IosPlaybackCoordinator(
                     }
                 }
                 val start = preparedStartMs ?: nowMs()
-                analytics.event(
-                    "preload_completed",
-                    mapOf(
-                        "id" to feed[preparedIndex].id,
-                        "index" to preparedIndex,
-                        "bytes" to 0,
-                        "ms" to (nowMs() - start),
-                        "fromCache" to false,
-                    ),
-                )
+                reporter.preloadCompleted(feed[preparedIndex].id, preparedIndex, 0, nowMs() - start, false)
                 preparedPendingIndex = null
                 preparedStartMs = null
             }
             if (preparedItem?.status == AVPlayerItemStatusFailed) {
-                analytics.event(
-                    "preload_canceled",
-                    mapOf("id" to feed[preparedIndex].id, "index" to preparedIndex, "reason" to "error"),
-                )
+                reporter.preloadCanceled(feed[preparedIndex].id, preparedIndex, "error")
                 preparedPendingIndex = null
                 preparedStartMs = null
             }

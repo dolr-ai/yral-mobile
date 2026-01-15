@@ -31,19 +31,8 @@ data class PreloadPolicy(
     val usePreparedNextPlayer: Boolean = false,
 )
 
-interface PlaybackAnalytics {
-    fun event(name: String, props: Map<String, Any?> = emptyMap())
-    fun timing(name: String, ms: Long, props: Map<String, Any?> = emptyMap())
-}
-
-object NoopPlaybackAnalytics : PlaybackAnalytics {
-    override fun event(name: String, props: Map<String, Any?>) = Unit
-
-    override fun timing(name: String, ms: Long, props: Map<String, Any?>) = Unit
-}
-
 data class CoordinatorDeps(
     val policy: PreloadPolicy = PreloadPolicy(),
-    val analytics: PlaybackAnalytics = NoopPlaybackAnalytics,
+    val reporter: PlaybackEventReporter = NoopPlaybackEventReporter,
     val nowMs: () -> Long = ::currentTimeMillis,
 )
