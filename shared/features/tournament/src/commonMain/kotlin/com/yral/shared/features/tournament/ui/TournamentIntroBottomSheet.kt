@@ -123,7 +123,7 @@ fun TournamentIntroBottomSheet(
                     modifier = Modifier.padding(horizontal = 30.dp),
                 )
 
-                Spacer(modifier = Modifier.height(56.dp))
+                Spacer(modifier = Modifier.height(42.dp))
 
                 // Emojis image with spotlight rays behind
                 Box(contentAlignment = Alignment.Center) {
@@ -148,7 +148,7 @@ fun TournamentIntroBottomSheet(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(56.dp))
+                Spacer(modifier = Modifier.height(42.dp))
 
                 // "View Tournaments" button with white background and pink gradient text
                 YralGradientButton(

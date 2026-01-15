@@ -36,8 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yral.shared.features.auth.nav.countryselector.CountrySelectorComponent
 import com.yral.shared.features.auth.viewModel.LoginViewModel
-import com.yral.shared.libs.designsystem.component.LoaderSize
-import com.yral.shared.libs.designsystem.component.YralAsyncImage
+import com.yral.shared.libs.designsystem.component.YralShimmerImage
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.phonevalidation.countries.Country
@@ -191,13 +190,13 @@ private fun CountryListItem(
                 .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Flag image
-        YralAsyncImage(
+        // Flag image with shimmer placeholder
+        YralShimmerImage(
             imageUrl = country.flagUrl,
+            placeholderImageUrl = "",
             modifier = Modifier.width(31.5.dp).height(22.5.dp),
             contentScale = ContentScale.FillBounds,
             shape = RoundedCornerShape(4.dp),
-            loaderSize = LoaderSize.Dynamic(16.dp),
         )
 
         Spacer(modifier = Modifier.width(8.dp))
