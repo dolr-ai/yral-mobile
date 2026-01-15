@@ -12,6 +12,7 @@ fun ShortformVideoSampleScreen(
     deps: CoordinatorDeps = CoordinatorDeps(),
     overlay: @Composable (index: Int, item: MediaDescriptor) -> Unit = { _, _ -> },
 ) {
+    KeepScreenOnEffect(true)
     val coordinator = rememberPlaybackCoordinatorWithLifecycle(deps)
     VideoFeed(
         items = items,
