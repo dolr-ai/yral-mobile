@@ -319,6 +319,7 @@ private class AndroidPlaybackCoordinator(
         return preloadManagerBuilder.buildExoPlayer().apply {
             setAudioAttributes(audioAttributes, true)
             setHandleAudioBecomingNoisy(true)
+            repeatMode = Player.REPEAT_MODE_ONE
         }
     }
 
