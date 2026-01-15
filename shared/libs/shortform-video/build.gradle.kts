@@ -20,6 +20,8 @@ kotlin {
 
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.androidx.lifecycle.runtime.compose)
+
+            implementation(projects.shared.core)
         }
         androidMain.dependencies {
             implementation(libs.androidx.media3.exoplayer)

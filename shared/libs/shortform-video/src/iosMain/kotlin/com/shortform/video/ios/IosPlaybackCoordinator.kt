@@ -81,6 +81,7 @@ private class IosPlaybackCoordinator(
     private val observers = mutableListOf<NSObjectProtocol>()
 
     init {
+        IosAudioSession.ensurePlaybackSessionActive()
         playerA.automaticallyWaitsToMinimizeStalling = false
         playerB?.automaticallyWaitsToMinimizeStalling = false
         registerObservers()

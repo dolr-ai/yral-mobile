@@ -1,4 +1,4 @@
-package com.yral.shared.libs.videoPlayer
+package com.shortform.video.ios
 
 import co.touchlab.kermit.Logger
 import com.yral.shared.core.utils.runOnMainSync

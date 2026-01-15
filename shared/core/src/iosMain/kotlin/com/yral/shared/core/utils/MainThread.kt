@@ -1,4 +1,4 @@
-package com.yral.shared.libs.videoPlayer.util
+package com.yral.shared.core.utils
 
 import platform.Foundation.NSThread
 import platform.darwin.DISPATCH_TIME_FOREVER
@@ -8,7 +8,7 @@ import platform.darwin.dispatch_semaphore_create
 import platform.darwin.dispatch_semaphore_signal
 import platform.darwin.dispatch_semaphore_wait
 
-internal inline fun <T> runOnMainSync(crossinline block: () -> T): T {
+inline fun <T> runOnMainSync(crossinline block: () -> T): T {
     if (NSThread.isMainThread()) {
         return block()
     }

@@ -5,7 +5,7 @@ import com.yral.shared.libs.videoPlayer.IosAudioSession
 import com.yral.shared.libs.videoPlayer.PlatformPlaybackState
 import com.yral.shared.libs.videoPlayer.model.PREFETCH_NEXT_N_VIDEOS
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
-import com.yral.shared.libs.videoPlayer.util.runOnMainSync
+import com.yral.shared.core.utils.runOnMainSync
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.AVFoundation.AVKeyValueStatusLoaded
 import platform.AVFoundation.AVPlayer
