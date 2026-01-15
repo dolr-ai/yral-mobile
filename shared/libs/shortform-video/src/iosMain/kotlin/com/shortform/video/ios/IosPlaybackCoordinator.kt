@@ -38,6 +38,8 @@ import platform.Foundation.NSRunLoopCommonModes
 import platform.Foundation.NSTimer
 import platform.Foundation.NSURL
 import platform.darwin.NSObjectProtocol
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 fun createIosPlaybackCoordinator(
     deps: CoordinatorDeps = CoordinatorDeps(),
@@ -48,7 +50,8 @@ private class IosPlaybackCoordinator(
 ) : PlaybackCoordinator {
     private val reporter = deps.reporter
     private val policy = deps.policy
-    private val nowMs = deps.nowMs
+    @OptIn(ExperimentalTime::class)
+    private val nowMs: () -> Long = { Clock.System.now().toEpochMilliseconds() }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var pollTimer: NSTimer? = null

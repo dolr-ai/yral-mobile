@@ -28,6 +28,8 @@ import com.shortform.video.computePreloadWindow
 import com.shortform.video.ui.AndroidVideoSurfaceHandle
 import java.io.File
 import kotlin.math.abs
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 @OptIn(UnstableApi::class)
 fun createAndroidPlaybackCoordinator(
@@ -43,7 +45,8 @@ private class AndroidPlaybackCoordinator(
     private val appContext = context.applicationContext
     private val reporter = deps.reporter
     private val policy = deps.policy
-    private val nowMs = deps.nowMs
+    @kotlin.OptIn(ExperimentalTime::class)
+    private val nowMs: () -> Long = { Clock.System.now().toEpochMilliseconds() }
 
     private val cache = createCache(appContext, policy)
     private val preloadStatusControl = DefaultTargetPreloadStatusControl(policy)

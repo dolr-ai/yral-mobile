@@ -34,5 +34,4 @@ data class PreloadPolicy(
 data class CoordinatorDeps(
     val policy: PreloadPolicy = PreloadPolicy(),
     val reporter: PlaybackEventReporter = NoopPlaybackEventReporter,
-    val nowMs: () -> Long = ::currentTimeMillis,
 )
