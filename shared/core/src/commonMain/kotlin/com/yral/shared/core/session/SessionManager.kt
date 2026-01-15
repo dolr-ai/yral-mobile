@@ -101,6 +101,10 @@ class SessionManager {
         mutableProperties.update { it.copy(emailId = email) }
     }
 
+    fun updatePhoneNumber(phoneNumber: String?) {
+        mutableProperties.update { it.copy(phoneNumber = phoneNumber) }
+    }
+
     fun updateUsername(username: String?) {
         mutableState.update { state ->
             if (state is SessionState.SignedIn) {

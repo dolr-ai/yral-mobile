@@ -191,6 +191,7 @@ class DefaultAuthClient(
             PrefKeys.HOW_TO_PLAY_SHOWN.name,
             PrefKeys.USERNAME.name,
             // PrefKeys.SMILEY_GAME_NUDGE_SHOWN.name,
+            PrefKeys.PHONE_NUMBER.name,
         ).forEach { key ->
             preferences.remove(key)
         }
@@ -497,6 +498,9 @@ class DefaultAuthClient(
                 )
                 preferences.putBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name, true)
                 sessionManager.updateSocialSignInStatus(true)
+                preferences.getString(PrefKeys.PHONE_NUMBER.name)?.let { phone ->
+                    sessionManager.updatePhoneNumber(phone)
+                }
                 scope.launch { getCachedSession()?.let { updateYralSession(it) } }
                 scope.launch {
                     // Minor delay for super properties to be set
@@ -640,6 +644,8 @@ class DefaultAuthClient(
                             throw YralAuthException("Phone auth verification failed - ${response.errorMessage}")
                         }
                         is PhoneAuthVerifyResponse.Success -> {
+                            preferences.putString(PrefKeys.PHONE_NUMBER.name, phoneNumber)
+                            sessionManager.updatePhoneNumber(phoneNumber)
                             val userPrincipal =
                                 sessionManager.userPrincipal
                                     ?: throw YralAuthException(
