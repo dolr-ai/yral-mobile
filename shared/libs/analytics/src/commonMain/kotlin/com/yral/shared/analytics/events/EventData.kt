@@ -48,5 +48,7 @@ fun EventData.shouldSendToBranch(): Boolean =
         FeatureEvents.GAME_PLAYED.getEventName() -> true
         FeatureEvents.LOGIN_SUCCESS.getEventName() -> true
         FeatureEvents.SIGNUP_SUCCESS.getEventName() -> true
+        FeatureEvents.TOURNAMENT_JOINED.getEventName() -> true
+        FeatureEvents.TOURNAMENT_RESULT_SCREEN_VIEWED.getEventName() -> true
         else -> false
     }
