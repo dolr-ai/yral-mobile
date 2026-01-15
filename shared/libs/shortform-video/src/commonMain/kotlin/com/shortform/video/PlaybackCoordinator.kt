@@ -2,6 +2,7 @@ package com.shortform.video
 
 interface PlaybackCoordinator {
     fun setFeed(items: List<MediaDescriptor>)
+    fun appendFeed(items: List<MediaDescriptor>)
 
     fun setActiveIndex(index: Int)
 

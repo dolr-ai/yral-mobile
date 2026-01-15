@@ -96,6 +96,14 @@ private class IosPlaybackCoordinator(
         }
     }
 
+    override fun appendFeed(items: List<MediaDescriptor>) {
+        if (items.isEmpty()) return
+        feed = feed + items
+        if (activeIndex == -1 && feed.isNotEmpty()) {
+            setActiveIndex(0)
+        }
+    }
+
     override fun setActiveIndex(index: Int) {
         if (index !in feed.indices) return
         if (index == activeIndex && activeSlot.index == index) return

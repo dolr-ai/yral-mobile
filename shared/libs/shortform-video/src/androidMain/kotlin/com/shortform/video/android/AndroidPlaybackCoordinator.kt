@@ -166,6 +166,23 @@ private class AndroidPlaybackCoordinator(
         }
     }
 
+    override fun appendFeed(items: List<MediaDescriptor>) {
+        if (items.isEmpty()) return
+        val startIndex = feed.size
+        feed = feed + items
+        val appendedMediaItems = items.mapIndexed { offset, descriptor ->
+            buildMediaItem(descriptor, startIndex + offset)
+        }
+        mediaItems = mediaItems + appendedMediaItems
+        mediaIndexById = feed.mapIndexed { index, descriptor -> descriptor.id to index }.toMap()
+        val ranking = (startIndex until feed.size).toList()
+        preloadManager.addMediaItems(appendedMediaItems, ranking)
+
+        if (activeIndex == -1 && feed.isNotEmpty()) {
+            setActiveIndex(0)
+        }
+    }
+
     override fun setActiveIndex(index: Int) {
         if (index !in feed.indices) return
         if (index == activeIndex && activeSlot.index == index) return

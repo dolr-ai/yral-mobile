@@ -34,9 +34,21 @@ fun ShortformVideoFeed(
         return
     }
     val pagerState = rememberPagerState(pageCount = { items.size })
+    var previousItems by remember { mutableStateOf<List<MediaDescriptor>>(emptyList()) }
 
     LaunchedEffect(items) {
-        coordinator.setFeed(items)
+        val previous = previousItems
+        if (previous.isEmpty()) {
+            coordinator.setFeed(items)
+        } else if (isAppend(previous, items)) {
+            val appended = items.drop(previous.size)
+            if (appended.isNotEmpty()) {
+                coordinator.appendFeed(appended)
+            }
+        } else {
+            coordinator.setFeed(items)
+        }
+        previousItems = items
     }
 
     LaunchedEffect(pagerState) {
@@ -103,4 +115,15 @@ fun ShortformVideoFeed(
             overlay(page, items[page])
         }
     }
+}
+
+private fun isAppend(
+    previous: List<MediaDescriptor>,
+    current: List<MediaDescriptor>,
+): Boolean {
+    if (current.size < previous.size) return false
+    for (index in previous.indices) {
+        if (previous[index].id != current[index].id) return false
+    }
+    return true
 }
