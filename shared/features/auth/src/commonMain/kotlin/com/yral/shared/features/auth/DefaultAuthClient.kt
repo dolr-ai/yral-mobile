@@ -10,6 +10,7 @@ import com.yral.shared.analytics.events.AuthSessionCause
 import com.yral.shared.analytics.events.AuthSessionFlow
 import com.yral.shared.analytics.events.AuthSessionInitiator
 import com.yral.shared.analytics.events.AuthSessionState
+import com.yral.shared.analytics.events.OtpValidationStatus
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.DELAY_FOR_SESSION_PROPERTIES
 import com.yral.shared.core.session.Session
@@ -191,6 +192,7 @@ class DefaultAuthClient(
             PrefKeys.HOW_TO_PLAY_SHOWN.name,
             PrefKeys.USERNAME.name,
             // PrefKeys.SMILEY_GAME_NUDGE_SHOWN.name,
+            PrefKeys.PHONE_NUMBER.name,
         ).forEach { key ->
             preferences.remove(key)
         }
@@ -497,6 +499,9 @@ class DefaultAuthClient(
                 )
                 preferences.putBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name, true)
                 sessionManager.updateSocialSignInStatus(true)
+                preferences.getString(PrefKeys.PHONE_NUMBER.name)?.let { phone ->
+                    sessionManager.updatePhoneNumber(phone)
+                }
                 scope.launch { getCachedSession()?.let { updateYralSession(it) } }
                 scope.launch {
                     // Minor delay for super properties to be set
@@ -637,19 +642,35 @@ class DefaultAuthClient(
                     Logger.d("DefaultAuthClient") { "Phone auth verification completed" }
                     when (response) {
                         is PhoneAuthVerifyResponse.Error -> {
+                            authTelemetry.otpValidationResult(
+                                status = OtpValidationStatus.FAILURE,
+                                reason = response.error,
+                            )
+                            authTelemetry.authFailed(SocialProvider.PHONE)
                             throw YralAuthException("Phone auth verification failed - ${response.errorMessage}")
                         }
                         is PhoneAuthVerifyResponse.Success -> {
+                            authTelemetry.otpValidationResult(
+                                status = OtpValidationStatus.SUCCESS,
+                                reason = null,
+                            )
+                            preferences.putString(PrefKeys.PHONE_NUMBER.name, phoneNumber)
+                            sessionManager.updatePhoneNumber(phoneNumber)
                             val userPrincipal =
                                 sessionManager.userPrincipal
                                     ?: throw YralAuthException(
                                         "Phone auth verification failed - user principal not found",
                                     )
+                            currentProvider = SocialProvider.PHONE
                             authenticate(response.idTokenCode, userPrincipal)
                         }
                     }
                 }.onFailure { error ->
-                    authTelemetry.authFailed(SocialProvider.PHONE_NUMBER)
+                    authTelemetry.otpValidationResult(
+                        status = OtpValidationStatus.FAILURE,
+                        reason = error.message,
+                    )
+                    authTelemetry.authFailed(SocialProvider.PHONE)
                     Logger.e("DefaultAuthClient") { "Phone auth verification failed: ${error.message}" }
                     throw YralAuthException("Phone auth verification failed - ${error.message}")
                 }.getOrThrow()

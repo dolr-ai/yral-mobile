@@ -5,5 +5,5 @@ enum class SocialProvider(
 ) {
     GOOGLE("google"),
     APPLE("apple"),
-    PHONE_NUMBER("phone_number"),
+    PHONE("phone"),
 }

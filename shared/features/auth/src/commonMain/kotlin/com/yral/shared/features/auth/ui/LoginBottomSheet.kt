@@ -94,6 +94,7 @@ fun LoginBottomSheet(
                     mode = mode,
                     onNavigateToCountrySelector = onNavigateToCountrySelector,
                     onNavigateToOtpVerification = onNavigateToOtpVerification,
+                    onSocialProviderSelected = { onDismissRequest() },
                 )
                 Spacer(modifier = Modifier.height(adaptiveHeight))
             }

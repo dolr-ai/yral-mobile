@@ -57,6 +57,7 @@ final class SessionManager: ObservableObject {
     }
   }
 
+    // swiftlint: disable function_body_length
   func update(coins: UInt64) {
     let isMandatoryLogin = KotlinBoolean(
         bool: AppDIHelper().getFeatureFlagManager().isEnabled(flag: AppFeatureFlags.Common.shared.MandatoryLogin)
@@ -81,6 +82,7 @@ final class SessionManager: ObservableObject {
           emailId: nil,
           utmParams: nil,
           isMandatoryLogin: isMandatoryLogin,
+          phoneNumber: nil
         )
       )
     case .permanentAuthentication(let userPrincipal, let email, let canisterPrincipal, _, _, let dailyRank):
@@ -103,12 +105,14 @@ final class SessionManager: ObservableObject {
           emailId: "",
           utmParams: nil,
           isMandatoryLogin: isMandatoryLogin,
+          phoneNumber: nil
         )
       )
     default:
       break
     }
   }
+    // swiftlint: enable function_body_length
 }
 
 extension SessionManager {

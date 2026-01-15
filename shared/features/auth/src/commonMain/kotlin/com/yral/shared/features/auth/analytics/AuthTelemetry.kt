@@ -11,7 +11,16 @@ import com.yral.shared.analytics.events.AuthSessionInitiator
 import com.yral.shared.analytics.events.AuthSessionState
 import com.yral.shared.analytics.events.AuthSessionStateChangedEventData
 import com.yral.shared.analytics.events.LoginSuccessEventData
+import com.yral.shared.analytics.events.OtpDismissedEventData
+import com.yral.shared.analytics.events.OtpRequestInitiatedEventData
+import com.yral.shared.analytics.events.OtpRequestType
+import com.yral.shared.analytics.events.OtpScreenViewedEventData
+import com.yral.shared.analytics.events.OtpValidationResultEventData
+import com.yral.shared.analytics.events.OtpValidationStatus
+import com.yral.shared.analytics.events.PhoneNumberEnteredEventData
 import com.yral.shared.analytics.events.SignupJourneySelected
+import com.yral.shared.analytics.events.SignupNudgeDismissAction
+import com.yral.shared.analytics.events.SignupNudgeDismissedEventData
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.analytics.events.SignupSuccessEventData
 import com.yral.shared.features.auth.utils.SocialProvider
@@ -23,6 +32,10 @@ class AuthTelemetry(
 ) {
     fun onSignupViewed(pageName: SignupPageName) {
         analyticsManager.trackEvent(AuthScreenViewedEventData(pageName = pageName))
+    }
+
+    fun onSignupNudgeDismissed(dismissAction: SignupNudgeDismissAction) {
+        analyticsManager.trackEvent(SignupNudgeDismissedEventData(dismissAction = dismissAction))
     }
 
     fun onSignupJourneySelected(provider: SocialProvider = SocialProvider.GOOGLE) {
@@ -38,6 +51,46 @@ class AuthTelemetry(
         } else {
             onLoginSuccess(provider)
         }
+    }
+
+    fun phoneNumberEntered(
+        countryCode: String,
+        phoneLength: Int,
+    ) {
+        analyticsManager.trackEvent(
+            PhoneNumberEnteredEventData(
+                countryCode = countryCode,
+                phoneLength = phoneLength,
+            ),
+        )
+    }
+
+    fun otpRequestInitiated(
+        attemptNumber: Int,
+        requestType: OtpRequestType,
+    ) {
+        analyticsManager.trackEvent(
+            OtpRequestInitiatedEventData(
+                attemptNumber = attemptNumber,
+                requestType = requestType,
+            ),
+        )
+    }
+
+    fun otpScreenViewed(phoneNumber: String) {
+        analyticsManager.trackEvent(OtpScreenViewedEventData(phoneNumber = phoneNumber))
+    }
+
+    fun otpValidationResult(
+        status: OtpValidationStatus,
+        reason: String? = null,
+    ) {
+        analyticsManager.trackEvent(
+            OtpValidationResultEventData(
+                validationStatus = status,
+                failureReason = reason,
+            ),
+        )
     }
 
     private fun onSignupSuccess(provider: SocialProvider) {
@@ -84,6 +137,12 @@ class AuthTelemetry(
         analyticsManager.flush()
     }
 
+    fun otpDismissed() {
+        analyticsManager.trackEvent(
+            OtpDismissedEventData(),
+        )
+    }
+
     fun sessionStateChanged(
         fromState: AuthSessionState,
         toState: AuthSessionState,
@@ -107,7 +166,7 @@ class AuthTelemetry(
         when (this) {
             SocialProvider.GOOGLE -> AuthJourney.GOOGLE
             SocialProvider.APPLE -> AuthJourney.APPLE
-            SocialProvider.PHONE_NUMBER -> AuthJourney.PHONE
+            SocialProvider.PHONE -> AuthJourney.PHONE
         }
 
     companion object {
