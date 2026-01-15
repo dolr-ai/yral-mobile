@@ -5,6 +5,7 @@ import com.shortform.video.MediaDescriptor
 import com.shortform.video.PlaybackCoordinator
 import com.shortform.video.VideoSurfaceHandle
 import com.shortform.video.PreloadEventScheduler
+import com.shortform.video.PreparedSlotScheduler
 import com.shortform.video.ui.IosVideoSurfaceHandle
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
@@ -72,10 +73,8 @@ private class IosPlaybackCoordinator(
     private var rebuffering = false
     private var rebufferStartMs: Long? = null
 
-    private var preparedPendingIndex: Int? = null
-    private var preparedStartMs: Long? = null
-    private var preparedPrerollRequested: Boolean = false
     private val preloadScheduler = PreloadEventScheduler(policy, reporter)
+    private val preparedScheduler = PreparedSlotScheduler(policy, reporter)
 
     private val cache = IosDownloadCache(policy.cacheMaxBytes)
 
@@ -90,6 +89,7 @@ private class IosPlaybackCoordinator(
 
     override fun setFeed(items: List<MediaDescriptor>) {
         cancelPrefetch(reason = "feed_update")
+        preparedScheduler.reset("feed_update") { feed.getOrNull(it)?.id }
         feed = items
         if (activeIndex >= items.size) {
             setActiveIndex(items.lastIndex)
@@ -111,9 +111,6 @@ private class IosPlaybackCoordinator(
 
         if (preparedSlot?.index == index) {
             swapSlots()
-            preparedPendingIndex = null
-            preparedStartMs = null
-            preparedPrerollRequested = false
         } else {
             prepareSlot(activeSlot, index, shouldPlay = true)
         }
@@ -177,19 +174,17 @@ private class IosPlaybackCoordinator(
         activeSlot.player.pause()
         preparedSlot?.player?.pause()
         cancelPrefetch(reason = "release")
+        preparedScheduler.reset("release") { feed.getOrNull(it)?.id }
         scope.cancel()
     }
 
     private fun schedulePreparedSlot(activeIndex: Int) {
         val prepared = preparedSlot ?: return
-        val nextIndex = activeIndex + 1
-        if (nextIndex in feed.indices) {
+        preparedScheduler.schedule(activeIndex, feed.size, { feed.getOrNull(it)?.id }) { nextIndex ->
             if (prepared.index != nextIndex) {
                 prepareSlot(prepared, nextIndex, shouldPlay = false)
-                preparedPendingIndex = nextIndex
-                preparedStartMs = nowMs()
-                preparedPrerollRequested = false
             }
+            preparedScheduler.setStartTime(nowMs())
         }
     }
 
@@ -198,6 +193,7 @@ private class IosPlaybackCoordinator(
         val previousActive = activeSlot
         activeSlot = prepared
         preparedSlot = previousActive
+        preparedScheduler.clearOnSwap()
     }
 
     private fun scheduleDiskPrefetch(centerIndex: Int) {
@@ -364,28 +360,25 @@ private class IosPlaybackCoordinator(
             }
         }
 
-        val preparedIndex = preparedPendingIndex
         val prepared = preparedSlot
-        if (prepared != null && preparedIndex != null && prepared.index == preparedIndex) {
+        if (prepared != null) {
             val preparedItem = prepared.player.currentItem
-            if (preparedItem?.status == AVPlayerItemStatusReadyToPlay) {
-                if (!preparedPrerollRequested) {
-                    preparedPrerollRequested = true
+            val preparedIndex = prepared.index
+            if (preparedIndex != null && preparedItem?.status == AVPlayerItemStatusReadyToPlay) {
+                preparedScheduler.markReady(
+                    index = preparedIndex,
+                    nowMs = nowMs(),
+                    idAt = { feed.getOrNull(it)?.id },
+                ) {
                     prepared.player.prerollAtRate(1.0F) { _ ->
                         if (prepared.index == preparedIndex) {
                             prepared.player.pause()
                         }
                     }
                 }
-                val start = preparedStartMs ?: nowMs()
-                reporter.preloadCompleted(feed[preparedIndex].id, preparedIndex, 0, nowMs() - start, false)
-                preparedPendingIndex = null
-                preparedStartMs = null
             }
-            if (preparedItem?.status == AVPlayerItemStatusFailed) {
-                reporter.preloadCanceled(feed[preparedIndex].id, preparedIndex, "error")
-                preparedPendingIndex = null
-                preparedStartMs = null
+            if (preparedIndex != null && preparedItem?.status == AVPlayerItemStatusFailed) {
+                preparedScheduler.markError(preparedIndex, { feed.getOrNull(it)?.id }, "error")
             }
         }
     }

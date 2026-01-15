@@ -25,6 +25,7 @@ import com.shortform.video.PreloadPolicy
 import com.shortform.video.VideoSurfaceHandle
 import com.shortform.video.cacheKey
 import com.shortform.video.PreloadEventScheduler
+import com.shortform.video.PreparedSlotScheduler
 import com.shortform.video.ui.AndroidVideoSurfaceHandle
 import java.io.File
 import kotlin.math.abs
@@ -70,6 +71,7 @@ private class AndroidPlaybackCoordinator(
     private var activeIndex: Int = -1
     private var predictedIndex: Int = -1
     private val preloadScheduler = PreloadEventScheduler(policy, reporter)
+    private val preparedScheduler = PreparedSlotScheduler(policy, reporter)
 
     private val playStartMsById = mutableMapOf<String, Long>()
     private var firstFramePendingIndex: Int? = null
@@ -146,6 +148,7 @@ private class AndroidPlaybackCoordinator(
 
     override fun setFeed(items: List<MediaDescriptor>) {
         preloadScheduler.reset("feed_update") { feed.getOrNull(it)?.id }
+        preparedScheduler.reset("feed_update") { feed.getOrNull(it)?.id }
         if (mediaItems.isNotEmpty()) {
             preloadManager.removeMediaItems(mediaItems)
         }
@@ -241,6 +244,7 @@ private class AndroidPlaybackCoordinator(
 
     override fun release() {
         preloadScheduler.reset("release") { feed.getOrNull(it)?.id }
+        preparedScheduler.reset("release") { feed.getOrNull(it)?.id }
         playerA.release()
         playerB?.release()
         preloadManager.release()
@@ -251,8 +255,7 @@ private class AndroidPlaybackCoordinator(
 
     private fun schedulePreparedSlot(activeIndex: Int) {
         val prepared = preparedSlot ?: return
-        val nextIndex = activeIndex + 1
-        if (nextIndex in feed.indices) {
+        preparedScheduler.schedule(activeIndex, feed.size, { feed.getOrNull(it)?.id }) { nextIndex ->
             if (prepared.index != nextIndex) {
                 prepareSlot(prepared, nextIndex, playWhenReady = false)
             }
@@ -264,6 +267,7 @@ private class AndroidPlaybackCoordinator(
         val previousActive = activeSlot
         activeSlot = prepared
         preparedSlot = previousActive
+        preparedScheduler.clearOnSwap()
     }
 
     private fun prepareSlot(slot: PlayerSlot, index: Int, playWhenReady: Boolean) {
