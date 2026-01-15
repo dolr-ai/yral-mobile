@@ -3,11 +3,16 @@ package com.yral.shared.app.nav
 import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
-import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
-import com.yral.shared.features.auth.ui.LoginBottomSheetType
+import com.yral.shared.features.auth.nav.countryselector.CountrySelectorComponent
+import com.yral.shared.features.auth.nav.mandatorylogin.MandatoryLoginComponent
+import com.yral.shared.features.auth.nav.otpverification.OtpVerificationComponent
+import com.yral.shared.features.auth.ui.LoginCoordinator
+import com.yral.shared.features.auth.ui.LoginInfo
+import com.yral.shared.features.auth.ui.RequestLoginFactory
+import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.profile.nav.EditProfileComponent
@@ -21,6 +26,8 @@ interface RootComponent {
     val stack: Value<ChildStack<*, Child>>
     val slot: Value<ChildSlot<*, SlotChild>>
     val updateState: Value<UpdateState>
+    val loginViewModel: LoginViewModel
+    var currentLoginInfo: LoginInfo?
 
     fun onBackClicked()
 
@@ -49,6 +56,11 @@ interface RootComponent {
         showResult: Boolean = false,
     )
 
+    fun openTournamentResults(
+        tournamentId: String,
+        showResult: Boolean = false,
+    )
+
     fun openTournamentGame(
         tournamentId: String,
         tournamentTitle: String,
@@ -56,6 +68,7 @@ interface RootComponent {
         startEpochMs: Long,
         endEpochMs: Long,
         totalPrizePool: Int,
+        isHotOrNot: Boolean = false,
     )
 
     fun openConversation(
@@ -67,14 +80,11 @@ interface RootComponent {
 
     fun openLeaderboard()
 
-    fun showLoginBottomSheet(
-        pageName: SignupPageName,
-        loginBottomSheetType: LoginBottomSheetType,
-        onDismissRequest: () -> Unit,
-        onLoginSuccess: () -> Unit = {},
-    )
+    fun getLoginCoordinator(): LoginCoordinator
 
-    fun hideLoginBottomSheetIfVisible()
+    fun createLoginRequestFactory(): RequestLoginFactory
+
+    fun clearLoginState()
 
     // Defines all possible child components
     sealed class Child {
@@ -106,7 +116,15 @@ interface RootComponent {
         class Leaderboard(
             val component: LeaderboardComponent,
         ) : Child()
-        data object MandatoryLogin : Child()
+        class CountrySelector(
+            val component: CountrySelectorComponent,
+        ) : Child()
+        class OtpVerification(
+            val component: OtpVerificationComponent,
+        ) : Child()
+        class MandatoryLogin(
+            val component: MandatoryLoginComponent,
+        ) : Child()
     }
 
     sealed class SlotChild {
@@ -114,11 +132,6 @@ interface RootComponent {
             val component: AlertsRequestComponent,
         ) : SlotChild()
 
-        class LoginBottomSheet(
-            val pageName: SignupPageName,
-            val loginBottomSheetType: LoginBottomSheetType,
-            val onDismissRequest: () -> Unit,
-            val onLoginSuccess: () -> Unit,
-        ) : SlotChild()
+        class LoginBottomSheet : SlotChild()
     }
 }

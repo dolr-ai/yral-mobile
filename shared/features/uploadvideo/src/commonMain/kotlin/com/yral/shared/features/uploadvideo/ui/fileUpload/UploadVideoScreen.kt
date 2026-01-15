@@ -7,14 +7,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -42,8 +39,6 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush.Companion.linearGradient
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.touchlab.kermit.Logger
@@ -79,7 +74,6 @@ private const val TOTAL_ITEMS = 5
 @Composable
 fun UploadVideoScreen(
     component: UploadVideoComponent,
-    bottomPadding: Dp,
     modifier: Modifier = Modifier,
     viewModel: UploadVideoViewModel = koinViewModel(),
 ) {
@@ -103,7 +97,6 @@ fun UploadVideoScreen(
         UiState.Initial -> {
             UploadVideoIdle(
                 listState = listState,
-                bottomPadding = bottomPadding,
                 modifier = modifier,
                 viewState = viewState,
                 viewModel = viewModel,
@@ -134,21 +127,15 @@ fun UploadVideoScreen(
 @Composable
 private fun UploadVideoIdle(
     listState: LazyListState,
-    bottomPadding: Dp,
     modifier: Modifier,
     viewState: UploadVideoViewModel.ViewState,
     viewModel: UploadVideoViewModel,
     onBack: () -> Unit,
     promptLogin: () -> Unit,
 ) {
-    val density = LocalDensity.current
-    val imeBottomDp = with(density) { WindowInsets.ime.getBottom(this).toDp() }
-    val keyboardAwareBottomPadding = (imeBottomDp - bottomPadding).coerceAtLeast(0.dp)
-
     LazyColumn(
         state = listState,
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = keyboardAwareBottomPadding),
     ) {
         // Update TOTAL_ITEMS if adding any more items
         item { Header(onBack) }

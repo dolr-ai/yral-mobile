@@ -40,6 +40,7 @@ data class TournamentLeaderboardUiState(
     val isNavigating: Boolean = false,
     val participantsLabel: String? = null,
     val scheduleLabel: String? = null,
+    val showResultOverlay: Boolean = false,
 )
 
 class TournamentLeaderboardViewModel(
@@ -110,6 +111,18 @@ class TournamentLeaderboardViewModel(
     }
 
     fun isCurrentUser(principalId: String): Boolean = principalId == sessionManager.userPrincipal
+
+    fun initShowResultOverlay(showResult: Boolean) {
+        // Only set to true if it hasn't been dismissed yet
+        // This prevents the overlay from reappearing after navigation
+        if (showResult && !_state.value.showResultOverlay && _state.value.leaderboard.isEmpty()) {
+            _state.update { it.copy(showResultOverlay = true) }
+        }
+    }
+
+    fun dismissResultOverlay() {
+        _state.update { it.copy(showResultOverlay = false) }
+    }
 
     fun onUserClick(row: LeaderboardRow) {
         if (_state.value.isNavigating) return // Prevent multiple clicks

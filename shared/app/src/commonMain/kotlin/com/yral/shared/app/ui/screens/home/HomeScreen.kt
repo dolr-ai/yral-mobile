@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -63,6 +62,9 @@ import com.yral.shared.features.account.ui.AlertsPermissionController
 import com.yral.shared.features.account.ui.rememberAlertsPermissionController
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
+import com.yral.shared.features.auth.ui.LoginMode
+import com.yral.shared.features.auth.ui.LoginScreenType
+import com.yral.shared.features.auth.ui.rememberLoginInfo
 import com.yral.shared.features.chat.ui.ChatScreen
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.game.viewmodel.GameViewModel
@@ -156,7 +158,6 @@ internal fun HomeScreen(
                 Modifier
                     .padding(innerPadding)
                     .background(MaterialTheme.colorScheme.primaryContainer),
-            innerPadding = innerPadding,
             sessionState = sessionState,
             updateProfileVideosCount = updateProfileVideosCount,
         )
@@ -185,7 +186,6 @@ private fun SlotContent(component: HomeComponent) {
 private fun HomeScreenContent(
     component: HomeComponent,
     modifier: Modifier,
-    innerPadding: PaddingValues,
     sessionState: SessionState,
     updateProfileVideosCount: (count: Int) -> Unit,
 ) {
@@ -235,7 +235,6 @@ private fun HomeScreenContent(
             is HomeComponent.Child.UploadVideo ->
                 UploadVideoRootScreen(
                     component = child.component,
-                    bottomPadding = innerPadding.calculateBottomPadding(),
                 )
 
             is HomeComponent.Child.Account ->
@@ -264,7 +263,6 @@ private fun HomeScreenContent(
             is HomeComponent.Child.Chat ->
                 ChatScreen(
                     component = child.component,
-                    bottomPadding = innerPadding.calculateBottomPadding(),
                 )
         }
         LoginIfRequired(
@@ -555,23 +553,23 @@ private fun LoginIfRequired(
     component: HomeComponent,
 ) {
     val homeState by component.homeViewModel.state.collectAsStateWithLifecycle()
-    val dismissSheet =
-        remember {
-            {
-                component.homeViewModel.showSignupPrompt(false, null)
-                component.hideLoginBottomSheetIfVisible()
-            }
-        }
+    val loginState = rememberLoginInfo(requestLoginFactory = component.requestLoginFactory)
+    val dismissSheet = { component.homeViewModel.showSignupPrompt(false, null) }
+
     LaunchedEffect(homeState.showSignupPrompt, homeState.isSocialSignedIn) {
-        if (homeState.isSocialSignedIn || !homeState.showSignupPrompt) return@LaunchedEffect
+        if (homeState.isSocialSignedIn || !homeState.showSignupPrompt) {
+            loginState.clearLogin()
+            return@LaunchedEffect
+        }
         when (currentChild) {
             is HomeComponent.Child.Feed -> {
-                component.showLoginBottomSheet(
-                    pageName = SignupPageName.HOME,
-                    loginBottomSheetType = LoginBottomSheetType.FEED,
-                    onDismissRequest = dismissSheet,
-                    onLoginSuccess = dismissSheet,
-                )
+                loginState.requestLogin(
+                    SignupPageName.HOME,
+                    LoginScreenType.BottomSheet(LoginBottomSheetType.FEED),
+                    LoginMode.BOTH,
+                    dismissSheet,
+                    dismissSheet,
+                ) {}
             }
             is HomeComponent.Child.UploadVideo -> {
                 val pageName = homeState.pageName ?: SignupPageName.UPLOAD_VIDEO
@@ -580,53 +578,63 @@ private fun LoginIfRequired(
                         SignupPageName.VIDEO_CREATION -> LoginBottomSheetType.CREATE_AI_VIDEO
                         else -> LoginBottomSheetType.UPLOAD_AI_VIDEO
                     }
-                component.showLoginBottomSheet(
-                    pageName = pageName,
-                    loginBottomSheetType = loginBottomSheetType,
-                    onDismissRequest = dismissSheet,
-                    onLoginSuccess = dismissSheet,
-                )
+                loginState.requestLogin(
+                    pageName,
+                    LoginScreenType.BottomSheet(loginBottomSheetType),
+                    LoginMode.BOTH,
+                    dismissSheet,
+                    dismissSheet,
+                ) {}
             }
             is HomeComponent.Child.Profile -> {
-                component.showLoginBottomSheet(
-                    pageName = homeState.pageName ?: SignupPageName.MENU,
-                    loginBottomSheetType = LoginBottomSheetType.DEFAULT,
-                    onDismissRequest = dismissSheet,
-                    onLoginSuccess = {
+                loginState.requestLogin(
+                    homeState.pageName ?: SignupPageName.MENU,
+                    LoginScreenType.BottomSheet(LoginBottomSheetType.DEFAULT),
+                    LoginMode.BOTH,
+                    {
                         dismissSheet()
                         currentChild.component.openProfile()
                     },
+                    dismissSheet,
+                    {},
                 )
             }
             is HomeComponent.Child.Tournament -> {
-                component.showLoginBottomSheet(
-                    pageName = homeState.pageName ?: SignupPageName.TOURNAMENT,
-                    loginBottomSheetType = LoginBottomSheetType.TOURNAMENT,
-                    onDismissRequest = dismissSheet,
-                    onLoginSuccess = dismissSheet,
-                )
+                loginState.requestLogin(
+                    homeState.pageName ?: SignupPageName.TOURNAMENT,
+                    LoginScreenType.BottomSheet(LoginBottomSheetType.TOURNAMENT),
+                    LoginMode.BOTH,
+                    dismissSheet,
+                    dismissSheet,
+                ) {}
             }
 
-            else -> Unit
+            else -> {
+                loginState.clearLogin()
+            }
         }
     }
     LaunchedEffect(currentChild, homeState.hasShownSignupPrompt, homeState.isSocialSignedIn) {
-        if (homeState.isSocialSignedIn) return@LaunchedEffect
+        if (homeState.isSocialSignedIn) {
+            loginState.clearLogin()
+            return@LaunchedEffect
+        }
         when (currentChild) {
             is HomeComponent.Child.Leaderboard -> {
                 if (homeState.hasShownSignupPrompt[SignupPageName.LEADERBOARD] != true) {
-                    component.showLoginBottomSheet(
-                        pageName = SignupPageName.LEADERBOARD,
-                        loginBottomSheetType = LoginBottomSheetType.DEFAULT,
-                        onDismissRequest = {
-                            dismissSheet()
-                            component.homeViewModel.onSignupPromptShown(SignupPageName.LEADERBOARD)
-                        },
-                        onLoginSuccess = {
-                            dismissSheet()
-                            component.homeViewModel.onSignupPromptShown(SignupPageName.LEADERBOARD)
-                        },
-                    )
+                    val onDismissOrSuccess = {
+                        dismissSheet()
+                        component.homeViewModel.onSignupPromptShown(SignupPageName.LEADERBOARD)
+                    }
+                    loginState.requestLogin(
+                        SignupPageName.LEADERBOARD,
+                        LoginScreenType.BottomSheet(LoginBottomSheetType.DEFAULT),
+                        LoginMode.BOTH,
+                        onDismissOrSuccess,
+                        onDismissOrSuccess,
+                    ) {}
+                } else {
+                    loginState.clearLogin()
                 }
             }
             else -> Unit

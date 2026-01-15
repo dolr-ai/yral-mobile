@@ -7,9 +7,15 @@ import com.yral.shared.core.AppConfigurations.OAUTH_BASE_URL
 import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
+import com.yral.shared.features.auth.data.models.AuthClientQuery
 import com.yral.shared.features.auth.data.models.DeleteAccountRequestDto
 import com.yral.shared.features.auth.data.models.ExchangePrincipalResponseDto
+import com.yral.shared.features.auth.data.models.PhoneAuthLoginRequestDto
+import com.yral.shared.features.auth.data.models.PhoneAuthLoginResponseDto
+import com.yral.shared.features.auth.data.models.PhoneAuthVerifyRequestDto
+import com.yral.shared.features.auth.data.models.PhoneAuthVerifyResponseDto
 import com.yral.shared.features.auth.data.models.TokenResponseDto
+import com.yral.shared.features.auth.data.models.VerifyRequestDto
 import com.yral.shared.features.auth.di.AuthEnv
 import com.yral.shared.firebaseStore.cloudFunctionUrl
 import com.yral.shared.firebaseStore.firebaseAppCheckToken
@@ -23,9 +29,12 @@ import com.yral.shared.rust.service.utils.delegatedIdentityWireToJson
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.headers
+import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.path
 import kotlinx.serialization.json.Json
@@ -196,6 +205,64 @@ class AuthDataSourceImpl(
         } ?: throw YralException("Identity not found while deregistering for notifications")
     }
 
+    override suspend fun phoneAuthLogin(
+        phoneNumber: String,
+        authClientQuery: AuthClientQuery,
+    ): PhoneAuthLoginResponseDto {
+        val requestBody =
+            PhoneAuthLoginRequestDto(
+                authClientQuery = authClientQuery,
+                phoneNumber = phoneNumber,
+            )
+        val response =
+            client.post {
+                expectSuccess = false
+                url {
+                    host = OAUTH_BASE_URL
+                    path(PATH_PHONE_AUTH_LOGIN)
+                }
+                setBody(requestBody)
+                contentType(ContentType.Application.Json)
+            }
+        return if (response.status == HttpStatusCode.OK) {
+            PhoneAuthLoginResponseDto.Success
+        } else {
+            val apiResponseString = response.bodyAsText()
+            json.decodeFromString<PhoneAuthLoginResponseDto.Error>(apiResponseString)
+        }
+    }
+
+    override suspend fun verifyPhoneAuth(verifyRequest: VerifyRequestDto): PhoneAuthVerifyResponseDto {
+        val requestBody = PhoneAuthVerifyRequestDto(verifyRequest = verifyRequest)
+        val response =
+            client.post {
+                expectSuccess = false
+                url {
+                    host = OAUTH_BASE_URL
+                    path(PATH_VERIFY_PHONE_AUTH)
+                }
+                setBody(requestBody)
+                contentType(ContentType.Application.Json)
+            }
+        val apiResponseString = response.bodyAsText()
+        return if (response.status == HttpStatusCode.OK) {
+            val responseArray = json.decodeFromString<List<String>>(apiResponseString)
+            if (responseArray.size == 2) {
+                PhoneAuthVerifyResponseDto.Success(
+                    idTokenCode = responseArray[0],
+                    redirectUri = responseArray[1],
+                )
+            } else {
+                PhoneAuthVerifyResponseDto.Error(
+                    error = "Missing all required keys",
+                    errorDescription = apiResponseString,
+                )
+            }
+        } else {
+            json.decodeFromString<PhoneAuthVerifyResponseDto.Error>(apiResponseString)
+        }
+    }
+
     companion object {
         private const val PATH_AUTHENTICATE_TOKEN = "oauth/token"
         private const val GRANT_TYPE_AUTHORIZATION = "authorization_code"
@@ -205,5 +272,7 @@ class AuthDataSourceImpl(
         private const val EXCHANGE_PRINCIPAL_PATH = "exchange_principal_id"
         private const val HEADER_X_FIREBASE_APPCHECK = "X-Firebase-AppCheck"
         private const val DELETE_ACCOUNT = "api/v1/user"
+        private const val PATH_PHONE_AUTH_LOGIN = "api/phone_auth_login"
+        private const val PATH_VERIFY_PHONE_AUTH = "api/verify_phone_auth"
     }
 }

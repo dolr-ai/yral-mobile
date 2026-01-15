@@ -3,8 +3,7 @@ package com.yral.shared.features.chat.nav
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
-import com.yral.shared.analytics.events.SignupPageName
-import com.yral.shared.features.auth.ui.LoginBottomSheetType
+import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.chat.nav.wall.ChatWallComponent
 import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
@@ -12,6 +11,7 @@ import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.serialization.Serializable
 
 abstract class ChatComponent : HomeChildSnapshotProvider {
+    abstract val requestLoginFactory: RequestLoginFactory
     abstract val stack: Value<ChildStack<*, Child>>
 
     abstract fun onBackClicked(): Boolean
@@ -45,24 +45,17 @@ abstract class ChatComponent : HomeChildSnapshotProvider {
     companion object Companion {
         operator fun invoke(
             componentContext: ComponentContext,
+            requestLoginFactory: RequestLoginFactory,
             snapshot: Snapshot?,
             openProfile: (userCanisterData: CanisterData) -> Unit,
             openConversation: (influencerId: String, influencerCategory: String) -> Unit,
-            showLoginBottomSheet: (
-                pageName: SignupPageName,
-                loginBottomSheetType: LoginBottomSheetType,
-                onDismissRequest: () -> Unit,
-                onLoginSuccess: () -> Unit,
-            ) -> Unit,
-            hideLoginBottomSheetIfVisible: () -> Unit,
         ): ChatComponent =
             DefaultChatComponent(
                 componentContext = componentContext,
+                requestLoginFactory = requestLoginFactory,
                 snapshot = snapshot,
                 openProfile = openProfile,
                 openConversation = openConversation,
-                showLoginBottomSheet = showLoginBottomSheet,
-                hideLoginBottomSheetIfVisible = hideLoginBottomSheetIfVisible,
             )
     }
 }

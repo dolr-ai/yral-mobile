@@ -20,7 +20,7 @@ import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.account.nav.AccountComponent
-import com.yral.shared.features.auth.ui.LoginBottomSheetType
+import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.chat.nav.ChatComponent
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
@@ -50,6 +50,7 @@ import kotlinx.serialization.Serializable
 @Suppress("TooManyFunctions", "LongParameterList")
 internal class DefaultHomeComponent(
     componentContext: ComponentContext,
+    override val requestLoginFactory: RequestLoginFactory,
     private val openEditProfile: () -> Unit,
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
     private val openConversation: (
@@ -69,15 +70,9 @@ internal class DefaultHomeComponent(
         startEpochMs: Long,
         endEpochMs: Long,
         totalPrizePool: Int,
+        isHotOrNot: Boolean,
     ) -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
-    private val showLoginBottomSheet: (
-        pageName: SignupPageName,
-        loginBottomSheetType: LoginBottomSheetType,
-        onDismissRequest: () -> Unit,
-        onLoginSuccess: () -> Unit,
-    ) -> Unit,
-    private val hideLoginBottomSheetIfVisible: () -> Unit,
 ) : HomeComponent(),
     ComponentContext by componentContext {
     private val navigation = StackNavigation<Config>()
@@ -220,24 +215,6 @@ internal class DefaultHomeComponent(
         openLeaderboard.invoke()
     }
 
-    override fun showLoginBottomSheet(
-        pageName: SignupPageName,
-        loginBottomSheetType: LoginBottomSheetType,
-        onDismissRequest: () -> Unit,
-        onLoginSuccess: () -> Unit,
-    ) {
-        showLoginBottomSheet.invoke(
-            pageName,
-            loginBottomSheetType,
-            onDismissRequest,
-            onLoginSuccess,
-        )
-    }
-
-    override fun hideLoginBottomSheetIfVisible() {
-        hideLoginBottomSheetIfVisible.invoke()
-    }
-
     private inline fun StackNavigator<Config>.replaceKeepingFeed(
         configuration: Config,
         crossinline onComplete: () -> Unit = { },
@@ -275,6 +252,7 @@ internal class DefaultHomeComponent(
     private fun feedComponent(componentContext: ComponentContext): FeedComponent =
         FeedComponent.Companion(
             componentContext = componentContext,
+            requestLoginFactory = requestLoginFactory,
             openProfile = openProfile,
             showAlertsOnDialog = showAlertsOnDialog,
             promptLogin = {
@@ -301,6 +279,7 @@ internal class DefaultHomeComponent(
             onBack = { navigation.pop() },
         )
 
+    @Suppress("MaxLineLength")
     private fun tournamentComponent(componentContext: ComponentContext): TournamentComponent =
         TournamentComponent(
             componentContext = componentContext,
@@ -308,7 +287,7 @@ internal class DefaultHomeComponent(
             navigateToLeaderboard = { tournamentId ->
                 openTournamentLeaderboard(tournamentId, false)
             },
-            navigateToTournament = { tournamentId, title, initialDiamonds, startEpochMs, endEpochMs, totalPrizePool ->
+            navigateToTournament = { tournamentId, title, initialDiamonds, startEpochMs, endEpochMs, totalPrizePool, isHotOrNot ->
                 openTournamentGame(
                     tournamentId,
                     title,
@@ -316,6 +295,7 @@ internal class DefaultHomeComponent(
                     startEpochMs,
                     endEpochMs,
                     totalPrizePool,
+                    isHotOrNot,
                 )
             },
             showAlertsOnDialog = showAlertsOnDialog,
@@ -335,6 +315,7 @@ internal class DefaultHomeComponent(
     private fun profileComponent(componentContext: ComponentContext): ProfileComponent =
         ProfileComponent.Companion(
             componentContext = componentContext,
+            requestLoginFactory = requestLoginFactory,
             onUploadVideoClicked = { onUploadVideoTabClick() },
             openEditProfile = openEditProfile,
             openProfile = openProfile,
@@ -358,11 +339,10 @@ internal class DefaultHomeComponent(
     private fun chatComponent(componentContext: ComponentContext): ChatComponent =
         ChatComponent.Companion(
             componentContext = componentContext,
+            requestLoginFactory = requestLoginFactory,
             snapshot = childSnapshots[Config.Chat] as? ChatComponent.Snapshot,
             openProfile = openProfile,
             openConversation = openConversation,
-            showLoginBottomSheet = showLoginBottomSheet,
-            hideLoginBottomSheetIfVisible = hideLoginBottomSheetIfVisible,
         )
 
     private fun slotChild(

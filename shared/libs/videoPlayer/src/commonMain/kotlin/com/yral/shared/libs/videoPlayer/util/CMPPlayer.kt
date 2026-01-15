@@ -77,6 +77,12 @@ fun CMPPlayer(
     }
 
     val logger = koinInject<YralLogger>().withTag("CMPPlayer")
+    // Match thumbnail content scale with video player
+    val thumbnailContentScale =
+        when (playerParams.size) {
+            ScreenResize.FIT -> ContentScale.Fit
+            ScreenResize.FILL -> ContentScale.Crop
+        }
     Box(modifier) {
         // YralBlurredThumbnail(playerData.thumbnailUrl)
         PlatformVideoPlayerView(Modifier.fillMaxSize(), platformPlayer, playerParams.size)
@@ -84,7 +90,7 @@ fun CMPPlayer(
             AsyncImage(
                 model = playerData.thumbnailUrl,
                 contentDescription = "Thumbnail",
-                contentScale = ContentScale.Fit,
+                contentScale = thumbnailContentScale,
                 onState = { state ->
                     // logger.d { "onState: $state" }
                 },

@@ -9,10 +9,13 @@ import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.features.game.domain.GetGameIconsUseCase
 import com.yral.shared.features.game.domain.models.GameIcon
 import com.yral.shared.features.tournament.analytics.TournamentTelemetry
+import com.yral.shared.features.tournament.domain.CastHotOrNotVoteUseCase
 import com.yral.shared.features.tournament.domain.CastTournamentVoteUseCase
 import com.yral.shared.features.tournament.domain.GetTournamentsUseCase
 import com.yral.shared.features.tournament.domain.model.CastTournamentVoteRequest
 import com.yral.shared.features.tournament.domain.model.GetTournamentsRequest
+import com.yral.shared.features.tournament.domain.model.HotOrNotVoteRequest
+import com.yral.shared.features.tournament.domain.model.HotOrNotVoteResult
 import com.yral.shared.features.tournament.domain.model.TournamentErrorCodes
 import com.yral.shared.features.tournament.domain.model.VoteOutcome
 import com.yral.shared.features.tournament.domain.model.VoteResult
@@ -22,10 +25,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@Suppress("TooManyFunctions")
 class TournamentGameViewModel(
     private val sessionManager: SessionManager,
     private val gameIconsUseCase: GetGameIconsUseCase,
     private val castTournamentVoteUseCase: CastTournamentVoteUseCase,
+    private val castHotOrNotVoteUseCase: CastHotOrNotVoteUseCase,
     private val getTournamentsUseCase: GetTournamentsUseCase,
     private val telemetry: TournamentTelemetry,
 ) : ViewModel() {
@@ -175,9 +180,88 @@ class TournamentGameViewModel(
             }
     }
 
+    /**
+     * Cast a hot or not vote based on swipe direction.
+     * @param isHot true for right swipe (hot), false for left swipe (not)
+     * @param videoId the video ID being voted on
+     */
+    fun castSwipeVote(
+        isHot: Boolean,
+        videoId: String,
+    ) {
+        val currentState = _state.value
+        if (currentState.isHotOrNotVoting) return
+        if (currentState.diamonds <= 0) {
+            _state.update { it.copy(noDiamondsError = true) }
+            telemetry.onOutOfDiamondsShown(tournamentId = currentState.tournamentId)
+            return
+        }
+        viewModelScope.launch { performHotOrNotVote(isHot, videoId) }
+    }
+
+    private suspend fun performHotOrNotVote(
+        isHot: Boolean,
+        videoId: String,
+    ) {
+        val currentState = _state.value
+        val principalId = sessionManager.userPrincipal ?: return
+        val vote = if (isHot) "hot" else "not"
+
+        _state.update { it.copy(isHotOrNotVoting = true) }
+
+        castHotOrNotVoteUseCase
+            .invoke(
+                HotOrNotVoteRequest(
+                    tournamentId = currentState.tournamentId,
+                    principalId = principalId,
+                    videoId = videoId,
+                    vote = vote,
+                ),
+            ).onSuccess { result ->
+                // Track answer submitted
+                val isCorrect = result.outcome == "WIN"
+                telemetry.onAnswerSubmitted(
+                    tournamentId = currentState.tournamentId,
+                    isCorrect = isCorrect,
+                    scoreDelta = result.diamondDelta,
+                    diamondsRemaining = result.diamonds,
+                )
+
+                val outcome = if (result.outcome == "WIN") VoteOutcome.WIN else VoteOutcome.LOSS
+
+                _state.update {
+                    val updatedResults = it.hotOrNotVoteResults.toMutableMap()
+                    updatedResults[videoId] = result
+                    it.copy(
+                        isHotOrNotVoting = false,
+                        diamonds = result.diamonds,
+                        position = result.position,
+                        wins = result.wins,
+                        losses = result.losses,
+                        lastVoteOutcome = outcome,
+                        lastDiamondDelta = result.diamondDelta,
+                        hotOrNotVoteResults = updatedResults,
+                        lastVotedCount = it.lastVotedCount + 1,
+                    )
+                }
+            }.onFailure { error ->
+                _state.update {
+                    it.copy(
+                        isHotOrNotVoting = false,
+                        noDiamondsError = error.code == TournamentErrorCodes.NO_DIAMONDS,
+                        tournamentEndedError = error.code == TournamentErrorCodes.TOURNAMENT_NOT_LIVE,
+                    )
+                }
+            }
+    }
+
     fun hasVotedOnVideo(videoId: String): Boolean = _state.value.voteResults.containsKey(videoId)
 
+    fun hasVotedOnHotOrNotVideo(videoId: String): Boolean = _state.value.hotOrNotVoteResults.containsKey(videoId)
+
     fun getVoteResult(videoId: String): VoteResult? = _state.value.voteResults[videoId]
+
+    fun getHotOrNotVoteResult(videoId: String): HotOrNotVoteResult? = _state.value.hotOrNotVoteResults[videoId]
 
     fun hasShownCoinDeltaAnimation(videoId: String): Boolean = _state.value.shownCoinDeltaAnimations.contains(videoId)
 
@@ -241,10 +325,12 @@ data class TournamentGameState(
     val losses: Int = 0,
     val endEpochMs: Long = 0,
     val isLoading: Boolean = false,
+    val isHotOrNotVoting: Boolean = false,
     val currentVideoId: String = "",
     val lastVoteOutcome: VoteOutcome? = null,
     val lastDiamondDelta: Int = 0,
     val voteResults: Map<String, VoteResult> = emptyMap(),
+    val hotOrNotVoteResults: Map<String, HotOrNotVoteResult> = emptyMap(),
     val shownCoinDeltaAnimations: Set<String> = emptySet(),
     val lastVotedCount: Int = 1,
     val noDiamondsError: Boolean = false,

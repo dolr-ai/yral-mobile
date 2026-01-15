@@ -9,6 +9,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
+import kotlin.time.Duration
 
 private const val MAX_CONCURRENCY = 64
 
@@ -137,3 +138,17 @@ inline fun <T> List<T>.update(
     index: Int,
     transform: (T) -> T,
 ): List<T> = toMutableList().also { it[index] = transform(it[index]) }
+
+@Suppress("MagicNumber")
+fun formatRemainingDuration(duration: Duration): String {
+    val totalSeconds = duration.inWholeSeconds.coerceAtLeast(0)
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+    fun Long.twoDigits(): String = this.toString().padStart(2, '0')
+
+    return when {
+        hours > 0 -> "${hours.twoDigits()}:${minutes.twoDigits()}:${seconds.twoDigits()}"
+        else -> "${minutes.twoDigits()}:${seconds.twoDigits()}"
+    }
+}

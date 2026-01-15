@@ -2,6 +2,7 @@ package com.yral.shared.features.tournament.nav
 
 import com.arkivanov.decompose.ComponentContext
 import com.yral.shared.data.AlertsRequestType
+import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
@@ -23,18 +24,21 @@ interface TournamentGameComponent : FeedComponent {
     companion object {
         operator fun invoke(
             componentContext: ComponentContext,
+            requestLoginFactory: RequestLoginFactory,
             tournamentId: String,
             tournamentTitle: String,
             initialDiamonds: Int,
             startEpochMs: Long,
             endEpochMs: Long,
             totalPrizePool: Int,
+            isHotOrNot: Boolean = false,
             onLeaderboardClick: (tournamentId: String, showResult: Boolean) -> Unit,
             onTimeUp: () -> Unit,
             onBack: () -> Unit,
         ): TournamentGameComponent =
             DefaultTournamentGameComponent(
                 componentContext = componentContext,
+                requestLoginFactory = requestLoginFactory,
                 gameConfig =
                     TournamentGameConfig(
                         tournamentId = tournamentId,
@@ -43,6 +47,7 @@ interface TournamentGameComponent : FeedComponent {
                         totalPrizePool = totalPrizePool,
                         startEpochMs = startEpochMs,
                         endEpochMs = endEpochMs,
+                        isHotOrNot = isHotOrNot,
                     ),
                 onLeaderboardClickCallback = onLeaderboardClick,
                 onTimeUpCallback = onTimeUp,
@@ -57,11 +62,13 @@ interface TournamentGameComponent : FeedComponent {
         val totalPrizePool: Int,
         val startEpochMs: Long,
         val endEpochMs: Long,
+        val isHotOrNot: Boolean = false,
     )
 }
 
 internal class DefaultTournamentGameComponent(
     componentContext: ComponentContext,
+    override val requestLoginFactory: RequestLoginFactory,
     override val gameConfig: TournamentGameComponent.TournamentGameConfig,
     private val onLeaderboardClickCallback: (tournamentId: String, showResult: Boolean) -> Unit,
     private val onTimeUpCallback: () -> Unit,
