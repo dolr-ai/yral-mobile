@@ -10,6 +10,7 @@ import com.yral.shared.analytics.events.AuthSessionCause
 import com.yral.shared.analytics.events.AuthSessionFlow
 import com.yral.shared.analytics.events.AuthSessionInitiator
 import com.yral.shared.analytics.events.AuthSessionState
+import com.yral.shared.analytics.events.OtpValidationStatus
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.DELAY_FOR_SESSION_PROPERTIES
 import com.yral.shared.core.session.Session
@@ -641,9 +642,18 @@ class DefaultAuthClient(
                     Logger.d("DefaultAuthClient") { "Phone auth verification completed" }
                     when (response) {
                         is PhoneAuthVerifyResponse.Error -> {
+                            authTelemetry.otpValidationResult(
+                                status = OtpValidationStatus.FAILURE,
+                                reason = response.error,
+                            )
+                            authTelemetry.authFailed(SocialProvider.PHONE)
                             throw YralAuthException("Phone auth verification failed - ${response.errorMessage}")
                         }
                         is PhoneAuthVerifyResponse.Success -> {
+                            authTelemetry.otpValidationResult(
+                                status = OtpValidationStatus.SUCCESS,
+                                reason = null,
+                            )
                             preferences.putString(PrefKeys.PHONE_NUMBER.name, phoneNumber)
                             sessionManager.updatePhoneNumber(phoneNumber)
                             val userPrincipal =
@@ -651,11 +661,16 @@ class DefaultAuthClient(
                                     ?: throw YralAuthException(
                                         "Phone auth verification failed - user principal not found",
                                     )
+                            currentProvider = SocialProvider.PHONE
                             authenticate(response.idTokenCode, userPrincipal)
                         }
                     }
                 }.onFailure { error ->
-                    authTelemetry.authFailed(SocialProvider.PHONE_NUMBER)
+                    authTelemetry.otpValidationResult(
+                        status = OtpValidationStatus.FAILURE,
+                        reason = error.message,
+                    )
+                    authTelemetry.authFailed(SocialProvider.PHONE)
                     Logger.e("DefaultAuthClient") { "Phone auth verification failed: ${error.message}" }
                     throw YralAuthException("Phone auth verification failed - ${error.message}")
                 }.getOrThrow()
