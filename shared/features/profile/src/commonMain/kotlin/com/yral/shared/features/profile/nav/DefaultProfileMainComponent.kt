@@ -1,6 +1,7 @@
 package com.yral.shared.features.profile.nav
 
 import com.arkivanov.decompose.ComponentContext
+import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.rust.service.utils.CanisterData
@@ -17,6 +18,11 @@ internal class DefaultProfileMainComponent(
     private val openAccount: () -> Unit,
     private val openEditProfile: () -> Unit,
     private val openProfile: (CanisterData) -> Unit,
+    private val openConversation: (
+        influencerId: String,
+        influencerCategory: String,
+        influencerSource: InfluencerSource,
+    ) -> Unit,
     private val onBackClicked: () -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
 ) : ProfileMainComponent,
@@ -36,6 +42,14 @@ internal class DefaultProfileMainComponent(
 
     override fun openProfile(userCanisterData: CanisterData) {
         openProfile.invoke(userCanisterData)
+    }
+
+    override fun openConversation(
+        influencerId: String,
+        influencerCategory: String,
+        influencerSource: InfluencerSource,
+    ) {
+        openConversation.invoke(influencerId, influencerCategory, influencerSource)
     }
 
     override fun onBackClicked() {

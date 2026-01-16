@@ -74,6 +74,7 @@ fun ChatConversationScreen(
         viewModel.initializeForInfluencer(
             influencerId = component.influencerId,
             influencerCategory = component.influencerCategory,
+            influencerSource = component.influencerSource,
         )
     }
 

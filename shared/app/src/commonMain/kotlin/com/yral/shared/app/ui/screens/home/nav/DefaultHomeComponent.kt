@@ -15,6 +15,7 @@ import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import com.yral.featureflag.FeatureFlagManager
+import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.core.session.SessionManager
@@ -56,6 +57,7 @@ internal class DefaultHomeComponent(
     private val openConversation: (
         influencerId: String,
         influencerCategory: String,
+        influencerSource: InfluencerSource,
     ) -> Unit,
     private val openWallet: () -> Unit,
     private val openLeaderboard: () -> Unit,
@@ -203,8 +205,9 @@ internal class DefaultHomeComponent(
     override fun openConversation(
         influencerId: String,
         influencerCategory: String,
+        influencerSource: InfluencerSource,
     ) {
-        openConversation.invoke(influencerId, influencerCategory)
+        openConversation.invoke(influencerId, influencerCategory, influencerSource)
     }
 
     override fun openWallet() {
@@ -319,6 +322,7 @@ internal class DefaultHomeComponent(
             onUploadVideoClicked = { onUploadVideoTabClick() },
             openEditProfile = openEditProfile,
             openProfile = openProfile,
+            openConversation = openConversation,
             snapshot = childSnapshots[Config.Profile] as? ProfileComponent.Snapshot,
             showAlertsOnDialog = showAlertsOnDialog,
             promptLogin = { homeViewModel.showSignupPrompt(true, it) },

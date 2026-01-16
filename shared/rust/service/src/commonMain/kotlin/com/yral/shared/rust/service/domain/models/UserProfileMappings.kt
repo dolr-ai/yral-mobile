@@ -1,19 +1,19 @@
 package com.yral.shared.rust.service.domain.models
 
-import com.yral.shared.uniffi.generated.UisUserProfileDetailsForFrontendV4
+import com.yral.shared.uniffi.generated.UisUserProfileDetailsForFrontendV6
 import com.yral.shared.uniffi.generated.UisUserProfileGlobalStats
 
-fun UisUserProfileDetailsForFrontendV4.toDomain(): UserProfileDetails =
+fun UisUserProfileDetailsForFrontendV6.toDomain(): UserProfileDetails =
     UserProfileDetails(
         bio = bio,
         websiteUrl = websiteUrl,
         followingCount = followingCount,
         userFollowsCaller = userFollowsCaller,
-        profilePictureUrl = profilePictureUrl,
+        profilePictureUrl = profilePicture?.url,
         principalId = principalId,
-        profileStats = profileStats.toDomain(),
         followersCount = followersCount,
         callerFollowsUser = callerFollowsUser,
+        isAiInfluencer = isAiInfluencer,
     )
 
 fun UisUserProfileGlobalStats.toDomain(): UserProfileGlobalStats =

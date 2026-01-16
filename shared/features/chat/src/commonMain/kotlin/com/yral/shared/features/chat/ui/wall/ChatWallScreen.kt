@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencerStatus
 import com.yral.shared.features.chat.nav.wall.ChatWallComponent
@@ -95,7 +96,11 @@ fun ChatWallScreen(
                         influencer = influencer,
                         onClick = {
                             viewModel.trackInfluencerCardClicked(influencer, index + 1)
-                            component.openConversation(influencer.id, influencer.category)
+                            component.openConversation(
+                                influencer.id,
+                                influencer.category,
+                                InfluencerSource.CARD,
+                            )
                         },
                         style = influencerCardStyles[index % influencerCardStyles.size],
                     )
