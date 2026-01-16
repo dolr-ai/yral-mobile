@@ -17,7 +17,7 @@ enum class ReelScrollDirection {
 class EdgeScrollDetectConnection(
     private val pageCount: Int,
     private val pagerState: PagerState,
-    private val playerConfig: PlayerConfig,
+    private val isVertical: Boolean,
     private val onEdgeScrollAttempt: (pageNo: Int, atStart: Boolean, direction: ReelScrollDirection) -> Unit,
 ) : NestedScrollConnection {
     override fun onPreScroll(
@@ -37,8 +37,8 @@ class EdgeScrollDetectConnection(
 
     private fun getDelta(available: Any): Float =
         when (available) {
-            is Offset -> if (playerConfig.reelVerticalScrolling) available.y else available.x
-            is Velocity -> if (playerConfig.reelVerticalScrolling) available.y else available.x
+            is Offset -> if (isVertical) available.y else available.x
+            is Velocity -> if (isVertical) available.y else available.x
             else -> 0f
         }
 
@@ -47,14 +47,14 @@ class EdgeScrollDetectConnection(
             delta < 0f && isAtLastPage() -> {
                 // Forward scrolling beyond last page
                 val dir =
-                    if (playerConfig.reelVerticalScrolling) ReelScrollDirection.Up else ReelScrollDirection.Left
+                    if (isVertical) ReelScrollDirection.Up else ReelScrollDirection.Left
                 onEdgeScrollAttempt(pagerState.currentPage, false, dir)
             }
 
             delta > 0f && isAtFirstPage() -> {
                 // Backward scrolling beyond first page
                 val dir =
-                    if (playerConfig.reelVerticalScrolling) ReelScrollDirection.Down else ReelScrollDirection.Right
+                    if (isVertical) ReelScrollDirection.Down else ReelScrollDirection.Right
                 onEdgeScrollAttempt(pagerState.currentPage, true, dir)
             }
         }

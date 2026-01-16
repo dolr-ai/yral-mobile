@@ -1,5 +1,6 @@
 package com.yral.shared.libs.videoPlayer
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.VerticalPager
@@ -16,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.foundation.background
 import coil3.compose.AsyncImage
 import com.shortform.video.CoordinatorDeps
 import com.shortform.video.MediaDescriptor
@@ -25,7 +25,6 @@ import com.shortform.video.ui.VideoFeedSync
 import com.shortform.video.ui.VideoPagerEffects
 import com.shortform.video.ui.VideoSurfaceSlot
 import com.shortform.video.ui.rememberPlaybackCoordinatorWithLifecycle
-import com.yral.shared.libs.videoPlayer.model.PlayerConfig
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.EdgeScrollDetectConnection
 import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
@@ -41,33 +40,6 @@ fun YRALReelPlayer(
     recordTime: (Int, Int) -> Unit,
     didVideoEnd: () -> Unit,
     onEdgeScrollAttempt: (pageNo: Int, atStart: Boolean, direction: ReelScrollDirection) -> Unit = { _, _, _ -> },
-    overlayContent: @Composable (pageNo: Int, scrollToNext: () -> Unit) -> Unit,
-) {
-    YRALReelsPlayerView(
-        modifier = modifier.fillMaxSize(),
-        reels = reels,
-        maxReelsInPager = maxReelsInPager,
-        initialPage = initialPage,
-        onPageLoaded = onPageLoaded,
-        recordTime = recordTime,
-        playerConfig = PlayerConfig(reelVerticalScrolling = true),
-        onEdgeScrollAttempt = onEdgeScrollAttempt,
-        overlayContent = overlayContent,
-        didVideoEnd = didVideoEnd
-    )
-}
-
-@Composable
-internal fun YRALReelsPlayerView(
-    modifier: Modifier = Modifier,
-    reels: List<Reels>,
-    maxReelsInPager: Int,
-    initialPage: Int,
-    onPageLoaded: (currentPage: Int) -> Unit,
-    recordTime: (Int, Int) -> Unit,
-    playerConfig: PlayerConfig = PlayerConfig(),
-    onEdgeScrollAttempt: (pageNo: Int, atStart: Boolean, direction: ReelScrollDirection) -> Unit = { _, _, _ -> },
-    didVideoEnd: () -> Unit,
     overlayContent: @Composable (pageNo: Int, scrollToNext: () -> Unit) -> Unit,
 ) {
     val pageCount = minOf(reels.size, maxReelsInPager)
@@ -111,16 +83,14 @@ internal fun YRALReelsPlayerView(
         itemsCount = mediaItems.size,
         coordinator = coordinator,
     )
-
-    val edgeDetectConnection =
-        remember(pageCount, playerConfig.reelVerticalScrolling) {
-            EdgeScrollDetectConnection(
-                pageCount = pageCount,
-                pagerState = pagerState,
-                playerConfig = playerConfig,
-                onEdgeScrollAttempt = onEdgeScrollAttempt,
-            )
-        }
+    val edgeDetectConnection = remember(pageCount) {
+        EdgeScrollDetectConnection(
+            pageCount = pageCount,
+            pagerState = pagerState,
+            isVertical = true,
+            onEdgeScrollAttempt = onEdgeScrollAttempt,
+        )
+    }
 
     var autoScrollToNext by remember { mutableStateOf(false) }
     LaunchedEffect(autoScrollToNext) {
@@ -133,7 +103,7 @@ internal fun YRALReelsPlayerView(
     }
 
     VerticalPager(
-        modifier = modifier.nestedScroll(edgeDetectConnection),
+        modifier = modifier.fillMaxSize().nestedScroll(edgeDetectConnection),
         state = pagerState,
         userScrollEnabled = true,
         beyondViewportPageCount = 1,
@@ -175,7 +145,12 @@ private fun rememberPlaybackEventReporter(
                 didVideoEnd()
             }
 
-            override fun playbackProgress(id: String, index: Int, positionMs: Long, durationMs: Long) {
+            override fun playbackProgress(
+                id: String,
+                index: Int,
+                positionMs: Long,
+                durationMs: Long
+            ) {
                 if (positionMs >= 0 && durationMs > 0) {
                     recordTime(positionMs.toInt(), durationMs.toInt())
                 }
@@ -196,7 +171,9 @@ private fun rememberPlaybackEventReporter(
                 message: String?,
             ) = Unit
 
-            override fun preloadScheduled(id: String, index: Int, distance: Int, mode: String) = Unit
+            override fun preloadScheduled(id: String, index: Int, distance: Int, mode: String) =
+                Unit
+
             override fun preloadCompleted(
                 id: String,
                 index: Int,

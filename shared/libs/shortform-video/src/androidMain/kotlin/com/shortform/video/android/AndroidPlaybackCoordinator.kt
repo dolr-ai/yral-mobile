@@ -55,7 +55,7 @@ private class AndroidPlaybackCoordinator(
     @kotlin.OptIn(ExperimentalTime::class)
     private val nowMs: () -> Long = { Clock.System.now().toEpochMilliseconds() }
 
-    private val cache = createCache(appContext, policy)
+    private val cache = ShortformCacheProvider.acquire(appContext, policy)
     private val preloadStatusControl = DefaultTargetPreloadStatusControl(policy)
     private val preloadManagerBuilder =
         DefaultPreloadManager.Builder(appContext, preloadStatusControl)
@@ -289,7 +289,7 @@ private class AndroidPlaybackCoordinator(
         playerA.release()
         playerB?.release()
         preloadManager.release()
-        cache.release()
+        ShortformCacheProvider.release()
     }
 
     
@@ -392,10 +392,38 @@ private class AndroidPlaybackCoordinator(
             .build()
     }
 
-    private fun createCache(context: Context, policy: PreloadPolicy): SimpleCache {
-        val cacheDir = File(context.cacheDir, "shortform-video-cache")
-        val evictor = LeastRecentlyUsedCacheEvictor(policy.cacheMaxBytes)
-        return SimpleCache(cacheDir, evictor, StandaloneDatabaseProvider(context))
+    private object ShortformCacheProvider {
+        private val lock = Any()
+        private var cache: SimpleCache? = null
+        private var databaseProvider: StandaloneDatabaseProvider? = null
+        private var refCount = 0
+
+        fun acquire(context: Context, policy: PreloadPolicy): SimpleCache {
+            synchronized(lock) {
+                val existing = cache
+                if (existing != null) {
+                    refCount++
+                    return existing
+                }
+                val cacheDir = File(context.cacheDir, "shortform-video-cache")
+                val evictor = LeastRecentlyUsedCacheEvictor(policy.cacheMaxBytes)
+                val provider = databaseProvider ?: StandaloneDatabaseProvider(context).also {
+                    databaseProvider = it
+                }
+                val created = SimpleCache(cacheDir, evictor, provider)
+                cache = created
+                refCount = 1
+                return created
+            }
+        }
+
+        fun release() {
+            synchronized(lock) {
+                if (refCount > 0) {
+                    refCount--
+                }
+            }
+        }
     }
 
     private data class PlayerSlot(
