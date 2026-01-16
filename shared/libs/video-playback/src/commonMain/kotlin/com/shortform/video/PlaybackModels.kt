@@ -7,18 +7,11 @@ enum class ContainerHint {
     UNKNOWN,
 }
 
-data class DrmDescriptor(
-    val scheme: String,
-    val licenseUri: String,
-    val headers: Map<String, String> = emptyMap(),
-)
-
 data class MediaDescriptor(
     val id: String,
     val uri: String,
     val containerHint: ContainerHint = ContainerHint.UNKNOWN,
     val headers: Map<String, String> = emptyMap(),
-    val drm: DrmDescriptor? = null,
 )
 
 data class PreloadPolicy(
@@ -27,7 +20,7 @@ data class PreloadPolicy(
     val diskPrefetchNext: Int = 3,
     val maxConcurrentPrefetch: Int = 2,
     val preloadTargetBytes: Long = 1_500_000,
-    val cacheMaxBytes: Long = 1_000_000_000,
+    val cacheMaxBytes: Long = 250_000_000,
     val usePreparedNextPlayer: Boolean = false,
 )
 
