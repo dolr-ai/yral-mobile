@@ -448,7 +448,7 @@ When asked to create tournaments, use the Firebase Cloud Functions - they handle
 ### Tournament Types
 
 1. **Smiley Tournament** - Users vote on videos with emoji reactions
-2. **Hot or Not Tournament** - Users predict if a video is "hot" or "not", compared against AI verdict
+2. **Hot or Not Tournament** - Users predict if a video is "hot" or "not", compared against Gemini AI verdict
 
 ### Default Configuration
 
@@ -462,8 +462,8 @@ When asked to create tournaments, use the Firebase Cloud Functions - they handle
 **Always use Cloud Functions** - they handle:
 - Backend API registration (gets tournament ID and videos from recsys)
 - Firestore document creation
-- Cloud Tasks scheduling for status transitions
-- AI video analysis (Hot or Not only)
+- Cloud Tasks scheduling for status transitions (scheduled → live → ended → settled)
+- **Gemini 2.0 Flash video analysis** (Hot or Not only) - downloads videos, analyzes with AI, stores verdict/confidence/reason
 - Prize settlement and BTC payouts
 
 #### Smiley Tournament (Staging)
@@ -503,7 +503,7 @@ curl -X POST "https://us-central1-yral-staging.cloudfunctions.net/create_hot_or_
     "prize_map": {"1": 3, "2": 2},
     "start_time": "HH:MM",
     "end_time": "HH:MM",
-    "video_count": 50
+    "video_count": 10
   }'
 ```
 
