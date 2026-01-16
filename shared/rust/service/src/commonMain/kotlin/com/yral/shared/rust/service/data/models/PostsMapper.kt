@@ -44,7 +44,9 @@ internal fun UpsResult3.toPosts(canisterId: String): Posts =
                     )
                 },
             )
-        is UpsResult3.Err -> Posts.Err(v1.toPostsOfUserProfileError())
+        is UpsResult3.Err ->
+            // UpsResult3.Err carries a string; fallback to a generic error mapping
+            Posts.Err(PostsOfUserProfileError.INVALID_BOUNDS_PASSED)
     }
 
 fun UpsGetPostsOfUserProfileError.toPostsOfUserProfileError(): PostsOfUserProfileError =

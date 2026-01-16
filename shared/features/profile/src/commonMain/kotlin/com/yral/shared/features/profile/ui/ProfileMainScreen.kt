@@ -63,6 +63,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import com.yral.shared.analytics.events.EditProfileSource
+import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.data.AlertsRequestType
@@ -235,6 +236,14 @@ fun ProfileMainScreen(
                     } else {
                         followers.refresh()
                     }
+                }
+
+                is ProfileEvents.InfluencerDetailsFetched -> {
+                    component.openConversation(
+                        influencerId = event.influencer.id,
+                        influencerCategory = event.influencer.category,
+                        influencerSource = InfluencerSource.PROFILE,
+                    )
                 }
 
                 is ProfileEvents.Failed -> {
@@ -596,9 +605,12 @@ private fun MainContent(
                 showFollow = !state.isOwnProfile && state.isLoggedIn,
                 isFollowing = state.isFollowing,
                 isFollowInProgress = state.isFollowInProgress,
+                isAiInfluencer = state.isAiInfluencer,
+                isTalkToMeInProgress = state.isTalkToMeInProgress,
                 onFollowClicked = { viewModel.followUnfollow() },
                 onFollowersClick = { onFollowersSectionClick(FollowersSheetTab.Followers) },
                 onFollowingClick = { onFollowersSectionClick(FollowersSheetTab.Following) },
+                onTalkToMeClicked = viewModel::fetchInfluencerDetails,
             )
         }
         when (profileVideos.loadState.refresh) {

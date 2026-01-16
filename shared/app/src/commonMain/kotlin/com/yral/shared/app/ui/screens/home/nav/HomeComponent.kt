@@ -7,6 +7,7 @@ import com.arkivanov.decompose.value.Value
 import com.yral.featureflag.ChatFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.WalletFeatureFlags
+import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
@@ -43,6 +44,7 @@ abstract class HomeComponent {
     abstract fun openConversation(
         influencerId: String,
         influencerCategory: String = "",
+        influencerSource: InfluencerSource = InfluencerSource.CARD,
     )
     abstract fun openWallet()
     abstract fun openLeaderboard()
@@ -91,6 +93,7 @@ abstract class HomeComponent {
             openConversation: (
                 influencerId: String,
                 influencerCategory: String,
+                influencerSource: InfluencerSource,
             ) -> Unit,
             openWallet: () -> Unit,
             openLeaderboard: () -> Unit,

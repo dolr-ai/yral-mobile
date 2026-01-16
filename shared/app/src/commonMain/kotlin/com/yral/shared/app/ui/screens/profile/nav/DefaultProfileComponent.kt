@@ -9,6 +9,7 @@ import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.pushToFront
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
+import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.account.nav.AccountComponent
@@ -31,6 +32,11 @@ internal class DefaultProfileComponent(
     private val onUploadVideoClicked: () -> Unit,
     private val openEditProfile: () -> Unit,
     private val openProfile: (CanisterData) -> Unit,
+    private val openConversation: (
+        influencerId: String,
+        influencerCategory: String,
+        influencerSource: InfluencerSource,
+    ) -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
     override val promptLogin: (pageName: SignupPageName) -> Unit,
 ) : ProfileComponent(),
@@ -83,6 +89,14 @@ internal class DefaultProfileComponent(
         // navigation.pushToFront(Config.EditProfile)
     }
 
+    override fun openConversation(
+        influencerId: String,
+        influencerCategory: String,
+        influencerSource: InfluencerSource,
+    ) {
+        openConversation.invoke(influencerId, influencerCategory, influencerSource)
+    }
+
     override fun onBackClicked(): Boolean {
         val items = stack.value.items
         return if (items.size > 1) {
@@ -132,6 +146,7 @@ internal class DefaultProfileComponent(
             openAccount = this::openAccount,
             openEditProfile = this::openEditProfile,
             openProfile = openProfile,
+            openConversation = openConversation,
             onBackClicked = {},
             showAlertsOnDialog = showAlertsOnDialog,
         )
