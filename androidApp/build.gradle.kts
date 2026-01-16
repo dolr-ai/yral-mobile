@@ -187,7 +187,6 @@ dependencies {
     implementation(projects.shared.libs.routing.deeplinkEngine)
     implementation(projects.shared.features.wallet)
     implementation(projects.shared.libs.designsystem)
-    implementation(projects.shared.libs.shortformVideo)
     implementation(projects.shared.features.reportVideo)
     implementation(compose.components.resources)
     implementation(projects.shared.features.leaderboard)

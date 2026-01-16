@@ -118,7 +118,7 @@ internal class IosDownloadCache(
         val urls = fileManager.URLsForDirectory(NSCachesDirectory, NSUserDomainMask)
         val base = urls.firstOrNull() as? NSURL
             ?: NSURL.fileURLWithPath(NSTemporaryDirectory())
-        val dir = base.URLByAppendingPathComponent("shortform-video-cache")!!
+        val dir = base.URLByAppendingPathComponent("video-playback-cache")!!
         fileManager.createDirectoryAtURL(
             dir,
             withIntermediateDirectories = true,

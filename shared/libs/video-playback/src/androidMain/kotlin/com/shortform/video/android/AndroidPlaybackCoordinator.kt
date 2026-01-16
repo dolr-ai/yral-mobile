@@ -405,7 +405,7 @@ private class AndroidPlaybackCoordinator(
                     refCount++
                     return existing
                 }
-                val cacheDir = File(context.cacheDir, "shortform-video-cache")
+                val cacheDir = File(context.cacheDir, "video-playback-cache")
                 val evictor = LeastRecentlyUsedCacheEvictor(policy.cacheMaxBytes)
                 val provider = databaseProvider ?: StandaloneDatabaseProvider(context).also {
                     databaseProvider = it
