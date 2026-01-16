@@ -2,39 +2,31 @@ package com.yral.shared.libs.videoPlayer
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import com.yral.shared.libs.videoPlayer.model.PREFETCH_NEXT_N_VIDEOS
+import com.shortform.video.CoordinatorDeps
+import com.shortform.video.MediaDescriptor
+import com.shortform.video.PlaybackEventReporter
+import com.shortform.video.ui.VideoFeedSync
+import com.shortform.video.ui.VideoPagerEffects
+import com.shortform.video.ui.VideoSurfaceSlot
+import com.shortform.video.ui.rememberPlaybackCoordinatorWithLifecycle
 import com.yral.shared.libs.videoPlayer.model.PlayerConfig
-import com.yral.shared.libs.videoPlayer.model.PlayerControls
 import com.yral.shared.libs.videoPlayer.model.Reels
-import com.yral.shared.libs.videoPlayer.model.toPlayerData
 import com.yral.shared.libs.videoPlayer.pool.VideoListener
-import com.yral.shared.libs.videoPlayer.pool.rememberPlayerPool
 import com.yral.shared.libs.videoPlayer.util.EdgeScrollDetectConnection
-import com.yral.shared.libs.videoPlayer.util.PrefetchVideo
 import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
 import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
-import com.yral.shared.libs.videoPlayer.util.evictPrefetchedVideo
-import com.yral.shared.libs.videoPlayer.util.nextN
-import com.yral.shared.libs.videoPlayer.util.rememberPrefetchPlayerWithLifecycle
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
@@ -58,151 +50,73 @@ fun YRALReelPlayer(
         initialPage = initialPage,
         onPageLoaded = onPageLoaded,
         recordTime = recordTime,
-        playerConfig =
-            PlayerConfig(
-                isAutoHideControlEnabled = true,
-                isPauseResumeEnabled = false,
-                isFastForwardBackwardEnabled = false,
-                isSeekBarVisible = false,
-                isDurationVisible = false,
-                isMuteControlEnabled = false,
-                isSpeedControlEnabled = false,
-                isFullScreenEnabled = false,
-                isScreenLockEnabled = false,
-                reelVerticalScrolling = true,
-                loaderView = {},
-                didEndVideo = didVideoEnd,
-            ),
+        playerConfig = PlayerConfig(reelVerticalScrolling = true),
         onEdgeScrollAttempt = onEdgeScrollAttempt,
         getPrefetchListener = getPrefetchListener,
         getVideoListener = { getVideoListener(it) },
         overlayContent = overlayContent,
+        didVideoEnd = didVideoEnd
     )
 }
 
-@Suppress("LongMethod", "CyclomaticComplexMethod")
+@Suppress("UNUSED_PARAMETER")
 @Composable
 internal fun YRALReelsPlayerView(
-    modifier: Modifier = Modifier, // Modifier for the composable
-    reels: List<Reels>, // List of video URLs
+    modifier: Modifier = Modifier,
+    reels: List<Reels>,
     maxReelsInPager: Int,
     initialPage: Int,
     onPageLoaded: (currentPage: Int) -> Unit,
     recordTime: (Int, Int) -> Unit,
-    playerConfig: PlayerConfig = PlayerConfig(), // Configuration for the player,
+    playerConfig: PlayerConfig = PlayerConfig(),
     onEdgeScrollAttempt: (pageNo: Int, atStart: Boolean, direction: ReelScrollDirection) -> Unit = { _, _, _ -> },
     getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
     getVideoListener: (reel: Reels) -> VideoListener?,
+    didVideoEnd: () -> Unit,
     overlayContent: @Composable (pageNo: Int, scrollToNext: () -> Unit) -> Unit,
 ) {
     val pageCount = minOf(reels.size, maxReelsInPager)
     if (pageCount == 0) return
-    // Remember the state of the pager
+
+    val visibleReels = remember(reels, pageCount) { reels.take(pageCount) }
+    val mediaItems =
+        remember(visibleReels) {
+            visibleReels.map { reel ->
+                MediaDescriptor(
+                    id = reel.videoId,
+                    uri = reel.videoUrl,
+                )
+            }
+        }
+
     val pagerState =
         rememberPagerState(
             pageCount = { pageCount },
             initialPage = initialPage.coerceAtMost(pageCount - 1),
         )
 
-    // Create multiplatform player pool for efficient resource management
-    val playerPool = rememberPlayerPool(maxPoolSize = 3)
-    // Clean up player pool when composable is disposed
-    DisposableEffect(playerPool) { onDispose { playerPool.dispose() } }
+    val reporter = rememberPlaybackEventReporter(
+        didVideoEnd = didVideoEnd,
+        recordTime = recordTime,
+    )
 
-    // Prefetch state management
-    val prefetchQueue = remember { mutableStateSetOf<Reels>() }
-    val prefetchedReels = remember { mutableStateSetOf<String>() }
-    val prefetchedReelUrls = remember { mutableStateMapOf<String, String>() }
-    DisposableEffect(Unit) {
-        onDispose {
-            prefetchedReelUrls.values.forEach { url ->
-                evictPrefetchedVideo(url)
-            }
-            prefetchedReelUrls.clear()
-            prefetchedReels.clear()
-            prefetchQueue.clear()
-        }
-    }
-    // Add new videos to prefetch queue on page change
-    LaunchedEffect(reels, pagerState) {
+    LaunchedEffect(pagerState, visibleReels) {
         snapshotFlow { pagerState.currentPage }
             .distinctUntilChanged()
-            .collect { currentPage ->
-                val newReels =
-                    reels
-                        .nextN(currentPage, PREFETCH_NEXT_N_VIDEOS)
-                        .filter { prefetch -> prefetch.videoId !in prefetchedReels }
-                if (newReels.isNotEmpty()) {
-                    prefetchQueue.addAll(newReels)
-                }
+            .collect { page ->
+                onPageLoaded(page)
             }
     }
-    val prefetch by remember { derivedStateOf { prefetchQueue.firstOrNull() } }
-    val prefetchVideoListener = remember(prefetch) { prefetch?.let { reel -> getPrefetchListener(reel) } }
-    prefetch?.let { reel ->
-        PrefetchVideos(
-            url = reel.videoUrl,
-            listener = prefetchVideoListener,
-            onUrlReady = {
-                prefetchQueue.removeAll { it.videoId == reel.videoId }
-                prefetchedReels.add(reel.videoId)
-                prefetchedReelUrls[reel.videoId] = reel.videoUrl
-            },
-        )
-    }
+    val coordinator = rememberPlaybackCoordinatorWithLifecycle(
+        deps = CoordinatorDeps(reporter = reporter),
+    )
+    VideoFeedSync(items = mediaItems, coordinator = coordinator)
+    VideoPagerEffects(
+        pagerState = pagerState,
+        itemsCount = mediaItems.size,
+        coordinator = coordinator,
+    )
 
-    LaunchedEffect(reels, pagerState, prefetchedReelUrls) {
-        snapshotFlow {
-            val currentPage = pagerState.currentPage
-            val keepIds = mutableSetOf<String>()
-            reels.getOrNull(currentPage)?.videoId?.let(keepIds::add)
-            reels.getOrNull(currentPage - 1)?.videoId?.let(keepIds::add)
-            reels
-                .nextN(currentPage, PREFETCH_NEXT_N_VIDEOS)
-                .forEach { keepIds.add(it.videoId) }
-            keepIds.toSet() to prefetchedReelUrls.toMap()
-        }.distinctUntilChanged().collect { (keepIds, prefetchedMap) ->
-            prefetchedMap.forEach { (videoId, url) ->
-                if (videoId !in keepIds) {
-                    evictPrefetchedVideo(url)
-                    prefetchedReels.remove(videoId)
-                    prefetchedReelUrls.remove(videoId)
-                }
-            }
-        }
-    }
-
-    // Report initial pager state
-    LaunchedEffect(Unit) { onPageLoaded(pagerState.currentPage) }
-
-    // Page change to start/stop play back time trace
-    var lastPage by remember { mutableIntStateOf(-1) }
-    LaunchedEffect(key1 = pagerState, reels) {
-        snapshotFlow { pagerState.currentPage to reels }
-            .distinctUntilChanged()
-            .collect { (page, reels) ->
-                if (lastPage != page) {
-                    if (reels.size > lastPage && lastPage >= 0) {
-                        playerPool.onPlayBackStopped(
-                            playerData = reels[lastPage].toPlayerData(),
-                        )
-                    }
-                    // small delay for player setup
-                    delay(PLAYER_SETUP_DELAY)
-                    if (reels.size > page && page >= 0) {
-                        playerPool.onPlayBackStarted(
-                            playerData = reels[page].toPlayerData(),
-                        )
-                    }
-                    lastPage = page
-                }
-            }
-    }
-
-    var isPause by remember { mutableStateOf(false) } // State for pausing/resuming video
-    LaunchedEffect(pagerState.currentPage) { isPause = false }
-
-    // Detect user attempts to scroll beyond available pages (start or end)
     val edgeDetectConnection =
         remember(pageCount, playerConfig.reelVerticalScrolling) {
             EdgeScrollDetectConnection(
@@ -223,106 +137,70 @@ internal fun YRALReelsPlayerView(
         }
     }
 
-    // Render vertical pager if enabled, otherwise render horizontal pager
-    if (playerConfig.reelVerticalScrolling) {
-        VerticalPager(
-            modifier = modifier.nestedScroll(edgeDetectConnection),
-            state = pagerState,
-            userScrollEnabled = true, // Ensure user scrolling is enabled
-            beyondViewportPageCount = 0,
-            key = { page -> reels.getOrNull(page)?.videoId ?: page },
-        ) { page ->
-            // Create a side effect to detect when this page is shown
-            LaunchedEffect(page, pagerState.currentPage) {
-                if (pagerState.currentPage == page) {
-                    // Call the callback directly from here
-                    onPageLoaded(page)
-                }
-            }
-            Box(
+    VerticalPager(
+        modifier = modifier.nestedScroll(edgeDetectConnection),
+        state = pagerState,
+        userScrollEnabled = true,
+        beyondViewportPageCount = 1,
+        key = { page -> visibleReels.getOrNull(page)?.videoId ?: page },
+    ) { page ->
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.TopStart,
+        ) {
+            VideoSurfaceSlot(
+                index = page,
+                coordinator = coordinator,
                 modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.TopStart,
-            ) {
-                // Video player with control
-                YRALVideoPlayerWithControl(
-                    modifier = Modifier.fillMaxSize(),
-                    playerData = reels[page].toPlayerData(reels, page),
-                    playerConfig = playerConfig,
-                    playerControls =
-                        PlayerControls(
-                            isPause =
-                                if (pagerState.currentPage == page) {
-                                    isPause
-                                } else {
-                                    true
-                                }, // Pause video when not in focus
-                            onPauseToggle = { isPause = isPause.not() }, // Toggle pause/resume
-                            recordTime = recordTime,
-                        ),
-                    playerPool = playerPool,
-                    videoListener = getVideoListener(reels[page]),
-                )
-                overlayContent(page) { autoScrollToNext = true }
-            }
-        }
-    } else {
-        HorizontalPager(
-            modifier = modifier.nestedScroll(edgeDetectConnection),
-            state = pagerState,
-            userScrollEnabled = true, // Ensure user scrolling is enabled
-            beyondViewportPageCount = 0,
-        ) { page ->
-            // Create a side effect to detect when this page is shown
-            LaunchedEffect(page, pagerState.currentPage) {
-                if (pagerState.currentPage == page) {
-                    // Call the callback directly from here
-                    onPageLoaded(page)
-                }
-            }
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.TopStart,
-            ) {
-                // Video player with control
-                YRALVideoPlayerWithControl(
-                    modifier = Modifier.fillMaxSize(),
-                    playerData = reels[page].toPlayerData(reels, page),
-                    playerConfig = playerConfig,
-                    playerControls =
-                        PlayerControls(
-                            isPause =
-                                if (pagerState.currentPage == page) {
-                                    isPause
-                                } else {
-                                    true
-                                }, // Pause video when not in focus
-                            onPauseToggle = { isPause = isPause.not() }, // Toggle pause/resume
-                            recordTime = recordTime,
-                        ),
-                    playerPool = playerPool,
-                    videoListener = getVideoListener(reels[page]),
-                )
-                overlayContent(page) { autoScrollToNext = true }
-            }
+                overlay = { overlayContent(page) { autoScrollToNext = true } },
+            )
         }
     }
 }
 
 @Composable
-private fun PrefetchVideos(
-    url: String?,
-    listener: PrefetchVideoListener?,
-    onUrlReady: (url: String) -> Unit,
-) {
-    val prefetchPlayer = rememberPrefetchPlayerWithLifecycle()
-    url?.let {
-        PrefetchVideo(
-            player = prefetchPlayer,
-            url = url,
-            listener = listener,
-            onUrlReady = onUrlReady,
-        )
-    }
-}
+private fun rememberPlaybackEventReporter(
+    didVideoEnd: () -> Unit,
+    recordTime: (Int, Int) -> Unit,
+): PlaybackEventReporter =
+    remember(didVideoEnd, recordTime) {
+        object : PlaybackEventReporter {
+            override fun playbackEnded(id: String, index: Int) {
+                didVideoEnd()
+            }
 
-private const val PLAYER_SETUP_DELAY = 100L
+            override fun playbackProgress(id: String, index: Int, positionMs: Long, durationMs: Long) {
+                if (positionMs >= 0 && durationMs > 0) {
+                    recordTime(positionMs.toInt(), durationMs.toInt())
+                }
+            }
+
+            override fun feedItemImpression(id: String, index: Int) = Unit
+            override fun playStartRequest(id: String, index: Int, reason: String) = Unit
+            override fun firstFrameRendered(id: String, index: Int) = Unit
+            override fun timeToFirstFrame(id: String, index: Int, ms: Long) = Unit
+            override fun rebufferStart(id: String, index: Int, reason: String) = Unit
+            override fun rebufferEnd(id: String, index: Int, reason: String) = Unit
+            override fun rebufferTotal(id: String, index: Int, ms: Long) = Unit
+            override fun playbackError(
+                id: String,
+                index: Int,
+                category: String,
+                code: Any,
+                message: String?,
+            ) = Unit
+
+            override fun preloadScheduled(id: String, index: Int, distance: Int, mode: String) = Unit
+            override fun preloadCompleted(
+                id: String,
+                index: Int,
+                bytes: Long,
+                ms: Long,
+                fromCache: Boolean,
+            ) = Unit
+
+            override fun preloadCanceled(id: String, index: Int, reason: String) = Unit
+            override fun cacheHit(id: String, bytes: Long) = Unit
+            override fun cacheMiss(id: String, bytes: Long) = Unit
+        }
+    }

@@ -34,6 +34,7 @@ kotlin {
 
             implementation(projects.shared.core)
             implementation(projects.shared.libs.koin)
+            implementation(projects.shared.libs.shortformVideo)
 
             implementation(libs.coil.compose)
 

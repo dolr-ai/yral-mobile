@@ -20,7 +20,7 @@ import com.yral.android.update.InAppUpdateManager
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.nav.DefaultRootComponent
 import com.yral.shared.app.ui.MyApplicationTheme
-import com.shortform.video.ui.ShortformVideoDemoScreen
+import com.yral.shared.app.ui.screens.RootScreen
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.utils.OAuthResult
 import com.yral.shared.features.auth.utils.OAuthUtils
@@ -133,7 +133,7 @@ class MainActivity : ComponentActivity() {
             CompositionLocalProvider(LocalRippleConfiguration provides null) {
                 CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
                     MyApplicationTheme {
-                        ShortformVideoDemoScreen()
+                        RootScreen(rootComponent)
                     }
                 }
             }
