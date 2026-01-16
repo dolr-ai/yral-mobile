@@ -9,6 +9,7 @@ on:
       - ready_for_review
       - synchronize
       - reopened
+      - labeled
     paths:
       - '**/*.kt'
       - '**/*.kts'
@@ -21,6 +22,7 @@ on:
 permissions:
   id-token: write
   contents: read
+  pull-requests: read
 
 jobs:
   build-play-store-internal:
@@ -91,6 +93,26 @@ jobs:
           echo "YRAL_BRANCH_KEY=${{ secrets.YRAL_BRANCH_KEY }}" >> $GITHUB_ENV
           echo "YRAL_META_INSTALL_REFERRER_DECRYPTION_KEY=${{ secrets.YRAL_META_INSTALL_REFERRER_DECRYPTION_KEY }}" >> $GITHUB_ENV
 
+      - name: Determine update priority from PR labels
+        id: update-priority
+        run: |
+          PRIORITY="0"
+          LABELS="${{ join(github.event.pull_request.labels.*.name, ' ') }}"
+          echo "PR labels: $LABELS"
+          
+          if echo "$LABELS" | grep -q "update-immediate"; then
+            PRIORITY="4"
+            echo "Found 'update-immediate' label, setting priority to 4"
+          elif echo "$LABELS" | grep -q "update-flexible"; then
+            PRIORITY="2"
+            echo "Found 'update-flexible' label, setting priority to 2"
+          else
+            echo "No relevant update label found, using default priority 0"
+          fi
+          
+          echo "update_priority=$PRIORITY" >> $GITHUB_OUTPUT
+          echo "Set update priority to: $PRIORITY"
+
       - name: Clean project
         run: ./gradlew clean
 
@@ -116,3 +138,4 @@ jobs:
           releaseFiles: androidApp/build/outputs/bundle/prodRelease/androidApp-prod-release.aab
           track: internal
           status: draft
+          inAppUpdatePriority: ${{ steps.update-priority.outputs.update_priority }}
