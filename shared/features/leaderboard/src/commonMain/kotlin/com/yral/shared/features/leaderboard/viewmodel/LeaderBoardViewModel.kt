@@ -14,8 +14,8 @@ import com.yral.shared.features.leaderboard.domain.models.GetLeaderboardRequest
 import com.yral.shared.features.leaderboard.domain.models.LeaderboardDailyRankRequest
 import com.yral.shared.features.leaderboard.domain.models.LeaderboardItem
 import com.yral.shared.features.leaderboard.domain.models.RewardCurrency
-import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4Params
-import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4UseCase
+import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV6Params
+import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV6UseCase
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import kotlinx.coroutines.Job
@@ -32,7 +32,7 @@ class LeaderBoardViewModel(
     private val getLeaderboardRankForTodayUseCase: GetLeaderboardRankForTodayUseCase,
     private val sessionManager: SessionManager,
     private val leaderBoardTelemetry: LeaderBoardTelemetry,
-    private val getProfileDetailsV4UseCase: GetProfileDetailsV4UseCase,
+    private val getUserProfileDetailsV6UseCase: GetUserProfileDetailsV6UseCase,
 ) : ViewModel() {
     private val _state = MutableStateFlow(LeaderBoardState())
     val state: StateFlow<LeaderBoardState> = _state.asStateFlow()
@@ -212,9 +212,9 @@ class LeaderBoardViewModel(
         viewModelScope.launch {
             sessionManager.userPrincipal?.let { principal ->
                 _state.update { it.copy(isNavigating = true) }
-                getProfileDetailsV4UseCase(
+                getUserProfileDetailsV6UseCase(
                     parameter =
-                        GetProfileDetailsV4Params(
+                        GetUserProfileDetailsV6Params(
                             principal = principal,
                             targetPrincipal = item.userPrincipalId,
                         ),

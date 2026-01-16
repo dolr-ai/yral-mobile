@@ -139,6 +139,95 @@ impl From<yral_canisters_client::user_info_service::UserProfileDetailsForFronten
     }
 }
 
+#[derive(CandidType, Deserialize, Record, Clone)]
+pub struct UISUserProfileDetailsForFrontendV6 {
+    pub bio: Option<String>,
+    pub website_url: Option<String>,
+    pub following_count: u64,
+    pub user_follows_caller: Option<bool>,
+    pub profile_picture: Option<UISProfilePictureData>,
+    pub principal_id: Principal,
+    pub followers_count: u64,
+    pub caller_follows_user: Option<bool>,
+    pub subscription_plan: String,
+    pub is_ai_influencer: bool,
+}
+
+impl From<yral_canisters_client::user_info_service::UserProfileDetailsForFrontendV6>
+    for UISUserProfileDetailsForFrontendV6
+{
+    fn from(
+        value: yral_canisters_client::user_info_service::UserProfileDetailsForFrontendV6,
+    ) -> Self {
+        Self {
+            bio: value.bio,
+            website_url: value.website_url,
+            following_count: value.following_count,
+            user_follows_caller: value.user_follows_caller,
+            profile_picture: value.profile_picture.map(|pic| pic.into()),
+            principal_id: value.principal_id,
+            followers_count: value.followers_count,
+            caller_follows_user: value.caller_follows_user,
+            subscription_plan: format!("{:?}", value.subscription_plan),
+            is_ai_influencer: value.is_ai_influencer,
+        }
+    }
+}
+
+#[derive(CandidType, Deserialize, Record, Clone)]
+pub struct UISNsfwInfo {
+    pub is_nsfw: bool,
+    pub nsfw_ec: String,
+    pub nsfw_gore: String,
+    pub csam_detected: bool,
+}
+
+impl From<yral_canisters_client::user_info_service::NsfwInfo> for UISNsfwInfo {
+    fn from(value: yral_canisters_client::user_info_service::NsfwInfo) -> Self {
+        Self {
+            is_nsfw: value.is_nsfw,
+            nsfw_ec: value.nsfw_ec,
+            nsfw_gore: value.nsfw_gore,
+            csam_detected: value.csam_detected,
+        }
+    }
+}
+
+#[derive(CandidType, Deserialize, Record, Clone)]
+pub struct UISProfilePictureData {
+    pub url: String,
+    pub nsfw_info: UISNsfwInfo,
+}
+
+impl From<yral_canisters_client::user_info_service::ProfilePictureData> for UISProfilePictureData {
+    fn from(value: yral_canisters_client::user_info_service::ProfilePictureData) -> Self {
+        Self {
+            url: value.url,
+            nsfw_info: value.nsfw_info.into(),
+        }
+    }
+}
+
+impl From<UISNsfwInfo> for yral_canisters_client::user_info_service::NsfwInfo {
+    fn from(value: UISNsfwInfo) -> Self {
+        Self {
+            is_nsfw: value.is_nsfw,
+            nsfw_ec: value.nsfw_ec,
+            nsfw_gore: value.nsfw_gore,
+            csam_detected: value.csam_detected,
+        }
+    }
+}
+
+impl From<UISProfilePictureData> for yral_canisters_client::user_info_service::ProfilePictureData {
+    fn from(value: UISProfilePictureData) -> Self {
+        Self {
+            url: value.url,
+            nsfw_info: value.nsfw_info.into(),
+        }
+    }
+}
+
 #[derive(CandidType, Deserialize, Enum, Clone)]
 pub enum UISSessionType {
     AnonymousSession,
@@ -171,6 +260,23 @@ impl From<UISProfileUpdateDetails> for yral_canisters_client::user_info_service:
             bio: value.bio,
             website_url: value.website_url,
             profile_picture_url: value.profile_picture_url,
+        }
+    }
+}
+
+#[derive(CandidType, Deserialize, Record, Clone)]
+pub struct UISProfileUpdateDetailsV2 {
+    pub bio: Option<String>,
+    pub website_url: Option<String>,
+    pub profile_picture: Option<UISProfilePictureData>,
+}
+
+impl From<UISProfileUpdateDetailsV2> for yral_canisters_client::user_info_service::ProfileUpdateDetailsV2 {
+    fn from(value: UISProfileUpdateDetailsV2) -> Self {
+        Self {
+            bio: value.bio,
+            website_url: value.website_url,
+            profile_picture: value.profile_picture.map(|pic| pic.into()),
         }
     }
 }
@@ -288,6 +394,37 @@ impl UserInfoService {
     }
 
     #[uniffi::method]
+    pub async fn get_user_profile_details_v6(
+        &self,
+        principal_text: String,
+    ) -> Result<UISUserProfileDetailsForFrontendV6> {
+        let agent = Arc::clone(&self.agent);
+        RUNTIME
+            .spawn(async move {
+                let principal = Principal::from_text(principal_text)
+                    .map_err(|e| FFIError::PrincipalError(format!("Invalid principal: {:?}", e)))?;
+                let service = yral_canisters_client::user_info_service::UserInfoService(
+                    yral_canisters_client::ic::USER_INFO_SERVICE_ID,
+                    &agent,
+                );
+                let res = service
+                    .get_user_profile_details_v_6(principal)
+                    .await
+                    .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?;
+                match res {
+                    yral_canisters_client::user_info_service::Result6::Ok(details) => {
+                        Ok(details.into())
+                    }
+                    yral_canisters_client::user_info_service::Result6::Err(msg) => {
+                        Err(FFIError::UnknownError(format!("{:?}", msg)))
+                    }
+                }
+            })
+            .await
+            .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
+    }
+
+    #[uniffi::method]
     pub async fn update_profile_details(&self, details: UISProfileUpdateDetails) -> Result<()> {
         let agent = Arc::clone(&self.agent);
         let update_details = details;
@@ -299,6 +436,34 @@ impl UserInfoService {
                 );
                 let res = service
                     .update_profile_details(update_details.into())
+                    .await
+                    .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?;
+                match res {
+                    yral_canisters_client::user_info_service::Result_::Ok => Ok(()),
+                    yral_canisters_client::user_info_service::Result_::Err(msg) => {
+                        Err(FFIError::UnknownError(format!(
+                            "Update profile details failed: {}",
+                            msg
+                        )))
+                    }
+                }
+            })
+            .await
+            .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
+    }
+
+    #[uniffi::method]
+    pub async fn update_profile_details_v2(&self, details: UISProfileUpdateDetailsV2) -> Result<()> {
+        let agent = Arc::clone(&self.agent);
+        let update_details = details;
+        RUNTIME
+            .spawn(async move {
+                let service = yral_canisters_client::user_info_service::UserInfoService(
+                    yral_canisters_client::ic::USER_INFO_SERVICE_ID,
+                    &agent,
+                );
+                let res = service
+                    .update_profile_details_v_2(update_details.into())
                     .await
                     .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?;
                 match res {
@@ -397,4 +562,3 @@ impl UserInfoService {
             .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
     }
 }
-

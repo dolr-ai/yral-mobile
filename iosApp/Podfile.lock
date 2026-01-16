@@ -1278,6 +1278,13 @@ PODS:
     - gRPC-Core (~> 1.69.0)
     - leveldb-library (~> 1.22)
     - nanopb (~> 3.30910.0)
+  - FirebaseInAppMessaging (11.14.0-beta):
+    - FirebaseABTesting (~> 11.0)
+    - FirebaseCore (~> 11.14.0)
+    - FirebaseInstallations (~> 11.0)
+    - GoogleUtilities/Environment (~> 8.1)
+    - GoogleUtilities/UserDefaults (~> 8.1)
+    - nanopb (~> 3.30910.0)
   - FirebaseInstallations (11.14.0):
     - FirebaseCore (~> 11.14.0)
     - GoogleUtilities/Environment (~> 8.1)
@@ -1515,6 +1522,7 @@ DEPENDENCIES:
   - FirebaseCoreInternal (= 11.14.0)
   - FirebaseCrashlytics (= 11.14.0)
   - FirebaseFirestore (= 11.14.0)
+  - FirebaseInAppMessaging (= 11.14.0-beta)
   - FirebaseInstallations (= 11.14.0)
   - FirebaseMessaging (= 11.14.0)
   - FirebasePerformance (= 11.14.0)
@@ -1545,6 +1553,7 @@ SPEC REPOS:
     - FirebaseCrashlytics
     - FirebaseFirestore
     - FirebaseFirestoreInternal
+    - FirebaseInAppMessaging
     - FirebaseInstallations
     - FirebaseMessaging
     - FirebasePerformance
@@ -1591,6 +1600,7 @@ SPEC CHECKSUMS:
   FirebaseCrashlytics: 7f50df2871a788468825db11a6d845c363c2ad58
   FirebaseFirestore: ebafb2293ef1579cdbf8060c346e85a11cfa3c36
   FirebaseFirestoreInternal: b480dcb3df444184cb9c7e01388581b66a1ba57c
+  FirebaseInAppMessaging: 97b12807f283672acd318aa00049ecf9d22551ff
   FirebaseInstallations: 863f2846bb124331b501d29c0f17f95caa2ef6bb
   FirebaseMessaging: 61404edd221eaa09f9a733ce0fc9885f286705fe
   FirebasePerformance: f84beecea8dc5421ff9926816e754323682f2981
@@ -1615,6 +1625,6 @@ SPEC CHECKSUMS:
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
   Sentry: ea4ca7cd1a46c77dcc8123804ce36d8f5603a841
 
-PODFILE CHECKSUM: 51d18fd4fe84651d4020c7a28c3a4b94b3f41243
+PODFILE CHECKSUM: 6b177e6ea62cd1fb894efa9c6733a25e50a000e2
 
 COCOAPODS: 1.16.2

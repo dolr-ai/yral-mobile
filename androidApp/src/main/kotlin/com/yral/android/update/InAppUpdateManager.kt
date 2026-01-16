@@ -54,9 +54,9 @@ class InAppUpdateManager(
         private const val UPDATE_CHECK_INTERVAL_MS = 1 * 60 * 1000L // 1 minute
         private const val REQUEST_CODE_FLEXIBLE_UPDATE = 1001
         private const val PRIORITY_IMMEDIATE = 4
-        private const val STALENESS_DAYS_IMMEDIATE = 30
+        private const val STALENESS_DAYS_IMMEDIATE = 7
         private const val PRIORITY_FLEXIBLE = 2
-        private const val STALENESS_DAYS_FLEXIBLE = 7
+        private const val STALENESS_DAYS_FLEXIBLE = 1
     }
 
     private val installStateUpdatedListener =

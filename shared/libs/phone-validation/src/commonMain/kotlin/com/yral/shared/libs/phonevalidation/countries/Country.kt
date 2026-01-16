@@ -19,6 +19,6 @@ data class Country(
 ) {
     companion object {
         // Helper to generate flag CDN URL
-        fun getFlagUrl(countryCode: String): String = "https://flagcdn.com/w40/${countryCode.lowercase()}.png"
+        fun getFlagUrl(countryCode: String): String = "https://flagcdn.com/w80/${countryCode.lowercase()}.png"
     }
 }

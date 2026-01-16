@@ -94,6 +94,7 @@ fun LoginBottomSheet(
                     mode = mode,
                     onNavigateToCountrySelector = onNavigateToCountrySelector,
                     onNavigateToOtpVerification = onNavigateToOtpVerification,
+                    onSocialProviderSelected = { onDismissRequest() },
                 )
                 Spacer(modifier = Modifier.height(adaptiveHeight))
             }
@@ -111,7 +112,7 @@ fun LoginBottomSheet(
 }
 
 private object LoginBottomSheetConstants {
-    const val BOTTOM_SHEET_SPACER_PERCENT_TO_SCREEN = 0.3f
+    const val BOTTOM_SHEET_SPACER_PERCENT_TO_SCREEN = 0.09f
 }
 
 @Composable

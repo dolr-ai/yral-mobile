@@ -17,6 +17,7 @@ import com.yral.shared.features.tournament.domain.model.GetTournamentsRequest
 import com.yral.shared.features.tournament.domain.model.HotOrNotVoteRequest
 import com.yral.shared.features.tournament.domain.model.HotOrNotVoteResult
 import com.yral.shared.features.tournament.domain.model.TournamentErrorCodes
+import com.yral.shared.features.tournament.domain.model.TournamentType
 import com.yral.shared.features.tournament.domain.model.VoteOutcome
 import com.yral.shared.features.tournament.domain.model.VoteResult
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,6 +44,7 @@ class TournamentGameViewModel(
 
     fun setTournament(
         tournamentId: String,
+        tournamentType: TournamentType,
         initialDiamonds: Int,
         endEpochMs: Long,
     ) {
@@ -58,6 +60,7 @@ class TournamentGameViewModel(
         _state.update {
             it.copy(
                 tournamentId = tournamentId,
+                tournamentType = tournamentType,
                 diamonds = initialDiamonds,
                 endEpochMs = endEpochMs,
             )
@@ -66,6 +69,7 @@ class TournamentGameViewModel(
         // Track tournament joined
         telemetry.onTournamentJoined(
             tournamentId = tournamentId,
+            tournamentType = tournamentType,
             diamondsAllocated = initialDiamonds,
         )
 
@@ -113,7 +117,10 @@ class TournamentGameViewModel(
         if (currentState.diamonds <= 0) {
             _state.update { it.copy(noDiamondsError = true) }
             // Track out of diamonds nudge shown
-            telemetry.onOutOfDiamondsShown(tournamentId = currentState.tournamentId)
+            telemetry.onOutOfDiamondsShown(
+                tournamentId = currentState.tournamentId,
+                tournamentType = currentState.tournamentType,
+            )
             return
         }
         viewModelScope.launch { castVote(icon, feedDetails) }
@@ -149,6 +156,7 @@ class TournamentGameViewModel(
                 val isCorrect = result.outcome == VoteOutcome.WIN
                 telemetry.onAnswerSubmitted(
                     tournamentId = currentState.tournamentId,
+                    tournamentType = currentState.tournamentType,
                     isCorrect = isCorrect,
                     scoreDelta = diamondDelta,
                     diamondsRemaining = result.diamonds,
@@ -193,7 +201,10 @@ class TournamentGameViewModel(
         if (currentState.isHotOrNotVoting) return
         if (currentState.diamonds <= 0) {
             _state.update { it.copy(noDiamondsError = true) }
-            telemetry.onOutOfDiamondsShown(tournamentId = currentState.tournamentId)
+            telemetry.onOutOfDiamondsShown(
+                tournamentId = currentState.tournamentId,
+                tournamentType = currentState.tournamentType,
+            )
             return
         }
         viewModelScope.launch { performHotOrNotVote(isHot, videoId) }
@@ -222,6 +233,7 @@ class TournamentGameViewModel(
                 val isCorrect = result.outcome == "WIN"
                 telemetry.onAnswerSubmitted(
                     tournamentId = currentState.tournamentId,
+                    tournamentType = currentState.tournamentType,
                     isCorrect = isCorrect,
                     scoreDelta = result.diamondDelta,
                     diamondsRemaining = result.diamonds,
@@ -292,25 +304,33 @@ class TournamentGameViewModel(
         val currentState = _state.value
         telemetry.onExitAttempted(
             tournamentId = currentState.tournamentId,
+            tournamentType = currentState.tournamentType,
             diamondsRemaining = currentState.diamonds,
         )
     }
 
     fun trackExitNudgeShown() {
-        telemetry.onExitNudgeShown(tournamentId = _state.value.tournamentId)
+        val currentState = _state.value
+        telemetry.onExitNudgeShown(
+            tournamentId = currentState.tournamentId,
+            tournamentType = currentState.tournamentType,
+        )
     }
 
     fun trackExitConfirmed() {
         val currentState = _state.value
         telemetry.onExitConfirmed(
             tournamentId = currentState.tournamentId,
+            tournamentType = currentState.tournamentType,
             diamondsRemaining = currentState.diamonds,
         )
     }
 
     fun trackTournamentEnded(tournamentName: String) {
+        val currentState = _state.value
         telemetry.onTournamentEnded(
-            tournamentId = _state.value.tournamentId,
+            tournamentId = currentState.tournamentId,
+            tournamentType = currentState.tournamentType,
             tournamentName = tournamentName,
         )
     }
@@ -318,6 +338,7 @@ class TournamentGameViewModel(
 
 data class TournamentGameState(
     val tournamentId: String = "",
+    val tournamentType: TournamentType = TournamentType.SMILEY,
     val gameIcons: List<GameIcon> = emptyList(),
     val diamonds: Int = 0,
     val position: Int = 0,

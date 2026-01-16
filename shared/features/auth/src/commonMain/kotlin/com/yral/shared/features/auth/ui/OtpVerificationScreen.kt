@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -23,6 +24,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.shared.core.utils.formatRemainingDuration
+import com.yral.shared.features.auth.analytics.AuthTelemetry
 import com.yral.shared.features.auth.nav.otpverification.OtpVerificationComponent
 import com.yral.shared.features.auth.ui.components.OtpInput
 import com.yral.shared.features.auth.ui.components.OtpInputConfig
@@ -36,6 +38,7 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import yral_mobile.shared.features.auth.generated.resources.Res
 import yral_mobile.shared.features.auth.generated.resources.didnt_receive_otp
 import yral_mobile.shared.features.auth.generated.resources.invalid_otp
@@ -49,17 +52,26 @@ import yral_mobile.shared.libs.designsystem.generated.resources.pink_gradient_ba
 import kotlin.time.Duration.Companion.seconds
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
+@Suppress("LongMethod")
 @Composable
 fun OtpVerificationScreen(
     component: OtpVerificationComponent,
     loginViewModel: LoginViewModel,
     modifier: Modifier = Modifier,
+    authTelemetry: AuthTelemetry = koinInject(),
 ) {
     // Collect state from ViewModel
     val loginState by loginViewModel.state.collectAsState()
     val phoneAuthData = (loginState.phoneAuthState as? UiState.Success)?.data
     val otpAuthState = loginState.otpAuthState
     val resendTimerSeconds = loginState.resendTimerSeconds
+
+    LaunchedEffect(phoneAuthData?.phoneNumber) {
+        val phoneNumber = phoneAuthData?.phoneNumber
+        if (!phoneNumber.isNullOrBlank()) {
+            authTelemetry.otpScreenViewed(phoneNumber)
+        }
+    }
 
     Column(
         modifier =
@@ -69,7 +81,12 @@ fun OtpVerificationScreen(
                 .padding(bottom = 16.dp),
     ) {
         // Header with back button
-        Header(component)
+        Header(
+            onBack = {
+                authTelemetry.otpDismissed()
+                component.onBack()
+            },
+        )
 
         // Content
         Column(
@@ -124,7 +141,7 @@ fun OtpVerificationScreen(
 }
 
 @Composable
-private fun Header(component: OtpVerificationComponent) {
+private fun Header(onBack: () -> Unit) {
     Row(
         modifier =
             Modifier
@@ -139,7 +156,7 @@ private fun Header(component: OtpVerificationComponent) {
             modifier =
                 Modifier
                     .size(24.dp)
-                    .clickable { component.onBack() },
+                    .clickable { onBack() },
         )
         Text(
             text = stringResource(Res.string.otp_verification),

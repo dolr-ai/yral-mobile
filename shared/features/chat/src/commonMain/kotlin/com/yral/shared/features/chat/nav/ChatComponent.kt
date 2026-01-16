@@ -3,6 +3,7 @@ package com.yral.shared.features.chat.nav
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
+import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.chat.nav.wall.ChatWallComponent
@@ -38,6 +39,7 @@ abstract class ChatComponent : HomeChildSnapshotProvider {
             data class Conversation(
                 val influencerId: String,
                 val influencerCategory: String = "",
+                val influencerSource: InfluencerSource = InfluencerSource.CARD,
             ) : Route
         }
     }
@@ -48,7 +50,11 @@ abstract class ChatComponent : HomeChildSnapshotProvider {
             requestLoginFactory: RequestLoginFactory,
             snapshot: Snapshot?,
             openProfile: (userCanisterData: CanisterData) -> Unit,
-            openConversation: (influencerId: String, influencerCategory: String) -> Unit,
+            openConversation: (
+                influencerId: String,
+                influencerCategory: String,
+                influencerSource: InfluencerSource,
+            ) -> Unit,
         ): ChatComponent =
             DefaultChatComponent(
                 componentContext = componentContext,

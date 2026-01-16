@@ -22,6 +22,7 @@ import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.instancekeeper.InstanceKeeper
 import com.arkivanov.essenty.instancekeeper.getOrCreate
+import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.nav.factories.ComponentFactory
 import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
@@ -358,8 +359,25 @@ class DefaultRootComponent(
     override fun openConversation(
         influencerId: String,
         influencerCategory: String,
+        influencerSource: InfluencerSource,
     ) {
-        navigation.pushToFront(Config.Conversation(influencerId, influencerCategory))
+        navigation.navigate { stack ->
+            val existingIndex =
+                stack.indexOfLast { config ->
+                    config is Config.Conversation && config.influencerId == influencerId
+                }
+            if (existingIndex != -1) {
+                // Conversation already in stack (e.g., came from Chat -> Profile -> Talk to Me); just go back to it.
+                stack.take(existingIndex + 1)
+            } else {
+                stack +
+                    Config.Conversation(
+                        influencerId = influencerId,
+                        influencerCategory = influencerCategory,
+                        influencerSource = influencerSource,
+                    )
+            }
+        }
     }
 
     override fun openWallet() {

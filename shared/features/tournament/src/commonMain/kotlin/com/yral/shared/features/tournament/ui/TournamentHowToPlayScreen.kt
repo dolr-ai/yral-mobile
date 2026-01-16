@@ -44,6 +44,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import yral_mobile.shared.features.tournament.generated.resources.Res
 import yral_mobile.shared.features.tournament.generated.resources.body_live_leaderboard
 import yral_mobile.shared.features.tournament.generated.resources.body_pick_emoji
+import yral_mobile.shared.features.tournament.generated.resources.body_pick_emoji_hot_or_not
 import yral_mobile.shared.features.tournament.generated.resources.body_pick_emoji_right_choice
 import yral_mobile.shared.features.tournament.generated.resources.body_pick_emoji_right_choice_result
 import yral_mobile.shared.features.tournament.generated.resources.body_pick_emoji_wrong_choice
@@ -56,6 +57,7 @@ import yral_mobile.shared.features.tournament.generated.resources.how_to_play
 import yral_mobile.shared.features.tournament.generated.resources.start_playing
 import yral_mobile.shared.features.tournament.generated.resources.title_live_leaderboard
 import yral_mobile.shared.features.tournament.generated.resources.title_pick_emoji
+import yral_mobile.shared.features.tournament.generated.resources.title_pick_emoji_hot_or_not
 import yral_mobile.shared.features.tournament.generated.resources.title_watch_video
 import yral_mobile.shared.features.tournament.generated.resources.tournament_diamond
 import yral_mobile.shared.features.tournament.generated.resources.tournament_eyes
@@ -72,6 +74,7 @@ fun TournamentHowToPlayScreen(
     startingDiamonds: Int,
     playType: PlayType = PlayType.START,
     tournamentDurationMinutes: Int,
+    isHotOrNot: Boolean = false,
 ) {
     Box(
         modifier =
@@ -152,8 +155,15 @@ fun TournamentHowToPlayScreen(
                     iconRes = Res.drawable.tournament_hand,
                     iconWidth = 36.dp,
                     iconHeight = 44.dp,
-                    title = stringResource(Res.string.title_pick_emoji),
-                    body = buildPickEmojiBody(),
+                    title =
+                        stringResource(
+                            if (isHotOrNot) {
+                                Res.string.title_pick_emoji_hot_or_not
+                            } else {
+                                Res.string.title_pick_emoji
+                            },
+                        ),
+                    body = buildPickEmojiBody(isHotOrNot),
                 )
                 HowToPlayCard(
                     iconRes = Res.drawable.tournament_leaderboard,
@@ -247,7 +257,7 @@ private fun HowToPlayCard(
 }
 
 @Composable
-private fun buildPickEmojiBody(): AnnotatedString {
+private fun buildPickEmojiBody(isHotOrNot: Boolean = false): AnnotatedString {
     val baseStyle = LocalAppTopography.current.baseRegular
     return buildAnnotatedString {
         withStyle(
@@ -258,7 +268,15 @@ private fun buildPickEmojiBody(): AnnotatedString {
                 fontWeight = baseStyle.fontWeight,
             ),
         ) {
-            append(stringResource(Res.string.body_pick_emoji))
+            append(
+                stringResource(
+                    if (isHotOrNot) {
+                        Res.string.body_pick_emoji_hot_or_not
+                    } else {
+                        Res.string.body_pick_emoji
+                    },
+                ),
+            )
             append("\n")
             append(stringResource(Res.string.body_pick_emoji_right_choice))
         }

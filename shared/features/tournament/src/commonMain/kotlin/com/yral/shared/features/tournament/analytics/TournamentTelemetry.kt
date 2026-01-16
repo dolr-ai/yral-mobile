@@ -1,6 +1,7 @@
 package com.yral.shared.features.tournament.analytics
 
 import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.analytics.events.AnalyticsTournamentType
 import com.yral.shared.analytics.events.TournamentAnswerResult
 import com.yral.shared.analytics.events.TournamentAnswerSubmittedEventData
 import com.yral.shared.analytics.events.TournamentEndedEventData
@@ -21,6 +22,7 @@ import com.yral.shared.analytics.events.TournamentStateChangedEventData
 import com.yral.shared.features.tournament.domain.model.Tournament
 import com.yral.shared.features.tournament.domain.model.TournamentParticipationState
 import com.yral.shared.features.tournament.domain.model.TournamentStatus
+import com.yral.shared.features.tournament.domain.model.TournamentType
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
@@ -38,10 +40,14 @@ class TournamentTelemetry(
 
     private fun getSessionId(): String = sessionId
 
-    fun onTournamentScreenViewed(tournamentId: String) {
+    fun onTournamentScreenViewed(
+        tournamentId: String,
+        tournamentType: TournamentType,
+    ) {
         analyticsManager.trackEvent(
             TournamentScreenViewedEventData(
                 tournamentId = tournamentId,
+                tournamentType = tournamentType.toAnalyticsType(),
                 sessionId = getSessionId(),
             ),
         )
@@ -49,6 +55,7 @@ class TournamentTelemetry(
 
     fun onRegistrationInitiated(
         tournamentId: String,
+        tournamentType: TournamentType,
         entryFeePoints: Int,
         userPointBalance: Int,
         tournamentDurationMinutes: Int,
@@ -56,6 +63,7 @@ class TournamentTelemetry(
         analyticsManager.trackEvent(
             TournamentRegistrationInitiatedEventData(
                 tournamentId = tournamentId,
+                tournamentType = tournamentType.toAnalyticsType(),
                 entryFeePoints = entryFeePoints,
                 userPointBalance = userPointBalance,
                 tournamentDuration = tournamentDurationMinutes,
@@ -66,11 +74,13 @@ class TournamentTelemetry(
 
     fun onTournamentRegistered(
         tournamentId: String,
+        tournamentType: TournamentType,
         entryFeePoints: Int,
     ) {
         analyticsManager.trackEvent(
             TournamentRegisteredEventData(
                 tournamentId = tournamentId,
+                tournamentType = tournamentType.toAnalyticsType(),
                 entryFeePoints = entryFeePoints,
                 registrationTime = currentTimestamp(),
                 sessionId = getSessionId(),
@@ -101,6 +111,7 @@ class TournamentTelemetry(
         analyticsManager.trackEvent(
             TournamentStateChangedEventData(
                 tournamentId = currentTournament.id,
+                tournamentType = currentTournament.type.toAnalyticsType(),
                 fromState = previousState,
                 toState = currentState,
                 tokensRequired = tokensRequired,
@@ -112,11 +123,13 @@ class TournamentTelemetry(
 
     fun onTournamentJoined(
         tournamentId: String,
+        tournamentType: TournamentType,
         diamondsAllocated: Int,
     ) {
         analyticsManager.trackEvent(
             TournamentJoinedEventData(
                 tournamentId = tournamentId,
+                tournamentType = tournamentType.toAnalyticsType(),
                 joinTime = currentTimestamp(),
                 diamondsAllocated = diamondsAllocated,
                 sessionId = getSessionId(),
@@ -126,6 +139,7 @@ class TournamentTelemetry(
 
     fun onAnswerSubmitted(
         tournamentId: String,
+        tournamentType: TournamentType,
         isCorrect: Boolean,
         scoreDelta: Int,
         diamondsRemaining: Int,
@@ -133,7 +147,8 @@ class TournamentTelemetry(
         analyticsManager.trackEvent(
             TournamentAnswerSubmittedEventData(
                 tournamentId = tournamentId,
-                answerResult = if (isCorrect) TournamentAnswerResult.CORRECT else TournamentAnswerResult.WRONG,
+                tournamentType = tournamentType.toAnalyticsType(),
+                answerResult = if (isCorrect) TournamentAnswerResult.RIGHT else TournamentAnswerResult.WRONG,
                 scoreDelta = scoreDelta,
                 diamondsRemaining = diamondsRemaining,
                 sessionId = getSessionId(),
@@ -143,21 +158,27 @@ class TournamentTelemetry(
 
     fun onExitAttempted(
         tournamentId: String,
+        tournamentType: TournamentType,
         diamondsRemaining: Int,
     ) {
         analyticsManager.trackEvent(
             TournamentExitAttemptedEventData(
                 tournamentId = tournamentId,
+                tournamentType = tournamentType.toAnalyticsType(),
                 diamondsRemaining = diamondsRemaining,
                 sessionId = getSessionId(),
             ),
         )
     }
 
-    fun onExitNudgeShown(tournamentId: String) {
+    fun onExitNudgeShown(
+        tournamentId: String,
+        tournamentType: TournamentType,
+    ) {
         analyticsManager.trackEvent(
             TournamentExitNudgeShownEventData(
                 tournamentId = tournamentId,
+                tournamentType = tournamentType.toAnalyticsType(),
                 sessionId = getSessionId(),
             ),
         )
@@ -165,21 +186,27 @@ class TournamentTelemetry(
 
     fun onExitConfirmed(
         tournamentId: String,
+        tournamentType: TournamentType,
         diamondsRemaining: Int,
     ) {
         analyticsManager.trackEvent(
             TournamentExitConfirmedEventData(
                 tournamentId = tournamentId,
+                tournamentType = tournamentType.toAnalyticsType(),
                 diamondsRemaining = diamondsRemaining,
                 sessionId = getSessionId(),
             ),
         )
     }
 
-    fun onOutOfDiamondsShown(tournamentId: String) {
+    fun onOutOfDiamondsShown(
+        tournamentId: String,
+        tournamentType: TournamentType,
+    ) {
         analyticsManager.trackEvent(
             TournamentOutOfDiamondsShownEventData(
                 tournamentId = tournamentId,
+                tournamentType = tournamentType.toAnalyticsType(),
                 diamondsRemaining = 0,
                 sessionId = getSessionId(),
             ),
@@ -188,11 +215,13 @@ class TournamentTelemetry(
 
     fun onTournamentEnded(
         tournamentId: String,
+        tournamentType: TournamentType,
         tournamentName: String,
     ) {
         analyticsManager.trackEvent(
             TournamentEndedEventData(
                 tournamentId = tournamentId,
+                tournamentType = tournamentType.toAnalyticsType(),
                 tournamentName = tournamentName,
                 sessionId = getSessionId(),
             ),
@@ -201,6 +230,7 @@ class TournamentTelemetry(
 
     fun onResultScreenViewed(
         tournamentId: String,
+        tournamentType: TournamentType,
         isWin: Boolean,
         finalScore: Int,
         rank: Int,
@@ -208,6 +238,7 @@ class TournamentTelemetry(
         analyticsManager.trackEvent(
             TournamentResultScreenViewedEventData(
                 tournamentId = tournamentId,
+                tournamentType = tournamentType.toAnalyticsType(),
                 result = if (isWin) TournamentResult.WIN else TournamentResult.LOSE,
                 finalScore = finalScore,
                 rank = rank,
@@ -218,12 +249,14 @@ class TournamentTelemetry(
 
     fun onLeaderboardViewed(
         tournamentId: String,
+        tournamentType: TournamentType,
         userRank: Int,
         isWinner: Boolean,
     ) {
         analyticsManager.trackEvent(
             TournamentLeaderboardViewedEventData(
                 tournamentId = tournamentId,
+                tournamentType = tournamentType.toAnalyticsType(),
                 userRank = userRank,
                 isWinner = isWinner,
                 sessionId = getSessionId(),
@@ -233,12 +266,14 @@ class TournamentTelemetry(
 
     fun onRewardEarned(
         tournamentId: String,
+        tournamentType: TournamentType,
         rewardAmountInr: Int,
         rank: Int,
     ) {
         analyticsManager.trackEvent(
             TournamentRewardEarnedEventData(
                 tournamentId = tournamentId,
+                tournamentType = tournamentType.toAnalyticsType(),
                 rewardAmountInr = rewardAmountInr,
                 rank = rank,
             ),
@@ -279,5 +314,11 @@ class TournamentTelemetry(
             is TournamentParticipationState.JoinNowWithTokens,
             is TournamentParticipationState.JoinNowDisabled,
             -> null
+        }
+
+    private fun TournamentType.toAnalyticsType(): AnalyticsTournamentType =
+        when (this) {
+            TournamentType.SMILEY -> AnalyticsTournamentType.SMILEY
+            TournamentType.HOT_OR_NOT -> AnalyticsTournamentType.HOT_OR_NOT
         }
 }
