@@ -12,7 +12,7 @@ import androidx.compose.ui.viewinterop.UIKitView
 import com.shortform.video.VideoSurfaceHandle
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.AVKit.AVPlayerViewController
-import platform.AVFoundation.AVLayerVideoGravityResizeAspectFill
+import platform.AVFoundation.AVLayerVideoGravityResizeAspect
 import platform.AVFoundation.AVPlayerItem
 import platform.AVFoundation.AVPlayerTimeControlStatusPlaying
 import platform.AVFoundation.addPeriodicTimeObserverForInterval
@@ -41,7 +41,7 @@ private class PlayerViewContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0
         AVPlayerViewController().apply {
             showsPlaybackControls = false
             view.backgroundColor = UIColor.blackColor
-            videoGravity = AVLayerVideoGravityResizeAspectFill
+            videoGravity = AVLayerVideoGravityResizeAspect
         }
 
     init {

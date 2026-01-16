@@ -29,7 +29,7 @@ actual fun VideoSurface(
     ContentFrame(
         modifier = modifier,
         player = playerState.value,
-        contentScale = ContentScale.Crop,
+        contentScale = ContentScale.Fit,
         shutter = shutter,
     )
 

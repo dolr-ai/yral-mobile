@@ -153,7 +153,7 @@ internal fun YRALReelsPlayerView(
                         AsyncImage(
                             model = reel.thumbnailUrl,
                             contentDescription = "Thumbnail",
-                            contentScale = ContentScale.Crop,
+                            contentScale = ContentScale.Fit,
                             modifier = Modifier.fillMaxSize().background(Color.Black),
                         )
                     }
