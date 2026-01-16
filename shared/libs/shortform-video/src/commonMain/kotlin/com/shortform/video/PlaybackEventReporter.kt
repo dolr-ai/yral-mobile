@@ -5,6 +5,7 @@ interface PlaybackEventReporter {
     fun playStartRequest(id: String, index: Int, reason: String)
     fun firstFrameRendered(id: String, index: Int)
     fun timeToFirstFrame(id: String, index: Int, ms: Long)
+    fun playbackProgress(id: String, index: Int, positionMs: Long, durationMs: Long)
     fun rebufferStart(id: String, index: Int, reason: String)
     fun rebufferEnd(id: String, index: Int, reason: String)
     fun rebufferTotal(id: String, index: Int, ms: Long)
@@ -22,6 +23,7 @@ object NoopPlaybackEventReporter : PlaybackEventReporter {
     override fun playStartRequest(id: String, index: Int, reason: String) = Unit
     override fun firstFrameRendered(id: String, index: Int) = Unit
     override fun timeToFirstFrame(id: String, index: Int, ms: Long) = Unit
+    override fun playbackProgress(id: String, index: Int, positionMs: Long, durationMs: Long) = Unit
     override fun rebufferStart(id: String, index: Int, reason: String) = Unit
     override fun rebufferEnd(id: String, index: Int, reason: String) = Unit
     override fun rebufferTotal(id: String, index: Int, ms: Long) = Unit

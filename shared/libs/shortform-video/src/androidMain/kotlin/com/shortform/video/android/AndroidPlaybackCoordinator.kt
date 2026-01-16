@@ -26,8 +26,14 @@ import com.shortform.video.VideoSurfaceHandle
 import com.shortform.video.cacheKey
 import com.shortform.video.PreloadEventScheduler
 import com.shortform.video.PreparedSlotScheduler
+import com.shortform.video.PlaybackProgress
+import com.shortform.video.PlaybackProgressTicker
 import com.shortform.video.ui.AndroidVideoSurfaceHandle
 import java.io.File
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlin.math.abs
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -76,6 +82,21 @@ private class AndroidPlaybackCoordinator(
     private val playStartMsById = mutableMapOf<String, Long>()
     private var firstFramePendingIndex: Int? = null
     private var rebuffering = false
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val progressTicker =
+        PlaybackProgressTicker(
+            intervalMs = deps.progressTickIntervalMs,
+            scope = scope,
+            provider = { activeProgress() },
+            onProgress = { progress ->
+                reporter.playbackProgress(
+                    progress.id,
+                    progress.index,
+                    progress.positionMs,
+                    progress.durationMs,
+                )
+            },
+        )
 
     private val listener = object : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
@@ -144,6 +165,7 @@ private class AndroidPlaybackCoordinator(
         playerA.addListener(listener)
         playerB?.addListener(listener)
         preloadManager.addListener(preloadListener)
+        progressTicker.start()
     }
 
     override fun setFeed(items: List<MediaDescriptor>) {
@@ -262,6 +284,8 @@ private class AndroidPlaybackCoordinator(
     override fun release() {
         preloadScheduler.reset("release") { feed.getOrNull(it)?.id }
         preparedScheduler.reset("release") { feed.getOrNull(it)?.id }
+        progressTicker.stop()
+        scope.cancel()
         playerA.release()
         playerB?.release()
         preloadManager.release()
@@ -277,6 +301,22 @@ private class AndroidPlaybackCoordinator(
                 prepareSlot(prepared, nextIndex, playWhenReady = false)
             }
         }
+    }
+
+    private fun activeProgress(): PlaybackProgress? {
+        val index = activeSlot.index ?: return null
+        val item = feed.getOrNull(index) ?: return null
+        val player = activeSlot.player
+        if (!player.isPlaying) return null
+        val durationMs = player.duration
+        if (durationMs == C.TIME_UNSET || durationMs <= 0L) return null
+        val positionMs = player.currentPosition.coerceAtLeast(0L)
+        return PlaybackProgress(
+            id = item.id,
+            index = index,
+            positionMs = positionMs,
+            durationMs = durationMs,
+        )
     }
 
     private fun swapSlots() {

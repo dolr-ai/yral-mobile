@@ -6,6 +6,8 @@ import com.shortform.video.PlaybackCoordinator
 import com.shortform.video.VideoSurfaceHandle
 import com.shortform.video.PreloadEventScheduler
 import com.shortform.video.PreparedSlotScheduler
+import com.shortform.video.PlaybackProgress
+import com.shortform.video.PlaybackProgressTicker
 import com.shortform.video.ui.IosVideoSurfaceHandle
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
@@ -26,6 +28,7 @@ import platform.AVFoundation.AVURLAsset
 import platform.AVFoundation.automaticallyWaitsToMinimizeStalling
 import platform.AVFoundation.currentItem
 import platform.AVFoundation.currentTime
+import platform.AVFoundation.duration
 import platform.AVFoundation.pause
 import platform.AVFoundation.playImmediatelyAtRate
 import platform.AVFoundation.preferredForwardBufferDuration
@@ -72,6 +75,20 @@ private class IosPlaybackCoordinator(
 
     private var rebuffering = false
     private var rebufferStartMs: Long? = null
+    private val progressTicker =
+        PlaybackProgressTicker(
+            intervalMs = deps.progressTickIntervalMs,
+            scope = scope,
+            provider = { activeProgress() },
+            onProgress = { progress ->
+                reporter.playbackProgress(
+                    progress.id,
+                    progress.index,
+                    progress.positionMs,
+                    progress.durationMs,
+                )
+            },
+        )
 
     private val preloadScheduler = PreloadEventScheduler(policy, reporter)
     private val preparedScheduler = PreparedSlotScheduler(policy, reporter)
@@ -86,6 +103,7 @@ private class IosPlaybackCoordinator(
         playerB?.automaticallyWaitsToMinimizeStalling = false
         registerObservers()
         startPolling()
+        progressTicker.start()
     }
 
     override fun setFeed(items: List<MediaDescriptor>) {
@@ -184,6 +202,7 @@ private class IosPlaybackCoordinator(
         preparedSlot?.player?.pause()
         cancelPrefetch(reason = "release")
         preparedScheduler.reset("release") { feed.getOrNull(it)?.id }
+        progressTicker.stop()
         scope.cancel()
     }
 
@@ -396,4 +415,26 @@ private class IosPlaybackCoordinator(
         val player: AVPlayer,
         var index: Int? = null,
     )
+
+    @OptIn(ExperimentalForeignApi::class)
+    private fun activeProgress(): PlaybackProgress? {
+        val index = activeSlot.index ?: return null
+        val item = feed.getOrNull(index) ?: return null
+        val status = activeSlot.player.timeControlStatus
+        if (status != AVPlayerTimeControlStatusPlaying) return null
+        val currentSeconds = CMTimeGetSeconds(activeSlot.player.currentTime())
+        val durationSeconds = activeSlot.player.currentItem?.duration?.let { CMTimeGetSeconds(it) }
+        if (!currentSeconds.isFinite() || durationSeconds == null || !durationSeconds.isFinite()) {
+            return null
+        }
+        val durationMs = (durationSeconds * 1000).toLong()
+        if (durationMs <= 0L) return null
+        val positionMs = (currentSeconds * 1000).toLong().coerceAtLeast(0L)
+        return PlaybackProgress(
+            id = item.id,
+            index = index,
+            positionMs = positionMs,
+            durationMs = durationMs,
+        )
+    }
 }
