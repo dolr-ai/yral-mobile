@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -17,10 +18,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
+import com.yral.shared.analytics.events.SignupNudgeDismissAction
 import com.yral.shared.analytics.events.SignupPageName
+import com.yral.shared.features.auth.analytics.AuthTelemetry
 import com.yral.shared.features.auth.ui.components.SignupView
 import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
 import com.yral.shared.libs.designsystem.theme.YralColors
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,9 +37,15 @@ fun LoginOverlay(
     onNavigateToCountrySelector: () -> Unit,
     onNavigateToOtpVerification: () -> Unit,
     bottomContent: @Composable () -> Unit = {},
+    authTelemetry: AuthTelemetry = koinInject(),
 ) {
     val termsSheetState = rememberModalBottomSheetState()
     var termsLinkState by remember { mutableStateOf("") }
+    DisposableEffect(Unit) {
+        onDispose {
+            authTelemetry.onSignupNudgeDismissed(SignupNudgeDismissAction.SKIP)
+        }
+    }
     Column(
         modifier =
             Modifier

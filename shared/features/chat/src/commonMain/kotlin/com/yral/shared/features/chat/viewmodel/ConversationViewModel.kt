@@ -250,7 +250,7 @@ class ConversationViewModel(
                 influencerId = resolvedInfluencer?.id.orEmpty(),
                 influencerType = resolvedInfluencer?.category.orEmpty(),
                 chatSessionId = id,
-                source = InfluencerSource.CARD,
+                source = _viewState.value.influencerSource,
             )
         }
     }
@@ -277,7 +277,9 @@ class ConversationViewModel(
     fun initializeForInfluencer(
         influencerId: String,
         influencerCategory: String,
+        influencerSource: InfluencerSource = InfluencerSource.CARD,
     ) {
+        _viewState.update { it.copy(influencerSource = influencerSource) }
         val currentInfluencerId = _viewState.value.influencer?.id
         val currentConversationId = _viewState.value.conversationId
         // same influencer and conversation exists
@@ -306,7 +308,8 @@ class ConversationViewModel(
     }
 
     private fun resetState() {
-        val isSocialSignedIn = _viewState.value.isSocialSignedIn
+        val currentIsSocialSignedIn = _viewState.value.isSocialSignedIn
+        val currentInfluencerSource = _viewState.value.influencerSource
         _viewState.update {
             ConversationViewState(
                 isCreating = false,
@@ -318,7 +321,8 @@ class ConversationViewModel(
                 shareDisplayName = "",
                 shareMessage = "",
                 shareDescription = "",
-                isSocialSignedIn = isSocialSignedIn,
+                isSocialSignedIn = currentIsSocialSignedIn,
+                influencerSource = currentInfluencerSource,
             )
         }
         _overlay.value = OverlayState()
@@ -632,6 +636,7 @@ data class ConversationViewState(
     val shareMessage: String = "",
     val shareDescription: String = "",
     val isSocialSignedIn: Boolean = false,
+    val influencerSource: InfluencerSource = InfluencerSource.CARD,
 )
 
 sealed class ConversationMessageItem {

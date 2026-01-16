@@ -40,6 +40,7 @@ actual class MixpanelAnalyticsProvider actual constructor(
                 "token_type" to (user.tokenType?.serialName ?: ""),
                 "canister_id" to user.canisterId,
                 "email_id" to user.emailId,
+                "phone_number" to user.phoneNumber,
             )
 
         // Attach UTM attribution as user-level properties (people + super props)

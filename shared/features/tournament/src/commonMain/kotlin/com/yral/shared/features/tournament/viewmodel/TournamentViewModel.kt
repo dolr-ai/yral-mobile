@@ -68,8 +68,11 @@ class TournamentViewModel(
         tournamentListUpdater()
     }
 
-    fun trackScreenViewed(tournamentId: String) {
-        telemetry.onTournamentScreenViewed(tournamentId)
+    fun trackScreenViewed(tournament: Tournament) {
+        telemetry.onTournamentScreenViewed(
+            tournamentId = tournament.id,
+            tournamentType = tournament.type,
+        )
     }
 
     @OptIn(ExperimentalTime::class)
@@ -298,6 +301,7 @@ class TournamentViewModel(
             val durationMinutes = ((tournament.endEpochMs - tournament.startEpochMs) / 60000).toInt()
             telemetry.onRegistrationInitiated(
                 tournamentId = tournament.id,
+                tournamentType = tournament.type,
                 entryFeePoints = tokensRequired,
                 userPointBalance = currentBalance.toInt(),
                 tournamentDurationMinutes = durationMinutes,
@@ -325,6 +329,7 @@ class TournamentViewModel(
                     // Track registration success
                     telemetry.onTournamentRegistered(
                         tournamentId = result.tournamentId,
+                        tournamentType = tournament.type,
                         entryFeePoints = result.coinsPaid,
                     )
                     // Refresh balance from server after entry fee was deducted

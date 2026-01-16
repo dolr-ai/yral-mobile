@@ -5,6 +5,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
@@ -46,6 +48,85 @@ fun YralAsyncImage(
         modifier = modifier,
         contentAlignment = Alignment.Center,
     ) {
+        YralAsyncImageContent(
+            imageUrl = imageUrl,
+            modifier =
+                Modifier
+                    .width(maxWidth)
+                    .height(maxHeight)
+                    .clip(shape)
+                    .border(
+                        width = border,
+                        color = borderColor,
+                        shape = shape,
+                    ).background(
+                        color = backgroundColor,
+                        shape = shape,
+                    ),
+            contentScale = contentScale,
+            onLoadingStateChange = { isLoading = it },
+            onError = onError,
+        )
+
+        AnimatedVisibility(
+            visible = isLoading,
+            enter = fadeIn(),
+            exit = fadeOut(),
+        ) {
+            val availableSize = min(maxWidth.value, maxHeight.value)
+            val loaderSizeDp =
+                when (loaderSize) {
+                    is LoaderSize.None -> loaderSize.mSize
+                    is LoaderSize.Fixed -> loaderSize.mSize
+                    is LoaderSize.Dynamic -> loaderSize.size
+                    is LoaderSize.Percentage -> (availableSize * loaderSize.percentage).dp
+                }
+            YralLoader(size = loaderSizeDp)
+        }
+    }
+}
+
+@Composable
+private fun BoxScope.YralAsyncImageContent(
+    imageUrl: Any,
+    modifier: Modifier,
+    contentScale: ContentScale,
+    onLoadingStateChange: (Boolean) -> Unit,
+    onError: () -> Unit,
+) {
+    AsyncImage(
+        modifier = modifier.align(Alignment.Center),
+        contentScale = contentScale,
+        model = imageUrl,
+        contentDescription = "image",
+        onState = {
+            onLoadingStateChange(it !is AsyncImagePainter.State.Success)
+            if (it is AsyncImagePainter.State.Error) {
+                onError()
+            }
+        },
+    )
+}
+
+@Composable
+fun YralShimmerImage(
+    imageUrl: Any?,
+    placeholderImageUrl: Any,
+    modifier: Modifier = Modifier,
+    border: Dp = 0.dp,
+    borderColor: Color = Color.Transparent,
+    backgroundColor: Color = Color.Transparent,
+    contentScale: ContentScale = ContentScale.FillBounds,
+    shape: Shape = CircleShape,
+    onError: () -> Unit = {},
+) {
+    BoxWithConstraints(
+        modifier = modifier,
+        contentAlignment = Alignment.Center,
+    ) {
+        var isLoading by remember { mutableStateOf(true) }
+        val targetUrl = imageUrl ?: placeholderImageUrl
+
         AsyncImage(
             modifier =
                 Modifier
@@ -61,29 +142,29 @@ fun YralAsyncImage(
                         shape = shape,
                     ),
             contentScale = contentScale,
-            model = imageUrl,
+            model = targetUrl,
             contentDescription = "image",
-            onState = {
-                isLoading = it is AsyncImagePainter.State.Loading
-                if (it is AsyncImagePainter.State.Error) {
+            onState = { state ->
+                isLoading = state !is AsyncImagePainter.State.Success
+                if (state is AsyncImagePainter.State.Error) {
                     onError()
                 }
             },
         )
+
         AnimatedVisibility(
             visible = isLoading,
             enter = fadeIn(),
             exit = fadeOut(),
         ) {
-            val availableSize = min(maxWidth.value, maxHeight.value)
-            val loaderSizeDp =
-                when (loaderSize) {
-                    is LoaderSize.None -> loaderSize.mSize
-                    is LoaderSize.Fixed -> loaderSize.mSize
-                    is LoaderSize.Dynamic -> loaderSize.size
-                    is LoaderSize.Percentage -> (availableSize * loaderSize.percentage).dp
-                }
-            YralLoader(size = loaderSizeDp)
+            Box(
+                modifier =
+                    Modifier
+                        .width(maxWidth)
+                        .height(maxHeight)
+                        .clip(shape)
+                        .shimmer(cornerRadius = 4.dp),
+            )
         }
     }
 }

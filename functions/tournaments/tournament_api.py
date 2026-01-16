@@ -996,21 +996,12 @@ def tournament_vote(request: Request):
             # Check if video doc exists, create if not
             video_snap = video_ref.get(transaction=tx)
             if not video_snap.exists:
-                # Initialize video with seed votes (like cast_vote_v2)
-                all_ids = [s["id"] for s in smileys if s["id"] != "heart"]
-                seed_ids = random.sample(all_ids, min(3, len(all_ids)))
-
                 tx.set(video_ref, {"created_at": firestore.SERVER_TIMESTAMP})
 
-                # Initialize shard 0 with seed votes
+                # Initialize all shards with zeros (no seeding for tournaments)
                 zero = {s["id"]: 0 for s in smileys}
-                for seed_id in seed_ids:
-                    zero[seed_id] = 1000
-                tx.set(shard_ref(0), zero, merge=True)
-
-                # Initialize other shards with zeros
-                for k in range(1, TOURNAMENT_SHARDS):
-                    tx.set(shard_ref(k), {s["id"]: 0 for s in smileys}, merge=True)
+                for k in range(TOURNAMENT_SHARDS):
+                    tx.set(shard_ref(k), zero, merge=True)
 
             # WRITES
             # Record vote

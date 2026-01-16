@@ -49,6 +49,7 @@ import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralBrushes
 import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.libs.phonevalidation.countries.Country
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -91,6 +92,7 @@ fun SignupView(
     mode: LoginMode = LoginMode.BOTH,
     onNavigateToCountrySelector: () -> Unit,
     onNavigateToOtpVerification: () -> Unit,
+    onSocialProviderSelected: (SocialProvider) -> Unit = {},
     authTelemetry: AuthTelemetry = koinInject(),
     loginViewModel: LoginViewModel = koinInject(),
 ) {
@@ -137,31 +139,10 @@ fun SignupView(
             verticalArrangement = Arrangement.spacedBy(28.dp, Alignment.Top),
             horizontalAlignment = Alignment.Start,
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
-                horizontalAlignment = Alignment.Start,
-            ) {
-                Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    text =
-                        headlineText
-                            ?: getAnnotatedHeaderForLogin(
-                                fullText = stringResource(Res.string.continue_to_sign_up_for_free),
-                            ),
-                    style = LocalAppTopography.current.xlSemiBold,
-                    color = Color.White,
-                )
-                if (disclaimerText?.isEmpty() == true) return@Column
-                Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    text = disclaimerText ?: stringResource(Res.string.sign_up_disclaimer),
-                    style = LocalAppTopography.current.baseRegular,
-                    color = Color.White,
-                )
-            }
+            SignupHeader(
+                headlineText = headlineText,
+                disclaimerText = disclaimerText,
+            )
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.Top),
@@ -169,69 +150,19 @@ fun SignupView(
             ) {
                 // Phone authentication section (for ONLY_PHONE and SOCIAL_AND_PHONE)
                 if (style == SignupViewStyle.ONLY_PHONE || style == SignupViewStyle.SOCIAL_AND_PHONE) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        // Country picker and phone input
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            CountryPickerButton(
-                                selectedCountry = selectedCountry,
-                                onClick = onNavigateToCountrySelector,
-                                modifier = Modifier.width(90.dp),
-                            )
+                    PhoneSignupSection(
+                        selectedCountry = selectedCountry,
+                        phoneNumber = phoneNumber,
+                        phoneAuthState = phoneAuthState,
+                        phoneValidationError = phoneValidationError,
+                        onNavigateToCountrySelector = onNavigateToCountrySelector,
+                        onPhoneNumberChange = loginViewModel::onPhoneNumberChanged,
+                        onPhoneLoginClick = loginViewModel::onPhoneLoginClicked,
+                    )
 
-                            PhoneInputField(
-                                phoneNumber = phoneNumber,
-                                onPhoneNumberChange = loginViewModel::onPhoneNumberChanged,
-                                selectedCountry = selectedCountry,
-                                isError = phoneValidationError != null,
-                                modifier = Modifier.weight(1f),
-                            )
-                        }
-
-                        // Login button
-                        YralGradientButton(
-                            modifier = Modifier.fillMaxWidth(),
-                            text = stringResource(DesignRes.string.login),
-                            onClick = loginViewModel::onPhoneLoginClicked,
-                            buttonState =
-                                when {
-                                    phoneAuthState is UiState.InProgress -> YralButtonState.Loading
-                                    phoneNumber.trim().isEmpty() -> YralButtonState.Disabled
-                                    selectedCountry == null -> YralButtonState.Disabled
-                                    phoneValidationError != null -> YralButtonState.Disabled
-                                    else -> {
-                                        val numberLength = phoneNumber.length
-                                        val minLength = selectedCountry.minLength
-                                        val maxLength = selectedCountry.maxLength
-                                        if (numberLength !in minLength..maxLength) {
-                                            YralButtonState.Disabled
-                                        } else {
-                                            YralButtonState.Enabled
-                                        }
-                                    }
-                                },
-                        )
-
-                        // Error message
-                        phoneValidationError?.let { error ->
-                            Text(
-                                text = error,
-                                style = LocalAppTopography.current.smRegular,
-                                color = YralColors.ErrorRed,
-                                textAlign = TextAlign.Center,
-                            )
-                        }
-                    }
-
-                    // Terms of Service
-                    Text(
-                        text = annotateText(termsLink, openTerms),
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center,
+                    TermsOfServiceText(
+                        termsLink = termsLink,
+                        openTerms = openTerms,
                     )
                 }
 
@@ -242,68 +173,24 @@ fun SignupView(
 
                 // Social buttons (for ONLY_SOCIAL and SOCIAL_AND_PHONE)
                 if (style == SignupViewStyle.ONLY_SOCIAL || style == SignupViewStyle.SOCIAL_AND_PHONE) {
-                    if (style == SignupViewStyle.SOCIAL_AND_PHONE) {
-                        // Icon-only buttons in a row for BOTH mode
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            defaultSocialProviders()
-                                .filter { it != SocialProvider.PHONE_NUMBER }
-                                .forEach { provider ->
-                                    val iconRes =
-                                        when (provider) {
-                                            SocialProvider.GOOGLE -> DesignRes.drawable.google
-                                            SocialProvider.APPLE -> DesignRes.drawable.apple
-                                            SocialProvider.PHONE_NUMBER -> DesignRes.drawable.google
-                                        }
-                                    SocialIconButton(
-                                        icon = iconRes,
-                                        onClick = {
-                                            context?.let {
-                                                authTelemetry.onSignupJourneySelected(provider)
-                                                loginViewModel.signInWithSocial(context, provider)
-                                            }
-                                        },
-                                    )
-                                }
-                        }
-                    } else {
-                        // Full buttons with text for ONLY_SOCIAL mode
-                        defaultSocialProviders()
-                            .filter { it != SocialProvider.PHONE_NUMBER }
-                            .forEach { provider ->
-                                val buttonTextRes =
-                                    when (provider) {
-                                        SocialProvider.GOOGLE -> Res.string.signup_with_google
-                                        SocialProvider.APPLE -> Res.string.signup_with_apple
-                                        SocialProvider.PHONE_NUMBER -> Res.string.signup_with_google
-                                    }
-                                val iconRes =
-                                    when (provider) {
-                                        SocialProvider.GOOGLE -> DesignRes.drawable.google
-                                        SocialProvider.APPLE -> DesignRes.drawable.apple
-                                        SocialProvider.PHONE_NUMBER -> DesignRes.drawable.google
-                                    }
-                                YralButton(
-                                    text = stringResource(buttonTextRes),
-                                    icon = iconRes,
-                                ) {
-                                    context?.let {
-                                        authTelemetry.onSignupJourneySelected(provider)
-                                        loginViewModel.signInWithSocial(context, provider)
-                                    }
-                                }
+                    val providers = defaultSocialProviders()
+                    SocialSignupSection(
+                        providers = providers,
+                        isIconOnly = style == SignupViewStyle.SOCIAL_AND_PHONE && providers.isNotEmpty(),
+                        onProviderSelected = { provider ->
+                            context?.let {
+                                authTelemetry.onSignupJourneySelected(provider)
+                                loginViewModel.signInWithSocial(context, provider)
+                                onSocialProviderSelected(provider)
                             }
-                    }
+                        },
+                    )
 
                     // Terms for ONLY_SOCIAL
                     if (style == SignupViewStyle.ONLY_SOCIAL) {
-                        Text(
-                            text = annotateText(termsLink, openTerms),
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center,
+                        TermsOfServiceText(
+                            termsLink = termsLink,
+                            openTerms = openTerms,
                         )
                     }
                 }
@@ -323,6 +210,40 @@ fun DefaultTopContent() {
                 .width(DEFAULT_TOP_CONTENT_WIDTH)
                 .height(DEFAULT_TOP_CONTENT_HEIGHT),
     )
+}
+
+@Composable
+private fun SignupHeader(
+    headlineText: AnnotatedString?,
+    disclaimerText: String?,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
+        horizontalAlignment = Alignment.Start,
+    ) {
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+            text =
+                headlineText
+                    ?: getAnnotatedHeaderForLogin(
+                        fullText = stringResource(Res.string.continue_to_sign_up_for_free),
+                    ),
+            style = LocalAppTopography.current.xlSemiBold,
+            color = Color.White,
+        )
+
+        if (disclaimerText?.isEmpty() != true) {
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                text = disclaimerText ?: stringResource(Res.string.sign_up_disclaimer),
+                style = LocalAppTopography.current.baseRegular,
+                color = Color.White,
+            )
+        }
+    }
 }
 
 @Composable
@@ -395,6 +316,20 @@ private fun OrDivider() {
 }
 
 @Composable
+private fun TermsOfServiceText(
+    termsLink: String,
+    openTerms: () -> Unit,
+    modifier: Modifier = Modifier,
+    textAlign: TextAlign = TextAlign.Center,
+) {
+    Text(
+        text = annotateText(termsLink, openTerms),
+        modifier = modifier.fillMaxWidth(),
+        textAlign = textAlign,
+    )
+}
+
+@Composable
 private fun annotateText(
     termsLink: String,
     openTerms: () -> Unit,
@@ -445,6 +380,153 @@ private fun annotateText(
                 style = spanStyle.copy(color = defaultColor),
             ) {
                 append(consentText)
+            }
+        }
+    }
+}
+
+@Composable
+private fun PhoneSignupSection(
+    selectedCountry: Country?,
+    phoneNumber: String,
+    phoneAuthState: UiState<*>,
+    phoneValidationError: String?,
+    onNavigateToCountrySelector: () -> Unit,
+    onPhoneNumberChange: (String) -> Unit,
+    onPhoneLoginClick: () -> Unit,
+    authTelemetry: AuthTelemetry = koinInject(),
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        // Country picker and phone input
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            CountryPickerButton(
+                selectedCountry = selectedCountry,
+                onClick = onNavigateToCountrySelector,
+                modifier = Modifier.width(90.dp).height(44.dp),
+            )
+
+            PhoneInputField(
+                phoneNumber = phoneNumber,
+                onPhoneNumberChange = onPhoneNumberChange,
+                selectedCountry = selectedCountry,
+                isError = phoneValidationError != null,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        val buttonState =
+            phoneLoginButtonState(
+                phoneNumber = phoneNumber,
+                selectedCountry = selectedCountry,
+                phoneAuthState = phoneAuthState,
+                phoneValidationError = phoneValidationError,
+            )
+
+        LaunchedEffect(phoneNumber) {
+            if (buttonState == YralButtonState.Enabled) {
+                authTelemetry.phoneNumberEntered(
+                    countryCode = selectedCountry?.code ?: "",
+                    phoneLength = phoneNumber.length,
+                )
+            }
+        }
+
+        // Login button
+        YralGradientButton(
+            modifier = Modifier.fillMaxWidth(),
+            text = stringResource(DesignRes.string.login),
+            onClick = onPhoneLoginClick,
+            buttonState = buttonState,
+        )
+
+        // Error message
+        phoneValidationError?.let { error ->
+            Text(
+                text = error,
+                style = LocalAppTopography.current.smRegular,
+                color = YralColors.ErrorRed,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
+
+private fun phoneLoginButtonState(
+    phoneNumber: String,
+    selectedCountry: Country?,
+    phoneAuthState: UiState<*>,
+    phoneValidationError: String?,
+): YralButtonState =
+    when {
+        phoneAuthState is UiState.InProgress -> YralButtonState.Loading
+        phoneNumber.trim().isEmpty() -> YralButtonState.Disabled
+        selectedCountry == null -> YralButtonState.Disabled
+        phoneValidationError != null -> YralButtonState.Disabled
+        else -> {
+            val numberLength = phoneNumber.length
+            val minLength = selectedCountry.minLength
+            val maxLength = selectedCountry.maxLength
+            if (numberLength !in minLength..maxLength) {
+                YralButtonState.Disabled
+            } else {
+                YralButtonState.Enabled
+            }
+        }
+    }
+
+private fun SocialProvider.iconRes() =
+    when (this) {
+        SocialProvider.GOOGLE -> DesignRes.drawable.google
+        SocialProvider.APPLE -> DesignRes.drawable.apple
+        SocialProvider.PHONE -> DesignRes.drawable.google
+    }
+
+private fun SocialProvider.labelRes() =
+    when (this) {
+        SocialProvider.GOOGLE -> Res.string.signup_with_google
+        SocialProvider.APPLE -> Res.string.signup_with_apple
+        SocialProvider.PHONE -> Res.string.signup_with_google
+    }
+
+@Composable
+private fun SocialSignupSection(
+    providers: List<SocialProvider>,
+    isIconOnly: Boolean,
+    onProviderSelected: (SocialProvider) -> Unit,
+) {
+    val filteredProviders = providers.filter { it != SocialProvider.PHONE }
+    if (isIconOnly && filteredProviders.isNotEmpty()) {
+        // Icon-only buttons in a row for BOTH mode
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            filteredProviders.forEach { provider ->
+                SocialIconButton(
+                    icon = provider.iconRes(),
+                    onClick = { onProviderSelected(provider) },
+                )
+            }
+        }
+    } else {
+        // Full buttons with text (ONLY_SOCIAL mode or single provider)
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            filteredProviders.forEach { provider ->
+                YralButton(
+                    text = stringResource(provider.labelRes()),
+                    icon = provider.iconRes(),
+                ) {
+                    onProviderSelected(provider)
+                }
             }
         }
     }

@@ -4,7 +4,7 @@ import com.yral.shared.libs.arch.domain.SuspendUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.rust.service.domain.UserInfoRepository
-import com.yral.shared.rust.service.domain.models.ProfileUpdateDetails
+import com.yral.shared.rust.service.domain.models.ProfileUpdateDetailsV2
 
 class UpdateProfileDetailsUseCase
     internal constructor(
@@ -16,10 +16,10 @@ class UpdateProfileDetailsUseCase
             failureListener,
         ) {
         override suspend fun execute(parameter: UpdateProfileDetailsParams) =
-            userInfoRepository.updateProfileDetails(
+            userInfoRepository.updateProfileDetailsV2(
                 principal = parameter.principal,
                 details =
-                    ProfileUpdateDetails(
+                    ProfileUpdateDetailsV2(
                         bio = parameter.bio,
                         websiteUrl = parameter.websiteUrl,
                         profilePictureUrl = parameter.profilePictureUrl,

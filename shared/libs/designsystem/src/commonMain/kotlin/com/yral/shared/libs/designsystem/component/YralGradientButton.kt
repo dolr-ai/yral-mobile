@@ -41,6 +41,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.white_background
 
 @Composable
 fun YralGradientButton(
+    textStyle: TextStyle? = null,
     modifier: Modifier = Modifier,
     buttonState: YralButtonState = YralButtonState.Enabled,
     buttonType: YralButtonType = YralButtonType.Pink,
@@ -70,18 +71,19 @@ fun YralGradientButton(
                 enter = fadeIn(),
                 exit = fadeOut(),
             ) {
+                val defaultTextStyle =
+                    LocalAppTopography
+                        .current
+                        .mdBold
+                        .plus(
+                            TextStyle(
+                                textAlign = TextAlign.Center,
+                            ),
+                        )
                 YralMaskedVectorTextV2(
                     text = text,
                     drawableRes = getButtonTextBackground(buttonType, buttonState),
-                    textStyle =
-                        LocalAppTopography
-                            .current
-                            .mdBold
-                            .plus(
-                                TextStyle(
-                                    textAlign = TextAlign.Center,
-                                ),
-                            ),
+                    textStyle = textStyle ?: defaultTextStyle,
                 )
             }
         }

@@ -211,6 +211,7 @@ class ProfileViewModel: ObservableObject {
                 flag: AppFeatureFlags.Common.shared.MandatoryLogin
             )
         ),
+        phoneNumber: nil
       )
     )
     AnalyticsModuleKt.getAnalyticsManager().flush()
@@ -223,5 +224,6 @@ class ProfileViewModel: ObservableObject {
     let walletBalance: Double
     let playToScroll: Bool
     let emailId: String?
+    let phoneNumber: String?
   }
 }

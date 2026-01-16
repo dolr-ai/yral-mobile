@@ -98,8 +98,15 @@ fun TournamentGameScaffoldScreen(
 
     // Initialize the game view model with tournament data
     LaunchedEffect(gameConfig) {
+        val tournamentType =
+            if (gameConfig.isHotOrNot) {
+                com.yral.shared.features.tournament.domain.model.TournamentType.HOT_OR_NOT
+            } else {
+                com.yral.shared.features.tournament.domain.model.TournamentType.SMILEY
+            }
         tournamentGameViewModel.setTournament(
             tournamentId = gameConfig.tournamentId,
+            tournamentType = tournamentType,
             initialDiamonds = gameConfig.initialDiamonds,
             endEpochMs = gameConfig.endEpochMs,
         )
@@ -189,6 +196,7 @@ fun TournamentGameScaffoldScreen(
                     startingDiamonds = component.gameConfig.initialDiamonds,
                     playType = if (howToPlayOpenedFromButton) PlayType.CONTINUE else PlayType.START,
                     tournamentDurationMinutes = tournamentDurationMinutes,
+                    isHotOrNot = gameConfig.isHotOrNot,
                 )
             }
 

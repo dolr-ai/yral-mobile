@@ -6,14 +6,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import com.yral.shared.analytics.events.SignupNudgeDismissAction
 import com.yral.shared.app.nav.RootComponent
+import com.yral.shared.features.auth.analytics.AuthTelemetry
 import com.yral.shared.features.auth.ui.LoginBottomSheet
 import com.yral.shared.features.auth.ui.LoginScreenType
 import com.yral.shared.libs.phonevalidation.countries.Country
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginBottomSheetSlotContent(rootComponent: RootComponent) {
+fun LoginBottomSheetSlotContent(
+    rootComponent: RootComponent,
+    authTelemetry: AuthTelemetry = koinInject(),
+) {
     val loginInfo = rootComponent.currentLoginInfo ?: return
     val screenType = loginInfo.screenType as? LoginScreenType.BottomSheet ?: return
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -33,7 +39,11 @@ fun LoginBottomSheetSlotContent(rootComponent: RootComponent) {
         tncLink = rootComponent.loginViewModel.getTncLink(),
         initialBalanceReward = rootComponent.loginViewModel.getInitialBalanceReward(),
         bottomSheetState = bottomSheetState,
-        onDismissRequest = { loginCoordinator.dismissLoginBottomSheet() },
+        onDismissRequest = {
+            // User-initiated dismissal (tap outside / swipe down)
+            authTelemetry.onSignupNudgeDismissed(SignupNudgeDismissAction.CLOSE)
+            loginCoordinator.dismissLoginBottomSheet()
+        },
         onNavigateToOtpVerification = { loginCoordinator.navigateToOtpVerification() },
         onNavigateToCountrySelector = {
             loginCoordinator.navigateToCountrySelector { country: Country ->

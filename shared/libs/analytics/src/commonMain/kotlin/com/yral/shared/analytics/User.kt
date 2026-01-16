@@ -12,6 +12,7 @@ data class User(
     val emailId: String?,
     val utmParams: AnalyticsUtmParams?,
     val isMandatoryLogin: Boolean?,
+    val phoneNumber: String?,
 ) {
     constructor(
         userId: String,
@@ -26,5 +27,6 @@ data class User(
         emailId = null,
         utmParams = null,
         isMandatoryLogin = null,
+        phoneNumber = null,
     )
 }

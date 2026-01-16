@@ -10,11 +10,12 @@ import com.yral.shared.features.tournament.analytics.TournamentTelemetry
 import com.yral.shared.features.tournament.domain.GetTournamentLeaderboardUseCase
 import com.yral.shared.features.tournament.domain.model.GetTournamentLeaderboardRequest
 import com.yral.shared.features.tournament.domain.model.LeaderboardRow
+import com.yral.shared.features.tournament.domain.model.TournamentType
 import com.yral.shared.features.tournament.domain.model.formatParticipantsLabel
 import com.yral.shared.features.tournament.domain.model.formatScheduleLabel
 import com.yral.shared.features.tournament.domain.model.tournamentStatus
-import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4Params
-import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4UseCase
+import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV6Params
+import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV6UseCase
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import com.yral.shared.rust.service.utils.propicFromPrincipal
@@ -46,7 +47,7 @@ data class TournamentLeaderboardUiState(
 class TournamentLeaderboardViewModel(
     private val getTournamentLeaderboardUseCase: GetTournamentLeaderboardUseCase,
     private val sessionManager: SessionManager,
-    private val getProfileDetailsV4UseCase: GetProfileDetailsV4UseCase,
+    private val getUserProfileDetailsV6UseCase: GetUserProfileDetailsV6UseCase,
     private val telemetry: TournamentTelemetry,
 ) : ViewModel() {
     private val _state = MutableStateFlow(TournamentLeaderboardUiState())
@@ -55,7 +56,10 @@ class TournamentLeaderboardViewModel(
     val eventsFlow: Flow<Event> = eventChannel.receiveAsFlow()
 
     @OptIn(ExperimentalTime::class)
-    fun loadLeaderboard(tournamentId: String) {
+    fun loadLeaderboard(
+        tournamentId: String,
+        tournamentType: TournamentType,
+    ) {
         viewModelScope.launch {
             sessionManager.userPrincipal?.let { userPrincipal ->
                 _state.update { it.copy(isLoading = true, error = null) }
@@ -68,18 +72,10 @@ class TournamentLeaderboardViewModel(
                         val isWinner = userRank > 0 && userPrize != null
                         telemetry.onLeaderboardViewed(
                             tournamentId = tournamentId,
+                            tournamentType = tournamentType,
                             userRank = userRank,
                             isWinner = isWinner,
                         )
-
-                        // Track reward earned if user won a prize
-                        if (isWinner) {
-                            telemetry.onRewardEarned(
-                                tournamentId = tournamentId,
-                                rewardAmountInr = userPrize ?: 0,
-                                rank = userRank,
-                            )
-                        }
 
                         _state.update {
                             val startTime = Instant.fromEpochMilliseconds(leaderboard.startEpochMs)
@@ -144,9 +140,9 @@ class TournamentLeaderboardViewModel(
         viewModelScope.launch {
             sessionManager.userPrincipal?.let { principal ->
                 _state.update { it.copy(isNavigating = true) }
-                getProfileDetailsV4UseCase(
+                getUserProfileDetailsV6UseCase(
                     parameter =
-                        GetProfileDetailsV4Params(
+                        GetUserProfileDetailsV6Params(
                             principal = principal,
                             targetPrincipal = row.principalId,
                         ),
@@ -173,12 +169,14 @@ class TournamentLeaderboardViewModel(
     // Telemetry tracking methods
     fun trackResultScreenViewed(
         tournamentId: String,
+        tournamentType: TournamentType,
         isWin: Boolean,
         finalScore: Int,
         rank: Int,
     ) {
         telemetry.onResultScreenViewed(
             tournamentId = tournamentId,
+            tournamentType = tournamentType,
             isWin = isWin,
             finalScore = finalScore,
             rank = rank,

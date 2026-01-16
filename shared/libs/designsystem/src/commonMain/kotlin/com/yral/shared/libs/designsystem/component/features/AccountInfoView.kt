@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -41,8 +42,9 @@ import yral_mobile.shared.libs.designsystem.generated.resources.followers
 import yral_mobile.shared.libs.designsystem.generated.resources.following
 import yral_mobile.shared.libs.designsystem.generated.resources.login
 import yral_mobile.shared.libs.designsystem.generated.resources.share_profile
+import yral_mobile.shared.libs.designsystem.generated.resources.talk_to_me
 
-@Suppress("LongMethod", "LongParameterList")
+@Suppress("LongMethod", "LongParameterList", "CyclomaticComplexMethod")
 @Composable
 fun AccountInfoView(
     accountInfo: AccountInfo,
@@ -61,9 +63,12 @@ fun AccountInfoView(
     showFollow: Boolean = false,
     isFollowing: Boolean = false,
     isFollowInProgress: Boolean = false,
+    isAiInfluencer: Boolean = false,
+    isTalkToMeInProgress: Boolean = false,
     onFollowClicked: () -> Unit = {},
     onFollowersClick: (() -> Unit)? = null,
     onFollowingClick: (() -> Unit)? = null,
+    onTalkToMeClicked: () -> Unit = {},
 ) {
     Column(
         modifier =
@@ -192,32 +197,78 @@ fun AccountInfoView(
                 }
             }
             showFollow -> {
-                val followText =
-                    when {
-                        isFollowInProgress -> ""
-                        isFollowing -> stringResource(Res.string.following)
-                        else -> stringResource(Res.string.follow)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    val followText =
+                        when {
+                            isFollowInProgress -> ""
+                            isFollowing -> stringResource(Res.string.following)
+                            else -> stringResource(Res.string.follow)
+                        }
+                    val buttonState =
+                        if (isFollowInProgress) YralButtonState.Loading else YralButtonState.Enabled
+                    if (isFollowing) {
+                        YralButton(
+                            modifier = Modifier.weight(1f),
+                            text = followText,
+                            borderColor = YralColors.Neutral700,
+                            borderWidth = 1.dp,
+                            backgroundColor = YralColors.Neutral800,
+                            textStyle =
+                                LocalAppTopography
+                                    .current
+                                    .baseSemiBold
+                                    .copy(
+                                        color = YralColors.Grey50,
+                                    ),
+                            onClick = onFollowClicked,
+                            buttonState = buttonState,
+                            buttonHeight = 40.dp,
+                        )
+                    } else {
+                        YralGradientButton(
+                            modifier = Modifier.weight(1f),
+                            text = followText,
+                            onClick = onFollowClicked,
+                            buttonState = buttonState,
+                            buttonHeight = 40.dp,
+                            textStyle =
+                                LocalAppTopography
+                                    .current
+                                    .baseSemiBold
+                                    .copy(
+                                        color = YralColors.Grey50,
+                                        textAlign = TextAlign.Center,
+                                    ),
+                        )
                     }
-                val buttonState =
-                    if (isFollowInProgress) YralButtonState.Loading else YralButtonState.Enabled
-                if (isFollowing) {
-                    YralButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        text = followText,
-                        borderColor = YralColors.Neutral700,
-                        borderWidth = 1.dp,
-                        backgroundColor = YralColors.Neutral800,
-                        textStyle = TextStyle(color = YralColors.NeutralTextPrimary),
-                        onClick = onFollowClicked,
-                        buttonState = buttonState,
-                    )
-                } else {
-                    YralGradientButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        text = followText,
-                        onClick = onFollowClicked,
-                        buttonState = buttonState,
-                    )
+                    if (isAiInfluencer) {
+                        val talkButtonState =
+                            if (isTalkToMeInProgress) YralButtonState.Loading else YralButtonState.Enabled
+                        val talkText =
+                            if (isTalkToMeInProgress) {
+                                ""
+                            } else {
+                                stringResource(Res.string.talk_to_me)
+                            }
+                        YralButton(
+                            modifier = Modifier.weight(1f),
+                            text = talkText,
+                            backgroundColor = YralColors.Grey50,
+                            textStyle =
+                                LocalAppTopography
+                                    .current
+                                    .baseSemiBold
+                                    .copy(
+                                        color = YralColors.Pink300,
+                                    ),
+                            onClick = onTalkToMeClicked,
+                            buttonState = talkButtonState,
+                            buttonHeight = 40.dp,
+                        )
+                    }
                 }
             }
         }

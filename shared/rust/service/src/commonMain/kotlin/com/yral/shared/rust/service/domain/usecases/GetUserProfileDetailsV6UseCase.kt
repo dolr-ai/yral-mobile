@@ -5,22 +5,22 @@ import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.rust.service.domain.models.UserProfileDetails
 
-class GetProfileDetailsV4UseCase(
+class GetUserProfileDetailsV6UseCase(
     appDispatchers: AppDispatchers,
     useCaseFailureListener: UseCaseFailureListener,
     private val userInfoRepository: com.yral.shared.rust.service.domain.UserInfoRepository,
-) : SuspendUseCase<GetProfileDetailsV4Params, UserProfileDetails>(
+) : SuspendUseCase<GetUserProfileDetailsV6Params, UserProfileDetails>(
         appDispatchers.network,
         useCaseFailureListener,
     ) {
-    override suspend fun execute(parameter: GetProfileDetailsV4Params): UserProfileDetails =
-        userInfoRepository.getProfileDetailsV4(
+    override suspend fun execute(parameter: GetUserProfileDetailsV6Params): UserProfileDetails =
+        userInfoRepository.getUserProfileDetailsV6(
             principal = parameter.principal,
             targetPrincipal = parameter.targetPrincipal,
         )
 }
 
-data class GetProfileDetailsV4Params(
+data class GetUserProfileDetailsV6Params(
     val principal: String,
     val targetPrincipal: String,
 )

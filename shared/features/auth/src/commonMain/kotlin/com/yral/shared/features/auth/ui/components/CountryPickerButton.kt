@@ -19,8 +19,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import com.yral.shared.libs.designsystem.component.LoaderSize
-import com.yral.shared.libs.designsystem.component.YralAsyncImage
+import com.yral.shared.libs.designsystem.component.YralShimmerImage
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.phonevalidation.countries.Country
 import org.jetbrains.compose.resources.painterResource
@@ -51,16 +50,14 @@ fun CountryPickerButton(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Flag image
-            if (selectedCountry != null) {
-                YralAsyncImage(
-                    imageUrl = selectedCountry.flagUrl,
-                    modifier = Modifier.width(31.5.dp).height(22.5.dp),
-                    contentScale = ContentScale.FillBounds,
-                    shape = RoundedCornerShape(4.dp),
-                    loaderSize = LoaderSize.Fixed,
-                )
-            }
+            // Flag image with shimmer placeholder
+            YralShimmerImage(
+                imageUrl = selectedCountry?.flagUrl,
+                placeholderImageUrl = "",
+                modifier = Modifier.width(31.5.dp).height(22.5.dp),
+                contentScale = ContentScale.FillBounds,
+                shape = RoundedCornerShape(4.dp),
+            )
 
             // Dropdown arrow (rotated arrow-left icon)
             Icon(

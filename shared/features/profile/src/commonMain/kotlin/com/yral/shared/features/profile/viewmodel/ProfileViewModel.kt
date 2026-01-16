@@ -18,6 +18,8 @@ import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.shared.analytics.events.CtaType
 import com.yral.shared.analytics.events.EditProfileSource
 import com.yral.shared.analytics.events.FollowersListTab
+import com.yral.shared.analytics.events.InfluencerClickType
+import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.AccountInfo
@@ -30,6 +32,9 @@ import com.yral.shared.data.domain.CommonApis
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.data.domain.models.VideoViews
 import com.yral.shared.data.domain.useCases.GetVideoViewsUseCase
+import com.yral.shared.features.chat.analytics.ChatTelemetry
+import com.yral.shared.features.chat.domain.models.Influencer
+import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
 import com.yral.shared.features.profile.analytics.ProfileTelemetry
 import com.yral.shared.features.profile.domain.DeleteVideoUseCase
 import com.yral.shared.features.profile.domain.FollowNotificationUseCase
@@ -56,8 +61,8 @@ import com.yral.shared.rust.service.domain.models.PagedFollowerItem
 import com.yral.shared.rust.service.domain.pagedDataSource.UserInfoPagingSourceFactory
 import com.yral.shared.rust.service.domain.usecases.FollowUserParams
 import com.yral.shared.rust.service.domain.usecases.FollowUserUseCase
-import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4Params
-import com.yral.shared.rust.service.domain.usecases.GetProfileDetailsV4UseCase
+import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV6Params
+import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV6UseCase
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserParams
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserUseCase
 import com.yral.shared.rust.service.utils.CanisterData
@@ -81,6 +86,7 @@ import yral_mobile.shared.features.profile.generated.resources.download_successf
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.profile_share_default_name
+import yral_mobile.shared.libs.designsystem.generated.resources.something_went_wrong
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
@@ -99,13 +105,15 @@ class ProfileViewModel(
     private val followNotificationUseCase: FollowNotificationUseCase,
     private val getVideoViewsUseCase: GetVideoViewsUseCase,
     private val profileTelemetry: ProfileTelemetry,
+    private val chatTelemetry: ChatTelemetry,
     private val shareService: ShareService,
     private val urlBuilder: UrlBuilder,
     private val linkGenerator: LinkGenerator,
     private val crashlyticsManager: CrashlyticsManager,
     private val flagManager: FeatureFlagManager,
     private val userInfoPagingSourceFactory: UserInfoPagingSourceFactory,
-    private val getProfileDetailsV4UseCase: GetProfileDetailsV4UseCase,
+    private val getUserProfileDetailsV6UseCase: GetUserProfileDetailsV6UseCase,
+    private val getInfluencerUseCase: GetInfluencerUseCase,
     private val fileDownloader: FileDownloader,
 ) : ViewModel() {
     companion object {
@@ -321,8 +329,8 @@ class ProfileViewModel(
     private fun refreshOwnProfileDetails() {
         viewModelScope.launch {
             val principal = sessionManager.userPrincipal ?: return@launch
-            getProfileDetailsV4UseCase(
-                GetProfileDetailsV4Params(
+            getUserProfileDetailsV6UseCase(
+                GetUserProfileDetailsV6Params(
                     principal = principal,
                     targetPrincipal = principal,
                 ),
@@ -342,7 +350,7 @@ class ProfileViewModel(
                                     ?: currentInfo.profilePic,
                             bio = bio?.takeUnless { it.isBlank() } ?: currentInfo.bio,
                         )
-                    current.copy(accountInfo = newInfo)
+                    current.copy(accountInfo = newInfo, isAiInfluencer = details.isAiInfluencer == true)
                 }
             }.onFailure { error ->
                 Logger.e("refreshOwnProfileDetails") { "Failed to fetch profile details $error" }
@@ -356,8 +364,8 @@ class ProfileViewModel(
         if (targetPrincipal.isBlank()) return
         viewModelScope.launch {
             val callerPrincipal = sessionManager.userPrincipal ?: return@launch
-            getProfileDetailsV4UseCase(
-                GetProfileDetailsV4Params(
+            getUserProfileDetailsV6UseCase(
+                GetUserProfileDetailsV6Params(
                     principal = callerPrincipal,
                     targetPrincipal = targetPrincipal,
                 ),
@@ -374,10 +382,44 @@ class ProfileViewModel(
                     current.copy(
                         accountInfo = updatedInfo,
                         isFollowing = details.callerFollowsUser ?: current.isFollowing,
+                        isAiInfluencer = details.isAiInfluencer == true,
                     )
                 }
             }.onFailure { error ->
                 Logger.e("refreshOtherProfileDetails") { "Failed to fetch profile details $error" }
+            }
+        }
+    }
+
+    fun fetchInfluencerDetails() {
+        val influencerId = canisterData.userPrincipalId
+        if (influencerId.isBlank()) return
+        viewModelScope.launch {
+            _state.update { it.copy(isTalkToMeInProgress = true) }
+            try {
+                getInfluencerUseCase(GetInfluencerUseCase.Params(id = influencerId))
+                    .onSuccess { influencer ->
+                        chatTelemetry.influencerCardClicked(
+                            influencerId = influencer.id,
+                            influencerType = influencer.category,
+                            clickType = InfluencerClickType.TALK,
+                            position = 0,
+                        )
+                        chatTelemetry.chatInfluencerClicked(
+                            influencerId = influencer.id,
+                            influencerType = influencer.category,
+                            source = InfluencerSource.PROFILE,
+                        )
+                        profileEventsChannel.trySend(ProfileEvents.InfluencerDetailsFetched(influencer))
+                    }.onFailure { error ->
+                        Logger.e("fetchInfluencerDetails") { "Failed to fetch influencer details $error" }
+                        val message =
+                            error.message
+                                ?: getString(DesignRes.string.something_went_wrong)
+                        profileEventsChannel.trySend(ProfileEvents.Failed(message))
+                    }
+            } finally {
+                _state.update { it.copy(isTalkToMeInProgress = false) }
             }
         }
     }
@@ -951,6 +993,8 @@ data class ViewState(
     val shareMessage: String = "",
     val shareDescription: String = "",
     val canShareProfile: Boolean = false,
+    val isAiInfluencer: Boolean = false,
+    val isTalkToMeInProgress: Boolean = false,
 )
 
 sealed interface ProfileBottomSheet {
@@ -990,6 +1034,9 @@ sealed class VideoViewState {
 sealed class ProfileEvents {
     data object FollowedSuccessfully : ProfileEvents()
     data object UnfollowedSuccessfully : ProfileEvents()
+    data class InfluencerDetailsFetched(
+        val influencer: Influencer,
+    ) : ProfileEvents()
     data class Failed(
         val message: String,
     ) : ProfileEvents()
