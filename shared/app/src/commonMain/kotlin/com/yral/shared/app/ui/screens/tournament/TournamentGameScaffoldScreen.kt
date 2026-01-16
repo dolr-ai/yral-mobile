@@ -196,6 +196,7 @@ fun TournamentGameScaffoldScreen(
                     startingDiamonds = component.gameConfig.initialDiamonds,
                     playType = if (howToPlayOpenedFromButton) PlayType.CONTINUE else PlayType.START,
                     tournamentDurationMinutes = tournamentDurationMinutes,
+                    isHotOrNot = gameConfig.isHotOrNot,
                 )
             }
 

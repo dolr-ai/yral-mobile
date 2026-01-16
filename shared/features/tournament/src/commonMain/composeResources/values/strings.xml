@@ -24,6 +24,8 @@
     <string name="body_watch_video">Watch the reel and pay attention to the vibe.</string>
     <string name="title_pick_emoji">Pick the Best Emoji</string>
     <string name="body_pick_emoji">Choose the emoji that fits the video the BEST.</string>
+    <string name="title_pick_emoji_hot_or_not">Decide if the video is mast or bakwaas</string>
+    <string name="body_pick_emoji_hot_or_not">Choose if the video is mast or bakwaas according to you.</string>
     <string name="body_pick_emoji_right_choice">Right choice -&gt; </string>
     <string name="body_pick_emoji_right_choice_result">earn diamonds</string>
     <string name="body_pick_emoji_wrong_choice">Wrong choice -&gt; </string>
