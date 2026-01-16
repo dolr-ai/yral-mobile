@@ -258,6 +258,10 @@ private class IosPlaybackCoordinator(
         val descriptor = feed[index]
         val item = buildPlayerItem(descriptor)
         item.preferredForwardBufferDuration = 1.0
+        val previousIndex = slot.index
+        if (previousIndex != null && previousIndex != index) {
+            detachSurface(previousIndex, slot.player)
+        }
         slot.index = index
         slot.player.replaceCurrentItemWithPlayerItem(item)
         if (shouldPlay) {
@@ -275,6 +279,14 @@ private class IosPlaybackCoordinator(
                 handle.controller.player = slot.player
                 handle.playerState.value = slot.player
             }
+        }
+    }
+
+    private fun detachSurface(index: Int, player: AVPlayer) {
+        val handle = surfaces[index] as? IosVideoSurfaceHandle ?: return
+        if (handle.controller.player == player) {
+            handle.controller.player = null
+            handle.playerState.value = null
         }
     }
 

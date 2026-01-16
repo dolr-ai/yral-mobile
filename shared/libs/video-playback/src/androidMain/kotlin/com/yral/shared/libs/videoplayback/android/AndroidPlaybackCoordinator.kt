@@ -330,6 +330,10 @@ private class AndroidPlaybackCoordinator(
 
     private fun prepareSlot(slot: PlayerSlot, index: Int, playWhenReady: Boolean) {
         val mediaItem = mediaItems.getOrNull(index) ?: return
+        val previousIndex = slot.index
+        if (previousIndex != null && previousIndex != index) {
+            detachSurface(previousIndex, slot.player)
+        }
         var mediaSource = preloadManager.getMediaSource(mediaItem)
         if (mediaSource == null) {
             preloadManager.add(mediaItem, index)
@@ -350,6 +354,13 @@ private class AndroidPlaybackCoordinator(
             if (handle.playerState.value != slot.player) {
                 handle.playerState.value = slot.player
             }
+        }
+    }
+
+    private fun detachSurface(index: Int, player: Player) {
+        val handle = surfaces[index] as? AndroidVideoSurfaceHandle ?: return
+        if (handle.playerState.value == player) {
+            handle.playerState.value = null
         }
     }
 
