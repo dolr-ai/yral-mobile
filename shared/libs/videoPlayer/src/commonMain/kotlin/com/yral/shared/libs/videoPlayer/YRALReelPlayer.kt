@@ -13,7 +13,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.background
+import coil3.compose.AsyncImage
 import com.shortform.video.CoordinatorDeps
 import com.shortform.video.MediaDescriptor
 import com.shortform.video.PlaybackEventReporter
@@ -148,10 +152,21 @@ internal fun YRALReelsPlayerView(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.TopStart,
         ) {
+            val reel = visibleReels.getOrNull(page)
             VideoSurfaceSlot(
                 index = page,
                 coordinator = coordinator,
                 modifier = Modifier.fillMaxSize(),
+                shutter = {
+                    if (reel != null) {
+                        AsyncImage(
+                            model = reel.thumbnailUrl,
+                            contentDescription = "Thumbnail",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize().background(Color.Black),
+                        )
+                    }
+                },
                 overlay = { overlayContent(page) { autoScrollToNext = true } },
             )
         }

@@ -7,5 +7,6 @@ import com.shortform.video.VideoSurfaceHandle
 @Composable
 expect fun VideoSurface(
     modifier: Modifier = Modifier,
+    shutter: @Composable () -> Unit = {},
     onHandleReady: (VideoSurfaceHandle) -> Unit,
 )

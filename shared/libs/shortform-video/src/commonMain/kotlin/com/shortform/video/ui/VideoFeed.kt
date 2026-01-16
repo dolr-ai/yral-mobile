@@ -150,6 +150,7 @@ fun VideoSurfaceSlot(
     index: Int,
     coordinator: PlaybackCoordinator,
     modifier: Modifier = Modifier,
+    shutter: @Composable () -> Unit = {},
     overlay: @Composable () -> Unit = {},
 ) {
     Box(modifier = modifier) {
@@ -157,6 +158,7 @@ fun VideoSurfaceSlot(
 
         VideoSurface(
             modifier = Modifier.fillMaxSize(),
+            shutter = shutter,
             onHandleReady = { handle -> surfaceHandle = handle },
         )
 

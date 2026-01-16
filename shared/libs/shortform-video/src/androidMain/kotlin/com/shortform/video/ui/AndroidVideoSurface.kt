@@ -20,6 +20,7 @@ internal class AndroidVideoSurfaceHandle(
 @Composable
 actual fun VideoSurface(
     modifier: Modifier,
+    shutter: @Composable () -> Unit,
     onHandleReady: (VideoSurfaceHandle) -> Unit,
 ) {
     val playerState = remember { mutableStateOf<Player?>(null) }
@@ -29,7 +30,7 @@ actual fun VideoSurface(
         modifier = modifier,
         player = playerState.value,
         contentScale = ContentScale.Crop,
-        shutter = {},
+        shutter = shutter,
     )
 
     LaunchedEffect(handle) {
