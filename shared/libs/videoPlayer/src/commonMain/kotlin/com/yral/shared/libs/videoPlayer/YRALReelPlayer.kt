@@ -105,8 +105,6 @@ fun YRALReelPlayer(
     VerticalPager(
         modifier = modifier.fillMaxSize().nestedScroll(edgeDetectConnection),
         state = pagerState,
-        userScrollEnabled = true,
-        beyondViewportPageCount = 1,
         key = { page -> visibleReels.getOrNull(page)?.videoId ?: page },
     ) { page ->
         Box(
