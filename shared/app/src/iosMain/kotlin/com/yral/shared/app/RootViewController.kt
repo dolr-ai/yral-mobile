@@ -6,7 +6,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.window.ComposeUIViewController
 import com.yral.shared.app.nav.RootComponent
 import com.yral.shared.app.ui.MyApplicationTheme
-import com.shortform.video.ui.ShortformVideoDemoScreen
+import com.yral.shared.app.ui.screens.RootScreen
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -44,7 +44,7 @@ private class RootComposeViewController(
             CompositionLocalProvider(LocalRippleConfiguration provides null) {
                 CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
                     MyApplicationTheme {
-                        ShortformVideoDemoScreen()
+                        RootScreen(rootComponent)
                     }
                 }
             }

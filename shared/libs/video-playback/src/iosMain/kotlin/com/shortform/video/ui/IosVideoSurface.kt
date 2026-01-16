@@ -14,6 +14,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import platform.AVKit.AVPlayerViewController
 import platform.AVFoundation.AVLayerVideoGravityResizeAspect
 import platform.AVFoundation.AVPlayerItem
+import platform.AVFoundation.AVPlayerItemStatusReadyToPlay
 import platform.AVFoundation.AVPlayerTimeControlStatusPlaying
 import platform.AVFoundation.addPeriodicTimeObserverForInterval
 import platform.AVFoundation.currentItem
@@ -32,6 +33,7 @@ import kotlin.uuid.Uuid
 
 internal class IosVideoSurfaceHandle @OptIn(ExperimentalUuidApi::class) constructor(
     val controller: AVPlayerViewController,
+    val playerState: androidx.compose.runtime.MutableState<platform.AVFoundation.AVPlayer?>,
     override val id: String = Uuid.random().toHexString(),
 ) : VideoSurfaceHandle
 
@@ -65,6 +67,7 @@ actual fun VideoSurface(
     shutter: @Composable () -> Unit,
     onHandleReady: (VideoSurfaceHandle) -> Unit,
 ) {
+    val playerState = remember { mutableStateOf<platform.AVFoundation.AVPlayer?>(null) }
     var handle by remember { mutableStateOf<IosVideoSurfaceHandle?>(null) }
     var showShutter by remember { mutableStateOf(true) }
 
@@ -74,16 +77,19 @@ actual fun VideoSurface(
             modifier = Modifier.matchParentSize(),
             update = { view ->
                 val container = view
-                val current = handle ?: IosVideoSurfaceHandle(container.controller).also {
-                    handle = it
-                }
+                val current =
+                    handle ?: IosVideoSurfaceHandle(container.controller, playerState).also {
+                        handle = it
+                    }
                 onHandleReady(current)
             },
             onReset = { view ->
                 view.controller.player = null
+                playerState.value = null
             },
             onRelease = { view ->
                 view.controller.player = null
+                playerState.value = null
             },
         )
 
@@ -92,26 +98,38 @@ actual fun VideoSurface(
         }
     }
 
-    val player = handle?.controller?.player
+    val player = playerState.value
     DisposableEffect(player) {
         showShutter = true
         var lastItem: AVPlayerItem? = null
-        val observer =
-            player?.addPeriodicTimeObserverForInterval(
-                interval = CMTimeMakeWithSeconds(0.2, 600),
-                queue = null,
-            ) {
-                val item = player.currentItem
+        val updateShutter = {
+            player?.let { currentPlayer ->
+                val item = currentPlayer.currentItem
                 if (item != lastItem) {
                     lastItem = item
                     showShutter = true
                 }
-                if (player.timeControlStatus == AVPlayerTimeControlStatusPlaying) {
-                    val seconds = CMTimeGetSeconds(player.currentTime())
-                    if (seconds > 0.01) {
+                if (currentPlayer.timeControlStatus == AVPlayerTimeControlStatusPlaying) {
+                    val itemReady =
+                        currentPlayer.currentItem?.status == AVPlayerItemStatusReadyToPlay
+                    if (itemReady) {
                         showShutter = false
+                    } else {
+                        val seconds = CMTimeGetSeconds(currentPlayer.currentTime())
+                        if (seconds > 0.01) {
+                            showShutter = false
+                        }
                     }
                 }
+            }
+        }
+        updateShutter()
+        val observer =
+            player?.addPeriodicTimeObserverForInterval(
+                interval = CMTimeMakeWithSeconds(0.05, 600),
+                queue = null,
+            ) {
+                updateShutter()
             }
         onDispose {
             if (observer != null) {

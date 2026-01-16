@@ -170,6 +170,7 @@ private class IosPlaybackCoordinator(
         if (handle is IosVideoSurfaceHandle) {
             if (activeSlot.index == index && handle.controller.player == activeSlot.player) {
                 handle.controller.player = null
+                handle.playerState.value = null
             }
             val prepared = preparedSlot
             if (prepared != null &&
@@ -177,6 +178,7 @@ private class IosPlaybackCoordinator(
                 handle.controller.player == prepared.player
             ) {
                 handle.controller.player = null
+                handle.playerState.value = null
             }
         }
     }
@@ -271,6 +273,7 @@ private class IosPlaybackCoordinator(
         if (handle is IosVideoSurfaceHandle) {
             if (handle.controller.player != slot.player) {
                 handle.controller.player = slot.player
+                handle.playerState.value = slot.player
             }
         }
     }
