@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.features.tournament.domain.model.LeaderboardRow
+import com.yral.shared.features.tournament.domain.model.TournamentType
 import com.yral.shared.features.tournament.viewmodel.TournamentLeaderboardViewModel
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralLoader
@@ -94,6 +95,7 @@ import yral_mobile.shared.libs.leaderboard.generated.resources.Res as Leaderboar
 fun TournamentLeaderboardScreen(
     tournamentId: String,
     tournamentTitle: String,
+    tournamentType: TournamentType = TournamentType.SMILEY,
     showResult: Boolean = false,
     onBack: () -> Unit,
     onOpenProfile: (CanisterData) -> Unit,
@@ -104,7 +106,7 @@ fun TournamentLeaderboardScreen(
 
     LaunchedEffect(tournamentId, showResult) {
         viewModel.initShowResultOverlay(showResult)
-        viewModel.loadLeaderboard(tournamentId)
+        viewModel.loadLeaderboard(tournamentId, tournamentType)
     }
 
     LaunchedEffect(viewModel) {
@@ -223,6 +225,7 @@ fun TournamentLeaderboardScreen(
                 LaunchedEffect(shouldShowWinner, rank) {
                     viewModel.trackResultScreenViewed(
                         tournamentId = tournamentId,
+                        tournamentType = tournamentType,
                         isWin = shouldShowWinner,
                         finalScore = currentUser.diamonds,
                         rank = rank,

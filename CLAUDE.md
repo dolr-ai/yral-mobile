@@ -440,3 +440,112 @@ If Gradle configuration cache causes issues:
 # Disable temporarily
 ./gradlew build --no-configuration-cache
 ```
+
+## Tournament Creation
+
+When asked to create tournaments, use the Firebase Cloud Functions - they handle backend registration, video fetching, Cloud Tasks scheduling for status transitions, and prize distribution.
+
+### Tournament Types
+
+1. **Smiley Tournament** - Users vote on videos with emoji reactions
+2. **Hot or Not Tournament** - Users predict if a video is "hot" or "not", compared against AI verdict
+
+### Default Configuration
+
+- **Entry Cost**: 5 YRAL tokens (unless specified otherwise)
+- **Prize Pool**: Configurable (e.g., 5rs with 3rs for 1st, 2rs for 2nd)
+- **Duration**: Typically 10 minutes
+- **Status Transitions**: Automatically handled via Cloud Tasks (scheduled → live → ended → settled)
+
+### Creating Tournaments
+
+**Always use Cloud Functions** - they handle:
+- Backend API registration (gets tournament ID and videos from recsys)
+- Firestore document creation
+- Cloud Tasks scheduling for status transitions
+- AI video analysis (Hot or Not only)
+- Prize settlement and BTC payouts
+
+#### Smiley Tournament (Staging)
+
+```bash
+# Get access token
+ACCESS_TOKEN=$(gcloud auth print-access-token)
+
+# Create tournament
+curl -X POST "https://us-central1-yral-staging.cloudfunctions.net/create_tournaments" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Test Smiley Tournament",
+    "entry_cost": 5,
+    "total_prize_pool": 5,
+    "prize_map": {"1": 3, "2": 2},
+    "start_time": "HH:MM",
+    "end_time": "HH:MM"
+  }'
+```
+
+#### Hot or Not Tournament (Staging)
+
+```bash
+# Get access token
+ACCESS_TOKEN=$(gcloud auth print-access-token)
+
+# Create tournament
+curl -X POST "https://us-central1-yral-staging.cloudfunctions.net/create_hot_or_not_tournament" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Test Hot or Not Tournament",
+    "entry_cost": 5,
+    "total_prize_pool": 5,
+    "prize_map": {"1": 3, "2": 2},
+    "start_time": "HH:MM",
+    "end_time": "HH:MM",
+    "video_count": 50
+  }'
+```
+
+#### Production
+
+Replace `yral-staging` with `yral-mobile` in the URLs above.
+
+### Tournament Lifecycle
+
+1. **SCHEDULED** - Created, waiting to start
+2. **LIVE** - Active, accepting votes (Cloud Task triggers at start_time)
+3. **ENDED** - Closed, settlement begins (Cloud Task triggers at end_time)
+4. **SETTLED** - Prizes distributed via BTC transfers
+
+Cloud Tasks automatically trigger `update_tournament_status` function at the scheduled times.
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `/functions/tournaments/tournaments.py` | Smiley tournament creation, status updates, settlement |
+| `/functions/hot_or_not_tournament.py` | Hot or Not tournament creation with AI analysis |
+| `/functions/tournaments/tournament_api.py` | Client-facing APIs (register, vote, leaderboard) |
+| `/functions/scripts/` | Manual tournament creation scripts |
+
+### Firestore Collections
+
+- `tournaments/` - Smiley tournaments
+- `hot_or_not_tournaments/` - Hot or Not tournaments
+- `{collection}/{tournament_id}/users/` - Registered participants
+- `{collection}/{tournament_id}/votes/` - User votes
+- `hot_or_not_tournaments/{id}/videos/` - AI verdicts for videos
+
+### Cloud Tasks Queue
+
+- **Queue**: `tournament-status-updates` (us-central1)
+- **Purpose**: Schedules status transitions (live, ended)
+
+### Manual Status Update (if needed)
+
+```bash
+curl -X POST "https://us-central1-yral-staging.cloudfunctions.net/update_tournament_status" \
+  -H "Content-Type: application/json" \
+  -d '{"tournament_id": "YOUR_TOURNAMENT_ID", "status": "live"}'
+```

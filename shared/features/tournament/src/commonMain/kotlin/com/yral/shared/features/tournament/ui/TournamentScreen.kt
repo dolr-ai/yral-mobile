@@ -61,11 +61,6 @@ fun TournamentScreen(
     val insufficientBalanceMessage = stringResource(Res.string.tournament_insufficient_balance)
     val registrationFailedMessage = stringResource(Res.string.tournament_registration_failed)
 
-    // Track screen viewed when the tournament list screen is opened
-    LaunchedEffect(Unit) {
-        viewModel.trackScreenViewed("")
-    }
-
     LaunchedEffect(key1 = component, viewModel) {
         viewModel.eventsFlow.collectLatest { value ->
             if (value is TournamentViewModel.Event.RegistrationFailed) {
