@@ -27,9 +27,7 @@ import com.shortform.video.ui.VideoSurfaceSlot
 import com.shortform.video.ui.rememberPlaybackCoordinatorWithLifecycle
 import com.yral.shared.libs.videoPlayer.model.PlayerConfig
 import com.yral.shared.libs.videoPlayer.model.Reels
-import com.yral.shared.libs.videoPlayer.pool.VideoListener
 import com.yral.shared.libs.videoPlayer.util.EdgeScrollDetectConnection
-import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
 import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
 import kotlinx.coroutines.flow.distinctUntilChanged
 
@@ -43,8 +41,6 @@ fun YRALReelPlayer(
     recordTime: (Int, Int) -> Unit,
     didVideoEnd: () -> Unit,
     onEdgeScrollAttempt: (pageNo: Int, atStart: Boolean, direction: ReelScrollDirection) -> Unit = { _, _, _ -> },
-    getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
-    getVideoListener: (reel: Reels) -> VideoListener?,
     overlayContent: @Composable (pageNo: Int, scrollToNext: () -> Unit) -> Unit,
 ) {
     YRALReelsPlayerView(
@@ -56,14 +52,11 @@ fun YRALReelPlayer(
         recordTime = recordTime,
         playerConfig = PlayerConfig(reelVerticalScrolling = true),
         onEdgeScrollAttempt = onEdgeScrollAttempt,
-        getPrefetchListener = getPrefetchListener,
-        getVideoListener = { getVideoListener(it) },
         overlayContent = overlayContent,
         didVideoEnd = didVideoEnd
     )
 }
 
-@Suppress("UNUSED_PARAMETER")
 @Composable
 internal fun YRALReelsPlayerView(
     modifier: Modifier = Modifier,
@@ -74,8 +67,6 @@ internal fun YRALReelsPlayerView(
     recordTime: (Int, Int) -> Unit,
     playerConfig: PlayerConfig = PlayerConfig(),
     onEdgeScrollAttempt: (pageNo: Int, atStart: Boolean, direction: ReelScrollDirection) -> Unit = { _, _, _ -> },
-    getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
-    getVideoListener: (reel: Reels) -> VideoListener?,
     didVideoEnd: () -> Unit,
     overlayContent: @Composable (pageNo: Int, scrollToNext: () -> Unit) -> Unit,
 ) {
@@ -99,11 +90,6 @@ internal fun YRALReelsPlayerView(
             initialPage = initialPage.coerceAtMost(pageCount - 1),
         )
 
-    val reporter = rememberPlaybackEventReporter(
-        didVideoEnd = didVideoEnd,
-        recordTime = recordTime,
-    )
-
     LaunchedEffect(pagerState, visibleReels) {
         snapshotFlow { pagerState.currentPage }
             .distinctUntilChanged()
@@ -111,6 +97,11 @@ internal fun YRALReelsPlayerView(
                 onPageLoaded(page)
             }
     }
+
+    val reporter = rememberPlaybackEventReporter(
+        didVideoEnd = didVideoEnd,
+        recordTime = recordTime,
+    )
     val coordinator = rememberPlaybackCoordinatorWithLifecycle(
         deps = CoordinatorDeps(reporter = reporter),
     )

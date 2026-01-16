@@ -44,7 +44,6 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.model.Reels
-import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
 import com.yral.shared.reportVideo.domain.models.ReportSheetState
 import com.yral.shared.reportVideo.domain.models.ReportVideoData
 import com.yral.shared.reportVideo.ui.ReportVideo
@@ -82,7 +81,6 @@ fun ProfileReelPlayer(
     onDownloadVideo: (FeedDetails) -> Unit,
     onShareClick: (FeedDetails) -> Unit,
     onViewsClick: (FeedDetails) -> Unit,
-    getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
     modifier: Modifier = Modifier,
 ) {
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -99,8 +97,6 @@ fun ProfileReelPlayer(
             onPageLoaded = { },
             recordTime = { _, _ -> },
             didVideoEnd = { },
-            getPrefetchListener = getPrefetchListener,
-            getVideoListener = { null },
         ) { pageNo, _ ->
             val currentVideo = reelVideos[pageNo]
             if (currentVideo != null) {
