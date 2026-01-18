@@ -69,7 +69,10 @@ fun VideoFeedSync(
     coordinator: PlaybackCoordinator,
 ) {
     var previousItems by remember { mutableStateOf<List<MediaDescriptor>>(emptyList()) }
-    LaunchedEffect(items) {
+    LaunchedEffect(items, coordinator) {
+        if (previousItems.isNotEmpty()) {
+            previousItems = emptyList()
+        }
         val previous = previousItems
         if (previous.isEmpty()) {
             coordinator.setFeed(items)
@@ -107,7 +110,7 @@ fun VideoPagerEffects(
     coordinator: PlaybackCoordinator,
     scrollHintThreshold: Float = 0.15f,
 ) {
-    LaunchedEffect(pagerState, itemsCount) {
+    LaunchedEffect(pagerState, itemsCount, coordinator) {
         snapshotFlow { pagerState.currentPage }
             .distinctUntilChanged()
             .collectLatest { page ->
@@ -117,7 +120,7 @@ fun VideoPagerEffects(
             }
     }
 
-    LaunchedEffect(pagerState, itemsCount, scrollHintThreshold) {
+    LaunchedEffect(pagerState, itemsCount, scrollHintThreshold, coordinator) {
         snapshotFlow { pagerState.currentPage to pagerState.currentPageOffsetFraction }
             .map { (page, offset) ->
                 predictedIndexFromOffset(
@@ -162,13 +165,17 @@ fun VideoSurfaceSlot(
             onHandleReady = { handle -> surfaceHandle = handle },
         )
 
-        DisposableEffect(surfaceHandle, index) {
+        DisposableEffect(surfaceHandle, index, coordinator) {
             val handle = surfaceHandle
+            var bound = false
             if (handle != null) {
                 coordinator.bindSurface(index, handle)
+                bound = true
             }
             onDispose {
-                coordinator.unbindSurface(index)
+                if (bound) {
+                    coordinator.unbindSurface(index)
+                }
             }
         }
 

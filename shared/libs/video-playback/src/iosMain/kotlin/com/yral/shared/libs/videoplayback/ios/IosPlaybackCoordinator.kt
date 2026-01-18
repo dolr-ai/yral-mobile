@@ -111,6 +111,18 @@ private class IosPlaybackCoordinator(
         cancelPrefetch(reason = "feed_update")
         preparedScheduler.reset("feed_update") { feed.getOrNull(it)?.id }
         feed = items
+        if (items.isEmpty()) {
+            activeIndex = -1
+            predictedIndex = -1
+            rebuffering = false
+            rebufferStartMs = null
+            firstFramePendingIndex = null
+            activeSlot.player.pause()
+            preparedSlot?.player?.pause()
+            activeSlot.index = null
+            preparedSlot?.index = null
+            return
+        }
         if (activeIndex >= items.size) {
             setActiveIndex(items.lastIndex)
         }
