@@ -95,7 +95,7 @@ actual fun VideoSurface(
             },
         )
 
-        if (showShutter) {
+        if (showShutter || playerState.value == null) {
             shutter()
         }
     }
