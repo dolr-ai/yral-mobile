@@ -62,13 +62,13 @@ internal class IosDownloadCache(
         onError: () -> Unit,
     ) {
         val key = descriptor.cacheKey()
-        val existing = cachedFileUrl(descriptor)
-        if (existing != null) {
-            onComplete(fileSize(existing), true)
-            return
-        }
         val alreadyInProgress =
             synchronized(lock) {
+                val existing = cachedFileUrl(descriptor)
+                if (existing != null) {
+                    onComplete(fileSize(existing), true)
+                    return
+                }
                 if (activeDownloads.containsKey(key)) {
                     pendingCallbacks
                         .getOrPut(key) { mutableListOf() }
@@ -170,6 +170,11 @@ internal class IosDownloadCache(
             task.cancel()
             callbacks.forEach { it.onError() }
         }
+    }
+
+    fun close() {
+        cancelAll()
+        session.invalidateAndCancel()
     }
 
     @OptIn(BetaInteropApi::class)

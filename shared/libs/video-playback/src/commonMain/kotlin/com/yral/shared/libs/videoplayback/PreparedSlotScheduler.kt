@@ -21,6 +21,16 @@ class PreparedSlotScheduler(
         if (pendingIndex == nextIndex) return
 
         val id = idAt(nextIndex) ?: return
+        val previousIndex = pendingIndex
+        if (previousIndex != null && previousIndex != nextIndex) {
+            val previousId = idAt(previousIndex)
+            if (previousId != null) {
+                reporter.preloadCanceled(previousId, previousIndex, "prepared")
+            }
+            pendingIndex = null
+            startMs = null
+            prerollRequested = false
+        }
         prepare(nextIndex)
         pendingIndex = nextIndex
         startMs = null
@@ -60,10 +70,12 @@ class PreparedSlotScheduler(
         reason: String,
     ) {
         if (pendingIndex != index) return
-        val id = idAt(index) ?: return
-        reporter.preloadCanceled(id, index, reason)
         pendingIndex = null
         startMs = null
+        val id = idAt(index)
+        if (id != null) {
+            reporter.preloadCanceled(id, index, reason)
+        }
     }
 
     fun reset(

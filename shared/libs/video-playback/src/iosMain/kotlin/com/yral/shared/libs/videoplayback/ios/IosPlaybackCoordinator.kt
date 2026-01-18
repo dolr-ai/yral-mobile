@@ -212,6 +212,7 @@ private class IosPlaybackCoordinator(
         activeSlot.player.pause()
         preparedSlot?.player?.pause()
         cancelPrefetch(reason = "release")
+        cache.close()
         preparedScheduler.reset("release") { feed.getOrNull(it)?.id }
         progressTicker.stop()
         scope.cancel()

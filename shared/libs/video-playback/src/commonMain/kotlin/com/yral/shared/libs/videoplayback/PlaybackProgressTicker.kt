@@ -1,5 +1,6 @@
 package com.yral.shared.libs.videoplayback
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -29,6 +30,8 @@ class PlaybackProgressTicker(
                     while (isActive) {
                         try {
                             provider()?.let(onProgress)
+                        } catch (e: CancellationException) {
+                            throw e
                         } catch (_: Exception) {
                             // Keep ticking even if one iteration fails.
                         }

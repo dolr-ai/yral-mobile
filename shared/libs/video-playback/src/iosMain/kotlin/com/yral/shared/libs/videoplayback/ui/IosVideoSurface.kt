@@ -93,10 +93,12 @@ actual fun VideoSurface(
             onReset = { view ->
                 view.controller.player = null
                 playerState.value = null
+                handle = null
             },
             onRelease = { view ->
                 view.controller.player = null
                 playerState.value = null
+                handle = null
             },
         )
 
@@ -107,7 +109,9 @@ actual fun VideoSurface(
 
     val player = playerState.value
     DisposableEffect(player) {
-        showShutter = true
+        if (player == null) {
+            showShutter = true
+        }
         var lastItem: AVPlayerItem? = null
         val updateShutter = {
             player?.let { currentPlayer ->
