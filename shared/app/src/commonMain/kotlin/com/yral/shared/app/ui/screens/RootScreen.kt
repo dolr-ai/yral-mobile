@@ -34,7 +34,6 @@ import com.yral.shared.app.nav.RootComponent
 import com.yral.shared.app.nav.RootComponent.Child
 import com.yral.shared.app.ui.components.UpdateNotificationHost
 import com.yral.shared.app.ui.screens.alertsrequest.AlertsRequestBottomSheet
-import com.yral.shared.app.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.shared.app.ui.screens.home.HomeScreen
 import com.yral.shared.app.ui.screens.login.LoginBottomSheetSlotContent
 import com.yral.shared.app.ui.screens.login.LoginScreenContent
@@ -146,7 +145,6 @@ fun RootScreen(
                             modifier = Modifier.fillMaxSize().safeDrawingPadding(),
                             viewModel = profileViewModel,
                             profileVideos = profileVideos,
-                            getPrefetchListener = { reel -> PrefetchVideoListenerImpl(reel) },
                         )
                     }
 

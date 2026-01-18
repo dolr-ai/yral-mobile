@@ -9,7 +9,6 @@ import androidx.paging.compose.LazyPagingItems
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.slide
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
-import com.yral.shared.app.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.features.account.ui.AccountScreen
@@ -43,7 +42,6 @@ internal fun ProfileScreen(
                     modifier = Modifier.fillMaxSize(),
                     viewModel = profileViewModel,
                     profileVideos = profileVideos,
-                    getPrefetchListener = { reel -> PrefetchVideoListenerImpl(reel) },
                 )
             }
 
