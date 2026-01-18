@@ -79,11 +79,11 @@ actual fun VideoSurface(
             modifier = Modifier.matchParentSize(),
             update = { view ->
                 val container = view
-                val current =
-                    handle ?: IosVideoSurfaceHandle(container.controller, playerState).also {
-                        handle = it
-                    }
-                onHandleReady(current)
+                if (handle == null) {
+                    val current = IosVideoSurfaceHandle(container.controller, playerState)
+                    handle = current
+                    onHandleReady(current)
+                }
             },
             onReset = { view ->
                 view.controller.player = null

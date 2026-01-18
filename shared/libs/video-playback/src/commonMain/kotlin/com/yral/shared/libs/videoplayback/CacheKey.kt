@@ -1,8 +1,10 @@
 package com.yral.shared.libs.videoplayback
 
+import io.ktor.http.encodeURLParameter
+
 fun MediaDescriptor.cacheKey(): String {
     val headersKey = headers.entries.sortedBy { it.key }.joinToString("&") { (key, value) ->
-        "$key=$value"
+        "${key.encodeURLParameter()}=${value.encodeURLParameter()}"
     }
     val base = buildString {
         append(uri)

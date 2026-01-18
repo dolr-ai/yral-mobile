@@ -129,6 +129,8 @@ private class IosPlaybackCoordinator(
 
         activeIndex = index
         predictedIndex = index
+        rebuffering = false
+        rebufferStartMs = null
         val item = feed[index]
 
         reporter.feedItemImpression(item.id, index)
@@ -256,7 +258,7 @@ private class IosPlaybackCoordinator(
 
     private fun prepareSlot(slot: PlayerSlot, index: Int, shouldPlay: Boolean) {
         val descriptor = feed[index]
-        val item = buildPlayerItem(descriptor)
+        val item = buildPlayerItem(descriptor, index)
         item.preferredForwardBufferDuration = 1.0
         val previousIndex = slot.index
         if (previousIndex != null && previousIndex != index) {
@@ -290,9 +292,13 @@ private class IosPlaybackCoordinator(
         }
     }
 
-    private fun buildPlayerItem(descriptor: MediaDescriptor): AVPlayerItem {
+    private fun buildPlayerItem(descriptor: MediaDescriptor, index: Int): AVPlayerItem {
         val cachedUrl = cache.cachedFileUrl(descriptor)
-        val url = cachedUrl ?: NSURL.URLWithString(descriptor.uri) ?: return AVPlayerItem()
+        val url = cachedUrl ?: NSURL.URLWithString(descriptor.uri) ?: run {
+            val message = "Invalid media URL for id=${descriptor.id}, uri=${descriptor.uri}"
+            reporter.playbackError(descriptor.id, index, "invalid_url", "ios", message)
+            return AVPlayerItem()
+        }
         val options: Map<Any?, *>? = if (cachedUrl == null && descriptor.headers.isNotEmpty()) {
             mapOf("AVURLAssetHTTPHeaderFieldsKey" to descriptor.headers)
         } else {
@@ -348,7 +354,7 @@ private class IosPlaybackCoordinator(
                 val index = activeSlot.index ?: return@addObserverForName
                 val item = feed.getOrNull(index) ?: return@addObserverForName
                 reporter.playbackEnded(item.id, index)
-                val replacement = buildPlayerItem(item)
+                val replacement = buildPlayerItem(item, index)
                 replacement.preferredForwardBufferDuration = 1.0
                 activeSlot.player.replaceCurrentItemWithPlayerItem(replacement)
                 activeSlot.player.playImmediatelyAtRate(1.0F)

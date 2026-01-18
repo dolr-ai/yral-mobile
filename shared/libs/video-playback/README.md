@@ -97,5 +97,5 @@ KeepScreenOnEffect(enabled = true)
 
 - This module intentionally does **not** include UI controls.
 - Prefetch/pooling are handled internally for the active + next items only.
-- The API is designed to be generic and reuseable for non‑shortform experiences.
+- The API is designed to be generic and reusable for non‑shortform experiences.
 
