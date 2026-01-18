@@ -105,8 +105,6 @@ import com.yral.shared.libs.designsystem.component.toast.showError
 import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
-import com.yral.shared.libs.videoPlayer.model.Reels
-import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
 import com.yral.shared.rust.service.domain.models.FollowerItem
 import com.yral.shared.rust.service.domain.models.PagedFollowerItem
 import com.yral.shared.rust.service.utils.CanisterData
@@ -178,7 +176,6 @@ fun ProfileMainScreen(
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel,
     profileVideos: LazyPagingItems<FeedDetails>,
-    getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val storagePermissionController = rememberStoragePermissionController()
@@ -368,7 +365,6 @@ fun ProfileMainScreen(
                             )
                         },
                         onViewsClick = { video -> viewModel.showVideoViews(video) },
-                        getPrefetchListener = getPrefetchListener,
                         modifier = Modifier.fillMaxSize(),
                     )
                 } else {

@@ -166,13 +166,13 @@ fun FeedScreen(
                         viewModel.recordTime(currentTime, totalTime)
                     },
                     didVideoEnd = { viewModel.didCurrentVideoEnd() },
-                    getPrefetchListener = getPrefetchListener,
-                    getVideoListener = getVideoListener,
                     onEdgeScrollAttempt = { page, atFirst, direction ->
                         // For card stack, any edge swipe attempt should trigger load more
                         onEdgeScrollAttempt(page)
                     },
                     onSwipeVote = onSwipeVote,
+                    getPrefetchListener = getPrefetchListener,
+                    getVideoListener = getVideoListener,
                 ) { pageNo, scrollToNext ->
                     FeedOverlay(
                         pageNo = pageNo,
@@ -198,8 +198,6 @@ fun FeedScreen(
                         viewModel.recordTime(currentTime, totalTime)
                     },
                     didVideoEnd = { viewModel.didCurrentVideoEnd() },
-                    getPrefetchListener = getPrefetchListener,
-                    getVideoListener = getVideoListener,
                     onEdgeScrollAttempt = { page, atFirst, direction ->
                         if (!atFirst && direction == ReelScrollDirection.Up) {
                             onEdgeScrollAttempt(page)
