@@ -139,6 +139,7 @@ internal class IosDownloadCache(
             callbacks.forEach { it.onError() }
             return
         }
+        touch(destination)
         val bytes = fileSize(destination)
         trimToSize()
         callbacks.forEach { it.onComplete(bytes, false) }
@@ -243,8 +244,9 @@ internal class IosDownloadCache(
         for (url in sorted) {
             if (total <= maxBytes) break
             val size = fileSize(url)
-            tryRemove(url)
-            total -= size
+            if (tryRemove(url)) {
+                total -= size
+            }
         }
     }
 
@@ -255,7 +257,10 @@ internal class IosDownloadCache(
         return date?.timeIntervalSince1970 ?: 0.0
     }
 
-    private fun tryRemove(url: NSURL) {
-        fileManager.removeItemAtURL(url, null)
-    }
+    @OptIn(BetaInteropApi::class)
+    private fun tryRemove(url: NSURL): Boolean =
+        memScoped {
+            val error = alloc<ObjCObjectVar<NSError?>>()
+            fileManager.removeItemAtURL(url, error.ptr) && error.value == null
+        }
 }

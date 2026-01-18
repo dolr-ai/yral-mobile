@@ -22,12 +22,20 @@ class PlaybackProgressTicker(
     private var job: Job? = null
 
     fun start() {
-        if (job != null) return
+        if (job?.isActive == true) return
         job =
             scope.launch {
-                while (isActive) {
-                    provider()?.let(onProgress)
-                    delay(intervalMs)
+                try {
+                    while (isActive) {
+                        try {
+                            provider()?.let(onProgress)
+                        } catch (_: Exception) {
+                            // Keep ticking even if one iteration fails.
+                        }
+                        delay(intervalMs)
+                    }
+                } finally {
+                    job = null
                 }
             }
     }
