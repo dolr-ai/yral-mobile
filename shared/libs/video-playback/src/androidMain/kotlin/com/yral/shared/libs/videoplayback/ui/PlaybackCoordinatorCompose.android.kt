@@ -9,13 +9,12 @@ import com.yral.shared.libs.videoplayback.PlaybackCoordinator
 import com.yral.shared.libs.videoplayback.android.createAndroidPlaybackCoordinator
 
 @Composable
-actual fun rememberPlaybackCoordinator(
-    deps: CoordinatorDeps,
-): PlaybackCoordinator {
+actual fun rememberPlaybackCoordinator(deps: CoordinatorDeps): PlaybackCoordinator {
     val context = LocalContext.current
-    val coordinator = remember(deps, context) {
-        createAndroidPlaybackCoordinator(context, deps)
-    }
+    val coordinator =
+        remember(deps, context) {
+            createAndroidPlaybackCoordinator(context, deps)
+        }
     DisposableEffect(coordinator) {
         onDispose { coordinator.release() }
     }

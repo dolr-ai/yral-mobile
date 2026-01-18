@@ -3,11 +3,11 @@ package com.yral.shared.libs.videoplayback.ios
 import com.yral.shared.libs.videoplayback.CoordinatorDeps
 import com.yral.shared.libs.videoplayback.MediaDescriptor
 import com.yral.shared.libs.videoplayback.PlaybackCoordinator
-import com.yral.shared.libs.videoplayback.VideoSurfaceHandle
-import com.yral.shared.libs.videoplayback.PreloadEventScheduler
-import com.yral.shared.libs.videoplayback.PreparedSlotScheduler
 import com.yral.shared.libs.videoplayback.PlaybackProgress
 import com.yral.shared.libs.videoplayback.PlaybackProgressTicker
+import com.yral.shared.libs.videoplayback.PreloadEventScheduler
+import com.yral.shared.libs.videoplayback.PreparedSlotScheduler
+import com.yral.shared.libs.videoplayback.VideoSurfaceHandle
 import com.yral.shared.libs.videoplayback.ui.IosVideoSurfaceHandle
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
@@ -45,15 +45,16 @@ import platform.darwin.NSObjectProtocol
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-fun createIosPlaybackCoordinator(
-    deps: CoordinatorDeps = CoordinatorDeps(),
-): PlaybackCoordinator = IosPlaybackCoordinator(deps)
+@Suppress("MaxLineLength")
+fun createIosPlaybackCoordinator(deps: CoordinatorDeps = CoordinatorDeps()): PlaybackCoordinator = IosPlaybackCoordinator(deps)
 
+@Suppress("TooManyFunctions")
 private class IosPlaybackCoordinator(
     private val deps: CoordinatorDeps,
 ) : PlaybackCoordinator {
     private val reporter = deps.reporter
     private val policy = deps.policy
+
     @OptIn(ExperimentalTime::class)
     private val nowMs: () -> Long = { Clock.System.now().toEpochMilliseconds() }
 
@@ -151,14 +152,20 @@ private class IosPlaybackCoordinator(
         scheduleDiskPrefetch(index)
     }
 
-    override fun setScrollHint(predictedIndex: Int, velocity: Float?) {
+    override fun setScrollHint(
+        predictedIndex: Int,
+        velocity: Float?,
+    ) {
         if (predictedIndex !in feed.indices) return
         if (predictedIndex == this.predictedIndex) return
         this.predictedIndex = predictedIndex
         scheduleDiskPrefetch(predictedIndex)
     }
 
-    override fun bindSurface(index: Int, surface: VideoSurfaceHandle) {
+    override fun bindSurface(
+        index: Int,
+        surface: VideoSurfaceHandle,
+    ) {
         surfaces[index] = surface
         if (activeSlot.index == index) {
             attachIfBound(activeSlot)
@@ -228,6 +235,7 @@ private class IosPlaybackCoordinator(
         preparedScheduler.clearOnSwap()
     }
 
+    @Suppress("LoopWithTooManyJumpStatements")
     private fun scheduleDiskPrefetch(centerIndex: Int) {
         val result = preloadScheduler.update(centerIndex, feed.size) { feed.getOrNull(it)?.id }
         for (index in result.toCancel) {
@@ -256,7 +264,11 @@ private class IosPlaybackCoordinator(
         cache.cancelAll()
     }
 
-    private fun prepareSlot(slot: PlayerSlot, index: Int, shouldPlay: Boolean) {
+    private fun prepareSlot(
+        slot: PlayerSlot,
+        index: Int,
+        shouldPlay: Boolean,
+    ) {
         val descriptor = feed[index]
         val item = buildPlayerItem(descriptor, index)
         item.preferredForwardBufferDuration = 1.0
@@ -284,7 +296,10 @@ private class IosPlaybackCoordinator(
         }
     }
 
-    private fun detachSurface(index: Int, player: AVPlayer) {
+    private fun detachSurface(
+        index: Int,
+        player: AVPlayer,
+    ) {
         val handle = surfaces[index] as? IosVideoSurfaceHandle ?: return
         if (handle.controller.player == player) {
             handle.controller.player = null
@@ -292,18 +307,23 @@ private class IosPlaybackCoordinator(
         }
     }
 
-    private fun buildPlayerItem(descriptor: MediaDescriptor, index: Int): AVPlayerItem {
+    private fun buildPlayerItem(
+        descriptor: MediaDescriptor,
+        index: Int,
+    ): AVPlayerItem {
         val cachedUrl = cache.cachedFileUrl(descriptor)
-        val url = cachedUrl ?: NSURL.URLWithString(descriptor.uri) ?: run {
-            val message = "Invalid media URL for id=${descriptor.id}, uri=${descriptor.uri}"
-            reporter.playbackError(descriptor.id, index, "invalid_url", "ios", message)
-            return AVPlayerItem()
-        }
-        val options: Map<Any?, *>? = if (cachedUrl == null && descriptor.headers.isNotEmpty()) {
-            mapOf("AVURLAssetHTTPHeaderFieldsKey" to descriptor.headers)
-        } else {
-            null
-        }
+        val url =
+            cachedUrl ?: NSURL.URLWithString(descriptor.uri) ?: run {
+                val message = "Invalid media URL for id=${descriptor.id}, uri=${descriptor.uri}"
+                reporter.playbackError(descriptor.id, index, "invalid_url", "ios", message)
+                return AVPlayerItem()
+            }
+        val options: Map<Any?, *>? =
+            if (cachedUrl == null && descriptor.headers.isNotEmpty()) {
+                mapOf("AVURLAssetHTTPHeaderFieldsKey" to descriptor.headers)
+            } else {
+                null
+            }
         val asset = AVURLAsset(uRL = url, options = options)
         if (cachedUrl != null) {
             reporter.cacheHit(descriptor.id, 0)
@@ -316,67 +336,72 @@ private class IosPlaybackCoordinator(
     private fun registerObservers() {
         val center = NSNotificationCenter.defaultCenter
 
-        observers += center.addObserverForName(
-            name = AVPlayerItemFailedToPlayToEndTimeNotification,
-            `object` = null,
-            queue = null,
-        ) { notification ->
-            val current = activeSlot.player.currentItem
-            if (notification?.`object` == current) {
-                val index = activeSlot.index ?: return@addObserverForName
-                val item = feed.getOrNull(index) ?: return@addObserverForName
-                reporter.playbackError(item.id, index, "failed", "ios")
+        observers +=
+            center.addObserverForName(
+                name = AVPlayerItemFailedToPlayToEndTimeNotification,
+                `object` = null,
+                queue = null,
+            ) { notification ->
+                val current = activeSlot.player.currentItem
+                if (notification?.`object` == current) {
+                    val index = activeSlot.index ?: return@addObserverForName
+                    val item = feed.getOrNull(index) ?: return@addObserverForName
+                    reporter.playbackError(item.id, index, "failed", "ios")
+                }
             }
-        }
 
-        observers += center.addObserverForName(
-            name = AVPlayerItemPlaybackStalledNotification,
-            `object` = null,
-            queue = null,
-        ) { notification ->
-            val current = activeSlot.player.currentItem
-            if (notification?.`object` == current) {
-                val index = activeSlot.index ?: return@addObserverForName
-                val item = feed.getOrNull(index) ?: return@addObserverForName
-                reporter.rebufferStart(item.id, index, "stalled")
-                rebuffering = true
-                rebufferStartMs = nowMs()
+        observers +=
+            center.addObserverForName(
+                name = AVPlayerItemPlaybackStalledNotification,
+                `object` = null,
+                queue = null,
+            ) { notification ->
+                val current = activeSlot.player.currentItem
+                if (notification?.`object` == current) {
+                    val index = activeSlot.index ?: return@addObserverForName
+                    val item = feed.getOrNull(index) ?: return@addObserverForName
+                    reporter.rebufferStart(item.id, index, "stalled")
+                    rebuffering = true
+                    rebufferStartMs = nowMs()
+                }
             }
-        }
 
-        observers += center.addObserverForName(
-            name = AVPlayerItemDidPlayToEndTimeNotification,
-            `object` = null,
-            queue = null,
-        ) { notification ->
-            val current = activeSlot.player.currentItem
-            if (notification?.`object` == current) {
-                val index = activeSlot.index ?: return@addObserverForName
-                val item = feed.getOrNull(index) ?: return@addObserverForName
-                reporter.playbackEnded(item.id, index)
-                val replacement = buildPlayerItem(item, index)
-                replacement.preferredForwardBufferDuration = 1.0
-                activeSlot.player.replaceCurrentItemWithPlayerItem(replacement)
-                activeSlot.player.playImmediatelyAtRate(1.0F)
-                firstFramePendingIndex = index
-                playStartMsById[item.id] = nowMs()
+        observers +=
+            center.addObserverForName(
+                name = AVPlayerItemDidPlayToEndTimeNotification,
+                `object` = null,
+                queue = null,
+            ) { notification ->
+                val current = activeSlot.player.currentItem
+                if (notification?.`object` == current) {
+                    val index = activeSlot.index ?: return@addObserverForName
+                    val item = feed.getOrNull(index) ?: return@addObserverForName
+                    reporter.playbackEnded(item.id, index)
+                    val replacement = buildPlayerItem(item, index)
+                    replacement.preferredForwardBufferDuration = 1.0
+                    activeSlot.player.replaceCurrentItemWithPlayerItem(replacement)
+                    activeSlot.player.playImmediatelyAtRate(1.0F)
+                    firstFramePendingIndex = index
+                    playStartMsById[item.id] = nowMs()
+                }
             }
-        }
     }
 
     private fun startPolling() {
         pollTimer?.invalidate()
-        pollTimer = NSTimer.scheduledTimerWithTimeInterval(
-            interval = 0.2,
-            repeats = true,
-        ) {
-            scope.launch {
-                pollPlaybackState()
+        pollTimer =
+            NSTimer.scheduledTimerWithTimeInterval(
+                interval = 0.2,
+                repeats = true,
+            ) {
+                scope.launch {
+                    pollPlaybackState()
+                }
             }
-        }
         NSRunLoop.mainRunLoop.addTimer(pollTimer!!, NSRunLoopCommonModes)
     }
 
+    @Suppress("CyclomaticComplexMethod", "MagicNumber")
     @OptIn(ExperimentalForeignApi::class)
     private fun pollPlaybackState() {
         val index = activeSlot.index ?: return
@@ -437,6 +462,7 @@ private class IosPlaybackCoordinator(
         var index: Int? = null,
     )
 
+    @Suppress("ReturnCount", "MagicNumber")
     @OptIn(ExperimentalForeignApi::class)
     private fun activeProgress(): PlaybackProgress? {
         val index = activeSlot.index ?: return null
@@ -444,7 +470,10 @@ private class IosPlaybackCoordinator(
         val status = activeSlot.player.timeControlStatus
         if (status != AVPlayerTimeControlStatusPlaying) return null
         val currentSeconds = CMTimeGetSeconds(activeSlot.player.currentTime())
-        val durationSeconds = activeSlot.player.currentItem?.duration?.let { CMTimeGetSeconds(it) }
+        val durationSeconds =
+            activeSlot.player.currentItem
+                ?.duration
+                ?.let { CMTimeGetSeconds(it) }
         if (!currentSeconds.isFinite() || durationSeconds == null || !durationSeconds.isFinite()) {
             return null
         }

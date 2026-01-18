@@ -37,7 +37,10 @@ class PreloadEventScheduler(
         return PreloadScheduleResult(window, toStart, toCancel)
     }
 
-    fun reset(reason: String, idAt: (Int) -> String?) {
+    fun reset(
+        reason: String,
+        idAt: (Int) -> String?,
+    ) {
         for (index in scheduled) {
             val id = idAt(index) ?: continue
             reporter.preloadCanceled(id, index, reason)

@@ -1,18 +1,19 @@
+@file:Suppress("MatchingDeclarationName")
+
 package com.yral.shared.libs.videoplayback.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.Box
-import androidx.compose.runtime.MutableState
 import androidx.compose.ui.viewinterop.UIKitView
 import com.yral.shared.libs.videoplayback.VideoSurfaceHandle
 import kotlinx.cinterop.ExperimentalForeignApi
-import platform.AVKit.AVPlayerViewController
 import platform.AVFoundation.AVLayerVideoGravityResizeAspect
 import platform.AVFoundation.AVPlayer
 import platform.AVFoundation.AVPlayerItem
@@ -23,9 +24,10 @@ import platform.AVFoundation.currentItem
 import platform.AVFoundation.currentTime
 import platform.AVFoundation.removeTimeObserver
 import platform.AVFoundation.timeControlStatus
+import platform.AVKit.AVPlayerViewController
 import platform.CoreGraphics.CGRectMake
-import platform.CoreMedia.CMTimeMakeWithSeconds
 import platform.CoreMedia.CMTimeGetSeconds
+import platform.CoreMedia.CMTimeMakeWithSeconds
 import platform.UIKit.UIColor
 import platform.UIKit.UIView
 import platform.UIKit.UIViewAutoresizingFlexibleHeight
@@ -33,11 +35,13 @@ import platform.UIKit.UIViewAutoresizingFlexibleWidth
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-internal class IosVideoSurfaceHandle @OptIn(ExperimentalUuidApi::class) constructor(
-    val controller: AVPlayerViewController,
-    val playerState: MutableState<AVPlayer?>,
-    override val id: String = Uuid.random().toHexString(),
-) : VideoSurfaceHandle
+internal class IosVideoSurfaceHandle
+    @OptIn(ExperimentalUuidApi::class)
+    constructor(
+        val controller: AVPlayerViewController,
+        val playerState: MutableState<AVPlayer?>,
+        override val id: String = Uuid.random().toHexString(),
+    ) : VideoSurfaceHandle
 
 @OptIn(ExperimentalForeignApi::class)
 private class PlayerViewContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)) {
@@ -62,6 +66,7 @@ private class PlayerViewContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0
     }
 }
 
+@Suppress("LongMethod", "MagicNumber")
 @OptIn(ExperimentalForeignApi::class)
 @Composable
 actual fun VideoSurface(

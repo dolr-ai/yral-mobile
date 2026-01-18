@@ -22,19 +22,19 @@ import com.yral.shared.libs.videoplayback.ContainerHint
 import com.yral.shared.libs.videoplayback.CoordinatorDeps
 import com.yral.shared.libs.videoplayback.MediaDescriptor
 import com.yral.shared.libs.videoplayback.PlaybackCoordinator
-import com.yral.shared.libs.videoplayback.PreloadPolicy
-import com.yral.shared.libs.videoplayback.VideoSurfaceHandle
-import com.yral.shared.libs.videoplayback.cacheKey
-import com.yral.shared.libs.videoplayback.PreloadEventScheduler
-import com.yral.shared.libs.videoplayback.PreparedSlotScheduler
 import com.yral.shared.libs.videoplayback.PlaybackProgress
 import com.yral.shared.libs.videoplayback.PlaybackProgressTicker
+import com.yral.shared.libs.videoplayback.PreloadEventScheduler
+import com.yral.shared.libs.videoplayback.PreloadPolicy
+import com.yral.shared.libs.videoplayback.PreparedSlotScheduler
+import com.yral.shared.libs.videoplayback.VideoSurfaceHandle
+import com.yral.shared.libs.videoplayback.cacheKey
 import com.yral.shared.libs.videoplayback.ui.AndroidVideoSurfaceHandle
-import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import java.io.File
 import kotlin.math.abs
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -53,13 +53,15 @@ private class AndroidPlaybackCoordinator(
     private val appContext = context.applicationContext
     private val reporter = deps.reporter
     private val policy = deps.policy
+
     @kotlin.OptIn(ExperimentalTime::class)
     private val nowMs: () -> Long = { Clock.System.now().toEpochMilliseconds() }
 
     private val cache = ShortformCacheProvider.acquire(appContext, policy)
     private val preloadStatusControl = DefaultTargetPreloadStatusControl(policy)
     private val preloadManagerBuilder =
-        DefaultPreloadManager.Builder(appContext, preloadStatusControl)
+        DefaultPreloadManager
+            .Builder(appContext, preloadStatusControl)
             .setCache(cache)
             .setLoadControl(createLoadControl())
 
@@ -99,68 +101,71 @@ private class AndroidPlaybackCoordinator(
             },
         )
 
-    private val listener = object : Player.Listener {
-        override fun onPlaybackStateChanged(playbackState: Int) {
-            val index = activeSlot.index ?: return
-            val item = feed.getOrNull(index) ?: return
+    private val listener =
+        object : Player.Listener {
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                val index = activeSlot.index ?: return
+                val item = feed.getOrNull(index) ?: return
 
-            if (playbackState == Player.STATE_BUFFERING && activeSlot.player.playWhenReady) {
-                if (!rebuffering) {
-                    rebuffering = true
-                    reporter.rebufferStart(item.id, index, "buffering")
+                if (playbackState == Player.STATE_BUFFERING && activeSlot.player.playWhenReady) {
+                    if (!rebuffering) {
+                        rebuffering = true
+                        reporter.rebufferStart(item.id, index, "buffering")
+                    }
+                }
+
+                if (playbackState == Player.STATE_READY && rebuffering) {
+                    rebuffering = false
+                    reporter.rebufferEnd(item.id, index, "buffering")
+                }
+
+                if (playbackState == Player.STATE_ENDED) {
+                    reporter.playbackEnded(item.id, index)
                 }
             }
 
-            if (playbackState == Player.STATE_READY && rebuffering) {
-                rebuffering = false
-                reporter.rebufferEnd(item.id, index, "buffering")
+            override fun onPlayerError(error: PlaybackException) {
+                val index = activeSlot.index ?: return
+                val item = feed.getOrNull(index) ?: return
+                reporter.playbackError(
+                    id = item.id,
+                    index = index,
+                    category = error.errorCodeName,
+                    code = error.errorCode,
+                    message = error.message,
+                )
             }
 
-            if (playbackState == Player.STATE_ENDED) {
-                reporter.playbackEnded(item.id, index)
+            @Suppress("ReturnCount")
+            override fun onRenderedFirstFrame() {
+                val index = activeSlot.index ?: return
+                val item = feed.getOrNull(index) ?: return
+                if (firstFramePendingIndex != index) return
+                firstFramePendingIndex = null
+                val start = playStartMsById[item.id] ?: return
+                val elapsed = nowMs() - start
+                reporter.firstFrameRendered(item.id, index)
+                reporter.timeToFirstFrame(item.id, index, elapsed)
             }
         }
 
-        override fun onPlayerError(error: PlaybackException) {
-            val index = activeSlot.index ?: return
-            val item = feed.getOrNull(index) ?: return
-            reporter.playbackError(
-                id = item.id,
-                index = index,
-                category = error.errorCodeName,
-                code = error.errorCode,
-                message = error.message,
-            )
-        }
+    private val preloadListener =
+        object : PreloadManagerListener {
+            override fun onCompleted(mediaItem: MediaItem) {
+                val index = mediaIndexById[mediaItem.mediaId] ?: return
+                val descriptor = feed.getOrNull(index) ?: return
+                val cacheKey = mediaItem.localConfiguration?.customCacheKey ?: mediaItem.mediaId
+                val cachedBytes = cache.getCachedBytes(cacheKey, 0, C.LENGTH_UNSET.toLong()).coerceAtLeast(0)
+                reporter.preloadCompleted(descriptor.id, index, cachedBytes, 0, cachedBytes > 0)
+            }
 
-        override fun onRenderedFirstFrame() {
-            val index = activeSlot.index ?: return
-            val item = feed.getOrNull(index) ?: return
-            if (firstFramePendingIndex != index) return
-            firstFramePendingIndex = null
-            val start = playStartMsById[item.id] ?: return
-            val elapsed = nowMs() - start
-            reporter.firstFrameRendered(item.id, index)
-            reporter.timeToFirstFrame(item.id, index, elapsed)
+            override fun onError(exception: PreloadException) {
+                val mediaItem = exception.mediaItem
+                val index = mediaIndexById[mediaItem.mediaId] ?: return
+                val descriptor = feed.getOrNull(index) ?: return
+                reporter.preloadCanceled(descriptor.id, index, "error")
+            }
         }
-    }
-
-    private val preloadListener = object : PreloadManagerListener {
-        override fun onCompleted(mediaItem: MediaItem) {
-            val index = mediaIndexById[mediaItem.mediaId] ?: return
-            val descriptor = feed.getOrNull(index) ?: return
-            val cacheKey = mediaItem.localConfiguration?.customCacheKey ?: mediaItem.mediaId
-            val cachedBytes = cache.getCachedBytes(cacheKey, 0, C.LENGTH_UNSET.toLong()).coerceAtLeast(0)
-            reporter.preloadCompleted(descriptor.id, index, cachedBytes, 0, cachedBytes > 0)
-        }
-
-        override fun onError(exception: PreloadException) {
-            val mediaItem = exception.mediaItem
-            val index = mediaIndexById[mediaItem.mediaId] ?: return
-            val descriptor = feed.getOrNull(index) ?: return
-            reporter.preloadCanceled(descriptor.id, index, "error")
-        }
-    }
 
     init {
         playerA.addListener(listener)
@@ -176,7 +181,7 @@ private class AndroidPlaybackCoordinator(
             preloadManager.removeMediaItems(mediaItems)
         }
         feed = items
-        mediaItems = items.mapIndexed { index, descriptor -> buildMediaItem(descriptor, index) }
+        mediaItems = items.mapIndexed { index, descriptor -> buildMediaItem(descriptor) }
         mediaIndexById = items.mapIndexed { index, descriptor -> descriptor.id to index }.toMap()
 
         if (mediaItems.isNotEmpty()) {
@@ -193,9 +198,10 @@ private class AndroidPlaybackCoordinator(
         if (items.isEmpty()) return
         val startIndex = feed.size
         feed = feed + items
-        val appendedMediaItems = items.mapIndexed { offset, descriptor ->
-            buildMediaItem(descriptor, startIndex + offset)
-        }
+        val appendedMediaItems =
+            items.mapIndexed { offset, descriptor ->
+                buildMediaItem(descriptor)
+            }
         mediaItems = mediaItems + appendedMediaItems
         mediaIndexById = feed.mapIndexed { index, descriptor -> descriptor.id to index }.toMap()
         val ranking = (startIndex until feed.size).toList()
@@ -243,7 +249,10 @@ private class AndroidPlaybackCoordinator(
         schedulePreparedSlot(index)
     }
 
-    override fun setScrollHint(predictedIndex: Int, velocity: Float?) {
+    override fun setScrollHint(
+        predictedIndex: Int,
+        velocity: Float?,
+    ) {
         if (predictedIndex !in feed.indices) return
         if (predictedIndex == this.predictedIndex) return
         this.predictedIndex = predictedIndex
@@ -252,7 +261,10 @@ private class AndroidPlaybackCoordinator(
         preloadScheduler.update(predictedIndex, feed.size) { feed.getOrNull(it)?.id }
     }
 
-    override fun bindSurface(index: Int, surface: VideoSurfaceHandle) {
+    override fun bindSurface(
+        index: Int,
+        surface: VideoSurfaceHandle,
+    ) {
         surfaces[index] = surface
         if (activeSlot.index == index) {
             attachIfBound(activeSlot)
@@ -299,8 +311,6 @@ private class AndroidPlaybackCoordinator(
         ShortformCacheProvider.release()
     }
 
-    
-
     private fun schedulePreparedSlot(activeIndex: Int) {
         val prepared = preparedSlot ?: return
         preparedScheduler.schedule(activeIndex, feed.size, { feed.getOrNull(it)?.id }) { nextIndex ->
@@ -310,6 +320,7 @@ private class AndroidPlaybackCoordinator(
         }
     }
 
+    @Suppress("ReturnCount")
     private fun activeProgress(): PlaybackProgress? {
         val index = activeSlot.index ?: return null
         val item = feed.getOrNull(index) ?: return null
@@ -335,7 +346,11 @@ private class AndroidPlaybackCoordinator(
         preparedScheduler.clearOnSwap()
     }
 
-    private fun prepareSlot(slot: PlayerSlot, index: Int, playWhenReady: Boolean) {
+    private fun prepareSlot(
+        slot: PlayerSlot,
+        index: Int,
+        playWhenReady: Boolean,
+    ) {
         val mediaItem = mediaItems.getOrNull(index) ?: return
         val previousIndex = slot.index
         if (previousIndex != null && previousIndex != index) {
@@ -364,18 +379,23 @@ private class AndroidPlaybackCoordinator(
         }
     }
 
-    private fun detachSurface(index: Int, player: Player) {
+    private fun detachSurface(
+        index: Int,
+        player: Player,
+    ) {
         val handle = surfaces[index] as? AndroidVideoSurfaceHandle ?: return
         if (handle.playerState.value == player) {
             handle.playerState.value = null
         }
     }
 
-    private fun buildMediaItem(descriptor: MediaDescriptor, index: Int): MediaItem {
-        val builder = MediaItem.Builder()
-            .setUri(descriptor.uri)
-            .setMediaId(descriptor.id)
-            .setCustomCacheKey(descriptor.cacheKey())
+    private fun buildMediaItem(descriptor: MediaDescriptor): MediaItem {
+        val builder =
+            MediaItem
+                .Builder()
+                .setUri(descriptor.uri)
+                .setMediaId(descriptor.id)
+                .setCustomCacheKey(descriptor.cacheKey())
 
         when (descriptor.containerHint) {
             ContainerHint.MP4 -> builder.setMimeType(MimeTypes.APPLICATION_MP4)
@@ -388,10 +408,12 @@ private class AndroidPlaybackCoordinator(
     }
 
     private fun createPlayer(preloadManagerBuilder: DefaultPreloadManager.Builder): ExoPlayer {
-        val audioAttributes = AudioAttributes.Builder()
-            .setUsage(C.USAGE_MEDIA)
-            .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
-            .build()
+        val audioAttributes =
+            AudioAttributes
+                .Builder()
+                .setUsage(C.USAGE_MEDIA)
+                .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                .build()
         return preloadManagerBuilder.buildExoPlayer().apply {
             setAudioAttributes(audioAttributes, true)
             setHandleAudioBecomingNoisy(true)
@@ -399,17 +421,16 @@ private class AndroidPlaybackCoordinator(
         }
     }
 
-    private fun createLoadControl(): DefaultLoadControl {
-        return DefaultLoadControl.Builder()
+    private fun createLoadControl(): DefaultLoadControl =
+        DefaultLoadControl
+            .Builder()
             .setBufferDurationsMs(
-                5_000,
-                20_000,
-                500,
-                DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS,
-            )
-            .setPrioritizeTimeOverSizeThresholds(true)
+                MIN_BUFFER_MS,
+                MAX_BUFFER_MS,
+                BUFFER_FOR_PLAYBACK_MS,
+                BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS,
+            ).setPrioritizeTimeOverSizeThresholds(true)
             .build()
-    }
 
     private object ShortformCacheProvider {
         private val lock = Any()
@@ -417,7 +438,10 @@ private class AndroidPlaybackCoordinator(
         private var databaseProvider: StandaloneDatabaseProvider? = null
         private var refCount = 0
 
-        fun acquire(context: Context, policy: PreloadPolicy): SimpleCache {
+        fun acquire(
+            context: Context,
+            policy: PreloadPolicy,
+        ): SimpleCache {
             synchronized(lock) {
                 val existing = cache
                 if (existing != null) {
@@ -426,9 +450,10 @@ private class AndroidPlaybackCoordinator(
                 }
                 val cacheDir = File(context.cacheDir, "video-playback-cache")
                 val evictor = LeastRecentlyUsedCacheEvictor(policy.cacheMaxBytes)
-                val provider = databaseProvider ?: StandaloneDatabaseProvider(context).also {
-                    databaseProvider = it
-                }
+                val provider =
+                    databaseProvider ?: StandaloneDatabaseProvider(context).also {
+                        databaseProvider = it
+                    }
                 val created = SimpleCache(cacheDir, evictor, provider)
                 cache = created
                 refCount = 1
@@ -451,6 +476,14 @@ private class AndroidPlaybackCoordinator(
         }
     }
 
+    private companion object {
+        private const val MIN_BUFFER_MS = 5_000
+        private const val MAX_BUFFER_MS = 20_000
+        private const val BUFFER_FOR_PLAYBACK_MS = 500
+        private const val BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS =
+            DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS
+    }
+
     private data class PlayerSlot(
         val player: ExoPlayer,
         var index: Int? = null,
@@ -462,6 +495,7 @@ private class AndroidPlaybackCoordinator(
         var currentPlayingIndex: Int = C.INDEX_UNSET
         var predictedIndex: Int = C.INDEX_UNSET
 
+        @Suppress("CyclomaticComplexMethod", "ReturnCount", "MagicNumber")
         override fun getTargetPreloadStatus(rankingData: Int): DefaultPreloadManager.PreloadStatus {
             val center = if (predictedIndex != C.INDEX_UNSET) predictedIndex else currentPlayingIndex
             if (center == C.INDEX_UNSET) {

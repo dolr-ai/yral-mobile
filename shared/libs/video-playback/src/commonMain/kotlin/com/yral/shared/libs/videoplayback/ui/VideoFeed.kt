@@ -9,19 +9,19 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import com.yral.shared.libs.videoplayback.MediaDescriptor
 import com.yral.shared.libs.videoplayback.PlaybackCoordinator
 import com.yral.shared.libs.videoplayback.VideoSurfaceHandle
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.collectLatest
-import androidx.compose.runtime.snapshotFlow
 
 @Composable
 fun VideoFeed(
@@ -125,8 +125,7 @@ fun VideoPagerEffects(
                     offsetFraction = offset,
                     threshold = scrollHintThreshold,
                 )
-            }
-            .distinctUntilChanged()
+            }.distinctUntilChanged()
             .collectLatest { predicted ->
                 if (predicted != null && predicted in 0 until itemsCount) {
                     coordinator.setScrollHint(predictedIndex = predicted, velocity = null)
@@ -139,13 +138,12 @@ fun predictedIndexFromOffset(
     currentIndex: Int,
     offsetFraction: Float,
     threshold: Float = 0.15f,
-): Int? {
-    return when {
+): Int? =
+    when {
         offsetFraction > threshold -> currentIndex + 1
         offsetFraction < -threshold -> currentIndex - 1
         else -> null
     }
-}
 
 @Composable
 fun VideoSurfaceSlot(
@@ -178,6 +176,7 @@ fun VideoSurfaceSlot(
     }
 }
 
+@Suppress("ReturnCount")
 private fun isAppend(
     previous: List<MediaDescriptor>,
     current: List<MediaDescriptor>,

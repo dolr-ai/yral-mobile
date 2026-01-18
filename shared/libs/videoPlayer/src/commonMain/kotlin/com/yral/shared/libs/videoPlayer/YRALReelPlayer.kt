@@ -18,6 +18,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
+import com.yral.shared.libs.videoPlayer.model.Reels
+import com.yral.shared.libs.videoPlayer.util.EdgeScrollDetectConnection
+import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
 import com.yral.shared.libs.videoplayback.CoordinatorDeps
 import com.yral.shared.libs.videoplayback.MediaDescriptor
 import com.yral.shared.libs.videoplayback.PlaybackEventReporter
@@ -25,11 +28,9 @@ import com.yral.shared.libs.videoplayback.ui.VideoFeedSync
 import com.yral.shared.libs.videoplayback.ui.VideoPagerEffects
 import com.yral.shared.libs.videoplayback.ui.VideoSurfaceSlot
 import com.yral.shared.libs.videoplayback.ui.rememberPlaybackCoordinatorWithLifecycle
-import com.yral.shared.libs.videoPlayer.model.Reels
-import com.yral.shared.libs.videoPlayer.util.EdgeScrollDetectConnection
-import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
 import kotlinx.coroutines.flow.distinctUntilChanged
 
+@Suppress("LongMethod")
 @Composable
 fun YRALReelPlayer(
     modifier: Modifier = Modifier,
@@ -70,27 +71,30 @@ fun YRALReelPlayer(
             }
     }
 
-    val reporter = rememberPlaybackEventReporter(
-        didVideoEnd = didVideoEnd,
-        recordTime = recordTime,
-    )
-    val coordinator = rememberPlaybackCoordinatorWithLifecycle(
-        deps = CoordinatorDeps(reporter = reporter),
-    )
+    val reporter =
+        rememberPlaybackEventReporter(
+            didVideoEnd = didVideoEnd,
+            recordTime = recordTime,
+        )
+    val coordinator =
+        rememberPlaybackCoordinatorWithLifecycle(
+            deps = CoordinatorDeps(reporter = reporter),
+        )
     VideoFeedSync(items = mediaItems, coordinator = coordinator)
     VideoPagerEffects(
         pagerState = pagerState,
         itemsCount = mediaItems.size,
         coordinator = coordinator,
     )
-    val edgeDetectConnection = remember(pageCount) {
-        EdgeScrollDetectConnection(
-            pageCount = pageCount,
-            pagerState = pagerState,
-            isVertical = true,
-            onEdgeScrollAttempt = onEdgeScrollAttempt,
-        )
-    }
+    val edgeDetectConnection =
+        remember(pageCount) {
+            EdgeScrollDetectConnection(
+                pageCount = pageCount,
+                pagerState = pagerState,
+                isVertical = true,
+                onEdgeScrollAttempt = onEdgeScrollAttempt,
+            )
+        }
 
     var autoScrollToNext by remember { mutableStateOf(false) }
     LaunchedEffect(autoScrollToNext) {
@@ -140,7 +144,10 @@ private fun rememberPlaybackEventReporter(
 ): PlaybackEventReporter =
     remember(didVideoEnd, recordTime) {
         object : PlaybackEventReporter {
-            override fun playbackEnded(id: String, index: Int) {
+            override fun playbackEnded(
+                id: String,
+                index: Int,
+            ) {
                 didVideoEnd()
             }
 
@@ -148,20 +155,46 @@ private fun rememberPlaybackEventReporter(
                 id: String,
                 index: Int,
                 positionMs: Long,
-                durationMs: Long
+                durationMs: Long,
             ) {
                 if (positionMs >= 0 && durationMs > 0) {
                     recordTime(positionMs.toInt(), durationMs.toInt())
                 }
             }
 
-            override fun feedItemImpression(id: String, index: Int) = Unit
-            override fun playStartRequest(id: String, index: Int, reason: String) = Unit
-            override fun firstFrameRendered(id: String, index: Int) = Unit
-            override fun timeToFirstFrame(id: String, index: Int, ms: Long) = Unit
-            override fun rebufferStart(id: String, index: Int, reason: String) = Unit
-            override fun rebufferEnd(id: String, index: Int, reason: String) = Unit
-            override fun rebufferTotal(id: String, index: Int, ms: Long) = Unit
+            override fun feedItemImpression(
+                id: String,
+                index: Int,
+            ) = Unit
+            override fun playStartRequest(
+                id: String,
+                index: Int,
+                reason: String,
+            ) = Unit
+            override fun firstFrameRendered(
+                id: String,
+                index: Int,
+            ) = Unit
+            override fun timeToFirstFrame(
+                id: String,
+                index: Int,
+                ms: Long,
+            ) = Unit
+            override fun rebufferStart(
+                id: String,
+                index: Int,
+                reason: String,
+            ) = Unit
+            override fun rebufferEnd(
+                id: String,
+                index: Int,
+                reason: String,
+            ) = Unit
+            override fun rebufferTotal(
+                id: String,
+                index: Int,
+                ms: Long,
+            ) = Unit
             override fun playbackError(
                 id: String,
                 index: Int,
@@ -170,8 +203,12 @@ private fun rememberPlaybackEventReporter(
                 message: String?,
             ) = Unit
 
-            override fun preloadScheduled(id: String, index: Int, distance: Int, mode: String) =
-                Unit
+            override fun preloadScheduled(
+                id: String,
+                index: Int,
+                distance: Int,
+                mode: String,
+            ) = Unit
 
             override fun preloadCompleted(
                 id: String,
@@ -181,8 +218,18 @@ private fun rememberPlaybackEventReporter(
                 fromCache: Boolean,
             ) = Unit
 
-            override fun preloadCanceled(id: String, index: Int, reason: String) = Unit
-            override fun cacheHit(id: String, bytes: Long) = Unit
-            override fun cacheMiss(id: String, bytes: Long) = Unit
+            override fun preloadCanceled(
+                id: String,
+                index: Int,
+                reason: String,
+            ) = Unit
+            override fun cacheHit(
+                id: String,
+                bytes: Long,
+            ) = Unit
+            override fun cacheMiss(
+                id: String,
+                bytes: Long,
+            ) = Unit
         }
     }

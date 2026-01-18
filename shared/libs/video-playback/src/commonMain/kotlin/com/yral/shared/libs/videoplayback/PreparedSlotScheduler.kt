@@ -8,6 +8,7 @@ class PreparedSlotScheduler(
     private var startMs: Long? = null
     private var prerollRequested = false
 
+    @Suppress("ReturnCount")
     fun schedule(
         activeIndex: Int,
         itemCount: Int,
@@ -27,6 +28,7 @@ class PreparedSlotScheduler(
         reporter.preloadScheduled(id, nextIndex, 1, "prepared")
     }
 
+    @Suppress("ReturnCount")
     fun markReady(
         index: Int,
         nowMs: Long,
@@ -35,12 +37,13 @@ class PreparedSlotScheduler(
     ) {
         if (!policy.usePreparedNextPlayer) return
         if (pendingIndex != index) return
-        val id = idAt(index) ?: run {
-            pendingIndex = null
-            startMs = null
-            prerollRequested = false
-            return
-        }
+        val id =
+            idAt(index) ?: run {
+                pendingIndex = null
+                startMs = null
+                prerollRequested = false
+                return
+            }
         if (!prerollRequested) {
             prerollRequested = true
             onPreroll?.invoke()
@@ -51,7 +54,11 @@ class PreparedSlotScheduler(
         startMs = null
     }
 
-    fun markError(index: Int, idAt: (Int) -> String?, reason: String) {
+    fun markError(
+        index: Int,
+        idAt: (Int) -> String?,
+        reason: String,
+    ) {
         if (pendingIndex != index) return
         val id = idAt(index) ?: return
         reporter.preloadCanceled(id, index, reason)
@@ -59,7 +66,10 @@ class PreparedSlotScheduler(
         startMs = null
     }
 
-    fun reset(reason: String, idAt: (Int) -> String?) {
+    fun reset(
+        reason: String,
+        idAt: (Int) -> String?,
+    ) {
         val index = pendingIndex ?: return
         val id = idAt(index) ?: return
         reporter.preloadCanceled(id, index, reason)

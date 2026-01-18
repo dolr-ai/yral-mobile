@@ -6,9 +6,15 @@ interface PlaybackCoordinator {
 
     fun setActiveIndex(index: Int)
 
-    fun setScrollHint(predictedIndex: Int, velocity: Float? = null)
+    fun setScrollHint(
+        predictedIndex: Int,
+        velocity: Float? = null,
+    )
 
-    fun bindSurface(index: Int, surface: VideoSurfaceHandle)
+    fun bindSurface(
+        index: Int,
+        surface: VideoSurfaceHandle,
+    )
 
     fun unbindSurface(index: Int)
 

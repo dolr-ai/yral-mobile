@@ -5,7 +5,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.unit.Velocity
-import com.yral.shared.libs.videoPlayer.model.PlayerConfig
 
 enum class ReelScrollDirection {
     Up, // Forward

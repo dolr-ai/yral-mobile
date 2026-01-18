@@ -8,12 +8,11 @@ import com.yral.shared.libs.videoplayback.PlaybackCoordinator
 import com.yral.shared.libs.videoplayback.ios.createIosPlaybackCoordinator
 
 @Composable
-actual fun rememberPlaybackCoordinator(
-    deps: CoordinatorDeps,
-): PlaybackCoordinator {
-    val coordinator = remember(deps) {
-        createIosPlaybackCoordinator(deps)
-    }
+actual fun rememberPlaybackCoordinator(deps: CoordinatorDeps): PlaybackCoordinator {
+    val coordinator =
+        remember(deps) {
+            createIosPlaybackCoordinator(deps)
+        }
     DisposableEffect(coordinator) {
         onDispose { coordinator.release() }
     }
