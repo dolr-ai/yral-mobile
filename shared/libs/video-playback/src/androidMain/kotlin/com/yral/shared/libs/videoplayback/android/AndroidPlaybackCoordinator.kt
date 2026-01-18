@@ -103,6 +103,17 @@ private class AndroidPlaybackCoordinator(
 
     private val listener =
         object : Player.Listener {
+            @Suppress("ReturnCount")
+            override fun onMediaItemTransition(
+                mediaItem: MediaItem?,
+                reason: Int,
+            ) {
+                if (reason != Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT) return
+                val index = mediaItem?.mediaId?.let { mediaIndexById[it] } ?: activeSlot.index ?: return
+                val item = feed.getOrNull(index) ?: return
+                reporter.playbackEnded(item.id, index)
+            }
+
             override fun onPlaybackStateChanged(playbackState: Int) {
                 val index = activeSlot.index ?: return
                 val item = feed.getOrNull(index) ?: return
