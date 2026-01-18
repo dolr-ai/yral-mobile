@@ -210,6 +210,12 @@ private class AndroidPlaybackCoordinator(
         if (index !in feed.indices) return
         if (index == activeIndex && activeSlot.index == index) return
 
+        if (rebuffering) {
+            feed.getOrNull(activeIndex)?.let { item ->
+                reporter.rebufferEnd(item.id, activeIndex, "navigation")
+            }
+            rebuffering = false
+        }
         activeIndex = index
         predictedIndex = index
         preloadStatusControl.currentPlayingIndex = index
@@ -323,6 +329,7 @@ private class AndroidPlaybackCoordinator(
     private fun swapSlots() {
         val prepared = preparedSlot ?: return
         val previousActive = activeSlot
+        previousActive.player.playWhenReady = false
         activeSlot = prepared
         preparedSlot = previousActive
         preparedScheduler.clearOnSwap()
@@ -433,6 +440,12 @@ private class AndroidPlaybackCoordinator(
             synchronized(lock) {
                 if (refCount > 0) {
                     refCount--
+                }
+                if (refCount == 0) {
+                    cache?.release()
+                    cache = null
+                    databaseProvider?.close()
+                    databaseProvider = null
                 }
             }
         }

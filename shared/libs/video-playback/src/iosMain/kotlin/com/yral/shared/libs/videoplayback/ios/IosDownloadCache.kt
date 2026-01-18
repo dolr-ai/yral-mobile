@@ -2,6 +2,8 @@ package com.yral.shared.libs.videoplayback.ios
 
 import com.yral.shared.libs.videoplayback.MediaDescriptor
 import com.yral.shared.libs.videoplayback.cacheKey
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.Foundation.NSCachesDirectory
 import platform.Foundation.NSDate
@@ -32,6 +34,8 @@ internal class IosDownloadCache(
         NSURLSessionConfiguration.defaultSessionConfiguration,
     )
     private val activeDownloads = mutableMapOf<String, NSURLSessionDownloadTask>()
+    private val pendingCallbacks = mutableMapOf<String, MutableList<PendingCallback>>()
+    private val lock = SynchronizedObject()
 
     fun cachedFileUrl(descriptor: MediaDescriptor): NSURL? {
         val key = descriptor.cacheKey()
@@ -55,7 +59,17 @@ internal class IosDownloadCache(
             onComplete(fileSize(existing), true)
             return
         }
-        if (activeDownloads.containsKey(key)) return
+        val alreadyInProgress = synchronized(lock) {
+            if (activeDownloads.containsKey(key)) {
+                pendingCallbacks.getOrPut(key) { mutableListOf() }
+                    .add(PendingCallback(onComplete, onError))
+                true
+            } else {
+                pendingCallbacks[key] = mutableListOf(PendingCallback(onComplete, onError))
+                false
+            }
+        }
+        if (alreadyInProgress) return
 
         val remoteUrl = NSURL.URLWithString(descriptor.uri) ?: run {
             onError()
@@ -72,14 +86,16 @@ internal class IosDownloadCache(
         }
         val task = if (request != null) {
             session.downloadTaskWithRequest(request) { tempUrl, _, error ->
-                handleDownloadResult(tempUrl, error, key, onComplete, onError)
+                handleDownloadResult(tempUrl, error, key)
             }
         } else {
             session.downloadTaskWithURL(remoteUrl) { tempUrl, _, error ->
-                handleDownloadResult(tempUrl, error, key, onComplete, onError)
+                handleDownloadResult(tempUrl, error, key)
             }
         }
-        activeDownloads[key] = task
+        synchronized(lock) {
+            activeDownloads[key] = task
+        }
         task.resume()
     }
 
@@ -87,31 +103,47 @@ internal class IosDownloadCache(
         tempUrl: NSURL?,
         error: NSError?,
         key: String,
-        onComplete: (bytes: Long, fromCache: Boolean) -> Unit,
-        onError: () -> Unit,
     ) {
-        if (error != null || tempUrl == null) {
+        val callbacks = synchronized(lock) {
             activeDownloads.remove(key)
-            onError()
+            pendingCallbacks.remove(key).orEmpty()
+        }
+        if (error != null || tempUrl == null) {
+            callbacks.forEach { it.onError() }
             return
         }
-        val destination = cacheDir.URLByAppendingPathComponent("$key.mp4") ?: return
+        val destination = cacheDir.URLByAppendingPathComponent("$key.mp4")
+        if (destination == null) {
+            callbacks.forEach { it.onError() }
+            return
+        }
         moveToCache(tempUrl, destination)
         val bytes = fileSize(destination)
-        activeDownloads.remove(key)
         trimToSize()
-        onComplete(bytes, false)
+        callbacks.forEach { it.onComplete(bytes, false) }
     }
 
     fun cancelPrefetch(descriptor: MediaDescriptor) {
         val key = descriptor.cacheKey()
-        activeDownloads.remove(key)?.cancel()
+        val (task, callbacks) = synchronized(lock) {
+            activeDownloads.remove(key) to pendingCallbacks.remove(key).orEmpty()
+        }
+        task?.cancel()
+        callbacks.forEach { it.onError() }
     }
 
     fun cancelAll() {
-        val keys = activeDownloads.keys.toList()
-        for (key in keys) {
-            activeDownloads.remove(key)?.cancel()
+        val entries = synchronized(lock) {
+            val tasks = activeDownloads.map { (key, task) ->
+                task to pendingCallbacks.remove(key).orEmpty()
+            }
+            activeDownloads.clear()
+            pendingCallbacks.clear()
+            tasks
+        }
+        entries.forEach { (task, callbacks) ->
+            task.cancel()
+            callbacks.forEach { it.onError() }
         }
     }
 
@@ -146,6 +178,11 @@ internal class IosDownloadCache(
         val attributes: Map<Any?, *> = mapOf(NSFileModificationDate to NSDate())
         fileManager.setAttributes(attributes, ofItemAtPath = path, error = null)
     }
+
+    private data class PendingCallback(
+        val onComplete: (bytes: Long, fromCache: Boolean) -> Unit,
+        val onError: () -> Unit,
+    )
 
     private fun trimToSize() {
         if (maxBytes <= 0) return

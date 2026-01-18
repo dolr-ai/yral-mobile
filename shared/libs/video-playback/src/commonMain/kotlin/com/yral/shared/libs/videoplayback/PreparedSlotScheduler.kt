@@ -19,11 +19,11 @@ class PreparedSlotScheduler(
         if (nextIndex !in 0 until itemCount) return
         if (pendingIndex == nextIndex) return
 
+        val id = idAt(nextIndex) ?: return
         prepare(nextIndex)
         pendingIndex = nextIndex
         startMs = null
         prerollRequested = false
-        val id = idAt(nextIndex) ?: return
         reporter.preloadScheduled(id, nextIndex, 1, "prepared")
     }
 
@@ -35,11 +35,16 @@ class PreparedSlotScheduler(
     ) {
         if (!policy.usePreparedNextPlayer) return
         if (pendingIndex != index) return
+        val id = idAt(index) ?: run {
+            pendingIndex = null
+            startMs = null
+            prerollRequested = false
+            return
+        }
         if (!prerollRequested) {
             prerollRequested = true
             onPreroll?.invoke()
         }
-        val id = idAt(index) ?: return
         val started = startMs ?: nowMs
         reporter.preloadCompleted(id, index, 0, nowMs - started, false)
         pendingIndex = null

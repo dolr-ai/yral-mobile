@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import com.yral.shared.libs.videoplayback.MediaDescriptor
 import com.yral.shared.libs.videoplayback.PlaybackCoordinator
@@ -89,9 +90,10 @@ fun VideoReleaseEffect(
     coordinator: PlaybackCoordinator,
     releaseOnDispose: Boolean,
 ) {
-    DisposableEffect(releaseOnDispose) {
+    val releaseOnDisposeState = rememberUpdatedState(releaseOnDispose)
+    DisposableEffect(coordinator) {
         onDispose {
-            if (releaseOnDispose) {
+            if (releaseOnDisposeState.value) {
                 coordinator.release()
             }
         }
