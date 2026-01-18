@@ -19,6 +19,7 @@ kotlin {
             implementation(compose.ui)
 
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.ktor.client.core)
             implementation(libs.androidx.lifecycle.runtime.compose)
 
             implementation(projects.shared.core)

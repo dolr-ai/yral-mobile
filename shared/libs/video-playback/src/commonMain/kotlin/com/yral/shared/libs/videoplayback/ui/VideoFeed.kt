@@ -118,10 +118,10 @@ fun VideoPagerEffects(
     }
 
     LaunchedEffect(pagerState, itemsCount, scrollHintThreshold) {
-        snapshotFlow { pagerState.currentPageOffsetFraction }
-            .map { offset ->
+        snapshotFlow { pagerState.currentPage to pagerState.currentPageOffsetFraction }
+            .map { (page, offset) ->
                 predictedIndexFromOffset(
-                    currentIndex = pagerState.currentPage,
+                    currentIndex = page,
                     offsetFraction = offset,
                     threshold = scrollHintThreshold,
                 )

@@ -71,10 +71,13 @@ class PreparedSlotScheduler(
         idAt: (Int) -> String?,
     ) {
         val index = pendingIndex ?: return
-        val id = idAt(index) ?: return
-        reporter.preloadCanceled(id, index, reason)
         pendingIndex = null
         startMs = null
+        prerollRequested = false
+        val id = idAt(index)
+        if (id != null) {
+            reporter.preloadCanceled(id, index, reason)
+        }
     }
 
     fun clearOnSwap() {

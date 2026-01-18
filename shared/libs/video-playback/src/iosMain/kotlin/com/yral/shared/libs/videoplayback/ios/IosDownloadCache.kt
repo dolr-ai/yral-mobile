@@ -4,7 +4,13 @@ import com.yral.shared.libs.videoplayback.MediaDescriptor
 import com.yral.shared.libs.videoplayback.cacheKey
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
+import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.ObjCObjectVar
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.ptr
+import kotlinx.cinterop.value
 import platform.Foundation.NSCachesDirectory
 import platform.Foundation.NSDate
 import platform.Foundation.NSError
@@ -77,6 +83,9 @@ internal class IosDownloadCache(
 
         val remoteUrl =
             NSURL.URLWithString(descriptor.uri) ?: run {
+                synchronized(lock) {
+                    pendingCallbacks.remove(key)
+                }
                 onError()
                 return
             }
@@ -106,6 +115,7 @@ internal class IosDownloadCache(
         task.resume()
     }
 
+    @Suppress("ReturnCount")
     private fun handleDownloadResult(
         tempUrl: NSURL?,
         error: NSError?,
@@ -125,7 +135,10 @@ internal class IosDownloadCache(
             callbacks.forEach { it.onError() }
             return
         }
-        moveToCache(tempUrl, destination)
+        if (!moveToCache(tempUrl, destination)) {
+            callbacks.forEach { it.onError() }
+            return
+        }
         val bytes = fileSize(destination)
         trimToSize()
         callbacks.forEach { it.onComplete(bytes, false) }
@@ -158,27 +171,40 @@ internal class IosDownloadCache(
         }
     }
 
+    @OptIn(BetaInteropApi::class)
     private fun ensureCacheDir(): NSURL {
         val urls = fileManager.URLsForDirectory(NSCachesDirectory, NSUserDomainMask)
         val base =
             urls.firstOrNull() as? NSURL
                 ?: NSURL.fileURLWithPath(NSTemporaryDirectory())
-        val dir = base.URLByAppendingPathComponent("video-playback-cache")!!
-        fileManager.createDirectoryAtURL(
-            dir,
-            withIntermediateDirectories = true,
-            attributes = null,
-            error = null,
-        )
+        val dir =
+            base.URLByAppendingPathComponent("video-playback-cache")
+                ?: error("Failed to create cache directory URL")
+        memScoped {
+            val error = alloc<ObjCObjectVar<NSError?>>()
+            fileManager.createDirectoryAtURL(
+                dir,
+                withIntermediateDirectories = true,
+                attributes = null,
+                error = error.ptr,
+            )
+            val failure = error.value
+            if (failure != null) {
+                error("Failed to create cache directory: ${failure.localizedDescription}")
+            }
+        }
         return dir
     }
 
     private fun moveToCache(
         tempUrl: NSURL,
         destination: NSURL,
-    ) {
+    ): Boolean {
         tryRemove(destination)
-        fileManager.moveItemAtURL(tempUrl, destination, null)
+        return memScoped {
+            val error = alloc<ObjCObjectVar<NSError?>>()
+            fileManager.moveItemAtURL(tempUrl, destination, error.ptr) && error.value == null
+        }
     }
 
     private fun fileSize(url: NSURL): Long {
