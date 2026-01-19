@@ -19,6 +19,7 @@ kotlin {
             implementation(projects.shared.libs.coroutinesX)
             implementation(projects.shared.libs.koin)
             implementation(projects.shared.libs.preferences)
+            implementation(projects.shared.libs.http)
             implementation(libs.kotlinx.serialization.json)
         }
     }

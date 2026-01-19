@@ -43,6 +43,7 @@ internal class IOSIAPProvider : IAPProvider {
     override suspend fun purchaseProduct(
         productId: ProductId,
         context: Any?,
+        obfuscatedAccountId: String?,
     ): Result<IAPPurchase> {
         return try {
             val productIdString = productId.productId

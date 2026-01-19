@@ -6,17 +6,15 @@ import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.Product
 import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.iap.core.model.PurchaseState
-import com.yral.shared.preferences.Preferences
-import kotlinx.serialization.json.Json
+import com.yral.shared.iap.verification.PurchaseVerificationService
+import kotlin.coroutines.cancellation.CancellationException
 import com.yral.shared.iap.core.model.Purchase as CorePurchase
 import com.yral.shared.iap.core.providers.IAPProvider as CoreIAPProvider
 
-private const val ACCOUNT_IDENTIFIER_PREFIX = "iap_account_identifier_"
-
 internal class IAPProviderImpl(
     private val coreProvider: CoreIAPProvider,
-    private val preferences: Preferences,
     private val sessionManager: SessionManager,
+    private val verificationService: PurchaseVerificationService,
 ) : IAPProvider {
     private var warningNotifier: (String) -> Unit = {}
 
@@ -31,96 +29,46 @@ internal class IAPProviderImpl(
     override suspend fun purchaseProduct(
         productId: ProductId,
         context: Any?,
-    ): Result<CorePurchase> {
-        val result = coreProvider.purchaseProduct(productId, context)
-        result.onSuccess { purchase ->
-            val accountIdentifier = purchase.accountIdentifier
-            if (accountIdentifier != null) {
-                val userId = sessionManager.userPrincipal
-                if (userId != null) {
-                    val existing = getAccountIdentifiersForUser(userId)
-                    if (!existing.contains(accountIdentifier)) {
-                        if (existing.isNotEmpty()) {
-                            val message =
-                                "Account identifier changed for user $userId. " +
-                                    "Existing: ${existing.joinToString()}, " +
-                                    "New: $accountIdentifier. " +
-                                    "Adding new identifier to support multiple accounts."
-                            Logger.w("IAPProviderImpl") { message }
-                            warningNotifier(message)
-                        }
-                        addAccountIdentifierForUser(userId, accountIdentifier)
-                    }
-                } else {
-                    val message =
-                        "Purchase completed but userId is null. " +
-                            "Account identifier $accountIdentifier not stored. " +
-                            "User may need to restore purchases after login."
-                    Logger.w("IAPProviderImpl") { message }
-                    warningNotifier(message)
-                }
-            } else {
-                val message =
-                    "Purchase completed but account identifier is null. " +
-                        "Mapping not stored. User may need backend rehydration."
-                Logger.w("IAPProviderImpl") { message }
-                warningNotifier(message)
-            }
-        }
-        return result
-    }
-
-    override suspend fun restorePurchases(userId: String?): Result<List<CorePurchase>> {
-        val allPurchases = coreProvider.restorePurchases()
-        return if (userId == null) {
-            allPurchases
-        } else {
-            val accountIdentifiers = getAccountIdentifiersForUser(userId)
-            if (accountIdentifiers.isEmpty()) {
-                Result.success(emptyList())
-            } else {
-                allPurchases.map { purchases ->
-                    purchases.filter { purchase ->
-                        purchase.accountIdentifier != null &&
-                            accountIdentifiers.contains(purchase.accountIdentifier)
-                    }
-                }
-            }
-        }
-    }
-
-    override suspend fun isProductPurchased(
-        productId: ProductId,
-        userId: String?,
-    ): Result<Boolean> =
+    ): Result<CorePurchase> =
         try {
-            val productIdString = productId.productId
-            val restoreResult = restorePurchases(userId)
-            restoreResult.map { purchases ->
-                if (userId == null) {
-                    purchases.any { purchase ->
-                        purchase.productId == productIdString &&
-                            purchase.state == PurchaseState.PURCHASED &&
-                            (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
-                    }
-                } else {
-                    val accountIdentifiers = getAccountIdentifiersForUser(userId)
-                    if (accountIdentifiers.isEmpty()) {
-                        false
-                    } else {
-                        purchases
-                            .filter { purchase ->
-                                purchase.accountIdentifier != null &&
-                                    accountIdentifiers.contains(purchase.accountIdentifier)
-                            }.any { purchase ->
-                                purchase.productId == productIdString &&
-                                    purchase.state == PurchaseState.PURCHASED &&
-                                    (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
+            sessionManager.userPrincipal?.let { userId ->
+                coreProvider
+                    .purchaseProduct(
+                        productId = productId,
+                        context = context,
+                        obfuscatedAccountId = userId,
+                    ).mapCatching { purchase ->
+                        if (verificationService.verifyPurchase(purchase, userId)) {
+                            Logger.w("IAPProviderImpl") {
+                                "Purchase verification failed for product ${purchase.productId}"
                             }
+                            purchase
+                        } else {
+                            throw IAPError.PurchaseFailed(purchase.productId)
+                        }
                     }
-                }
-            }
-        } catch (e: kotlinx.coroutines.CancellationException) {
+            } ?: throw IAPError.UnknownError(Exception("userId null"))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: IAPError) {
+            Result.failure(e)
+        } catch (
+            @Suppress("TooGenericExceptionCaught")
+            e: Exception,
+        ) {
+            Result.failure(IAPError.UnknownError(e))
+        }
+
+    override suspend fun restorePurchases(userId: String?): Result<List<CorePurchase>> =
+        try {
+            userId?.let {
+                coreProvider
+                    .restorePurchases()
+                    .mapCatching { purchases ->
+                        purchases.filter { purchase -> verify(purchase, userId) }
+                    }
+            } ?: throw IAPError.UnknownError(Exception("userId null"))
+        } catch (e: CancellationException) {
             throw e
         } catch (e: IAPError) {
             Result.failure(e)
@@ -130,41 +78,40 @@ internal class IAPProviderImpl(
             Result.failure(IAPError.UnknownError(e))
         }
 
-    override suspend fun setAccountIdentifier(
-        userId: String,
-        accountIdentifier: String,
-    ) {
-        if (validateAccountIdentifier(accountIdentifier)) {
-            addAccountIdentifierForUser(userId, accountIdentifier)
-        } else {
-            val message =
-                "Account identifier $accountIdentifier does not match any purchases. " +
-                    "Not storing mapping for user $userId."
-            Logger.w("IAPProviderImpl") { message }
-            warningNotifier(message)
+    override suspend fun isProductPurchased(
+        productId: ProductId,
+        userId: String?,
+    ): Result<Boolean> =
+        try {
+            val productIdString = productId.productId
+            restorePurchases(userId).map { purchases ->
+                purchases.any { purchase ->
+                    purchase.productId == productIdString &&
+                        purchase.state == PurchaseState.PURCHASED &&
+                        (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
+                }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: IAPError) {
+            Result.failure(e)
+        } catch (
+            @Suppress("TooGenericExceptionCaught") e: Exception,
+        ) {
+            Result.failure(IAPError.UnknownError(e))
         }
-    }
 
-    private suspend fun getAccountIdentifiersForUser(userId: String): Set<String> {
-        val key = "$ACCOUNT_IDENTIFIER_PREFIX$userId"
-        val stored = preferences.getString(key) ?: return emptySet()
-        return runCatching { Json.decodeFromString<Set<String>>(stored) }.getOrDefault(emptySet())
-    }
-
-    private suspend fun addAccountIdentifierForUser(
+    private suspend fun verify(
+        purchase: CorePurchase,
         userId: String,
-        accountIdentifier: String,
-    ) {
-        val existing = getAccountIdentifiersForUser(userId)
-        if (!existing.contains(accountIdentifier)) {
-            val key = "$ACCOUNT_IDENTIFIER_PREFIX$userId"
-            val updated = Json.encodeToString(existing + accountIdentifier)
-            preferences.putString(key, updated)
-        }
-    }
-
-    private suspend fun validateAccountIdentifier(accountIdentifier: String): Boolean {
-        val allPurchases = coreProvider.restorePurchases().getOrNull() ?: return false
-        return allPurchases.any { it.accountIdentifier == accountIdentifier }
-    }
+    ): Boolean =
+        verificationService
+            .verifyPurchase(purchase, userId)
+            .also { verified ->
+                if (!verified) {
+                    Logger.w("IAPProviderImpl") {
+                        "Purchase verification failed for product ${purchase.productId} during restore"
+                    }
+                }
+            }
 }

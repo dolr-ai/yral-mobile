@@ -9,6 +9,7 @@ interface IAPProvider {
     suspend fun purchaseProduct(
         productId: ProductId,
         context: Any? = null,
+        obfuscatedAccountId: String? = null,
     ): Result<Purchase>
     suspend fun restorePurchases(): Result<List<Purchase>>
     suspend fun isProductPurchased(productId: ProductId): Result<Boolean>

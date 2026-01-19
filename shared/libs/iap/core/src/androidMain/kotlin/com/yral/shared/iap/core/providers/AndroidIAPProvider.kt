@@ -52,6 +52,7 @@ internal class AndroidIAPProvider(
     override suspend fun purchaseProduct(
         productId: ProductId,
         context: Any?,
+        obfuscatedAccountId: String?,
     ): Result<IAPPurchase> {
         return try {
             val productIdString = productId.productId
@@ -86,7 +87,8 @@ internal class AndroidIAPProvider(
                                     }
                                 }.build(),
                         ),
-                    ).build()
+                    ).apply { obfuscatedAccountId?.let { setObfuscatedAccountId(it) } }
+                    .build()
 
             val deferred = CompletableDeferred<Result<IAPPurchase>>()
             pendingPurchasesLock.withLock {

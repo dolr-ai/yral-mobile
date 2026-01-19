@@ -15,8 +15,4 @@ interface IAPProvider {
         productId: ProductId,
         userId: String?,
     ): Result<Boolean>
-    suspend fun setAccountIdentifier(
-        userId: String,
-        accountIdentifier: String,
-    )
 }

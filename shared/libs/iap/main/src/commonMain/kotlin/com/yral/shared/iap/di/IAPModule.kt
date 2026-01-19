@@ -4,16 +4,24 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.iap.IAPManager
 import com.yral.shared.iap.providers.IAPProvider
 import com.yral.shared.iap.providers.IAPProviderImpl
+import com.yral.shared.iap.verification.PurchaseVerificationService
+import io.ktor.client.HttpClient
 import org.koin.dsl.module
 
 val iapModule =
     module {
+        single<PurchaseVerificationService> {
+            PurchaseVerificationService(
+                httpClient = get<HttpClient>(),
+                preferences = get(),
+            )
+        }
         single<IAPProvider> {
             val coreProvider: com.yral.shared.iap.core.providers.IAPProvider = get()
             IAPProviderImpl(
                 coreProvider = coreProvider,
-                preferences = get(),
                 sessionManager = get<SessionManager>(),
+                verificationService = get<PurchaseVerificationService>(),
             )
         }
         single<IAPManager> {

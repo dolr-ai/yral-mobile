@@ -89,13 +89,6 @@ class IAPManager(
         userId: String?,
     ): Result<Boolean> = provider.isProductPurchased(productId, userId)
 
-    suspend fun setAccountIdentifier(
-        userId: String,
-        accountIdentifier: String,
-    ) {
-        provider.setAccountIdentifier(userId, accountIdentifier)
-    }
-
     fun notifyWarning(message: String) {
         Logger.w("IAPManager") { message }
         managerScope.launch {
