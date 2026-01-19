@@ -1,299 +1,359 @@
 # IAP Module - Edge Cases and Handling
 
-This document describes edge cases and potential issues when using the IAP module with account validation, along with how the module handles them.
+This document describes edge cases and potential issues when using the IAP module, along with how the module handles them.
 
-## Account Identifier Mapping
+## Simplified Architecture
 
-The IAP module maintains a one-to-many mapping between app user IDs and Google Play account identifiers. This allows users to have purchases from multiple Google Play accounts while maintaining security.
+The IAP module follows a simplified, backend-driven architecture:
+- **IAP Module**: Returns all purchases from store with automatically verifies purchases with backend
+- **Subscription Module**: Handles subscription status management, credit consumption, and subscription lifecycle
+- **Backend**: Handles account matching during verification (source of truth)
 
-### Edge Cases
+### Module Responsibilities
 
-#### 1. User Switches Google Play Account After Purchase
+**IAP Module (Core + Main):**
+- Fetch products from store
+- Purchase products from store
+- Restore purchases from store
+- **Automatically verify ALL purchases with backend** (`POST /google/verify`)
+- Return only verified purchases
+
+**Implementation:** `shared/libs/iap/main/src/commonMain/kotlin/com/yral/shared/iap/providers/IAPProviderImpl.kt`
+
+```kotlin
+override suspend fun purchaseProduct(
+    productId: ProductId,
+    context: Any?,
+): Result<CorePurchase> =
+    handleIAPResultOperation {
+        sessionManager.userPrincipal?.let { userId ->
+            coreProvider
+                .purchaseProduct(productId, context, userId)
+                .mapCatching { purchase ->
+                    verificationService.verifyPurchase(purchase, userId).fold(
+                        onSuccess = { purchase },
+                        onFailure = { error -> throw error },
+                    )
+                }
+        } ?: throw IAPError.UnknownError(Exception("User principal is null"))
+    }
+```
+
+**Subscription Module:**
+- Query subscription status (`GET /subscription/status`)
+- Manage subscription lifecycle (active, paused, cancelled, expired)
+- Handle credit consumption (`POST /subscription/credits/consume`)
+- Manage entitlements and benefits
+- Handle child account sharing (transparent to client)
+
+**Location:** `shared/features/subscription/`
+
+## Edge Cases
+
+### 1. App Reinstall
 
 **Scenario:**
-- User makes purchase with Google Play Account 1 → stores mapping `userId → [account1]`
-- User switches to Google Play Account 2 in Play Store
-- User makes another purchase → new purchase has `account2`, adds to mapping: `userId → [account1, account2]`
+- User has active subscription
+- User uninstalls app
+- User reinstalls app and logs in
 
 **Current Behavior:**
-- Both account identifiers are stored
-- User can access purchases from both accounts
-- Warning is logged when account identifier changes
+- IAP module automatically restores purchases from store on app launch (via `restorePurchases()`)
+- IAP module automatically verifies each purchase with backend
+- Backend handles account matching internally
+- Subscription module refreshes subscription status from backend
+- UI reflects active subscription immediately
 
-**Impact:** ✅ Positive - User maintains access to purchases from both accounts
+**Impact:** ✅ Works automatically - No local account identifier management needed
 
-**Recommendation:** Monitor logs for account identifier changes to understand user behavior patterns.
+**Note:** Backend maintains subscription state, so reinstall works seamlessly.
 
 ---
 
-#### 2. Multiple App Users, Same Google Play Account
+### 2. Multiple Google Play Accounts
 
 **Scenario:**
-- User A (app userId: `userA`) makes purchase with Google Play Account X → stores `userA → [accountX]`
-- User B (app userId: `userB`) logs in, also uses Google Play Account X
-- User B makes purchase → stores `userB → [accountX]`
+- User has multiple Google Play accounts on device
+- User makes purchases with different accounts
 
 **Current Behavior:**
-- Each app user has their own mapping
-- Filtering by `userId` prevents cross-user access
-- Both users can have purchases from the same Google Play account
+- IAP module returns all purchases from store (no filtering)
+- IAP module automatically verifies all purchases with backend
+- Backend handles account matching internally
+- Backend determines which purchases belong to which user
 
-**Impact:** ✅ Safe - No cross-user access due to userId filtering
-
-**Note:** This is expected behavior for family sharing scenarios where multiple app users share a Google Play account.
+**Impact:** ✅ Backend handles account matching - No client-side complexity
 
 ---
 
-#### 3. Account Identifier Overwrite Prevention
-
-**Scenario:**
-- User makes purchase with Account 1 → stores `userId → [account1]`
-- User switches Google Play account
-- User makes purchase with Account 2 → adds to mapping: `userId → [account1, account2]`
-
-**Current Behavior:**
-- New account identifier is added to the set (not overwritten)
-- User maintains access to purchases from both accounts
-- Warning is logged for monitoring
-
-**Impact:** ✅ Positive - No data loss, user maintains access to all purchases
-
----
-
-#### 4. Null Account Identifier in Purchase
-
-**Scenario:**
-- Purchase succeeds but `purchase.accountIdentifiers?.obfuscatedAccountId` is `null`
-- Mapping is not stored
-- Future purchase checks return `false`
-
-**Current Behavior:**
-- Mapping is only stored if `accountIdentifier != null`
-- Warning is logged when account identifier is null
-- User will need backend rehydration to restore access
-
-**Impact:** ⚠️ User loses access until backend provides account identifier
-
-**Mitigation:**
-- Backend should store account identifier when purchase is validated server-side
-- Backend can rehydrate using `setAccountIdentifier()` after login
-
----
-
-#### 5. Backend Provides Incorrect Account Identifier
-
-**Scenario:**
-- Backend returns wrong `accountIdentifier` for user
-- App calls `setAccountIdentifier(userId, wrongAccountId)`
-- Validation checks if identifier matches any purchases
-
-**Current Behavior:**
-- `setAccountIdentifier()` validates the identifier against actual purchases
-- If identifier doesn't match any purchases, it's not stored
-- Warning is logged
-
-**Impact:** ✅ Safe - Invalid identifiers are rejected
-
-**Recommendation:** Backend should always return the account identifier from the most recent purchase validation.
-
----
-
-#### 6. User Logs Out and Different User Logs In
-
-**Scenario:**
-- User A logs in, makes purchase → stores `userA → [account1]`
-- User A logs out
-- User B logs in (different app user, same device)
-- User B's purchases are checked
-
-**Current Behavior:**
-- Mapping is per `userId`, so no conflict
-- User B's purchases are filtered by their own `userId`
-- Account identifier mappings are preserved per user
-
-**Impact:** ✅ Safe - No cross-user access
-
-**Note:** Mappings are not cleared on logout, allowing users to restore access when they log back in.
-
----
-
-#### 7. Account Identifier Format Changes
-
-**Scenario:**
-- Google Play changes `obfuscatedAccountId` format
-- Old stored identifiers no longer match new format
-- User loses access
-
-**Current Behavior:**
-- Module uses identifiers as-is from Google Play Billing Library
-- If format changes, stored identifiers won't match new purchases
-
-**Impact:** ⚠️ Breaking change from Google Play
-
-**Mitigation:**
-- Google Play typically maintains backward compatibility
-- If format changes, users may need to re-authenticate purchases
-- Backend rehydration can restore access with new format
-
----
-
-#### 8. User Reinstalls App, Backend Provides Stale Account Identifier
-
-**Scenario:**
-- User makes purchase with Account 1
-- User switches to Account 2, makes purchase
-- User reinstalls app
-- Backend returns old Account 1 identifier
-- User loses access to Account 2 purchases
-
-**Current Behavior:**
-- `setAccountIdentifier()` validates identifier against actual purchases
-- Only identifiers that match purchases are stored
-- If backend provides stale identifier, it may not match current purchases
-
-**Impact:** ⚠️ User may lose access if backend provides wrong identifier
-
-**Recommendation:**
-- Backend should return the most recent account identifier
-- Backend should support multiple account identifiers per user
-- Consider calling `restorePurchases()` first to discover current account identifiers
-
----
-
-#### 9. Purchase Made While User ID is Null
+### 3. Purchase Made While User ID is Null
 
 **Scenario:**
 - Purchase completes but `sessionManager.userPrincipal` is `null`
-- Account identifier is not stored
-- User logs in later, but mapping is missing
+- User logs in later
 
 **Current Behavior:**
-- Warning is logged when userId is null
-- Account identifier is not stored
-- User will need backend rehydration to restore access
+- IAP module requires `userId` to be present for purchase verification
+- If `userId` is null, `purchaseProduct()` throws `IAPError.UnknownError`
+- If purchase completes but verification fails due to null userId, purchase is not verified
+- On next app launch, `restorePurchases()` will automatically verify all purchases (including unverified ones)
 
-**Impact:** ⚠️ User loses access until backend provides mapping
+**Impact:** ⚠️ Purchase should be verified after login
 
 **Mitigation:**
-- Ensure user is logged in before making purchases
-- Backend should store account identifier when validating purchase server-side
-- Backend can rehydrate using `setAccountIdentifier()` after login
+- Ensure user is logged in before making purchases (best practice)
+- Auto-restore on app launch will automatically verify all purchases via `restorePurchases()`
+- IAP module handles verification automatically - no manual verification needed
 
 ---
 
-#### 10. Family Sharing / Multiple Devices
+### 4. Store Restore Fails
 
 **Scenario:**
-- User has purchases on Device A with Account 1
-- User logs in on Device B with same app userId
-- Device B has different Google Play account active
-- Backend provides Account 1 identifier
-- Device B cannot find purchases because active account is different
+- Store restore operation fails (network error, timeout, etc.)
+- User has active subscription on backend
 
 **Current Behavior:**
-- Module filters purchases by stored account identifiers
-- If Device B's active account doesn't match stored identifiers, no purchases are found
+- IAP module logs error and returns empty list or failure
+- Subscription module still refreshes subscription status from backend
+- Backend is source of truth - UI reflects backend state
 
-**Impact:** ⚠️ User must switch to correct Google Play account on Device B
+**Impact:** ✅ Backend state is shown even if store restore fails
 
-**Recommendation:**
-- User should switch Google Play account on Device B to match Account 1
-- Or backend should provide all account identifiers for the user
-- Module supports multiple identifiers, so both accounts can be stored
+**Note:** Backend maintains subscription state independently of store restore.
 
 ---
 
-#### 11. Account Identifier Collision (Same Identifier, Different Users)
+### 5. Purchase Verification Fails
 
 **Scenario:**
-- User A and User B both use the same Google Play account
-- Both have purchases from the same account
-- Both users store the same account identifier
+- Store-side purchase succeeds
+- Backend verification fails (network error, invalid receipt, etc.)
 
 **Current Behavior:**
-- Filtering by `userId` prevents cross-access
-- Both users can have the same account identifier in their mappings
-- Each user only sees their own purchases (filtered by userId)
+- IAP module throws `IAPError.VerificationFailed` for `purchaseProduct()`
+- For `restorePurchases()`, failed verifications are filtered out (logged as warnings)
+- On next app launch, auto-restore will retry verification
+- Backend should handle duplicate verification gracefully
+- User can manually restore purchases to retry verification
 
-**Impact:** ✅ Safe - No cross-user access due to userId filtering
+**Implementation:**
+
+```kotlin
+// In PurchaseVerificationService.kt
+suspend fun verifyPurchase(
+    purchase: Purchase,
+    userId: String,
+): Result<Boolean> =
+    handleIAPOperation {
+        // ... verification logic ...
+        if (!response.status.isSuccess()) {
+            throw IAPError.VerificationFailed(
+                purchase.productId,
+                Exception("Backend verification failed with HTTP status: ${response.status.value}"),
+            )
+        }
+        true
+    }
+
+// In IAPProviderImpl.kt - purchaseProduct throws error
+verificationService.verifyPurchase(purchase, userId).fold(
+    onSuccess = { purchase },
+    onFailure = { error -> throw error }, // Throws VerificationFailed
+)
+
+// In IAPProviderImpl.kt - restorePurchases filters out failures
+purchases.filter { purchase ->
+    verificationService.verifyPurchase(purchase, userId).fold(
+        onSuccess = { true },
+        onFailure = { error ->
+            Logger.w("IAPProviderImpl", error) {
+                "Purchase verification error for product ${purchase.productId} during restore"
+            }
+            false // Filter out failed verifications
+        },
+    )
+}
+```
+
+**Impact:** ⚠️ Verification should be retried
+
+**Mitigation:**
+- Auto-restore on app launch retries verification
+- Backend should handle duplicate verification gracefully
+- Query `/subscription/status` to check actual subscription state
 
 ---
 
-#### 12. Backend Rehydration with Multiple Account Identifiers
+### 6. User Switches Google Play Account
 
 **Scenario:**
-- User has purchases from Account 1 and Account 2
-- User reinstalls app
-- Backend provides only Account 1 identifier
-- User loses access to Account 2 purchases
+- User makes purchase with Google Play Account 1
+- User switches to Google Play Account 2 in Play Store
+- User makes another purchase
 
 **Current Behavior:**
-- `setAccountIdentifier()` adds identifier to the set (doesn't replace)
-- If backend provides multiple identifiers, call `setAccountIdentifier()` for each
-- Module supports multiple identifiers per user
+- IAP module returns all purchases from store (both accounts)
+- IAP module automatically verifies all purchases with backend
+- Backend handles account matching internally
+- Backend determines which purchases belong to current user
 
-**Impact:** ⚠️ User may lose access to some purchases if backend doesn't provide all identifiers
+**Impact:** ✅ Backend handles account matching - No client-side complexity
 
-**Recommendation:**
-- Backend should return all account identifiers for the user
-- Call `setAccountIdentifier()` for each identifier provided by backend
-- Or implement a batch method: `setAccountIdentifiers(userId, List<String>)`
+---
+
+### 7. Multiple App Users, Same Google Play Account
+
+**Scenario:**
+- User A (app userId: `userA`) makes purchase with Google Play Account X
+- User B (app userId: `userB`) logs in, also uses Google Play Account X
+- User B makes purchase
+
+**Current Behavior:**
+- IAP module returns all purchases from store
+- IAP module automatically verifies purchases with backend using `user_id` from `SessionManager`
+- Backend matches purchases to correct user based on `user_id` in verification request
+- Each user's subscription is managed independently
+
+**Impact:** ✅ Safe - Backend handles user matching via `user_id` parameter
+
+---
+
+### 8. Subscription Expires During Use
+
+**Scenario:**
+- User starts AI video creation
+- Subscription expires mid-process
+
+**Current Behavior:**
+- Backend checks subscription status before consuming credit
+- Returns `SUBSCRIPTION_EXPIRED` if subscription inactive
+- Client falls back to YRAL tokens
+
+**Impact:** ✅ Graceful fallback to YRAL tokens
+
+---
+
+### 9. Network Error During Verification
+
+**Scenario:**
+- Store purchase succeeds
+- Network error during backend verification
+
+**Current Behavior:**
+- IAP module catches network exceptions and throws `IAPError.NetworkError`
+- For `purchaseProduct()`, throws `IAPError.NetworkError` (purchase fails)
+- For `restorePurchases()`, filters out purchases with network errors (logged as warnings)
+- On next app launch, auto-restore will retry verification
+- Backend state is source of truth - query `/subscription/status` to check actual state
+
+**Implementation:**
+
+```kotlin
+// In PurchaseVerificationService.kt
+val response = try {
+    httpClient.post { /* ... */ }
+} catch (
+    @Suppress("TooGenericExceptionCaught") e: Exception,
+) {
+    Logger.e(TAG, e) { "Network error during purchase verification for product ${purchase.productId}" }
+    throw IAPError.NetworkError(
+        Exception("Network error during purchase verification", e),
+    )
+}
+```
+
+**Impact:** ⚠️ Verification should be retried
+
+**Mitigation:**
+- Auto-restore on app launch retries verification
+- Backend maintains subscription state independently
+- Use common error handling utilities (`handleIAPOperation`, `handleIAPResultOperation`) for consistent error handling
+
+---
+
+### 10. Backend Verification Returns Error
+
+**Scenario:**
+- Store purchase succeeds
+- Backend verification returns error (invalid receipt, user mismatch, etc.)
+
+**Current Behavior:**
+- IAP module throws `IAPError.VerificationFailed` with HTTP status code
+- Purchase is not considered verified
+- For `purchaseProduct()`, throws `IAPError.VerificationFailed` (purchase fails)
+- For `restorePurchases()`, filters out failed verifications (logged as warnings)
+- On next app launch, auto-restore will retry verification
+- Backend should handle duplicate verification gracefully
+
+**Implementation:**
+
+```kotlin
+// In PurchaseVerificationService.kt
+val isSuccess = response.status.isSuccess()
+if (!isSuccess) {
+    Logger.w(TAG) {
+        "Purchase verification failed for product ${purchase.productId}. " +
+            "HTTP status: ${response.status.value}"
+    }
+    throw IAPError.VerificationFailed(
+        purchase.productId,
+        Exception("Backend verification failed with HTTP status: ${response.status.value}"),
+    )
+}
+```
+
+**Impact:** ⚠️ Verification should be retried
+
+**Mitigation:**
+- Auto-restore on app launch retries verification
+- Backend should handle duplicate verification gracefully
+- Query `/subscription/status` to check actual subscription state
+- Handle `IAPError.VerificationFailed` in UI to show appropriate error message
 
 ---
 
 ## Best Practices
 
-1. **Always Pass userId**: Use `SessionManager.userPrincipal` when calling IAP methods
-2. **Backend Storage**: Store account identifier on backend when validating purchases server-side
-3. **Backend Rehydration**: Return all account identifiers for user during login/authentication
-4. **Monitor Logs**: Watch for account identifier change warnings to understand user behavior
-5. **Handle Null Cases**: Ensure user is logged in before making purchases
-6. **Multiple Identifiers**: Support users with purchases from multiple Google Play accounts
-
-## Implementation Details
-
-### Account Identifier Storage Format
-
-Account identifiers are stored as comma-separated values:
-```
-key: "iap_account_identifier_{userId}"
-value: "account1,account2,account3"
-```
-
-### Validation
-
-- `setAccountIdentifier()` validates that the identifier matches actual purchases before storing
-- Invalid identifiers are rejected with a warning log
-- This prevents storing incorrect mappings from backend
-
-### Multiple Identifiers Support
-
-- Module supports multiple account identifiers per user (one-to-many mapping)
-- When checking purchases, all stored identifiers are checked
-- New identifiers are added to the set (not overwritten)
-- This allows users to maintain access to purchases from multiple Google Play accounts
+1. **Auto-restore on app launch**: IAP module should automatically restore purchases and verify with backend; Subscription module should refresh status from backend
+2. **Backend is source of truth**: Always query `/subscription/status` to get subscription state - don't rely on local purchase state
+3. **Verify ALL purchases**: IAP module automatically verifies all purchases (subscriptions, consumables, one-time) with backend
+4. **Handle verification failures gracefully**: 
+   - For `purchaseProduct()`, handle `IAPError.VerificationFailed` and `IAPError.NetworkError`
+   - For `restorePurchases()`, failed verifications are automatically filtered out
+   - Log errors and retry on next app launch
+5. **Ensure user is logged in**: User should be logged in before making purchases (best practice)
+6. **Query subscription status**: Always check `/subscription/status` to get current subscription state
+7. **Use common error handling utilities**: Use `handleIAPOperation` and `handleIAPResultOperation` for consistent error handling
+8. **Handle all error types**: Be aware of `IAPError.VerificationFailed` for verification failures
 
 ## Troubleshooting
 
-### User Cannot Access Purchases
+### User Cannot Access Subscription
 
-1. Check if `userId` is being passed correctly
-2. Verify account identifier is stored: Check Preferences for key `iap_account_identifier_{userId}`
-3. Check if account identifier matches any purchases: Call `restorePurchases(userId)` and inspect results
-4. Verify backend rehydration: Ensure backend provides correct account identifier(s)
-5. Check logs for warnings about null account identifiers or validation failures
+1. **Check subscription status**: Query `/subscription/status` - backend is source of truth
+2. **Check auto-restore**: Ensure auto-restore runs on app launch
+3. **Check verification**: Ensure purchases are verified with backend
+4. **Check logs**: Look for verification errors or network issues
 
-### Account Identifier Not Stored
+### Purchase Not Reflected in Subscription Status
 
-1. Check if purchase has account identifier: Inspect `Purchase.accountIdentifier` field
-2. Verify user is logged in: Check `SessionManager.userPrincipal` is not null
-3. Check logs for warnings about null userId or account identifier
-4. Ensure backend stores account identifier when validating purchase server-side
+1. **Verify purchase**: Ensure purchase was verified with backend (`POST /google/verify`)
+2. **Check backend logs**: Backend should have processed the verification
+3. **Refresh status**: Query `/subscription/status` to get latest state
+4. **Retry restore**: Manually restore purchases to retry verification
 
-### Multiple Account Identifiers
+### Store Restore Returns Empty List
 
-1. User can have purchases from multiple Google Play accounts
-2. All account identifiers are stored and checked
-3. User maintains access to purchases from all stored accounts
-4. Backend should provide all account identifiers during rehydration
+1. **Check backend status**: Query `/subscription/status` - backend may have subscription even if store restore fails
+2. **Check network**: Ensure network connectivity for store restore
+3. **Check store account**: Ensure correct store account is active
+4. **Backend is source of truth**: Always check backend status regardless of store restore result
 
+### Verification Fails
+
+1. **Check network**: Ensure network connectivity for verification
+2. **Check purchase token**: Ensure purchase token is valid
+3. **Check backend logs**: Backend should log verification errors
+4. **Retry on next launch**: Auto-restore will retry verification on next app launch
+5. **Manual restore**: User can manually restore purchases to retry verification

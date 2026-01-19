@@ -13,10 +13,10 @@ The IAP module abstracts platform-specific implementations (Google Play Billing 
 - ✅ **Event Listeners**: Reactive event handling via `IAPListener`
 - ✅ **Compose Support**: Built-in Compose helpers for easy integration
 - ✅ **Subscription Status Tracking**: Comprehensive handling of active, paused, cancelled, and expired subscriptions
-- ✅ **Account Validation**: Automatic filtering of purchases by Google Play account to prevent cross-account access
 - ✅ **Timeout Handling**: Automatic timeout and cleanup for purchase operations
 - ✅ **Error Matching**: Intelligent error matching to specific product IDs
 - ✅ **Thread-Safe**: All operations are thread-safe with proper synchronization
+- ✅ **Backend-Driven**: No local account identifier management - backend handles account matching during verification
 
 ## Architecture
 
@@ -32,9 +32,9 @@ Pure IAP functionality without business logic:
 
 ### Main Module (`shared/libs/iap/main`)
 
-Business logic layer that wraps core:
+Simplified wrapper around core:
 - **Depends on** `iap/core`, `preferences`, `sessionManager`
-- Adds userId-based account validation
+- Adds userId-based account validation through BE
 - Adds Compose helpers
 - Package: `com.yral.shared.iap.*` (public API)
 - **This is what you should use** in your app
@@ -71,9 +71,9 @@ Business logic layer that wraps core:
 ### Components
 
 **Main Module (Public API):**
-- **IAPManager**: Main entry point with userId support and account validation
-- **IAPProvider**: Interface with userId parameters and account validation
-- **IAPProviderImpl**: Common implementation that wraps core provider, adds account validation using Preferences and SessionManager (works for both Android and iOS)
+- **IAPManager**: Main entry point
+- **IAPProvider**: Interface - returns all purchases from store with BE verfication
+- **IAPProviderImpl**: Common implementation that wraps core provider (works for both Android and iOS)
 - **IAPListener**: Extends core listener with `onWarning` method
 
 **Core Module (Internal):**
@@ -258,7 +258,7 @@ viewModelScope.launch {
 }
 ```
 
-**Note**: Always pass `userId` from `SessionManager.userPrincipal` to ensure proper account validation. The method returns `Result<Boolean>` to handle potential errors when checking purchase status.
+**Note**: Always pass `userId` from `SessionManager.userPrincipal` to ensure proper account validation.
 
 ### Using IAPListener
 
@@ -430,15 +430,119 @@ According to [Android subscription lifecycle](https://developer.android.com/goog
 All errors are represented by `IAPError` sealed class:
 
 ```kotlin
-sealed class IAPError : Exception {
-    data class ProductNotFound(val productId: String)
-    data class PurchaseFailed(val productId: String, override val cause: Throwable?)
-    data class PurchaseCancelled(val productId: String)
-    data class BillingUnavailable(override val cause: Throwable?)
-    data class NetworkError(override val cause: Throwable?)
-    data class UnknownError(override val cause: Throwable?)
+sealed class IAPError(
+    message: String,
+    cause: Throwable? = null,
+) : Exception(message, cause) {
+    data class ProductNotFound(
+        val productId: String,
+    ) : IAPError("Product not found: $productId")
+    
+    data class PurchaseFailed(
+        val productId: String,
+        override val cause: Throwable? = null,
+    ) : IAPError("Purchase failed for product: $productId", cause)
+    
+    data class PurchaseCancelled(
+        val productId: String,
+    ) : IAPError("Purchase cancelled for product: $productId")
+    
+    data class BillingUnavailable(
+        override val cause: Throwable? = null,
+    ) : IAPError("Billing service unavailable", cause)
+    
+    data class NetworkError(
+        override val cause: Throwable? = null,
+    ) : IAPError("Network error during IAP operation", cause)
+    
+    data class VerificationFailed(
+        val productId: String,
+        override val cause: Throwable? = null,
+    ) : IAPError("Purchase verification failed for product: $productId", cause)
+    
+    data class UnknownError(
+        override val cause: Throwable? = null,
+    ) : IAPError("Unknown IAP error", cause)
 }
 ```
+
+#### Common Error Handling Utilities
+
+The module provides reusable error handling functions to reduce code duplication:
+
+**Location:** `shared/libs/iap/core/src/commonMain/kotlin/com/yral/shared/iap/core/util/IAPOperations.kt`
+
+```kotlin
+/**
+ * Executes an IAP operation with standard error handling.
+ * Handles CancellationException, IAPError, and generic Exception types.
+ */
+suspend inline fun <T> handleIAPOperation(
+    crossinline operation: suspend () -> T,
+): Result<T> {
+    return try {
+        Result.success(operation())
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: IAPError) {
+        Result.failure(e)
+    } catch (
+        @Suppress("TooGenericExceptionCaught")
+        e: Exception,
+    ) {
+        Result.failure(IAPError.UnknownError(e))
+    }
+}
+
+/**
+ * Executes an IAP operation that already returns Result<T>.
+ * This is useful for chaining operations that return Result.
+ */
+suspend inline fun <T> handleIAPResultOperation(
+    crossinline operation: suspend () -> Result<T>,
+): Result<T> {
+    return try {
+        operation()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: IAPError) {
+        Result.failure(e)
+    } catch (
+        @Suppress("TooGenericExceptionCaught")
+        e: Exception,
+    ) {
+        Result.failure(IAPError.UnknownError(e))
+    }
+}
+```
+
+**Usage Example:**
+
+```kotlin
+// In IAPProviderImpl.kt
+override suspend fun purchaseProduct(
+    productId: ProductId,
+    context: Any?,
+): Result<CorePurchase> =
+    handleIAPResultOperation {
+        sessionManager.userPrincipal?.let { userId ->
+            coreProvider
+                .purchaseProduct(productId, context, userId)
+                .mapCatching { purchase ->
+                    verificationService.verifyPurchase(purchase, userId).fold(
+                        onSuccess = { purchase },
+                        onFailure = { error -> throw error },
+                    )
+                }
+        } ?: throw IAPError.UnknownError(Exception("User principal is null"))
+    }
+```
+
+**Benefits:**
+- ✅ Consistent error handling across all IAP operations
+- ✅ Reduced code duplication
+- ✅ Proper cancellation handling
+- ✅ Automatic wrapping of exceptions as `IAPError.UnknownError`
 
 ## Subscription Status Handling
 
@@ -451,6 +555,39 @@ The module tracks subscription lifecycle states to handle paused, cancelled, and
 - **CANCELLED**: Subscription is cancelled but still active until expiration
 - **EXPIRED**: Subscription has expired
 - **UNKNOWN**: Status cannot be determined
+
+### Implementation
+
+**Location:** `shared/libs/iap/core/src/commonMain/kotlin/com/yral/shared/iap/core/model/Purchase.kt`
+
+```kotlin
+data class Purchase(
+    val productId: String,
+    val purchaseToken: String? = null,
+    val receipt: String? = null,
+    val purchaseTime: Long,
+    val state: PurchaseState,
+    val expirationDate: Long? = null,
+    val isAutoRenewing: Boolean? = null,
+    val subscriptionStatus: SubscriptionStatus? = null,
+    val accountIdentifier: String? = null,
+) {
+    @OptIn(ExperimentalTime::class)
+    fun isActiveSubscription(): Boolean {
+        val status = subscriptionStatus ?: return false
+        if (status == SubscriptionStatus.UNKNOWN) return false
+
+        expirationDate?.let { expiry ->
+            val currentTime = Clock.System.now().toEpochMilliseconds()
+            if (expiry <= currentTime) {
+                return false
+            }
+        }
+
+        return status == SubscriptionStatus.ACTIVE || status == SubscriptionStatus.CANCELLED
+    }
+}
+```
 
 ### Usage
 
@@ -474,6 +611,8 @@ if (purchase.isActiveSubscription()) {
 
 **Note**: See `SubscriptionStatus.kt`, `Purchase.kt`, and platform provider files for detailed documentation on status determination, platform limitations, and best practices.
 
+**Important**: For production apps, use the **Subscription Module** (`shared/features/subscription/`) to query subscription status from the backend, as it provides more accurate status including credits, entitlements, and handles child account sharing.
+
 ## Platform-Specific Details
 
 ### Android
@@ -482,7 +621,7 @@ if (purchase.isActiveSubscription()) {
 - **Context Requirement**: `Activity` context required for `purchaseProduct()`
 - **Automatic Acknowledgment**: Purchases are automatically acknowledged
 - **Subscription Support**: Full support for subscription products with all pricing phases
-- **Account Validation**: Fully supported using Google Play account identifiers
+- **Purchase Restoration**: Returns all purchases from store and verifies with BE using Google Play account identifiers
 
 See `core/src/androidMain/.../AndroidIAPProvider.kt` and `PurchaseManager.kt` for detailed implementation notes.
 
@@ -492,7 +631,7 @@ See `core/src/androidMain/.../AndroidIAPProvider.kt` and `PurchaseManager.kt` fo
 - **No Context Required**: `purchaseProduct()` accepts `Unit` on iOS
 - **Receipt Extraction**: Receipts are automatically extracted and included in `Purchase` model
 - **Transaction Observer**: Automatically handles transaction state updates
-- **Account Validation**: `setAccountIdentifier()` is implemented and stores identifiers, but iOS doesn't have account identifiers in purchases (single App Store account per device)
+- **Purchase Restoration**: Returns all purchases from store (no filtering)
 
 See `core/src/iosMain/.../IOSIAPProvider.kt` and `PurchaseManager.kt` for detailed implementation notes and limitations.
 
@@ -505,105 +644,344 @@ The module includes robust timeout and error handling:
 - **Error Matching**: Errors are matched to specific product IDs when possible
 - **Thread Safety**: All operations are thread-safe with proper synchronization
 
-## Account Validation
+## Architecture Overview
 
-### Multiple Google Play Accounts
+### Simplified Design
 
-When users have multiple Google Play accounts on their device, subscriptions are tied to the specific Google Play account that made the purchase. The IAP module handles account validation to ensure users can only access subscriptions from their own Google Play account.
+The IAP module follows a simplified, backend-driven architecture:
 
-#### How It Works
+1. **Core Module**: Provides purchases from store (no business logic)
+2. **Main Module**: Simple wrapper that returns all purchases (no filtering) and handles purchase verification
+3. **Subscription Module**: Handles subscription status management, credit consumption, and subscription lifecycle
 
-1. **Account Identifier Storage**: When a purchase is made, the module:
-   - Extracts the Google Play account identifier from the `Purchase` object using `accountIdentifiers.obfuscatedAccountId`
-   - Gets the current app user ID from `SessionManager.userPrincipal`
-   - Stores the mapping: `userId → accountIdentifier` in persistent storage (Preferences)
+**Key Principle**: Backend is the source of truth. All purchases are returned from store, and backend handles account matching during verification.
 
-2. **Purchase Validation**: When checking if a product is purchased (`isProductPurchased`) or restoring purchases (`restorePurchases`):
-   - Retrieves the stored account identifier for the given `userId`
-   - If account identifier is **not found**, returns `Result.success(false)` (not purchased) or empty list
-   - If account identifier is found, filters purchases to only include those matching the stored identifier
-   - Returns `Result<Boolean>` to handle potential errors during the check
+#### Module Responsibilities
 
-3. **Security**: The module uses a strict validation approach:
-   - **No fallback behavior**: If account identifier mapping is missing, access is denied
-   - This prevents cross-account access even after app reinstall
-   - Backend can rehydrate the mapping using `setAccountIdentifier()`
+**IAP Module (Core + Main):**
+- Fetch products from store
+- Purchase products from store
+- Restore purchases from store
+- **Automatically verify ALL purchases with backend** (`POST /google/verify`)
+- Return only verified purchases
 
-#### Usage Example
+**Subscription Module:**
+- Query subscription status (`GET /subscription/status`)
+- Manage subscription lifecycle (active, paused, cancelled, expired)
+- Handle credit consumption (`POST /subscription/credits/consume`)
+- Manage entitlements and benefits
+- Handle child account sharing (transparent to client)
 
-```kotlin
-// Get current user ID
-val userId = sessionManager.userPrincipal
+### Purchase Flow
 
-// Check if product is purchased (automatically filters by user's Google Play account)
-val result = iapManager.isProductPurchased(ProductId.PREMIUM_MONTHLY, userId)
-result.onSuccess { isPurchased ->
-    if (isPurchased) {
-        // Product is purchased
-    }
-}.onFailure { error ->
-    // Handle error checking purchase status
-}
+1. **Store Operations** (IAP Module):
+   - Fetch products from store
+   - Purchase product (returns purchase object)
+   - Restore purchases (returns all purchases from store)
 
-// Restore purchases (automatically filters by user's Google Play account)
-val purchases = iapManager.restorePurchases(userId)
-```
+2. **Backend Verification** (Subscription Module):
+   - Verify each purchase with backend (`POST /google/verify`)
+   - Backend handles account matching internally
+   - Backend grants subscription access and credits
 
-#### Backend Rehydration
+3. **Subscription Status** (Subscription Module):
+   - Query subscription status (`GET /subscription/status`)
+   - Backend returns subscription details (credits, entitlements)
+   - Backend automatically handles child account sharing
 
-If the account identifier mapping is lost (e.g., after app reinstall), the backend can restore it:
+### Benefits
 
-```kotlin
-// After fetching user data from backend
-val userId = sessionManager.userPrincipal
-val accountIdentifier = backendResponse.googlePlayAccountId
-
-// Rehydrate the mapping
-iapManager.setAccountIdentifier(userId, accountIdentifier)
-
-// Now purchases will work correctly
-val result = iapManager.isProductPurchased(ProductId.PREMIUM_MONTHLY, userId)
-result.onSuccess { isPurchased ->
-    if (isPurchased) {
-        // Product is purchased
-    }
-}.onFailure { error ->
-    // Handle error checking purchase status
-}
-```
-
-**Backend Integration:**
-- Store the Google Play account identifier (`obfuscatedAccountId`) on your backend when a purchase is made
-- When user logs in, include the account identifier in the user profile/response
-- Call `setAccountIdentifier()` to restore the mapping before checking purchases
-
-#### Important Notes
-
-- **Android**: Account validation is fully supported using Google Play Billing Library's account identifiers. Purchases are filtered by the stored account identifier(s) for the current user.
-- **iOS**: `setAccountIdentifier()` is implemented and stores the identifier, but iOS doesn't have account identifiers in purchases (uses a single App Store account per device). The identifier is stored for consistency and potential future use, but filtering is not applicable.
-- **Security**: If account identifier mapping is missing, `isProductPurchased()` returns `Result.success(false)` and `restorePurchases()` returns empty list (no fallback to all purchases).
-- **Persistence**: Account identifier mappings are stored in Preferences and persist across app restarts.
-- **SessionManager**: Used directly (KMP-compatible) to get the current user ID for account validation.
-
-#### User Experience
-
-When a user switches Google Play accounts:
-- Subscriptions from the previous account are automatically filtered out
-- Only subscriptions from the current account are considered
-- Users must switch back to the original account to access their previous subscriptions
-
-When a user reinstalls the app:
-- Account identifier mapping is lost locally
-- Backend must provide the mapping via `setAccountIdentifier()`
-- Until mapping is restored, purchases will return `false`/empty list
-
-This ensures that:
-- User A's subscription cannot be accessed by User B
-- Each account maintains its own subscription state
-- No cross-account subscription access occurs
-- Secure validation even after app reinstall
+- ✅ **No local account identifier management** - Works on reinstall automatically
+- ✅ **Backend is source of truth** - More reliable and secure
+- ✅ **Simpler code** - Less complexity, fewer edge cases
+- ✅ **Automatic restore** - App launch automatically restores and verifies purchases
 
 **Edge Cases:** See `IAP_EDGE_CASES.md` for detailed information about edge cases, potential issues, and how the module handles them.
+
+## Purchase Verification
+
+**The IAP module automatically verifies ALL purchases with the backend** before returning them.
+
+### Implementation
+
+**Location:** `shared/libs/iap/main/src/commonMain/kotlin/com/yral/shared/iap/verification/PurchaseVerificationService.kt`
+
+```kotlin
+internal class PurchaseVerificationService(
+    private val httpClient: HttpClient,
+    private val preferences: Preferences,
+) {
+    suspend fun verifyPurchase(
+        purchase: Purchase,
+        userId: String,
+    ): Result<Boolean> =
+        handleIAPOperation {
+            val purchaseToken = purchase.purchaseToken
+            val idToken = preferences.getString(PrefKeys.ID_TOKEN.name)
+
+            if (purchaseToken == null || idToken == null) {
+                throw IAPError.UnknownError(
+                    Exception("Missing required tokens for verification")
+                )
+            }
+
+            val response = try {
+                httpClient.post {
+                    url {
+                        host = AppConfigurations.BILLING_BASE_URL
+                        path("google/verify")
+                    }
+                    headers {
+                        append(HttpHeaders.Authorization, "Bearer $idToken")
+                    }
+                    setBody(
+                        VerifyPurchaseRequest(
+                            userId = userId,
+                            packageName = PackageNameProvider.getPackageName(),
+                            productId = purchase.productId,
+                            purchaseToken = purchaseToken,
+                        ),
+                    )
+                }
+            } catch (e: Exception) {
+                throw IAPError.NetworkError(
+                    Exception("Network error during purchase verification", e),
+                )
+            }
+
+            if (!response.status.isSuccess()) {
+                throw IAPError.VerificationFailed(
+                    purchase.productId,
+                    Exception("Backend verification failed with HTTP status: ${response.status.value}"),
+                )
+            }
+
+            true
+        }
+}
+```
+
+**Integration in IAPProviderImpl:**
+
+```kotlin
+override suspend fun purchaseProduct(
+    productId: ProductId,
+    context: Any?,
+): Result<CorePurchase> =
+    handleIAPResultOperation {
+        sessionManager.userPrincipal?.let { userId ->
+            coreProvider
+                .purchaseProduct(productId, context, userId)
+                .mapCatching { purchase ->
+                    verificationService.verifyPurchase(purchase, userId).fold(
+                        onSuccess = { purchase },
+                        onFailure = { error -> throw error },
+                    )
+                }
+        } ?: throw IAPError.UnknownError(Exception("User principal is null"))
+    }
+
+override suspend fun restorePurchases(userId: String?): Result<List<CorePurchase>> =
+    handleIAPResultOperation {
+        userId?.let {
+            coreProvider
+                .restorePurchases()
+                .mapCatching { purchases ->
+                    purchases.filter { purchase ->
+                        verificationService.verifyPurchase(purchase, userId).fold(
+                            onSuccess = { true },
+                            onFailure = { error ->
+                                Logger.w("IAPProviderImpl", error) {
+                                    "Purchase verification error for product ${purchase.productId} during restore"
+                                }
+                                false
+                            },
+                        )
+                    }
+                }
+        } ?: throw IAPError.UnknownError(Exception("User principal is null"))
+    }
+```
+
+### IAP Module Responsibilities
+
+The IAP module handles:
+- Fetch products from store
+- Purchase product (verifies with backend before returning)
+- Restore purchases (verifies all purchases with backend before returning)
+- Backend handles account matching internally during verification
+
+### Verification Flow
+
+1. **IAP Module**: Purchases from store or restores purchases
+2. **IAP Module**: Automatically verifies each purchase with backend (`POST /google/verify`)
+   - Backend validates receipt with App Store/Play Store
+   - Backend handles account matching internally
+   - Backend grants subscription access and credits (for subscription products)
+3. **IAP Module**: Returns only verified purchases
+   - For `purchaseProduct`: Returns purchase after verification (throws `IAPError.VerificationFailed` if verification fails)
+   - For `restorePurchases`: Returns only purchases that were successfully verified (filters out failed verifications)
+
+**Important:** The IAP module verifies ALL purchases (subscriptions, consumables, one-time purchases) with the backend automatically. Only verified purchases are returned.
+
+## Subscription Module
+
+**The Subscription Module handles subscription status management, credit consumption, and subscription lifecycle.**
+
+### Overview
+
+The Subscription Module is a separate feature module (`shared/features/subscription/`) that works alongside the IAP module:
+
+- **IAP Module**: Handles store operations (purchase, restore) and automatic purchase verification
+- **Subscription Module**: Handles subscription status, credits, entitlements, and subscription lifecycle
+
+### Key Responsibilities
+
+1. **Subscription Status Management**
+   - Query subscription status from backend (`GET /subscription/status`)
+   - Track subscription lifecycle (active, paused, cancelled, expired)
+   - Handle child account sharing (transparent to client)
+
+2. **Credit Management**
+   - Consume credits for premium features (`POST /subscription/credits/consume`)
+   - Track remaining credits and credit reset dates
+   - Atomic credit consumption (prevents race conditions)
+
+3. **Entitlements Management**
+   - Manage subscription benefits and entitlements
+   - Provide dynamic UI rendering based on subscription status
+
+### Module Structure
+
+```
+shared/features/subscription/
+├── data/
+│   ├── SubscriptionRemoteDataSource.kt
+│   ├── SubscriptionRepositoryImpl.kt
+│   └── models/
+│       ├── SubscriptionStatusResponse.kt
+│       └── ConsumeCreditRequest.kt
+├── domain/
+│   ├── repository/
+│   │   └── SubscriptionRepository.kt
+│   ├── model/
+│   │   ├── SubscriptionStatus.kt
+│   │   ├── Entitlement.kt
+│   │   └── CreditType.kt
+│   └── usecases/
+│       ├── GetSubscriptionStatusUseCase.kt
+│       └── ConsumeCreditUseCase.kt
+├── viewmodel/
+│   └── SubscriptionViewModel.kt
+└── di/
+    └── SubscriptionModule.kt
+```
+
+### Integration with IAP Module
+
+The Subscription Module integrates with the IAP module as follows:
+
+1. **After Purchase**: IAP module automatically verifies purchase with backend
+2. **Status Refresh**: Subscription module queries `/subscription/status` to get credits and entitlements
+3. **Credit Consumption**: Subscription module consumes credits when using premium features
+
+**Example Flow:**
+
+```kotlin
+// 1. IAP module purchases and verifies (automatic)
+val purchase = iapManager.purchaseProduct(ProductId.YRAL_PRO, context)
+
+purchase.onSuccess { purchase ->
+    // 2. Subscription module refreshes status to get credits
+    if (productId.getProductType() == ProductType.SUBS) {
+        val status = subscriptionRepository.getSubscriptionStatus(userId)
+        // Update UI with credits and entitlements
+    }
+}
+
+// 3. When using premium feature
+val result = subscriptionRepository.consumeCredit(
+    userId = userId,
+    creditType = CreditType.AI_VIDEO,
+    videoId = videoId,
+)
+```
+
+## Subscription APIs Integration
+
+For subscription management (credits, entitlements, status), use the **Subscription APIs** from the YRAL Billing Service.
+
+### Overview
+
+After a successful in-app purchase (for subscription products):
+1. **IAP module purchases from store** and **automatically verifies with backend** (`/google/verify`)
+2. **IAP module returns verified purchase**
+3. **Subscription module refreshes subscription status** (`/subscription/status`) to get credits and entitlements
+4. Consume credits when using premium features (`/subscription/credits/consume`)
+
+### Key APIs
+
+**Base URL:** `https://billing.yral.com`  
+**Authentication:** `Authorization: Bearer {yral_id_token}` (same as chat.yral.com)
+
+1. **`POST /google/verify`** - Verify purchase for ALL product types (existing, enhanced)
+   - **Called automatically by IAP Module** after store purchase/restore
+   - Backend handles account matching internally
+   - For subscription products: Backend grants credits and sets up entitlements
+   - Returns success confirmation
+
+2. **`GET /subscription/status?user_id={userId}`** - Get subscription status, credits, entitlements
+   - Called first when user opens app/subscription screen
+   - Called after purchase to get full details
+   - Automatically handles child account sharing (transparent to client)
+   - If no subscription found, client should fetch products and show purchase flow
+
+3. **`POST /subscription/credits/consume`** - Consume credits for AI video/tournament
+   - Called before AI video creation or tournament entry
+   - Atomically deducts credits (transaction-safe)
+   - Returns remaining credits
+
+### Complete Purchase Flow
+
+```kotlin
+// 1. Check subscription status first (on app launch or subscription screen)
+val subscriptionStatus = subscriptionApi.getSubscriptionStatus(userId)
+
+if (subscriptionStatus.isActive) {
+    // User has subscription (direct or shared) - show benefits
+    showSubscriptionBenefits(subscriptionStatus)
+} else {
+    // 2. No subscription - fetch products from store
+    val products = iapManager.fetchProducts(listOf(ProductId.YRAL_PRO))
+    showPurchaseFlow(products)
+    
+    // 3. User purchases via IAP module (automatically verifies with backend)
+    val purchase = iapManager.purchaseProduct(ProductId.YRAL_PRO, context)
+    
+    purchase.onSuccess { purchase ->
+        // 4. Purchase is already verified by IAP module
+        // For subscription products, refresh subscription status to get credits/entitlements
+        if (productId.getProductType() == ProductType.SUBS) {
+            val updatedStatus = subscriptionApi.getSubscriptionStatus(userId)
+            // Update UI with credits and entitlements
+            showSubscriptionBenefits(updatedStatus)
+        }
+    }
+}
+```
+
+### Important Notes
+
+- **Purchase verification is automatic**: The IAP module automatically verifies ALL purchases with backend (`/google/verify`) before returning them. Only verified purchases are returned.
+- **Restore purchases**: `restorePurchases()` verifies all purchases with backend before returning. Only successfully verified purchases are included in the result.
+- **Backend is source of truth**: Always query `/subscription/status` to get subscription state. Backend handles account matching and child account sharing automatically.
+- **Child account sharing**: Handled automatically in the backend. The `/subscription/status` API automatically checks for shared subscriptions from parent accounts. Client simply queries subscription status for any user_id (parent or child).
+- **Purchase flow**: Always check subscription status first. If no subscription, then fetch products from Play Store/App Store and show purchase flow.
+- **Token source**: YRAL ID token is obtained from app preferences (same token used for chat service) via `PrefKeys.ID_TOKEN.name`.
+
+For detailed end-to-end flow and API documentation, see [SUBSCRIPTION_END_TO_END.md](./SUBSCRIPTION_END_TO_END.md).
+
+For client implementation details and code examples, see [SUBSCRIPTION_CLIENT_IMPLEMENTATION.md](./SUBSCRIPTION_CLIENT_IMPLEMENTATION.md).
 
 ## Best Practices
 
@@ -611,10 +989,12 @@ This ensures that:
 2. **Register listeners early**: Register `IAPListener` when your screen/view model is created
 3. **Unregister listeners**: Always unregister listeners to prevent memory leaks
 4. **Handle all error cases**: Check for `PurchaseCancelled`, `PurchaseFailed`, etc.
-5. **Validate purchases server-side**: Use `purchaseToken` (Android) or `receipt` (iOS) for server validation
-6. **Always pass userId**: Use `SessionManager.userPrincipal` when calling `isProductPurchased()` and `restorePurchases()`
-7. **Backend rehydration**: Store account identifier on backend and restore using `setAccountIdentifier()` after login
-8. **Restore purchases**: Always provide a "Restore Purchases" option for users
+5. **Purchase verification is automatic**: The IAP module automatically verifies ALL purchases with backend before returning them. No manual verification needed.
+6. **Restore purchases**: `restorePurchases()` automatically verifies all purchases with backend and returns only verified purchases
+7. **Backend is source of truth**: Always query `/subscription/status` to get subscription state - don't rely on local purchase state
+8. **Restore purchases**: Always provide a "Restore Purchases" option for users (IAP module handles verification automatically)
+9. **Check subscription status first**: Before showing purchase flow, check `/subscription/status` to see if user already has subscription (direct or shared)
+10. **For subscription products: Auto-refresh status**: After successful purchase (IAP module auto-verifies), automatically call `/subscription/status` to get credits and entitlements
 
 ## Example: Complete Purchase Flow
 
@@ -651,7 +1031,7 @@ fun PremiumScreen(iapManager: IAPManager) {
         
         // Restore account identifier from backend if needed
         // (This should be done during login/authentication)
-        // iapManager.setAccountIdentifier(userId, backendAccountIdentifier)
+        // No account identifier management needed - backend handles account matching during verification
         
         iapManager.fetchProducts(
             listOf(ProductId.PREMIUM_MONTHLY, ProductId.PREMIUM_YEARLY)
@@ -745,6 +1125,11 @@ shared/libs/iap/
             └── kotlin/com/yral/shared/iap/
                 └── IAPComposeHelpers.ios.kt
 ```
+
+## Related Documentation
+
+- [IAP Edge Cases](./IAP_EDGE_CASES.md) - Edge cases and handling strategies
+- [Subscription Module](./SUBSCRIPTION_MODULE.md) - Subscription Module API reference and integration guide
 
 ## License
 
