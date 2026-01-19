@@ -9,15 +9,14 @@ import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.Product
 import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.iap.core.model.ProductType
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.TimeoutCancellationException
+import com.yral.shared.iap.core.util.handleIAPResultOperation
 
 internal class ProductFetcher(
     private val connectionManager: BillingClientConnectionManager,
 ) {
     @Suppress("CyclomaticComplexMethod")
     suspend fun fetchProducts(productIds: List<ProductId>): Result<List<Product>> =
-        try {
+        handleIAPResultOperation {
             val client = connectionManager.ensureReady()
             val productList = mutableListOf<Product>()
             val (oneTimeProductIds, subscriptionProductIds) =
@@ -51,16 +50,6 @@ internal class ProductFetcher(
                     ),
                 )
             }
-        } catch (e: TimeoutCancellationException) {
-            throw e
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: IAPError) {
-            Result.failure(e)
-        } catch (
-            @Suppress("TooGenericExceptionCaught") e: Exception,
-        ) {
-            Result.failure(IAPError.UnknownError(e))
         }
 
     suspend fun queryProductDetailsForPurchase(productId: String): ProductDetails? {

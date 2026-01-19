@@ -2,7 +2,9 @@ package com.yral.shared.iap.verification
 
 import co.touchlab.kermit.Logger
 import com.yral.shared.core.AppConfigurations
+import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.Purchase
+import com.yral.shared.iap.core.util.handleIAPOperation
 import com.yral.shared.iap.utils.PackageNameProvider
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
@@ -33,41 +35,71 @@ internal class PurchaseVerificationService(
         const val GOOGLE_VERIFY_PATH = "google/verify"
     }
 
+    @Suppress("LongMethod", "ThrowsCount")
     suspend fun verifyPurchase(
         purchase: Purchase,
         userId: String,
-    ): Boolean {
-        val purchaseToken = purchase.purchaseToken
-        val idToken = preferences.getString(PrefKeys.ID_TOKEN.name)
+    ): Result<Boolean> =
+        handleIAPOperation {
+            val purchaseToken = purchase.purchaseToken
+            val idToken = preferences.getString(PrefKeys.ID_TOKEN.name)
 
-        if (purchaseToken == null || idToken == null) {
-            if (purchaseToken == null) {
-                Logger.w(TAG) { "Purchase token is null for product ${purchase.productId}" }
-            }
-            if (idToken == null) {
-                Logger.w(TAG) { "ID token not found - cannot verify purchase" }
-            }
-            return false
-        }
-
-        val response =
-            httpClient.post {
-                url {
-                    host = AppConfigurations.BILLING_BASE_URL
-                    path(GOOGLE_VERIFY_PATH)
+            if (purchaseToken == null || idToken == null) {
+                if (purchaseToken == null) {
+                    Logger.w(TAG) { "Purchase token is null for product ${purchase.productId}" }
                 }
-                headers {
-                    append(HttpHeaders.Authorization, "Bearer $idToken")
+                if (idToken == null) {
+                    Logger.w(TAG) { "ID token not found - cannot verify purchase" }
                 }
-                setBody(
-                    VerifyPurchaseRequest(
-                        userId = userId,
-                        packageName = PackageNameProvider.getPackageName(),
-                        productId = purchase.productId,
-                        purchaseToken = purchaseToken,
+                throw IAPError.UnknownError(
+                    Exception(
+                        "Missing required tokens for verification. " +
+                            "Purchase token: ${if (purchaseToken == null) "null" else "present"}, " +
+                            "ID token: ${if (idToken == null) "null" else "present"}",
                     ),
                 )
             }
-        return response.status.isSuccess()
-    }
+
+            val response =
+                try {
+                    httpClient.post {
+                        url {
+                            host = AppConfigurations.BILLING_BASE_URL
+                            path(GOOGLE_VERIFY_PATH)
+                        }
+                        headers {
+                            append(HttpHeaders.Authorization, "Bearer $idToken")
+                        }
+                        setBody(
+                            VerifyPurchaseRequest(
+                                userId = userId,
+                                packageName = PackageNameProvider.getPackageName(),
+                                productId = purchase.productId,
+                                purchaseToken = purchaseToken,
+                            ),
+                        )
+                    }
+                } catch (
+                    @Suppress("TooGenericExceptionCaught") e: Exception,
+                ) {
+                    Logger.e(TAG, e) { "Network error during purchase verification for product ${purchase.productId}" }
+                    throw IAPError.NetworkError(
+                        Exception("Network error during purchase verification", e),
+                    )
+                }
+
+            val isSuccess = response.status.isSuccess()
+            if (!isSuccess) {
+                Logger.w(TAG) {
+                    "Purchase verification failed for product ${purchase.productId}. " +
+                        "HTTP status: ${response.status.value}"
+                }
+                throw IAPError.VerificationFailed(
+                    purchase.productId,
+                    Exception("Backend verification failed with HTTP status: ${response.status.value}"),
+                )
+            }
+
+            true
+        }
 }

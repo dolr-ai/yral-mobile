@@ -9,13 +9,14 @@ import com.android.billingclient.api.QueryPurchasesParams
 import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.PurchaseState
 import com.yral.shared.iap.core.model.SubscriptionStatus
+import com.yral.shared.iap.core.util.handleIAPResultOperation
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.resume
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -27,7 +28,7 @@ internal class PurchaseManager(
 ) {
     private val acknowledgmentScope = CoroutineScope(SupervisorJob() + appDispatchers.network)
     suspend fun restorePurchases(): Result<List<IAPPurchase>> =
-        try {
+        handleIAPResultOperation {
             val client = connectionManager.ensureReady()
             val purchases = mutableListOf<IAPPurchase>()
             val inAppResult = queryPurchases(client, BillingClient.ProductType.INAPP, purchases)
@@ -44,16 +45,6 @@ internal class PurchaseManager(
                     ),
                 )
             }
-        } catch (e: TimeoutCancellationException) {
-            throw e
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: IAPError) {
-            Result.failure(e)
-        } catch (
-            @Suppress("TooGenericExceptionCaught") e: Exception,
-        ) {
-            Result.failure(IAPError.UnknownError(e))
         }
 
     private suspend fun queryPurchases(

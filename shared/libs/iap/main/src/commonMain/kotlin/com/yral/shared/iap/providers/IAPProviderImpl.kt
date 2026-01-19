@@ -6,8 +6,8 @@ import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.Product
 import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.iap.core.model.PurchaseState
+import com.yral.shared.iap.core.util.handleIAPResultOperation
 import com.yral.shared.iap.verification.PurchaseVerificationService
-import kotlin.coroutines.cancellation.CancellationException
 import com.yral.shared.iap.core.model.Purchase as CorePurchase
 import com.yral.shared.iap.core.providers.IAPProvider as CoreIAPProvider
 
@@ -30,7 +30,7 @@ internal class IAPProviderImpl(
         productId: ProductId,
         context: Any?,
     ): Result<CorePurchase> =
-        try {
+        handleIAPResultOperation {
             sessionManager.userPrincipal?.let { userId ->
                 coreProvider
                     .purchaseProduct(
@@ -38,51 +38,40 @@ internal class IAPProviderImpl(
                         context = context,
                         obfuscatedAccountId = userId,
                     ).mapCatching { purchase ->
-                        if (verificationService.verifyPurchase(purchase, userId)) {
-                            Logger.w("IAPProviderImpl") {
-                                "Purchase verification failed for product ${purchase.productId}"
-                            }
-                            purchase
-                        } else {
-                            throw IAPError.PurchaseFailed(purchase.productId)
-                        }
+                        verificationService.verifyPurchase(purchase, userId).fold(
+                            onSuccess = { purchase },
+                            onFailure = { error -> throw error },
+                        )
                     }
-            } ?: throw IAPError.UnknownError(Exception("userId null"))
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: IAPError) {
-            Result.failure(e)
-        } catch (
-            @Suppress("TooGenericExceptionCaught")
-            e: Exception,
-        ) {
-            Result.failure(IAPError.UnknownError(e))
+            } ?: throw IAPError.UnknownError(Exception("User principal is null"))
         }
 
     override suspend fun restorePurchases(userId: String?): Result<List<CorePurchase>> =
-        try {
+        handleIAPResultOperation {
             userId?.let {
                 coreProvider
                     .restorePurchases()
                     .mapCatching { purchases ->
-                        purchases.filter { purchase -> verify(purchase, userId) }
+                        purchases.filter { purchase ->
+                            verificationService.verifyPurchase(purchase, userId).fold(
+                                onSuccess = { true },
+                                onFailure = { error ->
+                                    Logger.w("IAPProviderImpl", error) {
+                                        "Purchase verification error for product ${purchase.productId} during restore"
+                                    }
+                                    false
+                                },
+                            )
+                        }
                     }
-            } ?: throw IAPError.UnknownError(Exception("userId null"))
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: IAPError) {
-            Result.failure(e)
-        } catch (
-            @Suppress("TooGenericExceptionCaught") e: Exception,
-        ) {
-            Result.failure(IAPError.UnknownError(e))
+            } ?: throw IAPError.UnknownError(Exception("User principal is null"))
         }
 
     override suspend fun isProductPurchased(
         productId: ProductId,
         userId: String?,
     ): Result<Boolean> =
-        try {
+        handleIAPResultOperation {
             val productIdString = productId.productId
             restorePurchases(userId).map { purchases ->
                 purchases.any { purchase ->
@@ -91,27 +80,5 @@ internal class IAPProviderImpl(
                         (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
                 }
             }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: IAPError) {
-            Result.failure(e)
-        } catch (
-            @Suppress("TooGenericExceptionCaught") e: Exception,
-        ) {
-            Result.failure(IAPError.UnknownError(e))
         }
-
-    private suspend fun verify(
-        purchase: CorePurchase,
-        userId: String,
-    ): Boolean =
-        verificationService
-            .verifyPurchase(purchase, userId)
-            .also { verified ->
-                if (!verified) {
-                    Logger.w("IAPProviderImpl") {
-                        "Purchase verification failed for product ${purchase.productId} during restore"
-                    }
-                }
-            }
 }
