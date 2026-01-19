@@ -29,6 +29,7 @@ internal class IAPProviderImpl(
     override suspend fun purchaseProduct(
         productId: ProductId,
         context: Any?,
+        acknowledgePurchase: Boolean,
     ): Result<CorePurchase> =
         handleIAPResultOperation {
             sessionManager.userPrincipal?.let { userId ->
@@ -37,6 +38,7 @@ internal class IAPProviderImpl(
                         productId = productId,
                         context = context,
                         obfuscatedAccountId = userId,
+                        acknowledgePurchase = acknowledgePurchase,
                     ).mapCatching { purchase ->
                         verificationService.verifyPurchase(purchase, userId).fold(
                             onSuccess = { purchase },
@@ -46,11 +48,14 @@ internal class IAPProviderImpl(
             } ?: throw IAPError.UnknownError(Exception("User principal is null"))
         }
 
-    override suspend fun restorePurchases(userId: String?): Result<List<CorePurchase>> =
+    override suspend fun restorePurchases(
+        userId: String?,
+        acknowledgePurchase: Boolean,
+    ): Result<List<CorePurchase>> =
         handleIAPResultOperation {
             userId?.let {
                 coreProvider
-                    .restorePurchases()
+                    .restorePurchases(acknowledgePurchase = acknowledgePurchase)
                     .mapCatching { purchases ->
                         purchases.filter { purchase ->
                             verificationService.verifyPurchase(purchase, userId).fold(

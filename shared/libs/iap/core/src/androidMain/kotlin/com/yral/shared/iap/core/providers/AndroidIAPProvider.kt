@@ -32,6 +32,7 @@ internal class AndroidIAPProvider(
     appDispatchers: AppDispatchers,
 ) : IAPProvider {
     private val pendingPurchases = mutableMapOf<String, CompletableDeferred<Result<IAPPurchase>>>()
+    private val pendingPurchasesAcknowledgeFlags = mutableMapOf<String, Boolean>()
     private val pendingPurchasesLock = Mutex()
     private val callbackScope = CoroutineScope(SupervisorJob() + appDispatchers.network)
 
@@ -53,6 +54,7 @@ internal class AndroidIAPProvider(
         productId: ProductId,
         context: Any?,
         obfuscatedAccountId: String?,
+        acknowledgePurchase: Boolean,
     ): Result<IAPPurchase> {
         return try {
             val productIdString = productId.productId
@@ -93,6 +95,7 @@ internal class AndroidIAPProvider(
             val deferred = CompletableDeferred<Result<IAPPurchase>>()
             pendingPurchasesLock.withLock {
                 pendingPurchases[productIdString] = deferred
+                pendingPurchasesAcknowledgeFlags[productIdString] = acknowledgePurchase
             }
 
             val billingResult = client.launchBillingFlow(activity, flowParams)
@@ -100,6 +103,7 @@ internal class AndroidIAPProvider(
             if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
                 pendingPurchasesLock.withLock {
                     pendingPurchases.remove(productIdString)?.let {
+                        pendingPurchasesAcknowledgeFlags.remove(productIdString)
                         if (!it.isCompleted) {
                             it.complete(
                                 Result.failure(
@@ -146,7 +150,9 @@ internal class AndroidIAPProvider(
         }
     }
 
-    override suspend fun restorePurchases(): Result<List<IAPPurchase>> = purchaseManager.restorePurchases()
+    override suspend fun restorePurchases(acknowledgePurchase: Boolean): Result<List<IAPPurchase>> =
+        purchaseManager
+            .restorePurchases(acknowledgePurchase)
 
     override suspend fun isProductPurchased(productId: ProductId): Result<Boolean> =
         try {
@@ -189,20 +195,27 @@ internal class AndroidIAPProvider(
             val productId = purchase.products.firstOrNull() ?: return@forEach
             val iapPurchase = purchaseManager.convertPurchase(purchase)
             callbackScope.launch {
-                try {
-                    val client = connectionManager.ensureReady()
-                    purchaseManager.acknowledgePurchaseIfNeeded(client, purchase)
-                } catch (e: TimeoutCancellationException) {
-                    throw e
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (_: Exception) {
-                    // The acknowledgment failure is handled in acknowledgePurchaseIfNeeded callback
+                val shouldAcknowledge =
+                    pendingPurchasesLock.withLock {
+                        pendingPurchasesAcknowledgeFlags[productId] ?: true
+                    }
+                if (shouldAcknowledge) {
+                    try {
+                        val client = connectionManager.ensureReady()
+                        purchaseManager.acknowledgePurchaseIfNeeded(client, purchase)
+                    } catch (e: TimeoutCancellationException) {
+                        throw e
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (_: Exception) {
+                        // The acknowledgment failure is handled in acknowledgePurchaseIfNeeded callback
+                    }
                 }
             }
             callbackScope.launch {
                 pendingPurchasesLock.withLock {
                     pendingPurchases.remove(productId)?.let { deferred ->
+                        pendingPurchasesAcknowledgeFlags.remove(productId)
                         if (!deferred.isCompleted) {
                             deferred.complete(Result.success(iapPurchase))
                         }
@@ -219,6 +232,7 @@ internal class AndroidIAPProvider(
             callbackScope.launch {
                 pendingPurchasesLock.withLock {
                     pendingPurchases.remove(productId)?.let { deferred ->
+                        pendingPurchasesAcknowledgeFlags.remove(productId)
                         if (!deferred.isCompleted) {
                             deferred.complete(Result.failure(error))
                         }
@@ -245,6 +259,7 @@ internal class AndroidIAPProvider(
             callbackScope.launch {
                 pendingPurchasesLock.withLock {
                     pendingPurchases.remove(productId)?.let { deferred ->
+                        pendingPurchasesAcknowledgeFlags.remove(productId)
                         if (!deferred.isCompleted) {
                             deferred.complete(Result.failure(error))
                         }
@@ -263,6 +278,7 @@ internal class AndroidIAPProvider(
                     }
                 }
                 pendingPurchases.clear()
+                pendingPurchasesAcknowledgeFlags.clear()
             }
         }
     }
@@ -270,6 +286,7 @@ internal class AndroidIAPProvider(
     private suspend fun cleanupPendingPurchase(productId: String) {
         pendingPurchasesLock.withLock {
             pendingPurchases.remove(productId)?.let { deferred ->
+                pendingPurchasesAcknowledgeFlags.remove(productId)
                 if (!deferred.isCompleted) {
                     deferred.complete(
                         Result.failure(

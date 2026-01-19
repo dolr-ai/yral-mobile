@@ -44,6 +44,7 @@ internal class IOSIAPProvider : IAPProvider {
         productId: ProductId,
         context: Any?,
         obfuscatedAccountId: String?,
+        acknowledgePurchase: Boolean,
     ): Result<IAPPurchase> {
         return try {
             val productIdString = productId.productId
@@ -80,7 +81,7 @@ internal class IOSIAPProvider : IAPProvider {
     }
 
     @Suppress("ReturnCount")
-    override suspend fun restorePurchases(): Result<List<IAPPurchase>> {
+    override suspend fun restorePurchases(acknowledgePurchase: Boolean): Result<List<IAPPurchase>> {
         return try {
             val (existingContinuation, newDeferred) = purchaseManager.startRestore()
 

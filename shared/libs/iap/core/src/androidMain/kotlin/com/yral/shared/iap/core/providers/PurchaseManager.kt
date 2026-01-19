@@ -27,12 +27,24 @@ internal class PurchaseManager(
     appDispatchers: AppDispatchers,
 ) {
     private val acknowledgmentScope = CoroutineScope(SupervisorJob() + appDispatchers.network)
-    suspend fun restorePurchases(): Result<List<IAPPurchase>> =
+    suspend fun restorePurchases(acknowledgePurchase: Boolean = true): Result<List<IAPPurchase>> =
         handleIAPResultOperation {
             val client = connectionManager.ensureReady()
             val purchases = mutableListOf<IAPPurchase>()
-            val inAppResult = queryPurchases(client, BillingClient.ProductType.INAPP, purchases)
-            val subscriptionResult = queryPurchases(client, BillingClient.ProductType.SUBS, purchases)
+            val inAppResult =
+                queryPurchases(
+                    client,
+                    BillingClient.ProductType.INAPP,
+                    purchases,
+                    acknowledgePurchase,
+                )
+            val subscriptionResult =
+                queryPurchases(
+                    client,
+                    BillingClient.ProductType.SUBS,
+                    purchases,
+                    acknowledgePurchase,
+                )
 
             if (inAppResult.responseCode == BillingClient.BillingResponseCode.OK ||
                 subscriptionResult.responseCode == BillingClient.BillingResponseCode.OK
@@ -51,6 +63,7 @@ internal class PurchaseManager(
         client: BillingClient,
         productType: String,
         purchases: MutableList<IAPPurchase>,
+        acknowledgePurchase: Boolean = true,
     ): BillingResult =
         suspendCancellableCoroutine { continuation ->
             val unacknowledgedPurchases = mutableListOf<Purchase>()
@@ -65,7 +78,7 @@ internal class PurchaseManager(
                     purchaseList.forEach { purchase ->
                         purchases.add(convertPurchase(purchase, productType))
                         // Collect purchases that need acknowledgment instead of acknowledging immediately
-                        if (!purchase.isAcknowledged) {
+                        if (acknowledgePurchase && !purchase.isAcknowledged) {
                             unacknowledgedPurchases.add(purchase)
                         }
                     }
@@ -73,8 +86,8 @@ internal class PurchaseManager(
                 // Resume immediately without blocking the billing callback
                 continuation.resume(billingResult)
 
-                // After resuming, acknowledge purchases asynchronously
-                if (unacknowledgedPurchases.isNotEmpty()) {
+                // After resuming, acknowledge purchases asynchronously (only if acknowledgePurchase is true)
+                if (acknowledgePurchase && unacknowledgedPurchases.isNotEmpty()) {
                     acknowledgmentScope.launch {
                         unacknowledgedPurchases.forEach { purchase ->
                             try {

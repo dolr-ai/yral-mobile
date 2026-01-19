@@ -50,8 +50,9 @@ class IAPManager(
     suspend fun purchaseProduct(
         productId: ProductId,
         context: Any? = null,
+        acknowledgePurchase: Boolean = false,
     ): Result<Purchase> {
-        val result = provider.purchaseProduct(productId, context)
+        val result = provider.purchaseProduct(productId, context, acknowledgePurchase)
         notifyListeners {
             if (result.isSuccess) {
                 result.getOrNull()?.let { purchase ->
@@ -67,8 +68,11 @@ class IAPManager(
         return result
     }
 
-    suspend fun restorePurchases(userId: String?): Result<List<Purchase>> {
-        val result = provider.restorePurchases(userId)
+    suspend fun restorePurchases(
+        userId: String?,
+        acknowledgePurchase: Boolean = false,
+    ): Result<List<Purchase>> {
+        val result = provider.restorePurchases(userId, acknowledgePurchase)
         notifyListeners {
             if (result.isSuccess) {
                 result.getOrNull()?.let { purchases ->
