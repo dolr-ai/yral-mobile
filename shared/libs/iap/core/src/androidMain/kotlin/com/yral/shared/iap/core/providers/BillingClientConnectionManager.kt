@@ -4,6 +4,7 @@ import android.content.Context
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingResult
+import com.android.billingclient.api.PendingPurchasesParams
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.yral.shared.iap.core.IAPError
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -26,7 +27,13 @@ internal class BillingClientConnectionManager(
         BillingClient
             .newBuilder(context)
             .setListener(purchasesUpdatedListener)
-            .enableAutoServiceReconnection()
+            .enablePendingPurchases(
+                PendingPurchasesParams
+                    .newBuilder()
+                    .enablePrepaidPlans()
+                    .enableOneTimeProducts()
+                    .build(),
+            ).enableAutoServiceReconnection()
             .build()
 
     private val connectionMutex = Mutex()
