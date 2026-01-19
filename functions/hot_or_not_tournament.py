@@ -2,30 +2,58 @@
 Hot or Not Tournament - AI-powered video prediction game.
 
 Users vote "hot" or "not" on videos and win if their prediction matches the AI's verdict.
-Gemini 2.5 Flash analyzes videos during tournament creation.
+Gemini 2.0 Flash analyzes videos during tournament creation.
 """
 
-import json
-import os
-import random
-import string
+# ─────────────────────  IMPORTS WITH LOGGING  ────────────────────────
+# Added logging before each import to diagnose cold start crashes
 import sys
+print("[import] Starting imports...", file=sys.stderr)
+
+import json
+print("[import] json loaded", file=sys.stderr)
+import os
+print("[import] os loaded", file=sys.stderr)
+import random
+print("[import] random loaded", file=sys.stderr)
+import string
+print("[import] string loaded", file=sys.stderr)
 import tempfile
+print("[import] tempfile loaded", file=sys.stderr)
 import time
+print("[import] time loaded", file=sys.stderr)
 from concurrent.futures import ThreadPoolExecutor, as_completed
+print("[import] concurrent.futures loaded", file=sys.stderr)
 from datetime import datetime, timezone, timedelta
+print("[import] datetime loaded", file=sys.stderr)
 from enum import Enum
+print("[import] enum loaded", file=sys.stderr)
 from typing import Any, Dict, List, Optional, Tuple
+print("[import] typing loaded", file=sys.stderr)
 
 import firebase_admin
+print("[import] firebase_admin loaded", file=sys.stderr)
 import requests
-import google.generativeai as genai
+print("[import] requests loaded", file=sys.stderr)
+
+# New unified Google GenAI SDK (replaces deprecated google.generativeai)
+from google import genai
+print("[import] google.genai loaded", file=sys.stderr)
+
 from firebase_admin import auth, firestore
+print("[import] firebase_admin.auth, firestore loaded", file=sys.stderr)
 from firebase_functions import https_fn
+print("[import] firebase_functions loaded", file=sys.stderr)
 from flask import Request, jsonify, make_response
+print("[import] flask loaded", file=sys.stderr)
 from google.api_core.exceptions import GoogleAPICallError
+print("[import] google.api_core.exceptions loaded", file=sys.stderr)
 from google.cloud import tasks_v2
+print("[import] google.cloud.tasks_v2 loaded", file=sys.stderr)
 from google.protobuf import timestamp_pb2
+print("[import] google.protobuf loaded", file=sys.stderr)
+from mixpanel import Mixpanel
+print("[import] All imports completed successfully", file=sys.stderr)
 
 # ─────────────────────  CONSTANTS  ────────────────────────
 HOT_OR_NOT_TOURNAMENT_COLL = "hot_or_not_tournaments"
@@ -126,6 +154,47 @@ def error_response(status: int, code: str, message: str):
     payload = {"error": {"code": code, "message": message}}
     return make_response(jsonify(payload), status)
 
+
+def _track_tournament_creation_failed(
+    error_code: str,
+    error_message: str,
+    stage: str,
+    additional_data: Optional[Dict[str, Any]] = None
+) -> None:
+    """
+    Track tournament creation failure event in Mixpanel.
+
+    Args:
+        error_code: Error code (e.g., "BACKEND_ERROR", "CONFIG_ERROR")
+        error_message: Detailed error message
+        stage: Stage where failure occurred (e.g., "backend_register", "fetch_videos", "gemini_analysis")
+        additional_data: Any additional context to include
+    """
+    mixpanel_token = os.environ.get("MIXPANEL_TOKEN")
+    if not mixpanel_token:
+        print("[mixpanel] MIXPANEL_TOKEN not configured, skipping failure event", file=sys.stderr)
+        return
+
+    try:
+        mp = Mixpanel(mixpanel_token)
+        event_data = {
+            "error_code": error_code,
+            "error_message": error_message,
+            "stage": stage,
+            "tournament_type": "hot_or_not",
+            "environment": "production" if IS_PRODUCTION else "staging",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+        if additional_data:
+            event_data.update(additional_data)
+
+        # Use a system identifier for server-side events
+        mp.track("system_hot_or_not", "tournament_creation_failed", event_data)
+        print(f"[mixpanel] Tracked tournament_creation_failed: {error_code} at {stage}")
+    except Exception as e:
+        print(f"[mixpanel] Failed to track failure event: {e}", file=sys.stderr)
+
+
 def _tx_id() -> str:
     now = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
     rnd = "".join(random.choices(string.ascii_lowercase + string.digits, k=4))
@@ -187,16 +256,18 @@ def _form_video_url(video_id: str) -> str:
 
 def _analyze_video_with_gemini(video_url: str, api_key: str) -> Dict[str, Any]:
     """
-    Analyze video with Gemini 2.5 Flash to determine if it will go viral.
+    Analyze video with Gemini 2.0 Flash to determine if it will go viral.
     Downloads video, uploads to Gemini, analyzes, and cleans up.
+    Uses the new unified google.genai SDK.
     Returns: {"verdict": "hot" | "not", "confidence": float, "reason": str, "error": str | None}
     """
     temp_path = None
     video_file = None
+    client = None
 
     try:
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel(GEMINI_MODEL)
+        # Create client with API key (new SDK pattern)
+        client = genai.Client(api_key=api_key)
 
         # Step 1: Download video from Cloudflare
         video_resp = requests.get(video_url, timeout=60, stream=True)
@@ -214,8 +285,8 @@ def _analyze_video_with_gemini(video_url: str, api_key: str) -> Dict[str, Any]:
                 f.write(chunk)
             temp_path = f.name
 
-        # Step 2: Upload to Gemini
-        video_file = genai.upload_file(temp_path, mime_type="video/mp4")
+        # Step 2: Upload to Gemini (new SDK: client.files.upload)
+        video_file = client.files.upload(file=temp_path)
 
         # Wait for processing (with timeout)
         max_wait = 30  # seconds
@@ -223,7 +294,7 @@ def _analyze_video_with_gemini(video_url: str, api_key: str) -> Dict[str, Any]:
         while video_file.state.name == "PROCESSING" and waited < max_wait:
             time.sleep(2)
             waited += 2
-            video_file = genai.get_file(video_file.name)
+            video_file = client.files.get(name=video_file.name)
 
         if video_file.state.name == "FAILED":
             return {
@@ -233,13 +304,16 @@ def _analyze_video_with_gemini(video_url: str, api_key: str) -> Dict[str, Any]:
                 "error": "PROCESSING_FAILED"
             }
 
-        # Step 3: Analyze with Gemini
+        # Step 3: Analyze with Gemini (new SDK: client.models.generate_content)
         prompt = """Determine if this video is mast(hit) or bakwaas(flop).
-Think like a person living in tier 2 and tier 3 cities of India, be a bit frugal in identifying it as mast since most videos are going to be analyzed as mast.                
+Think like a person living in tier 2 and tier 3 cities of India, be a bit frugal in identifying it as mast since most videos are going to be analyzed as mast.
 Respond with ONLY a JSON object:
 {"verdict": "mast" or "bakwaas", "confidence": 0.0 to 1.0, "reason": "brief explanation"}"""
 
-        response = model.generate_content([video_file, prompt])
+        response = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=[video_file, prompt]
+        )
         response_text = response.text.strip()
 
         # Parse JSON from response
@@ -278,9 +352,9 @@ Respond with ONLY a JSON object:
                 os.unlink(temp_path)
             except Exception:
                 pass
-        if video_file:
+        if video_file and client:
             try:
-                genai.delete_file(video_file.name)
+                client.files.delete(name=video_file.name)
             except Exception:
                 pass
 
@@ -335,7 +409,7 @@ def _analyze_videos_batch(videos: List[Dict], api_key: str, max_workers: int = 5
     return results
 
 # ─────────────────────  TOURNAMENT CREATION  ────────────────────────
-@https_fn.on_request(region="us-central1", timeout_sec=540, memory=1024, secrets=["BALANCE_UPDATE_TOKEN", "GEMINI_API_KEY", "BACKEND_ADMIN_KEY"])
+@https_fn.on_request(region="us-central1", timeout_sec=1500, memory=2048, secrets=["BALANCE_UPDATE_TOKEN", "GEMINI_API_KEY", "BACKEND_ADMIN_KEY", "MIXPANEL_TOKEN"])
 def create_hot_or_not_tournament(request: Request):
     """
     Create a new Hot or Not tournament with AI-analyzed videos.
@@ -350,8 +424,10 @@ def create_hot_or_not_tournament(request: Request):
         backend_admin_key = os.environ.get("BACKEND_ADMIN_KEY")
 
         if not gemini_api_key:
+            _track_tournament_creation_failed("CONFIG_ERROR", "GEMINI_API_KEY not configured", "config_check")
             return error_response(500, "CONFIG_ERROR", "GEMINI_API_KEY not configured")
         if not backend_admin_key:
+            _track_tournament_creation_failed("CONFIG_ERROR", "BACKEND_ADMIN_KEY not configured", "config_check")
             return error_response(500, "CONFIG_ERROR", "BACKEND_ADMIN_KEY not configured")
 
         # Parse request
@@ -391,19 +467,22 @@ def create_hot_or_not_tournament(request: Request):
         # 1. Register with backend
         tournament_id, err = _register_tournament_backend(backend_admin_key, video_count)
         if err:
+            _track_tournament_creation_failed("BACKEND_ERROR", f"Failed to register tournament: {err}", "backend_register", {"video_count": video_count})
             return error_response(502, "BACKEND_ERROR", f"Failed to register tournament: {err}")
 
         # 2. Fetch videos
         videos, err = _fetch_tournament_videos(tournament_id)
         if err:
+            _track_tournament_creation_failed("BACKEND_ERROR", f"Failed to fetch videos: {err}", "fetch_videos", {"tournament_id": tournament_id})
             return error_response(502, "BACKEND_ERROR", f"Failed to fetch videos: {err}")
 
         if not videos:
+            _track_tournament_creation_failed("BACKEND_ERROR", "No videos returned from backend", "fetch_videos", {"tournament_id": tournament_id})
             return error_response(502, "BACKEND_ERROR", "No videos returned from backend")
 
         # 3. Analyze videos with Gemini (parallel)
         print(f"[gemini] Starting analysis of {len(videos)} videos...")
-        analyzed_videos = _analyze_videos_batch(videos, gemini_api_key, max_workers=10)
+        analyzed_videos = _analyze_videos_batch(videos, gemini_api_key, max_workers=5)
         print(f"[gemini] Completed analysis of {len(analyzed_videos)} videos")
 
         # 4. Calculate epoch times
@@ -485,6 +564,7 @@ def create_hot_or_not_tournament(request: Request):
 
     except Exception as e:
         print(f"[error] create_hot_or_not_tournament: {e}", file=sys.stderr)
+        _track_tournament_creation_failed("INTERNAL", str(e), "unknown", {"exception_type": type(e).__name__})
         return error_response(500, "INTERNAL", str(e))
 
 
