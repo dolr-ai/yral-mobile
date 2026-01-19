@@ -20,16 +20,12 @@ internal class ProductFetcher(
         try {
             val client = connectionManager.ensureReady()
             val productList = mutableListOf<Product>()
-            val productIdStrings = productIds.map { it.productId }
-            val (inAppProductIds, subscriptionProductIds) =
-                productIdStrings.partition { productId ->
-                    !productId.contains("sub_") &&
-                        !productId.contains("subscription") &&
-                        !productId.contains("monthly") &&
-                        !productId.contains("yearly")
-                }
-            if (inAppProductIds.isNotEmpty()) {
-                val inAppProducts = fetchInAppProducts(client, inAppProductIds)
+            val (oneTimeProductIds, subscriptionProductIds) =
+                productIds.partition { it.getProductType() == ProductType.ONE_TIME }
+            val oneTimeProductIdStrings = oneTimeProductIds.map { it.productId }
+            val subscriptionProductIdStrings = subscriptionProductIds.map { it.productId }
+            if (oneTimeProductIdStrings.isNotEmpty()) {
+                val inAppProducts = fetchInAppProducts(client, oneTimeProductIdStrings)
                 inAppProducts.fold(
                     onSuccess = {
                         productList.addAll(it)
@@ -37,8 +33,8 @@ internal class ProductFetcher(
                     onFailure = { Logger.e("ProductFetcher", it) { "Failed to fetch inApp products" } },
                 )
             }
-            if (subscriptionProductIds.isNotEmpty()) {
-                val subscriptionProducts = fetchSubscriptionProducts(client, subscriptionProductIds)
+            if (subscriptionProductIdStrings.isNotEmpty()) {
+                val subscriptionProducts = fetchSubscriptionProducts(client, subscriptionProductIdStrings)
                 subscriptionProducts.fold(
                     onSuccess = {
                         productList.addAll(it)

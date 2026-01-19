@@ -7,15 +7,14 @@ import kotlinx.serialization.Serializable
 enum class ProductId(
     val productId: String,
 ) {
-    @SerialName("premium_monthly")
-    PREMIUM_MONTHLY("premium_monthly"),
-
-    @SerialName("premium_yearly")
-    PREMIUM_YEARLY("premium_yearly"),
-
-    @SerialName("remove_ads")
-    REMOVE_ADS("remove_ads"),
+    @SerialName("yral_pro")
+    YRAL_PRO("yral_pro"),
     ;
+
+    fun getProductType(): ProductType =
+        when (this) {
+            YRAL_PRO -> ProductType.SUBS
+        }
 
     companion object {
         fun fromString(productId: String): ProductId? = entries.find { it.productId == productId }
