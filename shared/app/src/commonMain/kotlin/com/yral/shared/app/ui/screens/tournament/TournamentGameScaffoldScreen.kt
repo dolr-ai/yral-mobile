@@ -171,7 +171,6 @@ fun TournamentGameScaffoldScreen(
                 onEdgeScrollAttempt = { _ -> },
                 limitReelCount = feedState.feedDetails.size,
                 getPrefetchListener = { reel -> PrefetchVideoListenerImpl(reel) },
-                getVideoListener = { null },
                 onSwipeVote = { direction, pageIndex ->
                     // Hot or Not voting: right swipe = hot, left swipe = not
                     val videoId = feedState.feedDetails.getOrNull(pageIndex)?.videoID
