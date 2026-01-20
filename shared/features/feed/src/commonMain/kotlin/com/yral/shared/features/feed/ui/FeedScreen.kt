@@ -51,8 +51,6 @@ import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.YRALReelPlayerCardStack
 import com.yral.shared.libs.videoPlayer.cardstack.SwipeDirection
 import com.yral.shared.libs.videoPlayer.model.Reels
-import com.yral.shared.libs.videoPlayer.pool.VideoListener
-import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
 import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
 import com.yral.shared.reportVideo.domain.models.ReportSheetState
 import com.yral.shared.reportVideo.ui.ReportVideoSheet
@@ -83,8 +81,6 @@ fun FeedScreen(
     onPageChanged: (pageNo: Int, currentPage: Int) -> Unit,
     onEdgeScrollAttempt: (pageNo: Int) -> Unit,
     limitReelCount: Int,
-    getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
-    getVideoListener: (reel: Reels) -> VideoListener?,
     onSwipeVote: ((direction: SwipeDirection, pageIndex: Int) -> Unit)? = null,
 ) {
     val state by viewModel.state.collectAsState()
@@ -175,8 +171,6 @@ fun FeedScreen(
                         onEdgeScrollAttempt(page)
                     },
                     onSwipeVote = onSwipeVote,
-                    getPrefetchListener = getPrefetchListener,
-                    getVideoListener = getVideoListener,
                 ) { pageNo, scrollToNext ->
                     FeedOverlay(
                         pageNo = pageNo,
