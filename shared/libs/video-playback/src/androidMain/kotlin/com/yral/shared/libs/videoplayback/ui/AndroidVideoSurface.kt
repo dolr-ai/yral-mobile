@@ -22,6 +22,7 @@ internal class AndroidVideoSurfaceHandle(
 @Composable
 actual fun VideoSurface(
     modifier: Modifier,
+    contentScale: ContentScale,
     shutter: @Composable () -> Unit,
     onHandleReady: (VideoSurfaceHandle) -> Unit,
 ) {
@@ -31,7 +32,7 @@ actual fun VideoSurface(
     ContentFrame(
         modifier = modifier,
         player = playerState.value,
-        contentScale = ContentScale.Fit,
+        contentScale = contentScale,
         shutter = shutter,
     )
 
