@@ -750,8 +750,8 @@ class FeedViewModel(
             feedTelemetry.trackVideoImpression(
                 feedDetails = currentState.feedDetails[currentState.currentPageOfFeed],
             )
+            refreshVideoViewCount(currentState.feedDetails[currentState.currentPageOfFeed])
         }
-        refreshVideoViewCount(currentState.feedDetails[currentState.currentPageOfFeed])
     }
 
     private fun refreshVideoViewCount(detail: FeedDetails) {
