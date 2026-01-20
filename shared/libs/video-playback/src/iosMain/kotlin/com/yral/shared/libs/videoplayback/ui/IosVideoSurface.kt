@@ -11,10 +11,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.viewinterop.UIKitView
 import com.yral.shared.libs.videoplayback.VideoSurfaceHandle
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.AVFoundation.AVLayerVideoGravityResizeAspect
+import platform.AVFoundation.AVLayerVideoGravityResizeAspectFill
 import platform.AVFoundation.AVPlayer
 import platform.AVFoundation.AVPlayerItem
 import platform.AVFoundation.AVPlayerItemStatusReadyToPlay
@@ -44,12 +46,14 @@ internal class IosVideoSurfaceHandle
     ) : VideoSurfaceHandle
 
 @OptIn(ExperimentalForeignApi::class)
-private class PlayerViewContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)) {
+private class PlayerViewContainer(
+    initialContentScale: ContentScale,
+) : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)) {
     val controller: AVPlayerViewController =
         AVPlayerViewController().apply {
             showsPlaybackControls = false
             view.backgroundColor = UIColor.blackColor
-            videoGravity = AVLayerVideoGravityResizeAspect
+            videoGravity = videoGravityFor(initialContentScale)
         }
 
     init {
@@ -71,6 +75,7 @@ private class PlayerViewContainer : UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0
 @Composable
 actual fun VideoSurface(
     modifier: Modifier,
+    contentScale: ContentScale,
     shutter: @Composable () -> Unit,
     onHandleReady: (VideoSurfaceHandle) -> Unit,
 ) {
@@ -80,10 +85,14 @@ actual fun VideoSurface(
 
     Box(modifier = modifier) {
         UIKitView(
-            factory = { PlayerViewContainer() },
+            factory = { PlayerViewContainer(contentScale) },
             modifier = Modifier.matchParentSize(),
             update = { view ->
                 val container = view
+                val videoGravity = videoGravityFor(contentScale)
+                if (container.controller.videoGravity != videoGravity) {
+                    container.controller.videoGravity = videoGravity
+                }
                 if (handle == null) {
                     val current = IosVideoSurfaceHandle(container.controller, playerState)
                     handle = current
@@ -149,3 +158,9 @@ actual fun VideoSurface(
         }
     }
 }
+
+private fun videoGravityFor(contentScale: ContentScale): String? =
+    when (contentScale) {
+        ContentScale.Crop -> AVLayerVideoGravityResizeAspectFill
+        else -> AVLayerVideoGravityResizeAspect
+    }
