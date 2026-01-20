@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.AnnotatedString
@@ -415,7 +416,14 @@ private fun PhoneSignupSection(
                 onPhoneNumberChange = onPhoneNumberChange,
                 selectedCountry = selectedCountry,
                 isError = phoneValidationError != null,
-                modifier = Modifier.weight(1f),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .onFocusChanged { state ->
+                            if (state.isFocused) {
+                                authTelemetry.onSignupJourneySelected(SocialProvider.PHONE)
+                            }
+                        },
             )
         }
         val buttonState =
