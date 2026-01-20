@@ -16,6 +16,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import com.yral.shared.libs.videoplayback.MediaDescriptor
 import com.yral.shared.libs.videoplayback.PlaybackCoordinator
 import com.yral.shared.libs.videoplayback.VideoSurfaceHandle
@@ -153,6 +154,7 @@ fun VideoSurfaceSlot(
     index: Int,
     coordinator: PlaybackCoordinator,
     modifier: Modifier = Modifier,
+    contentScale: ContentScale = ContentScale.Fit,
     shutter: @Composable () -> Unit = {},
     overlay: @Composable () -> Unit = {},
 ) {
@@ -161,6 +163,7 @@ fun VideoSurfaceSlot(
 
         VideoSurface(
             modifier = Modifier.fillMaxSize(),
+            contentScale = contentScale,
             shutter = shutter,
             onHandleReady = { handle -> surfaceHandle = handle },
         )
