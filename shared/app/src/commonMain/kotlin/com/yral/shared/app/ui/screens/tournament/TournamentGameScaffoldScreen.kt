@@ -16,7 +16,6 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.yral.shared.app.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.shared.features.feed.ui.FeedScreen
 import com.yral.shared.features.feed.viewmodel.FeedContext
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
@@ -170,7 +169,6 @@ fun TournamentGameScaffoldScreen(
                 },
                 onEdgeScrollAttempt = { _ -> },
                 limitReelCount = feedState.feedDetails.size,
-                getPrefetchListener = { reel -> PrefetchVideoListenerImpl(reel) },
                 onSwipeVote = { direction, pageIndex ->
                     // Hot or Not voting: right swipe = hot, left swipe = not
                     val videoId = feedState.feedDetails.getOrNull(pageIndex)?.videoID
