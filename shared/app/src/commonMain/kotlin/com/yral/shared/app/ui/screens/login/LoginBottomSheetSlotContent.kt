@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import co.touchlab.kermit.Logger
 import com.yral.shared.analytics.events.SignupNudgeDismissAction
 import com.yral.shared.app.nav.RootComponent
 import com.yral.shared.features.auth.analytics.AuthTelemetry
@@ -20,14 +21,24 @@ fun LoginBottomSheetSlotContent(
     rootComponent: RootComponent,
     authTelemetry: AuthTelemetry = koinInject(),
 ) {
-    val loginInfo = rootComponent.currentLoginInfo ?: return
-    val screenType = loginInfo.screenType as? LoginScreenType.BottomSheet ?: return
+    val loginInfo = rootComponent.currentLoginInfo
+    LaunchedEffect(loginInfo) {
+        if (loginInfo == null) {
+            Logger.d("LoginBottomSheetSlotContent") { "LoginInfo not available for slot" }
+            rootComponent.getLoginCoordinator().dismissLoginBottomSheet()
+            return@LaunchedEffect
+        }
+    }
+
+    // Early return if LoginInfo is not available
+    val validLoginInfo = loginInfo ?: return
+    val screenType = validLoginInfo.screenType as? LoginScreenType.BottomSheet ?: return
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val state by rootComponent.loginViewModel.state.collectAsState()
     LaunchedEffect(state) {
         if (state.isLoginComplete()) {
-            loginInfo.onSuccess?.invoke()
+            validLoginInfo.onSuccess?.invoke()
             rootComponent.clearLoginState()
             rootComponent.getLoginCoordinator().dismissLoginBottomSheet()
         }
@@ -35,7 +46,7 @@ fun LoginBottomSheetSlotContent(
 
     val loginCoordinator = rootComponent.getLoginCoordinator()
     LoginBottomSheet(
-        pageName = loginInfo.pageName,
+        pageName = validLoginInfo.pageName,
         tncLink = rootComponent.loginViewModel.getTncLink(),
         initialBalanceReward = rootComponent.loginViewModel.getInitialBalanceReward(),
         bottomSheetState = bottomSheetState,
@@ -51,6 +62,6 @@ fun LoginBottomSheetSlotContent(
             }
         },
         bottomSheetType = screenType.bottomSheetType,
-        mode = loginInfo.mode,
+        mode = validLoginInfo.mode,
     )
 }
