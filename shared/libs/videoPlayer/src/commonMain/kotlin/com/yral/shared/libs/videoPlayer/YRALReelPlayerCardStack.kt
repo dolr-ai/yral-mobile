@@ -3,8 +3,8 @@ package com.yral.shared.libs.videoPlayer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.yral.shared.libs.videoPlayer.cardstack.ReelSwipeableCardStack
 import com.yral.shared.libs.videoPlayer.cardstack.SwipeDirection
-import com.yral.shared.libs.videoPlayer.cardstack.SwipeableCardStack
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
 
@@ -47,7 +47,7 @@ fun YRALReelPlayerCardStack(
     onSwipeVote: ((direction: SwipeDirection, pageIndex: Int) -> Unit)? = null,
     overlayContent: @Composable (pageNo: Int, scrollToNext: () -> Unit) -> Unit,
 ) {
-    SwipeableCardStack(
+    ReelSwipeableCardStack(
         modifier = modifier.fillMaxSize(),
         reels = reels,
         maxReelsInPager = maxReelsInPager,
