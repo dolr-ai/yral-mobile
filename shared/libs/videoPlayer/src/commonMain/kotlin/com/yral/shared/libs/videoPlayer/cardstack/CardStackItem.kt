@@ -18,12 +18,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import coil3.compose.AsyncImage
-import com.yral.shared.libs.videoPlayer.YRALVideoPlayerWithControl
-import com.yral.shared.libs.videoPlayer.model.PlayerConfig
-import com.yral.shared.libs.videoPlayer.model.PlayerControls
 import com.yral.shared.libs.videoPlayer.model.PlayerData
-import com.yral.shared.libs.videoPlayer.pool.PlayerPool
-import com.yral.shared.libs.videoPlayer.pool.VideoListener
+import com.yral.shared.libs.videoplayback.PlaybackCoordinator
+import com.yral.shared.libs.videoplayback.ui.VideoSurfaceSlot
 import org.jetbrains.compose.resources.painterResource
 import yral_mobile.shared.libs.videoplayer.generated.resources.Res
 import yral_mobile.shared.libs.videoplayer.generated.resources.bakwaas
@@ -35,13 +32,12 @@ import yral_mobile.shared.libs.videoplayer.generated.resources.mast
  *
  * @param stackIndex Position in the stack (0 = front card, 1+ = stacked behind).
  * @param playerData Data for the video player.
- * @param playerConfig Configuration for the video player.
- * @param playerControls Controls for the video player (pause, record time, etc.).
- * @param playerPool Pool of video players for efficient resource management.
- * @param videoListener Listener for video events.
+ * @param coordinator Playback coordinator for video surfaces.
+ * @param mediaIndex Index of this media item in the coordinator feed.
  * @param swipeState State holder for swipe gestures (only used by front card).
  * @param screenWidth Width of the screen for calculating transforms.
  * @param screenHeight Height of the screen for calculating transforms.
+ * @param showVideoPlayer Whether to render the video surface for this card.
  * @param modifier Modifier for the card.
  * @param overlayContent Content to overlay on the video (UI controls, etc.).
  */
@@ -50,14 +46,11 @@ import yral_mobile.shared.libs.videoplayer.generated.resources.mast
 internal fun CardStackItem(
     stackIndex: Int,
     playerData: PlayerData,
-    playerConfig: PlayerConfig,
-    playerControls: PlayerControls,
-    playerPool: PlayerPool,
-    videoListener: VideoListener?,
+    coordinator: PlaybackCoordinator,
+    mediaIndex: Int,
     swipeState: SwipeableCardState,
     screenWidth: Float,
     screenHeight: Float,
-    showVideoPlayer: Boolean,
     modifier: Modifier = Modifier,
     overlayContent: @Composable () -> Unit,
 ) {
@@ -166,28 +159,21 @@ internal fun CardStackItem(
                 },
         contentAlignment = Alignment.TopStart,
     ) {
-        // Thumbnail for all cards (shows next videos in stack)
         key(playerData.videoId) {
-            AsyncImage(
-                model = playerData.thumbnailUrl,
-                contentDescription = null,
+            VideoSurfaceSlot(
+                index = mediaIndex,
+                coordinator = coordinator,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
+                shutter = {
+                    AsyncImage(
+                        model = playerData.thumbnailUrl,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                    )
+                },
             )
-        }
-
-        // Video player: show based on activeVideoId from parent
-        if (showVideoPlayer) {
-            key(playerData.videoId) {
-                YRALVideoPlayerWithControl(
-                    modifier = Modifier.fillMaxSize(),
-                    playerData = playerData,
-                    playerConfig = playerConfig,
-                    playerControls = playerControls,
-                    playerPool = playerPool,
-                    videoListener = videoListener,
-                )
-            }
         }
 
         // Swipe feedback overlay for front card only

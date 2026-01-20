@@ -6,15 +6,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -22,19 +17,14 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.yral.shared.libs.videoPlayer.model.PREFETCH_NEXT_N_VIDEOS
-import com.yral.shared.libs.videoPlayer.model.PlayerConfig
-import com.yral.shared.libs.videoPlayer.model.PlayerControls
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.model.toPlayerData
-import com.yral.shared.libs.videoPlayer.pool.VideoListener
-import com.yral.shared.libs.videoPlayer.pool.rememberPlayerPool
-import com.yral.shared.libs.videoPlayer.util.PrefetchVideo
-import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
 import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
-import com.yral.shared.libs.videoPlayer.util.evictPrefetchedVideo
-import com.yral.shared.libs.videoPlayer.util.nextN
-import com.yral.shared.libs.videoPlayer.util.rememberPrefetchPlayerWithLifecycle
+import com.yral.shared.libs.videoplayback.CoordinatorDeps
+import com.yral.shared.libs.videoplayback.MediaDescriptor
+import com.yral.shared.libs.videoplayback.PlaybackEventReporter
+import com.yral.shared.libs.videoplayback.ui.VideoFeedSync
+import com.yral.shared.libs.videoplayback.ui.rememberPlaybackCoordinatorWithLifecycle
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
@@ -50,10 +40,9 @@ import kotlinx.coroutines.launch
  * @param initialPage Initial index to start at.
  * @param onPageLoaded Callback when a new page becomes visible.
  * @param recordTime Callback to record time spent on video (currentTime, totalTime).
- * @param playerConfig Configuration for the video player.
+ * @param didVideoEnd Callback when the current video ends.
  * @param onEdgeScrollAttempt Callback when user tries to swipe past the end.
  * @param getPrefetchListener Factory for prefetch listeners.
- * @param getVideoListener Factory for video listeners.
  * @param overlayContent Content to overlay on each video card.
  * @param onSwipeVote Callback when a swipe vote is registered (direction, pageIndex before swipe).
  */
@@ -66,15 +55,23 @@ internal fun SwipeableCardStack(
     initialPage: Int,
     onPageLoaded: (currentPage: Int) -> Unit,
     recordTime: (Int, Int) -> Unit,
-    playerConfig: PlayerConfig,
+    didVideoEnd: () -> Unit,
     onEdgeScrollAttempt: (pageNo: Int, atStart: Boolean, direction: ReelScrollDirection) -> Unit,
-    getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
-    getVideoListener: (reel: Reels) -> VideoListener?,
     overlayContent: @Composable (pageNo: Int, scrollToNext: () -> Unit) -> Unit,
     onSwipeVote: ((direction: SwipeDirection, pageIndex: Int) -> Unit)? = null,
 ) {
     val pageCount = minOf(reels.size, maxReelsInPager)
     if (pageCount == 0) return
+    val visibleReels = remember(reels, pageCount) { reels.take(pageCount) }
+    val mediaItems =
+        remember(visibleReels) {
+            visibleReels.map { reel ->
+                MediaDescriptor(
+                    id = reel.videoId,
+                    uri = reel.videoUrl,
+                )
+            }
+        }
 
     // Swipe state for the card stack
     val swipeState =
@@ -88,124 +85,35 @@ internal fun SwipeableCardStack(
         swipeState.updateItemCount(pageCount)
     }
 
-    // Create player pool for efficient resource management
-    val playerPool = rememberPlayerPool(maxPoolSize = 3)
-    DisposableEffect(playerPool) {
-        onDispose { playerPool.dispose() }
-    }
+    val reporter =
+        rememberPlaybackEventReporter(
+            didVideoEnd = didVideoEnd,
+            recordTime = recordTime,
+        )
+    val coordinator =
+        rememberPlaybackCoordinatorWithLifecycle(
+            deps = CoordinatorDeps(reporter = reporter),
+        )
+    VideoFeedSync(items = mediaItems, coordinator = coordinator)
 
-    // Prefetch state management (same as YRALReelPlayer)
-    val prefetchQueue = remember { mutableStateSetOf<Reels>() }
-    val prefetchedReels = remember { mutableStateSetOf<String>() }
-    val prefetchedReelUrls = remember { mutableStateMapOf<String, String>() }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            prefetchedReelUrls.values.forEach { url ->
-                evictPrefetchedVideo(url)
-            }
-            prefetchedReelUrls.clear()
-            prefetchedReels.clear()
-            prefetchQueue.clear()
-        }
-    }
-
-    // Add new videos to prefetch queue on index change
-    LaunchedEffect(reels, swipeState.currentIndex) {
+    LaunchedEffect(swipeState, mediaItems.size, coordinator) {
         snapshotFlow { swipeState.currentIndex }
             .distinctUntilChanged()
-            .collect { currentPage ->
-                val newReels =
-                    reels
-                        .nextN(currentPage, PREFETCH_NEXT_N_VIDEOS)
-                        .filter { prefetch -> prefetch.videoId !in prefetchedReels }
-                if (newReels.isNotEmpty()) {
-                    prefetchQueue.addAll(newReels)
+            .collect { index ->
+                if (index in 0 until mediaItems.size) {
+                    coordinator.setActiveIndex(index)
                 }
             }
     }
 
-    // Process prefetch queue
-    val prefetch by remember { derivedStateOf { prefetchQueue.firstOrNull() } }
-    val prefetchVideoListener =
-        remember(prefetch) {
-            prefetch?.let { reel -> getPrefetchListener(reel) }
-        }
-
-    prefetch?.let { reel ->
-        PrefetchVideos(
-            url = reel.videoUrl,
-            listener = prefetchVideoListener,
-            onUrlReady = {
-                prefetchQueue.removeAll { it.videoId == reel.videoId }
-                prefetchedReels.add(reel.videoId)
-                prefetchedReelUrls[reel.videoId] = reel.videoUrl
-            },
-        )
-    }
-
-    // Clean up prefetched videos outside window
-    LaunchedEffect(reels, swipeState.currentIndex, prefetchedReelUrls) {
-        snapshotFlow {
-            val currentPage = swipeState.currentIndex
-            val keepIds = mutableSetOf<String>()
-            reels.getOrNull(currentPage)?.videoId?.let(keepIds::add)
-            reels.getOrNull(currentPage - 1)?.videoId?.let(keepIds::add)
-            reels
-                .nextN(currentPage, PREFETCH_NEXT_N_VIDEOS)
-                .forEach { keepIds.add(it.videoId) }
-            keepIds.toSet() to prefetchedReelUrls.toMap()
-        }.distinctUntilChanged().collect { (keepIds, prefetchedMap) ->
-            prefetchedMap.forEach { (videoId, url) ->
-                if (videoId !in keepIds) {
-                    evictPrefetchedVideo(url)
-                    prefetchedReels.remove(videoId)
-                    prefetchedReelUrls.remove(videoId)
-                }
-            }
-        }
-    }
-
-    // Report initial page
-    LaunchedEffect(Unit) {
-        onPageLoaded(swipeState.currentIndex)
-    }
-
-    // Page change to start/stop playback
-    var lastPage by remember { mutableIntStateOf(-1) }
-    LaunchedEffect(swipeState.currentIndex) {
+    LaunchedEffect(swipeState, visibleReels) {
         snapshotFlow { swipeState.currentIndex }
             .distinctUntilChanged()
             .collect { page ->
-                if (lastPage != page) {
-                    // Stop old video
-                    if (reels.size > lastPage && lastPage >= 0) {
-                        playerPool.onPlayBackStopped(
-                            playerData = reels[lastPage].toPlayerData(),
-                        )
-                    }
-                    // Start new video
-                    val newVideo = reels.getOrNull(page)
-                    if (newVideo != null) {
-                        playerPool.onPlayBackStarted(
-                            playerData = newVideo.toPlayerData(),
-                        )
-                    }
-                    lastPage = page
-                }
+                onPageLoaded(page)
             }
     }
 
-    // Pause state for current video
-    var isPause by remember { mutableStateOf(false) }
-
-    // Track playback positions by videoId (for resuming after transition)
-    val videoPositions = remember { mutableStateMapOf<String, Int>() }
-
-    // Reset pause state when page changes (ensures new video plays)
-    LaunchedEffect(swipeState.currentIndex) {
-        isPause = false
-    }
     // Trigger scroll to next (for overlay button)
     var autoScrollToNext by remember { mutableStateOf(false) }
 
@@ -213,6 +121,24 @@ internal fun SwipeableCardStack(
         val screenWidth = constraints.maxWidth.toFloat()
         val screenHeight = constraints.maxHeight.toFloat()
         val coroutineScope = rememberCoroutineScope()
+
+        @Suppress("MagicNumber")
+        val scrollHintThreshold = 0.15f
+
+        LaunchedEffect(swipeState, mediaItems.size, screenWidth, screenHeight, coordinator) {
+            snapshotFlow {
+                val progress = swipeState.calculateSwipeProgress(screenWidth, screenHeight)
+                val shouldHint =
+                    swipeState.swipeDirection != SwipeDirection.NONE && progress >= scrollHintThreshold
+                swipeState.currentIndex to shouldHint
+            }.distinctUntilChanged()
+                .collect { (index, shouldHint) ->
+                    val predicted = index + 1
+                    if (shouldHint && predicted in 0 until mediaItems.size) {
+                        coordinator.setScrollHint(predictedIndex = predicted, velocity = null)
+                    }
+                }
+        }
 
         // Only render 2 cards: front card + next card (next is full screen, hides others)
         val visibleCardCount = minOf(2, pageCount - swipeState.currentIndex)
@@ -229,9 +155,6 @@ internal fun SwipeableCardStack(
                             // Video is already paused via isTouching/isDragging during drag
                         },
                         onSwipeComplete = { direction ->
-                            // Animation finished - ensure video plays and notify
-                            isPause = false
-                            onPageLoaded(swipeState.currentIndex)
                             // Trigger vote callback for left/right swipes
                             if (direction == SwipeDirection.LEFT || direction == SwipeDirection.RIGHT) {
                                 // currentIndex has already advanced, so previous card was at currentIndex - 1
@@ -257,41 +180,20 @@ internal fun SwipeableCardStack(
             // Render cards from back to front
             for (stackOffset in (visibleCardCount - 1) downTo 0) {
                 val reelIndex = swipeState.currentIndex + stackOffset
-                if (reelIndex >= reels.size) continue
+                if (reelIndex >= visibleReels.size) continue
 
-                val reel = reels[reelIndex]
-                val isFrontCard = stackOffset == 0
-
-                // Show video player only on front card
-                val showVideoPlayer = isFrontCard
-
-                // Get stored position for this video (for resuming after transition)
-                val storedPosition = videoPositions[reel.videoId]
+                val reel = visibleReels[reelIndex]
 
                 // Key by videoId ensures Compose doesn't mix up cards during transitions
                 key(reel.videoId) {
                     CardStackItem(
                         stackIndex = stackOffset,
-                        playerData = reel.toPlayerData(reels, reelIndex),
-                        playerConfig = playerConfig,
-                        playerControls =
-                            PlayerControls(
-                                isPause = if (showVideoPlayer) isPause else true,
-                                onPauseToggle = { isPause = !isPause },
-                                recordTime = { currentTime, totalTime ->
-                                    // Store position for this video
-                                    videoPositions[reel.videoId] = currentTime
-                                    // Also call the original callback
-                                    recordTime(currentTime, totalTime)
-                                },
-                                initialSeekPosition = storedPosition,
-                            ),
-                        playerPool = playerPool,
-                        videoListener = getVideoListener(reel),
+                        playerData = reel.toPlayerData(visibleReels, reelIndex),
+                        coordinator = coordinator,
+                        mediaIndex = reelIndex,
                         swipeState = swipeState,
                         screenWidth = screenWidth,
                         screenHeight = screenHeight,
-                        showVideoPlayer = showVideoPlayer,
                         modifier = Modifier.fillMaxSize(),
                         overlayContent = {
                             // Always render overlay content so it's pre-loaded for next card
@@ -316,8 +218,6 @@ internal fun SwipeableCardStack(
                             screenWidth = screenWidth,
                             screenHeight = screenHeight,
                             onComplete = {
-                                isPause = false
-                                onPageLoaded(swipeState.currentIndex)
                                 onSwipeVote?.invoke(SwipeDirection.LEFT, votedCardIndex)
                             },
                         )
@@ -333,8 +233,6 @@ internal fun SwipeableCardStack(
                             screenWidth = screenWidth,
                             screenHeight = screenHeight,
                             onComplete = {
-                                isPause = false
-                                onPageLoaded(swipeState.currentIndex)
                                 onSwipeVote?.invoke(SwipeDirection.RIGHT, votedCardIndex)
                             },
                         )
@@ -353,29 +251,117 @@ internal fun SwipeableCardStack(
 
     // Handle auto scroll to next (triggered by overlay)
     LaunchedEffect(autoScrollToNext) {
-        if (autoScrollToNext && !swipeState.isAtEnd()) {
-            swipeState.advanceToNext()
-            onPageLoaded(swipeState.currentIndex)
-            autoScrollToNext = false
-        } else {
+        if (autoScrollToNext) {
+            if (!swipeState.isAtEnd()) {
+                swipeState.advanceToNext()
+            }
             autoScrollToNext = false
         }
     }
 }
 
 @Composable
-private fun PrefetchVideos(
-    url: String?,
-    listener: PrefetchVideoListener?,
-    onUrlReady: (url: String) -> Unit,
-) {
-    val prefetchPlayer = rememberPrefetchPlayerWithLifecycle()
-    url?.let {
-        PrefetchVideo(
-            player = prefetchPlayer,
-            url = url,
-            listener = listener,
-            onUrlReady = onUrlReady,
-        )
+private fun rememberPlaybackEventReporter(
+    didVideoEnd: () -> Unit,
+    recordTime: (Int, Int) -> Unit,
+): PlaybackEventReporter =
+    remember(didVideoEnd, recordTime) {
+        object : PlaybackEventReporter {
+            override fun playbackEnded(
+                id: String,
+                index: Int,
+            ) {
+                didVideoEnd()
+            }
+
+            override fun playbackProgress(
+                id: String,
+                index: Int,
+                positionMs: Long,
+                durationMs: Long,
+            ) {
+                if (positionMs >= 0 && durationMs > 0) {
+                    recordTime(positionMs.toInt(), durationMs.toInt())
+                }
+            }
+
+            override fun feedItemImpression(
+                id: String,
+                index: Int,
+            ) = Unit
+
+            override fun playStartRequest(
+                id: String,
+                index: Int,
+                reason: String,
+            ) = Unit
+
+            override fun firstFrameRendered(
+                id: String,
+                index: Int,
+            ) = Unit
+
+            override fun timeToFirstFrame(
+                id: String,
+                index: Int,
+                ms: Long,
+            ) = Unit
+
+            override fun rebufferStart(
+                id: String,
+                index: Int,
+                reason: String,
+            ) = Unit
+
+            override fun rebufferEnd(
+                id: String,
+                index: Int,
+                reason: String,
+            ) = Unit
+
+            override fun rebufferTotal(
+                id: String,
+                index: Int,
+                ms: Long,
+            ) = Unit
+
+            override fun playbackError(
+                id: String,
+                index: Int,
+                category: String,
+                code: Any,
+                message: String?,
+            ) = Unit
+
+            override fun preloadScheduled(
+                id: String,
+                index: Int,
+                distance: Int,
+                mode: String,
+            ) = Unit
+
+            override fun preloadCompleted(
+                id: String,
+                index: Int,
+                bytes: Long,
+                ms: Long,
+                fromCache: Boolean,
+            ) = Unit
+
+            override fun preloadCanceled(
+                id: String,
+                index: Int,
+                reason: String,
+            ) = Unit
+
+            override fun cacheHit(
+                id: String,
+                bytes: Long,
+            ) = Unit
+
+            override fun cacheMiss(
+                id: String,
+                bytes: Long,
+            ) = Unit
+        }
     }
-}
