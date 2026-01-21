@@ -10,6 +10,7 @@ import com.android.billingclient.api.PurchasesUpdatedListener
 import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.Product
 import com.yral.shared.iap.core.model.ProductId
+import com.yral.shared.iap.core.model.ProductType
 import com.yral.shared.iap.core.model.PurchaseState
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import kotlinx.coroutines.CancellationException
@@ -49,7 +50,7 @@ internal class AndroidIAPProvider(
         productFetcher
             .fetchProducts(productIds)
 
-    @Suppress("ReturnCount", "LongMethod")
+    @Suppress("ReturnCount", "LongMethod", "CyclomaticComplexMethod")
     override suspend fun purchaseProduct(
         productId: ProductId,
         context: Any?,
@@ -75,21 +76,44 @@ internal class AndroidIAPProvider(
                         ?: return Result.failure(IAPError.ProductNotFound(productIdString))
                 }
             val client = connectionManager.ensureReady()
+            val productDetailsParamsBuilder =
+                BillingFlowParams.ProductDetailsParams
+                    .newBuilder()
+                    .setProductDetails(productDetails)
+
+            // For subscriptions, the offer token is required
+            when {
+                productId.getProductType() == ProductType.SUBS -> {
+                    val subscriptionOffers = productDetails.subscriptionOfferDetails
+                    val offer =
+                        subscriptionOffers?.firstOrNull { !it.offerId.isNullOrEmpty() } // Promotional offer
+                            ?: subscriptionOffers?.firstOrNull { it.offerId.isNullOrEmpty() } // Base plan fallback
+                            ?: return Result.failure(
+                                IAPError.PurchaseFailed(
+                                    productIdString,
+                                    Exception(
+                                        "Subscription product '$productIdString' has no available offers. " +
+                                            "Please ensure the product is properly configured in Google Play Console " +
+                                            "and that subscription offers are available.",
+                                    ),
+                                ),
+                            )
+                    productDetailsParamsBuilder.setOfferToken(offer.offerToken)
+                }
+                productId.getProductType() == ProductType.ONE_TIME -> {
+                    val oneTimeOffers = productDetails.oneTimePurchaseOfferDetailsList
+                    val offer =
+                        oneTimeOffers?.firstOrNull { !it.offerId.isNullOrEmpty() } // Promotional offer
+                            ?: oneTimeOffers?.firstOrNull { it.offerId.isNullOrEmpty() } // Base plan fallback
+                    offer?.offerToken?.let { offerToken -> productDetailsParamsBuilder.setOfferToken(offerToken) }
+                }
+            }
+
             val flowParams =
                 BillingFlowParams
                     .newBuilder()
-                    .setProductDetailsParamsList(
-                        listOf(
-                            BillingFlowParams.ProductDetailsParams
-                                .newBuilder()
-                                .setProductDetails(productDetails)
-                                .apply {
-                                    productDetails.subscriptionOfferDetails?.firstOrNull()?.let { offer ->
-                                        setOfferToken(offer.offerToken)
-                                    }
-                                }.build(),
-                        ),
-                    ).apply { obfuscatedAccountId?.let { setObfuscatedAccountId(it) } }
+                    .setProductDetailsParamsList(listOf(productDetailsParamsBuilder.build()))
+                    .apply { obfuscatedAccountId?.let { setObfuscatedAccountId(it) } }
                     .build()
 
             val deferred = CompletableDeferred<Result<IAPPurchase>>()
