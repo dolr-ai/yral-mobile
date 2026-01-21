@@ -19,6 +19,8 @@ import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.YralAuthException
 import com.yral.shared.features.auth.YralFBAuthException
 import com.yral.shared.features.root.analytics.RootTelemetry
+import com.yral.shared.iap.IAPManager
+import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.preferences.PrefKeys
@@ -61,6 +63,7 @@ class RootViewModel(
     private val flagManager: FeatureFlagManager,
     private val preferences: Preferences,
     private val utmAttributionStore: UtmAttributionStore,
+    private val iapManager: IAPManager,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
@@ -188,6 +191,8 @@ class RootViewModel(
             if (!isSessionPrincipalSame) {
                 resolveNavigationTarget()
                 initializeFirebase()
+                // Not used as of now we will get details from canister in profileDetailsV6
+                // restorePurchases()
             }
         } ?: authClient.initialize()
     }
@@ -216,6 +221,24 @@ class RootViewModel(
                     crashlyticsManager.recordException(e, ExceptionType.AUTH)
                 }
             }
+    }
+
+    @Suppress("UnusedPrivateMember")
+    private fun restorePurchases() {
+        coroutineScope.launch {
+            val isSocialSignIn =
+                sessionManager.readLatestSessionPropertyWithDefault(
+                    selector = { it.isSocialSignIn },
+                    defaultValue = false,
+                )
+            if (!isSocialSignIn) return@launch
+            iapManager
+                .isProductPurchased(ProductId.YRAL_PRO)
+                .fold(
+                    onSuccess = { isPurchased -> Logger.d("SubscriptionX") { "isPurchased: $isPurchased" } },
+                    onFailure = { Logger.e("SubscriptionX", it) { "Failed to restore" } },
+                )
+        }
     }
 
     private suspend fun resolveNavigationTarget() {
