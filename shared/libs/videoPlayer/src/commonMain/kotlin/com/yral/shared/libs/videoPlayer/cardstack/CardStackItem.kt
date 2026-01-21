@@ -33,6 +33,7 @@ import yral_mobile.shared.libs.videoplayer.generated.resources.mast
  * @param modifier Modifier for the card.
  * @param overlayContent Content to overlay on the video (UI controls, etc.).
  */
+@Suppress("LongMethod")
 @Composable
 internal fun ReelCardContent(
     playerData: PlayerData,

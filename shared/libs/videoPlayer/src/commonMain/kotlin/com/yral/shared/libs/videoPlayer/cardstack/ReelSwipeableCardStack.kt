@@ -30,7 +30,7 @@ import kotlinx.coroutines.launch
 /**
  * Reel-specific card stack that wires video playback into the generic stack.
  */
-@Suppress("LongMethod", "CyclomaticComplexMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod", "MagicNumber")
 @Composable
 internal fun ReelSwipeableCardStack(
     modifier: Modifier = Modifier,
@@ -208,8 +208,6 @@ internal fun ReelSwipeableCardStack(
                 }
             }
         }
-
-
 
         SwipeButtons(
             onFlopClick = {
