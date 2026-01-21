@@ -11,6 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.media3.common.Player
 import androidx.media3.ui.compose.ContentFrame
+import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
+import androidx.media3.ui.compose.SURFACE_TYPE_TEXTURE_VIEW
 import com.yral.shared.libs.videoplayback.VideoSurfaceHandle
 import java.util.UUID
 
@@ -23,15 +25,22 @@ internal class AndroidVideoSurfaceHandle(
 actual fun VideoSurface(
     modifier: Modifier,
     contentScale: ContentScale,
+    surfaceType: VideoSurfaceType,
     shutter: @Composable () -> Unit,
     onHandleReady: (VideoSurfaceHandle) -> Unit,
 ) {
     val playerState = remember { mutableStateOf<Player?>(null) }
     val handle = remember { AndroidVideoSurfaceHandle(playerState) }
+    val surfaceTypeValue =
+        when (surfaceType) {
+            VideoSurfaceType.SurfaceView -> SURFACE_TYPE_SURFACE_VIEW
+            VideoSurfaceType.TextureView -> SURFACE_TYPE_TEXTURE_VIEW
+        }
 
     ContentFrame(
         modifier = modifier,
         player = playerState.value,
+        surfaceType = surfaceTypeValue,
         contentScale = contentScale,
         shutter = shutter,
     )

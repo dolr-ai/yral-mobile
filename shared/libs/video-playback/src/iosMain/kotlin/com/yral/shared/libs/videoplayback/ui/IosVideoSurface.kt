@@ -76,6 +76,7 @@ private class PlayerViewContainer(
 actual fun VideoSurface(
     modifier: Modifier,
     contentScale: ContentScale,
+    surfaceType: VideoSurfaceType,
     shutter: @Composable () -> Unit,
     onHandleReady: (VideoSurfaceHandle) -> Unit,
 ) {

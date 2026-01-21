@@ -149,12 +149,14 @@ fun predictedIndexFromOffset(
         else -> null
     }
 
+@Suppress("UnusedParameter")
 @Composable
 fun VideoSurfaceSlot(
     index: Int,
     coordinator: PlaybackCoordinator,
     modifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Fit,
+    surfaceType: VideoSurfaceType = VideoSurfaceType.SurfaceView,
     shutter: @Composable () -> Unit = {},
     overlay: @Composable () -> Unit = {},
 ) {
