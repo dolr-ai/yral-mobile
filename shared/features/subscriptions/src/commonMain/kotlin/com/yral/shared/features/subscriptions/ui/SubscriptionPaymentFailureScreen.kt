@@ -22,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.shared.libs.designsystem.component.YralButtonType
@@ -32,20 +31,18 @@ import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.subscriptions.generated.resources.Res
-import yral_mobile.shared.features.subscriptions.generated.resources.create_ai_video
-import yral_mobile.shared.features.subscriptions.generated.resources.explore_feed
-import yral_mobile.shared.features.subscriptions.generated.resources.payment_successful_title
-import yral_mobile.shared.features.subscriptions.generated.resources.subscription_success_background
-import yral_mobile.shared.features.subscriptions.generated.resources.subscription_success_body
-import yral_mobile.shared.libs.designsystem.generated.resources.ic_success
+import yral_mobile.shared.features.subscriptions.generated.resources.payment_failed_title
+import yral_mobile.shared.features.subscriptions.generated.resources.subscription_failure_background
+import yral_mobile.shared.features.subscriptions.generated.resources.subscription_failure_body
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_error
+import yral_mobile.shared.libs.designsystem.generated.resources.try_again
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Composable
-fun SubscriptionPaymentSuccessScreen(
+fun SubscriptionPaymentFailureScreen(
     modifier: Modifier = Modifier,
     onClose: () -> Unit = {},
-    onCreateVideo: () -> Unit = {},
-    onExploreFeed: () -> Unit = {},
+    onTryAgain: () -> Unit = {},
 ) {
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -57,7 +54,7 @@ fun SubscriptionPaymentSuccessScreen(
                     .fillMaxSize()
                     .background(Color.Black)
                     .paint(
-                        painter = painterResource(Res.drawable.subscription_success_background),
+                        painter = painterResource(Res.drawable.subscription_failure_background),
                         contentScale = ContentScale.Crop,
                     ).padding(vertical = 24.dp),
         ) {
@@ -72,16 +69,13 @@ fun SubscriptionPaymentSuccessScreen(
                 )
             }
 
-            SubscriptionSuccessContent(onCreateVideo = onCreateVideo, onExploreFeed = onExploreFeed)
+            SubscriptionFailureContent(onTryAgain = onTryAgain)
         }
     }
 }
 
 @Composable
-private fun SubscriptionSuccessContent(
-    onCreateVideo: () -> Unit,
-    onExploreFeed: () -> Unit,
-) {
+private fun SubscriptionFailureContent(onTryAgain: () -> Unit) {
     Column(
         modifier =
             Modifier
@@ -92,35 +86,28 @@ private fun SubscriptionSuccessContent(
     ) {
         AnimatedBounceIcon(
             modifier = Modifier.offset(y = (-8).dp),
-            imageRes = DesignRes.drawable.ic_success,
+            imageRes = DesignRes.drawable.ic_error,
         )
         Spacer(modifier = Modifier.height(32.dp))
         Text(
-            text = stringResource(Res.string.payment_successful_title),
+            text = stringResource(Res.string.payment_failed_title),
             style = LocalAppTopography.current.lgBold,
             color = YralColors.NeutralTextPrimary,
             textAlign = TextAlign.Center,
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = stringResource(Res.string.subscription_success_body),
+            text = stringResource(Res.string.subscription_failure_body),
             style = LocalAppTopography.current.baseRegular,
             color = YralColors.NeutralTextSecondary,
             textAlign = TextAlign.Center,
         )
         Spacer(modifier = Modifier.height(36.dp))
         YralGradientButton(
-            text = stringResource(Res.string.create_ai_video),
+            text = stringResource(DesignRes.string.try_again),
             modifier = Modifier.fillMaxWidth(),
             buttonType = YralButtonType.Pink,
-            onClick = onCreateVideo,
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        YralGradientButton(
-            text = stringResource(Res.string.explore_feed),
-            modifier = Modifier.fillMaxWidth(),
-            buttonType = YralButtonType.White,
-            onClick = onExploreFeed,
+            onClick = onTryAgain,
         )
     }
 }
