@@ -12,4 +12,26 @@
     <string name="subscription_nudge_benefit_rewards">Get paid for engaged view</string>
     <string name="subscription_nudge_cta_subscribe">Subscribe for ₹49</string>
     <string name="subscription_nudge_cta_dismiss">Dismiss</string>
+    <string name="subscription_active_title">Subscription</string>
+    <string name="subscription_active_welcome">Welcome to Yral Pro!</string>
+    <string name="subscription_active_subtitle">You’re part of an exclusive club on YRAL.</string>
+    <string name="subscription_active_status_title">Active Subscription</string>
+    <string name="subscription_active_valid_prefix">Valid till</string>
+    <string name="subscription_active_credits_label">Credits Received</string>
+    <string name="subscription_active_credits">%1$d</string>
+    <string name="subscription_active_tagline">One subscription. Unlimited creation.</string>
+    <string name="subscription_active_benefit_ai">40 credited to create AI videos</string>
+    <string name="subscription_active_benefit_chat">Unlimited chat with influencers</string>
+    <string name="subscription_active_benefit_global">Tournament entry with credits</string>
+    <string name="subscription_active_benefit_rewards">Get paid for engaged view on your videos</string>
+    <string name="subscription_active_cta">Explore Home</string>
+    <string name="subscription_active_terms">Terms &amp; Conditions  |  Privacy Policy</string>
+    <string name="subscription_expired_title">Your Yral Pro has ended!</string>
+    <string name="subscription_expired_subtitle">Enjoyed Pro? Reactivate and unlock all perks again.</string>
+    <string name="subscription_expired_card_title">Expired on</string>
+    <string name="subscription_expired_card_button">Reactivate Yral Pro</string>
+    <string name="subscription_expired_old_price">₹499</string>
+    <string name="subscription_expired_new_price">₹49/ mo</string>
+    <string name="subscription_expired_benefits_title">What you get with Yral Pro?</string>
+    <string name="subscription_expired_cta">Renew Subscription</string>
 </resources>
