@@ -63,4 +63,7 @@ object CardStackConstants {
 
     /** Shadow elevation decay factor per card in stack */
     const val SHADOW_ELEVATION_DECAY = 0.2f
+
+    /** Fraction of visual progress at which to start playing the next video (0.35 = 35%) */
+    const val EARLY_PLAYBACK_THRESHOLD = 0.35f
 }

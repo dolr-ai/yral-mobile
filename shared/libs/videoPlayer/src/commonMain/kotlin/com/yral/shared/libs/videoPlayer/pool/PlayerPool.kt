@@ -32,6 +32,22 @@ class PlayerPool(
         videoListener: VideoListener?,
     ): PlatformPlayer =
         mutex.withLock {
+            // FIRST: Check if we already have a player for this URL (active or recently released)
+            // This handles the transition from "next card" to "front card" without restart
+            val existingPlayer =
+                pool.find {
+                    it.currentUrl == playerData.url
+                }
+            if (existingPlayer != null) {
+                // Just update the listener and mark in use, don't reset the player
+                existingPlayer.isInUse = true
+                existingPlayer.externalListener = videoListener
+                // Mark thumbnail hidden since we're reusing an existing player
+                // This prevents thumbnail flash on composable recreation during card transition
+                markThumbnailHidden(playerData.url)
+                return@withLock existingPlayer.platformPlayer
+            }
+
             // Find available player or create new one
             val availablePlayer = pool.find { !it.isInUse }
 
@@ -75,6 +91,53 @@ class PlayerPool(
                 cleanup(pooledPlayer)
             }
         }
+
+    /**
+     * Mark a player as available for reuse without full cleanup.
+     * Non-suspend version for use in DisposableEffect.onDispose
+     */
+    fun markPlayerAvailable(player: PlatformPlayer) {
+        pool.find { it.platformPlayer == player }?.let { pooledPlayer ->
+            pooledPlayer.isInUse = false
+        }
+    }
+
+    /**
+     * Check if there's an active player for this URL that is currently playing.
+     * Used to determine if thumbnail should be shown during composable recreation.
+     */
+    fun isPlayerActiveForUrl(url: String): Boolean {
+        return pool.any { it.currentUrl == url && it.platformPlayer.isPlaying() }
+    }
+
+    // Track URLs that have had their thumbnails hidden (video became ready)
+    // This persists across composable recreations
+    private val thumbnailHiddenUrls = mutableSetOf<String>()
+
+    /**
+     * Mark that a URL's thumbnail has been hidden (video is ready).
+     * Once hidden, we never show the thumbnail again for this URL.
+     */
+    fun markThumbnailHidden(url: String) {
+        thumbnailHiddenUrls.add(url)
+    }
+
+    /**
+     * Check if the thumbnail should be shown for this URL.
+     * Returns false if the thumbnail was already hidden or player is active.
+     */
+    fun shouldShowThumbnail(url: String): Boolean {
+        if (url in thumbnailHiddenUrls) return false
+        if (isPlayerActiveForUrl(url)) return false
+        return true
+    }
+
+    /**
+     * Clear thumbnail state for a URL (e.g., when video is no longer in view).
+     */
+    fun clearThumbnailState(url: String) {
+        thumbnailHiddenUrls.remove(url)
+    }
 
     private fun cleanup(pooledPlayer: PooledPlayer) {
         pooledPlayer.internalListener?.let { listener ->

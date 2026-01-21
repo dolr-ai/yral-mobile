@@ -37,4 +37,5 @@ expect class PlatformPlayer {
     fun removeListener(listener: PlatformPlayerListener)
 
     fun currentPosition(): Long
+    fun isPlaying(): Boolean
 }

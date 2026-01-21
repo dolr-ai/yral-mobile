@@ -2,6 +2,7 @@ package com.yral.shared.libs.videoPlayer.model
 
 data class PlayerControls(
     val isPause: Boolean, // Flag indicating if the video is paused
+    val isMuted: Boolean = false, // Flag indicating if the audio is muted (for preview mode)
     val onPauseToggle: (() -> Unit), // Callback for toggling pause/resume
     val recordTime: (Int, Int) -> Unit,
     val initialSeekPosition: Int? = null, // Position to seek to when player is ready (for resuming)

@@ -8,6 +8,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.MediaSource
+import com.yral.shared.libs.videoPlayer.util.VideoSurfaceManager
 
 /**
  * Simplified Android PlatformPlayer wrapping ExoPlayer
@@ -28,6 +29,8 @@ actual class PlatformPlayer(
     actual fun release() {
         listenerMap.values.forEach { exoPlayer.removeListener(it) }
         listenerMap.clear()
+        // Release the managed TextureView for this player
+        VideoSurfaceManager.releasePlayer(exoPlayer)
         exoPlayer.release()
     }
 
@@ -68,6 +71,8 @@ actual class PlatformPlayer(
     }
 
     actual fun currentPosition(): Long = exoPlayer.currentPosition
+
+    actual fun isPlaying(): Boolean = exoPlayer.isPlaying
 
     actual fun addListener(listener: PlatformPlayerListener) {
         val delegate =

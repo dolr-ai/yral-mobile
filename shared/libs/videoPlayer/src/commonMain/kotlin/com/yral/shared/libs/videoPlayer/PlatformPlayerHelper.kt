@@ -34,10 +34,15 @@ fun rememberPooledPlatformPlayer(
         }
     }
 
-    // Pause player when composable is disposed (e.g., card swiped away)
-    DisposableEffect(playerData.url) {
+    // Mark player as available when composable is disposed
+    // Don't pause here - if the same URL is requested immediately (composable recreation),
+    // the player should continue playing. The pool will stop/reset the player when a
+    // different URL is requested.
+    DisposableEffect(playerData.url, playerPool) {
         onDispose {
-            platformPlayer?.pause()
+            platformPlayer?.let { player ->
+                playerPool.markPlayerAvailable(player)
+            }
         }
     }
 

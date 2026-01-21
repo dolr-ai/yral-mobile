@@ -157,6 +157,8 @@ actual class PlatformPlayer {
         return cmTimeToMs(currentTime) ?: 0L
     }
 
+    actual fun isPlaying(): Boolean = player?.timeControlStatus == AVPlayerTimeControlStatusPlaying
+
     actual fun addListener(listener: PlatformPlayerListener) {
         listeners.add(listener)
         if (listeners.size == 1) {

@@ -53,7 +53,9 @@ fun CMPPlayer(
     BindPlayerState(platformPlayer, playerParams)
 
     var isBuffering by remember { mutableStateOf(false) }
-    var showThumbnail by remember { mutableStateOf(true) }
+    // Use pool-level tracking for thumbnail state - persists across composable recreations
+    // Once a video has shown content, we never show its thumbnail again
+    var showThumbnail by remember { mutableStateOf(playerPool.shouldShowThumbnail(playerData.url)) }
     val latestParams = rememberUpdatedState(playerParams)
     val latestVideoListener = rememberUpdatedState(videoListener)
 
@@ -126,6 +128,8 @@ fun CMPPlayer(
                                 isBuffering = false
                                 if (showThumbnail) {
                                     showThumbnail = false
+                                    // Mark in pool so thumbnail won't show on composable recreation
+                                    playerPool.markThumbnailHidden(playerData.url)
                                 }
                             }
 
@@ -210,9 +214,11 @@ internal fun BindPlayerState(
         if (platformPlayer == null) return@LaunchedEffect
 
         val shouldPlay = !playerParams.isPause
-        if (shouldPlay) {
+        val isCurrentlyPlaying = platformPlayer.isPlaying()
+        // Only call play/pause if state needs to change to avoid interrupting playback
+        if (shouldPlay && !isCurrentlyPlaying) {
             platformPlayer.play()
-        } else {
+        } else if (!shouldPlay && isCurrentlyPlaying) {
             platformPlayer.pause()
         }
 

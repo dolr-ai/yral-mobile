@@ -58,7 +58,8 @@ internal fun YRALVideoPlayerWithControl(
     var isSliding by remember { mutableStateOf(false) } // Flag indicating if the seek bar is being slid
     // Initialize with stored position for resuming, will be cleared after seek
     var sliderTime: Int? by remember { mutableStateOf(playerControls.initialSeekPosition) }
-    var isMute by remember { mutableStateOf(false) } // Flag indicating if the audio is muted
+    // User-controlled mute state (separate from preview mute)
+    var userMute by remember { mutableStateOf(false) }
     var selectedSpeed by remember { mutableStateOf(PlayerSpeed.X1) } // Selected playback speed
     var showSpeedSelection by remember { mutableStateOf(false) } // Selected playback speed
     var isScreenLocked by remember { mutableStateOf(false) }
@@ -67,9 +68,9 @@ internal fun YRALVideoPlayerWithControl(
     var isFullScreen by remember { mutableStateOf(false) }
     var showControls by remember { mutableStateOf(true) } // State for showing/hiding controls
 
-    playerConfig.isMute?.let {
-        isMute = it
-    }
+    // Effective mute state: combines preview mute, config mute, and user mute
+    // This is calculated synchronously to avoid frame delays
+    val isMute = playerControls.isMuted || (playerConfig.isMute == true) || userMute
 
     LaunchedEffect(isBuffering) {
         playerConfig.bufferCallback?.invoke(isBuffering)
@@ -147,8 +148,8 @@ internal fun YRALVideoPlayerWithControl(
                     PlayerInnerControls(
                         isMute = isMute,
                         onMuteToggle = {
-                            playerConfig.muteCallback?.invoke(isMute.not())
-                            isMute = isMute.not()
+                            playerConfig.muteCallback?.invoke(!userMute)
+                            userMute = !userMute
                         }, // Toggle mute/unMute
                         showControls = showControls,
                         onSpeedSelectionToggle = { showSpeedSelection = showSpeedSelection.not() },

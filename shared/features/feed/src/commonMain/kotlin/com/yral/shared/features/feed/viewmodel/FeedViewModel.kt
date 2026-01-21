@@ -104,11 +104,7 @@ class FeedViewModel(
     private val _state =
         MutableStateFlow(
             FeedState(
-                isCardLayoutEnabled =
-                    when (feedContext) {
-                        is FeedContext.Tournament -> feedContext.isHotOrNot
-                        is FeedContext.Default -> flagManager.isEnabled(FeedFeatureFlags.CardLayout.Enabled)
-                    },
+                isCardLayoutEnabled = true,
             ),
         )
     val state: StateFlow<FeedState> = _state.asStateFlow()
