@@ -47,6 +47,7 @@ import yral_mobile.shared.features.subscriptions.generated.resources.subscriptio
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_terms
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_title
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_back
+import yral_mobile.shared.features.subscriptions.generated.resources.subscription_background
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_ai
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_chat
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_global
@@ -80,7 +81,7 @@ fun SubscriptionExpiredScreen(
                     .fillMaxSize()
                     .background(Color.Black)
                     .paint(
-                        painter = painterResource(Res.drawable.subscription_success_background),
+                        painter = painterResource(Res.drawable.subscription_background),
                         contentScale = ContentScale.Crop,
                     ),
         ) {

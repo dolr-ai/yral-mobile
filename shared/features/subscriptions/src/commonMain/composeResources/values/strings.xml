@@ -34,4 +34,13 @@
     <string name="subscription_expired_new_price">₹49/ mo</string>
     <string name="subscription_expired_benefits_title">What you get with Yral Pro?</string>
     <string name="subscription_expired_cta">Renew Subscription</string>
+    <string name="subscription_inactive_title">Subscription</string>
+    <string name="subscription_inactive_go_pro">Go Pro</string>
+    <string name="subscription_inactive_headline">Create Without Limits.</string>
+    <string name="subscription_inactive_subtitle">One subscription. Unlimited creation.</string>
+    <string name="subscription_inactive_offer_title">Limited Time Offer</string>
+    <string name="subscription_inactive_plan">Pro Subscription</string>
+    <string name="subscription_inactive_old_price">₹499</string>
+    <string name="subscription_inactive_new_price">₹49/ mo</string>
+    <string name="subscription_inactive_cta">Subscribe Now</string>
 </resources>
