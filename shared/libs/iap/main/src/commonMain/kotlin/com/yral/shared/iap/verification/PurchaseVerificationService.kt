@@ -9,14 +9,18 @@ import com.yral.shared.iap.utils.PackageNameProvider
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.headers
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
 import io.ktor.http.isSuccess
 import io.ktor.http.path
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 internal expect fun getVerifierEndPoint(): String
 
@@ -28,8 +32,16 @@ internal data class VerifyPurchaseRequest(
     @SerialName("purchase_token") val purchaseToken: String,
 )
 
+@Serializable
+internal data class ErrorResponse(
+    @SerialName("success") val success: Boolean? = null,
+    @SerialName("msg") val msg: String? = null,
+    @SerialName("error") val error: String? = null,
+)
+
 internal class PurchaseVerificationService(
     private val httpClient: HttpClient,
+    private val json: Json,
     private val preferences: Preferences,
 ) {
     companion object {
@@ -62,44 +74,44 @@ internal class PurchaseVerificationService(
                 )
             }
 
-            val response =
-                try {
-                    httpClient.post {
-                        url {
-                            host = AppConfigurations.BILLING_BASE_URL
-                            path(getVerifierEndPoint())
-                        }
-                        headers {
-                            append(HttpHeaders.Authorization, "Bearer $idToken")
-                        }
-                        setBody(
-                            VerifyPurchaseRequest(
-                                userId = userId,
-                                packageName = PackageNameProvider.getPackageName(),
-                                productId = productId,
-                                purchaseToken = purchaseToken,
-                            ),
-                        )
+            val response: HttpResponse =
+                httpClient.post {
+                    expectSuccess = false
+                    url {
+                        host = AppConfigurations.BILLING_BASE_URL
+                        path(getVerifierEndPoint())
                     }
-                } catch (
-                    @Suppress("TooGenericExceptionCaught") e: Exception,
-                ) {
-                    Logger.e(TAG, e) { "Network error during purchase verification for product ${purchase.productId}" }
-                    throw IAPError.NetworkError(
-                        Exception("Network error during purchase verification", e),
+                    headers {
+                        append(HttpHeaders.Authorization, "Bearer $idToken")
+                    }
+                    setBody(
+                        VerifyPurchaseRequest(
+                            userId = userId,
+                            packageName = PackageNameProvider.getPackageName(),
+                            productId = productId,
+                            purchaseToken = purchaseToken,
+                        ),
                     )
                 }
 
-            val isSuccess = response.status.isSuccess()
-            if (!isSuccess) {
-                Logger.w(TAG) {
-                    "Purchase verification failed for product $productId. " +
-                        "HTTP status: ${response.status.value}"
-                }
-                throw IAPError.VerificationFailed(
-                    productId,
-                    Exception("Backend verification failed with HTTP status: ${response.status.value}"),
-                )
+            if (!response.status.isSuccess()) {
+                val errorMessage =
+                    try {
+                        val errorBody = response.bodyAsText()
+                        val errorResponse = json.decodeFromString<ErrorResponse>(errorBody)
+                        errorResponse.error
+                    } catch (
+                        @Suppress("TooGenericExceptionCaught")
+                        e: Exception,
+                    ) {
+                        Logger.e(TAG, e) {
+                            "Failed to parse error response for product $productId (status: ${response.status.value})"
+                        }
+                        "Backend verification failed with HTTP status: ${response.status.value}"
+                    }
+
+                Logger.w(TAG) { "Verification failed for $productId: $errorMessage" }
+                throw IAPError.VerificationFailed(productId, Exception(errorMessage))
             }
 
             true

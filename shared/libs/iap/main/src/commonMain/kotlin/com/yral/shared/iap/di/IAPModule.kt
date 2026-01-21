@@ -13,6 +13,7 @@ val iapModule =
         single<PurchaseVerificationService> {
             PurchaseVerificationService(
                 httpClient = get<HttpClient>(),
+                json = get(),
                 preferences = get(),
             )
         }
