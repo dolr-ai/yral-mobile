@@ -220,9 +220,8 @@ class SwipeableCardState(
             }
         }
 
-        // Advance to next card
-        advanceToNext()
         onComplete()
+        advanceToNext()
         isAnimating = false
     }
 

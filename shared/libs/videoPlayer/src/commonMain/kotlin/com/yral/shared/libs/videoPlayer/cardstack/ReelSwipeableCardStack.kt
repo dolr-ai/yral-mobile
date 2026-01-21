@@ -15,6 +15,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.model.toPlayerData
 import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
@@ -66,10 +67,17 @@ internal fun ReelSwipeableCardStack(
         swipeState.updateItemCount(pageCount)
     }
 
+    var activeFrameReadyIndex by remember { mutableStateOf<Int?>(null) }
+
     val reporter =
         rememberPlaybackEventReporter(
             didVideoEnd = didVideoEnd,
             recordTime = recordTime,
+            onFirstFrameRendered = { index ->
+                if (index >= 0 && index == swipeState.currentIndex) {
+                    activeFrameReadyIndex = index
+                }
+            },
         )
     val coordinator =
         rememberPlaybackCoordinatorWithLifecycle(
@@ -81,6 +89,7 @@ internal fun ReelSwipeableCardStack(
         snapshotFlow { swipeState.currentIndex }
             .distinctUntilChanged()
             .collect { index ->
+                activeFrameReadyIndex = null
                 if (index in 0 until mediaItems.size) {
                     coordinator.setActiveIndex(index)
                 }
@@ -101,6 +110,7 @@ internal fun ReelSwipeableCardStack(
         val screenWidth = constraints.maxWidth.toFloat()
         val screenHeight = constraints.maxHeight.toFloat()
         val coroutineScope = rememberCoroutineScope()
+        val isTransitioning = swipeState.currentIndex != swipeState.settledIndex
 
         @Suppress("MagicNumber")
         val scrollHintThreshold = 0.15f
@@ -159,6 +169,9 @@ internal fun ReelSwipeableCardStack(
                 isFrontCard = isFrontCard,
                 swipeDirection = swipeDirection,
                 swipeProgress = swipeProgress,
+                suppressShutter = reelIndex == activeFrameReadyIndex,
+                showPlaceholderOverlay = reelIndex == swipeState.currentIndex && activeFrameReadyIndex != reelIndex,
+                showSwipeOverlay = isFrontCard && !isTransitioning,
                 modifier = Modifier.fillMaxSize(),
                 overlayContent = {
                     overlayContent(reelIndex) {
@@ -167,6 +180,36 @@ internal fun ReelSwipeableCardStack(
                 },
             )
         }
+        if (swipeState.currentIndex != swipeState.settledIndex) {
+            val overlayIndex = swipeState.settledIndex
+            val overlayReel = visibleReels.getOrNull(overlayIndex)
+            if (overlayReel != null) {
+                SwipeableCardStackItem(
+                    stackIndex = 0,
+                    state = swipeState,
+                    screenWidth = screenWidth,
+                    screenHeight = screenHeight,
+                    applyFrontTransform = true,
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    ReelCardContent(
+                        playerData = overlayReel.toPlayerData(visibleReels, overlayIndex),
+                        coordinator = coordinator,
+                        mediaIndex = overlayIndex,
+                        isFrontCard = true,
+                        swipeDirection = swipeState.swipeDirection,
+                        swipeProgress = swipeState.calculateSwipeProgress(screenWidth, screenHeight),
+                        suppressShutter = true,
+                        showPlaceholderOverlay = true,
+                        showSwipeOverlay = true,
+                        modifier = Modifier.fillMaxSize(),
+                        overlayContent = { overlayContent(overlayIndex) {} },
+                    )
+                }
+            }
+        }
+
+
 
         SwipeButtons(
             onFlopClick = {
@@ -210,6 +253,7 @@ internal fun ReelSwipeableCardStack(
                 Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
+                    .zIndex(10f)
                     .padding(bottom = 50.dp),
         )
     }
@@ -228,8 +272,9 @@ internal fun ReelSwipeableCardStack(
 private fun rememberPlaybackEventReporter(
     didVideoEnd: () -> Unit,
     recordTime: (Int, Int) -> Unit,
+    onFirstFrameRendered: (Int) -> Unit,
 ): PlaybackEventReporter =
-    remember(didVideoEnd, recordTime) {
+    remember(didVideoEnd, recordTime, onFirstFrameRendered) {
         object : PlaybackEventReporter {
             override fun playbackEnded(
                 id: String,
@@ -263,7 +308,9 @@ private fun rememberPlaybackEventReporter(
             override fun firstFrameRendered(
                 id: String,
                 index: Int,
-            ) = Unit
+            ) {
+                onFirstFrameRendered(index)
+            }
 
             override fun timeToFirstFrame(
                 id: String,
