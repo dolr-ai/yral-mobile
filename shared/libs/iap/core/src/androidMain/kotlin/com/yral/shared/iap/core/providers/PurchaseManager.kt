@@ -7,6 +7,7 @@ import com.android.billingclient.api.BillingResult
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.QueryPurchasesParams
 import com.yral.shared.iap.core.IAPError
+import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.iap.core.model.PurchaseState
 import com.yral.shared.iap.core.model.SubscriptionStatus
 import com.yral.shared.iap.core.util.handleIAPResultOperation
@@ -123,7 +124,7 @@ internal class PurchaseManager(
             }
 
         return IAPPurchase(
-            productId = purchase.products.firstOrNull() ?: "",
+            productId = ProductId.fromString(purchase.products.firstOrNull() ?: ""),
             purchaseToken = purchase.purchaseToken,
             purchaseTime = purchase.purchaseTime,
             state =

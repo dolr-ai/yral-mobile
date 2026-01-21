@@ -52,11 +52,13 @@ internal class ProductFetcher(
             }
         }
 
-    suspend fun queryProductDetailsForPurchase(productId: String): ProductDetails? {
+    suspend fun queryProductDetailsForPurchase(productId: ProductId): ProductDetails? {
         val client = connectionManager.ensureReady()
-        val inAppProduct = queryProductDetailsByType(client, productId, BillingClient.ProductType.INAPP)
-        if (inAppProduct != null) return inAppProduct
-        return queryProductDetailsByType(client, productId, BillingClient.ProductType.SUBS)
+        return if (productId.getProductType() == ProductType.SUBS) {
+            queryProductDetailsByType(client, productId.productId, BillingClient.ProductType.SUBS)
+        } else {
+            queryProductDetailsByType(client, productId.productId, BillingClient.ProductType.INAPP)
+        }
     }
 
     private suspend fun queryProductDetailsByType(

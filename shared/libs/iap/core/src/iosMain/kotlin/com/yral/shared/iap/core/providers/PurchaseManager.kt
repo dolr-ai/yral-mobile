@@ -1,6 +1,7 @@
 package com.yral.shared.iap.core.providers
 
 import com.yral.shared.iap.core.IAPError
+import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.iap.core.model.PurchaseState
 import com.yral.shared.iap.core.model.SubscriptionStatus
 import com.yral.shared.iap.core.util.withLock
@@ -221,7 +222,7 @@ internal class PurchaseManager(
                 ?.inWholeMilliseconds ?: 0L
 
         return IAPPurchase(
-            productId = productId,
+            productId = ProductId.fromString(productId),
             purchaseToken = transactionId,
             purchaseTime = purchaseTime,
             state = state,

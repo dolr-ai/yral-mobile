@@ -71,7 +71,7 @@ internal class AndroidIAPProvider(
                         ),
                     )
                 } else {
-                    productFetcher.queryProductDetailsForPurchase(productIdString)
+                    productFetcher.queryProductDetailsForPurchase(productId)
                         ?: return Result.failure(IAPError.ProductNotFound(productIdString))
                 }
             val client = connectionManager.ensureReady()
@@ -156,10 +156,9 @@ internal class AndroidIAPProvider(
 
     override suspend fun isProductPurchased(productId: ProductId): Result<Boolean> =
         try {
-            val productIdString = productId.productId
             restorePurchases().map { purchases ->
                 purchases.any { purchase ->
-                    purchase.productId == productIdString &&
+                    purchase.productId == productId &&
                         purchase.state == PurchaseState.PURCHASED &&
                         (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
                 }

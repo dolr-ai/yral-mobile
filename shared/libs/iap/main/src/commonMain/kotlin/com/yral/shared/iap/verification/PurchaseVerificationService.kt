@@ -41,6 +41,7 @@ internal class PurchaseVerificationService(
         userId: String,
     ): Result<Boolean> =
         handleIAPOperation {
+            val productId = purchase.productId?.productId ?: return@handleIAPOperation false
             val purchaseToken = purchase.purchaseToken
             val idToken = preferences.getString(PrefKeys.ID_TOKEN.name)
 
@@ -74,7 +75,7 @@ internal class PurchaseVerificationService(
                             VerifyPurchaseRequest(
                                 userId = userId,
                                 packageName = PackageNameProvider.getPackageName(),
-                                productId = purchase.productId,
+                                productId = productId,
                                 purchaseToken = purchaseToken,
                             ),
                         )
@@ -91,11 +92,11 @@ internal class PurchaseVerificationService(
             val isSuccess = response.status.isSuccess()
             if (!isSuccess) {
                 Logger.w(TAG) {
-                    "Purchase verification failed for product ${purchase.productId}. " +
+                    "Purchase verification failed for product $productId. " +
                         "HTTP status: ${response.status.value}"
                 }
                 throw IAPError.VerificationFailed(
-                    purchase.productId,
+                    productId,
                     Exception("Backend verification failed with HTTP status: ${response.status.value}"),
                 )
             }

@@ -77,10 +77,9 @@ internal class IAPProviderImpl(
         userId: String?,
     ): Result<Boolean> =
         handleIAPResultOperation {
-            val productIdString = productId.productId
             restorePurchases(userId).map { purchases ->
                 purchases.any { purchase ->
-                    purchase.productId == productIdString &&
+                    purchase.productId == productId &&
                         purchase.state == PurchaseState.PURCHASED &&
                         (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
                 }

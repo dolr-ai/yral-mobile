@@ -6,7 +6,7 @@ import kotlin.time.ExperimentalTime
 
 @Serializable
 data class Purchase(
-    val productId: String,
+    val productId: ProductId?,
     val purchaseToken: String? = null,
     val receipt: String? = null,
     val purchaseTime: Long,
