@@ -60,6 +60,7 @@ kotlin {
             implementation(projects.shared.features.leaderboard)
             implementation(projects.shared.features.tournament)
             implementation(projects.shared.features.chat)
+            implementation(projects.shared.features.subscriptions)
 
             implementation(projects.shared.rust.service)
 
