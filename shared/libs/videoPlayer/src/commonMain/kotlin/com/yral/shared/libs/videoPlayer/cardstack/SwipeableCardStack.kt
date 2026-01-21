@@ -36,7 +36,7 @@ internal fun SwipeableCardStack(
         val screenWidth = constraints.maxWidth.toFloat()
         val screenHeight = constraints.maxHeight.toFloat()
 
-        val remaining = (count - state.currentIndex).coerceAtLeast(0)
+        val remaining = (count - state.settledIndex).coerceAtLeast(0)
         val visibleCardCount = minOf(maxVisibleCards, remaining)
 
         Box(
@@ -53,7 +53,7 @@ internal fun SwipeableCardStack(
                     ),
         ) {
             for (stackOffset in (visibleCardCount - 1) downTo 0) {
-                val index = state.currentIndex + stackOffset
+                val index = state.settledIndex + stackOffset
                 if (index >= count) continue
 
                 val itemKey = key?.invoke(index) ?: index

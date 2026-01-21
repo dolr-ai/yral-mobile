@@ -110,7 +110,7 @@ internal fun ReelSwipeableCardStack(
                 val progress = swipeState.calculateSwipeProgress(screenWidth, screenHeight)
                 val shouldHint =
                     swipeState.swipeDirection != SwipeDirection.NONE && progress >= scrollHintThreshold
-                swipeState.currentIndex to shouldHint
+                swipeState.settledIndex to shouldHint
             }.distinctUntilChanged()
                 .collect { (index, shouldHint) ->
                     val predicted = index + 1
@@ -129,7 +129,7 @@ internal fun ReelSwipeableCardStack(
             key = { index -> visibleReels[index].videoId },
             onSwipeComplete = { direction ->
                 if (direction == SwipeDirection.LEFT || direction == SwipeDirection.RIGHT) {
-                    val votedCardIndex = swipeState.currentIndex - 1
+                    val votedCardIndex = swipeState.settledIndex - 1
                     if (votedCardIndex >= 0) {
                         onSwipeVote?.invoke(direction, votedCardIndex)
                     }
@@ -144,7 +144,7 @@ internal fun ReelSwipeableCardStack(
                         SwipeDirection.RIGHT -> ReelScrollDirection.Right
                         SwipeDirection.NONE -> ReelScrollDirection.Up
                     }
-                onEdgeScrollAttempt(swipeState.currentIndex, false, reelDirection)
+                onEdgeScrollAttempt(swipeState.settledIndex, false, reelDirection)
             },
         ) {
             val reelIndex = index
@@ -171,7 +171,7 @@ internal fun ReelSwipeableCardStack(
         SwipeButtons(
             onFlopClick = {
                 if (!swipeState.isAnimating) {
-                    val votedCardIndex = swipeState.currentIndex
+                    val votedCardIndex = swipeState.settledIndex
                     coroutineScope.launch {
                         swipeState.swipeInDirection(
                             direction = SwipeDirection.LEFT,
@@ -186,7 +186,7 @@ internal fun ReelSwipeableCardStack(
             },
             onHitClick = {
                 if (!swipeState.isAnimating) {
-                    val votedCardIndex = swipeState.currentIndex
+                    val votedCardIndex = swipeState.settledIndex
                     coroutineScope.launch {
                         swipeState.swipeInDirection(
                             direction = SwipeDirection.RIGHT,
@@ -199,8 +199,13 @@ internal fun ReelSwipeableCardStack(
                     }
                 }
             },
-            swipeDirection = swipeState.swipeDirection,
-            swipeProgress = swipeState.calculateSwipeProgress(screenWidth, screenHeight),
+            swipeDirection = if (swipeState.isDragging) swipeState.swipeDirection else SwipeDirection.NONE,
+            swipeProgress =
+                if (swipeState.isDragging) {
+                    swipeState.calculateSwipeProgress(screenWidth, screenHeight)
+                } else {
+                    0f
+                },
             modifier =
                 Modifier
                     .align(Alignment.BottomCenter)
