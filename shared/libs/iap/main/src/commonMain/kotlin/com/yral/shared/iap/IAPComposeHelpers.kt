@@ -60,4 +60,4 @@ fun IAPManager.rememberPurchase(
 }
 
 @Composable
-internal expect fun getPurchaseContext(): Any?
+expect fun getPurchaseContext(): Any?
