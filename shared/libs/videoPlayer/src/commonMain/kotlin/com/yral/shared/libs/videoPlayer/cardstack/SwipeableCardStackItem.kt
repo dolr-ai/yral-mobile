@@ -26,6 +26,7 @@ internal fun SwipeableCardStackItem(
     state: SwipeableCardState,
     screenWidth: Float,
     screenHeight: Float,
+    applyFrontTransform: Boolean,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
@@ -36,13 +37,14 @@ internal fun SwipeableCardStackItem(
     val touchBaseProgress = if (state.isTouching) CardStackConstants.TOUCH_BASE_PROGRESS else 0f
     val dragProgress = state.calculateSwipeProgress(screenWidth, screenHeight).coerceIn(0f, 1f)
     val visualProgress = maxOf(touchBaseProgress, dragProgress).coerceIn(0f, 1f)
+    val frontVisualProgress = if (isFrontCard && !applyFrontTransform) 0f else visualProgress
 
     val cardTransforms =
         if (isFrontCard) {
             CardTransforms(
-                offsetX = state.offsetX,
-                offsetY = state.offsetY,
-                rotation = state.rotation,
+                offsetX = if (applyFrontTransform) state.offsetX else 0f,
+                offsetY = if (applyFrontTransform) state.offsetY else 0f,
+                rotation = if (applyFrontTransform) state.rotation else 0f,
                 scale = 1f,
             )
         } else if (isNextCard) {
@@ -81,7 +83,7 @@ internal fun SwipeableCardStackItem(
 
     val horizontalPadding =
         if (isFrontCard) {
-            (CardStackConstants.CARD_HORIZONTAL_PADDING_DP * visualProgress).dp
+            (CardStackConstants.CARD_HORIZONTAL_PADDING_DP * frontVisualProgress).dp
         } else if (isNextCard) {
             0.dp
         } else {
@@ -90,7 +92,7 @@ internal fun SwipeableCardStackItem(
 
     val cornerRadius =
         if (isFrontCard) {
-            (CardStackConstants.CARD_CORNER_RADIUS_DP * visualProgress).dp
+            (CardStackConstants.CARD_CORNER_RADIUS_DP * frontVisualProgress).dp
         } else if (isNextCard) {
             0.dp
         } else {
