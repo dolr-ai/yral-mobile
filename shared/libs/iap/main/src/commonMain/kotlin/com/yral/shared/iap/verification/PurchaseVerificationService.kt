@@ -18,6 +18,8 @@ import io.ktor.http.path
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+internal expect fun getVerifierEndPoint(): String
+
 @Serializable
 internal data class VerifyPurchaseRequest(
     @SerialName("user_id") val userId: String,
@@ -31,8 +33,7 @@ internal class PurchaseVerificationService(
     private val preferences: Preferences,
 ) {
     companion object {
-        const val TAG = "PurchaseVerificationService"
-        const val GOOGLE_VERIFY_PATH = "google/verify"
+        private const val TAG = "PurchaseVerificationService"
     }
 
     @Suppress("LongMethod", "ThrowsCount")
@@ -66,7 +67,7 @@ internal class PurchaseVerificationService(
                     httpClient.post {
                         url {
                             host = AppConfigurations.BILLING_BASE_URL
-                            path(GOOGLE_VERIFY_PATH)
+                            path(getVerifierEndPoint())
                         }
                         headers {
                             append(HttpHeaders.Authorization, "Bearer $idToken")

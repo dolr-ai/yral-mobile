@@ -1,6 +1,5 @@
 package com.yral.shared.iap.providers
 
-import co.touchlab.kermit.Logger
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.Product
@@ -48,41 +47,39 @@ internal class IAPProviderImpl(
             } ?: throw IAPError.UnknownError(Exception("User principal is null"))
         }
 
-    override suspend fun restorePurchases(
-        userId: String?,
-        acknowledgePurchase: Boolean,
-    ): Result<List<CorePurchase>> =
+    override suspend fun restorePurchases(acknowledgePurchase: Boolean): Result<RestoreResult> =
         handleIAPResultOperation {
-            userId?.let {
+            sessionManager.userPrincipal?.let { userId ->
                 coreProvider
                     .restorePurchases(acknowledgePurchase = acknowledgePurchase)
-                    .mapCatching { purchases ->
-                        purchases.filter { purchase ->
+                    .mapCatching { rawPurchases ->
+                        val verifiedPurchases = mutableListOf<CorePurchase>()
+                        val verificationErrors = mutableListOf<IAPError>()
+
+                        rawPurchases.filter { purchase ->
                             verificationService.verifyPurchase(purchase, userId).fold(
-                                onSuccess = { true },
+                                onSuccess = { verifiedPurchases.add(purchase) },
                                 onFailure = { error ->
-                                    Logger.w("IAPProviderImpl", error) {
-                                        "Purchase verification error for product ${purchase.productId} during restore"
+                                    if (error is IAPError) {
+                                        verificationErrors.add(error)
+                                    } else {
+                                        verificationErrors.add(IAPError.UnknownError(error))
                                     }
-                                    false
                                 },
                             )
                         }
+
+                        RestoreResult(verifiedPurchases, verificationErrors)
                     }
             } ?: throw IAPError.UnknownError(Exception("User principal is null"))
         }
 
-    override suspend fun isProductPurchased(
-        productId: ProductId,
-        userId: String?,
-    ): Result<Boolean> =
-        handleIAPResultOperation {
-            restorePurchases(userId).map { purchases ->
-                purchases.any { purchase ->
-                    purchase.productId == productId &&
-                        purchase.state == PurchaseState.PURCHASED &&
-                        (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
-                }
+    override suspend fun isProductPurchased(productId: ProductId): Result<Boolean> =
+        restorePurchases().map { result ->
+            result.purchases.any { purchase ->
+                purchase.productId == productId &&
+                    purchase.state == PurchaseState.PURCHASED &&
+                    (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
             }
         }
 }

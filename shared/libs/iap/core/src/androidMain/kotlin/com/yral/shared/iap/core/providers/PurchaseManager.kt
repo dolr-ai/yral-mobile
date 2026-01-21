@@ -131,7 +131,7 @@ internal class PurchaseManager(
                 when (purchase.purchaseState) {
                     Purchase.PurchaseState.PURCHASED -> PurchaseState.PURCHASED
                     Purchase.PurchaseState.PENDING -> PurchaseState.PENDING
-                    else -> PurchaseState.FAILED
+                    else -> PurchaseState.UNSPECIFIED
                 },
             expirationDate = expirationDate,
             isAutoRenewing = isAutoRenewing,

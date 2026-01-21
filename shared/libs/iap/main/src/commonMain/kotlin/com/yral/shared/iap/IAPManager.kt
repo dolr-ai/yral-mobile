@@ -6,6 +6,7 @@ import com.yral.shared.iap.core.model.Product
 import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.iap.core.model.Purchase
 import com.yral.shared.iap.providers.IAPProvider
+import com.yral.shared.iap.providers.RestoreResult
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -68,15 +69,15 @@ class IAPManager(
         return result
     }
 
-    suspend fun restorePurchases(
-        userId: String?,
-        acknowledgePurchase: Boolean = false,
-    ): Result<List<Purchase>> {
-        val result = provider.restorePurchases(userId, acknowledgePurchase)
+    suspend fun restorePurchases(acknowledgePurchase: Boolean = false): Result<RestoreResult> {
+        val result = provider.restorePurchases(acknowledgePurchase)
         notifyListeners {
             if (result.isSuccess) {
                 result.getOrNull()?.let { purchases ->
-                    onPurchasesRestored(purchases)
+                    onPurchasesRestored(purchases.purchases)
+                    if (purchases.verificationErrors.isNotEmpty()) {
+                        onRestoreError(purchases.verificationErrors)
+                    }
                 }
             } else {
                 val error =
@@ -88,10 +89,7 @@ class IAPManager(
         return result
     }
 
-    suspend fun isProductPurchased(
-        productId: ProductId,
-        userId: String?,
-    ): Result<Boolean> = provider.isProductPurchased(productId, userId)
+    suspend fun isProductPurchased(productId: ProductId): Result<Boolean> = provider.isProductPurchased(productId)
 
     fun notifyWarning(message: String) {
         Logger.w("IAPManager") { message }

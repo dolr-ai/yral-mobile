@@ -141,21 +141,11 @@ internal class IOSIAPProvider : IAPProvider {
     }
 
     override suspend fun isProductPurchased(productId: ProductId): Result<Boolean> =
-        try {
-            restorePurchases().map { purchases ->
-                purchases.any { purchase ->
-                    purchase.productId == productId &&
-                        purchase.state == PurchaseState.PURCHASED &&
-                        (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
-                }
+        restorePurchases().map { purchases ->
+            purchases.any { purchase ->
+                purchase.productId == productId &&
+                    purchase.state == PurchaseState.PURCHASED &&
+                    (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
             }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: IAPError) {
-            Result.failure(e)
-        } catch (
-            @Suppress("TooGenericExceptionCaught") e: Exception,
-        ) {
-            Result.failure(IAPError.UnknownError(e))
         }
 }

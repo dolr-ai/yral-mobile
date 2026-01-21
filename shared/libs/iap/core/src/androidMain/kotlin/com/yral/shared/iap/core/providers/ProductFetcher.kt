@@ -61,24 +61,27 @@ internal class ProductFetcher(
         }
     }
 
+    private fun getQueryProductParams(
+        productIds: List<String>,
+        productType: String,
+    ) = QueryProductDetailsParams
+        .newBuilder()
+        .setProductList(
+            productIds.map { productId ->
+                QueryProductDetailsParams.Product
+                    .newBuilder()
+                    .setProductId(productId)
+                    .setProductType(productType)
+                    .build()
+            },
+        ).build()
+
     private suspend fun queryProductDetailsByType(
         client: BillingClient,
         productId: String,
         productType: String,
     ): ProductDetails? {
-        val params =
-            QueryProductDetailsParams
-                .newBuilder()
-                .setProductList(
-                    listOf(
-                        QueryProductDetailsParams.Product
-                            .newBuilder()
-                            .setProductId(productId)
-                            .setProductType(productType)
-                            .build(),
-                    ),
-                ).build()
-
+        val params = getQueryProductParams(listOf(productId), productType)
         val result = client.queryProductDetails(params)
         return if (
             result.billingResult.responseCode == BillingClient.BillingResponseCode.OK &&
@@ -94,18 +97,7 @@ internal class ProductFetcher(
         client: BillingClient,
         productIds: List<String>,
     ): Result<List<Product>> {
-        val params =
-            QueryProductDetailsParams
-                .newBuilder()
-                .setProductList(
-                    productIds.map { productId ->
-                        QueryProductDetailsParams.Product
-                            .newBuilder()
-                            .setProductId(productId)
-                            .setProductType(BillingClient.ProductType.INAPP)
-                            .build()
-                    },
-                ).build()
+        val params = getQueryProductParams(productIds, BillingClient.ProductType.INAPP)
 
         val result = client.queryProductDetails(params)
         if (result.billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
@@ -118,7 +110,11 @@ internal class ProductFetcher(
 
         val products =
             result.productDetailsList?.mapNotNull { productDetails ->
-                productDetails.oneTimePurchaseOfferDetails?.let { offerDetails ->
+                val oneTimeOffers = productDetails.oneTimePurchaseOfferDetailsList
+                val offer =
+                    oneTimeOffers?.firstOrNull { !it.offerId.isNullOrEmpty() } // Promotional offer
+                        ?: oneTimeOffers?.firstOrNull { it.offerId.isNullOrEmpty() } // Base plan fallback
+                offer?.let { offerDetails ->
                     Product(
                         id = productDetails.productId,
                         price = offerDetails.formattedPrice,
@@ -138,18 +134,7 @@ internal class ProductFetcher(
         client: BillingClient,
         productIds: List<String>,
     ): Result<List<Product>> {
-        val params =
-            QueryProductDetailsParams
-                .newBuilder()
-                .setProductList(
-                    productIds.map { productId ->
-                        QueryProductDetailsParams.Product
-                            .newBuilder()
-                            .setProductId(productId)
-                            .setProductType(BillingClient.ProductType.SUBS)
-                            .build()
-                    },
-                ).build()
+        val params = getQueryProductParams(productIds, BillingClient.ProductType.SUBS)
 
         val result = client.queryProductDetails(params)
         if (result.billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
@@ -170,16 +155,12 @@ internal class ProductFetcher(
 
     @Suppress("ReturnCount")
     private fun extractSubscriptionProduct(productDetails: ProductDetails): Product? {
-        val subscriptionOfferDetails = productDetails.subscriptionOfferDetails ?: return null
-        if (subscriptionOfferDetails.isEmpty()) {
-            return null
-        }
-
-        val validOffer =
-            subscriptionOfferDetails.firstOrNull { offerDetails ->
-                offerDetails.pricingPhases.pricingPhaseList.isNotEmpty()
-            } ?: return null
-        val pricingPhaseList = validOffer.pricingPhases.pricingPhaseList
+        val subscriptionOffers = productDetails.subscriptionOfferDetails ?: return null
+        val offer =
+            subscriptionOffers.firstOrNull { !it.offerId.isNullOrEmpty() } // Promotional offer
+                ?: subscriptionOffers.firstOrNull { it.offerId.isNullOrEmpty() } // Base plan fallback
+                ?: return null
+        val pricingPhaseList = offer.pricingPhases.pricingPhaseList
         val recurringPhase = pricingPhaseList.last()
         val pricingInfo = extractPricingPhaseInfo(recurringPhase) ?: return null
 

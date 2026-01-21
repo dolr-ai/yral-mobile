@@ -6,5 +6,5 @@ import kotlinx.serialization.Serializable
 enum class PurchaseState {
     PENDING,
     PURCHASED,
-    FAILED,
+    UNSPECIFIED,
 }

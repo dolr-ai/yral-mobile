@@ -59,29 +59,25 @@ internal class AndroidIAPProvider(
     ): Result<IAPPurchase> {
         return try {
             val productIdString = productId.productId
-            val activity = context as? Activity
-            val productDetails =
-                if (activity == null) {
-                    return Result.failure(
+            val activity =
+                context as? Activity
+                    ?: return Result.failure(
                         IAPError.PurchaseFailed(
                             productIdString,
-                            Exception(
-                                "Activity context is required for purchase. " +
-                                    "Pass Activity from LocalContext.current in Compose.",
-                            ),
+                            Exception("Activity context is required for purchase."),
                         ),
                     )
-                } else {
-                    productFetcher.queryProductDetailsForPurchase(productId)
-                        ?: return Result.failure(IAPError.ProductNotFound(productIdString))
-                }
+            val productDetails =
+                productFetcher.queryProductDetailsForPurchase(productId)
+                    ?: return Result.failure(IAPError.ProductNotFound(productIdString))
+
             val client = connectionManager.ensureReady()
             val productDetailsParamsBuilder =
                 BillingFlowParams.ProductDetailsParams
                     .newBuilder()
                     .setProductDetails(productDetails)
 
-            // For subscriptions, the offer token is required
+            // set Offer details
             when {
                 productId.getProductType() == ProductType.SUBS -> {
                     val subscriptionOffers = productDetails.subscriptionOfferDetails
@@ -179,23 +175,14 @@ internal class AndroidIAPProvider(
             .restorePurchases(acknowledgePurchase)
 
     override suspend fun isProductPurchased(productId: ProductId): Result<Boolean> =
-        try {
-            restorePurchases().map { purchases ->
+        restorePurchases()
+            .map { purchases ->
                 purchases.any { purchase ->
                     purchase.productId == productId &&
                         purchase.state == PurchaseState.PURCHASED &&
                         (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
                 }
             }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: IAPError) {
-            Result.failure(e)
-        } catch (
-            @Suppress("TooGenericExceptionCaught") e: Exception,
-        ) {
-            Result.failure(IAPError.UnknownError(e))
-        }
 
     private fun handlePurchaseUpdate(
         billingResult: BillingResult,

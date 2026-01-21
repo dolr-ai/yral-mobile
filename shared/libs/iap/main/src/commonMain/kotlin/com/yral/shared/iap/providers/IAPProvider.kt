@@ -11,12 +11,6 @@ interface IAPProvider {
         context: Any? = null,
         acknowledgePurchase: Boolean = false,
     ): Result<Purchase>
-    suspend fun restorePurchases(
-        userId: String?,
-        acknowledgePurchase: Boolean = false,
-    ): Result<List<Purchase>>
-    suspend fun isProductPurchased(
-        productId: ProductId,
-        userId: String?,
-    ): Result<Boolean>
+    suspend fun restorePurchases(acknowledgePurchase: Boolean = false): Result<RestoreResult>
+    suspend fun isProductPurchased(productId: ProductId): Result<Boolean>
 }
