@@ -5,4 +5,11 @@
     <string name="explore_feed">Explore Feed</string>
     <string name="payment_failed_title">Payment Failed!</string>
     <string name="subscription_failure_body">Looks like the payment didn’t go through. Don’t worry — you’ll get back your full access as soon as the payment clears.</string>
+    <string name="subscription_nudge_title">Go YRAL Pro.\nCreate without limits.</string>
+    <string name="subscription_nudge_benefit_ai">Create AI videos using credits</string>
+    <string name="subscription_nudge_benefit_chat">Unlimited chat with influencers</string>
+    <string name="subscription_nudge_benefit_global">Tournament entry with credits</string>
+    <string name="subscription_nudge_benefit_rewards">Get paid for engaged view</string>
+    <string name="subscription_nudge_cta_subscribe">Subscribe for ₹49</string>
+    <string name="subscription_nudge_cta_dismiss">Dismiss</string>
 </resources>
