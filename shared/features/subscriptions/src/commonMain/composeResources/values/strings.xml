@@ -3,4 +3,6 @@
     <string name="subscription_success_body">Your YRAL Pro subscription is now active — start with 40 YRAL Credits and explore without limits.</string>
     <string name="create_ai_video">Create AI Video</string>
     <string name="explore_feed">Explore Feed</string>
+    <string name="payment_failed_title">Payment Failed!</string>
+    <string name="subscription_failure_body">Looks like the payment didn’t go through. Don’t worry — you’ll get back your full access as soon as the payment clears.</string>
 </resources>
