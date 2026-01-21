@@ -9,6 +9,7 @@ import com.yral.shared.libs.videoplayback.VideoSurfaceHandle
 expect fun VideoSurface(
     modifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Fit,
+    surfaceType: VideoSurfaceType = VideoSurfaceType.SurfaceView,
     shutter: @Composable () -> Unit = {},
     onHandleReady: (VideoSurfaceHandle) -> Unit,
 )
