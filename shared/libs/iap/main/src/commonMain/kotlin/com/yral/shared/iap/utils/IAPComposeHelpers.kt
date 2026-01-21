@@ -1,4 +1,4 @@
-package com.yral.shared.iap
+package com.yral.shared.iap.utils
 
 import androidx.compose.runtime.Composable
 
