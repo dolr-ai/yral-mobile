@@ -171,9 +171,12 @@ class SwipeableCardState(
         screenWidth: Float,
         screenHeight: Float,
         onComplete: () -> Unit,
+        commitAtStart: Boolean = true,
     ) {
         isAnimating = true
-        commitToNext()
+        if (commitAtStart) {
+            commitToNext()
+        }
 
         // Calculate exit position (off-screen in swipe direction)
         val exitMultiplier = CardStackConstants.EXIT_MULTIPLIER
@@ -290,7 +293,17 @@ class SwipeableCardState(
 
         swipeDirection = direction
         commitToNext()
-        animateDismiss(screenWidth, screenHeight, onComplete)
+        animatePreSwipe(
+            screenWidth = screenWidth,
+            screenHeight = screenHeight,
+            direction = direction,
+        )
+        animateDismiss(
+            screenWidth = screenWidth,
+            screenHeight = screenHeight,
+            onComplete = onComplete,
+            commitAtStart = false,
+        )
     }
 
     /**
@@ -304,6 +317,53 @@ class SwipeableCardState(
         isTouching = false
         isDragging = false
         isSwipeCommitted = false
+    }
+
+    private suspend fun animatePreSwipe(
+        screenWidth: Float,
+        screenHeight: Float,
+        direction: SwipeDirection,
+    ) {
+        val thresholdX = screenWidth * CardStackConstants.SWIPE_THRESHOLD_FRACTION
+        val thresholdY = screenHeight * CardStackConstants.SWIPE_THRESHOLD_FRACTION
+        val preOffset =
+            when (direction) {
+                SwipeDirection.LEFT -> Offset(-thresholdX * 0.6f, 0f)
+                SwipeDirection.RIGHT -> Offset(thresholdX * 0.6f, 0f)
+                SwipeDirection.UP -> Offset(0f, -thresholdY * 0.6f)
+                SwipeDirection.DOWN -> Offset(0f, thresholdY * 0.6f)
+                SwipeDirection.NONE -> Offset.Zero
+            }
+        if (preOffset == Offset.Zero) return
+
+        offsetAnimatable.snapTo(Offset(offsetX, offsetY))
+        rotationAnimatable.snapTo(rotation)
+
+        coroutineScope {
+            launch {
+                offsetAnimatable.animateTo(
+                    targetValue = preOffset,
+                    animationSpec = tween(120),
+                ) {
+                    offsetX = value.x
+                    offsetY = value.y
+                }
+            }
+            launch {
+                val targetRotation =
+                    when (direction) {
+                        SwipeDirection.LEFT -> -CardStackConstants.ROTATION_MULTIPLIER * 0.4f
+                        SwipeDirection.RIGHT -> CardStackConstants.ROTATION_MULTIPLIER * 0.4f
+                        else -> 0f
+                    }
+                rotationAnimatable.animateTo(
+                    targetValue = targetRotation,
+                    animationSpec = tween(120),
+                ) {
+                    rotation = value
+                }
+            }
+        }
     }
 
     private fun nextIndex(): Int {

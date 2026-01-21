@@ -126,9 +126,11 @@ fun Modifier.swipeableCard(
                             onSwipeCommitted(direction)
                         }
                         coroutineScope.launch {
-                            state.animateDismiss(screenWidth, screenHeight) {
-                                onSwipeComplete(direction)
-                            }
+                            state.animateDismiss(
+                                screenWidth = screenWidth,
+                                screenHeight = screenHeight,
+                                onComplete = { onSwipeComplete(direction) },
+                            )
                         }
                     }
                 } else {
