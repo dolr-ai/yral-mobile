@@ -319,6 +319,7 @@ class SwipeableCardState(
         isSwipeCommitted = false
     }
 
+    @Suppress("MagicNumber")
     private suspend fun animatePreSwipe(
         screenWidth: Float,
         screenHeight: Float,

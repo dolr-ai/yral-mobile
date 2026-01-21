@@ -19,7 +19,7 @@ import com.yral.shared.libs.videoPlayer.util.isPlatform
  * Layout wrapper for a single card in the stack.
  * Applies stack transforms, padding, rounding, and shadow based on position.
  */
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 internal fun SwipeableCardStackItem(
     stackIndex: Int,
