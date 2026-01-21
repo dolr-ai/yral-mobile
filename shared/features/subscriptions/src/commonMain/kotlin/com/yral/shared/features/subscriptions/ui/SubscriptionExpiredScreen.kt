@@ -304,44 +304,21 @@ private fun ExpiredBenefitList() {
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        ExpiredBenefitRow(
+        SubscriptionBenefitRow(
             iconRes = Res.drawable.subscription_benefit_ai,
             text = stringResource(Res.string.subscription_active_benefit_ai),
         )
-        ExpiredBenefitRow(
+        SubscriptionBenefitRow(
             iconRes = Res.drawable.subscription_benefit_chat,
             text = stringResource(Res.string.subscription_active_benefit_chat),
         )
-        ExpiredBenefitRow(
+        SubscriptionBenefitRow(
             iconRes = Res.drawable.subscription_benefit_global,
             text = stringResource(Res.string.subscription_active_benefit_global),
         )
-        ExpiredBenefitRow(
+        SubscriptionBenefitRow(
             iconRes = Res.drawable.subscription_benefit_rewards,
             text = stringResource(Res.string.subscription_active_benefit_rewards),
-        )
-    }
-}
-
-@Composable
-private fun ExpiredBenefitRow(
-    iconRes: DrawableResource,
-    text: String,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Image(
-            painter = painterResource(iconRes),
-            contentDescription = text,
-            modifier = Modifier.size(32.dp),
-        )
-        Text(
-            text = text,
-            style = LocalAppTopography.current.baseMedium,
-            color = YralColors.Neutral50,
         )
     }
 }

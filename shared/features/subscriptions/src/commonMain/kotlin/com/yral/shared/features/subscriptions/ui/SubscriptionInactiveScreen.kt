@@ -219,44 +219,21 @@ private fun InactiveBenefitList() {
         modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        BenefitRow(
+        SubscriptionBenefitRow(
             iconRes = Res.drawable.subscription_benefit_ai,
             text = stringResource(Res.string.subscription_active_benefit_ai),
         )
-        BenefitRow(
+        SubscriptionBenefitRow(
             iconRes = Res.drawable.subscription_benefit_chat,
             text = stringResource(Res.string.subscription_active_benefit_chat),
         )
-        BenefitRow(
+        SubscriptionBenefitRow(
             iconRes = Res.drawable.subscription_benefit_global,
             text = stringResource(Res.string.subscription_active_benefit_global),
         )
-        BenefitRow(
+        SubscriptionBenefitRow(
             iconRes = Res.drawable.subscription_benefit_rewards,
             text = stringResource(Res.string.subscription_active_benefit_rewards),
-        )
-    }
-}
-
-@Composable
-private fun BenefitRow(
-    iconRes: DrawableResource,
-    text: String,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Image(
-            painter = painterResource(iconRes),
-            contentDescription = text,
-            modifier = Modifier.size(32.dp),
-        )
-        Text(
-            text = text,
-            style = LocalAppTopography.current.baseMedium,
-            color = YralColors.Neutral50,
         )
     }
 }
