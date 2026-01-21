@@ -275,7 +275,7 @@ def tap_to_recharge(request: Request):
                 "Tap recharge not available: airdrop limit reached.")
 
         # 6️⃣ Push to wallet first
-        DELTA = 100
+        DELTA = 25
         success, error_msg = _push_delta_yral_token(os.environ["BALANCE_UPDATE_TOKEN"], pid, DELTA)
         if not success:
             print(f"Failed to update YRAL balance for {pid}: {error_msg}", file=sys.stderr)
