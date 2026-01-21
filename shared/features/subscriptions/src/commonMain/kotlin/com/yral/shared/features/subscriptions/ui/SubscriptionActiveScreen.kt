@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.dp
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
-import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.subscriptions.generated.resources.Res
@@ -280,44 +279,21 @@ private fun BenefitList() {
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        BenefitRow(
+        SubscriptionBenefitRow(
             iconRes = Res.drawable.subscription_benefit_ai,
             text = stringResource(Res.string.subscription_active_benefit_ai),
         )
-        BenefitRow(
+        SubscriptionBenefitRow(
             iconRes = Res.drawable.subscription_benefit_chat,
             text = stringResource(Res.string.subscription_active_benefit_chat),
         )
-        BenefitRow(
+        SubscriptionBenefitRow(
             iconRes = Res.drawable.subscription_benefit_global,
             text = stringResource(Res.string.subscription_active_benefit_global),
         )
-        BenefitRow(
+        SubscriptionBenefitRow(
             iconRes = Res.drawable.subscription_benefit_rewards,
             text = stringResource(Res.string.subscription_active_benefit_rewards),
-        )
-    }
-}
-
-@Composable
-private fun BenefitRow(
-    iconRes: DrawableResource,
-    text: String,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Image(
-            painter = painterResource(iconRes),
-            contentDescription = text,
-            modifier = Modifier.size(32.dp),
-        )
-        Text(
-            text = text,
-            style = LocalAppTopography.current.baseMedium,
-            color = YralColors.Neutral50,
         )
     }
 }
