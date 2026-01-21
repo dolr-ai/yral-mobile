@@ -220,9 +220,7 @@ class DefaultRootComponent(
                         ),
                 )
             is SlotConfig.LoginBottomSheet -> {
-                currentLoginInfo
-                    ?.let { RootComponent.SlotChild.LoginBottomSheet() }
-                    ?: error("LoginInfo not available for slot")
+                RootComponent.SlotChild.LoginBottomSheet()
             }
         }
 
@@ -463,7 +461,7 @@ class DefaultRootComponent(
 
     // Called by UI when bottom sheet is dismissed by user
     override fun dismissLoginBottomSheet() {
-        slotNavigation.dismiss()
+        dismissLoginSlotIfActive()
         currentLoginInfo?.onDismiss?.invoke()
         clearLoginState()
         loginViewModel.resetState()
