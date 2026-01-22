@@ -240,18 +240,20 @@ fun TournamentBottomOverlay(
 ) {
     gameViewModel.hasVotedOnVideo(feedDetails.videoID)
     val voteResult = gameViewModel.getVoteResult(feedDetails.videoID)
+    // Get video-specific icons (from Gemini analysis) or fallback to global icons
+    val videoIcons = gameViewModel.getIconsForVideo(feedDetails.videoID)
     val selectedIcon =
         voteResult?.smiley?.id?.let { voteId ->
-            gameState.gameIcons.firstOrNull { it.id == voteId }
+            videoIcons.firstOrNull { it.id == voteId }
         }
     val diamondDelta = voteResult?.diamondDelta ?: 0
     val overlayBottomPadding = 120.dp
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Only show smiley game for smiley tournaments, not Hot or Not
-        if (gameState.gameIcons.isNotEmpty() && !isHotOrNot) {
+        if (videoIcons.isNotEmpty() && !isHotOrNot) {
             SmileyGame(
-                gameIcons = gameState.gameIcons,
+                gameIcons = videoIcons,
                 clickedIcon = selectedIcon,
                 isLoading = gameState.isLoading,
                 coinDelta = diamondDelta,

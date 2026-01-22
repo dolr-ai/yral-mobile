@@ -8,6 +8,7 @@ data class VoteResult(
     val diamonds: Int,
     val position: Int,
     val diamondDelta: Int? = null,
+    val videoEmojis: List<VideoEmoji>? = null,
 )
 
 enum class VoteOutcome {
@@ -26,8 +27,29 @@ enum class VoteOutcome {
 
 data class VotedSmiley(
     val id: String,
+    val unicode: String?,
+    val displayName: String?,
     val imageUrl: String?,
     val isActive: Boolean?,
     val clickAnimation: String?,
     val imageFallback: String?,
+)
+
+/**
+ * Video-specific emoji from Gemini analysis.
+ * Each video can have its own unique set of emojis.
+ */
+data class VideoEmoji(
+    val id: String,
+    val unicode: String,
+    val displayName: String,
+)
+
+/**
+ * Result of fetching video-specific emojis.
+ */
+data class VideoEmojisResult(
+    val videoId: String,
+    val emojis: List<VideoEmoji>,
+    val isCustom: Boolean,
 )

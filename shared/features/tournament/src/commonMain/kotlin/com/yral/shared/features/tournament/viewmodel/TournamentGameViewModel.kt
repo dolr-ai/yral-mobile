@@ -8,16 +8,20 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.features.game.domain.GetGameIconsUseCase
 import com.yral.shared.features.game.domain.models.GameIcon
+import com.yral.shared.features.game.domain.models.GameIconNames
 import com.yral.shared.features.tournament.analytics.TournamentTelemetry
 import com.yral.shared.features.tournament.domain.CastHotOrNotVoteUseCase
 import com.yral.shared.features.tournament.domain.CastTournamentVoteUseCase
 import com.yral.shared.features.tournament.domain.GetTournamentsUseCase
+import com.yral.shared.features.tournament.domain.GetVideoEmojisRequest
+import com.yral.shared.features.tournament.domain.GetVideoEmojisUseCase
 import com.yral.shared.features.tournament.domain.model.CastTournamentVoteRequest
 import com.yral.shared.features.tournament.domain.model.GetTournamentsRequest
 import com.yral.shared.features.tournament.domain.model.HotOrNotVoteRequest
 import com.yral.shared.features.tournament.domain.model.HotOrNotVoteResult
 import com.yral.shared.features.tournament.domain.model.TournamentErrorCodes
 import com.yral.shared.features.tournament.domain.model.TournamentType
+import com.yral.shared.features.tournament.domain.model.VideoEmoji
 import com.yral.shared.features.tournament.domain.model.VoteOutcome
 import com.yral.shared.features.tournament.domain.model.VoteResult
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,10 +37,14 @@ class TournamentGameViewModel(
     private val castTournamentVoteUseCase: CastTournamentVoteUseCase,
     private val castHotOrNotVoteUseCase: CastHotOrNotVoteUseCase,
     private val getTournamentsUseCase: GetTournamentsUseCase,
+    private val getVideoEmojisUseCase: GetVideoEmojisUseCase,
     private val telemetry: TournamentTelemetry,
 ) : ViewModel() {
     private val _state = MutableStateFlow(TournamentGameState())
     val state: StateFlow<TournamentGameState> = _state.asStateFlow()
+
+    // Track loading state outside of StateFlow to avoid recompositions during scroll
+    private val loadingVideoEmojis = mutableSetOf<String>()
 
     init {
         viewModelScope.launch { getGameIcons() }
@@ -132,7 +140,6 @@ class TournamentGameViewModel(
     ) {
         val currentState = _state.value
         val principalId = sessionManager.userPrincipal ?: return
-
         _state.update { it.copy(isLoading = true) }
 
         castTournamentVoteUseCase
@@ -144,48 +151,58 @@ class TournamentGameViewModel(
                     smileyId = icon.id,
                 ),
             ).onSuccess { result ->
-                val diamondDelta = result.diamondDelta ?: (result.diamonds - currentState.diamonds)
-                val resolvedResult =
-                    if (result.diamondDelta == null) {
-                        result.copy(diamondDelta = diamondDelta)
-                    } else {
-                        result
-                    }
-
-                // Track answer submitted
-                val isCorrect = result.outcome == VoteOutcome.WIN
-                telemetry.onAnswerSubmitted(
-                    tournamentId = currentState.tournamentId,
-                    tournamentType = currentState.tournamentType,
-                    isCorrect = isCorrect,
-                    scoreDelta = diamondDelta,
-                    diamondsRemaining = result.diamonds,
-                )
-
-                _state.update {
-                    val updatedResults = it.voteResults.toMutableMap()
-                    updatedResults[feedDetails.videoID] = resolvedResult
-                    it.copy(
-                        isLoading = false,
-                        diamonds = result.diamonds,
-                        position = result.position,
-                        wins = result.tournamentWins,
-                        losses = result.tournamentLosses,
-                        lastVoteOutcome = result.outcome,
-                        lastDiamondDelta = diamondDelta,
-                        voteResults = updatedResults,
-                        lastVotedCount = it.lastVotedCount + 1,
-                    )
-                }
+                handleVoteSuccess(result, currentState, feedDetails.videoID)
             }.onFailure { error ->
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        noDiamondsError = error.code == TournamentErrorCodes.NO_DIAMONDS,
-                        tournamentEndedError = error.code == TournamentErrorCodes.TOURNAMENT_NOT_LIVE,
-                    )
-                }
+                handleVoteFailure(error)
             }
+    }
+
+    private fun handleVoteSuccess(
+        result: VoteResult,
+        currentState: TournamentGameState,
+        videoId: String,
+    ) {
+        val diamondDelta = result.diamondDelta ?: (result.diamonds - currentState.diamonds)
+        val resolvedResult = if (result.diamondDelta == null) result.copy(diamondDelta = diamondDelta) else result
+
+        telemetry.onAnswerSubmitted(
+            tournamentId = currentState.tournamentId,
+            tournamentType = currentState.tournamentType,
+            isCorrect = result.outcome == VoteOutcome.WIN,
+            scoreDelta = diamondDelta,
+            diamondsRemaining = result.diamonds,
+        )
+
+        val videoIcons = result.videoEmojis?.map { it.toGameIcon() }
+
+        _state.update {
+            val updatedResults = it.voteResults.toMutableMap().apply { put(videoId, resolvedResult) }
+            val updatedVideoEmojis =
+                if (!videoIcons.isNullOrEmpty()) it.videoEmojis + (videoId to videoIcons) else it.videoEmojis
+
+            it.copy(
+                isLoading = false,
+                diamonds = result.diamonds,
+                position = result.position,
+                wins = result.tournamentWins,
+                losses = result.tournamentLosses,
+                lastVoteOutcome = result.outcome,
+                lastDiamondDelta = diamondDelta,
+                voteResults = updatedResults,
+                videoEmojis = updatedVideoEmojis,
+                lastVotedCount = it.lastVotedCount + 1,
+            )
+        }
+    }
+
+    private fun handleVoteFailure(error: TournamentError) {
+        _state.update {
+            it.copy(
+                isLoading = false,
+                noDiamondsError = error.code == TournamentErrorCodes.NO_DIAMONDS,
+                tournamentEndedError = error.code == TournamentErrorCodes.TOURNAMENT_NOT_LIVE,
+            )
+        }
     }
 
     /**
@@ -271,6 +288,18 @@ class TournamentGameViewModel(
 
     fun hasVotedOnHotOrNotVideo(videoId: String): Boolean = _state.value.hotOrNotVoteResults.containsKey(videoId)
 
+    /**
+     * Get emojis for a specific video.
+     * Returns video-specific emojis if available (from Gemini analysis).
+     * Returns empty list while loading to prevent showing fallback emojis.
+     * Falls back to global game icons only if loading failed.
+     */
+    fun getIconsForVideo(videoId: String): List<GameIcon> {
+        val state = _state.value
+        return state.videoEmojis[videoId]
+            ?: if (loadingVideoEmojis.contains(videoId)) emptyList() else state.gameIcons
+    }
+
     fun getVoteResult(videoId: String): VoteResult? = _state.value.voteResults[videoId]
 
     fun getHotOrNotVoteResult(videoId: String): HotOrNotVoteResult? = _state.value.hotOrNotVoteResults[videoId]
@@ -289,6 +318,45 @@ class TournamentGameViewModel(
 
     fun setCurrentVideoId(videoId: String) {
         _state.update { it.copy(currentVideoId = videoId) }
+        // Prefetch emojis for this video if not already cached
+        prefetchVideoEmojis(videoId)
+    }
+
+    /**
+     * Prefetch video-specific emojis from the backend.
+     * This is called when a video becomes visible to ensure
+     * the correct emojis are shown before the user votes.
+     */
+    fun prefetchVideoEmojis(videoId: String) {
+        val currentState = _state.value
+        // Skip if already cached, already loading, or if tournament ID not set
+        val shouldSkip =
+            currentState.videoEmojis.containsKey(videoId) ||
+                loadingVideoEmojis.contains(videoId) ||
+                currentState.tournamentId.isEmpty()
+        if (shouldSkip) return
+
+        // Mark as loading (no state update to avoid recomposition)
+        loadingVideoEmojis.add(videoId)
+
+        viewModelScope.launch {
+            getVideoEmojisUseCase
+                .invoke(
+                    GetVideoEmojisRequest(
+                        tournamentId = currentState.tournamentId,
+                        videoId = videoId,
+                    ),
+                ).onSuccess { result ->
+                    loadingVideoEmojis.remove(videoId)
+                    val videoIcons = result.emojis.map { emoji -> emoji.toGameIcon() }
+                    _state.update {
+                        it.copy(videoEmojis = it.videoEmojis + (videoId to videoIcons))
+                    }
+                }.onFailure {
+                    // Remove from loading - will use global icons as fallback
+                    loadingVideoEmojis.remove(videoId)
+                }
+        }
     }
 
     fun clearNoDiamondsError() {
@@ -340,6 +408,7 @@ data class TournamentGameState(
     val tournamentId: String = "",
     val tournamentType: TournamentType = TournamentType.SMILEY,
     val gameIcons: List<GameIcon> = emptyList(),
+    val videoEmojis: Map<String, List<GameIcon>> = emptyMap(),
     val diamonds: Int = 0,
     val position: Int = 0,
     val wins: Int = 0,
@@ -358,3 +427,17 @@ data class TournamentGameState(
     val tournamentEndedError: Boolean = false,
     val hasPlayedBefore: Boolean = false,
 )
+
+/**
+ * Convert VideoEmoji (from Gemini analysis) to GameIcon for UI rendering.
+ * Uses UNKNOWN for imageName since dynamic emojis don't have predefined types.
+ * The unicode field enables rendering via text fallback.
+ */
+fun VideoEmoji.toGameIcon(): GameIcon =
+    GameIcon(
+        id = id,
+        imageName = GameIconNames.UNKNOWN,
+        imageUrl = "",
+        clickAnimation = "",
+        unicode = unicode,
+    )
