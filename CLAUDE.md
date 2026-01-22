@@ -278,10 +278,16 @@ The project enforces code quality via pre-commit hooks:
 - **detekt**: Static analysis (custom config in `detekt-config.yml`)
 - **SwiftLint**: iOS Swift code formatting (strict mode)
 
+**IMPORTANT: Always run detekt before submitting code changes:**
+```bash
+./gradlew detekt
+```
+
 Key detekt customizations:
 - LongParameterList: 15 params for functions, 10 for constructors
 - TooManyFunctions: 20 threshold
 - FunctionNaming: Composables exempt from naming rules
+- MagicNumber: Avoid hardcoded numbers; use named constants instead
 
 ### Common Patterns
 
