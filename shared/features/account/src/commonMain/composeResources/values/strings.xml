@@ -12,6 +12,10 @@
     <string name="privacy_policy">Privacy Policy</string>
     <string name="logout">Logout</string>
     <string name="delete_account">Delete Account</string>
-
+    <string name="join_yral">Join </string>
+    <string name="pro_exclamation">Yral Pro!</string>
+    <string name="pro_subscription_benefits">%1$d Credits, Free tournament access, Unlimited chats and much more.</string>
+    <string name="yral_pro_member">Yral Pro Member</string>
+    <string name="pro_credits_count">%1$d/%2$d</string>
 
 </resources>

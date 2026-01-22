@@ -28,7 +28,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
@@ -36,7 +35,6 @@ import androidx.compose.ui.unit.dp
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
-import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.subscriptions.generated.resources.Res
@@ -53,7 +51,6 @@ import yral_mobile.shared.features.subscriptions.generated.resources.subscriptio
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_global
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_logo_light
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_rewards
-import yral_mobile.shared.features.subscriptions.generated.resources.subscription_credits
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_expired_benefits_title
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_expired_card_button
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_expired_card_title
@@ -61,8 +58,6 @@ import yral_mobile.shared.features.subscriptions.generated.resources.subscriptio
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_expired_new_price
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_expired_old_price
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_expired_subtitle
-import yral_mobile.shared.features.subscriptions.generated.resources.subscription_expired_title
-import yral_mobile.shared.features.subscriptions.generated.resources.subscription_success_background
 
 @Composable
 fun SubscriptionExpiredScreen(

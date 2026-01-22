@@ -89,6 +89,20 @@ class AccountsViewModel internal constructor(
                 .observeSessionState(transform = { sessionManager.getAccountInfo() })
                 .collect { info: AccountInfo? -> _state.update { it.copy(accountInfo = info) } }
         }
+        coroutineScope.launch {
+            sessionManager
+                .observeSessionProperty { it.proDetails }
+                .collect { proDetails ->
+                    proDetails?.let { details ->
+                        _state.update {
+                            it.copy(
+                                isProPurchased = details.isProPurchased,
+                                availableProCredits = details.availableCredits.toInt(),
+                            )
+                        }
+                    }
+                }
+        }
     }
 
     private fun logout() {
@@ -261,6 +275,9 @@ data class AccountsState(
     val isWalletEnabled: Boolean = false,
     val isLoggedIn: Boolean = false,
     val alertsEnabled: Boolean = false,
+    val isProPurchased: Boolean = false,
+    val totalProCredits: Int = 40,
+    val availableProCredits: Int = 40,
 )
 
 sealed interface AccountBottomSheet {
