@@ -24,6 +24,7 @@ import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +52,8 @@ import com.yral.shared.features.tournament.viewmodel.TournamentGameState
 import com.yral.shared.features.tournament.viewmodel.TournamentGameViewModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.tournament.generated.resources.exit
@@ -240,8 +243,18 @@ fun TournamentBottomOverlay(
 ) {
     gameViewModel.hasVotedOnVideo(feedDetails.videoID)
     val voteResult = gameViewModel.getVoteResult(feedDetails.videoID)
-    // Get video-specific icons (from Gemini analysis) or fallback to global icons
-    val videoIcons = gameViewModel.getIconsForVideo(feedDetails.videoID)
+    // Use produceState to observe only THIS video's emojis, avoiding recomposition
+    // when other videos' emojis change. Start with empty list to hide static emojis
+    // until dynamic ones are loaded.
+    val videoIcons by produceState(
+        initialValue = emptyList(),
+        key1 = feedDetails.videoID,
+    ) {
+        gameViewModel.videoEmojisState
+            .map { it[feedDetails.videoID] ?: emptyList() }
+            .distinctUntilChanged()
+            .collect { value = it }
+    }
     val selectedIcon =
         voteResult?.smiley?.id?.let { voteId ->
             videoIcons.firstOrNull { it.id == voteId }

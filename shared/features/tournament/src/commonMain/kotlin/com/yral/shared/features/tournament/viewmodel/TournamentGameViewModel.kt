@@ -19,6 +19,7 @@ import com.yral.shared.features.tournament.domain.model.CastTournamentVoteReques
 import com.yral.shared.features.tournament.domain.model.GetTournamentsRequest
 import com.yral.shared.features.tournament.domain.model.HotOrNotVoteRequest
 import com.yral.shared.features.tournament.domain.model.HotOrNotVoteResult
+import com.yral.shared.features.tournament.domain.model.TournamentError
 import com.yral.shared.features.tournament.domain.model.TournamentErrorCodes
 import com.yral.shared.features.tournament.domain.model.TournamentType
 import com.yral.shared.features.tournament.domain.model.VideoEmoji
@@ -42,6 +43,11 @@ class TournamentGameViewModel(
 ) : ViewModel() {
     private val _state = MutableStateFlow(TournamentGameState())
     val state: StateFlow<TournamentGameState> = _state.asStateFlow()
+
+    // Separate StateFlow for video emojis to avoid triggering main state recompositions
+    // when prefetching emojis for videos during scroll
+    private val _videoEmojisState = MutableStateFlow<Map<String, List<GameIcon>>>(emptyMap())
+    val videoEmojisState: StateFlow<Map<String, List<GameIcon>>> = _videoEmojisState.asStateFlow()
 
     // Track loading state outside of StateFlow to avoid recompositions during scroll
     private val loadingVideoEmojis = mutableSetOf<String>()
@@ -173,12 +179,14 @@ class TournamentGameViewModel(
             diamondsRemaining = result.diamonds,
         )
 
+        // Update video emojis in dedicated StateFlow (separate from main state)
         val videoIcons = result.videoEmojis?.map { it.toGameIcon() }
+        if (!videoIcons.isNullOrEmpty()) {
+            _videoEmojisState.update { it + (videoId to videoIcons) }
+        }
 
         _state.update {
             val updatedResults = it.voteResults.toMutableMap().apply { put(videoId, resolvedResult) }
-            val updatedVideoEmojis =
-                if (!videoIcons.isNullOrEmpty()) it.videoEmojis + (videoId to videoIcons) else it.videoEmojis
 
             it.copy(
                 isLoading = false,
@@ -189,7 +197,6 @@ class TournamentGameViewModel(
                 lastVoteOutcome = result.outcome,
                 lastDiamondDelta = diamondDelta,
                 voteResults = updatedResults,
-                videoEmojis = updatedVideoEmojis,
                 lastVotedCount = it.lastVotedCount + 1,
             )
         }
@@ -295,9 +302,9 @@ class TournamentGameViewModel(
      * Falls back to global game icons only if loading failed.
      */
     fun getIconsForVideo(videoId: String): List<GameIcon> {
-        val state = _state.value
-        return state.videoEmojis[videoId]
-            ?: if (loadingVideoEmojis.contains(videoId)) emptyList() else state.gameIcons
+        val videoEmojis = _videoEmojisState.value
+        return videoEmojis[videoId]
+            ?: if (loadingVideoEmojis.contains(videoId)) emptyList() else _state.value.gameIcons
     }
 
     fun getVoteResult(videoId: String): VoteResult? = _state.value.voteResults[videoId]
@@ -331,7 +338,7 @@ class TournamentGameViewModel(
         val currentState = _state.value
         // Skip if already cached, already loading, or if tournament ID not set
         val shouldSkip =
-            currentState.videoEmojis.containsKey(videoId) ||
+            _videoEmojisState.value.containsKey(videoId) ||
                 loadingVideoEmojis.contains(videoId) ||
                 currentState.tournamentId.isEmpty()
         if (shouldSkip) return
@@ -349,9 +356,8 @@ class TournamentGameViewModel(
                 ).onSuccess { result ->
                     loadingVideoEmojis.remove(videoId)
                     val videoIcons = result.emojis.map { emoji -> emoji.toGameIcon() }
-                    _state.update {
-                        it.copy(videoEmojis = it.videoEmojis + (videoId to videoIcons))
-                    }
+                    // Update dedicated StateFlow to avoid main state recompositions during scroll
+                    _videoEmojisState.update { it + (videoId to videoIcons) }
                 }.onFailure {
                     // Remove from loading - will use global icons as fallback
                     loadingVideoEmojis.remove(videoId)

@@ -3,7 +3,6 @@ package com.yral.shared.features.game.ui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.text.BasicText
-import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -72,8 +71,7 @@ fun LocalGameIcon(
             BasicText(
                 text = icon.unicode,
                 maxLines = 1,
-                autoSize = TextAutoSize.StepBased(12.sp, 25.sp),
-                style = emojiTextStyle(),
+                style = emojiTextStyle().copy(fontSize = 28.sp),
             )
         }
     }
