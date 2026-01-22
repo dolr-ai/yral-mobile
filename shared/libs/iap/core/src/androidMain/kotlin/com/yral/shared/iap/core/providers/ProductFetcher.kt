@@ -17,6 +17,7 @@ internal class ProductFetcher(
     @Suppress("CyclomaticComplexMethod")
     suspend fun fetchProducts(productIds: List<ProductId>): Result<List<Product>> =
         handleIAPResultOperation {
+            Logger.d("SubscriptionX") { "Fetching products " }
             val client = connectionManager.ensureReady()
             val productList = mutableListOf<Product>()
             val (oneTimeProductIds, subscriptionProductIds) =
@@ -29,7 +30,7 @@ internal class ProductFetcher(
                     onSuccess = {
                         productList.addAll(it)
                     },
-                    onFailure = { Logger.e("ProductFetcher", it) { "Failed to fetch inApp products" } },
+                    onFailure = { Logger.e("SubscriptionX", it) { "Failed to fetch inApp products" } },
                 )
             }
             if (subscriptionProductIdStrings.isNotEmpty()) {
@@ -38,9 +39,10 @@ internal class ProductFetcher(
                     onSuccess = {
                         productList.addAll(it)
                     },
-                    onFailure = { Logger.e("ProductFetcher", it) { "Failed to fetch subscription products" } },
+                    onFailure = { Logger.e("SubscriptionX", it) { "Failed to fetch subscription products" } },
                 )
             }
+            Logger.d("SubscriptionX") { "Fetched products $productList" }
             if (productList.isNotEmpty()) {
                 Result.success(productList)
             } else {
@@ -83,6 +85,7 @@ internal class ProductFetcher(
     ): ProductDetails? {
         val params = getQueryProductParams(listOf(productId), productType)
         val result = client.queryProductDetails(params)
+        Logger.d("SubscriptionX") { "queryProductDetailsByType $result" }
         return if (
             result.billingResult.responseCode == BillingClient.BillingResponseCode.OK &&
             result.productDetailsList?.isNotEmpty() == true

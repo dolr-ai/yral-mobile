@@ -1,5 +1,6 @@
 package com.yral.shared.iap.providers
 
+import co.touchlab.kermit.Logger
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.Product
@@ -39,9 +40,16 @@ internal class IAPProviderImpl(
                         obfuscatedAccountId = userId,
                         acknowledgePurchase = acknowledgePurchase,
                     ).map { purchase ->
+                        Logger.d("SubscriptionX") { "verify purchase $purchase" }
                         verificationService.verifyPurchase(purchase, userId).fold(
-                            onSuccess = { purchase },
-                            onFailure = { error -> throw error },
+                            onSuccess = {
+                                Logger.d("SubscriptionX") { "purchase acknowledged" }
+                                purchase
+                            },
+                            onFailure = { error ->
+                                Logger.e("SubscriptionX", error) { "purchase acknowledge failed" }
+                                throw error
+                            },
                         )
                     }
             } ?: throw IAPError.UnknownError(Exception("User principal is null"))
@@ -55,11 +63,15 @@ internal class IAPProviderImpl(
                     .map { rawPurchases ->
                         val verifiedPurchases = mutableListOf<CorePurchase>()
                         val verificationErrors = mutableListOf<IAPError>()
-
+                        Logger.d("SubscriptionXM") { "verify restored purchases $rawPurchases" }
                         rawPurchases.filter { purchase ->
                             verificationService.verifyPurchase(purchase, userId).fold(
-                                onSuccess = { verifiedPurchases.add(purchase) },
+                                onSuccess = {
+                                    Logger.d("SubscriptionXM") { "purchase verified $purchase" }
+                                    verifiedPurchases.add(purchase)
+                                },
                                 onFailure = { error ->
+                                    Logger.e("SubscriptionXM", error) { "purchase verification failed $error" }
                                     if (error is IAPError) {
                                         verificationErrors.add(error)
                                     } else {
@@ -68,7 +80,7 @@ internal class IAPProviderImpl(
                                 },
                             )
                         }
-
+                        Logger.d("SubscriptionXM") { "verified purchases $verifiedPurchases" }
                         RestoreResult(verifiedPurchases, verificationErrors)
                     }
             } ?: throw IAPError.UnknownError(Exception("User principal is null"))

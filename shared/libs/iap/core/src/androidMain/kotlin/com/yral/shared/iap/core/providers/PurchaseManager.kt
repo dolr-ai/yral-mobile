@@ -47,6 +47,12 @@ internal class PurchaseManager(
                     acknowledgePurchase,
                 )
 
+            Logger.d("SubscriptionX") {
+                "Restored purchases:" +
+                    "iap: ${inAppResult.responseCode}, " +
+                    "subs: ${subscriptionResult.responseCode}"
+            }
+
             if (inAppResult.responseCode == BillingClient.BillingResponseCode.OK ||
                 subscriptionResult.responseCode == BillingClient.BillingResponseCode.OK
             ) {
@@ -89,6 +95,7 @@ internal class PurchaseManager(
 
                 // After resuming, acknowledge purchases asynchronously (only if acknowledgePurchase is true)
                 if (acknowledgePurchase && unacknowledgedPurchases.isNotEmpty()) {
+                    Logger.d("SubscriptionX") { "Acknowledging restored purchases $unacknowledgedPurchases" }
                     acknowledgmentScope.launch {
                         unacknowledgedPurchases.forEach { purchase ->
                             try {
@@ -161,6 +168,7 @@ internal class PurchaseManager(
         client: BillingClient,
         purchase: Purchase,
     ) {
+        Logger.d("SubscriptionX") { "acknowledgePurchaseIfNeeded ${purchase.isAcknowledged}" }
         if (!purchase.isAcknowledged) {
             val params =
                 AcknowledgePurchaseParams
@@ -171,7 +179,7 @@ internal class PurchaseManager(
                 // Handle acknowledgment result
                 if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
                     // Log error if needed - acknowledgment failure doesn't block the restore operation
-                    Logger.d("PurchaseManager") { "Failed to acknowledge purchase" }
+                    Logger.d("SubscriptionX") { "Failed to acknowledge purchase" }
                 }
             }
         }

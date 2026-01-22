@@ -53,7 +53,9 @@ class IAPManager(
         context: Any? = null,
         acknowledgePurchase: Boolean = false,
     ): Result<Purchase> {
+        Logger.d("SubscriptionXM") { "purchaseProduct $productId" }
         val result = provider.purchaseProduct(productId, context, acknowledgePurchase)
+        Logger.d("SubscriptionXM") { "purchaseProduct $result" }
         notifyListeners {
             if (result.isSuccess) {
                 result.getOrNull()?.let { purchase ->
@@ -70,7 +72,9 @@ class IAPManager(
     }
 
     suspend fun restorePurchases(acknowledgePurchase: Boolean = false): Result<RestoreResult> {
+        Logger.d("SubscriptionXM") { "restorePurchases $acknowledgePurchase" }
         val result = provider.restorePurchases(acknowledgePurchase)
+        Logger.d("SubscriptionXM") { "restorePurchases $result" }
         notifyListeners {
             if (result.isSuccess) {
                 result.getOrNull()?.let { purchases ->

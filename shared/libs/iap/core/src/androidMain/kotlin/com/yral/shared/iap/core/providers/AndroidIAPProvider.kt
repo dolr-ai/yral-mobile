@@ -2,6 +2,7 @@ package com.yral.shared.iap.core.providers
 
 import android.app.Activity
 import android.content.Context
+import co.touchlab.kermit.Logger
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.BillingResult
@@ -105,6 +106,7 @@ internal class AndroidIAPProvider(
                 }
             }
 
+            Logger.d("SubscriptionX") { "obfuscated account id while purchasing $obfuscatedAccountId" }
             val flowParams =
                 BillingFlowParams
                     .newBuilder()
@@ -188,6 +190,7 @@ internal class AndroidIAPProvider(
         billingResult: BillingResult,
         purchases: List<Purchase>?,
     ) {
+        Logger.d("SubscriptionX") { "handlePurchaseUpdate $billingResult" }
         if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
             handleBillingError(billingResult, purchases)
             return
@@ -201,6 +204,7 @@ internal class AndroidIAPProvider(
     }
 
     private fun handleSuccessfulPurchases(purchases: List<Purchase>?) {
+        Logger.d("SubscriptionX") { "handleSuccessfulPurchases $purchases" }
         purchases?.forEach { purchase ->
             val productId = purchase.products.firstOrNull() ?: return@forEach
             val iapPurchase = purchaseManager.convertPurchase(purchase)
@@ -210,6 +214,7 @@ internal class AndroidIAPProvider(
                         pendingPurchasesAcknowledgeFlags[productId] ?: true
                     }
                 if (shouldAcknowledge) {
+                    Logger.d("SubscriptionX") { "Acknowledge purchase at mobile end" }
                     try {
                         val client = connectionManager.ensureReady()
                         purchaseManager.acknowledgePurchaseIfNeeded(client, purchase)
@@ -236,6 +241,7 @@ internal class AndroidIAPProvider(
     }
 
     private fun handleCancelledPurchases(purchases: List<Purchase>?) {
+        Logger.d("SubscriptionX") { "handleCancelledPurchases $purchases" }
         purchases?.forEach { purchase ->
             val productId = purchase.products.firstOrNull() ?: return@forEach
             val error = IAPError.PurchaseCancelled(productId)
@@ -256,6 +262,7 @@ internal class AndroidIAPProvider(
         billingResult: BillingResult,
         purchases: List<Purchase>?,
     ) {
+        Logger.d("SubscriptionX") { "handleBillingError $purchases" }
         val error =
             when (billingResult.responseCode) {
                 BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE,

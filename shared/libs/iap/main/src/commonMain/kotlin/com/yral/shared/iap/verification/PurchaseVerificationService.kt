@@ -43,7 +43,7 @@ internal class PurchaseVerificationService(
     private val preferences: Preferences,
 ) {
     companion object {
-        private const val TAG = "PurchaseVerificationService"
+        private const val TAG = "SubscriptionXM"
     }
 
     @Suppress("LongMethod", "ThrowsCount")
@@ -71,7 +71,14 @@ internal class PurchaseVerificationService(
                     ),
                 )
             }
-
+            val request =
+                VerifyPurchaseRequest(
+                    userId = userId,
+                    packageName = PackageNameProvider.getPackageName(),
+                    productId = productId,
+                    purchaseToken = purchaseToken,
+                )
+            Logger.d(TAG) { "Verifying purchase $request" }
             val response: HttpResponse =
                 httpClient.post {
                     expectSuccess = false
@@ -79,14 +86,7 @@ internal class PurchaseVerificationService(
                         host = AppConfigurations.BILLING_BASE_URL
                         path(getVerifierEndPoint())
                     }
-                    setBody(
-                        VerifyPurchaseRequest(
-                            userId = userId,
-                            packageName = PackageNameProvider.getPackageName(),
-                            productId = productId,
-                            purchaseToken = purchaseToken,
-                        ),
-                    )
+                    setBody(request)
                 }
 
             if (!response.status.isSuccess()) {
