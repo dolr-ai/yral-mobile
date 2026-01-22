@@ -139,6 +139,38 @@ impl From<yral_canisters_client::user_info_service::UserProfileDetailsForFronten
     }
 }
 
+#[derive(CandidType, Deserialize, Record, Clone, Debug, PartialEq)]
+pub struct UISYralProSubscription {
+    pub free_video_credits_left: u32,
+}
+
+impl From<yral_canisters_client::user_info_service::YralProSubscription> for UISYralProSubscription {
+    fn from(value: yral_canisters_client::user_info_service::YralProSubscription) -> Self {
+        Self {
+            free_video_credits_left: value.free_video_credits_left,
+        }
+    }
+}
+
+#[derive(CandidType, Deserialize, Enum, Clone, Debug, PartialEq)]
+pub enum UISSubscriptionPlan {
+    Pro(UISYralProSubscription),
+    Free,
+}
+
+impl From<yral_canisters_client::user_info_service::SubscriptionPlan> for UISSubscriptionPlan {
+    fn from(value: yral_canisters_client::user_info_service::SubscriptionPlan) -> Self {
+        match value {
+            yral_canisters_client::user_info_service::SubscriptionPlan::Free => {
+                UISSubscriptionPlan::Free
+            }
+            yral_canisters_client::user_info_service::SubscriptionPlan::Pro(pro_sub) => {
+                UISSubscriptionPlan::Pro(pro_sub.into())
+            }
+        }
+    }
+}
+
 #[derive(CandidType, Deserialize, Record, Clone)]
 pub struct UISUserProfileDetailsForFrontendV6 {
     pub bio: Option<String>,
@@ -149,7 +181,7 @@ pub struct UISUserProfileDetailsForFrontendV6 {
     pub principal_id: Principal,
     pub followers_count: u64,
     pub caller_follows_user: Option<bool>,
-    pub subscription_plan: String,
+    pub subscription_plan: UISSubscriptionPlan,
     pub is_ai_influencer: bool,
 }
 
@@ -168,7 +200,7 @@ impl From<yral_canisters_client::user_info_service::UserProfileDetailsForFronten
             principal_id: value.principal_id,
             followers_count: value.followers_count,
             caller_follows_user: value.caller_follows_user,
-            subscription_plan: format!("{:?}", value.subscription_plan),
+            subscription_plan: value.subscription_plan.into(),
             is_ai_influencer: value.is_ai_influencer,
         }
     }
