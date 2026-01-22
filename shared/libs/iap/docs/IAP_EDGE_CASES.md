@@ -29,7 +29,7 @@ override suspend fun purchaseProduct(
         sessionManager.userPrincipal?.let { userId ->
             coreProvider
                 .purchaseProduct(productId, context, userId)
-                .mapCatching { purchase ->
+                .map { purchase ->
                     verificationService.verifyPurchase(purchase, userId).fold(
                         onSuccess = { purchase },
                         onFailure = { error -> throw error },

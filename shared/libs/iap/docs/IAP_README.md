@@ -528,7 +528,7 @@ override suspend fun purchaseProduct(
         sessionManager.userPrincipal?.let { userId ->
             coreProvider
                 .purchaseProduct(productId, context, userId)
-                .mapCatching { purchase ->
+                .map { purchase ->
                     verificationService.verifyPurchase(purchase, userId).fold(
                         onSuccess = { purchase },
                         onFailure = { error -> throw error },
@@ -772,7 +772,7 @@ override suspend fun purchaseProduct(
         sessionManager.userPrincipal?.let { userId ->
             coreProvider
                 .purchaseProduct(productId, context, userId)
-                .mapCatching { purchase ->
+                .map { purchase ->
                     verificationService.verifyPurchase(purchase, userId).fold(
                         onSuccess = { purchase },
                         onFailure = { error -> throw error },
@@ -786,7 +786,7 @@ override suspend fun restorePurchases(userId: String?): Result<List<CorePurchase
         userId?.let {
             coreProvider
                 .restorePurchases()
-                .mapCatching { purchases ->
+                .map { purchases ->
                     purchases.filter { purchase ->
                         verificationService.verifyPurchase(purchase, userId).fold(
                             onSuccess = { true },

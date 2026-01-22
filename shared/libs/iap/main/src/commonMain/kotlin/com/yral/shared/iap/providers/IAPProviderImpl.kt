@@ -38,7 +38,7 @@ internal class IAPProviderImpl(
                         context = context,
                         obfuscatedAccountId = userId,
                         acknowledgePurchase = acknowledgePurchase,
-                    ).mapCatching { purchase ->
+                    ).map { purchase ->
                         verificationService.verifyPurchase(purchase, userId).fold(
                             onSuccess = { purchase },
                             onFailure = { error -> throw error },
@@ -52,7 +52,7 @@ internal class IAPProviderImpl(
             sessionManager.userPrincipal?.let { userId ->
                 coreProvider
                     .restorePurchases(acknowledgePurchase = acknowledgePurchase)
-                    .mapCatching { rawPurchases ->
+                    .map { rawPurchases ->
                         val verifiedPurchases = mutableListOf<CorePurchase>()
                         val verificationErrors = mutableListOf<IAPError>()
 
