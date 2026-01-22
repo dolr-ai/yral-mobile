@@ -62,6 +62,8 @@ fun TournamentData.toUiTournament(): Tournament {
         startEpochMs = startEpochMs,
         endEpochMs = endEpochMs,
         entryCost = entryCost,
+        isRegistered = userStats != null,
+        userDiamonds = userStats?.diamonds ?: 0,
     )
 }
 
