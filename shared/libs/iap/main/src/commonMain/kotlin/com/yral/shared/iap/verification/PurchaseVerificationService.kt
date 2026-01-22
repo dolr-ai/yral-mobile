@@ -10,12 +10,10 @@ import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.expectSuccess
-import io.ktor.client.request.headers
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
-import io.ktor.http.HttpHeaders
 import io.ktor.http.isSuccess
 import io.ktor.http.path
 import kotlinx.serialization.SerialName
@@ -80,9 +78,6 @@ internal class PurchaseVerificationService(
                     url {
                         host = AppConfigurations.BILLING_BASE_URL
                         path(getVerifierEndPoint())
-                    }
-                    headers {
-                        append(HttpHeaders.Authorization, "Bearer $idToken")
                     }
                     setBody(
                         VerifyPurchaseRequest(
