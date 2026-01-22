@@ -102,5 +102,42 @@ fun GameIcon.getResource(): DrawableResource? =
         GameIconNames.SURPRISE -> Res.drawable.surprise
         GameIconNames.ROCKET -> Res.drawable.rocket
         GameIconNames.PUKE -> Res.drawable.puke
-        GameIconNames.UNKNOWN -> null
+        GameIconNames.UNKNOWN -> getDrawableFromUnicode(unicode)
+    }
+
+/**
+ * Maps common emoji unicode characters to existing drawable resources.
+ * This enables dynamic emojis from Gemini to show prettier static images
+ * when they match or are similar to our predefined emoji categories.
+ */
+private fun getDrawableFromUnicode(unicode: String): DrawableResource? =
+    when (unicode) {
+        // Laugh/Joy emojis
+        "😂", "🤣", "😆", "😄", "😁", "😀", "😃", "😅", "😹", "🙂", "😊", "☺️" ->
+            Res.drawable.laughing
+
+        // Heart/Love emojis
+        "❤️", "💕", "💖", "💗", "💓", "💞", "💘", "💝", "😍", "🥰", "😻", "💜", "💙", "💚",
+        "🧡", "💛", "🤍", "🖤", "🤎", "💟", "❣️", "♥️", "🩷", "🩵", "🩶",
+        ->
+            Res.drawable.heart
+
+        // Fire emojis
+        "🔥", "💥", "⚡", "✨", "🌟", "⭐", "💫", "🎇", "🎆" ->
+            Res.drawable.fire
+
+        // Surprise/Shock emojis
+        "😮", "😲", "🤯", "😱", "😨", "😧", "😦", "🙀", "😯", "😵", "🫢", "🫣", "😳" ->
+            Res.drawable.surprise
+
+        // Rocket/Speed/Achievement emojis
+        "🚀", "🎯", "🏆", "🥇", "🎖️", "🏅", "💪", "👊", "✊", "🙌", "👏", "🎉", "🎊" ->
+            Res.drawable.rocket
+
+        // Puke/Disgust emojis
+        "🤮", "🤢", "😷", "🤧", "😖", "😫", "😩", "💩", "👎", "😒", "😑", "😐" ->
+            Res.drawable.puke
+
+        // No matching image for other emojis - will render unicode text
+        else -> null
     }

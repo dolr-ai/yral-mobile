@@ -16,6 +16,8 @@ import com.yral.shared.features.tournament.data.models.TournamentStatusRequestDt
 import com.yral.shared.features.tournament.data.models.TournamentStatusResponseDto
 import com.yral.shared.features.tournament.data.models.TournamentVoteRequestDto
 import com.yral.shared.features.tournament.data.models.TournamentVoteResponseDto
+import com.yral.shared.features.tournament.data.models.VideoEmojisRequestDto
+import com.yral.shared.features.tournament.data.models.VideoEmojisResponseDto
 import com.yral.shared.firebaseStore.cloudFunctionUrl
 import com.yral.shared.firebaseStore.firebaseAppCheckToken
 import io.ktor.client.HttpClient
@@ -243,6 +245,29 @@ class TournamentRemoteDataSource(
         }
     }
 
+    @Suppress("SwallowedException", "TooGenericExceptionCaught")
+    override suspend fun getVideoEmojis(request: VideoEmojisRequestDto): VideoEmojisResponseDto {
+        try {
+            val response: HttpResponse =
+                httpClient.post {
+                    expectSuccess = false
+                    url {
+                        host = cloudFunctionUrl()
+                        path(VIDEO_EMOJIS_PATH)
+                    }
+                    val appCheckToken = firebaseAppCheckToken()
+                    headers {
+                        append(HEADER_X_FIREBASE_APPCHECK, appCheckToken)
+                    }
+                    setBody(FirebaseFunctionRequest(request))
+                }
+            val apiResponseString = response.bodyAsText()
+            return json.decodeFromString<VideoEmojisResponseDto>(apiResponseString)
+        } catch (e: Exception) {
+            throw YralException("Error getting video emojis: ${e.message}")
+        }
+    }
+
     companion object {
         private const val TOURNAMENTS_PATH = "tournaments"
         private const val TOURNAMENT_STATUS_PATH = "tournament_status"
@@ -251,6 +276,7 @@ class TournamentRemoteDataSource(
         private const val TOURNAMENT_VOTE_PATH = "tournament_vote"
         private const val HOT_OR_NOT_VOTE_PATH = "hot_or_not_tournament_vote"
         private const val TOURNAMENT_LEADERBOARD_PATH = "tournament_leaderboard"
+        private const val VIDEO_EMOJIS_PATH = "tournament_video_emojis"
         private const val HEADER_X_FIREBASE_APPCHECK = "X-Firebase-AppCheck"
     }
 }

@@ -16,7 +16,8 @@ from tournaments import (
     register_for_tournament,
     my_tournaments,
     tournament_vote,
-    tournament_leaderboard
+    tournament_leaderboard,
+    tournament_video_emojis,
 )
 from hot_or_not_tournament import (
     create_hot_or_not_tournament,

@@ -42,6 +42,14 @@ fun GameIconBubbles(
                 contentScale = ContentScale.FillBounds,
                 onAnimationComplete = onAnimationComplete,
             )
+        } else if (icon.unicode.isNotEmpty()) {
+            // For dynamic emojis without a Lottie animation, play the bubbles animation.
+            // The scale/rotate animation on the icon itself is already handled by GameIconStrip.
+            EmojiBubblesAnimation(
+                emoji = icon.unicode,
+                modifier = Modifier.fillMaxSize(),
+                onAnimationComplete = onAnimationComplete,
+            )
         }
     }
 }
@@ -54,5 +62,42 @@ fun GameIcon.getBubbleResource(): LottieRes? =
         GameIconNames.SURPRISE -> LottieRes.SMILEY_GAME_SURPRISE
         GameIconNames.ROCKET -> LottieRes.SMILEY_GAME_ROCKET
         GameIconNames.PUKE -> LottieRes.SMILEY_GAME_PUKE
-        GameIconNames.UNKNOWN -> null
+        GameIconNames.UNKNOWN -> getLottieFromUnicode(unicode)
+    }
+
+/**
+ * Maps common emoji unicode characters to existing Lottie animations.
+ * This enables dynamic emojis from Gemini to have animations when they
+ * match or are similar to our predefined emoji categories.
+ */
+private fun getLottieFromUnicode(unicode: String): LottieRes? =
+    when (unicode) {
+        // Laugh/Joy emojis
+        "😂", "🤣", "😆", "😄", "😁", "😀", "😃", "😅", "😹", "🙂", "😊", "☺️" ->
+            LottieRes.SMILEY_GAME_LAUGH
+
+        // Heart/Love emojis
+        "❤️", "💕", "💖", "💗", "💓", "💞", "💘", "💝", "😍", "🥰", "😻", "💜", "💙", "💚",
+        "🧡", "💛", "🤍", "🖤", "🤎", "💟", "❣️", "♥️", "🩷", "🩵", "🩶",
+        ->
+            LottieRes.SMILEY_GAME_HEART
+
+        // Fire emojis
+        "🔥", "💥", "⚡", "✨", "🌟", "⭐", "💫", "🎇", "🎆" ->
+            LottieRes.SMILEY_GAME_FIRE
+
+        // Surprise/Shock emojis
+        "😮", "😲", "🤯", "😱", "😨", "😧", "😦", "🙀", "😯", "😵", "🫢", "🫣", "😳" ->
+            LottieRes.SMILEY_GAME_SURPRISE
+
+        // Rocket/Speed/Achievement emojis
+        "🚀", "🎯", "🏆", "🥇", "🎖️", "🏅", "💪", "👊", "✊", "🙌", "👏", "🎉", "🎊" ->
+            LottieRes.SMILEY_GAME_ROCKET
+
+        // Puke/Disgust emojis
+        "🤮", "🤢", "😷", "🤧", "😖", "😫", "😩", "💩", "👎", "😒", "😑", "😐" ->
+            LottieRes.SMILEY_GAME_PUKE
+
+        // For all other emojis, return null to trigger custom EmojiBubblesAnimation
+        else -> null
     }
