@@ -77,6 +77,7 @@ internal class ComponentFactory(
             openConversation = rootComponent::openConversation,
             onBackClicked = rootComponent::onBackClicked,
             showAlertsOnDialog = showAlertsOnDialog,
+            showBackButton = true,
         )
 
     fun createConversation(

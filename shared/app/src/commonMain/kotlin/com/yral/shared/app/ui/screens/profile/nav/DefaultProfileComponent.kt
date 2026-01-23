@@ -152,6 +152,7 @@ internal class DefaultProfileComponent(
             openConversation = openConversation,
             onBackClicked = {},
             showAlertsOnDialog = showAlertsOnDialog,
+            showBackButton = false,
         )
 
     private fun accountComponent(componentContext: ComponentContext): AccountComponent =
