@@ -511,6 +511,7 @@ def create_hot_or_not_tournament(request: Request):
             "title": title,
             "type": "hot_or_not",
             "video_count": len(analyzed_videos),
+            "active_participant_count": 0,
             "created_at": firestore.SERVER_TIMESTAMP,
             "updated_at": firestore.SERVER_TIMESTAMP,
         })
@@ -676,6 +677,11 @@ def hot_or_not_tournament_vote(request: Request):
             if diamonds <= 0:
                 return {"error": "NO_DIAMONDS"}
 
+            # Check if this is user's first game (for active_participant_count)
+            previous_wins = int(user_data.get("wins") or 0)
+            previous_losses = int(user_data.get("losses") or 0)
+            is_first_game = (previous_wins + previous_losses) == 0
+
             # Check duplicate vote
             if vote_ref.get(transaction=tx).exists:
                 return {"error": "DUPLICATE_VOTE"}
@@ -714,6 +720,12 @@ def hot_or_not_tournament_vote(request: Request):
                 "updated_at": firestore.SERVER_TIMESTAMP,
             })
 
+            # Increment active_participant_count if this is user's first game
+            if is_first_game:
+                tx.update(tournament_ref, {
+                    "active_participant_count": firestore.Increment(1)
+                })
+
             return {
                 "success": True,
                 "outcome": outcome,
@@ -721,6 +733,7 @@ def hot_or_not_tournament_vote(request: Request):
                 "ai_verdict": ai_verdict,
                 "diamonds": new_diamonds,
                 "diamond_delta": diamond_delta,
+                "is_first_game": is_first_game,
             }
 
         result = _vote_tx(db().transaction())
@@ -744,6 +757,11 @@ def hot_or_not_tournament_vote(request: Request):
         wins = int(user_data.get("wins") or 0)
         losses = int(user_data.get("losses") or 0)
 
+        # Get updated tournament data for active_participant_count
+        updated_tournament = tournament_ref.get()
+        tournament_data = updated_tournament.to_dict() or {}
+        active_participant_count = int(tournament_data.get("active_participant_count") or 0)
+
         # Calculate live position
         position = _compute_user_position(tournament_id, principal_id, result["diamonds"], wins, losses)
 
@@ -756,6 +774,7 @@ def hot_or_not_tournament_vote(request: Request):
             "wins": wins,
             "losses": losses,
             "position": position,
+            "active_participant_count": active_participant_count,
         }), 200
 
     except auth.InvalidIdTokenError:

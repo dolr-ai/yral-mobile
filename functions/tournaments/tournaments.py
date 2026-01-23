@@ -63,6 +63,7 @@ class Tournament:
             "updated_at": self.updated_at,
             "title": self.title,
             "type": self.type,
+            "active_participant_count": 0,
         }
 
 
