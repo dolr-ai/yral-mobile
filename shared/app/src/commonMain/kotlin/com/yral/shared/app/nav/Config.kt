@@ -58,4 +58,7 @@ internal sealed interface Config {
 
     @Serializable
     data object MandatoryLogin : Config
+
+    @Serializable
+    data object Subscription : Config
 }

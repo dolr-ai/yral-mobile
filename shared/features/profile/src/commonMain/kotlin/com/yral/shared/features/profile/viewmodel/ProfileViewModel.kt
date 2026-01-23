@@ -298,6 +298,16 @@ class ProfileViewModel(
                     }
                 }
         }
+        viewModelScope.launch {
+            sessionManager
+                .observeSessionProperty { it.proDetails }
+                .collect { proDetails ->
+                    // When proDetails becomes null (after purchase), refresh profile
+                    if (proDetails == null && canisterData.userPrincipalId == sessionManager.userPrincipal) {
+                        refreshOwnProfileDetails()
+                    }
+                }
+        }
     }
 
     private fun setAccountInfo(info: AccountInfo?) {
@@ -329,6 +339,7 @@ class ProfileViewModel(
     }
 
     private fun refreshOwnProfileDetails() {
+        Logger.d("SubscriptionX") { "refreshOwnProfileDetails called" }
         viewModelScope.launch {
             val principal = sessionManager.userPrincipal ?: return@launch
             getUserProfileDetailsV6UseCase(
@@ -351,7 +362,8 @@ class ProfileViewModel(
                             availableCredits =
                                 proPlan
                                     ?.subscription
-                                    ?.freeVideoCreditsLeft ?: 0U,
+                                    ?.freeVideoCreditsLeft
+                                    ?.toInt() ?: 0,
                         ),
                 )
                 _state.update { current ->

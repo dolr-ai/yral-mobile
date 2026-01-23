@@ -29,5 +29,8 @@ data class SessionProperties(
 
 data class ProDetails(
     val isProPurchased: Boolean,
-    val availableCredits: UInt,
+    val availableCredits: Int,
+    val totalCredits: Int = DEFAULT_TOTAL_CREDITS,
 )
+
+const val DEFAULT_TOTAL_CREDITS = 30

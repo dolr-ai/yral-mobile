@@ -49,6 +49,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.touchlab.kermit.Logger
 import com.yral.shared.analytics.events.MenuCtaType
 import com.yral.shared.analytics.events.SignupPageName
+import com.yral.shared.core.session.DEFAULT_TOTAL_CREDITS
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.account.ui.AccountScreenConstants.SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT
 import com.yral.shared.features.account.viewmodel.AccountBottomSheet
@@ -58,6 +59,7 @@ import com.yral.shared.features.account.viewmodel.AccountsState
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.LOGOUT_URI
 import com.yral.shared.features.account.viewmodel.ErrorType
+import com.yral.shared.features.subscriptions.ui.SubscriptionCoordinator
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
@@ -145,6 +147,7 @@ fun AccountScreen(
         AccountScreenContent(
             state = state,
             viewModel = viewModel,
+            subscriptionCoordinator = component.subscriptionCoordinator,
             alertsEnabled = state.alertsEnabled,
             onAlertsToggle = handleAlertsToggle,
             onBack = { component.onBack() },
@@ -164,12 +167,28 @@ fun AccountScreen(
 private fun AccountScreenContent(
     state: AccountsState,
     viewModel: AccountsViewModel,
+    subscriptionCoordinator: SubscriptionCoordinator,
     alertsEnabled: Boolean,
     onAlertsToggle: (Boolean) -> Unit,
     onBack: () -> Unit,
     promptLogin: () -> Unit,
 ) {
     val helperLinks = remember(state.isLoggedIn) { viewModel.getHelperLinks() }
+
+    val proDetails by subscriptionCoordinator.proDetails.collectAsStateWithLifecycle(null)
+    val totalProCredits = proDetails?.totalCredits ?: DEFAULT_TOTAL_CREDITS
+    val availableProdCredits = proDetails?.availableCredits ?: 0
+    val proCardClick =
+        remember {
+            {
+                if (!state.isLoggedIn) {
+                    promptLogin()
+                } else {
+                    subscriptionCoordinator.buySubscription()
+                }
+            }
+        }
+
     Column(
         modifier =
             Modifier
@@ -193,13 +212,17 @@ private fun AccountScreenContent(
         } else {
             Spacer(modifier = Modifier.height(8.dp))
         }
-        if (state.isProPurchased) {
+        if (proDetails?.isProPurchased == true) {
             ProMemberCard(
-                availableProdCredits = state.availableProCredits,
-                totalProCredits = state.totalProCredits,
+                availableProdCredits = availableProdCredits,
+                totalProCredits = totalProCredits,
+                onClick = proCardClick,
             )
         } else {
-            ProSubscriptionCard(totalProCredits = state.totalProCredits)
+            ProSubscriptionCard(
+                totalProCredits = totalProCredits,
+                onClick = proCardClick,
+            )
         }
         Spacer(modifier = Modifier.height(8.dp))
         HelpLinks(
@@ -570,7 +593,10 @@ private fun AccountHelpLink.getText() =
     }
 
 @Composable
-private fun ProSubscriptionCard(totalProCredits: Int) {
+private fun ProSubscriptionCard(
+    totalProCredits: Int,
+    onClick: () -> Unit,
+) {
     val cardShape = RoundedCornerShape(size = 16.dp)
     Box(
         modifier =
@@ -578,7 +604,8 @@ private fun ProSubscriptionCard(totalProCredits: Int) {
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
                 .background(color = YralColors.ProCardBackground, shape = cardShape)
-                .clip(shape = cardShape),
+                .clip(shape = cardShape)
+                .clickable(onClick = onClick),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -621,6 +648,7 @@ private fun ProSubscriptionCard(totalProCredits: Int) {
 private fun ProMemberCard(
     availableProdCredits: Int,
     totalProCredits: Int,
+    onClick: () -> Unit,
 ) {
     Box(
         modifier =
@@ -629,7 +657,8 @@ private fun ProMemberCard(
                 .padding(horizontal = 16.dp)
                 .border(width = 1.dp, color = YralColors.ProCardBorder, shape = RoundedCornerShape(size = 8.dp))
                 .background(color = YralColors.ProCardBackground, shape = RoundedCornerShape(size = 8.dp))
-                .padding(10.dp),
+                .padding(10.dp)
+                .clickable(onClick = onClick),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),

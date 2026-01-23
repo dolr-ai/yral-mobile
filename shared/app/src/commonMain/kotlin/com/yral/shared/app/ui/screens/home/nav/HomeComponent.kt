@@ -17,6 +17,7 @@ import com.yral.shared.features.chat.nav.ChatComponent
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.root.viewmodels.HomeViewModel
+import com.yral.shared.features.subscriptions.ui.SubscriptionCoordinator
 import com.yral.shared.features.tournament.nav.TournamentComponent
 import com.yral.shared.features.uploadvideo.nav.UploadVideoRootComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
@@ -31,6 +32,7 @@ abstract class HomeComponent {
     abstract val showAlertsOnDialog: (type: AlertsRequestType) -> Unit
     abstract val homeViewModel: HomeViewModel
     abstract val sessionManager: SessionManager
+    abstract val subscriptionCoordinator: SubscriptionCoordinator
 
     abstract fun onFeedTabClick()
     abstract fun onLeaderboardTabClick()
@@ -88,6 +90,7 @@ abstract class HomeComponent {
         operator fun invoke(
             componentContext: ComponentContext,
             requestLoginFactory: RequestLoginFactory,
+            subscriptionCoordinator: SubscriptionCoordinator,
             openEditProfile: () -> Unit,
             openProfile: (userCanisterData: CanisterData) -> Unit,
             openConversation: (
@@ -115,6 +118,7 @@ abstract class HomeComponent {
             DefaultHomeComponent(
                 componentContext,
                 requestLoginFactory,
+                subscriptionCoordinator,
                 openEditProfile,
                 openProfile,
                 openConversation,
