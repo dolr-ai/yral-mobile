@@ -102,6 +102,7 @@ fun TournamentTopOverlay(
         )
         TournamentLeaderboardBadge(
             position = gameState.position,
+            activeParticipantCount = gameState.activeParticipantCount,
             onClick = onLeaderboardClick,
             modifier =
                 Modifier
@@ -198,10 +199,20 @@ private fun TournamentDiamondPill(diamonds: Int) {
 @Composable
 private fun TournamentLeaderboardBadge(
     position: Int,
+    activeParticipantCount: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val rankText = if (position > 0) "#$position" else "--"
+    val rankText =
+        if (position > 0) {
+            if (activeParticipantCount > 0) {
+                "#$position / $activeParticipantCount"
+            } else {
+                "#$position"
+            }
+        } else {
+            "--"
+        }
     Box(
         modifier = modifier.clickable { onClick() },
         contentAlignment = Alignment.BottomCenter,

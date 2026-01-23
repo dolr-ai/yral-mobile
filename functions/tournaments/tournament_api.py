@@ -1064,6 +1064,13 @@ def tournament_vote(request: Request):
             "updated_at": firestore.SERVER_TIMESTAMP
         })
 
+        # Get current stats to check if this is first game
+        current_reg = reg_ref.get()
+        current_reg_data = current_reg.to_dict() or {}
+        previous_wins = int(current_reg_data.get("tournament_wins") or 0)
+        previous_losses = int(current_reg_data.get("tournament_losses") or 0)
+        is_first_game = (previous_wins + previous_losses) == 0
+
         # Update user's tournament stats and diamonds
         # Win: +1 diamond, Loss: -1 diamond
         if outcome == "WIN":
@@ -1079,12 +1086,23 @@ def tournament_vote(request: Request):
                 "updated_at": firestore.SERVER_TIMESTAMP
             })
 
+        # Increment active_participant_count if this is user's first game
+        if is_first_game:
+            tournament_ref.update({
+                "active_participant_count": firestore.Increment(1)
+            })
+
         # Get updated stats
         updated_reg = reg_ref.get()
         reg_data = updated_reg.to_dict() or {}
         tournament_wins = int(reg_data.get("tournament_wins") or 0)
         tournament_losses = int(reg_data.get("tournament_losses") or 0)
         diamonds = int(reg_data.get("diamonds") or 0)
+
+        # Get updated tournament data for active_participant_count
+        updated_tournament = tournament_ref.get()
+        tournament_data = updated_tournament.to_dict() or {}
+        active_participant_count = int(tournament_data.get("active_participant_count") or 0)
 
         # Calculate position
         top_rows = _compute_tournament_leaderboard(tournament_id, limit=10)
@@ -1108,6 +1126,7 @@ def tournament_vote(request: Request):
             "tournament_losses": tournament_losses,
             "diamonds": diamonds,
             "position": position,
+            "active_participant_count": active_participant_count,
         }
 
         # Include video-specific emojis if available

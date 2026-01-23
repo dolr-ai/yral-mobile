@@ -9,6 +9,7 @@ data class VoteResult(
     val position: Int,
     val diamondDelta: Int? = null,
     val videoEmojis: List<VideoEmoji>? = null,
+    val activeParticipantCount: Int = 0,
 )
 
 enum class VoteOutcome {
