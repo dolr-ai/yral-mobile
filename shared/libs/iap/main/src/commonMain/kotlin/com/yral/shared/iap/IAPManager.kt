@@ -96,6 +96,8 @@ class IAPManager(
 
     suspend fun isProductPurchased(productId: ProductId): Result<Boolean> = provider.isProductPurchased(productId)
 
+    suspend fun queryPurchase(productId: ProductId): Result<Purchase?> = provider.queryPurchase(productId)
+
     fun notifyWarning(message: String) {
         Logger.w("SubscriptionXM") { message }
         managerScope.launch {

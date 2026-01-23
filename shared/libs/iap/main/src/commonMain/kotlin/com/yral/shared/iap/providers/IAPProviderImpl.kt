@@ -57,33 +57,41 @@ internal class IAPProviderImpl(
             } ?: throw IAPError.UnknownError(Exception("User principal is null"))
         }
 
-    override suspend fun restorePurchases(acknowledgePurchase: Boolean): Result<RestoreResult> =
+    override suspend fun restorePurchases(
+        acknowledgePurchase: Boolean,
+        verifyPurchases: Boolean,
+    ): Result<RestoreResult> =
         handleIAPResultOperation {
             sessionManager.userPrincipal?.let { userId ->
                 coreProvider
                     .restorePurchases(acknowledgePurchase = acknowledgePurchase)
                     .map { rawPurchases ->
-                        val verifiedPurchases = mutableListOf<CorePurchase>()
-                        val verificationErrors = mutableListOf<IAPError>()
-                        Logger.d("SubscriptionXM") { "verify restored purchases $rawPurchases" }
-                        rawPurchases.filter { purchase ->
-                            verificationService.verifyPurchase(purchase, userId).fold(
-                                onSuccess = {
-                                    Logger.d("SubscriptionXM") { "purchase verified $purchase" }
-                                    verifiedPurchases.add(purchase)
-                                },
-                                onFailure = { error ->
-                                    Logger.e("SubscriptionXM", error) { "purchase verification failed $error" }
-                                    if (error is IAPError) {
-                                        verificationErrors.add(error)
-                                    } else {
-                                        verificationErrors.add(IAPError.UnknownError(error))
-                                    }
-                                },
-                            )
+                        if (verifyPurchases) {
+                            val verifiedPurchases = mutableListOf<CorePurchase>()
+                            val verificationErrors = mutableListOf<IAPError>()
+                            Logger.d("SubscriptionXM") { "verify restored purchases $rawPurchases" }
+                            rawPurchases.filter { purchase ->
+                                verificationService.verifyPurchase(purchase, userId).fold(
+                                    onSuccess = {
+                                        Logger.d("SubscriptionXM") { "purchase verified $purchase" }
+                                        verifiedPurchases.add(purchase)
+                                    },
+                                    onFailure = { error ->
+                                        Logger.e("SubscriptionXM", error) { "purchase verification failed $error" }
+                                        if (error is IAPError) {
+                                            verificationErrors.add(error)
+                                        } else {
+                                            verificationErrors.add(IAPError.UnknownError(error))
+                                        }
+                                    },
+                                )
+                            }
+                            Logger.d("SubscriptionXM") { "verified purchases $verifiedPurchases" }
+                            RestoreResult(verifiedPurchases, verificationErrors)
+                        } else {
+                            Logger.d("SubscriptionXM") { "restored purchases $rawPurchases" }
+                            RestoreResult(rawPurchases, emptyList())
                         }
-                        Logger.d("SubscriptionXM") { "verified purchases $verifiedPurchases" }
-                        RestoreResult(verifiedPurchases, verificationErrors)
                     }
             } ?: throw IAPError.UnknownError(Exception("User principal is null"))
         }
@@ -91,6 +99,15 @@ internal class IAPProviderImpl(
     override suspend fun isProductPurchased(productId: ProductId): Result<Boolean> =
         restorePurchases().map { result ->
             result.purchases.any { purchase ->
+                purchase.productId == productId &&
+                    purchase.state == PurchaseState.PURCHASED &&
+                    (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
+            }
+        }
+
+    override suspend fun queryPurchase(productId: ProductId): Result<CorePurchase?> =
+        restorePurchases(verifyPurchases = false).map { result ->
+            result.purchases.firstOrNull { purchase ->
                 purchase.productId == productId &&
                     purchase.state == PurchaseState.PURCHASED &&
                     (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
