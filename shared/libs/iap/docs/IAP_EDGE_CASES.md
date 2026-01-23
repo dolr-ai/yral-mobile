@@ -5,7 +5,7 @@ This document describes edge cases and potential issues when using the IAP modul
 ## Simplified Architecture
 
 The IAP module follows a simplified, backend-driven architecture:
-- **IAP Module**: Returns all purchases from store with automatically verifies purchases with backend
+- **IAP Module**: Returns all purchases from store and automatically verifies purchases with backend
 - **Subscription Module**: Handles subscription status management, credit consumption, and subscription lifecycle
 - **Backend**: Handles account matching during verification (source of truth)
 

@@ -11,10 +11,11 @@ enum class ProductId(
     YRAL_PRO("yral_pro"),
     ;
 
-    fun getProductType(): ProductType =
-        when (this) {
-            YRAL_PRO -> ProductType.SUBS
-        }
+    val productType: ProductType
+        get() =
+            when (this) {
+                YRAL_PRO -> ProductType.SUBS
+            }
 
     companion object {
         fun fromString(productId: String): ProductId? = entries.find { it.productId == productId }

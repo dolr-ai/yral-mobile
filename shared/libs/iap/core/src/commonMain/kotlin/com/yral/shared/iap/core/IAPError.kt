@@ -14,6 +14,10 @@ sealed class IAPError(
     data class PurchaseCancelled(
         val productId: String,
     ) : IAPError("Purchase cancelled for product: $productId")
+    data class PurchasePending(
+        val productId: String,
+        override val cause: Throwable? = null,
+    ) : IAPError("Purchase is pending approval (Ask to Buy) for product: $productId", cause)
     data class BillingUnavailable(
         override val cause: Throwable? = null,
     ) : IAPError("Billing service unavailable", cause)

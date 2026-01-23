@@ -147,24 +147,22 @@ internal class PurchaseManager(
         )
     }
 
-    @Suppress("ReturnCount")
+    @OptIn(ExperimentalTime::class)
     private fun determineSubscriptionStatus(
         expirationDate: Long?,
         isAutoRenewing: Boolean?,
         isSuspended: Boolean?,
-    ): SubscriptionStatus {
-        if (isSuspended == true) return SubscriptionStatus.PAUSED
-        expirationDate?.let { expiry ->
-            @OptIn(ExperimentalTime::class)
-            if (expiry <= Clock.System.now().toEpochMilliseconds()) {
-                return SubscriptionStatus.EXPIRED
-            }
+    ): SubscriptionStatus =
+        when {
+            isSuspended == true -> SubscriptionStatus.PAUSED
+            expirationDate != null && expirationDate <= Clock.System.now().toEpochMilliseconds() ->
+                SubscriptionStatus.EXPIRED
+            isAutoRenewing == null && expirationDate == null -> SubscriptionStatus.UNKNOWN
+            isAutoRenewing == false -> SubscriptionStatus.CANCELLED
+            else -> SubscriptionStatus.ACTIVE
         }
-        if (isAutoRenewing == false) return SubscriptionStatus.CANCELLED
-        return SubscriptionStatus.ACTIVE
-    }
 
-    fun acknowledgePurchaseIfNeeded(
+    suspend fun acknowledgePurchaseIfNeeded(
         client: BillingClient,
         purchase: Purchase,
     ) {
@@ -175,11 +173,20 @@ internal class PurchaseManager(
                     .newBuilder()
                     .setPurchaseToken(purchase.purchaseToken)
                     .build()
-            client.acknowledgePurchase(params) { billingResult ->
-                // Handle acknowledgment result
-                if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
-                    // Log error if needed - acknowledgment failure doesn't block the restore operation
-                    Logger.d("SubscriptionX") { "Failed to acknowledge purchase" }
+            suspendCancellableCoroutine { continuation ->
+                client.acknowledgePurchase(params) { billingResult ->
+                    // Handle acknowledgment result
+                    if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
+                        // Log error if needed - acknowledgment failure doesn't block the restore operation
+                        Logger.d("SubscriptionX") { "Failed to acknowledge purchase" }
+                    }
+                    // Resume normally regardless of response code to allow callers to await completion
+                    continuation.resume(Unit)
+                }
+                // Handle coroutine cancellation
+                continuation.invokeOnCancellation {
+                    // Clean up if needed - acknowledgePurchase callback will still be invoked
+                    // but we won't wait for it if the coroutine is cancelled
                 }
             }
         }

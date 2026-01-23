@@ -44,12 +44,12 @@ internal class ProductFetcher {
                     ) {
                         val products = didReceiveResponse.products
                         val productList = mutableListOf<Product>()
+                        val tmpProductCache = mutableMapOf<String, SKProduct>()
+
                         for (i in 0 until products.size) {
                             val skProduct = products[i] as? SKProduct
                             if (skProduct != null) {
-                                productCacheLock.withLock {
-                                    productCache[skProduct.productIdentifier] = skProduct
-                                }
+                                tmpProductCache[skProduct.productIdentifier] = skProduct
 
                                 val priceFormatter =
                                     NSNumberFormatter().apply {
@@ -84,7 +84,10 @@ internal class ProductFetcher {
                             }
                         }
 
-                        request.cancel()
+                        productCacheLock.withLock {
+                            productCache.putAll(tmpProductCache)
+                        }
+
                         continuation.resume(Result.success(productList))
                     }
 

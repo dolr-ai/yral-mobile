@@ -343,12 +343,13 @@ class ProfileViewModel(
                     sessionManager.updateProfilePicture(updatedPic)
                 }
                 sessionManager.updateBio(bio)
+                val proPlan = details.subscriptionPlan as? SubscriptionPlan.Pro
                 sessionManager.updateProDetails(
                     details =
                         ProDetails(
-                            isProPurchased = details.subscriptionPlan is SubscriptionPlan.Pro,
+                            isProPurchased = proPlan != null,
                             availableCredits =
-                                (details.subscriptionPlan as? SubscriptionPlan.Pro)
+                                proPlan
                                     ?.subscription
                                     ?.freeVideoCreditsLeft ?: 0U,
                         ),

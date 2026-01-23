@@ -79,8 +79,8 @@ internal class AndroidIAPProvider(
                     .setProductDetails(productDetails)
 
             // set Offer details
-            when {
-                productId.getProductType() == ProductType.SUBS -> {
+            when (productId.productType) {
+                ProductType.SUBS -> {
                     val subscriptionOffers = productDetails.subscriptionOfferDetails
                     val offer =
                         subscriptionOffers?.firstOrNull { !it.offerId.isNullOrEmpty() } // Promotional offer
@@ -97,7 +97,7 @@ internal class AndroidIAPProvider(
                             )
                     productDetailsParamsBuilder.setOfferToken(offer.offerToken)
                 }
-                productId.getProductType() == ProductType.ONE_TIME -> {
+                ProductType.ONE_TIME -> {
                     val oneTimeOffers = productDetails.oneTimePurchaseOfferDetailsList
                     val offer =
                         oneTimeOffers?.firstOrNull { !it.offerId.isNullOrEmpty() } // Promotional offer
@@ -191,10 +191,6 @@ internal class AndroidIAPProvider(
         purchases: List<Purchase>?,
     ) {
         Logger.d("SubscriptionX") { "handlePurchaseUpdate $billingResult" }
-        if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
-            handleBillingError(billingResult, purchases)
-            return
-        }
 
         when (billingResult.responseCode) {
             BillingClient.BillingResponseCode.OK -> handleSuccessfulPurchases(purchases)

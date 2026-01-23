@@ -6,8 +6,6 @@ import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.Purchase
 import com.yral.shared.iap.core.util.handleIAPOperation
 import com.yral.shared.iap.utils.PackageNameProvider
-import com.yral.shared.preferences.PrefKeys
-import com.yral.shared.preferences.Preferences
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.post
@@ -40,7 +38,6 @@ internal data class ErrorResponse(
 internal class PurchaseVerificationService(
     private val httpClient: HttpClient,
     private val json: Json,
-    private val preferences: Preferences,
 ) {
     companion object {
         private const val TAG = "SubscriptionXM"
@@ -52,25 +49,12 @@ internal class PurchaseVerificationService(
         userId: String,
     ): Result<Boolean> =
         handleIAPOperation {
-            val productId = purchase.productId?.productId ?: return@handleIAPOperation false
-            val purchaseToken = purchase.purchaseToken
-            val idToken = preferences.getString(PrefKeys.ID_TOKEN.name)
-
-            if (purchaseToken == null || idToken == null) {
-                if (purchaseToken == null) {
-                    Logger.w(TAG) { "Purchase token is null for product ${purchase.productId}" }
-                }
-                if (idToken == null) {
-                    Logger.w(TAG) { "ID token not found - cannot verify purchase" }
-                }
-                throw IAPError.UnknownError(
-                    Exception(
-                        "Missing required tokens for verification. " +
-                            "Purchase token: ${if (purchaseToken == null) "null" else "present"}, " +
-                            "ID token: ${if (idToken == null) "null" else "present"}",
-                    ),
-                )
-            }
+            val productId =
+                purchase.productId?.productId
+                    ?: throw IAPError.VerificationFailed("unknown", Exception("Missing product ID"))
+            val purchaseToken =
+                purchase.purchaseToken
+                    ?: throw IAPError.VerificationFailed(productId, Exception("Missing purchase token"))
             val request =
                 VerifyPurchaseRequest(
                     userId = userId,
@@ -94,7 +78,7 @@ internal class PurchaseVerificationService(
                     try {
                         val errorBody = response.bodyAsText()
                         val errorResponse = json.decodeFromString<ErrorResponse>(errorBody)
-                        errorResponse.error
+                        errorResponse.error ?: errorResponse.msg ?: "Unknown error (status: ${response.status.value})"
                     } catch (
                         @Suppress("TooGenericExceptionCaught")
                         e: Exception,

@@ -1,8 +1,6 @@
 package com.yral.shared.iap.core.model
 
 import kotlinx.serialization.Serializable
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
 @Serializable
 data class Purchase(
@@ -16,19 +14,9 @@ data class Purchase(
     val subscriptionStatus: SubscriptionStatus? = null,
     val accountIdentifier: String? = null,
 ) {
-    @OptIn(ExperimentalTime::class)
-    @Suppress("ReturnCount")
-    fun isActiveSubscription(): Boolean {
-        val status = subscriptionStatus ?: return false
-        if (status == SubscriptionStatus.UNKNOWN) return false
-
-        expirationDate?.let { expiry ->
-            val currentTime = Clock.System.now().toEpochMilliseconds()
-            if (expiry <= currentTime) {
-                return false
-            }
+    fun isActiveSubscription(): Boolean =
+        when (subscriptionStatus) {
+            SubscriptionStatus.ACTIVE, SubscriptionStatus.CANCELLED -> true
+            else -> false
         }
-
-        return status == SubscriptionStatus.ACTIVE || status == SubscriptionStatus.CANCELLED
-    }
 }

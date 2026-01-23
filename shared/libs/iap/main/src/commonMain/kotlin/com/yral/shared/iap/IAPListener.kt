@@ -5,5 +5,5 @@ import com.yral.shared.iap.core.IAPListener as CoreIAPListener
 
 interface IAPListener : CoreIAPListener {
     fun onWarning(message: String)
-    fun onRestoreError(error: List<IAPError>)
+    fun onRestoreError(errors: List<IAPError>)
 }

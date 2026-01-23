@@ -7,6 +7,7 @@ import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.iap.core.model.Purchase
 import com.yral.shared.iap.providers.IAPProvider
 import com.yral.shared.iap.providers.RestoreResult
+import com.yral.shared.iap.utils.PurchaseContext
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -50,7 +51,7 @@ class IAPManager(
 
     suspend fun purchaseProduct(
         productId: ProductId,
-        context: Any? = null,
+        context: PurchaseContext? = null,
         acknowledgePurchase: Boolean = false,
     ): Result<Purchase> {
         Logger.d("SubscriptionXM") { "purchaseProduct $productId" }
@@ -96,7 +97,7 @@ class IAPManager(
     suspend fun isProductPurchased(productId: ProductId): Result<Boolean> = provider.isProductPurchased(productId)
 
     fun notifyWarning(message: String) {
-        Logger.w("IAPManager") { message }
+        Logger.w("SubscriptionXM") { message }
         managerScope.launch {
             notifyListeners { onWarning(message) }
         }
@@ -108,7 +109,7 @@ class IAPManager(
             runCatching {
                 listener.action()
             }.onFailure {
-                Logger.e("IAPManager", it) { "Failed to notify listener ${listener::class}" }
+                Logger.e("SubscriptionXM", it) { "Failed to notify listener ${listener::class}" }
             }
         }
     }

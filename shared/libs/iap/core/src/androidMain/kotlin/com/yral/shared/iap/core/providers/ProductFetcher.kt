@@ -21,7 +21,7 @@ internal class ProductFetcher(
             val client = connectionManager.ensureReady()
             val productList = mutableListOf<Product>()
             val (oneTimeProductIds, subscriptionProductIds) =
-                productIds.partition { it.getProductType() == ProductType.ONE_TIME }
+                productIds.partition { it.productType == ProductType.ONE_TIME }
             val oneTimeProductIdStrings = oneTimeProductIds.map { it.productId }
             val subscriptionProductIdStrings = subscriptionProductIds.map { it.productId }
             if (oneTimeProductIdStrings.isNotEmpty()) {
@@ -56,7 +56,7 @@ internal class ProductFetcher(
 
     suspend fun queryProductDetailsForPurchase(productId: ProductId): ProductDetails? {
         val client = connectionManager.ensureReady()
-        return if (productId.getProductType() == ProductType.SUBS) {
+        return if (productId.productType == ProductType.SUBS) {
             queryProductDetailsByType(client, productId.productId, BillingClient.ProductType.SUBS)
         } else {
             queryProductDetailsByType(client, productId.productId, BillingClient.ProductType.INAPP)
@@ -164,6 +164,9 @@ internal class ProductFetcher(
                 ?: subscriptionOffers.firstOrNull { it.offerId.isNullOrEmpty() } // Base plan fallback
                 ?: return null
         val pricingPhaseList = offer.pricingPhases.pricingPhaseList
+        if (pricingPhaseList.isEmpty()) {
+            return null
+        }
         val recurringPhase = pricingPhaseList.last()
         val pricingInfo = extractPricingPhaseInfo(recurringPhase) ?: return null
 

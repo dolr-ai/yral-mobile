@@ -88,7 +88,10 @@ internal class PurchaseManager(
                 handleFailedTransaction(
                     transaction,
                     productId,
-                    Exception("Unknown transaction state: $state"),
+                    IAPError.PurchaseFailed(
+                        productId,
+                        Exception("Unknown transaction state: $state"),
+                    ),
                 )
         }
     }
@@ -195,7 +198,7 @@ internal class PurchaseManager(
         productId: String,
     ) {
         val error =
-            IAPError.PurchaseFailed(
+            IAPError.PurchasePending(
                 productId,
                 Exception("Purchase is pending approval (Ask to Buy)"),
             )

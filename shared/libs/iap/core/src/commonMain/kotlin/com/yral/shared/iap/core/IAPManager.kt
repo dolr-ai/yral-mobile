@@ -45,18 +45,13 @@ class IAPManager(
         context: Any? = null,
     ): Result<Purchase> {
         val result = provider.purchaseProduct(productId, context)
-        notifyListeners {
-            if (result.isSuccess) {
-                result.getOrNull()?.let { purchase ->
-                    onPurchaseSuccess(purchase)
-                }
-            } else {
-                val error =
-                    result.exceptionOrNull() as? IAPError
-                        ?: IAPError.UnknownError(result.exceptionOrNull())
-                onPurchaseError(error)
-            }
-        }
+        result.fold(
+            onSuccess = { purchase -> notifyListeners { onPurchaseSuccess(purchase) } },
+            onFailure = { ex ->
+                val error = ex as? IAPError ?: IAPError.UnknownError(ex)
+                notifyListeners { onPurchaseError(error) }
+            },
+        )
         return result
     }
 
@@ -85,7 +80,7 @@ class IAPManager(
             runCatching {
                 listener.action()
             }.onFailure {
-                Logger.e("IAPManager", it) {
+                Logger.e("SubscriptionX", it) {
                     "IAP listener failed while executing action for listener=${listener::class.simpleName}"
                 }
             }

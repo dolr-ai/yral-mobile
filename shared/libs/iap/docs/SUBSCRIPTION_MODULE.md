@@ -273,7 +273,7 @@ if (status.isActive) {
     purchase.onSuccess { purchase ->
         // 4. Purchase is already verified by IAP module
         // For subscription products, refresh status to get credits/entitlements
-        if (productId.getProductType() == ProductType.SUBS) {
+        if (productId.productType == ProductType.SUBS) {
             val updatedStatus = subscriptionRepository.getSubscriptionStatus(userId)
             // Update UI with credits and entitlements
         }

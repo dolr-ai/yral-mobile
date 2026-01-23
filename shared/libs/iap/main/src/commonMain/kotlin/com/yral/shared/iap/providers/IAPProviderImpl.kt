@@ -7,6 +7,8 @@ import com.yral.shared.iap.core.model.Product
 import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.iap.core.model.PurchaseState
 import com.yral.shared.iap.core.util.handleIAPResultOperation
+import com.yral.shared.iap.utils.PurchaseContext
+import com.yral.shared.iap.utils.toPlatformContext
 import com.yral.shared.iap.verification.PurchaseVerificationService
 import com.yral.shared.iap.core.model.Purchase as CorePurchase
 import com.yral.shared.iap.core.providers.IAPProvider as CoreIAPProvider
@@ -28,7 +30,7 @@ internal class IAPProviderImpl(
 
     override suspend fun purchaseProduct(
         productId: ProductId,
-        context: Any?,
+        context: PurchaseContext?,
         acknowledgePurchase: Boolean,
     ): Result<CorePurchase> =
         handleIAPResultOperation {
@@ -36,18 +38,18 @@ internal class IAPProviderImpl(
                 coreProvider
                     .purchaseProduct(
                         productId = productId,
-                        context = context,
+                        context = context.toPlatformContext(),
                         obfuscatedAccountId = userId,
                         acknowledgePurchase = acknowledgePurchase,
                     ).map { purchase ->
                         Logger.d("SubscriptionX") { "verify purchase $purchase" }
                         verificationService.verifyPurchase(purchase, userId).fold(
                             onSuccess = {
-                                Logger.d("SubscriptionX") { "purchase acknowledged" }
+                                Logger.d("SubscriptionXM") { "purchase acknowledged" }
                                 purchase
                             },
                             onFailure = { error ->
-                                Logger.e("SubscriptionX", error) { "purchase acknowledge failed" }
+                                Logger.e("SubscriptionXM", error) { "purchase acknowledge failed" }
                                 throw error
                             },
                         )

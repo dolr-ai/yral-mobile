@@ -186,6 +186,10 @@ fun PurchaseScreen(iapManager: IAPManager) {
                 is IAPError.PurchaseCancelled -> {
                     // User cancelled
                 }
+                is IAPError.PurchasePending -> {
+                    // Purchase pending approval (Ask to Buy on iOS)
+                    // Show "waiting for approval" message
+                }
                 is IAPError.PurchaseFailed -> {
                     // Purchase failed
                 }
@@ -446,6 +450,11 @@ sealed class IAPError(
     data class PurchaseCancelled(
         val productId: String,
     ) : IAPError("Purchase cancelled for product: $productId")
+    
+    data class PurchasePending(
+        val productId: String,
+        override val cause: Throwable? = null,
+    ) : IAPError("Purchase is pending approval (Ask to Buy) for product: $productId", cause)
     
     data class BillingUnavailable(
         override val cause: Throwable? = null,
@@ -893,7 +902,7 @@ val purchase = iapManager.purchaseProduct(ProductId.YRAL_PRO, context)
 
 purchase.onSuccess { purchase ->
     // 2. Subscription module refreshes status to get credits
-    if (productId.getProductType() == ProductType.SUBS) {
+    if (productId.productType == ProductType.SUBS) {
         val status = subscriptionRepository.getSubscriptionStatus(userId)
         // Update UI with credits and entitlements
     }
@@ -961,7 +970,7 @@ if (subscriptionStatus.isActive) {
     purchase.onSuccess { purchase ->
         // 4. Purchase is already verified by IAP module
         // For subscription products, refresh subscription status to get credits/entitlements
-        if (productId.getProductType() == ProductType.SUBS) {
+        if (productId.productType == ProductType.SUBS) {
             val updatedStatus = subscriptionApi.getSubscriptionStatus(userId)
             // Update UI with credits and entitlements
             showSubscriptionBenefits(updatedStatus)
@@ -1013,6 +1022,11 @@ fun PremiumScreen(iapManager: IAPManager) {
             when (error) {
                 is IAPError.PurchaseCancelled -> {
                     // User cancelled - no action needed
+                }
+                is IAPError.PurchasePending -> {
+                    // Purchase pending approval (Ask to Buy on iOS)
+                    // Show "waiting for approval" message instead of error
+                    showMessage("Purchase is waiting for approval")
                 }
                 is IAPError.PurchaseFailed -> {
                     // Show error message

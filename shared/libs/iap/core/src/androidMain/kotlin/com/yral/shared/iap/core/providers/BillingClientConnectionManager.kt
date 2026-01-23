@@ -8,8 +8,6 @@ import com.android.billingclient.api.PendingPurchasesParams
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.yral.shared.iap.core.IAPError
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
@@ -36,7 +34,6 @@ internal class BillingClientConnectionManager(
             ).enableAutoServiceReconnection()
             .build()
 
-    private val connectionMutex = Mutex()
     private val pendingContinuations = mutableListOf<Continuation<BillingClient>>()
 
     @Volatile
@@ -52,15 +49,15 @@ internal class BillingClientConnectionManager(
             }
 
             val action =
-                connectionMutex.withLock {
+                synchronized(this@BillingClientConnectionManager) {
                     if (billingClient.isReady) {
-                        return@withLock ConnectionAction.READY
+                        return@synchronized ConnectionAction.READY
                     }
                     if (isConnecting) {
-                        return@withLock ConnectionAction.WAIT
+                        return@synchronized ConnectionAction.WAIT
                     }
                     isConnecting = true
-                    return@withLock ConnectionAction.START
+                    return@synchronized ConnectionAction.START
                 }
 
             return@withTimeout when (action) {
@@ -78,11 +75,11 @@ internal class BillingClientConnectionManager(
 
     private suspend fun waitForExistingConnection(): BillingClient =
         suspendCancellableCoroutine { continuation ->
-            synchronized(pendingContinuations) {
+            synchronized(this@BillingClientConnectionManager) {
                 pendingContinuations.add(continuation)
             }
             continuation.invokeOnCancellation {
-                synchronized(pendingContinuations) {
+                synchronized(this@BillingClientConnectionManager) {
                     pendingContinuations.remove(continuation)
                 }
             }
@@ -141,10 +138,8 @@ internal class BillingClientConnectionManager(
         val main: Continuation<BillingClient>?
         synchronized(this@BillingClientConnectionManager) {
             isConnecting = false
-            synchronized(pendingContinuations) {
-                pending = pendingContinuations.toList()
-                pendingContinuations.clear()
-            }
+            pending = pendingContinuations.toList()
+            pendingContinuations.clear()
             main = mainContinuation
             mainContinuation = null
         }

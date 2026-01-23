@@ -14,7 +14,6 @@ val iapModule =
             PurchaseVerificationService(
                 httpClient = get<HttpClient>(),
                 json = get(),
-                preferences = get(),
             )
         }
         single<IAPProvider> {
