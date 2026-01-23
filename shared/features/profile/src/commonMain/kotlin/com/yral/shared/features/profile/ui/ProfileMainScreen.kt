@@ -429,6 +429,7 @@ fun ProfileMainScreen(
                     canShareProfile = state.canShareProfile,
                     onShareProfileClicked = { viewModel.shareProfile() },
                     showHeaderShareButton = !state.isOwnProfile,
+                    showBackButton = component.showBackButton,
                     onDownloadVideo = onDownloadVideo,
                     onSubscribe = {
                         if (state.isLoggedIn) {
@@ -609,6 +610,7 @@ private fun MainContent(
     canShareProfile: Boolean,
     onShareProfileClicked: () -> Unit,
     showHeaderShareButton: Boolean,
+    showBackButton: Boolean,
     onDownloadVideo: (FeedDetails) -> Unit,
     onSubscribe: () -> Unit,
 ) {
@@ -623,6 +625,7 @@ private fun MainContent(
             onShareProfileClicked = onShareProfileClicked,
             openAccount = openAccount,
             onBack = onBackClicked,
+            showBackButton = showBackButton,
             onSubscribe = onSubscribe,
         )
         state.accountInfo?.let { info ->
@@ -725,6 +728,7 @@ private fun ProfileHeader(
     onShareProfileClicked: () -> Unit,
     openAccount: () -> Unit,
     onBack: () -> Unit,
+    showBackButton: Boolean = false,
     onSubscribe: () -> Unit,
 ) {
     Row(
@@ -736,7 +740,7 @@ private fun ProfileHeader(
         verticalAlignment = Alignment.Top,
     ) {
         Row(horizontalArrangement = Arrangement.Start, verticalAlignment = Alignment.Top) {
-            if (!isOwnProfile) {
+            if (showBackButton || !isOwnProfile) {
                 Icon(
                     painter = painterResource(DesignRes.drawable.arrow_left),
                     contentDescription = "back",

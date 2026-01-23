@@ -16,6 +16,7 @@ internal class DefaultProfileMainComponent(
     override val subscriptionCoordinator: SubscriptionCoordinator,
     override val pendingVideoNavigation: Flow<String?>,
     override val userCanisterData: CanisterData?,
+    override val showBackButton: Boolean,
     private val onUploadVideoClicked: () -> Unit,
     private val openAccount: () -> Unit,
     private val openEditProfile: () -> Unit,
