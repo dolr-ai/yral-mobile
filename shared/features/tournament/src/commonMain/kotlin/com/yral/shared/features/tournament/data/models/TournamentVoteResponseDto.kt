@@ -31,6 +31,8 @@ sealed class TournamentVoteResponseDto {
         val diamondDelta: Int? = null,
         @SerialName("video_emojis")
         val videoEmojis: List<VideoEmojiDto>? = null,
+        @SerialName("active_participant_count")
+        val activeParticipantCount: Int = 0,
     ) : TournamentVoteResponseDto()
 
     @Serializable
@@ -93,6 +95,7 @@ fun TournamentVoteResponseDto.toVoteResult(): Result<VoteResult, TournamentError
                     position = position,
                     diamondDelta = diamondDelta,
                     videoEmojis = videoEmojis?.map { it.toVideoEmoji() },
+                    activeParticipantCount = activeParticipantCount,
                 ),
             )
         }
