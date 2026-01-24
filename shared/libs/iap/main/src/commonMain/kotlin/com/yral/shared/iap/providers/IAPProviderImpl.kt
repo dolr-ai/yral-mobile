@@ -2,6 +2,7 @@ package com.yral.shared.iap.providers
 
 import co.touchlab.kermit.Logger
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.iap.PurchaseResult
 import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.Product
 import com.yral.shared.iap.core.model.ProductId
@@ -96,21 +97,24 @@ internal class IAPProviderImpl(
             } ?: throw IAPError.UnknownError(Exception("User principal is null"))
         }
 
-    override suspend fun isProductPurchased(productId: ProductId): Result<Boolean> =
-        restorePurchases().map { result ->
-            result.purchases.any { purchase ->
-                purchase.productId == productId &&
-                    purchase.state == PurchaseState.PURCHASED &&
-                    (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
-            }
-        }
-
-    override suspend fun queryPurchase(productId: ProductId): Result<CorePurchase?> =
-        restorePurchases(verifyPurchases = false).map { result ->
-            result.purchases.firstOrNull { purchase ->
-                purchase.productId == productId &&
-                    purchase.state == PurchaseState.PURCHASED &&
-                    (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
-            }
+    override suspend fun isProductPurchased(productId: ProductId): Result<PurchaseResult> =
+        handleIAPResultOperation {
+            sessionManager.userPrincipal?.let { userId ->
+                restorePurchases(verifyPurchases = false)
+                    .map { result ->
+                        result.purchases.firstOrNull { purchase ->
+                            purchase.productId == productId &&
+                                purchase.state == PurchaseState.PURCHASED &&
+                                (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
+                        }
+                    }.map { purchase ->
+                        when {
+                            purchase == null -> PurchaseResult.NoPurchase
+                            purchase.accountIdentifier == null -> PurchaseResult.UnaccountedPurchase
+                            purchase.accountIdentifier != userId -> PurchaseResult.AccountMismatch
+                            else -> PurchaseResult.PurchaseMatches
+                        }
+                    }
+            } ?: throw IAPError.UnknownError(Exception("User principal is null"))
         }
 }
