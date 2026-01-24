@@ -34,6 +34,7 @@ kotlin {
             implementation(projects.shared.libs.featureFlag)
             implementation(projects.shared.libs.sharing)
             implementation(projects.shared.libs.designsystem)
+            implementation(projects.shared.libs.iap.main)
             implementation(projects.shared.libs.videoPlayer)
             implementation(projects.shared.libs.videoPlayback)
             implementation(projects.shared.libs.fileDownloader)
