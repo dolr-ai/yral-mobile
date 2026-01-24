@@ -24,4 +24,10 @@ data class SessionProperties(
     val pendingTournamentRegistrationId: String? = null,
     val isMandatoryLogin: Boolean? = null,
     val phoneNumber: String? = null,
+    val proDetails: ProDetails? = null,
+)
+
+data class ProDetails(
+    val isProPurchased: Boolean,
+    val availableCredits: UInt,
 )

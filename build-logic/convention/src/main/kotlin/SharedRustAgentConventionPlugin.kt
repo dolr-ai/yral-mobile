@@ -32,7 +32,7 @@ class SharedRustAgentConventionPlugin : Plugin<Project> {
             ?.toBoolean() ?: true
 
     companion object {
-        private const val YRAL_RUST_VERSION = "2.7"
+        private const val YRAL_RUST_VERSION = "2.8"
         private const val YRAL_RUST_DEPENDENCY = "com.yral.shared:rust-agent"
     }
 }

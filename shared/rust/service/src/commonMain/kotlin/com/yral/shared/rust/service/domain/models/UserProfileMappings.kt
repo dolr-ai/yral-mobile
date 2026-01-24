@@ -1,7 +1,9 @@
 package com.yral.shared.rust.service.domain.models
 
+import com.yral.shared.uniffi.generated.UisSubscriptionPlan
 import com.yral.shared.uniffi.generated.UisUserProfileDetailsForFrontendV6
 import com.yral.shared.uniffi.generated.UisUserProfileGlobalStats
+import com.yral.shared.uniffi.generated.UisYralProSubscription
 
 fun UisUserProfileDetailsForFrontendV6.toDomain(): UserProfileDetails =
     UserProfileDetails(
@@ -13,7 +15,19 @@ fun UisUserProfileDetailsForFrontendV6.toDomain(): UserProfileDetails =
         principalId = principalId,
         followersCount = followersCount,
         callerFollowsUser = callerFollowsUser,
+        subscriptionPlan = subscriptionPlan.toDomain(),
         isAiInfluencer = isAiInfluencer,
+    )
+
+fun UisSubscriptionPlan.toDomain(): SubscriptionPlan =
+    when (this) {
+        is UisSubscriptionPlan.Free -> SubscriptionPlan.Free
+        is UisSubscriptionPlan.Pro -> SubscriptionPlan.Pro(v1.toDomain())
+    }
+
+fun UisYralProSubscription.toDomain(): YralProSubscription =
+    YralProSubscription(
+        freeVideoCreditsLeft = freeVideoCreditsLeft,
     )
 
 fun UisUserProfileGlobalStats.toDomain(): UserProfileGlobalStats =

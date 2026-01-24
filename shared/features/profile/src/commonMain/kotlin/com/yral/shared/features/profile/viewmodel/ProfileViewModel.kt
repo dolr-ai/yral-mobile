@@ -23,6 +23,7 @@ import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.AccountInfo
+import com.yral.shared.core.session.ProDetails
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.utils.getAccountInfo
@@ -58,6 +59,7 @@ import com.yral.shared.reportVideo.domain.ReportVideoUseCase
 import com.yral.shared.reportVideo.domain.models.ReportSheetState
 import com.yral.shared.reportVideo.domain.models.ReportVideoData
 import com.yral.shared.rust.service.domain.models.PagedFollowerItem
+import com.yral.shared.rust.service.domain.models.SubscriptionPlan
 import com.yral.shared.rust.service.domain.pagedDataSource.UserInfoPagingSourceFactory
 import com.yral.shared.rust.service.domain.usecases.FollowUserParams
 import com.yral.shared.rust.service.domain.usecases.FollowUserUseCase
@@ -341,6 +343,17 @@ class ProfileViewModel(
                     sessionManager.updateProfilePicture(updatedPic)
                 }
                 sessionManager.updateBio(bio)
+                val proPlan = details.subscriptionPlan as? SubscriptionPlan.Pro
+                sessionManager.updateProDetails(
+                    details =
+                        ProDetails(
+                            isProPurchased = proPlan != null,
+                            availableCredits =
+                                proPlan
+                                    ?.subscription
+                                    ?.freeVideoCreditsLeft ?: 0U,
+                        ),
+                )
                 _state.update { current ->
                     val currentInfo = current.accountInfo
                     val newInfo =

@@ -22,6 +22,7 @@ kotlin {
             implementation(projects.shared.libs.featureFlag)
             implementation(projects.shared.libs.preferences)
             implementation(projects.shared.libs.arch)
+            implementation(projects.shared.libs.iap.main)
 
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.androidx.lifecycle.viewmodel)

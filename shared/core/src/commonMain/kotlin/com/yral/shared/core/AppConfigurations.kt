@@ -12,6 +12,7 @@ object AppConfigurations {
     const val UPLOAD_BASE_URL = "yral-upload-video.go-bazzinga.workers.dev"
     const val ANALYTICS_BASE_URL = "analytics.yral.com"
     const val CHAT_BASE_URL = "chat.yral.com"
+    const val BILLING_BASE_URL = "billing.yral.com"
     const val FIREBASE_APP_NAME = "yral"
     const val FIREBASE_COULD_URL = "cloudfunctions.net"
     const val FIREBASE_COULD_FUN_REGION = "us-central1"
