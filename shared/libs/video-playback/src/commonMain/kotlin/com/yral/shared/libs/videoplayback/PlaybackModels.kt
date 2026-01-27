@@ -21,8 +21,10 @@ data class PreloadPolicy(
     val maxConcurrentPrefetch: Int = 2,
     val preloadTargetBytes: Long = 1_500_000,
     val cacheMaxBytes: Long = 250_000_000,
-    val usePreparedNextPlayer: Boolean = false,
+    val usePreparedNextPlayer: Boolean = defaultUsePreparedNextPlayer(),
 )
+
+expect fun defaultUsePreparedNextPlayer(): Boolean
 
 data class CoordinatorDeps(
     val policy: PreloadPolicy = PreloadPolicy(),
