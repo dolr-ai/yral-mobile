@@ -7,13 +7,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import com.yral.shared.libs.videoPlayer.model.Platform
-import com.yral.shared.libs.videoPlayer.util.isPlatform
 
 /**
  * Layout wrapper for a single card in the stack.
@@ -99,7 +96,7 @@ internal fun SwipeableCardStackItem(
             CardStackConstants.CARD_CORNER_RADIUS_DP.dp
         }
 
-    val isIos = isPlatform() == Platform.Ios
+//    val isIos = isPlatform() == Platform.Ios
     val dynamicCardShape = RoundedCornerShape(cornerRadius)
 
     Box(
@@ -109,7 +106,7 @@ internal fun SwipeableCardStackItem(
                 .padding(horizontal = horizontalPadding)
                 .zIndex(zIndex)
                 .graphicsLayer {
-                    compositingStrategy = if (isIos) CompositingStrategy.Auto else CompositingStrategy.Offscreen
+//                    compositingStrategy = if (isIos) CompositingStrategy.Auto else CompositingStrategy.Offscreen
                     translationX = cardTransforms.offsetX
                     translationY = cardTransforms.offsetY
                     rotationZ = cardTransforms.rotation

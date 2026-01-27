@@ -167,6 +167,7 @@ fun VideoSurfaceSlot(
             modifier = Modifier.fillMaxSize(),
             contentScale = contentScale,
             shutter = shutter,
+            surfaceType = surfaceType,
             onHandleReady = { handle -> surfaceHandle = handle },
         )
 
