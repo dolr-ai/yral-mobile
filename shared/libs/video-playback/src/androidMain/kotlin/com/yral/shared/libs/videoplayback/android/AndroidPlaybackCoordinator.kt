@@ -319,7 +319,7 @@ private class AndroidPlaybackCoordinator(
         playerA.release()
         playerB?.release()
         preloadManager.release()
-        ShortformCacheProvider.release()
+//        ShortformCacheProvider.release()
     }
 
     private fun schedulePreparedSlot(activeIndex: Int) {
