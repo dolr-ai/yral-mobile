@@ -46,6 +46,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yral.shared.data.domain.models.FeedDetails
+import com.yral.shared.features.game.domain.models.GameIcon
 import com.yral.shared.features.game.domain.models.GameIconNames
 import com.yral.shared.features.game.ui.SmileyGame
 import com.yral.shared.features.tournament.viewmodel.TournamentGameState
@@ -266,9 +267,17 @@ fun TournamentBottomOverlay(
             .distinctUntilChanged()
             .collect { value = it }
     }
+    // Construct selectedIcon from vote result data directly instead of looking up by ID
+    // This ensures we have the correct icon even if videoIcons was updated after voting
     val selectedIcon =
-        voteResult?.smiley?.id?.let { voteId ->
-            videoIcons.firstOrNull { it.id == voteId }
+        voteResult?.smiley?.let { smiley ->
+            GameIcon(
+                id = smiley.id,
+                imageName = GameIconNames.UNKNOWN,
+                imageUrl = smiley.imageUrl ?: "",
+                clickAnimation = smiley.clickAnimation ?: "",
+                unicode = smiley.unicode ?: "",
+            )
         }
     val diamondDelta = voteResult?.diamondDelta ?: 0
     val overlayBottomPadding = 120.dp
