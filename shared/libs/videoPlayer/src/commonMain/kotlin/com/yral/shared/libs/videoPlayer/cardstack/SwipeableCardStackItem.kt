@@ -7,25 +7,23 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import com.yral.shared.libs.videoPlayer.model.Platform
-import com.yral.shared.libs.videoPlayer.util.isPlatform
 
 /**
  * Layout wrapper for a single card in the stack.
  * Applies stack transforms, padding, rounding, and shadow based on position.
  */
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 internal fun SwipeableCardStackItem(
     stackIndex: Int,
     state: SwipeableCardState,
     screenWidth: Float,
     screenHeight: Float,
+    applyFrontTransform: Boolean,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
@@ -36,13 +34,14 @@ internal fun SwipeableCardStackItem(
     val touchBaseProgress = if (state.isTouching) CardStackConstants.TOUCH_BASE_PROGRESS else 0f
     val dragProgress = state.calculateSwipeProgress(screenWidth, screenHeight).coerceIn(0f, 1f)
     val visualProgress = maxOf(touchBaseProgress, dragProgress).coerceIn(0f, 1f)
+    val frontVisualProgress = if (isFrontCard && !applyFrontTransform) 0f else visualProgress
 
     val cardTransforms =
         if (isFrontCard) {
             CardTransforms(
-                offsetX = state.offsetX,
-                offsetY = state.offsetY,
-                rotation = state.rotation,
+                offsetX = if (applyFrontTransform) state.offsetX else 0f,
+                offsetY = if (applyFrontTransform) state.offsetY else 0f,
+                rotation = if (applyFrontTransform) state.rotation else 0f,
                 scale = 1f,
             )
         } else if (isNextCard) {
@@ -81,7 +80,7 @@ internal fun SwipeableCardStackItem(
 
     val horizontalPadding =
         if (isFrontCard) {
-            (CardStackConstants.CARD_HORIZONTAL_PADDING_DP * visualProgress).dp
+            (CardStackConstants.CARD_HORIZONTAL_PADDING_DP * frontVisualProgress).dp
         } else if (isNextCard) {
             0.dp
         } else {
@@ -90,14 +89,14 @@ internal fun SwipeableCardStackItem(
 
     val cornerRadius =
         if (isFrontCard) {
-            (CardStackConstants.CARD_CORNER_RADIUS_DP * visualProgress).dp
+            (CardStackConstants.CARD_CORNER_RADIUS_DP * frontVisualProgress).dp
         } else if (isNextCard) {
             0.dp
         } else {
             CardStackConstants.CARD_CORNER_RADIUS_DP.dp
         }
 
-    val isIos = isPlatform() == Platform.Ios
+//    val isIos = isPlatform() == Platform.Ios
     val dynamicCardShape = RoundedCornerShape(cornerRadius)
 
     Box(
@@ -107,7 +106,7 @@ internal fun SwipeableCardStackItem(
                 .padding(horizontal = horizontalPadding)
                 .zIndex(zIndex)
                 .graphicsLayer {
-                    compositingStrategy = if (isIos) CompositingStrategy.Auto else CompositingStrategy.Offscreen
+//                    compositingStrategy = if (isIos) CompositingStrategy.Auto else CompositingStrategy.Offscreen
                     translationX = cardTransforms.offsetX
                     translationY = cardTransforms.offsetY
                     rotationZ = cardTransforms.rotation

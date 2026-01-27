@@ -15,6 +15,7 @@ import coil3.compose.AsyncImage
 import com.yral.shared.libs.videoPlayer.model.PlayerData
 import com.yral.shared.libs.videoplayback.PlaybackCoordinator
 import com.yral.shared.libs.videoplayback.ui.VideoSurfaceSlot
+import com.yral.shared.libs.videoplayback.ui.VideoSurfaceType
 import org.jetbrains.compose.resources.painterResource
 import yral_mobile.shared.libs.videoplayer.generated.resources.Res
 import yral_mobile.shared.libs.videoplayer.generated.resources.bakwaas
@@ -32,6 +33,7 @@ import yral_mobile.shared.libs.videoplayer.generated.resources.mast
  * @param modifier Modifier for the card.
  * @param overlayContent Content to overlay on the video (UI controls, etc.).
  */
+@Suppress("LongMethod")
 @Composable
 internal fun ReelCardContent(
     playerData: PlayerData,
@@ -40,6 +42,9 @@ internal fun ReelCardContent(
     isFrontCard: Boolean,
     swipeDirection: SwipeDirection,
     swipeProgress: Float,
+    suppressShutter: Boolean,
+    showPlaceholderOverlay: Boolean,
+    showSwipeOverlay: Boolean,
     modifier: Modifier = Modifier,
     overlayContent: @Composable () -> Unit,
 ) {
@@ -54,18 +59,30 @@ internal fun ReelCardContent(
             coordinator = coordinator,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
+            surfaceType = VideoSurfaceType.TextureView,
             shutter = {
-                AsyncImage(
-                    model = playerData.thumbnailUrl,
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop,
-                )
+                if (!suppressShutter) {
+                    AsyncImage(
+                        model = playerData.thumbnailUrl,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                    )
+                }
             },
         )
 
+        if (showPlaceholderOverlay) {
+            AsyncImage(
+                model = playerData.thumbnailUrl,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+            )
+        }
+
         // Swipe feedback overlay for front card only
-        if (isFrontCard) {
+        if (isFrontCard && showSwipeOverlay) {
             SwipeFeedbackOverlay(
                 direction = swipeDirection,
                 progress = swipeProgress,

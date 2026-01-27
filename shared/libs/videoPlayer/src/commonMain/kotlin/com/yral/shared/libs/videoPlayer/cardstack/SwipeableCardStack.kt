@@ -35,8 +35,10 @@ internal fun SwipeableCardStack(
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val screenWidth = constraints.maxWidth.toFloat()
         val screenHeight = constraints.maxHeight.toFloat()
+        val isTransitioning = state.currentIndex != state.settledIndex
 
-        val remaining = (count - state.currentIndex).coerceAtLeast(0)
+        val baseIndex = state.currentIndex
+        val remaining = (count - baseIndex).coerceAtLeast(0)
         val visibleCardCount = minOf(maxVisibleCards, remaining)
 
         Box(
@@ -53,7 +55,7 @@ internal fun SwipeableCardStack(
                     ),
         ) {
             for (stackOffset in (visibleCardCount - 1) downTo 0) {
-                val index = state.currentIndex + stackOffset
+                val index = baseIndex + stackOffset
                 if (index >= count) continue
 
                 val itemKey = key?.invoke(index) ?: index
@@ -63,6 +65,7 @@ internal fun SwipeableCardStack(
                         state = state,
                         screenWidth = screenWidth,
                         screenHeight = screenHeight,
+                        applyFrontTransform = !(isTransitioning && stackOffset == 0),
                         modifier = Modifier.fillMaxSize(),
                     ) {
                         SwipeableCardStackItemScope(
