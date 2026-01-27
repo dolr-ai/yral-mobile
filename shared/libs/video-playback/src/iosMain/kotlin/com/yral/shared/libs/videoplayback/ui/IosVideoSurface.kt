@@ -52,14 +52,19 @@ private class PlayerViewContainer(
     val controller: AVPlayerViewController =
         AVPlayerViewController().apply {
             showsPlaybackControls = false
-            view.backgroundColor = UIColor.blackColor
+            view.backgroundColor = UIColor.clearColor
             videoGravity = videoGravityFor(initialContentScale)
         }
 
     init {
-        backgroundColor = UIColor.blackColor
+        backgroundColor = UIColor.clearColor
+        opaque = false
+        clipsToBounds = true
         controller.view.autoresizingMask =
             UIViewAutoresizingFlexibleWidth or UIViewAutoresizingFlexibleHeight
+        controller.view.backgroundColor = UIColor.clearColor
+        controller.view.opaque = false
+        controller.view.clipsToBounds = true
         controller.view.setFrame(bounds)
         addSubview(controller.view)
     }
