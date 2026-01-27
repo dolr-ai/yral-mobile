@@ -491,6 +491,28 @@ def _settle_tournament_prizes(tournament_id: str, prize_map: Dict[str, int], col
         if not prize_inr:
             continue
 
+        # IDEMPOTENCY CHECK: Skip if user already received reward
+        user_ref = db().document(f"{collection_name}/{tournament_id}/users/{principal_id}")
+        user_snap = user_ref.get()
+        if user_snap.exists:
+            user_data = user_snap.to_dict()
+            if user_data.get("status") == "rewarded" or user_data.get("prize_sent_at"):
+                print(f"[settlement] Skipping {principal_id} (#{position}) - already rewarded")
+                # Add to results as already-sent
+                results.append({
+                    "principal_id": principal_id,
+                    "position": int(position),
+                    "prize_inr": user_data.get("prize_inr", prize_inr),
+                    "prize_ckbtc": user_data.get("prize_ckbtc", 0),
+                    "success": True,
+                    "error": None,
+                    "skipped": True  # Flag indicating this was already sent
+                })
+                rewards_sent += 1
+                total_inr += user_data.get("prize_inr", prize_inr)
+                total_ckbtc += user_data.get("prize_ckbtc", 0)
+                continue
+
         # Convert INR to ckBTC
         prize_ckbtc = _inr_to_ckbtc(prize_inr, btc_price_inr)
         memo = f"Tournament prize #{position} - {tournament_id}"
@@ -838,6 +860,17 @@ def update_tournament_status(request: Request):
 
         # Handle ENDED status with settlement
         if target_status == TournamentStatus.ENDED:
+            # IDEMPOTENCY CHECK: Skip if already successfully settled
+            tournament_data = snap.to_dict()
+            if current_status == TournamentStatus.SETTLED:
+                print(f"[update_tournament_status] {doc_id}: skipping settlement (status already SETTLED)")
+                return jsonify({"status": "skipped", "reason": "Already settled"}), 200
+
+            existing_settlement = tournament_data.get("settlement_result")
+            if existing_settlement and existing_settlement.get("success") is True:
+                print(f"[update_tournament_status] {doc_id}: skipping settlement (settlement_result.success=True)")
+                return jsonify({"status": "skipped", "reason": "Already settled"}), 200
+
             # Update status to ENDED first
             ref.update({
                 "status": target_status.value,
