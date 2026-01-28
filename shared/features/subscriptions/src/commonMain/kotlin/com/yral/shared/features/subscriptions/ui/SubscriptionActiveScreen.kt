@@ -32,6 +32,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import com.yral.shared.core.session.DEFAULT_TOTAL_CREDITS
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -67,7 +68,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 fun SubscriptionActiveScreen(
     modifier: Modifier = Modifier,
     validTillText: String,
-    creditsReceived: Int = 40,
+    creditsReceived: Int = DEFAULT_TOTAL_CREDITS,
     onBack: () -> Unit = {},
     onExploreHome: () -> Unit = {},
 ) {
@@ -300,7 +301,7 @@ private fun BenefitList() {
     ) {
         SubscriptionBenefitRow(
             iconRes = Res.drawable.subscription_benefit_ai,
-            text = stringResource(Res.string.subscription_active_benefit_ai),
+            text = stringResource(Res.string.subscription_active_benefit_ai, DEFAULT_TOTAL_CREDITS),
         )
         SubscriptionBenefitRow(
             iconRes = Res.drawable.subscription_benefit_chat,

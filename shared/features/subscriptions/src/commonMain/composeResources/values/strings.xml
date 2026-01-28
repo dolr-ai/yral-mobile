@@ -1,6 +1,6 @@
 <resources>
     <string name="payment_successful_title">Payment Successful!</string>
-    <string name="subscription_success_body">Your YRAL Pro subscription is now active — start with 30 YRAL Credits and explore without limits.</string>
+    <string name="subscription_success_body">Your YRAL Pro subscription is now active — start with %1$d YRAL Credits and explore without limits.</string>
     <string name="create_ai_video">Create AI Video</string>
     <string name="explore_feed">Explore Feed</string>
     <string name="payment_failed_title">Payment Failed!</string>
@@ -20,7 +20,7 @@
     <string name="subscription_active_credits_label">Credits Received</string>
     <string name="subscription_active_credits">%1$d</string>
     <string name="subscription_active_tagline">One subscription. Unlimited creation.</string>
-    <string name="subscription_active_benefit_ai">30 credited to create AI videos</string>
+    <string name="subscription_active_benefit_ai">%1$d credited to create AI videos</string>
     <string name="subscription_active_benefit_chat">Unlimited chat with influencers</string>
     <string name="subscription_active_benefit_global">Tournament entry with credits</string>
     <string name="subscription_active_benefit_rewards">Get paid for engaged view on your videos</string>

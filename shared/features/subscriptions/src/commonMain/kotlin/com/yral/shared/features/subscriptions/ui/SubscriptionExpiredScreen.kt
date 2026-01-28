@@ -33,6 +33,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import com.yral.shared.core.session.DEFAULT_TOTAL_CREDITS
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -322,7 +323,7 @@ private fun ExpiredBenefitList() {
     ) {
         SubscriptionBenefitRow(
             iconRes = Res.drawable.subscription_benefit_ai,
-            text = stringResource(Res.string.subscription_active_benefit_ai),
+            text = stringResource(Res.string.subscription_active_benefit_ai, DEFAULT_TOTAL_CREDITS),
         )
         SubscriptionBenefitRow(
             iconRes = Res.drawable.subscription_benefit_chat,

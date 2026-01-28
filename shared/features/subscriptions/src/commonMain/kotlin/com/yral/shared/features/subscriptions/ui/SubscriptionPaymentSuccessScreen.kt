@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.yral.shared.core.session.DEFAULT_TOTAL_CREDITS
 import com.yral.shared.libs.designsystem.component.YralAnimatedBounceIcon
 import com.yral.shared.libs.designsystem.component.YralButtonType
 import com.yral.shared.libs.designsystem.component.YralGradientButton
@@ -101,7 +102,7 @@ private fun SubscriptionSuccessContent(
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = stringResource(Res.string.subscription_success_body),
+            text = stringResource(Res.string.subscription_success_body, DEFAULT_TOTAL_CREDITS),
             style = LocalAppTopography.current.baseRegular,
             color = YralColors.NeutralTextSecondary,
             textAlign = TextAlign.Center,

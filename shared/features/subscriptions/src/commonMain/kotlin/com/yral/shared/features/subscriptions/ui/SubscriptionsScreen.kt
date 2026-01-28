@@ -49,7 +49,6 @@ fun SubscriptionsScreen(
                     SubscriptionActiveScreen(
                         modifier = modifier,
                         validTillText = "Active",
-                        creditsReceived = 40,
                         onBack = { component.onBack() },
                         onExploreHome = { component.onExploreFeed() },
                     )
