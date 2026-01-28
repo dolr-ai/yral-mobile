@@ -177,7 +177,7 @@ private fun AccountScreenContent(
 
     val proDetails by subscriptionCoordinator.proDetails.collectAsStateWithLifecycle(null)
     val totalProCredits = proDetails?.totalCredits ?: DEFAULT_TOTAL_CREDITS
-    val availableProdCredits = proDetails?.availableCredits ?: 0
+    val availableProCredits = proDetails?.availableCredits ?: 0
     val proCardClick =
         remember {
             {
@@ -214,7 +214,7 @@ private fun AccountScreenContent(
         }
         if (proDetails?.isProPurchased == true) {
             ProMemberCard(
-                availableProdCredits = availableProdCredits,
+                availableProCredits = availableProCredits,
                 totalProCredits = totalProCredits,
                 onClick = proCardClick,
             )
@@ -646,7 +646,7 @@ private fun ProSubscriptionCard(
 
 @Composable
 private fun ProMemberCard(
-    availableProdCredits: Int,
+    availableProCredits: Int,
     totalProCredits: Int,
     onClick: () -> Unit,
 ) {
@@ -697,7 +697,7 @@ private fun ProMemberCard(
                         modifier = Modifier.size(16.dp),
                     )
                     Text(
-                        text = stringResource(Res.string.pro_credits_count, availableProdCredits, totalProCredits),
+                        text = stringResource(Res.string.pro_credits_count, availableProCredits, totalProCredits),
                         style = LocalAppTopography.current.lgBold,
                         color = YralColors.YellowTextPrimary,
                     )
