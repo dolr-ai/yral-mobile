@@ -4,7 +4,7 @@ import com.yral.shared.rust.service.domain.models.ProfileUpdateDetailsV2
 import com.yral.shared.uniffi.generated.Principal
 import com.yral.shared.uniffi.generated.UisFollowersResponse
 import com.yral.shared.uniffi.generated.UisFollowingResponse
-import com.yral.shared.uniffi.generated.UisUserProfileDetailsForFrontendV6
+import com.yral.shared.uniffi.generated.UisUserProfileDetailsForFrontendV7
 
 interface UserInfoDataSource {
     suspend fun followUser(
@@ -17,10 +17,10 @@ interface UserInfoDataSource {
         targetPrincipal: Principal,
     )
 
-    suspend fun getUserProfileDetailsV6(
+    suspend fun getUserProfileDetailsV7(
         principal: Principal,
         targetPrincipal: Principal,
-    ): UisUserProfileDetailsForFrontendV6
+    ): UisUserProfileDetailsForFrontendV7
 
     suspend fun getFollowers(
         principal: Principal,
