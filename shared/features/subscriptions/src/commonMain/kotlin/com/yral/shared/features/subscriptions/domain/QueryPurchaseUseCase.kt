@@ -15,11 +15,11 @@ class QueryPurchaseUseCase(
     private val iapManager: IAPManager,
     appDispatchers: AppDispatchers,
     useCaseFailureListener: UseCaseFailureListener,
-) : ResultSuspendUseCase<QueryPurchaseParams, PurchaseResult, IAPError>(
+) : ResultSuspendUseCase<Unit, PurchaseResult, IAPError>(
         coroutineDispatcher = appDispatchers.network,
         failureListener = useCaseFailureListener,
     ) {
-    override suspend fun executeWith(parameter: QueryPurchaseParams): Result<PurchaseResult, IAPError> {
+    override suspend fun executeWith(parameter: Unit): Result<PurchaseResult, IAPError> {
         val result = iapManager.isProductPurchased(ProductId.YRAL_PRO)
         return result.fold(
             onSuccess = { purchaseResult ->
@@ -34,7 +34,3 @@ class QueryPurchaseUseCase(
 
     override fun Throwable.toError(): IAPError = this as? IAPError ?: IAPError.UnknownError(this)
 }
-
-data class QueryPurchaseParams(
-    val userId: String,
-)

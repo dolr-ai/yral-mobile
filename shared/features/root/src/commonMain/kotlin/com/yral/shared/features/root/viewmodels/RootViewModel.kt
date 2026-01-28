@@ -21,7 +21,6 @@ import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.YralAuthException
 import com.yral.shared.features.auth.YralFBAuthException
 import com.yral.shared.features.root.analytics.RootTelemetry
-import com.yral.shared.features.subscriptions.domain.QueryPurchaseParams
 import com.yral.shared.features.subscriptions.domain.QueryPurchaseUseCase
 import com.yral.shared.iap.IAPManager
 import com.yral.shared.iap.PurchaseResult
@@ -311,24 +310,32 @@ class RootViewModel(
     fun checkSubscriptionAndOpen(
         openSubscription: (purchaseTimeMs: Long?) -> Unit,
         showSubscriptionAccountMismatchSheet: () -> Unit,
+        onError: (() -> Unit)? = null,
     ) {
         coroutineScope.launch {
-            sessionManager.userPrincipal?.let { userPrincipal ->
-                val result = queryPurchaseUseCase(QueryPurchaseParams(userId = userPrincipal))
-                result
-                    .onSuccess { purchaseResult ->
-                        withContext(appDispatchers.main) {
-                            when (purchaseResult) {
-                                is PurchaseResult.NoPurchase -> openSubscription(null)
-                                is PurchaseResult.PurchaseMatches -> openSubscription(purchaseResult.purchaseTime)
-                                is PurchaseResult.AccountMismatch -> showSubscriptionAccountMismatchSheet()
-                                is PurchaseResult.UnaccountedPurchase -> {
-                                    Logger.d("SubscriptionX") { "Unaccounted purchase" }
-                                }
+            val userPrincipal = sessionManager.userPrincipal
+            if (userPrincipal == null) {
+                withContext(appDispatchers.main) { onError?.invoke() }
+                return@launch
+            }
+            val result = queryPurchaseUseCase(Unit)
+            result
+                .onSuccess { purchaseResult ->
+                    withContext(appDispatchers.main) {
+                        when (purchaseResult) {
+                            is PurchaseResult.NoPurchase -> openSubscription(null)
+                            is PurchaseResult.PurchaseMatches -> openSubscription(purchaseResult.purchaseTime)
+                            is PurchaseResult.AccountMismatch -> showSubscriptionAccountMismatchSheet()
+                            is PurchaseResult.UnaccountedPurchase -> {
+                                Logger.d("SubscriptionX") { "Unaccounted purchase" }
+                                onError?.invoke()
                             }
                         }
-                    }.onFailure { Logger.d("SubscriptionX") { "Failed to query purchase $it" } }
-            }
+                    }
+                }.onFailure {
+                    Logger.d("SubscriptionX") { "Failed to query purchase $it" }
+                    withContext(appDispatchers.main) { onError?.invoke() }
+                }
         }
     }
 }
