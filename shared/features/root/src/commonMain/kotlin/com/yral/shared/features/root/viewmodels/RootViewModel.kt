@@ -313,6 +313,7 @@ class RootViewModel(
         onError: (() -> Unit)? = null,
     ) {
         coroutineScope.launch {
+            if (!flagManager.isEnabled(AppFeatureFlags.Common.EnableSubscription)) return@launch
             val userPrincipal = sessionManager.userPrincipal
             if (userPrincipal == null) {
                 withContext(appDispatchers.main) { onError?.invoke() }
