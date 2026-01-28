@@ -152,7 +152,7 @@ private fun ActiveContent(
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(modifier = Modifier.height(16.dp))
-        BenefitList()
+        BenefitList(creditsReceived = creditsReceived)
         Spacer(modifier = Modifier.height(20.dp))
         YralGradientButton(
             text = stringResource(Res.string.subscription_active_cta),
@@ -295,14 +295,14 @@ private fun CreditsRow(creditsReceived: Int) {
 }
 
 @Composable
-private fun BenefitList() {
+private fun BenefitList(creditsReceived: Int) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         SubscriptionBenefitRow(
             iconRes = Res.drawable.subscription_benefit_ai,
-            text = stringResource(Res.string.subscription_active_benefit_ai, DEFAULT_TOTAL_CREDITS),
+            text = stringResource(Res.string.subscription_active_benefit_ai, creditsReceived),
         )
         SubscriptionBenefitRow(
             iconRes = Res.drawable.subscription_benefit_chat,
