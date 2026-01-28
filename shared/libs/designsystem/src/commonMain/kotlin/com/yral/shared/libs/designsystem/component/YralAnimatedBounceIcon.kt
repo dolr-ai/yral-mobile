@@ -1,4 +1,4 @@
-package com.yral.shared.features.uploadvideo.ui.fileUpload
+package com.yral.shared.libs.designsystem.component
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -22,7 +22,7 @@ import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
-fun AnimatedBounceIcon(
+fun YralAnimatedBounceIcon(
     modifier: Modifier = Modifier,
     imageRes: DrawableResource,
     size: Dp = AnimatedBounceIconConstants.IMAGE_SIZE,

@@ -12,4 +12,7 @@ internal sealed interface SlotConfig {
 
     @Serializable
     data object LoginBottomSheet : SlotConfig
+
+    @Serializable
+    data object SubscriptionAccountMismatchSheet : SlotConfig
 }

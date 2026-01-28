@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.featureflag.AppFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.WalletFeatureFlags
 import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
@@ -59,6 +60,7 @@ class AccountsViewModel internal constructor(
                     accountInfo = sessionManager.getAccountInfo(),
                     accountLinks = flagManager.get(AccountFeatureFlags.AccountLinks.Links),
                     isWalletEnabled = flagManager.isEnabled(WalletFeatureFlags.Wallet.Enabled),
+                    isSubscriptionEnabled = flagManager.isEnabled(AppFeatureFlags.Common.EnableSubscription),
                 ),
         )
     val state: StateFlow<AccountsState> = _state.asStateFlow()
@@ -259,6 +261,7 @@ data class AccountsState(
     val accountLinks: AccountLinksDto,
     val supportIcon: String? = null,
     val isWalletEnabled: Boolean = false,
+    val isSubscriptionEnabled: Boolean = false,
     val isLoggedIn: Boolean = false,
     val alertsEnabled: Boolean = false,
 )

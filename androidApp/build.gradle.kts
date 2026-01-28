@@ -190,6 +190,7 @@ dependencies {
     implementation(projects.shared.features.reportVideo)
     implementation(compose.components.resources)
     implementation(projects.shared.features.leaderboard)
+    implementation(projects.shared.features.subscriptions)
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.robolectric)

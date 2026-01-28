@@ -21,6 +21,7 @@ import com.yral.shared.features.game.di.gameModule
 import com.yral.shared.features.leaderboard.di.leaderboardModule
 import com.yral.shared.features.profile.di.profileModule
 import com.yral.shared.features.root.di.rootModule
+import com.yral.shared.features.subscriptions.di.subscriptionsModule
 import com.yral.shared.features.tournament.di.tournamentModule
 import com.yral.shared.features.uploadvideo.di.uploadVideoModule
 import com.yral.shared.features.wallet.di.walletModule
@@ -92,6 +93,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             profileModule,
             walletModule,
             chatModule,
+            subscriptionsModule,
         )
     }
 }

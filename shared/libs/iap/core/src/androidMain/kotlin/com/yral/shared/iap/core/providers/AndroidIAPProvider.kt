@@ -78,13 +78,13 @@ internal class AndroidIAPProvider(
                     .newBuilder()
                     .setProductDetails(productDetails)
 
-            // set Offer details
+            // set Offer details using the same base/promo resolution as product fetching
             when (productId.productType) {
                 ProductType.SUBS -> {
                     val subscriptionOffers = productDetails.subscriptionOfferDetails
-                    val offer =
-                        subscriptionOffers?.firstOrNull { !it.offerId.isNullOrEmpty() } // Promotional offer
-                            ?: subscriptionOffers?.firstOrNull { it.offerId.isNullOrEmpty() } // Base plan fallback
+                    val (baseOffer, promoOffer) = resolveBaseAndPromo(subscriptionOffers) { it.offerId }
+                    val effectiveOffer =
+                        promoOffer ?: baseOffer
                             ?: return Result.failure(
                                 IAPError.PurchaseFailed(
                                     productIdString,
@@ -95,14 +95,14 @@ internal class AndroidIAPProvider(
                                     ),
                                 ),
                             )
-                    productDetailsParamsBuilder.setOfferToken(offer.offerToken)
+                    productDetailsParamsBuilder.setOfferToken(effectiveOffer.offerToken)
                 }
                 ProductType.ONE_TIME -> {
                     val oneTimeOffers = productDetails.oneTimePurchaseOfferDetailsList
-                    val offer =
-                        oneTimeOffers?.firstOrNull { !it.offerId.isNullOrEmpty() } // Promotional offer
-                            ?: oneTimeOffers?.firstOrNull { it.offerId.isNullOrEmpty() } // Base plan fallback
-                    offer?.offerToken?.let { offerToken -> productDetailsParamsBuilder.setOfferToken(offerToken) }
+                    val (_, promoOffer) = resolveBaseAndPromo(oneTimeOffers) { it.offerId }
+                    promoOffer
+                        ?.offerToken
+                        ?.let { offerToken -> productDetailsParamsBuilder.setOfferToken(offerToken) }
                 }
             }
 

@@ -61,9 +61,10 @@ internal class ProductFetcher {
                                 val priceAmountMicros =
                                     (skProduct.price.doubleValue * PRICE_TO_MICROS_FACTOR).roundToLong()
 
+                                val subscriptionPeriod = skProduct.subscriptionPeriod
                                 val productType =
                                     when {
-                                        skProduct.subscriptionPeriod != null -> ProductType.SUBS
+                                        subscriptionPeriod != null -> ProductType.SUBS
                                         else -> ProductType.ONE_TIME
                                     }
 
@@ -72,6 +73,8 @@ internal class ProductFetcher {
                                         id = skProduct.productIdentifier,
                                         price = priceString,
                                         priceAmountMicros = priceAmountMicros,
+                                        offerPrice = priceString,
+                                        offerPriceAmountMicros = priceAmountMicros,
                                         currencyCode =
                                             skProduct.priceLocale
                                                 .objectForKey(NSLocaleCurrencyCode)
@@ -79,6 +82,7 @@ internal class ProductFetcher {
                                         title = skProduct.localizedTitle,
                                         description = skProduct.localizedDescription,
                                         type = productType,
+                                        billingPeriodMillis = null,
                                     ),
                                 )
                             }
