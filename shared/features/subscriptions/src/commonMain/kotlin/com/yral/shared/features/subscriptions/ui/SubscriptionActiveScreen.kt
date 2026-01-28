@@ -2,6 +2,7 @@ package com.yral.shared.features.subscriptions.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,10 +13,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -90,20 +89,23 @@ fun SubscriptionActiveScreen(
                 modifier =
                     Modifier
                         .fillMaxSize()
-                        .statusBarsPadding()
-                        .verticalScroll(rememberScrollState())
-                        .padding(vertical = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                        .padding(bottom = 16.dp),
             ) {
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    Header(onBack = onBack)
-                    HeroLogo(modifier = Modifier.align(Alignment.BottomCenter))
+                Header(onBack = onBack)
+                Column(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    HeroLogo(modifier = Modifier.align(Alignment.CenterHorizontally))
+                    ActiveContent(
+                        validTillText = validTillText,
+                        creditsReceived = creditsReceived,
+                        onExploreHome = onExploreHome,
+                    )
                 }
-                ActiveContent(
-                    validTillText = validTillText,
-                    creditsReceived = creditsReceived,
-                    onExploreHome = onExploreHome,
-                )
             }
         }
     }
@@ -119,7 +121,7 @@ private fun ActiveContent(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp),
+                .padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(modifier = Modifier.height(4.dp))
@@ -172,24 +174,29 @@ private fun ActiveContent(
 
 @Composable
 private fun Header(onBack: () -> Unit) {
-    Box(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-        contentAlignment = Alignment.Center,
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconButton(
-            onClick = onBack,
-            modifier = Modifier.align(Alignment.CenterStart),
-        ) {
-            Image(
-                painter = painterResource(DesignRes.drawable.arrow_left),
-                contentDescription = "Back",
-                modifier = Modifier.size(24.dp),
-            )
-        }
+        Image(
+            painter = painterResource(DesignRes.drawable.arrow_left),
+            contentDescription = "Back",
+            modifier =
+                Modifier
+                    .size(24.dp)
+                    .align(Alignment.CenterVertically)
+                    .padding(end = 8.dp)
+                    .clickable(onClick = onBack),
+        )
         Text(
             text = stringResource(Res.string.subscription_active_title),
             style = LocalAppTopography.current.xlBold,
             color = YralColors.Neutral0,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.weight(1f).align(Alignment.CenterVertically),
         )
     }
 }
@@ -201,7 +208,6 @@ private fun HeroLogo(modifier: Modifier = Modifier) {
         modifier =
             modifier
                 .size(width = 200.dp, height = 180.dp)
-                .padding(top = 28.dp)
                 .background(
                     brush =
                         Brush.radialGradient(

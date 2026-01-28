@@ -2,6 +2,7 @@ package com.yral.shared.features.subscriptions.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -94,17 +94,23 @@ fun SubscriptionExpiredScreen(
                     Modifier
                         .fillMaxSize()
                         .statusBarsPadding()
-                        .verticalScroll(rememberScrollState())
-                        .padding(vertical = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                        .padding(bottom = 16.dp),
             ) {
-                ExpiredContent(
-                    validTillText = validTillText,
-                    oldPrice = oldPrice,
-                    newPrice = newPrice,
-                    onBack = onBack,
-                    onExploreHome = onExploreHome,
-                )
+                ExpiredHeader(onBack = onBack)
+                Column(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    ExpiredContent(
+                        validTillText = validTillText,
+                        oldPrice = oldPrice,
+                        newPrice = newPrice,
+                        onExploreHome = onExploreHome,
+                    )
+                }
             }
         }
     }
@@ -115,12 +121,13 @@ private fun ExpiredContent(
     validTillText: String,
     oldPrice: String?,
     newPrice: String?,
-    onBack: () -> Unit,
     onExploreHome: () -> Unit,
 ) {
-    Box(modifier = Modifier.fillMaxWidth()) {
-        ExpiredHeader(onBack = onBack)
-        ExpiredHeroLogo(modifier = Modifier.align(Alignment.BottomCenter))
+    Box(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center,
+    ) {
+        ExpiredHeroLogo(modifier = Modifier.align(Alignment.Center))
     }
     Column(
         modifier =
@@ -189,24 +196,29 @@ private fun ExpiredBenefitsSection(onExploreHome: () -> Unit) {
 
 @Composable
 private fun ExpiredHeader(onBack: () -> Unit) {
-    Box(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-        contentAlignment = Alignment.Center,
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconButton(
-            onClick = onBack,
-            modifier = Modifier.align(Alignment.CenterStart),
-        ) {
-            Image(
-                painter = painterResource(DesignRes.drawable.arrow_left),
-                contentDescription = "Back",
-                modifier = Modifier.size(24.dp),
-            )
-        }
+        Image(
+            painter = painterResource(DesignRes.drawable.arrow_left),
+            contentDescription = "Back",
+            modifier =
+                Modifier
+                    .size(24.dp)
+                    .align(Alignment.CenterVertically)
+                    .padding(end = 8.dp)
+                    .clickable(onClick = onBack),
+        )
         Text(
             text = stringResource(Res.string.subscription_active_title),
             style = LocalAppTopography.current.xlBold,
             color = YralColors.Neutral0,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.weight(1f).align(Alignment.CenterVertically),
         )
     }
 }
@@ -218,7 +230,6 @@ private fun ExpiredHeroLogo(modifier: Modifier) {
         modifier =
             modifier
                 .size(width = 200.dp, height = 180.dp)
-                .padding(top = 28.dp)
                 .background(
                     brush =
                         Brush.radialGradient(

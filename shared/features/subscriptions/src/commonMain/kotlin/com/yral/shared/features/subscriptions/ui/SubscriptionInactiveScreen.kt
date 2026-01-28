@@ -2,6 +2,7 @@ package com.yral.shared.features.subscriptions.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +17,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -93,31 +93,37 @@ fun SubscriptionInactiveScreen(
                     Modifier
                         .fillMaxSize()
                         .statusBarsPadding()
-                        .verticalScroll(rememberScrollState())
-                        .padding(vertical = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                        .padding(bottom = 16.dp),
             ) {
                 InactiveHeader(onBack = onBack)
-                Spacer(modifier = Modifier.height(200.dp))
-                InactiveHeroSection()
-                Spacer(modifier = Modifier.height(24.dp))
-                InactiveBenefitList()
-                Spacer(modifier = Modifier.height(24.dp))
-                InactiveOfferCard(oldPrice, newPrice)
-                Spacer(modifier = Modifier.height(24.dp))
-                YralGradientButton(
-                    text = stringResource(Res.string.subscription_inactive_cta),
-                    onClick = onSubscribe,
-                    buttonHeight = 46.dp,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
-                )
-                Spacer(modifier = Modifier.height(24.dp))
-                Text(
-                    text = stringResource(Res.string.subscription_active_terms),
-                    style = LocalAppTopography.current.baseRegular,
-                    color = YralColors.Neutral300,
-                    textAlign = TextAlign.Center,
-                )
+                Column(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Spacer(modifier = Modifier.height(200.dp))
+                    InactiveHeroSection()
+                    Spacer(modifier = Modifier.height(24.dp))
+                    InactiveBenefitList()
+                    Spacer(modifier = Modifier.height(24.dp))
+                    InactiveOfferCard(oldPrice, newPrice)
+                    Spacer(modifier = Modifier.height(24.dp))
+                    YralGradientButton(
+                        text = stringResource(Res.string.subscription_inactive_cta),
+                        onClick = onSubscribe,
+                        buttonHeight = 46.dp,
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        text = stringResource(Res.string.subscription_active_terms),
+                        style = LocalAppTopography.current.baseRegular,
+                        color = YralColors.Neutral300,
+                        textAlign = TextAlign.Center,
+                    )
+                }
             }
         }
     }
@@ -154,24 +160,29 @@ private fun HeroBackdrop() {
 
 @Composable
 private fun InactiveHeader(onBack: () -> Unit) {
-    Box(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-        contentAlignment = Alignment.Center,
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconButton(
-            onClick = onBack,
-            modifier = Modifier.align(Alignment.CenterStart),
-        ) {
-            Image(
-                painter = painterResource(DesignRes.drawable.arrow_left),
-                contentDescription = "Back",
-                modifier = Modifier.size(24.dp),
-            )
-        }
+        Image(
+            painter = painterResource(DesignRes.drawable.arrow_left),
+            contentDescription = "Back",
+            modifier =
+                Modifier
+                    .size(24.dp)
+                    .align(Alignment.CenterVertically)
+                    .padding(end = 8.dp)
+                    .clickable(onClick = onBack),
+        )
         Text(
             text = stringResource(Res.string.subscription_inactive_title),
             style = LocalAppTopography.current.xlBold,
             color = YralColors.Neutral0,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.weight(1f).align(Alignment.CenterVertically),
         )
     }
 }
