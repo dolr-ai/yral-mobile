@@ -9,8 +9,9 @@
     <string name="subscription_nudge_benefit_ai">Create AI videos using credits</string>
     <string name="subscription_nudge_benefit_chat">Unlimited chat with influencers</string>
     <string name="subscription_nudge_benefit_global">Tournament entry with credits</string>
-    <string name="subscription_nudge_benefit_rewards">Get paid for engaged view</string>
-    <string name="subscription_nudge_cta_subscribe">Subscribe for ₹49</string>
+    <string name="subscription_nudge_benefit_rewards">Get paid for engaged views</string>
+    <string name="subscription_nudge_cta_subscribe_with_price">Subscribe for %1$s</string>
+    <string name="subscription_nudge_cta_subscribe">Subscribe</string>
     <string name="subscription_nudge_cta_dismiss">Dismiss</string>
     <string name="subscription_active_title">Subscription</string>
     <string name="subscription_active_welcome">Welcome to Yral Pro!</string>
@@ -24,7 +25,7 @@
     <string name="subscription_active_benefit_ai">%1$d credited to create AI videos</string>
     <string name="subscription_active_benefit_chat">Unlimited chat with influencers</string>
     <string name="subscription_active_benefit_global">Tournament entry with credits</string>
-    <string name="subscription_active_benefit_rewards">Get paid for engaged view on your videos</string>
+    <string name="subscription_active_benefit_rewards">Get paid for engaged views on your videos</string>
     <string name="subscription_active_cta">Explore Home</string>
     <string name="subscription_active_terms">Terms &amp; Conditions  |  Privacy Policy</string>
     <string name="subscription_expired_title">Your Yral Pro has ended!</string>

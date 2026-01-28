@@ -45,6 +45,7 @@ import yral_mobile.shared.features.subscriptions.generated.resources.subscriptio
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_nudge_benefit_rewards
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_nudge_cta_dismiss
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_nudge_cta_subscribe
+import yral_mobile.shared.features.subscriptions.generated.resources.subscription_nudge_cta_subscribe_with_price
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_nudge_title
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_lightning_bolt_gold
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_x
@@ -55,6 +56,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 @Composable
 fun SubscriptionNudge(
     modifier: Modifier = Modifier,
+    priceText: String? = null,
     onSubscribeClicked: () -> Unit,
     onDismissClicked: () -> Unit,
 ) {
@@ -152,8 +154,13 @@ fun SubscriptionNudge(
                 verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+                val ctaText =
+                    priceText?.let {
+                        stringResource(Res.string.subscription_nudge_cta_subscribe_with_price, it)
+                    } ?: stringResource(Res.string.subscription_nudge_cta_subscribe)
+
                 YralGradientButton(
-                    text = stringResource(Res.string.subscription_nudge_cta_subscribe),
+                    text = ctaText,
                     onClick = onSubscribeClicked,
                     buttonHeight = 42.dp,
                 )
@@ -204,6 +211,7 @@ private fun SubscriptionBenefitRow(
 private fun SubscriptionNudgePreview() {
     CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
         SubscriptionNudge(
+            priceText = "₹49",
             onSubscribeClicked = {},
             onDismissClicked = {},
         )
