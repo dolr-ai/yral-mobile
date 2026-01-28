@@ -44,7 +44,6 @@ import yral_mobile.shared.features.subscriptions.generated.resources.subscriptio
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_benefit_rewards
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_terms
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_title
-import yral_mobile.shared.features.subscriptions.generated.resources.subscription_back
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_background
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_ai
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_chat
@@ -58,6 +57,8 @@ import yral_mobile.shared.features.subscriptions.generated.resources.subscriptio
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_expired_new_price
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_expired_old_price
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_expired_subtitle
+import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Composable
 fun SubscriptionExpiredScreen(
@@ -186,7 +187,7 @@ private fun ExpiredHeader(onBack: () -> Unit) {
             modifier = Modifier.align(Alignment.CenterStart),
         ) {
             Image(
-                painter = painterResource(Res.drawable.subscription_back),
+                painter = painterResource(DesignRes.drawable.arrow_left),
                 contentDescription = "Back",
                 modifier = Modifier.size(24.dp),
             )

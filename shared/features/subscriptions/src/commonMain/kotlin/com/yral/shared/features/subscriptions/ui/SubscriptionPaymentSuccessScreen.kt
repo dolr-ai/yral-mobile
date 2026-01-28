@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.yral.shared.libs.designsystem.component.YralAnimatedBounceIcon
 import com.yral.shared.libs.designsystem.component.YralButtonType
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
@@ -89,7 +90,7 @@ private fun SubscriptionSuccessContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        AnimatedBounceIcon(
+        YralAnimatedBounceIcon(
             modifier = Modifier.offset(y = (-8).dp),
             imageRes = DesignRes.drawable.ic_success,
         )
