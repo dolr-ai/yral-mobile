@@ -86,15 +86,15 @@ class FeedViewModel(
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
     companion object {
-        const val PRE_FETCH_BEFORE_LAST = 5
+        const val PRE_FETCH_BEFORE_LAST = 10
         private const val FIRST_SECOND_WATCHED_THRESHOLD_MS = 100L
         private val ANALYTICS_VIDEO_STARTED_RANGE = 0L..1000L
         private val ANALYTICS_VIDEO_VIEWED_RANGE = 3000L..4000L
         private const val FULL_VIDEO_WATCHED_THRESHOLD = 95.0
         private const val MAX_PAGE_SIZE = 100
-        private const val MAX_PAGE_SIZE_AI_FEED = 50
+        private const val MAX_PAGE_SIZE_AI_FEED = 100
         private const val FEEDS_PAGE_SIZE = 10
-        private const val FEEDS_PAGE_SIZE_AI_FEED = 10
+        private const val FEEDS_PAGE_SIZE_AI_FEED = 50
         private const val SUFFICIENT_NEW_REQUIRED = 10
         const val SIGN_UP_PAGE = 9
         private const val PAGER_STATE_REFRESH_BUFFER_MS = 100L
