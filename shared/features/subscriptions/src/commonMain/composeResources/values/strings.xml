@@ -28,6 +28,7 @@
     <string name="subscription_active_cta">Explore Home</string>
     <string name="subscription_active_terms">Terms &amp; Conditions  |  Privacy Policy</string>
     <string name="subscription_expired_title">Your Yral Pro has ended!</string>
+    <string name="subscription_expired_title_highlight">Yral Pro</string>
     <string name="subscription_expired_subtitle">Enjoyed Pro? Reactivate and unlock all perks again.</string>
     <string name="subscription_expired_card_title">Expired on</string>
     <string name="subscription_expired_card_button">Reactivate Yral Pro</string>

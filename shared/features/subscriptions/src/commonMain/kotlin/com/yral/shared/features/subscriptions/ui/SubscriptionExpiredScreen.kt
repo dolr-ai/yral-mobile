@@ -35,6 +35,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.yral.shared.core.session.DEFAULT_TOTAL_CREDITS
 import com.yral.shared.libs.designsystem.component.YralGradientButton
+import com.yral.shared.libs.designsystem.component.buildHighlightedText
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.appTypoGraphy
@@ -58,6 +59,8 @@ import yral_mobile.shared.features.subscriptions.generated.resources.subscriptio
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_expired_card_title
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_expired_cta
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_expired_subtitle
+import yral_mobile.shared.features.subscriptions.generated.resources.subscription_expired_title
+import yral_mobile.shared.features.subscriptions.generated.resources.subscription_expired_title_highlight
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_new_price
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_lightning_bolt_silver
@@ -139,13 +142,11 @@ private fun ExpiredHeroSection() {
     Spacer(modifier = Modifier.height(4.dp))
     Text(
         text =
-            buildAnnotatedString {
-                append("Your ")
-                withStyle(SpanStyle(color = YralColors.Yellow200)) {
-                    append("Yral Pro ")
-                }
-                append("has ended!")
-            },
+            buildHighlightedText(
+                fullText = stringResource(Res.string.subscription_expired_title),
+                highlightedText = stringResource(Res.string.subscription_expired_title_highlight),
+                baseTextStyle = LocalAppTopography.current.xxlBold,
+            ),
         style = LocalAppTopography.current.xxlBold,
         color = YralColors.Neutral50,
         textAlign = TextAlign.Center,
