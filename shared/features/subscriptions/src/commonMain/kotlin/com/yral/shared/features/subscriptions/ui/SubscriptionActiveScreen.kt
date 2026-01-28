@@ -27,13 +27,11 @@ import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.yral.shared.core.session.DEFAULT_TOTAL_CREDITS
 import com.yral.shared.libs.designsystem.component.YralGradientButton
+import com.yral.shared.libs.designsystem.component.buildHighlightedText
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.appTypoGraphy
@@ -54,6 +52,8 @@ import yral_mobile.shared.features.subscriptions.generated.resources.subscriptio
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_terms
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_title
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_valid_prefix
+import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_welcome
+import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_welcome_highlight
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_background
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_ai
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_chat
@@ -125,12 +125,11 @@ private fun ActiveContent(
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text =
-                buildAnnotatedString {
-                    append("Welcome to ")
-                    withStyle(SpanStyle(color = YralColors.Yellow200)) {
-                        append("Yral Pro!")
-                    }
-                },
+                buildHighlightedText(
+                    fullText = stringResource(Res.string.subscription_active_welcome),
+                    highlightedText = stringResource(Res.string.subscription_active_welcome_highlight),
+                    baseTextStyle = LocalAppTopography.current.xxlBold,
+                ),
             style = LocalAppTopography.current.xxlBold,
             color = YralColors.Neutral50,
             textAlign = TextAlign.Center,

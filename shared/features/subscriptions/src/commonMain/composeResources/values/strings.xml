@@ -14,6 +14,7 @@
     <string name="subscription_nudge_cta_dismiss">Dismiss</string>
     <string name="subscription_active_title">Subscription</string>
     <string name="subscription_active_welcome">Welcome to Yral Pro!</string>
+    <string name="subscription_active_welcome_highlight">Yral Pro!</string>
     <string name="subscription_active_subtitle">You’re part of an exclusive club on YRAL.</string>
     <string name="subscription_active_status_title">Active Subscription</string>
     <string name="subscription_active_valid_prefix">Valid till</string>
