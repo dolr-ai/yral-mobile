@@ -47,8 +47,8 @@ import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralGradientButton
+import com.yral.shared.libs.designsystem.component.buildHighlightedText
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
-import com.yral.shared.libs.designsystem.theme.YralBrushes
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.phonevalidation.countries.Country
 import org.jetbrains.compose.resources.painterResource
@@ -251,42 +251,11 @@ private fun SignupHeader(
 fun getAnnotatedHeaderForLogin(
     fullText: String,
     maskedText: String = "",
-) = buildAnnotatedString {
-    val maskedStart = fullText.indexOf(maskedText)
-    val maskedEnd = maskedStart + maskedText.length
-    val textStyle = LocalAppTopography.current.xlSemiBold
-    val spanStyle =
-        SpanStyle(
-            fontSize = textStyle.fontSize,
-            fontFamily = textStyle.fontFamily,
-            fontWeight = textStyle.fontWeight,
-        )
-    if (maskedStart >= 0) {
-        withStyle(
-            style = spanStyle.copy(color = Color.White),
-        ) { append(fullText.take(maskedStart)) }
-
-        withStyle(
-            style =
-                spanStyle.copy(
-                    brush = YralBrushes.GoldenTextBrush,
-                    fontWeight = FontWeight.Bold,
-                ),
-        ) { append(fullText.substring(maskedStart, maskedEnd)) }
-
-        if (maskedEnd < fullText.length) {
-            withStyle(
-                style = spanStyle.copy(color = Color.White),
-            ) { append(fullText.substring(maskedEnd)) }
-        }
-    } else {
-        withStyle(
-            style = spanStyle.copy(color = Color.White),
-        ) {
-            append(fullText)
-        }
-    }
-}
+) = buildHighlightedText(
+    fullText = fullText,
+    highlightedText = maskedText,
+    baseTextStyle = LocalAppTopography.current.xlSemiBold,
+)
 
 @Composable
 private fun OrDivider() {
@@ -324,14 +293,14 @@ private fun TermsOfServiceText(
     textAlign: TextAlign = TextAlign.Center,
 ) {
     Text(
-        text = annotateText(termsLink, openTerms),
+        text = annotatedTermsConsent(termsLink, openTerms),
         modifier = modifier.fillMaxWidth(),
         textAlign = textAlign,
     )
 }
 
 @Composable
-private fun annotateText(
+private fun annotatedTermsConsent(
     termsLink: String,
     openTerms: () -> Unit,
 ): AnnotatedString {
