@@ -13,4 +13,5 @@ data class Product(
     val title: String,
     val description: String,
     val type: ProductType,
+    val billingPeriodMillis: Long? = null,
 )

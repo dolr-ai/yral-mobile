@@ -112,19 +112,20 @@ class SubscriptionViewModel(
                 .fetchProducts(listOf(ProductId.YRAL_PRO))
                 .onSuccess { products ->
                     val product = products.firstOrNull()
-                    product?.let {
-                        _viewState.update {
-                            val oldPrice = product.priceAmountMicros / CURRENCY_DIVIDER
-                            val currentPrice = product.offerPriceAmountMicros / CURRENCY_DIVIDER
-                            it.copy(
+                    product?.let { p ->
+                        _viewState.update { current ->
+                            val oldPrice = p.priceAmountMicros / CURRENCY_DIVIDER
+                            val currentPrice = p.offerPriceAmountMicros / CURRENCY_DIVIDER
+                            current.copy(
                                 pricingInfo =
                                     PricingInfo(
                                         currentPrice = currentPrice,
-                                        formattedCurrentPrice = product.offerPrice,
+                                        formattedCurrentPrice = p.offerPrice,
                                         oldPrice = oldPrice,
-                                        formattedOldPrice = product.price,
-                                        currencyCode = product.currencyCode,
+                                        formattedOldPrice = p.price,
+                                        currencyCode = p.currencyCode,
                                     ),
+                                billingPeriodMillis = p.billingPeriodMillis,
                             )
                         }
                     }
@@ -167,6 +168,7 @@ class SubscriptionViewModel(
 data class ViewState(
     val purchaseState: UiState<SubscriptionScreenType> = UiState.Initial,
     val pricingInfo: PricingInfo? = null,
+    val billingPeriodMillis: Long? = null,
 )
 
 sealed class SubscriptionScreenType {

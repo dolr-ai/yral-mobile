@@ -62,10 +62,19 @@ fun SubscriptionsScreen(
                     )
                 }
                 is SubscriptionScreenType.Purchased -> {
+                    val purchaseTimeMs = component.purchaseTimeMs
+                    val billingPeriodMillis = viewState.billingPeriodMillis
+                    val validTillMillis =
+                        if (purchaseTimeMs != null && billingPeriodMillis != null && billingPeriodMillis > 0) {
+                            purchaseTimeMs + billingPeriodMillis
+                        } else {
+                            null
+                        }
+
                     SubscriptionActiveScreen(
                         modifier = modifier,
                         validTillText =
-                            component.validTill
+                            validTillMillis
                                 ?.let { formatMillisWithOrdinal(it) }
                                 ?: "",
                         onBack = { component.onBack() },

@@ -4,7 +4,7 @@ import com.arkivanov.decompose.ComponentContext
 
 internal class DefaultSubscriptionsComponent(
     componentContext: ComponentContext,
-    override val validTill: Long?,
+    override val purchaseTimeMs: Long?,
     override val onBack: () -> Unit,
     override val onCreateVideo: () -> Unit,
     override val onExploreFeed: () -> Unit,

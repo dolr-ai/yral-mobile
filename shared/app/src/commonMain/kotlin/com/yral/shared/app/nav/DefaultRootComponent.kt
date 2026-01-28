@@ -402,8 +402,8 @@ class DefaultRootComponent(
         navigation.pushToFront(Config.Leaderboard)
     }
 
-    override fun openSubscription(validTill: Long?) {
-        navigation.pushToFront(Config.Subscription(validTill))
+    override fun openSubscription(purchaseTimeMs: Long?) {
+        navigation.pushToFront(Config.Subscription(purchaseTimeMs))
     }
 
     override fun onCreateVideo() {

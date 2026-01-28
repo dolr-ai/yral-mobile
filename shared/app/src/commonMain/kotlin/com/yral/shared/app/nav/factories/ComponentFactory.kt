@@ -120,7 +120,7 @@ internal class ComponentFactory(
     ): SubscriptionsComponent =
         SubscriptionsComponent.Companion(
             componentContext = componentContext,
-            validTill = config.validTill,
+            purchaseTimeMs = config.purchaseTimeMs,
             onBack = rootComponent::onBackClicked,
             onCreateVideo = rootComponent::onCreateVideo,
             onExploreFeed = rootComponent::onExploreFeed,

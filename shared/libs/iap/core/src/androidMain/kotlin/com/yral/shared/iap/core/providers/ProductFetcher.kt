@@ -143,6 +143,7 @@ internal class ProductFetcher(
                         title = productDetails.title,
                         description = productDetails.description,
                         type = ProductType.ONE_TIME,
+                        billingPeriodMillis = null,
                     )
                 }
             } ?: emptyList()
@@ -198,6 +199,8 @@ internal class ProductFetcher(
                 default = "",
             )
 
+        val billingPeriodMillis = billingPeriodToDurationMillis(basePhase.billingPeriod)
+
         return Product(
             id = productDetails.productId,
             price = basePrice,
@@ -208,6 +211,7 @@ internal class ProductFetcher(
             title = productDetails.title,
             description = productDetails.description,
             type = ProductType.SUBS,
+            billingPeriodMillis = billingPeriodMillis,
         )
     }
 }

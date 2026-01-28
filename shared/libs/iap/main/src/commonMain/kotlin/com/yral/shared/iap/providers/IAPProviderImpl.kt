@@ -1,7 +1,6 @@
 package com.yral.shared.iap.providers
 
 import co.touchlab.kermit.Logger
-import com.yral.shared.core.session.DEFAULT_DAYS
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.iap.PurchaseResult
 import com.yral.shared.iap.core.IAPError
@@ -12,7 +11,6 @@ import com.yral.shared.iap.core.util.handleIAPResultOperation
 import com.yral.shared.iap.utils.PurchaseContext
 import com.yral.shared.iap.utils.toPlatformContext
 import com.yral.shared.iap.verification.PurchaseVerificationService
-import kotlin.time.Duration.Companion.days
 import com.yral.shared.iap.core.model.Purchase as CorePurchase
 import com.yral.shared.iap.core.providers.IAPProvider as CoreIAPProvider
 
@@ -116,7 +114,7 @@ internal class IAPProviderImpl(
                             purchase.accountIdentifier != userId -> PurchaseResult.AccountMismatch
                             else ->
                                 PurchaseResult.PurchaseMatches(
-                                    validTill = purchase.purchaseTime + DEFAULT_DAYS.days.inWholeMilliseconds,
+                                    purchaseTime = purchase.purchaseTime,
                                 )
                         }
                     }

@@ -61,6 +61,6 @@ internal sealed interface Config {
 
     @Serializable
     data class Subscription(
-        val validTill: Long?,
+        val purchaseTimeMs: Long?,
     ) : Config
 }

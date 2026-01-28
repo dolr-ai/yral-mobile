@@ -87,7 +87,7 @@ interface RootComponent {
 
     fun openLeaderboard()
 
-    fun openSubscription(validTill: Long?)
+    fun openSubscription(purchaseTimeMs: Long?)
 
     fun onCreateVideo()
 
