@@ -76,6 +76,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -301,6 +302,7 @@ class ProfileViewModel(
         viewModelScope.launch {
             sessionManager
                 .observeSessionProperty { it.proDetails }
+                .drop(1) // Skip initial value, only react to changes
                 .collect { proDetails ->
                     // When proDetails becomes null (after purchase), refresh profile
                     if (proDetails == null && canisterData.userPrincipalId == sessionManager.userPrincipal) {
