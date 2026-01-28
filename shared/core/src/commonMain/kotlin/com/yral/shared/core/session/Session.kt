@@ -28,10 +28,7 @@ data class SessionProperties(
 )
 
 data class ProDetails(
-    val isProPurchased: Boolean,
-    val availableCredits: Int,
-    val totalCredits: Int = DEFAULT_TOTAL_CREDITS,
+    val isProPurchased: Boolean = false,
+    val availableCredits: Int = 0,
+    val totalCredits: Int = 0,
 )
-
-const val DEFAULT_TOTAL_CREDITS = 30
-const val DEFAULT_DAYS = 30

@@ -22,7 +22,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.yral.shared.core.session.DEFAULT_TOTAL_CREDITS
 import com.yral.shared.libs.designsystem.component.YralAnimatedBounceIcon
 import com.yral.shared.libs.designsystem.component.YralButtonType
 import com.yral.shared.libs.designsystem.component.YralGradientButton
@@ -43,6 +42,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 @Composable
 fun SubscriptionPaymentSuccessScreen(
     modifier: Modifier = Modifier,
+    creditsReceived: Int,
     onClose: () -> Unit = {},
     onCreateVideo: () -> Unit = {},
     onExploreFeed: () -> Unit = {},
@@ -71,13 +71,18 @@ fun SubscriptionPaymentSuccessScreen(
                 )
             }
 
-            SubscriptionSuccessContent(onCreateVideo = onCreateVideo, onExploreFeed = onExploreFeed)
+            SubscriptionSuccessContent(
+                creditsReceived = creditsReceived,
+                onCreateVideo = onCreateVideo,
+                onExploreFeed = onExploreFeed,
+            )
         }
     }
 }
 
 @Composable
 private fun SubscriptionSuccessContent(
+    creditsReceived: Int,
     onCreateVideo: () -> Unit,
     onExploreFeed: () -> Unit,
 ) {
@@ -102,7 +107,7 @@ private fun SubscriptionSuccessContent(
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = stringResource(Res.string.subscription_success_body, DEFAULT_TOTAL_CREDITS),
+            text = stringResource(Res.string.subscription_success_body, creditsReceived),
             style = LocalAppTopography.current.baseRegular,
             color = YralColors.NeutralTextSecondary,
             textAlign = TextAlign.Center,

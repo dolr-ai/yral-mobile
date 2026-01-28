@@ -33,7 +33,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import com.yral.shared.core.session.DEFAULT_TOTAL_CREDITS
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -72,6 +71,7 @@ private val HERO_FADE_COLOR = Color(HERO_FADE_COLOR_HEX)
 @Composable
 fun SubscriptionInactiveScreen(
     modifier: Modifier = Modifier,
+    creditsReceived: Int,
     oldPrice: String?,
     newPrice: String?,
     onBack: () -> Unit = {},
@@ -106,7 +106,7 @@ fun SubscriptionInactiveScreen(
                     Spacer(modifier = Modifier.height(200.dp))
                     InactiveHeroSection()
                     Spacer(modifier = Modifier.height(24.dp))
-                    InactiveBenefitList()
+                    InactiveBenefitList(creditsReceived)
                     Spacer(modifier = Modifier.height(24.dp))
                     InactiveOfferCard(oldPrice, newPrice)
                     Spacer(modifier = Modifier.height(24.dp))
@@ -228,14 +228,14 @@ private fun InactiveHeroSection() {
 }
 
 @Composable
-private fun InactiveBenefitList() {
+private fun InactiveBenefitList(creditsReceived: Int) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         SubscriptionBenefitRow(
             iconRes = Res.drawable.subscription_benefit_ai,
-            text = stringResource(Res.string.subscription_active_benefit_ai, DEFAULT_TOTAL_CREDITS),
+            text = stringResource(Res.string.subscription_active_benefit_ai, creditsReceived),
         )
         SubscriptionBenefitRow(
             iconRes = Res.drawable.subscription_benefit_chat,
@@ -338,6 +338,7 @@ private fun OfferPriceRow(
 private fun SubscriptionInactiveScreenPreview() {
     CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
         SubscriptionInactiveScreen(
+            creditsReceived = 40,
             oldPrice = "₹499",
             newPrice = "₹49",
             onBack = {},

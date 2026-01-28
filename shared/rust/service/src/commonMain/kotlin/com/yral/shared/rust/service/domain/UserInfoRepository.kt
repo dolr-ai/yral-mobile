@@ -17,7 +17,7 @@ interface UserInfoRepository {
         targetPrincipal: Principal,
     )
 
-    suspend fun getUserProfileDetailsV6(
+    suspend fun getUserProfileDetailsV7(
         principal: Principal,
         targetPrincipal: Principal,
     ): UserProfileDetails

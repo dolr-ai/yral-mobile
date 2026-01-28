@@ -49,7 +49,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.touchlab.kermit.Logger
 import com.yral.shared.analytics.events.MenuCtaType
 import com.yral.shared.analytics.events.SignupPageName
-import com.yral.shared.core.session.DEFAULT_TOTAL_CREDITS
+import com.yral.shared.core.session.ProDetails
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.account.ui.AccountScreenConstants.SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT
 import com.yral.shared.features.account.viewmodel.AccountBottomSheet
@@ -175,9 +175,9 @@ private fun AccountScreenContent(
 ) {
     val helperLinks = remember(state.isLoggedIn) { viewModel.getHelperLinks() }
 
-    val proDetails by subscriptionCoordinator.proDetails.collectAsStateWithLifecycle(null)
-    val totalProCredits = proDetails?.totalCredits ?: DEFAULT_TOTAL_CREDITS
-    val availableProCredits = proDetails?.availableCredits ?: 0
+    val proDetails by subscriptionCoordinator.proDetails.collectAsStateWithLifecycle(ProDetails())
+    val totalProCredits = proDetails.totalCredits
+    val availableProCredits = proDetails.availableCredits
     val proCardClick =
         remember {
             {
