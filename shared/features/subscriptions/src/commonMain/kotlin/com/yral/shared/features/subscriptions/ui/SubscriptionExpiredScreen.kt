@@ -33,7 +33,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import com.yral.shared.core.session.DEFAULT_TOTAL_CREDITS
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.buildHighlightedText
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
@@ -70,6 +69,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 fun SubscriptionExpiredScreen(
     modifier: Modifier = Modifier,
     validTillText: String,
+    creditsReceived: Int,
     oldPrice: String?,
     newPrice: String?,
     onBack: () -> Unit = {},
@@ -106,6 +106,7 @@ fun SubscriptionExpiredScreen(
                 ) {
                     ExpiredContent(
                         validTillText = validTillText,
+                        creditsReceived = creditsReceived,
                         oldPrice = oldPrice,
                         newPrice = newPrice,
                         onExploreHome = onExploreHome,
@@ -119,6 +120,7 @@ fun SubscriptionExpiredScreen(
 @Composable
 private fun ExpiredContent(
     validTillText: String,
+    creditsReceived: Int,
     oldPrice: String?,
     newPrice: String?,
     onExploreHome: () -> Unit,
@@ -140,7 +142,10 @@ private fun ExpiredContent(
         Spacer(modifier = Modifier.height(20.dp))
         ExpiredStatusCard(validTillText, oldPrice, newPrice)
         Spacer(modifier = Modifier.height(20.dp))
-        ExpiredBenefitsSection(onExploreHome = onExploreHome)
+        ExpiredBenefitsSection(
+            creditsReceived = creditsReceived,
+            onExploreHome = onExploreHome,
+        )
     }
 }
 
@@ -168,7 +173,10 @@ private fun ExpiredHeroSection() {
 }
 
 @Composable
-private fun ExpiredBenefitsSection(onExploreHome: () -> Unit) {
+private fun ExpiredBenefitsSection(
+    creditsReceived: Int,
+    onExploreHome: () -> Unit,
+) {
     Text(
         text = stringResource(Res.string.subscription_expired_benefits_title),
         style = LocalAppTopography.current.baseMedium,
@@ -177,7 +185,7 @@ private fun ExpiredBenefitsSection(onExploreHome: () -> Unit) {
         modifier = Modifier.fillMaxWidth(),
     )
     Spacer(modifier = Modifier.height(16.dp))
-    ExpiredBenefitList()
+    ExpiredBenefitList(creditsReceived)
     Spacer(modifier = Modifier.height(20.dp))
     YralGradientButton(
         text = stringResource(Res.string.subscription_expired_cta),
@@ -342,14 +350,14 @@ private fun ReactivateRow(
 }
 
 @Composable
-private fun ExpiredBenefitList() {
+private fun ExpiredBenefitList(creditsReceived: Int) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         SubscriptionBenefitRow(
             iconRes = Res.drawable.subscription_benefit_ai,
-            text = stringResource(Res.string.subscription_active_benefit_ai, DEFAULT_TOTAL_CREDITS),
+            text = stringResource(Res.string.subscription_active_benefit_ai, creditsReceived),
         )
         SubscriptionBenefitRow(
             iconRes = Res.drawable.subscription_benefit_chat,
@@ -373,6 +381,7 @@ private fun SubscriptionExpiredScreenPreview() {
     CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
         SubscriptionExpiredScreen(
             validTillText = "31 Dec 2024",
+            creditsReceived = 40,
             oldPrice = "₹499",
             newPrice = "₹49",
             onBack = {},

@@ -8,5 +8,5 @@ interface SubscriptionCoordinator {
 
     fun dismissSubscriptionBottomSheet()
 
-    val proDetails: Flow<ProDetails?>
+    val proDetails: Flow<ProDetails>
 }
