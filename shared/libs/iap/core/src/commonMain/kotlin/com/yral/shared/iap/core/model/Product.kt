@@ -7,8 +7,11 @@ data class Product(
     val id: String,
     val price: String,
     val priceAmountMicros: Long,
+    val offerPrice: String,
+    val offerPriceAmountMicros: Long,
     val currencyCode: String,
     val title: String,
     val description: String,
     val type: ProductType,
+    val billingPeriodMillis: Long? = null,
 )

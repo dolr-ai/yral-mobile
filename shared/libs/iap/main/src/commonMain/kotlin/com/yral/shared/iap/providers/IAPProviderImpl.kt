@@ -112,7 +112,10 @@ internal class IAPProviderImpl(
                             purchase == null -> PurchaseResult.NoPurchase
                             purchase.accountIdentifier == null -> PurchaseResult.UnaccountedPurchase
                             purchase.accountIdentifier != userId -> PurchaseResult.AccountMismatch
-                            else -> PurchaseResult.PurchaseMatches
+                            else ->
+                                PurchaseResult.PurchaseMatches(
+                                    purchaseTime = purchase.purchaseTime,
+                                )
                         }
                     }
             } ?: throw IAPError.UnknownError(Exception("User principal is null"))

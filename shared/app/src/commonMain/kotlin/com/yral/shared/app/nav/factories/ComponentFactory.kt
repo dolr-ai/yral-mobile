@@ -14,6 +14,7 @@ import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
+import com.yral.shared.features.subscriptions.nav.SubscriptionsComponent
 import com.yral.shared.features.tournament.nav.TournamentGameComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.libs.phonevalidation.countries.Country
@@ -40,6 +41,7 @@ internal class ComponentFactory(
             HomeComponent.Companion(
                 componentContext = componentContext,
                 requestLoginFactory = rootComponent.createLoginRequestFactory(),
+                subscriptionCoordinator = rootComponent.getSubscriptionCoordinator(),
                 openEditProfile = rootComponent::openEditProfile,
                 openProfile = rootComponent::openProfile,
                 openTournamentLeaderboard = rootComponent::openTournamentLeaderboard,
@@ -110,6 +112,18 @@ internal class ComponentFactory(
             openProfile = rootComponent::openProfile,
             showBackIcon = true,
             onBack = rootComponent::onBackClicked,
+        )
+
+    fun createSubscription(
+        componentContext: ComponentContext,
+        config: Config.Subscription,
+    ): SubscriptionsComponent =
+        SubscriptionsComponent.Companion(
+            componentContext = componentContext,
+            purchaseTimeMs = config.purchaseTimeMs,
+            onBack = rootComponent::onBackClicked,
+            onCreateVideo = rootComponent::onCreateVideo,
+            onExploreFeed = rootComponent::onExploreFeed,
         )
 
     fun createCountrySelector(
