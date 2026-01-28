@@ -25,7 +25,10 @@ class SubscriptionViewModel(
 
     val proDetails =
         sessionManager
-            .observeSessionProperty { it.proDetails }
+            .observeSessionPropertyWithDefault(
+                selector = { it.proDetails },
+                defaultValue = ProDetails(),
+            )
 
     init {
         fetchProductDetails()

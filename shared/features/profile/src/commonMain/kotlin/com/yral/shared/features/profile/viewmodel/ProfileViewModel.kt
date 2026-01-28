@@ -63,8 +63,8 @@ import com.yral.shared.rust.service.domain.models.SubscriptionPlan
 import com.yral.shared.rust.service.domain.pagedDataSource.UserInfoPagingSourceFactory
 import com.yral.shared.rust.service.domain.usecases.FollowUserParams
 import com.yral.shared.rust.service.domain.usecases.FollowUserUseCase
-import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV6Params
-import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV6UseCase
+import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7Params
+import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCase
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserParams
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserUseCase
 import com.yral.shared.rust.service.utils.CanisterData
@@ -76,7 +76,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -115,7 +114,7 @@ class ProfileViewModel(
     private val crashlyticsManager: CrashlyticsManager,
     private val flagManager: FeatureFlagManager,
     private val userInfoPagingSourceFactory: UserInfoPagingSourceFactory,
-    private val getUserProfileDetailsV6UseCase: GetUserProfileDetailsV6UseCase,
+    private val getUserProfileDetailsV7UseCase: GetUserProfileDetailsV7UseCase,
     private val getInfluencerUseCase: GetInfluencerUseCase,
     private val fileDownloader: FileDownloader,
 ) : ViewModel() {
@@ -302,7 +301,6 @@ class ProfileViewModel(
         viewModelScope.launch {
             sessionManager
                 .observeSessionProperty { it.proDetails }
-                .drop(1) // Skip initial value, only react to changes
                 .collect { proDetails ->
                     // When proDetails becomes null (after purchase), refresh profile
                     if (proDetails == null && canisterData.userPrincipalId == sessionManager.userPrincipal) {
@@ -344,8 +342,8 @@ class ProfileViewModel(
         Logger.d("SubscriptionX") { "refreshOwnProfileDetails called" }
         viewModelScope.launch {
             val principal = sessionManager.userPrincipal ?: return@launch
-            getUserProfileDetailsV6UseCase(
-                GetUserProfileDetailsV6Params(
+            getUserProfileDetailsV7UseCase(
+                GetUserProfileDetailsV7Params(
                     principal = principal,
                     targetPrincipal = principal,
                 ),
@@ -365,6 +363,11 @@ class ProfileViewModel(
                                 proPlan
                                     ?.subscription
                                     ?.freeVideoCreditsLeft
+                                    ?.toInt() ?: 0,
+                            totalCredits =
+                                proPlan
+                                    ?.subscription
+                                    ?.totalVideoCreditsAlloted
                                     ?.toInt() ?: 0,
                         ),
                 )
@@ -391,8 +394,8 @@ class ProfileViewModel(
         if (targetPrincipal.isBlank()) return
         viewModelScope.launch {
             val callerPrincipal = sessionManager.userPrincipal ?: return@launch
-            getUserProfileDetailsV6UseCase(
-                GetUserProfileDetailsV6Params(
+            getUserProfileDetailsV7UseCase(
+                GetUserProfileDetailsV7Params(
                     principal = callerPrincipal,
                     targetPrincipal = targetPrincipal,
                 ),

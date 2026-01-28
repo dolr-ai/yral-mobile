@@ -1,11 +1,12 @@
 package com.yral.shared.rust.service.domain.models
 
 import com.yral.shared.uniffi.generated.UisSubscriptionPlan
-import com.yral.shared.uniffi.generated.UisUserProfileDetailsForFrontendV6
+import com.yral.shared.uniffi.generated.UisUserAccountType
+import com.yral.shared.uniffi.generated.UisUserProfileDetailsForFrontendV7
 import com.yral.shared.uniffi.generated.UisUserProfileGlobalStats
 import com.yral.shared.uniffi.generated.UisYralProSubscription
 
-fun UisUserProfileDetailsForFrontendV6.toDomain(): UserProfileDetails =
+fun UisUserProfileDetailsForFrontendV7.toDomain(): UserProfileDetails =
     UserProfileDetails(
         bio = bio,
         websiteUrl = websiteUrl,
@@ -17,6 +18,7 @@ fun UisUserProfileDetailsForFrontendV6.toDomain(): UserProfileDetails =
         callerFollowsUser = callerFollowsUser,
         subscriptionPlan = subscriptionPlan.toDomain(),
         isAiInfluencer = isAiInfluencer,
+        accountType = accountType.toDomain(),
     )
 
 fun UisSubscriptionPlan.toDomain(): SubscriptionPlan =
@@ -28,7 +30,14 @@ fun UisSubscriptionPlan.toDomain(): SubscriptionPlan =
 fun UisYralProSubscription.toDomain(): YralProSubscription =
     YralProSubscription(
         freeVideoCreditsLeft = freeVideoCreditsLeft,
+        totalVideoCreditsAlloted = totalVideoCreditsAlloted,
     )
+
+fun UisUserAccountType.toDomain(): UserAccountType =
+    when (this) {
+        is UisUserAccountType.MainAccount -> UserAccountType.MainAccount(bots = bots)
+        is UisUserAccountType.BotAccount -> UserAccountType.BotAccount(owner = owner)
+    }
 
 fun UisUserProfileGlobalStats.toDomain(): UserProfileGlobalStats =
     UserProfileGlobalStats(

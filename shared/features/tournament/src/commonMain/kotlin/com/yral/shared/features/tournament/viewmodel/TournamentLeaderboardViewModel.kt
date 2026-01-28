@@ -14,8 +14,8 @@ import com.yral.shared.features.tournament.domain.model.TournamentType
 import com.yral.shared.features.tournament.domain.model.formatParticipantsLabel
 import com.yral.shared.features.tournament.domain.model.formatScheduleLabel
 import com.yral.shared.features.tournament.domain.model.tournamentStatus
-import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV6Params
-import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV6UseCase
+import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7Params
+import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCase
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import com.yral.shared.rust.service.utils.propicFromPrincipal
@@ -47,7 +47,7 @@ data class TournamentLeaderboardUiState(
 class TournamentLeaderboardViewModel(
     private val getTournamentLeaderboardUseCase: GetTournamentLeaderboardUseCase,
     private val sessionManager: SessionManager,
-    private val getUserProfileDetailsV6UseCase: GetUserProfileDetailsV6UseCase,
+    private val getUserProfileDetailsV7UseCase: GetUserProfileDetailsV7UseCase,
     private val telemetry: TournamentTelemetry,
 ) : ViewModel() {
     private val _state = MutableStateFlow(TournamentLeaderboardUiState())
@@ -140,9 +140,9 @@ class TournamentLeaderboardViewModel(
         viewModelScope.launch {
             sessionManager.userPrincipal?.let { principal ->
                 _state.update { it.copy(isNavigating = true) }
-                getUserProfileDetailsV6UseCase(
+                getUserProfileDetailsV7UseCase(
                     parameter =
-                        GetUserProfileDetailsV6Params(
+                        GetUserProfileDetailsV7Params(
                             principal = principal,
                             targetPrincipal = row.principalId,
                         ),

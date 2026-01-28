@@ -11,8 +11,8 @@ import com.yral.shared.features.leaderboard.domain.GetLeaderboardHistoryUseCase
 import com.yral.shared.features.leaderboard.domain.models.LeaderboardHistory
 import com.yral.shared.features.leaderboard.domain.models.LeaderboardHistoryRequest
 import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel.Companion.TOP_N_THRESHOLD
-import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV6Params
-import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV6UseCase
+import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7Params
+import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCase
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,7 +25,7 @@ class LeaderboardHistoryViewModel(
     private val getLeaderboardHistoryUseCase: GetLeaderboardHistoryUseCase,
     private val sessionManager: SessionManager,
     private val leaderBoardTelemetry: LeaderBoardTelemetry,
-    private val getUserProfileDetailsV6UseCase: GetUserProfileDetailsV6UseCase,
+    private val getUserProfileDetailsV7UseCase: GetUserProfileDetailsV7UseCase,
 ) : ViewModel() {
     private val _state = MutableStateFlow(LeaderboardHistoryState())
     val state: StateFlow<LeaderboardHistoryState> = _state.asStateFlow()
@@ -115,9 +115,9 @@ class LeaderboardHistoryViewModel(
         viewModelScope.launch {
             sessionManager.userPrincipal?.let { principal ->
                 _state.update { it.copy(isNavigating = true) }
-                getUserProfileDetailsV6UseCase(
+                getUserProfileDetailsV7UseCase(
                     parameter =
-                        GetUserProfileDetailsV6Params(
+                        GetUserProfileDetailsV7Params(
                             principal = principal,
                             targetPrincipal = item.userPrincipalId,
                         ),

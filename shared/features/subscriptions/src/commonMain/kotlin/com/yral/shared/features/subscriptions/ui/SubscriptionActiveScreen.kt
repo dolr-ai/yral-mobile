@@ -28,7 +28,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.yral.shared.core.session.DEFAULT_TOTAL_CREDITS
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.buildHighlightedText
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
@@ -67,7 +66,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 fun SubscriptionActiveScreen(
     modifier: Modifier = Modifier,
     validTillText: String,
-    creditsReceived: Int = DEFAULT_TOTAL_CREDITS,
+    creditsReceived: Int,
     onBack: () -> Unit = {},
     onExploreHome: () -> Unit = {},
 ) {
@@ -332,7 +331,7 @@ private fun SubscriptionActiveScreenPreview() {
     CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
         SubscriptionActiveScreen(
             validTillText = "31 Dec 2024",
-            creditsReceived = DEFAULT_TOTAL_CREDITS,
+            creditsReceived = 40,
             onBack = {},
             onExploreHome = {},
         )

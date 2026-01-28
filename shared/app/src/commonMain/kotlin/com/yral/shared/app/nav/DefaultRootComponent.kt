@@ -520,8 +520,12 @@ class DefaultRootComponent(
         dismissSubscriptionSlotIfActive()
     }
 
-    override val proDetails: Flow<ProDetails?>
-        get() = sessionManager.observeSessionProperty { it.proDetails }
+    override val proDetails: Flow<ProDetails>
+        get() =
+            sessionManager.observeSessionPropertyWithDefault(
+                selector = { it.proDetails },
+                defaultValue = ProDetails(),
+            )
 
     override fun getSubscriptionCoordinator(): SubscriptionCoordinator = this
 

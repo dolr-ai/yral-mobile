@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.yral.shared.core.session.ProDetails
 import com.yral.shared.features.subscriptions.nav.SubscriptionsComponent
 import com.yral.shared.features.subscriptions.viewmodel.SubscriptionScreenType
 import com.yral.shared.features.subscriptions.viewmodel.SubscriptionViewModel
@@ -28,13 +30,15 @@ fun SubscriptionsScreen(
 ) {
     val viewState by viewModel.viewState.collectAsState()
     val purchaseContext = getPurchaseContext()
-    val proDetails by viewModel.proDetails.collectAsState(null)
+    val proDetails by viewModel.proDetails.collectAsStateWithLifecycle(ProDetails())
+    val totalProCredits = proDetails.totalCredits
     val oldPrice = viewState.pricingInfo?.formattedOldPrice
     val newPrice = viewState.pricingInfo?.formattedCurrentPrice
     when (val state = viewState.purchaseState) {
         is UiState.Initial -> {
             SubscriptionInactiveScreen(
                 modifier = modifier,
+                creditsReceived = totalProCredits,
                 oldPrice = oldPrice,
                 newPrice = newPrice,
                 onBack = { component.onBack() },
@@ -44,6 +48,7 @@ fun SubscriptionsScreen(
         is UiState.InProgress -> {
             SubscriptionInactiveScreen(
                 modifier = modifier,
+                creditsReceived = totalProCredits,
                 oldPrice = oldPrice,
                 newPrice = newPrice,
                 onBack = { component.onBack() },
@@ -55,6 +60,7 @@ fun SubscriptionsScreen(
                 is SubscriptionScreenType.UnPurchased -> {
                     SubscriptionInactiveScreen(
                         modifier = modifier,
+                        creditsReceived = totalProCredits,
                         oldPrice = oldPrice,
                         newPrice = newPrice,
                         onBack = { component.onBack() },
@@ -77,6 +83,7 @@ fun SubscriptionsScreen(
                             validTillMillis
                                 ?.let { formatMillisWithOrdinal(it) }
                                 ?: "",
+                        creditsReceived = totalProCredits,
                         onBack = { component.onBack() },
                         onExploreHome = { component.onExploreFeed() },
                     )
@@ -84,6 +91,7 @@ fun SubscriptionsScreen(
                 is SubscriptionScreenType.Success -> {
                     SubscriptionPaymentSuccessScreen(
                         modifier = modifier,
+                        creditsReceived = totalProCredits,
                         onClose = {
                             viewModel.clearTransientState(proDetails)
                             component.onBack()

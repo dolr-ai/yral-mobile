@@ -40,13 +40,13 @@ class UserInfoRepositoryImpl(
             dataSource.unfollowUser(principal, targetPrincipal)
         }
 
-    override suspend fun getUserProfileDetailsV6(
+    override suspend fun getUserProfileDetailsV7(
         principal: Principal,
         targetPrincipal: Principal,
     ): UserProfileDetails =
-        traceApiCall(performanceTracer, "getUserProfileDetailsV6") {
+        traceApiCall(performanceTracer, "getUserProfileDetailsV7") {
             dataSource
-                .getUserProfileDetailsV6(principal, targetPrincipal)
+                .getUserProfileDetailsV7(principal, targetPrincipal)
                 .toDomain()
         }
 
