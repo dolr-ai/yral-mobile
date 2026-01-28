@@ -20,27 +20,25 @@ class SubscriptionViewModel(
     private val iapManager: IAPManager,
     private val sessionManager: SessionManager,
 ) : ViewModel() {
-    private val _purchaseState =
-        MutableStateFlow<UiState<SubscriptionScreenType>>(
-            UiState.Initial,
-        )
-    val purchaseState: StateFlow<UiState<SubscriptionScreenType>> = _purchaseState.asStateFlow()
+    private val _viewState = MutableStateFlow(ViewState())
+    val viewState: StateFlow<ViewState> = _viewState.asStateFlow()
 
     val proDetails =
         sessionManager
             .observeSessionProperty { it.proDetails }
 
     init {
+        fetchProductDetails()
         // Observe proDetails and update state accordingly
         viewModelScope.launch {
             proDetails
                 .collect { proDetails ->
                     // Only update if not in a transient state (InProgress or Success screen type)
                     val screenType = getScreenType(proDetails)
-                    when (val currentState = _purchaseState.value) {
+                    when (val currentState = _viewState.value.purchaseState) {
                         is UiState.Initial -> {
                             // Update based on proDetails
-                            _purchaseState.update { UiState.Success(screenType) }
+                            _viewState.update { it.copy(purchaseState = UiState.Success(screenType)) }
                         }
                         is UiState.InProgress -> {
                             // Don't update during purchase flow
@@ -57,13 +55,17 @@ class SubscriptionViewModel(
                                 is SubscriptionScreenType.Purchased,
                                 -> {
                                     // Update based on proDetails for normal states
-                                    _purchaseState.update { UiState.Success(screenType) }
+                                    _viewState.update {
+                                        it.copy(purchaseState = UiState.Success(screenType))
+                                    }
                                 }
                             }
                         }
                         is UiState.Failure -> {
                             // Update based on proDetails after failure
-                            _purchaseState.update { UiState.Success(screenType) }
+                            _viewState.update {
+                                it.copy(purchaseState = UiState.Success(screenType))
+                            }
                         }
                     }
                 }
@@ -72,15 +74,19 @@ class SubscriptionViewModel(
 
     fun clearTransientState(proDetails: ProDetails?) {
         val screenType = getScreenType(proDetails)
-        when (val currentState = _purchaseState.value) {
+        when (val currentState = _viewState.value.purchaseState) {
             is UiState.Success -> {
                 // Handle different screen types
                 when (currentState.data) {
                     is SubscriptionScreenType.Success -> {
-                        _purchaseState.update { UiState.Success(screenType) }
+                        _viewState.update {
+                            it.copy(purchaseState = UiState.Success(screenType))
+                        }
                     }
                     is SubscriptionScreenType.Failure -> {
-                        _purchaseState.update { UiState.Success(screenType) }
+                        _viewState.update {
+                            it.copy(purchaseState = UiState.Success(screenType))
+                        }
                     }
                     else -> {
                         // No need to clear for other screen types
@@ -100,9 +106,38 @@ class SubscriptionViewModel(
             SubscriptionScreenType.UnPurchased
         }
 
+    private fun fetchProductDetails() {
+        viewModelScope.launch {
+            iapManager
+                .fetchProducts(listOf(ProductId.YRAL_PRO))
+                .onSuccess { products ->
+                    val product = products.firstOrNull()
+                    product?.let {
+                        _viewState.update {
+                            val oldPrice = product.priceAmountMicros / CURRENCY_DIVIDER
+                            val currentPrice = product.offerPriceAmountMicros / CURRENCY_DIVIDER
+                            it.copy(
+                                pricingInfo =
+                                    PricingInfo(
+                                        currentPrice = currentPrice,
+                                        formattedCurrentPrice = product.offerPrice,
+                                        oldPrice = oldPrice,
+                                        formattedOldPrice = product.price,
+                                        currencyCode = product.currencyCode,
+                                    ),
+                            )
+                        }
+                    }
+                }.onFailure { error ->
+                    Logger.e("SubscriptionViewModel", error) { "Failed to fetch product details" }
+                    _viewState.update { it.copy(pricingInfo = null) }
+                }
+        }
+    }
+
     fun subscribe(purchaseContext: PurchaseContext) {
         viewModelScope.launch {
-            _purchaseState.update { UiState.InProgress() }
+            _viewState.update { it.copy(purchaseState = UiState.InProgress()) }
             iapManager
                 .purchaseProduct(
                     productId = ProductId.YRAL_PRO,
@@ -111,15 +146,28 @@ class SubscriptionViewModel(
                 ).onSuccess { purchase ->
                     Logger.d("SubscriptionViewModel") { "Purchase successful: $purchase" }
                     sessionManager.clearProDetails()
-                    _purchaseState.update { UiState.Success(SubscriptionScreenType.Success) }
+                    _viewState.update {
+                        it.copy(purchaseState = UiState.Success(SubscriptionScreenType.Success))
+                    }
                 }.onFailure { error ->
                     val iapError = error as? IAPError ?: IAPError.UnknownError(error)
                     Logger.e("SubscriptionViewModel", error) { "Purchase failed: $iapError" }
-                    _purchaseState.update { UiState.Success(SubscriptionScreenType.Failure(iapError)) }
+                    _viewState.update {
+                        it.copy(purchaseState = UiState.Success(SubscriptionScreenType.Failure(iapError)))
+                    }
                 }
         }
     }
+
+    companion object {
+        private const val CURRENCY_DIVIDER = 1_000_000.0
+    }
 }
+
+data class ViewState(
+    val purchaseState: UiState<SubscriptionScreenType> = UiState.Initial,
+    val pricingInfo: PricingInfo? = null,
+)
 
 sealed class SubscriptionScreenType {
     data object UnPurchased : SubscriptionScreenType()
@@ -129,3 +177,11 @@ sealed class SubscriptionScreenType {
         val error: IAPError,
     ) : SubscriptionScreenType()
 }
+
+data class PricingInfo(
+    val currentPrice: Double,
+    val formattedCurrentPrice: String,
+    val oldPrice: Double,
+    val formattedOldPrice: String,
+    val currencyCode: String,
+)

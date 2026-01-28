@@ -72,6 +72,8 @@ internal class ProductFetcher {
                                         id = skProduct.productIdentifier,
                                         price = priceString,
                                         priceAmountMicros = priceAmountMicros,
+                                        offerPrice = priceString,
+                                        offerPriceAmountMicros = priceAmountMicros,
                                         currencyCode =
                                             skProduct.priceLocale
                                                 .objectForKey(NSLocaleCurrencyCode)

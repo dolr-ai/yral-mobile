@@ -55,12 +55,11 @@ import yral_mobile.shared.features.subscriptions.generated.resources.subscriptio
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_inactive_cta
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_inactive_go_pro
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_inactive_headline
-import yral_mobile.shared.features.subscriptions.generated.resources.subscription_inactive_new_price
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_inactive_offer_title
-import yral_mobile.shared.features.subscriptions.generated.resources.subscription_inactive_old_price
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_inactive_plan
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_inactive_subtitle
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_inactive_title
+import yral_mobile.shared.features.subscriptions.generated.resources.subscription_new_price
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_lightning_bolt
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
@@ -73,6 +72,8 @@ private val HERO_FADE_COLOR = Color(HERO_FADE_COLOR_HEX)
 @Composable
 fun SubscriptionInactiveScreen(
     modifier: Modifier = Modifier,
+    oldPrice: String?,
+    newPrice: String?,
     onBack: () -> Unit = {},
     onSubscribe: () -> Unit = {},
 ) {
@@ -102,7 +103,7 @@ fun SubscriptionInactiveScreen(
                 Spacer(modifier = Modifier.height(24.dp))
                 InactiveBenefitList()
                 Spacer(modifier = Modifier.height(24.dp))
-                InactiveOfferCard()
+                InactiveOfferCard(oldPrice, newPrice)
                 Spacer(modifier = Modifier.height(24.dp))
                 YralGradientButton(
                     text = stringResource(Res.string.subscription_inactive_cta),
@@ -241,7 +242,10 @@ private fun InactiveBenefitList() {
 }
 
 @Composable
-private fun InactiveOfferCard() {
+private fun InactiveOfferCard(
+    oldPrice: String?,
+    newPrice: String?,
+) {
     Column(
         modifier =
             Modifier
@@ -259,13 +263,16 @@ private fun InactiveOfferCard() {
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
         )
-        OfferPriceRow()
+        OfferPriceRow(oldPrice, newPrice)
         Spacer(modifier = Modifier.height(6.dp))
     }
 }
 
 @Composable
-private fun OfferPriceRow() {
+private fun OfferPriceRow(
+    oldPrice: String?,
+    newPrice: String?,
+) {
     Row(
         modifier =
             Modifier
@@ -287,25 +294,29 @@ private fun OfferPriceRow() {
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             modifier = Modifier.padding(end = 12.dp),
         ) {
-            Text(
-                text =
-                    buildAnnotatedString {
-                        withStyle(
-                            SpanStyle(
-                                color = YralColors.Neutral600,
-                                textDecoration = TextDecoration.LineThrough,
-                            ),
-                        ) {
-                            append(stringResource(Res.string.subscription_inactive_old_price))
-                        }
-                    },
-                style = LocalAppTopography.current.baseMedium,
-            )
-            Text(
-                text = stringResource(Res.string.subscription_inactive_new_price),
-                style = LocalAppTopography.current.lgBold,
-                color = YralColors.Yellow200,
-            )
+            oldPrice?.let {
+                Text(
+                    text =
+                        buildAnnotatedString {
+                            withStyle(
+                                SpanStyle(
+                                    color = YralColors.Neutral600,
+                                    textDecoration = TextDecoration.LineThrough,
+                                ),
+                            ) {
+                                append(oldPrice)
+                            }
+                        },
+                    style = LocalAppTopography.current.baseMedium,
+                )
+            }
+            newPrice?.let {
+                Text(
+                    text = stringResource(Res.string.subscription_new_price, newPrice),
+                    style = LocalAppTopography.current.lgBold,
+                    color = YralColors.Yellow200,
+                )
+            }
         }
     }
 }
@@ -316,6 +327,8 @@ private fun OfferPriceRow() {
 private fun SubscriptionInactiveScreenPreview() {
     CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
         SubscriptionInactiveScreen(
+            oldPrice = "₹499",
+            newPrice = "₹49",
             onBack = {},
             onSubscribe = {},
         )

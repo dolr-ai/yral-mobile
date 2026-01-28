@@ -26,13 +26,17 @@ fun SubscriptionsScreen(
     modifier: Modifier = Modifier,
     viewModel: SubscriptionViewModel = koinViewModel(),
 ) {
-    val purchaseState by viewModel.purchaseState.collectAsState()
+    val viewState by viewModel.viewState.collectAsState()
     val purchaseContext = getPurchaseContext()
     val proDetails by viewModel.proDetails.collectAsState(null)
-    when (val state = purchaseState) {
+    val oldPrice = viewState.pricingInfo?.formattedOldPrice
+    val newPrice = viewState.pricingInfo?.formattedCurrentPrice
+    when (val state = viewState.purchaseState) {
         is UiState.Initial -> {
             SubscriptionInactiveScreen(
                 modifier = modifier,
+                oldPrice = oldPrice,
+                newPrice = newPrice,
                 onBack = { component.onBack() },
                 onSubscribe = { purchaseContext?.let { viewModel.subscribe(it) } },
             )
@@ -40,6 +44,8 @@ fun SubscriptionsScreen(
         is UiState.InProgress -> {
             SubscriptionInactiveScreen(
                 modifier = modifier,
+                oldPrice = oldPrice,
+                newPrice = newPrice,
                 onBack = { component.onBack() },
                 onSubscribe = { }, // Disable during purchase
             )
@@ -49,6 +55,8 @@ fun SubscriptionsScreen(
                 is SubscriptionScreenType.UnPurchased -> {
                     SubscriptionInactiveScreen(
                         modifier = modifier,
+                        oldPrice = oldPrice,
+                        newPrice = newPrice,
                         onBack = { component.onBack() },
                         onSubscribe = { purchaseContext?.let { viewModel.subscribe(it) } },
                     )

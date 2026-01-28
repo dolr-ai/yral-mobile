@@ -114,14 +114,31 @@ internal class ProductFetcher(
         val products =
             result.productDetailsList?.mapNotNull { productDetails ->
                 val oneTimeOffers = productDetails.oneTimePurchaseOfferDetailsList
-                val offer =
-                    oneTimeOffers?.firstOrNull { !it.offerId.isNullOrEmpty() } // Promotional offer
-                        ?: oneTimeOffers?.firstOrNull { it.offerId.isNullOrEmpty() } // Base plan fallback
-                offer?.let { offerDetails ->
+                val (baseOffer, promoOffer) = resolveBaseAndPromo(oneTimeOffers) { it.offerId }
+                val effectiveOffer = promoOffer ?: baseOffer
+
+                effectiveOffer?.let { offerDetails ->
+                    val (basePriceMicros, offerPriceMicros) =
+                        resolveBaseAndOfferPrices(
+                            baseOffer = baseOffer,
+                            promoOffer = promoOffer,
+                            priceSelector = { it.priceAmountMicros },
+                            default = 0L,
+                        )
+                    val (basePrice, offerPrice) =
+                        resolveBaseAndOfferPrices(
+                            baseOffer = baseOffer,
+                            promoOffer = promoOffer,
+                            priceSelector = { it.formattedPrice },
+                            default = "",
+                        )
+
                     Product(
                         id = productDetails.productId,
-                        price = offerDetails.formattedPrice,
-                        priceAmountMicros = offerDetails.priceAmountMicros,
+                        price = basePrice,
+                        priceAmountMicros = basePriceMicros,
+                        offerPrice = offerPrice,
+                        offerPriceAmountMicros = offerPriceMicros,
                         currencyCode = offerDetails.priceCurrencyCode,
                         title = productDetails.title,
                         description = productDetails.description,
@@ -159,47 +176,38 @@ internal class ProductFetcher(
     @Suppress("ReturnCount")
     private fun extractSubscriptionProduct(productDetails: ProductDetails): Product? {
         val subscriptionOffers = productDetails.subscriptionOfferDetails ?: return null
-        val offer =
-            subscriptionOffers.firstOrNull { !it.offerId.isNullOrEmpty() } // Promotional offer
-                ?: subscriptionOffers.firstOrNull { it.offerId.isNullOrEmpty() } // Base plan fallback
-                ?: return null
-        val pricingPhaseList = offer.pricingPhases.pricingPhaseList
-        if (pricingPhaseList.isEmpty()) {
-            return null
-        }
-        val recurringPhase = pricingPhaseList.last()
-        val pricingInfo = extractPricingPhaseInfo(recurringPhase) ?: return null
+        val (baseOffer, promoOffer) = resolveBaseAndPromo(subscriptionOffers) { it.offerId }
+
+        val basePhase = (baseOffer ?: promoOffer)?.pricingPhases?.pricingPhaseList?.lastOrNull() ?: return null
+        val promoPhase = promoOffer?.pricingPhases?.pricingPhaseList?.firstOrNull()
+
+        val (basePriceMicros, offerPriceMicros) =
+            resolveBaseAndOfferPrices(
+                baseOffer = basePhase,
+                promoOffer = promoPhase,
+                priceSelector = { it.priceAmountMicros },
+                default = 0L,
+            )
+        if (basePriceMicros <= 0) return null
+
+        val (basePrice, offerPrice) =
+            resolveBaseAndOfferPrices(
+                baseOffer = basePhase,
+                promoOffer = promoPhase,
+                priceSelector = { it.formattedPrice },
+                default = "",
+            )
 
         return Product(
             id = productDetails.productId,
-            price = pricingInfo.formattedPrice,
-            priceAmountMicros = pricingInfo.priceAmountMicros,
-            currencyCode = pricingInfo.currencyCode,
+            price = basePrice,
+            priceAmountMicros = basePriceMicros,
+            offerPrice = offerPrice,
+            offerPriceAmountMicros = offerPriceMicros,
+            currencyCode = basePhase.priceCurrencyCode,
             title = productDetails.title,
             description = productDetails.description,
             type = ProductType.SUBS,
         )
     }
-
-    private fun extractPricingPhaseInfo(pricingPhase: ProductDetails.PricingPhase): PricingInfo? {
-        val formattedPrice = pricingPhase.formattedPrice
-        val priceAmountMicros = pricingPhase.priceAmountMicros
-        val priceCurrencyCode = pricingPhase.priceCurrencyCode
-
-        return if (formattedPrice.isNotEmpty() && priceAmountMicros > 0 && priceCurrencyCode.isNotEmpty()) {
-            PricingInfo(
-                formattedPrice = formattedPrice,
-                priceAmountMicros = priceAmountMicros,
-                currencyCode = priceCurrencyCode,
-            )
-        } else {
-            null
-        }
-    }
-
-    private data class PricingInfo(
-        val formattedPrice: String,
-        val priceAmountMicros: Long,
-        val currencyCode: String,
-    )
 }
