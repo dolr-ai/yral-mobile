@@ -9,9 +9,17 @@ import com.yral.shared.features.subscriptions.viewmodel.SubscriptionScreenType
 import com.yral.shared.features.subscriptions.viewmodel.SubscriptionViewModel
 import com.yral.shared.iap.utils.getPurchaseContext
 import com.yral.shared.libs.arch.presentation.UiState
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.format
+import kotlinx.datetime.format.MonthNames
+import kotlinx.datetime.format.char
+import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 fun SubscriptionsScreen(
     component: SubscriptionsComponent,
@@ -48,7 +56,10 @@ fun SubscriptionsScreen(
                 is SubscriptionScreenType.Purchased -> {
                     SubscriptionActiveScreen(
                         modifier = modifier,
-                        validTillText = "Active",
+                        validTillText =
+                            component.validTill
+                                ?.let { formatMillisWithOrdinal(it) }
+                                ?: "",
                         onBack = { component.onBack() },
                         onExploreHome = { component.onExploreFeed() },
                     )
@@ -90,4 +101,32 @@ fun SubscriptionsScreen(
             )
         }
     }
+}
+
+@Suppress("MagicNumber")
+@OptIn(ExperimentalTime::class)
+private fun formatMillisWithOrdinal(millis: Long): String {
+    val instant = Instant.fromEpochMilliseconds(millis)
+    val localDate = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
+
+    val day = localDate.day
+    val suffix =
+        when {
+            day in 11..13 -> "th"
+            day % 10 == 1 -> "st"
+            day % 10 == 2 -> "nd"
+            day % 10 == 3 -> "rd"
+            else -> "th"
+        }
+
+    // Define the base format for Feb 2026
+    val baseFormat =
+        LocalDate.Format {
+            monthName(MonthNames.ENGLISH_ABBREVIATED)
+            char(' ')
+            year()
+        }
+
+    // Combine manually: "15" + "th" + " " + "Feb 2026"
+    return "${day}$suffix ${localDate.format(baseFormat)}"
 }

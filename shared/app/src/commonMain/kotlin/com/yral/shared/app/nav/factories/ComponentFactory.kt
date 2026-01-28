@@ -114,9 +114,13 @@ internal class ComponentFactory(
             onBack = rootComponent::onBackClicked,
         )
 
-    fun createSubscription(componentContext: ComponentContext): SubscriptionsComponent =
+    fun createSubscription(
+        componentContext: ComponentContext,
+        config: Config.Subscription,
+    ): SubscriptionsComponent =
         SubscriptionsComponent.Companion(
             componentContext = componentContext,
+            validTill = config.validTill,
             onBack = rootComponent::onBackClicked,
             onCreateVideo = rootComponent::onCreateVideo,
             onExploreFeed = rootComponent::onExploreFeed,

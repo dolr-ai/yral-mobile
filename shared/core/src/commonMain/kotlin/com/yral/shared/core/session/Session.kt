@@ -34,3 +34,4 @@ data class ProDetails(
 )
 
 const val DEFAULT_TOTAL_CREDITS = 30
+const val DEFAULT_DAYS = 30

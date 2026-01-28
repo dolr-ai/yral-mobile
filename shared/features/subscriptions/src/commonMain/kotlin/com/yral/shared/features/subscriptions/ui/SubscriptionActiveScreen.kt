@@ -245,11 +245,13 @@ private fun StatusCard(
             style = LocalAppTopography.current.baseSemiBold,
             color = YralColors.Neutral50,
         )
-        Text(
-            text = "${stringResource(Res.string.subscription_active_valid_prefix)} $validTillText",
-            style = LocalAppTopography.current.baseRegular,
-            color = YralColors.Neutral500,
-        )
+        validTillText.takeIf { it.isNotBlank() }?.let {
+            Text(
+                text = "${stringResource(Res.string.subscription_active_valid_prefix)} $validTillText",
+                style = LocalAppTopography.current.baseRegular,
+                color = YralColors.Neutral500,
+            )
+        }
         CreditsRow(creditsReceived)
     }
 }

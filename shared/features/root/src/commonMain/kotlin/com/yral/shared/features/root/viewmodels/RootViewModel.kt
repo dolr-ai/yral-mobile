@@ -309,7 +309,7 @@ class RootViewModel(
         }
 
     fun checkSubscriptionAndOpen(
-        openSubscription: () -> Unit,
+        openSubscription: (validTill: Long?) -> Unit,
         showSubscriptionAccountMismatchSheet: () -> Unit,
     ) {
         coroutineScope.launch {
@@ -319,8 +319,8 @@ class RootViewModel(
                     .onSuccess { purchaseResult ->
                         withContext(appDispatchers.main) {
                             when (purchaseResult) {
-                                is PurchaseResult.NoPurchase -> openSubscription()
-                                is PurchaseResult.PurchaseMatches -> openSubscription()
+                                is PurchaseResult.NoPurchase -> openSubscription(null)
+                                is PurchaseResult.PurchaseMatches -> openSubscription(purchaseResult.validTill)
                                 is PurchaseResult.AccountMismatch -> showSubscriptionAccountMismatchSheet()
                                 is PurchaseResult.UnaccountedPurchase -> {
                                     Logger.d("SubscriptionX") { "Unaccounted purchase" }

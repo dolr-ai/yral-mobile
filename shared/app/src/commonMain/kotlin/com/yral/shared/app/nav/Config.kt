@@ -60,5 +60,7 @@ internal sealed interface Config {
     data object MandatoryLogin : Config
 
     @Serializable
-    data object Subscription : Config
+    data class Subscription(
+        val validTill: Long?,
+    ) : Config
 }

@@ -177,6 +177,7 @@ class DefaultRootComponent(
                 RootComponent.Child.Subscription(
                     componentFactory.createSubscription(
                         componentContext = context,
+                        config = config,
                     ),
                 )
             is Config.CountrySelector ->
@@ -401,8 +402,8 @@ class DefaultRootComponent(
         navigation.pushToFront(Config.Leaderboard)
     }
 
-    override fun openSubscription() {
-        navigation.pushToFront(Config.Subscription)
+    override fun openSubscription(validTill: Long?) {
+        navigation.pushToFront(Config.Subscription(validTill))
     }
 
     override fun onCreateVideo() {
