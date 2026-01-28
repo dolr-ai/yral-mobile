@@ -13,17 +13,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.SpanStyle
@@ -35,8 +36,10 @@ import androidx.compose.ui.unit.dp
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import yral_mobile.shared.features.subscriptions.generated.resources.Res
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_benefit_ai
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_benefit_chat
@@ -48,7 +51,6 @@ import yral_mobile.shared.features.subscriptions.generated.resources.subscriptio
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_ai
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_chat
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_global
-import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_logo_light
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_rewards
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_expired_benefits_title
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_expired_card_button
@@ -58,6 +60,7 @@ import yral_mobile.shared.features.subscriptions.generated.resources.subscriptio
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_expired_old_price
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_expired_subtitle
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_lightning_bolt_silver
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Composable
@@ -106,8 +109,10 @@ private fun ExpiredContent(
     onBack: () -> Unit,
     onExploreHome: () -> Unit,
 ) {
-    ExpiredHeader(onBack = onBack)
-    Spacer(modifier = Modifier.height(28.dp))
+    Box(modifier = Modifier.fillMaxWidth()) {
+        ExpiredHeader(onBack = onBack)
+        ExpiredHeroLogo(modifier = Modifier.align(Alignment.BottomCenter))
+    }
     Column(
         modifier =
             Modifier
@@ -125,7 +130,6 @@ private fun ExpiredContent(
 
 @Composable
 private fun ExpiredHeroSection() {
-    ExpiredHeroLogo()
     Spacer(modifier = Modifier.height(4.dp))
     Text(
         text =
@@ -201,15 +205,31 @@ private fun ExpiredHeader(onBack: () -> Unit) {
 }
 
 @Composable
-private fun ExpiredHeroLogo() {
-    Image(
-        painter = painterResource(Res.drawable.subscription_benefit_logo_light),
-        contentDescription = "Subscription Logo",
+private fun ExpiredHeroLogo(modifier: Modifier) {
+    Box(
+        contentAlignment = Alignment.Center,
         modifier =
-            Modifier
-                .width(74.dp)
-                .height(120.dp),
-    )
+            modifier
+                .size(width = 200.dp, height = 180.dp)
+                .padding(top = 28.dp)
+                .background(
+                    brush =
+                        Brush.radialGradient(
+                            colors =
+                                listOf(
+                                    YralColors.SilverGlowShadow,
+                                    Color.Transparent,
+                                ),
+                            radius = 200f,
+                        ),
+                ),
+    ) {
+        Image(
+            painter = painterResource(DesignRes.drawable.ic_lightning_bolt_silver),
+            contentDescription = "Subscription Logo",
+            modifier = Modifier.size(width = 74.dp, height = 120.dp),
+        )
+    }
 }
 
 @Composable
@@ -315,6 +335,19 @@ private fun ExpiredBenefitList() {
         SubscriptionBenefitRow(
             iconRes = Res.drawable.subscription_benefit_rewards,
             text = stringResource(Res.string.subscription_active_benefit_rewards),
+        )
+    }
+}
+
+@Suppress("UnusedPrivateMember")
+@Preview
+@Composable
+private fun SubscriptionExpiredScreenPreview() {
+    CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
+        SubscriptionExpiredScreen(
+            validTillText = "31 Dec 2024",
+            onBack = {},
+            onExploreHome = {},
         )
     }
 }

@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
@@ -38,6 +36,7 @@ import yral_mobile.shared.features.subscriptions.generated.resources.payment_suc
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_success_background
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_success_body
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_success
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_x
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Composable
@@ -66,9 +65,8 @@ fun SubscriptionPaymentSuccessScreen(
                 modifier = Modifier.align(Alignment.TopEnd),
             ) {
                 Icon(
-                    imageVector = Icons.Default.Close,
+                    painter = painterResource(DesignRes.drawable.ic_x),
                     contentDescription = "Close",
-                    tint = Color.White,
                 )
             }
 

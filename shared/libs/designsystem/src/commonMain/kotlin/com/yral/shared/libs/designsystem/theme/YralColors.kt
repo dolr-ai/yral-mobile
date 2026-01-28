@@ -69,6 +69,8 @@ object YralColors {
     val Yellow100: Color = Color(0xFFFFDC8D)
     val PrimaryYellow: Color = Color(0xFFF9EA0E)
     val YellowTextPrimary: Color = Color(0xFFFFC33A)
+    val YellowGlowShadow: Color = Color(0x80FFC33A)
+    val SilverGlowShadow: Color = Color(0x80BABABA)
 
     val Blue100: Color = Color(0xFF8EBDFF)
     val Blue300: Color = Color(0xFF2B63B3)

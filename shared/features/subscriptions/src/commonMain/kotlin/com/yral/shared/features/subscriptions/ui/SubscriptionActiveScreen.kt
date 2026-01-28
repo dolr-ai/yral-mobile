@@ -13,17 +13,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.SpanStyle
@@ -34,8 +35,10 @@ import androidx.compose.ui.unit.dp
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import yral_mobile.shared.features.subscriptions.generated.resources.Res
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_benefit_ai
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_benefit_chat
@@ -50,14 +53,15 @@ import yral_mobile.shared.features.subscriptions.generated.resources.subscriptio
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_terms
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_title
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_valid_prefix
-import yral_mobile.shared.features.subscriptions.generated.resources.subscription_back
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_background
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_ai
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_chat
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_global
-import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_logo
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_rewards
-import yral_mobile.shared.features.subscriptions.generated.resources.subscription_credits
+import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_lightning_bolt
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_lightning_bolt_gold
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Composable
 fun SubscriptionActiveScreen(
@@ -90,7 +94,10 @@ fun SubscriptionActiveScreen(
                         .padding(vertical = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Header(onBack = onBack)
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Header(onBack = onBack)
+                    HeroLogo(modifier = Modifier.align(Alignment.BottomCenter))
+                }
                 ActiveContent(
                     validTillText = validTillText,
                     creditsReceived = creditsReceived,
@@ -107,7 +114,6 @@ private fun ActiveContent(
     creditsReceived: Int,
     onExploreHome: () -> Unit,
 ) {
-    Spacer(modifier = Modifier.height(28.dp))
     Column(
         modifier =
             Modifier
@@ -115,7 +121,6 @@ private fun ActiveContent(
                 .padding(horizontal = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        HeroLogo()
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text =
@@ -176,7 +181,7 @@ private fun Header(onBack: () -> Unit) {
             modifier = Modifier.align(Alignment.CenterStart),
         ) {
             Image(
-                painter = painterResource(Res.drawable.subscription_back),
+                painter = painterResource(DesignRes.drawable.arrow_left),
                 contentDescription = "Back",
                 modifier = Modifier.size(24.dp),
             )
@@ -190,15 +195,31 @@ private fun Header(onBack: () -> Unit) {
 }
 
 @Composable
-private fun HeroLogo() {
-    Image(
-        painter = painterResource(Res.drawable.subscription_benefit_logo),
-        contentDescription = "Subscription Logo",
+private fun HeroLogo(modifier: Modifier = Modifier) {
+    Box(
+        contentAlignment = Alignment.Center,
         modifier =
-            Modifier
-                .width(74.dp)
-                .height(120.dp),
-    )
+            modifier
+                .size(width = 200.dp, height = 180.dp)
+                .padding(top = 28.dp)
+                .background(
+                    brush =
+                        Brush.radialGradient(
+                            colors =
+                                listOf(
+                                    YralColors.YellowGlowShadow,
+                                    Color.Transparent,
+                                ),
+                            radius = 200f,
+                        ),
+                ),
+    ) {
+        Image(
+            painter = painterResource(DesignRes.drawable.ic_lightning_bolt_gold),
+            contentDescription = "Subscription Logo",
+            modifier = Modifier.size(width = 74.dp, height = 120.dp),
+        )
+    }
 }
 
 @Composable
@@ -263,7 +284,7 @@ private fun CreditsRow(creditsReceived: Int) {
                 color = YralColors.Yellow200,
             )
             Image(
-                painter = painterResource(Res.drawable.subscription_credits),
+                painter = painterResource(DesignRes.drawable.ic_lightning_bolt),
                 contentDescription = "Credits",
                 modifier = Modifier.size(width = 10.dp, height = 16.dp),
             )
@@ -292,6 +313,20 @@ private fun BenefitList() {
         SubscriptionBenefitRow(
             iconRes = Res.drawable.subscription_benefit_rewards,
             text = stringResource(Res.string.subscription_active_benefit_rewards),
+        )
+    }
+}
+
+@Suppress("UnusedPrivateMember")
+@Preview
+@Composable
+private fun SubscriptionActiveScreenPreview() {
+    CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
+        SubscriptionActiveScreen(
+            validTillText = "31 Dec 2024",
+            creditsReceived = DEFAULT_TOTAL_CREDITS,
+            onBack = {},
+            onExploreHome = {},
         )
     }
 }

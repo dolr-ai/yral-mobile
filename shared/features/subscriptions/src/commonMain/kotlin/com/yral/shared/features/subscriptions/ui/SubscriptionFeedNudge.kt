@@ -13,30 +13,31 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import yral_mobile.shared.features.subscriptions.generated.resources.Res
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_ai
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_chat
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_global
-import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_logo
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_rewards
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_nudge_benefit_ai
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_nudge_benefit_chat
@@ -45,6 +46,9 @@ import yral_mobile.shared.features.subscriptions.generated.resources.subscriptio
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_nudge_cta_dismiss
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_nudge_cta_subscribe
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_nudge_title
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_lightning_bolt_gold
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_x
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Suppress("LongMethod")
@@ -69,7 +73,7 @@ fun SubscriptionNudge(
                     .padding(horizontal = 20.dp, vertical = 20.dp),
         ) {
             Icon(
-                imageVector = Icons.Default.Close,
+                painter = painterResource(DesignRes.drawable.ic_x),
                 contentDescription = "Close",
                 tint = YralColors.Neutral0,
             )
@@ -83,14 +87,29 @@ fun SubscriptionNudge(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Image(
-                painter = painterResource(Res.drawable.subscription_benefit_logo),
-                contentDescription = "Subscription Logo",
+            Box(
+                contentAlignment = Alignment.Center,
                 modifier =
                     Modifier
-                        .width(74.dp)
-                        .height(120.dp),
-            )
+                        .size(width = 200.dp, height = 200.dp)
+                        .background(
+                            brush =
+                                Brush.radialGradient(
+                                    colors =
+                                        listOf(
+                                            YralColors.YellowGlowShadow,
+                                            Color.Transparent,
+                                        ),
+                                    radius = 200f,
+                                ),
+                        ),
+            ) {
+                Image(
+                    painter = painterResource(DesignRes.drawable.ic_lightning_bolt_gold),
+                    contentDescription = "Subscription Logo",
+                    modifier = Modifier.size(width = 74.dp, height = 120.dp),
+                )
+            }
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -175,6 +194,18 @@ private fun SubscriptionBenefitRow(
             text = text,
             style = LocalAppTopography.current.baseMedium,
             color = YralColors.Neutral50,
+        )
+    }
+}
+
+@Suppress("UnusedPrivateMember")
+@Preview
+@Composable
+private fun SubscriptionNudgePreview() {
+    CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
+        SubscriptionNudge(
+            onSubscribeClicked = {},
+            onDismissClicked = {},
         )
     }
 }

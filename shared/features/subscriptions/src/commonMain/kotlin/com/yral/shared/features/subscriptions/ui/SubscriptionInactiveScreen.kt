@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -21,6 +20,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,20 +36,20 @@ import androidx.compose.ui.unit.dp
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import yral_mobile.shared.features.subscriptions.generated.resources.Res
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_benefit_ai
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_benefit_chat
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_benefit_global
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_benefit_rewards
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_terms
-import yral_mobile.shared.features.subscriptions.generated.resources.subscription_back
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_ai
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_chat
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_global
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_rewards
-import yral_mobile.shared.features.subscriptions.generated.resources.subscription_credits
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_girl
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_inactive_cta
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_inactive_go_pro
@@ -60,6 +60,9 @@ import yral_mobile.shared.features.subscriptions.generated.resources.subscriptio
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_inactive_plan
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_inactive_subtitle
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_inactive_title
+import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_lightning_bolt
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 private const val HERO_HEIGHT_DP = 360
 private const val HERO_GRADIENT_START_Y = 200f
@@ -158,7 +161,7 @@ private fun InactiveHeader(onBack: () -> Unit) {
             modifier = Modifier.align(Alignment.CenterStart),
         ) {
             Image(
-                painter = painterResource(Res.drawable.subscription_back),
+                painter = painterResource(DesignRes.drawable.arrow_left),
                 contentDescription = "Back",
                 modifier = Modifier.size(24.dp),
             )
@@ -190,7 +193,7 @@ private fun InactiveHeroSection() {
                 color = YralColors.Yellow200,
             )
             Image(
-                painter = painterResource(Res.drawable.subscription_credits),
+                painter = painterResource(DesignRes.drawable.ic_lightning_bolt),
                 contentDescription = "Pro badge",
                 modifier = Modifier.size(width = 12.dp, height = 20.dp),
                 contentScale = ContentScale.Fit,
@@ -303,5 +306,17 @@ private fun OfferPriceRow() {
                 color = YralColors.Yellow200,
             )
         }
+    }
+}
+
+@Suppress("UnusedPrivateMember")
+@Preview
+@Composable
+private fun SubscriptionInactiveScreenPreview() {
+    CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
+        SubscriptionInactiveScreen(
+            onBack = {},
+            onSubscribe = {},
+        )
     }
 }
