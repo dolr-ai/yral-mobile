@@ -356,22 +356,16 @@ class ProfileViewModel(
                 }
                 sessionManager.updateBio(bio)
                 val proPlan = details.subscriptionPlan as? SubscriptionPlan.Pro
-                sessionManager.updateProDetails(
-                    details =
-                        ProDetails(
-                            isProPurchased = proPlan != null,
-                            availableCredits =
-                                proPlan
-                                    ?.subscription
-                                    ?.freeVideoCreditsLeft
-                                    ?.toInt() ?: 0,
-                            totalCredits =
-                                proPlan
-                                    ?.subscription
-                                    ?.totalVideoCreditsAlloted
-                                    ?.toInt() ?: 0,
-                        ),
-                )
+                proPlan?.let {
+                    sessionManager.updateProDetails(
+                        details =
+                            ProDetails(
+                                isProPurchased = true,
+                                availableCredits = proPlan.subscription.freeVideoCreditsLeft.toInt(),
+                                totalCredits = proPlan.subscription.totalVideoCreditsAlloted.toInt(),
+                            ),
+                    )
+                }
                 _state.update { current ->
                     val currentInfo = current.accountInfo
                     val newInfo =
