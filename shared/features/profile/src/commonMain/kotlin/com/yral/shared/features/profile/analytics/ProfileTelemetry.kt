@@ -1,6 +1,7 @@
 package com.yral.shared.features.profile.analytics
 
 import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.analytics.constants.Features
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.CtaType
 import com.yral.shared.analytics.events.DeleteVideoInitiatedEventData
@@ -75,6 +76,7 @@ class ProfileTelemetry(
         analyticsManager.trackEvent(
             event =
                 VideoClickedEventData(
+                    featureName = Features.PROFILE.getFeatureName(),
                     videoId = feedDetails.videoID,
                     publisherUserId = feedDetails.principalID,
                     likeCount = feedDetails.likeCount.toLong(),
@@ -93,6 +95,7 @@ class ProfileTelemetry(
         analyticsManager.trackEvent(
             event =
                 DeleteVideoInitiatedEventData(
+                    featureName = Features.PROFILE.getFeatureName(),
                     pageName = CategoryName.PROFILE,
                     videoId = feedDetails.videoID,
                 ),
@@ -106,6 +109,7 @@ class ProfileTelemetry(
         analyticsManager.trackEvent(
             event =
                 VideoDeletedEventData(
+                    featureName = Features.PROFILE.getFeatureName(),
                     pageName = CategoryName.PROFILE,
                     videoId = feedDetails.videoID,
                     ctaType = catType,
@@ -119,9 +123,10 @@ class ProfileTelemetry(
     ) {
         analyticsManager.trackEvent(
             VideoShareClickedEventData(
-                feedDetails.videoID,
-                SourceScreen.PROFILE,
-                feedDetails.principalID == userPrincipalId,
+                featureName = Features.PROFILE.getFeatureName(),
+                videoId = feedDetails.videoID,
+                sourceScreen = SourceScreen.PROFILE,
+                isOwner = feedDetails.principalID == userPrincipalId,
             ),
         )
     }
@@ -132,6 +137,7 @@ class ProfileTelemetry(
         analyticsManager.trackEvent(
             event =
                 VideoStartedEventData(
+                    featureName = Features.PROFILE.getFeatureName(),
                     videoId = feedDetails.videoID,
                     publisherUserId = feedDetails.principalID,
                     likeCount = feedDetails.likeCount.toLong(),
@@ -151,6 +157,7 @@ class ProfileTelemetry(
         analyticsManager.trackEvent(
             event =
                 VideoClickedEventData(
+                    featureName = Features.PROFILE.getFeatureName(),
                     videoId = feedDetails.videoID,
                     publisherUserId = feedDetails.principalID,
                     likeCount = feedDetails.likeCount.toLong(),
@@ -172,6 +179,7 @@ class ProfileTelemetry(
         analyticsManager.trackEvent(
             event =
                 VideoReportedEventData(
+                    featureName = Features.PROFILE.getFeatureName(),
                     videoId = feedDetails.videoID,
                     publisherUserId = feedDetails.principalID,
                     isNsfw = feedDetails.isNSFW(),
@@ -185,6 +193,7 @@ class ProfileTelemetry(
     fun followClicked(publisherUserId: String) {
         analyticsManager.trackEvent(
             UserFollowedEventData(
+                featureName = Features.PROFILE.getFeatureName(),
                 publisherUserId = publisherUserId,
                 source = SourceScreen.PROFILE,
                 ctaType = CtaType.FOLLOW,
@@ -195,6 +204,7 @@ class ProfileTelemetry(
     fun unFollowClicked(publisherUserId: String) {
         analyticsManager.trackEvent(
             UserUnFollowedEventData(
+                featureName = Features.PROFILE.getFeatureName(),
                 publisherUserId = publisherUserId,
                 source = SourceScreen.PROFILE,
                 ctaType = CtaType.FOLLOW,
@@ -209,6 +219,7 @@ class ProfileTelemetry(
     ) {
         analyticsManager.trackEvent(
             FollowersListViewedEventData(
+                featureName = Features.PROFILE.getFeatureName(),
                 publisherUserId = publisherUserId,
                 tab = tab,
                 totalCount = totalCount,
