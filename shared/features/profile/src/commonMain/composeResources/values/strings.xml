@@ -26,4 +26,5 @@
     <string name="download_failed">Your video couldn't be downloaded. Please try again.</string>
     <string name="storage_permission_required">Storage permission is required to download videos. Please grant permission in Settings.</string>
     <string name="msg_principal_id_copied">Your Principal ID has been copied successfully!</string>
+    <string name="become_pro">Become Pro</string>
 </resources>

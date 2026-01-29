@@ -12,9 +12,9 @@ import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.featureflag.AppFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.WalletFeatureFlags
-import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.shared.analytics.events.CtaType
 import com.yral.shared.analytics.events.EditProfileSource
 import com.yral.shared.analytics.events.FollowersListTab
@@ -128,6 +128,7 @@ class ProfileViewModel(
         MutableStateFlow(
             ViewState(
                 isWalletEnabled = flagManager.isEnabled(WalletFeatureFlags.Wallet.Enabled),
+                isSubscriptionEnabled = flagManager.isEnabled(AppFeatureFlags.Common.EnableSubscription),
             ),
         )
     val state: StateFlow<ViewState> = _state.asStateFlow()
@@ -302,9 +303,13 @@ class ProfileViewModel(
             sessionManager
                 .observeSessionProperty { it.proDetails }
                 .collect { proDetails ->
-                    // When proDetails becomes null (after purchase), refresh profile
-                    if (proDetails == null && canisterData.userPrincipalId == sessionManager.userPrincipal) {
-                        refreshOwnProfileDetails()
+                    proDetails?.let { details ->
+                        _state.update {
+                            it.copy(isProUser = details.isProPurchased)
+                        }
+                    }
+                    Logger.d("SubscriptionX") {
+                        "Prod details updated in profile $proDetails ${_state.value.isProUser}"
                     }
                 }
         }
@@ -355,22 +360,16 @@ class ProfileViewModel(
                 }
                 sessionManager.updateBio(bio)
                 val proPlan = details.subscriptionPlan as? SubscriptionPlan.Pro
-                sessionManager.updateProDetails(
-                    details =
-                        ProDetails(
-                            isProPurchased = proPlan != null,
-                            availableCredits =
-                                proPlan
-                                    ?.subscription
-                                    ?.freeVideoCreditsLeft
-                                    ?.toInt() ?: 0,
-                            totalCredits =
-                                proPlan
-                                    ?.subscription
-                                    ?.totalVideoCreditsAlloted
-                                    ?.toInt() ?: 0,
-                        ),
-                )
+                proPlan?.let {
+                    sessionManager.updateProDetails(
+                        details =
+                            ProDetails(
+                                isProPurchased = true,
+                                availableCredits = proPlan.subscription.freeVideoCreditsLeft.toInt(),
+                                totalCredits = proPlan.subscription.totalVideoCreditsAlloted.toInt(),
+                            ),
+                    )
+                }
                 _state.update { current ->
                     val currentInfo = current.accountInfo
                     val newInfo =
@@ -380,7 +379,11 @@ class ProfileViewModel(
                                     ?: currentInfo.profilePic,
                             bio = bio?.takeUnless { it.isBlank() } ?: currentInfo.bio,
                         )
-                    current.copy(accountInfo = newInfo, isAiInfluencer = details.isAiInfluencer == true)
+                    current.copy(
+                        accountInfo = newInfo,
+                        isAiInfluencer = details.isAiInfluencer == true,
+                        isProUser = proPlan != null,
+                    )
                 }
             }.onFailure { error ->
                 Logger.e("refreshOwnProfileDetails") { "Failed to fetch profile details $error" }
@@ -413,6 +416,7 @@ class ProfileViewModel(
                         accountInfo = updatedInfo,
                         isFollowing = details.callerFollowsUser ?: current.isFollowing,
                         isAiInfluencer = details.isAiInfluencer == true,
+                        isProUser = (details.subscriptionPlan as? SubscriptionPlan.Pro) != null,
                     )
                 }
             }.onFailure { error ->
@@ -704,8 +708,6 @@ class ProfileViewModel(
     fun setBottomSheetType(type: ProfileBottomSheet) {
         _state.update { it.copy(bottomSheet = type) }
     }
-
-    fun getTncLink(): String = flagManager.get(AccountFeatureFlags.AccountLinks.Links).tnc
 
     fun toggleReportSheet(
         isOpen: Boolean,
@@ -1025,6 +1027,8 @@ data class ViewState(
     val canShareProfile: Boolean = false,
     val isAiInfluencer: Boolean = false,
     val isTalkToMeInProgress: Boolean = false,
+    val isProUser: Boolean = false,
+    val isSubscriptionEnabled: Boolean = false,
 )
 
 sealed interface ProfileBottomSheet {

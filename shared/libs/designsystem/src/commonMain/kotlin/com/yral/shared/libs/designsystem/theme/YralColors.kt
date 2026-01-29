@@ -86,6 +86,8 @@ object YralColors {
     val ProCardBackground = Color(0xFF311424)
     val ProCardBackgroundDark = Color(0xFF1D0914)
     val ProCardBorder = Color(0xFF4C1F38)
+    val ProGradientOrange = Color(0xFFFF7A00)
+    val ProGradientPink = Color(0xFFFF007A)
 
     fun getColorFromHex(hex: String): Color {
         val cleanHex = hex.removePrefix("#")
