@@ -186,8 +186,19 @@ class SubscriptionViewModel(
                 }.onFailure { error ->
                     val iapError = error as? IAPError ?: IAPError.UnknownError(error)
                     Logger.e("SubscriptionViewModel", error) { "Purchase failed: $iapError" }
-                    _viewState.update {
-                        it.copy(purchaseState = UiState.Success(SubscriptionScreenType.Failure(iapError)))
+                    if (error !is IAPError.PurchaseCancelled) {
+                        _viewState.update {
+                            it.copy(
+                                purchaseState =
+                                    UiState.Success(
+                                        SubscriptionScreenType.Failure(
+                                            iapError,
+                                        ),
+                                    ),
+                            )
+                        }
+                    } else {
+                        _viewState.update { it.copy(purchaseState = UiState.Initial) }
                     }
                 }
         }

@@ -1,8 +1,12 @@
 package com.yral.shared.features.subscriptions.ui
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.shared.core.session.ProDetails
@@ -11,6 +15,7 @@ import com.yral.shared.features.subscriptions.viewmodel.SubscriptionScreenType
 import com.yral.shared.features.subscriptions.viewmodel.SubscriptionViewModel
 import com.yral.shared.iap.utils.getPurchaseContext
 import com.yral.shared.libs.arch.presentation.UiState
+import com.yral.shared.libs.designsystem.component.YralLoader
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
@@ -35,25 +40,26 @@ fun SubscriptionsScreen(
     val oldPrice = viewState.pricingInfo?.formattedOldPrice
     val newPrice = viewState.pricingInfo?.formattedCurrentPrice
     when (val state = viewState.purchaseState) {
-        is UiState.Initial -> {
-            SubscriptionInactiveScreen(
-                modifier = modifier,
-                creditsReceived = totalProCredits,
-                oldPrice = oldPrice,
-                newPrice = newPrice,
-                onBack = { component.onBack() },
-                onSubscribe = { purchaseContext?.let { viewModel.subscribe(it) } },
-            )
-        }
-        is UiState.InProgress -> {
-            SubscriptionInactiveScreen(
-                modifier = modifier,
-                creditsReceived = totalProCredits,
-                oldPrice = oldPrice,
-                newPrice = newPrice,
-                onBack = { component.onBack() },
-                onSubscribe = { }, // Disable during purchase
-            )
+        is UiState.Initial,
+        is UiState.InProgress,
+        -> {
+            Box(modifier = modifier) {
+                SubscriptionInactiveScreen(
+                    modifier = Modifier.fillMaxSize(),
+                    creditsReceived = totalProCredits,
+                    oldPrice = oldPrice,
+                    newPrice = newPrice,
+                    onBack = { component.onBack() },
+                    onSubscribe = { purchaseContext?.let { viewModel.subscribe(it) } },
+                )
+                if (state is UiState.InProgress) {
+                    // Blocking loader
+                    Box(
+                        modifier = Modifier.fillMaxSize().clickable { },
+                        contentAlignment = Alignment.Center,
+                    ) { YralLoader() }
+                }
+            }
         }
         is UiState.Success -> {
             when (state.data) {
