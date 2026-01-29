@@ -128,7 +128,9 @@ class SwipeableCardState(
     ): Boolean = calculateSwipeProgress(screenWidth, screenHeight) >= 1f
 
     /**
-     * Updates the active index based on drag progress and commit threshold.
+     * Updates the commit state based on drag progress and commit threshold.
+     * Keeps the active index pinned to the settled card while the user is touching
+     * to avoid swapping playback surfaces mid-gesture.
      * @return true if this call transitioned into the committed state.
      */
     fun updateCurrentIndexForDrag(
@@ -142,7 +144,7 @@ class SwipeableCardState(
                 calculateSwipeProgress(screenWidth, screenHeight) >= commitThreshold
         val wasCommitted = isSwipeCommitted
         isSwipeCommitted = shouldCommit
-        currentIndex = if (shouldCommit) nextIndex() else settledIndex
+        currentIndex = if (!isTouching && shouldCommit) nextIndex() else settledIndex
         return !wasCommitted && shouldCommit
     }
 
