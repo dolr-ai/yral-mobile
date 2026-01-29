@@ -38,7 +38,8 @@ import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.auth.ui.toRequestFactory
 import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.features.root.viewmodels.RootViewModel
-import com.yral.shared.features.subscriptions.ui.SubscriptionCoordinator
+import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
+import com.yral.shared.features.subscriptions.nav.SubscriptionNudgeContent
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.libs.phonevalidation.countries.Country
 import com.yral.shared.libs.routing.routes.api.AppRoute
@@ -93,6 +94,20 @@ class DefaultRootComponent(
         get() = loginStateHolder.countrySelectionCallback
         set(value) {
             loginStateHolder.countrySelectionCallback = value
+        }
+
+    // ==================== Subscription nudge state (in-memory) ====================
+    private class SubscriptionNudgeStateHolder : InstanceKeeper.Instance {
+        var content: SubscriptionNudgeContent? = null
+    }
+
+    private val subscriptionNudgeStateHolder: SubscriptionNudgeStateHolder =
+        instanceKeeper.getOrCreate("subscriptionNudgeState") { SubscriptionNudgeStateHolder() }
+
+    override var subscriptionNudgeContent: SubscriptionNudgeContent?
+        get() = subscriptionNudgeStateHolder.content
+        set(value) {
+            subscriptionNudgeStateHolder.content = value
         }
 
     // ==================== Component Factory ====================
@@ -237,6 +252,9 @@ class DefaultRootComponent(
             }
             is SlotConfig.SubscriptionAccountMismatchSheet -> {
                 RootComponent.SlotChild.SubscriptionAccountMismatchSheet()
+            }
+            is SlotConfig.SubscriptionNudge -> {
+                RootComponent.SlotChild.SubscriptionNudge()
             }
         }
 
@@ -529,6 +547,17 @@ class DefaultRootComponent(
 
     override fun getSubscriptionCoordinator(): SubscriptionCoordinator = this
 
+    // ==================== Subscription nudge ====================
+    override fun showSubscriptionNudge(content: SubscriptionNudgeContent) {
+        subscriptionNudgeContent = content
+        slotNavigation.activate(SlotConfig.SubscriptionNudge)
+    }
+
+    override fun dismissSubscriptionNudge() {
+        dismissSubscriptionNudgeSlotIfActive()
+        subscriptionNudgeContent = null
+    }
+
     // ==================== Subscription Slot Helpers ====================
     private fun showSubscriptionAccountMismatchSlot() {
         slotNavigation.activate(SlotConfig.SubscriptionAccountMismatchSheet)
@@ -536,6 +565,12 @@ class DefaultRootComponent(
 
     private fun dismissSubscriptionSlotIfActive() {
         if (slot.value.child?.instance is RootComponent.SlotChild.SubscriptionAccountMismatchSheet) {
+            slotNavigation.dismiss()
+        }
+    }
+
+    private fun dismissSubscriptionNudgeSlotIfActive() {
+        if (slot.value.child?.instance is RootComponent.SlotChild.SubscriptionNudge) {
             slotNavigation.dismiss()
         }
     }

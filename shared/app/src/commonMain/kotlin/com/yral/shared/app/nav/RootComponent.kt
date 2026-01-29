@@ -19,8 +19,8 @@ import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.root.viewmodels.RootViewModel
+import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.features.subscriptions.nav.SubscriptionsComponent
-import com.yral.shared.features.subscriptions.ui.SubscriptionCoordinator
 import com.yral.shared.features.tournament.nav.TournamentGameComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
@@ -153,5 +153,7 @@ interface RootComponent {
         class LoginBottomSheet : SlotChild()
 
         class SubscriptionAccountMismatchSheet : SlotChild()
+
+        class SubscriptionNudge : SlotChild()
     }
 }

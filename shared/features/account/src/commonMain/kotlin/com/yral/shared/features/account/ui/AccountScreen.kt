@@ -59,7 +59,7 @@ import com.yral.shared.features.account.viewmodel.AccountsState
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.LOGOUT_URI
 import com.yral.shared.features.account.viewmodel.ErrorType
-import com.yral.shared.features.subscriptions.ui.SubscriptionCoordinator
+import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet

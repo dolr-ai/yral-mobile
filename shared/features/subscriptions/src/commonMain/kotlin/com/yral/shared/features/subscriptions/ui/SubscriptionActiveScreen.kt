@@ -23,11 +23,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.yral.shared.features.subscriptions.ui.components.BoltIcon
+import com.yral.shared.features.subscriptions.ui.components.SubscriptionBenefitRow
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.buildHighlightedText
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
@@ -59,7 +60,6 @@ import yral_mobile.shared.features.subscriptions.generated.resources.subscriptio
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_rewards
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_lightning_bolt
-import yral_mobile.shared.libs.designsystem.generated.resources.ic_lightning_bolt_gold
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Composable
@@ -98,7 +98,18 @@ fun SubscriptionActiveScreen(
                             .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    HeroLogo(modifier = Modifier.align(Alignment.CenterHorizontally))
+                    BoltIcon(
+                        modifier =
+                            Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .size(width = 200.dp, height = 180.dp),
+                        gradientColors =
+                            listOf(
+                                YralColors.YellowGlowShadow.copy(alpha = 0.5f),
+                                YralColors.YellowGlowShadow.copy(alpha = 0.3f),
+                                Color.Transparent,
+                            ),
+                    )
                     ActiveContent(
                         validTillText = validTillText,
                         creditsReceived = creditsReceived,
@@ -196,33 +207,6 @@ private fun Header(onBack: () -> Unit) {
             color = YralColors.Neutral0,
             textAlign = TextAlign.Center,
             modifier = Modifier.weight(1f).align(Alignment.CenterVertically),
-        )
-    }
-}
-
-@Composable
-private fun HeroLogo(modifier: Modifier = Modifier) {
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier =
-            modifier
-                .size(width = 200.dp, height = 180.dp)
-                .background(
-                    brush =
-                        Brush.radialGradient(
-                            colors =
-                                listOf(
-                                    YralColors.YellowGlowShadow,
-                                    Color.Transparent,
-                                ),
-                            radius = 200f,
-                        ),
-                ),
-    ) {
-        Image(
-            painter = painterResource(DesignRes.drawable.ic_lightning_bolt_gold),
-            contentDescription = "Subscription Logo",
-            modifier = Modifier.size(width = 74.dp, height = 120.dp),
         )
     }
 }

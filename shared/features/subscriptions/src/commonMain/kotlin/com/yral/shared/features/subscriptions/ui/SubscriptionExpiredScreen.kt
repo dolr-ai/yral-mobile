@@ -24,7 +24,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.SpanStyle
@@ -33,6 +32,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import com.yral.shared.features.subscriptions.ui.components.BoltIcon
+import com.yral.shared.features.subscriptions.ui.components.SubscriptionBenefitRow
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.buildHighlightedText
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
@@ -129,7 +130,19 @@ private fun ExpiredContent(
         modifier = Modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center,
     ) {
-        ExpiredHeroLogo(modifier = Modifier.align(Alignment.Center))
+        BoltIcon(
+            modifier =
+                Modifier
+                    .align(Alignment.Center)
+                    .size(width = 200.dp, height = 180.dp),
+            gradientColors =
+                listOf(
+                    YralColors.SilverGlowShadow.copy(alpha = 0.5f),
+                    YralColors.SilverGlowShadow.copy(alpha = 0.3f),
+                    Color.Transparent,
+                ),
+            boltIcon = DesignRes.drawable.ic_lightning_bolt_silver,
+        )
     }
     Column(
         modifier =
@@ -227,33 +240,6 @@ private fun ExpiredHeader(onBack: () -> Unit) {
             color = YralColors.Neutral0,
             textAlign = TextAlign.Center,
             modifier = Modifier.weight(1f).align(Alignment.CenterVertically),
-        )
-    }
-}
-
-@Composable
-private fun ExpiredHeroLogo(modifier: Modifier) {
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier =
-            modifier
-                .size(width = 200.dp, height = 180.dp)
-                .background(
-                    brush =
-                        Brush.radialGradient(
-                            colors =
-                                listOf(
-                                    YralColors.SilverGlowShadow,
-                                    Color.Transparent,
-                                ),
-                            radius = 200f,
-                        ),
-                ),
-    ) {
-        Image(
-            painter = painterResource(DesignRes.drawable.ic_lightning_bolt_silver),
-            contentDescription = "Subscription Logo",
-            modifier = Modifier.size(width = 74.dp, height = 120.dp),
         )
     }
 }

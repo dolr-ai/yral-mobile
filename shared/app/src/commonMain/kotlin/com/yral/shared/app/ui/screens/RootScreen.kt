@@ -38,6 +38,7 @@ import com.yral.shared.app.ui.screens.home.HomeScreen
 import com.yral.shared.app.ui.screens.login.LoginBottomSheetSlotContent
 import com.yral.shared.app.ui.screens.login.LoginScreenContent
 import com.yral.shared.app.ui.screens.subscription.SubscriptionAccountMismatchSheet
+import com.yral.shared.app.ui.screens.subscription.SubscriptionNudgeBottomSheet
 import com.yral.shared.app.ui.screens.tournament.TournamentGameScaffoldScreen
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.session.getKey
@@ -364,6 +365,26 @@ private fun SlotContent(component: RootComponent) {
                         component.getSubscriptionCoordinator().dismissSubscriptionBottomSheet()
                     },
                 )
+            }
+            is RootComponent.SlotChild.SubscriptionNudge -> {
+                val coordinator = component.getSubscriptionCoordinator()
+                val nudgeContent = coordinator.subscriptionNudgeContent
+                val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+                if (nudgeContent != null) {
+                    SubscriptionNudgeBottomSheet(
+                        content = nudgeContent,
+                        bottomSheetState = bottomSheetState,
+                        onDismissRequest = { coordinator.dismissSubscriptionNudge() },
+                        onSubscribe = {
+                            coordinator.buySubscription()
+                            coordinator.dismissSubscriptionNudge()
+                        },
+                    )
+                } else {
+                    LaunchedEffect(Unit) {
+                        coordinator.dismissSubscriptionNudge()
+                    }
+                }
             }
         }
     }

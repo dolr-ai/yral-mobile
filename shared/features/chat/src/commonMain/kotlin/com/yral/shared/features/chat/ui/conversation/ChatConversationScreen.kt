@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,8 +31,10 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.yral.shared.analytics.events.SignupPageName
+import com.yral.shared.core.session.ProDetails
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.auth.ui.LoginMode
 import com.yral.shared.features.auth.ui.LoginScreenType
@@ -43,6 +46,8 @@ import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.chat.viewmodel.ConversationMessageItem
 import com.yral.shared.features.chat.viewmodel.ConversationViewModel
+import com.yral.shared.features.subscriptions.nav.SubscriptionNudgeContent
+import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
@@ -53,6 +58,8 @@ import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.features.chat.generated.resources.Res
 import yral_mobile.shared.features.chat.generated.resources.chat_background_inverted
 import yral_mobile.shared.features.chat.generated.resources.no_conversation_id
+import yral_mobile.shared.features.chat.generated.resources.subscription_nudge_chat_description
+import yral_mobile.shared.features.chat.generated.resources.subscription_nudge_chat_title
 
 /**
  * Chat screen for testing conversation functionality.
@@ -132,8 +139,16 @@ fun ChatConversationScreen(
             .map { items -> items.count { item -> item.isUser() } }
             .collect { value = it }
     }
+
+    val proDetails by component.subscriptionCoordinator.proDetails.collectAsStateWithLifecycle(ProDetails())
     val shouldPromptForLogin by derivedStateOf {
-        !viewState.isSocialSignedIn && (overlayUserCount + historyUserCount) >= LOGIN_PROMPT_MESSAGE_LIMIT
+        !viewState.isSocialSignedIn && (overlayUserCount + historyUserCount) >= viewState.loginPromptMessageThreshold
+    }
+    val shouldPromptForSubscription by derivedStateOf {
+        viewState.isSocialSignedIn &&
+            viewState.isSubscriptionEnabled &&
+            !proDetails.isProPurchased &&
+            (overlayUserCount + historyUserCount) >= viewState.subscriptionMandatoryThreshold
     }
 
     val loginState =
@@ -141,7 +156,6 @@ fun ChatConversationScreen(
             requestLoginFactory = component.requestLoginFactory,
             key = viewState.influencer,
         )
-
     val promptLogin: () -> Unit =
         remember(viewState.influencer) {
             {
@@ -163,12 +177,47 @@ fun ChatConversationScreen(
             }
         }
 
+    val subscriptionNudgeTitle =
+        stringResource(
+            Res.string.subscription_nudge_chat_title,
+            viewState.influencer?.displayName ?: "",
+        )
+    val subscriptionNudgeDescription =
+        stringResource(
+            Res.string.subscription_nudge_chat_description,
+            viewState.influencer?.displayName ?: "",
+            proDetails.totalCredits,
+        )
+    val subscriptionNudgeContent =
+        remember(subscriptionNudgeTitle, subscriptionNudgeDescription, viewState.influencer) {
+            SubscriptionNudgeContent(
+                title = subscriptionNudgeTitle,
+                description = subscriptionNudgeDescription,
+                topContent = {
+                    viewState.influencer?.avatarUrl?.let { avatarUrl ->
+                        YralAsyncImage(
+                            imageUrl = avatarUrl,
+                            modifier =
+                                Modifier
+                                    .padding(0.dp)
+                                    .width(120.dp)
+                                    .height(120.dp),
+                        )
+                    }
+                },
+            )
+        }
+
     fun sendMessageIfAllowed(
         draft: SendMessageDraft,
         onBeforeSend: () -> Unit = {},
     ) {
         if (shouldPromptForLogin) {
             promptLogin()
+            return
+        }
+        if (shouldPromptForSubscription) {
+            component.subscriptionCoordinator.showSubscriptionNudge(content = subscriptionNudgeContent)
             return
         }
         onBeforeSend()
@@ -320,5 +369,3 @@ fun ChatConversationScreen(
         }
     }
 }
-
-private const val LOGIN_PROMPT_MESSAGE_LIMIT = 5
