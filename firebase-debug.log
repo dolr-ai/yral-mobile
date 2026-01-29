@@ -1,81 +1,488 @@
-[debug] [2026-01-27T06:51:52.108Z] ----------------------------------------------------------------------
-[debug] [2026-01-27T06:51:52.109Z] Command:       /opt/homebrew/Cellar/node/24.1.0/bin/node /opt/homebrew/bin/firebase deploy --only functions:update_tournament_status --project=yral-staging
-[debug] [2026-01-27T06:51:52.109Z] CLI Version:   15.0.0
-[debug] [2026-01-27T06:51:52.109Z] Platform:      darwin
-[debug] [2026-01-27T06:51:52.109Z] Node Version:  v24.1.0
-[debug] [2026-01-27T06:51:52.109Z] Time:          Tue Jan 27 2026 12:21:52 GMT+0530 (India Standard Time)
-[debug] [2026-01-27T06:51:52.109Z] ----------------------------------------------------------------------
+[debug] [2026-01-22T06:27:14.609Z] ----------------------------------------------------------------------
+[debug] [2026-01-22T06:27:14.610Z] Command:       /opt/homebrew/Cellar/node/24.1.0/bin/node /opt/homebrew/bin/firebase deploy --only functions:create_tournaments --project yral-staging
+[debug] [2026-01-22T06:27:14.610Z] CLI Version:   15.0.0
+[debug] [2026-01-22T06:27:14.610Z] Platform:      darwin
+[debug] [2026-01-22T06:27:14.610Z] Node Version:  v24.1.0
+[debug] [2026-01-22T06:27:14.610Z] Time:          Thu Jan 22 2026 11:57:14 GMT+0530 (India Standard Time)
+[debug] [2026-01-22T06:27:14.610Z] ----------------------------------------------------------------------
 [debug] 
-[debug] [2026-01-27T06:51:52.110Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
-[debug] [2026-01-27T06:51:52.822Z] Field "/functions" in "firebase.json" is possibly invalid: must be object
-[debug] [2026-01-27T06:51:52.822Z] Field "/functions" in "firebase.json" is possibly invalid: must be object
-[debug] [2026-01-27T06:51:52.822Z] Object "/functions/0" in "firebase.json" has unknown property: {"additionalProperty":"region"}
-[debug] [2026-01-27T06:51:52.822Z] Object "/functions/0" in "firebase.json" is missing required property: {"missingProperty":"remoteSource"}
-[debug] [2026-01-27T06:51:52.822Z] Field "/functions/0" in "firebase.json" is possibly invalid: must match a schema in anyOf
-[debug] [2026-01-27T06:51:52.822Z] Field "/functions" in "firebase.json" is possibly invalid: must match a schema in anyOf
-[debug] [2026-01-27T06:51:52.825Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-27T06:51:52.825Z] > authorizing via signed-in user (sarvesh@gobazzinga.io)
-[debug] [2026-01-27T06:51:52.825Z] [iam] checking project yral-staging for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
-[debug] [2026-01-27T06:51:52.825Z] Checked if tokens are valid: false, expires at: 1769180684219
-[debug] [2026-01-27T06:51:52.825Z] Checked if tokens are valid: false, expires at: 1769180684219
-[debug] [2026-01-27T06:51:52.825Z] > refreshing access token with scopes: []
-[debug] [2026-01-27T06:51:52.826Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
-[debug] [2026-01-27T06:51:52.826Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
-[debug] [2026-01-27T06:51:52.981Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
-[debug] [2026-01-27T06:51:52.981Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
-[debug] [2026-01-27T06:51:52.995Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/yral-staging:testIamPermissions [none]
-[debug] [2026-01-27T06:51:52.995Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/yral-staging:testIamPermissions x-goog-quota-user=projects/yral-staging
-[debug] [2026-01-27T06:51:52.995Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/yral-staging:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
-[debug] [2026-01-27T06:51:53.681Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
-[debug] [2026-01-27T06:51:53.681Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
-[debug] [2026-01-27T06:51:54.479Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/yral-staging:testIamPermissions 200
-[debug] [2026-01-27T06:51:54.480Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/yral-staging:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
-[debug] [2026-01-27T06:51:54.480Z] Checked if tokens are valid: true, expires at: 1769500311981
-[debug] [2026-01-27T06:51:54.480Z] Checked if tokens are valid: true, expires at: 1769500311981
-[debug] [2026-01-27T06:51:54.480Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/yral-staging/serviceAccounts/yral-staging@appspot.gserviceaccount.com:testIamPermissions [none]
-[debug] [2026-01-27T06:51:54.480Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/yral-staging/serviceAccounts/yral-staging@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
-[debug] [2026-01-27T06:51:56.284Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/yral-staging/serviceAccounts/yral-staging@appspot.gserviceaccount.com:testIamPermissions 200
-[debug] [2026-01-27T06:51:56.284Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/yral-staging/serviceAccounts/yral-staging@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2026-01-22T06:27:15.271Z] Field "/functions" in "firebase.json" is possibly invalid: must be object
+[debug] [2026-01-22T06:27:15.271Z] Field "/functions" in "firebase.json" is possibly invalid: must be object
+[debug] [2026-01-22T06:27:15.271Z] Object "/functions/0" in "firebase.json" has unknown property: {"additionalProperty":"region"}
+[debug] [2026-01-22T06:27:15.271Z] Object "/functions/0" in "firebase.json" is missing required property: {"missingProperty":"remoteSource"}
+[debug] [2026-01-22T06:27:15.271Z] Field "/functions/0" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[debug] [2026-01-22T06:27:15.271Z] Field "/functions" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[debug] [2026-01-22T06:27:15.273Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-22T06:27:15.273Z] > authorizing via signed-in user (sarvesh@gobazzinga.io)
+[debug] [2026-01-22T06:27:15.273Z] [iam] checking project yral-staging for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
+[debug] [2026-01-22T06:27:15.274Z] Checked if tokens are valid: false, expires at: 1768982221908
+[debug] [2026-01-22T06:27:15.274Z] Checked if tokens are valid: false, expires at: 1768982221908
+[debug] [2026-01-22T06:27:15.274Z] > refreshing access token with scopes: []
+[debug] [2026-01-22T06:27:15.275Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-01-22T06:27:15.275Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-22T06:27:15.468Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-01-22T06:27:15.468Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-22T06:27:15.480Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/yral-staging:testIamPermissions [none]
+[debug] [2026-01-22T06:27:15.480Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/yral-staging:testIamPermissions x-goog-quota-user=projects/yral-staging
+[debug] [2026-01-22T06:27:15.480Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/yral-staging:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2026-01-22T06:27:17.011Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/yral-staging:testIamPermissions 200
+[debug] [2026-01-22T06:27:17.011Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/yral-staging:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2026-01-22T06:27:17.011Z] Checked if tokens are valid: true, expires at: 1769066834468
+[debug] [2026-01-22T06:27:17.012Z] Checked if tokens are valid: true, expires at: 1769066834468
+[debug] [2026-01-22T06:27:17.012Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/yral-staging/serviceAccounts/yral-staging@appspot.gserviceaccount.com:testIamPermissions [none]
+[debug] [2026-01-22T06:27:17.012Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/yral-staging/serviceAccounts/yral-staging@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2026-01-22T06:27:18.712Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/yral-staging/serviceAccounts/yral-staging@appspot.gserviceaccount.com:testIamPermissions 200
+[debug] [2026-01-22T06:27:18.713Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/yral-staging/serviceAccounts/yral-staging@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
 [info] 
 [info] === Deploying to 'yral-staging'...
 [info] 
 [info] i  deploying functions 
-[debug] [2026-01-27T06:51:56.287Z] Checked if tokens are valid: true, expires at: 1769500311981
-[debug] [2026-01-27T06:51:56.287Z] Checked if tokens are valid: true, expires at: 1769500311981
-[debug] [2026-01-27T06:51:56.287Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/yral-staging [none]
-[debug] [2026-01-27T06:51:56.629Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/yral-staging 200
-[debug] [2026-01-27T06:51:56.630Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/yral-staging {"projectNumber":"240456866818","projectId":"yral-staging","lifecycleState":"ACTIVE","name":"yral-mobile-staging","labels":{"firebase":"enabled"},"createTime":"2024-12-03T15:07:29.157450Z","parent":{"type":"organization","id":"284777782154"}}
+[debug] [2026-01-22T06:27:18.714Z] Checked if tokens are valid: true, expires at: 1769066834468
+[debug] [2026-01-22T06:27:18.714Z] Checked if tokens are valid: true, expires at: 1769066834468
+[debug] [2026-01-22T06:27:18.715Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/yral-staging [none]
+[debug] [2026-01-22T06:27:19.313Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/yral-staging 200
+[debug] [2026-01-22T06:27:19.313Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/yral-staging {"projectNumber":"240456866818","projectId":"yral-staging","lifecycleState":"ACTIVE","name":"yral-mobile-staging","labels":{"firebase":"enabled"},"createTime":"2024-12-03T15:07:29.157450Z","parent":{"type":"organization","id":"284777782154"}}
 [info] i  functions: preparing codebase default for deployment 
 [info] i  functions: ensuring required API cloudfunctions.googleapis.com is enabled... 
 [info] i  functions: ensuring required API cloudbuild.googleapis.com is enabled... 
 [info] i  artifactregistry: ensuring required API artifactregistry.googleapis.com is enabled... 
-[debug] [2026-01-27T06:51:56.633Z] Checked if tokens are valid: true, expires at: 1769500311981
-[debug] [2026-01-27T06:51:56.633Z] Checked if tokens are valid: true, expires at: 1769500311981
-[debug] [2026-01-27T06:51:56.633Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/yral-staging/adminSdkConfig [none]
-[debug] [2026-01-27T06:51:57.396Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/yral-staging/adminSdkConfig 200
-[debug] [2026-01-27T06:51:57.396Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/yral-staging/adminSdkConfig {"projectId":"yral-staging","storageBucket":"yral-staging.firebasestorage.app"}
-[debug] [2026-01-27T06:51:57.397Z] Checked if tokens are valid: true, expires at: 1769500311981
-[debug] [2026-01-27T06:51:57.397Z] Checked if tokens are valid: true, expires at: 1769500311981
-[debug] [2026-01-27T06:51:57.397Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/yral-staging/configs [none]
-[debug] [2026-01-27T06:51:57.895Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/yral-staging/configs 200
-[debug] [2026-01-27T06:51:57.895Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/yral-staging/configs {"configs":[{"name":"projects/yral-staging/configs/balance"}]}
-[debug] [2026-01-27T06:51:57.895Z] Checked if tokens are valid: true, expires at: 1769500311981
-[debug] [2026-01-27T06:51:57.896Z] Checked if tokens are valid: true, expires at: 1769500311981
-[debug] [2026-01-27T06:51:57.896Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/yral-staging/configs/balance/variables [none]
-[debug] [2026-01-27T06:51:58.429Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/yral-staging/configs/balance/variables 200
-[debug] [2026-01-27T06:51:58.430Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/yral-staging/configs/balance/variables {"variables":[{"name":"projects/yral-staging/configs/balance/variables/update/token","updateTime":"2025-06-13T06:17:22.883734188Z"}]}
-[debug] [2026-01-27T06:51:58.430Z] Checked if tokens are valid: true, expires at: 1769500311981
-[debug] [2026-01-27T06:51:58.430Z] Checked if tokens are valid: true, expires at: 1769500311981
-[debug] [2026-01-27T06:51:58.430Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/yral-staging/configs/balance/variables/update/token [none]
-[debug] [2026-01-27T06:51:58.781Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/yral-staging/configs/balance/variables/update/token 200
-[debug] [2026-01-27T06:51:58.781Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/yral-staging/configs/balance/variables/update/token {"name":"projects/yral-staging/configs/balance/variables/update/token","updateTime":"2025-06-13T06:17:22.883734188Z","text":"eyJ0eXAiOiJKV1QiLCJhbGciOiJFZERTQSJ9.eyJhdWQiOiJob3Qtb3Itbm90LXdvcmtlciIsImV4cCI6MTc2NDY5ODIzOH0.mpNNrUg_JbS9tCIZ-RWmCGLhsiD1I9-1ppQ7HOVL-7L3hUhcf8LTahdC-oSl7Ls2HMVRfD1E1AGjekXms7ioAQ"}
-[debug] [2026-01-27T06:51:58.783Z] Customer code is not Node
-[debug] [2026-01-27T06:51:58.783Z] Validating python source
-[debug] [2026-01-27T06:51:58.784Z] Building python source
+[debug] [2026-01-22T06:27:19.314Z] Checked if tokens are valid: true, expires at: 1769066834468
+[debug] [2026-01-22T06:27:19.314Z] Checked if tokens are valid: true, expires at: 1769066834468
+[debug] [2026-01-22T06:27:19.314Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/yral-staging/adminSdkConfig [none]
+[debug] [2026-01-22T06:27:20.092Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/yral-staging/adminSdkConfig 200
+[debug] [2026-01-22T06:27:20.093Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/yral-staging/adminSdkConfig {"projectId":"yral-staging","storageBucket":"yral-staging.firebasestorage.app"}
+[debug] [2026-01-22T06:27:20.093Z] Checked if tokens are valid: true, expires at: 1769066834468
+[debug] [2026-01-22T06:27:20.093Z] Checked if tokens are valid: true, expires at: 1769066834468
+[debug] [2026-01-22T06:27:20.093Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/yral-staging/configs [none]
+[debug] [2026-01-22T06:27:20.582Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/yral-staging/configs 200
+[debug] [2026-01-22T06:27:20.582Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/yral-staging/configs {"configs":[{"name":"projects/yral-staging/configs/balance"}]}
+[debug] [2026-01-22T06:27:20.582Z] Checked if tokens are valid: true, expires at: 1769066834468
+[debug] [2026-01-22T06:27:20.582Z] Checked if tokens are valid: true, expires at: 1769066834468
+[debug] [2026-01-22T06:27:20.583Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/yral-staging/configs/balance/variables [none]
+[debug] [2026-01-22T06:27:21.707Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/yral-staging/configs/balance/variables 200
+[debug] [2026-01-22T06:27:21.707Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/yral-staging/configs/balance/variables {"variables":[{"name":"projects/yral-staging/configs/balance/variables/update/token","updateTime":"2025-06-13T06:17:22.883734188Z"}]}
+[debug] [2026-01-22T06:27:21.707Z] Checked if tokens are valid: true, expires at: 1769066834468
+[debug] [2026-01-22T06:27:21.707Z] Checked if tokens are valid: true, expires at: 1769066834468
+[debug] [2026-01-22T06:27:21.707Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/yral-staging/configs/balance/variables/update/token [none]
+[debug] [2026-01-22T06:27:22.220Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/yral-staging/configs/balance/variables/update/token 200
+[debug] [2026-01-22T06:27:22.220Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/yral-staging/configs/balance/variables/update/token {"name":"projects/yral-staging/configs/balance/variables/update/token","updateTime":"2025-06-13T06:17:22.883734188Z","text":"eyJ0eXAiOiJKV1QiLCJhbGciOiJFZERTQSJ9.eyJhdWQiOiJob3Qtb3Itbm90LXdvcmtlciIsImV4cCI6MTc2NDY5ODIzOH0.mpNNrUg_JbS9tCIZ-RWmCGLhsiD1I9-1ppQ7HOVL-7L3hUhcf8LTahdC-oSl7Ls2HMVRfD1E1AGjekXms7ioAQ"}
+[debug] [2026-01-22T06:27:22.221Z] Customer code is not Node
+[debug] [2026-01-22T06:27:22.221Z] Validating python source
+[debug] [2026-01-22T06:27:22.221Z] Building python source
 [info] i  functions: Loading and analyzing source code for codebase default to determine what to deploy 
-[debug] [2026-01-27T06:51:58.784Z] Could not find functions.yaml. Must use http discovery
-[debug] [2026-01-27T06:51:58.797Z] Running command with virtualenv: command=., args=["\"/Users/sarveshsharma/Desktop/yral-mobile/functions/venv/bin/activate\"","&&","python3.11","-c","\"import firebase_functions; import os; print(os.path.dirname(firebase_functions.__file__))\""]
-[debug] [2026-01-27T06:51:58.881Z] stdout: /Users/sarveshsharma/Desktop/yral-mobile/functions/venv/lib/python3.11/site-packages/firebase_functions
+[debug] [2026-01-22T06:27:22.222Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-01-22T06:27:22.227Z] Running command with virtualenv: command=., args=["\"/Users/sarveshsharma/Desktop/yral-mobile/functions/venv/bin/activate\"","&&","python3.11","-c","\"import firebase_functions; import os; print(os.path.dirname(firebase_functions.__file__))\""]
+[debug] [2026-01-22T06:27:22.267Z] stdout: /Users/sarveshsharma/Desktop/yral-mobile/functions/venv/lib/python3.11/site-packages/firebase_functions
 
-[debug] [2026-01-27T06:51:58.885Z] Running admin server with args: ["python3.11","\"/Users/sarveshsharma/Desktop/yral-mobile/functions/venv/lib/python3.11/site-packages/firebase_functions/private/serving.py\""] and env: {"FIREBASE_CONFIG":"{\"projectId\":\"yral-staging\",\"storageBucket\":\"yral-staging.firebasestorage.app\"}","GCLOUD_PROJECT":"yral-staging","GOOGLE_CLOUD_QUOTA_PROJECT":"yral-staging","ADMIN_PORT":"8081"} in /Users/sarveshsharma/Desktop/yral-mobile/functions
-[debug] [2026-01-27T06:51:58.885Z] Running command with virtualenv: command=., args=["\"/Users/sarveshsharma/Desktop/yral-mobile/functions/venv/bin/activate\"","&&","python3.11","\"/Users/sarveshsharma/Desktop/yral-mobile/functions/venv/lib/python3.11/site-packages/firebase_functions/private/serving.py\""]
+[debug] [2026-01-22T06:27:22.270Z] Running admin server with args: ["python3.11","\"/Users/sarveshsharma/Desktop/yral-mobile/functions/venv/lib/python3.11/site-packages/firebase_functions/private/serving.py\""] and env: {"FIREBASE_CONFIG":"{\"projectId\":\"yral-staging\",\"storageBucket\":\"yral-staging.firebasestorage.app\"}","GCLOUD_PROJECT":"yral-staging","GOOGLE_CLOUD_QUOTA_PROJECT":"yral-staging","ADMIN_PORT":"8081"} in /Users/sarveshsharma/Desktop/yral-mobile/functions
+[debug] [2026-01-22T06:27:22.270Z] Running command with virtualenv: command=., args=["\"/Users/sarveshsharma/Desktop/yral-mobile/functions/venv/bin/activate\"","&&","python3.11","\"/Users/sarveshsharma/Desktop/yral-mobile/functions/venv/lib/python3.11/site-packages/firebase_functions/private/serving.py\""]
+[info]  * Serving Flask app 'serving'
+ * Debug mode: off
+
+[error] WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on http://127.0.0.1:8081
+
+[error] Press CTRL+C to quit
+
+[error] [import] Starting imports...
+[import] json loaded
+[import] os loaded
+[import] random loaded
+[import] string loaded
+[import] tempfile loaded
+[import] time loaded
+[import] concurrent.futures loaded
+
+[error] [import] datetime loaded
+[import] enum loaded
+[import] typing loaded
+[import] firebase_admin loaded
+[import] requests loaded
+[import] google.genai loaded
+[import] firebase_admin.auth, firestore loaded
+[import] firebase_functions loaded
+[import] flask loaded
+[import] google.api_core.exceptions loaded
+[import] google.cloud.tasks_v2 loaded
+[import] google.protobuf loaded
+[import] All imports completed successfully
+
+[error] 127.0.0.1 - - [22/Jan/2026 11:57:23] "GET /__/functions.yaml HTTP/1.1" 200 -
+
+[debug] [2026-01-22T06:27:23.433Z] Got response from /__/functions.yaml endpoints:
+  btc_value_by_country:
+    availableMemoryMb: null
+    concurrency: null
+    entryPoint: btc_value_by_country
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: null
+    minInstances: null
+    platform: gcfv2
+    region:
+    - us-central1
+    secretEnvironmentVariables: []
+    serviceAccountEmail: null
+    timeoutSeconds: null
+  cast_hot_or_not_vote:
+    availableMemoryMb: null
+    concurrency: null
+    entryPoint: cast_hot_or_not_vote
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: null
+    minInstances: null
+    platform: gcfv2
+    region:
+    - us-central1
+    secretEnvironmentVariables:
+    - key: BALANCE_UPDATE_TOKEN
+    serviceAccountEmail: null
+    timeoutSeconds: null
+  cast_vote_v2:
+    availableMemoryMb: null
+    concurrency: null
+    entryPoint: cast_vote_v2
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: null
+    minInstances: null
+    platform: gcfv2
+    region:
+    - us-central1
+    secretEnvironmentVariables:
+    - key: BALANCE_UPDATE_TOKEN
+    serviceAccountEmail: null
+    timeoutSeconds: null
+  create_hot_or_not_tournament:
+    availableMemoryMb: 2048
+    concurrency: null
+    entryPoint: create_hot_or_not_tournament
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: null
+    minInstances: null
+    platform: gcfv2
+    region:
+    - us-central1
+    secretEnvironmentVariables:
+    - key: BALANCE_UPDATE_TOKEN
+    - key: GEMINI_API_KEY
+    - key: BACKEND_ADMIN_KEY
+    - key: MIXPANEL_TOKEN
+    serviceAccountEmail: null
+    timeoutSeconds: 1500
+  create_tournaments:
+    availableMemoryMb: 2048
+    concurrency: null
+    entryPoint: create_tournaments
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: null
+    minInstances: null
+    platform: gcfv2
+    region:
+    - us-central1
+    secretEnvironmentVariables:
+    - key: BACKEND_ADMIN_KEY
+    - key: GEMINI_API_KEY
+    serviceAccountEmail: null
+    timeoutSeconds: 1500
+  daily_rank:
+    availableMemoryMb: null
+    concurrency: null
+    entryPoint: daily_rank
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: null
+    minInstances: null
+    platform: gcfv2
+    region:
+    - us-central1
+    secretEnvironmentVariables: []
+    serviceAccountEmail: null
+    timeoutSeconds: null
+  exchange_principal_id:
+    availableMemoryMb: null
+    concurrency: null
+    entryPoint: exchange_principal_id
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: null
+    minInstances: null
+    platform: gcfv2
+    region:
+    - us-central1
+    secretEnvironmentVariables: []
+    serviceAccountEmail: null
+    timeoutSeconds: null
+  get_smiley_game_stats:
+    availableMemoryMb: null
+    concurrency: null
+    entryPoint: get_smiley_game_stats
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: null
+    minInstances: null
+    platform: gcfv2
+    region:
+    - us-central1
+    secretEnvironmentVariables: []
+    serviceAccountEmail: null
+    timeoutSeconds: null
+  hot_or_not_tournament_vote:
+    availableMemoryMb: null
+    concurrency: null
+    entryPoint: hot_or_not_tournament_vote
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: null
+    minInstances: null
+    platform: gcfv2
+    region:
+    - us-central1
+    secretEnvironmentVariables:
+    - key: BALANCE_UPDATE_TOKEN
+    serviceAccountEmail: null
+    timeoutSeconds: null
+  leaderboard_history_v2:
+    availableMemoryMb: null
+    concurrency: null
+    entryPoint: leaderboard_history_v2
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: null
+    minInstances: null
+    platform: gcfv2
+    region:
+    - us-central1
+    secretEnvironmentVariables: []
+    serviceAccountEmail: null
+    timeoutSeconds: null
+  leaderboard_v3:
+    availableMemoryMb: null
+    concurrency: null
+    entryPoint: leaderboard_v3
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: null
+    minInstances: null
+    platform: gcfv2
+    region:
+    - us-central1
+    secretEnvironmentVariables: []
+    serviceAccountEmail: null
+    timeoutSeconds: null
+  my_tournaments:
+    availableMemoryMb: null
+    concurrency: null
+    entryPoint: my_tournaments
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: null
+    minInstances: null
+    platform: gcfv2
+    region:
+    - us-central1
+    secretEnvironmentVariables: []
+    serviceAccountEmail: null
+    timeoutSeconds: null
+  register_for_tournament:
+    availableMemoryMb: null
+    concurrency: null
+    entryPoint: register_for_tournament
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: null
+    minInstances: null
+    platform: gcfv2
+    region:
+    - us-central1
+    secretEnvironmentVariables:
+    - key: BALANCE_UPDATE_TOKEN
+    serviceAccountEmail: null
+    timeoutSeconds: null
+  reward_leaderboard_winners:
+    availableMemoryMb: null
+    concurrency: null
+    entryPoint: reward_leaderboard_winners
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: null
+    minInstances: null
+    platform: gcfv2
+    region:
+    - us-central1
+    secretEnvironmentVariables:
+    - key: BALANCE_UPDATE_TOKEN
+    serviceAccountEmail: null
+    timeoutSeconds: null
+  tap_to_recharge:
+    availableMemoryMb: null
+    concurrency: null
+    entryPoint: tap_to_recharge
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: null
+    minInstances: null
+    platform: gcfv2
+    region:
+    - us-central1
+    secretEnvironmentVariables:
+    - key: BALANCE_UPDATE_TOKEN
+    serviceAccountEmail: null
+    timeoutSeconds: null
+  tournament_leaderboard:
+    availableMemoryMb: null
+    concurrency: null
+    entryPoint: tournament_leaderboard
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: null
+    minInstances: null
+    platform: gcfv2
+    region:
+    - us-central1
+    secretEnvironmentVariables: []
+    serviceAccountEmail: null
+    timeoutSeconds: null
+  tournament_status:
+    availableMemoryMb: null
+    concurrency: null
+    entryPoint: tournament_status
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: null
+    minInstances: null
+    platform: gcfv2
+    region:
+    - us-central1
+    secretEnvironmentVariables: []
+    serviceAccountEmail: null
+    timeoutSeconds: null
+  tournament_video_emojis:
+    availableMemoryMb: null
+    concurrency: null
+    entryPoint: tournament_video_emojis
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: null
+    minInstances: null
+    platform: gcfv2
+    region:
+    - us-central1
+    secretEnvironmentVariables: []
+    serviceAccountEmail: null
+    timeoutSeconds: null
+  tournament_vote:
+    availableMemoryMb: null
+    concurrency: null
+    entryPoint: tournament_vote
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: null
+    minInstances: null
+    platform: gcfv2
+    region:
+    - us-central1
+    secretEnvironmentVariables: []
+    serviceAccountEmail: null
+    timeoutSeconds: null
+  tournaments:
+    availableMemoryMb: null
+    concurrency: null
+    entryPoint: tournaments
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: null
+    minInstances: null
+    platform: gcfv2
+    region:
+    - us-central1
+    secretEnvironmentVariables: []
+    serviceAccountEmail: null
+    timeoutSeconds: null
+  update_tournament_status:
+    availableMemoryMb: null
+    concurrency: null
+    entryPoint: update_tournament_status
+    httpsTrigger: {}
+    ingressSettings: null
+    labels: {}
+    maxInstances: null
+    minInstances: null
+    platform: gcfv2
+    region:
+    - us-central1
+    secretEnvironmentVariables:
+    - key: BALANCE_UPDATE_TOKEN
+    - key: MIXPANEL_TOKEN
+    serviceAccountEmail: null
+    timeoutSeconds: null
+params: []
+requiredAPIs: []
+specVersion: v1alpha1
+
+[error] 127.0.0.1 - - [22/Jan/2026 11:57:23] "GET /__/quitquitquit HTTP/1.1" 200 -
+
+[error] /bin/sh: line 1: 53588 Terminated: 15          python3.11 "/Users/sarveshsharma/Desktop/yral-mobile/functions/venv/lib/python3.11/site-packages/firebase_functions/private/serving.py"
+
+[info] i  functions: preparing functions directory for uploading... 
+[info] i  functions: packaged /Users/sarveshsharma/Desktop/yral-mobile/functions (289.56 KB) for uploading 
+[debug] [2026-01-22T06:27:23.472Z] Checked if tokens are valid: true, expires at: 1769066834468
+[debug] [2026-01-22T06:27:23.472Z] Checked if tokens are valid: true, expires at: 1769066834468
+[debug] [2026-01-22T06:27:23.472Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/projects/yral-staging/locations/-/functions [none]
+[debug] [2026-01-22T06:27:24.293Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/projects/yral-staging/locations/-/functions 200
+[debug] [2026-01-22T06:27:24.293Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/projects/yral-staging/locations/-/functions {}
+[debug] [2026-01-22T06:27:24.293Z] Checked if tokens are valid: true, expires at: 1769066834468
+[debug] [2026-01-22T06:27:24.293Z] Checked if tokens are valid: true, expires at: 1769066834468
+[debug] [2026-01-22T06:27:24.293Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/yral-staging/locations/-/functions filter=environment%3D%22GEN_2%22
+[debug] [2026-01-22T06:27:25.867Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/yral-staging/locations/-/functions 200
+[debug] [2026-01-22T06:27:25.867Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/yral-staging/locations/-/functions {"functions":[{"name":"projects/yral-staging/locations/us-central1/functions/tap_to_recharge","buildConfig":{"build":"projects/240456866818/locations/us-central1/builds/1af01f70-f96e-452a-9b1e-f5eb3ab2c46b","runtime":"python311","entryPoint":"tap_to_recharge","source":{"storageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"tap_to_recharge/function-source.zip","generation":"1768577111061725"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/yral-staging/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"tap_to_recharge/function-source.zip","generation":"1768577111061725"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/yral-staging/serviceAccounts/240456866818-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/yral-staging/locations/us-central1/services/tap-to-recharge","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"yral-staging\",\"storageBucket\":\"yral-staging.firebasestorage.app\"}","GCLOUD_PROJECT":"yral-staging","EVENTARC_CLOUD_EVENT_SOURCE":"projects/yral-staging/locations/us-central1/services/tap_to_recharge","FUNCTION_TARGET":"tap_to_recharge","LOG_EXECUTION_ID":"true","FUNCTION_SIGNATURE_TYPE":"http"},"maxInstanceCount":100,"ingressSettings":"ALLOW_ALL","uri":"https://tap-to-recharge-cnx4baqipa-uc.a.run.app","serviceAccountEmail":"240456866818-compute@developer.gserviceaccount.com","availableMemory":"256Mi","allTrafficOnLatestRevision":true,"secretEnvironmentVariables":[{"key":"BALANCE_UPDATE_TOKEN","projectId":"yral-staging","secret":"BALANCE_UPDATE_TOKEN","version":"7"}],"revision":"tap-to-recharge-00144-zid","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","updateTime":"2026-01-16T15:26:33.986559827Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"36133faadb4858d805158f7c88d10604042da0bb"},"environment":"GEN_2","url":"https://us-central1-yral-staging.cloudfunctions.net/tap_to_recharge","createTime":"2025-07-25T05:58:40.363887261Z","satisfiesPzi":true},{"name":"projects/yral-staging/locations/us-central1/functions/tournament_vote","buildConfig":{"build":"projects/240456866818/locations/us-central1/builds/861b27aa-3d33-4627-96b5-34dfed7c1ab3","runtime":"python311","entryPoint":"tournament_vote","source":{"storageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"tournament_vote/function-source.zip","generation":"1768979057781930"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/yral-staging/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"tournament_vote/function-source.zip","generation":"1768979057781930"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/yral-staging/serviceAccounts/240456866818-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/yral-staging/locations/us-central1/services/tournament-vote","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"yral-staging\",\"storageBucket\":\"yral-staging.firebasestorage.app\"}","GCLOUD_PROJECT":"yral-staging","EVENTARC_CLOUD_EVENT_SOURCE":"projects/yral-staging/locations/us-central1/services/tournament_vote","FUNCTION_TARGET":"tournament_vote","LOG_EXECUTION_ID":"true"},"maxInstanceCount":100,"ingressSettings":"ALLOW_ALL","uri":"https://tournament-vote-cnx4baqipa-uc.a.run.app","serviceAccountEmail":"240456866818-compute@developer.gserviceaccount.com","availableMemory":"256Mi","allTrafficOnLatestRevision":true,"revision":"tournament-vote-00018-hax","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","updateTime":"2026-01-21T07:05:48.598007535Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"e0631785502981b11606c6b6f20d25e53e8ced32"},"environment":"GEN_2","url":"https://us-central1-yral-staging.cloudfunctions.net/tournament_vote","createTime":"2025-12-14T16:31:15.371105614Z","satisfiesPzi":true},{"name":"projects/yral-staging/locations/us-central1/functions/get_smiley_game_stats","buildConfig":{"build":"projects/240456866818/locations/us-central1/builds/e7402cbb-0c7f-4fd7-a83a-935ce15c2993","runtime":"python311","entryPoint":"get_smiley_game_stats","source":{"storageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"get_smiley_game_stats/function-source.zip","generation":"1768406442754857"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/yral-staging/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"get_smiley_game_stats/function-source.zip","generation":"1768406442754857"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/yral-staging/serviceAccounts/240456866818-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/yral-staging/locations/us-central1/services/get-smiley-game-stats","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"yral-staging\",\"storageBucket\":\"yral-staging.firebasestorage.app\"}","GCLOUD_PROJECT":"yral-staging","EVENTARC_CLOUD_EVENT_SOURCE":"projects/yral-staging/locations/us-central1/services/get_smiley_game_stats","FUNCTION_TARGET":"get_smiley_game_stats","LOG_EXECUTION_ID":"true","FUNCTION_SIGNATURE_TYPE":"http"},"maxInstanceCount":100,"ingressSettings":"ALLOW_ALL","uri":"https://get-smiley-game-stats-cnx4baqipa-uc.a.run.app","serviceAccountEmail":"240456866818-compute@developer.gserviceaccount.com","availableMemory":"256Mi","allTrafficOnLatestRevision":true,"revision":"get-smiley-game-stats-00064-gus","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","updateTime":"2026-01-14T16:01:58.015559665Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"0534b75c0520c11fe604a726a66b27086a548ba8"},"environment":"GEN_2","url":"https://us-central1-yral-staging.cloudfunctions.net/get_smiley_game_stats","createTime":"2025-09-25T06:42:25.224278895Z","satisfiesPzi":true},{"name":"projects/yral-staging/locations/us-central1/functions/tournaments","buildConfig":{"build":"projects/240456866818/locations/us-central1/builds/f9523a39-a5e3-4db7-83af-effa25efeb61","runtime":"python311","entryPoint":"tournaments","source":{"storageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"tournaments/function-source.zip","generation":"1768979057815148"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/yral-staging/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"tournaments/function-source.zip","generation":"1768979057815148"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/yral-staging/serviceAccounts/240456866818-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/yral-staging/locations/us-central1/services/tournaments","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"yral-staging\",\"storageBucket\":\"yral-staging.firebasestorage.app\"}","GCLOUD_PROJECT":"yral-staging","EVENTARC_CLOUD_EVENT_SOURCE":"projects/yral-staging/locations/us-central1/services/tournaments","FUNCTION_TARGET":"tournaments","LOG_EXECUTION_ID":"true"},"maxInstanceCount":100,"ingressSettings":"ALLOW_ALL","uri":"https://tournaments-cnx4baqipa-uc.a.run.app","serviceAccountEmail":"240456866818-compute@developer.gserviceaccount.com","availableMemory":"256Mi","allTrafficOnLatestRevision":true,"revision":"tournaments-00023-bos","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","updateTime":"2026-01-21T07:05:50.140893558Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"e0631785502981b11606c6b6f20d25e53e8ced32"},"environment":"GEN_2","url":"https://us-central1-yral-staging.cloudfunctions.net/tournaments","createTime":"2025-12-14T16:31:15.031839450Z","satisfiesPzi":true},{"name":"projects/yral-staging/locations/us-central1/functions/register_for_tournament","buildConfig":{"build":"projects/240456866818/locations/us-central1/builds/2565655e-3e0d-4af0-815f-9418fd25b417","runtime":"python311","entryPoint":"register_for_tournament","source":{"storageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"register_for_tournament/function-source.zip","generation":"1768979057791744"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/yral-staging/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"register_for_tournament/function-source.zip","generation":"1768979057791744"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/yral-staging/serviceAccounts/240456866818-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/yral-staging/locations/us-central1/services/register-for-tournament","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"yral-staging\",\"storageBucket\":\"yral-staging.firebasestorage.app\"}","GCLOUD_PROJECT":"yral-staging","EVENTARC_CLOUD_EVENT_SOURCE":"projects/yral-staging/locations/us-central1/services/register_for_tournament","FUNCTION_TARGET":"register_for_tournament","LOG_EXECUTION_ID":"true"},"maxInstanceCount":100,"ingressSettings":"ALLOW_ALL","uri":"https://register-for-tournament-cnx4baqipa-uc.a.run.app","serviceAccountEmail":"240456866818-compute@developer.gserviceaccount.com","availableMemory":"256Mi","allTrafficOnLatestRevision":true,"secretEnvironmentVariables":[{"key":"BALANCE_UPDATE_TOKEN","projectId":"yral-staging","secret":"BALANCE_UPDATE_TOKEN","version":"7"}],"revision":"register-for-tournament-00025-nuh","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","updateTime":"2026-01-21T07:05:50.212773094Z","labels":{"firebase-functions-hash":"791ee4855d022b8021216bab32a76bb58f54357d","deployment-tool":"cli-firebase"},"environment":"GEN_2","url":"https://us-central1-yral-staging.cloudfunctions.net/register_for_tournament","createTime":"2025-12-14T16:31:15.374615101Z","satisfiesPzi":true},{"name":"projects/yral-staging/locations/us-central1/functions/cast_vote_v2","buildConfig":{"build":"projects/240456866818/locations/us-central1/builds/a1e2bfc2-21c9-4a05-a30b-aa6553daaa04","runtime":"python311","entryPoint":"cast_vote_v2","source":{"storageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"cast_vote_v2/function-source.zip","generation":"1768406442929303"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/yral-staging/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"cast_vote_v2/function-source.zip","generation":"1768406442929303"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/yral-staging/serviceAccounts/240456866818-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/yral-staging/locations/us-central1/services/cast-vote-v2","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"yral-staging\",\"storageBucket\":\"yral-staging.firebasestorage.app\"}","GCLOUD_PROJECT":"yral-staging","EVENTARC_CLOUD_EVENT_SOURCE":"projects/yral-staging/locations/us-central1/services/cast_vote_v2","FUNCTION_TARGET":"cast_vote_v2","LOG_EXECUTION_ID":"true","FUNCTION_SIGNATURE_TYPE":"http"},"maxInstanceCount":100,"ingressSettings":"ALLOW_ALL","uri":"https://cast-vote-v2-cnx4baqipa-uc.a.run.app","serviceAccountEmail":"240456866818-compute@developer.gserviceaccount.com","availableMemory":"256Mi","allTrafficOnLatestRevision":true,"secretEnvironmentVariables":[{"key":"BALANCE_UPDATE_TOKEN","projectId":"yral-staging","secret":"BALANCE_UPDATE_TOKEN","version":"7"}],"revision":"cast-vote-v2-00118-tig","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","updateTime":"2026-01-14T16:01:47.063778957Z","labels":{"firebase-functions-hash":"84853f5e014ca860e806e4c79d60eff5e8d700bd","deployment-tool":"cli-firebase"},"environment":"GEN_2","url":"https://us-central1-yral-staging.cloudfunctions.net/cast_vote_v2","createTime":"2025-08-06T12:08:20.378191679Z","satisfiesPzi":true},{"name":"projects/yral-staging/locations/us-central1/functions/daily_rank","buildConfig":{"build":"projects/240456866818/locations/us-central1/builds/fd1f09dd-034b-4491-b507-fcc1cb5d48e3","runtime":"python311","entryPoint":"daily_rank","source":{"storageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"daily_rank/function-source.zip","generation":"1768406442967224"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/yral-staging/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"daily_rank/function-source.zip","generation":"1768406442967224"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/yral-staging/serviceAccounts/240456866818-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/yral-staging/locations/us-central1/services/daily-rank","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"yral-staging\",\"storageBucket\":\"yral-staging.firebasestorage.app\"}","GCLOUD_PROJECT":"yral-staging","EVENTARC_CLOUD_EVENT_SOURCE":"projects/yral-staging/locations/us-central1/services/daily_rank","FUNCTION_TARGET":"daily_rank","LOG_EXECUTION_ID":"true","FUNCTION_SIGNATURE_TYPE":"http"},"maxInstanceCount":100,"ingressSettings":"ALLOW_ALL","uri":"https://daily-rank-cnx4baqipa-uc.a.run.app","serviceAccountEmail":"240456866818-compute@developer.gserviceaccount.com","availableMemory":"256Mi","allTrafficOnLatestRevision":true,"revision":"daily-rank-00045-xas","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","updateTime":"2026-01-14T16:02:17.068413740Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"0534b75c0520c11fe604a726a66b27086a548ba8"},"environment":"GEN_2","url":"https://us-central1-yral-staging.cloudfunctions.net/daily_rank","createTime":"2025-10-13T06:48:27.130550859Z","satisfiesPzi":true},{"name":"projects/yral-staging/locations/us-central1/functions/create_hot_or_not_tournament","buildConfig":{"build":"projects/240456866818/locations/us-central1/builds/cd50c656-e5d8-4be8-a766-81947176977b","runtime":"python311","entryPoint":"create_hot_or_not_tournament","source":{"storageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"create_hot_or_not_tournament/function-source.zip","generation":"1768808862457311"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/yral-staging/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"create_hot_or_not_tournament/function-source.zip","generation":"1768808862457311"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/yral-staging/serviceAccounts/240456866818-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/yral-staging/locations/us-central1/services/create-hot-or-not-tournament","timeoutSeconds":540,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"yral-staging\",\"storageBucket\":\"yral-staging.firebasestorage.app\"}","GCLOUD_PROJECT":"yral-staging","EVENTARC_CLOUD_EVENT_SOURCE":"projects/yral-staging/locations/us-central1/services/create_hot_or_not_tournament","FUNCTION_TARGET":"create_hot_or_not_tournament","LOG_EXECUTION_ID":"true"},"maxInstanceCount":100,"ingressSettings":"ALLOW_ALL","uri":"https://create-hot-or-not-tournament-cnx4baqipa-uc.a.run.app","serviceAccountEmail":"240456866818-compute@developer.gserviceaccount.com","availableMemory":"2Gi","allTrafficOnLatestRevision":true,"secretEnvironmentVariables":[{"key":"BALANCE_UPDATE_TOKEN","projectId":"yral-staging","secret":"BALANCE_UPDATE_TOKEN","version":"7"},{"key":"GEMINI_API_KEY","projectId":"yral-staging","secret":"GEMINI_API_KEY","version":"3"},{"key":"BACKEND_ADMIN_KEY","projectId":"yral-staging","secret":"BACKEND_ADMIN_KEY","version":"3"}],"revision":"create-hot-or-not-tournament-00011-paq","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","updateTime":"2026-01-19T07:48:47.000497029Z","labels":{"firebase-functions-hash":"4f982bd7b94fd0baaab441a628b7bd5aea37e83e","deployment-tool":"cli-firebase"},"environment":"GEN_2","url":"https://us-central1-yral-staging.cloudfunctions.net/create_hot_or_not_tournament","createTime":"2026-01-12T14:53:24.453758456Z","satisfiesPzi":true},{"name":"projects/yral-staging/locations/us-central1/functions/create_tournaments","buildConfig":{"build":"projects/240456866818/locations/us-central1/builds/5ec3b3b4-34a3-4114-bb20-216c7e5fecac","runtime":"python311","entryPoint":"create_tournaments","source":{"storageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"create_tournaments/function-source.zip","generation":"1768979057787898"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/yral-staging/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"create_tournaments/function-source.zip","generation":"1768979057787898"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/yral-staging/serviceAccounts/240456866818-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/yral-staging/locations/us-central1/services/create-tournaments","timeoutSeconds":1500,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"yral-staging\",\"storageBucket\":\"yral-staging.firebasestorage.app\"}","GCLOUD_PROJECT":"yral-staging","EVENTARC_CLOUD_EVENT_SOURCE":"projects/yral-staging/locations/us-central1/services/create_tournaments","FUNCTION_TARGET":"create_tournaments","LOG_EXECUTION_ID":"true","FUNCTION_SIGNATURE_TYPE":"http"},"maxInstanceCount":100,"ingressSettings":"ALLOW_ALL","uri":"https://create-tournaments-cnx4baqipa-uc.a.run.app","serviceAccountEmail":"240456866818-compute@developer.gserviceaccount.com","availableMemory":"2Gi","allTrafficOnLatestRevision":true,"secretEnvironmentVariables":[{"key":"BACKEND_ADMIN_KEY","projectId":"yral-staging","secret":"BACKEND_ADMIN_KEY","version":"3"},{"key":"GEMINI_API_KEY","projectId":"yral-staging","secret":"GEMINI_API_KEY","version":"3"}],"revision":"create-tournaments-00021-bec","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","updateTime":"2026-01-21T07:05:48.455915408Z","labels":{"firebase-functions-hash":"776ffb80eb0c77d8de47e8e3ffbdff5b28d15c98","deployment-tool":"cli-firebase"},"environment":"GEN_2","url":"https://us-central1-yral-staging.cloudfunctions.net/create_tournaments","createTime":"2025-11-28T05:56:54.286329318Z","satisfiesPzi":true},{"name":"projects/yral-staging/locations/us-central1/functions/update_tournament_status","buildConfig":{"build":"projects/240456866818/locations/us-central1/builds/44fac8d8-dcbf-4c9b-828e-5813a4c54c00","runtime":"python311","entryPoint":"update_tournament_status","source":{"storageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"update_tournament_status/function-source.zip","generation":"1768979057819585"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/yral-staging/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"update_tournament_status/function-source.zip","generation":"1768979057819585"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/yral-staging/serviceAccounts/240456866818-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/yral-staging/locations/us-central1/services/update-tournament-status","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"yral-staging\",\"storageBucket\":\"yral-staging.firebasestorage.app\"}","GCLOUD_PROJECT":"yral-staging","EVENTARC_CLOUD_EVENT_SOURCE":"projects/yral-staging/locations/us-central1/services/update_tournament_status","FUNCTION_TARGET":"update_tournament_status","LOG_EXECUTION_ID":"true","FUNCTION_SIGNATURE_TYPE":"http"},"maxInstanceCount":100,"ingressSettings":"ALLOW_ALL","uri":"https://update-tournament-status-cnx4baqipa-uc.a.run.app","serviceAccountEmail":"240456866818-compute@developer.gserviceaccount.com","availableMemory":"256Mi","allTrafficOnLatestRevision":true,"secretEnvironmentVariables":[{"key":"BALANCE_UPDATE_TOKEN","projectId":"yral-staging","secret":"BALANCE_UPDATE_TOKEN","version":"7"},{"key":"MIXPANEL_TOKEN","projectId":"yral-staging","secret":"MIXPANEL_TOKEN","version":"1"}],"revision":"update-tournament-status-00018-bir","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","updateTime":"2026-01-21T07:05:49.135935111Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"1757bfbe2ec95b704721e619ec8431e38b0eb191"},"environment":"GEN_2","url":"https://us-central1-yral-staging.cloudfunctions.net/update_tournament_status","createTime":"2025-11-28T06:27:52.942492210Z","satisfiesPzi":true},{"name":"projects/yral-staging/locations/us-central1/functions/tournament_video_emojis","buildConfig":{"build":"projects/240456866818/locations/us-central1/builds/2193feb9-b42d-460f-a6fa-62bacbfffc73","runtime":"python311","entryPoint":"tournament_video_emojis","source":{"storageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"tournament_video_emojis/function-source.zip","generation":"1768979226200943"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/yral-staging/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"tournament_video_emojis/function-source.zip","generation":"1768979226200943"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/yral-staging/serviceAccounts/240456866818-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/yral-staging/locations/us-central1/services/tournament-video-emojis","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"yral-staging\",\"storageBucket\":\"yral-staging.firebasestorage.app\"}","GCLOUD_PROJECT":"yral-staging","EVENTARC_CLOUD_EVENT_SOURCE":"projects/yral-staging/locations/us-central1/services/tournament_video_emojis","FUNCTION_TARGET":"tournament_video_emojis","LOG_EXECUTION_ID":"true"},"ingressSettings":"ALLOW_ALL","uri":"https://tournament-video-emojis-cnx4baqipa-uc.a.run.app","serviceAccountEmail":"240456866818-compute@developer.gserviceaccount.com","availableMemory":"256Mi","allTrafficOnLatestRevision":true,"revision":"tournament-video-emojis-00001-tiv","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","updateTime":"2026-01-21T07:08:38.481803612Z","labels":{"firebase-functions-hash":"984f5b751710812a2203b7d558c389768b84372e","deployment-tool":"cli-firebase"},"environment":"GEN_2","url":"https://us-central1-yral-staging.cloudfunctions.net/tournament_video_emojis","createTime":"2026-01-21T07:07:06.375965623Z","satisfiesPzi":true},{"name":"projects/yral-staging/locations/us-central1/functions/leaderboard_v3","buildConfig":{"build":"projects/240456866818/locations/us-central1/builds/c6e7bce1-1d10-45ee-85cc-cca7db811946","runtime":"python311","entryPoint":"leaderboard_v3","source":{"storageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"leaderboard_v3/function-source.zip","generation":"1768406442857126"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/yral-staging/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"leaderboard_v3/function-source.zip","generation":"1768406442857126"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/yral-staging/serviceAccounts/240456866818-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/yral-staging/locations/us-central1/services/leaderboard-v3","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"yral-staging\",\"storageBucket\":\"yral-staging.firebasestorage.app\"}","GCLOUD_PROJECT":"yral-staging","EVENTARC_CLOUD_EVENT_SOURCE":"projects/yral-staging/locations/us-central1/services/leaderboard_v3","FUNCTION_TARGET":"leaderboard_v3","LOG_EXECUTION_ID":"true","FUNCTION_SIGNATURE_TYPE":"http"},"maxInstanceCount":100,"ingressSettings":"ALLOW_ALL","uri":"https://leaderboard-v3-cnx4baqipa-uc.a.run.app","serviceAccountEmail":"240456866818-compute@developer.gserviceaccount.com","availableMemory":"256Mi","allTrafficOnLatestRevision":true,"revision":"leaderboard-v3-00079-tob","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","updateTime":"2026-01-14T16:02:00.828731754Z","labels":{"firebase-functions-hash":"0534b75c0520c11fe604a726a66b27086a548ba8","deployment-tool":"cli-firebase"},"environment":"GEN_2","url":"https://us-central1-yral-staging.cloudfunctions.net/leaderboard_v3","createTime":"2025-09-17T03:36:30.627575308Z","satisfiesPzi":true},{"name":"projects/yral-staging/locations/us-central1/functions/cast_hot_or_not_vote","buildConfig":{"build":"projects/240456866818/locations/us-central1/builds/af59117b-5d5e-4926-b8a3-495721969159","runtime":"python311","entryPoint":"cast_hot_or_not_vote","source":{"storageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"cast_hot_or_not_vote/function-source.zip","generation":"1768406442903614"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/yral-staging/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"cast_hot_or_not_vote/function-source.zip","generation":"1768406442903614"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/yral-staging/serviceAccounts/240456866818-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/yral-staging/locations/us-central1/services/cast-hot-or-not-vote","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"yral-staging\",\"storageBucket\":\"yral-staging.firebasestorage.app\"}","GCLOUD_PROJECT":"yral-staging","EVENTARC_CLOUD_EVENT_SOURCE":"projects/yral-staging/locations/us-central1/services/cast_hot_or_not_vote","FUNCTION_TARGET":"cast_hot_or_not_vote","LOG_EXECUTION_ID":"true"},"maxInstanceCount":100,"ingressSettings":"ALLOW_ALL","uri":"https://cast-hot-or-not-vote-cnx4baqipa-uc.a.run.app","serviceAccountEmail":"240456866818-compute@developer.gserviceaccount.com","availableMemory":"256Mi","allTrafficOnLatestRevision":true,"secretEnvironmentVariables":[{"key":"BALANCE_UPDATE_TOKEN","projectId":"yral-staging","secret":"BALANCE_UPDATE_TOKEN","version":"7"}],"revision":"cast-hot-or-not-vote-00008-xod","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","updateTime":"2026-01-14T16:02:06.654380155Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"84853f5e014ca860e806e4c79d60eff5e8d700bd"},"environment":"GEN_2","url":"https://us-central1-yral-staging.cloudfunctions.net/cast_hot_or_not_vote","createTime":"2026-01-12T13:24:43.709228143Z","satisfiesPzi":true},{"name":"projects/yral-staging/locations/us-central1/functions/exchange_principal_id","buildConfig":{"build":"projects/240456866818/locations/us-central1/builds/02f2ee83-27ac-4f88-9ef1-38fdec1d9648","runtime":"python311","entryPoint":"exchange_principal_id","source":{"storageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"exchange_principal_id/function-source.zip","generation":"1768406442668706"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/yral-staging/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"exchange_principal_id/function-source.zip","generation":"1768406442668706"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/yral-staging/serviceAccounts/240456866818-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/yral-staging/locations/us-central1/services/exchange-principal-id","timeoutSeconds":60,"environmentVariables":{"BALANCE_TOKEN":"Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJFZERTQSJ9.eyJhdWQiOiJob3Qtb3Itbm90LXdvcmtlciIsImV4cCI6MTc2NDY5ODIzOH0.mpNNrUg_JbS9tCIZ-RWmCGLhsiD1I9-1ppQ7HOVL-7L3hUhcf8LTahdC-oSl7Ls2HMVRfD1E1AGjekXms7ioAQ","FIREBASE_CONFIG":"{\"projectId\":\"yral-staging\",\"storageBucket\":\"yral-staging.firebasestorage.app\"}","GCLOUD_PROJECT":"yral-staging","EVENTARC_CLOUD_EVENT_SOURCE":"projects/yral-staging/locations/us-central1/services/exchange_principal_id","FUNCTION_TARGET":"exchange_principal_id","LOG_EXECUTION_ID":"true","FUNCTION_SIGNATURE_TYPE":"http"},"maxInstanceCount":100,"ingressSettings":"ALLOW_ALL","uri":"https://exchange-principal-id-cnx4baqipa-uc.a.run.app","serviceAccountEmail":"240456866818-compute@developer.gserviceaccount.com","availableMemory":"256Mi","allTrafficOnLatestRevision":true,"revision":"exchange-principal-id-00173-yuy","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","updateTime":"2026-01-14T16:02:06.715853606Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"0534b75c0520c11fe604a726a66b27086a548ba8"},"environment":"GEN_2","url":"https://us-central1-yral-staging.cloudfunctions.net/exchange_principal_id","createTime":"2025-04-30T06:57:46.254909370Z","satisfiesPzi":true},{"name":"projects/yral-staging/locations/us-central1/functions/my_tournaments","buildConfig":{"build":"projects/240456866818/locations/us-central1/builds/4f7504d3-6b52-4b54-9601-bf99372078f7","runtime":"python311","entryPoint":"my_tournaments","source":{"storageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"my_tournaments/function-source.zip","generation":"1768979057934228"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/yral-staging/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"my_tournaments/function-source.zip","generation":"1768979057934228"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/yral-staging/serviceAccounts/240456866818-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/yral-staging/locations/us-central1/services/my-tournaments","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"yral-staging\",\"storageBucket\":\"yral-staging.firebasestorage.app\"}","GCLOUD_PROJECT":"yral-staging","EVENTARC_CLOUD_EVENT_SOURCE":"projects/yral-staging/locations/us-central1/services/my_tournaments","FUNCTION_TARGET":"my_tournaments","LOG_EXECUTION_ID":"true"},"maxInstanceCount":100,"ingressSettings":"ALLOW_ALL","uri":"https://my-tournaments-cnx4baqipa-uc.a.run.app","serviceAccountEmail":"240456866818-compute@developer.gserviceaccount.com","availableMemory":"256Mi","allTrafficOnLatestRevision":true,"revision":"my-tournaments-00019-bac","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","updateTime":"2026-01-21T07:05:49.240350209Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"e0631785502981b11606c6b6f20d25e53e8ced32"},"environment":"GEN_2","url":"https://us-central1-yral-staging.cloudfunctions.net/my_tournaments","createTime":"2025-12-14T16:31:15.414370005Z","satisfiesPzi":true},{"name":"projects/yral-staging/locations/us-central1/functions/btc_value_by_country","buildConfig":{"build":"projects/240456866818/locations/us-central1/builds/19e9e6d5-b209-4730-8e6f-b16e7839b122","runtime":"python311","entryPoint":"btc_value_by_country","source":{"storageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"btc_value_by_country/function-source.zip","generation":"1768406443012723"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/yral-staging/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"btc_value_by_country/function-source.zip","generation":"1768406443012723"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/yral-staging/serviceAccounts/240456866818-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/yral-staging/locations/us-central1/services/btc-value-by-country","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"yral-staging\",\"storageBucket\":\"yral-staging.firebasestorage.app\"}","GCLOUD_PROJECT":"yral-staging","EVENTARC_CLOUD_EVENT_SOURCE":"projects/yral-staging/locations/us-central1/services/btc_value_by_country","FUNCTION_TARGET":"btc_value_by_country","LOG_EXECUTION_ID":"true","FUNCTION_SIGNATURE_TYPE":"http"},"maxInstanceCount":100,"ingressSettings":"ALLOW_ALL","uri":"https://btc-value-by-country-cnx4baqipa-uc.a.run.app","serviceAccountEmail":"240456866818-compute@developer.gserviceaccount.com","availableMemory":"256Mi","allTrafficOnLatestRevision":true,"revision":"btc-value-by-country-00078-xof","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","updateTime":"2026-01-14T16:02:05.442261558Z","labels":{"firebase-functions-hash":"0534b75c0520c11fe604a726a66b27086a548ba8","deployment-tool":"cli-firebase"},"environment":"GEN_2","url":"https://us-central1-yral-staging.cloudfunctions.net/btc_value_by_country","createTime":"2025-09-17T12:17:45.193837971Z","satisfiesPzi":true},{"name":"projects/yral-staging/locations/us-central1/functions/leaderboard_history_v2","buildConfig":{"build":"projects/240456866818/locations/us-central1/builds/5b6596ae-5762-4fa5-b150-a435da0b03f2","runtime":"python311","entryPoint":"leaderboard_history_v2","source":{"storageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"leaderboard_history_v2/function-source.zip","generation":"1768406442879021"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/yral-staging/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"leaderboard_history_v2/function-source.zip","generation":"1768406442879021"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/yral-staging/serviceAccounts/240456866818-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/yral-staging/locations/us-central1/services/leaderboard-history-v2","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"yral-staging\",\"storageBucket\":\"yral-staging.firebasestorage.app\"}","GCLOUD_PROJECT":"yral-staging","EVENTARC_CLOUD_EVENT_SOURCE":"projects/yral-staging/locations/us-central1/services/leaderboard_history_v2","FUNCTION_TARGET":"leaderboard_history_v2","LOG_EXECUTION_ID":"true","FUNCTION_SIGNATURE_TYPE":"http"},"maxInstanceCount":100,"ingressSettings":"ALLOW_ALL","uri":"https://leaderboard-history-v2-cnx4baqipa-uc.a.run.app","serviceAccountEmail":"240456866818-compute@developer.gserviceaccount.com","availableMemory":"256Mi","allTrafficOnLatestRevision":true,"revision":"leaderboard-history-v2-00077-key","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","updateTime":"2026-01-14T16:01:45.613855858Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"0534b75c0520c11fe604a726a66b27086a548ba8"},"environment":"GEN_2","url":"https://us-central1-yral-staging.cloudfunctions.net/leaderboard_history_v2","createTime":"2025-09-17T13:31:45.252924432Z","satisfiesPzi":true},{"name":"projects/yral-staging/locations/us-central1/functions/tournament_leaderboard","buildConfig":{"build":"projects/240456866818/locations/us-central1/builds/b8b50f15-9003-41ea-9194-3d7cd0f77a67","runtime":"python311","entryPoint":"tournament_leaderboard","source":{"storageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"tournament_leaderboard/function-source.zip","generation":"1768979057800592"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/yral-staging/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"tournament_leaderboard/function-source.zip","generation":"1768979057800592"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/yral-staging/serviceAccounts/240456866818-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/yral-staging/locations/us-central1/services/tournament-leaderboard","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"yral-staging\",\"storageBucket\":\"yral-staging.firebasestorage.app\"}","GCLOUD_PROJECT":"yral-staging","EVENTARC_CLOUD_EVENT_SOURCE":"projects/yral-staging/locations/us-central1/services/tournament_leaderboard","FUNCTION_TARGET":"tournament_leaderboard","LOG_EXECUTION_ID":"true"},"maxInstanceCount":100,"ingressSettings":"ALLOW_ALL","uri":"https://tournament-leaderboard-cnx4baqipa-uc.a.run.app","serviceAccountEmail":"240456866818-compute@developer.gserviceaccount.com","availableMemory":"256Mi","allTrafficOnLatestRevision":true,"revision":"tournament-leaderboard-00020-dur","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","updateTime":"2026-01-21T07:05:49.210860842Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"e0631785502981b11606c6b6f20d25e53e8ced32"},"environment":"GEN_2","url":"https://us-central1-yral-staging.cloudfunctions.net/tournament_leaderboard","createTime":"2025-12-14T16:31:15.422578277Z","satisfiesPzi":true},{"name":"projects/yral-staging/locations/us-central1/functions/tournament_status","buildConfig":{"build":"projects/240456866818/locations/us-central1/builds/7b90c565-04f3-4273-82eb-e212510fee6b","runtime":"python311","entryPoint":"tournament_status","source":{"storageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"tournament_status/function-source.zip","generation":"1768979057815127"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/yral-staging/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"tournament_status/function-source.zip","generation":"1768979057815127"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/yral-staging/serviceAccounts/240456866818-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/yral-staging/locations/us-central1/services/tournament-status","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"yral-staging\",\"storageBucket\":\"yral-staging.firebasestorage.app\"}","GCLOUD_PROJECT":"yral-staging","EVENTARC_CLOUD_EVENT_SOURCE":"projects/yral-staging/locations/us-central1/services/tournament_status","FUNCTION_TARGET":"tournament_status","LOG_EXECUTION_ID":"true"},"maxInstanceCount":100,"ingressSettings":"ALLOW_ALL","uri":"https://tournament-status-cnx4baqipa-uc.a.run.app","serviceAccountEmail":"240456866818-compute@developer.gserviceaccount.com","availableMemory":"256Mi","allTrafficOnLatestRevision":true,"revision":"tournament-status-00017-ceq","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","updateTime":"2026-01-21T07:05:50.128598713Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"e0631785502981b11606c6b6f20d25e53e8ced32"},"environment":"GEN_2","url":"https://us-central1-yral-staging.cloudfunctions.net/tournament_status","createTime":"2025-12-14T16:31:15.016098120Z","satisfiesPzi":true},{"name":"projects/yral-staging/locations/us-central1/functions/reward_leaderboard_winners","buildConfig":{"build":"projects/240456866818/locations/us-central1/builds/4bdf8de6-c12e-4137-8a34-2982754ca378","runtime":"python311","entryPoint":"reward_leaderboard_winners","source":{"storageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"reward_leaderboard_winners/function-source.zip","generation":"1768406442917582"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/yral-staging/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"reward_leaderboard_winners/function-source.zip","generation":"1768406442917582"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/yral-staging/serviceAccounts/240456866818-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/yral-staging/locations/us-central1/services/reward-leaderboard-winners","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"yral-staging\",\"storageBucket\":\"yral-staging.firebasestorage.app\"}","GCLOUD_PROJECT":"yral-staging","EVENTARC_CLOUD_EVENT_SOURCE":"projects/yral-staging/locations/us-central1/services/reward_leaderboard_winners","FUNCTION_TARGET":"reward_leaderboard_winners","LOG_EXECUTION_ID":"true","FUNCTION_SIGNATURE_TYPE":"http"},"maxInstanceCount":100,"ingressSettings":"ALLOW_ALL","uri":"https://reward-leaderboard-winners-cnx4baqipa-uc.a.run.app","serviceAccountEmail":"240456866818-compute@developer.gserviceaccount.com","availableMemory":"256Mi","allTrafficOnLatestRevision":true,"secretEnvironmentVariables":[{"key":"BALANCE_UPDATE_TOKEN","projectId":"yral-staging","secret":"BALANCE_UPDATE_TOKEN","version":"7"}],"revision":"reward-leaderboard-winners-00082-vez","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","updateTime":"2026-01-14T16:02:02.165204580Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"84853f5e014ca860e806e4c79d60eff5e8d700bd"},"environment":"GEN_2","url":"https://us-central1-yral-staging.cloudfunctions.net/reward_leaderboard_winners","createTime":"2025-09-22T10:55:51.213463690Z","satisfiesPzi":true},{"name":"projects/yral-staging/locations/us-central1/functions/hot_or_not_tournament_vote","buildConfig":{"build":"projects/240456866818/locations/us-central1/builds/218aa557-4ddc-47c5-88ba-917a74597cd2","runtime":"python311","entryPoint":"hot_or_not_tournament_vote","source":{"storageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"hot_or_not_tournament_vote/function-source.zip","generation":"1768406443573149"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/yral-staging/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-240456866818-us-central1","object":"hot_or_not_tournament_vote/function-source.zip","generation":"1768406443573149"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/yral-staging/serviceAccounts/240456866818-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/yral-staging/locations/us-central1/services/hot-or-not-tournament-vote","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"yral-staging\",\"storageBucket\":\"yral-staging.firebasestorage.app\"}","GCLOUD_PROJECT":"yral-staging","EVENTARC_CLOUD_EVENT_SOURCE":"projects/yral-staging/locations/us-central1/services/hot_or_not_tournament_vote","FUNCTION_TARGET":"hot_or_not_tournament_vote","LOG_EXECUTION_ID":"true"},"maxInstanceCount":100,"ingressSettings":"ALLOW_ALL","uri":"https://hot-or-not-tournament-vote-cnx4baqipa-uc.a.run.app","serviceAccountEmail":"240456866818-compute@developer.gserviceaccount.com","availableMemory":"256Mi","allTrafficOnLatestRevision":true,"secretEnvironmentVariables":[{"key":"BALANCE_UPDATE_TOKEN","projectId":"yral-staging","secret":"BALANCE_UPDATE_TOKEN","version":"7"}],"revision":"hot-or-not-tournament-vote-00003-bid","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"state":"ACTIVE","updateTime":"2026-01-14T16:01:37.988249944Z","labels":{"firebase-functions-hash":"84853f5e014ca860e806e4c79d60eff5e8d700bd","deployment-tool":"cli-firebase"},"environment":"GEN_2","url":"https://us-central1-yral-staging.cloudfunctions.net/hot_or_not_tournament_vote","createTime":"2026-01-12T14:53:24.082691654Z","satisfiesPzi":true}]}
+[info] i  functions: ensuring required API run.googleapis.com is enabled... 
+[info] i  functions: ensuring required API eventarc.googleapis.com is enabled... 
+[info] i  functions: ensuring required API pubsub.googleapis.com is enabled... 
+[info] i  functions: ensuring required API storage.googleapis.com is enabled... 
+[info] i  functions: generating the service identity for pubsub.googleapis.com... 
+[debug] [2026-01-22T06:27:25.870Z] Checked if tokens are valid: true, expires at: 1769066834468
+[debug] [2026-01-22T06:27:25.870Z] Checked if tokens are valid: true, expires at: 1769066834468
+[info] i  functions: generating the service identity for eventarc.googleapis.com... 
+[debug] [2026-01-22T06:27:25.870Z] Checked if tokens are valid: true, expires at: 1769066834468
+[debug] [2026-01-22T06:27:25.870Z] Checked if tokens are valid: true, expires at: 1769066834468
+[debug] [2026-01-22T06:27:25.870Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1beta1/projects/240456866818/services/pubsub.googleapis.com:generateServiceIdentity [none]
+[debug] [2026-01-22T06:27:25.870Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1beta1/projects/240456866818/services/pubsub.googleapis.com:generateServiceIdentity x-goog-quota-user=projects/240456866818
+[debug] [2026-01-22T06:27:25.870Z] >>> [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/240456866818/services/pubsub.googleapis.com:generateServiceIdentity {}
+[debug] [2026-01-22T06:27:25.871Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1beta1/projects/240456866818/services/eventarc.googleapis.com:generateServiceIdentity [none]
+[debug] [2026-01-22T06:27:25.871Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1beta1/projects/240456866818/services/eventarc.googleapis.com:generateServiceIdentity x-goog-quota-user=projects/240456866818
+[debug] [2026-01-22T06:27:25.871Z] >>> [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/240456866818/services/eventarc.googleapis.com:generateServiceIdentity {}
+[debug] [2026-01-22T06:27:27.869Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1beta1/projects/240456866818/services/eventarc.googleapis.com:generateServiceIdentity 200
+[debug] [2026-01-22T06:27:27.869Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/240456866818/services/eventarc.googleapis.com:generateServiceIdentity {"name":"operations/finished.DONE_OPERATION","done":true,"response":{"@type":"type.googleapis.com/google.api.serviceusage.v1beta1.ServiceIdentity","email":"service-240456866818@gcp-sa-eventarc.iam.gserviceaccount.com","uniqueId":"104812652171048361838"}}
+[debug] [2026-01-22T06:27:27.869Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1beta1/projects/240456866818/services/pubsub.googleapis.com:generateServiceIdentity 200
+[debug] [2026-01-22T06:27:27.869Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/240456866818/services/pubsub.googleapis.com:generateServiceIdentity {"name":"operations/finished.DONE_OPERATION","done":true,"response":{"@type":"type.googleapis.com/google.api.serviceusage.v1beta1.ServiceIdentity","email":"service-240456866818@gcp-sa-pubsub.iam.gserviceaccount.com","uniqueId":"102795563277884798165"}}
+[info] i  functions: ensuring required API secretmanager.googleapis.com is enabled... 
+[debug] [2026-01-22T06:27:27.870Z] Checked if tokens are valid: true, expires at: 1769066834468
+[debug] [2026-01-22T06:27:27.870Z] Checked if tokens are valid: true, expires at: 1769066834468
+[debug] [2026-01-22T06:27:27.870Z] Checked if tokens are valid: true, expires at: 1769066834468
+[debug] [2026-01-22T06:27:27.870Z] Checked if tokens are valid: true, expires at: 1769066834468
+[debug] [2026-01-22T06:27:27.870Z] >>> [apiv2][query] GET https://secretmanager.googleapis.com/v1/projects/yral-staging/secrets/BACKEND_ADMIN_KEY/versions/latest [none]
+[debug] [2026-01-22T06:27:27.871Z] >>> [apiv2][query] GET https://secretmanager.googleapis.com/v1/projects/yral-staging/secrets/GEMINI_API_KEY/versions/latest [none]

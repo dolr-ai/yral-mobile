@@ -9,4 +9,5 @@ data class HotOrNotVoteResult(
     val wins: Int = 0,
     val losses: Int = 0,
     val position: Int = 0,
+    val activeParticipantCount: Int = 0,
 )

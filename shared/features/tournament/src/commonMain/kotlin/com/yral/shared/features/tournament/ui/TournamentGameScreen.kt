@@ -24,6 +24,7 @@ import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,19 +39,20 @@ import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yral.shared.data.domain.models.FeedDetails
+import com.yral.shared.features.game.domain.models.GameIcon
 import com.yral.shared.features.game.domain.models.GameIconNames
 import com.yral.shared.features.game.ui.SmileyGame
 import com.yral.shared.features.tournament.viewmodel.TournamentGameState
 import com.yral.shared.features.tournament.viewmodel.TournamentGameViewModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.tournament.generated.resources.exit
@@ -99,6 +101,7 @@ fun TournamentTopOverlay(
         )
         TournamentLeaderboardBadge(
             position = gameState.position,
+            activeParticipantCount = gameState.activeParticipantCount,
             onClick = onLeaderboardClick,
             modifier =
                 Modifier
@@ -195,10 +198,20 @@ private fun TournamentDiamondPill(diamonds: Int) {
 @Composable
 private fun TournamentLeaderboardBadge(
     position: Int,
+    activeParticipantCount: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val rankText = if (position > 0) "#$position" else "--"
+    val rankText =
+        if (position > 0) {
+            if (activeParticipantCount > 0) {
+                "#$position / $activeParticipantCount"
+            } else {
+                "#$position"
+            }
+        } else {
+            "--"
+        }
     Box(
         modifier = modifier.clickable { onClick() },
         contentAlignment = Alignment.BottomCenter,
@@ -240,25 +253,44 @@ fun TournamentBottomOverlay(
 ) {
     gameViewModel.hasVotedOnVideo(feedDetails.videoID)
     val voteResult = gameViewModel.getVoteResult(feedDetails.videoID)
+    // Use produceState to observe only THIS video's emojis, avoiding recomposition
+    // when other videos' emojis change. Start with empty list to hide static emojis
+    // until dynamic ones are loaded.
+    val videoIcons by produceState(
+        initialValue = emptyList(),
+        key1 = feedDetails.videoID,
+    ) {
+        gameViewModel.videoEmojisState
+            .map { it[feedDetails.videoID] ?: emptyList() }
+            .distinctUntilChanged()
+            .collect { value = it }
+    }
+    // Construct selectedIcon from vote result data directly instead of looking up by ID
+    // This ensures we have the correct icon even if videoIcons was updated after voting
     val selectedIcon =
-        voteResult?.smiley?.id?.let { voteId ->
-            gameState.gameIcons.firstOrNull { it.id == voteId }
+        voteResult?.smiley?.let { smiley ->
+            GameIcon(
+                id = smiley.id,
+                imageName = GameIconNames.UNKNOWN,
+                imageUrl = smiley.imageUrl ?: "",
+                clickAnimation = smiley.clickAnimation ?: "",
+                unicode = smiley.unicode ?: "",
+            )
         }
     val diamondDelta = voteResult?.diamondDelta ?: 0
     val overlayBottomPadding = 120.dp
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Only show smiley game for smiley tournaments, not Hot or Not
-        if (gameState.gameIcons.isNotEmpty() && !isHotOrNot) {
+        if (videoIcons.isNotEmpty() && !isHotOrNot) {
             SmileyGame(
-                gameIcons = gameState.gameIcons,
+                gameIcons = videoIcons,
                 clickedIcon = selectedIcon,
                 isLoading = gameState.isLoading,
                 coinDelta = diamondDelta,
                 errorMessage = "",
-                resultContent = { icon, coinDelta, errorMessage ->
+                resultContent = { _, coinDelta, errorMessage ->
                     TournamentGameResultContent(
-                        iconName = icon.imageName,
                         coinDelta = coinDelta,
                         errorMessage = errorMessage,
                     )
@@ -301,7 +333,6 @@ fun TournamentBottomOverlay(
 @Suppress("LongMethod")
 @Composable
 private fun TournamentGameResultContent(
-    iconName: GameIconNames,
     coinDelta: Int,
     errorMessage: String,
 ) {
@@ -345,10 +376,7 @@ private fun TournamentGameResultContent(
             if (coinDelta > 0) {
                 withStyle(baseStyle) {
                     append(
-                        stringResource(
-                            TournamentRes.string.tournament_most_people_chose,
-                            iconName.name.lowercase().capitalize(Locale.current),
-                        ),
+                        stringResource(TournamentRes.string.tournament_most_people_chose),
                     )
                     append(" ")
                 }

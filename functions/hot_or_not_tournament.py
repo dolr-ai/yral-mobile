@@ -358,54 +358,219 @@ Respond with ONLY a JSON object:
             except Exception:
                 pass
 
-def _analyze_videos_batch(videos: List[Dict], api_key: str, max_workers: int = 5) -> List[Dict]:
-    """Analyze multiple videos in parallel using ThreadPoolExecutor.
+def _compare_video_pair(video1: Dict, video2: Dict, api_key: str) -> Tuple[Dict, Dict]:
+    """
+    Compare two videos head-to-head with Gemini to determine which is more 'mast'.
+    Returns tuple of (winner_result, loser_result) with verdicts assigned.
+    Winner gets 'hot' (mast), loser gets 'not' (bakwaas).
+    """
+    temp_path1 = None
+    temp_path2 = None
+    video_file1 = None
+    video_file2 = None
+    client = None
 
-    Note: max_workers reduced to 5 to avoid overwhelming Gemini API rate limits
-    when downloading/uploading videos.
+    video_id1 = video1.get("video_id") or video1.get("videoID")
+    video_id2 = video2.get("video_id") or video2.get("videoID")
+    video_url1 = _form_video_url(video_id1)
+    video_url2 = _form_video_url(video_id2)
+
+    def make_result(vid_id: str, vid_url: str, verdict: str, confidence: float, reason: str, error: Optional[str] = None) -> Dict:
+        return {
+            "video_id": vid_id,
+            "video_url": vid_url,
+            "ai_verdict": verdict,
+            "ai_confidence": confidence,
+            "ai_reason": reason,
+            "analysis_error": error,
+        }
+
+    try:
+        client = genai.Client(api_key=api_key)
+
+        # Download both videos
+        downloaded = []
+        for vid_url in [video_url1, video_url2]:
+            resp = requests.get(vid_url, timeout=60, stream=True)
+            if resp.status_code != 200:
+                raise Exception(f"Failed to download video: HTTP {resp.status_code}")
+
+            with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as f:
+                for chunk in resp.iter_content(chunk_size=8192):
+                    f.write(chunk)
+                downloaded.append(f.name)
+
+        temp_path1, temp_path2 = downloaded
+
+        # Upload both to Gemini
+        video_file1 = client.files.upload(file=temp_path1)
+        video_file2 = client.files.upload(file=temp_path2)
+
+        # Wait for processing
+        for vf_ref in [(video_file1, "video_file1"), (video_file2, "video_file2")]:
+            vf = vf_ref[0]
+            max_wait = 30
+            waited = 0
+            while vf.state.name == "PROCESSING" and waited < max_wait:
+                time.sleep(2)
+                waited += 2
+                vf = client.files.get(name=vf.name)
+            if vf.state.name == "FAILED":
+                raise Exception("Gemini processing failed for video")
+
+        # Refresh file references after waiting
+        video_file1 = client.files.get(name=video_file1.name)
+        video_file2 = client.files.get(name=video_file2.name)
+
+        # Compare the two videos
+        prompt = """You are judging a video competition for users in tier 2 and tier 3 cities of India.
+
+Compare these two videos and decide which one is more "mast" (entertaining/hit) vs "bakwaas" (boring/flop).
+
+VIDEO A is the first video.
+VIDEO B is the second video.
+
+Consider: entertainment value, creativity, production quality, engagement potential, and appeal to Indian audiences.
+
+You MUST pick a winner. Respond with ONLY a JSON object:
+{"winner": "A" or "B", "confidence": 0.5 to 1.0, "reason": "brief explanation of why the winner is better"}"""
+
+        response = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=[video_file1, video_file2, prompt]
+        )
+        response_text = response.text.strip()
+
+        # Parse JSON
+        if "```json" in response_text:
+            response_text = response_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in response_text:
+            response_text = response_text.split("```")[1].split("```")[0].strip()
+
+        result = json.loads(response_text)
+        winner = result.get("winner", "A").upper()
+        confidence = float(result.get("confidence", 0.7))
+        reason = result.get("reason", "")
+
+        # Assign verdicts: winner = hot (mast), loser = not (bakwaas)
+        if winner == "A":
+            return (
+                make_result(video_id1, video_url1, "hot", confidence, f"Winner: {reason}"),
+                make_result(video_id2, video_url2, "not", confidence, f"Lost to {video_id1[:8]}"),
+            )
+        else:
+            return (
+                make_result(video_id2, video_url2, "hot", confidence, f"Winner: {reason}"),
+                make_result(video_id1, video_url1, "not", confidence, f"Lost to {video_id2[:8]}"),
+            )
+
+    except Exception as e:
+        print(f"[gemini] Pair comparison failed: {e}", file=sys.stderr)
+        # On error, randomly assign verdicts to maintain 50/50
+        if random.choice([True, False]):
+            return (
+                make_result(video_id1, video_url1, "hot", 0.5, "", str(e)),
+                make_result(video_id2, video_url2, "not", 0.5, "", str(e)),
+            )
+        else:
+            return (
+                make_result(video_id2, video_url2, "hot", 0.5, "", str(e)),
+                make_result(video_id1, video_url1, "not", 0.5, "", str(e)),
+            )
+
+    finally:
+        # Cleanup temp files
+        for path in [temp_path1, temp_path2]:
+            if path and os.path.exists(path):
+                try:
+                    os.unlink(path)
+                except Exception:
+                    pass
+        # Cleanup Gemini files
+        for vf in [video_file1, video_file2]:
+            if vf and client:
+                try:
+                    client.files.delete(name=vf.name)
+                except Exception:
+                    pass
+
+
+def _analyze_videos_batch(videos: List[Dict], api_key: str, max_workers: int = 3) -> List[Dict]:
+    """
+    Analyze videos using pairwise comparison to ensure ~50/50 hot/not distribution.
+
+    Videos are paired up and compared head-to-head. Winner = hot, Loser = not.
+    This guarantees a balanced distribution instead of skewed results.
+
+    Note: max_workers=3 to be conservative on memory (2 videos per worker = 6 videos in memory).
     """
     results = []
 
-    def analyze_single(video: Dict, index: int) -> Dict:
-        video_id = video.get("video_id") or video.get("videoID")
-        if not video_id:
-            return {"video_id": None, "error": "No video_id"}
+    # Shuffle videos for random pairing
+    video_list = list(videos)
+    random.shuffle(video_list)
 
-        video_url = _form_video_url(video_id)
-        print(f"[gemini] Analyzing video {index + 1}: {video_id[:16]}...")
-        analysis = _analyze_video_with_gemini(video_url, api_key)
+    # Create pairs
+    pairs = []
+    for i in range(0, len(video_list) - 1, 2):
+        pairs.append((video_list[i], video_list[i + 1]))
 
-        verdict = analysis["verdict"]
-        print(f"[gemini] Video {index + 1} -> {verdict.upper()} (conf: {analysis['confidence']})")
+    # Handle odd video (if any) - will be assigned randomly at the end
+    odd_video = None
+    if len(video_list) % 2 == 1:
+        odd_video = video_list[-1]
 
-        return {
-            "video_id": video_id,
-            "video_url": video_url,
-            "ai_verdict": verdict,
-            "ai_confidence": analysis["confidence"],
-            "ai_reason": analysis.get("reason", ""),
-            "analysis_error": analysis.get("error"),
-        }
+    print(f"[gemini] Comparing {len(pairs)} pairs of videos...")
+
+    def compare_pair(pair: Tuple[Dict, Dict], index: int) -> Tuple[Dict, Dict]:
+        video1, video2 = pair
+        vid1 = (video1.get("video_id") or video1.get("videoID", ""))[:16]
+        vid2 = (video2.get("video_id") or video2.get("videoID", ""))[:16]
+        print(f"[gemini] Pair {index + 1}: {vid1}... vs {vid2}...")
+
+        winner, loser = _compare_video_pair(video1, video2, api_key)
+        print(f"[gemini] Pair {index + 1}: {winner['video_id'][:16]}... wins (mast)")
+        return winner, loser
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {executor.submit(analyze_single, v, i): v for i, v in enumerate(videos)}
+        futures = {executor.submit(compare_pair, pair, i): pair for i, pair in enumerate(pairs)}
 
         for future in as_completed(futures):
             try:
-                result = future.result()
-                results.append(result)
+                winner, loser = future.result()
+                results.append(winner)
+                results.append(loser)
             except Exception as e:
-                video = futures[future]
-                video_id = video.get("video_id") or video.get("videoID")
-                results.append({
-                    "video_id": video_id,
-                    "ai_verdict": random.choice(["hot", "not"]),
-                    "ai_confidence": 0.5,
-                    "ai_reason": "",
-                    "analysis_error": str(e),
-                })
+                pair = futures[future]
+                video1, video2 = pair
+                vid1 = video1.get("video_id") or video1.get("videoID")
+                vid2 = video2.get("video_id") or video2.get("videoID")
+                # On failure, randomly assign to maintain balance
+                if random.choice([True, False]):
+                    results.append({"video_id": vid1, "video_url": _form_video_url(vid1), "ai_verdict": "hot", "ai_confidence": 0.5, "ai_reason": "", "analysis_error": str(e)})
+                    results.append({"video_id": vid2, "video_url": _form_video_url(vid2), "ai_verdict": "not", "ai_confidence": 0.5, "ai_reason": "", "analysis_error": str(e)})
+                else:
+                    results.append({"video_id": vid2, "video_url": _form_video_url(vid2), "ai_verdict": "hot", "ai_confidence": 0.5, "ai_reason": "", "analysis_error": str(e)})
+                    results.append({"video_id": vid1, "video_url": _form_video_url(vid1), "ai_verdict": "not", "ai_confidence": 0.5, "ai_reason": "", "analysis_error": str(e)})
 
-    print(f"[gemini] Completed analysis of {len(results)} videos")
+    # Handle odd video with random verdict
+    if odd_video:
+        vid = odd_video.get("video_id") or odd_video.get("videoID")
+        verdict = random.choice(["hot", "not"])
+        print(f"[gemini] Odd video {vid[:16]}... assigned {verdict} randomly")
+        results.append({
+            "video_id": vid,
+            "video_url": _form_video_url(vid),
+            "ai_verdict": verdict,
+            "ai_confidence": 0.5,
+            "ai_reason": "Odd video - randomly assigned",
+            "analysis_error": None,
+        })
+
+    hot_count = sum(1 for r in results if r.get("ai_verdict") == "hot")
+    not_count = sum(1 for r in results if r.get("ai_verdict") == "not")
+    print(f"[gemini] Completed: {len(results)} videos ({hot_count} hot, {not_count} not)")
+
     return results
 
 # ─────────────────────  TOURNAMENT CREATION  ────────────────────────
@@ -480,9 +645,9 @@ def create_hot_or_not_tournament(request: Request):
             _track_tournament_creation_failed("BACKEND_ERROR", "No videos returned from backend", "fetch_videos", {"tournament_id": tournament_id})
             return error_response(502, "BACKEND_ERROR", "No videos returned from backend")
 
-        # 3. Analyze videos with Gemini (parallel)
-        print(f"[gemini] Starting analysis of {len(videos)} videos...")
-        analyzed_videos = _analyze_videos_batch(videos, gemini_api_key, max_workers=5)
+        # 3. Analyze videos with Gemini (pairwise comparison for 50/50 balance)
+        print(f"[gemini] Starting pairwise analysis of {len(videos)} videos...")
+        analyzed_videos = _analyze_videos_batch(videos, gemini_api_key)
         print(f"[gemini] Completed analysis of {len(analyzed_videos)} videos")
 
         # 4. Calculate epoch times
@@ -511,6 +676,7 @@ def create_hot_or_not_tournament(request: Request):
             "title": title,
             "type": "hot_or_not",
             "video_count": len(analyzed_videos),
+            "active_participant_count": 0,
             "created_at": firestore.SERVER_TIMESTAMP,
             "updated_at": firestore.SERVER_TIMESTAMP,
         })
@@ -676,6 +842,11 @@ def hot_or_not_tournament_vote(request: Request):
             if diamonds <= 0:
                 return {"error": "NO_DIAMONDS"}
 
+            # Check if this is user's first game (for active_participant_count)
+            previous_wins = int(user_data.get("wins") or 0)
+            previous_losses = int(user_data.get("losses") or 0)
+            is_first_game = (previous_wins + previous_losses) == 0
+
             # Check duplicate vote
             if vote_ref.get(transaction=tx).exists:
                 return {"error": "DUPLICATE_VOTE"}
@@ -714,6 +885,12 @@ def hot_or_not_tournament_vote(request: Request):
                 "updated_at": firestore.SERVER_TIMESTAMP,
             })
 
+            # Increment active_participant_count if this is user's first game
+            if is_first_game:
+                tx.update(tournament_ref, {
+                    "active_participant_count": firestore.Increment(1)
+                })
+
             return {
                 "success": True,
                 "outcome": outcome,
@@ -721,6 +898,7 @@ def hot_or_not_tournament_vote(request: Request):
                 "ai_verdict": ai_verdict,
                 "diamonds": new_diamonds,
                 "diamond_delta": diamond_delta,
+                "is_first_game": is_first_game,
             }
 
         result = _vote_tx(db().transaction())
@@ -744,6 +922,11 @@ def hot_or_not_tournament_vote(request: Request):
         wins = int(user_data.get("wins") or 0)
         losses = int(user_data.get("losses") or 0)
 
+        # Get updated tournament data for active_participant_count
+        updated_tournament = tournament_ref.get()
+        tournament_data = updated_tournament.to_dict() or {}
+        active_participant_count = int(tournament_data.get("active_participant_count") or 0)
+
         # Calculate live position
         position = _compute_user_position(tournament_id, principal_id, result["diamonds"], wins, losses)
 
@@ -756,6 +939,7 @@ def hot_or_not_tournament_vote(request: Request):
             "wins": wins,
             "losses": losses,
             "position": position,
+            "active_participant_count": active_participant_count,
         }), 200
 
     except auth.InvalidIdTokenError:

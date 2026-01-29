@@ -13,6 +13,7 @@ interface ProfileMainComponent {
     val subscriptionCoordinator: SubscriptionCoordinator
     val pendingVideoNavigation: Flow<String?>
     val userCanisterData: CanisterData?
+    val showBackButton: Boolean
     val showAlertsOnDialog: (type: AlertsRequestType) -> Unit
     fun onUploadVideoClick()
     fun openAccount()
@@ -42,6 +43,7 @@ interface ProfileMainComponent {
             ) -> Unit,
             onBackClicked: () -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
+            showBackButton: Boolean = false,
         ): ProfileMainComponent =
             DefaultProfileMainComponent(
                 componentContext = componentContext,
@@ -56,6 +58,7 @@ interface ProfileMainComponent {
                 openConversation = openConversation,
                 onBackClicked = onBackClicked,
                 showAlertsOnDialog = showAlertsOnDialog,
+                showBackButton = showBackButton,
             )
     }
 }

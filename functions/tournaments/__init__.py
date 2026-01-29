@@ -5,7 +5,8 @@ from .tournament_api import (
     register_for_tournament,
     my_tournaments,
     tournament_vote,
-    tournament_leaderboard
+    tournament_leaderboard,
+    tournament_video_emojis,
 )
 
 __all__ = [
@@ -20,5 +21,6 @@ __all__ = [
     "register_for_tournament",
     "my_tournaments",
     "tournament_vote",
-    "tournament_leaderboard"
+    "tournament_leaderboard",
+    "tournament_video_emojis",
 ]

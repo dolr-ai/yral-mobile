@@ -3,10 +3,13 @@ import os
 import random
 import string
 import sys
+import tempfile
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import firebase_admin
 import requests
@@ -17,6 +20,9 @@ from google.api_core.exceptions import AlreadyExists
 from google.cloud import tasks_v2
 from google.protobuf import timestamp_pb2
 from mixpanel import Mixpanel
+
+# Gemini AI SDK
+from google import genai
 
 
 class TournamentStatus(str, Enum):
@@ -63,6 +69,7 @@ class Tournament:
             "updated_at": self.updated_at,
             "title": self.title,
             "type": self.type,
+            "active_participant_count": 0,
         }
 
 
@@ -76,7 +83,23 @@ SATOSHIS_PER_BTC = 100_000_000
 
 # Backend API Constants
 BACKEND_TOURNAMENT_REGISTER_URL = "https://recsys-on-premise.fly.dev/tournament/register"
+BACKEND_TOURNAMENT_VIDEOS_URL = "https://recsys-on-premise.fly.dev/tournament/{tournament_id}/videos"
 DEFAULT_VIDEO_COUNT = 500
+
+# Gemini AI Constants
+GEMINI_MODEL = "gemini-2.0-flash"
+CLOUDFLARE_PREFIX = "https://customer-2p3jflss4r4hmpnz.cloudflarestream.com/"
+CLOUDFLARE_MP4_SUFFIX = "/downloads/default.mp4"
+SEEDED_VOTE_COUNT = 5
+
+# Default emoji fallback (used when Gemini analysis fails)
+DEFAULT_EMOJIS = [
+    {"id": "heart", "unicode": "❤️", "display_name": "Heart"},
+    {"id": "laugh", "unicode": "😂", "display_name": "Laugh"},
+    {"id": "fire", "unicode": "🔥", "display_name": "Fire"},
+    {"id": "surprise", "unicode": "😮", "display_name": "Surprise"},
+    {"id": "rocket", "unicode": "🚀", "display_name": "Rocket"},
+]
 
 # Environment detection
 GCLOUD_PROJECT = os.environ.get("GCLOUD_PROJECT", "")
@@ -190,6 +213,308 @@ def _register_tournament_backend(admin_key: str, video_count: int = DEFAULT_VIDE
         # Log detailed backend exception server-side, but return a generic error message
         print(f"[backend] Tournament registration request failed: {e}", file=sys.stderr)
         return None, "Backend request failed"
+
+
+def _fetch_tournament_videos(tournament_id: str) -> Tuple[Optional[List[Dict]], Optional[str]]:
+    """Fetch video list from backend for a tournament."""
+    url = BACKEND_TOURNAMENT_VIDEOS_URL.format(tournament_id=tournament_id)
+    try:
+        resp = requests.get(url, timeout=60, params={"with_metadata": "true"})
+        if resp.status_code == 200:
+            data = resp.json()
+            videos = data.get("videos", [])
+            print(f"[backend] Fetched {len(videos)} videos for tournament {tournament_id}")
+            return videos, None
+        return None, f"Status: {resp.status_code}, Body: {resp.text}"
+    except requests.RequestException as e:
+        return None, str(e)
+
+
+def _form_video_url(video_id: str) -> str:
+    """Form Cloudflare MP4 URL from video ID."""
+    return f"{CLOUDFLARE_PREFIX}{video_id}{CLOUDFLARE_MP4_SUFFIX}"
+
+
+def _analyze_video_for_emojis(video_url: str, api_key: str) -> Dict[str, Any]:
+    """
+    Analyze video with Gemini to determine relevant emojis.
+
+    Returns: {
+        "emojis": [{"id": str, "unicode": str, "display_name": str}, ...],
+        "top_pick_id": str,
+        "confidence": float,
+        "reason": str,
+        "error": str | None
+    }
+    """
+    temp_path = None
+    video_file = None
+    client = None
+
+    try:
+        client = genai.Client(api_key=api_key)
+
+        # Download video
+        video_resp = requests.get(video_url, timeout=60, stream=True)
+        if video_resp.status_code != 200:
+            return {
+                "emojis": DEFAULT_EMOJIS,
+                "top_pick_id": DEFAULT_EMOJIS[0]["id"],
+                "confidence": 0.5,
+                "reason": "Download failed",
+                "error": f"HTTP {video_resp.status_code}"
+            }
+
+        # Save to temp file
+        with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as f:
+            for chunk in video_resp.iter_content(chunk_size=8192):
+                f.write(chunk)
+            temp_path = f.name
+
+        # Upload to Gemini
+        video_file = client.files.upload(file=temp_path)
+
+        # Wait for processing
+        max_wait = 30
+        waited = 0
+        while video_file.state.name == "PROCESSING" and waited < max_wait:
+            time.sleep(2)
+            waited += 2
+            video_file = client.files.get(name=video_file.name)
+
+        if video_file.state.name == "FAILED":
+            return {
+                "emojis": DEFAULT_EMOJIS,
+                "top_pick_id": DEFAULT_EMOJIS[0]["id"],
+                "confidence": 0.5,
+                "reason": "Gemini processing failed",
+                "error": "PROCESSING_FAILED"
+            }
+
+        # Analyze with Gemini
+        prompt = """Analyze this video and suggest exactly 5 emojis that best represent its emotional content.
+You can suggest ANY emoji that fits - be creative and match the video's vibe.
+
+Consider:
+- The dominant emotion (joy, excitement, surprise, disgust, love, fear, etc.)
+- The video's energy level and vibe
+- What reaction viewers would most likely have
+- Cultural relevance (Indian audience, tier 2/3 cities)
+
+Return ONLY a valid JSON object with EXACTLY 5 emojis:
+{
+  "emojis": [
+    {"id": "unique_lowercase_id", "unicode": "actual emoji character", "display_name": "Human Name"},
+    {"id": "...", "unicode": "...", "display_name": "..."},
+    {"id": "...", "unicode": "...", "display_name": "..."},
+    {"id": "...", "unicode": "...", "display_name": "..."},
+    {"id": "...", "unicode": "...", "display_name": "..."}
+  ],
+  "top_pick": "id_of_most_fitting_emoji",
+  "confidence": 0.0 to 1.0,
+  "reason": "brief explanation"
+}
+
+Example output:
+{
+  "emojis": [
+    {"id": "laugh", "unicode": "😂", "display_name": "Laugh"},
+    {"id": "fire", "unicode": "🔥", "display_name": "Fire"},
+    {"id": "heart_eyes", "unicode": "😍", "display_name": "Heart Eyes"},
+    {"id": "clap", "unicode": "👏", "display_name": "Clap"},
+    {"id": "mind_blown", "unicode": "🤯", "display_name": "Mind Blown"}
+  ],
+  "top_pick": "laugh",
+  "confidence": 0.85,
+  "reason": "Funny video with impressive moments"
+}"""
+
+        response = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=[video_file, prompt]
+        )
+        response_text = response.text.strip()
+
+        # Parse JSON from response (handles code blocks)
+        if "```json" in response_text:
+            response_text = response_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in response_text:
+            response_text = response_text.split("```")[1].split("```")[0].strip()
+
+        result = json.loads(response_text)
+        emojis = result.get("emojis", DEFAULT_EMOJIS)
+        top_pick = result.get("top_pick", emojis[0]["id"] if emojis else "heart")
+        confidence = float(result.get("confidence", 0.7))
+        reason = result.get("reason", "")
+
+        # Ensure exactly 5 emojis
+        if len(emojis) < 5:
+            emojis = DEFAULT_EMOJIS[:5]
+        elif len(emojis) > 5:
+            emojis = emojis[:5]
+
+        return {
+            "emojis": emojis,
+            "top_pick_id": top_pick,
+            "confidence": confidence,
+            "reason": reason,
+            "error": None
+        }
+
+    except (json.JSONDecodeError, KeyError, ValueError) as e:
+        return {
+            "emojis": DEFAULT_EMOJIS,
+            "top_pick_id": DEFAULT_EMOJIS[0]["id"],
+            "confidence": 0.5,
+            "reason": "",
+            "error": f"Parse error: {e}"
+        }
+
+    except Exception as e:
+        return {
+            "emojis": DEFAULT_EMOJIS,
+            "top_pick_id": DEFAULT_EMOJIS[0]["id"],
+            "confidence": 0.5,
+            "reason": "",
+            "error": str(e)
+        }
+
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.unlink(temp_path)
+            except Exception:
+                pass
+        if video_file and client:
+            try:
+                client.files.delete(name=video_file.name)
+            except Exception:
+                pass
+
+
+def _analyze_videos_for_emojis_batch(videos: List[Dict], api_key: str, max_workers: int = 5) -> List[Dict]:
+    """Analyze multiple videos in parallel for emoji selection."""
+    results = []
+
+    def analyze_single(video: Dict, index: int) -> Dict:
+        video_id = video.get("video_id") or video.get("videoID")
+        if not video_id:
+            return {"video_id": None, "error": "No video_id"}
+
+        video_url = _form_video_url(video_id)
+        print(f"[gemini] Analyzing video {index + 1} for emojis: {video_id[:16]}...")
+        analysis = _analyze_video_for_emojis(video_url, api_key)
+
+        return {
+            "video_id": video_id,
+            "video_url": video_url,
+            "emojis": analysis["emojis"],
+            "top_pick_id": analysis["top_pick_id"],
+            "confidence": analysis["confidence"],
+            "reason": analysis.get("reason", ""),
+            "analysis_error": analysis.get("error"),
+        }
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(analyze_single, v, i): v for i, v in enumerate(videos)}
+        for future in as_completed(futures):
+            try:
+                result = future.result()
+                results.append(result)
+            except Exception as e:
+                video = futures[future]
+                video_id = video.get("video_id") or video.get("videoID")
+                results.append({
+                    "video_id": video_id,
+                    "emojis": DEFAULT_EMOJIS,
+                    "top_pick_id": DEFAULT_EMOJIS[0]["id"],
+                    "confidence": 0.5,
+                    "reason": "",
+                    "analysis_error": str(e),
+                })
+
+    return results
+
+
+def _seed_votes_for_video(
+    tournament_id: str,
+    video_id: str,
+    top_emoji_id: str,
+    all_emoji_ids: List[str],
+    seed_count: int = SEEDED_VOTE_COUNT,
+):
+    """Seed initial votes on the top emoji for a video and initialize all shards."""
+    # Initialize video document if needed
+    video_ref = db().document(f"tournaments/{tournament_id}/videos/{video_id}")
+    video_ref.set({"created_at": firestore.SERVER_TIMESTAMP}, merge=True)
+
+    # Initialize all 5 shards with zero counts for all emojis
+    # This prevents 404 errors when users vote on random shards
+    zero_counts = {emoji_id: 0 for emoji_id in all_emoji_ids}
+    for shard_num in range(5):  # TOURNAMENT_SHARDS = 5
+        shard_ref = db().document(f"tournaments/{tournament_id}/videos/{video_id}/tallies/shard_{shard_num}")
+        if shard_num == 0:
+            # Shard 0 gets the seeded votes
+            shard_data = zero_counts.copy()
+            shard_data[top_emoji_id] = seed_count
+            shard_ref.set(shard_data, merge=True)
+        else:
+            # Other shards get zeros
+            shard_ref.set(zero_counts, merge=True)
+
+    print(f"[seed] Seeded {seed_count} votes for emoji '{top_emoji_id}' on video {video_id[:16]}")
+
+
+def _store_video_emojis_and_seed(tournament_id: str, analyzed_videos: List[Dict]):
+    """Store per-video emoji data in Firestore and seed initial votes."""
+    videos_ref = db().collection(f"tournaments/{tournament_id}/videos")
+    batch = db().batch()
+    batch_count = 0
+
+    for video_data in analyzed_videos:
+        video_id = video_data.get("video_id")
+        if not video_id:
+            continue
+
+        # Shuffle emojis to randomize the winning emoji position
+        # This prevents the seeded winner from always appearing first
+        emojis = video_data.get("emojis", [])
+        if emojis:
+            emojis = list(emojis)  # Make a copy to avoid modifying original
+            random.shuffle(emojis)
+            video_data["emojis"] = emojis  # Update for seeding step below
+
+        video_doc_ref = videos_ref.document(video_id)
+        batch.set(video_doc_ref, {
+            "emojis": emojis,
+            "top_pick_id": video_data["top_pick_id"],
+            "ai_confidence": video_data.get("confidence", 0.5),
+            "ai_reason": video_data.get("reason", ""),
+            "analyzed_at": firestore.SERVER_TIMESTAMP,
+        }, merge=True)
+
+        batch_count += 1
+        if batch_count >= 500:
+            batch.commit()
+            batch = db().batch()
+            batch_count = 0
+
+    if batch_count > 0:
+        batch.commit()
+
+    print(f"[store] Stored emoji data for {len(analyzed_videos)} videos")
+
+    # Seed votes for each video
+    for video_data in analyzed_videos:
+        video_id = video_data.get("video_id")
+        if video_id:
+            all_emoji_ids = [e["id"] for e in video_data.get("emojis", [])]
+            _seed_votes_for_video(
+                tournament_id,
+                video_id,
+                video_data["top_pick_id"],
+                all_emoji_ids,
+            )
 
 
 # ─────────────────────  COIN HELPERS  ────────────────────────
@@ -655,16 +980,23 @@ def _schedule_status_task(doc_id: str, target_status: TournamentStatus, run_at: 
     print(f"[tasks] scheduled {target_status.value} for {doc_id} at {run_at.isoformat()} ({response.name})")
 
 
-@https_fn.on_request(region="us-central1", secrets=["BACKEND_ADMIN_KEY"])
+@https_fn.on_request(region="us-central1", timeout_sec=1500, memory=2048, secrets=["BACKEND_ADMIN_KEY", "GEMINI_API_KEY"])
 def create_tournaments(cloud_event):
     """
     Cloud Scheduler target (run daily at 12am IST) to create tournaments.
     Also accepts manual HTTP POST requests with custom parameters.
+    Includes Gemini AI video analysis for dynamic emoji selection.
     """
     try:
         backend_admin_key = os.environ.get("BACKEND_ADMIN_KEY")
+        gemini_api_key = os.environ.get("GEMINI_API_KEY")
+
         if not backend_admin_key:
             print("[create_tournaments] BACKEND_ADMIN_KEY not configured", file=sys.stderr)
+            return jsonify({"error": "INTERNAL", "message": "An internal error occurred"}), 500
+
+        if not gemini_api_key:
+            print("[create_tournaments] GEMINI_API_KEY not configured", file=sys.stderr)
             return jsonify({"error": "INTERNAL", "message": "An internal error occurred"}), 500
 
         env_name = "production" if IS_PRODUCTION else "staging"
@@ -751,6 +1083,20 @@ def create_tournaments(cloud_event):
                 created.append(tournament_id)
                 _schedule_status_task(tournament_id, TournamentStatus.LIVE, start_dt)
                 _schedule_status_task(tournament_id, TournamentStatus.ENDED, end_dt)
+
+                # Fetch videos and analyze with Gemini for dynamic emoji selection
+                videos, fetch_error = _fetch_tournament_videos(tournament_id)
+                if fetch_error or not videos:
+                    print(f"[create_tournaments] Failed to fetch videos for {tournament_id}: {fetch_error}", file=sys.stderr)
+                    print(f"[create_tournaments] Continuing with tournament (no emoji analysis)")
+                else:
+                    print(f"[gemini] Starting emoji analysis for {len(videos)} videos...")
+                    analyzed_videos = _analyze_videos_for_emojis_batch(videos, gemini_api_key, max_workers=5)
+                    print(f"[gemini] Completed emoji analysis for {len(analyzed_videos)} videos")
+
+                    # Store emoji data and seed initial votes
+                    _store_video_emojis_and_seed(tournament_id, analyzed_videos)
+
             except AlreadyExists:
                 skipped.append({"id": tournament_id, "reason": "Already exists"})
             except Exception as e:
