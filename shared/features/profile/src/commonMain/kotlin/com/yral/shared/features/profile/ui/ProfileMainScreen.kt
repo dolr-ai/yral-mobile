@@ -50,6 +50,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
@@ -127,6 +128,7 @@ import yral_mobile.shared.features.profile.generated.resources.error_loading_mor
 import yral_mobile.shared.features.profile.generated.resources.error_loading_videos
 import yral_mobile.shared.features.profile.generated.resources.failed_to_delete_video
 import yral_mobile.shared.features.profile.generated.resources.pink_heart
+import yral_mobile.shared.features.profile.generated.resources.pro_profile_background
 import yral_mobile.shared.features.profile.generated.resources.profile_empty_other_subtitle
 import yral_mobile.shared.features.profile.generated.resources.profile_empty_other_title
 import yral_mobile.shared.features.profile.generated.resources.profile_empty_subtitle
@@ -310,7 +312,17 @@ fun ProfileMainScreen(
         modifier =
             modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.primaryContainer),
+                .background(MaterialTheme.colorScheme.primaryContainer)
+                .then(
+                    if (state.isProUser) {
+                        Modifier.paint(
+                            painter = painterResource(Res.drawable.pro_profile_background),
+                            contentScale = ContentScale.Crop,
+                        )
+                    } else {
+                        Modifier
+                    },
+                ),
     ) {
         when (val videoViewState = state.videoView) {
             is VideoViewState.ViewingReels -> {
@@ -607,6 +619,7 @@ private fun MainContent(
                 onFollowersClick = { onFollowersSectionClick(FollowersSheetTab.Followers) },
                 onFollowingClick = { onFollowersSectionClick(FollowersSheetTab.Following) },
                 onTalkToMeClicked = viewModel::fetchInfluencerDetails,
+                isProUser = state.isProUser,
             )
         }
         when (profileVideos.loadState.refresh) {

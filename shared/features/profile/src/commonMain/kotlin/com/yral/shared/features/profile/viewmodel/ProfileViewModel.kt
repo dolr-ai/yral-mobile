@@ -380,7 +380,11 @@ class ProfileViewModel(
                                     ?: currentInfo.profilePic,
                             bio = bio?.takeUnless { it.isBlank() } ?: currentInfo.bio,
                         )
-                    current.copy(accountInfo = newInfo, isAiInfluencer = details.isAiInfluencer == true)
+                    current.copy(
+                        accountInfo = newInfo,
+                        isAiInfluencer = details.isAiInfluencer == true,
+                        isProUser = proPlan != null,
+                    )
                 }
             }.onFailure { error ->
                 Logger.e("refreshOwnProfileDetails") { "Failed to fetch profile details $error" }
@@ -413,6 +417,7 @@ class ProfileViewModel(
                         accountInfo = updatedInfo,
                         isFollowing = details.callerFollowsUser ?: current.isFollowing,
                         isAiInfluencer = details.isAiInfluencer == true,
+                        isProUser = (details.subscriptionPlan as? SubscriptionPlan.Pro) != null,
                     )
                 }
             }.onFailure { error ->
@@ -1025,6 +1030,7 @@ data class ViewState(
     val canShareProfile: Boolean = false,
     val isAiInfluencer: Boolean = false,
     val isTalkToMeInProgress: Boolean = false,
+    val isProUser: Boolean = false,
 )
 
 sealed interface ProfileBottomSheet {

@@ -207,12 +207,13 @@ private fun AccountScreenContent(
                     promptLogin()
                     viewModel.accountsTelemetry.signUpClicked(SignupPageName.MENU)
                 },
+                isProUser = proDetails.isProPurchased,
             )
             Spacer(modifier = Modifier.height(8.dp))
         } else {
             Spacer(modifier = Modifier.height(8.dp))
         }
-        if (proDetails?.isProPurchased == true) {
+        if (proDetails.isProPurchased) {
             ProMemberCard(
                 availableProCredits = availableProCredits,
                 totalProCredits = totalProCredits,
