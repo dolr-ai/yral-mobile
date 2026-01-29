@@ -4,11 +4,13 @@ package com.yral.shared.features.tournament.data
 
 import com.github.michaelbull.result.Result
 import com.yral.shared.features.tournament.data.models.HotOrNotVoteRequestDto
+import com.yral.shared.features.tournament.data.models.VideoEmojisRequestDto
 import com.yral.shared.features.tournament.data.models.toRegistrationResult
 import com.yral.shared.features.tournament.data.models.toTournamentDataList
 import com.yral.shared.features.tournament.data.models.toTournamentLeaderboard
 import com.yral.shared.features.tournament.data.models.toTournamentList
 import com.yral.shared.features.tournament.data.models.toTournamentStatusData
+import com.yral.shared.features.tournament.data.models.toVideoEmojisResult
 import com.yral.shared.features.tournament.data.models.toVoteResult
 import com.yral.shared.features.tournament.domain.ITournamentRepository
 import com.yral.shared.features.tournament.domain.model.CastTournamentVoteRequest
@@ -24,6 +26,7 @@ import com.yral.shared.features.tournament.domain.model.TournamentData
 import com.yral.shared.features.tournament.domain.model.TournamentError
 import com.yral.shared.features.tournament.domain.model.TournamentLeaderboard
 import com.yral.shared.features.tournament.domain.model.TournamentStatusData
+import com.yral.shared.features.tournament.domain.model.VideoEmojisResult
 import com.yral.shared.features.tournament.domain.model.VoteResult
 import com.yral.shared.features.tournament.domain.model.toDto
 import com.yral.shared.features.tournament.data.models.toVoteResult as toHotOrNotVoteResult
@@ -87,4 +90,12 @@ class TournamentRepository(
         remoteDataSource
             .getTournamentLeaderboard(idToken, request.toDto())
             .toTournamentLeaderboard()
+
+    override suspend fun getVideoEmojis(
+        tournamentId: String,
+        videoId: String,
+    ): Result<VideoEmojisResult, Throwable> =
+        remoteDataSource
+            .getVideoEmojis(VideoEmojisRequestDto(tournamentId, videoId))
+            .toVideoEmojisResult()
 }

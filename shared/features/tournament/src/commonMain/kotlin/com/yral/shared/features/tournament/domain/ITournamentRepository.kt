@@ -14,6 +14,7 @@ import com.yral.shared.features.tournament.domain.model.TournamentData
 import com.yral.shared.features.tournament.domain.model.TournamentError
 import com.yral.shared.features.tournament.domain.model.TournamentLeaderboard
 import com.yral.shared.features.tournament.domain.model.TournamentStatusData
+import com.yral.shared.features.tournament.domain.model.VideoEmojisResult
 import com.yral.shared.features.tournament.domain.model.VoteResult
 
 interface ITournamentRepository {
@@ -67,4 +68,13 @@ interface ITournamentRepository {
         idToken: String,
         request: GetTournamentLeaderboardRequest,
     ): Result<TournamentLeaderboard, TournamentError>
+
+    /**
+     * Get video-specific emojis for a tournament video.
+     * Used for prefetching emoji data before user sees the video.
+     */
+    suspend fun getVideoEmojis(
+        tournamentId: String,
+        videoId: String,
+    ): Result<VideoEmojisResult, Throwable>
 }

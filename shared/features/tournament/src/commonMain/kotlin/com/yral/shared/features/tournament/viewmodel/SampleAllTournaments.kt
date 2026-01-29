@@ -24,6 +24,8 @@ internal fun sampleAllTournaments(): List<Tournament> =
             startEpochMs = Clock.System.now().toEpochMilliseconds(),
             endEpochMs = (Clock.System.now() + 10.minutes).toEpochMilliseconds(),
             entryCost = 20,
+            isRegistered = false,
+            userDiamonds = 0,
         ),
         Tournament(
             id = "t2",
@@ -37,6 +39,8 @@ internal fun sampleAllTournaments(): List<Tournament> =
             startEpochMs = Clock.System.now().toEpochMilliseconds(),
             endEpochMs = (Clock.System.now() + 10.minutes).toEpochMilliseconds(),
             entryCost = 20,
+            isRegistered = true,
+            userDiamonds = 30,
         ),
         Tournament(
             id = "t3",
@@ -50,6 +54,8 @@ internal fun sampleAllTournaments(): List<Tournament> =
             startEpochMs = (Clock.System.now() - 20.minutes).toEpochMilliseconds(),
             endEpochMs = (Clock.System.now() - 10.minutes).toEpochMilliseconds(),
             entryCost = 20,
+            isRegistered = true,
+            userDiamonds = 30,
         ),
     )
 
@@ -68,6 +74,8 @@ internal fun sampleHistoryTournaments(): List<Tournament> =
             startEpochMs = (Clock.System.now() - 20.minutes).toEpochMilliseconds(),
             endEpochMs = (Clock.System.now() - 10.minutes).toEpochMilliseconds(),
             entryCost = 20,
+            isRegistered = true,
+            userDiamonds = 30,
         ),
     )
 

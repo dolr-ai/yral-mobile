@@ -28,6 +28,8 @@ sealed class HotOrNotVoteResponseDto {
         val losses: Int = 0,
         @SerialName("position")
         val position: Int = 0,
+        @SerialName("active_participant_count")
+        val activeParticipantCount: Int = 0,
     ) : HotOrNotVoteResponseDto()
 
     @Serializable
@@ -50,6 +52,7 @@ fun HotOrNotVoteResponseDto.toVoteResult(): Result<HotOrNotVoteResult, Tournamen
                     wins = wins,
                     losses = losses,
                     position = position,
+                    activeParticipantCount = activeParticipantCount,
                 ),
             )
         }

@@ -3,4 +3,4 @@ functions-framework==3.*
 firebase-functions==0.4.3
 google-cloud-tasks==2.20.0
 mixpanel==4.10.1
-google-genai>=0.8.0
+google-genai>=1.0.0

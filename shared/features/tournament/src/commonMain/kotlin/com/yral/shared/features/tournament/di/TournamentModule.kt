@@ -10,6 +10,7 @@ import com.yral.shared.features.tournament.domain.GetMyTournamentsUseCase
 import com.yral.shared.features.tournament.domain.GetTournamentLeaderboardUseCase
 import com.yral.shared.features.tournament.domain.GetTournamentStatusUseCase
 import com.yral.shared.features.tournament.domain.GetTournamentsUseCase
+import com.yral.shared.features.tournament.domain.GetVideoEmojisUseCase
 import com.yral.shared.features.tournament.domain.ITournamentRepository
 import com.yral.shared.features.tournament.domain.RegisterForTournamentUseCase
 import com.yral.shared.features.tournament.viewmodel.TournamentGameViewModel
@@ -40,6 +41,7 @@ val tournamentModule =
         factoryOf(::CastTournamentVoteUseCase)
         factoryOf(::CastHotOrNotVoteUseCase)
         factoryOf(::GetTournamentLeaderboardUseCase)
+        factoryOf(::GetVideoEmojisUseCase)
 
         // ViewModels
         viewModelOf(::TournamentViewModel)

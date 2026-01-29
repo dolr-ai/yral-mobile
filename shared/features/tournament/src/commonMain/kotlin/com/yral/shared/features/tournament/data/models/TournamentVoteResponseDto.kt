@@ -4,6 +4,7 @@ import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import com.yral.shared.features.tournament.domain.model.TournamentError
+import com.yral.shared.features.tournament.domain.model.VideoEmoji
 import com.yral.shared.features.tournament.domain.model.VoteOutcome
 import com.yral.shared.features.tournament.domain.model.VoteResult
 import com.yral.shared.features.tournament.domain.model.VotedSmiley
@@ -28,6 +29,10 @@ sealed class TournamentVoteResponseDto {
         val position: Int,
         @SerialName("diamond_delta")
         val diamondDelta: Int? = null,
+        @SerialName("video_emojis")
+        val videoEmojis: List<VideoEmojiDto>? = null,
+        @SerialName("active_participant_count")
+        val activeParticipantCount: Int = 0,
     ) : TournamentVoteResponseDto()
 
     @Serializable
@@ -41,6 +46,10 @@ sealed class TournamentVoteResponseDto {
 data class SmileyDto(
     @SerialName("id")
     val id: String,
+    @SerialName("unicode")
+    val unicode: String? = null,
+    @SerialName("display_name")
+    val displayName: String? = null,
     @SerialName("image_url")
     val imageUrl: String? = null,
     @SerialName("is_active")
@@ -49,6 +58,19 @@ data class SmileyDto(
     val clickAnimation: String? = null,
     @SerialName("image_fallback")
     val imageFallback: String? = null,
+)
+
+/**
+ * Video-specific emoji returned from dynamic Gemini analysis.
+ */
+@Serializable
+data class VideoEmojiDto(
+    @SerialName("id")
+    val id: String,
+    @SerialName("unicode")
+    val unicode: String,
+    @SerialName("display_name")
+    val displayName: String = "",
 )
 
 fun TournamentVoteResponseDto.toVoteResult(): Result<VoteResult, TournamentError> =
@@ -60,6 +82,8 @@ fun TournamentVoteResponseDto.toVoteResult(): Result<VoteResult, TournamentError
                     smiley =
                         VotedSmiley(
                             id = smiley.id,
+                            unicode = smiley.unicode,
+                            displayName = smiley.displayName,
                             imageUrl = smiley.imageUrl,
                             isActive = smiley.isActive,
                             clickAnimation = smiley.clickAnimation,
@@ -70,6 +94,8 @@ fun TournamentVoteResponseDto.toVoteResult(): Result<VoteResult, TournamentError
                     diamonds = diamonds,
                     position = position,
                     diamondDelta = diamondDelta,
+                    videoEmojis = videoEmojis?.map { it.toVideoEmoji() },
+                    activeParticipantCount = activeParticipantCount,
                 ),
             )
         }
@@ -77,3 +103,10 @@ fun TournamentVoteResponseDto.toVoteResult(): Result<VoteResult, TournamentError
             Err(error.toTournamentError())
         }
     }
+
+fun VideoEmojiDto.toVideoEmoji(): VideoEmoji =
+    VideoEmoji(
+        id = id,
+        unicode = unicode,
+        displayName = displayName,
+    )

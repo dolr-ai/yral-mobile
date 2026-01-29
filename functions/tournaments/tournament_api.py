@@ -51,11 +51,32 @@ _SMILEYS: List[Dict[str, str]] | None = None
 
 
 def get_smileys() -> List[Dict[str, str]]:
+    """Get global smiley config from Firestore."""
     global _SMILEYS
     if _SMILEYS is None:
         snap = db().document(SMILEY_GAME_CONFIG_PATH).get()
         _SMILEYS = snap.get("available_smileys") or []
     return _SMILEYS
+
+
+def get_video_smileys(tournament_id: str, video_id: str) -> tuple[List[Dict], bool]:
+    """
+    Get emojis for a specific video in a tournament.
+
+    Returns (emojis_list, is_video_specific).
+    Falls back to global config if video has no custom emojis.
+    """
+    video_ref = db().document(f"tournaments/{tournament_id}/videos/{video_id}")
+    video_snap = video_ref.get()
+
+    if video_snap.exists:
+        video_data = video_snap.to_dict() or {}
+        emojis = video_data.get("emojis")
+        if emojis and len(emojis) >= 4:
+            return emojis, True
+
+    # Fallback to global config
+    return get_smileys(), False
 
 
 # ─────────────────────  ERROR HELPER  ────────────────────────
@@ -946,11 +967,11 @@ def tournament_vote(request: Request):
         if not smiley_id:
             return error_response(400, "MISSING_SMILEY_ID", "smiley_id required")
 
-        # Validate smiley_id
-        smileys = get_smileys()
-        smiley_map = {s["id"]: s for s in smileys}
+        # Get video-specific emojis (or fallback to global config)
+        video_smileys, is_video_specific = get_video_smileys(tournament_id, video_id)
+        smiley_map = {s["id"]: s for s in video_smileys}
         if smiley_id not in smiley_map:
-            return error_response(400, "SMILEY_NOT_ALLOWED", "Invalid smiley_id")
+            return error_response(400, "SMILEY_NOT_ALLOWED", f"Invalid smiley_id for this video")
 
         # References
         tournament_ref = db().collection("tournaments").document(tournament_id)
@@ -998,8 +1019,8 @@ def tournament_vote(request: Request):
             if not video_snap.exists:
                 tx.set(video_ref, {"created_at": firestore.SERVER_TIMESTAMP})
 
-                # Initialize all shards with zeros (no seeding for tournaments)
-                zero = {s["id"]: 0 for s in smileys}
+                # Initialize all shards with zeros (using video-specific emojis)
+                zero = {s["id"]: 0 for s in video_smileys}
                 for k in range(TOURNAMENT_SHARDS):
                     tx.set(shard_ref(k), zero, merge=True)
 
@@ -1043,6 +1064,13 @@ def tournament_vote(request: Request):
             "updated_at": firestore.SERVER_TIMESTAMP
         })
 
+        # Get current stats to check if this is first game
+        current_reg = reg_ref.get()
+        current_reg_data = current_reg.to_dict() or {}
+        previous_wins = int(current_reg_data.get("tournament_wins") or 0)
+        previous_losses = int(current_reg_data.get("tournament_losses") or 0)
+        is_first_game = (previous_wins + previous_losses) == 0
+
         # Update user's tournament stats and diamonds
         # Win: +1 diamond, Loss: -1 diamond
         if outcome == "WIN":
@@ -1058,12 +1086,23 @@ def tournament_vote(request: Request):
                 "updated_at": firestore.SERVER_TIMESTAMP
             })
 
+        # Increment active_participant_count if this is user's first game
+        if is_first_game:
+            tournament_ref.update({
+                "active_participant_count": firestore.Increment(1)
+            })
+
         # Get updated stats
         updated_reg = reg_ref.get()
         reg_data = updated_reg.to_dict() or {}
         tournament_wins = int(reg_data.get("tournament_wins") or 0)
         tournament_losses = int(reg_data.get("tournament_losses") or 0)
         diamonds = int(reg_data.get("diamonds") or 0)
+
+        # Get updated tournament data for active_participant_count
+        updated_tournament = tournament_ref.get()
+        tournament_data = updated_tournament.to_dict() or {}
+        active_participant_count = int(tournament_data.get("active_participant_count") or 0)
 
         # Calculate position
         top_rows = _compute_tournament_leaderboard(tournament_id, limit=10)
@@ -1072,20 +1111,29 @@ def tournament_vote(request: Request):
 
         # Build response
         voted_smiley = smiley_map[smiley_id]
-        return jsonify({
+        response_data = {
             "outcome": outcome,
             "smiley": {
                 "id": voted_smiley["id"],
+                "unicode": voted_smiley.get("unicode", ""),
+                "display_name": voted_smiley.get("display_name", ""),
                 "image_url": voted_smiley.get("image_url"),
-                "is_active": voted_smiley.get("is_active"),
+                "is_active": voted_smiley.get("is_active", True),
                 "click_animation": voted_smiley.get("click_animation"),
                 "image_fallback": voted_smiley.get("image_fallback")
             },
             "tournament_wins": tournament_wins,
             "tournament_losses": tournament_losses,
             "diamonds": diamonds,
-            "position": position
-        }), 200
+            "position": position,
+            "active_participant_count": active_participant_count,
+        }
+
+        # Include video-specific emojis if available
+        if is_video_specific:
+            response_data["video_emojis"] = video_smileys
+
+        return jsonify(response_data), 200
 
     except auth.InvalidIdTokenError:
         return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
@@ -1189,4 +1237,49 @@ def tournament_leaderboard(request: Request):
         return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
     except Exception as e:
         print(f"tournament_leaderboard error: {e}", file=sys.stderr)
+        return error_response(500, "INTERNAL", "Internal server error")
+
+
+@https_fn.on_request(region="us-central1")
+def tournament_video_emojis(request: Request):
+    """
+    Get emojis for a specific video in a tournament.
+    Used for prefetching emoji data before user sees the video.
+
+    POST /tournament_video_emojis
+    Request:
+        { "data": { "tournament_id": "...", "video_id": "..." } }
+
+    Response:
+        {
+            "video_id": "...",
+            "emojis": [{"id": "...", "unicode": "...", "display_name": "..."}, ...],
+            "is_custom": true/false
+        }
+    """
+    try:
+        if request.method != "POST":
+            return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
+
+        body = request.get_json(silent=True) or {}
+        data = body.get("data", {}) or {}
+
+        tournament_id = str(data.get("tournament_id", "")).strip()
+        video_id = str(data.get("video_id", "")).strip()
+
+        if not tournament_id:
+            return error_response(400, "MISSING_TOURNAMENT_ID", "tournament_id required")
+        if not video_id:
+            return error_response(400, "MISSING_VIDEO_ID", "video_id required")
+
+        emojis, is_custom = get_video_smileys(tournament_id, video_id)
+
+        return jsonify({
+            "video_id": video_id,
+            "emojis": emojis,
+            "is_custom": is_custom,
+        }), 200
+
+    except Exception as e:
+        print(f"tournament_video_emojis error: {e}", file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
