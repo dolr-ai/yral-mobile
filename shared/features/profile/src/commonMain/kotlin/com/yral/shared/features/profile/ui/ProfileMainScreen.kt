@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions")
+
 package com.yral.shared.features.profile.ui
 
 import androidx.compose.animation.AnimatedVisibility
@@ -39,6 +41,7 @@ import androidx.compose.material3.pulltorefresh.pullToRefreshIndicator
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
@@ -100,12 +104,14 @@ import com.yral.shared.libs.designsystem.component.features.DeleteConfirmationSh
 import com.yral.shared.libs.designsystem.component.features.VideoViewsSheet
 import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
+import com.yral.shared.libs.designsystem.component.neonBorder
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastType
 import com.yral.shared.libs.designsystem.component.toast.showError
 import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import com.yral.shared.rust.service.domain.models.FollowerItem
 import com.yral.shared.rust.service.domain.models.PagedFollowerItem
 import com.yral.shared.rust.service.utils.CanisterData
@@ -116,7 +122,9 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import yral_mobile.shared.features.profile.generated.resources.Res
+import yral_mobile.shared.features.profile.generated.resources.become_pro
 import yral_mobile.shared.features.profile.generated.resources.create_ai_video
 import yral_mobile.shared.features.profile.generated.resources.delete
 import yral_mobile.shared.features.profile.generated.resources.delete_video
@@ -148,6 +156,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.error_data_not_l
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_dots_vertical
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_download
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_share
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_thunder
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_views
 import yral_mobile.shared.libs.designsystem.generated.resources.login
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share
@@ -418,6 +427,19 @@ fun ProfileMainScreen(
                     onShareProfileClicked = { viewModel.shareProfile() },
                     showHeaderShareButton = !state.isOwnProfile,
                     onDownloadVideo = onDownloadVideo,
+                    onSubscribe = {
+                        if (state.isLoggedIn) {
+                            component.subscriptionCoordinator.buySubscription()
+                        } else {
+                            loginState.requestLogin(
+                                SignupPageName.PROFILE,
+                                LoginScreenType.BottomSheet(LoginBottomSheetType.DEFAULT),
+                                LoginMode.BOTH,
+                                null,
+                                null,
+                            ) {}
+                        }
+                    },
                 )
             }
         }
@@ -585,16 +607,20 @@ private fun MainContent(
     onShareProfileClicked: () -> Unit,
     showHeaderShareButton: Boolean,
     onDownloadVideo: (FeedDetails) -> Unit,
+    onSubscribe: () -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader(
             isOwnProfile = state.isOwnProfile,
+            isSubscriptionEnabled = state.isSubscriptionEnabled,
+            isProUser = state.isProUser,
             userName = state.accountInfo?.displayName,
             showShareProfile = showHeaderShareButton && canShareProfile,
             isWalletEnabled = state.isWalletEnabled,
             onShareProfileClicked = onShareProfileClicked,
             openAccount = openAccount,
             onBack = onBackClicked,
+            onSubscribe = onSubscribe,
         )
         state.accountInfo?.let { info ->
             val followersCount = totalCount(followers)
@@ -684,15 +710,19 @@ private fun totalCount(data: LazyPagingItems<PagedFollowerItem>?) =
         }
     } ?: 0
 
+@Suppress("LongMethod")
 @Composable
 private fun ProfileHeader(
     isOwnProfile: Boolean,
+    isProUser: Boolean,
+    isSubscriptionEnabled: Boolean,
     userName: String?,
     showShareProfile: Boolean,
     isWalletEnabled: Boolean,
     onShareProfileClicked: () -> Unit,
     openAccount: () -> Unit,
     onBack: () -> Unit,
+    onSubscribe: () -> Unit,
 ) {
     Row(
         modifier =
@@ -729,6 +759,9 @@ private fun ProfileHeader(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            if (isOwnProfile && isSubscriptionEnabled && !isProUser) {
+                BecomeProButton { onSubscribe() }
+            }
             if (showShareProfile) {
                 Icon(
                     painter = painterResource(DesignRes.drawable.ic_share),
@@ -1308,6 +1341,62 @@ private fun DownloadTriggeredSheet(
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun BecomeProButton(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    val gradientColors =
+        listOf(
+            YralColors.ProGradientOrange,
+            YralColors.ProGradientPink,
+        )
+    Row(
+        modifier =
+            modifier
+                .neonBorder(
+                    paddingValues = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
+                    cornerRadius = 8.dp,
+                    containerColor = Color.Transparent,
+                    animationDuration = 600L,
+                    neonColor = YralColors.YellowGlowShadow,
+                ).clip(RoundedCornerShape(8.dp))
+                .background(brush = Brush.linearGradient(colors = gradientColors))
+                .clickable(onClick = onClick)
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(Res.string.become_pro),
+            style = LocalAppTopography.current.mdMedium,
+            color = Color.White,
+        )
+        Image(
+            painter = painterResource(DesignRes.drawable.ic_thunder),
+            contentDescription = "Pro",
+            contentScale = ContentScale.Inside,
+            modifier = Modifier.size(20.dp),
+        )
+    }
+}
+
+@Suppress("UnusedPrivateMember")
+@Preview
+@Composable
+private fun BecomeProButtonPreview() {
+    CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
+        Box(
+            modifier =
+                Modifier
+                    .background(YralColors.Neutral900)
+                    .padding(24.dp),
+        ) {
+            BecomeProButton(onClick = {})
         }
     }
 }

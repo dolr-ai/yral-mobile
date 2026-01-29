@@ -12,9 +12,9 @@ import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.featureflag.AppFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.WalletFeatureFlags
-import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.shared.analytics.events.CtaType
 import com.yral.shared.analytics.events.EditProfileSource
 import com.yral.shared.analytics.events.FollowersListTab
@@ -128,6 +128,7 @@ class ProfileViewModel(
         MutableStateFlow(
             ViewState(
                 isWalletEnabled = flagManager.isEnabled(WalletFeatureFlags.Wallet.Enabled),
+                isSubscriptionEnabled = flagManager.isEnabled(AppFeatureFlags.Common.EnableSubscription),
             ),
         )
     val state: StateFlow<ViewState> = _state.asStateFlow()
@@ -710,8 +711,6 @@ class ProfileViewModel(
         _state.update { it.copy(bottomSheet = type) }
     }
 
-    fun getTncLink(): String = flagManager.get(AccountFeatureFlags.AccountLinks.Links).tnc
-
     fun toggleReportSheet(
         isOpen: Boolean,
         currentDetail: FeedDetails,
@@ -1031,6 +1030,7 @@ data class ViewState(
     val isAiInfluencer: Boolean = false,
     val isTalkToMeInProgress: Boolean = false,
     val isProUser: Boolean = false,
+    val isSubscriptionEnabled: Boolean = false,
 )
 
 sealed interface ProfileBottomSheet {

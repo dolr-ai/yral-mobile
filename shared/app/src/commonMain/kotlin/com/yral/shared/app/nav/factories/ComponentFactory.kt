@@ -68,6 +68,7 @@ internal class ComponentFactory(
         ProfileMainComponent.invoke(
             componentContext = componentContext,
             requestLoginFactory = rootComponent.createLoginRequestFactory(),
+            subscriptionCoordinator = rootComponent.getSubscriptionCoordinator(),
             userCanisterData = config.userCanisterData,
             pendingVideoNavigation = flowOf(null),
             onUploadVideoClicked = {},
