@@ -36,6 +36,7 @@ import com.yral.shared.koin.koinInstance
 import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
 import com.yral.shared.libs.routing.routes.api.AddVideo
 import com.yral.shared.libs.routing.routes.api.AppRoute
+import com.yral.shared.libs.routing.routes.api.Chat
 import com.yral.shared.libs.routing.routes.api.GenerateAIVideo
 import com.yral.shared.libs.routing.routes.api.Leaderboard
 import com.yral.shared.libs.routing.routes.api.PendingAppRouteStore
@@ -164,6 +165,7 @@ internal class DefaultHomeComponent(
                         appRoute,
                     )
                 }
+            is Chat -> onChatTabClick()
 
             is RewardsReceived -> {
                 when (appRoute.rewardOn) {
