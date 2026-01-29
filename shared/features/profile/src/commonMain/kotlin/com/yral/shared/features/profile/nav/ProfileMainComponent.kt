@@ -4,11 +4,13 @@ import com.arkivanov.decompose.ComponentContext
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.auth.ui.RequestLoginFactory
+import com.yral.shared.features.subscriptions.ui.SubscriptionCoordinator
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.flow.Flow
 
 interface ProfileMainComponent {
     val requestLoginFactory: RequestLoginFactory
+    val subscriptionCoordinator: SubscriptionCoordinator
     val pendingVideoNavigation: Flow<String?>
     val userCanisterData: CanisterData?
     val showAlertsOnDialog: (type: AlertsRequestType) -> Unit
@@ -26,6 +28,7 @@ interface ProfileMainComponent {
         operator fun invoke(
             componentContext: ComponentContext,
             requestLoginFactory: RequestLoginFactory,
+            subscriptionCoordinator: SubscriptionCoordinator,
             userCanisterData: CanisterData? = null,
             pendingVideoNavigation: Flow<String?>,
             onUploadVideoClicked: () -> Unit,
@@ -43,6 +46,7 @@ interface ProfileMainComponent {
             DefaultProfileMainComponent(
                 componentContext = componentContext,
                 requestLoginFactory = requestLoginFactory,
+                subscriptionCoordinator = subscriptionCoordinator,
                 userCanisterData = userCanisterData,
                 pendingVideoNavigation = pendingVideoNavigation,
                 onUploadVideoClicked = onUploadVideoClicked,

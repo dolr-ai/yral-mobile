@@ -144,6 +144,7 @@ internal class DefaultProfileComponent(
         ProfileMainComponent.Companion(
             componentContext = componentContext,
             requestLoginFactory = requestLoginFactory,
+            subscriptionCoordinator = subscriptionCoordinator,
             pendingVideoNavigation = pendingVideoNavigation,
             onUploadVideoClicked = onUploadVideoClicked,
             openAccount = this::openAccount,

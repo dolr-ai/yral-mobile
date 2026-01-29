@@ -4,6 +4,7 @@ import com.arkivanov.decompose.ComponentContext
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.auth.ui.RequestLoginFactory
+import com.yral.shared.features.subscriptions.ui.SubscriptionCoordinator
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.flow.Flow
 import org.koin.core.component.KoinComponent
@@ -12,6 +13,7 @@ import org.koin.core.component.KoinComponent
 internal class DefaultProfileMainComponent(
     componentContext: ComponentContext,
     override val requestLoginFactory: RequestLoginFactory,
+    override val subscriptionCoordinator: SubscriptionCoordinator,
     override val pendingVideoNavigation: Flow<String?>,
     override val userCanisterData: CanisterData?,
     private val onUploadVideoClicked: () -> Unit,

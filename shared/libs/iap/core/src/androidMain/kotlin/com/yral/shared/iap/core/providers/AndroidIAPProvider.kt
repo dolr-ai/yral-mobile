@@ -238,16 +238,28 @@ internal class AndroidIAPProvider(
 
     private fun handleCancelledPurchases(purchases: List<Purchase>?) {
         Logger.d("SubscriptionX") { "handleCancelledPurchases $purchases" }
-        purchases?.forEach { purchase ->
-            val productId = purchase.products.firstOrNull() ?: return@forEach
-            val error = IAPError.PurchaseCancelled(productId)
+        if (purchases != null) {
+            purchases.forEach { purchase ->
+                val productId = purchase.products.firstOrNull() ?: return@forEach
+                completePendingWithCancelled(productId)
+            }
+        } else {
+            // User cancelled without purchase list (e.g. closed the sheet) - fail all pending
             callbackScope.launch {
-                pendingPurchasesLock.withLock {
-                    pendingPurchases.remove(productId)?.let { deferred ->
-                        pendingPurchasesAcknowledgeFlags.remove(productId)
-                        if (!deferred.isCompleted) {
-                            deferred.complete(Result.failure(error))
-                        }
+                val productIds = pendingPurchasesLock.withLock { pendingPurchases.keys.toList() }
+                productIds.forEach { productId -> completePendingWithCancelled(productId) }
+            }
+        }
+    }
+
+    private fun completePendingWithCancelled(productId: String) {
+        val error = IAPError.PurchaseCancelled(productId)
+        callbackScope.launch {
+            pendingPurchasesLock.withLock {
+                pendingPurchases.remove(productId)?.let { deferred ->
+                    pendingPurchasesAcknowledgeFlags.remove(productId)
+                    if (!deferred.isCompleted) {
+                        deferred.complete(Result.failure(error))
                     }
                 }
             }

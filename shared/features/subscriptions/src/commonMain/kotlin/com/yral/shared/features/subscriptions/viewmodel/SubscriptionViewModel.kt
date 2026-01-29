@@ -3,6 +3,8 @@ package com.yral.shared.features.subscriptions.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.session.ProDetails
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.iap.IAPManager
@@ -10,6 +12,9 @@ import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.iap.utils.PurchaseContext
 import com.yral.shared.libs.arch.presentation.UiState
+import com.yral.shared.rust.service.domain.models.SubscriptionPlan
+import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7Params
+import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,6 +24,7 @@ import kotlinx.coroutines.launch
 class SubscriptionViewModel(
     private val iapManager: IAPManager,
     private val sessionManager: SessionManager,
+    private val getUserProfileDetailsV7UseCase: GetUserProfileDetailsV7UseCase,
 ) : ViewModel() {
     private val _viewState = MutableStateFlow(ViewState())
     val viewState: StateFlow<ViewState> = _viewState.asStateFlow()
@@ -150,14 +156,49 @@ class SubscriptionViewModel(
                 ).onSuccess { purchase ->
                     Logger.d("SubscriptionViewModel") { "Purchase successful: $purchase" }
                     sessionManager.clearProDetails()
+                    viewModelScope.launch {
+                        val principal = sessionManager.userPrincipal ?: return@launch
+                        getUserProfileDetailsV7UseCase(
+                            GetUserProfileDetailsV7Params(
+                                principal = principal,
+                                targetPrincipal = principal,
+                            ),
+                        ).onSuccess { details ->
+                            val proPlan = details.subscriptionPlan as? SubscriptionPlan.Pro
+                            proPlan?.let {
+                                sessionManager.updateProDetails(
+                                    details =
+                                        ProDetails(
+                                            isProPurchased = true,
+                                            availableCredits = proPlan.subscription.freeVideoCreditsLeft.toInt(),
+                                            totalCredits = proPlan.subscription.totalVideoCreditsAlloted.toInt(),
+                                        ),
+                                )
+                            }
+                            Logger.d("SubscriptionX") { "Updated pro details $proPlan" }
+                        }.onFailure {
+                            Logger.e("SubscriptionX", it) { "Failed to update pro details" }
+                        }
+                    }
                     _viewState.update {
                         it.copy(purchaseState = UiState.Success(SubscriptionScreenType.Success))
                     }
                 }.onFailure { error ->
                     val iapError = error as? IAPError ?: IAPError.UnknownError(error)
                     Logger.e("SubscriptionViewModel", error) { "Purchase failed: $iapError" }
-                    _viewState.update {
-                        it.copy(purchaseState = UiState.Success(SubscriptionScreenType.Failure(iapError)))
+                    if (error !is IAPError.PurchaseCancelled) {
+                        _viewState.update {
+                            it.copy(
+                                purchaseState =
+                                    UiState.Success(
+                                        SubscriptionScreenType.Failure(
+                                            iapError,
+                                        ),
+                                    ),
+                            )
+                        }
+                    } else {
+                        _viewState.update { it.copy(purchaseState = UiState.Initial) }
                     }
                 }
         }
