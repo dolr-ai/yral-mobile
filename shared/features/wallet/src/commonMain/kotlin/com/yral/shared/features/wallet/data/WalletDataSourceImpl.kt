@@ -4,6 +4,7 @@ import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.features.wallet.data.models.BtcPriceResponseDto
 import com.yral.shared.features.wallet.data.models.BtcRewardConfigResponseDto
+import com.yral.shared.features.wallet.data.models.DolrPriceResponseDto
 import com.yral.shared.firebaseStore.cloudFunctionUrl
 import com.yral.shared.firebaseStore.firebaseAppCheckToken
 import com.yral.shared.http.httpGet
@@ -78,9 +79,27 @@ class WalletDataSourceImpl(
             },
         )
 
+    override suspend fun getDolrUsdPrice(): DolrPriceResponseDto =
+        httpGet(
+            httpClient = httpClient,
+            json = json,
+            block = {
+                url {
+                    protocol = io.ktor.http.URLProtocol.HTTPS
+                    host = COINGECKO_API_HOST
+                    path(COINGECKO_PRICE_PATH)
+                    parameters.append("ids", DOLR_COIN_ID)
+                    parameters.append("vs_currencies", "usd,inr")
+                }
+            },
+        )
+
     companion object {
         private const val BTC_VALUE_BY_COUNTRY_PATH = "btc_value_by_country"
         private const val HEADER_X_FIREBASE_APPCHECK = "X-Firebase-AppCheck"
         private const val BTC_REWARD_CONFIG_PATH = "api/v1/rewards/config_v2"
+        private const val COINGECKO_API_HOST = "api.coingecko.com"
+        private const val COINGECKO_PRICE_PATH = "api/v3/simple/price"
+        private const val DOLR_COIN_ID = "dolr-ai"
     }
 }

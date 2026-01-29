@@ -5,4 +5,7 @@ data class BtcRewardConfig(
     val rewardAmountInr: Double?,
     val rewardAmountUsd: Double?,
     val minDurationWatched: Float,
+    val fraudThreshold: Int? = null,
+    val shadowBanDuration: Long? = null,
+    val configVersion: Long? = null,
 )
