@@ -303,9 +303,13 @@ class ProfileViewModel(
             sessionManager
                 .observeSessionProperty { it.proDetails }
                 .collect { proDetails ->
-                    // When proDetails becomes null (after purchase), refresh profile
-                    if (proDetails == null && canisterData.userPrincipalId == sessionManager.userPrincipal) {
-                        refreshOwnProfileDetails()
+                    proDetails?.let { details ->
+                        _state.update {
+                            it.copy(isProUser = details.isProPurchased)
+                        }
+                    }
+                    Logger.d("SubscriptionX") {
+                        "Prod details updated in profile $proDetails ${_state.value.isProUser}"
                     }
                 }
         }
