@@ -108,6 +108,7 @@ class TournamentGameViewModel(
                         it.copy(
                             diamonds = userStats.diamonds,
                             hasPlayedBefore = hasPlayed,
+                            activeParticipantCount = tournament.participantCount,
                         )
                     }
                 }

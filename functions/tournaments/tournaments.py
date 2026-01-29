@@ -476,9 +476,17 @@ def _store_video_emojis_and_seed(tournament_id: str, analyzed_videos: List[Dict]
         if not video_id:
             continue
 
+        # Shuffle emojis to randomize the winning emoji position
+        # This prevents the seeded winner from always appearing first
+        emojis = video_data.get("emojis", [])
+        if emojis:
+            emojis = list(emojis)  # Make a copy to avoid modifying original
+            random.shuffle(emojis)
+            video_data["emojis"] = emojis  # Update for seeding step below
+
         video_doc_ref = videos_ref.document(video_id)
         batch.set(video_doc_ref, {
-            "emojis": video_data["emojis"],
+            "emojis": emojis,
             "top_pick_id": video_data["top_pick_id"],
             "ai_confidence": video_data.get("confidence", 0.5),
             "ai_reason": video_data.get("reason", ""),

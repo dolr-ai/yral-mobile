@@ -61,7 +61,7 @@
     <string name="tournament_fail_title">So Close... Try Again Tomorrow!</string>
     <string name="tournament_fail_body">Good news! %1$s worth of Bitcoin is waiting for you. Register now to take part in our upcoming tournaments.</string>
     <string name="win_upto_prize">Win up to ₹%1$d</string>
-    <string name="tournament_most_people_chose">Most people chose %1$s!</string>
+    <string name="tournament_most_people_chose">Most people chose your emoji!</string>
     <string name="tournament_not_most_popular_pick">Not the most popular pick!</string>
     <string name="tournament_you_win_diamonds">You win %1$d</string>
     <string name="tournament_you_lost_diamonds">You lost %1$d</string>

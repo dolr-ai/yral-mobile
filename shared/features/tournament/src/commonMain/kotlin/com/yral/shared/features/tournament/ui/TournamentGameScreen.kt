@@ -39,9 +39,7 @@ import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -291,9 +289,8 @@ fun TournamentBottomOverlay(
                 isLoading = gameState.isLoading,
                 coinDelta = diamondDelta,
                 errorMessage = "",
-                resultContent = { icon, coinDelta, errorMessage ->
+                resultContent = { _, coinDelta, errorMessage ->
                     TournamentGameResultContent(
-                        iconName = icon.imageName,
                         coinDelta = coinDelta,
                         errorMessage = errorMessage,
                     )
@@ -336,7 +333,6 @@ fun TournamentBottomOverlay(
 @Suppress("LongMethod")
 @Composable
 private fun TournamentGameResultContent(
-    iconName: GameIconNames,
     coinDelta: Int,
     errorMessage: String,
 ) {
@@ -380,10 +376,7 @@ private fun TournamentGameResultContent(
             if (coinDelta > 0) {
                 withStyle(baseStyle) {
                     append(
-                        stringResource(
-                            TournamentRes.string.tournament_most_people_chose,
-                            iconName.name.lowercase().capitalize(Locale.current),
-                        ),
+                        stringResource(TournamentRes.string.tournament_most_people_chose),
                     )
                     append(" ")
                 }
