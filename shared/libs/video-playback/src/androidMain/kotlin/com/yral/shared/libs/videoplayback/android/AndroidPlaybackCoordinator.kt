@@ -1,8 +1,6 @@
 package com.yral.shared.libs.videoplayback.android
 
 import android.content.Context
-import android.os.Handler
-import android.os.Looper
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -39,7 +37,6 @@ import kotlinx.coroutines.cancel
 import java.io.File
 import kotlin.math.abs
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
 @OptIn(UnstableApi::class)

@@ -1,6 +1,5 @@
 package com.yral.shared.features.wallet.data
 
-import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.features.wallet.data.models.BtcPriceResponseDto
 import com.yral.shared.features.wallet.data.models.BtcRewardConfigResponseDto
@@ -72,7 +71,7 @@ class WalletDataSourceImpl(
             json = json,
             block = {
                 url {
-                    host = OFF_CHAIN_BASE_URL
+                    host = REWARDS_CONFIG_BASE_URL
                     path(BTC_REWARD_CONFIG_PATH)
                 }
             },
@@ -82,5 +81,6 @@ class WalletDataSourceImpl(
         private const val BTC_VALUE_BY_COUNTRY_PATH = "btc_value_by_country"
         private const val HEADER_X_FIREBASE_APPCHECK = "X-Firebase-AppCheck"
         private const val BTC_REWARD_CONFIG_PATH = "api/v1/rewards/config_v2"
+        private const val REWARDS_CONFIG_BASE_URL = "pr-376-dolr-ai-off-chain-agent.fly.dev"
     }
 }
