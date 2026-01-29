@@ -22,12 +22,15 @@ import com.yral.shared.analytics.events.VideoDeletedEventData
 import com.yral.shared.analytics.events.VideoDownloadedEventData
 import com.yral.shared.analytics.events.VideoReportedEventData
 import com.yral.shared.analytics.events.VideoShareClickedEventData
+import com.yral.shared.analytics.events.VideoStartedEventData
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.reportVideo.domain.models.VideoReportReason
 
 class ProfileTelemetry(
     private val analyticsManager: AnalyticsManager,
 ) {
+    private val trackedStarted = mutableSetOf<String>()
+
     fun onProfileScreenViewed(
         totalVideos: Int,
         publisherUserId: String,
@@ -120,6 +123,24 @@ class ProfileTelemetry(
                 SourceScreen.PROFILE,
                 feedDetails.principalID == userPrincipalId,
             ),
+        )
+    }
+
+    fun trackVideoStarted(feedDetails: FeedDetails) {
+        if (trackedStarted.contains(feedDetails.videoID)) return
+        trackedStarted += feedDetails.videoID
+        analyticsManager.trackEvent(
+            event =
+                VideoStartedEventData(
+                    videoId = feedDetails.videoID,
+                    publisherUserId = feedDetails.principalID,
+                    likeCount = feedDetails.likeCount.toLong(),
+                    viewCount = feedDetails.viewCount.toLong(),
+                    isNsfw = feedDetails.isNSFW(),
+                    shareCount = 0,
+                    isGameEnabled = true,
+                    gameType = GameType.SMILEY,
+                ),
         )
     }
 
