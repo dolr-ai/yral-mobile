@@ -3,6 +3,7 @@ package com.yral.shared.features.wallet.data
 import com.yral.shared.features.wallet.data.models.toDomain
 import com.yral.shared.features.wallet.domain.models.BtcRewardConfig
 import com.yral.shared.features.wallet.domain.models.BtcToCurrency
+import com.yral.shared.features.wallet.domain.models.DolrPrice
 import com.yral.shared.features.wallet.domain.repository.WalletRepository
 
 class WalletRepositoryImpl(
@@ -35,4 +36,9 @@ class WalletRepositoryImpl(
             .getBtcRewardConfig()
             .config
             ?.toDomain()
+
+    override suspend fun getDolrPrice(): DolrPrice =
+        dataSource
+            .getDolrUsdPrice()
+            .toDomain()
 }

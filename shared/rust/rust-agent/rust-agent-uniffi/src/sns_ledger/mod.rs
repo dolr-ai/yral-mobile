@@ -398,7 +398,7 @@ pub struct SnsLedgerService {
     pub agent: Arc<Agent>,
 }
 
-pub const DEFAULT_SNS_LEDGER_CANISTER: &str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+pub const DEFAULT_SNS_LEDGER_CANISTER: &str = "6rdgd-kyaaa-aaaaq-aaavq-cai";
 
 #[uniffi::export]
 impl SnsLedgerService {
