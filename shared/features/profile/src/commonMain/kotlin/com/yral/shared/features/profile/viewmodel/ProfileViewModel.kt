@@ -122,6 +122,7 @@ class ProfileViewModel(
         private const val POSTS_PER_PAGE = 20
         private const val POSTS_PREFETCH_DISTANCE = 5
         private val VIEWS_REFRESH_THRESHOLD = 15.seconds
+        private val ANALYTICS_VIDEO_STARTED_RANGE = 0..1000
     }
 
     private val _state =
@@ -568,6 +569,17 @@ class ProfileViewModel(
 
     fun onEditProfileOpened(source: EditProfileSource) {
         profileTelemetry.onEditProfileStarted(source)
+    }
+
+    @Suppress("UnusedParameter")
+    fun recordTime(
+        currentTime: Int,
+        totalTime: Int,
+        feedDetails: FeedDetails,
+    ) {
+        if (currentTime in ANALYTICS_VIDEO_STARTED_RANGE) {
+            profileTelemetry.trackVideoStarted(feedDetails)
+        }
     }
 
     fun setManualRefreshTriggered(isTriggered: Boolean) {

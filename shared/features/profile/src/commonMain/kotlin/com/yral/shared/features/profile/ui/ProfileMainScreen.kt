@@ -386,6 +386,9 @@ fun ProfileMainScreen(
                             )
                         },
                         onViewsClick = { video -> viewModel.showVideoViews(video) },
+                        onRecordTime = { currentTime, totalTime, video ->
+                            viewModel.recordTime(currentTime, totalTime, video)
+                        },
                         modifier = Modifier.fillMaxSize(),
                     )
                 } else {
