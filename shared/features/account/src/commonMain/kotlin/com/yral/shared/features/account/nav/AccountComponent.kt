@@ -2,7 +2,7 @@ package com.yral.shared.features.account.nav
 
 import com.arkivanov.decompose.ComponentContext
 import com.yral.shared.analytics.events.SignupPageName
-import com.yral.shared.features.subscriptions.ui.SubscriptionCoordinator
+import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 
 interface AccountComponent {
     val promptLogin: (pageName: SignupPageName) -> Unit

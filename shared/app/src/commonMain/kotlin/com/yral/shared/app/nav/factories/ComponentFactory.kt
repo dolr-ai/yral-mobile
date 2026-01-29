@@ -87,6 +87,7 @@ internal class ComponentFactory(
         ConversationComponent.Companion(
             componentContext = componentContext,
             requestLoginFactory = rootComponent.createLoginRequestFactory(),
+            subscriptionCoordinator = rootComponent.getSubscriptionCoordinator(),
             influencerId = config.influencerId,
             influencerCategory = config.influencerCategory,
             influencerSource = config.influencerSource,

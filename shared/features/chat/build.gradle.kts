@@ -30,6 +30,7 @@ kotlin {
             implementation(projects.shared.rust.service)
 
             implementation(projects.shared.features.auth)
+            implementation(projects.shared.features.subscriptions)
 
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.io.core)

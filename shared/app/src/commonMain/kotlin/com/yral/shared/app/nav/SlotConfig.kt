@@ -15,4 +15,7 @@ internal sealed interface SlotConfig {
 
     @Serializable
     data object SubscriptionAccountMismatchSheet : SlotConfig
+
+    @Serializable
+    data object SubscriptionNudge : SlotConfig
 }

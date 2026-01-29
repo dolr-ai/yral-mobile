@@ -36,4 +36,5 @@
     <string name="subscription_account_mismatch_title">You already have YRAL Pro!</string>
     <string name="subscription_account_mismatch_message">This subscription is active on another YRAL account. Please log in with that account to continue.</string>
     <string name="subscription_account_mismatch_button">Use Another Account</string>
+    <string name="subscription_nudge_cta">Subscribe Now</string>
 </resources>
