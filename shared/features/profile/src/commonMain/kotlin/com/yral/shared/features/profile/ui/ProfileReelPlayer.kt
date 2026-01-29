@@ -81,6 +81,7 @@ fun ProfileReelPlayer(
     onDownloadVideo: (FeedDetails) -> Unit,
     onShareClick: (FeedDetails) -> Unit,
     onViewsClick: (FeedDetails) -> Unit,
+    onRecordTime: (currentTime: Int, totalTime: Int, video: FeedDetails) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -88,14 +89,20 @@ fun ProfileReelPlayer(
         remember(reelVideos.itemSnapshotList) {
             reelVideos.itemSnapshotList.items.map { it.toReel() }
         }
+    var currentPage by remember { mutableStateOf(initialPage) }
     if (videoReels.isNotEmpty()) {
         YRALReelPlayer(
             modifier = modifier.fillMaxSize(),
             reels = videoReels,
             maxReelsInPager = videoReels.size,
             initialPage = initialPage,
-            onPageLoaded = { },
-            recordTime = { _, _ -> },
+            onPageLoaded = { page -> currentPage = page },
+            recordTime = { currentTime, totalTime ->
+                val currentVideo = reelVideos[currentPage]
+                if (currentVideo != null) {
+                    onRecordTime(currentTime, totalTime, currentVideo)
+                }
+            },
             didVideoEnd = { },
         ) { pageNo, _ ->
             val currentVideo = reelVideos[pageNo]
