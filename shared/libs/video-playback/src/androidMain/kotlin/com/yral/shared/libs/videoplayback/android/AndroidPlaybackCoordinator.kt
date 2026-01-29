@@ -316,8 +316,23 @@ private class AndroidPlaybackCoordinator(
         preparedScheduler.reset("release") { feed.getOrNull(it)?.id }
         progressTicker.stop()
         scope.cancel()
+
+        // Stop preload manager from starting new operations
+        preloadManager.removeListener(preloadListener)
+        preloadManager.invalidate()
+
+        // Remove all media items to cancel ongoing downloads
+        // Note: This is asynchronous - downloads may still be active for a short time
+        if (mediaItems.isNotEmpty()) {
+            preloadManager.removeMediaItems(mediaItems)
+        }
+
+        // Release players first - they may have MediaSources using the cache
+        // This ensures all cache references from players are closed
         playerA.release()
         playerB?.release()
+
+        // Release the preload manager - this should stop all preload operations
         preloadManager.release()
 //        ShortformCacheProvider.release()
     }
@@ -449,13 +464,16 @@ private class AndroidPlaybackCoordinator(
         private var databaseProvider: StandaloneDatabaseProvider? = null
         private var refCount = 0
 
+        @Volatile
+        private var isReleasing = false
+
         fun acquire(
             context: Context,
             policy: PreloadPolicy,
         ): SimpleCache {
             synchronized(lock) {
                 val existing = cache
-                if (existing != null) {
+                if (existing != null && !isReleasing) {
                     refCount++
                     return existing
                 }
@@ -468,6 +486,7 @@ private class AndroidPlaybackCoordinator(
                 val created = SimpleCache(cacheDir, evictor, provider)
                 cache = created
                 refCount = 1
+                isReleasing = false
                 return created
             }
         }
@@ -477,11 +496,28 @@ private class AndroidPlaybackCoordinator(
                 if (refCount > 0) {
                     refCount--
                 }
-                if (refCount == 0) {
-                    cache?.release()
-                    cache = null
+                if (refCount == 0 && !isReleasing) {
+                    isReleasing = true
+                    val cacheToRelease = cache
+                    cache = null // Clear reference first to prevent new operations
                     databaseProvider?.close()
                     databaseProvider = null
+
+                    // Release cache - may throw if background threads are still accessing it
+                    // This is expected in race conditions with Media3's async download cancellation
+                    try {
+                        cacheToRelease?.release()
+                    } catch (
+                        @Suppress("SwallowedException") e: IllegalStateException,
+                    ) {
+                        // Cache may be in use by background download threads that haven't
+                        // been cancelled yet. This is a known race condition in Media3 when
+                        // removeMediaItems() is called (which is async) and release() is called
+                        // immediately after. The cache will be cleaned up on next app start.
+                        // Swallow the exception to prevent crashes.
+                    } finally {
+                        isReleasing = false
+                    }
                 }
             }
         }
