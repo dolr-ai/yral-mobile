@@ -70,6 +70,13 @@ internal class IndividualUserRepositoryImpl(
                 ?.toFeedDetails()
         }
 
+    override suspend fun fetchPostDetailsWithNsfwInfo(post: Post): FeedDetails? =
+        traceApiCall(performanceTracer, "fetchPostDetailsWithNsfwInfo") {
+            dataSource
+                .fetchPostDetailsWithNsfwInfo(post.toDTO())
+                ?.toFeedDetails()
+        }
+
     override suspend fun getUserBitcoinBalance(
         canisterId: String,
         principalId: String,

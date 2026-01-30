@@ -11,6 +11,7 @@ internal interface IndividualUserDataSource {
     suspend fun fetchFeedDetails(post: PostDTO): PostDetailsForFrontend
     suspend fun fetchSCFeedDetails(post: PostDTO): UpsPostDetailsForFrontend
     suspend fun fetchFeedDetailsWithCreatorInfo(post: PostDTO): PostDetailsWithUserInfo?
+    suspend fun fetchPostDetailsWithNsfwInfo(post: PostDTO): PostDetailsWithUserInfo?
     suspend fun getPostsOfThisUserProfileWithPaginationCursor(
         canisterId: String,
         startIndex: ULong,
