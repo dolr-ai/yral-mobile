@@ -32,7 +32,6 @@ import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.auth.ui.rememberLoginInfo
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.feed.viewmodel.FeedEvents
-import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.FOLLOW_NUDGE_PAGE
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.PRE_FETCH_BEFORE_LAST
@@ -52,8 +51,6 @@ import com.yral.shared.libs.videoPlayer.YRALReelPlayer
 import com.yral.shared.libs.videoPlayer.YRALReelPlayerCardStack
 import com.yral.shared.libs.videoPlayer.cardstack.SwipeDirection
 import com.yral.shared.libs.videoPlayer.model.Reels
-import com.yral.shared.libs.videoPlayer.pool.VideoListener
-import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
 import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
 import com.yral.shared.reportVideo.domain.models.ReportSheetState
 import com.yral.shared.reportVideo.ui.ReportVideoSheet
@@ -84,8 +81,6 @@ fun FeedScreen(
     onPageChanged: (pageNo: Int, currentPage: Int) -> Unit,
     onEdgeScrollAttempt: (pageNo: Int) -> Unit,
     limitReelCount: Int,
-    getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
-    getVideoListener: (reel: Reels) -> VideoListener?,
     onSwipeVote: ((direction: SwipeDirection, pageIndex: Int) -> Unit)? = null,
 ) {
     val state by viewModel.state.collectAsState()
@@ -147,13 +142,18 @@ fun FeedScreen(
         return
     }
 
+    val reels =
+        remember(state.feedDetails) {
+            state.feedDetails.map { it.toReel() }
+        }
+
     Column(modifier = modifier) {
         if (state.feedDetails.isNotEmpty()) {
             KeepScreenOnEffect(true)
             if (state.isCardLayoutEnabled) {
                 YRALReelPlayerCardStack(
                     modifier = Modifier.weight(1f),
-                    reels = getReels(state),
+                    reels = reels,
                     maxReelsInPager = limitReelCount,
                     initialPage = state.currentPageOfFeed,
                     onPageLoaded = { page ->
@@ -166,8 +166,6 @@ fun FeedScreen(
                         viewModel.recordTime(currentTime, totalTime)
                     },
                     didVideoEnd = { viewModel.didCurrentVideoEnd() },
-                    getPrefetchListener = getPrefetchListener,
-                    getVideoListener = getVideoListener,
                     onEdgeScrollAttempt = { page, atFirst, direction ->
                         // For card stack, any edge swipe attempt should trigger load more
                         onEdgeScrollAttempt(page)
@@ -176,7 +174,8 @@ fun FeedScreen(
                 ) { pageNo, scrollToNext ->
                     FeedOverlay(
                         pageNo = pageNo,
-                        state = state,
+                        currentOnboardingStep = state.currentOnboardingStep,
+                        isLoggedIn = state.isLoggedIn,
                         topOverlay = { topOverlay(pageNo) },
                         bottomOverlay = { bottomOverlay(pageNo, scrollToNext) },
                         actionsRight = { actionsRight(pageNo) },
@@ -186,7 +185,7 @@ fun FeedScreen(
             } else {
                 YRALReelPlayer(
                     modifier = Modifier.weight(1f),
-                    reels = getReels(state),
+                    reels = reels,
                     maxReelsInPager = limitReelCount,
                     initialPage = state.currentPageOfFeed,
                     onPageLoaded = { page ->
@@ -198,8 +197,6 @@ fun FeedScreen(
                         viewModel.recordTime(currentTime, totalTime)
                     },
                     didVideoEnd = { viewModel.didCurrentVideoEnd() },
-                    getPrefetchListener = getPrefetchListener,
-                    getVideoListener = getVideoListener,
                     onEdgeScrollAttempt = { page, atFirst, direction ->
                         if (!atFirst && direction == ReelScrollDirection.Up) {
                             onEdgeScrollAttempt(page)
@@ -208,7 +205,8 @@ fun FeedScreen(
                 ) { pageNo, scrollToNext ->
                     FeedOverlay(
                         pageNo = pageNo,
-                        state = state,
+                        currentOnboardingStep = state.currentOnboardingStep,
+                        isLoggedIn = state.isLoggedIn,
                         topOverlay = { topOverlay(pageNo) },
                         bottomOverlay = { bottomOverlay(pageNo, scrollToNext) },
                         actionsRight = { actionsRight(pageNo) },
@@ -295,12 +293,6 @@ fun FeedScreen(
     }
 }
 
-private fun getReels(state: FeedState): List<Reels> =
-    state
-        .feedDetails
-        .map { it.toReel() }
-        .toList()
-
 private fun FeedDetails.toReel() =
     Reels(
         videoUrl = url,
@@ -311,7 +303,8 @@ private fun FeedDetails.toReel() =
 @Composable
 private fun FeedOverlay(
     pageNo: Int,
-    state: FeedState,
+    currentOnboardingStep: OnboardingStep?,
+    isLoggedIn: Boolean,
     topOverlay: @Composable () -> Unit,
     bottomOverlay: @Composable () -> Unit,
     actionsRight: @Composable ColumnScope.() -> Unit,
@@ -321,8 +314,8 @@ private fun FeedOverlay(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.TopStart,
     ) {
-        if (state.currentOnboardingStep == OnboardingStep.INTRO_RANK ||
-            state.currentOnboardingStep == OnboardingStep.INTRO_BALANCE
+        if (currentOnboardingStep == OnboardingStep.INTRO_RANK ||
+            currentOnboardingStep == OnboardingStep.INTRO_BALANCE
         ) {
             BottomView(
                 bottomOverlay = bottomOverlay,
@@ -339,9 +332,9 @@ private fun FeedOverlay(
     }
 
     val loginState = rememberLoginInfo(requestLoginFactory = requestLoginFactory)
-    LaunchedEffect(pageNo, state.isLoggedIn) {
+    LaunchedEffect(pageNo, isLoggedIn) {
         // Login overlay - rendered after Box to ensure it's on top
-        if (!state.isLoggedIn && pageNo != 0 && (pageNo % SIGN_UP_PAGE) == 0) {
+        if (!isLoggedIn && pageNo != 0 && (pageNo % SIGN_UP_PAGE) == 0) {
             loginState.requestLogin(
                 SignupPageName.HOME,
                 LoginScreenType.Overlay,

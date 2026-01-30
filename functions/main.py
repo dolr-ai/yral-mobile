@@ -16,7 +16,8 @@ from tournaments import (
     register_for_tournament,
     my_tournaments,
     tournament_vote,
-    tournament_leaderboard
+    tournament_leaderboard,
+    tournament_video_emojis,
 )
 from hot_or_not_tournament import (
     create_hot_or_not_tournament,
@@ -275,7 +276,7 @@ def tap_to_recharge(request: Request):
                 "Tap recharge not available: airdrop limit reached.")
 
         # 6️⃣ Push to wallet first
-        DELTA = 100
+        DELTA = 25
         success, error_msg = _push_delta_yral_token(os.environ["BALANCE_UPDATE_TOKEN"], pid, DELTA)
         if not success:
             print(f"Failed to update YRAL balance for {pid}: {error_msg}", file=sys.stderr)

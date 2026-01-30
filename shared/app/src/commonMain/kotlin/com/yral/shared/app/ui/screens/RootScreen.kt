@@ -34,10 +34,11 @@ import com.yral.shared.app.nav.RootComponent
 import com.yral.shared.app.nav.RootComponent.Child
 import com.yral.shared.app.ui.components.UpdateNotificationHost
 import com.yral.shared.app.ui.screens.alertsrequest.AlertsRequestBottomSheet
-import com.yral.shared.app.ui.screens.feed.performance.PrefetchVideoListenerImpl
 import com.yral.shared.app.ui.screens.home.HomeScreen
 import com.yral.shared.app.ui.screens.login.LoginBottomSheetSlotContent
 import com.yral.shared.app.ui.screens.login.LoginScreenContent
+import com.yral.shared.app.ui.screens.subscription.SubscriptionAccountMismatchSheet
+import com.yral.shared.app.ui.screens.subscription.SubscriptionNudgeBottomSheet
 import com.yral.shared.app.ui.screens.tournament.TournamentGameScaffoldScreen
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.session.getKey
@@ -51,7 +52,7 @@ import com.yral.shared.features.profile.viewmodel.EditProfileViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.root.viewmodels.NavigationTarget
 import com.yral.shared.features.root.viewmodels.RootError
-import com.yral.shared.features.root.viewmodels.RootViewModel
+import com.yral.shared.features.subscriptions.ui.SubscriptionsScreen
 import com.yral.shared.features.tournament.ui.TournamentLeaderboardScreen
 import com.yral.shared.features.wallet.ui.WalletScreen
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
@@ -70,10 +71,8 @@ import yral_mobile.shared.app.generated.resources.error_timeout_title
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RootScreen(
-    rootComponent: RootComponent,
-    viewModel: RootViewModel = koinViewModel(),
-) {
+fun RootScreen(rootComponent: RootComponent) {
+    val viewModel = rootComponent.rootViewModel
     val state by viewModel.state.collectAsState()
     LaunchedEffect(state.navigationTarget) {
         when (state.navigationTarget) {
@@ -146,7 +145,6 @@ fun RootScreen(
                             modifier = Modifier.fillMaxSize().safeDrawingPadding(),
                             viewModel = profileViewModel,
                             profileVideos = profileVideos,
-                            getPrefetchListener = { reel -> PrefetchVideoListenerImpl(reel) },
                         )
                     }
 
@@ -194,6 +192,14 @@ fun RootScreen(
                         LeaderboardScreen(
                             component = child.component,
                             leaderBoardViewModel = leaderBoardViewModel,
+                            modifier = Modifier.fillMaxSize().safeDrawingPadding(),
+                        )
+                    }
+
+                    is Child.Subscription -> {
+                        HandleSystemBars(show = true)
+                        SubscriptionsScreen(
+                            component = child.component,
                             modifier = Modifier.fillMaxSize().safeDrawingPadding(),
                         )
                     }
@@ -347,6 +353,38 @@ private fun SlotContent(component: RootComponent) {
             }
             is RootComponent.SlotChild.LoginBottomSheet -> {
                 LoginBottomSheetSlotContent(rootComponent = component)
+            }
+            is RootComponent.SlotChild.SubscriptionAccountMismatchSheet -> {
+                val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+                SubscriptionAccountMismatchSheet(
+                    bottomSheetState = bottomSheetState,
+                    onDismissRequest = {
+                        component.getSubscriptionCoordinator().dismissSubscriptionBottomSheet()
+                    },
+                    onUseAnotherAccount = {
+                        component.getSubscriptionCoordinator().dismissSubscriptionBottomSheet()
+                    },
+                )
+            }
+            is RootComponent.SlotChild.SubscriptionNudge -> {
+                val coordinator = component.getSubscriptionCoordinator()
+                val nudgeContent = coordinator.subscriptionNudgeContent
+                val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+                if (nudgeContent != null) {
+                    SubscriptionNudgeBottomSheet(
+                        content = nudgeContent,
+                        bottomSheetState = bottomSheetState,
+                        onDismissRequest = { coordinator.dismissSubscriptionNudge() },
+                        onSubscribe = {
+                            coordinator.buySubscription()
+                            coordinator.dismissSubscriptionNudge()
+                        },
+                    )
+                } else {
+                    LaunchedEffect(Unit) {
+                        coordinator.dismissSubscriptionNudge()
+                    }
+                }
             }
         }
     }

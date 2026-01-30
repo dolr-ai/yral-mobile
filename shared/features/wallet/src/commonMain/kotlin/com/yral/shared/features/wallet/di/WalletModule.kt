@@ -5,8 +5,10 @@ import com.yral.shared.features.wallet.data.WalletDataSource
 import com.yral.shared.features.wallet.data.WalletDataSourceImpl
 import com.yral.shared.features.wallet.data.WalletRepositoryImpl
 import com.yral.shared.features.wallet.domain.GetBtcConversionUseCase
+import com.yral.shared.features.wallet.domain.GetDolrUsdPriceUseCase
 import com.yral.shared.features.wallet.domain.GetRewardConfigUseCase
 import com.yral.shared.features.wallet.domain.GetUserBtcBalanceUseCase
+import com.yral.shared.features.wallet.domain.GetUserDolrBalanceUseCase
 import com.yral.shared.features.wallet.domain.repository.WalletRepository
 import com.yral.shared.features.wallet.viewmodel.WalletViewModel
 import org.koin.core.module.dsl.factoryOf
@@ -21,6 +23,8 @@ val walletModule =
         factoryOf(::WalletTelemetry)
         factoryOf(::GetBtcConversionUseCase)
         factoryOf(::GetUserBtcBalanceUseCase)
+        factoryOf(::GetUserDolrBalanceUseCase)
         factoryOf(::GetRewardConfigUseCase)
+        factoryOf(::GetDolrUsdPriceUseCase)
         viewModelOf(::WalletViewModel)
     }

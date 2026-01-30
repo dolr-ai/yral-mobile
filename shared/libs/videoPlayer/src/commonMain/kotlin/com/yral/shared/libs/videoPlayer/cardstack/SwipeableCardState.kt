@@ -41,8 +41,12 @@ class SwipeableCardState(
     initialIndex: Int,
     private var itemCount: Int,
 ) {
-    /** Current index of the front card in the reels list */
+    /** Index closest to the snapped position (used for playback/active state) */
     var currentIndex by mutableIntStateOf(initialIndex)
+        private set
+
+    /** Index of the fully settled front card (used for rendering) */
+    var settledIndex by mutableIntStateOf(initialIndex)
         private set
 
     /** Horizontal offset of the front card during drag */
@@ -81,6 +85,9 @@ class SwipeableCardState(
      */
     fun updateItemCount(newCount: Int) {
         itemCount = newCount
+        val maxIndex = (itemCount - 1).coerceAtLeast(0)
+        settledIndex = settledIndex.coerceIn(0, maxIndex)
+        currentIndex = currentIndex.coerceIn(0, maxIndex)
     }
 
     /**
@@ -121,6 +128,42 @@ class SwipeableCardState(
     ): Boolean = calculateSwipeProgress(screenWidth, screenHeight) >= 1f
 
     /**
+     * Updates the commit state based on drag progress and commit threshold.
+     * Keeps the active index pinned to the settled card while the user is touching
+     * to avoid swapping playback surfaces mid-gesture.
+     * @return true if this call transitioned into the committed state.
+     */
+    fun updateCurrentIndexForDrag(
+        screenWidth: Float,
+        screenHeight: Float,
+        commitThreshold: Float,
+    ): Boolean {
+        val shouldCommit =
+            !isAtEnd() &&
+                swipeDirection != SwipeDirection.NONE &&
+                calculateSwipeProgress(screenWidth, screenHeight) >= commitThreshold
+        val wasCommitted = isSwipeCommitted
+        isSwipeCommitted = shouldCommit
+        currentIndex = if (!isTouching && shouldCommit) nextIndex() else settledIndex
+        return !wasCommitted && shouldCommit
+    }
+
+    /**
+     * Forces the active index to the next card if possible.
+     * @return true if the index moved to next.
+     */
+    fun commitToNext(): Boolean {
+        if (isAtEnd()) {
+            isSwipeCommitted = false
+            currentIndex = settledIndex
+            return false
+        }
+        isSwipeCommitted = true
+        currentIndex = nextIndex()
+        return true
+    }
+
+    /**
      * Animates the card dismissal in the current swipe direction.
      * @param screenWidth Width of the screen for calculating exit position.
      * @param screenHeight Height of the screen for calculating exit position.
@@ -130,8 +173,12 @@ class SwipeableCardState(
         screenWidth: Float,
         screenHeight: Float,
         onComplete: () -> Unit,
+        commitAtStart: Boolean = true,
     ) {
         isAnimating = true
+        if (commitAtStart) {
+            commitToNext()
+        }
 
         // Calculate exit position (off-screen in swipe direction)
         val exitMultiplier = CardStackConstants.EXIT_MULTIPLIER
@@ -178,9 +225,8 @@ class SwipeableCardState(
             }
         }
 
-        // Advance to next card
-        advanceToNext()
         onComplete()
+        advanceToNext()
         isAnimating = false
     }
 
@@ -204,6 +250,7 @@ class SwipeableCardState(
         }
         swipeDirection = SwipeDirection.NONE
         isSwipeCommitted = false
+        currentIndex = settledIndex
         isAnimating = false
     }
 
@@ -213,11 +260,13 @@ class SwipeableCardState(
      * @return true if there was a next card, false if at end.
      */
     fun advanceToNext(): Boolean =
-        if (currentIndex < itemCount - 1) {
-            currentIndex++
+        if (settledIndex < itemCount - 1) {
+            settledIndex++
+            currentIndex = settledIndex
             resetState()
             true
         } else {
+            currentIndex = settledIndex
             resetState()
             false
         }
@@ -225,7 +274,7 @@ class SwipeableCardState(
     /**
      * Checks if current index is at the last item.
      */
-    fun isAtEnd(): Boolean = currentIndex >= itemCount - 1
+    fun isAtEnd(): Boolean = settledIndex >= itemCount - 1
 
     /**
      * Programmatically swipes the card in the specified direction.
@@ -245,8 +294,18 @@ class SwipeableCardState(
         if (isAnimating || isAtEnd() || direction == SwipeDirection.NONE) return
 
         swipeDirection = direction
-        isSwipeCommitted = true
-        animateDismiss(screenWidth, screenHeight, onComplete)
+        commitToNext()
+        animatePreSwipe(
+            screenWidth = screenWidth,
+            screenHeight = screenHeight,
+            direction = direction,
+        )
+        animateDismiss(
+            screenWidth = screenWidth,
+            screenHeight = screenHeight,
+            onComplete = onComplete,
+            commitAtStart = false,
+        )
     }
 
     /**
@@ -260,5 +319,58 @@ class SwipeableCardState(
         isTouching = false
         isDragging = false
         isSwipeCommitted = false
+    }
+
+    @Suppress("MagicNumber")
+    private suspend fun animatePreSwipe(
+        screenWidth: Float,
+        screenHeight: Float,
+        direction: SwipeDirection,
+    ) {
+        val thresholdX = screenWidth * CardStackConstants.SWIPE_THRESHOLD_FRACTION
+        val thresholdY = screenHeight * CardStackConstants.SWIPE_THRESHOLD_FRACTION
+        val preOffset =
+            when (direction) {
+                SwipeDirection.LEFT -> Offset(-thresholdX * 0.6f, 0f)
+                SwipeDirection.RIGHT -> Offset(thresholdX * 0.6f, 0f)
+                SwipeDirection.UP -> Offset(0f, -thresholdY * 0.6f)
+                SwipeDirection.DOWN -> Offset(0f, thresholdY * 0.6f)
+                SwipeDirection.NONE -> Offset.Zero
+            }
+        if (preOffset == Offset.Zero) return
+
+        offsetAnimatable.snapTo(Offset(offsetX, offsetY))
+        rotationAnimatable.snapTo(rotation)
+
+        coroutineScope {
+            launch {
+                offsetAnimatable.animateTo(
+                    targetValue = preOffset,
+                    animationSpec = tween(120),
+                ) {
+                    offsetX = value.x
+                    offsetY = value.y
+                }
+            }
+            launch {
+                val targetRotation =
+                    when (direction) {
+                        SwipeDirection.LEFT -> -CardStackConstants.ROTATION_MULTIPLIER * 0.4f
+                        SwipeDirection.RIGHT -> CardStackConstants.ROTATION_MULTIPLIER * 0.4f
+                        else -> 0f
+                    }
+                rotationAnimatable.animateTo(
+                    targetValue = targetRotation,
+                    animationSpec = tween(120),
+                ) {
+                    rotation = value
+                }
+            }
+        }
+    }
+
+    private fun nextIndex(): Int {
+        val maxIndex = (itemCount - 1).coerceAtLeast(0)
+        return (settledIndex + 1).coerceAtMost(maxIndex)
     }
 }

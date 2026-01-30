@@ -34,7 +34,9 @@ kotlin {
             implementation(projects.shared.libs.featureFlag)
             implementation(projects.shared.libs.sharing)
             implementation(projects.shared.libs.designsystem)
+            implementation(projects.shared.libs.iap.main)
             implementation(projects.shared.libs.videoPlayer)
+            implementation(projects.shared.libs.videoPlayback)
             implementation(projects.shared.libs.fileDownloader)
             implementation(projects.shared.data)
 
@@ -58,6 +60,7 @@ kotlin {
             implementation(projects.shared.features.leaderboard)
             implementation(projects.shared.features.tournament)
             implementation(projects.shared.features.chat)
+            implementation(projects.shared.features.subscriptions)
 
             implementation(projects.shared.rust.service)
 

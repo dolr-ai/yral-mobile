@@ -2,6 +2,8 @@ package com.yral.shared.features.root.viewmodels
 
 import androidx.lifecycle.ViewModel
 import co.touchlab.kermit.Logger
+import com.github.michaelbull.result.onFailure
+import com.github.michaelbull.result.onSuccess
 import com.yral.featureflag.AppFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.FeedFeatureFlags
@@ -19,6 +21,10 @@ import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.YralAuthException
 import com.yral.shared.features.auth.YralFBAuthException
 import com.yral.shared.features.root.analytics.RootTelemetry
+import com.yral.shared.features.subscriptions.domain.QueryPurchaseUseCase
+import com.yral.shared.iap.IAPManager
+import com.yral.shared.iap.PurchaseResult
+import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.preferences.PrefKeys
@@ -35,6 +41,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
@@ -51,9 +58,9 @@ sealed interface NavigationTarget {
 }
 
 @OptIn(ExperimentalTime::class)
-@Suppress("TooGenericExceptionCaught")
+@Suppress("TooGenericExceptionCaught", "LongParameterList")
 class RootViewModel(
-    appDispatchers: AppDispatchers,
+    private val appDispatchers: AppDispatchers,
     authClientFactory: AuthClientFactory,
     private val sessionManager: SessionManager,
     private val crashlyticsManager: CrashlyticsManager,
@@ -61,6 +68,8 @@ class RootViewModel(
     private val flagManager: FeatureFlagManager,
     private val preferences: Preferences,
     private val utmAttributionStore: UtmAttributionStore,
+    private val iapManager: IAPManager,
+    private val queryPurchaseUseCase: QueryPurchaseUseCase,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
@@ -188,6 +197,8 @@ class RootViewModel(
             if (!isSessionPrincipalSame) {
                 resolveNavigationTarget()
                 initializeFirebase()
+                // Not used as of now we will get details from canister in profileDetailsV6
+                // restorePurchases()
             }
         } ?: authClient.initialize()
     }
@@ -216,6 +227,24 @@ class RootViewModel(
                     crashlyticsManager.recordException(e, ExceptionType.AUTH)
                 }
             }
+    }
+
+    @Suppress("UnusedPrivateMember")
+    private fun restorePurchases() {
+        coroutineScope.launch {
+            val isSocialSignIn =
+                sessionManager.readLatestSessionPropertyWithDefault(
+                    selector = { it.isSocialSignIn },
+                    defaultValue = false,
+                )
+            if (!isSocialSignIn) return@launch
+            iapManager
+                .isProductPurchased(ProductId.YRAL_PRO)
+                .fold(
+                    onSuccess = { isPurchased -> Logger.d("SubscriptionX") { "isPurchased: $isPurchased" } },
+                    onFailure = { Logger.e("SubscriptionX", it) { "Failed to restore" } },
+                )
+        }
     }
 
     private suspend fun resolveNavigationTarget() {
@@ -277,6 +306,39 @@ class RootViewModel(
         with(_state.value) {
             isPendingLogin !is UiState.Success || isPendingLogin.data
         }
+
+    fun checkSubscriptionAndOpen(
+        openSubscription: (purchaseTimeMs: Long?) -> Unit,
+        showSubscriptionAccountMismatchSheet: () -> Unit,
+        onError: (() -> Unit)? = null,
+    ) {
+        coroutineScope.launch {
+            if (!flagManager.isEnabled(AppFeatureFlags.Common.EnableSubscription)) return@launch
+            val userPrincipal = sessionManager.userPrincipal
+            if (userPrincipal == null) {
+                withContext(appDispatchers.main) { onError?.invoke() }
+                return@launch
+            }
+            val result = queryPurchaseUseCase(Unit)
+            result
+                .onSuccess { purchaseResult ->
+                    withContext(appDispatchers.main) {
+                        when (purchaseResult) {
+                            is PurchaseResult.NoPurchase -> openSubscription(null)
+                            is PurchaseResult.PurchaseMatches -> openSubscription(purchaseResult.purchaseTime)
+                            is PurchaseResult.AccountMismatch -> showSubscriptionAccountMismatchSheet()
+                            is PurchaseResult.UnaccountedPurchase -> {
+                                Logger.d("SubscriptionX") { "Unaccounted purchase" }
+                                onError?.invoke()
+                            }
+                        }
+                    }
+                }.onFailure {
+                    Logger.d("SubscriptionX") { "Failed to query purchase $it" }
+                    withContext(appDispatchers.main) { onError?.invoke() }
+                }
+        }
+    }
 }
 
 data class RootState(

@@ -21,6 +21,7 @@ import com.yral.shared.features.game.di.gameModule
 import com.yral.shared.features.leaderboard.di.leaderboardModule
 import com.yral.shared.features.profile.di.profileModule
 import com.yral.shared.features.root.di.rootModule
+import com.yral.shared.features.subscriptions.di.subscriptionsModule
 import com.yral.shared.features.tournament.di.tournamentModule
 import com.yral.shared.features.uploadvideo.di.uploadVideoModule
 import com.yral.shared.features.wallet.di.walletModule
@@ -28,6 +29,8 @@ import com.yral.shared.firebaseAuth.di.firebaseAuthModule
 import com.yral.shared.firebaseStore.di.firestoreModule
 import com.yral.shared.http.HTTPEventListener
 import com.yral.shared.http.di.networkModule
+import com.yral.shared.iap.core.di.iapCoreModule
+import com.yral.shared.iap.di.iapModule
 import com.yral.shared.libs.arch.data.NetworkBoundResource
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
@@ -59,6 +62,8 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             preferencesModule,
             analyticsModule,
             crashlyticsModule,
+            iapCoreModule,
+            iapModule,
             networkModule,
             fileDownloaderModule,
             rustModule,
@@ -88,6 +93,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             profileModule,
             walletModule,
             chatModule,
+            subscriptionsModule,
         )
     }
 }

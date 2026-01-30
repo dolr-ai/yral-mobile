@@ -3,13 +3,9 @@ package com.yral.shared.libs.videoPlayer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.yral.shared.libs.videoPlayer.cardstack.ReelSwipeableCardStack
 import com.yral.shared.libs.videoPlayer.cardstack.SwipeDirection
-import com.yral.shared.libs.videoPlayer.cardstack.SwipeableCardStack
-import com.yral.shared.libs.videoPlayer.model.PlayerConfig
 import com.yral.shared.libs.videoPlayer.model.Reels
-import com.yral.shared.libs.videoPlayer.model.ScreenResize
-import com.yral.shared.libs.videoPlayer.pool.VideoListener
-import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
 import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
 
 /**
@@ -35,7 +31,6 @@ import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
  * @param didVideoEnd Callback when the current video ends.
  * @param onEdgeScrollAttempt Callback when user tries to swipe past the last video.
  * @param getPrefetchListener Factory for creating prefetch listeners per reel.
- * @param getVideoListener Factory for creating video listeners per reel.
  * @param overlayContent Content to overlay on each video card (UI controls, etc.).
  * @param onSwipeVote Callback when a swipe vote is registered (direction, pageIndex).
  */
@@ -49,38 +44,18 @@ fun YRALReelPlayerCardStack(
     recordTime: (Int, Int) -> Unit,
     didVideoEnd: () -> Unit,
     onEdgeScrollAttempt: (pageNo: Int, atStart: Boolean, direction: ReelScrollDirection) -> Unit = { _, _, _ -> },
-    getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
-    getVideoListener: (reel: Reels) -> VideoListener?,
     onSwipeVote: ((direction: SwipeDirection, pageIndex: Int) -> Unit)? = null,
     overlayContent: @Composable (pageNo: Int, scrollToNext: () -> Unit) -> Unit,
 ) {
-    SwipeableCardStack(
+    ReelSwipeableCardStack(
         modifier = modifier.fillMaxSize(),
         reels = reels,
         maxReelsInPager = maxReelsInPager,
         initialPage = initialPage,
         onPageLoaded = onPageLoaded,
         recordTime = recordTime,
-        playerConfig =
-            PlayerConfig(
-                isAutoHideControlEnabled = true,
-                isPauseResumeEnabled = false,
-                isFastForwardBackwardEnabled = false,
-                isSeekBarVisible = false,
-                isDurationVisible = false,
-                isMuteControlEnabled = false,
-                isSpeedControlEnabled = false,
-                isFullScreenEnabled = false,
-                isScreenLockEnabled = false,
-                isScreenResizeEnabled = false,
-                defaultScreenResize = ScreenResize.FILL,
-                reelVerticalScrolling = true,
-                loaderView = {},
-                didEndVideo = didVideoEnd,
-            ),
+        didVideoEnd = didVideoEnd,
         onEdgeScrollAttempt = onEdgeScrollAttempt,
-        getPrefetchListener = getPrefetchListener,
-        getVideoListener = { getVideoListener(it) },
         overlayContent = overlayContent,
         onSwipeVote = onSwipeVote,
     )

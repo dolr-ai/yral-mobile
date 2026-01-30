@@ -16,12 +16,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.capitalize
-import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.yral.shared.features.game.domain.models.GameIcon
-import com.yral.shared.features.game.domain.models.GameIconNames
 import com.yral.shared.features.game.ui.GameResultConstant.RESULT_ANIMATION_DURATION
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -61,7 +58,7 @@ fun GameResultView(
                 resultContent()
             } else {
                 Text(
-                    text = gameResultText(icon.imageName, coinDelta, errorMessage),
+                    text = gameResultText(coinDelta, errorMessage),
                 )
             }
         }
@@ -96,7 +93,6 @@ private fun GameResultViewIcon(
 
 @Composable
 private fun gameResultText(
-    iconName: GameIconNames,
     coinDelta: Int,
     errorMessage: String = "",
 ): AnnotatedString =
@@ -118,10 +114,7 @@ private fun gameResultText(
         if (coinDelta > 0) {
             withStyle(spanStyle) {
                 append(
-                    stringResource(
-                        Res.string.was_most_people_choice,
-                        iconName.name.lowercase().capitalize(Locale.current),
-                    ),
+                    stringResource(Res.string.was_most_people_choice),
                 )
                 append(" ")
             }

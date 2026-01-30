@@ -11,5 +11,7 @@ data class UserProfileDetails(
     val principalId: Principal,
     val followersCount: ULong,
     val callerFollowsUser: Boolean?,
+    val subscriptionPlan: SubscriptionPlan,
     val isAiInfluencer: Boolean?,
+    val accountType: UserAccountType,
 )

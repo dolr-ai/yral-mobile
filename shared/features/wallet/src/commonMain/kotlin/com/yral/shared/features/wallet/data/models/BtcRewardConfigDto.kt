@@ -20,6 +20,12 @@ data class BtcRewardConfigDto(
     val rewardAmountUsd: Double?,
     @SerialName("min_watch_duration")
     val minDurationWatched: Float,
+    @SerialName("fraud_threshold")
+    val fraudThreshold: Int? = null,
+    @SerialName("shadow_ban_duration")
+    val shadowBanDuration: Long? = null,
+    @SerialName("config_version")
+    val configVersion: Long? = null,
 )
 
 fun BtcRewardConfigDto.toDomain(): BtcRewardConfig =
@@ -28,4 +34,7 @@ fun BtcRewardConfigDto.toDomain(): BtcRewardConfig =
         rewardAmountInr = rewardAmountInr,
         rewardAmountUsd = rewardAmountUsd,
         minDurationWatched = minDurationWatched,
+        fraudThreshold = fraudThreshold,
+        shadowBanDuration = shadowBanDuration,
+        configVersion = configVersion,
     )

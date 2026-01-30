@@ -26,8 +26,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.shared.analytics.events.GameType
 import com.yral.shared.app.ui.screens.feed.FeedScaffoldScreenConstants.TOP_OVERLAY_ITEM_OFFSET_X
-import com.yral.shared.app.ui.screens.feed.performance.PrefetchVideoListenerImpl
-import com.yral.shared.app.ui.screens.feed.performance.VideoListenerImpl
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.feed.ui.FeedActionsRight
 import com.yral.shared.features.feed.ui.FeedScreen
@@ -147,18 +145,6 @@ fun FeedScaffoldScreen(
             } else {
                 feedState.feedDetails.size
             },
-        getPrefetchListener = { PrefetchVideoListenerImpl(it) },
-        getVideoListener = {
-            VideoListenerImpl(
-                reel = it,
-                registerTrace = { id, tractType ->
-                    feedViewModel.registerTrace(id, tractType.name)
-                },
-                isTraced = { id, traceType ->
-                    feedViewModel.isAlreadyTraced(id, traceType.name)
-                },
-            )
-        },
     )
     RefreshBalanceAnimation(
         refreshBalanceState = gameState.refreshBalanceState.toRefreshBalanceAnimationState(),

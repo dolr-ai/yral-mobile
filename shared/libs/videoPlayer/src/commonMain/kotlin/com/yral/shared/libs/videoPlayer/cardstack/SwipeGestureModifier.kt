@@ -79,14 +79,16 @@ fun Modifier.swipeableCard(
                             screenWidth = screenWidth,
                         )
 
-                        // Check if we should commit the video transition during drag
-                        if (!hasCommittedThisGesture && !state.isAtEnd()) {
-                            val progress = state.calculateSwipeProgress(screenWidth, screenHeight)
-                            if (progress >= commitThreshold && state.swipeDirection != SwipeDirection.NONE) {
-                                hasCommittedThisGesture = true
-                                state.isSwipeCommitted = true
-                                onSwipeCommitted(state.swipeDirection)
-                            }
+                        // Update active index based on drag progress.
+                        val didCommit =
+                            state.updateCurrentIndexForDrag(
+                                screenWidth = screenWidth,
+                                screenHeight = screenHeight,
+                                commitThreshold = commitThreshold,
+                            )
+                        if (didCommit && !hasCommittedThisGesture) {
+                            hasCommittedThisGesture = true
+                            onSwipeCommitted(state.swipeDirection)
                         }
                     }
 
@@ -120,13 +122,15 @@ fun Modifier.swipeableCard(
                         // Dismiss the card
                         // Fire commit callback if not already fired during drag (e.g., for flings)
                         if (!hasCommittedThisGesture) {
-                            state.isSwipeCommitted = true
+                            state.commitToNext()
                             onSwipeCommitted(direction)
                         }
                         coroutineScope.launch {
-                            state.animateDismiss(screenWidth, screenHeight) {
-                                onSwipeComplete(direction)
-                            }
+                            state.animateDismiss(
+                                screenWidth = screenWidth,
+                                screenHeight = screenHeight,
+                                onComplete = { onSwipeComplete(direction) },
+                            )
                         }
                     }
                 } else {

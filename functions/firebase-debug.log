@@ -1,0 +1,59 @@
+[debug] [2026-01-21T06:57:02.041Z] ----------------------------------------------------------------------
+[debug] [2026-01-21T06:57:02.042Z] Command:       /opt/homebrew/Cellar/node/24.1.0/bin/node /opt/homebrew/bin/firebase deploy --only functions:create_tournaments,functions:tournament_vote,functions:tournament_video_emojis --project yral-staging
+[debug] [2026-01-21T06:57:02.042Z] CLI Version:   15.0.0
+[debug] [2026-01-21T06:57:02.042Z] Platform:      darwin
+[debug] [2026-01-21T06:57:02.042Z] Node Version:  v24.1.0
+[debug] [2026-01-21T06:57:02.042Z] Time:          Wed Jan 21 2026 12:27:02 GMT+0530 (India Standard Time)
+[debug] [2026-01-21T06:57:02.042Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-01-21T06:57:02.043Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2026-01-21T06:57:02.736Z] Field "/functions" in "firebase.json" is possibly invalid: must be object
+[debug] [2026-01-21T06:57:02.736Z] Field "/functions" in "firebase.json" is possibly invalid: must be object
+[debug] [2026-01-21T06:57:02.736Z] Object "/functions/0" in "firebase.json" has unknown property: {"additionalProperty":"region"}
+[debug] [2026-01-21T06:57:02.736Z] Object "/functions/0" in "firebase.json" is missing required property: {"missingProperty":"remoteSource"}
+[debug] [2026-01-21T06:57:02.736Z] Field "/functions/0" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[debug] [2026-01-21T06:57:02.736Z] Field "/functions" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[debug] [2026-01-21T06:57:02.738Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-21T06:57:02.739Z] > authorizing via signed-in user (sarvesh@gobazzinga.io)
+[debug] [2026-01-21T06:57:02.739Z] [iam] checking project yral-staging for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
+[debug] [2026-01-21T06:57:02.739Z] Checked if tokens are valid: false, expires at: 1768887966466
+[debug] [2026-01-21T06:57:02.739Z] Checked if tokens are valid: false, expires at: 1768887966466
+[debug] [2026-01-21T06:57:02.739Z] > refreshing access token with scopes: []
+[debug] [2026-01-21T06:57:02.739Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-01-21T06:57:02.739Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-21T06:57:02.908Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-01-21T06:57:02.908Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-21T06:57:02.919Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/yral-staging:testIamPermissions [none]
+[debug] [2026-01-21T06:57:02.919Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/yral-staging:testIamPermissions x-goog-quota-user=projects/yral-staging
+[debug] [2026-01-21T06:57:02.919Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/yral-staging:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2026-01-21T06:57:03.372Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2026-01-21T06:57:03.372Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[debug] [2026-01-21T06:57:04.379Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/yral-staging:testIamPermissions 200
+[debug] [2026-01-21T06:57:04.379Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/yral-staging:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2026-01-21T06:57:04.379Z] Checked if tokens are valid: true, expires at: 1768982221908
+[debug] [2026-01-21T06:57:04.379Z] Checked if tokens are valid: true, expires at: 1768982221908
+[debug] [2026-01-21T06:57:04.379Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/yral-staging/serviceAccounts/yral-staging@appspot.gserviceaccount.com:testIamPermissions [none]
+[debug] [2026-01-21T06:57:04.379Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/yral-staging/serviceAccounts/yral-staging@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2026-01-21T06:57:06.187Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/yral-staging/serviceAccounts/yral-staging@appspot.gserviceaccount.com:testIamPermissions 200
+[debug] [2026-01-21T06:57:06.187Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/yral-staging/serviceAccounts/yral-staging@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[info] 
+[info] === Deploying to 'yral-staging'...
+[info] 
+[info] i  deploying functions 
+[debug] [2026-01-21T06:57:06.188Z] Checked if tokens are valid: true, expires at: 1768982221908
+[debug] [2026-01-21T06:57:06.188Z] Checked if tokens are valid: true, expires at: 1768982221908
+[debug] [2026-01-21T06:57:06.188Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/yral-staging [none]
+[debug] [2026-01-21T06:57:06.538Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/yral-staging 200
+[debug] [2026-01-21T06:57:06.538Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/yral-staging {"projectNumber":"240456866818","projectId":"yral-staging","lifecycleState":"ACTIVE","name":"yral-mobile-staging","labels":{"firebase":"enabled"},"createTime":"2024-12-03T15:07:29.157450Z","parent":{"type":"organization","id":"284777782154"}}
+[info] i  functions: preparing codebase default for deployment 
+[info] i  functions: ensuring required API cloudfunctions.googleapis.com is enabled... 
+[info] i  functions: ensuring required API cloudbuild.googleapis.com is enabled... 
+[info] i  artifactregistry: ensuring required API artifactregistry.googleapis.com is enabled... 
+[debug] [2026-01-21T06:57:06.539Z] Checked if tokens are valid: true, expires at: 1768982221908
+[debug] [2026-01-21T06:57:06.539Z] Checked if tokens are valid: true, expires at: 1768982221908
+[debug] [2026-01-21T06:57:06.539Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/yral-staging/adminSdkConfig [none]
+[debug] [2026-01-21T06:57:07.519Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/yral-staging/adminSdkConfig 200
+[debug] [2026-01-21T06:57:07.520Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/yral-staging/adminSdkConfig {"projectId":"yral-staging","storageBucket":"yral-staging.firebasestorage.app"}
+[debug] [2026-01-21T06:57:07.520Z] Checked if tokens are valid: true, expires at: 1768982221908
+[debug] [2026-01-21T06:57:07.520Z] Checked if tokens are valid: true, expires at: 1768982221908
+[debug] [2026-01-21T06:57:07.520Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/yral-staging/configs [none]

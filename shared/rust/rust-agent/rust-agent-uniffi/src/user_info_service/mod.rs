@@ -139,6 +139,40 @@ impl From<yral_canisters_client::user_info_service::UserProfileDetailsForFronten
     }
 }
 
+#[derive(CandidType, Deserialize, Record, Clone, Debug, PartialEq)]
+pub struct UISYralProSubscription {
+    pub free_video_credits_left: u32,
+    pub total_video_credits_alloted: u32,
+}
+
+impl From<yral_canisters_client::user_info_service::YralProSubscription> for UISYralProSubscription {
+    fn from(value: yral_canisters_client::user_info_service::YralProSubscription) -> Self {
+        Self {
+            free_video_credits_left: value.free_video_credits_left,
+            total_video_credits_alloted: value.total_video_credits_alloted,
+        }
+    }
+}
+
+#[derive(CandidType, Deserialize, Enum, Clone, Debug, PartialEq)]
+pub enum UISSubscriptionPlan {
+    Pro(UISYralProSubscription),
+    Free,
+}
+
+impl From<yral_canisters_client::user_info_service::SubscriptionPlan> for UISSubscriptionPlan {
+    fn from(value: yral_canisters_client::user_info_service::SubscriptionPlan) -> Self {
+        match value {
+            yral_canisters_client::user_info_service::SubscriptionPlan::Free => {
+                UISSubscriptionPlan::Free
+            }
+            yral_canisters_client::user_info_service::SubscriptionPlan::Pro(pro_sub) => {
+                UISSubscriptionPlan::Pro(pro_sub.into())
+            }
+        }
+    }
+}
+
 #[derive(CandidType, Deserialize, Record, Clone)]
 pub struct UISUserProfileDetailsForFrontendV6 {
     pub bio: Option<String>,
@@ -149,7 +183,7 @@ pub struct UISUserProfileDetailsForFrontendV6 {
     pub principal_id: Principal,
     pub followers_count: u64,
     pub caller_follows_user: Option<bool>,
-    pub subscription_plan: String,
+    pub subscription_plan: UISSubscriptionPlan,
     pub is_ai_influencer: bool,
 }
 
@@ -168,8 +202,64 @@ impl From<yral_canisters_client::user_info_service::UserProfileDetailsForFronten
             principal_id: value.principal_id,
             followers_count: value.followers_count,
             caller_follows_user: value.caller_follows_user,
-            subscription_plan: format!("{:?}", value.subscription_plan),
+            subscription_plan: value.subscription_plan.into(),
             is_ai_influencer: value.is_ai_influencer,
+        }
+    }
+}
+
+#[derive(CandidType, Deserialize, Enum, Clone, Debug, PartialEq)]
+pub enum UISUserAccountType {
+    MainAccount { bots: Vec<Principal> },
+    BotAccount { owner: Principal },
+}
+
+impl From<yral_canisters_client::user_info_service::UserAccountType> for UISUserAccountType {
+    fn from(value: yral_canisters_client::user_info_service::UserAccountType) -> Self {
+        match value {
+            yral_canisters_client::user_info_service::UserAccountType::MainAccount { bots } => {
+                UISUserAccountType::MainAccount { bots }
+            }
+            yral_canisters_client::user_info_service::UserAccountType::BotAccount { owner } => {
+                UISUserAccountType::BotAccount { owner }
+            }
+        }
+    }
+}
+
+#[derive(CandidType, Deserialize, Record, Clone)]
+pub struct UISUserProfileDetailsForFrontendV7 {
+    pub bio: Option<String>,
+    pub website_url: Option<String>,
+    pub is_ai_influencer: bool,
+    pub profile_picture: Option<UISProfilePictureData>,
+    pub following_count: u64,
+    pub user_follows_caller: Option<bool>,
+    pub subscription_plan: UISSubscriptionPlan,
+    pub principal_id: Principal,
+    pub followers_count: u64,
+    pub caller_follows_user: Option<bool>,
+    pub account_type: UISUserAccountType,
+}
+
+impl From<yral_canisters_client::user_info_service::UserProfileDetailsForFrontendV7>
+    for UISUserProfileDetailsForFrontendV7
+{
+    fn from(
+        value: yral_canisters_client::user_info_service::UserProfileDetailsForFrontendV7,
+    ) -> Self {
+        Self {
+            bio: value.bio,
+            website_url: value.website_url,
+            is_ai_influencer: value.is_ai_influencer,
+            profile_picture: value.profile_picture.map(|pic| pic.into()),
+            following_count: value.following_count,
+            user_follows_caller: value.user_follows_caller,
+            subscription_plan: value.subscription_plan.into(),
+            principal_id: value.principal_id,
+            followers_count: value.followers_count,
+            caller_follows_user: value.caller_follows_user,
+            account_type: value.account_type.into(),
         }
     }
 }
@@ -416,6 +506,37 @@ impl UserInfoService {
                         Ok(details.into())
                     }
                     yral_canisters_client::user_info_service::Result6::Err(msg) => {
+                        Err(FFIError::UnknownError(format!("{:?}", msg)))
+                    }
+                }
+            })
+            .await
+            .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
+    }
+
+    #[uniffi::method]
+    pub async fn get_user_profile_details_v7(
+        &self,
+        principal_text: String,
+    ) -> Result<UISUserProfileDetailsForFrontendV7> {
+        let agent = Arc::clone(&self.agent);
+        RUNTIME
+            .spawn(async move {
+                let principal = Principal::from_text(principal_text)
+                    .map_err(|e| FFIError::PrincipalError(format!("Invalid principal: {:?}", e)))?;
+                let service = yral_canisters_client::user_info_service::UserInfoService(
+                    yral_canisters_client::ic::USER_INFO_SERVICE_ID,
+                    &agent,
+                );
+                let res = service
+                    .get_user_profile_details_v_7(principal)
+                    .await
+                    .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?;
+                match res {
+                    yral_canisters_client::user_info_service::Result7::Ok(details) => {
+                        Ok(details.into())
+                    }
+                    yral_canisters_client::user_info_service::Result7::Err(msg) => {
                         Err(FFIError::UnknownError(format!("{:?}", msg)))
                     }
                 }

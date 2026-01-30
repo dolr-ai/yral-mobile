@@ -24,4 +24,13 @@ data class SessionProperties(
     val pendingTournamentRegistrationId: String? = null,
     val isMandatoryLogin: Boolean? = null,
     val phoneNumber: String? = null,
+    val proDetails: ProDetails? = null,
 )
+
+data class ProDetails(
+    val isProPurchased: Boolean = false,
+    val availableCredits: Int = 0,
+    val totalCredits: Int = DEFAULT_TOTAL_CREDITS,
+)
+
+private const val DEFAULT_TOTAL_CREDITS = 30

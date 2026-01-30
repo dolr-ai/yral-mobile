@@ -1,7 +1,7 @@
 package com.yral.shared.libs.videoPlayer
 
 import co.touchlab.kermit.Logger
-import com.yral.shared.libs.videoPlayer.util.runOnMainSync
+import com.yral.shared.core.utils.runOnMainSync
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCObjectVar

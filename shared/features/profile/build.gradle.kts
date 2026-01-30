@@ -33,6 +33,7 @@ kotlin {
             implementation(projects.shared.features.reportVideo)
             implementation(projects.shared.features.auth)
             implementation(projects.shared.features.chat)
+            implementation(projects.shared.features.subscriptions)
 
             implementation(libs.androidx.paging.common)
             implementation(libs.androidx.paging.compose)

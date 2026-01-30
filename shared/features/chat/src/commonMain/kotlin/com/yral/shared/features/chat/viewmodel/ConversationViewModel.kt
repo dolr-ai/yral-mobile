@@ -11,6 +11,9 @@ import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.featureflag.AppFeatureFlags
+import com.yral.featureflag.ChatFeatureFlags
+import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
@@ -64,6 +67,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Suppress("LongParameterList")
 class ConversationViewModel(
+    flagManager: FeatureFlagManager,
     private val chatRepository: ChatRepository,
     private val useCaseFailureListener: UseCaseFailureListener,
     private val sendMessageUseCase: SendMessageUseCase,
@@ -82,7 +86,14 @@ class ConversationViewModel(
      * - UI uses `LazyColumn(reverseLayout = true)` to display oldest at top, newest at bottom
      * - Render overlay first, then history
      */
-    private val _viewState = MutableStateFlow(ConversationViewState())
+    private val _viewState =
+        MutableStateFlow(
+            ConversationViewState(
+                loginPromptMessageThreshold = flagManager.get(ChatFeatureFlags.Chat.LoginPromptMessageThreshold),
+                subscriptionMandatoryThreshold = flagManager.get(ChatFeatureFlags.Chat.SubscriptionMandatoryThreshold),
+                isSubscriptionEnabled = flagManager.isEnabled(AppFeatureFlags.Common.EnableSubscription),
+            ),
+        )
     val viewState: StateFlow<ConversationViewState> = _viewState.asStateFlow()
 
     private val conversationId: String?
@@ -211,11 +222,9 @@ class ConversationViewModel(
                         name = influencer.name.ifBlank { existingInfluencer.name },
                         avatarUrl = influencer.avatarUrl.ifBlank { existingInfluencer.avatarUrl },
                         suggestedMessages =
-                            if (influencer.suggestedMessages.isNotEmpty()) {
-                                influencer.suggestedMessages
-                            } else {
-                                existingInfluencer.suggestedMessages
-                            },
+                            influencer
+                                .suggestedMessages
+                                .ifEmpty { existingInfluencer.suggestedMessages },
                     )
             }
 
@@ -308,8 +317,7 @@ class ConversationViewModel(
     }
 
     private fun resetState() {
-        val currentIsSocialSignedIn = _viewState.value.isSocialSignedIn
-        val currentInfluencerSource = _viewState.value.influencerSource
+        val current = _viewState.value
         _viewState.update {
             ConversationViewState(
                 isCreating = false,
@@ -321,8 +329,11 @@ class ConversationViewModel(
                 shareDisplayName = "",
                 shareMessage = "",
                 shareDescription = "",
-                isSocialSignedIn = currentIsSocialSignedIn,
-                influencerSource = currentInfluencerSource,
+                isSocialSignedIn = current.isSocialSignedIn,
+                influencerSource = current.influencerSource,
+                loginPromptMessageThreshold = current.loginPromptMessageThreshold,
+                subscriptionMandatoryThreshold = current.subscriptionMandatoryThreshold,
+                isSubscriptionEnabled = current.isSubscriptionEnabled,
             )
         }
         _overlay.value = OverlayState()
@@ -637,6 +648,9 @@ data class ConversationViewState(
     val shareDescription: String = "",
     val isSocialSignedIn: Boolean = false,
     val influencerSource: InfluencerSource = InfluencerSource.CARD,
+    val loginPromptMessageThreshold: Int,
+    val subscriptionMandatoryThreshold: Int,
+    val isSubscriptionEnabled: Boolean,
 )
 
 sealed class ConversationMessageItem {

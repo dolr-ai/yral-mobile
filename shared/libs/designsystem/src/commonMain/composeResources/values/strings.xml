@@ -59,4 +59,6 @@
 
     <string name="error_data_not_loaded">Oops...Something went wrong! We couldn’t load your data. Please refresh or try again later.</string>
     <string name="refresh">Refresh</string>
+
+    <string name="pro">PRO</string>
 </resources>

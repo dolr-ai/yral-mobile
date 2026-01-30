@@ -26,6 +26,7 @@ import com.yral.shared.features.chat.nav.ChatComponent
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.root.viewmodels.HomeViewModel
+import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.features.tournament.nav.TournamentComponent
 import com.yral.shared.features.uploadvideo.nav.UploadVideoRootComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
@@ -35,6 +36,7 @@ import com.yral.shared.koin.koinInstance
 import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
 import com.yral.shared.libs.routing.routes.api.AddVideo
 import com.yral.shared.libs.routing.routes.api.AppRoute
+import com.yral.shared.libs.routing.routes.api.Chat
 import com.yral.shared.libs.routing.routes.api.GenerateAIVideo
 import com.yral.shared.libs.routing.routes.api.Leaderboard
 import com.yral.shared.libs.routing.routes.api.PendingAppRouteStore
@@ -52,6 +54,7 @@ import kotlinx.serialization.Serializable
 internal class DefaultHomeComponent(
     componentContext: ComponentContext,
     override val requestLoginFactory: RequestLoginFactory,
+    override val subscriptionCoordinator: SubscriptionCoordinator,
     private val openEditProfile: () -> Unit,
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
     private val openConversation: (
@@ -162,6 +165,7 @@ internal class DefaultHomeComponent(
                         appRoute,
                     )
                 }
+            is Chat -> onChatTabClick()
 
             is RewardsReceived -> {
                 when (appRoute.rewardOn) {
@@ -319,6 +323,7 @@ internal class DefaultHomeComponent(
         ProfileComponent.Companion(
             componentContext = componentContext,
             requestLoginFactory = requestLoginFactory,
+            subscriptionCoordinator = subscriptionCoordinator,
             onUploadVideoClicked = { onUploadVideoTabClick() },
             openEditProfile = openEditProfile,
             openProfile = openProfile,
@@ -332,6 +337,7 @@ internal class DefaultHomeComponent(
         AccountComponent.Companion(
             componentContext = componentContext,
             promptLogin = { homeViewModel.showSignupPrompt(true, it) },
+            subscriptionCoordinator = subscriptionCoordinator,
         )
 
     private fun walletComponent(componentContext: ComponentContext): WalletComponent =
@@ -344,6 +350,7 @@ internal class DefaultHomeComponent(
         ChatComponent.Companion(
             componentContext = componentContext,
             requestLoginFactory = requestLoginFactory,
+            subscriptionCoordinator = subscriptionCoordinator,
             snapshot = childSnapshots[Config.Chat] as? ChatComponent.Snapshot,
             openProfile = openProfile,
             openConversation = openConversation,
