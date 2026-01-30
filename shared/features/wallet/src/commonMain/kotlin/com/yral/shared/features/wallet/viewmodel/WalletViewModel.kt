@@ -66,11 +66,7 @@ class WalletViewModel(
             sessionManager
                 .observeSessionProperty { it.proDetails }
                 .collect { proDetails ->
-                    proDetails?.let { details ->
-                        _state.update {
-                            it.copy(isProUser = details.isProPurchased)
-                        }
-                    }
+                    _state.update { it.copy(isProUser = proDetails?.isProPurchased ?: false) }
                 }
         }
     }
