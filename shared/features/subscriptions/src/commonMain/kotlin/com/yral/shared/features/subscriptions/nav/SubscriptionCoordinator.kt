@@ -14,5 +14,7 @@ interface SubscriptionCoordinator {
 
     fun dismissSubscriptionNudge()
 
+    fun refreshCreditBalances()
+
     var subscriptionNudgeContent: SubscriptionNudgeContent?
 }
