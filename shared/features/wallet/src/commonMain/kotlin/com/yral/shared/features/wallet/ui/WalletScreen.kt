@@ -89,6 +89,7 @@ fun WalletScreen(
                 accountInfo = info,
                 isSocialSignIn = true,
                 onLoginClicked = {},
+                isProUser = state.isProUser,
             )
         }
         state.yralTokenBalance?.let { coinBalance ->

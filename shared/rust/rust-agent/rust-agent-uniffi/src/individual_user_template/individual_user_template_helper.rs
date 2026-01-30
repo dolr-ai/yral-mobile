@@ -24,6 +24,7 @@ use yral_metadata_client::DeviceRegistrationToken;
 use yral_metadata_client::MetadataClient;
 use yral_metadata_types::SetUserMetadataReqMetadata;
 use yral_types::delegated_identity::DelegatedIdentityWire;
+use yral_username_gen::random_username_from_principal;
 
 pub type Secp256k1Error = k256::elliptic_curve::Error;
 
@@ -367,6 +368,15 @@ pub struct PostDetailsWithUserInfo {
 
 impl PostDetailsWithUserInfo {
     pub fn from_post_details(post: PostDetails) -> Self {
+        let username = match &post.username {
+            Some(s) if !s.is_empty() => post.username,
+            _ => Some(
+                random_username_from_principal(
+                    post.poster_principal,
+                    15,
+                )
+            ),
+        };
         Self {
             canister_id: post.canister_id,
             post_id: post.post_id,
@@ -375,7 +385,7 @@ impl PostDetailsWithUserInfo {
             views: post.views,
             likes: post.likes,
             display_name: post.display_name,
-            username: post.username,
+            username: username,
             propic_url: post.propic_url,
             liked_by_user: post.liked_by_user,
             poster_principal: post.poster_principal,
@@ -389,6 +399,33 @@ impl PostDetailsWithUserInfo {
             nsfw_probability: post.nsfw_probability,
         }
     }
+}
+
+#[uniffi::export]
+pub async fn get_post_details_with_nsfw_info(
+    identity_data: Vec<u8>,
+    user_canister: Principal,
+    post_id: String,
+    nsfw_probability: Option<f32>,
+) -> std::result::Result<Option<PostDetailsWithUserInfo>, FFIError> {
+    RUNTIME.spawn(async move {
+        let identity_wire = delegated_identity_wire_from_bytes(&identity_data)
+            .map_err(|e| FFIError::UnknownError(format!("Invalid: {:?}", e)))?;
+        let identity = delegated_identity_from_bytes(&identity_data.as_slice())
+            .map_err(|e| FFIError::UnknownError(format!("Invalid: {:?}", e)))?;
+        let base_canister = Canisters::<false>::default();
+        let canister = base_canister
+            .set_agent(Arc::new(identity), Arc::new(identity_wire))
+            .unwrap();
+
+        let details = canister
+            .get_post_details_with_nsfw_info(user_canister, post_id, nsfw_probability)
+            .await
+            .map_err(|e| FFIError::AgentError(format!("Api Error: {:?}", e)))?;
+        Ok(details.map(PostDetailsWithUserInfo::from_post_details))
+    })
+    .await
+    .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
 }
 
 #[uniffi::export]
