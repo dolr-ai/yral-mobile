@@ -173,6 +173,14 @@ class SessionManager {
         }
     }
 
+    fun updateProDetails(details: ProDetails) {
+        mutableProperties.update { it.copy(proDetails = details) }
+    }
+
+    fun clearProDetails() {
+        mutableProperties.update { it.copy(proDetails = null) }
+    }
+
     fun <T : Any> observeSessionPropertyWithDefault(
         selector: (SessionProperties) -> T?,
         defaultValue: T,

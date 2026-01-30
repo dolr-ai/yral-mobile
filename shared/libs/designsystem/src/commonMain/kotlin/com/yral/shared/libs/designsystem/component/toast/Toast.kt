@@ -46,10 +46,10 @@ import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameterProvider
 import yral_mobile.shared.libs.designsystem.generated.resources.Res
 import yral_mobile.shared.libs.designsystem.generated.resources.cross
-import yral_mobile.shared.libs.designsystem.generated.resources.ic_cross_circle
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_information_circle
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_tick_circle
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_warning_circle
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_x_circle_red
 
 sealed class ToastType {
     abstract val message: String
@@ -311,7 +311,7 @@ private fun iconResource(status: ToastStatus): DrawableResource =
     when (status) {
         ToastStatus.Success -> Res.drawable.ic_tick_circle
         ToastStatus.Warning -> Res.drawable.ic_warning_circle
-        ToastStatus.Error -> Res.drawable.ic_cross_circle
+        ToastStatus.Error -> Res.drawable.ic_x_circle_red
         ToastStatus.Info -> Res.drawable.ic_information_circle
     }
 

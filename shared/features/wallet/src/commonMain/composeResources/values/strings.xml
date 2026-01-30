@@ -9,5 +9,15 @@
     <string name="btc_credited">Bitcoin Reward added</string>
     <string name="go_to_wallet">Go to Wallet</string>
     <string name="keep_scrolling">Keep Scrolling</string>
-    <string name="btc_rewards_congratulations">Congrats! You’ve received a Bitcoin reward for your video views. See it in your wallet.</string>
+    <string name="btc_rewards_congratulations">Congrats! You've received a Bitcoin reward for your video views. See it in your wallet.</string>
+    <string name="dolr">DOLR</string>
+    <string name="dolr_inr_rate">1 DOLR = %1$s</string>
+    <string name="currency_balance">%1$s Balance:</string>
+    <string name="how_to_get_dolr">How to get DOLR?</string>
+    <string name="how_to_get_dolr_title">How to get DOLR?</string>
+    <string name="get_engaged_views">Get engaged views on your video.</string>
+    <string name="engaged_view_equals_dolr">1 Engaged View = 1 DOLR</string>
+    <string name="what_are_engaged_views">What are Engaged Views?</string>
+    <string name="engaged_views_description">A logged-in user watches your video for 3+ sec.</string>
+    <string name="got_it">Got It!</string>
 </resources>

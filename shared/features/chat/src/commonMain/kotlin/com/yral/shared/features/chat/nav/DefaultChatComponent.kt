@@ -10,6 +10,7 @@ import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.chat.nav.wall.ChatWallComponent
+import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.serialization.Serializable
 import org.koin.core.component.KoinComponent
@@ -17,6 +18,7 @@ import org.koin.core.component.KoinComponent
 internal class DefaultChatComponent(
     componentContext: ComponentContext,
     override val requestLoginFactory: RequestLoginFactory,
+    override val subscriptionCoordinator: SubscriptionCoordinator,
     private val snapshot: Snapshot?,
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
     private val openConversation: (
@@ -109,6 +111,7 @@ internal class DefaultChatComponent(
         ConversationComponent.Companion(
             componentContext = componentContext,
             requestLoginFactory = requestLoginFactory,
+            subscriptionCoordinator = subscriptionCoordinator,
             influencerId = config.influencerId,
             influencerCategory = config.influencerCategory,
             influencerSource = config.influencerSource,

@@ -1,0 +1,156 @@
+package com.yral.shared.iap.core.providers
+
+import android.content.Context
+import com.android.billingclient.api.BillingClient
+import com.android.billingclient.api.BillingClientStateListener
+import com.android.billingclient.api.BillingResult
+import com.android.billingclient.api.PendingPurchasesParams
+import com.android.billingclient.api.PurchasesUpdatedListener
+import com.yral.shared.iap.core.IAPError
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeout
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+
+private val CONNECTION_TIMEOUT: Duration = 30.seconds
+
+internal class BillingClientConnectionManager(
+    context: Context,
+    purchasesUpdatedListener: PurchasesUpdatedListener,
+) {
+    private val billingClient: BillingClient =
+        BillingClient
+            .newBuilder(context)
+            .setListener(purchasesUpdatedListener)
+            .enablePendingPurchases(
+                PendingPurchasesParams
+                    .newBuilder()
+                    .enablePrepaidPlans()
+                    .enableOneTimeProducts()
+                    .build(),
+            ).enableAutoServiceReconnection()
+            .build()
+
+    private val pendingContinuations = mutableListOf<Continuation<BillingClient>>()
+
+    @Volatile
+    private var isConnecting = false
+
+    @Volatile
+    private var mainContinuation: Continuation<BillingClient>? = null
+
+    suspend fun ensureReady(): BillingClient =
+        withTimeout(CONNECTION_TIMEOUT) {
+            if (billingClient.isReady) {
+                return@withTimeout billingClient
+            }
+
+            val action =
+                synchronized(this@BillingClientConnectionManager) {
+                    if (billingClient.isReady) {
+                        return@synchronized ConnectionAction.READY
+                    }
+                    if (isConnecting) {
+                        return@synchronized ConnectionAction.WAIT
+                    }
+                    isConnecting = true
+                    return@synchronized ConnectionAction.START
+                }
+
+            return@withTimeout when (action) {
+                ConnectionAction.READY -> billingClient
+                ConnectionAction.WAIT -> waitForExistingConnection()
+                ConnectionAction.START -> startNewConnection()
+            }
+        }
+
+    private enum class ConnectionAction {
+        READY,
+        WAIT,
+        START,
+    }
+
+    private suspend fun waitForExistingConnection(): BillingClient =
+        suspendCancellableCoroutine { continuation ->
+            synchronized(this@BillingClientConnectionManager) {
+                pendingContinuations.add(continuation)
+            }
+            continuation.invokeOnCancellation {
+                synchronized(this@BillingClientConnectionManager) {
+                    pendingContinuations.remove(continuation)
+                }
+            }
+        }
+
+    private suspend fun startNewConnection(): BillingClient =
+        suspendCancellableCoroutine { continuation ->
+            synchronized(this@BillingClientConnectionManager) {
+                mainContinuation = continuation
+            }
+
+            val listener =
+                object : BillingClientStateListener {
+                    override fun onBillingSetupFinished(billingResult: BillingResult) {
+                        handleConnectionResult(
+                            success = billingResult.responseCode == BillingClient.BillingResponseCode.OK,
+                            error =
+                                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                                    null
+                                } else {
+                                    IAPError.BillingUnavailable(
+                                        Exception("Billing setup failed: ${billingResult.debugMessage}"),
+                                    )
+                                },
+                        )
+                    }
+
+                    override fun onBillingServiceDisconnected() {
+                        handleConnectionResult(
+                            success = false,
+                            error =
+                                IAPError.BillingUnavailable(
+                                    Exception("Billing service disconnected"),
+                                ),
+                        )
+                    }
+                }
+
+            billingClient.startConnection(listener)
+
+            continuation.invokeOnCancellation {
+                synchronized(this@BillingClientConnectionManager) {
+                    if (mainContinuation == continuation) {
+                        mainContinuation = null
+                        isConnecting = false
+                    }
+                }
+            }
+        }
+
+    private fun handleConnectionResult(
+        success: Boolean,
+        error: IAPError?,
+    ) {
+        val pending: List<Continuation<BillingClient>>
+        val main: Continuation<BillingClient>?
+        synchronized(this@BillingClientConnectionManager) {
+            isConnecting = false
+            pending = pendingContinuations.toList()
+            pendingContinuations.clear()
+            main = mainContinuation
+            mainContinuation = null
+        }
+
+        if (success && error == null) {
+            main?.resume(billingClient)
+            pending.forEach { it.resume(billingClient) }
+        } else {
+            val exception = error ?: IAPError.BillingUnavailable(Exception("Unknown connection error"))
+            main?.resumeWithException(exception)
+            pending.forEach { it.resumeWithException(exception) }
+        }
+    }
+}

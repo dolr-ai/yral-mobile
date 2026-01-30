@@ -27,6 +27,7 @@ import com.yral.shared.app.UpdateState
 import com.yral.shared.app.nav.factories.ComponentFactory
 import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
+import com.yral.shared.core.session.ProDetails
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.auth.ui.LoginCoordinator
@@ -36,6 +37,9 @@ import com.yral.shared.features.auth.ui.LoginScreenType
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.auth.ui.toRequestFactory
 import com.yral.shared.features.auth.viewModel.LoginViewModel
+import com.yral.shared.features.root.viewmodels.RootViewModel
+import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
+import com.yral.shared.features.subscriptions.nav.SubscriptionNudgeContent
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.libs.phonevalidation.countries.Country
 import com.yral.shared.libs.routing.routes.api.AppRoute
@@ -43,12 +47,14 @@ import com.yral.shared.libs.routing.routes.api.Profile
 import com.yral.shared.libs.routing.routes.api.UserProfileRoute
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
+import kotlinx.coroutines.flow.Flow
 
 @Suppress("TooManyFunctions")
 class DefaultRootComponent(
     componentContext: ComponentContext,
 ) : RootComponent,
     LoginCoordinator,
+    SubscriptionCoordinator,
     ComponentContext by componentContext {
     // ==================== Navigation ====================
     private val navigation = StackNavigation<Config>()
@@ -58,6 +64,7 @@ class DefaultRootComponent(
     // ==================== Dependencies ====================
     private val sessionManager: SessionManager = koinInstance.get()
     override val loginViewModel: LoginViewModel = koinInstance.get()
+    override val rootViewModel: RootViewModel = koinInstance.get()
 
     // ==================== State ====================
     private var pendingNavRoute: AppRoute? = null
@@ -87,6 +94,20 @@ class DefaultRootComponent(
         get() = loginStateHolder.countrySelectionCallback
         set(value) {
             loginStateHolder.countrySelectionCallback = value
+        }
+
+    // ==================== Subscription nudge state (in-memory) ====================
+    private class SubscriptionNudgeStateHolder : InstanceKeeper.Instance {
+        var content: SubscriptionNudgeContent? = null
+    }
+
+    private val subscriptionNudgeStateHolder: SubscriptionNudgeStateHolder =
+        instanceKeeper.getOrCreate("subscriptionNudgeState") { SubscriptionNudgeStateHolder() }
+
+    override var subscriptionNudgeContent: SubscriptionNudgeContent?
+        get() = subscriptionNudgeStateHolder.content
+        set(value) {
+            subscriptionNudgeStateHolder.content = value
         }
 
     // ==================== Component Factory ====================
@@ -167,6 +188,13 @@ class DefaultRootComponent(
                 )
             is Config.Wallet -> RootComponent.Child.Wallet(componentFactory.createWallet(context))
             is Config.Leaderboard -> RootComponent.Child.Leaderboard(componentFactory.createLeaderboard(context))
+            is Config.Subscription ->
+                RootComponent.Child.Subscription(
+                    componentFactory.createSubscription(
+                        componentContext = context,
+                        config = config,
+                    ),
+                )
             is Config.CountrySelector ->
                 RootComponent.Child.CountrySelector(
                     componentFactory.createCountrySelector(
@@ -221,6 +249,12 @@ class DefaultRootComponent(
                 )
             is SlotConfig.LoginBottomSheet -> {
                 RootComponent.SlotChild.LoginBottomSheet()
+            }
+            is SlotConfig.SubscriptionAccountMismatchSheet -> {
+                RootComponent.SlotChild.SubscriptionAccountMismatchSheet()
+            }
+            is SlotConfig.SubscriptionNudge -> {
+                RootComponent.SlotChild.SubscriptionNudge()
             }
         }
 
@@ -386,6 +420,26 @@ class DefaultRootComponent(
         navigation.pushToFront(Config.Leaderboard)
     }
 
+    override fun openSubscription(purchaseTimeMs: Long?) {
+        navigation.pushToFront(Config.Subscription(purchaseTimeMs))
+    }
+
+    override fun onCreateVideo() {
+        if (stack.active.instance !is RootComponent.Child.Home) {
+            navigateToHome()
+        }
+        // If home is already active or just navigated, switch to upload video tab
+        homeComponent?.onUploadVideoTabClick()
+    }
+
+    override fun onExploreFeed() {
+        if (stack.active.instance !is RootComponent.Child.Home) {
+            navigateToHome()
+        }
+        // If home is already active or just navigated, switch to feed tab
+        homeComponent?.onFeedTabClick()
+    }
+
     // ==================== LoginCoordinator Implementation ====================
     override fun requestLogin(loginInfo: LoginInfo): @Composable () -> Unit {
         // Store the login info
@@ -471,4 +525,53 @@ class DefaultRootComponent(
     override fun getLoginCoordinator(): LoginCoordinator = this
 
     override fun createLoginRequestFactory(): RequestLoginFactory = this.toRequestFactory()
+
+    // ==================== SubscriptionCoordinator Implementation ====================
+    override fun buySubscription() {
+        rootViewModel.checkSubscriptionAndOpen(
+            openSubscription = ::openSubscription,
+            showSubscriptionAccountMismatchSheet = ::showSubscriptionAccountMismatchSlot,
+        )
+    }
+
+    override fun dismissSubscriptionBottomSheet() {
+        dismissSubscriptionSlotIfActive()
+    }
+
+    override val proDetails: Flow<ProDetails>
+        get() =
+            sessionManager.observeSessionPropertyWithDefault(
+                selector = { it.proDetails },
+                defaultValue = ProDetails(),
+            )
+
+    override fun getSubscriptionCoordinator(): SubscriptionCoordinator = this
+
+    // ==================== Subscription nudge ====================
+    override fun showSubscriptionNudge(content: SubscriptionNudgeContent) {
+        subscriptionNudgeContent = content
+        slotNavigation.activate(SlotConfig.SubscriptionNudge)
+    }
+
+    override fun dismissSubscriptionNudge() {
+        dismissSubscriptionNudgeSlotIfActive()
+        subscriptionNudgeContent = null
+    }
+
+    // ==================== Subscription Slot Helpers ====================
+    private fun showSubscriptionAccountMismatchSlot() {
+        slotNavigation.activate(SlotConfig.SubscriptionAccountMismatchSheet)
+    }
+
+    private fun dismissSubscriptionSlotIfActive() {
+        if (slot.value.child?.instance is RootComponent.SlotChild.SubscriptionAccountMismatchSheet) {
+            slotNavigation.dismiss()
+        }
+    }
+
+    private fun dismissSubscriptionNudgeSlotIfActive() {
+        if (slot.value.child?.instance is RootComponent.SlotChild.SubscriptionNudge) {
+            slotNavigation.dismiss()
+        }
+    }
 }

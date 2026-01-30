@@ -1,6 +1,7 @@
 package com.yral.shared.features.profile.analytics
 
 import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.analytics.constants.Features
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.CtaType
 import com.yral.shared.analytics.events.DeleteVideoInitiatedEventData
@@ -22,12 +23,15 @@ import com.yral.shared.analytics.events.VideoDeletedEventData
 import com.yral.shared.analytics.events.VideoDownloadedEventData
 import com.yral.shared.analytics.events.VideoReportedEventData
 import com.yral.shared.analytics.events.VideoShareClickedEventData
+import com.yral.shared.analytics.events.VideoStartedEventData
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.reportVideo.domain.models.VideoReportReason
 
 class ProfileTelemetry(
     private val analyticsManager: AnalyticsManager,
 ) {
+    private val trackedStarted = mutableSetOf<String>()
+
     fun onProfileScreenViewed(
         totalVideos: Int,
         publisherUserId: String,
@@ -72,6 +76,7 @@ class ProfileTelemetry(
         analyticsManager.trackEvent(
             event =
                 VideoClickedEventData(
+                    featureName = Features.PROFILE.getFeatureName(),
                     videoId = feedDetails.videoID,
                     publisherUserId = feedDetails.principalID,
                     likeCount = feedDetails.likeCount.toLong(),
@@ -90,6 +95,7 @@ class ProfileTelemetry(
         analyticsManager.trackEvent(
             event =
                 DeleteVideoInitiatedEventData(
+                    featureName = Features.PROFILE.getFeatureName(),
                     pageName = CategoryName.PROFILE,
                     videoId = feedDetails.videoID,
                 ),
@@ -103,6 +109,7 @@ class ProfileTelemetry(
         analyticsManager.trackEvent(
             event =
                 VideoDeletedEventData(
+                    featureName = Features.PROFILE.getFeatureName(),
                     pageName = CategoryName.PROFILE,
                     videoId = feedDetails.videoID,
                     ctaType = catType,
@@ -116,10 +123,30 @@ class ProfileTelemetry(
     ) {
         analyticsManager.trackEvent(
             VideoShareClickedEventData(
-                feedDetails.videoID,
-                SourceScreen.PROFILE,
-                feedDetails.principalID == userPrincipalId,
+                featureName = Features.PROFILE.getFeatureName(),
+                videoId = feedDetails.videoID,
+                sourceScreen = SourceScreen.PROFILE,
+                isOwner = feedDetails.principalID == userPrincipalId,
             ),
+        )
+    }
+
+    fun trackVideoStarted(feedDetails: FeedDetails) {
+        if (trackedStarted.contains(feedDetails.videoID)) return
+        trackedStarted += feedDetails.videoID
+        analyticsManager.trackEvent(
+            event =
+                VideoStartedEventData(
+                    featureName = Features.PROFILE.getFeatureName(),
+                    videoId = feedDetails.videoID,
+                    publisherUserId = feedDetails.principalID,
+                    likeCount = feedDetails.likeCount.toLong(),
+                    viewCount = feedDetails.viewCount.toLong(),
+                    isNsfw = feedDetails.isNSFW(),
+                    shareCount = 0,
+                    isGameEnabled = true,
+                    gameType = GameType.SMILEY,
+                ),
         )
     }
 
@@ -130,6 +157,7 @@ class ProfileTelemetry(
         analyticsManager.trackEvent(
             event =
                 VideoClickedEventData(
+                    featureName = Features.PROFILE.getFeatureName(),
                     videoId = feedDetails.videoID,
                     publisherUserId = feedDetails.principalID,
                     likeCount = feedDetails.likeCount.toLong(),
@@ -151,6 +179,7 @@ class ProfileTelemetry(
         analyticsManager.trackEvent(
             event =
                 VideoReportedEventData(
+                    featureName = Features.PROFILE.getFeatureName(),
                     videoId = feedDetails.videoID,
                     publisherUserId = feedDetails.principalID,
                     isNsfw = feedDetails.isNSFW(),
@@ -164,6 +193,7 @@ class ProfileTelemetry(
     fun followClicked(publisherUserId: String) {
         analyticsManager.trackEvent(
             UserFollowedEventData(
+                featureName = Features.PROFILE.getFeatureName(),
                 publisherUserId = publisherUserId,
                 source = SourceScreen.PROFILE,
                 ctaType = CtaType.FOLLOW,
@@ -174,6 +204,7 @@ class ProfileTelemetry(
     fun unFollowClicked(publisherUserId: String) {
         analyticsManager.trackEvent(
             UserUnFollowedEventData(
+                featureName = Features.PROFILE.getFeatureName(),
                 publisherUserId = publisherUserId,
                 source = SourceScreen.PROFILE,
                 ctaType = CtaType.FOLLOW,
@@ -188,6 +219,7 @@ class ProfileTelemetry(
     ) {
         analyticsManager.trackEvent(
             FollowersListViewedEventData(
+                featureName = Features.PROFILE.getFeatureName(),
                 publisherUserId = publisherUserId,
                 tab = tab,
                 totalCount = totalCount,

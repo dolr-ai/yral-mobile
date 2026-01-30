@@ -68,6 +68,9 @@ object YralColors {
     val Yellow300: Color = Color(0xFFB38929)
     val Yellow100: Color = Color(0xFFFFDC8D)
     val PrimaryYellow: Color = Color(0xFFF9EA0E)
+    val YellowTextPrimary: Color = Color(0xFFFFC33A)
+    val YellowGlowShadow: Color = Color(0x80FFC33A)
+    val SilverGlowShadow: Color = Color(0x80BABABA)
 
     val Blue100: Color = Color(0xFF8EBDFF)
     val Blue300: Color = Color(0xFF2B63B3)
@@ -79,6 +82,12 @@ object YralColors {
     val GameToggleBackground = Color(0x66212121)
     val HowToPlayBackground = Color(0x80000000)
     val GameRewardChipBackground = Color(0xFFE2E6FF)
+
+    val ProCardBackground = Color(0xFF311424)
+    val ProCardBackgroundDark = Color(0xFF1D0914)
+    val ProCardBorder = Color(0xFF4C1F38)
+    val ProGradientOrange = Color(0xFFFF7A00)
+    val ProGradientPink = Color(0xFFFF007A)
 
     fun getColorFromHex(hex: String): Color {
         val cleanHex = hex.removePrefix("#")

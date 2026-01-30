@@ -14,6 +14,8 @@ import com.yral.shared.features.tournament.data.models.TournamentStatusRequestDt
 import com.yral.shared.features.tournament.data.models.TournamentStatusResponseDto
 import com.yral.shared.features.tournament.data.models.TournamentVoteRequestDto
 import com.yral.shared.features.tournament.data.models.TournamentVoteResponseDto
+import com.yral.shared.features.tournament.data.models.VideoEmojisRequestDto
+import com.yral.shared.features.tournament.data.models.VideoEmojisResponseDto
 
 interface ITournamentRemoteDataSource {
     /**
@@ -73,4 +75,11 @@ interface ITournamentRemoteDataSource {
         idToken: String,
         request: TournamentLeaderboardRequestDto,
     ): TournamentLeaderboardResponseDto
+
+    /**
+     * Get video-specific emojis for a tournament video.
+     * Used for prefetching emoji data before user sees the video.
+     * No authentication required.
+     */
+    suspend fun getVideoEmojis(request: VideoEmojisRequestDto): VideoEmojisResponseDto
 }

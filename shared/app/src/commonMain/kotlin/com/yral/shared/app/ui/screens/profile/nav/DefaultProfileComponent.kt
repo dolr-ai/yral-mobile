@@ -16,6 +16,7 @@ import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
+import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.libs.routing.routes.api.VideoUploadSuccessful
 import com.yral.shared.rust.service.utils.CanisterData
@@ -25,9 +26,11 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.serialization.Serializable
 import org.koin.core.component.KoinComponent
 
+@Suppress("LongParameterList")
 internal class DefaultProfileComponent(
     componentContext: ComponentContext,
     private val requestLoginFactory: RequestLoginFactory,
+    override val subscriptionCoordinator: SubscriptionCoordinator,
     private val snapshot: Snapshot?,
     private val onUploadVideoClicked: () -> Unit,
     private val openEditProfile: () -> Unit,
@@ -141,6 +144,7 @@ internal class DefaultProfileComponent(
         ProfileMainComponent.Companion(
             componentContext = componentContext,
             requestLoginFactory = requestLoginFactory,
+            subscriptionCoordinator = subscriptionCoordinator,
             pendingVideoNavigation = pendingVideoNavigation,
             onUploadVideoClicked = onUploadVideoClicked,
             openAccount = this::openAccount,
@@ -149,6 +153,7 @@ internal class DefaultProfileComponent(
             openConversation = openConversation,
             onBackClicked = {},
             showAlertsOnDialog = showAlertsOnDialog,
+            showBackButton = false,
         )
 
     private fun accountComponent(componentContext: ComponentContext): AccountComponent =
@@ -156,6 +161,7 @@ internal class DefaultProfileComponent(
             componentContext = componentContext,
             onBack = this::onBackClicked,
             promptLogin = promptLogin,
+            subscriptionCoordinator = subscriptionCoordinator,
         )
 
     private fun editProfileComponent(componentContext: ComponentContext): EditProfileComponent =

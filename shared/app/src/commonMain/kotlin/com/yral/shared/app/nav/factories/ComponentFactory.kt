@@ -14,6 +14,7 @@ import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
+import com.yral.shared.features.subscriptions.nav.SubscriptionsComponent
 import com.yral.shared.features.tournament.nav.TournamentGameComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.libs.phonevalidation.countries.Country
@@ -40,6 +41,7 @@ internal class ComponentFactory(
             HomeComponent.Companion(
                 componentContext = componentContext,
                 requestLoginFactory = rootComponent.createLoginRequestFactory(),
+                subscriptionCoordinator = rootComponent.getSubscriptionCoordinator(),
                 openEditProfile = rootComponent::openEditProfile,
                 openProfile = rootComponent::openProfile,
                 openTournamentLeaderboard = rootComponent::openTournamentLeaderboard,
@@ -66,6 +68,7 @@ internal class ComponentFactory(
         ProfileMainComponent.invoke(
             componentContext = componentContext,
             requestLoginFactory = rootComponent.createLoginRequestFactory(),
+            subscriptionCoordinator = rootComponent.getSubscriptionCoordinator(),
             userCanisterData = config.userCanisterData,
             pendingVideoNavigation = flowOf(null),
             onUploadVideoClicked = {},
@@ -75,6 +78,7 @@ internal class ComponentFactory(
             openConversation = rootComponent::openConversation,
             onBackClicked = rootComponent::onBackClicked,
             showAlertsOnDialog = showAlertsOnDialog,
+            showBackButton = true,
         )
 
     fun createConversation(
@@ -84,6 +88,7 @@ internal class ComponentFactory(
         ConversationComponent.Companion(
             componentContext = componentContext,
             requestLoginFactory = rootComponent.createLoginRequestFactory(),
+            subscriptionCoordinator = rootComponent.getSubscriptionCoordinator(),
             influencerId = config.influencerId,
             influencerCategory = config.influencerCategory,
             influencerSource = config.influencerSource,
@@ -110,6 +115,18 @@ internal class ComponentFactory(
             openProfile = rootComponent::openProfile,
             showBackIcon = true,
             onBack = rootComponent::onBackClicked,
+        )
+
+    fun createSubscription(
+        componentContext: ComponentContext,
+        config: Config.Subscription,
+    ): SubscriptionsComponent =
+        SubscriptionsComponent.Companion(
+            componentContext = componentContext,
+            purchaseTimeMs = config.purchaseTimeMs,
+            onBack = rootComponent::onBackClicked,
+            onCreateVideo = rootComponent::onCreateVideo,
+            onExploreFeed = rootComponent::onExploreFeed,
         )
 
     fun createCountrySelector(

@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import com.yral.shared.libs.designsystem.component.YralAnimatedBounceIcon
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralButtonType
 import com.yral.shared.libs.designsystem.component.YralGradientButton
@@ -53,7 +54,7 @@ fun UploadVideoSuccess(onDone: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
-            AnimatedBounceIcon(
+            YralAnimatedBounceIcon(
                 modifier = Modifier.offset(y = (-8).dp),
                 imageRes = DesignRes.drawable.ic_success,
             )
@@ -126,7 +127,7 @@ fun UploadVideoFailure(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
-            AnimatedBounceIcon(
+            YralAnimatedBounceIcon(
                 modifier = Modifier.offset(y = (-8).dp),
                 imageRes = DesignRes.drawable.ic_error,
             )

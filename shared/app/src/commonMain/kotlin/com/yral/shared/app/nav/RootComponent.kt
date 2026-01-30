@@ -18,6 +18,9 @@ import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
+import com.yral.shared.features.root.viewmodels.RootViewModel
+import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
+import com.yral.shared.features.subscriptions.nav.SubscriptionsComponent
 import com.yral.shared.features.tournament.nav.TournamentGameComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
@@ -29,6 +32,7 @@ interface RootComponent {
     val slot: Value<ChildSlot<*, SlotChild>>
     val updateState: Value<UpdateState>
     val loginViewModel: LoginViewModel
+    val rootViewModel: RootViewModel
     var currentLoginInfo: LoginInfo?
 
     fun onBackClicked()
@@ -83,7 +87,15 @@ interface RootComponent {
 
     fun openLeaderboard()
 
+    fun openSubscription(purchaseTimeMs: Long?)
+
+    fun onCreateVideo()
+
+    fun onExploreFeed()
+
     fun getLoginCoordinator(): LoginCoordinator
+
+    fun getSubscriptionCoordinator(): SubscriptionCoordinator
 
     fun createLoginRequestFactory(): RequestLoginFactory
 
@@ -119,6 +131,9 @@ interface RootComponent {
         class Leaderboard(
             val component: LeaderboardComponent,
         ) : Child()
+        class Subscription(
+            val component: SubscriptionsComponent,
+        ) : Child()
         class CountrySelector(
             val component: CountrySelectorComponent,
         ) : Child()
@@ -136,5 +151,9 @@ interface RootComponent {
         ) : SlotChild()
 
         class LoginBottomSheet : SlotChild()
+
+        class SubscriptionAccountMismatchSheet : SlotChild()
+
+        class SubscriptionNudge : SlotChild()
     }
 }

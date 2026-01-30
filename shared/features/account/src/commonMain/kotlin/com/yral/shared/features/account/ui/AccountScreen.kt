@@ -1,8 +1,11 @@
 package com.yral.shared.features.account.ui
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -31,16 +35,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.touchlab.kermit.Logger
 import com.yral.shared.analytics.events.MenuCtaType
 import com.yral.shared.analytics.events.SignupPageName
+import com.yral.shared.core.session.ProDetails
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.account.ui.AccountScreenConstants.SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT
 import com.yral.shared.features.account.viewmodel.AccountBottomSheet
@@ -50,6 +59,7 @@ import com.yral.shared.features.account.viewmodel.AccountsState
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.LOGOUT_URI
 import com.yral.shared.features.account.viewmodel.ErrorType
+import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
@@ -74,15 +84,20 @@ import yral_mobile.shared.features.account.generated.resources.document
 import yral_mobile.shared.features.account.generated.resources.error_delete_account
 import yral_mobile.shared.features.account.generated.resources.error_delete_account_title
 import yral_mobile.shared.features.account.generated.resources.follow_us_on
+import yral_mobile.shared.features.account.generated.resources.join_yral
 import yral_mobile.shared.features.account.generated.resources.lock
 import yral_mobile.shared.features.account.generated.resources.logout
 import yral_mobile.shared.features.account.generated.resources.no_take_me_back
 import yral_mobile.shared.features.account.generated.resources.privacy_policy
+import yral_mobile.shared.features.account.generated.resources.pro_credits_count
+import yral_mobile.shared.features.account.generated.resources.pro_exclamation
+import yral_mobile.shared.features.account.generated.resources.pro_subscription_benefits
 import yral_mobile.shared.features.account.generated.resources.sms
 import yral_mobile.shared.features.account.generated.resources.talk_to_the_team
 import yral_mobile.shared.features.account.generated.resources.telegram
 import yral_mobile.shared.features.account.generated.resources.twitter
 import yral_mobile.shared.features.account.generated.resources.yes_delete
+import yral_mobile.shared.features.account.generated.resources.yral_pro_member
 import yral_mobile.shared.libs.designsystem.generated.resources.alerts
 import yral_mobile.shared.libs.designsystem.generated.resources.alerts_icon
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow
@@ -90,6 +105,8 @@ import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.could_not_login
 import yral_mobile.shared.libs.designsystem.generated.resources.could_not_login_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.delete
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_lightning_bolt
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_lightning_bolt_gold
 import yral_mobile.shared.libs.designsystem.generated.resources.ok
 import yral_mobile.shared.libs.designsystem.generated.resources.terms_of_service
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
@@ -130,6 +147,7 @@ fun AccountScreen(
         AccountScreenContent(
             state = state,
             viewModel = viewModel,
+            subscriptionCoordinator = component.subscriptionCoordinator,
             alertsEnabled = state.alertsEnabled,
             onAlertsToggle = handleAlertsToggle,
             onBack = { component.onBack() },
@@ -144,16 +162,33 @@ fun AccountScreen(
     }
 }
 
+@Suppress("LongMethod")
 @Composable
 private fun AccountScreenContent(
     state: AccountsState,
     viewModel: AccountsViewModel,
+    subscriptionCoordinator: SubscriptionCoordinator,
     alertsEnabled: Boolean,
     onAlertsToggle: (Boolean) -> Unit,
     onBack: () -> Unit,
     promptLogin: () -> Unit,
 ) {
     val helperLinks = remember(state.isLoggedIn) { viewModel.getHelperLinks() }
+
+    val proDetails by subscriptionCoordinator.proDetails.collectAsStateWithLifecycle(ProDetails())
+    val totalProCredits = proDetails.totalCredits
+    val availableProCredits = proDetails.availableCredits
+    val proCardClick =
+        remember {
+            {
+                if (!state.isLoggedIn) {
+                    promptLogin()
+                } else {
+                    subscriptionCoordinator.buySubscription()
+                }
+            }
+        }
+
     Column(
         modifier =
             Modifier
@@ -172,11 +207,25 @@ private fun AccountScreenContent(
                     promptLogin()
                     viewModel.accountsTelemetry.signUpClicked(SignupPageName.MENU)
                 },
+                isProUser = proDetails.isProPurchased,
             )
             Spacer(modifier = Modifier.height(8.dp))
         } else {
             Spacer(modifier = Modifier.height(8.dp))
         }
+        if (proDetails.isProPurchased) {
+            ProMemberCard(
+                availableProCredits = availableProCredits,
+                totalProCredits = totalProCredits,
+                onClick = proCardClick,
+            )
+        } else if (state.isSubscriptionEnabled) {
+            ProSubscriptionCard(
+                totalProCredits = totalProCredits,
+                onClick = proCardClick,
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
         HelpLinks(
             links = helperLinks,
             alertsEnabled = alertsEnabled,
@@ -543,6 +592,121 @@ private fun AccountHelpLink.getText() =
         AccountHelpLinkType.DELETE_ACCOUNT -> stringResource(Res.string.delete_account)
         else -> null
     }
+
+@Composable
+private fun ProSubscriptionCard(
+    totalProCredits: Int,
+    onClick: () -> Unit,
+) {
+    val cardShape = RoundedCornerShape(size = 16.dp)
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .background(color = YralColors.ProCardBackground, shape = cardShape)
+                .clip(shape = cardShape)
+                .clickable(onClick = onClick),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Text(
+                    text =
+                        buildAnnotatedString {
+                            append(stringResource(Res.string.join_yral))
+                            withStyle(SpanStyle(color = YralColors.Yellow200)) {
+                                append(stringResource(Res.string.pro_exclamation))
+                            }
+                        },
+                    style = LocalAppTopography.current.xxlBold,
+                    color = YralColors.Neutral300,
+                )
+                Text(
+                    text = stringResource(Res.string.pro_subscription_benefits, totalProCredits),
+                    style = LocalAppTopography.current.baseMedium,
+                    color = YralColors.Neutral300,
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Image(
+                painter = painterResource(DesignRes.drawable.ic_lightning_bolt_gold),
+                contentDescription = "Pro icon",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.size(54.dp, 86.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProMemberCard(
+    availableProCredits: Int,
+    totalProCredits: Int,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .border(width = 1.dp, color = YralColors.ProCardBorder, shape = RoundedCornerShape(size = 8.dp))
+                .background(color = YralColors.ProCardBackground, shape = RoundedCornerShape(size = 8.dp))
+                .padding(10.dp)
+                .clickable(onClick = onClick),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Image(
+                    painter = painterResource(DesignRes.drawable.ic_lightning_bolt_gold),
+                    contentDescription = "Pro icon",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.width(21.dp).height(33.dp),
+                )
+                Text(
+                    text = stringResource(Res.string.yral_pro_member),
+                    style = LocalAppTopography.current.lgBold,
+                    color = YralColors.Neutral50,
+                )
+            }
+            Box(
+                modifier =
+                    Modifier
+                        .background(color = YralColors.ProCardBackgroundDark, shape = RoundedCornerShape(size = 100.dp))
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Image(
+                        painter = painterResource(DesignRes.drawable.ic_lightning_bolt),
+                        contentDescription = "Credits icon",
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Text(
+                        text = stringResource(Res.string.pro_credits_count, availableProCredits, totalProCredits),
+                        style = LocalAppTopography.current.lgBold,
+                        color = YralColors.YellowTextPrimary,
+                    )
+                }
+            }
+        }
+    }
+}
 
 object AccountScreenConstants {
     const val SOCIAL_MEDIA_LINK_BOTTOM_SPACER_WEIGHT = 0.2f

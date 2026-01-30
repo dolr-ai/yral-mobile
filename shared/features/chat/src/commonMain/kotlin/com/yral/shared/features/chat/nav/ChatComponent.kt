@@ -7,12 +7,14 @@ import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.chat.nav.wall.ChatWallComponent
+import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.serialization.Serializable
 
 abstract class ChatComponent : HomeChildSnapshotProvider {
     abstract val requestLoginFactory: RequestLoginFactory
+    abstract val subscriptionCoordinator: SubscriptionCoordinator
     abstract val stack: Value<ChildStack<*, Child>>
 
     abstract fun onBackClicked(): Boolean
@@ -48,6 +50,7 @@ abstract class ChatComponent : HomeChildSnapshotProvider {
         operator fun invoke(
             componentContext: ComponentContext,
             requestLoginFactory: RequestLoginFactory,
+            subscriptionCoordinator: SubscriptionCoordinator,
             snapshot: Snapshot?,
             openProfile: (userCanisterData: CanisterData) -> Unit,
             openConversation: (
@@ -59,6 +62,7 @@ abstract class ChatComponent : HomeChildSnapshotProvider {
             DefaultChatComponent(
                 componentContext = componentContext,
                 requestLoginFactory = requestLoginFactory,
+                subscriptionCoordinator = subscriptionCoordinator,
                 snapshot = snapshot,
                 openProfile = openProfile,
                 openConversation = openConversation,

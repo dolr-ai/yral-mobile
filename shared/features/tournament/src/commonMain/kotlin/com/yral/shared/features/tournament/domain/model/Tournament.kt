@@ -13,6 +13,8 @@ data class Tournament(
     val startEpochMs: Long,
     val endEpochMs: Long,
     val entryCost: Int,
+    val isRegistered: Boolean,
+    val userDiamonds: Int,
 ) {
     /**
      * Calculate initial diamonds for the game (1.5x entry cost).

@@ -69,9 +69,11 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import yral_mobile.shared.features.tournament.generated.resources.Res as TournamentRes
 
-@Suppress("MagicNumber", "LongMethod")
+@Suppress("MagicNumber", "LongMethod", "CyclomaticComplexMethod")
+@OptIn(ExperimentalTime::class)
 @Composable
 fun TournamentCard(
     tournament: Tournament,
@@ -79,6 +81,20 @@ fun TournamentCard(
     onShareClick: () -> Unit,
     onTournamentCtaClick: () -> Unit,
 ) {
+    // Single time source for both countdown and button state
+    val now by produceState(initialValue = Clock.System.now(), tournament.status) {
+        if (tournament.status is TournamentStatus.Ended) {
+            return@produceState
+        }
+        while (true) {
+            value = Clock.System.now()
+            delay(1.seconds)
+        }
+    }
+
+    // Derive current participation state based on real-time
+    val currentParticipationState = deriveParticipationState(tournament, now)
+
     val cardShape = RoundedCornerShape(8.dp)
 
     val gradientColor =
@@ -115,6 +131,7 @@ fun TournamentCard(
     ) {
         StatusChip(
             status = tournament.status,
+            now = now,
             modifier = Modifier.align(Alignment.TopStart),
         )
 
@@ -201,7 +218,7 @@ fun TournamentCard(
                                 .height(40.dp)
                                 .weight(1f),
                         status = tournament.status,
-                        participationState = tournament.participationState,
+                        participationState = currentParticipationState,
                         onClick = onTournamentCtaClick,
                     )
                     if (tournament.status !is TournamentStatus.Ended) {
@@ -247,19 +264,9 @@ fun TournamentCard(
 @OptIn(ExperimentalTime::class)
 private fun StatusChip(
     status: TournamentStatus,
+    now: Instant,
     modifier: Modifier = Modifier,
 ) {
-    val now by
-        produceState(initialValue = Clock.System.now(), status) {
-            if (status is TournamentStatus.Ended) {
-                return@produceState
-            }
-            while (true) {
-                value = Clock.System.now()
-                delay(1.seconds)
-            }
-        }
-
     val bg =
         when (status) {
             is TournamentStatus.Live -> YralColors.Red400
@@ -413,6 +420,42 @@ private fun titleLineHeight(status: TournamentStatus) =
         else -> 19.6.sp
     }
 
+/**
+ * Derives the current participation state based on real-time, ensuring the button state
+ * and countdown timer are always synchronized.
+ */
+@OptIn(ExperimentalTime::class)
+private fun deriveParticipationState(
+    tournament: Tournament,
+    currentTime: Instant,
+): TournamentParticipationState {
+    val startTime = Instant.fromEpochMilliseconds(tournament.startEpochMs)
+    val endTime = Instant.fromEpochMilliseconds(tournament.endEpochMs)
+
+    // Determine current status based on real-time
+    val isLive = currentTime >= startTime && currentTime <= endTime
+    val isUpcoming = currentTime < startTime
+
+    return when {
+        tournament.isRegistered -> {
+            when {
+                isLive -> TournamentParticipationState.JoinNow(tournament.userDiamonds)
+                isUpcoming -> {
+                    val timeLeft = startTime - currentTime
+                    if (timeLeft <= 10.minutes) {
+                        TournamentParticipationState.JoinNowDisabled
+                    } else {
+                        TournamentParticipationState.Registered
+                    }
+                }
+                else -> TournamentParticipationState.Registered
+            }
+        }
+        isLive -> TournamentParticipationState.JoinNowWithTokens(tournament.entryCost)
+        else -> TournamentParticipationState.RegistrationRequired(tournament.entryCost)
+    }
+}
+
 @Suppress("MagicNumber", "UnusedPrivateMember")
 @OptIn(ExperimentalTime::class)
 @Preview
@@ -433,6 +476,8 @@ private fun TournamentCardLivePreview() {
                     startEpochMs = Clock.System.now().toEpochMilliseconds(),
                     endEpochMs = (Clock.System.now() + 10.minutes).toEpochMilliseconds(),
                     entryCost = 20,
+                    isRegistered = false,
+                    userDiamonds = 0,
                 ),
             onShareClick = {},
             onTournamentCtaClick = {},
@@ -461,6 +506,8 @@ private fun TournamentCardUpcomingPreview() {
                     startEpochMs = (Clock.System.now() + 20.minutes).toEpochMilliseconds(),
                     endEpochMs = (Clock.System.now() + 30.minutes).toEpochMilliseconds(),
                     entryCost = 20,
+                    isRegistered = false,
+                    userDiamonds = 0,
                 ),
             onShareClick = {},
             onTournamentCtaClick = {},
@@ -489,6 +536,8 @@ private fun TournamentCardEndedPreview() {
                     startEpochMs = (Clock.System.now() - 20.minutes).toEpochMilliseconds(),
                     endEpochMs = (Clock.System.now() - 10.minutes).toEpochMilliseconds(),
                     entryCost = 20,
+                    isRegistered = false,
+                    userDiamonds = 0,
                 ),
             onShareClick = {},
             onTournamentCtaClick = {},

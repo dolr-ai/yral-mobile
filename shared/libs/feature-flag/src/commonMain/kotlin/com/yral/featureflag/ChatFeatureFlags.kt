@@ -14,5 +14,19 @@ object ChatFeatureFlags {
                 description = "Enable or disable chat",
                 defaultValue = false,
             )
+        val LoginPromptMessageThreshold: FeatureFlag<Int> =
+            int(
+                keySuffix = "loginPromptMessageThreshold",
+                name = "Login prompt message limit",
+                description = "User message count at which to show login prompt in chat",
+                defaultValue = 5,
+            )
+        val SubscriptionMandatoryThreshold: FeatureFlag<Int> =
+            int(
+                keySuffix = "subscriptionMandatoryThreshold",
+                name = "Subscription mandatory threshold",
+                description = "User message count at which to show subscription nudge in chat",
+                defaultValue = 15,
+            )
     }
 }

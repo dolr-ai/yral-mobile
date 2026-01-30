@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions")
+
 package com.yral.shared.features.profile.ui
 
 import androidx.compose.animation.AnimatedVisibility
@@ -39,6 +41,7 @@ import androidx.compose.material3.pulltorefresh.pullToRefreshIndicator
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,6 +53,8 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.paint
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
@@ -99,14 +104,14 @@ import com.yral.shared.libs.designsystem.component.features.DeleteConfirmationSh
 import com.yral.shared.libs.designsystem.component.features.VideoViewsSheet
 import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
+import com.yral.shared.libs.designsystem.component.neonBorder
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastType
 import com.yral.shared.libs.designsystem.component.toast.showError
 import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
-import com.yral.shared.libs.videoPlayer.model.Reels
-import com.yral.shared.libs.videoPlayer.util.PrefetchVideoListener
+import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import com.yral.shared.rust.service.domain.models.FollowerItem
 import com.yral.shared.rust.service.domain.models.PagedFollowerItem
 import com.yral.shared.rust.service.utils.CanisterData
@@ -117,7 +122,9 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import yral_mobile.shared.features.profile.generated.resources.Res
+import yral_mobile.shared.features.profile.generated.resources.become_pro
 import yral_mobile.shared.features.profile.generated.resources.create_ai_video
 import yral_mobile.shared.features.profile.generated.resources.delete
 import yral_mobile.shared.features.profile.generated.resources.delete_video
@@ -129,6 +136,7 @@ import yral_mobile.shared.features.profile.generated.resources.error_loading_mor
 import yral_mobile.shared.features.profile.generated.resources.error_loading_videos
 import yral_mobile.shared.features.profile.generated.resources.failed_to_delete_video
 import yral_mobile.shared.features.profile.generated.resources.pink_heart
+import yral_mobile.shared.features.profile.generated.resources.pro_profile_background
 import yral_mobile.shared.features.profile.generated.resources.profile_empty_other_subtitle
 import yral_mobile.shared.features.profile.generated.resources.profile_empty_other_title
 import yral_mobile.shared.features.profile.generated.resources.profile_empty_subtitle
@@ -148,6 +156,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.error_data_not_l
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_dots_vertical
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_download
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_share
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_thunder
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_views
 import yral_mobile.shared.libs.designsystem.generated.resources.login
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share
@@ -178,7 +187,6 @@ fun ProfileMainScreen(
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel,
     profileVideos: LazyPagingItems<FeedDetails>,
-    getPrefetchListener: (reel: Reels) -> PrefetchVideoListener,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val storagePermissionController = rememberStoragePermissionController()
@@ -313,7 +321,17 @@ fun ProfileMainScreen(
         modifier =
             modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.primaryContainer),
+                .background(MaterialTheme.colorScheme.primaryContainer)
+                .then(
+                    if (state.isProUser) {
+                        Modifier.paint(
+                            painter = painterResource(Res.drawable.pro_profile_background),
+                            contentScale = ContentScale.Crop,
+                        )
+                    } else {
+                        Modifier
+                    },
+                ),
     ) {
         when (val videoViewState = state.videoView) {
             is VideoViewState.ViewingReels -> {
@@ -368,7 +386,9 @@ fun ProfileMainScreen(
                             )
                         },
                         onViewsClick = { video -> viewModel.showVideoViews(video) },
-                        getPrefetchListener = getPrefetchListener,
+                        onRecordTime = { currentTime, totalTime, video ->
+                            viewModel.recordTime(currentTime, totalTime, video)
+                        },
                         modifier = Modifier.fillMaxSize(),
                     )
                 } else {
@@ -409,7 +429,21 @@ fun ProfileMainScreen(
                     canShareProfile = state.canShareProfile,
                     onShareProfileClicked = { viewModel.shareProfile() },
                     showHeaderShareButton = !state.isOwnProfile,
+                    showBackButton = component.showBackButton,
                     onDownloadVideo = onDownloadVideo,
+                    onSubscribe = {
+                        if (state.isLoggedIn) {
+                            component.subscriptionCoordinator.buySubscription()
+                        } else {
+                            loginState.requestLogin(
+                                SignupPageName.PROFILE,
+                                LoginScreenType.BottomSheet(LoginBottomSheetType.DEFAULT),
+                                LoginMode.BOTH,
+                                null,
+                                null,
+                            ) {}
+                        }
+                    },
                 )
             }
         }
@@ -576,17 +610,23 @@ private fun MainContent(
     canShareProfile: Boolean,
     onShareProfileClicked: () -> Unit,
     showHeaderShareButton: Boolean,
+    showBackButton: Boolean,
     onDownloadVideo: (FeedDetails) -> Unit,
+    onSubscribe: () -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader(
             isOwnProfile = state.isOwnProfile,
+            isSubscriptionEnabled = state.isSubscriptionEnabled,
+            isProUser = state.isProUser,
             userName = state.accountInfo?.displayName,
             showShareProfile = showHeaderShareButton && canShareProfile,
             isWalletEnabled = state.isWalletEnabled,
             onShareProfileClicked = onShareProfileClicked,
             openAccount = openAccount,
             onBack = onBackClicked,
+            showBackButton = showBackButton,
+            onSubscribe = onSubscribe,
         )
         state.accountInfo?.let { info ->
             val followersCount = totalCount(followers)
@@ -611,6 +651,7 @@ private fun MainContent(
                 onFollowersClick = { onFollowersSectionClick(FollowersSheetTab.Followers) },
                 onFollowingClick = { onFollowersSectionClick(FollowersSheetTab.Following) },
                 onTalkToMeClicked = viewModel::fetchInfluencerDetails,
+                isProUser = state.isProUser,
             )
         }
         when (profileVideos.loadState.refresh) {
@@ -675,15 +716,20 @@ private fun totalCount(data: LazyPagingItems<PagedFollowerItem>?) =
         }
     } ?: 0
 
+@Suppress("LongMethod")
 @Composable
 private fun ProfileHeader(
     isOwnProfile: Boolean,
+    isProUser: Boolean,
+    isSubscriptionEnabled: Boolean,
     userName: String?,
     showShareProfile: Boolean,
     isWalletEnabled: Boolean,
     onShareProfileClicked: () -> Unit,
     openAccount: () -> Unit,
     onBack: () -> Unit,
+    showBackButton: Boolean = false,
+    onSubscribe: () -> Unit,
 ) {
     Row(
         modifier =
@@ -694,7 +740,7 @@ private fun ProfileHeader(
         verticalAlignment = Alignment.Top,
     ) {
         Row(horizontalArrangement = Arrangement.Start, verticalAlignment = Alignment.Top) {
-            if (!isOwnProfile) {
+            if (showBackButton || !isOwnProfile) {
                 Icon(
                     painter = painterResource(DesignRes.drawable.arrow_left),
                     contentDescription = "back",
@@ -720,6 +766,9 @@ private fun ProfileHeader(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            if (isOwnProfile && isSubscriptionEnabled && !isProUser) {
+                BecomeProButton { onSubscribe() }
+            }
             if (showShareProfile) {
                 Icon(
                     painter = painterResource(DesignRes.drawable.ic_share),
@@ -1299,6 +1348,62 @@ private fun DownloadTriggeredSheet(
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun BecomeProButton(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    val gradientColors =
+        listOf(
+            YralColors.ProGradientOrange,
+            YralColors.ProGradientPink,
+        )
+    Row(
+        modifier =
+            modifier
+                .neonBorder(
+                    paddingValues = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
+                    cornerRadius = 8.dp,
+                    containerColor = Color.Transparent,
+                    animationDuration = 600L,
+                    neonColor = YralColors.YellowGlowShadow,
+                ).clip(RoundedCornerShape(8.dp))
+                .background(brush = Brush.linearGradient(colors = gradientColors))
+                .clickable(onClick = onClick)
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(Res.string.become_pro),
+            style = LocalAppTopography.current.mdMedium,
+            color = Color.White,
+        )
+        Image(
+            painter = painterResource(DesignRes.drawable.ic_thunder),
+            contentDescription = "Pro",
+            contentScale = ContentScale.Inside,
+            modifier = Modifier.size(20.dp),
+        )
+    }
+}
+
+@Suppress("UnusedPrivateMember")
+@Preview
+@Composable
+private fun BecomeProButtonPreview() {
+    CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
+        Box(
+            modifier =
+                Modifier
+                    .background(YralColors.Neutral900)
+                    .padding(24.dp),
+        ) {
+            BecomeProButton(onClick = {})
         }
     }
 }

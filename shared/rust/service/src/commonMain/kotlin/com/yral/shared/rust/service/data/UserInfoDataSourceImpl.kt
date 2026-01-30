@@ -8,7 +8,7 @@ import com.yral.shared.uniffi.generated.UisFollowingResponse
 import com.yral.shared.uniffi.generated.UisNsfwInfo
 import com.yral.shared.uniffi.generated.UisProfilePictureData
 import com.yral.shared.uniffi.generated.UisProfileUpdateDetailsV2
-import com.yral.shared.uniffi.generated.UisUserProfileDetailsForFrontendV6
+import com.yral.shared.uniffi.generated.UisUserProfileDetailsForFrontendV7
 
 class UserInfoDataSourceImpl(
     private val userInfoServiceFactory: UserInfoServiceFactory,
@@ -29,13 +29,13 @@ class UserInfoDataSourceImpl(
             .service(principal)
             .unfollowUser(targetPrincipal)
 
-    override suspend fun getUserProfileDetailsV6(
+    override suspend fun getUserProfileDetailsV7(
         principal: Principal,
         targetPrincipal: Principal,
-    ): UisUserProfileDetailsForFrontendV6 =
+    ): UisUserProfileDetailsForFrontendV7 =
         userInfoServiceFactory
             .service(principal)
-            .getUserProfileDetailsV6(targetPrincipal)
+            .getUserProfileDetailsV7(targetPrincipal)
 
     override suspend fun getFollowers(
         principal: Principal,

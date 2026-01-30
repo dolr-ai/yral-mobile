@@ -12,9 +12,9 @@ import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.featureflag.AppFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.WalletFeatureFlags
-import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.shared.analytics.events.CtaType
 import com.yral.shared.analytics.events.EditProfileSource
 import com.yral.shared.analytics.events.FollowersListTab
@@ -23,6 +23,7 @@ import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.AccountInfo
+import com.yral.shared.core.session.ProDetails
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.utils.getAccountInfo
@@ -58,11 +59,12 @@ import com.yral.shared.reportVideo.domain.ReportVideoUseCase
 import com.yral.shared.reportVideo.domain.models.ReportSheetState
 import com.yral.shared.reportVideo.domain.models.ReportVideoData
 import com.yral.shared.rust.service.domain.models.PagedFollowerItem
+import com.yral.shared.rust.service.domain.models.SubscriptionPlan
 import com.yral.shared.rust.service.domain.pagedDataSource.UserInfoPagingSourceFactory
 import com.yral.shared.rust.service.domain.usecases.FollowUserParams
 import com.yral.shared.rust.service.domain.usecases.FollowUserUseCase
-import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV6Params
-import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV6UseCase
+import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7Params
+import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCase
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserParams
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserUseCase
 import com.yral.shared.rust.service.utils.CanisterData
@@ -112,7 +114,7 @@ class ProfileViewModel(
     private val crashlyticsManager: CrashlyticsManager,
     private val flagManager: FeatureFlagManager,
     private val userInfoPagingSourceFactory: UserInfoPagingSourceFactory,
-    private val getUserProfileDetailsV6UseCase: GetUserProfileDetailsV6UseCase,
+    private val getUserProfileDetailsV7UseCase: GetUserProfileDetailsV7UseCase,
     private val getInfluencerUseCase: GetInfluencerUseCase,
     private val fileDownloader: FileDownloader,
 ) : ViewModel() {
@@ -120,12 +122,14 @@ class ProfileViewModel(
         private const val POSTS_PER_PAGE = 20
         private const val POSTS_PREFETCH_DISTANCE = 5
         private val VIEWS_REFRESH_THRESHOLD = 15.seconds
+        private val ANALYTICS_VIDEO_STARTED_RANGE = 0..1000
     }
 
     private val _state =
         MutableStateFlow(
             ViewState(
                 isWalletEnabled = flagManager.isEnabled(WalletFeatureFlags.Wallet.Enabled),
+                isSubscriptionEnabled = flagManager.isEnabled(AppFeatureFlags.Common.EnableSubscription),
             ),
         )
     val state: StateFlow<ViewState> = _state.asStateFlow()
@@ -296,6 +300,20 @@ class ProfileViewModel(
                     }
                 }
         }
+        viewModelScope.launch {
+            sessionManager
+                .observeSessionProperty { it.proDetails }
+                .collect { proDetails ->
+                    proDetails?.let { details ->
+                        _state.update {
+                            it.copy(isProUser = details.isProPurchased)
+                        }
+                    }
+                    Logger.d("SubscriptionX") {
+                        "Prod details updated in profile $proDetails ${_state.value.isProUser}"
+                    }
+                }
+        }
     }
 
     private fun setAccountInfo(info: AccountInfo?) {
@@ -327,10 +345,11 @@ class ProfileViewModel(
     }
 
     private fun refreshOwnProfileDetails() {
+        Logger.d("SubscriptionX") { "refreshOwnProfileDetails called" }
         viewModelScope.launch {
             val principal = sessionManager.userPrincipal ?: return@launch
-            getUserProfileDetailsV6UseCase(
-                GetUserProfileDetailsV6Params(
+            getUserProfileDetailsV7UseCase(
+                GetUserProfileDetailsV7Params(
                     principal = principal,
                     targetPrincipal = principal,
                 ),
@@ -341,6 +360,17 @@ class ProfileViewModel(
                     sessionManager.updateProfilePicture(updatedPic)
                 }
                 sessionManager.updateBio(bio)
+                val proPlan = details.subscriptionPlan as? SubscriptionPlan.Pro
+                proPlan?.let {
+                    sessionManager.updateProDetails(
+                        details =
+                            ProDetails(
+                                isProPurchased = true,
+                                availableCredits = proPlan.subscription.freeVideoCreditsLeft.toInt(),
+                                totalCredits = proPlan.subscription.totalVideoCreditsAlloted.toInt(),
+                            ),
+                    )
+                }
                 _state.update { current ->
                     val currentInfo = current.accountInfo
                     val newInfo =
@@ -350,7 +380,11 @@ class ProfileViewModel(
                                     ?: currentInfo.profilePic,
                             bio = bio?.takeUnless { it.isBlank() } ?: currentInfo.bio,
                         )
-                    current.copy(accountInfo = newInfo, isAiInfluencer = details.isAiInfluencer == true)
+                    current.copy(
+                        accountInfo = newInfo,
+                        isAiInfluencer = details.isAiInfluencer == true,
+                        isProUser = proPlan != null,
+                    )
                 }
             }.onFailure { error ->
                 Logger.e("refreshOwnProfileDetails") { "Failed to fetch profile details $error" }
@@ -364,8 +398,8 @@ class ProfileViewModel(
         if (targetPrincipal.isBlank()) return
         viewModelScope.launch {
             val callerPrincipal = sessionManager.userPrincipal ?: return@launch
-            getUserProfileDetailsV6UseCase(
-                GetUserProfileDetailsV6Params(
+            getUserProfileDetailsV7UseCase(
+                GetUserProfileDetailsV7Params(
                     principal = callerPrincipal,
                     targetPrincipal = targetPrincipal,
                 ),
@@ -383,6 +417,7 @@ class ProfileViewModel(
                         accountInfo = updatedInfo,
                         isFollowing = details.callerFollowsUser ?: current.isFollowing,
                         isAiInfluencer = details.isAiInfluencer == true,
+                        isProUser = (details.subscriptionPlan as? SubscriptionPlan.Pro) != null,
                     )
                 }
             }.onFailure { error ->
@@ -536,6 +571,17 @@ class ProfileViewModel(
         profileTelemetry.onEditProfileStarted(source)
     }
 
+    @Suppress("UnusedParameter")
+    fun recordTime(
+        currentTime: Int,
+        totalTime: Int,
+        feedDetails: FeedDetails,
+    ) {
+        if (currentTime in ANALYTICS_VIDEO_STARTED_RANGE) {
+            profileTelemetry.trackVideoStarted(feedDetails)
+        }
+    }
+
     fun setManualRefreshTriggered(isTriggered: Boolean) {
         _state.update { it.copy(manualRefreshTriggered = isTriggered) }
         if (isTriggered && _state.value.isOwnProfile) {
@@ -674,8 +720,6 @@ class ProfileViewModel(
     fun setBottomSheetType(type: ProfileBottomSheet) {
         _state.update { it.copy(bottomSheet = type) }
     }
-
-    fun getTncLink(): String = flagManager.get(AccountFeatureFlags.AccountLinks.Links).tnc
 
     fun toggleReportSheet(
         isOpen: Boolean,
@@ -995,6 +1039,8 @@ data class ViewState(
     val canShareProfile: Boolean = false,
     val isAiInfluencer: Boolean = false,
     val isTalkToMeInProgress: Boolean = false,
+    val isProUser: Boolean = false,
+    val isSubscriptionEnabled: Boolean = false,
 )
 
 sealed interface ProfileBottomSheet {
