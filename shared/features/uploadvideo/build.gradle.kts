@@ -26,9 +26,12 @@ kotlin {
             implementation(projects.shared.libs.designsystem)
             implementation(projects.shared.libs.routing.routesApi)
             implementation(projects.shared.libs.videoPlayer)
+            implementation(projects.shared.libs.featureFlag)
+            implementation(projects.shared.features.subscriptions)
             implementation(compose.components.resources)
             implementation(libs.compose.ui.backhandler)
             implementation(libs.coil.compose)
+            implementation(libs.kotlinx.datetime)
         }
         androidMain.dependencies {
             implementation(libs.accompanist.permission)

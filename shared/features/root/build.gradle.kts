@@ -24,6 +24,7 @@ kotlin {
             implementation(projects.shared.libs.arch)
             implementation(projects.shared.libs.iap.main)
             implementation(projects.shared.features.subscriptions)
+            implementation(projects.shared.rust.service)
 
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.androidx.lifecycle.viewmodel)

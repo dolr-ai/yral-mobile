@@ -558,6 +558,10 @@ class DefaultRootComponent(
         subscriptionNudgeContent = null
     }
 
+    override fun refreshCreditBalances() {
+        rootViewModel.refreshCreditBalances()
+    }
+
     // ==================== Subscription Slot Helpers ====================
     private fun showSubscriptionAccountMismatchSlot() {
         slotNavigation.activate(SlotConfig.SubscriptionAccountMismatchSheet)
