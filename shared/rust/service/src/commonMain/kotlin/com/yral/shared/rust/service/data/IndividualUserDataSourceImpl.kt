@@ -14,6 +14,7 @@ import com.yral.shared.uniffi.generated.Result12
 import com.yral.shared.uniffi.generated.UpsPostDetailsForFrontend
 import com.yral.shared.uniffi.generated.UpsResult3
 import com.yral.shared.uniffi.generated.getPostDetailsWithCreatorInfoV1
+import com.yral.shared.uniffi.generated.getPostDetailsWithNsfwInfo
 
 internal class IndividualUserDataSourceImpl(
     private val individualUserServiceFactory: IndividualUserServiceFactory,
@@ -39,7 +40,17 @@ internal class IndividualUserDataSourceImpl(
             userCanister = post.canisterID,
             postId = post.postID,
             creatorPrincipal = post.publisherUserId,
-            nsfwProbability = post.nsfwProbability?.toFloat() ?: 0.0f,
+            nsfwProbability = post.nsfwProbability?.toFloat(),
+        )
+    }
+
+    override suspend fun fetchPostDetailsWithNsfwInfo(post: PostDTO): PostDetailsWithUserInfo? {
+        val identity = sessionManager.identity ?: throw YralException("No identity found")
+        return getPostDetailsWithNsfwInfo(
+            identityData = identity,
+            userCanister = post.canisterID,
+            postId = post.postID,
+            nsfwProbability = post.nsfwProbability?.toFloat(),
         )
     }
 

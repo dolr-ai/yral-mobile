@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
+import androidx.compose.ui.graphics.Brush.Companion.linearGradient
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
@@ -32,8 +34,8 @@ import com.yral.shared.analytics.events.FeedType
 import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.OverlayType
-import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralLoadingDots
+import com.yral.shared.libs.designsystem.component.features.ProfileImageView
 import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -84,16 +86,30 @@ fun ColumnScope.FeedActionsRight(
     if (state.overlayType in listOf(OverlayType.GAME_TOGGLE, OverlayType.DAILY_RANK)) {
         feedDetails.profileImageURL?.let { profileImage ->
             Column(modifier = Modifier.offset(y = 16.dp)) {
-                YralAsyncImage(
-                    imageUrl = profileImage,
-                    border = 2.dp,
-                    borderColor = Color.White,
-                    backgroundColor = YralColors.ProfilePicBackground,
+                Box(
                     modifier =
                         Modifier
-                            .size(36.dp)
                             .clickable { openProfile(feedDetails.toCanisterData()) },
-                )
+                ) {
+                    if (feedDetails.isProUser) {
+                        ProfileImageView(
+                            imageUrl = profileImage,
+                            applyFrame = true,
+                            size = 36.dp,
+                            frameBorderWidth = 2.dp,
+                            frameBadgeSizeFraction = 0.5f,
+                        )
+                    } else {
+                        ProfileImageView(
+                            imageUrl = profileImage,
+                            applyFrame = true,
+                            size = 36.dp,
+                            frameBrush = linearGradient(colors = listOf(Color.White, Color.White)),
+                            frameBadgeSizeFraction = 0f,
+                            frameBorderWidth = 2.dp,
+                        )
+                    }
+                }
                 Image(
                     painter =
                         painterResource(
