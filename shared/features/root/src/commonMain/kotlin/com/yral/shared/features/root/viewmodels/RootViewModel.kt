@@ -12,6 +12,7 @@ import com.yral.shared.analytics.User
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.TokenType
 import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.core.session.ProDetails
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.session.hasSameUserPrincipal
@@ -31,6 +32,9 @@ import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.preferences.stores.UtmAttributionStore
 import com.yral.shared.preferences.stores.UtmParams
+import com.yral.shared.rust.service.domain.models.SubscriptionPlan
+import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7Params
+import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -70,6 +74,7 @@ class RootViewModel(
     private val utmAttributionStore: UtmAttributionStore,
     private val iapManager: IAPManager,
     private val queryPurchaseUseCase: QueryPurchaseUseCase,
+    private val getUserProfileDetailsV7UseCase: GetUserProfileDetailsV7UseCase,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
@@ -337,6 +342,33 @@ class RootViewModel(
                     Logger.d("SubscriptionX") { "Failed to query purchase $it" }
                     withContext(appDispatchers.main) { onError?.invoke() }
                 }
+        }
+    }
+
+    fun refreshCreditBalances() {
+        coroutineScope.launch {
+            val principal = sessionManager.userPrincipal ?: return@launch
+            getUserProfileDetailsV7UseCase(
+                GetUserProfileDetailsV7Params(
+                    principal = principal,
+                    targetPrincipal = principal,
+                ),
+            ).onSuccess { details ->
+                val proPlan = details.subscriptionPlan as? SubscriptionPlan.Pro
+                proPlan?.let {
+                    sessionManager.updateProDetails(
+                        details =
+                            ProDetails(
+                                isProPurchased = true,
+                                availableCredits = proPlan.subscription.freeVideoCreditsLeft.toInt(),
+                                totalCredits = proPlan.subscription.totalVideoCreditsAlloted.toInt(),
+                            ),
+                    )
+                }
+                Logger.d("SubscriptionX") { "Updated pro details $proPlan" }
+            }.onFailure {
+                Logger.e("SubscriptionX", it) { "Failed to update pro details" }
+            }
         }
     }
 }

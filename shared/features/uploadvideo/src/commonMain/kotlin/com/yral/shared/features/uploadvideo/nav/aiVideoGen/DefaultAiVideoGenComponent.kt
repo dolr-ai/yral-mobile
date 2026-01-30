@@ -1,12 +1,14 @@
 package com.yral.shared.features.uploadvideo.nav.aiVideoGen
 
 import com.arkivanov.decompose.ComponentContext
+import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 
 internal class DefaultAiVideoGenComponent(
     componentContext: ComponentContext,
     private val goToHome: () -> Unit,
     private val onBack: () -> Unit,
     override val promptLogin: () -> Unit,
+    override val subscriptionCoordinator: SubscriptionCoordinator,
 ) : AiVideoGenComponent(),
     ComponentContext by componentContext {
     override fun onBack() {

@@ -193,6 +193,7 @@ class DefaultAuthClient(
             PrefKeys.USERNAME.name,
             // PrefKeys.SMILEY_GAME_NUDGE_SHOWN.name,
             PrefKeys.PHONE_NUMBER.name,
+            PrefKeys.AI_VIDEO_SUBSCRIPTION_NUDGE_LAST_SHOWN_DATE.name,
         ).forEach { key ->
             preferences.remove(key)
         }

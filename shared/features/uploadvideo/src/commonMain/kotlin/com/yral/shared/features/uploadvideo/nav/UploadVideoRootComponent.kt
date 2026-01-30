@@ -4,6 +4,7 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.analytics.events.SignupPageName
+import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.features.uploadvideo.nav.aiVideoGen.AiVideoGenComponent
 import com.yral.shared.features.uploadvideo.nav.fileUpload.UploadVideoComponent
 import com.yral.shared.features.uploadvideo.nav.flowSelection.FlowSelectionComponent
@@ -14,6 +15,7 @@ import kotlinx.serialization.Serializable
 abstract class UploadVideoRootComponent : HomeChildSnapshotProvider {
     abstract val stack: Value<ChildStack<*, Child>>
     abstract val promptLogin: (pageName: SignupPageName) -> Unit
+    abstract val subscriptionCoordinator: SubscriptionCoordinator
 
     // Handle back presses within the upload flow. Returns true if consumed.
     abstract fun onBackClicked(): Boolean
@@ -44,12 +46,14 @@ abstract class UploadVideoRootComponent : HomeChildSnapshotProvider {
             componentContext: ComponentContext,
             goToHome: () -> Unit,
             promptLogin: (pageName: SignupPageName) -> Unit,
+            subscriptionCoordinator: SubscriptionCoordinator,
             snapshot: Snapshot?,
         ): UploadVideoRootComponent =
             DefaultUploadVideoRootComponent(
                 componentContext = componentContext,
                 goToHome = goToHome,
                 promptLogin = promptLogin,
+                subscriptionCoordinator = subscriptionCoordinator,
                 snapshot = snapshot,
             )
     }

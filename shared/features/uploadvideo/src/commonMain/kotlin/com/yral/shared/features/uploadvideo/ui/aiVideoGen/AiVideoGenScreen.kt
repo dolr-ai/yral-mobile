@@ -48,6 +48,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.touchlab.kermit.Logger
+import com.yral.shared.features.subscriptions.nav.SubscriptionNudgeContent
+import com.yral.shared.features.subscriptions.ui.components.BoltIcon
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.features.uploadvideo.nav.aiVideoGen.AiVideoGenComponent
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel
@@ -107,6 +109,25 @@ fun AiVideoGenScreen(
         Logger.d("VideoGen") { "shouldRefresh: $shouldRefresh" }
         shouldRefresh.value?.first?.let { viewModel.refresh(it) }
         shouldRefresh.value?.second?.let { viewModel.updateBalance(it) }
+    }
+    LaunchedEffect(Unit) {
+        viewModel.aiVideoGenEvents.collect { event ->
+            when (event) {
+                is AiVideoGenViewModel.AiVideoGenEvent.ShowSubscriptionNudge -> {
+                    component.subscriptionCoordinator.showSubscriptionNudge(
+                        content =
+                            SubscriptionNudgeContent(
+                                title = event.title,
+                                description = event.description,
+                                topContent = { BoltIcon() },
+                            ),
+                    )
+                }
+                is AiVideoGenViewModel.AiVideoGenEvent.RefreshProDetails -> {
+                    component.subscriptionCoordinator.refreshCreditBalances()
+                }
+            }
+        }
     }
     BackHandler(
         enabled = viewState.uiState is UiState.Success,
@@ -278,7 +299,7 @@ private fun PromptScreen(
                 },
             )
         }
-        if (viewState.usedCredits != null && !viewState.isCreditsAvailable() && viewState.isBalanceLow()) {
+        if (!viewState.isCreditsAvailable() && viewState.isBalanceLow()) {
             Spacer(Modifier.height(16.dp))
             PlayGameText(goToHome)
         }
