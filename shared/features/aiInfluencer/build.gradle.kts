@@ -21,6 +21,8 @@ kotlin {
             implementation(projects.shared.libs.arch)
             implementation(projects.shared.libs.coroutinesX)
             implementation(projects.shared.libs.http)
+            implementation(projects.shared.libs.analytics)
+            implementation(projects.shared.libs.preferences)
             implementation(projects.shared.libs.designsystem)
 
             implementation(libs.kotlinx.coroutines.core)
