@@ -5,6 +5,7 @@ import com.yral.shared.features.game.data.GameRemoteDataSource
 import com.yral.shared.features.game.data.GameRepository
 import com.yral.shared.features.game.data.IGameRemoteDataSource
 import com.yral.shared.features.game.domain.AutoRechargeBalanceUseCase
+import com.yral.shared.features.game.domain.CastHotOrNotVoteUseCase
 import com.yral.shared.features.game.domain.CastVoteUseCase
 import com.yral.shared.features.game.domain.GetBalanceUseCase
 import com.yral.shared.features.game.domain.GetGameIconsUseCase
@@ -20,6 +21,7 @@ import org.koin.dsl.module
 val gameModule =
     module {
         factoryOf(::CastVoteUseCase)
+        factoryOf(::CastHotOrNotVoteUseCase)
         factoryOf(::GetBalanceUseCase)
         factoryOf(::AutoRechargeBalanceUseCase)
         factory { GetGameIconsUseCase(get(), get(), get(named("GameConfig")), get()) }

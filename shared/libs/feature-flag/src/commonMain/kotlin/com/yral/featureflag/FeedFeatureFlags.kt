@@ -22,6 +22,16 @@ object FeedFeatureFlags {
                 defaultValue = false,
             )
     }
+    object GameMode :
+        FlagGroup(keyPrefix = "feed_gameMode", defaultAudience = FlagAudience.INTERNAL_QA) {
+        val Mode: FeatureFlag<String> =
+            string(
+                keySuffix = "mode",
+                name = "Feed Game Mode",
+                description = "Which game to show in feed: SMILEY or HOT_OR_NOT",
+                defaultValue = "SMILEY",
+            )
+    }
     object FeedTypes :
         FlagGroup(keyPrefix = "feed", defaultAudience = FlagAudience.INTERNAL_QA) {
         val AvailableTypes: FeatureFlag<String> =

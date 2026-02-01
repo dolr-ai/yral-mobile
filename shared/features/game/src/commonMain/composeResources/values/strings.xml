@@ -22,4 +22,8 @@
     <string name="was_most_people_choice">Your emoji was the most popular choice.</string>
     <string name="not_most_popular_pick">Not the most popular pick!</string>
 
+    <!-- Hot or Not -->
+    <string name="hot_or_not_win">You matched the majority!</string>
+    <string name="hot_or_not_loss">Not the popular choice!</string>
+
 </resources>

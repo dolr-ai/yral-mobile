@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.featureflag.FeatureFlagManager
+import com.yral.featureflag.FeedFeatureFlags
 import com.yral.shared.analytics.events.GameConcludedCtaType
 import com.yral.shared.analytics.events.GameType
 import com.yral.shared.core.session.DELAY_FOR_SESSION_PROPERTIES
@@ -12,11 +14,13 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.features.game.analytics.GameTelemetry
 import com.yral.shared.features.game.domain.AutoRechargeBalanceUseCase
+import com.yral.shared.features.game.domain.CastHotOrNotVoteUseCase
 import com.yral.shared.features.game.domain.CastVoteUseCase
 import com.yral.shared.features.game.domain.GetGameIconsUseCase
 import com.yral.shared.features.game.domain.GetGameRulesUseCase
 import com.yral.shared.features.game.domain.models.AboutGameItem
 import com.yral.shared.features.game.domain.models.AutoRechargeBalanceRequest
+import com.yral.shared.features.game.domain.models.CastHotOrNotVoteRequest
 import com.yral.shared.features.game.domain.models.CastVoteRequest
 import com.yral.shared.features.game.domain.models.CastVoteResponse
 import com.yral.shared.features.game.domain.models.GameIcon
@@ -45,8 +49,10 @@ class GameViewModel(
     private val gameIconsUseCase: GetGameIconsUseCase,
     private val gameRulesUseCase: GetGameRulesUseCase,
     private val castVoteUseCase: CastVoteUseCase,
+    private val castHotOrNotVoteUseCase: CastHotOrNotVoteUseCase,
     private val gameTelemetry: GameTelemetry,
     private val autoRechargeBalanceUseCase: AutoRechargeBalanceUseCase,
+    private val flagManager: FeatureFlagManager,
 ) : ViewModel() {
     private val _state =
         MutableStateFlow(
@@ -59,6 +65,7 @@ class GameViewModel(
     val state: StateFlow<GameState> = _state.asStateFlow()
 
     init {
+        initGameMode()
         viewModelScope.launch { restoreDataFromPrefs() }
         viewModelScope.launch {
             sessionManager
@@ -89,6 +96,12 @@ class GameViewModel(
                     }
                 }
         }
+    }
+
+    private fun initGameMode() {
+        val gameMode = flagManager.get(FeedFeatureFlags.GameMode.Mode)
+        val isHotOrNot = gameMode.equals("HOT_OR_NOT", ignoreCase = true)
+        _state.update { it.copy(isHotOrNotMode = isHotOrNot) }
     }
 
     private suspend fun restoreDataFromPrefs() {
@@ -445,10 +458,138 @@ class GameViewModel(
         }
     }
 
+    fun setHotOrNotMode(isHotOrNotMode: Boolean) {
+        _state.update { it.copy(isHotOrNotMode = isHotOrNotMode) }
+    }
+
+    fun castHotOrNotVote(
+        isHot: Boolean,
+        feedDetails: FeedDetails,
+    ) {
+        val gameState = _state.value
+        if (gameState.isLoading) return
+        viewModelScope.launch {
+            if (gameState.coinBalance >= HOT_OR_NOT_LOSS_PENALTY) {
+                executeHotOrNotVote(isHot, feedDetails)
+            } else {
+                refreshBalance()
+            }
+        }
+    }
+
+    @Suppress("LongMethod")
+    private suspend fun executeHotOrNotVote(
+        isHot: Boolean,
+        feedDetails: FeedDetails,
+    ) {
+        val videoId = feedDetails.videoID
+        // Initialize result tracking
+        _state.update { currentState ->
+            val initialResult = HotOrNotVoteResult(isHot = isHot, voteResult = VoteResult(0, "", false))
+            val updatedResults = currentState.hotOrNotResult.toMutableMap()
+            updatedResults[videoId] = initialResult
+            currentState.copy(
+                hotOrNotResult = updatedResults,
+                lastVotedCount = currentState.lastVotedCount + 1,
+            )
+        }
+
+        sessionManager.userPrincipal?.let { principal ->
+            setLoading(true)
+            gameTelemetry.onHotOrNotVoted(
+                feedDetails = feedDetails,
+                optionChosen = if (isHot) "hot" else "not",
+            )
+            castHotOrNotVoteUseCase
+                .invoke(
+                    parameter =
+                        CastHotOrNotVoteRequest(
+                            principalId = principal,
+                            videoId = videoId,
+                            isHot = isHot,
+                        ),
+                ).onSuccess { result ->
+                    val voteResult = result.toVoteResult()
+                    setHotOrNotGameResult(
+                        videoId = videoId,
+                        isHot = isHot,
+                        voteResult = voteResult,
+                        feedDetails = feedDetails,
+                    )
+                }.onFailure {
+                    setLoading(false)
+                    Logger.e("HotOrNot") { "Vote failed: $it" }
+                }
+        }
+    }
+
+    private fun setHotOrNotGameResult(
+        videoId: String,
+        isHot: Boolean,
+        voteResult: VoteResult,
+        feedDetails: FeedDetails,
+    ) {
+        viewModelScope.launch {
+            val currentState = _state.value
+            val updatedResults =
+                currentState.hotOrNotResult.toMutableMap().apply {
+                    get(videoId)?.let { currentResult ->
+                        val shouldMarkShown = videoId != currentState.currentVideoId
+                        put(
+                            videoId,
+                            currentResult.copy(
+                                voteResult = voteResult.copy(hasShownAnimation = shouldMarkShown),
+                            ),
+                        )
+                    }
+                }
+            val newCoinBalance = currentState.coinBalance + voteResult.coinDelta
+            _state.update {
+                it.copy(
+                    hotOrNotResult = updatedResults,
+                    coinBalance = newCoinBalance,
+                    animateCoinBalance = newCoinBalance != it.coinBalance,
+                    isLoading = false,
+                    lastBalanceDifference = voteResult.coinDelta,
+                )
+            }
+
+            sessionManager.updateCoinBalance(newCoinBalance)
+            delay(DELAY_FOR_SESSION_PROPERTIES)
+            gameTelemetry.onHotOrNotPlayed(
+                feedDetails = feedDetails,
+                optionChosen = if (isHot) "hot" else "not",
+                coinDelta = voteResult.coinDelta,
+            )
+        }
+    }
+
+    fun getHotOrNotResult(videoId: String): HotOrNotVoteResult? = _state.value.hotOrNotResult[videoId]
+
+    fun hasShownHotOrNotAnimation(videoId: String): Boolean =
+        _state.value.hotOrNotResult[videoId]
+            ?.voteResult
+            ?.hasShownAnimation ?: false
+
+    fun markHotOrNotAnimationShown(videoId: String) {
+        val result = _state.value.hotOrNotResult[videoId] ?: return
+        if (result.voteResult.coinDelta == 0 && result.voteResult.errorMessage.isEmpty()) return
+        _state.update { currentState ->
+            val updatedResults =
+                currentState.hotOrNotResult.toMutableMap().apply {
+                    this[videoId]?.let {
+                        this[videoId] = it.copy(voteResult = it.voteResult.copy(hasShownAnimation = true))
+                    }
+                }
+            currentState.copy(hotOrNotResult = updatedResults)
+        }
+    }
+
     companion object {
         const val SHOW_HOW_TO_PLAY_MAX_PAGE = 3
         private const val NUDGE_PAGE = 3
         private const val REFRESH_BALANCE_ANIM_DISMISS_DELAY_MS = 2000L
+        private const val HOT_OR_NOT_LOSS_PENALTY = 1
     }
 }
 
@@ -456,6 +597,7 @@ data class GameState(
     val lossPenalty: Int = Int.MAX_VALUE,
     val gameIcons: List<GameIcon>,
     val gameResult: Map<String, Pair<GameIcon, VoteResult>> = emptyMap(),
+    val hotOrNotResult: Map<String, HotOrNotVoteResult> = emptyMap(),
     val coinBalance: Long,
     val animateCoinBalance: Boolean = false,
     val isLoading: Boolean = false,
@@ -474,6 +616,12 @@ data class GameState(
     val lastVotedCount: Int = 1,
     val isStopAndVote: Boolean = false,
     val isAutoScrollEnabled: Boolean = false,
+    val isHotOrNotMode: Boolean = false,
+)
+
+data class HotOrNotVoteResult(
+    val isHot: Boolean,
+    val voteResult: VoteResult,
 )
 
 enum class NudgeType {
