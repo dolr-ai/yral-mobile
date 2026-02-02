@@ -11,14 +11,18 @@ import com.yral.shared.features.tournament.analytics.TournamentTelemetry
 import com.yral.shared.features.tournament.domain.GetTournamentLeaderboardUseCase
 import com.yral.shared.features.tournament.domain.model.GetTournamentLeaderboardRequest
 import com.yral.shared.features.tournament.domain.model.LeaderboardRow
+import com.yral.shared.features.tournament.domain.model.TournamentLeaderboard
 import com.yral.shared.features.tournament.domain.model.TournamentType
 import com.yral.shared.features.tournament.domain.model.formatParticipantsLabel
 import com.yral.shared.features.tournament.domain.model.formatScheduleLabel
 import com.yral.shared.features.tournament.domain.model.tournamentStatus
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
+import com.yral.shared.rust.service.domain.models.UserProfileDetails
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7Params
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCase
+import com.yral.shared.rust.service.domain.usecases.GetUsersProfileDetailsParams
+import com.yral.shared.rust.service.domain.usecases.GetUsersProfileDetailsUseCase
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import com.yral.shared.rust.service.utils.propicFromPrincipal
@@ -48,12 +52,14 @@ data class TournamentLeaderboardUiState(
     val scheduleLabel: String? = null,
     val showResultOverlay: Boolean = false,
     val proDetails: ProDetails = ProDetails(),
+    val profileDetailsByPrincipalId: Map<String, UserProfileDetails> = emptyMap(),
 )
 
 class TournamentLeaderboardViewModel(
     private val getTournamentLeaderboardUseCase: GetTournamentLeaderboardUseCase,
     private val sessionManager: SessionManager,
     private val getUserProfileDetailsV7UseCase: GetUserProfileDetailsV7UseCase,
+    private val getUsersProfileDetailsUseCase: GetUsersProfileDetailsUseCase,
     private val telemetry: TournamentTelemetry,
     private val preferences: Preferences,
 ) : ViewModel() {
@@ -78,7 +84,6 @@ class TournamentLeaderboardViewModel(
         }
     }
 
-    @OptIn(ExperimentalTime::class)
     fun loadLeaderboard(
         tournamentId: String,
         tournamentType: TournamentType,
@@ -89,39 +94,9 @@ class TournamentLeaderboardViewModel(
                 getTournamentLeaderboardUseCase
                     .invoke(GetTournamentLeaderboardRequest(principalId = userPrincipal, tournamentId = tournamentId))
                     .onSuccess { leaderboard ->
-                        // Track leaderboard viewed
-                        val userRank = leaderboard.userRow?.position ?: 0
-                        val userPrize = leaderboard.userRow?.prize ?: leaderboard.prizeMap[userRank]
-                        val isWinner = userRank > 0 && userPrize != null
-                        telemetry.onLeaderboardViewed(
-                            tournamentId = tournamentId,
-                            tournamentType = tournamentType,
-                            userRank = userRank,
-                            isWinner = isWinner,
-                        )
-
-                        _state.update {
-                            val startTime = Instant.fromEpochMilliseconds(leaderboard.startEpochMs)
-                            val endTime = Instant.fromEpochMilliseconds(leaderboard.endEpochMs)
-                            val currentTime = Clock.System.now()
-                            val scheduleLabel = formatScheduleLabel(leaderboard.date, startTime, endTime)
-                            val tournamentStatus = tournamentStatus(currentTime, startTime, endTime)
-                            val participantsLabel =
-                                formatParticipantsLabel(
-                                    leaderboard.participantCount,
-                                    tournamentStatus,
-                                )
-                            it.copy(
-                                leaderboard = leaderboard.topRows,
-                                currentUser = leaderboard.userRow,
-                                prizeMap = leaderboard.prizeMap,
-                                endEpochMs = leaderboard.endEpochMs,
-                                isLoading = false,
-                                error = null,
-                                scheduleLabel = scheduleLabel,
-                                participantsLabel = participantsLabel,
-                            )
-                        }
+                        trackLeaderboardViewed(leaderboard, tournamentId, tournamentType)
+                        _state.update { applyLeaderboardToState(it, leaderboard) }
+                        fetchProfileDetailsInBackground(userPrincipal, leaderboard)
                         if (tryShowSubscriptionNudge()) {
                             eventChannel.send(Event.ShowSubscriptionNudge)
                         }
@@ -129,6 +104,72 @@ class TournamentLeaderboardViewModel(
                         _state.update { it.copy(isLoading = false, error = error.message) }
                     }
             }
+        }
+    }
+
+    private fun trackLeaderboardViewed(
+        leaderboard: TournamentLeaderboard,
+        tournamentId: String,
+        tournamentType: TournamentType,
+    ) {
+        val userRank = leaderboard.userRow?.position ?: 0
+        val userPrize = leaderboard.userRow?.prize ?: leaderboard.prizeMap[userRank]
+        val isWinner = userRank > 0 && userPrize != null
+        telemetry.onLeaderboardViewed(
+            tournamentId = tournamentId,
+            tournamentType = tournamentType,
+            userRank = userRank,
+            isWinner = isWinner,
+        )
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private fun applyLeaderboardToState(
+        current: TournamentLeaderboardUiState,
+        leaderboard: TournamentLeaderboard,
+    ): TournamentLeaderboardUiState {
+        val startTime = Instant.fromEpochMilliseconds(leaderboard.startEpochMs)
+        val endTime = Instant.fromEpochMilliseconds(leaderboard.endEpochMs)
+        val currentTime = Clock.System.now()
+        val scheduleLabel = formatScheduleLabel(leaderboard.date, startTime, endTime)
+        val tournamentStatus = tournamentStatus(currentTime, startTime, endTime)
+        val participantsLabel =
+            formatParticipantsLabel(
+                leaderboard.participantCount,
+                tournamentStatus,
+            )
+        return current.copy(
+            leaderboard = leaderboard.topRows,
+            currentUser = leaderboard.userRow,
+            prizeMap = leaderboard.prizeMap,
+            endEpochMs = leaderboard.endEpochMs,
+            isLoading = false,
+            error = null,
+            scheduleLabel = scheduleLabel,
+            participantsLabel = participantsLabel,
+        )
+    }
+
+    private fun fetchProfileDetailsInBackground(
+        userPrincipal: String,
+        leaderboard: TournamentLeaderboard,
+    ) {
+        val uniquePrincipalIds =
+            (
+                leaderboard.topRows.map { it.principalId } +
+                    listOfNotNull(leaderboard.userRow?.principalId)
+            ).distinct()
+                .filter { it.isNotBlank() }
+        if (uniquePrincipalIds.isEmpty()) return
+        viewModelScope.launch {
+            getUsersProfileDetailsUseCase(
+                GetUsersProfileDetailsParams(
+                    callerPrincipal = userPrincipal,
+                    targetPrincipalIds = uniquePrincipalIds,
+                ),
+            ).onSuccess { profileDetailsMap ->
+                _state.update { it.copy(profileDetailsByPrincipalId = profileDetailsMap) }
+            }.onFailure { error -> Logger.e("TournamentLeaderboard") { "Failed to fetch profile details: $error" } }
         }
     }
 
@@ -146,6 +187,7 @@ class TournamentLeaderboardViewModel(
         _state.update { it.copy(showResultOverlay = false) }
     }
 
+    @Suppress("ReturnCount")
     fun onUserClick(row: LeaderboardRow) {
         if (_state.value.isNavigating) return // Prevent multiple clicks
 
@@ -158,6 +200,21 @@ class TournamentLeaderboardViewModel(
                     username = sessionManager.username,
                     isCreatedFromServiceCanister = sessionManager.isCreatedFromServiceCanister ?: false,
                     isFollowing = false,
+                )
+            viewModelScope.launch { eventChannel.send(Event.OpenProfile(canisterData)) }
+            return
+        }
+
+        val cachedProfile = _state.value.profileDetailsByPrincipalId[row.principalId]
+        if (cachedProfile != null) {
+            val canisterData =
+                CanisterData(
+                    canisterId = getUserInfoServiceCanister(),
+                    userPrincipalId = row.principalId,
+                    profilePic = cachedProfile.profilePictureUrl ?: propicFromPrincipal(row.principalId),
+                    username = row.username,
+                    isCreatedFromServiceCanister = true,
+                    isFollowing = cachedProfile.callerFollowsUser ?: false,
                 )
             viewModelScope.launch { eventChannel.send(Event.OpenProfile(canisterData)) }
             return

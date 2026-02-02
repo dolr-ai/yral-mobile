@@ -55,9 +55,9 @@ import com.yral.shared.features.subscriptions.ui.components.BoltIcon
 import com.yral.shared.features.tournament.domain.model.LeaderboardRow
 import com.yral.shared.features.tournament.domain.model.TournamentType
 import com.yral.shared.features.tournament.viewmodel.TournamentLeaderboardViewModel
-import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
+import com.yral.shared.libs.designsystem.component.features.ProfileImageView
 import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
@@ -68,6 +68,8 @@ import com.yral.shared.libs.leaderboard.ui.LeaderboardReward
 import com.yral.shared.libs.leaderboard.ui.main.LeaderboardHelpers
 import com.yral.shared.libs.leaderboard.ui.main.LeaderboardUiConstants
 import com.yral.shared.libs.leaderboard.ui.main.LeaderboardUiConstants.TOURNAMENT_LEADERBOARD_HEADER_WEIGHTS
+import com.yral.shared.rust.service.domain.models.SubscriptionPlan
+import com.yral.shared.rust.service.domain.models.UserProfileDetails
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.propicFromPrincipal
 import kotlinx.coroutines.flow.collectLatest
@@ -179,12 +181,15 @@ fun TournamentLeaderboardScreen(
                     }
 
                     val currentUser = state.currentUser
+                    val profileDetailsMap = state.profileDetailsByPrincipalId
                     if (currentUser != null) {
                         item {
                             TournamentLeaderboardRow(
                                 row = currentUser,
                                 isCurrentUser = true,
                                 fallbackPrize = state.prizeMap[currentUser.position],
+                                profileImageUrl = profileImageUrlFor(currentUser.principalId, profileDetailsMap),
+                                isPro = isProFor(currentUser.principalId, profileDetailsMap),
                                 onClick = { viewModel.onUserClick(currentUser) },
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                             )
@@ -196,6 +201,8 @@ fun TournamentLeaderboardScreen(
                             row = row,
                             isCurrentUser = false,
                             fallbackPrize = state.prizeMap[row.position],
+                            profileImageUrl = profileImageUrlFor(row.principalId, profileDetailsMap),
+                            isPro = isProFor(row.principalId, profileDetailsMap),
                             onClick = { viewModel.onUserClick(row) },
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
                         )
@@ -585,6 +592,8 @@ private fun TournamentLeaderboardRow(
     row: LeaderboardRow,
     isCurrentUser: Boolean,
     fallbackPrize: Int?,
+    profileImageUrl: String,
+    isPro: Boolean = false,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -634,7 +643,12 @@ private fun TournamentLeaderboardRow(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
             ) {
-                TournamentAvatar(position = row.position, principalId = row.principalId)
+                TournamentAvatar(
+                    position = row.position,
+                    principalId = row.principalId,
+                    profileImageUrl = profileImageUrl,
+                    isPro = isPro,
+                )
                 TournamentUsername(
                     position = row.position,
                     username = formatUsername(row),
@@ -692,21 +706,26 @@ private fun TournamentPosition(
 private fun TournamentAvatar(
     position: Int,
     principalId: String,
+    profileImageUrl: String,
+    isPro: Boolean = false,
 ) {
+    val imageUrl = profileImageUrl.ifBlank { propicFromPrincipal(principalId) }
     Box(modifier = Modifier.wrapContentSize()) {
-        YralAsyncImage(
-            imageUrl = propicFromPrincipal(principalId),
-            modifier = Modifier.size(LeaderboardHelpers.PROFILE_IMAGE_SIZE.dp),
-            backgroundColor = YralColors.ProfilePicBackground,
+        ProfileImageView(
+            imageUrl = imageUrl,
+            size = LeaderboardHelpers.PROFILE_IMAGE_SIZE.dp,
+            applyFrame = isPro,
         )
-        val ring = LeaderboardHelpers.getProfileImageRing(position)
-        if (ring != null) {
-            Image(
-                painter = painterResource(ring),
-                contentDescription = null,
-                modifier = Modifier.matchParentSize(),
-                contentScale = ContentScale.FillBounds,
-            )
+        if (!isPro) {
+            val ring = LeaderboardHelpers.getProfileImageRing(position)
+            if (ring != null) {
+                Image(
+                    painter = painterResource(ring),
+                    contentDescription = null,
+                    modifier = Modifier.matchParentSize(),
+                    contentScale = ContentScale.FillBounds,
+                )
+            }
         }
     }
 }
@@ -779,3 +798,15 @@ private fun formatUsername(row: LeaderboardRow?): String {
     val resolved = resolveUsername(row.username, row.principalId) ?: row.principalId
     return if (resolved.startsWith("@")) resolved else "@$resolved"
 }
+
+private fun profileImageUrlFor(
+    principalId: String,
+    profileDetailsMap: Map<String, UserProfileDetails>,
+): String =
+    profileDetailsMap[principalId]?.profilePictureUrl?.takeIf { it.isNotBlank() }
+        ?: propicFromPrincipal(principalId)
+
+private fun isProFor(
+    principalId: String,
+    profileDetailsMap: Map<String, UserProfileDetails>,
+): Boolean = profileDetailsMap[principalId]?.subscriptionPlan is SubscriptionPlan.Pro

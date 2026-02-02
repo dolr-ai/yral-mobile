@@ -58,7 +58,7 @@ class UserInfoRepositoryImpl(
             dataSource
                 .getUsersProfileDetails(principal, targetPrincipalIds)
                 .map { it.toDomain() }
-                .associateBy { it.principalId.toString() }
+                .associateBy { it.principalId }
         }
 
     override suspend fun getFollowers(
