@@ -5,8 +5,6 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
-import com.yral.featureflag.FeatureFlagManager
-import com.yral.featureflag.FeedFeatureFlags
 import com.yral.shared.analytics.events.GameConcludedCtaType
 import com.yral.shared.analytics.events.GameType
 import com.yral.shared.core.session.DELAY_FOR_SESSION_PROPERTIES
@@ -52,7 +50,6 @@ class GameViewModel(
     private val castHotOrNotVoteUseCase: CastHotOrNotVoteUseCase,
     private val gameTelemetry: GameTelemetry,
     private val autoRechargeBalanceUseCase: AutoRechargeBalanceUseCase,
-    private val flagManager: FeatureFlagManager,
 ) : ViewModel() {
     private val _state =
         MutableStateFlow(
@@ -65,7 +62,6 @@ class GameViewModel(
     val state: StateFlow<GameState> = _state.asStateFlow()
 
     init {
-        initGameMode()
         viewModelScope.launch { restoreDataFromPrefs() }
         viewModelScope.launch {
             sessionManager
@@ -96,12 +92,6 @@ class GameViewModel(
                     }
                 }
         }
-    }
-
-    private fun initGameMode() {
-        val gameMode = flagManager.get(FeedFeatureFlags.GameMode.Mode)
-        val isHotOrNot = gameMode.equals("HOT_OR_NOT", ignoreCase = true)
-        _state.update { it.copy(isHotOrNotMode = isHotOrNot) }
     }
 
     private suspend fun restoreDataFromPrefs() {
@@ -458,10 +448,6 @@ class GameViewModel(
         }
     }
 
-    fun setHotOrNotMode(isHotOrNotMode: Boolean) {
-        _state.update { it.copy(isHotOrNotMode = isHotOrNotMode) }
-    }
-
     fun castHotOrNotVote(
         isHot: Boolean,
         feedDetails: FeedDetails,
@@ -616,7 +602,6 @@ data class GameState(
     val lastVotedCount: Int = 1,
     val isStopAndVote: Boolean = false,
     val isAutoScrollEnabled: Boolean = false,
-    val isHotOrNotMode: Boolean = false,
 )
 
 data class HotOrNotVoteResult(

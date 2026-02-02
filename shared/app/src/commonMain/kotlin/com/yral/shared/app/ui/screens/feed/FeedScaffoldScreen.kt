@@ -124,7 +124,7 @@ fun FeedScaffoldScreen(
                         videoId = feedState.feedDetails[currentPageOfFeed].videoID,
                     )
                     // Also mark Hot or Not animation as shown for previous page
-                    if (gameState.isHotOrNotMode) {
+                    if (feedState.isCardLayoutEnabled) {
                         gameViewModel.markHotOrNotAnimationShown(
                             feedState.feedDetails[currentPageOfFeed].videoID,
                         )
@@ -154,7 +154,7 @@ fun FeedScaffoldScreen(
                 feedState.feedDetails.size
             },
         onSwipeVote =
-            if (gameState.isHotOrNotMode && feedState.isCardLayoutEnabled) {
+            if (feedState.isCardLayoutEnabled) {
                 { direction, pageIndex ->
                     if (pageIndex < feedState.feedDetails.size) {
                         val isHot = direction == SwipeDirection.RIGHT
@@ -202,6 +202,7 @@ fun FeedScaffoldScreen(
             onDismissRequest = {
                 gameViewModel.toggleAboutGame(false)
             },
+            isHotOrNotMode = feedState.isCardLayoutEnabled,
         )
     }
     if (gameState.gameIcons.isNotEmpty()) {
@@ -565,7 +566,7 @@ private fun OverlayBottom(
                 }
 
             // Hot or Not mode: show result overlay when card layout is enabled
-            if (gameState.isHotOrNotMode && feedState.isCardLayoutEnabled) {
+            if (feedState.isCardLayoutEnabled) {
                 val hotOrNotResult = gameViewModel.getHotOrNotResult(currentVideoId)
                 if (hotOrNotResult != null) {
                     HotOrNotResultOverlay(
