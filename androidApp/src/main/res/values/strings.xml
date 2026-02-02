@@ -27,7 +27,7 @@
     <string name="mixpanel_token">609abef3172b5fc64554f5ac6c77414d</string>
 
     <!-- Sentry Configuration -->
-    <string name="sentry_dsn">https://8c02037eff3cc273ff921053b3aeb309@apm.yral.com/13</string>
+    <string name="sentry_dsn">https://a5d4d8ed198025785f555aad4dddb1a7@sentry.yral.com/3</string>
     <string name="sentry_environment">prod</string>
 
 
