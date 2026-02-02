@@ -22,6 +22,11 @@ interface UserInfoDataSource {
         targetPrincipal: Principal,
     ): UisUserProfileDetailsForFrontendV7
 
+    suspend fun getUsersProfileDetails(
+        principal: Principal,
+        targetPrincipalIds: List<String>,
+    ): List<UisUserProfileDetailsForFrontendV7>
+
     suspend fun getFollowers(
         principal: Principal,
         targetPrincipal: Principal,
