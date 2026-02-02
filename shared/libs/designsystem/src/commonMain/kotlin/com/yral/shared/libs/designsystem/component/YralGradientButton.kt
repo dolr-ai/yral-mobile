@@ -3,6 +3,7 @@ package com.yral.shared.libs.designsystem.component
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -33,12 +34,14 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
 import org.jetbrains.compose.ui.tooling.preview.PreviewParameterProvider
 import yral_mobile.shared.libs.designsystem.generated.resources.Res
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_thunder
 import yral_mobile.shared.libs.designsystem.generated.resources.pink_gradient_background
 import yral_mobile.shared.libs.designsystem.generated.resources.pink_gradient_background_disabled
 import yral_mobile.shared.libs.designsystem.generated.resources.transparent_background
 import yral_mobile.shared.libs.designsystem.generated.resources.white_background
 import yral_mobile.shared.libs.designsystem.generated.resources.white_background_disabled
 
+@Suppress("LongMethod")
 @Composable
 fun YralGradientButton(
     textStyle: TextStyle? = null,
@@ -47,6 +50,7 @@ fun YralGradientButton(
     buttonType: YralButtonType = YralButtonType.Pink,
     text: String,
     buttonHeight: Dp = 45.dp,
+    iconRes: DrawableResource? = null,
     onClick: () -> Unit,
 ) {
     Row(
@@ -71,20 +75,32 @@ fun YralGradientButton(
                 enter = fadeIn(),
                 exit = fadeOut(),
             ) {
-                val defaultTextStyle =
-                    LocalAppTopography
-                        .current
-                        .mdBold
-                        .plus(
-                            TextStyle(
-                                textAlign = TextAlign.Center,
-                            ),
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterHorizontally),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val defaultTextStyle =
+                        LocalAppTopography
+                            .current
+                            .mdBold
+                            .plus(
+                                TextStyle(
+                                    textAlign = TextAlign.Center,
+                                ),
+                            )
+                    YralMaskedVectorTextV2(
+                        text = text,
+                        drawableRes = getButtonTextBackground(buttonType, buttonState),
+                        textStyle = textStyle ?: defaultTextStyle,
+                    )
+                    if (iconRes != null) {
+                        Image(
+                            painter = painterResource(iconRes),
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
                         )
-                YralMaskedVectorTextV2(
-                    text = text,
-                    drawableRes = getButtonTextBackground(buttonType, buttonState),
-                    textStyle = textStyle ?: defaultTextStyle,
-                )
+                    }
+                }
             }
         }
         AnimatedVisibility(
@@ -193,6 +209,7 @@ private fun YralGradientButtonPreview(
                 buttonState = parameter.state,
                 buttonType = parameter.type,
                 buttonHeight = parameter.height,
+                iconRes = parameter.iconRes,
                 onClick = {},
             )
         }
@@ -204,6 +221,7 @@ private data class YralGradientButtonPreviewParameter(
     val state: YralButtonState,
     val text: String,
     val height: Dp = 45.dp,
+    val iconRes: DrawableResource? = null,
 )
 
 @Suppress("MaxLineLength")
@@ -211,7 +229,12 @@ private class YralGradientButtonPreviewParameterProvider : PreviewParameterProvi
     override val values =
         YralButtonType.entries.asSequence().flatMap { buttonType ->
             YralButtonState.entries.asSequence().map { buttonState ->
-                YralGradientButtonPreviewParameter(buttonType, buttonState, "Continue")
+                YralGradientButtonPreviewParameter(
+                    type = buttonType,
+                    state = buttonState,
+                    text = "Continue",
+                    iconRes = Res.drawable.ic_thunder,
+                )
             }
         }
 }
