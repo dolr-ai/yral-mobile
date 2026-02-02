@@ -245,6 +245,33 @@ class IndividualUserDataSourceImpl(
 
 ## Development Workflow
 
+### Testing Requirements (MANDATORY)
+
+**IMPORTANT: Every code change MUST include tests. A task is NOT considered complete until tests pass.**
+
+When adding new features or modifying existing implementations:
+
+1. **Always write/update tests** for any code changes
+2. **Run relevant tests** before considering the task complete:
+   ```bash
+   # For specific module changes
+   ./gradlew :shared:features:<module>:allTests
+
+   # For all tests
+   ./gradlew allTests
+   ```
+3. **Fix failing tests** - if tests fail, debug and fix before marking task as done
+4. **Test coverage expectations**:
+   - ViewModels: Test state changes and event emissions
+   - Use Cases: Test business logic with success/error cases
+   - Repositories: Test data transformations and error handling
+   - Components: Test navigation logic where applicable
+
+**A task is ONLY finished when:**
+- All new/modified code has corresponding tests
+- All tests pass (`./gradlew allTests` succeeds)
+- Code quality checks pass (`./gradlew detekt`)
+
 ### Adding a New Feature
 
 1. Create module: `/shared/features/yourfeature/`
@@ -254,6 +281,9 @@ class IndividualUserDataSourceImpl(
 5. Define routes in `/shared/libs/routing/routes-api/`
 6. Create Component interface + Default implementation
 7. Wire up navigation in `RootComponent`
+8. **Write tests** for ViewModels, Use Cases, and Repositories
+9. **Run tests**: `./gradlew :shared:features:yourfeature:allTests`
+10. **Verify all tests pass** before considering the feature complete
 
 ### Working with Navigation
 
@@ -555,3 +585,4 @@ curl -X POST "https://us-central1-yral-staging.cloudfunctions.net/update_tournam
   -H "Content-Type: application/json" \
   -d '{"tournament_id": "YOUR_TOURNAMENT_ID", "status": "live"}'
 ```
+
