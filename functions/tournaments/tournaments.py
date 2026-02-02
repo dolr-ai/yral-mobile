@@ -980,7 +980,7 @@ def _schedule_status_task(doc_id: str, target_status: TournamentStatus, run_at: 
     print(f"[tasks] scheduled {target_status.value} for {doc_id} at {run_at.isoformat()} ({response.name})")
 
 
-@https_fn.on_request(region="us-central1", timeout_sec=1500, memory=2048, secrets=["BACKEND_ADMIN_KEY", "GEMINI_API_KEY"])
+@https_fn.on_request(region="us-central1", timeout_sec=3600, memory=2048, secrets=["BACKEND_ADMIN_KEY", "GEMINI_API_KEY"])
 def create_tournaments(cloud_event):
     """
     Cloud Scheduler target (run daily at 12am IST) to create tournaments.
