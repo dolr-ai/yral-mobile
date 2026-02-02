@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
@@ -22,12 +21,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush.Companion.linearGradient
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.shared.core.session.AccountInfo
-import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralGradientButton
@@ -93,23 +90,9 @@ fun AccountInfoView(
             horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            YralAsyncImage(
+            ProfileImageView(
                 imageUrl = accountInfo.profilePic,
-                modifier =
-                    Modifier
-                        .size(76.dp)
-                        .then(
-                            if (isProUser) {
-                                Modifier.border(
-                                    width = 3.dp,
-                                    brush = proBrush(),
-                                    shape = RoundedCornerShape(size = 120.dp),
-                                )
-                            } else {
-                                Modifier
-                            },
-                        ),
-                contentScale = ContentScale.Crop,
+                applyFrame = isProUser,
             )
             Column(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -370,5 +353,3 @@ private fun ProChip() {
         )
     }
 }
-
-private fun proBrush() = linearGradient(colors = listOf(YralColors.Yellow200, YralColors.Yellow300))

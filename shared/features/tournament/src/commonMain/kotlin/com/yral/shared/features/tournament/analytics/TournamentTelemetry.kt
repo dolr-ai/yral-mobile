@@ -143,6 +143,9 @@ class TournamentTelemetry(
         isCorrect: Boolean,
         scoreDelta: Int,
         diamondsRemaining: Int,
+        emojiShown: List<String>,
+        userResponse: String,
+        aiResponse: String,
     ) {
         analyticsManager.trackEvent(
             TournamentAnswerSubmittedEventData(
@@ -152,6 +155,9 @@ class TournamentTelemetry(
                 scoreDelta = scoreDelta,
                 diamondsRemaining = diamondsRemaining,
                 sessionId = getSessionId(),
+                emojiShown = emojiShown,
+                userResponse = userResponse,
+                aiResponse = aiResponse,
             ),
         )
     }

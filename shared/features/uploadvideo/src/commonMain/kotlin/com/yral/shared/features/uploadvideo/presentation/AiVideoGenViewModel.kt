@@ -5,9 +5,12 @@ import androidx.lifecycle.viewModelScope
 import com.github.michaelbull.result.fold
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.featureflag.AppFeatureFlags
+import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.events.AiVideoGenFailureType
 import com.yral.shared.analytics.events.VideoCreationType
 import com.yral.shared.core.logging.YralLogger
+import com.yral.shared.core.session.ProDetails
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.features.uploadvideo.analytics.UploadVideoTelemetry
@@ -19,26 +22,50 @@ import com.yral.shared.features.uploadvideo.domain.PollAndUploadAiVideoUseCase
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.libs.arch.presentation.UiState
+import com.yral.shared.preferences.PrefKeys
+import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.service.domain.models.RateLimitStatus
 import com.yral.shared.rust.service.domain.models.VideoGenRequestKey
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.getString
+import yral_mobile.shared.features.uploadvideo.generated.resources.Res
+import yral_mobile.shared.features.uploadvideo.generated.resources.ai_video_subscription_nudge_description
+import yral_mobile.shared.features.uploadvideo.generated.resources.ai_video_subscription_nudge_title
+import kotlin.time.Clock
+import kotlin.time.Instant
 
+@OptIn(kotlin.time.ExperimentalTime::class)
 @Suppress("TooManyFunctions")
 class AiVideoGenViewModel internal constructor(
     private val requiredUseCases: RequiredUseCases,
     private val sessionManager: SessionManager,
+    private val preferences: Preferences,
     private val uploadVideoTelemetry: UploadVideoTelemetry,
     logger: YralLogger,
+    flagManager: FeatureFlagManager,
 ) : ViewModel() {
     private val logger = logger.withTag(AiVideoGenViewModel::class.simpleName ?: "")
 
-    private val _state = MutableStateFlow(ViewState())
+    private val _state =
+        MutableStateFlow(
+            ViewState(
+                isSubscriptionEnabled = flagManager.isEnabled(AppFeatureFlags.Common.EnableSubscription),
+            ),
+        )
     val state: StateFlow<ViewState> = _state.asStateFlow()
+
+    private val aiVideoGenEventChannel = Channel<AiVideoGenEvent>(Channel.CONFLATED)
+    val aiVideoGenEvents = aiVideoGenEventChannel.receiveAsFlow()
+
     val sessionObserver =
         sessionManager.observeSessionStateWithProperty { state, properties ->
             val canisterId =
@@ -60,6 +87,18 @@ class AiVideoGenViewModel internal constructor(
                     defaultValue = false,
                 ).collect { isSocialSignIn ->
                     _state.update { it.copy(isLoggedIn = isSocialSignIn) }
+                }
+        }
+        viewModelScope.launch {
+            sessionManager
+                .observeSessionPropertyWithDefault(
+                    selector = { it.proDetails },
+                    defaultValue = ProDetails(),
+                ).collect { proDetails ->
+                    _state.update { it.copy(proDetails = proDetails) }
+                    if (_state.value.currentCanister != null) {
+                        getFreeCreditsStatus()
+                    }
                 }
         }
     }
@@ -127,6 +166,22 @@ class AiVideoGenViewModel internal constructor(
 
     private fun getFreeCreditsStatus() {
         viewModelScope.launch {
+            with(_state.value.proDetails) {
+                if (isProPurchased) {
+                    _state.update {
+                        it.copy(
+                            usedCredits = totalCredits - availableCredits,
+                            totalCredits = totalCredits,
+                        )
+                    }
+                    uploadVideoTelemetry.videoCreationPageViewed(
+                        type = VideoCreationType.AI_VIDEO,
+                        creditsFetched = true,
+                        creditsAvailable = availableCredits,
+                    )
+                    return@launch
+                }
+            }
             _state.update { it.copy(usedCredits = null) }
             sessionManager.userPrincipal?.let { userPrincipal ->
                 requiredUseCases
@@ -141,13 +196,16 @@ class AiVideoGenViewModel internal constructor(
                                     ),
                             ),
                     ).onSuccess { status ->
+                        val usedCredits = status.usedCredits()
                         uploadVideoTelemetry.videoCreationPageViewed(
                             type = VideoCreationType.AI_VIDEO,
                             creditsFetched = true,
-                            creditsAvailable = 1 - status.usedCredits(),
+                            creditsAvailable = 1 - usedCredits,
                         )
-                        _state.update { it.copy(usedCredits = status.usedCredits()) }
-                        logger.d { "Used credits ${_state.value.usedCredits} $status" }
+                        _state
+                            .update { it.copy(usedCredits = usedCredits) }
+                            .also { logger.d { "Used credits ${_state.value.usedCredits} $status" } }
+                        setSubscriptionNudgeShown(usedCredits)
                     }.onFailure { error ->
                         uploadVideoTelemetry.videoCreationPageViewed(
                             type = VideoCreationType.AI_VIDEO,
@@ -188,7 +246,11 @@ class AiVideoGenViewModel internal constructor(
                                             generateAudio = if (selectedProvider.supportsAudio == true) true else null,
                                             tokenType =
                                                 if (currentState.isCreditsAvailable()) {
-                                                    TokenType.FREE
+                                                    if (currentState.proDetails.isProPurchased) {
+                                                        TokenType.YRAL_PRO_SUBSCRIPTION
+                                                    } else {
+                                                        TokenType.FREE
+                                                    }
                                                 } else {
                                                     TokenType.SATS
                                                 },
@@ -312,6 +374,9 @@ class AiVideoGenViewModel internal constructor(
                                                 reservedBalance = null,
                                             )
                                         }
+                                        if (_state.value.proDetails.isProPurchased) {
+                                            aiVideoGenEventChannel.trySend(AiVideoGenEvent.RefreshProDetails)
+                                        }
                                     }
 
                                     is PollAndUploadAiVideoUseCase.PollAndUploadResult.Failed -> {
@@ -326,6 +391,9 @@ class AiVideoGenViewModel internal constructor(
                                         }
                                         // if endFlow true then only return balance
                                         returnBalance()
+                                        if (_state.value.proDetails.isProPurchased) {
+                                            aiVideoGenEventChannel.trySend(AiVideoGenEvent.RefreshProDetails)
+                                        }
                                     }
 
                                     is PollAndUploadAiVideoUseCase.PollAndUploadResult.UploadFailed -> {
@@ -334,6 +402,9 @@ class AiVideoGenViewModel internal constructor(
                                                 bottomSheetType = BottomSheetType.Error(""),
                                                 reservedBalance = null,
                                             )
+                                        }
+                                        if (_state.value.proDetails.isProPurchased) {
+                                            aiVideoGenEventChannel.trySend(AiVideoGenEvent.RefreshProDetails)
                                         }
                                     }
                                 }
@@ -347,6 +418,9 @@ class AiVideoGenViewModel internal constructor(
                                     reasonType = AiVideoGenFailureType.GENERATION_FAILED,
                                 )
                                 _state.update { it.copy(bottomSheetType = BottomSheetType.Error("")) }
+                                if (_state.value.proDetails.isProPurchased) {
+                                    aiVideoGenEventChannel.trySend(AiVideoGenEvent.RefreshProDetails)
+                                }
                             },
                         )
                     }
@@ -396,7 +470,13 @@ class AiVideoGenViewModel internal constructor(
         }
 
     fun cleanup() {
-        _state.update { ViewState() }
+        _state.update { current ->
+            ViewState(
+                isLoggedIn = current.isLoggedIn,
+                proDetails = current.proDetails,
+                isSubscriptionEnabled = current.isSubscriptionEnabled,
+            )
+        }
         currentRequestKey = null
         pollingJob?.cancel()
     }
@@ -419,6 +499,36 @@ class AiVideoGenViewModel internal constructor(
         _state.update { it.copy(currentBalance = balance) }
     }
 
+    suspend fun setSubscriptionNudgeShown(usedCredits: Int?) {
+        if (usedCredits == 1 && !_state.value.proDetails.isProPurchased) {
+            val todayEpochDays =
+                Instant
+                    .fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds())
+                    .toLocalDateTime(TimeZone.currentSystemDefault())
+                    .date
+                    .toEpochDays()
+            val lastShownEpochDays =
+                preferences.getLong(PrefKeys.AI_VIDEO_SUBSCRIPTION_NUDGE_LAST_SHOWN_DATE.name)
+            if (lastShownEpochDays == null || lastShownEpochDays != todayEpochDays) {
+                preferences.putLong(
+                    PrefKeys.AI_VIDEO_SUBSCRIPTION_NUDGE_LAST_SHOWN_DATE.name,
+                    todayEpochDays,
+                )
+                logger.d { "showSubscription Nudge" }
+                aiVideoGenEventChannel.trySend(
+                    AiVideoGenEvent.ShowSubscriptionNudge(
+                        title = getString(Res.string.ai_video_subscription_nudge_title),
+                        description =
+                            getString(
+                                Res.string.ai_video_subscription_nudge_description,
+                                _state.value.proDetails.totalCredits,
+                            ),
+                    ),
+                )
+            }
+        }
+    }
+
     data class ViewState(
         val selectedProvider: Provider? = null,
         val providers: List<Provider> = emptyList(),
@@ -431,6 +541,8 @@ class AiVideoGenViewModel internal constructor(
         val currentBalance: Long? = null,
         val reservedBalance: Long? = null,
         val isLoggedIn: Boolean = false,
+        val proDetails: ProDetails = ProDetails(),
+        val isSubscriptionEnabled: Boolean,
     ) {
         fun isBalanceLow() = (selectedProvider?.cost?.sats ?: 0) > (currentBalance ?: -1)
 
@@ -453,4 +565,12 @@ class AiVideoGenViewModel internal constructor(
         val generateVideo: GenerateVideoUseCase,
         val pollAndUploadAiVideo: PollAndUploadAiVideoUseCase,
     )
+
+    sealed class AiVideoGenEvent {
+        data class ShowSubscriptionNudge(
+            val title: String,
+            val description: String,
+        ) : AiVideoGenEvent()
+        data object RefreshProDetails : AiVideoGenEvent()
+    }
 }

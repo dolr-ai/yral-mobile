@@ -62,6 +62,13 @@ class WalletViewModel(
                     _state.update { it.copy(isFirebaseLoggedIn = isFirebaseLoggedIn) }
                 }
         }
+        viewModelScope.launch {
+            sessionManager
+                .observeSessionProperty { it.proDetails }
+                .collect { proDetails ->
+                    _state.update { it.copy(isProUser = proDetails?.isProPurchased ?: false) }
+                }
+        }
     }
 
     private fun updateDolrConversionRate() {
@@ -185,4 +192,5 @@ data class WalletState(
     val howToGetDolrHelpVisible: Boolean = false,
     val rewardConfig: BtcRewardConfig? = null,
     val isFirebaseLoggedIn: Boolean = false,
+    val isProUser: Boolean = false,
 )

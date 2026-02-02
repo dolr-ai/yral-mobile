@@ -2116,6 +2116,9 @@ data class TournamentAnswerSubmittedEventData(
     @SerialName("score_delta") val scoreDelta: Int,
     @SerialName("diamonds_remaining") val diamondsRemaining: Int,
     @SerialName("session_id") val sessionId: String,
+    @SerialName("emoji_shown") val emojiShown: List<String>,
+    @SerialName("user_response") val userResponse: String,
+    @SerialName("ai_response") val aiResponse: String,
 ) : BaseEventData(),
     EventData
 
