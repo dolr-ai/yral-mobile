@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.shared.core.session.ProDetails
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.tournament.analytics.TournamentTelemetry
 import com.yral.shared.features.tournament.domain.GetTournamentLeaderboardUseCase
@@ -42,6 +43,7 @@ data class TournamentLeaderboardUiState(
     val participantsLabel: String? = null,
     val scheduleLabel: String? = null,
     val showResultOverlay: Boolean = false,
+    val proDetails: ProDetails = ProDetails(),
 )
 
 class TournamentLeaderboardViewModel(
@@ -54,6 +56,22 @@ class TournamentLeaderboardViewModel(
     val state: StateFlow<TournamentLeaderboardUiState> = _state.asStateFlow()
     private val eventChannel = Channel<Event>(Channel.BUFFERED)
     val eventsFlow: Flow<Event> = eventChannel.receiveAsFlow()
+
+    init {
+        observeProDetails()
+    }
+
+    private fun observeProDetails() {
+        viewModelScope.launch {
+            sessionManager
+                .observeSessionPropertyWithDefault(
+                    selector = { it.proDetails },
+                    defaultValue = ProDetails(),
+                ).collect { proDetails ->
+                    _state.update { it.copy(proDetails = proDetails) }
+                }
+        }
+    }
 
     @OptIn(ExperimentalTime::class)
     fun loadLeaderboard(

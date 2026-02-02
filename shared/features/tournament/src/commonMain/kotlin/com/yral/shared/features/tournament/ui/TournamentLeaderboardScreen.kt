@@ -32,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,6 +50,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import com.yral.shared.core.utils.resolveUsername
+import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
+import com.yral.shared.features.subscriptions.nav.SubscriptionNudgeContent
+import com.yral.shared.features.subscriptions.ui.components.BoltIcon
 import com.yral.shared.features.tournament.domain.model.LeaderboardRow
 import com.yral.shared.features.tournament.domain.model.TournamentType
 import com.yral.shared.features.tournament.viewmodel.TournamentLeaderboardViewModel
@@ -99,14 +103,38 @@ fun TournamentLeaderboardScreen(
     showResult: Boolean = false,
     onBack: () -> Unit,
     onOpenProfile: (CanisterData) -> Unit,
+    subscriptionCoordinator: SubscriptionCoordinator,
     viewModel: TournamentLeaderboardViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
     val showResultOverlay = state.showResultOverlay
+    var hasShownNudge by remember { mutableStateOf(false) }
+    val shouldShowSubscriptionNudge by
+        remember {
+            derivedStateOf {
+                state.currentUser != null &&
+                    !state.isLoading &&
+                    !state.proDetails.isProPurchased &&
+                    !hasShownNudge
+            }
+        }
 
     LaunchedEffect(tournamentId, showResult) {
         viewModel.initShowResultOverlay(showResult)
         viewModel.loadLeaderboard(tournamentId, tournamentType)
+    }
+
+    LaunchedEffect(shouldShowSubscriptionNudge) {
+        if (shouldShowSubscriptionNudge) {
+            hasShownNudge = true
+            subscriptionCoordinator.showSubscriptionNudge(
+                SubscriptionNudgeContent(
+                    title = null,
+                    description = null,
+                    topContent = { BoltIcon() },
+                ),
+            )
+        }
     }
 
     LaunchedEffect(viewModel) {

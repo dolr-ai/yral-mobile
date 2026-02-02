@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.github.michaelbull.result.runCatching
+import com.yral.shared.core.session.ProDetails
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.game.domain.GetBalanceUseCase
 import com.yral.shared.features.tournament.analytics.TournamentTelemetry
@@ -82,17 +83,15 @@ class TournamentViewModel(
                 var previousTournaments: List<Tournament> = emptyList()
                 while (true) {
                     val currentTimeMs = Clock.System.now().toEpochMilliseconds()
-                    val tournaments = tournamentDataList.map { it.toUiTournament() }
+                    val tournaments = tournamentDataList.map { it.toUiTournament(_state.value.proDetails) }
 
                     trackTournamentStateChanges(previousTournaments, tournaments)
                     previousTournaments = tournaments
 
                     _state.update { it.copy(tournaments = tournaments) }
 
-                    val nextBoundaryMs = findNextBoundaryTime(tournamentDataList, currentTimeMs)
-                    if (nextBoundaryMs == null) {
-                        break
-                    }
+                    val nextBoundaryMs =
+                        findNextBoundaryTime(tournamentDataList, currentTimeMs) ?: break
 
                     val delayMs = nextBoundaryMs - currentTimeMs
                     if (delayMs > 0) {
@@ -148,6 +147,23 @@ class TournamentViewModel(
 
                     if (isSocialSignIn) {
                         processPendingTournamentRegistration()
+                    }
+                }
+        }
+        viewModelScope.launch {
+            sessionManager
+                .observeSessionPropertyWithDefault(
+                    selector = { it.proDetails },
+                    defaultValue = ProDetails(),
+                ).collect { proDetails ->
+                    _state.update { state ->
+                        state.copy(
+                            proDetails = proDetails,
+                            tournaments =
+                                tournamentDataListFlow
+                                    .value
+                                    .map { it.toUiTournament(proDetails) },
+                        )
                     }
                 }
         }
@@ -214,6 +230,7 @@ class TournamentViewModel(
                     it.copy(
                         isLoading = false,
                         error = null,
+                        tournaments = tournamentDataList.map { data -> data.toUiTournament(it.proDetails) },
                     )
                 }
             }.onFailure { error ->
@@ -255,6 +272,7 @@ class TournamentViewModel(
                     it.copy(
                         isLoading = false,
                         error = null,
+                        tournaments = tournamentDataList.map { data -> data.toUiTournament(it.proDetails) },
                     )
                 }
             }.onFailure { error ->
@@ -287,6 +305,7 @@ class TournamentViewModel(
             _state.update { it.copy(isRegistering = true) }
             val tokensRequired =
                 when (val state = tournament.participationState) {
+                    is TournamentParticipationState.JoinNowWithCredit -> 0
                     is TournamentParticipationState.JoinNowWithTokens -> state.tokensRequired
                     is TournamentParticipationState.RegistrationRequired -> state.tokensRequired
                     else -> 0
@@ -394,7 +413,9 @@ class TournamentViewModel(
             )
         } else {
             when (tournament.participationState) {
-                is TournamentParticipationState.JoinNowWithTokens ->
+                is TournamentParticipationState.JoinNowWithCredit,
+                is TournamentParticipationState.JoinNowWithTokens,
+                ->
                     registerForTournament(
                         tournament,
                     )

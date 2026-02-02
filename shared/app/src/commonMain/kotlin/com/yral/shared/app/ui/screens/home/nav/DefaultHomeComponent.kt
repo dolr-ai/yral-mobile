@@ -306,6 +306,7 @@ internal class DefaultHomeComponent(
                 )
             },
             showAlertsOnDialog = showAlertsOnDialog,
+            subscriptionCoordinator = subscriptionCoordinator,
         )
 
     private fun uploadVideoComponent(componentContext: ComponentContext): UploadVideoRootComponent =

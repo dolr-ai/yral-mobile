@@ -1,5 +1,6 @@
 package com.yral.shared.features.tournament.domain.model
 
+import com.yral.shared.core.session.ProDetails
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
@@ -8,14 +9,18 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 /**
- * Maps API TournamentData to UI Tournament model.
+ * Maps API [TournamentData] to UI [Tournament].
+ * Pro users with [ProDetails.availableCredits] get [TournamentParticipationState.JoinNowWithCredit]
+ * others get token-based states.
  */
+@Suppress("LongMethod")
 @OptIn(ExperimentalTime::class)
-fun TournamentData.toUiTournament(): Tournament {
+fun TournamentData.toUiTournament(proDetails: ProDetails): Tournament {
     val startTime = Instant.fromEpochMilliseconds(startEpochMs)
     val endTime = Instant.fromEpochMilliseconds(endEpochMs)
     val currentTime = Clock.System.now()
     val tournamentStatus = tournamentStatus(currentTime, startTime, endTime)
+    val canUseCredit = proDetails.isProPurchased && proDetails.availableCredits >= entryCostCredits
 
     val participationState =
         when {
@@ -34,10 +39,18 @@ fun TournamentData.toUiTournament(): Tournament {
                 }
             }
             tournamentStatus is TournamentStatus.Live -> {
-                TournamentParticipationState.JoinNowWithTokens(entryCost)
+                if (canUseCredit) {
+                    TournamentParticipationState.JoinNowWithCredit(entryCostCredits)
+                } else {
+                    TournamentParticipationState.JoinNowWithTokens(entryCost)
+                }
             }
             else -> {
-                TournamentParticipationState.RegistrationRequired(entryCost)
+                if (canUseCredit) {
+                    TournamentParticipationState.JoinNowWithCredit(entryCostCredits)
+                } else {
+                    TournamentParticipationState.RegistrationRequired(entryCost)
+                }
             }
         }
 
@@ -62,6 +75,7 @@ fun TournamentData.toUiTournament(): Tournament {
         startEpochMs = startEpochMs,
         endEpochMs = endEpochMs,
         entryCost = entryCost,
+        entryCostCredits = entryCostCredits,
         isRegistered = userStats != null,
         userDiamonds = userStats?.diamonds ?: 0,
     )

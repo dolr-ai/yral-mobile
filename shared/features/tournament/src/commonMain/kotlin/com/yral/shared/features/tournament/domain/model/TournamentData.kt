@@ -12,6 +12,7 @@ data class TournamentData(
     val startEpochMs: Long,
     val endEpochMs: Long,
     val entryCost: Int,
+    val entryCostCredits: Int,
     val totalPrizePool: Int,
     val prizeMap: Map<Int, Int>,
     val participantCount: Int,
