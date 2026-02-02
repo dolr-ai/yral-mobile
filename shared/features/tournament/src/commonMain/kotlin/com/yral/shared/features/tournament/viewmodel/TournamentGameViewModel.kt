@@ -158,7 +158,7 @@ class TournamentGameViewModel(
                     smileyId = icon.id,
                 ),
             ).onSuccess { result ->
-                handleVoteSuccess(result, currentState, feedDetails.videoID)
+                handleVoteSuccess(result, currentState, feedDetails.videoID, icon)
             }.onFailure { error ->
                 handleVoteFailure(error)
             }
@@ -168,9 +168,31 @@ class TournamentGameViewModel(
         result: VoteResult,
         currentState: TournamentGameState,
         videoId: String,
+        userSelectedIcon: GameIcon,
     ) {
         val diamondDelta = result.diamondDelta ?: (result.diamonds - currentState.diamonds)
         val resolvedResult = if (result.diamondDelta == null) result.copy(diamondDelta = diamondDelta) else result
+
+        // Build analytics data using display names from response
+        // Use videoEmojis from result (has displayName) for emoji_shown
+        // Fall back to unicode if displayName is empty
+        val emojiShownList =
+            result.videoEmojis?.map { emoji ->
+                emoji.displayName.ifEmpty { emoji.unicode }
+            } ?: emptyList()
+
+        // User's choice - find matching emoji in result.videoEmojis by unicode to get displayName
+        val userResponse =
+            result.videoEmojis
+                ?.find { it.unicode == userSelectedIcon.unicode }
+                ?.let { it.displayName.ifEmpty { it.unicode } }
+                ?: userSelectedIcon.unicode
+
+        // AI's answer - use displayName if available, else unicode, else id
+        val aiResponse =
+            result.smiley.displayName?.takeIf { it.isNotEmpty() }
+                ?: result.smiley.unicode
+                ?: result.smiley.id
 
         telemetry.onAnswerSubmitted(
             tournamentId = currentState.tournamentId,
@@ -178,6 +200,9 @@ class TournamentGameViewModel(
             isCorrect = result.outcome == VoteOutcome.WIN,
             scoreDelta = diamondDelta,
             diamondsRemaining = result.diamonds,
+            emojiShown = emojiShownList,
+            userResponse = userResponse,
+            aiResponse = aiResponse,
         )
 
         // Update video emojis in dedicated StateFlow (separate from main state)
@@ -263,6 +288,9 @@ class TournamentGameViewModel(
                     isCorrect = isCorrect,
                     scoreDelta = result.diamondDelta,
                     diamondsRemaining = result.diamonds,
+                    emojiShown = emptyList(), // No emojis in Hot or Not
+                    userResponse = vote, // "hot" or "not"
+                    aiResponse = result.aiVerdict, // AI's verdict
                 )
 
                 val outcome = if (result.outcome == "WIN") VoteOutcome.WIN else VoteOutcome.LOSS
