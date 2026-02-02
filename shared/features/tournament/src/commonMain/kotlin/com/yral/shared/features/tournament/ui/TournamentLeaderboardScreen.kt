@@ -32,7 +32,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -108,39 +107,24 @@ fun TournamentLeaderboardScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val showResultOverlay = state.showResultOverlay
-    var hasShownNudge by remember { mutableStateOf(false) }
-    val shouldShowSubscriptionNudge by
-        remember {
-            derivedStateOf {
-                state.currentUser != null &&
-                    !state.isLoading &&
-                    !state.proDetails.isProPurchased &&
-                    !hasShownNudge
-            }
-        }
 
     LaunchedEffect(tournamentId, showResult) {
         viewModel.initShowResultOverlay(showResult)
         viewModel.loadLeaderboard(tournamentId, tournamentType)
     }
 
-    LaunchedEffect(shouldShowSubscriptionNudge) {
-        if (shouldShowSubscriptionNudge) {
-            hasShownNudge = true
-            subscriptionCoordinator.showSubscriptionNudge(
-                SubscriptionNudgeContent(
-                    title = null,
-                    description = null,
-                    topContent = { BoltIcon() },
-                ),
-            )
-        }
-    }
-
     LaunchedEffect(viewModel) {
         viewModel.eventsFlow.collectLatest { event ->
             when (event) {
                 is TournamentLeaderboardViewModel.Event.OpenProfile -> onOpenProfile(event.canisterData)
+                is TournamentLeaderboardViewModel.Event.ShowSubscriptionNudge ->
+                    subscriptionCoordinator.showSubscriptionNudge(
+                        SubscriptionNudgeContent(
+                            title = null,
+                            description = null,
+                            topContent = { BoltIcon() },
+                        ),
+                    )
             }
         }
     }

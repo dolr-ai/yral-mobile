@@ -15,6 +15,8 @@ import com.yral.shared.features.tournament.domain.model.TournamentType
 import com.yral.shared.features.tournament.domain.model.formatParticipantsLabel
 import com.yral.shared.features.tournament.domain.model.formatScheduleLabel
 import com.yral.shared.features.tournament.domain.model.tournamentStatus
+import com.yral.shared.preferences.PrefKeys
+import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7Params
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCase
 import com.yral.shared.rust.service.utils.CanisterData
@@ -28,6 +30,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -51,6 +55,7 @@ class TournamentLeaderboardViewModel(
     private val sessionManager: SessionManager,
     private val getUserProfileDetailsV7UseCase: GetUserProfileDetailsV7UseCase,
     private val telemetry: TournamentTelemetry,
+    private val preferences: Preferences,
 ) : ViewModel() {
     private val _state = MutableStateFlow(TournamentLeaderboardUiState())
     val state: StateFlow<TournamentLeaderboardUiState> = _state.asStateFlow()
@@ -116,6 +121,9 @@ class TournamentLeaderboardViewModel(
                                 scheduleLabel = scheduleLabel,
                                 participantsLabel = participantsLabel,
                             )
+                        }
+                        if (tryShowSubscriptionNudge()) {
+                            eventChannel.send(Event.ShowSubscriptionNudge)
                         }
                     }.onFailure { error ->
                         _state.update { it.copy(isLoading = false, error = error.message) }
@@ -184,6 +192,28 @@ class TournamentLeaderboardViewModel(
         }
     }
 
+    @OptIn(ExperimentalTime::class)
+    suspend fun tryShowSubscriptionNudge(): Boolean {
+        if (_state.value.proDetails.isProPurchased) return false
+        val todayEpochDays =
+            Instant
+                .fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds())
+                .toLocalDateTime(TimeZone.currentSystemDefault())
+                .date
+                .toEpochDays()
+        val lastShownEpochDays =
+            preferences.getLong(PrefKeys.TOURNAMENT_LEADERBOARD_SUBSCRIPTION_NUDGE_LAST_SHOWN_DATE.name)
+        return if (lastShownEpochDays == null || lastShownEpochDays != todayEpochDays) {
+            preferences.putLong(
+                PrefKeys.TOURNAMENT_LEADERBOARD_SUBSCRIPTION_NUDGE_LAST_SHOWN_DATE.name,
+                todayEpochDays,
+            )
+            true
+        } else {
+            false
+        }
+    }
+
     // Telemetry tracking methods
     fun trackResultScreenViewed(
         tournamentId: String,
@@ -205,5 +235,7 @@ class TournamentLeaderboardViewModel(
         data class OpenProfile(
             val canisterData: CanisterData,
         ) : Event()
+
+        data object ShowSubscriptionNudge : Event()
     }
 }
