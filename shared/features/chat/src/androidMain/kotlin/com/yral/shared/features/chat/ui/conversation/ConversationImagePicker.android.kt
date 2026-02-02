@@ -35,7 +35,7 @@ actual fun rememberChatImagePicker(onImagePicked: (FilePathChatAttachment) -> Un
 
     val galleryLauncher =
         rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.GetContent(),
+            contract = ActivityResultContracts.OpenDocument(),
         ) { uri: Uri? ->
             if (uri == null) {
                 return@rememberLauncherForActivityResult
@@ -53,7 +53,7 @@ actual fun rememberChatImagePicker(onImagePicked: (FilePathChatAttachment) -> Un
         }
 
     return remember(galleryLauncher) {
-        { galleryLauncher.launch("image/*") }
+        { galleryLauncher.launch(arrayOf("image/jpeg", "image/jpg", "image/png")) }
     }
 }
 
