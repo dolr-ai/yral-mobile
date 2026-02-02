@@ -66,7 +66,7 @@
 	<key>NSUserTrackingUsageDescription</key>
 	<string>This helps Yral personalise content that we show you.</string>
 	<key>SENTRY_DSN</key>
-	<string>https://673c701dcea89017a3cfa26059ac10cc@apm.yral.com/14</string>
+	<string>https://5307b43281accab3750a5231deeffd4d@sentry.yral.com/4</string>
 	<key>SENTRY_ENVIRONMENT</key>
 	<string>prod</string>
 	<key>UIAppFonts</key>
