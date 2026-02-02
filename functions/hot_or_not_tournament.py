@@ -5,55 +5,28 @@ Users vote "hot" or "not" on videos and win if their prediction matches the AI's
 Gemini 2.0 Flash analyzes videos during tournament creation.
 """
 
-# ─────────────────────  IMPORTS WITH LOGGING  ────────────────────────
-# Added logging before each import to diagnose cold start crashes
 import sys
-print("[import] Starting imports...", file=sys.stderr)
-
 import json
-print("[import] json loaded", file=sys.stderr)
 import os
-print("[import] os loaded", file=sys.stderr)
 import random
-print("[import] random loaded", file=sys.stderr)
 import string
-print("[import] string loaded", file=sys.stderr)
 import tempfile
-print("[import] tempfile loaded", file=sys.stderr)
 import time
-print("[import] time loaded", file=sys.stderr)
 from concurrent.futures import ThreadPoolExecutor, as_completed
-print("[import] concurrent.futures loaded", file=sys.stderr)
 from datetime import datetime, timezone, timedelta
-print("[import] datetime loaded", file=sys.stderr)
 from enum import Enum
-print("[import] enum loaded", file=sys.stderr)
 from typing import Any, Dict, List, Optional, Tuple
-print("[import] typing loaded", file=sys.stderr)
 
 import firebase_admin
-print("[import] firebase_admin loaded", file=sys.stderr)
 import requests
-print("[import] requests loaded", file=sys.stderr)
-
-# New unified Google GenAI SDK (replaces deprecated google.generativeai)
 from google import genai
-print("[import] google.genai loaded", file=sys.stderr)
-
 from firebase_admin import auth, firestore
-print("[import] firebase_admin.auth, firestore loaded", file=sys.stderr)
 from firebase_functions import https_fn
-print("[import] firebase_functions loaded", file=sys.stderr)
 from flask import Request, jsonify, make_response
-print("[import] flask loaded", file=sys.stderr)
 from google.api_core.exceptions import GoogleAPICallError
-print("[import] google.api_core.exceptions loaded", file=sys.stderr)
 from google.cloud import tasks_v2
-print("[import] google.cloud.tasks_v2 loaded", file=sys.stderr)
 from google.protobuf import timestamp_pb2
-print("[import] google.protobuf loaded", file=sys.stderr)
 from mixpanel import Mixpanel
-print("[import] All imports completed successfully", file=sys.stderr)
 
 # ─────────────────────  CONSTANTS  ────────────────────────
 HOT_OR_NOT_TOURNAMENT_COLL = "hot_or_not_tournaments"
