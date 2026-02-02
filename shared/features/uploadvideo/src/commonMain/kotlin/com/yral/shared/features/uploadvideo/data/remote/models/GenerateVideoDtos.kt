@@ -42,6 +42,9 @@ enum class TokenType {
 
     @SerialName("Sats")
     SATS,
+
+    @SerialName("YralProSubscription")
+    YRAL_PRO_SUBSCRIPTION,
 }
 
 @Serializable

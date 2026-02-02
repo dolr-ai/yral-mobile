@@ -44,4 +44,7 @@
     <string name="generate_video">Generate Video</string>
     <string name="play_games">Play Games</string>
     <string name="to_earn_token">to earn %1$s!</string>
+
+    <string name="ai_video_subscription_nudge_title">You’ve used your free AI video!</string>
+    <string name="ai_video_subscription_nudge_description">Why use tokens? Go Pro. Get %1$d YRAL Credits to create AI videos, unlimited chats &amp; free tournaments access.</string>
 </resources>

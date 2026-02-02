@@ -316,6 +316,7 @@ internal class DefaultHomeComponent(
                 showAlertsOnDialog(AlertsRequestType.VIDEO)
             },
             promptLogin = { homeViewModel.showSignupPrompt(true, it) },
+            subscriptionCoordinator = subscriptionCoordinator,
             snapshot = childSnapshots[Config.UploadVideo] as? UploadVideoRootComponent.Snapshot,
         )
 

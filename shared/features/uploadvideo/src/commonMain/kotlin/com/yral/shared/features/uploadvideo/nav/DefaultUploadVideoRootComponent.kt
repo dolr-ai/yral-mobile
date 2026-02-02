@@ -10,6 +10,7 @@ import com.arkivanov.decompose.router.stack.pushToFront
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.analytics.events.SignupPageName
+import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.features.uploadvideo.nav.aiVideoGen.AiVideoGenComponent
 import com.yral.shared.features.uploadvideo.nav.fileUpload.UploadVideoComponent
 import com.yral.shared.features.uploadvideo.nav.flowSelection.FlowSelectionComponent
@@ -22,6 +23,7 @@ internal class DefaultUploadVideoRootComponent(
     componentContext: ComponentContext,
     override val promptLogin: (pageName: SignupPageName) -> Unit,
     private val goToHome: () -> Unit,
+    override val subscriptionCoordinator: SubscriptionCoordinator,
     private val snapshot: Snapshot?,
 ) : UploadVideoRootComponent(),
     ComponentContext by componentContext,
@@ -99,6 +101,7 @@ internal class DefaultUploadVideoRootComponent(
             onBack = { navigation.pop() },
             goToHome = iGoToHome,
             promptLogin = { promptLogin(SignupPageName.VIDEO_CREATION) },
+            subscriptionCoordinator = subscriptionCoordinator,
         )
 
     private fun uploadVideoComponent(componentContext: ComponentContext): UploadVideoComponent =

@@ -10,6 +10,7 @@ interface IndividualUserRepository {
         shouldFetchFromServiceCanisters: Boolean,
     ): FeedDetails
     suspend fun fetchFeedDetailsWithCreatorInfo(post: Post): FeedDetails?
+    suspend fun fetchPostDetailsWithNsfwInfo(post: Post): FeedDetails?
     suspend fun getPostsOfThisUserProfileWithPaginationCursor(
         canisterId: String,
         principalId: String,
