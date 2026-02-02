@@ -137,5 +137,5 @@ jobs:
           packageName: com.yral.android.app
           releaseFiles: androidApp/build/outputs/bundle/prodRelease/androidApp-prod-release.aab
           track: production
-          status: completed
+          status: draft
           inAppUpdatePriority: ${{ steps.update-priority.outputs.update_priority }}
