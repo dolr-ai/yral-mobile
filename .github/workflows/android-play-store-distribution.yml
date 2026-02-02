@@ -136,6 +136,6 @@ jobs:
           serviceAccountJson: ${{ steps.auth.outputs.credentials_file_path }}
           packageName: com.yral.android.app
           releaseFiles: androidApp/build/outputs/bundle/prodRelease/androidApp-prod-release.aab
-          track: internal
-          status: draft
+          track: production
+          status: completed
           inAppUpdatePriority: ${{ steps.update-priority.outputs.update_priority }}
