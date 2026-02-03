@@ -5,6 +5,8 @@ import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.data.FirebaseFunctionRequest
 import com.yral.shared.features.game.data.models.AutoRechargeBalanceRequestDto
 import com.yral.shared.features.game.data.models.AutoRechargeBalanceResponseDto
+import com.yral.shared.features.game.data.models.CastHotOrNotVoteRequestDto
+import com.yral.shared.features.game.data.models.CastHotOrNotVoteResponseDto
 import com.yral.shared.features.game.data.models.CastVoteRequestDto
 import com.yral.shared.features.game.data.models.CastVoteResponseDto
 import com.yral.shared.features.game.data.models.GetBalanceResponseDto
@@ -60,6 +62,39 @@ class GameRemoteDataSource(
         }
     }
 
+    @Suppress("SwallowedException", "TooGenericExceptionCaught")
+    override suspend fun castHotOrNotVote(
+        idToken: String,
+        request: CastHotOrNotVoteRequestDto,
+    ): CastHotOrNotVoteResponseDto {
+        try {
+            val response: HttpResponse =
+                httpClient.post {
+                    expectSuccess = false
+                    url {
+                        host = cloudFunctionUrl()
+                        path(CAST_HOT_OR_NOT_VOTE_PATH)
+                    }
+                    val appCheckToken = firebaseAppCheckToken()
+                    headers {
+                        append(HttpHeaders.Authorization, "Bearer $idToken")
+                        append(HEADER_X_FIREBASE_APPCHECK, appCheckToken)
+                    }
+                    setBody(FirebaseFunctionRequest(request))
+                }
+            val apiResponseString = response.bodyAsText()
+            val responseDto =
+                if (response.status == HttpStatusCode.OK) {
+                    json.decodeFromString<CastHotOrNotVoteResponseDto.Success>(apiResponseString)
+                } else {
+                    json.decodeFromString<CastHotOrNotVoteResponseDto.Error>(apiResponseString)
+                }
+            return responseDto
+        } catch (e: Exception) {
+            throw YralException("Error in casting hot or not vote: ${e.message}")
+        }
+    }
+
     override suspend fun getBalance(userPrincipal: String): GetBalanceResponseDto =
         httpGet(
             httpClient,
@@ -106,6 +141,7 @@ class GameRemoteDataSource(
 
     companion object {
         private const val CAST_VOTE_PATH = "cast_vote_v2"
+        private const val CAST_HOT_OR_NOT_VOTE_PATH = "cast_hot_or_not_vote"
         private const val GET_BALANCE_PATH = "v2/balance"
         private const val AUTO_RECHARGE_BALANCE_PATH = "tap_to_recharge"
         private const val HEADER_X_FIREBASE_APPCHECK = "X-Firebase-AppCheck"

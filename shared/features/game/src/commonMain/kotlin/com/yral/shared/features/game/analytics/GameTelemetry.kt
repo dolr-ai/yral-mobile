@@ -138,4 +138,56 @@ class GameTelemetry(
             ),
         )
     }
+
+    fun onHotOrNotVoted(
+        feedDetails: FeedDetails,
+        optionChosen: String,
+    ) {
+        analyticsManager.trackEvent(
+            event =
+                GameVotedEventData(
+                    videoId = feedDetails.videoID,
+                    publisherUserId = feedDetails.principalID,
+                    likeCount = feedDetails.likeCount.toLong(),
+                    viewCount = feedDetails.viewCount.toLong(),
+                    isNsfw = feedDetails.isNSFW(),
+                    shareCount = 0,
+                    gameType = GameType.HOT_OR_NOT,
+                    stakeType = TokenType.YRAL,
+                    stakeAmount = HOT_OR_NOT_STAKE,
+                    optionChosen = optionChosen,
+                    isTutorialVote = false,
+                ),
+        )
+    }
+
+    fun onHotOrNotPlayed(
+        feedDetails: FeedDetails,
+        optionChosen: String,
+        coinDelta: Int,
+    ) {
+        analyticsManager.trackEvent(
+            event =
+                GamePlayedEventData(
+                    videoId = feedDetails.videoID,
+                    publisherUserId = feedDetails.principalID,
+                    likeCount = feedDetails.likeCount.toLong(),
+                    viewCount = feedDetails.viewCount.toLong(),
+                    isNsfw = feedDetails.isNSFW(),
+                    shareCount = 0,
+                    gameType = GameType.HOT_OR_NOT,
+                    stakeType = TokenType.YRAL,
+                    stakeAmount = HOT_OR_NOT_STAKE,
+                    optionChosen = optionChosen,
+                    gameResult = if (coinDelta > 0) GameResult.WIN else GameResult.LOSS,
+                    wonLossAmount = coinDelta,
+                    isTutorialVote = false,
+                    affiliate = affiliateAttributionStore.peek(),
+                ),
+        )
+    }
+
+    companion object {
+        private const val HOT_OR_NOT_STAKE = 1
+    }
 }

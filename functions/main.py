@@ -573,11 +573,10 @@ def cast_hot_or_not_vote(request: Request):
         if vote not in ("hot", "not"):
             return error_response(400, "INVALID_VOTE", "vote must be 'hot' or 'not'")
 
-        # TODO: Re-enable auth after testing
-        # auth_header = request.headers.get("Authorization", "")
-        # if not auth_header.startswith("Bearer "):
-        #     return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
-        # auth.verify_id_token(auth_header.split(" ", 1)[1])
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
+        auth.verify_id_token(auth_header.split(" ", 1)[1])
 
         # 2. references ───────────────────────────────────────────────────
         vid_ref   = db().collection(HOT_OR_NOT_COLL).document(vid)
@@ -587,12 +586,11 @@ def cast_hot_or_not_vote(request: Request):
         # 3. transaction: check balance, check duplicate, record vote ─────
         @firestore.transactional
         def _vote_tx(tx: firestore.Transaction) -> dict:
-            # TODO: Re-enable coin check after testing
-            # # Check user balance
-            # user_snapshot = user_ref.get(transaction=tx)
-            # balance = user_snapshot.get("coins") or 0
-            # if balance < abs(HOT_OR_NOT_LOSS_PENALTY):
-            #     return {"result": "INSUFFICIENT", "coins": balance}
+            # Check user balance
+            user_snapshot = user_ref.get(transaction=tx)
+            balance = user_snapshot.get("coins") or 0
+            if balance < abs(HOT_OR_NOT_LOSS_PENALTY):
+                return {"result": "INSUFFICIENT", "coins": balance}
 
             # Check duplicate vote
             if vote_ref.get(transaction=tx).exists:
@@ -661,16 +659,14 @@ def cast_hot_or_not_vote(request: Request):
         # 5. coin mutation ────────────────────────────────────────────────
         delta = HOT_OR_NOT_WIN_REWARD if outcome == "WIN" else HOT_OR_NOT_LOSS_PENALTY
 
-        # TODO: Re-enable after testing
-        # coins = tx_coin_change(pid, vid, delta, f"HOT_OR_NOT_{outcome}")
-        # # Push to external YRAL token service
-        # success, error_msg = _push_delta_yral_token(balance_update_token, pid, delta)
-        # if not success:
-        #     print(f"Failed to update YRAL balance for {pid}: {error_msg}", file=sys.stderr)
-        #     _ = tx_coin_change(pid, vid, -delta, "HOT_OR_NOT_ROLLBACK")
-        #     return error_response(502, "UPSTREAM_FAILED",
-        #                           "We couldn't record your vote. Please try again.")
-        coins = 100  # Dummy value for testing
+        coins = tx_coin_change(pid, vid, delta, f"HOT_OR_NOT_{outcome}")
+        # Push to external YRAL token service
+        success, error_msg = _push_delta_yral_token(balance_update_token, pid, delta)
+        if not success:
+            print(f"Failed to update YRAL balance for {pid}: {error_msg}", file=sys.stderr)
+            _ = tx_coin_change(pid, vid, -delta, "HOT_OR_NOT_ROLLBACK")
+            return error_response(502, "UPSTREAM_FAILED",
+                                  "We couldn't record your vote. Please try again.")
 
         # Update vote document with outcome
         vote_ref.update({
