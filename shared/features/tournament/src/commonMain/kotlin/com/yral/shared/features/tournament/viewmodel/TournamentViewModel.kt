@@ -337,11 +337,14 @@ class TournamentViewModel(
                 return@launch
             }
 
+            val isPro = tournament.participationState is TournamentParticipationState.JoinNowWithCredit
+
             registerForTournamentUseCase
                 .invoke(
                     RegisterForTournamentRequest(
                         tournamentId = tournament.id,
                         principalId = principalId,
+                        isPro = isPro,
                     ),
                 ).onSuccess { result ->
                     _state.update { it.copy(isRegistering = false) }
