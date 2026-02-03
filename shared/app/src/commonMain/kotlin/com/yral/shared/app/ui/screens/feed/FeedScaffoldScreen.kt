@@ -43,6 +43,7 @@ import com.yral.shared.features.game.ui.CoinBalance
 import com.yral.shared.features.game.ui.Game
 import com.yral.shared.features.game.ui.GameResultSheet
 import com.yral.shared.features.game.ui.GameToggle
+import com.yral.shared.features.game.ui.HotOrNotResultOverlay
 import com.yral.shared.features.game.ui.HowToPlay
 import com.yral.shared.features.game.ui.RefreshBalanceAnimation
 import com.yral.shared.features.game.ui.toRefreshBalanceAnimationState
@@ -53,6 +54,7 @@ import com.yral.shared.features.leaderboard.ui.DailyRanK
 import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
 import com.yral.shared.features.tournament.ui.TournamentIntroBottomSheet
 import com.yral.shared.libs.designsystem.component.lottie.PreloadLottieAnimations
+import com.yral.shared.libs.videoPlayer.cardstack.SwipeDirection
 import com.yral.shared.rust.service.domain.models.toCanisterData
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.delay
@@ -121,6 +123,12 @@ fun FeedScaffoldScreen(
                     gameViewModel.markCoinDeltaAnimationShown(
                         videoId = feedState.feedDetails[currentPageOfFeed].videoID,
                     )
+                    // Also mark Hot or Not animation as shown for previous page
+                    if (feedState.isCardLayoutEnabled) {
+                        gameViewModel.markHotOrNotAnimationShown(
+                            feedState.feedDetails[currentPageOfFeed].videoID,
+                        )
+                    }
                 }
             }
             gameViewModel.showNudge(
@@ -144,6 +152,20 @@ fun FeedScaffoldScreen(
                 gameState.lastVotedCount
             } else {
                 feedState.feedDetails.size
+            },
+        onSwipeVote =
+            if (feedState.isCardLayoutEnabled) {
+                { direction, pageIndex ->
+                    if (pageIndex < feedState.feedDetails.size) {
+                        val isHot = direction == SwipeDirection.RIGHT
+                        gameViewModel.castHotOrNotVote(
+                            isHot = isHot,
+                            feedDetails = feedState.feedDetails[pageIndex],
+                        )
+                    }
+                }
+            } else {
+                null
             },
     )
     RefreshBalanceAnimation(
@@ -180,6 +202,7 @@ fun FeedScaffoldScreen(
             onDismissRequest = {
                 gameViewModel.toggleAboutGame(false)
             },
+            isHotOrNotMode = feedState.isCardLayoutEnabled,
         )
     }
     if (gameState.gameIcons.isNotEmpty()) {
@@ -531,6 +554,8 @@ private fun OverlayBottom(
             )
         }
         if (pageNo < feedState.feedDetails.size) {
+            val currentVideoId = feedState.feedDetails[pageNo].videoID
+
             // Map OnboardingStep to NudgeType for game module
             val onboardingNudgeType =
                 when (feedState.currentOnboardingStep) {
@@ -539,8 +564,21 @@ private fun OverlayBottom(
                     null -> null
                     else -> NudgeType.ONBOARDING_OTHERS
                 }
-            // Hide smiley game when card layout is enabled
-            if (!feedState.isCardLayoutEnabled) {
+
+            // Hot or Not mode: show result overlay when card layout is enabled
+            if (feedState.isCardLayoutEnabled) {
+                val hotOrNotResult = gameViewModel.getHotOrNotResult(currentVideoId)
+                if (hotOrNotResult != null) {
+                    HotOrNotResultOverlay(
+                        result = hotOrNotResult,
+                        hasShownAnimation = gameViewModel.hasShownHotOrNotAnimation(currentVideoId),
+                        onAnimationComplete = {
+                            gameViewModel.markHotOrNotAnimationShown(currentVideoId)
+                        },
+                    )
+                }
+            } else if (!feedState.isCardLayoutEnabled) {
+                // Smiley game mode: show smiley game when card layout is disabled
                 Game(
                     feedDetails = feedState.feedDetails[pageNo],
                     pageNo = pageNo,
@@ -549,11 +587,12 @@ private fun OverlayBottom(
                     onOnboardingNudgeComplete = { feedViewModel.dismissOnboardingStep() },
                 )
             }
+
+            // Auto-scroll logic for smiley game mode
             if (!feedState.isCardLayoutEnabled &&
                 (gameState.isAutoScrollEnabled || feedState.currentOnboardingStep != null)
             ) {
                 var resultOfCurrentPage by remember { mutableStateOf<VoteResult?>(null) }
-                val currentVideoId = feedState.feedDetails[pageNo].videoID
                 val voteResult = gameState.gameResult[currentVideoId]?.second
 
                 // Track when result becomes available for the current page
