@@ -48,6 +48,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import com.yral.shared.analytics.events.SubscriptionEntryPoint
 import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.features.subscriptions.nav.SubscriptionNudgeContent
@@ -125,6 +126,7 @@ fun TournamentLeaderboardScreen(
                             title = null,
                             description = null,
                             topContent = { BoltIcon() },
+                            entryPoint = SubscriptionEntryPoint.TOURNAMENT,
                         ),
                     )
             }

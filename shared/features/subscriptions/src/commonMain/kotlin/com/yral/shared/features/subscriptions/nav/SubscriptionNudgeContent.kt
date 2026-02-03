@@ -1,6 +1,7 @@
 package com.yral.shared.features.subscriptions.nav
 
 import androidx.compose.runtime.Composable
+import com.yral.shared.analytics.events.SubscriptionEntryPoint
 
 /**
  * Reusable content for the subscription nudge bottomsheet:
@@ -12,4 +13,5 @@ data class SubscriptionNudgeContent(
     val title: String? = null,
     val description: String? = null,
     val topContent: @Composable () -> Unit = {},
+    val entryPoint: SubscriptionEntryPoint = SubscriptionEntryPoint.HOME_FEED,
 )

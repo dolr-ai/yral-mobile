@@ -420,8 +420,11 @@ class DefaultRootComponent(
         navigation.pushToFront(Config.Leaderboard)
     }
 
-    override fun openSubscription(purchaseTimeMs: Long?) {
-        navigation.pushToFront(Config.Subscription(purchaseTimeMs))
+    override fun openSubscription(
+        purchaseTimeMs: Long?,
+        entryPoint: com.yral.shared.analytics.events.SubscriptionEntryPoint,
+    ) {
+        navigation.pushToFront(Config.Subscription(purchaseTimeMs, entryPoint))
     }
 
     override fun onCreateVideo() {
@@ -528,8 +531,11 @@ class DefaultRootComponent(
 
     // ==================== SubscriptionCoordinator Implementation ====================
     override fun buySubscription() {
+        val entryPoint =
+            subscriptionNudgeContent?.entryPoint
+                ?: com.yral.shared.analytics.events.SubscriptionEntryPoint.HOME_FEED
         rootViewModel.checkSubscriptionAndOpen(
-            openSubscription = ::openSubscription,
+            openSubscription = { purchaseTimeMs -> openSubscription(purchaseTimeMs, entryPoint) },
             showSubscriptionAccountMismatchSheet = ::showSubscriptionAccountMismatchSlot,
         )
     }

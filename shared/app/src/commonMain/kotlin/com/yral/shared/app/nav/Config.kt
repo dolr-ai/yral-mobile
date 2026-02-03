@@ -1,6 +1,7 @@
 package com.yral.shared.app.nav
 
 import com.yral.shared.analytics.events.InfluencerSource
+import com.yral.shared.analytics.events.SubscriptionEntryPoint
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.serialization.Serializable
 
@@ -62,5 +63,6 @@ internal sealed interface Config {
     @Serializable
     data class Subscription(
         val purchaseTimeMs: Long?,
+        val entryPoint: SubscriptionEntryPoint = SubscriptionEntryPoint.HOME_FEED,
     ) : Config
 }

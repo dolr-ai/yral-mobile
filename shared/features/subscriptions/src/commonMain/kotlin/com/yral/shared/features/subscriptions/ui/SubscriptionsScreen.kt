@@ -33,6 +33,10 @@ fun SubscriptionsScreen(
     modifier: Modifier = Modifier,
     viewModel: SubscriptionViewModel = koinViewModel(),
 ) {
+    // Set entry point on first composition
+    androidx.compose.runtime.LaunchedEffect(component.entryPoint) {
+        viewModel.setEntryPoint(component.entryPoint)
+    }
     val viewState by viewModel.viewState.collectAsState()
     val purchaseContext = getPurchaseContext()
     val proDetails by viewModel.proDetails.collectAsStateWithLifecycle(ProDetails())

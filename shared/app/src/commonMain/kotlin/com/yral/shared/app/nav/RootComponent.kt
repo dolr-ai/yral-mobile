@@ -4,6 +4,7 @@ import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.analytics.events.InfluencerSource
+import com.yral.shared.analytics.events.SubscriptionEntryPoint
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
@@ -87,7 +88,10 @@ interface RootComponent {
 
     fun openLeaderboard()
 
-    fun openSubscription(purchaseTimeMs: Long?)
+    fun openSubscription(
+        purchaseTimeMs: Long?,
+        entryPoint: SubscriptionEntryPoint = SubscriptionEntryPoint.HOME_FEED,
+    )
 
     fun onCreateVideo()
 
