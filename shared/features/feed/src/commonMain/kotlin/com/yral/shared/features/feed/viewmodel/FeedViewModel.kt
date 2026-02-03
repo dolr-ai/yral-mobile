@@ -99,6 +99,7 @@ class FeedViewModel(
         const val SIGN_UP_PAGE = 9
         private const val PAGER_STATE_REFRESH_BUFFER_MS = 100L
         const val FOLLOW_NUDGE_PAGE = 5
+        const val TOURNAMENT_INTRO_PAGE = 5
     }
 
     private val _state =
@@ -1125,6 +1126,24 @@ class FeedViewModel(
         _state.update { it.copy(showTournamentIntroSheet = false) }
     }
 
+    fun checkAndShowHotOrNotOnboarding() {
+        viewModelScope.launch {
+            if (_state.value.isCardLayoutEnabled) {
+                val hasShown = preferences.getBoolean(PrefKeys.HOT_OR_NOT_ONBOARDING_SHOWN.name) ?: false
+                if (!hasShown) {
+                    _state.update { it.copy(showHotOrNotOnboarding = true) }
+                }
+            }
+        }
+    }
+
+    fun dismissHotOrNotOnboarding() {
+        viewModelScope.launch {
+            preferences.putBoolean(PrefKeys.HOT_OR_NOT_ONBOARDING_SHOWN.name, true)
+            _state.update { it.copy(showHotOrNotOnboarding = false) }
+        }
+    }
+
     private fun trackOnboardingShown() {
         viewModelScope.launch {
             _state
@@ -1193,6 +1212,7 @@ data class FeedState(
     val tournamentIntroCheckedThisSession: Boolean = false,
     val isMandatoryLogin: Boolean = false,
     val isCardLayoutEnabled: Boolean = true,
+    val showHotOrNotOnboarding: Boolean = false,
 )
 
 enum class OverlayType {
