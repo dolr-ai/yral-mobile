@@ -310,7 +310,8 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
                 flag: AppFeatureFlags.Common.shared.MandatoryLogin
             )
         ),
-        phoneNumber: nil
+        phoneNumber: nil,
+        proStatus: nil
       )
     )
     MPSessionReplay.getInstance()?.identify(distinctId: Mixpanel.sharedInstance()?.distinctId ?? "")

@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.featureflag.FeatureFlagManager
+import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.shared.analytics.events.PaymentStatus
 import com.yral.shared.analytics.events.ProStatusSource
 import com.yral.shared.analytics.events.SubscriptionEntryPoint
@@ -31,11 +33,22 @@ class SubscriptionViewModel(
     private val sessionManager: SessionManager,
     private val getUserProfileDetailsV7UseCase: GetUserProfileDetailsV7UseCase,
     private val telemetry: SubscriptionTelemetry,
+    flagManager: FeatureFlagManager,
 ) : ViewModel() {
     private var entryPoint: SubscriptionEntryPoint = SubscriptionEntryPoint.HOME_FEED
     private var hasFiredPlanViewed = false
     private val _viewState = MutableStateFlow(ViewState())
     val viewState: StateFlow<ViewState> = _viewState.asStateFlow()
+
+    init {
+        val accountLinks = flagManager.get(AccountFeatureFlags.AccountLinks.Links)
+        _viewState.update {
+            it.copy(
+                tncUrl = accountLinks.tnc,
+                privacyPolicyUrl = accountLinks.privacyPolicy,
+            )
+        }
+    }
 
     val proDetails =
         sessionManager
@@ -46,7 +59,10 @@ class SubscriptionViewModel(
 
     init {
         fetchProductDetails()
-        // Observe proDetails and update state accordingly
+        observeProDetails()
+    }
+
+    private fun observeProDetails() {
         viewModelScope.launch {
             proDetails
                 .collect { proDetails ->
@@ -272,6 +288,8 @@ data class ViewState(
     val purchaseState: UiState<SubscriptionScreenType> = UiState.Initial,
     val pricingInfo: PricingInfo? = null,
     val billingPeriodMillis: Long? = null,
+    val tncUrl: String = "",
+    val privacyPolicyUrl: String = "",
 )
 
 sealed class SubscriptionScreenType {

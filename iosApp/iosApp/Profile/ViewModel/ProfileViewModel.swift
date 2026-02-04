@@ -211,7 +211,8 @@ class ProfileViewModel: ObservableObject {
                 flag: AppFeatureFlags.Common.shared.MandatoryLogin
             )
         ),
-        phoneNumber: nil
+        phoneNumber: nil,
+        proStatus: nil
       )
     )
     AnalyticsModuleKt.getAnalyticsManager().flush()
