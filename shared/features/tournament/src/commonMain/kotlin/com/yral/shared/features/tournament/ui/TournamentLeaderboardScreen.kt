@@ -717,6 +717,9 @@ private fun TournamentAvatar(
             imageUrl = imageUrl,
             size = LeaderboardHelpers.PROFILE_IMAGE_SIZE.dp,
             applyFrame = isPro,
+            frameBorderWidth = 2.5.dp,
+            frameBadgeSizeFraction = 0.5f,
+            frameBadgeOverflowFraction = 0.3f,
         )
         if (!isPro) {
             val ring = LeaderboardHelpers.getProfileImageRing(position)
