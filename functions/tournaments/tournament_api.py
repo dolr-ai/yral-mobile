@@ -828,9 +828,11 @@ def register_for_tournament(request: Request):
         return jsonify({
             "status": "registered",
             "tournament_id": tournament_id,
-            "coins_paid": entry_cost,
+            "coins_paid": entry_cost if not is_pro else 0,  # Pro users don't pay coins
             "coins_remaining": 0,  # Client should refresh balance from YRAL API
-            "diamonds": initial_diamonds
+            "diamonds": initial_diamonds,
+            "credits_consumed": 1 if is_pro else 0,  # 1 credit for pro, 0 for regular
+            "is_pro": is_pro
         }), 200
 
     except auth.InvalidIdTokenError:
