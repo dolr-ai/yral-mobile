@@ -43,6 +43,7 @@ import com.yral.shared.features.game.ui.CoinBalance
 import com.yral.shared.features.game.ui.Game
 import com.yral.shared.features.game.ui.GameResultSheet
 import com.yral.shared.features.game.ui.GameToggle
+import com.yral.shared.features.game.ui.HotOrNotOnboardingOverlay
 import com.yral.shared.features.game.ui.HotOrNotResultOverlay
 import com.yral.shared.features.game.ui.HowToPlay
 import com.yral.shared.features.game.ui.RefreshBalanceAnimation
@@ -229,10 +230,22 @@ fun FeedScaffoldScreen(
             )
         }
     }
-    // Check and show tournament intro bottom sheet after feed loads
-    LaunchedEffect(feedState.feedDetails.size, feedState.currentOnboardingStep) {
-        if (feedState.feedDetails.isNotEmpty() && feedState.currentOnboardingStep == null) {
+    // Check and show tournament intro bottom sheet on 6th video (index 5)
+    LaunchedEffect(feedState.currentPageOfFeed, feedState.currentOnboardingStep) {
+        if (feedState.feedDetails.isNotEmpty() &&
+            feedState.currentOnboardingStep == null &&
+            feedState.currentPageOfFeed == FeedViewModel.TOURNAMENT_INTRO_PAGE
+        ) {
             feedViewModel.checkAndShowTournamentIntroSheet()
+        }
+    }
+    // Check and show Hot or Not onboarding when card layout is enabled
+    LaunchedEffect(feedState.feedDetails.size, feedState.isCardLayoutEnabled) {
+        if (feedState.feedDetails.isNotEmpty() &&
+            feedState.isCardLayoutEnabled &&
+            feedState.currentOnboardingStep == null
+        ) {
+            feedViewModel.checkAndShowHotOrNotOnboarding()
         }
     }
     // Tournament intro bottom sheet
@@ -243,6 +256,12 @@ fun FeedScaffoldScreen(
                 feedViewModel.dismissTournamentIntroSheet()
                 onNavigateToTournaments()
             },
+        )
+    }
+    // Hot or Not onboarding overlay (shows on top of feed)
+    if (feedState.showHotOrNotOnboarding) {
+        HotOrNotOnboardingOverlay(
+            onDismiss = { feedViewModel.dismissHotOrNotOnboarding() },
         )
     }
 }

@@ -39,4 +39,8 @@
     <string name="hon_leaderboard_title">Global Leaderboard</string>
     <string name="hon_leaderboard_body">Make the right calls, earn YRAL tokens, and rise up the leaderboard.</string>
 
+    <!-- Hot or Not Onboarding Overlay -->
+    <string name="hon_swipe_left_instruction">Swipe Left if you think video is "BAKWASS"</string>
+    <string name="hon_swipe_right_instruction">Swipe Right if you think video is "MAST"</string>
+
 </resources>
