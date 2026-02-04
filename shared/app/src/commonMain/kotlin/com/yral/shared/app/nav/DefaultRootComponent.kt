@@ -23,6 +23,7 @@ import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.instancekeeper.InstanceKeeper
 import com.arkivanov.essenty.instancekeeper.getOrCreate
 import com.yral.shared.analytics.events.InfluencerSource
+import com.yral.shared.analytics.events.SubscriptionEntryPoint
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.nav.factories.ComponentFactory
 import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
@@ -422,7 +423,7 @@ class DefaultRootComponent(
 
     override fun openSubscription(
         purchaseTimeMs: Long?,
-        entryPoint: com.yral.shared.analytics.events.SubscriptionEntryPoint,
+        entryPoint: SubscriptionEntryPoint,
     ) {
         navigation.pushToFront(Config.Subscription(purchaseTimeMs, entryPoint))
     }
@@ -531,9 +532,7 @@ class DefaultRootComponent(
 
     // ==================== SubscriptionCoordinator Implementation ====================
     override fun buySubscription() {
-        val entryPoint =
-            subscriptionNudgeContent?.entryPoint
-                ?: com.yral.shared.analytics.events.SubscriptionEntryPoint.HOME_FEED
+        val entryPoint = subscriptionNudgeContent?.entryPoint ?: SubscriptionEntryPoint.HOME_FEED
         rootViewModel.checkSubscriptionAndOpen(
             openSubscription = { purchaseTimeMs -> openSubscription(purchaseTimeMs, entryPoint) },
             showSubscriptionAccountMismatchSheet = ::showSubscriptionAccountMismatchSlot,

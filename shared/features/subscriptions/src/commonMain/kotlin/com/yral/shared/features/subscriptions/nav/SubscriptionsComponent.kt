@@ -14,7 +14,7 @@ abstract class SubscriptionsComponent {
         operator fun invoke(
             componentContext: ComponentContext,
             purchaseTimeMs: Long?,
-            entryPoint: SubscriptionEntryPoint = SubscriptionEntryPoint.HOME_FEED,
+            entryPoint: SubscriptionEntryPoint,
             onBack: () -> Unit = {},
             onCreateVideo: () -> Unit = {},
             onExploreFeed: () -> Unit = {},

@@ -63,6 +63,6 @@ internal sealed interface Config {
     @Serializable
     data class Subscription(
         val purchaseTimeMs: Long?,
-        val entryPoint: SubscriptionEntryPoint = SubscriptionEntryPoint.HOME_FEED,
+        val entryPoint: SubscriptionEntryPoint,
     ) : Config
 }

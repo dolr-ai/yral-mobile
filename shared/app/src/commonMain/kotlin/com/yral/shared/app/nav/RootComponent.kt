@@ -90,7 +90,7 @@ interface RootComponent {
 
     fun openSubscription(
         purchaseTimeMs: Long?,
-        entryPoint: SubscriptionEntryPoint = SubscriptionEntryPoint.HOME_FEED,
+        entryPoint: SubscriptionEntryPoint,
     )
 
     fun onCreateVideo()
