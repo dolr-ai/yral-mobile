@@ -292,6 +292,7 @@ class TournamentTelemetry(
             is TournamentParticipationState.Registered -> TournamentState.REGISTERED
             is TournamentParticipationState.JoinNow -> TournamentState.JOIN_NOW
             is TournamentParticipationState.JoinNowWithTokens -> TournamentState.JOIN_NOW_WITH_TOKENS
+            is TournamentParticipationState.JoinNowWithCredit -> TournamentState.JOIN_NOW_WITH_CREDIT
             is TournamentParticipationState.JoinNowDisabled -> TournamentState.JOIN_NOW_DISABLED
         }
 
@@ -306,6 +307,7 @@ class TournamentTelemetry(
         when (this) {
             is TournamentParticipationState.RegistrationRequired -> tokensRequired
             is TournamentParticipationState.JoinNowWithTokens -> tokensRequired
+            is TournamentParticipationState.JoinNowWithCredit -> null
             is TournamentParticipationState.JoinNow,
             is TournamentParticipationState.JoinNowDisabled,
             is TournamentParticipationState.Registered,
@@ -318,6 +320,7 @@ class TournamentTelemetry(
             is TournamentParticipationState.RegistrationRequired,
             is TournamentParticipationState.Registered,
             is TournamentParticipationState.JoinNowWithTokens,
+            is TournamentParticipationState.JoinNowWithCredit,
             is TournamentParticipationState.JoinNowDisabled,
             -> null
         }

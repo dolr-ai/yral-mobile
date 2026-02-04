@@ -41,6 +41,8 @@ data class MyTournamentDto(
     val endEpochMs: Long,
     @SerialName("entry_cost")
     val entryCost: Int,
+    @SerialName("entry_cost_credits")
+    val entryCostCredits: Int? = null,
     @SerialName("total_prize_pool")
     val totalPrizePool: Int,
     @SerialName("prize_map")
@@ -84,6 +86,7 @@ fun MyTournamentDto.toTournamentData(): TournamentData =
         startEpochMs = startEpochMs,
         endEpochMs = endEpochMs,
         entryCost = entryCost,
+        entryCostCredits = entryCostCredits ?: 1,
         totalPrizePool = totalPrizePool,
         prizeMap =
             prizeMap
