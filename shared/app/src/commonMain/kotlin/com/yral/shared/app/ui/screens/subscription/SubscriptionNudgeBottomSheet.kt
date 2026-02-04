@@ -19,6 +19,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.shared.features.subscriptions.nav.SubscriptionNudgeContent
 import com.yral.shared.features.subscriptions.ui.components.BoltIcon
+import com.yral.shared.features.subscriptions.ui.components.SubscriptionNudgeGenericBenefits
+import com.yral.shared.features.subscriptions.ui.components.SubscriptionNudgeGenericTitle
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
@@ -59,23 +61,27 @@ fun SubscriptionNudgeBottomSheet(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text(
-                text = content.title,
-                style = LocalAppTopography.current.xlSemiBold,
-                textAlign = TextAlign.Center,
-                color = YralColors.Neutral50,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            content.title?.let { title ->
+                Text(
+                    text = title,
+                    style = LocalAppTopography.current.xlSemiBold,
+                    textAlign = TextAlign.Center,
+                    color = YralColors.Neutral50,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            } ?: SubscriptionNudgeGenericTitle(modifier = Modifier.fillMaxWidth())
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Text(
-                text = content.description,
-                style = LocalAppTopography.current.regRegular,
-                textAlign = TextAlign.Center,
-                color = YralColors.Neutral300,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            content.description?.let { description ->
+                Text(
+                    text = description,
+                    style = LocalAppTopography.current.regRegular,
+                    textAlign = TextAlign.Center,
+                    color = YralColors.Neutral300,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            } ?: SubscriptionNudgeGenericBenefits(modifier = Modifier.fillMaxWidth())
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -99,6 +105,28 @@ private fun SubscriptionNudgeBottomSheetPreview() {
             SubscriptionNudgeContent(
                 title = "Upgrade to Pro",
                 description = "Get unlimited messages and more with Yral Pro.",
+                topContent = { BoltIcon() },
+            )
+        SubscriptionNudgeBottomSheet(
+            content = content,
+            bottomSheetState = sheetState,
+            onDismissRequest = {},
+            onSubscribe = {},
+        )
+    }
+}
+
+@Suppress("UnusedPrivateMember")
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview
+@Composable
+private fun SubscriptionNudgeBottomSheetGenericPreview() {
+    CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val content =
+            SubscriptionNudgeContent(
+                title = null,
+                description = null,
                 topContent = { BoltIcon() },
             )
         SubscriptionNudgeBottomSheet(

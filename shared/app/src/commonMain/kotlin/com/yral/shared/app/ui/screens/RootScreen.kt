@@ -156,6 +156,7 @@ fun RootScreen(rootComponent: RootComponent) {
                             showResult = child.showResult,
                             onBack = rootComponent::onBackClicked,
                             onOpenProfile = rootComponent::openProfile,
+                            subscriptionCoordinator = rootComponent.getSubscriptionCoordinator(),
                         )
                     }
 

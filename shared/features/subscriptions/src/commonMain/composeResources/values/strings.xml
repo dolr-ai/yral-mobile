@@ -43,4 +43,6 @@
     <string name="subscription_inactive_plan">Pro Subscription</string>
     <string name="subscription_inactive_cta">Subscribe Now</string>
     <string name="subscription_new_price">%1$s/ mo</string>
+    <string name="go_pro">Go Pro</string>
+    <string name="create_without_limits">Create Without Limits.</string>
 </resources>

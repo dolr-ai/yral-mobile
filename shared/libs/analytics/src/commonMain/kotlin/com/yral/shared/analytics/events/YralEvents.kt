@@ -2228,6 +2228,9 @@ enum class TournamentState {
     @SerialName("join_now_with_tokens")
     JOIN_NOW_WITH_TOKENS,
 
+    @SerialName("join_now_with_credit")
+    JOIN_NOW_WITH_CREDIT,
+
     @SerialName("join_now_disabled")
     JOIN_NOW_DISABLED,
 

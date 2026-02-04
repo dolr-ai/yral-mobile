@@ -22,6 +22,11 @@ interface UserInfoRepository {
         targetPrincipal: Principal,
     ): UserProfileDetails
 
+    suspend fun getUsersProfileDetails(
+        principal: Principal,
+        targetPrincipalIds: List<String>,
+    ): Map<String, UserProfileDetails>
+
     suspend fun getFollowers(
         principal: Principal,
         targetPrincipal: Principal,

@@ -3,9 +3,12 @@ package com.yral.shared.features.tournament.nav
 import com.arkivanov.decompose.ComponentContext
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.data.AlertsRequestType
+import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.features.tournament.viewmodel.TournamentViewModel
 
 interface TournamentComponent {
+    val subscriptionCoordinator: SubscriptionCoordinator?
+
     fun processEvent(value: TournamentViewModel.Event)
 
     companion object {
@@ -25,6 +28,7 @@ interface TournamentComponent {
                 tournamentId: String,
             ) -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
+            subscriptionCoordinator: SubscriptionCoordinator? = null,
         ): TournamentComponent =
             DefaultTournamentComponent(
                 componentContext,
@@ -32,6 +36,7 @@ interface TournamentComponent {
                 navigateToTournament,
                 navigateToLeaderboard,
                 showAlertsOnDialog,
+                subscriptionCoordinator,
             )
     }
 }
@@ -52,6 +57,7 @@ internal class DefaultTournamentComponent(
         tournamentId: String,
     ) -> Unit,
     private val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
+    override val subscriptionCoordinator: SubscriptionCoordinator? = null,
 ) : TournamentComponent,
     ComponentContext by componentContext {
     override fun processEvent(value: TournamentViewModel.Event) {
