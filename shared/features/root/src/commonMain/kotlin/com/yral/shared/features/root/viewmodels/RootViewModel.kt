@@ -13,9 +13,11 @@ import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.TokenType
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.ProDetails
+import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.session.hasSameUserPrincipal
+import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.auth.AuthClientFactory
@@ -35,6 +37,10 @@ import com.yral.shared.preferences.stores.UtmParams
 import com.yral.shared.rust.service.domain.models.SubscriptionPlan
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7Params
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCase
+import com.yral.shared.rust.service.services.HelperService
+import com.yral.shared.rust.service.utils.authenticateWithNetwork
+import com.yral.shared.rust.service.utils.getSessionFromIdentity
+import com.yral.shared.rust.service.utils.propicFromPrincipal
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -47,6 +53,15 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
@@ -61,8 +76,8 @@ sealed interface NavigationTarget {
     data object MandatoryLogin : NavigationTarget
 }
 
-@OptIn(ExperimentalTime::class)
-@Suppress("TooGenericExceptionCaught", "LongParameterList")
+@OptIn(ExperimentalTime::class, ExperimentalEncodingApi::class)
+@Suppress("TooGenericExceptionCaught", "LongParameterList", "TooManyFunctions")
 class RootViewModel(
     private val appDispatchers: AppDispatchers,
     authClientFactory: AuthClientFactory,
@@ -77,6 +92,8 @@ class RootViewModel(
     private val getUserProfileDetailsV7UseCase: GetUserProfileDetailsV7UseCase,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
+    private val json = Json { ignoreUnknownKeys = true }
+    private var hasAttemptedAutoSwitch = false
 
     private val authClient =
         authClientFactory
@@ -94,6 +111,13 @@ class RootViewModel(
     companion object {
         const val SPLASH_SCREEN_TIMEOUT = 31000L // 31 seconds timeout
         const val INITIAL_DELAY_FOR_SETUP = 300L
+        private const val ACCOUNT_DIALOG_RETRY_DELAY_MS = 500L
+        private const val STARTUP_DIALOG_RETRY_DELAY_MS = 500L
+        private const val BOT_LOAD_MAX_ATTEMPTS = 3
+        private const val BOT_LOAD_RETRY_DELAY_MS = 600L
+        private const val JWT_PAYLOAD_INDEX = 1
+        private const val BASE64_BLOCK_SIZE = 4
+        private const val BASE64_PAD_CHAR = '='
     }
 
     private val _state = MutableStateFlow(RootState())
@@ -206,6 +230,11 @@ class RootViewModel(
                 // Not used as of now we will get details from canister in profileDetailsV6
                 // restorePurchases()
             }
+            if (_state.value.accountDialogInfo == null) {
+                populateAccountDialog(showSheet = false)
+            }
+            populateStartupDialog()
+            autoSwitchToLastActiveAccount()
         } ?: authClient.initialize()
     }
 
@@ -308,6 +337,228 @@ class RootViewModel(
             content = content,
         )
 
+    private suspend fun populateAccountDialog(
+        showSheet: Boolean,
+        allowRetry: Boolean = true,
+    ) {
+        val activePrincipal = sessionManager.userPrincipal
+        val mainPrincipal =
+            preferences.getString(PrefKeys.MAIN_PRINCIPAL.name)
+                ?: preferences.getString(PrefKeys.USER_PRINCIPAL.name)
+        val mainIdentity =
+            preferences.getBytes(PrefKeys.MAIN_IDENTITY.name)
+                ?: preferences
+                    .getBytes(PrefKeys.IDENTITY.name)
+                    ?.takeIf { activePrincipal == mainPrincipal }
+        val mainAccount =
+            resolveAccountUi(
+                principal = mainPrincipal,
+                identityBytes = mainIdentity,
+                isBot = false,
+                activePrincipal = activePrincipal,
+                fallbackUsername = sessionManager.username,
+            )
+
+        val botAccounts =
+            loadBotEntries()
+                ?.filter { it.principal != mainPrincipal }
+                ?.mapNotNull { entry ->
+                    val identityBytes = runCatching { Base64.decode(entry.identity) }.getOrNull()
+                    resolveAccountUi(
+                        principal = entry.principal,
+                        identityBytes = identityBytes,
+                        isBot = true,
+                        activePrincipal = activePrincipal,
+                        fallbackUsername = null,
+                    )
+                }.orEmpty()
+
+        if (mainAccount != null || botAccounts.isNotEmpty()) {
+            _state.update {
+                it.copy(
+                    accountDialogInfo = AccountDialogInfo(mainAccount = mainAccount, botAccounts = botAccounts),
+                    showAccountDialog = showSheet,
+                )
+            }
+        } else if (allowRetry) {
+            // ID token may not be persisted yet right after login; retry once shortly.
+            delay(ACCOUNT_DIALOG_RETRY_DELAY_MS)
+            populateAccountDialog(showSheet = showSheet, allowRetry = false)
+        }
+    }
+
+    private fun resolveAccountUi(
+        principal: String?,
+        identityBytes: ByteArray?,
+        isBot: Boolean,
+        activePrincipal: String?,
+        fallbackUsername: String?,
+    ): AccountUi? {
+        if (principal == null) return null
+        val details =
+            runCatching {
+                identityBytes?.let { authenticateWithNetwork(it) }
+            }.getOrNull()
+        val resolvedUsername =
+            resolveUsername(details?.username, principal)
+                ?: fallbackUsername?.takeUnless { username -> username.isBlank() }
+                ?: principal
+        return AccountUi(
+            principal = principal,
+            name = resolvedUsername,
+            avatarUrl = details?.profilePic ?: propicFromPrincipal(principal),
+            isBot = isBot,
+            isActive = principal == activePrincipal,
+        )
+    }
+
+    fun dismissAccountDialog() {
+        _state.update { it.copy(showAccountDialog = false) }
+    }
+
+    fun dismissStartupDialog() {
+        _state.update { it.copy(showStartupDialog = false) }
+    }
+
+    fun switchToAccount(principal: String) {
+        coroutineScope.launch {
+            runCatching {
+                val current = sessionManager.userPrincipal
+                if (current == principal) {
+                    _state.update { it.copy(showAccountDialog = false) }
+                    return@launch
+                }
+                val identityBytes: ByteArray
+                val isBot: Boolean
+                val storedMainPrincipal = preferences.getString(PrefKeys.MAIN_PRINCIPAL.name)
+                if (principal == storedMainPrincipal) {
+                    identityBytes =
+                        preferences.getBytes(PrefKeys.MAIN_IDENTITY.name)
+                            ?: throw YralException("Main identity missing")
+                    isBot = false
+                } else {
+                    val storedBots =
+                        preferences
+                            .getString(PrefKeys.BOT_IDENTITIES.name)
+                            ?.let { runCatching { json.decodeFromString<List<BotIdentityEntry>>(it) }.getOrNull() }
+                            ?: emptyList()
+                    val match =
+                        storedBots.firstOrNull { it.principal == principal }
+                            ?: throw YralException("Bot identity not found")
+                    identityBytes = Base64.decode(match.identity)
+                    isBot = true
+                }
+
+                val canisterData = authenticateWithNetwork(identityBytes)
+                HelperService.initServiceFactories(identityBytes)
+                val session =
+                    Session(
+                        identity = identityBytes,
+                        canisterId = canisterData.canisterId,
+                        userPrincipal = canisterData.userPrincipalId,
+                        profilePic = canisterData.profilePic,
+                        username = canisterData.username,
+                        bio = null,
+                        isCreatedFromServiceCanister = canisterData.isCreatedFromServiceCanister,
+                        isBotAccount = isBot,
+                    )
+                sessionManager.updateState(SessionState.SignedIn(session = session))
+                cacheSession(identityBytes, session)
+                preferences.putString(PrefKeys.LAST_ACTIVE_PRINCIPAL.name, principal)
+                // Refresh tokens and notification registration similar to post-login
+                if (isBot) {
+                    // Skip auth initialization for bots to avoid overwriting the active bot session with parent tokens
+                    sessionManager.updateFirebaseLoginState(false)
+                    authClient.fetchBalance(session)
+                } else {
+                    authClient.initialize()
+                    authClient.authorizeFirebase(session)
+                    authClient.fetchBalance(session)
+                }
+                _state.update { it.copy(showAccountDialog = false) }
+                populateAccountDialog(showSheet = false)
+            }.onFailure { error ->
+                Logger.e("RootViewModel") { "Failed to switch account: ${error.message}" }
+            }
+        }
+    }
+
+    fun showAccountSwitcher() {
+        coroutineScope.launch {
+            _state.update { it.copy(showAccountDialog = true, accountDialogInfo = null) }
+            populateAccountDialog(showSheet = true)
+        }
+    }
+
+    private suspend fun cacheSession(
+        identity: ByteArray,
+        session: Session,
+    ) {
+        preferences.putBytes(PrefKeys.IDENTITY.name, identity)
+        session.canisterId?.let { preferences.putString(PrefKeys.CANISTER_ID.name, it) }
+        session.userPrincipal?.let { preferences.putString(PrefKeys.USER_PRINCIPAL.name, it) }
+        session.profilePic?.let { preferences.putString(PrefKeys.PROFILE_PIC.name, it) }
+        session.username?.let { preferences.putString(PrefKeys.USERNAME.name, it) }
+        preferences.putBoolean(
+            PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name,
+            session.isCreatedFromServiceCanister,
+        )
+        if (!session.isBotAccount) {
+            preferences.putBytes(PrefKeys.MAIN_IDENTITY.name, identity)
+            session.userPrincipal?.let { preferences.putString(PrefKeys.MAIN_PRINCIPAL.name, it) }
+        }
+    }
+
+    private suspend fun autoSwitchToLastActiveAccount() {
+        if (!hasAttemptedAutoSwitch) {
+            hasAttemptedAutoSwitch = true
+            val targetPrincipal = preferences.getString(PrefKeys.LAST_ACTIVE_PRINCIPAL.name)
+            val currentPrincipal = sessionManager.userPrincipal
+            if (
+                targetPrincipal != null &&
+                currentPrincipal != null &&
+                targetPrincipal != currentPrincipal
+            ) {
+                val mainPrincipal =
+                    preferences.getString(PrefKeys.MAIN_PRINCIPAL.name)
+                        ?: preferences.getString(PrefKeys.USER_PRINCIPAL.name)
+
+                val shouldSwitchToMain = targetPrincipal == mainPrincipal
+                val shouldSwitchToBot =
+                    !shouldSwitchToMain &&
+                        loadBotEntries()
+                            .any { it.principal == targetPrincipal }
+
+                if (shouldSwitchToMain || shouldSwitchToBot) {
+                    switchToAccount(targetPrincipal)
+                }
+            }
+        }
+    }
+
+    private suspend fun populateStartupDialog(allowRetry: Boolean = true) {
+        val mainPrincipal =
+            preferences.getString(PrefKeys.MAIN_PRINCIPAL.name)
+                ?: preferences.getString(PrefKeys.USER_PRINCIPAL.name)
+        val bots =
+            loadBotEntries()
+                ?.map { it.principal }
+                ?.distinct()
+                .orEmpty()
+
+        if (mainPrincipal != null || bots.isNotEmpty()) {
+            _state.update {
+                it.copy(
+                    startupDialogInfo = PrincipalDialogInfo(mainPrincipal = mainPrincipal, botPrincipals = bots),
+                    showStartupDialog = true,
+                )
+            }
+        } else if (allowRetry) {
+            delay(STARTUP_DIALOG_RETRY_DELAY_MS)
+            populateStartupDialog(allowRetry = false)
+        }
+    }
+
     fun isPendingLogin(): Boolean =
         with(_state.value) {
             isPendingLogin !is UiState.Success || isPendingLogin.data
@@ -372,6 +623,111 @@ class RootViewModel(
             }
         }
     }
+    private suspend fun loadBotEntries(): List<BotIdentityEntry> {
+        var result: List<BotIdentityEntry>? = null
+        repeat(BOT_LOAD_MAX_ATTEMPTS) { attempt ->
+            if (result != null) return@repeat
+
+            val cachedBots =
+                preferences
+                    .getString(PrefKeys.BOT_IDENTITIES.name)
+                    ?.let { stored ->
+                        runCatching { json.decodeFromString<List<BotIdentityEntry>>(stored) }.getOrNull()
+                    }
+            if (!cachedBots.isNullOrEmpty()) {
+                Logger.d("RootViewModel") { "loadBotEntries: using cached ${cachedBots.size} bots" }
+                result = cachedBots
+                return@repeat
+            }
+
+            val idToken = preferences.getString(PrefKeys.ID_TOKEN.name)
+            val entriesFromToken = idToken?.let { parseBotsFromToken(it) }.orEmpty()
+            if (entriesFromToken.isNotEmpty()) {
+                Logger.d("RootViewModel") {
+                    "loadBotEntries: parsed ${entriesFromToken.size} bots from token on attempt $attempt"
+                }
+                runCatching {
+                    preferences.putString(
+                        PrefKeys.BOT_IDENTITIES.name,
+                        json.encodeToString(entriesFromToken),
+                    )
+                }
+                result = entriesFromToken
+                return@repeat
+            }
+            if (attempt < BOT_LOAD_MAX_ATTEMPTS - 1) {
+                Logger.d("RootViewModel") { "loadBotEntries: empty on attempt $attempt, retrying..." }
+                delay(BOT_LOAD_RETRY_DELAY_MS)
+            }
+        }
+        if (result == null) {
+            Logger.d("RootViewModel") { "loadBotEntries: no bots found after retries" }
+        }
+        return result ?: emptyList()
+    }
+
+    private fun parseBotsFromToken(idToken: String): List<BotIdentityEntry> {
+        val payloadJson = decodeJwtPayload(idToken)
+        val payloadElement =
+            payloadJson?.let {
+                runCatching<JsonElement> {
+                    Json { ignoreUnknownKeys = true }.parseToJsonElement(it)
+                }.getOrNull()
+            }
+        val botArray = payloadElement?.jsonObject?.get("ext_ai_account_delegated_identities")
+        return if (payloadJson == null || botArray == null) {
+            if (payloadElement != null && botArray == null) {
+                Logger.d("RootViewModel") {
+                    "parseBotsFromToken: no ext_ai_account_delegated_identities. " +
+                        "Payload keys=${payloadElement.jsonObject.keys}"
+                }
+            }
+            emptyList()
+        } else {
+            val rawStrings: List<String> =
+                botArray.jsonArray.mapNotNull { element ->
+                    when {
+                        element is kotlinx.serialization.json.JsonPrimitive && element.isString ->
+                            element.content
+                        element is kotlinx.serialization.json.JsonPrimitive && element.isString.not() ->
+                            element.content
+                        else -> element.toString()
+                    }
+                }
+
+            rawStrings.mapNotNull { raw ->
+                runCatching {
+                    val identityBytes =
+                        decodeBase64Flexible(raw)
+                            ?: raw.encodeToByteArray()
+                    val principal = getSessionFromIdentity(identityBytes).userPrincipalId
+                    BotIdentityEntry(principal = principal, identity = Base64.encode(identityBytes))
+                }.onFailure { error ->
+                    Logger.e("RootViewModel") {
+                        "parseBotsFromToken: failed to decode one entry: ${error.message}"
+                    }
+                }.getOrNull()
+            }
+        }
+    }
+
+    private fun decodeJwtPayload(idToken: String): String? {
+        val payloadPart = idToken.split(".").getOrNull(JWT_PAYLOAD_INDEX) ?: return null
+        return decodeBase64Flexible(payloadPart)?.decodeToString()
+    }
+
+    private fun decodeBase64Flexible(input: String): ByteArray? {
+        val padded =
+            if (input.length % BASE64_BLOCK_SIZE == 0) {
+                input
+            } else {
+                val padAmount = BASE64_BLOCK_SIZE - (input.length % BASE64_BLOCK_SIZE)
+                input.padEnd(input.length + padAmount, BASE64_PAD_CHAR)
+            }
+        return runCatching { Base64.UrlSafe.decode(padded) }
+            .recoverCatching { Base64.decode(padded) }
+            .getOrNull()
+    }
 }
 
 data class RootState(
@@ -381,4 +737,32 @@ data class RootState(
     val navigationTarget: NavigationTarget = NavigationTarget.Splash,
     val isLoginMandatory: Boolean = false,
     val isPendingLogin: UiState<Boolean> = UiState.Initial,
+    val accountDialogInfo: AccountDialogInfo? = null,
+    val showAccountDialog: Boolean = false,
+    val startupDialogInfo: PrincipalDialogInfo? = null,
+    val showStartupDialog: Boolean = false,
+)
+
+data class AccountDialogInfo(
+    val mainAccount: AccountUi?,
+    val botAccounts: List<AccountUi>,
+)
+
+@Serializable
+private data class BotIdentityEntry(
+    val principal: String,
+    val identity: String,
+)
+
+data class AccountUi(
+    val principal: String,
+    val name: String,
+    val avatarUrl: String,
+    val isBot: Boolean,
+    val isActive: Boolean,
+)
+
+data class PrincipalDialogInfo(
+    val mainPrincipal: String?,
+    val botPrincipals: List<String>,
 )

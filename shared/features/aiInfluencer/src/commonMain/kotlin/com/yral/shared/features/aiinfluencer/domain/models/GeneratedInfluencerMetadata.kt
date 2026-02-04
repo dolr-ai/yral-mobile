@@ -11,4 +11,6 @@ data class GeneratedInfluencerMetadata(
     val personalityTraits: Map<String, String>,
     val category: String,
     val avatarUrl: String,
+    val systemInstructions: String? = null,
+    val isNsfw: Boolean = false,
 )

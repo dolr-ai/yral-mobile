@@ -113,6 +113,7 @@ abstract class HomeComponent {
                 totalPrizePool: Int,
                 isHotOrNot: Boolean,
             ) -> Unit,
+            openAccountSheet: () -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
         ): HomeComponent =
             DefaultHomeComponent(
@@ -126,6 +127,7 @@ abstract class HomeComponent {
                 openLeaderboard,
                 openTournamentLeaderboard,
                 openTournamentGame,
+                openAccountSheet,
                 showAlertsOnDialog,
             )
     }

@@ -5,11 +5,13 @@ import com.yral.shared.features.aiinfluencer.data.AiInfluencerDataSource
 import com.yral.shared.features.aiinfluencer.data.AiInfluencerRemoteDataSource
 import com.yral.shared.features.aiinfluencer.data.AiInfluencerRepositoryImpl
 import com.yral.shared.features.aiinfluencer.domain.AiInfluencerRepository
+import com.yral.shared.features.aiinfluencer.domain.usecases.CreateInfluencerUseCase
 import com.yral.shared.features.aiinfluencer.domain.usecases.GeneratePromptUseCase
 import com.yral.shared.features.aiinfluencer.domain.usecases.ValidateAndGenerateMetadataUseCase
 import com.yral.shared.features.aiinfluencer.viewmodel.AiInfluencerViewModel
+import com.yral.shared.features.aiinfluencer.viewmodel.BotIdentityStorage
+import org.koin.compose.viewmodel.dsl.viewModelOf
 import org.koin.core.module.dsl.factoryOf
-import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
@@ -31,5 +33,7 @@ val aiInfluencerModule =
         }
         factoryOf(::GeneratePromptUseCase)
         factoryOf(::ValidateAndGenerateMetadataUseCase)
+        factoryOf(::CreateInfluencerUseCase)
+        factoryOf(::BotIdentityStorage)
         viewModelOf(::AiInfluencerViewModel)
     }

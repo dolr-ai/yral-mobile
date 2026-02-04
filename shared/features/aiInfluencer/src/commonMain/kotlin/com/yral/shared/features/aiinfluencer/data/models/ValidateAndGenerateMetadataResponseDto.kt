@@ -21,4 +21,8 @@ data class ValidateAndGenerateMetadataResponseDto(
     val category: String,
     @SerialName("avatar_url")
     val avatarUrl: String,
+    @SerialName("system_instructions")
+    val systemInstructions: String? = null,
+    @SerialName("is_nsfw")
+    val isNsfw: Boolean = false,
 )

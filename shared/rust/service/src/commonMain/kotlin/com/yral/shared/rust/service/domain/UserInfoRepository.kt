@@ -47,4 +47,11 @@ interface UserInfoRepository {
         principal: Principal,
         details: ProfileUpdateDetailsV2,
     )
+
+    suspend fun acceptNewUserRegistrationV2(
+        principal: Principal,
+        newPrincipal: Principal,
+        authenticated: Boolean,
+        mainAccount: Principal?,
+    )
 }

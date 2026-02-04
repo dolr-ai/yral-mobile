@@ -7,6 +7,8 @@ import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.getOrThrow
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.rust.service.domain.performance.traceApiCall
+import com.yral.shared.rust.service.utils.SignedMessage
+import com.yral.shared.rust.service.utils.signMessageWithIdentity
 import com.yral.shared.uniffi.generated.LoggerException
 
 object HelperService {
@@ -130,6 +132,11 @@ object HelperService {
         koinInstance.get<SnsLedgerServiceFactory>().initialize(identityData)
         koinInstance.get<ICPLedgerServiceFactory>().initialize(identityData)
     }
+
+    fun signMessage(
+        identityData: ByteArray,
+        message: String,
+    ): SignedMessage = signMessageWithIdentity(identityData, message)
 }
 
 sealed class DeviceRegistrationError : Exception() {

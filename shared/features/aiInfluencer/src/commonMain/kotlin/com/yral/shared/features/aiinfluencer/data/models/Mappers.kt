@@ -17,4 +17,6 @@ fun ValidateAndGenerateMetadataResponseDto.toDomain(): GeneratedInfluencerMetada
         personalityTraits = personalityTraits,
         category = category,
         avatarUrl = avatarUrl,
+        systemInstructions = systemInstructions,
+        isNsfw = isNsfw,
     )

@@ -141,4 +141,28 @@ class AuthRepositoryImpl(
                         clientState = clientState,
                     ),
             ).toPhoneAuthVerifyResponse()
+
+    override suspend fun createAiAccount(
+        userPrincipal: String,
+        signature: ByteArray,
+        publicKey: ByteArray,
+        signedMessage: ByteArray,
+        ingressExpirySecs: Long,
+        ingressExpiryNanos: Int,
+        delegations: List<com.yral.shared.rust.service.utils.SignedDelegationPayload>?,
+    ): ByteArray {
+        val response =
+            dataSource.createAiAccount(
+                userPrincipal = userPrincipal,
+                signature = signature,
+                publicKey = publicKey,
+                signedMessage = signedMessage,
+                ingressExpirySecs = ingressExpirySecs,
+                ingressExpiryNanos = ingressExpiryNanos,
+                delegations = delegations,
+            )
+        return json
+            .encodeToString(response.delegatedIdentity)
+            .toByteArray()
+    }
 }

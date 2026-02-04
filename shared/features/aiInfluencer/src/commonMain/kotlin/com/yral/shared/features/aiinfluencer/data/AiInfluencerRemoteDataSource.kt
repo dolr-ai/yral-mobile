@@ -2,6 +2,8 @@ package com.yral.shared.features.aiinfluencer.data
 
 import com.yral.shared.core.AppConfigurations.CHAT_BASE_URL
 import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.features.aiinfluencer.data.models.CreateInfluencerRequestDto
+import com.yral.shared.features.aiinfluencer.data.models.CreateInfluencerResponseDto
 import com.yral.shared.features.aiinfluencer.data.models.GeneratePromptRequestDto
 import com.yral.shared.features.aiinfluencer.data.models.GeneratePromptResponseDto
 import com.yral.shared.features.aiinfluencer.data.models.ValidateAndGenerateMetadataRequestDto
@@ -57,6 +59,21 @@ class AiInfluencerRemoteDataSource(
         }
     }
 
+    override suspend fun createInfluencer(request: CreateInfluencerRequestDto): CreateInfluencerResponseDto {
+        val idToken = getIdToken()
+        return httpPost(
+            httpClient = httpClient,
+            json = json,
+        ) {
+            url {
+                host = CHAT_BASE_URL
+                path(environmentPrefix, CREATE_INFLUENCER_PATH)
+            }
+            headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
+            setBody(request)
+        }
+    }
+
     private suspend fun getIdToken() =
         preferences.getString(PrefKeys.ID_TOKEN.name)
             ?: throw YralException("Authorisation not found")
@@ -64,5 +81,6 @@ class AiInfluencerRemoteDataSource(
     private companion object {
         private const val GENERATE_PROMPT_PATH = "api/v1/influencers/generate-prompt"
         private const val VALIDATE_AND_GENERATE_METADATA_PATH = "api/v1/influencers/validate-and-generate-metadata"
+        private const val CREATE_INFLUENCER_PATH = "api/v1/influencers/create"
     }
 }

@@ -86,7 +86,7 @@ fun CreateAIInfluencerScreen(
     modifier: Modifier = Modifier,
     viewModel: AiInfluencerViewModel = koinViewModel(),
     onBack: () -> Unit = {},
-    onCreateProfile: (AiInfluencerStep.ProfileDetails) -> Unit = {},
+    onCreateProfile: () -> Unit = {},
     onUploadPhoto: (() -> Unit)? = null,
     onTakePhoto: (() -> Unit)? = null,
 ) {
@@ -350,7 +350,7 @@ private fun ProfileDetailsScreen(
     onNameChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
     onEditImage: () -> Unit,
-    onCreateProfile: (AiInfluencerStep.ProfileDetails) -> Unit,
+    onCreateProfile: () -> Unit,
 ) {
     val step = state.step as AiInfluencerStep.ProfileDetails
     val scrollState = rememberScrollState()
@@ -428,12 +428,17 @@ private fun ProfileDetailsScreen(
         Spacer(modifier = Modifier.weight(1f))
         YralGradientButton(
             text = stringResource(Res.string.ai_influencer_create_profile),
-            buttonState = YralButtonState.Enabled,
+            buttonState =
+                if (state.isBotCreationLoading) {
+                    YralButtonState.Loading
+                } else {
+                    YralButtonState.Enabled
+                },
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .padding(start = 16.dp, end = 16.dp, bottom = 28.dp),
-            onClick = { onCreateProfile(step) },
+            onClick = onCreateProfile,
         )
     }
 }

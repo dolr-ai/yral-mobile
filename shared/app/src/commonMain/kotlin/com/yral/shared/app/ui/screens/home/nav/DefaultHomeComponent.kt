@@ -77,6 +77,7 @@ internal class DefaultHomeComponent(
         totalPrizePool: Int,
         isHotOrNot: Boolean,
     ) -> Unit,
+    private val openAccountSheet: () -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
 ) : HomeComponent(),
     ComponentContext by componentContext {
@@ -330,6 +331,7 @@ internal class DefaultHomeComponent(
             openEditProfile = openEditProfile,
             openProfile = openProfile,
             openConversation = openConversation,
+            openAccountSheet = openAccountSheet,
             snapshot = childSnapshots[Config.Profile] as? ProfileComponent.Snapshot,
             showAlertsOnDialog = showAlertsOnDialog,
             promptLogin = { homeViewModel.showSignupPrompt(true, it) },

@@ -5591,6 +5591,7 @@ dependencies = [
  "serde_json",
  "tokio",
  "uniffi",
+ "web-time",
  "yral-canisters-client",
  "yral-canisters-common",
  "yral-identity",
