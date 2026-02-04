@@ -82,7 +82,8 @@ final class SessionManager: ObservableObject {
           emailId: nil,
           utmParams: nil,
           isMandatoryLogin: isMandatoryLogin,
-          phoneNumber: nil
+          phoneNumber: nil,
+          proStatus: nil
         )
       )
     case .permanentAuthentication(let userPrincipal, let email, let canisterPrincipal, _, _, let dailyRank):
@@ -105,7 +106,8 @@ final class SessionManager: ObservableObject {
           emailId: "",
           utmParams: nil,
           isMandatoryLogin: isMandatoryLogin,
-          phoneNumber: nil
+          phoneNumber: nil,
+          proStatus: nil
         )
       )
     default:

@@ -24,6 +24,7 @@ class FirebaseAnalyticsProvider(
 
     override fun setUserProperties(user: User) {
         firebaseAnalytics.setUserId(user.userId)
+        firebaseAnalytics.setUserProperty("pro_status", user.proStatus?.toString() ?: "")
     }
 
     override fun reset() {
@@ -31,6 +32,7 @@ class FirebaseAnalyticsProvider(
         firebaseAnalytics.setUserId("")
         firebaseAnalytics.setUserProperty("name", "")
         firebaseAnalytics.setUserProperty("emailId", "")
+        firebaseAnalytics.setUserProperty("pro_status", "")
     }
 
     override fun applyCommonContext(common: Map<String, Any?>) {
