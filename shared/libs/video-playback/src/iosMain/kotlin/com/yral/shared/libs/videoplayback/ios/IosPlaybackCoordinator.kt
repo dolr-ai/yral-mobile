@@ -34,8 +34,10 @@ import platform.AVFoundation.playImmediatelyAtRate
 import platform.AVFoundation.preferredForwardBufferDuration
 import platform.AVFoundation.prerollAtRate
 import platform.AVFoundation.replaceCurrentItemWithPlayerItem
+import platform.AVFoundation.seekToTime
 import platform.AVFoundation.timeControlStatus
 import platform.CoreMedia.CMTimeGetSeconds
+import platform.CoreMedia.CMTimeMake
 import platform.Foundation.NSNotificationCenter
 import platform.Foundation.NSRunLoop
 import platform.Foundation.NSRunLoopCommonModes
@@ -384,6 +386,7 @@ private class IosPlaybackCoordinator(
         return AVPlayerItem(asset = asset)
     }
 
+    @OptIn(ExperimentalForeignApi::class)
     private fun registerObservers() {
         val center = NSNotificationCenter.defaultCenter
 
@@ -433,12 +436,9 @@ private class IosPlaybackCoordinator(
                     val index = activeSlot.index ?: return@addObserverForName
                     val item = feed.getOrNull(index) ?: return@addObserverForName
                     reporter.playbackEnded(item.id, index)
-                    val replacement = buildPlayerItem(item, index)
-                    replacement.preferredForwardBufferDuration = PREFERRED_BUFFER_DURATION_SECONDS
-                    activeSlot.player.replaceCurrentItemWithPlayerItem(replacement)
+                    // Seek to beginning instead of replacing item for faster looping
+                    activeSlot.player.seekToTime(CMTimeMake(value = 0, timescale = 1))
                     activeSlot.player.playImmediatelyAtRate(1.0F)
-                    firstFramePendingIndex = index
-                    playStartMsById[item.id] = nowMs()
                 }
             }
     }
