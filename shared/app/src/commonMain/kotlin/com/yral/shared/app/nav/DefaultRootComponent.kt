@@ -23,6 +23,7 @@ import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.instancekeeper.InstanceKeeper
 import com.arkivanov.essenty.instancekeeper.getOrCreate
 import com.yral.shared.analytics.events.InfluencerSource
+import com.yral.shared.analytics.events.SubscriptionEntryPoint
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.nav.factories.ComponentFactory
 import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
@@ -420,8 +421,11 @@ class DefaultRootComponent(
         navigation.pushToFront(Config.Leaderboard)
     }
 
-    override fun openSubscription(purchaseTimeMs: Long?) {
-        navigation.pushToFront(Config.Subscription(purchaseTimeMs))
+    override fun openSubscription(
+        purchaseTimeMs: Long?,
+        entryPoint: SubscriptionEntryPoint,
+    ) {
+        navigation.pushToFront(Config.Subscription(purchaseTimeMs, entryPoint))
     }
 
     override fun onCreateVideo() {
@@ -528,8 +532,9 @@ class DefaultRootComponent(
 
     // ==================== SubscriptionCoordinator Implementation ====================
     override fun buySubscription() {
+        val entryPoint = subscriptionNudgeContent?.entryPoint ?: SubscriptionEntryPoint.HOME_FEED
         rootViewModel.checkSubscriptionAndOpen(
-            openSubscription = ::openSubscription,
+            openSubscription = { purchaseTimeMs -> openSubscription(purchaseTimeMs, entryPoint) },
             showSubscriptionAccountMismatchSheet = ::showSubscriptionAccountMismatchSlot,
         )
     }

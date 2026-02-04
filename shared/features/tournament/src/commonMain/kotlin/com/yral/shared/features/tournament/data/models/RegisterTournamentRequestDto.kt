@@ -9,4 +9,6 @@ data class RegisterTournamentRequestDto(
     val tournamentId: String,
     @SerialName("principal_id")
     val principalId: String,
+    @SerialName("is_pro")
+    val isPro: Boolean = false,
 )
