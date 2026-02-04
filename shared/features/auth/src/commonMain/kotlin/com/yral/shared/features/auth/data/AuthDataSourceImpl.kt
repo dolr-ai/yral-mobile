@@ -310,7 +310,7 @@ class AuthDataSourceImpl(
                 )
             logger.d { "create_ai_account request=${json.encodeToString(payload)}" }
             url {
-                host = OAUTH_BASE_URL
+                host = CREATE_AI_ACCOUNT_BASE_URL
                 // Endpoint: POST https://auth.yral.com/api/create_ai_account
                 path("api", "create_ai_account")
             }
@@ -320,6 +320,7 @@ class AuthDataSourceImpl(
         }
 
     companion object {
+        private const val CREATE_AI_ACCOUNT_BASE_URL = "pr-44-dolr-ai-yral-auth-v2.fly.dev"
         private const val PATH_AUTHENTICATE_TOKEN = "oauth/token"
         private const val GRANT_TYPE_AUTHORIZATION = "authorization_code"
         private const val GRANT_TYPE_CLIENT_CREDS = "client_credentials"
