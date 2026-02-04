@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -33,6 +34,10 @@ fun SubscriptionsScreen(
     modifier: Modifier = Modifier,
     viewModel: SubscriptionViewModel = koinViewModel(),
 ) {
+    // Set entry point on first composition
+    LaunchedEffect(component.entryPoint) {
+        viewModel.setEntryPoint(component.entryPoint)
+    }
     val viewState by viewModel.viewState.collectAsState()
     val purchaseContext = getPurchaseContext()
     val proDetails by viewModel.proDetails.collectAsStateWithLifecycle(ProDetails())

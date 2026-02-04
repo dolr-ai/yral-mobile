@@ -120,6 +120,7 @@ fun AiVideoGenScreen(
                                 title = event.title,
                                 description = event.description,
                                 topContent = { BoltIcon() },
+                                entryPoint = event.entryPoint,
                             ),
                     )
                 }

@@ -32,8 +32,8 @@ IST = timezone(timedelta(hours=5, minutes=30))
 TOURNAMENT_SHARDS = 5
 SMILEY_GAME_CONFIG_PATH = "config/smiley_game_v2"
 BALANCE_URL_YRAL_TOKEN = "https://yral-hot-or-not.go-bazzinga.workers.dev/update_balance/"
-BILLING_URL_DEDUCT_CREDITS = "https://billing.yral.com/deduct_credits"
-BILLING_ONE_CREDIT = 1073741824  # 1 credit in billing system units (2^30)
+BILLING_URL_DEDUCT_CREDITS = "https://billing.yral.com/credits/deduct"
+BILLING_ONE_CREDIT = 1  # 1 credit
 
 # ─────────────────────  DATABASE HELPER  ────────────────────────
 _db = None
@@ -139,8 +139,13 @@ def _deduct_pro_credit(token: str, principal_id: str) -> tuple[bool, str | None]
         "amount": BILLING_ONE_CREDIT,
         "user_principal": principal_id
     }
+    # Debug logging
+    print(f"[DEBUG] Calling billing API: URL={url}", file=sys.stderr)
+    print(f"[DEBUG] Body: {body}", file=sys.stderr)
+    print(f"[DEBUG] Token present: {bool(token)}, Token length: {len(token) if token else 0}", file=sys.stderr)
     try:
         resp = requests.post(url, json=body, timeout=30, headers=headers)
+        print(f"[DEBUG] Response status: {resp.status_code}, headers: {dict(resp.headers)}", file=sys.stderr)
         if resp.status_code == 200:
             return True, None
         return False, f"Status: {resp.status_code}, Body: {resp.text}"

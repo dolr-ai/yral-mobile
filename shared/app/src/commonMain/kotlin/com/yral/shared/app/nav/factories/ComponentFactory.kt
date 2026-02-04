@@ -124,6 +124,7 @@ internal class ComponentFactory(
         SubscriptionsComponent.Companion(
             componentContext = componentContext,
             purchaseTimeMs = config.purchaseTimeMs,
+            entryPoint = config.entryPoint,
             onBack = rootComponent::onBackClicked,
             onCreateVideo = rootComponent::onCreateVideo,
             onExploreFeed = rootComponent::onExploreFeed,

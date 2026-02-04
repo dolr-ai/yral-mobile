@@ -34,12 +34,14 @@ fun GetTournamentStatusRequest.toDto(): TournamentStatusRequestDto =
 data class RegisterForTournamentRequest(
     val tournamentId: String,
     val principalId: String,
+    val isPro: Boolean = false,
 )
 
 fun RegisterForTournamentRequest.toDto(): RegisterTournamentRequestDto =
     RegisterTournamentRequestDto(
         tournamentId = tournamentId,
         principalId = principalId,
+        isPro = isPro,
     )
 
 data class GetMyTournamentsRequest(

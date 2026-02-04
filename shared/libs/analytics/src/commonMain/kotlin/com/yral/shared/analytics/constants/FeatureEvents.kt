@@ -134,6 +134,16 @@ enum class FeatureEvents {
     TOURNAMENT_LEADERBOARD_VIEWED,
     TOURNAMENT_REWARD_EARNED,
 
+    // Subscription
+    PRO_NUDGE_IMPRESSION,
+    PRO_NUDGE_CLICKED,
+    PRO_PLAN_VIEWED,
+    PRO_BUY_CLICKED,
+    PRO_PAYMENT_RESULT,
+    PRO_STATUS_UPDATED,
+    CREDITS_CONSUMED,
+    CREDITS_EXHAUSTED,
+
     ;
 
     fun getEventName(): String = name.lowercase()

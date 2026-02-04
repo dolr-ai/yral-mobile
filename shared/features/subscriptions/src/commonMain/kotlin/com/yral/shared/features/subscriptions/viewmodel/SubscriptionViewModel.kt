@@ -5,8 +5,13 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.shared.analytics.events.PaymentStatus
+import com.yral.shared.analytics.events.ProStatusSource
+import com.yral.shared.analytics.events.SubscriptionEntryPoint
+import com.yral.shared.analytics.events.getPlatformPaymentProvider
 import com.yral.shared.core.session.ProDetails
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.features.subscriptions.analytics.SubscriptionTelemetry
 import com.yral.shared.iap.IAPManager
 import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.ProductId
@@ -25,7 +30,10 @@ class SubscriptionViewModel(
     private val iapManager: IAPManager,
     private val sessionManager: SessionManager,
     private val getUserProfileDetailsV7UseCase: GetUserProfileDetailsV7UseCase,
+    private val telemetry: SubscriptionTelemetry,
 ) : ViewModel() {
+    private var entryPoint: SubscriptionEntryPoint = SubscriptionEntryPoint.HOME_FEED
+    private var hasFiredPlanViewed = false
     private val _viewState = MutableStateFlow(ViewState())
     val viewState: StateFlow<ViewState> = _viewState.asStateFlow()
 
@@ -115,6 +123,25 @@ class SubscriptionViewModel(
             SubscriptionScreenType.UnPurchased
         }
 
+    fun setEntryPoint(entry: SubscriptionEntryPoint) {
+        this.entryPoint = entry
+        // Try to fire plan viewed if pricing info is already available
+        firePlanViewedIfReady()
+    }
+
+    private fun firePlanViewedIfReady() {
+        if (!hasFiredPlanViewed) {
+            _viewState.value.pricingInfo?.let { pricing ->
+                telemetry.onPlanViewed(
+                    entryPoint = entryPoint,
+                    planPrice = pricing.currentPrice,
+                    creditsOffered = DEFAULT_TOTAL_CREDITS,
+                )
+                hasFiredPlanViewed = true
+            }
+        }
+    }
+
     private fun fetchProductDetails() {
         viewModelScope.launch {
             iapManager
@@ -137,6 +164,8 @@ class SubscriptionViewModel(
                                 billingPeriodMillis = p.billingPeriodMillis,
                             )
                         }
+                        // Fire plan viewed now that pricing is available
+                        firePlanViewedIfReady()
                     }
                 }.onFailure { error ->
                     Logger.e("SubscriptionViewModel", error) { "Failed to fetch product details" }
@@ -147,6 +176,7 @@ class SubscriptionViewModel(
 
     fun subscribe(purchaseContext: PurchaseContext) {
         viewModelScope.launch {
+            trackBuyClicked()
             _viewState.update { it.copy(purchaseState = UiState.InProgress()) }
             iapManager
                 .purchaseProduct(
@@ -154,58 +184,87 @@ class SubscriptionViewModel(
                     context = purchaseContext,
                     acknowledgePurchase = false,
                 ).onSuccess { purchase ->
-                    Logger.d("SubscriptionViewModel") { "Purchase successful: $purchase" }
-                    sessionManager.clearProDetails()
-                    viewModelScope.launch {
-                        val principal = sessionManager.userPrincipal ?: return@launch
-                        getUserProfileDetailsV7UseCase(
-                            GetUserProfileDetailsV7Params(
-                                principal = principal,
-                                targetPrincipal = principal,
-                            ),
-                        ).onSuccess { details ->
-                            val proPlan = details.subscriptionPlan as? SubscriptionPlan.Pro
-                            proPlan?.let {
-                                sessionManager.updateProDetails(
-                                    details =
-                                        ProDetails(
-                                            isProPurchased = true,
-                                            availableCredits = proPlan.subscription.freeVideoCreditsLeft.toInt(),
-                                            totalCredits = proPlan.subscription.totalVideoCreditsAlloted.toInt(),
-                                        ),
-                                )
-                            }
-                            Logger.d("SubscriptionX") { "Updated pro details $proPlan" }
-                        }.onFailure {
-                            Logger.e("SubscriptionX", it) { "Failed to update pro details" }
-                        }
-                    }
-                    _viewState.update {
-                        it.copy(purchaseState = UiState.Success(SubscriptionScreenType.Success))
-                    }
+                    handlePurchaseSuccess(purchase.purchaseToken)
                 }.onFailure { error ->
-                    val iapError = error as? IAPError ?: IAPError.UnknownError(error)
-                    Logger.e("SubscriptionViewModel", error) { "Purchase failed: $iapError" }
-                    if (error !is IAPError.PurchaseCancelled) {
-                        _viewState.update {
-                            it.copy(
-                                purchaseState =
-                                    UiState.Success(
-                                        SubscriptionScreenType.Failure(
-                                            iapError,
-                                        ),
-                                    ),
-                            )
-                        }
-                    } else {
-                        _viewState.update { it.copy(purchaseState = UiState.Initial) }
-                    }
+                    handlePurchaseFailure(error)
                 }
+        }
+    }
+
+    private fun trackBuyClicked() {
+        _viewState.value.pricingInfo?.let { pricing ->
+            telemetry.onBuyClicked(
+                planPrice = pricing.currentPrice,
+                paymentProvider = getPlatformPaymentProvider(),
+            )
+        }
+    }
+
+    private fun handlePurchaseSuccess(purchaseToken: String?) {
+        Logger.d("SubscriptionViewModel") { "Purchase successful" }
+        telemetry.onPaymentResult(
+            paymentStatus = PaymentStatus.SUCCESS,
+            amountPaid = _viewState.value.pricingInfo?.currentPrice,
+            currency = _viewState.value.pricingInfo?.currencyCode,
+            transactionId = purchaseToken,
+        )
+        sessionManager.clearProDetails()
+        refreshProDetails()
+        _viewState.update {
+            it.copy(purchaseState = UiState.Success(SubscriptionScreenType.Success))
+        }
+    }
+
+    private fun refreshProDetails() {
+        viewModelScope.launch {
+            val principal = sessionManager.userPrincipal ?: return@launch
+            getUserProfileDetailsV7UseCase(
+                GetUserProfileDetailsV7Params(
+                    principal = principal,
+                    targetPrincipal = principal,
+                ),
+            ).onSuccess { details ->
+                val proPlan = details.subscriptionPlan as? SubscriptionPlan.Pro
+                proPlan?.let { updateProDetailsFromPlan(it) }
+                Logger.d("SubscriptionX") { "Updated pro details $proPlan" }
+            }.onFailure {
+                Logger.e("SubscriptionX", it) { "Failed to update pro details" }
+            }
+        }
+    }
+
+    private fun updateProDetailsFromPlan(proPlan: SubscriptionPlan.Pro) {
+        sessionManager.updateProDetails(
+            details =
+                ProDetails(
+                    isProPurchased = true,
+                    availableCredits = proPlan.subscription.freeVideoCreditsLeft.toInt(),
+                    totalCredits = proPlan.subscription.totalVideoCreditsAlloted.toInt(),
+                ),
+        )
+        telemetry.onProStatusUpdated(
+            proStatus = true,
+            creditsGranted = proPlan.subscription.totalVideoCreditsAlloted.toInt(),
+            source = ProStatusSource.PURCHASE,
+        )
+    }
+
+    private fun handlePurchaseFailure(error: Throwable) {
+        val iapError = error as? IAPError ?: IAPError.UnknownError(error)
+        Logger.e("SubscriptionViewModel", error) { "Purchase failed: $iapError" }
+        if (error !is IAPError.PurchaseCancelled) {
+            telemetry.onPaymentResult(paymentStatus = PaymentStatus.FAILURE)
+            _viewState.update {
+                it.copy(purchaseState = UiState.Success(SubscriptionScreenType.Failure(iapError)))
+            }
+        } else {
+            _viewState.update { it.copy(purchaseState = UiState.Initial) }
         }
     }
 
     companion object {
         private const val CURRENCY_DIVIDER = 1_000_000.0
+        private const val DEFAULT_TOTAL_CREDITS = 30
     }
 }
 
