@@ -54,6 +54,10 @@ interface RootComponent {
 
     fun onCompleteUpdateClicked()
 
+    fun showMandatoryUpdateSlot()
+
+    fun dismissMandatoryUpdateSlot()
+
     fun openEditProfile()
 
     fun openProfile(userCanisterData: CanisterData)
@@ -159,5 +163,7 @@ interface RootComponent {
         class SubscriptionAccountMismatchSheet : SlotChild()
 
         class SubscriptionNudge : SlotChild()
+
+        class MandatoryUpdate : SlotChild()
     }
 }

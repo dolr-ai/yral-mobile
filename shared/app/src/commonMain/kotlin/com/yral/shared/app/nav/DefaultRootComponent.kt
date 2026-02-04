@@ -257,6 +257,9 @@ class DefaultRootComponent(
             is SlotConfig.SubscriptionNudge -> {
                 RootComponent.SlotChild.SubscriptionNudge()
             }
+            is SlotConfig.MandatoryUpdate -> {
+                RootComponent.SlotChild.MandatoryUpdate()
+            }
         }
 
     // ==================== RootComponent Navigation ====================
@@ -296,6 +299,16 @@ class DefaultRootComponent(
 
     override fun onCompleteUpdateClicked() {
         onCompleteUpdateCallback?.invoke()
+    }
+
+    override fun showMandatoryUpdateSlot() {
+        slotNavigation.activate(SlotConfig.MandatoryUpdate)
+    }
+
+    override fun dismissMandatoryUpdateSlot() {
+        if (slot.value.child?.instance is RootComponent.SlotChild.MandatoryUpdate) {
+            slotNavigation.dismiss()
+        }
     }
 
     fun setOnCompleteUpdateCallback(callback: () -> Unit) {

@@ -32,6 +32,7 @@ import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.shared.app.nav.RootComponent
 import com.yral.shared.app.nav.RootComponent.Child
+import com.yral.shared.app.ui.components.MandatoryUpdateScreen
 import com.yral.shared.app.ui.components.UpdateNotificationHost
 import com.yral.shared.app.ui.screens.alertsrequest.AlertsRequestBottomSheet
 import com.yral.shared.app.ui.screens.home.HomeScreen
@@ -386,6 +387,9 @@ private fun SlotContent(component: RootComponent) {
                         coordinator.dismissSubscriptionNudge()
                     }
                 }
+            }
+            is RootComponent.SlotChild.MandatoryUpdate -> {
+                MandatoryUpdateScreen()
             }
         }
     }
