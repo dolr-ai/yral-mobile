@@ -52,6 +52,12 @@ fun createIosPlaybackCoordinator(deps: CoordinatorDeps = CoordinatorDeps()): Pla
 private class IosPlaybackCoordinator(
     private val deps: CoordinatorDeps,
 ) : PlaybackCoordinator {
+    private companion object {
+        const val PREFERRED_BUFFER_DURATION_SECONDS = 3.0
+        const val BUFFERING_TIMEOUT_MS = 10_000L
+        const val MAX_RETRY_ATTEMPTS = 2
+        const val RETRY_DELAY_MS = 500L
+    }
     private val reporter = deps.reporter
     private val policy = deps.policy
 
@@ -76,6 +82,9 @@ private class IosPlaybackCoordinator(
 
     private var rebuffering = false
     private var rebufferStartMs: Long? = null
+    private var bufferingStartMs: Long? = null
+    private var retryCount = 0
+    private var lastFailedIndex: Int? = null
     private val progressTicker =
         PlaybackProgressTicker(
             intervalMs = deps.progressTickIntervalMs,
@@ -100,8 +109,8 @@ private class IosPlaybackCoordinator(
 
     init {
         IosAudioSession.ensurePlaybackSessionActive()
-        playerA.automaticallyWaitsToMinimizeStalling = false
-        playerB?.automaticallyWaitsToMinimizeStalling = false
+        playerA.automaticallyWaitsToMinimizeStalling = true
+        playerB?.automaticallyWaitsToMinimizeStalling = true
         registerObservers()
         startPolling()
         progressTicker.start()
@@ -139,6 +148,13 @@ private class IosPlaybackCoordinator(
     override fun setActiveIndex(index: Int) {
         if (index !in feed.indices) return
         if (index == activeIndex && activeSlot.index == index) return
+
+        // Reset retry state when changing videos
+        if (index != lastFailedIndex) {
+            retryCount = 0
+            lastFailedIndex = null
+        }
+        bufferingStartMs = null
 
         activeIndex = index
         predictedIndex = index
@@ -284,7 +300,7 @@ private class IosPlaybackCoordinator(
     ) {
         val descriptor = feed[index]
         val item = buildPlayerItem(descriptor, index)
-        item.preferredForwardBufferDuration = 1.0
+        item.preferredForwardBufferDuration = PREFERRED_BUFFER_DURATION_SECONDS
         val previousIndex = slot.index
         if (previousIndex != null && previousIndex != index) {
             detachSurface(previousIndex, slot.player)
@@ -318,6 +334,28 @@ private class IosPlaybackCoordinator(
             handle.controller.player = null
             handle.playerState.value = null
         }
+    }
+
+    private fun retryCurrentVideo() {
+        val index = activeSlot.index ?: return
+        val item = feed.getOrNull(index)
+        if (index != lastFailedIndex) {
+            retryCount = 0
+            lastFailedIndex = index
+        }
+
+        if (retryCount >= MAX_RETRY_ATTEMPTS || item == null) {
+            reporter.playbackError(item?.id ?: "", index, "max_retries", "ios")
+            return
+        }
+
+        retryCount++
+        bufferingStartMs = null
+        reporter.playStartRequest(item.id, index, "retry_$retryCount")
+
+        prepareSlot(activeSlot, index, shouldPlay = true)
+        attachIfBound(activeSlot)
+        activeSlot.player.playImmediatelyAtRate(1.0F)
     }
 
     private fun buildPlayerItem(
@@ -360,6 +398,11 @@ private class IosPlaybackCoordinator(
                     val index = activeSlot.index ?: return@addObserverForName
                     val item = feed.getOrNull(index) ?: return@addObserverForName
                     reporter.playbackError(item.id, index, "failed", "ios")
+
+                    scope.launch {
+                        kotlinx.coroutines.delay(RETRY_DELAY_MS)
+                        retryCurrentVideo()
+                    }
                 }
             }
 
@@ -391,7 +434,7 @@ private class IosPlaybackCoordinator(
                     val item = feed.getOrNull(index) ?: return@addObserverForName
                     reporter.playbackEnded(item.id, index)
                     val replacement = buildPlayerItem(item, index)
-                    replacement.preferredForwardBufferDuration = 1.0
+                    replacement.preferredForwardBufferDuration = PREFERRED_BUFFER_DURATION_SECONDS
                     activeSlot.player.replaceCurrentItemWithPlayerItem(replacement)
                     activeSlot.player.playImmediatelyAtRate(1.0F)
                     firstFramePendingIndex = index
@@ -421,13 +464,41 @@ private class IosPlaybackCoordinator(
         val item = feed.getOrNull(index) ?: return
 
         val status = activeSlot.player.timeControlStatus
-        if (status == AVPlayerTimeControlStatusWaitingToPlayAtSpecifiedRate && !rebuffering) {
+        pollBufferingState(status, item, index)
+        pollPlayingState(status, item, index)
+        pollFirstFrame(item, index)
+        pollPreparedSlot()
+    }
+
+    private fun pollBufferingState(
+        status: Long,
+        item: MediaDescriptor,
+        index: Int,
+    ) {
+        if (status != AVPlayerTimeControlStatusWaitingToPlayAtSpecifiedRate) return
+        if (!rebuffering) {
             rebuffering = true
             rebufferStartMs = nowMs()
+            bufferingStartMs = nowMs()
             reporter.rebufferStart(item.id, index, "buffering")
+        } else {
+            val startTime = bufferingStartMs
+            if (startTime != null && (nowMs() - startTime) > BUFFERING_TIMEOUT_MS) {
+                bufferingStartMs = null
+                reporter.playbackError(item.id, index, "buffering_timeout", "ios")
+                retryCurrentVideo()
+            }
         }
+    }
 
-        if (status == AVPlayerTimeControlStatusPlaying && rebuffering) {
+    private fun pollPlayingState(
+        status: Long,
+        item: MediaDescriptor,
+        index: Int,
+    ) {
+        if (status != AVPlayerTimeControlStatusPlaying) return
+        bufferingStartMs = null
+        if (rebuffering) {
             rebuffering = false
             val start = rebufferStartMs
             if (start != null) {
@@ -436,37 +507,43 @@ private class IosPlaybackCoordinator(
             }
             rebufferStartMs = null
         }
+    }
 
-        if (firstFramePendingIndex == index) {
-            val seconds = CMTimeGetSeconds(activeSlot.player.currentTime())
-            if (seconds > 0.01) {
-                firstFramePendingIndex = null
-                val start = playStartMsById[item.id] ?: nowMs()
-                reporter.firstFrameRendered(item.id, index)
-                reporter.timeToFirstFrame(item.id, index, nowMs() - start)
-            }
+    @Suppress("MagicNumber")
+    @OptIn(ExperimentalForeignApi::class)
+    private fun pollFirstFrame(
+        item: MediaDescriptor,
+        index: Int,
+    ) {
+        if (firstFramePendingIndex != index) return
+        val seconds = CMTimeGetSeconds(activeSlot.player.currentTime())
+        if (seconds > 0.01) {
+            firstFramePendingIndex = null
+            val start = playStartMsById[item.id] ?: nowMs()
+            reporter.firstFrameRendered(item.id, index)
+            reporter.timeToFirstFrame(item.id, index, nowMs() - start)
         }
+    }
 
-        val prepared = preparedSlot
-        if (prepared != null) {
-            val preparedItem = prepared.player.currentItem
-            val preparedIndex = prepared.index
-            if (preparedIndex != null && preparedItem?.status == AVPlayerItemStatusReadyToPlay) {
-                preparedScheduler.markReady(
-                    index = preparedIndex,
-                    nowMs = nowMs(),
-                    idAt = { feed.getOrNull(it)?.id },
-                ) {
-                    prepared.player.prerollAtRate(1.0F) { _ ->
-                        if (prepared.index == preparedIndex) {
-                            prepared.player.pause()
-                        }
+    private fun pollPreparedSlot() {
+        val prepared = preparedSlot ?: return
+        val preparedItem = prepared.player.currentItem
+        val preparedIndex = prepared.index ?: return
+        if (preparedItem?.status == AVPlayerItemStatusReadyToPlay) {
+            preparedScheduler.markReady(
+                index = preparedIndex,
+                nowMs = nowMs(),
+                idAt = { feed.getOrNull(it)?.id },
+            ) {
+                prepared.player.prerollAtRate(1.0F) { _ ->
+                    if (prepared.index == preparedIndex) {
+                        prepared.player.pause()
                     }
                 }
             }
-            if (preparedIndex != null && preparedItem?.status == AVPlayerItemStatusFailed) {
-                preparedScheduler.markError(preparedIndex, { feed.getOrNull(it)?.id }, "error")
-            }
+        }
+        if (preparedItem?.status == AVPlayerItemStatusFailed) {
+            preparedScheduler.markError(preparedIndex, { feed.getOrNull(it)?.id }, "error")
         }
     }
 
