@@ -372,7 +372,7 @@ class RootViewModel(
                                 identityBytes = identityBytes,
                                 isBot = true,
                                 activePrincipal = activePrincipal,
-                                fallbackUsername = null,
+                                fallbackUsername = entry.username,
                             )?.let { add(it) }
                         }
                     }
@@ -425,6 +425,7 @@ class RootViewModel(
         _state.update { it.copy(showStartupDialog = false) }
     }
 
+    @Suppress("LongMethod")
     fun switchToAccount(principal: String) {
         coroutineScope.launch {
             runCatching {
@@ -435,12 +436,14 @@ class RootViewModel(
                 }
                 val identityBytes: ByteArray
                 val isBot: Boolean
+                val botUsername: String?
                 val storedMainPrincipal = preferences.getString(PrefKeys.MAIN_PRINCIPAL.name)
                 if (principal == storedMainPrincipal) {
                     identityBytes =
                         preferences.getBytes(PrefKeys.MAIN_IDENTITY.name)
                             ?: throw YralException("Main identity missing")
                     isBot = false
+                    botUsername = null
                 } else {
                     val storedBots =
                         preferences
@@ -452,9 +455,12 @@ class RootViewModel(
                             ?: throw YralException("Bot identity not found")
                     identityBytes = Base64.decode(match.identity)
                     isBot = true
+                    botUsername = match.username
                 }
 
                 val canisterData = authenticateWithNetwork(identityBytes)
+                val resolvedUsername =
+                    resolveUsername(canisterData.username ?: botUsername, principal)
                 HelperService.initServiceFactories(identityBytes)
                 val session =
                     Session(
@@ -462,7 +468,7 @@ class RootViewModel(
                         canisterId = canisterData.canisterId,
                         userPrincipal = canisterData.userPrincipalId,
                         profilePic = canisterData.profilePic,
-                        username = canisterData.username,
+                        username = resolvedUsername,
                         bio = null,
                         isCreatedFromServiceCanister = canisterData.isCreatedFromServiceCanister,
                         isBotAccount = isBot,
@@ -503,7 +509,13 @@ class RootViewModel(
         session.canisterId?.let { preferences.putString(PrefKeys.CANISTER_ID.name, it) }
         session.userPrincipal?.let { preferences.putString(PrefKeys.USER_PRINCIPAL.name, it) }
         session.profilePic?.let { preferences.putString(PrefKeys.PROFILE_PIC.name, it) }
-        session.username?.let { preferences.putString(PrefKeys.USERNAME.name, it) }
+        val resolvedUsername =
+            resolveUsername(session.username, session.userPrincipal)
+        if (resolvedUsername != null) {
+            preferences.putString(PrefKeys.USERNAME.name, resolvedUsername)
+        } else {
+            preferences.remove(PrefKeys.USERNAME.name)
+        }
         preferences.putBoolean(
             PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name,
             session.isCreatedFromServiceCanister,
@@ -757,6 +769,7 @@ data class AccountDialogInfo(
 private data class BotIdentityEntry(
     val principal: String,
     val identity: String,
+    val username: String? = null,
 )
 
 data class AccountUi(

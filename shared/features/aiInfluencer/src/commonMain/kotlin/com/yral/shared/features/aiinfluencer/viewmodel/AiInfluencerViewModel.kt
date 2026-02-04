@@ -11,6 +11,7 @@ import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
+import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.features.aiinfluencer.domain.models.GeneratedInfluencerMetadata
 import com.yral.shared.features.aiinfluencer.domain.usecases.CreateInfluencerUseCase
 import com.yral.shared.features.aiinfluencer.domain.usecases.GeneratePromptUseCase
@@ -263,6 +264,19 @@ class AiInfluencerViewModel(
         }
     }
 
+    fun onAvatarSelected(bytes: ByteArray) {
+        _state.update { current ->
+            when (val step = current.step) {
+                is AiInfluencerStep.ProfileDetails ->
+                    current.copy(
+                        step = step.copy(avatarBytes = bytes),
+                        isImagePickerVisible = false,
+                    )
+                else -> current
+            }
+        }
+    }
+
     fun openImagePicker() {
         _state.update { it.copy(isImagePickerVisible = true) }
     }
@@ -393,6 +407,7 @@ class AiInfluencerViewModel(
                     logger.d { "bot_setup: authenticate_with_network success canister=${it.canisterId}" }
                 }
             // Update username via set_user_metadata
+            var usernameUpdated = false
             runCatching {
                 HelperService
                     .updateUserMetadata(
@@ -402,6 +417,7 @@ class AiInfluencerViewModel(
                     ).getOrThrow()
             }.onSuccess {
                 logger.d { "bot_setup: set_user_metadata success" }
+                usernameUpdated = true
             }.onFailure { throwable ->
                 // Username collisions shouldn't block the rest of the flow
                 logger.w { "bot_setup: set_user_metadata failed (continuing) - ${throwable.message}" }
@@ -409,9 +425,10 @@ class AiInfluencerViewModel(
 
             // Upload avatar (download then upload)
             val avatarBytes =
-                downloadAvatar(profileDetails.avatarUrl).also {
-                    logger.d { "bot_setup: downloaded avatar bytes=${it.size}" }
-                }
+                profileDetails.avatarBytes
+                    ?: downloadAvatar(profileDetails.avatarUrl).also {
+                        logger.d { "bot_setup: downloaded avatar bytes=${it.size}" }
+                    }
             val uploadedAvatarUrl =
                 uploadProfileImage(
                     imageBase64 = avatarBytes.encodeBase64(),
@@ -463,6 +480,7 @@ class AiInfluencerViewModel(
             botIdentityStorage.saveBotIdentity(
                 principal = botPrincipal,
                 identity = botIdentity,
+                username = profileDetails.name.takeIf { usernameUpdated },
             )
             logger.d { "bot_setup: completed" }
             setActiveBotSession(
@@ -471,6 +489,7 @@ class AiInfluencerViewModel(
                 canisterData = canisterData,
                 profileDetails = profileDetails,
                 profilePicUrl = uploadedAvatarUrl,
+                displayUsername = if (usernameUpdated) profileDetails.name else null,
             )
         }
 
@@ -507,9 +526,11 @@ class AiInfluencerViewModel(
         canisterData: com.yral.shared.rust.service.utils.CanisterData,
         profileDetails: AiInfluencerStep.ProfileDetails,
         profilePicUrl: String,
+        displayUsername: String?,
     ) {
         val mainIdentitySnapshot = sessionManager.identity
         val mainPrincipalSnapshot = sessionManager.userPrincipal
+        val resolvedUsername = resolveUsername(displayUsername, botPrincipal)
         // Switch in-memory session to bot for immediate use
         HelperService.initServiceFactories(botIdentity)
         val botSession =
@@ -518,7 +539,7 @@ class AiInfluencerViewModel(
                 canisterId = canisterData.canisterId,
                 userPrincipal = botPrincipal,
                 profilePic = profilePicUrl,
-                username = profileDetails.name,
+                username = resolvedUsername,
                 bio = profileDetails.description,
                 isCreatedFromServiceCanister = canisterData.isCreatedFromServiceCanister,
                 isBotAccount = true,
@@ -529,7 +550,11 @@ class AiInfluencerViewModel(
         preferences.putString(PrefKeys.CANISTER_ID.name, canisterData.canisterId)
         preferences.putString(PrefKeys.USER_PRINCIPAL.name, botPrincipal)
         preferences.putString(PrefKeys.PROFILE_PIC.name, profilePicUrl)
-        preferences.putString(PrefKeys.USERNAME.name, profileDetails.name)
+        if (resolvedUsername != null) {
+            preferences.putString(PrefKeys.USERNAME.name, resolvedUsername)
+        } else {
+            preferences.remove(PrefKeys.USERNAME.name)
+        }
         // Preserve main account identity/principal if not already stored
         mainIdentitySnapshot?.let { mainIdentity ->
             preferences.putBytes(PrefKeys.MAIN_IDENTITY.name, mainIdentity)
@@ -558,6 +583,7 @@ class BotIdentityStorage(
     suspend fun saveBotIdentity(
         principal: String,
         identity: ByteArray,
+        username: String? = null,
     ) {
         val existing =
             preferences
@@ -567,7 +593,11 @@ class BotIdentityStorage(
         val updated =
             existing
                 .filterNot { it.principal == principal } +
-                BotIdentityEntry(principal = principal, identity = identity.encodeBase64())
+                BotIdentityEntry(
+                    principal = principal,
+                    identity = identity.encodeBase64(),
+                    username = username?.takeIf { it.isNotBlank() },
+                )
         val encoded = json.encodeToString(updated)
         preferences.putString(PrefKeys.BOT_IDENTITIES.name, encoded)
     }
@@ -576,6 +606,7 @@ class BotIdentityStorage(
     private data class BotIdentityEntry(
         val principal: String,
         val identity: String,
+        val username: String? = null,
     )
 }
 
@@ -628,6 +659,7 @@ sealed interface AiInfluencerStep {
         val displayName: String,
         val description: String,
         val avatarUrl: String,
+        val avatarBytes: ByteArray? = null,
         val initialGreeting: String,
         val suggestedMessages: List<String>,
         val personalityTraits: Map<String, String>,
@@ -645,6 +677,7 @@ private fun GeneratedInfluencerMetadata.toProfileDetails(systemInstructions: Str
         displayName = displayName,
         description = description,
         avatarUrl = avatarUrl,
+        avatarBytes = null,
         initialGreeting = initialGreeting,
         suggestedMessages = suggestedMessages,
         personalityTraits = personalityTraits,

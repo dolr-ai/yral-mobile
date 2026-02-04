@@ -737,6 +737,7 @@ class DefaultAuthClient(
         } ?: throw YralAuthException("Phone auth verification failed - no state found")
     }
 
+    @Suppress("LongMethod")
     private suspend fun persistBotIdentitiesFromToken(idToken: String) {
         val claims = runCatching { oAuthUtilsHelper.parseOAuthToken(idToken) }.getOrNull()
         val botIdentities = claims?.botDelegatedIdentities?.takeIf { it.isNotEmpty() }
@@ -787,7 +788,15 @@ class DefaultAuthClient(
                 val merged =
                     (existing + entries)
                         .groupBy { it.principal }
-                        .map { (_, list) -> list.last() }
+                        .map { (_, list) ->
+                            val latest = list.last()
+                            val username =
+                                list
+                                    .asReversed()
+                                    .firstOrNull { !it.username.isNullOrBlank() }
+                                    ?.username
+                            latest.copy(username = username)
+                        }
                 preferences.putString(PrefKeys.BOT_IDENTITIES.name, json.encodeToString(merged))
             }
         }
@@ -802,6 +811,7 @@ class SecurityException(
 private data class BotIdentityEntry(
     val principal: String,
     val identity: String,
+    val username: String? = null,
 )
 
 private fun extractPayloadKeys(idToken: String): Set<String> {

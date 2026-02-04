@@ -98,10 +98,10 @@ fun CreateAIInfluencerScreen(
     requestLoginFactory: RequestLoginFactory? = null,
     onBack: () -> Unit = {},
     onCreateProfile: () -> Unit = {},
-    onUploadPhoto: (() -> Unit)? = null,
-    onTakePhoto: (() -> Unit)? = null,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val galleryPicker = rememberAiInfluencerImagePicker(viewModel::onAvatarSelected)
+    val photoCapture = rememberAiInfluencerPhotoCapture(viewModel::onAvatarSelected)
     val isSocialSignedIn by
         sessionManager
             .observeSessionPropertyWithDefault(
@@ -188,11 +188,11 @@ fun CreateAIInfluencerScreen(
             ImagePickerSheet(
                 onDismiss = viewModel::dismissImagePicker,
                 onUploadPhoto = {
-                    onUploadPhoto?.invoke()
+                    galleryPicker()
                     viewModel.dismissImagePicker()
                 },
                 onTakePhoto = {
-                    onTakePhoto?.invoke()
+                    photoCapture()
                     viewModel.dismissImagePicker()
                 },
             )
@@ -484,6 +484,7 @@ private fun ProfileDetailsScreen(
 }
 
 @Composable
+@Suppress("LongMethod")
 private fun AvatarBlock(
     step: AiInfluencerStep.ProfileDetails,
     onEditImage: () -> Unit,
@@ -508,7 +509,13 @@ private fun AvatarBlock(
                         .background(YralColors.Neutral800),
                 contentAlignment = Alignment.Center,
             ) {
-                if (step.avatarUrl.isNotBlank()) {
+                if (step.avatarBytes != null) {
+                    YralAsyncImage(
+                        imageUrl = step.avatarBytes,
+                        modifier = Modifier.fillMaxSize(),
+                        shape = CircleShape,
+                    )
+                } else if (step.avatarUrl.isNotBlank()) {
                     YralAsyncImage(
                         imageUrl = step.avatarUrl,
                         modifier = Modifier.fillMaxSize(),
