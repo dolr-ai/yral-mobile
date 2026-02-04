@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.yral.shared.features.subscriptions.ui.components.SubscriptionBenefitRow
+import com.yral.shared.features.subscriptions.ui.components.SubscriptionTermsText
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -46,7 +47,6 @@ import yral_mobile.shared.features.subscriptions.generated.resources.subscriptio
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_benefit_chat
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_benefit_global
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_benefit_rewards
-import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_terms
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_ai
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_chat
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_global
@@ -75,8 +75,11 @@ fun SubscriptionInactiveScreen(
     creditsReceived: Int,
     oldPrice: String?,
     newPrice: String?,
+    tncUrl: String,
+    privacyPolicyUrl: String,
     onBack: () -> Unit = {},
     onSubscribe: () -> Unit = {},
+    onOpenLink: (String) -> Unit = {},
 ) {
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -118,10 +121,10 @@ fun SubscriptionInactiveScreen(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
                     )
                     Spacer(modifier = Modifier.height(24.dp))
-                    Text(
-                        text = stringResource(Res.string.subscription_active_terms),
-                        style = LocalAppTopography.current.baseRegular,
-                        color = YralColors.Neutral300,
+                    SubscriptionTermsText(
+                        tncUrl = tncUrl,
+                        privacyPolicyUrl = privacyPolicyUrl,
+                        onOpenLink = onOpenLink,
                         textAlign = TextAlign.Center,
                     )
                 }
@@ -342,8 +345,11 @@ private fun SubscriptionInactiveScreenPreview() {
             creditsReceived = 40,
             oldPrice = "₹499",
             newPrice = "₹49",
+            tncUrl = "https://yral.com/terms",
+            privacyPolicyUrl = "https://yral.com/privacy-policy",
             onBack = {},
             onSubscribe = {},
+            onOpenLink = {},
         )
     }
 }
