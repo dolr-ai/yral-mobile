@@ -362,15 +362,20 @@ class RootViewModel(
         val botAccounts =
             loadBotEntries()
                 ?.filter { it.principal != mainPrincipal }
-                ?.mapNotNull { entry ->
-                    val identityBytes = runCatching { Base64.decode(entry.identity) }.getOrNull()
-                    resolveAccountUi(
-                        principal = entry.principal,
-                        identityBytes = identityBytes,
-                        isBot = true,
-                        activePrincipal = activePrincipal,
-                        fallbackUsername = null,
-                    )
+                ?.let { entries ->
+                    buildList {
+                        entries.forEach { entry ->
+                            val identityBytes =
+                                runCatching { Base64.decode(entry.identity) }.getOrNull()
+                            resolveAccountUi(
+                                principal = entry.principal,
+                                identityBytes = identityBytes,
+                                isBot = true,
+                                activePrincipal = activePrincipal,
+                                fallbackUsername = null,
+                            )?.let { add(it) }
+                        }
+                    }
                 }.orEmpty()
 
         if (mainAccount != null || botAccounts.isNotEmpty()) {
@@ -387,7 +392,7 @@ class RootViewModel(
         }
     }
 
-    private fun resolveAccountUi(
+    private suspend fun resolveAccountUi(
         principal: String?,
         identityBytes: ByteArray?,
         isBot: Boolean,
