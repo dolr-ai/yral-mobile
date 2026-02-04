@@ -18,4 +18,7 @@ internal sealed interface SlotConfig {
 
     @Serializable
     data object SubscriptionNudge : SlotConfig
+
+    @Serializable
+    data object MandatoryUpdate : SlotConfig
 }

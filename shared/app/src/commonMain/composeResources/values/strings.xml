@@ -5,6 +5,11 @@
     <string name="flexible_downloaded_message">A new version is ready to install</string>
     <string name="flexible_downloaded_cta">RESTART</string>
 
+    <string name="mandatory_update_title">Alert! </string>
+    <string name="mandatory_update_title_highlight">Play the Latest Games.</string>
+    <string name="mandatory_update_message">We have enabled some interesting games. Update now to get access.</string>
+    <string name="mandatory_update_cta">Update YRAL</string>
+
     <!-- Alerts Request -->
     <string name="a_little_nudge">A little nudge!</string>
     <string name="enable_notification_message">Stay in loop! Enable notifications so you never miss what’s new on YRAL.</string>
