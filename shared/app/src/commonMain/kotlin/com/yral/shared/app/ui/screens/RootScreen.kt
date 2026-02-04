@@ -63,6 +63,8 @@ import com.yral.shared.app.ui.screens.subscription.SubscriptionNudgeBottomSheet
 import com.yral.shared.app.ui.screens.tournament.TournamentGameScaffoldScreen
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.session.getKey
+import com.yral.shared.features.aiinfluencer.ui.CreateAIInfluencerScreen
+import com.yral.shared.features.aiinfluencer.viewmodel.AiInfluencerViewModel
 import com.yral.shared.features.chat.ui.conversation.ChatConversationScreen
 import com.yral.shared.features.chat.viewmodel.ConversationViewModel
 import com.yral.shared.features.leaderboard.ui.LeaderboardScreen
@@ -271,6 +273,22 @@ fun RootScreen(rootComponent: RootComponent) {
                             component = child.component,
                             leaderBoardViewModel = leaderBoardViewModel,
                             modifier = Modifier.fillMaxSize().safeDrawingPadding(),
+                        )
+                    }
+
+                    is Child.CreateInfluencer -> {
+                        HandleSystemBars(show = true)
+                        val aiInfluencerViewModel = koinViewModel<AiInfluencerViewModel>()
+                        CreateAIInfluencerScreen(
+                            modifier = Modifier.fillMaxSize().safeDrawingPadding(),
+                            viewModel = aiInfluencerViewModel,
+                            requestLoginFactory = rootComponent.createLoginRequestFactory(),
+                            onBack = rootComponent::onBackClicked,
+                            onCreateProfile = {
+                                aiInfluencerViewModel.createBotAccount {
+                                    rootComponent.onBackClicked()
+                                }
+                            },
                         )
                     }
 

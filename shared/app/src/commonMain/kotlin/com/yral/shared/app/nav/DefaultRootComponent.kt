@@ -164,6 +164,7 @@ class DefaultRootComponent(
             is Config.Splash -> RootComponent.Child.Splash(componentFactory.createSplash(context))
             is Config.Home -> RootComponent.Child.Home(componentFactory.createHome(context))
             is Config.EditProfile -> RootComponent.Child.EditProfile(componentFactory.createEditProfile(context))
+            is Config.CreateInfluencer -> RootComponent.Child.CreateInfluencer
             is Config.UserProfile -> RootComponent.Child.UserProfile(componentFactory.createProfile(context, config))
             is Config.TournamentLeaderboard ->
                 RootComponent.Child.TournamentLeaderboard(
@@ -439,6 +440,10 @@ class DefaultRootComponent(
         entryPoint: SubscriptionEntryPoint,
     ) {
         navigation.pushToFront(Config.Subscription(purchaseTimeMs, entryPoint))
+    }
+
+    override fun openCreateInfluencer() {
+        navigation.pushToFront(Config.CreateInfluencer)
     }
 
     override fun onCreateVideo() {

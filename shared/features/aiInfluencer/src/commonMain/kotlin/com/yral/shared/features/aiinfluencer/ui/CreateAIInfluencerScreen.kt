@@ -30,6 +30,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,9 +39,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.yral.shared.analytics.events.SignupPageName
+import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.aiinfluencer.viewmodel.AiInfluencerStep
 import com.yral.shared.features.aiinfluencer.viewmodel.AiInfluencerUiState
 import com.yral.shared.features.aiinfluencer.viewmodel.AiInfluencerViewModel
+import com.yral.shared.features.auth.ui.LoginBottomSheetType
+import com.yral.shared.features.auth.ui.LoginMode
+import com.yral.shared.features.auth.ui.LoginScreenType
+import com.yral.shared.features.auth.ui.RequestLoginFactory
+import com.yral.shared.features.auth.ui.rememberLoginInfo
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralGradientButton
@@ -49,6 +57,7 @@ import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.features.aiinfluencer.generated.resources.Res
 import yral_mobile.shared.features.aiinfluencer.generated.resources.ai_influencer_create_profile
@@ -85,12 +94,24 @@ import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 fun CreateAIInfluencerScreen(
     modifier: Modifier = Modifier,
     viewModel: AiInfluencerViewModel = koinViewModel(),
+    sessionManager: SessionManager = koinInject(),
+    requestLoginFactory: RequestLoginFactory? = null,
     onBack: () -> Unit = {},
     onCreateProfile: () -> Unit = {},
     onUploadPhoto: (() -> Unit)? = null,
     onTakePhoto: (() -> Unit)? = null,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val isSocialSignedIn by
+        sessionManager
+            .observeSessionPropertyWithDefault(
+                selector = { it.isSocialSignIn },
+                defaultValue = false,
+            ).collectAsStateWithLifecycle(initialValue = false)
+    val loginState =
+        requestLoginFactory?.let {
+            rememberLoginInfo(requestLoginFactory = it, key = "ai-influencer-login")
+        }
     val backgroundModifier = modifier.fillMaxSize().background(Color.Black)
     val handleBack: () -> Unit = {
         val handled = viewModel.onBack()
@@ -98,6 +119,19 @@ fun CreateAIInfluencerScreen(
             onBack()
         }
     }
+    val isLoggedIn = isSocialSignedIn && sessionManager.userPrincipal != null
+    val requestLogin =
+        remember(loginState) {
+            {
+                loginState?.requestLogin(
+                    SignupPageName.CREATE_INFLUENCER,
+                    LoginScreenType.BottomSheet(LoginBottomSheetType.CREATE_INFLUENCER),
+                    LoginMode.BOTH,
+                    null,
+                    null,
+                ) {}
+            }
+        }
 
     Box(
         modifier = backgroundModifier,
@@ -108,7 +142,13 @@ fun CreateAIInfluencerScreen(
                     state = state,
                     onBack = onBack,
                     onDescriptionChange = viewModel::onPromptChanged,
-                    onNext = viewModel::submitPrompt,
+                    onNext = {
+                        if (isLoggedIn) {
+                            viewModel.submitPrompt()
+                        } else {
+                            requestLogin()
+                        }
+                    },
                 )
 
             is AiInfluencerStep.LoadingPrompt ->

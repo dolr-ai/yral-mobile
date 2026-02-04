@@ -62,6 +62,7 @@ internal class DefaultHomeComponent(
         influencerCategory: String,
         influencerSource: InfluencerSource,
     ) -> Unit,
+    private val openCreateInfluencer: () -> Unit,
     private val openWallet: () -> Unit,
     private val openLeaderboard: () -> Unit,
     private val openTournamentLeaderboard: (
@@ -113,6 +114,10 @@ internal class DefaultHomeComponent(
 
     override val homeViewModel: HomeViewModel = koinInstance.get<HomeViewModel>()
     override val sessionManager: SessionManager = koinInstance.get<SessionManager>()
+
+    override fun openCreateInfluencer() {
+        openCreateInfluencer.invoke()
+    }
 
     private val slotNavigation = SlotNavigation<SlotConfig>()
 
@@ -358,6 +363,7 @@ internal class DefaultHomeComponent(
             snapshot = childSnapshots[Config.Chat] as? ChatComponent.Snapshot,
             openProfile = openProfile,
             openConversation = openConversation,
+            openCreateInfluencer = openCreateInfluencer,
         )
 
     private fun slotChild(

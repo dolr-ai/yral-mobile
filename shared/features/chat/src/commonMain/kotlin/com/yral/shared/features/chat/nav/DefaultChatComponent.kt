@@ -26,6 +26,7 @@ internal class DefaultChatComponent(
         influencerCategory: String,
         influencerSource: InfluencerSource,
     ) -> Unit,
+    private val openCreateInfluencer: () -> Unit,
 ) : ChatComponent(),
     ComponentContext by componentContext,
     KoinComponent {
@@ -55,6 +56,10 @@ internal class DefaultChatComponent(
         } else {
             false
         }
+    }
+
+    override fun openCreateInfluencer() {
+        openCreateInfluencer.invoke()
     }
 
     override fun createHomeSnapshot(): Snapshot =

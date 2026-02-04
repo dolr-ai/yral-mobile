@@ -44,6 +44,7 @@ internal class ComponentFactory(
                 subscriptionCoordinator = rootComponent.getSubscriptionCoordinator(),
                 openEditProfile = rootComponent::openEditProfile,
                 openProfile = rootComponent::openProfile,
+                openCreateInfluencer = rootComponent::openCreateInfluencer,
                 openTournamentLeaderboard = rootComponent::openTournamentLeaderboard,
                 openTournamentGame = rootComponent::openTournamentGame,
                 openConversation = rootComponent::openConversation,
