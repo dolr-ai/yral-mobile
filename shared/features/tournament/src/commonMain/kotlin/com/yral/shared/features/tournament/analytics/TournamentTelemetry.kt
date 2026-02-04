@@ -75,13 +75,15 @@ class TournamentTelemetry(
     fun onTournamentRegistered(
         tournamentId: String,
         tournamentType: TournamentType,
-        entryFeePoints: Int,
+        entryFeePoints: Int?,
+        entryFeeCredits: Int?,
     ) {
         analyticsManager.trackEvent(
             TournamentRegisteredEventData(
                 tournamentId = tournamentId,
                 tournamentType = tournamentType.toAnalyticsType(),
                 entryFeePoints = entryFeePoints,
+                entryFeeCredits = entryFeeCredits,
                 registrationTime = currentTimestamp(),
                 sessionId = getSessionId(),
             ),

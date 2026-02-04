@@ -353,13 +353,17 @@ class TournamentViewModel(
                         tournamentId = result.tournamentId,
                         tournamentType = tournament.type,
                         entryFeePoints = result.coinsPaid,
+                        entryFeeCredits = result.creditsConsumed,
                     )
-                    // Refresh balance from server after entry fee was deducted
-                    refreshBalance(principalId)
+                    val coinsPaid = result.coinsPaid ?: 0
+                    if (coinsPaid > 0) {
+                        // Refresh balance from server after entry fee was deducted
+                        refreshBalance(principalId)
+                    }
                     send(
                         Event.RegistrationSuccess(
                             result.tournamentId,
-                            result.coinsPaid,
+                            coinsPaid,
                             isPro,
                         ),
                     )
