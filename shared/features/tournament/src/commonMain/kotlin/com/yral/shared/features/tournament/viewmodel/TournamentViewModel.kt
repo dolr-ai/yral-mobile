@@ -356,7 +356,13 @@ class TournamentViewModel(
                     )
                     // Refresh balance from server after entry fee was deducted
                     refreshBalance(principalId)
-                    send(Event.RegistrationSuccess(result.tournamentId, result.coinsPaid))
+                    send(
+                        Event.RegistrationSuccess(
+                            result.tournamentId,
+                            result.coinsPaid,
+                            isPro,
+                        ),
+                    )
                     // Refresh tournaments to update registration state
                     loadTournaments()
                 }.onFailure { error ->
@@ -476,6 +482,7 @@ class TournamentViewModel(
         data class RegistrationSuccess(
             val tournamentId: String,
             val coinsPaid: Int,
+            val isPro: Boolean,
         ) : Event()
 
         data class RegistrationFailed(

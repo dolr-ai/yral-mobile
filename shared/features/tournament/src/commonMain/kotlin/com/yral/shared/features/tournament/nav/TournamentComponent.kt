@@ -76,6 +76,9 @@ internal class DefaultTournamentComponent(
             }
             is TournamentViewModel.Event.RegistrationSuccess -> {
                 showAlertsOnDialog(AlertsRequestType.TOURNAMENT)
+                if (value.isPro) {
+                    subscriptionCoordinator?.refreshCreditBalances()
+                }
             }
             is TournamentViewModel.Event.RegistrationFailed -> {
                 // Handle registration failure - could show an error dialog
