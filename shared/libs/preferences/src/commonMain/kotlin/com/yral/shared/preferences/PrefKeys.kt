@@ -29,4 +29,5 @@ enum class PrefKeys {
     PHONE_NUMBER,
     BOT_IDENTITIES,
     LAST_ACTIVE_PRINCIPAL,
+    BOT_VIDEO_GEN_REQUEST,
 }

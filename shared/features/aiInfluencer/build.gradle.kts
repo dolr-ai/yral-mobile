@@ -25,6 +25,7 @@ kotlin {
             implementation(projects.shared.libs.preferences)
             implementation(projects.shared.libs.designsystem)
             implementation(projects.shared.features.auth)
+            implementation(projects.shared.features.uploadvideo)
             implementation(projects.shared.rust.service)
 
             implementation(libs.kotlinx.coroutines.core)

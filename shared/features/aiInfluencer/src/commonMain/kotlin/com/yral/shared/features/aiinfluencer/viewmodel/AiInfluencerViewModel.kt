@@ -7,6 +7,7 @@ import com.github.michaelbull.result.getOrThrow
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
+import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
@@ -17,6 +18,9 @@ import com.yral.shared.features.aiinfluencer.domain.usecases.CreateInfluencerUse
 import com.yral.shared.features.aiinfluencer.domain.usecases.GeneratePromptUseCase
 import com.yral.shared.features.aiinfluencer.domain.usecases.ValidateAndGenerateMetadataUseCase
 import com.yral.shared.features.auth.domain.useCases.CreateAiAccountUseCase
+import com.yral.shared.features.uploadvideo.domain.models.ImageData
+import com.yral.shared.features.uploadvideo.domain.models.ImageInput
+import com.yral.shared.features.uploadvideo.presentation.BotVideoGenManager
 import com.yral.shared.http.httpPost
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
@@ -67,6 +71,7 @@ class AiInfluencerViewModel(
     private val botIdentityStorage: BotIdentityStorage,
     private val updateProfileDetailsUseCase: UpdateProfileDetailsUseCase,
     private val httpClient: HttpClient,
+    private val botVideoGenCoordinator: BotVideoGenManager,
 ) : ViewModel() {
     private val logger = Logger.withTag("AiInfluencerViewModel")
     private val _state = MutableStateFlow(AiInfluencerUiState())
@@ -391,6 +396,25 @@ class AiInfluencerViewModel(
         private const val PROMPT_CHAR_LIMIT = 200
         private const val DEFAULT_ERROR_MESSAGE = "Something went wrong. Please try again."
         private const val BOT_CREATE_MESSAGE = "yral_auth_v2_create_ai_account"
+        private val PNG_MAGIC =
+            byteArrayOf(
+                0x89.toByte(),
+                0x50,
+                0x4E,
+                0x47,
+                0x0D,
+                0x0A,
+                0x1A,
+                0x0A,
+            )
+        private val JPEG_MAGIC =
+            byteArrayOf(
+                0xFF.toByte(),
+                0xD8.toByte(),
+                0xFF.toByte(),
+            )
+        private const val MIME_TYPE_PNG = "image/png"
+        private const val MIME_TYPE_JPEG = "image/jpeg"
     }
 
     @Suppress("LongMethod")
@@ -455,27 +479,36 @@ class AiInfluencerViewModel(
             }
 
             // Create influencer record in backend
-            createInfluencerUseCase(
-                CreateInfluencerUseCase.Params(
-                    request =
-                        com.yral.shared.features.aiinfluencer.domain.models.CreatedInfluencer(
-                            name = profileDetails.name,
-                            displayName = profileDetails.displayName,
-                            description = profileDetails.description,
-                            systemInstructions = profileDetails.systemInstructions,
-                            initialGreeting = profileDetails.initialGreeting,
-                            suggestedMessages = profileDetails.suggestedMessages,
-                            personalityTraits = profileDetails.personalityTraits,
-                            category = profileDetails.category,
-                            avatarUrl = uploadedAvatarUrl,
-                            isNsfw = profileDetails.isNsfw,
-                            botPrincipalId = botPrincipal,
-                            parentPrincipalId = sessionManager.userPrincipal.orEmpty(),
+            val createdInfluencer =
+                runCatching {
+                    createInfluencerUseCase(
+                        CreateInfluencerUseCase.Params(
+                            request =
+                                com.yral.shared.features.aiinfluencer.domain.models.CreatedInfluencer(
+                                    name = profileDetails.name,
+                                    displayName = profileDetails.displayName,
+                                    description = profileDetails.description,
+                                    systemInstructions = profileDetails.systemInstructions,
+                                    initialGreeting = profileDetails.initialGreeting,
+                                    suggestedMessages = profileDetails.suggestedMessages,
+                                    personalityTraits = profileDetails.personalityTraits,
+                                    category = profileDetails.category,
+                                    avatarUrl = uploadedAvatarUrl,
+                                    isNsfw = profileDetails.isNsfw,
+                                    botPrincipalId = botPrincipal,
+                                    parentPrincipalId = sessionManager.userPrincipal.orEmpty(),
+                                ),
                         ),
-                ),
-            ).also {
-                logger.d { "bot_setup: create influencer success" }
-            }
+                    ).getOrThrow()
+                }.getOrElse { throwable ->
+                    val serverMessage = extractServerMessage(throwable)
+                    logger.e {
+                        "bot_setup: create influencer failed ${serverMessage ?: throwable.message}"
+                    }
+                    throw YralException(serverMessage ?: throwable.message ?: DEFAULT_ERROR_MESSAGE)
+                }.also {
+                    logger.d { "bot_setup: create influencer success" }
+                }
 
             botIdentityStorage.saveBotIdentity(
                 principal = botPrincipal,
@@ -491,6 +524,21 @@ class AiInfluencerViewModel(
                 profilePicUrl = uploadedAvatarUrl,
                 displayUsername = if (usernameUpdated) profileDetails.name else null,
             )
+
+            val starterPrompt = createdInfluencer.starterVideoPrompt
+            if (!starterPrompt.isNullOrBlank()) {
+                botVideoGenCoordinator.enqueueGeneration(
+                    botPrincipal = botPrincipal,
+                    prompt = starterPrompt,
+                    imageData =
+                        ImageData.Base64(
+                            ImageInput(
+                                data = avatarBytes.encodeBase64(),
+                                mimeType = resolveImageMimeType(avatarBytes),
+                            ),
+                        ),
+                )
+            }
         }
 
     private suspend fun uploadProfileImage(
@@ -516,6 +564,20 @@ class AiInfluencerViewModel(
             }
 
         return response.profileImageUrl
+    }
+
+    private fun resolveImageMimeType(bytes: ByteArray): String {
+        val isPng =
+            bytes.size >= PNG_MAGIC.size &&
+                bytes.copyOfRange(0, PNG_MAGIC.size).contentEquals(PNG_MAGIC)
+        val isJpeg =
+            bytes.size >= JPEG_MAGIC.size &&
+                bytes.copyOfRange(0, JPEG_MAGIC.size).contentEquals(JPEG_MAGIC)
+        return when {
+            isPng -> MIME_TYPE_PNG
+            isJpeg -> MIME_TYPE_JPEG
+            else -> MIME_TYPE_PNG
+        }
     }
 
     private suspend fun downloadAvatar(url: String): ByteArray = httpClient.get(url).body()

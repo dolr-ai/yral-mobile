@@ -32,6 +32,9 @@ class AiInfluencerRepositoryImpl(
                     parentPrincipalId = request.parentPrincipalId,
                 ),
             ).let {
-                request.copy(avatarUrl = it.avatarUrl ?: request.avatarUrl)
+                request.copy(
+                    avatarUrl = it.avatarUrl ?: request.avatarUrl,
+                    starterVideoPrompt = it.starterVideoPrompt,
+                )
             }
 }

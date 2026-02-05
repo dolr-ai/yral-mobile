@@ -13,4 +13,5 @@ data class CreatedInfluencer(
     val isNsfw: Boolean,
     val botPrincipalId: String,
     val parentPrincipalId: String,
+    val starterVideoPrompt: String? = null,
 )
