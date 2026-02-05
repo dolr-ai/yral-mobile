@@ -35,6 +35,7 @@ internal class DefaultProfileComponent(
     private val onUploadVideoClicked: () -> Unit,
     private val openEditProfile: () -> Unit,
     private val openProfile: (CanisterData) -> Unit,
+    private val openCreateInfluencer: () -> Unit,
     private val openConversation: (
         influencerId: String,
         influencerCategory: String,
@@ -86,6 +87,10 @@ internal class DefaultProfileComponent(
 
     override fun openProfile() {
         navigation.replaceAll(Config.Main)
+    }
+
+    override fun openCreateInfluencer() {
+        openCreateInfluencer.invoke()
     }
 
     override fun openEditProfile() {
@@ -152,6 +157,7 @@ internal class DefaultProfileComponent(
             openAccount = this::openAccount,
             openEditProfile = this::openEditProfile,
             openProfile = openProfile,
+            openCreateInfluencer = openCreateInfluencer,
             openConversation = openConversation,
             onBackClicked = {},
             showAlertsOnDialog = showAlertsOnDialog,

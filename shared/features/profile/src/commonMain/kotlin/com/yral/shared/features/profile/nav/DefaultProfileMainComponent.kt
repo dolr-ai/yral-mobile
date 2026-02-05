@@ -22,6 +22,7 @@ internal class DefaultProfileMainComponent(
     private val openAccount: () -> Unit,
     private val openEditProfile: () -> Unit,
     private val openProfile: (CanisterData) -> Unit,
+    private val openCreateInfluencer: () -> Unit,
     private val openConversation: (
         influencerId: String,
         influencerCategory: String,
@@ -50,6 +51,10 @@ internal class DefaultProfileMainComponent(
 
     override fun openProfile(userCanisterData: CanisterData) {
         openProfile.invoke(userCanisterData)
+    }
+
+    override fun openCreateInfluencer() {
+        openCreateInfluencer.invoke()
     }
 
     override fun openConversation(

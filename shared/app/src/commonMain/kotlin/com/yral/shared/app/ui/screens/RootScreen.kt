@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,9 +19,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -29,7 +30,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,7 +43,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
-import coil3.compose.AsyncImage
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.fade
 import com.arkivanov.decompose.extensions.compose.stack.animation.plus
@@ -80,11 +79,15 @@ import com.yral.shared.features.root.viewmodels.RootError
 import com.yral.shared.features.subscriptions.ui.SubscriptionsScreen
 import com.yral.shared.features.tournament.ui.TournamentLeaderboardScreen
 import com.yral.shared.features.wallet.ui.WalletScreen
+import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.component.toast.ToastHost
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.libs.routing.routes.api.Profile
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -112,6 +115,7 @@ fun RootScreen(rootComponent: RootComponent) {
         ModalBottomSheet(
             onDismissRequest = { viewModel.dismissAccountDialog() },
             sheetState = sheetState,
+            containerColor = YralColors.Neutral900,
         ) {
             val accountDialogInfo = state.accountDialogInfo
             if (accountDialogInfo == null) {
@@ -125,34 +129,12 @@ fun RootScreen(rootComponent: RootComponent) {
                 AccountSwitchSheet(
                     info = accountDialogInfo,
                     onSelect = { principal ->
+                        viewModel.dismissAccountDialog()
                         viewModel.switchToAccount(principal)
                     },
                 )
             }
         }
-    }
-
-    val startupInfo = state.startupDialogInfo
-    if (state.showStartupDialog && startupInfo != null) {
-        AlertDialog(
-            onDismissRequest = { viewModel.dismissStartupDialog() },
-            confirmButton = {
-                TextButton(onClick = { viewModel.dismissStartupDialog() }) {
-                    Text("OK")
-                }
-            },
-            title = { Text("Accounts found") },
-            text = {
-                val main = startupInfo.mainPrincipal ?: "None"
-                val bots =
-                    if (startupInfo.botPrincipals.isEmpty()) {
-                        "None"
-                    } else {
-                        startupInfo.botPrincipals.joinToString("\n")
-                    }
-                Text("Main: $main\nBots:\n$bots")
-            },
-        )
     }
 
     Scaffold(
@@ -221,6 +203,7 @@ fun RootScreen(rootComponent: RootComponent) {
                             modifier = Modifier.fillMaxSize().safeDrawingPadding(),
                             viewModel = profileViewModel,
                             profileVideos = profileVideos,
+                            onCreateInfluencerClick = rootComponent::openCreateInfluencer,
                         )
                     }
 
@@ -386,7 +369,7 @@ private fun AccountSwitchSheet(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 26.dp, bottom = 36.dp),
     ) {
         SheetSection(
             title = "Main Profile",
@@ -394,7 +377,7 @@ private fun AccountSwitchSheet(
             onSelect = onSelect,
         )
         if (info.botAccounts.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             SheetSection(
                 title = "AI Influencer Profile",
                 accounts = info.botAccounts,
@@ -413,13 +396,19 @@ private fun SheetSection(
     if (accounts.isEmpty()) return
     Text(
         text = title,
-        style = MaterialTheme.typography.titleMedium,
-        color = MaterialTheme.colorScheme.onSurface,
-        modifier = Modifier.padding(vertical = 8.dp),
+        style = LocalAppTopography.current.baseSemiBold,
+        color = Color.White,
+        modifier = Modifier.padding(bottom = 10.dp),
     )
-    accounts.forEach { account ->
-        AccountRow(account = account, onSelect = onSelect)
-        Spacer(modifier = Modifier.height(8.dp))
+    accounts.forEachIndexed { index, account ->
+        val isFirst = index == 0
+        val isLast = index == accounts.lastIndex
+        AccountRow(
+            account = account,
+            onSelect = onSelect,
+            isFirst = isFirst,
+            isLast = isLast,
+        )
     }
 }
 
@@ -427,61 +416,82 @@ private fun SheetSection(
 private fun AccountRow(
     account: AccountUi,
     onSelect: (String) -> Unit,
+    isFirst: Boolean,
+    isLast: Boolean,
 ) {
-    val background =
-        if (account.isActive) {
-            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-        } else {
-            MaterialTheme.colorScheme.surface
-        }
+    val shape = accountRowShape(isFirst = isFirst, isLast = isLast)
     Surface(
-        shape = MaterialTheme.shapes.medium,
-        color = background,
-        tonalElevation = if (account.isActive) 2.dp else 0.dp,
+        shape = shape,
+        color = YralColors.Neutral900,
+        tonalElevation = 0.dp,
         modifier =
             Modifier
                 .fillMaxWidth()
+                .clip(shape)
+                .border(width = 1.dp, color = YralColors.Neutral700, shape = shape)
                 .clickable { onSelect(account.principal) },
     ) {
-        Row(
+        AccountRowContent(account = account)
+    }
+}
+
+@Composable
+private fun AccountRowContent(account: AccountUi) {
+    Row(
+        modifier = Modifier.padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        YralAsyncImage(
+            imageUrl = account.avatarUrl,
             modifier =
                 Modifier
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            AsyncImage(
-                model = account.avatarUrl,
-                contentDescription = null,
-                modifier =
-                    Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                contentScale = ContentScale.Crop,
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = account.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    text = account.principal,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            if (account.isActive) {
-                Icon(
-                    imageVector = Icons.Filled.Check,
-                    contentDescription = "Selected",
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-            }
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(YralColors.Neutral800),
+            contentScale = ContentScale.Crop,
+        )
+        Spacer(modifier = Modifier.width(10.dp))
+        Text(
+            text = account.name,
+            style = LocalAppTopography.current.mdMedium,
+            color = Color.White,
+            modifier = Modifier.weight(1f),
+        )
+        if (account.isActive) {
+            ActiveAccountIndicator()
         }
     }
 }
+
+@Composable
+private fun ActiveAccountIndicator() {
+    Box(
+        modifier =
+            Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(YralColors.Pink300),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Check,
+            contentDescription = "Selected",
+            tint = Color.White,
+            modifier = Modifier.size(18.dp),
+        )
+    }
+}
+
+private fun accountRowShape(
+    isFirst: Boolean,
+    isLast: Boolean,
+): RoundedCornerShape =
+    when {
+        isFirst && isLast -> RoundedCornerShape(8.dp)
+        isFirst -> RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
+        isLast -> RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp)
+        else -> RoundedCornerShape(0.dp)
+    }
 
 @Composable
 private fun BlockingLoader() {
