@@ -92,6 +92,11 @@ class AnalyticsManager(
         coreService?.flush()
     }
 
+    fun setHonExperimentStatus(isEnabled: Boolean) {
+        val context = mapOf("is_hon_experiment" to isEnabled.toString())
+        providers.forEach { it.applyCommonContext(context) }
+    }
+
     fun setUserProperties(user: User) {
         providers.forEach { it.setUserProperties(user) }
         coreService?.setUserProperties(user)

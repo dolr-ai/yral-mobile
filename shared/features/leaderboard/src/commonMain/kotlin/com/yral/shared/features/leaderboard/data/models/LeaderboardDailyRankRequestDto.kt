@@ -7,4 +7,6 @@ import kotlinx.serialization.Serializable
 data class LeaderboardDailyRankRequestDto(
     @SerialName("principal_id")
     val principalId: String,
+    @SerialName("game_type")
+    val gameType: String = "smiley",
 )

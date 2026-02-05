@@ -25,6 +25,7 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.shared.analytics.events.GameType
+import com.yral.shared.analytics.events.SwipeAction
 import com.yral.shared.app.ui.screens.feed.FeedScaffoldScreenConstants.TOP_OVERLAY_ITEM_OFFSET_X
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.feed.ui.FeedActionsRight
@@ -82,11 +83,24 @@ fun FeedScaffoldScreen(
 ) {
     val gameState by gameViewModel.state.collectAsStateWithLifecycle()
     val feedState by feedViewModel.state.collectAsStateWithLifecycle()
-    val dailyRank by if (feedState.overlayType == OverlayType.DAILY_RANK) {
+    // Collect both ranks separately
+    val smileyDailyRank by if (feedState.overlayType == OverlayType.DAILY_RANK) {
         leaderBoardViewModel.dailyRank.collectAsStateWithLifecycle(null)
     } else {
         remember { mutableStateOf(null) }
     }
+    val honDailyRank by if (feedState.overlayType == OverlayType.DAILY_RANK) {
+        leaderBoardViewModel.honDailyRank.collectAsStateWithLifecycle(null)
+    } else {
+        remember { mutableStateOf(null) }
+    }
+    // In HON mode use HON rank (0 if null to show "--"), in Smiley mode use smiley rank
+    val dailyRank =
+        if (feedState.isCardLayoutEnabled) {
+            honDailyRank ?: 0L // Show 0 to display "--" when no HON rank
+        } else {
+            smileyDailyRank
+        }
     if (feedState.overlayType == OverlayType.DAILY_RANK) {
         leaderBoardViewModel.refreshRank.collectAsStateWithLifecycle(false)
     }
@@ -156,12 +170,13 @@ fun FeedScaffoldScreen(
             },
         onSwipeVote =
             if (feedState.isCardLayoutEnabled) {
-                { direction, pageIndex ->
+                { direction, pageIndex, isSwipe ->
                     if (pageIndex < feedState.feedDetails.size) {
                         val isHot = direction == SwipeDirection.RIGHT
                         gameViewModel.castHotOrNotVote(
                             isHot = isHot,
                             feedDetails = feedState.feedDetails[pageIndex],
+                            swipeAction = if (isSwipe) SwipeAction.SWIPE else SwipeAction.CLICK,
                         )
                     }
                 }
@@ -568,7 +583,10 @@ private fun OverlayBottom(
                         !gameState.isHowToPlayShown[pageNo] &&
                         pageNo == feedState.currentPageOfFeed,
                 pageNo = pageNo,
-                onClick = { gameViewModel.toggleAboutGame(true) },
+                onClick = {
+                    gameViewModel.onHowToPlayClicked()
+                    gameViewModel.toggleAboutGame(true)
+                },
                 onAnimationComplete = { gameViewModel.setHowToPlayShown(pageNo, feedState.currentPageOfFeed) },
             )
         }

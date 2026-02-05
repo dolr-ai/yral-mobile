@@ -39,7 +39,7 @@ import yral_mobile.shared.features.game.generated.resources.hon_swipe_left_instr
 import yral_mobile.shared.features.game.generated.resources.hon_swipe_right_instruction
 import yral_mobile.shared.features.game.generated.resources.ic_hon_hand
 
-private const val SCRIM_ALPHA = 0.3f
+private const val SCRIM_ALPHA = 0.5f
 private const val HAND_ICON_SIZE = 64
 private const val DASH_LENGTH = 10f
 private const val GAP_LENGTH = 10f

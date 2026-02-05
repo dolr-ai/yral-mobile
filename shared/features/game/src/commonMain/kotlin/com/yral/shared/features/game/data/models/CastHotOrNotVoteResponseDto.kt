@@ -16,6 +16,8 @@ sealed class CastHotOrNotVoteResponseDto {
         val coins: Long,
         @SerialName("coin_delta")
         val coinDelta: Int,
+        @SerialName("new_position")
+        val newPosition: Long? = null,
     ) : CastHotOrNotVoteResponseDto()
 
     @Serializable
@@ -40,6 +42,7 @@ fun CastHotOrNotVoteResponseDto.toCastHotOrNotVoteResponse(): CastHotOrNotVoteRe
                 outcome = outcome,
                 coins = coins,
                 coinDelta = coinDelta,
+                newPosition = newPosition,
             )
 
         is CastHotOrNotVoteResponseDto.Error ->

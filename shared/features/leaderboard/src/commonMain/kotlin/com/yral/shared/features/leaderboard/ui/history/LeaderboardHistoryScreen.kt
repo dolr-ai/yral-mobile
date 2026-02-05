@@ -65,7 +65,7 @@ fun LeaderboardDetailsScreen(
     val countryCode = Locale.current.region
     val state by viewModel.state.collectAsState()
     var showConfetti by remember(state.selectedIndex, state.history) { mutableStateOf(viewModel.isCurrentUserInTop()) }
-    LaunchedEffect(Unit) { viewModel.fetchHistory(countryCode) }
+    LaunchedEffect(Unit) { viewModel.fetchHistory(countryCode, component.gameType) }
 
     LaunchedEffect(state.navigationEvent) {
         state.navigationEvent?.let { canisterData ->

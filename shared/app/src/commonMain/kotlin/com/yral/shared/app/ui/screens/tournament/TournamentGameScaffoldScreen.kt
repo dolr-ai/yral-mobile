@@ -137,22 +137,24 @@ fun TournamentGameScaffoldScreen(
                 },
                 bottomOverlay = { pageNo, _ ->
                     if (pageNo < feedState.feedDetails.size) {
+                        val totalDurationMs = gameConfig.endEpochMs - gameConfig.startEpochMs
                         TournamentBottomOverlay(
                             pageNo = pageNo,
                             feedDetails = feedState.feedDetails[pageNo],
                             gameState = gameState,
                             gameViewModel = tournamentGameViewModel,
                             timeLeftMs = timeLeftMs,
+                            totalDurationMs = totalDurationMs,
                             isHotOrNot = gameConfig.isHotOrNot,
-                            onHowToPlayClick = {
-                                howToPlayOpenedFromButton = true
-                                showHowToPlay = true
-                            },
                         )
                     }
                 },
                 actionsRight = { pageNo ->
                     TournamentGameActionsRight(
+                        onHowToPlayClick = {
+                            howToPlayOpenedFromButton = true
+                            showHowToPlay = true
+                        },
                         onExit = {
                             tournamentGameViewModel.trackExitAttempted()
                             showLeaveTournamentConfirmation = true

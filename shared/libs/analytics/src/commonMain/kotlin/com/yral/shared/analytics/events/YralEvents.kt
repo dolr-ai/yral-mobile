@@ -681,6 +681,7 @@ data class GameVotedEventData(
     @SerialName("stake_type") val stakeType: TokenType,
     @SerialName("option_chosen") val optionChosen: String,
     @SerialName("is_tutorial_vote") val isTutorialVote: Boolean,
+    @SerialName("swipe_action") val swipeAction: SwipeAction? = null,
 ) : BaseEventData(),
     EventData {
     constructor(
@@ -695,6 +696,7 @@ data class GameVotedEventData(
         stakeType: TokenType,
         optionChosen: String,
         isTutorialVote: Boolean,
+        swipeAction: SwipeAction? = null,
     ) : this(
         FeatureEvents.GAME_VOTED.getEventName(),
         Features.AUTH.getFeatureName(),
@@ -709,6 +711,21 @@ data class GameVotedEventData(
         stakeType,
         optionChosen,
         isTutorialVote,
+        swipeAction,
+    )
+}
+
+@Serializable
+data class HowToPlayClickedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.HOW_TO_PLAY_CLICKED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+    @SerialName("game_type") val gameType: GameType,
+) : BaseEventData(),
+    EventData {
+    constructor(gameType: GameType) : this(
+        FeatureEvents.HOW_TO_PLAY_CLICKED.getEventName(),
+        Features.FEED.getFeatureName(),
+        gameType,
     )
 }
 
@@ -1952,6 +1969,15 @@ enum class GameConcludedCtaType {
 
     @SerialName("learn_more")
     LEARN_MORE,
+}
+
+@Serializable
+enum class SwipeAction {
+    @SerialName("swipe")
+    SWIPE,
+
+    @SerialName("click")
+    CLICK,
 }
 
 @Serializable

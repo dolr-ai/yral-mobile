@@ -7,6 +7,7 @@ import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.pushNew
 import com.arkivanov.decompose.value.Value
+import com.yral.shared.features.leaderboard.domain.models.DailyRankGameType
 import com.yral.shared.features.leaderboard.nav.detail.LeaderboardDetailsComponent
 import com.yral.shared.features.leaderboard.nav.main.LeaderboardMainComponent
 import com.yral.shared.rust.service.utils.CanisterData
@@ -20,6 +21,7 @@ internal class DefaultLeaderboardComponent(
     private val openProfile: (CanisterData) -> Unit,
     override val showBackIcon: Boolean,
     override val onBack: () -> Unit,
+    override val gameType: DailyRankGameType = DailyRankGameType.SMILEY,
 ) : LeaderboardComponent(),
     ComponentContext by componentContext,
     KoinComponent {
@@ -89,6 +91,7 @@ internal class DefaultLeaderboardComponent(
             componentContext = componentContext,
             onBack = { navigation.pop() },
             openProfile = openProfile,
+            gameType = gameType,
         )
 
     @Serializable
