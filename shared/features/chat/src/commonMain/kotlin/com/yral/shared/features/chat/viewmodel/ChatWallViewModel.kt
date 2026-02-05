@@ -83,13 +83,15 @@ class ChatWallViewModel(
             .observeSessionState { state ->
                 val signedIn = state as? com.yral.shared.core.session.SessionState.SignedIn
                 val principal = signedIn?.session?.userPrincipal
-                if (principal.isNullOrBlank()) return@observeSessionState null
+                val lastActivePrincipal = preferences.getString(PrefKeys.LAST_ACTIVE_PRINCIPAL.name)
+                val activePrincipal = principal ?: lastActivePrincipal
+                if (activePrincipal.isNullOrBlank()) return@observeSessionState null
                 val mainPrincipal =
                     preferences.getString(PrefKeys.MAIN_PRINCIPAL.name)
                         ?: preferences.getString(PrefKeys.USER_PRINCIPAL.name)
                 val isBotBySession = signedIn?.session?.isBotAccount == true
-                val isBotByPrincipal = mainPrincipal != null && principal != mainPrincipal
-                if (isBotBySession || isBotByPrincipal) principal else null
+                val isBotByPrincipal = mainPrincipal != null && activePrincipal != mainPrincipal
+                if (isBotBySession || isBotByPrincipal) activePrincipal else null
             }.distinctUntilChanged()
             .flatMapLatest { activeBotPrincipal ->
                 // Create a new Pager when active bot changes to refresh influencers

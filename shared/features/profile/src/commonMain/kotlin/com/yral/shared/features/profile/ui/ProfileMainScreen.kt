@@ -54,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -71,6 +72,7 @@ import com.yral.shared.analytics.events.EditProfileSource
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.analytics.events.VideoDeleteCTA
+import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
@@ -112,6 +114,8 @@ import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.appTypoGraphy
+import com.yral.shared.preferences.PrefKeys
+import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.service.domain.models.FollowerItem
 import com.yral.shared.rust.service.domain.models.PagedFollowerItem
 import com.yral.shared.rust.service.utils.CanisterData
@@ -119,10 +123,14 @@ import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import com.yral.shared.rust.service.utils.propicFromPrincipal
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.koin.compose.koinInject
 import yral_mobile.shared.features.profile.generated.resources.Res
 import yral_mobile.shared.features.profile.generated.resources.become_pro
 import yral_mobile.shared.features.profile.generated.resources.create_ai_video
@@ -149,6 +157,7 @@ import yral_mobile.shared.features.profile.generated.resources.storage_permissio
 import yral_mobile.shared.features.profile.generated.resources.video_will_be_deleted_permanently
 import yral_mobile.shared.features.profile.generated.resources.white_heart
 import yral_mobile.shared.libs.designsystem.generated.resources.account_nav
+import yral_mobile.shared.libs.designsystem.generated.resources.arrow
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.cancel
 import yral_mobile.shared.libs.designsystem.generated.resources.delete
@@ -162,6 +171,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.login
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.my_profile
+import yral_mobile.shared.libs.designsystem.generated.resources.my_profiles
 import yral_mobile.shared.libs.designsystem.generated.resources.oops
 import yral_mobile.shared.libs.designsystem.generated.resources.refresh
 import yral_mobile.shared.libs.designsystem.generated.resources.share_profile
@@ -178,6 +188,7 @@ internal const val PULL_TO_REFRESH_OFFSET_MULTIPLIER = 1.5f
 internal const val MAX_LINES_FOR_POST_DESCRIPTION = 5
 internal const val PADDING_BOTTOM_ACCOUNT_INFO = 20
 internal const val SHEET_GROWTH_PER_ITEM = 0.05f
+internal const val PROFILE_SWITCHER_ROTATION_DEGREES = 90f
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
@@ -188,8 +199,25 @@ fun ProfileMainScreen(
     viewModel: ProfileViewModel,
     profileVideos: LazyPagingItems<FeedDetails>,
 ) {
+    val sessionManager: SessionManager = koinInject()
+    val preferences: Preferences = koinInject()
+    val json: Json = koinInject()
+    var hasBotAccounts by remember { mutableStateOf(false) }
     val state by viewModel.state.collectAsStateWithLifecycle()
     val storagePermissionController = rememberStoragePermissionController()
+    val isBotAccount = sessionManager.isBotAccount == true
+
+    LaunchedEffect(state.isOwnProfile) {
+        if (state.isOwnProfile) {
+            val raw = preferences.getString(PrefKeys.BOT_IDENTITIES.name)
+            val bots =
+                raw?.let { runCatching { json.decodeFromString<List<BotIdentityEntry>>(it) }.getOrNull() }
+                    ?: emptyList()
+            hasBotAccounts = bots.isNotEmpty()
+        } else {
+            hasBotAccounts = false
+        }
+    }
 
     val followers = viewModel.followers.collectAsLazyPagingItems()
     val following = viewModel.following.collectAsLazyPagingItems()
@@ -445,6 +473,8 @@ fun ProfileMainScreen(
                             ) {}
                         }
                     },
+                    isBotAccount = isBotAccount,
+                    hasBotAccounts = hasBotAccounts,
                 )
             }
         }
@@ -615,6 +645,8 @@ private fun MainContent(
     showBackButton: Boolean,
     onDownloadVideo: (FeedDetails) -> Unit,
     onSubscribe: () -> Unit,
+    isBotAccount: Boolean,
+    hasBotAccounts: Boolean,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader(
@@ -622,6 +654,7 @@ private fun MainContent(
             isSubscriptionEnabled = state.isSubscriptionEnabled,
             isProUser = state.isProUser,
             userName = state.accountInfo?.displayName,
+            showAccountChevron = state.isOwnProfile && (isBotAccount || hasBotAccounts),
             showShareProfile = showHeaderShareButton && canShareProfile,
             isWalletEnabled = state.isWalletEnabled,
             onShareProfileClicked = onShareProfileClicked,
@@ -719,6 +752,13 @@ private fun totalCount(data: LazyPagingItems<PagedFollowerItem>?) =
         }
     } ?: 0
 
+@Serializable
+private data class BotIdentityEntry(
+    val principal: String,
+    val identity: String,
+    val username: String? = null,
+)
+
 @Suppress("LongMethod")
 @Composable
 private fun ProfileHeader(
@@ -726,6 +766,7 @@ private fun ProfileHeader(
     isProUser: Boolean,
     isSubscriptionEnabled: Boolean,
     userName: String?,
+    showAccountChevron: Boolean,
     showShareProfile: Boolean,
     isWalletEnabled: Boolean,
     onShareProfileClicked: () -> Unit,
@@ -755,19 +796,40 @@ private fun ProfileHeader(
                             .clickable { onBack() },
                 )
             }
-            Text(
-                text =
-                    if (isOwnProfile) {
-                        stringResource(DesignRes.string.my_profile)
-                    } else {
-                        userName ?: ""
-                    },
-                style = LocalAppTopography.current.xlBold,
-                color = YralColors.NeutralTextPrimary,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier =
-                    Modifier
-                        .clickable(enabled = isOwnProfile) { openAccountSheet() },
-            )
+                    Modifier.clickable(enabled = isOwnProfile && showAccountChevron) {
+                        openAccountSheet()
+                    },
+            ) {
+                Text(
+                    text =
+                        if (isOwnProfile) {
+                            if (showAccountChevron) {
+                                stringResource(DesignRes.string.my_profiles)
+                            } else {
+                                stringResource(DesignRes.string.my_profile)
+                            }
+                        } else {
+                            userName ?: ""
+                        },
+                    style = LocalAppTopography.current.xlBold,
+                    color = YralColors.NeutralTextPrimary,
+                )
+                if (isOwnProfile && showAccountChevron) {
+                    Icon(
+                        painter = painterResource(DesignRes.drawable.arrow),
+                        contentDescription = "Profile switcher",
+                        tint = Color.White,
+                        modifier =
+                            Modifier
+                                .padding(start = 6.dp)
+                                .size(20.dp)
+                                .rotate(PROFILE_SWITCHER_ROTATION_DEGREES),
+                    )
+                }
+            }
         }
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
