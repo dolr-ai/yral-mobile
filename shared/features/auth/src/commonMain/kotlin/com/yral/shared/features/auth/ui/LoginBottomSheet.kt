@@ -36,6 +36,8 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.auth.generated.resources.Res
 import yral_mobile.shared.features.auth.generated.resources.continue_to_sign_up_for_free
+import yral_mobile.shared.features.auth.generated.resources.create_ai_influencer_subtext
+import yral_mobile.shared.features.auth.generated.resources.create_ai_influencer_title
 import yral_mobile.shared.features.auth.generated.resources.create_ai_videos_earn_bitcoin
 import yral_mobile.shared.features.auth.generated.resources.create_ai_videos_earn_bitcoin_dis
 import yral_mobile.shared.features.auth.generated.resources.join_tournament
@@ -140,6 +142,9 @@ private fun getHeaderText(
             val maskedText = stringResource(Res.string.join_tournament)
             getAnnotatedHeaderForLogin(fullText, maskedText)
         }
+        LoginBottomSheetType.CREATE_INFLUENCER -> {
+            getAnnotatedHeaderForLogin(stringResource(Res.string.create_ai_influencer_title))
+        }
         is LoginBottomSheetType.CONVERSATION -> {
             val name = type.influencerName
             val fullText = stringResource(Res.string.login_to_chat_with_influencer, name)
@@ -154,6 +159,7 @@ private fun getDisclaimerText(type: LoginBottomSheetType) =
         LoginBottomSheetType.UPLOAD_AI_VIDEO -> stringResource(Res.string.upload_ai_videos_earn_bitcoin_dis)
         LoginBottomSheetType.CREATE_AI_VIDEO -> stringResource(Res.string.create_ai_videos_earn_bitcoin_dis)
         LoginBottomSheetType.TOURNAMENT -> stringResource(Res.string.join_tournament_disclaimer)
+        LoginBottomSheetType.CREATE_INFLUENCER -> stringResource(Res.string.create_ai_influencer_subtext)
         else -> null
     }
 
@@ -225,6 +231,9 @@ sealed interface LoginBottomSheetType {
 
     @Serializable
     data object TOURNAMENT : LoginBottomSheetType
+
+    @Serializable
+    data object CREATE_INFLUENCER : LoginBottomSheetType
 
     @Serializable
     data class CONVERSATION(

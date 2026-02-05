@@ -16,6 +16,7 @@ interface ProfileMainComponent {
     val showBackButton: Boolean
     val showAlertsOnDialog: (type: AlertsRequestType) -> Unit
     fun onUploadVideoClick()
+    fun openAccountSheet()
     fun openAccount()
     fun openEditProfile()
     fun openProfile(userCanisterData: CanisterData)
@@ -33,6 +34,7 @@ interface ProfileMainComponent {
             userCanisterData: CanisterData? = null,
             pendingVideoNavigation: Flow<String?>,
             onUploadVideoClicked: () -> Unit,
+            openAccountSheet: () -> Unit,
             openAccount: () -> Unit,
             openEditProfile: () -> Unit,
             openProfile: (CanisterData) -> Unit,
@@ -52,6 +54,7 @@ interface ProfileMainComponent {
                 userCanisterData = userCanisterData,
                 pendingVideoNavigation = pendingVideoNavigation,
                 onUploadVideoClicked = onUploadVideoClicked,
+                openAccountSheet = openAccountSheet,
                 openAccount = openAccount,
                 openEditProfile = openEditProfile,
                 openProfile = openProfile,

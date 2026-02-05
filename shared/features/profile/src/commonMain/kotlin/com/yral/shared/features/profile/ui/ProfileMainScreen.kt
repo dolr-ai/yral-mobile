@@ -410,6 +410,7 @@ fun ProfileMainScreen(
                         viewModel.uploadVideoClicked()
                         component.onUploadVideoClick()
                     },
+                    openAccountSheet = { component.openAccountSheet() },
                     openAccount = { component.openAccount() },
                     openEditProfile = {
                         viewModel.onEditProfileOpened(EditProfileSource.PROFILE)
@@ -602,6 +603,7 @@ private fun MainContent(
     following: LazyPagingItems<PagedFollowerItem>?,
     deletingVideoId: String,
     uploadVideo: () -> Unit,
+    openAccountSheet: () -> Unit,
     openAccount: () -> Unit,
     openEditProfile: () -> Unit,
     onBackClicked: () -> Unit,
@@ -623,6 +625,7 @@ private fun MainContent(
             showShareProfile = showHeaderShareButton && canShareProfile,
             isWalletEnabled = state.isWalletEnabled,
             onShareProfileClicked = onShareProfileClicked,
+            openAccountSheet = openAccountSheet,
             openAccount = openAccount,
             onBack = onBackClicked,
             showBackButton = showBackButton,
@@ -726,6 +729,7 @@ private fun ProfileHeader(
     showShareProfile: Boolean,
     isWalletEnabled: Boolean,
     onShareProfileClicked: () -> Unit,
+    openAccountSheet: () -> Unit,
     openAccount: () -> Unit,
     onBack: () -> Unit,
     showBackButton: Boolean = false,
@@ -760,6 +764,9 @@ private fun ProfileHeader(
                     },
                 style = LocalAppTopography.current.xlBold,
                 color = YralColors.NeutralTextPrimary,
+                modifier =
+                    Modifier
+                        .clickable(enabled = isOwnProfile) { openAccountSheet() },
             )
         }
         Row(

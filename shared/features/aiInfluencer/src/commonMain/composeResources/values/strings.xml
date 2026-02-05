@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <string name="ai_influencer_title">Create an AI</string>
+    <string name="ai_influencer_prompt_title">Write a short description of the influencer.</string>
+    <string name="ai_influencer_prompt_label">Description</string>
+    <string name="ai_influencer_prompt_placeholder">Enter</string>
+    <string name="ai_influencer_next">Next</string>
+    <string name="ai_influencer_loading_prompt_title">Creating your character</string>
+    <string name="ai_influencer_loading_prompt_subtitle">AI is doing its magic to create a unique "AI influencers for you"</string>
+    <string name="ai_influencer_loading_metadata_title">Bringing it all together</string>
+    <string name="ai_influencer_loading_metadata_subtitle">Generating the image and name of your influencer.</string>
+    <string name="ai_influencer_review_title">Review your influencer personality.</string>
+    <string name="ai_influencer_review_subtitle">Created from your input. Edit to fine-tune tone and behavior.</string>
+    <string name="ai_influencer_profile_title">Your Influencers name &amp; image</string>
+    <string name="ai_influencer_name_label">Name</string>
+    <string name="ai_influencer_description_label">Description</string>
+    <string name="ai_influencer_create_profile">Create Profile</string>
+    <string name="ai_influencer_upload_photo">Upload Photo</string>
+    <string name="ai_influencer_take_photo">Take A Photo</string>
+    <string name="ai_influencer_error_generic">Something went wrong. Please try again.</string>
+</resources>

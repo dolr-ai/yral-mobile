@@ -8,6 +8,7 @@ data class Session(
     val username: String? = null,
     val bio: String? = null,
     val isCreatedFromServiceCanister: Boolean = false,
+    val isBotAccount: Boolean = false,
 )
 
 data class SessionProperties(

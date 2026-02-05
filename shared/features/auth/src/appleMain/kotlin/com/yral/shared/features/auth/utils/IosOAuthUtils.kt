@@ -227,6 +227,16 @@ class IosOAuthUtilsHelper(
                 ?.takeUnless { it is JsonNull }
                 ?.toString()
                 ?.encodeToByteArray()
+        val botDelegatedIdentities =
+            payloadJson[KEY_AI_ACCOUNT_DELEGATED_IDENTITIES]
+                ?.jsonArrayOrNull()
+                ?.mapNotNull { element ->
+                    when (element) {
+                        is JsonNull -> null
+                        is JsonPrimitive -> element.contentOrNull?.encodeToByteArray()
+                        else -> element.toString().encodeToByteArray()
+                    }
+                }
         val email = payloadJson[KEY_EMAIL]?.jsonPrimitive?.contentOrNull
 
         return TokenClaims(
@@ -239,6 +249,7 @@ class IosOAuthUtilsHelper(
             extIsAnonymous = isAnonymous,
             delegatedIdentity = delegatedIdentity,
             email = email,
+            botDelegatedIdentities = botDelegatedIdentities,
         )
     }
 
@@ -273,6 +284,8 @@ class IosOAuthUtilsHelper(
         val randomBytes = secureRandomBytes(CODE_VERIFIER_LENGTH)
         return randomBytes.toUrlSafeBase64()
     }
+
+    private fun JsonElement.jsonArrayOrNull(): JsonArray? = this as? JsonArray
 
     @OptIn(ExperimentalForeignApi::class)
     private fun secureRandomBytes(length: Int): ByteArray {

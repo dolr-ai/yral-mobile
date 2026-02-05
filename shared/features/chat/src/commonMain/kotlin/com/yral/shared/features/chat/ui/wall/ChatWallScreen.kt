@@ -6,14 +6,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -44,6 +48,8 @@ import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.chat.generated.resources.Res
 import yral_mobile.shared.features.chat.generated.resources.chat_wall_coming_soon
@@ -52,14 +58,18 @@ import yral_mobile.shared.features.chat.generated.resources.chat_wall_talk_to_me
 import yral_mobile.shared.features.chat.generated.resources.chat_wall_title
 import yral_mobile.shared.features.chat.generated.resources.error_network_message_influencers
 import yral_mobile.shared.features.chat.generated.resources.influencers_error
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_plus_circle
+import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
+@Composable
 @Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable
+@OptIn(ExperimentalResourceApi::class)
 fun ChatWallScreen(
     component: ChatWallComponent,
     viewModel: ChatWallViewModel,
     modifier: Modifier = Modifier,
+    onCreateInfluencerClick: () -> Unit = {},
 ) {
     val influencers = viewModel.influencers.collectAsLazyPagingItems()
     var trackedCardsViewed by remember { mutableStateOf(false) }
@@ -97,12 +107,27 @@ fun ChatWallScreen(
                 .background(Color.Black)
                 .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp),
     ) {
-        Text(
-            text = stringResource(Res.string.chat_wall_title),
-            style = LocalAppTopography.current.xlBold,
-            color = YralColors.Grey50,
-            modifier = Modifier.padding(bottom = 22.dp),
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 22.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(Res.string.chat_wall_title),
+                style = LocalAppTopography.current.xlBold,
+                color = YralColors.Grey50,
+                modifier = Modifier.weight(1f),
+            )
+            IconButton(
+                onClick = onCreateInfluencerClick,
+                modifier = Modifier.size(32.dp),
+            ) {
+                Icon(
+                    painter = painterResource(DesignRes.drawable.ic_plus_circle),
+                    contentDescription = "Create AI Influencer",
+                    tint = YralColors.Grey50,
+                )
+            }
+        }
         Text(
             text = stringResource(Res.string.chat_wall_subtitle),
             style = LocalAppTopography.current.baseRegular,

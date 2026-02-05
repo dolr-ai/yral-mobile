@@ -21,10 +21,18 @@ kotlin {
             implementation(projects.shared.libs.arch)
             implementation(projects.shared.libs.coroutinesX)
             implementation(projects.shared.libs.http)
+            implementation(projects.shared.libs.analytics)
+            implementation(projects.shared.libs.preferences)
             implementation(projects.shared.libs.designsystem)
+            implementation(projects.shared.features.auth)
+            implementation(projects.shared.features.uploadvideo)
+            implementation(projects.shared.rust.service)
 
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.ktor.serialization.kotlinx.json)
+
+            implementation(libs.androidx.lifecycle.viewmodel)
+            implementation(libs.koin.compose.viewmodel)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

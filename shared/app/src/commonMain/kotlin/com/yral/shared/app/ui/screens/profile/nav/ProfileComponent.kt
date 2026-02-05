@@ -70,6 +70,7 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
                 influencerCategory: String,
                 influencerSource: InfluencerSource,
             ) -> Unit,
+            openAccountSheet: () -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
             promptLogin: (pageName: SignupPageName) -> Unit,
         ): ProfileComponent =
@@ -82,6 +83,7 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
                 openEditProfile,
                 openProfile,
                 openConversation,
+                openAccountSheet,
                 showAlertsOnDialog,
                 promptLogin,
             )

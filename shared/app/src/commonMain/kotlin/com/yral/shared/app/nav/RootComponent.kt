@@ -102,6 +102,8 @@ interface RootComponent {
         entryPoint: SubscriptionEntryPoint,
     )
 
+    fun openCreateInfluencer()
+
     fun onCreateVideo()
 
     fun onExploreFeed()
@@ -148,6 +150,7 @@ interface RootComponent {
         class Subscription(
             val component: SubscriptionsComponent,
         ) : Child()
+        data object CreateInfluencer : Child()
         class CountrySelector(
             val component: CountrySelectorComponent,
         ) : Child()
