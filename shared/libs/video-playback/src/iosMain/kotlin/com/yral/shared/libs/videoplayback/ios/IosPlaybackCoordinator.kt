@@ -8,6 +8,7 @@ import com.yral.shared.libs.videoplayback.PlaybackProgressTicker
 import com.yral.shared.libs.videoplayback.PreloadEventScheduler
 import com.yral.shared.libs.videoplayback.PreparedSlotScheduler
 import com.yral.shared.libs.videoplayback.VideoSurfaceHandle
+import com.yral.shared.libs.videoplayback.planFeedAlignment
 import com.yral.shared.libs.videoplayback.ui.IosVideoSurfaceHandle
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
@@ -109,25 +110,29 @@ private class IosPlaybackCoordinator(
 
     override fun setFeed(items: List<MediaDescriptor>) {
         val previousFeed = feed
-        val previousActiveId = previousFeed.getOrNull(activeIndex)?.id
-        val preparedIndex = preparedSlot?.index
-        val preparedIdBefore = preparedIndex?.let { previousFeed.getOrNull(it)?.id }
+        val previousIds = previousFeed.map { it.id }
+        val currentIds = items.map { it.id }
+        val alignment =
+            planFeedAlignment(
+                previousIds = previousIds,
+                currentIds = currentIds,
+                activeIndex = activeIndex,
+                activeSlotIndex = activeSlot.index,
+                preparedSlotIndex = preparedSlot?.index,
+            )
         cancelPrefetch(reason = "feed_update")
         preparedScheduler.reset("feed_update") { feed.getOrNull(it)?.id }
         feed = items
 
-        if (preparedIndex != null) {
-            val preparedIdAfter = items.getOrNull(preparedIndex)?.id
-            if (preparedIdBefore != preparedIdAfter) {
-                preparedSlot?.let { slot ->
-                    slot.player.pause()
-                    detachSurface(preparedIndex, slot.player)
-                    slot.index = null
-                }
+        alignment.invalidatePreparedIndex?.let { stalePreparedIndex ->
+            preparedSlot?.let { slot ->
+                slot.player.pause()
+                detachSurface(stalePreparedIndex, slot.player)
+                slot.index = null
             }
         }
 
-        if (items.isEmpty()) {
+        if (alignment.clearPlaybackState) {
             activeIndex = -1
             predictedIndex = -1
             rebuffering = false
@@ -139,20 +144,10 @@ private class IosPlaybackCoordinator(
             preparedSlot?.index = null
             return
         }
-        if (activeIndex >= items.size) {
-            activeIndex = -1
-            setActiveIndex(items.lastIndex)
-            return
-        }
 
-        if (activeIndex in items.indices) {
-            val activeIdChanged = previousActiveId != items[activeIndex].id
-            val activeSlotOutOfSync = activeSlot.index != activeIndex
-            if (activeIdChanged || activeSlotOutOfSync) {
-                val targetIndex = activeIndex
-                activeIndex = -1
-                setActiveIndex(targetIndex)
-            }
+        alignment.nextActiveIndex?.let { targetIndex ->
+            activeIndex = -1
+            setActiveIndex(targetIndex)
         }
     }
 
