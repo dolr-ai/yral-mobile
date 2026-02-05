@@ -186,6 +186,10 @@ private class AndroidPlaybackCoordinator(
     }
 
     override fun setFeed(items: List<MediaDescriptor>) {
+        val previousFeed = feed
+        val previousActiveId = previousFeed.getOrNull(activeIndex)?.id
+        val preparedIndex = preparedSlot?.index
+        val preparedIdBefore = preparedIndex?.let { previousFeed.getOrNull(it)?.id }
         preloadScheduler.reset("feed_update") { feed.getOrNull(it)?.id }
         preparedScheduler.reset("feed_update") { feed.getOrNull(it)?.id }
         if (mediaItems.isNotEmpty()) {
@@ -200,8 +204,43 @@ private class AndroidPlaybackCoordinator(
             preloadManager.addMediaItems(mediaItems, ranking)
         }
 
+        if (preparedIndex != null) {
+            val preparedIdAfter = items.getOrNull(preparedIndex)?.id
+            if (preparedIdBefore != preparedIdAfter) {
+                preparedSlot?.let { slot ->
+                    slot.player.playWhenReady = false
+                    detachSurface(preparedIndex, slot.player)
+                    slot.index = null
+                }
+            }
+        }
+
+        if (items.isEmpty()) {
+            activeIndex = -1
+            predictedIndex = -1
+            rebuffering = false
+            firstFramePendingIndex = null
+            activeSlot.player.playWhenReady = false
+            preparedSlot?.player?.playWhenReady = false
+            activeSlot.index = null
+            preparedSlot?.index = null
+            return
+        }
+
         if (activeIndex >= items.size) {
+            activeIndex = -1
             setActiveIndex(items.lastIndex)
+            return
+        }
+
+        if (activeIndex in items.indices) {
+            val activeIdChanged = previousActiveId != items[activeIndex].id
+            val activeSlotOutOfSync = activeSlot.index != activeIndex
+            if (activeIdChanged || activeSlotOutOfSync) {
+                val targetIndex = activeIndex
+                activeIndex = -1
+                setActiveIndex(targetIndex)
+            }
         }
     }
 

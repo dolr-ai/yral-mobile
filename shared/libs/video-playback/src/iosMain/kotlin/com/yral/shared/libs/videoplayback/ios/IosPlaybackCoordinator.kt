@@ -108,9 +108,25 @@ private class IosPlaybackCoordinator(
     }
 
     override fun setFeed(items: List<MediaDescriptor>) {
+        val previousFeed = feed
+        val previousActiveId = previousFeed.getOrNull(activeIndex)?.id
+        val preparedIndex = preparedSlot?.index
+        val preparedIdBefore = preparedIndex?.let { previousFeed.getOrNull(it)?.id }
         cancelPrefetch(reason = "feed_update")
         preparedScheduler.reset("feed_update") { feed.getOrNull(it)?.id }
         feed = items
+
+        if (preparedIndex != null) {
+            val preparedIdAfter = items.getOrNull(preparedIndex)?.id
+            if (preparedIdBefore != preparedIdAfter) {
+                preparedSlot?.let { slot ->
+                    slot.player.pause()
+                    detachSurface(preparedIndex, slot.player)
+                    slot.index = null
+                }
+            }
+        }
+
         if (items.isEmpty()) {
             activeIndex = -1
             predictedIndex = -1
@@ -124,7 +140,19 @@ private class IosPlaybackCoordinator(
             return
         }
         if (activeIndex >= items.size) {
+            activeIndex = -1
             setActiveIndex(items.lastIndex)
+            return
+        }
+
+        if (activeIndex in items.indices) {
+            val activeIdChanged = previousActiveId != items[activeIndex].id
+            val activeSlotOutOfSync = activeSlot.index != activeIndex
+            if (activeIdChanged || activeSlotOutOfSync) {
+                val targetIndex = activeIndex
+                activeIndex = -1
+                setActiveIndex(targetIndex)
+            }
         }
     }
 
