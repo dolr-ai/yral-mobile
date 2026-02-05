@@ -144,10 +144,6 @@ fun TournamentGameScaffoldScreen(
                             gameViewModel = tournamentGameViewModel,
                             timeLeftMs = timeLeftMs,
                             isHotOrNot = gameConfig.isHotOrNot,
-                            onHowToPlayClick = {
-                                howToPlayOpenedFromButton = true
-                                showHowToPlay = true
-                            },
                         )
                     }
                 },
@@ -158,6 +154,10 @@ fun TournamentGameScaffoldScreen(
                             showLeaveTournamentConfirmation = true
                         },
                         onReport = { tournamentFeedViewModel.toggleReportSheet(true, pageNo) },
+                        onHowToPlay = {
+                            howToPlayOpenedFromButton = true
+                            showHowToPlay = true
+                        },
                     )
                 },
                 onPageChanged = { pageNo, _ ->

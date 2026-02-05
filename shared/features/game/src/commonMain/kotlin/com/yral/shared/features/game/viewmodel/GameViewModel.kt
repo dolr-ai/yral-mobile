@@ -19,6 +19,7 @@ import com.yral.shared.features.game.domain.GetGameRulesUseCase
 import com.yral.shared.features.game.domain.models.AboutGameItem
 import com.yral.shared.features.game.domain.models.AutoRechargeBalanceRequest
 import com.yral.shared.features.game.domain.models.CastHotOrNotVoteRequest
+import com.yral.shared.features.game.domain.models.CastHotOrNotVoteResponse
 import com.yral.shared.features.game.domain.models.CastVoteRequest
 import com.yral.shared.features.game.domain.models.CastVoteResponse
 import com.yral.shared.features.game.domain.models.GameIcon
@@ -495,6 +496,9 @@ class GameViewModel(
                             isHot = isHot,
                         ),
                 ).onSuccess { result ->
+                    if (result is CastHotOrNotVoteResponse.Success) {
+                        sessionManager.updateHonDailyRank(result.newPosition)
+                    }
                     val voteResult = result.toVoteResult()
                     setHotOrNotGameResult(
                         videoId = videoId,

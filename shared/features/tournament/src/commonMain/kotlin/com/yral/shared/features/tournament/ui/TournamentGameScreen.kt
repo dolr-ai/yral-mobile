@@ -249,7 +249,6 @@ fun TournamentBottomOverlay(
     gameViewModel: TournamentGameViewModel,
     timeLeftMs: Long,
     isHotOrNot: Boolean,
-    onHowToPlayClick: () -> Unit,
 ) {
     gameViewModel.hasVotedOnVideo(feedDetails.videoID)
     val voteResult = gameViewModel.getVoteResult(feedDetails.videoID)
@@ -309,17 +308,6 @@ fun TournamentBottomOverlay(
                 modifier = Modifier.padding(bottom = 24.dp),
             )
         }
-        Image(
-            painter = painterResource(DesignRes.drawable.ic_how_to_play),
-            contentDescription = "how to play",
-            contentScale = ContentScale.None,
-            modifier =
-                Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(start = 20.dp, bottom = overlayBottomPadding + 8.dp)
-                    .size(32.dp)
-                    .clickable { onHowToPlayClick() },
-        )
         TournamentTimerPill(
             timeLeftMs = timeLeftMs,
             modifier =
@@ -465,7 +453,19 @@ private fun TournamentTimerPill(
 fun ColumnScope.TournamentGameActionsRight(
     onExit: () -> Unit,
     onReport: () -> Unit,
+    onHowToPlay: (() -> Unit)? = null,
 ) {
+    onHowToPlay?.let {
+        Image(
+            painter = painterResource(DesignRes.drawable.ic_how_to_play),
+            contentDescription = "how to play",
+            colorFilter = ColorFilter.tint(Color.White),
+            modifier =
+                Modifier
+                    .size(36.dp)
+                    .clickable { it() },
+        )
+    }
     Image(
         painter = painterResource(TournamentRes.drawable.exit),
         contentDescription = "exit tournament",

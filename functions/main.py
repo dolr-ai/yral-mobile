@@ -50,6 +50,7 @@ SMILEY_GAME_BAN_THRESHOLD_LAST_60_MINS = 1500
 HOT_OR_NOT_WIN_REWARD = 1
 HOT_OR_NOT_LOSS_PENALTY = -1
 HOT_OR_NOT_COLL = "hot_or_not_videos"
+HOT_OR_NOT_DAILY_COLL = "hot_or_not_leaderboards_daily"
 
 BALANCE_URL_YRAL_TOKEN = "https://yral-hot-or-not.go-bazzinga.workers.dev/update_balance/"
 BALANCE_URL_CKBTC = "https://yral-hot-or-not.go-bazzinga.workers.dev/v2/transfer_ckbtc"
@@ -319,6 +320,35 @@ def _get_daily_position(pid: str) -> int:
     count_query = (
         users_ref.where("smiley_game_wins", ">", wins)
                  .where("is_smiley_game_banned", "==", False)
+                 .count()
+                 .get()
+    )
+
+    higher_count = int(count_query[0][0].value)
+    position = higher_count + 1
+
+    return position
+
+def _get_hot_or_not_daily_position(pid: str) -> int:
+    """Get user's daily position for Hot or Not game."""
+    bucket_id, _start_ms, _end_ms = _bucket_bounds_ist()
+    daily_doc_ref = db().collection(HOT_OR_NOT_DAILY_COLL).document(bucket_id)
+    daily_doc = daily_doc_ref.get()
+
+    if not daily_doc.exists:
+        return 0
+
+    users_ref = daily_doc_ref.collection("users")
+    user_doc = users_ref.document(pid).get()
+
+    if user_doc.exists:
+        wins = int(user_doc.get("hot_or_not_wins") or 0)
+    else:
+        wins = 0
+
+    count_query = (
+        users_ref.where("hot_or_not_wins", ">", wins)
+                 .where("is_hot_or_not_banned", "==", False)
                  .count()
                  .get()
     )
@@ -674,11 +704,25 @@ def cast_hot_or_not_vote(request: Request):
             "coin_delta": delta
         })
 
+        # Update Hot or Not daily leaderboard
+        try:
+            _inc_hot_or_not_daily_leaderboard(pid, outcome)
+        except Exception as e:
+            print(f"[hot-or-not-daily-leaderboard] failed for {pid}: {e}", file=sys.stderr)
+
+        # Get user's daily position for Hot or Not
+        try:
+            new_position = _get_hot_or_not_daily_position(pid)
+        except Exception as e:
+            print(f"[hot-or-not-rank] position calc failed for {pid}: {e}", file=sys.stderr)
+            new_position = 0
+
         # 6. success payload ──────────────────────────────────────────────
         return jsonify({
             "outcome": outcome,
             "coins": coins,
-            "coin_delta": delta
+            "coin_delta": delta,
+            "new_position": new_position
         }), 200
 
     # known error wrappers ───────────────────────────────────────────────
@@ -772,6 +816,52 @@ def _inc_daily_leaderboard(pid: str, outcome: str) -> None:
             "updated_at": firestore.SERVER_TIMESTAMP
         }
         tx.set(entry_ref, updates, merge=True)
+
+    _tx(db().transaction())
+
+def _inc_hot_or_not_daily_leaderboard(pid: str, outcome: str) -> None:
+    """Increment today's IST daily leaderboard counters for Hot or Not game."""
+    bucket_id, start_ms, end_ms = _bucket_bounds_ist()
+    day_ref = db().document(f"{HOT_OR_NOT_DAILY_COLL}/{bucket_id}")
+    entry_ref = day_ref.collection("users").document(pid)
+
+    @firestore.transactional
+    def _tx(tx: firestore.Transaction):
+        # ALL READS FIRST (Firestore requirement)
+        day_snapshot = day_ref.get(transaction=tx)
+        entry_snap = entry_ref.get(transaction=tx)
+
+        # Process user entry data
+        if entry_snap.exists:
+            d = entry_snap.to_dict() or {}
+            w = d.get("hot_or_not_wins", 0)
+            l = d.get("hot_or_not_losses", 0)
+        else:
+            w, l = 0, 0
+
+        if outcome == "WIN":
+            w += 1
+        else:
+            l += 1
+
+        # ALL WRITES AFTER READS
+        # Ensure the day doc exists
+        if not day_snapshot.exists:
+            tx.set(day_ref, {
+                "bucket_id": bucket_id,
+                "start_ms": start_ms,
+                "end_ms": end_ms,
+                "updated_at": firestore.SERVER_TIMESTAMP
+            }, merge=True)
+
+        # Update user entry
+        tx.set(entry_ref, {
+            "principal_id": pid,
+            "hot_or_not_wins": w,
+            "hot_or_not_losses": l,
+            "is_hot_or_not_banned": False,
+            "updated_at": firestore.SERVER_TIMESTAMP,
+        }, merge=True)
 
     _tx(db().transaction())
 
@@ -1532,6 +1622,91 @@ def daily_rank(request: Request):
         return error_response(500, "FIRESTORE_ERROR", str(e))
     except Exception as e:
         print("daily_rank error:", e, file=sys.stderr)
+        return error_response(500, "INTERNAL", "Internal server error")
+
+@https_fn.on_request(region="us-central1")
+def daily_rank_hon(request: Request):
+    """
+    POST /daily_rank_hon
+
+    Request:
+      {
+        "data": {
+          "principal_id": "<pid>"
+        }
+      }
+
+    Response (200):
+      {
+        "principal_id": "<pid>",
+        "wins": <int>,
+        "position": <int>
+      }
+    """
+    try:
+        if request.method != "POST":
+            return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
+
+        body = request.get_json(silent=True) or {}
+        data = body.get("data", {}) or {}
+        pid = str(data.get("principal_id", "")).strip()
+
+        if not pid:
+            return error_response(400, "MISSING_PID", "principal_id is required")
+
+        # ───────── Auth & App Check ─────────
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
+        auth.verify_id_token(auth_header.split(" ", 1)[1])
+
+        # ───────── Get bucket and user doc ─────────
+        bucket_id, _start_ms, _end_ms = _bucket_bounds_ist()
+        daily_doc_ref = db().collection(HOT_OR_NOT_DAILY_COLL).document(bucket_id)
+        daily_doc = daily_doc_ref.get()
+
+        if not daily_doc.exists:
+            return jsonify({
+                "principal_id": pid,
+                "wins": 0,
+                "position": 0
+            }), 200
+
+        users_ref = daily_doc_ref.collection("users")
+        user_doc = users_ref.document(pid).get()
+
+        if user_doc.exists:
+            wins = int(user_doc.get("hot_or_not_wins") or 0)
+            is_banned = bool(user_doc.get("is_hot_or_not_banned") or False)
+        else:
+            wins = 0
+            is_banned = False
+
+        if is_banned:
+            higher_count = 0
+            position = 0
+        else:
+            count_snap = (
+                users_ref.where("hot_or_not_wins", ">", wins)
+                         .where("is_hot_or_not_banned", "==", False)
+                         .count()
+                         .get()
+            )
+            higher_count = int(count_snap[0][0].value)
+            position = higher_count + 1
+
+        return jsonify({
+            "principal_id": pid,
+            "wins": wins,
+            "position": position
+        }), 200
+
+    except auth.InvalidIdTokenError:
+        return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
+    except GoogleAPICallError as e:
+        return error_response(500, "FIRESTORE_ERROR", str(e))
+    except Exception as e:
+        print("daily_rank_hon error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
 

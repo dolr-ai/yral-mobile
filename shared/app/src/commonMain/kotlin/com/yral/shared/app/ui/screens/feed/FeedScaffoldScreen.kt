@@ -82,11 +82,24 @@ fun FeedScaffoldScreen(
 ) {
     val gameState by gameViewModel.state.collectAsStateWithLifecycle()
     val feedState by feedViewModel.state.collectAsStateWithLifecycle()
-    val dailyRank by if (feedState.overlayType == OverlayType.DAILY_RANK) {
+    // Collect both ranks separately
+    val smileyDailyRank by if (feedState.overlayType == OverlayType.DAILY_RANK) {
         leaderBoardViewModel.dailyRank.collectAsStateWithLifecycle(null)
     } else {
         remember { mutableStateOf(null) }
     }
+    val honDailyRank by if (feedState.overlayType == OverlayType.DAILY_RANK) {
+        leaderBoardViewModel.honDailyRank.collectAsStateWithLifecycle(null)
+    } else {
+        remember { mutableStateOf(null) }
+    }
+    // In HON mode use HON rank (0 if null to show "--"), in Smiley mode use smiley rank
+    val dailyRank =
+        if (feedState.isCardLayoutEnabled) {
+            honDailyRank ?: 0L // Show 0 to display "--" when no HON rank
+        } else {
+            smileyDailyRank
+        }
     if (feedState.overlayType == OverlayType.DAILY_RANK) {
         leaderBoardViewModel.refreshRank.collectAsStateWithLifecycle(false)
     }
