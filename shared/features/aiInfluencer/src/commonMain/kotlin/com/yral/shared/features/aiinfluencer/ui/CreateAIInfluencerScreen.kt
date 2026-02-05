@@ -29,12 +29,16 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -49,12 +53,15 @@ import com.yral.shared.features.auth.ui.LoginMode
 import com.yral.shared.features.auth.ui.LoginScreenType
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.auth.ui.rememberLoginInfo
+import com.yral.shared.libs.designsystem.component.LoaderSize
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralGradientButton
+import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -155,7 +162,7 @@ fun CreateAIInfluencerScreen(
                 LoadingScreen(
                     title = stringResource(Res.string.ai_influencer_loading_prompt_title),
                     subtitle = stringResource(Res.string.ai_influencer_loading_prompt_subtitle),
-                    icon = Res.drawable.create_influencer_magic,
+                    gifPath = "drawable/create_influencer_magic.gif",
                 )
 
             is AiInfluencerStep.PersonaReview ->
@@ -170,7 +177,7 @@ fun CreateAIInfluencerScreen(
                 LoadingScreen(
                     title = stringResource(Res.string.ai_influencer_loading_metadata_title),
                     subtitle = stringResource(Res.string.ai_influencer_loading_metadata_subtitle),
-                    icon = Res.drawable.create_influencer_puzzle,
+                    gifPath = "drawable/create_influencer_puzzle.gif",
                 )
 
             is AiInfluencerStep.ProfileDetails ->
@@ -195,6 +202,12 @@ fun CreateAIInfluencerScreen(
                     photoCapture()
                     viewModel.dismissImagePicker()
                 },
+            )
+        }
+
+        if (state.isBotCreationLoading) {
+            FullScreenLoadingOverlay(
+                text = "Creating an AI Influencer for you",
             )
         }
     }
@@ -470,7 +483,7 @@ private fun ProfileDetailsScreen(
             text = stringResource(Res.string.ai_influencer_create_profile),
             buttonState =
                 if (state.isBotCreationLoading) {
-                    YralButtonState.Loading
+                    YralButtonState.Disabled
                 } else {
                     YralButtonState.Enabled
                 },
@@ -480,6 +493,30 @@ private fun ProfileDetailsScreen(
                     .padding(start = 16.dp, end = 16.dp, bottom = 28.dp),
             onClick = onCreateProfile,
         )
+    }
+}
+
+@Composable
+private fun FullScreenLoadingOverlay(text: String) {
+    Box(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(YralColors.Neutral950.copy(alpha = 0.85f)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            YralLoader(size = 100.dp)
+            Text(
+                text = text,
+                style = LocalAppTopography.current.baseSemiBold,
+                color = YralColors.NeutralTextPrimary,
+                textAlign = TextAlign.Center,
+            )
+        }
     }
 }
 
@@ -551,11 +588,16 @@ private fun AvatarBlock(
 }
 
 @Composable
+@OptIn(ExperimentalResourceApi::class)
 private fun LoadingScreen(
     title: String,
     subtitle: String,
-    icon: DrawableResource,
+    gifPath: String,
 ) {
+    var gifBytes by remember(gifPath) { mutableStateOf<ByteArray?>(null) }
+    LaunchedEffect(gifPath) {
+        gifBytes = Res.readBytes(gifPath)
+    }
     Column(
         modifier =
             Modifier
@@ -574,11 +616,14 @@ private fun LoadingScreen(
                     .background(YralColors.NeutralBlack),
             contentAlignment = Alignment.Center,
         ) {
-            Image(
-                painter = painterResource(icon),
-                contentDescription = null,
-                modifier = Modifier.size(160.dp),
-            )
+            gifBytes?.let { bytes ->
+                YralAsyncImage(
+                    imageUrl = bytes,
+                    modifier = Modifier.size(160.dp),
+                    loaderSize = LoaderSize.None,
+                    contentScale = ContentScale.Fit,
+                )
+            }
         }
         Spacer(modifier = Modifier.height(30.dp))
         Text(

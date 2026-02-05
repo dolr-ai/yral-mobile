@@ -20,6 +20,7 @@ interface ProfileMainComponent {
     fun openAccount()
     fun openEditProfile()
     fun openProfile(userCanisterData: CanisterData)
+    fun openCreateInfluencer()
     fun openConversation(
         influencerId: String,
         influencerCategory: String,
@@ -27,6 +28,7 @@ interface ProfileMainComponent {
     )
     fun onBackClicked()
     companion object Companion {
+        @Suppress("LongParameterList")
         operator fun invoke(
             componentContext: ComponentContext,
             requestLoginFactory: RequestLoginFactory,
@@ -38,6 +40,7 @@ interface ProfileMainComponent {
             openAccount: () -> Unit,
             openEditProfile: () -> Unit,
             openProfile: (CanisterData) -> Unit,
+            openCreateInfluencer: () -> Unit,
             openConversation: (
                 influencerId: String,
                 influencerCategory: String,
@@ -58,6 +61,7 @@ interface ProfileMainComponent {
                 openAccount = openAccount,
                 openEditProfile = openEditProfile,
                 openProfile = openProfile,
+                openCreateInfluencer = openCreateInfluencer,
                 openConversation = openConversation,
                 onBackClicked = onBackClicked,
                 showAlertsOnDialog = showAlertsOnDialog,

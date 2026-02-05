@@ -31,6 +31,7 @@ import com.yral.shared.features.auth.ui.components.getAnnotatedHeaderForLogin
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
+import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -42,6 +43,7 @@ import yral_mobile.shared.features.auth.generated.resources.create_ai_videos_ear
 import yral_mobile.shared.features.auth.generated.resources.create_ai_videos_earn_bitcoin_dis
 import yral_mobile.shared.features.auth.generated.resources.join_tournament
 import yral_mobile.shared.features.auth.generated.resources.join_tournament_disclaimer
+import yral_mobile.shared.features.auth.generated.resources.join_yral_create_influencer
 import yral_mobile.shared.features.auth.generated.resources.login_to_chat_with_influencer
 import yral_mobile.shared.features.auth.generated.resources.login_to_get_25_tokens
 import yral_mobile.shared.features.auth.generated.resources.login_to_join_tournament
@@ -143,7 +145,10 @@ private fun getHeaderText(
             getAnnotatedHeaderForLogin(fullText, maskedText)
         }
         LoginBottomSheetType.CREATE_INFLUENCER -> {
-            getAnnotatedHeaderForLogin(stringResource(Res.string.create_ai_influencer_title))
+            getAnnotatedHeaderForLogin(
+                stringResource(Res.string.create_ai_influencer_title),
+                baseColor = YralColors.Yellow200,
+            )
         }
         is LoginBottomSheetType.CONVERSATION -> {
             val name = type.influencerName
@@ -169,6 +174,7 @@ private fun getTopIcon(type: LoginBottomSheetType) =
         LoginBottomSheetType.UPLOAD_AI_VIDEO -> painterResource(DesignRes.drawable.btc_giftbox)
         LoginBottomSheetType.CREATE_AI_VIDEO -> painterResource(DesignRes.drawable.btc_giftbox)
         LoginBottomSheetType.TOURNAMENT -> painterResource(DesignRes.drawable.victory_cup)
+        LoginBottomSheetType.CREATE_INFLUENCER -> painterResource(Res.drawable.join_yral_create_influencer)
         is LoginBottomSheetType.CONVERSATION -> painterResource(DesignRes.drawable.victory_cup)
         else -> null
     }

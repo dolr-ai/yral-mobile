@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,6 +26,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.shared.core.session.AccountInfo
+import com.yral.shared.libs.designsystem.component.CreateInfluencerButton
 import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralGradientButton
@@ -72,6 +74,8 @@ fun AccountInfoView(
     onFollowingClick: (() -> Unit)? = null,
     onTalkToMeClicked: () -> Unit = {},
     isProUser: Boolean = false,
+    showCreateInfluencerCta: Boolean = false,
+    onCreateInfluencerClick: () -> Unit = {},
 ) {
     Column(
         modifier =
@@ -281,6 +285,14 @@ fun AccountInfoView(
                     }
                 }
             }
+        }
+        if (showCreateInfluencerCta) {
+            CreateInfluencerButton(
+                modifier = Modifier.fillMaxWidth().height(45.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                alignIconToEnd = true,
+                onClick = onCreateInfluencerClick,
+            )
         }
         Spacer(
             modifier =

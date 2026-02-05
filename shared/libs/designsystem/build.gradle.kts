@@ -31,6 +31,7 @@ kotlin {
         androidMain {
             dependencies {
                 implementation(libs.androidx.window)
+                implementation(libs.coil.gif)
             }
         }
     }
