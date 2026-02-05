@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -35,15 +36,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.features.chat.domain.models.ChatError
+import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencerStatus
 import com.yral.shared.features.chat.nav.wall.ChatWallComponent
 import com.yral.shared.features.chat.ui.components.ChatErrorBottomSheet
 import com.yral.shared.features.chat.viewmodel.ChatWallViewModel
+import com.yral.shared.libs.designsystem.component.CreateInfluencerButton
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
@@ -51,6 +55,7 @@ import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import yral_mobile.shared.features.chat.generated.resources.Res
 import yral_mobile.shared.features.chat.generated.resources.chat_wall_coming_soon
 import yral_mobile.shared.features.chat.generated.resources.chat_wall_subtitle
@@ -71,6 +76,18 @@ fun ChatWallScreen(
     modifier: Modifier = Modifier,
     onCreateInfluencerClick: () -> Unit = {},
 ) {
+    val sessionManager: SessionManager = koinInject()
+    val isBotAccount by
+        sessionManager
+            .observeSessionState { state ->
+                (state as? com.yral.shared.core.session.SessionState.SignedIn)?.session?.isBotAccount == true
+            }.collectAsStateWithLifecycle(initialValue = false)
+    val botCount by
+        sessionManager
+            .observeSessionPropertyWithDefault(
+                selector = { it.botCount },
+                defaultValue = 0,
+            ).collectAsStateWithLifecycle(initialValue = 0)
     val influencers = viewModel.influencers.collectAsLazyPagingItems()
     var trackedCardsViewed by remember { mutableStateOf(false) }
 
@@ -117,14 +134,11 @@ fun ChatWallScreen(
                 color = YralColors.Grey50,
                 modifier = Modifier.weight(1f),
             )
-            IconButton(
-                onClick = onCreateInfluencerClick,
-                modifier = Modifier.size(32.dp),
-            ) {
-                Icon(
-                    painter = painterResource(DesignRes.drawable.ic_plus_circle),
-                    contentDescription = "Create AI Influencer",
-                    tint = YralColors.Grey50,
+            if (!isBotAccount && botCount != MAX_BOT_COUNT_FOR_CTA) {
+                CreateInfluencerButton(
+                    modifier = Modifier.height(32.dp),
+                    alignIconToEnd = false,
+                    onClick = onCreateInfluencerClick,
                 )
             }
         }
@@ -304,3 +318,5 @@ object ChatWallScreenConstants {
     const val GRADIENT_WEIGHT = 40f
     const val SOLID_WEIGHT = 20f
 }
+
+private const val MAX_BOT_COUNT_FOR_CTA = 3

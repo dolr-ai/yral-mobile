@@ -214,6 +214,15 @@ class DefaultAuthClient(
             preferences.putString(PrefKeys.ACCESS_TOKEN.name, accessToken)
         }
         persistBotIdentitiesFromToken(idToken)
+        updateBotCountFromPrefs()
+    }
+
+    private suspend fun updateBotCountFromPrefs() {
+        val raw = preferences.getString(PrefKeys.BOT_IDENTITIES.name)
+        val count =
+            raw?.let { runCatching { json.decodeFromString<List<BotIdentityEntry>>(it).size }.getOrNull() }
+                ?: 0
+        sessionManager.updateBotCount(count)
     }
 
     override suspend fun logout() {

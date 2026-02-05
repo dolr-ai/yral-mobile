@@ -54,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -71,6 +72,7 @@ import com.yral.shared.analytics.events.EditProfileSource
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.analytics.events.VideoDeleteCTA
+import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
@@ -123,6 +125,7 @@ import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.koin.compose.koinInject
 import yral_mobile.shared.features.profile.generated.resources.Res
 import yral_mobile.shared.features.profile.generated.resources.become_pro
 import yral_mobile.shared.features.profile.generated.resources.create_ai_video
@@ -149,6 +152,7 @@ import yral_mobile.shared.features.profile.generated.resources.storage_permissio
 import yral_mobile.shared.features.profile.generated.resources.video_will_be_deleted_permanently
 import yral_mobile.shared.features.profile.generated.resources.white_heart
 import yral_mobile.shared.libs.designsystem.generated.resources.account_nav
+import yral_mobile.shared.libs.designsystem.generated.resources.arrow
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.cancel
 import yral_mobile.shared.libs.designsystem.generated.resources.delete
@@ -162,6 +166,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.login
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.my_profile
+import yral_mobile.shared.libs.designsystem.generated.resources.my_profiles
 import yral_mobile.shared.libs.designsystem.generated.resources.oops
 import yral_mobile.shared.libs.designsystem.generated.resources.refresh
 import yral_mobile.shared.libs.designsystem.generated.resources.share_profile
@@ -178,6 +183,7 @@ internal const val PULL_TO_REFRESH_OFFSET_MULTIPLIER = 1.5f
 internal const val MAX_LINES_FOR_POST_DESCRIPTION = 5
 internal const val PADDING_BOTTOM_ACCOUNT_INFO = 20
 internal const val SHEET_GROWTH_PER_ITEM = 0.05f
+internal const val PROFILE_SWITCHER_ROTATION_DEGREES = 90f
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
@@ -187,9 +193,19 @@ fun ProfileMainScreen(
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel,
     profileVideos: LazyPagingItems<FeedDetails>,
+    onCreateInfluencerClick: () -> Unit,
 ) {
+    val sessionManager: SessionManager = koinInject()
+    val botCount by
+        sessionManager
+            .observeSessionPropertyWithDefault(
+                selector = { it.botCount },
+                defaultValue = 0,
+            ).collectAsStateWithLifecycle(initialValue = 0)
+    val hasBotAccounts = botCount > 0
     val state by viewModel.state.collectAsStateWithLifecycle()
     val storagePermissionController = rememberStoragePermissionController()
+    val isBotAccount = sessionManager.isBotAccount == true
 
     val followers = viewModel.followers.collectAsLazyPagingItems()
     val following = viewModel.following.collectAsLazyPagingItems()
@@ -445,6 +461,10 @@ fun ProfileMainScreen(
                             ) {}
                         }
                     },
+                    isBotAccount = isBotAccount,
+                    hasBotAccounts = hasBotAccounts,
+                    botCount = botCount,
+                    onCreateInfluencerClick = onCreateInfluencerClick,
                 )
             }
         }
@@ -615,6 +635,10 @@ private fun MainContent(
     showBackButton: Boolean,
     onDownloadVideo: (FeedDetails) -> Unit,
     onSubscribe: () -> Unit,
+    isBotAccount: Boolean,
+    hasBotAccounts: Boolean,
+    botCount: Int,
+    onCreateInfluencerClick: () -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader(
@@ -622,6 +646,7 @@ private fun MainContent(
             isSubscriptionEnabled = state.isSubscriptionEnabled,
             isProUser = state.isProUser,
             userName = state.accountInfo?.displayName,
+            showAccountChevron = state.isOwnProfile && (isBotAccount || hasBotAccounts),
             showShareProfile = showHeaderShareButton && canShareProfile,
             isWalletEnabled = state.isWalletEnabled,
             onShareProfileClicked = onShareProfileClicked,
@@ -655,6 +680,12 @@ private fun MainContent(
                 onFollowingClick = { onFollowersSectionClick(FollowersSheetTab.Following) },
                 onTalkToMeClicked = viewModel::fetchInfluencerDetails,
                 isProUser = state.isProUser,
+                showCreateInfluencerCta =
+                    state.isOwnProfile &&
+                        state.isLoggedIn &&
+                        !isBotAccount &&
+                        botCount != 3,
+                onCreateInfluencerClick = onCreateInfluencerClick,
             )
         }
         when (profileVideos.loadState.refresh) {
@@ -726,6 +757,7 @@ private fun ProfileHeader(
     isProUser: Boolean,
     isSubscriptionEnabled: Boolean,
     userName: String?,
+    showAccountChevron: Boolean,
     showShareProfile: Boolean,
     isWalletEnabled: Boolean,
     onShareProfileClicked: () -> Unit,
@@ -755,19 +787,40 @@ private fun ProfileHeader(
                             .clickable { onBack() },
                 )
             }
-            Text(
-                text =
-                    if (isOwnProfile) {
-                        stringResource(DesignRes.string.my_profile)
-                    } else {
-                        userName ?: ""
-                    },
-                style = LocalAppTopography.current.xlBold,
-                color = YralColors.NeutralTextPrimary,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier =
-                    Modifier
-                        .clickable(enabled = isOwnProfile) { openAccountSheet() },
-            )
+                    Modifier.clickable(enabled = isOwnProfile && showAccountChevron) {
+                        openAccountSheet()
+                    },
+            ) {
+                Text(
+                    text =
+                        if (isOwnProfile) {
+                            if (showAccountChevron) {
+                                stringResource(DesignRes.string.my_profiles)
+                            } else {
+                                stringResource(DesignRes.string.my_profile)
+                            }
+                        } else {
+                            userName ?: ""
+                        },
+                    style = LocalAppTopography.current.xlBold,
+                    color = YralColors.NeutralTextPrimary,
+                )
+                if (isOwnProfile && showAccountChevron) {
+                    Icon(
+                        painter = painterResource(DesignRes.drawable.arrow),
+                        contentDescription = "Profile switcher",
+                        tint = Color.White,
+                        modifier =
+                            Modifier
+                                .padding(start = 6.dp)
+                                .size(20.dp)
+                                .rotate(PROFILE_SWITCHER_ROTATION_DEGREES),
+                    )
+                }
+            }
         }
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),

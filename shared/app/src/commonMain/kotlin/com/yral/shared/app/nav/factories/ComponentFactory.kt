@@ -82,6 +82,7 @@ internal class ComponentFactory(
             openAccount = {},
             openEditProfile = {},
             openProfile = rootComponent::openProfile,
+            openCreateInfluencer = rootComponent::openCreateInfluencer,
             openConversation = rootComponent::openConversation,
             onBackClicked = rootComponent::onBackClicked,
             showAlertsOnDialog = showAlertsOnDialog,
