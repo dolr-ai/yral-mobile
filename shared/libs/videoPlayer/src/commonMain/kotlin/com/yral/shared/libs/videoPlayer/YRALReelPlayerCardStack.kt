@@ -32,7 +32,7 @@ import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
  * @param onEdgeScrollAttempt Callback when user tries to swipe past the last video.
  * @param getPrefetchListener Factory for creating prefetch listeners per reel.
  * @param overlayContent Content to overlay on each video card (UI controls, etc.).
- * @param onSwipeVote Callback when a swipe vote is registered (direction, pageIndex).
+ * @param onSwipeVote Callback when a swipe vote is registered (direction, pageIndex, isSwipe).
  */
 @Composable
 fun YRALReelPlayerCardStack(
@@ -44,7 +44,7 @@ fun YRALReelPlayerCardStack(
     recordTime: (Int, Int) -> Unit,
     didVideoEnd: () -> Unit,
     onEdgeScrollAttempt: (pageNo: Int, atStart: Boolean, direction: ReelScrollDirection) -> Unit = { _, _, _ -> },
-    onSwipeVote: ((direction: SwipeDirection, pageIndex: Int) -> Unit)? = null,
+    onSwipeVote: ((direction: SwipeDirection, pageIndex: Int, isSwipe: Boolean) -> Unit)? = null,
     overlayContent: @Composable (pageNo: Int, scrollToNext: () -> Unit) -> Unit,
 ) {
     ReelSwipeableCardStack(

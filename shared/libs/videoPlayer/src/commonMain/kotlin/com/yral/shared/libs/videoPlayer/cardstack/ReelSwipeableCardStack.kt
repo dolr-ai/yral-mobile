@@ -42,7 +42,7 @@ internal fun ReelSwipeableCardStack(
     didVideoEnd: () -> Unit,
     onEdgeScrollAttempt: (pageNo: Int, atStart: Boolean, direction: ReelScrollDirection) -> Unit,
     overlayContent: @Composable (pageNo: Int, scrollToNext: () -> Unit) -> Unit,
-    onSwipeVote: ((direction: SwipeDirection, pageIndex: Int) -> Unit)? = null,
+    onSwipeVote: ((direction: SwipeDirection, pageIndex: Int, isSwipe: Boolean) -> Unit)? = null,
 ) {
     val pageCount = minOf(reels.size, maxReelsInPager)
     if (pageCount == 0) return
@@ -139,7 +139,7 @@ internal fun ReelSwipeableCardStack(
             key = { index -> visibleReels[index].videoId },
             onSwipeComplete = { direction ->
                 if (direction == SwipeDirection.LEFT || direction == SwipeDirection.RIGHT) {
-                    onSwipeVote?.invoke(direction, swipeState.settledIndex)
+                    onSwipeVote?.invoke(direction, swipeState.settledIndex, true)
                 }
             },
             onEdgeReached = { direction ->
@@ -216,7 +216,7 @@ internal fun ReelSwipeableCardStack(
                             screenWidth = screenWidth,
                             screenHeight = screenHeight,
                             onComplete = {
-                                onSwipeVote?.invoke(SwipeDirection.LEFT, votedCardIndex)
+                                onSwipeVote?.invoke(SwipeDirection.LEFT, votedCardIndex, false)
                             },
                         )
                     }
@@ -231,7 +231,7 @@ internal fun ReelSwipeableCardStack(
                             screenWidth = screenWidth,
                             screenHeight = screenHeight,
                             onComplete = {
-                                onSwipeVote?.invoke(SwipeDirection.RIGHT, votedCardIndex)
+                                onSwipeVote?.invoke(SwipeDirection.RIGHT, votedCardIndex, false)
                             },
                         )
                     }

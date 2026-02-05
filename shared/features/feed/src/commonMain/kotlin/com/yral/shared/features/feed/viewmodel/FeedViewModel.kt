@@ -122,6 +122,9 @@ class FeedViewModel(
     private val trackedOnboardingSteps = mutableSetOf<OnboardingStep>()
 
     init {
+        // Set HON experiment super property for analytics
+        feedTelemetry.setHonExperimentStatus(_state.value.isCardLayoutEnabled)
+
         if (feedContext is FeedContext.Default) {
             initAvailableFeeds()
             loadCachedFeedDetails()

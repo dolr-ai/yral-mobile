@@ -7,6 +7,7 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.events.GameConcludedCtaType
 import com.yral.shared.analytics.events.GameType
+import com.yral.shared.analytics.events.SwipeAction
 import com.yral.shared.core.session.DELAY_FOR_SESSION_PROPERTIES
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.domain.models.FeedDetails
@@ -452,12 +453,13 @@ class GameViewModel(
     fun castHotOrNotVote(
         isHot: Boolean,
         feedDetails: FeedDetails,
+        swipeAction: SwipeAction,
     ) {
         val gameState = _state.value
         if (gameState.isLoading) return
         viewModelScope.launch {
             if (gameState.coinBalance >= HOT_OR_NOT_LOSS_PENALTY) {
-                executeHotOrNotVote(isHot, feedDetails)
+                executeHotOrNotVote(isHot, feedDetails, swipeAction)
             } else {
                 refreshBalance()
             }
@@ -468,6 +470,7 @@ class GameViewModel(
     private suspend fun executeHotOrNotVote(
         isHot: Boolean,
         feedDetails: FeedDetails,
+        swipeAction: SwipeAction,
     ) {
         val videoId = feedDetails.videoID
         // Initialize result tracking
@@ -486,6 +489,7 @@ class GameViewModel(
             gameTelemetry.onHotOrNotVoted(
                 feedDetails = feedDetails,
                 optionChosen = if (isHot) "hot" else "not",
+                swipeAction = swipeAction,
             )
             castHotOrNotVoteUseCase
                 .invoke(
@@ -573,6 +577,10 @@ class GameViewModel(
                 }
             currentState.copy(hotOrNotResult = updatedResults)
         }
+    }
+
+    fun onHowToPlayClicked() {
+        gameTelemetry.onHowToPlayClicked(gameType = _state.value.gameType)
     }
 
     companion object {

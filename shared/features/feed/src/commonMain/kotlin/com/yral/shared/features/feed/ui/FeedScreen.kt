@@ -81,7 +81,7 @@ fun FeedScreen(
     onPageChanged: (pageNo: Int, currentPage: Int) -> Unit,
     onEdgeScrollAttempt: (pageNo: Int) -> Unit,
     limitReelCount: Int,
-    onSwipeVote: ((direction: SwipeDirection, pageIndex: Int) -> Unit)? = null,
+    onSwipeVote: ((direction: SwipeDirection, pageIndex: Int, isSwipe: Boolean) -> Unit)? = null,
 ) {
     val state by viewModel.state.collectAsState()
 
