@@ -335,6 +335,7 @@ internal class DefaultHomeComponent(
             onUploadVideoClicked = { onUploadVideoTabClick() },
             openEditProfile = openEditProfile,
             openProfile = openProfile,
+            openCreateInfluencer = openCreateInfluencer,
             openConversation = openConversation,
             openAccountSheet = openAccountSheet,
             snapshot = childSnapshots[Config.Profile] as? ProfileComponent.Snapshot,

@@ -22,7 +22,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -31,7 +30,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -138,29 +136,6 @@ fun RootScreen(rootComponent: RootComponent) {
         }
     }
 
-    val startupInfo = state.startupDialogInfo
-    if (state.showStartupDialog && startupInfo != null) {
-        AlertDialog(
-            onDismissRequest = { viewModel.dismissStartupDialog() },
-            confirmButton = {
-                TextButton(onClick = { viewModel.dismissStartupDialog() }) {
-                    Text("OK")
-                }
-            },
-            title = { Text("Accounts found") },
-            text = {
-                val main = startupInfo.mainPrincipal ?: "None"
-                val bots =
-                    if (startupInfo.botPrincipals.isEmpty()) {
-                        "None"
-                    } else {
-                        startupInfo.botPrincipals.joinToString("\n")
-                    }
-                Text("Main: $main\nBots:\n$bots")
-            },
-        )
-    }
-
     Scaffold(
         containerColor = MaterialTheme.colorScheme.primaryContainer,
         modifier = Modifier.fillMaxSize(),
@@ -227,6 +202,7 @@ fun RootScreen(rootComponent: RootComponent) {
                             modifier = Modifier.fillMaxSize().safeDrawingPadding(),
                             viewModel = profileViewModel,
                             profileVideos = profileVideos,
+                            onCreateInfluencerClick = rootComponent::openCreateInfluencer,
                         )
                     }
 
@@ -293,7 +269,6 @@ fun RootScreen(rootComponent: RootComponent) {
                             onCreateProfile = {
                                 aiInfluencerViewModel.createBotAccount {
                                     rootComponent.onBackClicked()
-                                    rootComponent.onNavigationRequest(Profile)
                                 }
                             },
                         )

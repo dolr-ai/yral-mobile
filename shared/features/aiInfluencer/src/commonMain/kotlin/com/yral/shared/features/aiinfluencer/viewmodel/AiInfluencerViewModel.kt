@@ -650,6 +650,7 @@ class AiInfluencerViewModel(
 class BotIdentityStorage(
     private val preferences: Preferences,
     private val json: Json,
+    private val sessionManager: SessionManager,
 ) {
     suspend fun saveBotIdentity(
         principal: String,
@@ -671,6 +672,7 @@ class BotIdentityStorage(
                 )
         val encoded = json.encodeToString(updated)
         preferences.putString(PrefKeys.BOT_IDENTITIES.name, encoded)
+        sessionManager.updateBotCount(updated.size)
     }
 
     @Serializable

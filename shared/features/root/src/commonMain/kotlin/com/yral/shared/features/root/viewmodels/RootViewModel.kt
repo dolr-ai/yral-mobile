@@ -112,7 +112,6 @@ class RootViewModel(
         const val SPLASH_SCREEN_TIMEOUT = 31000L // 31 seconds timeout
         const val INITIAL_DELAY_FOR_SETUP = 300L
         private const val ACCOUNT_DIALOG_RETRY_DELAY_MS = 500L
-        private const val STARTUP_DIALOG_RETRY_DELAY_MS = 500L
         private const val BOT_LOAD_MAX_ATTEMPTS = 3
         private const val BOT_LOAD_RETRY_DELAY_MS = 600L
         private const val JWT_PAYLOAD_INDEX = 1
@@ -233,7 +232,6 @@ class RootViewModel(
             if (_state.value.accountDialogInfo == null) {
                 populateAccountDialog(showSheet = false)
             }
-            populateStartupDialog()
             autoSwitchToLastActiveAccount()
         } ?: authClient.initialize()
     }
@@ -421,10 +419,6 @@ class RootViewModel(
         _state.update { it.copy(showAccountDialog = false) }
     }
 
-    fun dismissStartupDialog() {
-        _state.update { it.copy(showStartupDialog = false) }
-    }
-
     @Suppress("LongMethod")
     fun switchToAccount(principal: String) {
         coroutineScope.launch {
@@ -553,29 +547,6 @@ class RootViewModel(
         }
     }
 
-    private suspend fun populateStartupDialog(allowRetry: Boolean = true) {
-        val mainPrincipal =
-            preferences.getString(PrefKeys.MAIN_PRINCIPAL.name)
-                ?: preferences.getString(PrefKeys.USER_PRINCIPAL.name)
-        val bots =
-            loadBotEntries()
-                ?.map { it.principal }
-                ?.distinct()
-                .orEmpty()
-
-        if (mainPrincipal != null || bots.isNotEmpty()) {
-            _state.update {
-                it.copy(
-                    startupDialogInfo = PrincipalDialogInfo(mainPrincipal = mainPrincipal, botPrincipals = bots),
-                    showStartupDialog = true,
-                )
-            }
-        } else if (allowRetry) {
-            delay(STARTUP_DIALOG_RETRY_DELAY_MS)
-            populateStartupDialog(allowRetry = false)
-        }
-    }
-
     fun isPendingLogin(): Boolean =
         with(_state.value) {
             isPendingLogin !is UiState.Success || isPendingLogin.data
@@ -653,6 +624,7 @@ class RootViewModel(
                     }
             if (!cachedBots.isNullOrEmpty()) {
                 Logger.d("RootViewModel") { "loadBotEntries: using cached ${cachedBots.size} bots" }
+                sessionManager.updateBotCount(cachedBots.size)
                 result = cachedBots
                 return@repeat
             }
@@ -663,6 +635,7 @@ class RootViewModel(
                 Logger.d("RootViewModel") {
                     "loadBotEntries: parsed ${entriesFromToken.size} bots from token on attempt $attempt"
                 }
+                sessionManager.updateBotCount(entriesFromToken.size)
                 runCatching {
                     preferences.putString(
                         PrefKeys.BOT_IDENTITIES.name,
@@ -679,6 +652,7 @@ class RootViewModel(
         }
         if (result == null) {
             Logger.d("RootViewModel") { "loadBotEntries: no bots found after retries" }
+            sessionManager.updateBotCount(0)
         }
         return result ?: emptyList()
     }
@@ -756,8 +730,6 @@ data class RootState(
     val isPendingLogin: UiState<Boolean> = UiState.Initial,
     val accountDialogInfo: AccountDialogInfo? = null,
     val showAccountDialog: Boolean = false,
-    val startupDialogInfo: PrincipalDialogInfo? = null,
-    val showStartupDialog: Boolean = false,
 )
 
 data class AccountDialogInfo(
@@ -778,9 +750,4 @@ data class AccountUi(
     val avatarUrl: String,
     val isBot: Boolean,
     val isActive: Boolean,
-)
-
-data class PrincipalDialogInfo(
-    val mainPrincipal: String?,
-    val botPrincipals: List<String>,
 )

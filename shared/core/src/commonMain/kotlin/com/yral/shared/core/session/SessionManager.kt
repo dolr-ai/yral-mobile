@@ -76,7 +76,10 @@ class SessionManager {
         mutableState.update { state }
         mutableProperties.update {
             // Preserve pending tournament registration across session changes
-            SessionProperties(pendingTournamentRegistrationId = it.pendingTournamentRegistrationId)
+            SessionProperties(
+                pendingTournamentRegistrationId = it.pendingTournamentRegistrationId,
+                botCount = it.botCount,
+            )
         }
     }
 
@@ -90,6 +93,10 @@ class SessionManager {
 
     fun updateProfileVideosCount(count: Int?) {
         mutableProperties.update { it.copy(profileVideosCount = count) }
+    }
+
+    fun updateBotCount(count: Int?) {
+        mutableProperties.update { it.copy(botCount = count) }
     }
 
     fun updateIsForcedGamePlayUser(isForcedGamePlayUser: Boolean) {
@@ -224,6 +231,7 @@ class SessionManager {
             SessionProperties(
                 coinBalance = 0,
                 profileVideosCount = 0,
+                botCount = null,
                 isSocialSignIn = false,
                 // Preserve pending tournament registration across session resets
                 pendingTournamentRegistrationId = it.pendingTournamentRegistrationId,

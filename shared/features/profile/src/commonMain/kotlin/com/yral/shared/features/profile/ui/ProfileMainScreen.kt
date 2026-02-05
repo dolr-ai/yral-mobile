@@ -114,8 +114,6 @@ import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.appTypoGraphy
-import com.yral.shared.preferences.PrefKeys
-import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.service.domain.models.FollowerItem
 import com.yral.shared.rust.service.domain.models.PagedFollowerItem
 import com.yral.shared.rust.service.utils.CanisterData
@@ -123,9 +121,6 @@ import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import com.yral.shared.rust.service.utils.propicFromPrincipal
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -198,26 +193,19 @@ fun ProfileMainScreen(
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel,
     profileVideos: LazyPagingItems<FeedDetails>,
+    onCreateInfluencerClick: () -> Unit,
 ) {
     val sessionManager: SessionManager = koinInject()
-    val preferences: Preferences = koinInject()
-    val json: Json = koinInject()
-    var hasBotAccounts by remember { mutableStateOf(false) }
+    val botCount by
+        sessionManager
+            .observeSessionPropertyWithDefault(
+                selector = { it.botCount },
+                defaultValue = 0,
+            ).collectAsStateWithLifecycle(initialValue = 0)
+    val hasBotAccounts = botCount > 0
     val state by viewModel.state.collectAsStateWithLifecycle()
     val storagePermissionController = rememberStoragePermissionController()
     val isBotAccount = sessionManager.isBotAccount == true
-
-    LaunchedEffect(state.isOwnProfile) {
-        if (state.isOwnProfile) {
-            val raw = preferences.getString(PrefKeys.BOT_IDENTITIES.name)
-            val bots =
-                raw?.let { runCatching { json.decodeFromString<List<BotIdentityEntry>>(it) }.getOrNull() }
-                    ?: emptyList()
-            hasBotAccounts = bots.isNotEmpty()
-        } else {
-            hasBotAccounts = false
-        }
-    }
 
     val followers = viewModel.followers.collectAsLazyPagingItems()
     val following = viewModel.following.collectAsLazyPagingItems()
@@ -475,6 +463,8 @@ fun ProfileMainScreen(
                     },
                     isBotAccount = isBotAccount,
                     hasBotAccounts = hasBotAccounts,
+                    botCount = botCount,
+                    onCreateInfluencerClick = onCreateInfluencerClick,
                 )
             }
         }
@@ -647,6 +637,8 @@ private fun MainContent(
     onSubscribe: () -> Unit,
     isBotAccount: Boolean,
     hasBotAccounts: Boolean,
+    botCount: Int,
+    onCreateInfluencerClick: () -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader(
@@ -688,6 +680,12 @@ private fun MainContent(
                 onFollowingClick = { onFollowersSectionClick(FollowersSheetTab.Following) },
                 onTalkToMeClicked = viewModel::fetchInfluencerDetails,
                 isProUser = state.isProUser,
+                showCreateInfluencerCta =
+                    state.isOwnProfile &&
+                        state.isLoggedIn &&
+                        !isBotAccount &&
+                        botCount != 3,
+                onCreateInfluencerClick = onCreateInfluencerClick,
             )
         }
         when (profileVideos.loadState.refresh) {
@@ -751,13 +749,6 @@ private fun totalCount(data: LazyPagingItems<PagedFollowerItem>?) =
             0
         }
     } ?: 0
-
-@Serializable
-private data class BotIdentityEntry(
-    val principal: String,
-    val identity: String,
-    val username: String? = null,
-)
 
 @Suppress("LongMethod")
 @Composable
