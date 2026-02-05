@@ -25,6 +25,11 @@ use yral_metadata_client::MetadataClient;
 use yral_metadata_types::SetUserMetadataReqMetadata;
 use yral_types::delegated_identity::DelegatedIdentityWire;
 use yral_username_gen::random_username_from_principal;
+use yral_identity::ic_agent::sign_message;
+use yral_metadata_types::Message;
+use serde::{Deserialize as SerdeDeserialize, Serialize};
+use std::time::Duration as StdDuration;
+use web_time::Duration as WebDuration;
 
 pub type Secp256k1Error = k256::elliptic_curve::Error;
 
@@ -125,6 +130,105 @@ pub fn delegated_identity_wire_to_json(data: &[u8]) -> String {
     let wire = delegated_identity_wire_from_bytes(data).unwrap();
     serde_json::to_string(&wire).unwrap()
 }
+
+#[derive(uniffi::Record)]
+pub struct DelegationRecord {
+    pub pubkey: Vec<u8>,
+    pub expiration: u64,
+    pub targets: Option<Vec<String>>,
+}
+
+#[derive(uniffi::Record)]
+pub struct SignedDelegationRecord {
+    pub delegation: DelegationRecord,
+    pub signature: Vec<u8>,
+}
+
+#[derive(uniffi::Record)]
+pub struct SignatureRecord {
+    pub sig: Option<Vec<u8>>,
+    pub public_key: Option<Vec<u8>>,
+    pub ingress_expiry: StdDuration,
+    pub delegations: Option<Vec<SignedDelegationRecord>>,
+    pub sender: Principal,
+}
+
+#[derive(SerdeDeserialize, Serialize)]
+struct DelegationSerde {
+    pub pubkey: Vec<u8>,
+    pub expiration_ns: u64,
+    pub targets: Option<Vec<Principal>>,
+}
+
+#[derive(SerdeDeserialize, Serialize)]
+struct SignedDelegationSerde {
+    pub delegation: DelegationSerde,
+    pub signature: Vec<u8>,
+}
+
+#[derive(SerdeDeserialize, Serialize)]
+struct SignatureSerde {
+    pub sig: Option<Vec<u8>>,
+    pub public_key: Option<Vec<u8>>,
+    pub ingress_expiry: WebDuration,
+    pub delegations: Option<Vec<SignedDelegationSerde>>,
+    pub sender: Principal,
+}
+
+fn signature_to_record(signature: yral_identity::Signature) -> std::result::Result<SignatureRecord, FFIError> {
+    let serialized = serde_json::to_vec(&signature)
+        .map_err(|e| FFIError::UnknownError(format!("Failed to serialize signature: {:?}", e)))?;
+    let deserialized: SignatureSerde = serde_json::from_slice(&serialized)
+        .map_err(|e| FFIError::UnknownError(format!("Failed to deserialize signature: {:?}", e)))?;
+
+    let delegations = deserialized
+        .delegations
+        .map(|list| {
+            list.into_iter()
+                .map(|item| SignedDelegationRecord {
+                    delegation: DelegationRecord {
+                        pubkey: item.delegation.pubkey,
+                        expiration: item.delegation.expiration_ns,
+                        targets: item
+                            .delegation
+                            .targets
+                            .map(|targets| targets.into_iter().map(|t| t.to_string()).collect()),
+                    },
+                    signature: item.signature,
+                })
+                .collect()
+        });
+
+    let ingress_expiry = StdDuration::new(
+        deserialized.ingress_expiry.as_secs(),
+        deserialized.ingress_expiry.subsec_nanos(),
+    );
+
+    Ok(SignatureRecord {
+        sig: deserialized.sig,
+        public_key: deserialized.public_key,
+        ingress_expiry,
+        delegations,
+        sender: deserialized.sender,
+    })
+}
+
+#[uniffi::export]
+pub fn sign_message_internal(
+    identity_data: Vec<u8>,
+    message: String,
+) -> std::result::Result<SignatureRecord, FFIError> {
+    let identity = delegated_identity_from_bytes(&identity_data)
+        .map_err(|e| FFIError::UnknownError(format!("Failed to parse identity: {:?}", e)))?;
+
+    let msg = Message::default().method_name(message);
+    let signature = sign_message(&identity, msg)
+        .map_err(|e| FFIError::UnknownError(format!("Failed to sign message: {:?}", e)))?;
+
+    signature_to_record(signature)
+}
+
+
 
 #[derive(uniffi::Object)]
 pub struct CanistersWrapper {

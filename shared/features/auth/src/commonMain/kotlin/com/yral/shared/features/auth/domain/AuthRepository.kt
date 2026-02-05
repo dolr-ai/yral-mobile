@@ -37,4 +37,14 @@ interface AuthRepository {
         code: String,
         clientState: String,
     ): PhoneAuthVerifyResponse
+
+    suspend fun createAiAccount(
+        userPrincipal: String,
+        signature: ByteArray,
+        publicKey: ByteArray,
+        signedMessage: ByteArray,
+        ingressExpirySecs: Long,
+        ingressExpiryNanos: Int,
+        delegations: List<com.yral.shared.rust.service.utils.SignedDelegationPayload>?,
+    ): ByteArray
 }

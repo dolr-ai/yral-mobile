@@ -3,6 +3,7 @@ package com.yral.shared.features.uploadvideo.data.remote.models
 import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoResult
+import com.yral.shared.features.uploadvideo.domain.models.ImageData
 import com.yral.shared.rust.service.domain.models.VideoGenRequestKey
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
@@ -10,8 +11,11 @@ import io.ktor.http.isSuccess
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.put
 
 @Serializable
 internal data class GenerateVideoRequestDto(
@@ -25,10 +29,10 @@ internal data class RequestBodyDto(
     @SerialName("duration_seconds") val durationSeconds: Int?,
     // @SerialName("extra_params") val extraParams: Map<String, String>?,
     @SerialName("generate_audio") val generateAudio: Boolean?,
-    @SerialName("image") val image: String?,
     @SerialName("model_id") val modelId: String,
     @SerialName("negative_prompt") val negativePrompt: String?,
     @SerialName("prompt") val prompt: String,
+    @SerialName("image") val image: JsonElement?,
     @SerialName("resolution") val resolution: String?,
     @SerialName("seed") val seed: Long? = null,
     @SerialName("token_type") val tokenType: TokenType?,
@@ -75,7 +79,7 @@ internal fun GenerateVideoParams.toRequestDto(delegatedIdentityWire: KotlinDeleg
                 durationSeconds = durationSeconds,
                 // extraParams = extraParams,
                 generateAudio = generateAudio,
-                image = image,
+                image = image?.toJsonElement(),
                 modelId = providerId,
                 negativePrompt = negativePrompt,
                 prompt = prompt,
@@ -85,6 +89,21 @@ internal fun GenerateVideoParams.toRequestDto(delegatedIdentityWire: KotlinDeleg
                 userId = userId ?: "",
             ),
     )
+
+private fun ImageData.toJsonElement(): JsonElement =
+    when (this) {
+        is ImageData.Base64 ->
+            buildJsonObject {
+                put("type", "Base64")
+                put(
+                    "value",
+                    buildJsonObject {
+                        put("data", image.data)
+                        put("mime_type", image.mimeType)
+                    },
+                )
+            }
+    }
 
 internal suspend fun HttpResponse.parseGenerateVideoResponse(json: Json): GenerateVideoResult {
     val text = bodyAsText()
@@ -101,13 +120,15 @@ internal suspend fun HttpResponse.parseGenerateVideoResponse(json: Json): Genera
             providerError = null,
         )
     } else {
-        val errorObj = json.parseToJsonElement(text).jsonObject
-        val error = json.decodeFromJsonElement<GenerateVideoProviderErrorDto>(errorObj)
+        val errorObj = runCatching { json.parseToJsonElement(text).jsonObject }.getOrNull()
+        val error =
+            errorObj
+                ?.let { runCatching { json.decodeFromJsonElement<GenerateVideoProviderErrorDto>(it) }.getOrNull() }
         GenerateVideoResult(
             operationId = null,
             provider = null,
             requestKey = null,
-            providerError = error.providerError,
+            providerError = error?.providerError ?: text,
         )
     }
 }

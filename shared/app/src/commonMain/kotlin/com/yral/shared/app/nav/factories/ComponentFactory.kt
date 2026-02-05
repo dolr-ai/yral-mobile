@@ -44,11 +44,13 @@ internal class ComponentFactory(
                 subscriptionCoordinator = rootComponent.getSubscriptionCoordinator(),
                 openEditProfile = rootComponent::openEditProfile,
                 openProfile = rootComponent::openProfile,
+                openCreateInfluencer = rootComponent::openCreateInfluencer,
                 openTournamentLeaderboard = rootComponent::openTournamentLeaderboard,
                 openTournamentGame = rootComponent::openTournamentGame,
                 openConversation = rootComponent::openConversation,
                 openWallet = rootComponent::openWallet,
                 openLeaderboard = rootComponent::openLeaderboard,
+                openAccountSheet = { rootComponent.rootViewModel.showAccountSwitcher() },
                 showAlertsOnDialog = showAlertsOnDialog,
             )
         setHomeComponent(component)
@@ -72,6 +74,7 @@ internal class ComponentFactory(
             userCanisterData = config.userCanisterData,
             pendingVideoNavigation = flowOf(null),
             onUploadVideoClicked = {},
+            openAccountSheet = { rootComponent.rootViewModel.showAccountSwitcher() },
             openAccount = {},
             openEditProfile = {},
             openProfile = rootComponent::openProfile,

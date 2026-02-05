@@ -129,4 +129,18 @@ class UserInfoRepositoryImpl(
     ) = traceApiCall(performanceTracer, "updateProfileDetailsV2") {
         dataSource.updateProfileDetailsV2(principal, details)
     }
+
+    override suspend fun acceptNewUserRegistrationV2(
+        principal: Principal,
+        newPrincipal: Principal,
+        authenticated: Boolean,
+        mainAccount: Principal?,
+    ) = traceApiCall(performanceTracer, "acceptNewUserRegistrationV2") {
+        dataSource.acceptNewUserRegistrationV2(
+            principal = principal,
+            newPrincipal = newPrincipal,
+            authenticated = authenticated,
+            mainAccount = mainAccount,
+        )
+    }
 }

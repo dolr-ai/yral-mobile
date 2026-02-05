@@ -50,6 +50,7 @@ abstract class HomeComponent {
     )
     abstract fun openWallet()
     abstract fun openLeaderboard()
+    abstract fun openCreateInfluencer()
 
     sealed class Child {
         class Feed(
@@ -98,6 +99,7 @@ abstract class HomeComponent {
                 influencerCategory: String,
                 influencerSource: InfluencerSource,
             ) -> Unit,
+            openCreateInfluencer: () -> Unit,
             openWallet: () -> Unit,
             openLeaderboard: () -> Unit,
             openTournamentLeaderboard: (
@@ -113,6 +115,7 @@ abstract class HomeComponent {
                 totalPrizePool: Int,
                 isHotOrNot: Boolean,
             ) -> Unit,
+            openAccountSheet: () -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
         ): HomeComponent =
             DefaultHomeComponent(
@@ -122,10 +125,12 @@ abstract class HomeComponent {
                 openEditProfile,
                 openProfile,
                 openConversation,
+                openCreateInfluencer,
                 openWallet,
                 openLeaderboard,
                 openTournamentLeaderboard,
                 openTournamentGame,
+                openAccountSheet,
                 showAlertsOnDialog,
             )
     }

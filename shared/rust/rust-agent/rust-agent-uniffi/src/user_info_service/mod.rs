@@ -427,6 +427,49 @@ impl UserInfoService {
     }
 
     #[uniffi::method]
+    pub async fn accept_new_user_registration_v2(
+        &self,
+        new_principal_text: String,
+        authenticated: bool,
+        main_account_text: Option<String>,
+    ) -> Result<()> {
+        let agent = Arc::clone(&self.agent);
+        RUNTIME
+            .spawn(async move {
+                let new_principal = Principal::from_text(new_principal_text).map_err(|e| {
+                    FFIError::PrincipalError(format!("Invalid principal: {:?}", e))
+                })?;
+                let main_account = match main_account_text {
+                    Some(text) => Some(
+                        Principal::from_text(text).map_err(|e| {
+                            FFIError::PrincipalError(format!("Invalid principal: {:?}", e))
+                        })?,
+                    ),
+                    None => None,
+                };
+                let service = yral_canisters_client::user_info_service::UserInfoService(
+                    yral_canisters_client::ic::USER_INFO_SERVICE_ID,
+                    &agent,
+                );
+                let res = service
+                    .accept_new_user_registration_v_2(new_principal, authenticated, main_account)
+                    .await
+                    .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?;
+                match res {
+                    yral_canisters_client::user_info_service::Result_::Ok => Ok(()),
+                    yral_canisters_client::user_info_service::Result_::Err(msg) => Err(
+                        FFIError::UnknownError(format!(
+                            "Accept new user registration failed: {}",
+                            msg
+                        )),
+                    ),
+                }
+            })
+            .await
+            .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
+    }
+
+    #[uniffi::method]
     pub async fn unfollow_user(&self, target_principal_text: String) -> Result<()> {
         let agent = Arc::clone(&self.agent);
         RUNTIME
@@ -715,6 +758,33 @@ impl UserInfoService {
                     }
                     yral_canisters_client::user_info_service::Result2::Err(msg) => {
                         Err(FFIError::UnknownError(format!("{:?}", msg)))
+                    }
+                }
+            })
+            .await
+            .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
+    }
+
+    #[uniffi::method]
+    pub async fn delete_user_info(&self, principal_to_delete_text: String) -> Result<()> {
+        let agent = Arc::clone(&self.agent);
+        RUNTIME
+            .spawn(async move {
+                let principal_to_delete = Principal::from_text(principal_to_delete_text).map_err(|e| {
+                    FFIError::PrincipalError(format!("Invalid principal: {:?}", e))
+                })?;
+                let service = yral_canisters_client::user_info_service::UserInfoService(
+                    yral_canisters_client::ic::USER_INFO_SERVICE_ID,
+                    &agent,
+                );
+                let res = service
+                    .delete_user_info(principal_to_delete)
+                    .await
+                    .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?;
+                match res {
+                    yral_canisters_client::user_info_service::Result_::Ok => Ok(()),
+                    yral_canisters_client::user_info_service::Result_::Err(msg) => {
+                        Err(FFIError::UnknownError(format!("Delete user failed: {}", msg)))
                     }
                 }
             })
