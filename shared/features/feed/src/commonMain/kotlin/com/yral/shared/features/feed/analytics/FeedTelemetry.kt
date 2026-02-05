@@ -220,4 +220,8 @@ class FeedTelemetry(
             ),
         )
     }
+
+    fun setHonExperimentStatus(isEnabled: Boolean) {
+        analyticsManager.setHonExperimentStatus(isEnabled)
+    }
 }

@@ -10,6 +10,8 @@ import com.yral.shared.analytics.events.GameResult
 import com.yral.shared.analytics.events.GameTutorialShownEventData
 import com.yral.shared.analytics.events.GameType
 import com.yral.shared.analytics.events.GameVotedEventData
+import com.yral.shared.analytics.events.HowToPlayClickedEventData
+import com.yral.shared.analytics.events.SwipeAction
 import com.yral.shared.analytics.events.TokenType
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.preferences.stores.AffiliateAttributionStore
@@ -23,6 +25,7 @@ class GameTelemetry(
         lossPenalty: Int,
         optionChosen: String,
         isTutorialVote: Boolean,
+        swipeAction: SwipeAction = SwipeAction.CLICK,
     ) {
         analyticsManager.trackEvent(
             event =
@@ -38,6 +41,7 @@ class GameTelemetry(
                     stakeAmount = lossPenalty,
                     optionChosen = optionChosen,
                     isTutorialVote = isTutorialVote,
+                    swipeAction = swipeAction,
                 ),
         )
     }
@@ -142,6 +146,7 @@ class GameTelemetry(
     fun onHotOrNotVoted(
         feedDetails: FeedDetails,
         optionChosen: String,
+        swipeAction: SwipeAction,
     ) {
         analyticsManager.trackEvent(
             event =
@@ -157,6 +162,7 @@ class GameTelemetry(
                     stakeAmount = HOT_OR_NOT_STAKE,
                     optionChosen = optionChosen,
                     isTutorialVote = false,
+                    swipeAction = swipeAction,
                 ),
         )
     }
@@ -184,6 +190,12 @@ class GameTelemetry(
                     isTutorialVote = false,
                     affiliate = affiliateAttributionStore.peek(),
                 ),
+        )
+    }
+
+    fun onHowToPlayClicked(gameType: GameType) {
+        analyticsManager.trackEvent(
+            event = HowToPlayClickedEventData(gameType = gameType),
         )
     }
 

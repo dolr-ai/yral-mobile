@@ -56,9 +56,7 @@ import kotlinx.coroutines.flow.map
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.tournament.generated.resources.exit
-import yral_mobile.shared.features.tournament.generated.resources.ic_timer
 import yral_mobile.shared.features.tournament.generated.resources.tournament_diamond
-import yral_mobile.shared.features.tournament.generated.resources.tournament_ends_in
 import yral_mobile.shared.features.tournament.generated.resources.tournament_ingame_rank
 import yral_mobile.shared.features.tournament.generated.resources.tournament_most_people_chose
 import yral_mobile.shared.features.tournament.generated.resources.tournament_not_most_popular_pick
@@ -70,7 +68,6 @@ import yral_mobile.shared.libs.designsystem.generated.resources.exclamation
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_how_to_play
 import yral_mobile.shared.libs.designsystem.generated.resources.shadow
 import kotlin.math.abs
-import kotlin.time.Duration.Companion.milliseconds
 import yral_mobile.shared.features.tournament.generated.resources.Res as TournamentRes
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
@@ -248,8 +245,8 @@ fun TournamentBottomOverlay(
     gameState: TournamentGameState,
     gameViewModel: TournamentGameViewModel,
     timeLeftMs: Long,
+    totalDurationMs: Long,
     isHotOrNot: Boolean,
-    onHowToPlayClick: () -> Unit,
 ) {
     gameViewModel.hasVotedOnVideo(feedDetails.videoID)
     val voteResult = gameViewModel.getVoteResult(feedDetails.videoID)
@@ -309,23 +306,13 @@ fun TournamentBottomOverlay(
                 modifier = Modifier.padding(bottom = 24.dp),
             )
         }
-        Image(
-            painter = painterResource(DesignRes.drawable.ic_how_to_play),
-            contentDescription = "how to play",
-            contentScale = ContentScale.None,
+        CircularTimerProgress(
+            timeLeftMs = timeLeftMs,
+            totalDurationMs = totalDurationMs,
             modifier =
                 Modifier
                     .align(Alignment.BottomStart)
-                    .padding(start = 20.dp, bottom = overlayBottomPadding + 8.dp)
-                    .size(32.dp)
-                    .clickable { onHowToPlayClick() },
-        )
-        TournamentTimerPill(
-            timeLeftMs = timeLeftMs,
-            modifier =
-                Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = overlayBottomPadding + 12.dp),
+                    .padding(start = 16.dp, bottom = overlayBottomPadding + 8.dp),
         )
     }
 }
@@ -413,59 +400,21 @@ private fun TournamentGameResultContent(
     Text(text = resultText, inlineContent = inlineContent)
 }
 
-@Suppress("MagicNumber")
-@Composable
-private fun TournamentTimerPill(
-    timeLeftMs: Long,
-    modifier: Modifier = Modifier,
-) {
-    val timeLeftColor =
-        when {
-            timeLeftMs <= 60_000L -> Color(0xFFFF6353)
-            timeLeftMs <= 300_000L -> YralColors.Yellow200
-            else -> YralColors.Neutral300
-        }
-    val remainingDuration = formatRemainingDuration(timeLeftMs.milliseconds)
-    Row(
-        modifier =
-            modifier
-                .clip(RoundedCornerShape(8.dp))
-                .background(Color(0x660A0A0A))
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Image(
-            painter = painterResource(TournamentRes.drawable.ic_timer),
-            contentDescription = null,
-            modifier = Modifier.size(16.dp),
-        )
-        Text(
-            text =
-                buildAnnotatedString {
-                    append(
-                        stringResource(
-                            TournamentRes.string.tournament_ends_in,
-                            "",
-                        ).trim(),
-                    )
-                    append(" ")
-                    withStyle(SpanStyle(color = timeLeftColor)) {
-                        append(remainingDuration)
-                    }
-                },
-            style = LocalAppTopography.current.regMedium,
-            color = YralColors.Neutral300,
-            maxLines = 1,
-        )
-    }
-}
-
 @Composable
 fun ColumnScope.TournamentGameActionsRight(
+    onHowToPlayClick: () -> Unit,
     onExit: () -> Unit,
     onReport: () -> Unit,
 ) {
+    Image(
+        painter = painterResource(DesignRes.drawable.ic_how_to_play),
+        contentDescription = "how to play",
+        colorFilter = ColorFilter.tint(Color.White),
+        modifier =
+            Modifier
+                .size(36.dp)
+                .clickable { onHowToPlayClick() },
+    )
     Image(
         painter = painterResource(TournamentRes.drawable.exit),
         contentDescription = "exit tournament",

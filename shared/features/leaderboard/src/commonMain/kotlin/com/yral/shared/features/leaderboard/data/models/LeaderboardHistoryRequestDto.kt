@@ -9,4 +9,6 @@ data class LeaderboardHistoryRequestDto(
     val principalId: String,
     @SerialName("country_code")
     val countryCode: String,
+    @SerialName("game_type")
+    val gameType: String = "smiley",
 )
