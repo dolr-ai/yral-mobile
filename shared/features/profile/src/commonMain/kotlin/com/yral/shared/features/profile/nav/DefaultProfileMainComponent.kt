@@ -18,6 +18,7 @@ internal class DefaultProfileMainComponent(
     override val userCanisterData: CanisterData?,
     override val showBackButton: Boolean,
     private val onUploadVideoClicked: () -> Unit,
+    private val openAccountSheet: () -> Unit,
     private val openAccount: () -> Unit,
     private val openEditProfile: () -> Unit,
     private val openProfile: (CanisterData) -> Unit,
@@ -33,6 +34,10 @@ internal class DefaultProfileMainComponent(
     KoinComponent {
     override fun onUploadVideoClick() {
         onUploadVideoClicked.invoke()
+    }
+
+    override fun openAccountSheet() {
+        openAccountSheet.invoke()
     }
 
     override fun openAccount() {

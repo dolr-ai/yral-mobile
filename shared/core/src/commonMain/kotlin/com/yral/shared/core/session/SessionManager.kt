@@ -62,6 +62,13 @@ class SessionManager {
                 else -> null
             }
 
+    val isBotAccount: Boolean?
+        get() =
+            when (val state = mutableState.value) {
+                is SessionState.SignedIn -> state.session.isBotAccount
+                else -> null
+            }
+
     val profileVideosCount: Int
         get() = mutableProperties.value.profileVideosCount ?: 0
 
