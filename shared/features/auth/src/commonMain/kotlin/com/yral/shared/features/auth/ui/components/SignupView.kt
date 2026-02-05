@@ -251,10 +251,12 @@ private fun SignupHeader(
 fun getAnnotatedHeaderForLogin(
     fullText: String,
     maskedText: String = "",
+    baseColor: Color = Color.White,
 ) = buildHighlightedText(
     fullText = fullText,
     highlightedText = maskedText,
     baseTextStyle = LocalAppTopography.current.xlSemiBold,
+    baseColor = baseColor,
 )
 
 @Composable

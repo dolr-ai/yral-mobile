@@ -85,6 +85,7 @@ import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.component.toast.ToastHost
+import com.yral.shared.libs.routing.routes.api.Profile
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -287,6 +288,7 @@ fun RootScreen(rootComponent: RootComponent) {
                             onCreateProfile = {
                                 aiInfluencerViewModel.createBotAccount {
                                     rootComponent.onBackClicked()
+                                    rootComponent.onNavigationRequest(Profile)
                                 }
                             },
                         )

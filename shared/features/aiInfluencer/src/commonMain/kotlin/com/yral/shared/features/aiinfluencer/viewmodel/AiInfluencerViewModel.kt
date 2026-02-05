@@ -85,12 +85,14 @@ class AiInfluencerViewModel(
             when (val step = current.step) {
                 is AiInfluencerStep.DescriptionEntry ->
                     current.copy(
+                        promptInput = clamped,
                         step = step.copy(description = clamped),
                         errorMessage = null,
                     )
 
                 is AiInfluencerStep.PersonaReview ->
                     current.copy(
+                        promptInput = clamped,
                         step = step.copy(description = clamped),
                         errorMessage = null,
                     )
@@ -108,11 +110,12 @@ class AiInfluencerViewModel(
         val currentStep = _state.value.step
         return when (currentStep) {
             is AiInfluencerStep.ProfileDetails -> {
+                val prompt = _state.value.promptInput
                 _state.update {
                     it.copy(
                         step =
                             AiInfluencerStep.PersonaReview(
-                                description = currentStep.description,
+                                description = prompt.ifBlank { currentStep.description },
                                 systemInstructions = currentStep.systemInstructions,
                                 editedInstructions = currentStep.systemInstructions,
                             ),
@@ -123,9 +126,13 @@ class AiInfluencerViewModel(
             }
 
             is AiInfluencerStep.PersonaReview -> {
+                val prompt = _state.value.promptInput
                 _state.update {
                     it.copy(
-                        step = AiInfluencerStep.DescriptionEntry(description = currentStep.description),
+                        step =
+                            AiInfluencerStep.DescriptionEntry(
+                                description = prompt.ifBlank { currentStep.description },
+                            ),
                         errorMessage = null,
                     )
                 }
@@ -148,6 +155,7 @@ class AiInfluencerViewModel(
         requestJob?.cancel()
         _state.update {
             it.copy(
+                promptInput = description,
                 step = AiInfluencerStep.LoadingPrompt(description = description),
                 errorMessage = null,
                 isImagePickerVisible = false,
@@ -359,7 +367,7 @@ class AiInfluencerViewModel(
                             botPrincipal = newBotPrincipal,
                             botIdentity = delegatedIdentityBytes,
                             profileDetails = currentStep,
-                        ).onSuccess {
+                        ).onSuccess { _ ->
                             _state.update { it.copy(isBotCreationLoading = false) }
                             onSuccess()
                         }.onFailure { error ->
@@ -422,7 +430,7 @@ class AiInfluencerViewModel(
         botPrincipal: String,
         botIdentity: ByteArray,
         profileDetails: AiInfluencerStep.ProfileDetails,
-    ): Result<Unit> =
+    ): Result<com.yral.shared.rust.service.utils.CanisterData> =
         runCatching {
             logger.d { "bot_setup: start for bot=$botPrincipal" }
             // Authenticate with network using bot identity to get canister info
@@ -539,6 +547,7 @@ class AiInfluencerViewModel(
                         ),
                 )
             }
+            canisterData
         }
 
     private suspend fun uploadProfileImage(
@@ -690,6 +699,7 @@ private const val UPLOAD_PROFILE_ENDPOINT = "/api/v1/user/profile-image"
 
 data class AiInfluencerUiState(
     val step: AiInfluencerStep = AiInfluencerStep.DescriptionEntry(),
+    val promptInput: String = "",
     val errorMessage: String? = null,
     val isImagePickerVisible: Boolean = false,
     val isBotCreationLoading: Boolean = false,

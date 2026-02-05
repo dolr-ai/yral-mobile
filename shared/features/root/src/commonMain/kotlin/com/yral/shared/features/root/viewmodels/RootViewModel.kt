@@ -77,7 +77,7 @@ sealed interface NavigationTarget {
 }
 
 @OptIn(ExperimentalTime::class, ExperimentalEncodingApi::class)
-@Suppress("TooGenericExceptionCaught", "LongParameterList", "TooManyFunctions")
+@Suppress("TooGenericExceptionCaught", "LongParameterList", "TooManyFunctions", "LargeClass")
 class RootViewModel(
     private val appDispatchers: AppDispatchers,
     authClientFactory: AuthClientFactory,
