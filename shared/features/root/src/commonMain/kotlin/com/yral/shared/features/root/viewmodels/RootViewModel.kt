@@ -422,12 +422,15 @@ class RootViewModel(
     @Suppress("LongMethod")
     fun switchToAccount(principal: String) {
         coroutineScope.launch {
+            val previousSessionState = _state.value.sessionState
             runCatching {
                 val current = sessionManager.userPrincipal
                 if (current == principal) {
                     _state.update { it.copy(showAccountDialog = false) }
                     return@launch
                 }
+                sessionManager.updateState(SessionState.Loading)
+                _state.update { it.copy(showAccountDialog = false) }
                 val identityBytes: ByteArray
                 val isBot: Boolean
                 val botUsername: String?
@@ -480,10 +483,10 @@ class RootViewModel(
                     authClient.authorizeFirebase(session)
                     authClient.fetchBalance(session)
                 }
-                _state.update { it.copy(showAccountDialog = false) }
                 populateAccountDialog(showSheet = false)
             }.onFailure { error ->
                 Logger.e("RootViewModel") { "Failed to switch account: ${error.message}" }
+                sessionManager.updateState(previousSessionState)
             }
         }
     }

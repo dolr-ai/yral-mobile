@@ -129,6 +129,7 @@ fun RootScreen(rootComponent: RootComponent) {
                 AccountSwitchSheet(
                     info = accountDialogInfo,
                     onSelect = { principal ->
+                        viewModel.dismissAccountDialog()
                         viewModel.switchToAccount(principal)
                     },
                 )
