@@ -66,12 +66,21 @@ class LeaderboardRemoteDataSource(
         request: LeaderboardHistoryRequestDto,
     ): LeaderboardHistoryResponseDto {
         try {
+            val endpointPath =
+                if (request.gameType == "hot_or_not") {
+                    LEADERBOARD_HISTORY_HON_PATH
+                } else {
+                    LEADERBOARD_HISTORY_PATH
+                }
+            co.touchlab.kermit.Logger.d(
+                "LeaderboardHistory",
+            ) { "Fetching history with gameType=${request.gameType}, endpoint=$endpointPath" }
             val response: HttpResponse =
                 httpClient.post {
                     expectSuccess = false
                     url {
                         host = cloudFunctionUrl()
-                        path(LEADERBOARD_HISTORY_PATH)
+                        path(endpointPath)
                     }
                     val appCheckToken = firebaseAppCheckToken()
                     headers {
@@ -136,6 +145,7 @@ class LeaderboardRemoteDataSource(
     companion object {
         private const val LEADERBOARD_PATH = "leaderboard_v3"
         private const val LEADERBOARD_HISTORY_PATH = "leaderboard_history_v2"
+        private const val LEADERBOARD_HISTORY_HON_PATH = "leaderboard_history_hon"
         private const val DAILY_RANK_PATH = "daily_rank"
         private const val DAILY_RANK_HON_PATH = "daily_rank_hon"
         private const val HEADER_X_FIREBASE_APPCHECK = "X-Firebase-AppCheck"

@@ -405,23 +405,11 @@ fun ColumnScope.TournamentGameActionsRight(
     onHowToPlayClick: () -> Unit,
     onExit: () -> Unit,
     onReport: () -> Unit,
-    onHowToPlay: (() -> Unit)? = null,
 ) {
-    onHowToPlay?.let {
-        Image(
-            painter = painterResource(DesignRes.drawable.ic_how_to_play),
-            contentDescription = "how to play",
-            colorFilter = ColorFilter.tint(Color.White),
-            modifier =
-                Modifier
-                    .size(36.dp)
-                    .clickable { it() },
-        )
-    }
     Image(
         painter = painterResource(DesignRes.drawable.ic_how_to_play),
         contentDescription = "how to play",
-        contentScale = ContentScale.None,
+        colorFilter = ColorFilter.tint(Color.White),
         modifier =
             Modifier
                 .size(36.dp)

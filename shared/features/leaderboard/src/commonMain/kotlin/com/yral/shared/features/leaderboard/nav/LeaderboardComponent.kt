@@ -3,6 +3,7 @@ package com.yral.shared.features.leaderboard.nav
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
+import com.yral.shared.features.leaderboard.domain.models.DailyRankGameType
 import com.yral.shared.features.leaderboard.nav.detail.LeaderboardDetailsComponent
 import com.yral.shared.features.leaderboard.nav.main.LeaderboardMainComponent
 import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
@@ -16,6 +17,7 @@ abstract class LeaderboardComponent : HomeChildSnapshotProvider {
 
     abstract val showBackIcon: Boolean
     abstract val onBack: () -> Unit
+    abstract val gameType: DailyRankGameType
 
     sealed class Child {
         class Main(
@@ -42,6 +44,7 @@ abstract class LeaderboardComponent : HomeChildSnapshotProvider {
             openProfile: (CanisterData) -> Unit,
             showBackIcon: Boolean = false,
             onBack: () -> Unit = {},
+            gameType: DailyRankGameType = DailyRankGameType.SMILEY,
         ): LeaderboardComponent =
             DefaultLeaderboardComponent(
                 componentContext = componentContext,
@@ -50,6 +53,7 @@ abstract class LeaderboardComponent : HomeChildSnapshotProvider {
                 openProfile = openProfile,
                 showBackIcon = showBackIcon,
                 onBack = onBack,
+                gameType = gameType,
             )
     }
 }

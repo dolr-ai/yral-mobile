@@ -979,6 +979,94 @@ def _user_row_for_day_v2(bucket_id: str, pid: str, rewards_table: Optional[Dict[
 
     return user_row
 
+
+def _dense_top_rows_for_day_hon(bucket_id: str, rewards_table: Optional[Dict[str, Any]] = None, rewards_enabled: bool = False) -> tuple[List[Dict], int, int]:
+    """Top 10 rows with dense ranking for Hot or Not game for a given IST bucket (with optional rewards)."""
+    coll = db().collection(f"{HOT_OR_NOT_DAILY_COLL}/{bucket_id}/users")
+    snaps = (
+        coll.where("hot_or_not_wins", ">", 0)
+            .order_by("hot_or_not_wins", direction=firestore.Query.DESCENDING)
+            .limit(10)
+            .stream()
+    )
+    rows: List[Dict] = []
+    current_rank, last_wins = 0, None
+    principal_ids = []
+
+    for snap in snaps:
+        wins = int(snap.get("hot_or_not_wins") or 0)
+        if wins != last_wins:
+            current_rank += 1  # dense ranking
+            last_wins = wins
+
+        row = {
+            "principal_id": snap.id,
+            "wins": wins,
+            "position": current_rank
+        }
+
+        if rewards_enabled and rewards_table:
+            row["reward"] = rewards_table.get(str(current_rank), None)
+
+        rows.append(row)
+        principal_ids.append(snap.id)
+
+    if principal_ids:
+        user_refs = [db().collection("users").document(pid) for pid in principal_ids]
+        user_docs = db().get_all(user_refs)
+        username_map = {
+            doc.id: (doc.to_dict() or {}).get("username") for doc in user_docs
+        }
+        for row in rows:
+            row["username"] = username_map.get(row["principal_id"])
+
+    return rows, last_wins, current_rank
+
+
+def _user_row_for_day_hon(bucket_id: str, pid: str, rewards_table: Optional[Dict[str, Any]] = None, rewards_enabled: bool = False, top_rows: Optional[List[Dict]] = None) -> Dict:
+    """
+    Compute user's wins and dense position for Hot or Not game within that day's collection (with optional reward).
+    Optimizes by first checking if user is already present in top_rows.
+    """
+    # 1. Reuse from top_rows if already available
+    if top_rows:
+        for row in top_rows:
+            if row.get("principal_id") == pid:
+                return row
+
+    # 2. Else, fallback to Firestore query
+    day_users = db().collection(f"{HOT_OR_NOT_DAILY_COLL}/{bucket_id}/users")
+    entry = day_users.document(pid).get()
+    user_wins = int((entry.get("hot_or_not_wins") if entry.exists else 0) or 0)
+
+    user_doc = db().collection("users").document(pid).get()
+    user_profile = user_doc.to_dict() or {}
+    username = user_profile.get("username")
+
+    # Compute dense rank
+    rank_q = (
+        day_users.where("hot_or_not_wins", ">", user_wins)
+                 .count()
+                 .get()
+    )
+    higher = int(rank_q[0][0].value)
+    position = higher + 1
+
+    user_row = {
+        "principal_id": pid,
+        "wins": user_wins,
+        "position": position,
+        "username": username
+    }
+
+    if rewards_enabled and user_wins > 0 and rewards_table:
+        user_row["reward"] = rewards_table.get(str(position), None)
+    else:
+        user_row["reward"] = None
+
+    return user_row
+
+
 def _top_winners(bucket_id: str, max_rank: int = 5) -> list[dict]:
     MAX_DOCS = 100
     coll = db().collection(f"{DAILY_COLL}/{bucket_id}/users")
@@ -1529,6 +1617,125 @@ def leaderboard_history_v2(request: Request):
     except Exception as e:
         print("leaderboard_history error:", e, file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
+
+
+@https_fn.on_request(region="us-central1")
+def leaderboard_history_hon(request: Request):
+    """
+    Hot or Not leaderboard history endpoint.
+
+    Request:
+      { "data": { "principal_id": "<pid>" } }
+
+    Response: 200 OK with an ARRAY (newest → oldest). Each item:
+      {
+        "date": "Aug 15",
+        "top_rows": [ { principal_id, wins, position, reward? }, ... ],
+        "user_row": { principal_id, wins, position, reward? } | null,
+        "reward_currency": <str | None>,
+        "reward_currency_code": "INR/USD"
+        "rewards_enabled": <bool>
+      }
+    """
+    try:
+        if request.method != "POST":
+            return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
+
+        body = request.get_json(silent=True) or {}
+        data = body.get("data", {}) or {}
+        pid = str(data.get("principal_id", "")).strip()
+        country_code = str(data.get("country_code", "US")).strip().upper()
+
+        if not pid:
+            return error_response(400, "MISSING_PID", "principal_id required")
+
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return error_response(401, "MISSING_ID_TOKEN", "Authorization missing")
+        auth.verify_id_token(auth_header.split(" ", 1)[1])
+
+        today = _ist_today_date()
+        days = [today - timedelta(days=offset) for offset in range(1, 8)]
+
+        result: List[Dict] = []
+        for d in days:
+            bucket_id = _bucket_id_for_ist_day(d)
+            date_label = _friendly_date_str(d)
+
+            day_doc = db().collection(HOT_OR_NOT_DAILY_COLL).document(bucket_id).get()
+            day_data = day_doc.to_dict() if day_doc.exists else {}
+
+            currency = day_data.get("currency")
+            reward_currency_code = None
+
+            rewards_table_raw = day_data.get("rewards_table") or {}
+            if currency == CURRENCY_BTC:
+                # Choose between INR or USD based on country
+                if country_code == COUNTRY_CODE_INDIA:
+                    rewards_table = rewards_table_raw.get(COUNTRY_CODE_INDIA, {})
+                    reward_currency_code = "INR"
+                else:
+                    rewards_table = rewards_table_raw.get(COUNTRY_CODE_USA, {})
+                    reward_currency_code = "USD"
+            else:
+                rewards_table = rewards_table_raw
+                reward_currency_code = None
+
+            # Ensure all keys are str and values are int
+            rewards_table = {str(k): int(v) for k, v in rewards_table.items() if v is not None}
+
+            rewards_enabled = day_data.get("rewards_enabled")
+
+            if currency is None or rewards_enabled is None:
+                rewards_enabled = False
+                currency = None
+                rewards_table = {}
+                reward_currency_code = None
+
+            try:
+                top_rows, last_wins, current_rank = _dense_top_rows_for_day_hon(bucket_id, rewards_table, rewards_enabled)
+            except GoogleAPICallError as e:
+                print(f"[skip] top rows read error for {bucket_id}: {e}", file=sys.stderr)
+                continue
+
+            if not top_rows:
+                result.append({
+                    "date": date_label,
+                    "top_rows": [],
+                    "user_row": None,
+                    "reward_currency": currency,
+                    "reward_currency_code": reward_currency_code,
+                    "rewards_enabled": rewards_enabled,
+                    "rewards_table": rewards_table
+                })
+                continue
+
+            user_row = None
+            try:
+                user_row = _user_row_for_day_hon(bucket_id, pid, rewards_table, rewards_enabled, top_rows)
+            except GoogleAPICallError:
+                user_row = None
+
+            result.append({
+                "date": date_label,
+                "top_rows": top_rows,
+                "user_row": user_row,
+                "reward_currency": currency,
+                "reward_currency_code": reward_currency_code,
+                "rewards_enabled": rewards_enabled,
+                "rewards_table": rewards_table
+            })
+
+        return jsonify(result), 200
+
+    except auth.InvalidIdTokenError:
+        return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
+    except GoogleAPICallError as e:
+        return error_response(500, "FIRESTORE_ERROR", str(e))
+    except Exception as e:
+        print("leaderboard_history_hon error:", e, file=sys.stderr)
+        return error_response(500, "INTERNAL", "Internal server error")
+
 
 @https_fn.on_request(region="us-central1")
 def daily_rank(request: Request):
