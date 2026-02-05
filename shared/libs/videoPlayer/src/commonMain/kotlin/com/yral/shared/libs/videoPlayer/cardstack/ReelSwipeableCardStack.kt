@@ -139,10 +139,7 @@ internal fun ReelSwipeableCardStack(
             key = { index -> visibleReels[index].videoId },
             onSwipeComplete = { direction ->
                 if (direction == SwipeDirection.LEFT || direction == SwipeDirection.RIGHT) {
-                    val votedCardIndex = swipeState.settledIndex - 1
-                    if (votedCardIndex >= 0) {
-                        onSwipeVote?.invoke(direction, votedCardIndex)
-                    }
+                    onSwipeVote?.invoke(direction, swipeState.settledIndex)
                 }
             },
             onEdgeReached = { direction ->
