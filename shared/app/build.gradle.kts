@@ -61,6 +61,7 @@ kotlin {
             implementation(projects.shared.features.tournament)
             implementation(projects.shared.features.chat)
             implementation(projects.shared.features.subscriptions)
+            implementation(projects.shared.features.aiInfluencer)
 
             implementation(projects.shared.rust.service)
 

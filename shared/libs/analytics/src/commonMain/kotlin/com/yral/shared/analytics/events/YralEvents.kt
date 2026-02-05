@@ -1852,6 +1852,9 @@ enum class SignupPageName {
 
     @SerialName("tournament")
     TOURNAMENT,
+
+    @SerialName("create_influencer")
+    CREATE_INFLUENCER,
 }
 
 @Serializable

@@ -61,6 +61,7 @@ class AccountsViewModel internal constructor(
                     accountLinks = flagManager.get(AccountFeatureFlags.AccountLinks.Links),
                     isWalletEnabled = flagManager.isEnabled(WalletFeatureFlags.Wallet.Enabled),
                     isSubscriptionEnabled = flagManager.isEnabled(AppFeatureFlags.Common.EnableSubscription),
+                    isBotAccount = sessionManager.isBotAccount ?: false,
                 ),
         )
     val state: StateFlow<AccountsState> = _state.asStateFlow()
@@ -89,7 +90,14 @@ class AccountsViewModel internal constructor(
         coroutineScope.launch {
             sessionManager
                 .observeSessionState(transform = { sessionManager.getAccountInfo() })
-                .collect { info: AccountInfo? -> _state.update { it.copy(accountInfo = info) } }
+                .collect { info: AccountInfo? ->
+                    _state.update {
+                        it.copy(
+                            accountInfo = info,
+                            isBotAccount = sessionManager.isBotAccount ?: false,
+                        )
+                    }
+                }
         }
     }
 
@@ -159,14 +167,16 @@ class AccountsViewModel internal constructor(
                     menuCtaType = MenuCtaType.LOG_OUT,
                 ),
             )
-            links.add(
-                AccountHelpLink(
-                    type = AccountHelpLinkType.DELETE_ACCOUNT,
-                    link = DELETE_ACCOUNT_URI,
-                    openInExternalBrowser = true,
-                    menuCtaType = MenuCtaType.DELETE_ACCOUNT,
-                ),
-            )
+            if (!_state.value.isBotAccount) {
+                links.add(
+                    AccountHelpLink(
+                        type = AccountHelpLinkType.DELETE_ACCOUNT,
+                        link = DELETE_ACCOUNT_URI,
+                        openInExternalBrowser = true,
+                        menuCtaType = MenuCtaType.DELETE_ACCOUNT,
+                    ),
+                )
+            }
         }
         return links
     }
@@ -264,6 +274,7 @@ data class AccountsState(
     val isSubscriptionEnabled: Boolean = false,
     val isLoggedIn: Boolean = false,
     val alertsEnabled: Boolean = false,
+    val isBotAccount: Boolean = false,
 )
 
 sealed interface AccountBottomSheet {
