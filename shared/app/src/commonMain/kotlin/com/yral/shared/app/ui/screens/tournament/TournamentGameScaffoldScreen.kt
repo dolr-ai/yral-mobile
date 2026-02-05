@@ -152,6 +152,7 @@ fun TournamentGameScaffoldScreen(
                 actionsRight = { pageNo ->
                     TournamentGameActionsRight(
                         onHowToPlayClick = {
+                            tournamentGameViewModel.trackHowToPlayClicked()
                             howToPlayOpenedFromButton = true
                             showHowToPlay = true
                         },

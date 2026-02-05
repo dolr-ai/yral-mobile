@@ -2,6 +2,8 @@ package com.yral.shared.features.tournament.analytics
 
 import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.events.AnalyticsTournamentType
+import com.yral.shared.analytics.events.GameType
+import com.yral.shared.analytics.events.HowToPlayClickedEventData
 import com.yral.shared.analytics.events.TournamentAnswerResult
 import com.yral.shared.analytics.events.TournamentAnswerSubmittedEventData
 import com.yral.shared.analytics.events.TournamentEndedEventData
@@ -286,6 +288,15 @@ class TournamentTelemetry(
                 rank = rank,
             ),
         )
+    }
+
+    fun onHowToPlayClicked(tournamentType: TournamentType) {
+        val gameType =
+            when (tournamentType) {
+                TournamentType.SMILEY -> GameType.SMILEY
+                TournamentType.HOT_OR_NOT -> GameType.HOT_OR_NOT
+            }
+        analyticsManager.trackEvent(HowToPlayClickedEventData(gameType = gameType))
     }
 
     private fun TournamentParticipationState.toAnalyticsState(): TournamentState =
