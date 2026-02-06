@@ -317,8 +317,13 @@ private class AndroidPlaybackCoordinator(
         }
     }
 
-    override fun unbindSurface(index: Int) {
-        val handle = surfaces.remove(index)
+    override fun unbindSurface(
+        index: Int,
+        surfaceId: String,
+    ) {
+        val handle = surfaces[index]
+        if (handle?.id != surfaceId) return
+        surfaces.remove(index)
         if (handle is AndroidVideoSurfaceHandle) {
             if (activeSlot.index == index && handle.playerState.value == activeSlot.player) {
                 handle.playerState.value = null

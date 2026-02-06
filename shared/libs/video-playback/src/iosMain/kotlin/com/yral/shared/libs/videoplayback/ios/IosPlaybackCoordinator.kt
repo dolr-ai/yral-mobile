@@ -209,8 +209,13 @@ private class IosPlaybackCoordinator(
         }
     }
 
-    override fun unbindSurface(index: Int) {
-        val handle = surfaces.remove(index)
+    override fun unbindSurface(
+        index: Int,
+        surfaceId: String,
+    ) {
+        val handle = surfaces[index]
+        if (handle?.id != surfaceId) return
+        surfaces.remove(index)
         if (handle is IosVideoSurfaceHandle) {
             if (activeSlot.index == index && handle.controller.player == activeSlot.player) {
                 handle.controller.player = null
