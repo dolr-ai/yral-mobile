@@ -621,6 +621,8 @@ class DefaultAuthClient(
         val profilePic = preferences.getString(PrefKeys.PROFILE_PIC.name)
         val username = preferences.getString(PrefKeys.USERNAME.name)
         val isCreatedFromServiceCanister = preferences.getBoolean(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name)
+        val resolvedIsBotAccount =
+            mainPrincipal?.let { main -> userPrincipal != null && userPrincipal != main } ?: false
         return listOf(identity, canisterId, userPrincipal, profilePic)
             .all { it != null }
             .let { allPresent ->
@@ -632,6 +634,7 @@ class DefaultAuthClient(
                         profilePic = profilePic!!,
                         username = resolveUsername(username, userPrincipal),
                         isCreatedFromServiceCanister = isCreatedFromServiceCanister ?: false,
+                        isBotAccount = resolvedIsBotAccount,
                     )
                 } else {
                     null
@@ -673,6 +676,7 @@ class DefaultAuthClient(
         preferences.remove(PrefKeys.USERNAME.name)
         preferences.remove(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name)
         preferences.remove(PrefKeys.BOT_IDENTITIES.name)
+        preferences.remove(PrefKeys.ACCOUNT_DIRECTORY_CACHE.name)
     }
 
     override suspend fun phoneAuthLogin(phoneNumber: String): PhoneAuthLoginResponse {

@@ -128,6 +128,7 @@ fun RootScreen(rootComponent: RootComponent) {
             } else {
                 AccountSwitchSheet(
                     info = accountDialogInfo,
+                    selectionEnabled = !state.isAccountSwitchInProgress,
                     onSelect = { principal ->
                         viewModel.dismissAccountDialog()
                         viewModel.switchToAccount(principal)
@@ -363,6 +364,7 @@ fun RootScreen(rootComponent: RootComponent) {
 @Composable
 private fun AccountSwitchSheet(
     info: AccountDialogInfo,
+    selectionEnabled: Boolean,
     onSelect: (String) -> Unit,
 ) {
     Column(
@@ -374,6 +376,7 @@ private fun AccountSwitchSheet(
         SheetSection(
             title = "Main Profile",
             accounts = listOfNotNull(info.mainAccount),
+            selectionEnabled = selectionEnabled,
             onSelect = onSelect,
         )
         if (info.botAccounts.isNotEmpty()) {
@@ -381,6 +384,7 @@ private fun AccountSwitchSheet(
             SheetSection(
                 title = "AI Influencer Profile",
                 accounts = info.botAccounts,
+                selectionEnabled = selectionEnabled,
                 onSelect = onSelect,
             )
         }
@@ -391,6 +395,7 @@ private fun AccountSwitchSheet(
 private fun SheetSection(
     title: String,
     accounts: List<AccountUi>,
+    selectionEnabled: Boolean,
     onSelect: (String) -> Unit,
 ) {
     if (accounts.isEmpty()) return
@@ -405,6 +410,7 @@ private fun SheetSection(
         val isLast = index == accounts.lastIndex
         AccountRow(
             account = account,
+            selectionEnabled = selectionEnabled,
             onSelect = onSelect,
             isFirst = isFirst,
             isLast = isLast,
@@ -415,6 +421,7 @@ private fun SheetSection(
 @Composable
 private fun AccountRow(
     account: AccountUi,
+    selectionEnabled: Boolean,
     onSelect: (String) -> Unit,
     isFirst: Boolean,
     isLast: Boolean,
@@ -429,7 +436,7 @@ private fun AccountRow(
                 .fillMaxWidth()
                 .clip(shape)
                 .border(width = 1.dp, color = YralColors.Neutral700, shape = shape)
-                .clickable { onSelect(account.principal) },
+                .clickable(enabled = selectionEnabled) { onSelect(account.principal) },
     ) {
         AccountRowContent(account = account)
     }

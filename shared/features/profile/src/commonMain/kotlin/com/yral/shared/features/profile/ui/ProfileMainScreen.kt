@@ -72,6 +72,7 @@ import com.yral.shared.analytics.events.EditProfileSource
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.analytics.events.VideoDeleteCTA
+import com.yral.shared.core.session.AccountDirectory
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.domain.models.FeedDetails
@@ -202,6 +203,10 @@ fun ProfileMainScreen(
                 selector = { it.botCount },
                 defaultValue = 0,
             ).collectAsStateWithLifecycle(initialValue = 0)
+    val accountDirectory by
+        sessionManager
+            .observeSessionProperty { it.accountDirectory }
+            .collectAsStateWithLifecycle(initialValue = null)
     val hasBotAccounts = botCount > 0
     val state by viewModel.state.collectAsStateWithLifecycle()
     val storagePermissionController = rememberStoragePermissionController()
@@ -464,6 +469,7 @@ fun ProfileMainScreen(
                     isBotAccount = isBotAccount,
                     hasBotAccounts = hasBotAccounts,
                     botCount = botCount,
+                    accountDirectory = accountDirectory,
                     onCreateInfluencerClick = onCreateInfluencerClick,
                 )
             }
@@ -638,6 +644,7 @@ private fun MainContent(
     isBotAccount: Boolean,
     hasBotAccounts: Boolean,
     botCount: Int,
+    accountDirectory: AccountDirectory?,
     onCreateInfluencerClick: () -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
@@ -659,6 +666,20 @@ private fun MainContent(
         state.accountInfo?.let { info ->
             val followersCount = totalCount(followers)
             val followingCount = totalCount(following)
+            val parentBotUsernames =
+                accountDirectory
+                    ?.takeIf { state.isOwnProfile && !isBotAccount }
+                    ?.botPrincipals
+                    ?.mapNotNull { principal ->
+                        accountDirectory.profilesByPrincipal[principal]?.username?.takeUnless { it.isBlank() }
+                    }.orEmpty()
+            val createdByUsername =
+                accountDirectory
+                    ?.takeIf { state.isOwnProfile && isBotAccount }
+                    ?.mainPrincipal
+                    ?.let { principal ->
+                        accountDirectory.profilesByPrincipal[principal]?.username?.takeUnless { it.isBlank() }
+                    }
             AccountInfoView(
                 accountInfo = info,
                 totalFollowers = followersCount,
@@ -686,6 +707,8 @@ private fun MainContent(
                         !isBotAccount &&
                         botCount != 3,
                 onCreateInfluencerClick = onCreateInfluencerClick,
+                botUsernames = parentBotUsernames,
+                createdByUsername = createdByUsername,
             )
         }
         when (profileVideos.loadState.refresh) {
