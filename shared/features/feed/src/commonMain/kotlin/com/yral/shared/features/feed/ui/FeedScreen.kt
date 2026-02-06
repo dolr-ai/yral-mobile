@@ -171,12 +171,14 @@ fun FeedScreen(
                         onEdgeScrollAttempt(page)
                     },
                     onSwipeVote = onSwipeVote,
+                    shouldSuppressSwipeFeedback = { pageIndex ->
+                        !state.isLoggedIn && pageIndex != 0 && (pageIndex % SIGN_UP_PAGE) == 0
+                    },
                 ) { pageNo, scrollToNext ->
                     FeedOverlay(
                         pageNo = pageNo,
                         currentOnboardingStep = state.currentOnboardingStep,
                         isLoggedIn = state.isLoggedIn,
-                        isCardLayoutEnabled = true,
                         topOverlay = { topOverlay(pageNo) },
                         bottomOverlay = { bottomOverlay(pageNo, scrollToNext) },
                         actionsRight = { actionsRight(pageNo) },
@@ -208,7 +210,6 @@ fun FeedScreen(
                         pageNo = pageNo,
                         currentOnboardingStep = state.currentOnboardingStep,
                         isLoggedIn = state.isLoggedIn,
-                        isCardLayoutEnabled = false,
                         topOverlay = { topOverlay(pageNo) },
                         bottomOverlay = { bottomOverlay(pageNo, scrollToNext) },
                         actionsRight = { actionsRight(pageNo) },
@@ -307,7 +308,6 @@ private fun FeedOverlay(
     pageNo: Int,
     currentOnboardingStep: OnboardingStep?,
     isLoggedIn: Boolean,
-    isCardLayoutEnabled: Boolean,
     topOverlay: @Composable () -> Unit,
     bottomOverlay: @Composable () -> Unit,
     actionsRight: @Composable ColumnScope.() -> Unit,
@@ -335,11 +335,10 @@ private fun FeedOverlay(
     }
 
     val loginState = rememberLoginInfo(requestLoginFactory = requestLoginFactory)
-    LaunchedEffect(pageNo, isLoggedIn, isCardLayoutEnabled) {
+    LaunchedEffect(pageNo, isLoggedIn) {
         // Login overlay - rendered after Box to ensure it's on top
-        // Don't show login overlay in HON card layout mode
         val isSignUpPage = pageNo != 0 && (pageNo % SIGN_UP_PAGE) == 0
-        val shouldShowLoginOverlay = !isCardLayoutEnabled && !isLoggedIn && isSignUpPage
+        val shouldShowLoginOverlay = !isLoggedIn && isSignUpPage
         if (shouldShowLoginOverlay) {
             loginState.requestLogin(
                 SignupPageName.HOME,
