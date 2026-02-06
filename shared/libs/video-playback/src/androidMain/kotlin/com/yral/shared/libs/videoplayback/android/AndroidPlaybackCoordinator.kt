@@ -29,6 +29,7 @@ import com.yral.shared.libs.videoplayback.PreloadPolicy
 import com.yral.shared.libs.videoplayback.PreparedSlotScheduler
 import com.yral.shared.libs.videoplayback.VideoSurfaceHandle
 import com.yral.shared.libs.videoplayback.cacheKey
+import com.yral.shared.libs.videoplayback.planFeedAlignment
 import com.yral.shared.libs.videoplayback.ui.AndroidVideoSurfaceHandle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -186,6 +187,17 @@ private class AndroidPlaybackCoordinator(
     }
 
     override fun setFeed(items: List<MediaDescriptor>) {
+        val previousFeed = feed
+        val previousIds = previousFeed.map { it.id }
+        val currentIds = items.map { it.id }
+        val alignment =
+            planFeedAlignment(
+                previousIds = previousIds,
+                currentIds = currentIds,
+                activeIndex = activeIndex,
+                activeSlotIndex = activeSlot.index,
+                preparedSlotIndex = preparedSlot?.index,
+            )
         preloadScheduler.reset("feed_update") { feed.getOrNull(it)?.id }
         preparedScheduler.reset("feed_update") { feed.getOrNull(it)?.id }
         if (mediaItems.isNotEmpty()) {
@@ -200,8 +212,29 @@ private class AndroidPlaybackCoordinator(
             preloadManager.addMediaItems(mediaItems, ranking)
         }
 
-        if (activeIndex >= items.size) {
-            setActiveIndex(items.lastIndex)
+        alignment.invalidatePreparedIndex?.let { stalePreparedIndex ->
+            preparedSlot?.let { slot ->
+                slot.player.playWhenReady = false
+                detachSurface(stalePreparedIndex, slot.player)
+                slot.index = null
+            }
+        }
+
+        if (alignment.clearPlaybackState) {
+            activeIndex = -1
+            predictedIndex = -1
+            rebuffering = false
+            firstFramePendingIndex = null
+            activeSlot.player.playWhenReady = false
+            preparedSlot?.player?.playWhenReady = false
+            activeSlot.index = null
+            preparedSlot?.index = null
+            return
+        }
+
+        alignment.nextActiveIndex?.let { targetIndex ->
+            activeIndex = -1
+            setActiveIndex(targetIndex)
         }
     }
 
@@ -284,8 +317,13 @@ private class AndroidPlaybackCoordinator(
         }
     }
 
-    override fun unbindSurface(index: Int) {
-        val handle = surfaces.remove(index)
+    override fun unbindSurface(
+        index: Int,
+        surfaceId: String,
+    ) {
+        val handle = surfaces[index]
+        if (handle?.id != surfaceId) return
+        surfaces.remove(index)
         if (handle is AndroidVideoSurfaceHandle) {
             if (activeSlot.index == index && handle.playerState.value == activeSlot.player) {
                 handle.playerState.value = null
