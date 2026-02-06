@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.shared.core.session.AccountDirectory
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.profile.analytics.ProfileTelemetry
@@ -23,6 +24,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.StringResource
 import yral_mobile.shared.features.profile.generated.resources.Res
 import yral_mobile.shared.features.profile.generated.resources.profile_picture_updated
@@ -40,6 +45,7 @@ class EditProfileViewModel(
     private val crashlyticsManager: CrashlyticsManager,
 ) : ViewModel() {
     private val logger = Logger.withTag("EditProfileViewModel")
+    private val json = Json { ignoreUnknownKeys = true }
     companion object {
         private const val MIN_USERNAME_LENGTH = 3
         private const val MAX_USERNAME_LENGTH = 15
@@ -105,6 +111,7 @@ class EditProfileViewModel(
                     if (profileImage != null) {
                         sessionManager.updateProfilePicture(profileImage)
                         preferences.putString(PrefKeys.PROFILE_PIC.name, profileImage)
+                        updateAccountDirectoryCache(avatarUrl = profileImage)
                     }
                 }.onFailure { error ->
                     logger.e { "Failed to fetch profile details: ${error.message}" }
@@ -149,6 +156,7 @@ class EditProfileViewModel(
                     val isImageUpdated = imageUrl != previousImageUrl && imageUrl.isNotEmpty()
                     sessionManager.updateProfilePicture(imageUrl)
                     preferences.putString(PrefKeys.PROFILE_PIC.name, imageUrl)
+                    updateAccountDirectoryCache(avatarUrl = imageUrl)
                     _state.update { current ->
                         current.copy(
                             profileImageUrl = imageUrl,
@@ -393,6 +401,8 @@ class EditProfileViewModel(
                         }.onSuccess {
                             sessionManager.updateUsername(sanitizedUsername)
                             preferences.putString(PrefKeys.USERNAME.name, sanitizedUsername)
+                            updateAccountDirectoryCache(username = sanitizedUsername)
+                            updateBotIdentityUsernameIfNeeded(sanitizedUsername)
                             _state.update { current ->
                                 current.copy(
                                     usernameInput = sanitizedUsername,
@@ -528,6 +538,56 @@ class EditProfileViewModel(
 
     private fun isValidOrEmpty(value: String): Boolean = value.isEmpty() || isValidUsername(value)
 
+    private suspend fun updateAccountDirectoryCache(
+        username: String? = null,
+        avatarUrl: String? = null,
+    ) {
+        val principal = sessionManager.userPrincipal ?: return
+        val isBot = sessionManager.isBotAccount == true
+        val resolvedUsername =
+            username
+                ?: sessionManager.username
+                ?: principal
+        val resolvedAvatar =
+            avatarUrl
+                ?: sessionManager.profilePic
+                ?: preferences.getString(PrefKeys.PROFILE_PIC.name)
+                ?: ""
+        sessionManager.upsertAccountDirectoryProfile(
+            principal = principal,
+            username = resolvedUsername,
+            avatarUrl = resolvedAvatar,
+            isBot = isBot,
+        )
+        val directory = sessionManager.accountDirectory ?: return
+        preferences.putString(
+            PrefKeys.ACCOUNT_DIRECTORY_CACHE.name,
+            json.encodeToString(AccountDirectoryCache.from(directory)),
+        )
+    }
+
+    private suspend fun updateBotIdentityUsernameIfNeeded(username: String) {
+        if (sessionManager.isBotAccount == true) {
+            sessionManager.userPrincipal?.let { principal ->
+                preferences
+                    .getString(PrefKeys.BOT_IDENTITIES.name)
+                    ?.let { raw ->
+                        runCatching { json.decodeFromString<List<BotIdentityEntry>>(raw) }.getOrNull()
+                    }?.let { existing ->
+                        val updated =
+                            existing.map { entry ->
+                                if (entry.principal == principal) {
+                                    entry.copy(username = username)
+                                } else {
+                                    entry
+                                }
+                            }
+                        preferences.putString(PrefKeys.BOT_IDENTITIES.name, json.encodeToString(updated))
+                    }
+            }
+        }
+    }
+
     private fun sanitizedSessionUsername(): String = sanitizeInput(sessionManager.username.orEmpty())
 }
 
@@ -549,4 +609,43 @@ data class EditProfileViewState(
     val isSavingProfile: Boolean = false,
     val isBioFocused: Boolean = false,
     val profileImageToastMessage: StringResource? = null,
+)
+
+@Serializable
+private data class BotIdentityEntry(
+    val principal: String,
+    val identity: String,
+    val username: String? = null,
+)
+
+@Serializable
+private data class AccountDirectoryCache(
+    val mainPrincipal: String?,
+    val botPrincipals: List<String>,
+    val profiles: List<AccountDirectoryProfileCache>,
+) {
+    companion object {
+        fun from(directory: AccountDirectory): AccountDirectoryCache =
+            AccountDirectoryCache(
+                mainPrincipal = directory.mainPrincipal,
+                botPrincipals = directory.botPrincipals,
+                profiles =
+                    directory.profilesByPrincipal.values.map { profile ->
+                        AccountDirectoryProfileCache(
+                            principal = profile.principal,
+                            username = profile.username,
+                            avatarUrl = profile.avatarUrl,
+                            isBot = profile.isBot,
+                        )
+                    },
+            )
+    }
+}
+
+@Serializable
+private data class AccountDirectoryProfileCache(
+    val principal: String,
+    val username: String,
+    val avatarUrl: String,
+    val isBot: Boolean,
 )

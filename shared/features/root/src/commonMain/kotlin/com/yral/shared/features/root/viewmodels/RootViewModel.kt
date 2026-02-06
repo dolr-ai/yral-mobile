@@ -12,6 +12,8 @@ import com.yral.shared.analytics.User
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.TokenType
 import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.core.session.AccountDirectory
+import com.yral.shared.core.session.AccountDirectoryProfile
 import com.yral.shared.core.session.ProDetails
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
@@ -45,6 +47,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -231,7 +236,18 @@ class RootViewModel(
                 // restorePurchases()
             }
             if (_state.value.accountDialogInfo == null) {
-                populateAccountDialog(showSheet = false)
+                restoreAccountDialogFromCache()?.let { cachedInfo ->
+                    _state.update { current ->
+                        current.copy(accountDialogInfo = cachedInfo)
+                    }
+                } ?: seedAccountDialogFromLocalData()?.let { localInfo ->
+                    _state.update { current ->
+                        current.copy(accountDialogInfo = localInfo)
+                    }
+                }
+            }
+            if (!_state.value.isAccountSwitchInProgress) {
+                refreshAccountDirectoryInBackground()
             }
             autoSwitchToLastActiveAccount()
         } ?: authClient.initialize()
@@ -336,10 +352,13 @@ class RootViewModel(
             content = content,
         )
 
-    private suspend fun populateAccountDialog(
-        showSheet: Boolean,
-        allowRetry: Boolean = true,
-    ) {
+    private fun refreshAccountDirectoryInBackground() {
+        coroutineScope.launch {
+            refreshAccountDirectory(allowRetry = true)
+        }
+    }
+
+    private suspend fun refreshAccountDirectory(allowRetry: Boolean) {
         val activePrincipal = sessionManager.userPrincipal
         val mainPrincipal =
             preferences.getString(PrefKeys.MAIN_PRINCIPAL.name)
@@ -349,46 +368,90 @@ class RootViewModel(
                 ?: preferences
                     .getBytes(PrefKeys.IDENTITY.name)
                     ?.takeIf { activePrincipal == mainPrincipal }
-        val mainAccount =
-            resolveAccountUi(
-                principal = mainPrincipal,
-                identityBytes = mainIdentity,
-                isBot = false,
-                activePrincipal = activePrincipal,
-                fallbackUsername = sessionManager.username,
-            )
-
-        val botAccounts =
-            loadBotEntries()
-                ?.filter { it.principal != mainPrincipal }
-                ?.let { entries ->
-                    buildList {
-                        entries.forEach { entry ->
-                            val identityBytes =
-                                runCatching { Base64.decode(entry.identity) }.getOrNull()
+        val botEntries = loadBotEntries().filter { it.principal != mainPrincipal }
+        val mainFallbackUsername = sessionManager.username
+        val resolvedAccounts =
+            coroutineScope {
+                val mainDeferred =
+                    async {
+                        resolveAccountUi(
+                            principal = mainPrincipal,
+                            identityBytes = mainIdentity,
+                            isBot = false,
+                            activePrincipal = activePrincipal,
+                            fallbackUsername = mainFallbackUsername,
+                        )
+                    }
+                val botDeferred =
+                    botEntries.map { entry ->
+                        async {
+                            val identityBytes = runCatching { Base64.decode(entry.identity) }.getOrNull()
                             resolveAccountUi(
                                 principal = entry.principal,
                                 identityBytes = identityBytes,
                                 isBot = true,
                                 activePrincipal = activePrincipal,
                                 fallbackUsername = entry.username,
-                            )?.let { add(it) }
+                            )
                         }
                     }
-                }.orEmpty()
+                mainDeferred.await() to botDeferred.awaitAll().filterNotNull()
+            }
+        val mainAccount = resolvedAccounts.first
+        val botAccounts = resolvedAccounts.second
 
         if (mainAccount != null || botAccounts.isNotEmpty()) {
-            _state.update {
-                it.copy(
-                    accountDialogInfo = AccountDialogInfo(mainAccount = mainAccount, botAccounts = botAccounts),
-                    showAccountDialog = showSheet,
+            val directory =
+                buildAccountDirectory(
+                    mainPrincipal = mainPrincipal,
+                    mainAccount = mainAccount,
+                    botAccounts = botAccounts,
                 )
-            }
+            applyAccountDirectory(directory)
         } else if (allowRetry) {
             // ID token may not be persisted yet right after login; retry once shortly.
             delay(ACCOUNT_DIALOG_RETRY_DELAY_MS)
-            populateAccountDialog(showSheet = showSheet, allowRetry = false)
+            refreshAccountDirectory(allowRetry = false)
+        } else {
+            Logger.d("RootViewModel") { "refreshAccountDirectory: no accounts resolved, keeping cached directory" }
         }
+    }
+
+    private fun buildAccountDirectory(
+        mainPrincipal: String?,
+        mainAccount: AccountUi?,
+        botAccounts: List<AccountUi>,
+    ): AccountDirectory {
+        val profiles =
+            buildMap {
+                mainAccount?.let {
+                    put(
+                        it.principal,
+                        AccountDirectoryProfile(
+                            principal = it.principal,
+                            username = it.name,
+                            avatarUrl = it.avatarUrl,
+                            isBot = false,
+                        ),
+                    )
+                }
+                botAccounts.forEach { bot ->
+                    put(
+                        bot.principal,
+                        AccountDirectoryProfile(
+                            principal = bot.principal,
+                            username = bot.name,
+                            avatarUrl = bot.avatarUrl,
+                            isBot = true,
+                        ),
+                    )
+                }
+            }
+        return AccountDirectory(
+            mainPrincipal = mainPrincipal,
+            botPrincipals = botAccounts.map { it.principal },
+            profilesByPrincipal = profiles,
+        )
     }
 
     private suspend fun resolveAccountUi(
@@ -416,22 +479,126 @@ class RootViewModel(
         )
     }
 
+    private suspend fun applyAccountDirectory(directory: AccountDirectory) {
+        val activePrincipal = sessionManager.userPrincipal
+        sessionManager.updateAccountDirectory(directory)
+        persistAccountDirectoryCache(directory)
+        val accountDialogInfo = toAccountDialogInfo(directory, activePrincipal)
+        _state.update { current ->
+            current.copy(accountDialogInfo = accountDialogInfo)
+        }
+    }
+
+    private fun toAccountDialogInfo(
+        directory: AccountDirectory,
+        activePrincipal: String?,
+    ): AccountDialogInfo {
+        val mainAccount =
+            directory.mainPrincipal
+                ?.let { directory.profilesByPrincipal[it] }
+                ?.toAccountUi(activePrincipal)
+        val botAccounts =
+            directory.botPrincipals
+                .mapNotNull { principal -> directory.profilesByPrincipal[principal]?.toAccountUi(activePrincipal) }
+        return AccountDialogInfo(mainAccount = mainAccount, botAccounts = botAccounts)
+    }
+
+    private suspend fun restoreAccountDialogFromCache(): AccountDialogInfo? =
+        preferences
+            .getString(PrefKeys.ACCOUNT_DIRECTORY_CACHE.name)
+            ?.let { encoded ->
+                runCatching { json.decodeFromString<AccountDirectoryCache>(encoded) }.getOrNull()
+            }?.let { cache ->
+                val directory = cache.toAccountDirectory()
+                sessionManager.updateAccountDirectory(directory)
+                toAccountDialogInfo(directory, sessionManager.userPrincipal)
+            }
+
+    private suspend fun seedAccountDialogFromLocalData(): AccountDialogInfo? {
+        val activePrincipal = sessionManager.userPrincipal
+        val mainPrincipal =
+            preferences.getString(PrefKeys.MAIN_PRINCIPAL.name)
+                ?: preferences.getString(PrefKeys.USER_PRINCIPAL.name)
+                ?: return null
+        val botEntries =
+            preferences
+                .getString(PrefKeys.BOT_IDENTITIES.name)
+                ?.let { runCatching { json.decodeFromString<List<BotIdentityEntry>>(it) }.getOrNull() }
+                .orEmpty()
+                .filter { it.principal != mainPrincipal }
+
+        val mainUsername =
+            if (activePrincipal == mainPrincipal) {
+                resolveUsername(sessionManager.username, mainPrincipal)
+            } else {
+                mainPrincipal
+            } ?: mainPrincipal
+        val mainAvatar =
+            if (activePrincipal == mainPrincipal) {
+                sessionManager.profilePic ?: propicFromPrincipal(mainPrincipal)
+            } else {
+                propicFromPrincipal(mainPrincipal)
+            }
+        val mainAccount =
+            AccountUi(
+                principal = mainPrincipal,
+                name = mainUsername,
+                avatarUrl = mainAvatar,
+                isBot = false,
+                isActive = mainPrincipal == activePrincipal,
+            )
+        val botAccounts =
+            botEntries.map { entry ->
+                AccountUi(
+                    principal = entry.principal,
+                    name = resolveUsername(entry.username, entry.principal) ?: entry.principal,
+                    avatarUrl = propicFromPrincipal(entry.principal),
+                    isBot = true,
+                    isActive = entry.principal == activePrincipal,
+                )
+            }
+        val directory =
+            buildAccountDirectory(
+                mainPrincipal = mainPrincipal,
+                mainAccount = mainAccount,
+                botAccounts = botAccounts,
+            )
+        applyAccountDirectory(directory)
+        return AccountDialogInfo(mainAccount = mainAccount, botAccounts = botAccounts)
+    }
+
+    private suspend fun persistAccountDirectoryCache(directory: AccountDirectory) {
+        val encoded = json.encodeToString(AccountDirectoryCache.from(directory))
+        preferences.putString(PrefKeys.ACCOUNT_DIRECTORY_CACHE.name, encoded)
+    }
+
     fun dismissAccountDialog() {
         _state.update { it.copy(showAccountDialog = false) }
     }
 
     @Suppress("LongMethod")
     fun switchToAccount(principal: String) {
+        if (_state.value.isAccountSwitchInProgress) return
+        _state.update {
+            it.copy(
+                showAccountDialog = false,
+                isAccountSwitchInProgress = true,
+            )
+        }
         coroutineScope.launch {
             val previousSessionState = _state.value.sessionState
             runCatching {
                 val current = sessionManager.userPrincipal
                 if (current == principal) {
-                    _state.update { it.copy(showAccountDialog = false) }
-                    return@launch
+                    _state.update {
+                        it.copy(
+                            showAccountDialog = false,
+                            isAccountSwitchInProgress = false,
+                        )
+                    }
+                    return@runCatching
                 }
                 sessionManager.updateState(SessionState.Loading)
-                _state.update { it.copy(showAccountDialog = false) }
                 val identityBytes: ByteArray
                 val isBot: Boolean
                 val botUsername: String?
@@ -484,19 +651,88 @@ class RootViewModel(
                     authClient.authorizeFirebase(session)
                     authClient.fetchBalance(session)
                 }
-                populateAccountDialog(showSheet = false)
+                updateAccountDialogForSwitchedProfile(
+                    principal = principal,
+                    isBot = isBot,
+                    username = resolvedUsername ?: principal,
+                    avatarUrl = canisterData.profilePic ?: propicFromPrincipal(principal),
+                )
             }.onFailure { error ->
                 Logger.e("RootViewModel") { "Failed to switch account: ${error.message}" }
                 sessionManager.updateState(previousSessionState)
+            }.also {
+                _state.update { current -> current.copy(isAccountSwitchInProgress = false) }
             }
         }
     }
 
     fun showAccountSwitcher() {
+        if (_state.value.isAccountSwitchInProgress) return
+        if (_state.value.sessionState is SessionState.Loading) return
         coroutineScope.launch {
-            _state.update { it.copy(showAccountDialog = true, accountDialogInfo = null) }
-            populateAccountDialog(showSheet = true)
+            if (_state.value.accountDialogInfo == null) {
+                val cachedOrSeeded = restoreAccountDialogFromCache() ?: seedAccountDialogFromLocalData()
+                if (cachedOrSeeded != null) {
+                    _state.update { current -> current.copy(accountDialogInfo = cachedOrSeeded) }
+                }
+            }
+            _state.update { it.copy(showAccountDialog = true) }
         }
+    }
+
+    private suspend fun updateAccountDialogForSwitchedProfile(
+        principal: String,
+        isBot: Boolean,
+        username: String,
+        avatarUrl: String,
+    ) {
+        val current =
+            sessionManager.accountDirectory
+                ?: try {
+                    restoreAccountDialogFromCache()
+                    sessionManager.accountDirectory
+                } catch (_: Throwable) {
+                    null
+                }
+        val updatedDirectory =
+            if (current != null) {
+                val updatedBots =
+                    if (isBot) {
+                        (current.botPrincipals + principal).distinct()
+                    } else {
+                        current.botPrincipals
+                    }
+                current.copy(
+                    mainPrincipal = if (isBot) current.mainPrincipal else principal,
+                    botPrincipals = updatedBots,
+                    profilesByPrincipal =
+                        current.profilesByPrincipal + (
+                            principal to
+                                AccountDirectoryProfile(
+                                    principal = principal,
+                                    username = username,
+                                    avatarUrl = avatarUrl,
+                                    isBot = isBot,
+                                )
+                        ),
+                )
+            } else {
+                AccountDirectory(
+                    mainPrincipal = if (isBot) preferences.getString(PrefKeys.MAIN_PRINCIPAL.name) else principal,
+                    botPrincipals = if (isBot) listOf(principal) else emptyList(),
+                    profilesByPrincipal =
+                        mapOf(
+                            principal to
+                                AccountDirectoryProfile(
+                                    principal = principal,
+                                    username = username,
+                                    avatarUrl = avatarUrl,
+                                    isBot = isBot,
+                                ),
+                        ),
+                )
+            }
+        applyAccountDirectory(updatedDirectory)
     }
 
     private suspend fun cacheSession(
@@ -734,6 +970,7 @@ data class RootState(
     val isPendingLogin: UiState<Boolean> = UiState.Initial,
     val accountDialogInfo: AccountDialogInfo? = null,
     val showAccountDialog: Boolean = false,
+    val isAccountSwitchInProgress: Boolean = false,
 )
 
 data class AccountDialogInfo(
@@ -755,3 +992,59 @@ data class AccountUi(
     val isBot: Boolean,
     val isActive: Boolean,
 )
+
+private fun AccountDirectoryProfile.toAccountUi(activePrincipal: String?): AccountUi =
+    AccountUi(
+        principal = principal,
+        name = username,
+        avatarUrl = avatarUrl,
+        isBot = isBot,
+        isActive = principal == activePrincipal,
+    )
+
+@Serializable
+private data class AccountDirectoryCache(
+    val mainPrincipal: String?,
+    val botPrincipals: List<String>,
+    val profiles: List<AccountDirectoryProfileCache>,
+) {
+    fun toAccountDirectory(): AccountDirectory =
+        AccountDirectory(
+            mainPrincipal = mainPrincipal,
+            botPrincipals = botPrincipals,
+            profilesByPrincipal = profiles.associateBy({ it.principal }, { it.toProfile() }),
+        )
+
+    companion object {
+        fun from(directory: AccountDirectory): AccountDirectoryCache =
+            AccountDirectoryCache(
+                mainPrincipal = directory.mainPrincipal,
+                botPrincipals = directory.botPrincipals,
+                profiles =
+                    directory.profilesByPrincipal.values.map { profile ->
+                        AccountDirectoryProfileCache(
+                            principal = profile.principal,
+                            username = profile.username,
+                            avatarUrl = profile.avatarUrl,
+                            isBot = profile.isBot,
+                        )
+                    },
+            )
+    }
+}
+
+@Serializable
+private data class AccountDirectoryProfileCache(
+    val principal: String,
+    val username: String,
+    val avatarUrl: String,
+    val isBot: Boolean,
+) {
+    fun toProfile(): AccountDirectoryProfile =
+        AccountDirectoryProfile(
+            principal = principal,
+            username = username,
+            avatarUrl = avatarUrl,
+            isBot = isBot,
+        )
+}
