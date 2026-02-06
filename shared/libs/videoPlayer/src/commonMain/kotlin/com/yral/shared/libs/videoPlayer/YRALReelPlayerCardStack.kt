@@ -45,6 +45,7 @@ fun YRALReelPlayerCardStack(
     didVideoEnd: () -> Unit,
     onEdgeScrollAttempt: (pageNo: Int, atStart: Boolean, direction: ReelScrollDirection) -> Unit = { _, _, _ -> },
     onSwipeVote: ((direction: SwipeDirection, pageIndex: Int, isSwipe: Boolean) -> Unit)? = null,
+    shouldSuppressSwipeFeedback: ((pageIndex: Int) -> Boolean)? = null,
     overlayContent: @Composable (pageNo: Int, scrollToNext: () -> Unit) -> Unit,
 ) {
     ReelSwipeableCardStack(
@@ -58,5 +59,6 @@ fun YRALReelPlayerCardStack(
         onEdgeScrollAttempt = onEdgeScrollAttempt,
         overlayContent = overlayContent,
         onSwipeVote = onSwipeVote,
+        shouldSuppressSwipeFeedback = shouldSuppressSwipeFeedback,
     )
 }
