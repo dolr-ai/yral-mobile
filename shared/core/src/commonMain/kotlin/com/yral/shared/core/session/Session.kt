@@ -16,6 +16,7 @@ data class SessionProperties(
     val isSocialSignIn: Boolean? = null,
     val profileVideosCount: Int? = null,
     val botCount: Int? = null,
+    val accountDirectory: AccountDirectory? = null,
     val isForcedGamePlayUser: Boolean? = null,
     val isAutoScrollEnabled: Boolean? = null,
     val emailId: String? = null,
@@ -37,3 +38,16 @@ data class ProDetails(
 )
 
 private const val DEFAULT_TOTAL_CREDITS = 30
+
+data class AccountDirectory(
+    val mainPrincipal: String?,
+    val botPrincipals: List<String>,
+    val profilesByPrincipal: Map<String, AccountDirectoryProfile>,
+)
+
+data class AccountDirectoryProfile(
+    val principal: String,
+    val username: String,
+    val avatarUrl: String,
+    val isBot: Boolean,
+)
