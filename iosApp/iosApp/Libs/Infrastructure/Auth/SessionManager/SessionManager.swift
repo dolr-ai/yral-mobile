@@ -83,7 +83,8 @@ final class SessionManager: ObservableObject {
           utmParams: nil,
           isMandatoryLogin: isMandatoryLogin,
           phoneNumber: nil,
-          proStatus: nil
+          proStatus: nil,
+          isHonExperiment: KotlinBoolean(bool: true)
         )
       )
     case .permanentAuthentication(let userPrincipal, let email, let canisterPrincipal, _, _, let dailyRank):
@@ -107,7 +108,8 @@ final class SessionManager: ObservableObject {
           utmParams: nil,
           isMandatoryLogin: isMandatoryLogin,
           phoneNumber: nil,
-          proStatus: nil
+          proStatus: nil,
+          isHonExperiment: KotlinBoolean(bool: true)
         )
       )
     default:
