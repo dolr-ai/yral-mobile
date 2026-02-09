@@ -330,29 +330,21 @@ class FeedViewModel(
                             .distinctBy { it.videoID }
                             .sortedBy { stableTournamentOrderKey(tournamentId, userSeed, it.videoID) }
                     if (posts.isNotEmpty()) {
+                        // Pager reads initial page only at creation time; set restored page
+                        // before feed items are inserted so it starts at the expected index.
+                        val clampedPage = restoredPage.coerceIn(0, posts.lastIndex)
+                        _state.update { currentState ->
+                            currentState.copy(
+                                currentPageOfFeed = clampedPage,
+                                maxPageReached = maxOf(currentState.maxPageReached, clampedPage),
+                            )
+                        }
                         filterVotedAndFetchDetails(posts)
-                        applyRestoredTournamentPage(restoredPage)
                     }
                     setLoadingMore(false)
                 }.onFailure {
                     setLoadingMore(false)
                 }
-        }
-    }
-
-    private fun applyRestoredTournamentPage(restoredPage: Int) {
-        if (feedContext !is FeedContext.Tournament) return
-        _state.update { currentState ->
-            if (currentState.feedDetails.isEmpty()) {
-                currentState.copy(currentPageOfFeed = 0, maxPageReached = maxOf(currentState.maxPageReached, 0))
-            } else {
-                val maxIndex = currentState.feedDetails.lastIndex
-                val clampedPage = restoredPage.coerceIn(0, maxIndex)
-                currentState.copy(
-                    currentPageOfFeed = clampedPage,
-                    maxPageReached = maxOf(currentState.maxPageReached, clampedPage),
-                )
-            }
         }
     }
 
