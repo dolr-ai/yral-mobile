@@ -212,7 +212,8 @@ class ProfileViewModel: ObservableObject {
             )
         ),
         phoneNumber: nil,
-        proStatus: nil
+        proStatus: nil,
+        isHonExperiment: KotlinBoolean(bool: true)
       )
     )
     AnalyticsModuleKt.getAnalyticsManager().flush()

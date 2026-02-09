@@ -167,7 +167,8 @@ extension FeedsViewController: FeedsCellProtocol {
         stakeAmount: Int32(item.smileyGame?.config.lossPenalty ?? Int.zero),
         stakeType: TokenType.yral,
         optionChosen: smileyID,
-        isTutorialVote: self.isTutorialVote
+        isTutorialVote: self.isTutorialVote,
+        swipeAction: nil
       )
     )
   }
@@ -320,7 +321,8 @@ extension FeedsViewController: FeedsCellProtocol {
         stakeAmount: Int32(item.smileyGame?.config.lossPenalty ?? Int.zero),
         stakeType: TokenType.yral,
         optionChosen: smileyID,
-        isTutorialVote: self.isTutorialVote
+        isTutorialVote: self.isTutorialVote,
+        swipeAction: nil
       )
     )
     Task { @MainActor in
