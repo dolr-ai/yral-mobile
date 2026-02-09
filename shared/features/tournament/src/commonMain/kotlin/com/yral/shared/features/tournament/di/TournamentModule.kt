@@ -1,6 +1,8 @@
 package com.yral.shared.features.tournament.di
 
 import com.yral.shared.features.tournament.analytics.TournamentTelemetry
+import com.yral.shared.features.tournament.cache.TournamentResumeCacheStore
+import com.yral.shared.features.tournament.cache.TournamentResumeCacheStoreImpl
 import com.yral.shared.features.tournament.data.ITournamentRemoteDataSource
 import com.yral.shared.features.tournament.data.TournamentRemoteDataSource
 import com.yral.shared.features.tournament.data.TournamentRepository
@@ -26,6 +28,7 @@ val tournamentModule =
     module {
         // Analytics
         singleOf(::TournamentTelemetry)
+        singleOf(::TournamentResumeCacheStoreImpl) { bind<TournamentResumeCacheStore>() }
 
         // Data Source
         factoryOf(::TournamentRemoteDataSource) { bind<ITournamentRemoteDataSource>() }
