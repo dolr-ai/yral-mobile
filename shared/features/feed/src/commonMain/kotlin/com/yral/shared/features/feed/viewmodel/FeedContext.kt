@@ -7,5 +7,7 @@ sealed class FeedContext {
         val tournamentId: String,
         val sessionKey: String? = null,
         val isHotOrNot: Boolean = false,
+        val loadSavedPage: (suspend () -> Int?)? = null,
+        val saveCurrentPage: (suspend (Int) -> Unit)? = null,
     ) : FeedContext()
 }
