@@ -19,6 +19,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.shared.features.feed.ui.FeedScreen
 import com.yral.shared.features.feed.viewmodel.FeedContext
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
+import com.yral.shared.features.tournament.cache.TournamentResumeCacheStore
 import com.yral.shared.features.tournament.nav.TournamentGameComponent
 import com.yral.shared.features.tournament.ui.LeaveTournamentBottomSheet
 import com.yral.shared.features.tournament.ui.OutOfDiamondsBottomSheet
@@ -31,6 +32,7 @@ import com.yral.shared.features.tournament.viewmodel.TournamentGameViewModel
 import com.yral.shared.libs.designsystem.component.lottie.PreloadLottieAnimations
 import com.yral.shared.libs.videoPlayer.cardstack.SwipeDirection
 import kotlinx.coroutines.delay
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.time.Clock
@@ -44,6 +46,7 @@ fun TournamentGameScaffoldScreen(
     sessionKey: String,
 ) {
     val gameConfig = component.gameConfig
+    val tournamentResumeCacheStore: TournamentResumeCacheStore = koinInject()
     val tournamentGameViewModel =
         koinViewModel<TournamentGameViewModel>(
             key = "tournament-game-${gameConfig.tournamentId}-$sessionKey",
@@ -57,6 +60,21 @@ fun TournamentGameScaffoldScreen(
                         tournamentId = gameConfig.tournamentId,
                         sessionKey = sessionKey,
                         isHotOrNot = gameConfig.isHotOrNot,
+                        loadSavedPage = {
+                            tournamentResumeCacheStore.loadPage(
+                                scopeKey = sessionKey,
+                                tournamentId = gameConfig.tournamentId,
+                                nowEpochMs = Clock.System.now().toEpochMilliseconds(),
+                            )
+                        },
+                        saveCurrentPage = { pageNo ->
+                            tournamentResumeCacheStore.savePage(
+                                scopeKey = sessionKey,
+                                tournamentId = gameConfig.tournamentId,
+                                endEpochMs = gameConfig.endEpochMs,
+                                pageIndex = pageNo,
+                            )
+                        },
                     ),
                 )
             },

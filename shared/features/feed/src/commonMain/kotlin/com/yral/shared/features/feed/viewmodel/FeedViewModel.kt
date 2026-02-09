@@ -310,6 +310,13 @@ class FeedViewModel(
 
     private fun initialTournamentFeedData(tournamentId: String) {
         coroutineScope.launch {
+            val tournamentContext = feedContext as? FeedContext.Tournament
+            val restoredPage =
+                tournamentContext
+                    ?.loadSavedPage
+                    ?.invoke()
+                    ?.coerceAtLeast(0)
+                    ?: 0
             setLoadingMore(true)
             requiredUseCases.getTournamentFeedUseCase
                 .invoke(GetTournamentFeedUseCase.Params(tournamentId = tournamentId))
@@ -324,11 +331,28 @@ class FeedViewModel(
                             .sortedBy { stableTournamentOrderKey(tournamentId, userSeed, it.videoID) }
                     if (posts.isNotEmpty()) {
                         filterVotedAndFetchDetails(posts)
+                        applyRestoredTournamentPage(restoredPage)
                     }
                     setLoadingMore(false)
                 }.onFailure {
                     setLoadingMore(false)
                 }
+        }
+    }
+
+    private fun applyRestoredTournamentPage(restoredPage: Int) {
+        if (feedContext !is FeedContext.Tournament) return
+        _state.update { currentState ->
+            if (currentState.feedDetails.isEmpty()) {
+                currentState.copy(currentPageOfFeed = 0, maxPageReached = maxOf(currentState.maxPageReached, 0))
+            } else {
+                val maxIndex = currentState.feedDetails.lastIndex
+                val clampedPage = restoredPage.coerceIn(0, maxIndex)
+                currentState.copy(
+                    currentPageOfFeed = clampedPage,
+                    maxPageReached = maxOf(currentState.maxPageReached, clampedPage),
+                )
+            }
         }
     }
 
@@ -748,6 +772,11 @@ class FeedViewModel(
                 currentPageOfFeed = pageNo,
                 maxPageReached = maxOf(currentState.maxPageReached, pageNo), // Update max page reached
             )
+        }
+        if (feedContext is FeedContext.Tournament) {
+            viewModelScope.launch {
+                feedContext.saveCurrentPage?.invoke(pageNo)
+            }
         }
         val currentState = _state.value
         if (currentState.currentPageOfFeed < currentState.feedDetails.size) {
