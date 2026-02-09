@@ -8,19 +8,19 @@ data class ValidateAndGenerateMetadataResponseDto(
     @SerialName("is_valid")
     val isValid: Boolean,
     val reason: String? = null,
-    val name: String,
+    val name: String? = null,
     @SerialName("display_name")
-    val displayName: String,
-    val description: String,
+    val displayName: String? = null,
+    val description: String? = null,
     @SerialName("initial_greeting")
-    val initialGreeting: String,
+    val initialGreeting: String? = null,
     @SerialName("suggested_messages")
-    val suggestedMessages: List<String> = emptyList(),
+    val suggestedMessages: List<String>? = emptyList(),
     @SerialName("personality_traits")
-    val personalityTraits: Map<String, String> = emptyMap(),
-    val category: String,
+    val personalityTraits: Map<String, String>? = emptyMap(),
+    val category: String? = null,
     @SerialName("avatar_url")
-    val avatarUrl: String,
+    val avatarUrl: String? = null,
     @SerialName("system_instructions")
     val systemInstructions: String? = null,
     @SerialName("is_nsfw")
