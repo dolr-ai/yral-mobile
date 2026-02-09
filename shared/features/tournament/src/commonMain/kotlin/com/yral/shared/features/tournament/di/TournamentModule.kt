@@ -18,17 +18,24 @@ import com.yral.shared.features.tournament.domain.RegisterForTournamentUseCase
 import com.yral.shared.features.tournament.viewmodel.TournamentGameViewModel
 import com.yral.shared.features.tournament.viewmodel.TournamentLeaderboardViewModel
 import com.yral.shared.features.tournament.viewmodel.TournamentViewModel
+import com.yral.shared.preferences.Preferences
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 val tournamentModule =
     module {
         // Analytics
         singleOf(::TournamentTelemetry)
-        singleOf(::TournamentResumeCacheStoreImpl) { bind<TournamentResumeCacheStore>() }
+        single<TournamentResumeCacheStore> {
+            TournamentResumeCacheStoreImpl(
+                preferences = get<Preferences>(named("TournamentResumeCachePreferences")),
+                json = get(),
+            )
+        }
 
         // Data Source
         factoryOf(::TournamentRemoteDataSource) { bind<ITournamentRemoteDataSource>() }
