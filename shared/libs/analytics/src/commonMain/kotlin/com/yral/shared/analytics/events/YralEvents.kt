@@ -346,16 +346,19 @@ data class OtpValidationResultEventData(
     @SerialName("feature_name") override val featureName: String = Features.AUTH.getFeatureName(),
     @SerialName("validation_status") val validationStatus: OtpValidationStatus,
     @SerialName("failure_reason") val failureReason: String? = null,
+    @SerialName("phone_number") val phoneNumber: String,
 ) : BaseEventData(),
     EventData {
     constructor(
         validationStatus: OtpValidationStatus,
         failureReason: String? = null,
+        phoneNumber: String,
     ) : this(
         FeatureEvents.OTP_VALIDATION_RESULT.getEventName(),
         Features.AUTH.getFeatureName(),
         validationStatus,
         failureReason,
+        phoneNumber,
     )
 }
 
