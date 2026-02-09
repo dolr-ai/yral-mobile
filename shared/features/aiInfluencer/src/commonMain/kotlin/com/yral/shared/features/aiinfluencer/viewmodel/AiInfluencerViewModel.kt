@@ -371,7 +371,7 @@ class AiInfluencerViewModel(
                             botPrincipal = newBotPrincipal,
                             botIdentity = delegatedIdentityBytes,
                             profileDetails = currentStep,
-                        ).onSuccess { _ ->
+                        ).onSuccess {
                             _state.update { it.copy(isBotCreationLoading = false) }
                             onSuccess()
                         }.onFailure { error ->
