@@ -12,6 +12,7 @@ import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
+import com.yral.shared.core.utils.generateUsernameFromPrincipal
 import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.features.aiinfluencer.domain.models.GeneratedInfluencerMetadata
 import com.yral.shared.features.aiinfluencer.domain.usecases.CreateInfluencerUseCase
@@ -29,6 +30,7 @@ import com.yral.shared.rust.service.domain.usecases.AcceptNewUserRegistrationV2U
 import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsParams
 import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsUseCase
 import com.yral.shared.rust.service.services.HelperService
+import com.yral.shared.rust.service.services.MetadataUpdateError
 import com.yral.shared.rust.service.utils.SignedMessage
 import com.yral.shared.rust.service.utils.authenticateWithNetwork
 import com.yral.shared.rust.service.utils.delegatedIdentityWireToJson
@@ -58,7 +60,7 @@ import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 @OptIn(ExperimentalEncodingApi::class)
-@Suppress("LongParameterList")
+@Suppress("LongParameterList", "TooManyFunctions")
 class AiInfluencerViewModel(
     private val generatePromptUseCase: GeneratePromptUseCase,
     private val validateAndGenerateMetadataUseCase: ValidateAndGenerateMetadataUseCase,
@@ -231,12 +233,21 @@ class AiInfluencerViewModel(
                 validateAndGenerateMetadataUseCase(
                     ValidateAndGenerateMetadataUseCase.Params(systemInstructions = edited),
                 ).onSuccess { metadata ->
-                    _state.update {
-                        it.copy(
-                            step = metadata.toProfileDetails(edited),
-                            errorMessage = null,
-                            isImagePickerVisible = false,
-                        )
+                    if (metadata.isValid) {
+                        _state.update {
+                            it.copy(
+                                step = metadata.toProfileDetails(edited),
+                                errorMessage = null,
+                                isImagePickerVisible = false,
+                            )
+                        }
+                    } else {
+                        _state.update {
+                            it.copy(
+                                step = currentStep,
+                                errorMessage = metadata.reason.ifBlank { DEFAULT_ERROR_MESSAGE },
+                            )
+                        }
                     }
                 }.onFailure { throwable ->
                     _state.update {
@@ -408,6 +419,9 @@ class AiInfluencerViewModel(
         private const val PROMPT_CHAR_LIMIT = 200
         private const val DEFAULT_ERROR_MESSAGE = "Something went wrong. Please try again."
         private const val BOT_CREATE_MESSAGE = "yral_auth_v2_create_ai_account"
+        private const val MIN_USERNAME_LENGTH = 3
+        private const val MAX_USERNAME_LENGTH = 15
+        private const val RETRY_SUFFIX_LENGTH = 3
         private val PNG_MAGIC =
             byteArrayOf(
                 0x89.toByte(),
@@ -429,7 +443,7 @@ class AiInfluencerViewModel(
         private const val MIME_TYPE_JPEG = "image/jpeg"
     }
 
-    @Suppress("LongMethod")
+    @Suppress("LongMethod", "CyclomaticComplexMethod")
     private suspend fun completeBotSetup(
         botPrincipal: String,
         botIdentity: ByteArray,
@@ -443,20 +457,48 @@ class AiInfluencerViewModel(
                     logger.d { "bot_setup: authenticate_with_network success canister=${it.canisterId}" }
                 }
             // Update username via set_user_metadata
+            val fallbackUsername =
+                resolveUsername(preferred = null, principal = botPrincipal)
+                    ?: generateUsernameFromPrincipal(botPrincipal)
+            val normalizedUsername = normalizeBotUsername(profileDetails.name, botPrincipal)
+            var usernameForCreateApi = fallbackUsername
             var usernameUpdated = false
             runCatching {
                 HelperService
                     .updateUserMetadata(
                         identityData = botIdentity,
                         userCanisterId = canisterData.canisterId,
-                        userName = profileDetails.name,
+                        userName = normalizedUsername,
                     ).getOrThrow()
             }.onSuccess {
                 logger.d { "bot_setup: set_user_metadata success" }
                 usernameUpdated = true
+                usernameForCreateApi = normalizedUsername
             }.onFailure { throwable ->
-                // Username collisions shouldn't block the rest of the flow
-                logger.w { "bot_setup: set_user_metadata failed (continuing) - ${throwable.message}" }
+                if (isUsernameTakenError(throwable)) {
+                    val retryUsername = buildRetryUsername(normalizedUsername, botPrincipal)
+                    runCatching {
+                        HelperService
+                            .updateUserMetadata(
+                                identityData = botIdentity,
+                                userCanisterId = canisterData.canisterId,
+                                userName = retryUsername,
+                            ).getOrThrow()
+                    }.onSuccess {
+                        logger.d { "bot_setup: set_user_metadata retry success username=$retryUsername" }
+                        usernameUpdated = true
+                        usernameForCreateApi = retryUsername
+                    }.onFailure { retryThrowable ->
+                        logger.w {
+                            "bot_setup: set_user_metadata retry failed (continuing) - ${retryThrowable.message}"
+                        }
+                    }
+                } else {
+                    // Username failures shouldn't block the rest of the flow
+                    logger.w {
+                        "bot_setup: set_user_metadata failed (continuing) - ${throwable.message}"
+                    }
+                }
             }
 
             // Upload avatar (download then upload)
@@ -497,7 +539,7 @@ class AiInfluencerViewModel(
                         CreateInfluencerUseCase.Params(
                             request =
                                 com.yral.shared.features.aiinfluencer.domain.models.CreatedInfluencer(
-                                    name = profileDetails.name,
+                                    name = usernameForCreateApi,
                                     displayName = profileDetails.displayName,
                                     description = profileDetails.description,
                                     systemInstructions = profileDetails.systemInstructions,
@@ -525,7 +567,7 @@ class AiInfluencerViewModel(
             botIdentityStorage.saveBotIdentity(
                 principal = botPrincipal,
                 identity = botIdentity,
-                username = profileDetails.name.takeIf { usernameUpdated },
+                username = usernameForCreateApi.takeIf { usernameUpdated },
             )
             logger.d { "bot_setup: completed" }
             setActiveBotSession(
@@ -534,7 +576,7 @@ class AiInfluencerViewModel(
                 canisterData = canisterData,
                 profileDetails = profileDetails,
                 profilePicUrl = uploadedAvatarUrl,
-                displayUsername = if (usernameUpdated) profileDetails.name else null,
+                displayUsername = if (usernameUpdated) usernameForCreateApi else null,
             )
 
             val starterPrompt = createdInfluencer.starterVideoPrompt
@@ -592,6 +634,33 @@ class AiInfluencerViewModel(
             else -> MIME_TYPE_PNG
         }
     }
+
+    private fun normalizeBotUsername(
+        sourceUsername: String,
+        principal: String,
+    ): String {
+        val seed = principal.filter { it.isLetterOrDigit() }.ifBlank { "user123" }
+        val base = sourceUsername.filter { it.isLetterOrDigit() }.ifBlank { seed }
+        val trimmed = if (base.length > MAX_USERNAME_LENGTH) base.take(MAX_USERNAME_LENGTH) else base
+        return if (trimmed.length >= MIN_USERNAME_LENGTH) {
+            trimmed
+        } else {
+            (trimmed + seed).take(MIN_USERNAME_LENGTH)
+        }
+    }
+
+    private fun buildRetryUsername(
+        username: String,
+        principal: String,
+    ): String {
+        val seed = principal.filter { it.isLetterOrDigit() }.ifBlank { "xyz123" }
+        val suffix = seed.takeLast(RETRY_SUFFIX_LENGTH).padStart(RETRY_SUFFIX_LENGTH, '0')
+        val prefixLength = (MAX_USERNAME_LENGTH - RETRY_SUFFIX_LENGTH).coerceAtLeast(0)
+        val prefix = username.take(prefixLength)
+        return normalizeBotUsername(sourceUsername = prefix + suffix, principal = principal)
+    }
+
+    private fun isUsernameTakenError(throwable: Throwable): Boolean = throwable is MetadataUpdateError.UsernameTaken
 
     private suspend fun downloadAvatar(url: String): ByteArray = httpClient.get(url).body()
 
