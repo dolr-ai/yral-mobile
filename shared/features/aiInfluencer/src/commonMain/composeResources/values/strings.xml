@@ -18,4 +18,7 @@
     <string name="ai_influencer_upload_photo">Upload Photo</string>
     <string name="ai_influencer_take_photo">Take A Photo</string>
     <string name="ai_influencer_error_generic">Something went wrong. Please try again.</string>
+    <string name="ai_influencer_error_sheet_title">Something went wrong!</string>
+    <string name="ai_influencer_error_sheet_subtitle">We were unable to create your influencer profile. Please try again in a moment.</string>
+    <string name="ai_influencer_error_sheet_retry">Try Again</string>
 </resources>

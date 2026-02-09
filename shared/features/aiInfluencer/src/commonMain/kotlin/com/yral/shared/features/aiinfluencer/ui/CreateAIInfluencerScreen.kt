@@ -96,7 +96,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.ic_gallery
 import yral_mobile.shared.libs.designsystem.generated.resources.profile_placeholder
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 fun CreateAIInfluencerScreen(
     modifier: Modifier = Modifier,
@@ -119,6 +119,8 @@ fun CreateAIInfluencerScreen(
         requestLoginFactory?.let {
             rememberLoginInfo(requestLoginFactory = it, key = "ai-influencer-login")
         }
+    var showCreateErrorSheet by remember { mutableStateOf(false) }
+    var lastShownCreateError by remember { mutableStateOf<String?>(null) }
     val backgroundModifier = modifier.fillMaxSize().background(Color.Black)
     val handleBack: () -> Unit = {
         val handled = viewModel.onBack()
@@ -143,6 +145,19 @@ fun CreateAIInfluencerScreen(
     Box(
         modifier = backgroundModifier,
     ) {
+        LaunchedEffect(state.isBotCreationLoading, state.errorMessage, state.step) {
+            if (state.isBotCreationLoading) {
+                lastShownCreateError = null
+            }
+            if (state.step is AiInfluencerStep.ProfileDetails) {
+                val error = state.errorMessage?.takeIf { it.isNotBlank() }
+                if (error != null && error != lastShownCreateError) {
+                    lastShownCreateError = error
+                    showCreateErrorSheet = true
+                }
+            }
+        }
+
         when (val step = state.step) {
             is AiInfluencerStep.DescriptionEntry ->
                 PromptEntryScreen(
@@ -208,6 +223,16 @@ fun CreateAIInfluencerScreen(
         if (state.isBotCreationLoading) {
             FullScreenLoadingOverlay(
                 text = "Creating an AI Influencer for you",
+            )
+        }
+
+        if (showCreateErrorSheet && state.step is AiInfluencerStep.ProfileDetails) {
+            AiInfluencerErrorBottomSheet(
+                onDismiss = { showCreateErrorSheet = false },
+                onRetry = {
+                    showCreateErrorSheet = false
+                    onCreateProfile()
+                },
             )
         }
     }
@@ -476,7 +501,6 @@ private fun ProfileDetailsScreen(
                 onValueChange = onDescriptionChange,
                 minLines = 2,
             )
-            ErrorText(state.errorMessage)
         }
         Spacer(modifier = Modifier.weight(1f))
         YralGradientButton(
