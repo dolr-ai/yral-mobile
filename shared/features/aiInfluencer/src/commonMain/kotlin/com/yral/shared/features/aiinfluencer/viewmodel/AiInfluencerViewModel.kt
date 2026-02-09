@@ -77,6 +77,10 @@ class AiInfluencerViewModel(
     private val _state = MutableStateFlow(AiInfluencerUiState())
     val state: StateFlow<AiInfluencerUiState> = _state.asStateFlow()
 
+    fun resetFlow() {
+        _state.value = AiInfluencerUiState()
+    }
+
     private var requestJob: Job? = null
 
     fun onPromptChanged(prompt: String) {

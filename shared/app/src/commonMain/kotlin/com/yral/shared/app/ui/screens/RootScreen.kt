@@ -263,6 +263,9 @@ fun RootScreen(rootComponent: RootComponent) {
                     is Child.CreateInfluencer -> {
                         HandleSystemBars(show = true)
                         val aiInfluencerViewModel = koinViewModel<AiInfluencerViewModel>()
+                        LaunchedEffect(Unit) {
+                            aiInfluencerViewModel.resetFlow()
+                        }
                         CreateAIInfluencerScreen(
                             modifier = Modifier.fillMaxSize().safeDrawingPadding(),
                             viewModel = aiInfluencerViewModel,
