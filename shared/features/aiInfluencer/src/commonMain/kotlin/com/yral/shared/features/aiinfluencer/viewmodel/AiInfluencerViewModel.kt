@@ -60,7 +60,7 @@ import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 @OptIn(ExperimentalEncodingApi::class)
-@Suppress("LongParameterList", "TooManyFunctions")
+@Suppress("LongParameterList", "TooManyFunctions", "LargeClass")
 class AiInfluencerViewModel(
     private val generatePromptUseCase: GeneratePromptUseCase,
     private val validateAndGenerateMetadataUseCase: ValidateAndGenerateMetadataUseCase,
@@ -80,10 +80,12 @@ class AiInfluencerViewModel(
     val state: StateFlow<AiInfluencerUiState> = _state.asStateFlow()
 
     fun resetFlow() {
+        clearBotCreationProgress()
         _state.value = AiInfluencerUiState()
     }
 
     private var requestJob: Job? = null
+    private var botCreationProgress: BotCreationProgress? = null
 
     fun onPromptChanged(prompt: String) {
         val clamped = prompt.take(PROMPT_CHAR_LIMIT)
@@ -116,6 +118,7 @@ class AiInfluencerViewModel(
         val currentStep = _state.value.step
         return when (currentStep) {
             is AiInfluencerStep.ProfileDetails -> {
+                clearBotCreationProgress()
                 val prompt = _state.value.promptInput
                 _state.update {
                     it.copy(
@@ -340,70 +343,62 @@ class AiInfluencerViewModel(
 
         requestJob?.cancel()
         _state.update { it.copy(isBotCreationLoading = true, errorMessage = null) }
+        val profileKey = currentStep.progressKey()
+        val progress =
+            botCreationProgress?.takeIf { it.profileKey == profileKey } ?: BotCreationProgress(profileKey)
+        botCreationProgress = progress
 
         requestJob =
             viewModelScope.launch {
-                createAiAccountUseCase(
-                    CreateAiAccountUseCase.Params(
-                        userPrincipal = principal,
-                        signature = signedMessage.sig ?: ByteArray(0),
-                        publicKey = signedMessage.publicKey ?: ByteArray(0),
-                        signedMessage = ByteArray(0),
-                        ingressExpirySecs = signedMessage.ingressExpirySecs,
-                        ingressExpiryNanos = signedMessage.ingressExpiryNanos,
-                        delegations = signedMessage.delegations,
-                    ),
-                ).onSuccess { delegatedIdentityBytes ->
-                    logger.d { "createAiAccount: success, bytes=${delegatedIdentityBytes.size}" }
-                    val newBotPrincipal =
-                        runCatching { getSessionFromIdentity(delegatedIdentityBytes).userPrincipalId }
-                            .getOrElse {
-                                logger.e { "createAiAccount: failed to parse bot principal ${it.message}" }
-                                _state.update {
-                                    it.copy(
-                                        isBotCreationLoading = false,
-                                        errorMessage =
-                                            "Unable to parse bot principal. Please try again.",
-                                    )
-                                }
-                                return@launch
+                runCatching {
+                    val delegatedIdentityBytes =
+                        progress.botIdentity
+                            ?: createAiAccountUseCase(
+                                CreateAiAccountUseCase.Params(
+                                    userPrincipal = principal,
+                                    signature = signedMessage.sig ?: ByteArray(0),
+                                    publicKey = signedMessage.publicKey ?: ByteArray(0),
+                                    signedMessage = ByteArray(0),
+                                    ingressExpirySecs = signedMessage.ingressExpirySecs,
+                                    ingressExpiryNanos = signedMessage.ingressExpiryNanos,
+                                    delegations = signedMessage.delegations,
+                                ),
+                            ).getOrThrow().also {
+                                logger.d { "createAiAccount: success, bytes=${it.size}" }
+                                progress.botIdentity = it
                             }
 
-                    acceptNewUserRegistrationV2UseCase(
-                        AcceptNewUserRegistrationV2Params(
-                            principal = principal,
-                            newPrincipal = newBotPrincipal,
-                            authenticated = true,
-                            mainAccount = principal,
-                        ),
-                    ).onSuccess {
+                    val newBotPrincipal =
+                        progress.botPrincipal
+                            ?: runCatching { getSessionFromIdentity(delegatedIdentityBytes).userPrincipalId }
+                                .getOrElse {
+                                    throw YralException("Unable to parse bot principal. Please try again.")
+                                }.also { progress.botPrincipal = it }
+
+                    if (!progress.registrationAccepted) {
+                        acceptNewUserRegistrationV2UseCase(
+                            AcceptNewUserRegistrationV2Params(
+                                principal = principal,
+                                newPrincipal = newBotPrincipal,
+                                authenticated = true,
+                                mainAccount = principal,
+                            ),
+                        ).getOrThrow()
                         logger.d { "accept_new_user_registration_v2: success for bot=$newBotPrincipal" }
-                        completeBotSetup(
-                            botPrincipal = newBotPrincipal,
-                            botIdentity = delegatedIdentityBytes,
-                            profileDetails = currentStep,
-                        ).onSuccess {
-                            _state.update { it.copy(isBotCreationLoading = false) }
-                            onSuccess()
-                        }.onFailure { error ->
-                            _state.update {
-                                it.copy(
-                                    isBotCreationLoading = false,
-                                    errorMessage = error.message ?: DEFAULT_ERROR_MESSAGE,
-                                )
-                            }
-                        }
-                    }.onFailure { throwable ->
-                        logger.e { "accept_new_user_registration_v2: failed ${throwable.message}" }
-                        _state.update {
-                            it.copy(
-                                isBotCreationLoading = false,
-                                errorMessage = throwable.message ?: DEFAULT_ERROR_MESSAGE,
-                            )
-                        }
+                        progress.registrationAccepted = true
                     }
+
+                    completeBotSetup(
+                        progress = progress,
+                        botPrincipal = newBotPrincipal,
+                        botIdentity = delegatedIdentityBytes,
+                        profileDetails = currentStep,
+                    ).getOrThrow()
+                }.onSuccess {
+                    _state.update { it.copy(isBotCreationLoading = false) }
+                    clearBotCreationProgress()
+                    onSuccess()
                 }.onFailure { throwable ->
-                    logger.e { "createAiAccount: failed ${throwable.message}" }
                     val serverMessage = extractServerMessage(throwable)
                     _state.update {
                         it.copy(
@@ -445,6 +440,7 @@ class AiInfluencerViewModel(
 
     @Suppress("LongMethod", "CyclomaticComplexMethod")
     private suspend fun completeBotSetup(
+        progress: BotCreationProgress,
         botPrincipal: String,
         botIdentity: ByteArray,
         profileDetails: AiInfluencerStep.ProfileDetails,
@@ -453,148 +449,176 @@ class AiInfluencerViewModel(
             logger.d { "bot_setup: start for bot=$botPrincipal" }
             // Authenticate with network using bot identity to get canister info
             val canisterData =
-                authenticateWithNetwork(botIdentity).also {
-                    logger.d { "bot_setup: authenticate_with_network success canister=${it.canisterId}" }
-                }
+                progress.canisterData
+                    ?: authenticateWithNetwork(botIdentity).also {
+                        logger.d { "bot_setup: authenticate_with_network success canister=${it.canisterId}" }
+                        progress.canisterData = it
+                    }
             // Update username via set_user_metadata
             val fallbackUsername =
                 resolveUsername(preferred = null, principal = botPrincipal)
                     ?: generateUsernameFromPrincipal(botPrincipal)
-            val normalizedUsername = normalizeBotUsername(profileDetails.name, botPrincipal)
-            var usernameForCreateApi = fallbackUsername
-            var usernameUpdated = false
-            runCatching {
-                HelperService
-                    .updateUserMetadata(
-                        identityData = botIdentity,
-                        userCanisterId = canisterData.canisterId,
-                        userName = normalizedUsername,
-                    ).getOrThrow()
-            }.onSuccess {
-                logger.d { "bot_setup: set_user_metadata success" }
-                usernameUpdated = true
-                usernameForCreateApi = normalizedUsername
-            }.onFailure { throwable ->
-                if (isUsernameTakenError(throwable)) {
-                    val retryUsername = buildRetryUsername(normalizedUsername, botPrincipal)
-                    runCatching {
-                        HelperService
-                            .updateUserMetadata(
-                                identityData = botIdentity,
-                                userCanisterId = canisterData.canisterId,
-                                userName = retryUsername,
-                            ).getOrThrow()
-                    }.onSuccess {
-                        logger.d { "bot_setup: set_user_metadata retry success username=$retryUsername" }
-                        usernameUpdated = true
-                        usernameForCreateApi = retryUsername
-                    }.onFailure { retryThrowable ->
-                        logger.w {
-                            "bot_setup: set_user_metadata retry failed (continuing) - ${retryThrowable.message}"
-                        }
-                    }
-                } else {
-                    // Username failures shouldn't block the rest of the flow
-                    logger.w {
-                        "bot_setup: set_user_metadata failed (continuing) - ${throwable.message}"
-                    }
-                }
-            }
+            val usernameResult =
+                progress.usernameResult
+                    ?: tryUpdateUsername(
+                        botIdentity = botIdentity,
+                        canisterId = canisterData.canisterId,
+                        requestedUsername = profileDetails.name,
+                        botPrincipal = botPrincipal,
+                        fallbackUsername = fallbackUsername,
+                    ).also { progress.usernameResult = it }
+            val usernameForCreateApi = usernameResult.username
+            val usernameUpdated = usernameResult.updated
 
             // Upload avatar (download then upload)
             val avatarBytes =
-                profileDetails.avatarBytes
-                    ?: downloadAvatar(profileDetails.avatarUrl).also {
-                        logger.d { "bot_setup: downloaded avatar bytes=${it.size}" }
-                    }
+                progress.avatarBytes
+                    ?: (
+                        profileDetails.avatarBytes
+                            ?: downloadAvatar(profileDetails.avatarUrl).also {
+                                logger.d { "bot_setup: downloaded avatar bytes=${it.size}" }
+                            }
+                    ).also { progress.avatarBytes = it }
             val uploadedAvatarUrl =
-                uploadProfileImage(
-                    imageBase64 = avatarBytes.encodeBase64(),
-                    identityBase64 = botIdentity.encodeBase64(),
-                ).also {
-                    logger.d { "bot_setup: upload avatar success url=$it" }
-                }
+                progress.uploadedAvatarUrl
+                    ?: uploadProfileImage(
+                        imageBase64 = avatarBytes.encodeBase64(),
+                        identityBase64 = botIdentity.encodeBase64(),
+                    ).also {
+                        logger.d { "bot_setup: upload avatar success url=$it" }
+                        progress.uploadedAvatarUrl = it
+                    }
 
             // Update bio and profile picture
-            val originalIdentity = sessionManager.identity
-            HelperService.initServiceFactories(botIdentity)
-            try {
-                updateProfileDetailsUseCase(
-                    UpdateProfileDetailsParams(
-                        principal = botPrincipal,
-                        bio = profileDetails.description,
-                        profilePictureUrl = uploadedAvatarUrl,
-                    ),
-                ).also {
-                    logger.d { "bot_setup: update_profile_details_v2 success" }
+            if (!progress.profileUpdated) {
+                val originalIdentity = sessionManager.identity
+                HelperService.initServiceFactories(botIdentity)
+                try {
+                    updateProfileDetailsUseCase(
+                        UpdateProfileDetailsParams(
+                            principal = botPrincipal,
+                            bio = profileDetails.description,
+                            profilePictureUrl = uploadedAvatarUrl,
+                        ),
+                    ).also {
+                        logger.d { "bot_setup: update_profile_details_v2 success" }
+                    }
+                    progress.profileUpdated = true
+                } finally {
+                    originalIdentity?.let { HelperService.initServiceFactories(it) }
                 }
-            } finally {
-                originalIdentity?.let { HelperService.initServiceFactories(it) }
             }
 
             // Create influencer record in backend
             val createdInfluencer =
-                runCatching {
-                    createInfluencerUseCase(
-                        CreateInfluencerUseCase.Params(
-                            request =
-                                com.yral.shared.features.aiinfluencer.domain.models.CreatedInfluencer(
-                                    name = usernameForCreateApi,
-                                    displayName = profileDetails.displayName,
-                                    description = profileDetails.description,
-                                    systemInstructions = profileDetails.systemInstructions,
-                                    initialGreeting = profileDetails.initialGreeting,
-                                    suggestedMessages = profileDetails.suggestedMessages,
-                                    personalityTraits = profileDetails.personalityTraits,
-                                    category = profileDetails.category,
-                                    avatarUrl = uploadedAvatarUrl,
-                                    isNsfw = profileDetails.isNsfw,
-                                    botPrincipalId = botPrincipal,
-                                    parentPrincipalId = sessionManager.userPrincipal.orEmpty(),
-                                ),
-                        ),
-                    ).getOrThrow()
-                }.getOrElse { throwable ->
-                    val serverMessage = extractServerMessage(throwable)
-                    logger.e {
-                        "bot_setup: create influencer failed ${serverMessage ?: throwable.message}"
-                    }
-                    throw YralException(serverMessage ?: throwable.message ?: DEFAULT_ERROR_MESSAGE)
-                }.also {
-                    logger.d { "bot_setup: create influencer success" }
-                }
-
-            botIdentityStorage.saveBotIdentity(
-                principal = botPrincipal,
-                identity = botIdentity,
-                username = usernameForCreateApi.takeIf { usernameUpdated },
-            )
-            logger.d { "bot_setup: completed" }
-            setActiveBotSession(
-                botPrincipal = botPrincipal,
-                botIdentity = botIdentity,
-                canisterData = canisterData,
-                profileDetails = profileDetails,
-                profilePicUrl = uploadedAvatarUrl,
-                displayUsername = if (usernameUpdated) usernameForCreateApi else null,
-            )
-
-            val starterPrompt = createdInfluencer.starterVideoPrompt
-            if (!starterPrompt.isNullOrBlank()) {
-                botVideoGenCoordinator.enqueueGeneration(
-                    botPrincipal = botPrincipal,
-                    prompt = starterPrompt,
-                    imageData =
-                        ImageData.Base64(
-                            ImageInput(
-                                data = avatarBytes.encodeBase64(),
-                                mimeType = resolveImageMimeType(avatarBytes),
+                progress.createdInfluencer
+                    ?: runCatching {
+                        createInfluencerUseCase(
+                            CreateInfluencerUseCase.Params(
+                                request =
+                                    com.yral.shared.features.aiinfluencer.domain.models.CreatedInfluencer(
+                                        name = usernameForCreateApi,
+                                        displayName = profileDetails.displayName,
+                                        description = profileDetails.description,
+                                        systemInstructions = profileDetails.systemInstructions,
+                                        initialGreeting = profileDetails.initialGreeting,
+                                        suggestedMessages = profileDetails.suggestedMessages,
+                                        personalityTraits = profileDetails.personalityTraits,
+                                        category = profileDetails.category,
+                                        avatarUrl = uploadedAvatarUrl,
+                                        isNsfw = profileDetails.isNsfw,
+                                        botPrincipalId = botPrincipal,
+                                        parentPrincipalId = sessionManager.userPrincipal.orEmpty(),
+                                    ),
                             ),
-                        ),
+                        ).getOrThrow()
+                    }.getOrElse { throwable ->
+                        val serverMessage = extractServerMessage(throwable)
+                        logger.e {
+                            "bot_setup: create influencer failed ${serverMessage ?: throwable.message}"
+                        }
+                        throw YralException(serverMessage ?: throwable.message ?: DEFAULT_ERROR_MESSAGE)
+                    }.also {
+                        logger.d { "bot_setup: create influencer success" }
+                        progress.createdInfluencer = it
+                    }
+
+            if (!progress.finalized) {
+                botIdentityStorage.saveBotIdentity(
+                    principal = botPrincipal,
+                    identity = botIdentity,
+                    username = usernameForCreateApi.takeIf { usernameUpdated },
                 )
+                setActiveBotSession(
+                    botPrincipal = botPrincipal,
+                    botIdentity = botIdentity,
+                    canisterData = canisterData,
+                    profileDetails = profileDetails,
+                    profilePicUrl = uploadedAvatarUrl,
+                    displayUsername = if (usernameUpdated) usernameForCreateApi else null,
+                )
+
+                val starterPrompt = createdInfluencer.starterVideoPrompt
+                if (!starterPrompt.isNullOrBlank()) {
+                    botVideoGenCoordinator.enqueueGeneration(
+                        botPrincipal = botPrincipal,
+                        prompt = starterPrompt,
+                        imageData =
+                            ImageData.Base64(
+                                ImageInput(
+                                    data = avatarBytes.encodeBase64(),
+                                    mimeType = resolveImageMimeType(avatarBytes),
+                                ),
+                            ),
+                    )
+                }
+                progress.finalized = true
+                logger.d { "bot_setup: completed" }
             }
             canisterData
         }
+
+    private suspend fun tryUpdateUsername(
+        botIdentity: ByteArray,
+        canisterId: String,
+        requestedUsername: String,
+        botPrincipal: String,
+        fallbackUsername: String,
+    ): UsernameUpdateResult {
+        val normalizedUsername = normalizeBotUsername(requestedUsername, botPrincipal)
+        return runCatching {
+            HelperService
+                .updateUserMetadata(
+                    identityData = botIdentity,
+                    userCanisterId = canisterId,
+                    userName = normalizedUsername,
+                ).getOrThrow()
+            logger.d { "bot_setup: set_user_metadata success" }
+            UsernameUpdateResult(username = normalizedUsername, updated = true)
+        }.getOrElse { throwable ->
+            if (isUsernameTakenError(throwable)) {
+                val retryUsername = buildRetryUsername(normalizedUsername, botPrincipal)
+                runCatching {
+                    HelperService
+                        .updateUserMetadata(
+                            identityData = botIdentity,
+                            userCanisterId = canisterId,
+                            userName = retryUsername,
+                        ).getOrThrow()
+                    logger.d { "bot_setup: set_user_metadata retry success username=$retryUsername" }
+                    UsernameUpdateResult(username = retryUsername, updated = true)
+                }.getOrElse { retryThrowable ->
+                    logger.w {
+                        "bot_setup: set_user_metadata retry failed (continuing) - ${retryThrowable.message}"
+                    }
+                    UsernameUpdateResult(username = fallbackUsername, updated = false)
+                }
+            } else {
+                logger.w { "bot_setup: set_user_metadata failed (continuing) - ${throwable.message}" }
+                UsernameUpdateResult(username = fallbackUsername, updated = false)
+            }
+        }
+    }
 
     private suspend fun uploadProfileImage(
         imageBase64: String,
@@ -718,6 +742,29 @@ class AiInfluencerViewModel(
             val response = (throwable as? Exception)?.cause as? ResponseException
             response?.response?.bodyAsText()
         }.getOrNull()
+
+    private fun clearBotCreationProgress() {
+        botCreationProgress = null
+    }
+
+    private data class UsernameUpdateResult(
+        val username: String,
+        val updated: Boolean,
+    )
+
+    private data class BotCreationProgress(
+        val profileKey: String,
+        var botIdentity: ByteArray? = null,
+        var botPrincipal: String? = null,
+        var registrationAccepted: Boolean = false,
+        var canisterData: com.yral.shared.rust.service.utils.CanisterData? = null,
+        var usernameResult: UsernameUpdateResult? = null,
+        var avatarBytes: ByteArray? = null,
+        var uploadedAvatarUrl: String? = null,
+        var profileUpdated: Boolean = false,
+        var createdInfluencer: com.yral.shared.features.aiinfluencer.domain.models.CreatedInfluencer? = null,
+        var finalized: Boolean = false,
+    )
 }
 
 class BotIdentityStorage(
@@ -771,6 +818,22 @@ private data class UploadProfileImageResponse(
 )
 
 private const val UPLOAD_PROFILE_ENDPOINT = "/api/v1/user/profile-image"
+
+private fun AiInfluencerStep.ProfileDetails.progressKey(): String {
+    val avatarKey = avatarBytes?.size?.toString() ?: avatarUrl
+    return listOf(
+        systemInstructions,
+        name,
+        displayName,
+        description,
+        avatarKey,
+        initialGreeting,
+        suggestedMessages.joinToString("|"),
+        personalityTraits.entries.sortedBy { it.key }.joinToString("|") { "${it.key}:${it.value}" },
+        category,
+        isNsfw.toString(),
+    ).joinToString("::")
+}
 
 data class AiInfluencerUiState(
     val step: AiInfluencerStep = AiInfluencerStep.DescriptionEntry(),
