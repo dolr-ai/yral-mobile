@@ -111,13 +111,18 @@ fun TournamentScreen(
                     )
                 }
             } else {
+                // Separate daily tournaments (pinned at top) from regular tournaments
+                val dailyTournaments = uiState.tournaments.filter { it.isDaily }
+                val regularTournaments = uiState.tournaments.filter { !it.isDaily }
+                val sortedTournaments = dailyTournaments + regularTournaments
+
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     items(
-                        items = uiState.tournaments,
+                        items = sortedTournaments,
                         key = { it.id },
                     ) { tournament ->
                         TournamentCard(

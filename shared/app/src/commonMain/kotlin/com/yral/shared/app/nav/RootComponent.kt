@@ -72,6 +72,7 @@ interface RootComponent {
         showResult: Boolean = false,
     )
 
+    @Suppress("LongParameterList")
     fun openTournamentGame(
         tournamentId: String,
         tournamentTitle: String,
@@ -80,6 +81,8 @@ interface RootComponent {
         endEpochMs: Long,
         totalPrizePool: Int,
         isHotOrNot: Boolean = false,
+        isDailyTournament: Boolean = false,
+        dailyTimeLimitMs: Long = 0,
     )
 
     fun openConversation(

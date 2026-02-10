@@ -2,6 +2,8 @@ package com.yral.shared.features.tournament.data
 
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.data.FirebaseFunctionRequest
+import com.yral.shared.features.tournament.data.models.DailySessionRequestDto
+import com.yral.shared.features.tournament.data.models.DailySessionResponseDto
 import com.yral.shared.features.tournament.data.models.HotOrNotVoteRequestDto
 import com.yral.shared.features.tournament.data.models.HotOrNotVoteResponseDto
 import com.yral.shared.features.tournament.data.models.MyTournamentsRequestDto
@@ -268,6 +270,68 @@ class TournamentRemoteDataSource(
         }
     }
 
+    @Suppress("SwallowedException", "TooGenericExceptionCaught")
+    override suspend fun startDailySession(
+        idToken: String,
+        request: DailySessionRequestDto,
+    ): DailySessionResponseDto {
+        try {
+            val response: HttpResponse =
+                httpClient.post {
+                    expectSuccess = false
+                    url {
+                        host = cloudFunctionUrl()
+                        path(START_DAILY_SESSION_PATH)
+                    }
+                    val appCheckToken = firebaseAppCheckToken()
+                    headers {
+                        append(HttpHeaders.Authorization, "Bearer $idToken")
+                        append(HEADER_X_FIREBASE_APPCHECK, appCheckToken)
+                    }
+                    setBody(request)
+                }
+            val apiResponseString = response.bodyAsText()
+            return if (response.status == HttpStatusCode.OK) {
+                json.decodeFromString<DailySessionResponseDto.Success>(apiResponseString)
+            } else {
+                json.decodeFromString<DailySessionResponseDto.Error>(apiResponseString)
+            }
+        } catch (e: Exception) {
+            throw YralException("Error starting daily session: ${e.message}")
+        }
+    }
+
+    @Suppress("SwallowedException", "TooGenericExceptionCaught")
+    override suspend fun endDailySession(
+        idToken: String,
+        request: DailySessionRequestDto,
+    ): DailySessionResponseDto {
+        try {
+            val response: HttpResponse =
+                httpClient.post {
+                    expectSuccess = false
+                    url {
+                        host = cloudFunctionUrl()
+                        path(END_DAILY_SESSION_PATH)
+                    }
+                    val appCheckToken = firebaseAppCheckToken()
+                    headers {
+                        append(HttpHeaders.Authorization, "Bearer $idToken")
+                        append(HEADER_X_FIREBASE_APPCHECK, appCheckToken)
+                    }
+                    setBody(request)
+                }
+            val apiResponseString = response.bodyAsText()
+            return if (response.status == HttpStatusCode.OK) {
+                json.decodeFromString<DailySessionResponseDto.Success>(apiResponseString)
+            } else {
+                json.decodeFromString<DailySessionResponseDto.Error>(apiResponseString)
+            }
+        } catch (e: Exception) {
+            throw YralException("Error ending daily session: ${e.message}")
+        }
+    }
+
     companion object {
         private const val TOURNAMENTS_PATH = "tournaments"
         private const val TOURNAMENT_STATUS_PATH = "tournament_status"
@@ -277,6 +341,8 @@ class TournamentRemoteDataSource(
         private const val HOT_OR_NOT_VOTE_PATH = "hot_or_not_tournament_vote"
         private const val TOURNAMENT_LEADERBOARD_PATH = "tournament_leaderboard"
         private const val VIDEO_EMOJIS_PATH = "tournament_video_emojis"
+        private const val START_DAILY_SESSION_PATH = "start_daily_session"
+        private const val END_DAILY_SESSION_PATH = "end_daily_session"
         private const val HEADER_X_FIREBASE_APPCHECK = "X-Firebase-AppCheck"
     }
 }

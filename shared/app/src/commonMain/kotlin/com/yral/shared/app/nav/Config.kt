@@ -36,6 +36,8 @@ internal sealed interface Config {
         val endEpochMs: Long,
         val totalPrizePool: Int,
         val isHotOrNot: Boolean = false,
+        val isDailyTournament: Boolean = false,
+        val dailyTimeLimitMs: Long = 0,
     ) : Config
 
     @Serializable

@@ -12,6 +12,7 @@ interface TournamentComponent {
     fun processEvent(value: TournamentViewModel.Event)
 
     companion object {
+        @Suppress("LongParameterList")
         operator fun invoke(
             componentContext: ComponentContext,
             promptLogin: (pageName: SignupPageName) -> Unit,
@@ -23,6 +24,8 @@ interface TournamentComponent {
                 endEpochMs: Long,
                 totalPrizePool: Int,
                 isHotOrNot: Boolean,
+                isDailyTournament: Boolean,
+                dailyTimeLimitMs: Long,
             ) -> Unit,
             navigateToLeaderboard: (
                 tournamentId: String,
@@ -41,6 +44,7 @@ interface TournamentComponent {
     }
 }
 
+@Suppress("LongParameterList")
 internal class DefaultTournamentComponent(
     componentContext: ComponentContext,
     private val promptLogin: (pageName: SignupPageName) -> Unit,
@@ -52,6 +56,8 @@ internal class DefaultTournamentComponent(
         endEpochMs: Long,
         totalPrizePool: Int,
         isHotOrNot: Boolean,
+        isDailyTournament: Boolean,
+        dailyTimeLimitMs: Long,
     ) -> Unit,
     private val navigateToLeaderboard: (
         tournamentId: String,
@@ -72,6 +78,8 @@ internal class DefaultTournamentComponent(
                     value.endEpochMs,
                     value.totalPrizePool,
                     value.isHotOrNot,
+                    value.isDailyTournament,
+                    value.dailyTimeLimitMs,
                 )
             }
             is TournamentViewModel.Event.RegistrationSuccess -> {
