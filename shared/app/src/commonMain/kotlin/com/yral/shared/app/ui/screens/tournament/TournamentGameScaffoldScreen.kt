@@ -108,26 +108,36 @@ fun TournamentGameScaffoldScreen(
     }
 
     if (isDailyTournament) {
-        // Daily tournament: start session on enter, use personal remaining time
+        // Start daily session on enter
         LaunchedEffect(gameConfig.tournamentId) {
             tournamentGameViewModel.startDailySession(gameConfig.tournamentId)
         }
-        // Personal timer countdown from server-provided remaining time
+
+        // Start local countdown immediately (don't wait for API)
+        LaunchedEffect(gameConfig.tournamentId) {
+            while (timeLeftMs > 0) {
+                @Suppress("MagicNumber")
+                delay(1000L)
+                timeLeftMs = maxOf(0L, timeLeftMs - 1000L)
+            }
+            tournamentGameViewModel.endDailySession()
+            component.onTimeUp()
+        }
+
+        // When server responds, adjust timer to server's remaining time
         LaunchedEffect(gameState.personalRemainingTimeMs) {
             if (gameState.personalRemainingTimeMs > 0) {
-                var remaining = gameState.personalRemainingTimeMs
-                while (remaining > 0) {
-                    @Suppress("MagicNumber")
-                    delay(1000L)
-                    remaining -= 1000L
-                    timeLeftMs = maxOf(0L, remaining)
-                }
-                tournamentGameViewModel.trackTournamentEnded(gameConfig.tournamentTitle)
-                tournamentGameViewModel.clearTournamentCache(gameConfig.tournamentId)
-                tournamentGameViewModel.endDailySession()
-                component.onTimeUp()
+                timeLeftMs = gameState.personalRemainingTimeMs
             }
         }
+
+        // Handle time expired from server
+        LaunchedEffect(gameState.personalTimeExpired) {
+            if (gameState.personalTimeExpired) {
+                timeLeftMs = 0
+            }
+        }
+
         // End session on dispose (user exits)
         DisposableEffect(gameConfig.tournamentId) {
             onDispose { tournamentGameViewModel.endDailySession() }

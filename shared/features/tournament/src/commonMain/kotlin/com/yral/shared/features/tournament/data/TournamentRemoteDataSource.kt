@@ -288,7 +288,7 @@ class TournamentRemoteDataSource(
                         append(HttpHeaders.Authorization, "Bearer $idToken")
                         append(HEADER_X_FIREBASE_APPCHECK, appCheckToken)
                     }
-                    setBody(request)
+                    setBody(FirebaseFunctionRequest(request))
                 }
             val apiResponseString = response.bodyAsText()
             return if (response.status == HttpStatusCode.OK) {
@@ -319,7 +319,7 @@ class TournamentRemoteDataSource(
                         append(HttpHeaders.Authorization, "Bearer $idToken")
                         append(HEADER_X_FIREBASE_APPCHECK, appCheckToken)
                     }
-                    setBody(request)
+                    setBody(FirebaseFunctionRequest(request))
                 }
             val apiResponseString = response.bodyAsText()
             return if (response.status == HttpStatusCode.OK) {
