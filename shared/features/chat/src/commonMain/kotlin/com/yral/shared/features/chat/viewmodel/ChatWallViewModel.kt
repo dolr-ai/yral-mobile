@@ -12,8 +12,10 @@ import com.yral.shared.analytics.events.InfluencerClickType
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.chat.analytics.ChatTelemetry
+import com.yral.shared.features.chat.domain.ChatErrorMapper
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.InfluencersPagingSource
+import com.yral.shared.features.chat.domain.models.ChatError
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
@@ -34,6 +36,7 @@ class ChatWallViewModel(
     private val getInfluencerUseCase: GetInfluencerUseCase,
     private val sessionManager: SessionManager,
     private val chatTelemetry: ChatTelemetry,
+    private val chatErrorMapper: ChatErrorMapper,
 ) : ViewModel() {
     private val _state = MutableStateFlow(ChatWallState())
     val state: StateFlow<ChatWallState> = _state.asStateFlow()
@@ -109,12 +112,16 @@ class ChatWallViewModel(
                             influencerError = null,
                         )
                     }
-                }.onFailure { error ->
+                }.onFailure { throwable ->
+                    val chatError =
+                        chatErrorMapper.mapException(throwable) {
+                            selectInfluencer(influencerId)
+                        }
                     _state.update {
                         it.copy(
                             influencerDetail = null,
                             isInfluencerLoading = false,
-                            influencerError = error.message ?: "Failed to load influencer",
+                            influencerError = chatError,
                         )
                     }
                 }
@@ -143,5 +150,5 @@ data class ChatWallState(
     val selectedInfluencerId: String? = null,
     val influencerDetail: Influencer? = null,
     val isInfluencerLoading: Boolean = false,
-    val influencerError: String? = null,
+    val influencerError: ChatError? = null,
 )

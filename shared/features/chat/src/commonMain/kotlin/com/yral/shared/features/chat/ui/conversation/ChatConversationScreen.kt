@@ -11,8 +11,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -45,6 +45,7 @@ import com.yral.shared.features.chat.domain.models.ChatMessageType
 import com.yral.shared.features.chat.domain.models.ConversationMessageRole
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
+import com.yral.shared.features.chat.ui.components.ChatErrorBottomSheet
 import com.yral.shared.features.chat.viewmodel.ConversationMessageItem
 import com.yral.shared.features.chat.viewmodel.ConversationViewModel
 import com.yral.shared.features.subscriptions.nav.SubscriptionNudgeContent
@@ -58,7 +59,6 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.features.chat.generated.resources.Res
 import yral_mobile.shared.features.chat.generated.resources.chat_background_inverted
-import yral_mobile.shared.features.chat.generated.resources.no_conversation_id
 import yral_mobile.shared.features.chat.generated.resources.subscription_nudge_chat_description
 import yral_mobile.shared.features.chat.generated.resources.subscription_nudge_chat_title
 
@@ -70,6 +70,7 @@ import yral_mobile.shared.features.chat.generated.resources.subscription_nudge_c
  * - Supports sending TEXT and IMAGE messages and retrying failed messages
  */
 @Suppress("LongMethod", "CyclomaticComplexMethod")
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatConversationScreen(
     modifier: Modifier = Modifier,
@@ -77,6 +78,7 @@ fun ChatConversationScreen(
     viewModel: ConversationViewModel = koinViewModel(),
 ) {
     val viewState by viewModel.viewState.collectAsState()
+    val errorBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     LaunchedEffect(component.influencerId, viewState.isSocialSignedIn) {
         viewModel.initializeForInfluencer(
@@ -274,20 +276,6 @@ fun ChatConversationScreen(
                         }
                     }
 
-                    viewState.error != null -> {
-                        Text(
-                            text = viewState.error.orEmpty(),
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
-
-                    viewState.conversationId == null -> {
-                        Text(
-                            text = stringResource(Res.string.no_conversation_id),
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
-
                     else -> {
                         val keyboardController = LocalSoftwareKeyboardController.current
                         MessagesList(
@@ -367,6 +355,14 @@ fun ChatConversationScreen(
                 onDismiss = { selectedImage = null },
                 hasWaitingAssistant = hasWaitingAssistant,
                 modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        viewState.chatError?.let { errorToShow ->
+            ChatErrorBottomSheet(
+                error = errorToShow,
+                bottomSheetState = errorBottomSheetState,
+                onDismissRequest = { viewModel.clearError() },
             )
         }
     }
