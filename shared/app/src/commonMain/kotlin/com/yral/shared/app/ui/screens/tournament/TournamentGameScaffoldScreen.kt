@@ -239,6 +239,7 @@ fun TournamentGameScaffoldScreen(
             if (gameState.tournamentEndedError) {
                 LaunchedEffect(gameState.tournamentEndedError) {
                     tournamentGameViewModel.clearTournamentEndedError()
+                    tournamentGameViewModel.clearTournamentCache(gameConfig.tournamentId)
                     component.onTimeUp()
                 }
             }
