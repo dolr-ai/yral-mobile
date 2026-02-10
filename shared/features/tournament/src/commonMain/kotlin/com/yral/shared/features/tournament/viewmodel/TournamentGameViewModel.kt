@@ -12,9 +12,11 @@ import com.yral.shared.features.game.domain.models.GameIconNames
 import com.yral.shared.features.tournament.analytics.TournamentTelemetry
 import com.yral.shared.features.tournament.domain.CastHotOrNotVoteUseCase
 import com.yral.shared.features.tournament.domain.CastTournamentVoteUseCase
+import com.yral.shared.features.tournament.domain.EndDailySessionUseCase
 import com.yral.shared.features.tournament.domain.GetTournamentsUseCase
 import com.yral.shared.features.tournament.domain.GetVideoEmojisRequest
 import com.yral.shared.features.tournament.domain.GetVideoEmojisUseCase
+import com.yral.shared.features.tournament.domain.StartDailySessionUseCase
 import com.yral.shared.features.tournament.domain.model.CastTournamentVoteRequest
 import com.yral.shared.features.tournament.domain.model.GetTournamentsRequest
 import com.yral.shared.features.tournament.domain.model.HotOrNotVoteRequest
@@ -39,6 +41,8 @@ class TournamentGameViewModel(
     private val castHotOrNotVoteUseCase: CastHotOrNotVoteUseCase,
     private val getTournamentsUseCase: GetTournamentsUseCase,
     private val getVideoEmojisUseCase: GetVideoEmojisUseCase,
+    private val startDailySessionUseCase: StartDailySessionUseCase,
+    private val endDailySessionUseCase: EndDailySessionUseCase,
     private val telemetry: TournamentTelemetry,
 ) : ViewModel() {
     private val _state = MutableStateFlow(TournamentGameState())
@@ -235,6 +239,7 @@ class TournamentGameViewModel(
                 isLoading = false,
                 noDiamondsError = error.code == TournamentErrorCodes.NO_DIAMONDS,
                 tournamentEndedError = error.code == TournamentErrorCodes.TOURNAMENT_NOT_LIVE,
+                personalTimeExpired = error.code == TournamentErrorCodes.TIME_EXPIRED,
             )
         }
     }
@@ -317,6 +322,7 @@ class TournamentGameViewModel(
                         isHotOrNotVoting = false,
                         noDiamondsError = error.code == TournamentErrorCodes.NO_DIAMONDS,
                         tournamentEndedError = error.code == TournamentErrorCodes.TOURNAMENT_NOT_LIVE,
+                        personalTimeExpired = error.code == TournamentErrorCodes.TIME_EXPIRED,
                     )
                 }
             }
@@ -443,6 +449,45 @@ class TournamentGameViewModel(
     fun trackHowToPlayClicked() {
         telemetry.onHowToPlayClicked(tournamentType = _state.value.tournamentType)
     }
+
+    fun startDailySession(tournamentId: String) {
+        viewModelScope.launch {
+            startDailySessionUseCase
+                .invoke(tournamentId)
+                .onSuccess { result ->
+                    _state.update {
+                        it.copy(
+                            isDailyTournament = true,
+                            diamonds = result.diamonds,
+                            wins = result.wins,
+                            losses = result.losses,
+                            position = result.position,
+                            personalRemainingTimeMs = result.remainingTimeMs,
+                            personalTimeExpired = result.remainingTimeMs <= 0,
+                        )
+                    }
+                }.onFailure { error ->
+                    _state.update {
+                        it.copy(
+                            isDailyTournament = true,
+                            personalTimeExpired = error.code == TournamentErrorCodes.TIME_EXPIRED,
+                        )
+                    }
+                }
+        }
+    }
+
+    fun endDailySession() {
+        val tournamentId = _state.value.tournamentId
+        if (tournamentId.isEmpty()) return
+        viewModelScope.launch {
+            endDailySessionUseCase.invoke(tournamentId)
+        }
+    }
+
+    fun clearPersonalTimeExpired() {
+        _state.update { it.copy(personalTimeExpired = false) }
+    }
 }
 
 data class TournamentGameState(
@@ -468,6 +513,10 @@ data class TournamentGameState(
     val noDiamondsError: Boolean = false,
     val tournamentEndedError: Boolean = false,
     val hasPlayedBefore: Boolean = false,
+    val isDailyTournament: Boolean = false,
+    val dailyTimeLimitMs: Long = 0,
+    val personalRemainingTimeMs: Long = 0,
+    val personalTimeExpired: Boolean = false,
 )
 
 /**

@@ -574,6 +574,9 @@ def tournaments(request: Request):
             if participant_count is None:
                 participant_count = _get_participant_count(snap.id, collection_name)
 
+            is_daily = t_data.get("is_daily", False)
+            daily_time_limit_ms = t_data.get("daily_time_limit_ms", 0)
+
             tournament_entry = {
                 "id": snap.id,
                 "title": t_data.get("title", "SMILEY SHOWDOWN" if tournament_type == "smiley" else "Mast ya Bakwaas?"),
@@ -590,6 +593,9 @@ def tournaments(request: Request):
                 "participant_count": participant_count,
                 "is_registered": False,
                 "user_stats": None,
+                "is_daily": is_daily,
+                "daily_time_limit_ms": daily_time_limit_ms,
+                "initial_diamonds": t_data.get("initial_diamonds", 20) if is_daily else 0,
             }
 
             # Check if user is registered (if principal_id provided)
@@ -605,6 +611,10 @@ def tournaments(request: Request):
                         "tournament_losses": reg_data.get("tournament_losses", reg_data.get("losses", 0)),
                         "status": reg_data.get("status")
                     }
+                    # Add remaining time for daily tournaments
+                    if is_daily and daily_time_limit_ms > 0:
+                        time_spent = int(reg_data.get("time_spent_ms") or 0)
+                        tournament_entry["remaining_time_ms"] = max(0, daily_time_limit_ms - time_spent)
 
             result.append(tournament_entry)
 
@@ -1057,8 +1067,17 @@ def tournament_vote(request: Request):
             if not reg_snap.exists:
                 return {"error": "NOT_REGISTERED", "message": "You are not registered for this tournament"}
 
-            # Check diamond balance
+            # Check personal time limit for daily tournaments
             reg_data = reg_snap.to_dict() or {}
+            if t_data.get("is_daily", False):
+                time_spent = int(reg_data.get("time_spent_ms") or 0)
+                session_start = reg_data.get("last_session_start_ms")
+                limit = t_data.get("daily_time_limit_ms", 300000)
+                elapsed = (int(datetime.now(timezone.utc).timestamp() * 1000) - int(session_start)) if session_start else 0
+                if (time_spent + max(0, elapsed)) >= limit:
+                    return {"error": "TIME_EXPIRED", "message": "Your 5 minutes are up!"}
+
+            # Check diamond balance
             current_diamonds = int(reg_data.get("diamonds") or 0)
             if current_diamonds <= 0:
                 return {"error": "NO_DIAMONDS", "message": "You have no diamonds left. Cannot play anymore."}
@@ -1104,6 +1123,8 @@ def tournament_vote(request: Request):
                 return error_response(403, error_code, tx_result["message"])
             elif error_code == "NO_DIAMONDS":
                 return error_response(403, error_code, tx_result["message"])
+            elif error_code == "TIME_EXPIRED":
+                return error_response(409, error_code, tx_result["message"])
             else:
                 return error_response(409, error_code, tx_result["message"])
 
@@ -1250,8 +1271,9 @@ def tournament_leaderboard(request: Request):
         status = _compute_status(start_epoch_ms, end_epoch_ms)
         prize_map = t_data.get("prizeMap", {})
 
-        # Allow leaderboard viewing after ENDED or SETTLED
-        if status not in [TournamentStatus.ENDED.value, TournamentStatus.SETTLED.value]:
+        # Allow leaderboard viewing after ENDED or SETTLED (or anytime for daily tournaments)
+        is_daily = t_data.get("is_daily", False)
+        if not is_daily and status not in [TournamentStatus.ENDED.value, TournamentStatus.SETTLED.value]:
             return error_response(409, "TOURNAMENT_STILL_ACTIVE",
                                   f"Leaderboard available after tournament ends (current: {status})")
 
@@ -1290,6 +1312,260 @@ def tournament_leaderboard(request: Request):
         return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
     except Exception as e:
         print(f"tournament_leaderboard error: {e}", file=sys.stderr)
+        return error_response(500, "INTERNAL", "Internal server error")
+
+
+@https_fn.on_request(region="us-central1")
+def start_daily_session(request: Request):
+    """
+    Start or resume a daily tournament session.
+    Auto-registers user if not registered (free entry).
+    Handles app-kill recovery by finalizing stale sessions.
+
+    POST /start_daily_session
+    Request:
+        { "data": { "tournament_id": "...", "principal_id": "..." } }
+
+    Response:
+        {
+            "remaining_time_ms": 285000,
+            "diamonds": 20,
+            "wins": 3,
+            "losses": 1,
+            "position": 5,
+            "time_spent_ms": 15000
+        }
+    """
+    try:
+        if request.method != "POST":
+            return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
+
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return error_response(401, "MISSING_ID_TOKEN", "Authorization header required")
+        auth.verify_id_token(auth_header.split(" ", 1)[1])
+
+        body = request.get_json(silent=True) or {}
+        data = body.get("data", {}) or {}
+
+        tournament_id = str(data.get("tournament_id", "")).strip()
+        principal_id = str(data.get("principal_id", "")).strip()
+
+        if not tournament_id:
+            return error_response(400, "MISSING_TOURNAMENT_ID", "tournament_id required")
+        if not principal_id:
+            return error_response(400, "MISSING_PRINCIPAL_ID", "principal_id required")
+
+        # Get tournament
+        snap, t_data, collection_name = _get_tournament(tournament_id)
+        if not snap:
+            return error_response(404, "TOURNAMENT_NOT_FOUND", f"Tournament {tournament_id} not found")
+
+        if not t_data.get("is_daily", False):
+            return error_response(400, "NOT_DAILY_TOURNAMENT", "This API is only for daily tournaments")
+
+        # Check status
+        start_epoch_ms = t_data.get("start_epoch_ms", 0)
+        end_epoch_ms = t_data.get("end_epoch_ms", 0)
+        status = _compute_status(start_epoch_ms, end_epoch_ms)
+        if status != "live":
+            return error_response(409, "TOURNAMENT_NOT_LIVE", f"Tournament is {status}")
+
+        daily_time_limit_ms = t_data.get("daily_time_limit_ms", 300000)
+        initial_diamonds = t_data.get("initial_diamonds", 20)
+        now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+
+        # Check/create user registration
+        tournament_ref = db().collection(collection_name).document(tournament_id)
+        reg_ref = db().document(f"{collection_name}/{tournament_id}/users/{principal_id}")
+        reg_snap = reg_ref.get()
+
+        is_hot_or_not = collection_name == "hot_or_not_tournaments"
+
+        if not reg_snap.exists:
+            # Auto-register (free entry)
+            if is_hot_or_not:
+                reg_ref.set({
+                    "registered_at": firestore.SERVER_TIMESTAMP,
+                    "coins_paid": 0,
+                    "diamonds": initial_diamonds,
+                    "wins": 0,
+                    "losses": 0,
+                    "status": "registered",
+                    "is_pro": False,
+                    "time_spent_ms": 0,
+                    "last_session_start_ms": now_ms,
+                    "session_active": True,
+                    "updated_at": firestore.SERVER_TIMESTAMP,
+                })
+            else:
+                reg_ref.set({
+                    "registered_at": firestore.SERVER_TIMESTAMP,
+                    "coins_paid": 0,
+                    "diamonds": initial_diamonds,
+                    "tournament_wins": 0,
+                    "tournament_losses": 0,
+                    "status": "registered",
+                    "is_pro": False,
+                    "time_spent_ms": 0,
+                    "last_session_start_ms": now_ms,
+                    "session_active": True,
+                    "updated_at": firestore.SERVER_TIMESTAMP,
+                })
+            # Increment participant count
+            tournament_ref.update({
+                "participant_count": firestore.Increment(1),
+                "updated_at": firestore.SERVER_TIMESTAMP,
+            })
+
+            return jsonify({
+                "remaining_time_ms": daily_time_limit_ms,
+                "diamonds": initial_diamonds,
+                "wins": 0,
+                "losses": 0,
+                "position": 0,
+                "time_spent_ms": 0,
+            }), 200
+
+        # Existing registration
+        reg_data = reg_snap.to_dict() or {}
+        time_spent_ms = int(reg_data.get("time_spent_ms") or 0)
+        session_active = bool(reg_data.get("session_active", False))
+        last_session_start_ms = reg_data.get("last_session_start_ms")
+
+        # If session was active (app killed), finalize old session
+        if session_active and last_session_start_ms:
+            elapsed = now_ms - int(last_session_start_ms)
+            remaining_before = daily_time_limit_ms - time_spent_ms
+            session_duration = min(max(0, elapsed), max(0, remaining_before))
+            time_spent_ms += session_duration
+
+        remaining_time_ms = max(0, daily_time_limit_ms - time_spent_ms)
+        if remaining_time_ms <= 0:
+            return error_response(409, "TIME_EXPIRED", "Your 5 minutes are up!")
+
+        # Start new session
+        reg_ref.update({
+            "time_spent_ms": time_spent_ms,
+            "last_session_start_ms": now_ms,
+            "session_active": True,
+            "updated_at": firestore.SERVER_TIMESTAMP,
+        })
+
+        if is_hot_or_not:
+            wins = int(reg_data.get("wins") or 0)
+            losses = int(reg_data.get("losses") or 0)
+        else:
+            wins = int(reg_data.get("tournament_wins") or 0)
+            losses = int(reg_data.get("tournament_losses") or 0)
+
+        diamonds = int(reg_data.get("diamonds") or 0)
+
+        # Get position
+        try:
+            top_rows = _compute_tournament_leaderboard(tournament_id, limit=10, collection_name=collection_name)
+            user_row = _get_user_tournament_position(tournament_id, principal_id, top_rows, collection_name=collection_name)
+            position = user_row.get("position", 0)
+        except Exception:
+            position = 0
+
+        return jsonify({
+            "remaining_time_ms": remaining_time_ms,
+            "diamonds": diamonds,
+            "wins": wins,
+            "losses": losses,
+            "position": position,
+            "time_spent_ms": time_spent_ms,
+        }), 200
+
+    except auth.InvalidIdTokenError:
+        return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
+    except Exception as e:
+        print(f"start_daily_session error: {e}", file=sys.stderr)
+        return error_response(500, "INTERNAL", "Internal server error")
+
+
+@https_fn.on_request(region="us-central1")
+def end_daily_session(request: Request):
+    """
+    End current daily tournament session (user exits game screen).
+
+    POST /end_daily_session
+    Request:
+        { "data": { "tournament_id": "...", "principal_id": "..." } }
+
+    Response:
+        {
+            "time_spent_ms": 120000,
+            "remaining_time_ms": 180000,
+            "diamonds": 22
+        }
+    """
+    try:
+        if request.method != "POST":
+            return error_response(405, "METHOD_NOT_ALLOWED", "POST required")
+
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return error_response(401, "MISSING_ID_TOKEN", "Authorization header required")
+        auth.verify_id_token(auth_header.split(" ", 1)[1])
+
+        body = request.get_json(silent=True) or {}
+        data = body.get("data", {}) or {}
+
+        tournament_id = str(data.get("tournament_id", "")).strip()
+        principal_id = str(data.get("principal_id", "")).strip()
+
+        if not tournament_id:
+            return error_response(400, "MISSING_TOURNAMENT_ID", "tournament_id required")
+        if not principal_id:
+            return error_response(400, "MISSING_PRINCIPAL_ID", "principal_id required")
+
+        snap, t_data, collection_name = _get_tournament(tournament_id)
+        if not snap:
+            return error_response(404, "TOURNAMENT_NOT_FOUND", f"Tournament {tournament_id} not found")
+
+        daily_time_limit_ms = t_data.get("daily_time_limit_ms", 300000)
+        now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+
+        reg_ref = db().document(f"{collection_name}/{tournament_id}/users/{principal_id}")
+        reg_snap = reg_ref.get()
+
+        if not reg_snap.exists:
+            return error_response(404, "NOT_REGISTERED", "Not registered for this tournament")
+
+        reg_data = reg_snap.to_dict() or {}
+        time_spent_ms = int(reg_data.get("time_spent_ms") or 0)
+        last_session_start_ms = reg_data.get("last_session_start_ms")
+        session_active = bool(reg_data.get("session_active", False))
+
+        if session_active and last_session_start_ms:
+            elapsed = now_ms - int(last_session_start_ms)
+            remaining_before = daily_time_limit_ms - time_spent_ms
+            session_duration = min(max(0, elapsed), max(0, remaining_before))
+            time_spent_ms += session_duration
+
+        remaining_time_ms = max(0, daily_time_limit_ms - time_spent_ms)
+
+        reg_ref.update({
+            "time_spent_ms": time_spent_ms,
+            "last_session_start_ms": None,
+            "session_active": False,
+            "updated_at": firestore.SERVER_TIMESTAMP,
+        })
+
+        diamonds = int(reg_data.get("diamonds") or 0)
+
+        return jsonify({
+            "time_spent_ms": time_spent_ms,
+            "remaining_time_ms": remaining_time_ms,
+            "diamonds": diamonds,
+        }), 200
+
+    except auth.InvalidIdTokenError:
+        return error_response(401, "ID_TOKEN_INVALID", "ID token invalid or expired")
+    except Exception as e:
+        print(f"end_daily_session error: {e}", file=sys.stderr)
         return error_response(500, "INTERNAL", "Internal server error")
 
 

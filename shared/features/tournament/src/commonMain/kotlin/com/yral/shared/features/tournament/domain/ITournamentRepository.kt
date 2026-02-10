@@ -2,6 +2,7 @@ package com.yral.shared.features.tournament.domain
 
 import com.github.michaelbull.result.Result
 import com.yral.shared.features.tournament.domain.model.CastTournamentVoteRequest
+import com.yral.shared.features.tournament.domain.model.DailySessionResult
 import com.yral.shared.features.tournament.domain.model.GetMyTournamentsRequest
 import com.yral.shared.features.tournament.domain.model.GetTournamentLeaderboardRequest
 import com.yral.shared.features.tournament.domain.model.GetTournamentStatusRequest
@@ -77,4 +78,23 @@ interface ITournamentRepository {
         tournamentId: String,
         videoId: String,
     ): Result<VideoEmojisResult, Throwable>
+
+    /**
+     * Start a daily tournament session.
+     * Auto-registers user if not registered.
+     */
+    suspend fun startDailySession(
+        idToken: String,
+        tournamentId: String,
+        principalId: String,
+    ): Result<DailySessionResult, TournamentError>
+
+    /**
+     * End a daily tournament session.
+     */
+    suspend fun endDailySession(
+        idToken: String,
+        tournamentId: String,
+        principalId: String,
+    ): Result<DailySessionResult, TournamentError>
 }

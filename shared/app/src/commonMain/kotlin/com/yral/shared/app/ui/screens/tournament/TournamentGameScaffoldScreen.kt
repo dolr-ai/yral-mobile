@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -63,6 +64,7 @@ fun TournamentGameScaffoldScreen(
         )
     val gameState by tournamentGameViewModel.state.collectAsStateWithLifecycle()
     val feedState by tournamentFeedViewModel.state.collectAsStateWithLifecycle()
+    val isDailyTournament = gameConfig.isDailyTournament
     var timeLeftMs by remember(gameConfig.endEpochMs) {
         mutableLongStateOf(
             maxOf(0L, gameConfig.endEpochMs - Clock.System.now().toEpochMilliseconds()),
@@ -83,15 +85,41 @@ fun TournamentGameScaffoldScreen(
         mutableStateOf(false)
     }
 
-    LaunchedEffect(gameConfig.endEpochMs) {
-        while (timeLeftMs > 0) {
-            @Suppress("MagicNumber")
-            delay(1000L)
-            timeLeftMs = maxOf(0L, gameConfig.endEpochMs - Clock.System.now().toEpochMilliseconds())
+    if (isDailyTournament) {
+        // Daily tournament: start session on enter, use personal remaining time
+        LaunchedEffect(gameConfig.tournamentId) {
+            tournamentGameViewModel.startDailySession(gameConfig.tournamentId)
         }
-        if (timeLeftMs <= 0 && gameConfig.endEpochMs > 0) {
-            tournamentGameViewModel.trackTournamentEnded(gameConfig.tournamentTitle)
-            component.onTimeUp()
+        // Personal timer countdown from server-provided remaining time
+        LaunchedEffect(gameState.personalRemainingTimeMs) {
+            if (gameState.personalRemainingTimeMs > 0) {
+                var remaining = gameState.personalRemainingTimeMs
+                while (remaining > 0) {
+                    @Suppress("MagicNumber")
+                    delay(1000L)
+                    remaining -= 1000L
+                    timeLeftMs = maxOf(0L, remaining)
+                }
+                tournamentGameViewModel.endDailySession()
+                component.onTimeUp()
+            }
+        }
+        // End session on dispose (user exits)
+        DisposableEffect(gameConfig.tournamentId) {
+            onDispose { tournamentGameViewModel.endDailySession() }
+        }
+    } else {
+        // Regular tournament: global timer
+        LaunchedEffect(gameConfig.endEpochMs) {
+            while (timeLeftMs > 0) {
+                @Suppress("MagicNumber")
+                delay(1000L)
+                timeLeftMs = maxOf(0L, gameConfig.endEpochMs - Clock.System.now().toEpochMilliseconds())
+            }
+            if (timeLeftMs <= 0 && gameConfig.endEpochMs > 0) {
+                tournamentGameViewModel.trackTournamentEnded(gameConfig.tournamentTitle)
+                component.onTimeUp()
+            }
         }
     }
 
@@ -137,7 +165,12 @@ fun TournamentGameScaffoldScreen(
                 },
                 bottomOverlay = { pageNo, _ ->
                     if (pageNo < feedState.feedDetails.size) {
-                        val totalDurationMs = gameConfig.endEpochMs - gameConfig.startEpochMs
+                        val totalDurationMs =
+                            if (isDailyTournament) {
+                                gameConfig.dailyTimeLimitMs
+                            } else {
+                                gameConfig.endEpochMs - gameConfig.startEpochMs
+                            }
                         TournamentBottomOverlay(
                             pageNo = pageNo,
                             feedDetails = feedState.feedDetails[pageNo],
@@ -189,7 +222,12 @@ fun TournamentGameScaffoldScreen(
             }
 
             if (showHowToPlay) {
-                val tournamentDurationMinutes = ((gameConfig.endEpochMs - gameConfig.startEpochMs) / 60_000).toInt()
+                val tournamentDurationMinutes =
+                    if (isDailyTournament) {
+                        (gameConfig.dailyTimeLimitMs / 60_000).toInt()
+                    } else {
+                        ((gameConfig.endEpochMs - gameConfig.startEpochMs) / 60_000).toInt()
+                    }
                 TournamentHowToPlayScreen(
                     title = gameConfig.tournamentTitle,
                     onStartPlaying = { showHowToPlay = false },
@@ -223,6 +261,14 @@ fun TournamentGameScaffoldScreen(
                 }
             }
 
+            // Handle personal time expired for daily tournaments
+            if (gameState.personalTimeExpired) {
+                LaunchedEffect(gameState.personalTimeExpired) {
+                    tournamentGameViewModel.clearPersonalTimeExpired()
+                    component.onTimeUp()
+                }
+            }
+
             if (showLeaveTournamentConfirmation) {
                 // Track that the exit nudge is shown
                 LaunchedEffect(Unit) {
@@ -237,6 +283,7 @@ fun TournamentGameScaffoldScreen(
                         showLeaveTournamentConfirmation = false
                         component.onBack()
                     },
+                    isDailyTournament = isDailyTournament,
                 )
             }
         }

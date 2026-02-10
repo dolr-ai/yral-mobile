@@ -459,8 +459,26 @@ class TournamentViewModel(
                             endEpochMs = tournament.endEpochMs,
                             totalPrizePool = tournament.totalPrizePool,
                             isHotOrNot = tournament.type == TournamentType.HOT_OR_NOT,
+                            isDailyTournament = tournament.isDaily,
+                            dailyTimeLimitMs = tournament.dailyTimeLimitMs,
                         ),
                     )
+                is TournamentParticipationState.JoinNowFree ->
+                    send(
+                        Event.NavigateToTournament(
+                            tournamentId = tournament.id,
+                            title = tournament.title,
+                            initialDiamonds = tournament.initialDiamonds,
+                            startEpochMs = tournament.startEpochMs,
+                            endEpochMs = tournament.endEpochMs,
+                            totalPrizePool = 0,
+                            isHotOrNot = tournament.type == TournamentType.HOT_OR_NOT,
+                            isDailyTournament = true,
+                            dailyTimeLimitMs = tournament.dailyTimeLimitMs,
+                        ),
+                    )
+                is TournamentParticipationState.TimeExpired ->
+                    send(Event.NavigateToLeaderboard(tournamentId = tournament.id))
                 else -> {}
             }
         }
@@ -513,6 +531,8 @@ class TournamentViewModel(
             val endEpochMs: Long,
             val totalPrizePool: Int,
             val isHotOrNot: Boolean,
+            val isDailyTournament: Boolean = false,
+            val dailyTimeLimitMs: Long = 0,
         ) : Event()
 
         data class NavigateToLeaderboard(

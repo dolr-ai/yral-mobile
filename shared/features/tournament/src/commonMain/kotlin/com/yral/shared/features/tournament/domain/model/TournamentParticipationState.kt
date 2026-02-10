@@ -21,4 +21,12 @@ sealed class TournamentParticipationState {
     ) : TournamentParticipationState()
 
     data object JoinNowDisabled : TournamentParticipationState()
+
+    /** Daily tournament: free entry, no tokens or credits needed. */
+    data object JoinNowFree : TournamentParticipationState()
+
+    /** Daily tournament: user's 5-minute time limit has been exhausted. */
+    data class TimeExpired(
+        val userDiamonds: Int,
+    ) : TournamentParticipationState()
 }

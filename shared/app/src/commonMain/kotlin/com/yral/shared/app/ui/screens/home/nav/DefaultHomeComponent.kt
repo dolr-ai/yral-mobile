@@ -76,6 +76,8 @@ internal class DefaultHomeComponent(
         endEpochMs: Long,
         totalPrizePool: Int,
         isHotOrNot: Boolean,
+        isDailyTournament: Boolean,
+        dailyTimeLimitMs: Long,
     ) -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
 ) : HomeComponent(),
@@ -306,7 +308,17 @@ internal class DefaultHomeComponent(
             navigateToLeaderboard = { tournamentId ->
                 openTournamentLeaderboard(tournamentId, false)
             },
-            navigateToTournament = { tournamentId, title, initialDiamonds, startEpochMs, endEpochMs, totalPrizePool, isHotOrNot ->
+            navigateToTournament = {
+                tournamentId,
+                title,
+                initialDiamonds,
+                startEpochMs,
+                endEpochMs,
+                totalPrizePool,
+                isHotOrNot,
+                isDailyTournament,
+                dailyTimeLimitMs,
+                ->
                 openTournamentGame(
                     tournamentId,
                     title,
@@ -315,6 +327,8 @@ internal class DefaultHomeComponent(
                     endEpochMs,
                     totalPrizePool,
                     isHotOrNot,
+                    isDailyTournament,
+                    dailyTimeLimitMs,
                 )
             },
             showAlertsOnDialog = showAlertsOnDialog,

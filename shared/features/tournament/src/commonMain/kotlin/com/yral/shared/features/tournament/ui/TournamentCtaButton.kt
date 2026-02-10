@@ -37,8 +37,10 @@ import yral_mobile.shared.features.tournament.generated.resources.check_tick
 import yral_mobile.shared.features.tournament.generated.resources.join_now
 import yral_mobile.shared.features.tournament.generated.resources.join_now_with_tokens
 import yral_mobile.shared.features.tournament.generated.resources.join_with_credit
+import yral_mobile.shared.features.tournament.generated.resources.play_free
 import yral_mobile.shared.features.tournament.generated.resources.register_with_tokens
 import yral_mobile.shared.features.tournament.generated.resources.registered
+import yral_mobile.shared.features.tournament.generated.resources.time_expired
 import yral_mobile.shared.features.tournament.generated.resources.view_leaderboard
 import yral_mobile.shared.features.tournament.generated.resources.yral_coin
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_thunder
@@ -71,6 +73,7 @@ internal fun TournamentCtaButton(
                                 is TournamentParticipationState.JoinNow,
                                 is TournamentParticipationState.JoinNowWithTokens,
                                 is TournamentParticipationState.JoinNowWithCredit,
+                                TournamentParticipationState.JoinNowFree,
                                 -> {
                                     Modifier.angledGradientBackground(
                                         degrees = 218f,
@@ -93,6 +96,12 @@ internal fun TournamentCtaButton(
                                 }
 
                                 is TournamentParticipationState.RegistrationRequired -> {
+                                    Modifier.Companion
+                                        .background(YralColors.Neutral50)
+                                        .border(1.dp, YralColors.Neutral700, shape)
+                                }
+
+                                is TournamentParticipationState.TimeExpired -> {
                                     Modifier.Companion
                                         .background(YralColors.Neutral50)
                                         .border(1.dp, YralColors.Neutral700, shape)
@@ -125,7 +134,9 @@ internal fun TournamentCtaButton(
                     TournamentStatus.Ended -> tournamentPinkGradientBrush(angleDegrees = 198.93394f)
                     else -> {
                         when (participationState) {
-                            is TournamentParticipationState.RegistrationRequired -> {
+                            is TournamentParticipationState.RegistrationRequired,
+                            is TournamentParticipationState.TimeExpired,
+                            -> {
                                 tournamentPinkGradientBrush(angleDegrees = 188.3126f)
                             }
 
@@ -201,6 +212,8 @@ private fun ctaLabel(
                         Res.string.register_with_tokens,
                         participationState.tokensRequired,
                     )
+                TournamentParticipationState.JoinNowFree -> stringResource(Res.string.play_free)
+                is TournamentParticipationState.TimeExpired -> stringResource(Res.string.time_expired)
             }
     }
 

@@ -23,35 +23,10 @@ fun TournamentData.toUiTournament(proDetails: ProDetails): Tournament {
     val canUseCredit = proDetails.isProPurchased && proDetails.availableCredits >= entryCostCredits
 
     val participationState =
-        when {
-            userStats != null -> {
-                when (tournamentStatus) {
-                    is TournamentStatus.Live -> TournamentParticipationState.JoinNow(userStats.diamonds)
-                    is TournamentStatus.Upcoming -> {
-                        val timeLeft = startTime - currentTime
-                        if (timeLeft <= 10.minutes) {
-                            TournamentParticipationState.JoinNowDisabled
-                        } else {
-                            TournamentParticipationState.Registered
-                        }
-                    }
-                    else -> TournamentParticipationState.Registered
-                }
-            }
-            tournamentStatus is TournamentStatus.Live -> {
-                if (canUseCredit) {
-                    TournamentParticipationState.JoinNowWithCredit(entryCostCredits)
-                } else {
-                    TournamentParticipationState.JoinNowWithTokens(entryCost)
-                }
-            }
-            else -> {
-                if (canUseCredit) {
-                    TournamentParticipationState.JoinNowWithCredit(entryCostCredits)
-                } else {
-                    TournamentParticipationState.RegistrationRequired(entryCost)
-                }
-            }
+        if (isDaily) {
+            dailyParticipationState(tournamentStatus)
+        } else {
+            regularParticipationState(tournamentStatus, canUseCredit, startTime, currentTime)
         }
 
     val scheduleLabel = formatScheduleLabel(date, startTime.toHourMinute12h(), endTime.toHourMinute12h())
@@ -78,8 +53,66 @@ fun TournamentData.toUiTournament(proDetails: ProDetails): Tournament {
         entryCostCredits = entryCostCredits,
         isRegistered = userStats != null,
         userDiamonds = userStats?.diamonds ?: 0,
+        isDaily = isDaily,
+        dailyTimeLimitMs = dailyTimeLimitMs,
+        remainingTimeMs = remainingTimeMs,
     )
 }
+
+@OptIn(ExperimentalTime::class)
+private fun TournamentData.dailyParticipationState(tournamentStatus: TournamentStatus): TournamentParticipationState =
+    when {
+        userStats != null && (remainingTimeMs ?: dailyTimeLimitMs) <= 0 ->
+            TournamentParticipationState.TimeExpired(userStats.diamonds)
+        userStats != null && tournamentStatus is TournamentStatus.Live ->
+            TournamentParticipationState.JoinNow(userStats.diamonds)
+        userStats != null ->
+            TournamentParticipationState.Registered
+        tournamentStatus is TournamentStatus.Live ->
+            TournamentParticipationState.JoinNowFree
+        tournamentStatus is TournamentStatus.Ended ->
+            TournamentParticipationState.Registered
+        else ->
+            TournamentParticipationState.JoinNowFree
+    }
+
+@OptIn(ExperimentalTime::class)
+private fun TournamentData.regularParticipationState(
+    tournamentStatus: TournamentStatus,
+    canUseCredit: Boolean,
+    startTime: Instant,
+    currentTime: Instant,
+): TournamentParticipationState =
+    when {
+        userStats != null -> {
+            when (tournamentStatus) {
+                is TournamentStatus.Live -> TournamentParticipationState.JoinNow(userStats.diamonds)
+                is TournamentStatus.Upcoming -> {
+                    val timeLeft = startTime - currentTime
+                    if (timeLeft <= 10.minutes) {
+                        TournamentParticipationState.JoinNowDisabled
+                    } else {
+                        TournamentParticipationState.Registered
+                    }
+                }
+                else -> TournamentParticipationState.Registered
+            }
+        }
+        tournamentStatus is TournamentStatus.Live -> {
+            if (canUseCredit) {
+                TournamentParticipationState.JoinNowWithCredit(entryCostCredits)
+            } else {
+                TournamentParticipationState.JoinNowWithTokens(entryCost)
+            }
+        }
+        else -> {
+            if (canUseCredit) {
+                TournamentParticipationState.JoinNowWithCredit(entryCostCredits)
+            } else {
+                TournamentParticipationState.RegistrationRequired(entryCost)
+            }
+        }
+    }
 
 @OptIn(ExperimentalTime::class)
 internal fun tournamentStatus(
