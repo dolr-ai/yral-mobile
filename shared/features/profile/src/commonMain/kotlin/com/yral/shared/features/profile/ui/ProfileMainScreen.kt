@@ -705,7 +705,7 @@ private fun MainContent(
                     state.isOwnProfile &&
                         state.isLoggedIn &&
                         !isBotAccount &&
-                        botCount != 3,
+                        botCount < MAX_BOT_COUNT_FOR_CTA,
                 onCreateInfluencerClick = onCreateInfluencerClick,
                 botUsernames = parentBotUsernames,
                 createdByUsername = createdByUsername,
@@ -772,6 +772,8 @@ private fun totalCount(data: LazyPagingItems<PagedFollowerItem>?) =
             0
         }
     } ?: 0
+
+private const val MAX_BOT_COUNT_FOR_CTA = 3
 
 @Suppress("LongMethod")
 @Composable

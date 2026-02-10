@@ -192,12 +192,14 @@ internal class BotVideoGenCoordinator(
     }
 
     private suspend fun loadProviderConfig(): ProviderConfig {
-        val provider = loadLumaProvider()
+        val provider = loadBotProvider()
         return ProviderConfig(
-            providerId = provider?.id ?: LUMA_PROVIDER_ID,
-            modelName = provider?.name ?: LUMA_MODEL_NAME,
+            providerId = provider?.id ?: BOT_PROVIDER_ID,
+            modelName = provider?.name ?: BOT_MODEL_NAME,
             aspectRatio = provider?.defaultAspectRatio ?: DEFAULT_ASPECT_RATIO,
             durationSeconds = provider?.defaultDuration ?: DEFAULT_DURATION_SECONDS,
+            resolution = provider?.defaultResolution,
+            generateAudio = if (provider?.supportsAudio == true) true else null,
         )
     }
 
@@ -210,8 +212,9 @@ internal class BotVideoGenCoordinator(
         providerId = config.providerId,
         prompt = prompt,
         aspectRatio = config.aspectRatio,
+        resolution = config.resolution,
         durationSeconds = config.durationSeconds,
-        generateAudio = null,
+        generateAudio = config.generateAudio,
         image = imageData,
         tokenType = TokenType.FREE,
         userId = botPrincipal,
@@ -252,11 +255,11 @@ internal class BotVideoGenCoordinator(
         }
     }
 
-    private suspend fun loadLumaProvider(): Provider? {
+    private suspend fun loadBotProvider(): Provider? {
         var provider: Provider? = null
         getProvidersUseCase()
             .onSuccess { list ->
-                provider = list.firstOrNull { it.id == LUMA_PROVIDER_ID }
+                provider = list.firstOrNull { it.id == BOT_PROVIDER_ID }
             }.onFailure { error ->
                 logger.e(error) { "bot_video_gen: failed to fetch providers" }
             }
@@ -286,12 +289,14 @@ internal class BotVideoGenCoordinator(
         val modelName: String,
         val aspectRatio: String,
         val durationSeconds: Int,
+        val resolution: String?,
+        val generateAudio: Boolean?,
     )
 
     private companion object {
-        const val LUMA_PROVIDER_ID = "lumalabs"
-        const val LUMA_MODEL_NAME = "Luma"
+        const val BOT_PROVIDER_ID = "wan2_5"
+        const val BOT_MODEL_NAME = "WAN 2.5"
         const val DEFAULT_ASPECT_RATIO = "9:16"
-        const val DEFAULT_DURATION_SECONDS = 9
+        const val DEFAULT_DURATION_SECONDS = 5
     }
 }
