@@ -30,6 +30,7 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
     abstract fun openEditProfile()
     abstract fun onBackClicked(): Boolean
     abstract fun openProfile()
+    abstract fun openCreateInfluencer()
     abstract fun openConversation(
         influencerId: String,
         influencerCategory: String,
@@ -65,11 +66,13 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
             onUploadVideoClicked: () -> Unit,
             openEditProfile: () -> Unit,
             openProfile: (CanisterData) -> Unit,
+            openCreateInfluencer: () -> Unit,
             openConversation: (
                 influencerId: String,
                 influencerCategory: String,
                 influencerSource: InfluencerSource,
             ) -> Unit,
+            openAccountSheet: () -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
             promptLogin: (pageName: SignupPageName) -> Unit,
         ): ProfileComponent =
@@ -81,7 +84,9 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
                 onUploadVideoClicked,
                 openEditProfile,
                 openProfile,
+                openCreateInfluencer,
                 openConversation,
+                openAccountSheet,
                 showAlertsOnDialog,
                 promptLogin,
             )

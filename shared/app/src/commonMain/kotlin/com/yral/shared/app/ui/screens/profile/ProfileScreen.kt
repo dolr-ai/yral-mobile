@@ -42,6 +42,7 @@ internal fun ProfileScreen(
                     modifier = Modifier.fillMaxSize(),
                     viewModel = profileViewModel,
                     profileVideos = profileVideos,
+                    onCreateInfluencerClick = { component.openCreateInfluencer() },
                 )
             }
 

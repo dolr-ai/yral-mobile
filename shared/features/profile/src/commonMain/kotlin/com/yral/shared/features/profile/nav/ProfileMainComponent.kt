@@ -16,9 +16,11 @@ interface ProfileMainComponent {
     val showBackButton: Boolean
     val showAlertsOnDialog: (type: AlertsRequestType) -> Unit
     fun onUploadVideoClick()
+    fun openAccountSheet()
     fun openAccount()
     fun openEditProfile()
     fun openProfile(userCanisterData: CanisterData)
+    fun openCreateInfluencer()
     fun openConversation(
         influencerId: String,
         influencerCategory: String,
@@ -26,6 +28,7 @@ interface ProfileMainComponent {
     )
     fun onBackClicked()
     companion object Companion {
+        @Suppress("LongParameterList")
         operator fun invoke(
             componentContext: ComponentContext,
             requestLoginFactory: RequestLoginFactory,
@@ -33,9 +36,11 @@ interface ProfileMainComponent {
             userCanisterData: CanisterData? = null,
             pendingVideoNavigation: Flow<String?>,
             onUploadVideoClicked: () -> Unit,
+            openAccountSheet: () -> Unit,
             openAccount: () -> Unit,
             openEditProfile: () -> Unit,
             openProfile: (CanisterData) -> Unit,
+            openCreateInfluencer: () -> Unit,
             openConversation: (
                 influencerId: String,
                 influencerCategory: String,
@@ -52,9 +57,11 @@ interface ProfileMainComponent {
                 userCanisterData = userCanisterData,
                 pendingVideoNavigation = pendingVideoNavigation,
                 onUploadVideoClicked = onUploadVideoClicked,
+                openAccountSheet = openAccountSheet,
                 openAccount = openAccount,
                 openEditProfile = openEditProfile,
                 openProfile = openProfile,
+                openCreateInfluencer = openCreateInfluencer,
                 openConversation = openConversation,
                 onBackClicked = onBackClicked,
                 showAlertsOnDialog = showAlertsOnDialog,

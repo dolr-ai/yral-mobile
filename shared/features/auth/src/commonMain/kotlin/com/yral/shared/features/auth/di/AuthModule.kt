@@ -9,6 +9,7 @@ import com.yral.shared.features.auth.data.AuthDataSourceImpl
 import com.yral.shared.features.auth.data.AuthRepositoryImpl
 import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.domain.useCases.AuthenticateTokenUseCase
+import com.yral.shared.features.auth.domain.useCases.CreateAiAccountUseCase
 import com.yral.shared.features.auth.domain.useCases.DeleteAccountUseCase
 import com.yral.shared.features.auth.domain.useCases.DeregisterNotificationTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.ExchangePrincipalIdUseCase
@@ -43,6 +44,7 @@ val authModule =
         factoryOf(::AuthTelemetry)
         factoryOf(::RegisterNotificationTokenUseCase)
         factoryOf(::DeregisterNotificationTokenUseCase)
+        factoryOf(::CreateAiAccountUseCase)
         singleOf(::LoginViewModel)
         singleOf(::CountryRepository)
         single { createAuthEnv() }

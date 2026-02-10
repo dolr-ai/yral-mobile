@@ -31,15 +31,19 @@ import com.yral.shared.features.auth.ui.components.getAnnotatedHeaderForLogin
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
+import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.auth.generated.resources.Res
 import yral_mobile.shared.features.auth.generated.resources.continue_to_sign_up_for_free
+import yral_mobile.shared.features.auth.generated.resources.create_ai_influencer_subtext
+import yral_mobile.shared.features.auth.generated.resources.create_ai_influencer_title
 import yral_mobile.shared.features.auth.generated.resources.create_ai_videos_earn_bitcoin
 import yral_mobile.shared.features.auth.generated.resources.create_ai_videos_earn_bitcoin_dis
 import yral_mobile.shared.features.auth.generated.resources.join_tournament
 import yral_mobile.shared.features.auth.generated.resources.join_tournament_disclaimer
+import yral_mobile.shared.features.auth.generated.resources.join_yral_create_influencer
 import yral_mobile.shared.features.auth.generated.resources.login_to_chat_with_influencer
 import yral_mobile.shared.features.auth.generated.resources.login_to_get_25_tokens
 import yral_mobile.shared.features.auth.generated.resources.login_to_join_tournament
@@ -140,6 +144,12 @@ private fun getHeaderText(
             val maskedText = stringResource(Res.string.join_tournament)
             getAnnotatedHeaderForLogin(fullText, maskedText)
         }
+        LoginBottomSheetType.CREATE_INFLUENCER -> {
+            getAnnotatedHeaderForLogin(
+                stringResource(Res.string.create_ai_influencer_title),
+                baseColor = YralColors.Yellow200,
+            )
+        }
         is LoginBottomSheetType.CONVERSATION -> {
             val name = type.influencerName
             val fullText = stringResource(Res.string.login_to_chat_with_influencer, name)
@@ -154,6 +164,7 @@ private fun getDisclaimerText(type: LoginBottomSheetType) =
         LoginBottomSheetType.UPLOAD_AI_VIDEO -> stringResource(Res.string.upload_ai_videos_earn_bitcoin_dis)
         LoginBottomSheetType.CREATE_AI_VIDEO -> stringResource(Res.string.create_ai_videos_earn_bitcoin_dis)
         LoginBottomSheetType.TOURNAMENT -> stringResource(Res.string.join_tournament_disclaimer)
+        LoginBottomSheetType.CREATE_INFLUENCER -> stringResource(Res.string.create_ai_influencer_subtext)
         else -> null
     }
 
@@ -163,6 +174,7 @@ private fun getTopIcon(type: LoginBottomSheetType) =
         LoginBottomSheetType.UPLOAD_AI_VIDEO -> painterResource(DesignRes.drawable.btc_giftbox)
         LoginBottomSheetType.CREATE_AI_VIDEO -> painterResource(DesignRes.drawable.btc_giftbox)
         LoginBottomSheetType.TOURNAMENT -> painterResource(DesignRes.drawable.victory_cup)
+        LoginBottomSheetType.CREATE_INFLUENCER -> painterResource(Res.drawable.join_yral_create_influencer)
         is LoginBottomSheetType.CONVERSATION -> painterResource(DesignRes.drawable.victory_cup)
         else -> null
     }
@@ -225,6 +237,9 @@ sealed interface LoginBottomSheetType {
 
     @Serializable
     data object TOURNAMENT : LoginBottomSheetType
+
+    @Serializable
+    data object CREATE_INFLUENCER : LoginBottomSheetType
 
     @Serializable
     data class CONVERSATION(

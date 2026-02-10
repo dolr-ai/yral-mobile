@@ -6,6 +6,8 @@ import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.net.toUri
 import co.touchlab.kermit.Logger
 import com.nimbusds.jose.shaded.gson.Gson
+import com.nimbusds.jose.shaded.gson.JsonArray
+import com.nimbusds.jose.shaded.gson.JsonElement
 import com.nimbusds.jwt.JWTParser
 import com.yral.shared.features.auth.di.AuthEnv
 import com.yral.shared.features.auth.domain.models.TokenClaims
@@ -97,6 +99,27 @@ class AndroidOAuthUtilsHelper(
         val jwt = JWTParser.parse(token)
         val claims = jwt.jwtClaimsSet.claims
         val gson = Gson()
+        val botsRaw = claims[KEY_AI_ACCOUNT_DELEGATED_IDENTITIES]
+        val botDelegatedIdentities =
+            when (botsRaw) {
+                is List<*> -> botsRaw
+                is Collection<*> -> botsRaw.toList()
+                else -> {
+                    runCatching {
+                        val tree: JsonElement = gson.toJsonTree(botsRaw)
+                        if (tree is JsonArray) tree.map { it } else null
+                    }.getOrNull()
+                }
+            }?.mapNotNull { entry ->
+                runCatching {
+                    when (entry) {
+                        is String -> entry.toByteArray()
+                        is Map<*, *> -> gson.toJson(entry).toByteArray()
+                        is JsonElement -> entry.toString().toByteArray()
+                        else -> gson.toJson(entry).toByteArray()
+                    }
+                }.getOrNull()
+            }
         return TokenClaims(
             aud = claims[KEY_AUD] as List<String>,
             expiry = (claims[KEY_EXP] as Date).time / 1000,
@@ -106,10 +129,9 @@ class AndroidOAuthUtilsHelper(
             nonce = claims[KEY_NONCE] as? String,
             extIsAnonymous = claims[KEY_IS_ANONYMOUS] as Boolean,
             delegatedIdentity =
-                gson
-                    .toJson(claims[KEY_DELEGATED_IDENTITY] as Map<*, *>)
-                    .toByteArray(),
+                (claims[KEY_DELEGATED_IDENTITY] as? Map<*, *>)?.let { gson.toJson(it).toByteArray() },
             email = claims[KEY_EMAIL] as? String,
+            botDelegatedIdentities = botDelegatedIdentities,
         )
     }
 

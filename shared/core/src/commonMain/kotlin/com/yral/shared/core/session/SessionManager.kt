@@ -62,14 +62,28 @@ class SessionManager {
                 else -> null
             }
 
+    val isBotAccount: Boolean?
+        get() =
+            when (val state = mutableState.value) {
+                is SessionState.SignedIn -> state.session.isBotAccount
+                else -> null
+            }
+
     val profileVideosCount: Int
         get() = mutableProperties.value.profileVideosCount ?: 0
+
+    val accountDirectory: AccountDirectory?
+        get() = mutableProperties.value.accountDirectory
 
     fun updateState(state: SessionState) {
         mutableState.update { state }
         mutableProperties.update {
             // Preserve pending tournament registration across session changes
-            SessionProperties(pendingTournamentRegistrationId = it.pendingTournamentRegistrationId)
+            SessionProperties(
+                pendingTournamentRegistrationId = it.pendingTournamentRegistrationId,
+                botCount = it.botCount,
+                accountDirectory = it.accountDirectory,
+            )
         }
     }
 
@@ -83,6 +97,53 @@ class SessionManager {
 
     fun updateProfileVideosCount(count: Int?) {
         mutableProperties.update { it.copy(profileVideosCount = count) }
+    }
+
+    fun updateBotCount(count: Int?) {
+        mutableProperties.update { it.copy(botCount = count) }
+    }
+
+    fun updateAccountDirectory(directory: AccountDirectory?) {
+        mutableProperties.update { it.copy(accountDirectory = directory) }
+    }
+
+    fun upsertAccountDirectoryProfile(
+        principal: String,
+        username: String,
+        avatarUrl: String,
+        isBot: Boolean,
+    ) {
+        mutableProperties.update { properties ->
+            val existing = properties.accountDirectory
+            val updatedProfile =
+                AccountDirectoryProfile(
+                    principal = principal,
+                    username = username,
+                    avatarUrl = avatarUrl,
+                    isBot = isBot,
+                )
+            val updatedDirectory =
+                if (existing == null) {
+                    AccountDirectory(
+                        mainPrincipal = if (isBot) null else principal,
+                        botPrincipals = if (isBot) listOf(principal) else emptyList(),
+                        profilesByPrincipal = mapOf(principal to updatedProfile),
+                    )
+                } else {
+                    val updatedBots =
+                        if (isBot) {
+                            (existing.botPrincipals + principal).distinct()
+                        } else {
+                            existing.botPrincipals
+                        }
+                    existing.copy(
+                        mainPrincipal = if (isBot) existing.mainPrincipal else principal,
+                        botPrincipals = updatedBots,
+                        profilesByPrincipal = existing.profilesByPrincipal + (principal to updatedProfile),
+                    )
+                }
+            properties.copy(accountDirectory = updatedDirectory)
+        }
     }
 
     fun updateIsForcedGamePlayUser(isForcedGamePlayUser: Boolean) {
@@ -221,6 +282,8 @@ class SessionManager {
             SessionProperties(
                 coinBalance = 0,
                 profileVideosCount = 0,
+                botCount = null,
+                accountDirectory = null,
                 isSocialSignIn = false,
                 // Preserve pending tournament registration across session resets
                 pendingTournamentRegistrationId = it.pendingTournamentRegistrationId,

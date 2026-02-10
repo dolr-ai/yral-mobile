@@ -18,9 +18,11 @@ internal class DefaultProfileMainComponent(
     override val userCanisterData: CanisterData?,
     override val showBackButton: Boolean,
     private val onUploadVideoClicked: () -> Unit,
+    private val openAccountSheet: () -> Unit,
     private val openAccount: () -> Unit,
     private val openEditProfile: () -> Unit,
     private val openProfile: (CanisterData) -> Unit,
+    private val openCreateInfluencer: () -> Unit,
     private val openConversation: (
         influencerId: String,
         influencerCategory: String,
@@ -35,6 +37,10 @@ internal class DefaultProfileMainComponent(
         onUploadVideoClicked.invoke()
     }
 
+    override fun openAccountSheet() {
+        openAccountSheet.invoke()
+    }
+
     override fun openAccount() {
         openAccount.invoke()
     }
@@ -45,6 +51,10 @@ internal class DefaultProfileMainComponent(
 
     override fun openProfile(userCanisterData: CanisterData) {
         openProfile.invoke(userCanisterData)
+    }
+
+    override fun openCreateInfluencer() {
+        openCreateInfluencer.invoke()
     }
 
     override fun openConversation(

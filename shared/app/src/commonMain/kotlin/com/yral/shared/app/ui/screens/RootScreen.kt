@@ -4,15 +4,32 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,8 +37,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.arkivanov.decompose.extensions.compose.stack.Children
@@ -43,6 +62,8 @@ import com.yral.shared.app.ui.screens.subscription.SubscriptionNudgeBottomSheet
 import com.yral.shared.app.ui.screens.tournament.TournamentGameScaffoldScreen
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.session.getKey
+import com.yral.shared.features.aiinfluencer.ui.CreateAIInfluencerScreen
+import com.yral.shared.features.aiinfluencer.viewmodel.AiInfluencerViewModel
 import com.yral.shared.features.chat.ui.conversation.ChatConversationScreen
 import com.yral.shared.features.chat.viewmodel.ConversationViewModel
 import com.yral.shared.features.leaderboard.ui.LeaderboardScreen
@@ -51,20 +72,30 @@ import com.yral.shared.features.profile.ui.EditProfileScreen
 import com.yral.shared.features.profile.ui.ProfileMainScreen
 import com.yral.shared.features.profile.viewmodel.EditProfileViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
+import com.yral.shared.features.root.viewmodels.AccountDialogInfo
+import com.yral.shared.features.root.viewmodels.AccountUi
 import com.yral.shared.features.root.viewmodels.NavigationTarget
 import com.yral.shared.features.root.viewmodels.RootError
 import com.yral.shared.features.subscriptions.ui.SubscriptionsScreen
 import com.yral.shared.features.tournament.ui.TournamentLeaderboardScreen
 import com.yral.shared.features.wallet.ui.WalletScreen
+import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.component.toast.ToastHost
+import com.yral.shared.libs.designsystem.component.toast.ToastManager
+import com.yral.shared.libs.designsystem.component.toast.ToastType
+import com.yral.shared.libs.designsystem.component.toast.showSuccess
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.libs.routing.routes.api.Profile
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import yral_mobile.shared.app.generated.resources.Res
+import yral_mobile.shared.app.generated.resources.ai_influencer_created_success
 import yral_mobile.shared.app.generated.resources.error_retry
 import yral_mobile.shared.app.generated.resources.error_timeout
 import yral_mobile.shared.app.generated.resources.error_timeout_title
@@ -80,6 +111,34 @@ fun RootScreen(rootComponent: RootComponent) {
             is NavigationTarget.Splash -> rootComponent.navigateToSplash()
             is NavigationTarget.MandatoryLogin -> rootComponent.navigateToMandatoryLogin()
             is NavigationTarget.Home -> rootComponent.navigateToHome()
+        }
+    }
+
+    if (state.showAccountDialog) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
+            onDismissRequest = { viewModel.dismissAccountDialog() },
+            sheetState = sheetState,
+            containerColor = YralColors.Neutral900,
+        ) {
+            val accountDialogInfo = state.accountDialogInfo
+            if (accountDialogInfo == null) {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(24.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                AccountSwitchSheet(
+                    info = accountDialogInfo,
+                    selectionEnabled = !state.isAccountSwitchInProgress,
+                    onSelect = { principal ->
+                        viewModel.dismissAccountDialog()
+                        viewModel.switchToAccount(principal)
+                    },
+                )
+            }
         }
     }
 
@@ -128,7 +187,10 @@ fun RootScreen(rootComponent: RootComponent) {
                         HandleSystemBars(show = true)
                         EditProfileScreen(
                             component = child.component,
-                            viewModel = koinViewModel<EditProfileViewModel>(key = "edit-profile-$sessionKey"),
+                            viewModel =
+                                koinViewModel<EditProfileViewModel>(
+                                    key = "edit-profile-$sessionKey",
+                                ),
                             modifier = Modifier.fillMaxSize().safeDrawingPadding(),
                         )
                     }
@@ -146,6 +208,7 @@ fun RootScreen(rootComponent: RootComponent) {
                             modifier = Modifier.fillMaxSize().safeDrawingPadding(),
                             viewModel = profileViewModel,
                             profileVideos = profileVideos,
+                            onCreateInfluencerClick = rootComponent::openCreateInfluencer,
                         )
                     }
 
@@ -190,11 +253,39 @@ fun RootScreen(rootComponent: RootComponent) {
                     is Child.Leaderboard -> {
                         HandleSystemBars(show = true)
                         val sessionKey = state.sessionState.getKey()
-                        val leaderBoardViewModel = koinViewModel<LeaderBoardViewModel>(key = "leaderboard-$sessionKey")
+                        val leaderBoardViewModel =
+                            koinViewModel<LeaderBoardViewModel>(
+                                key = "leaderboard-$sessionKey",
+                            )
                         LeaderboardScreen(
                             component = child.component,
                             leaderBoardViewModel = leaderBoardViewModel,
                             modifier = Modifier.fillMaxSize().safeDrawingPadding(),
+                        )
+                    }
+
+                    is Child.CreateInfluencer -> {
+                        HandleSystemBars(show = true)
+                        val aiInfluencerViewModel = koinViewModel<AiInfluencerViewModel>()
+                        val influencerCreatedMessage =
+                            stringResource(Res.string.ai_influencer_created_success)
+                        LaunchedEffect(Unit) {
+                            aiInfluencerViewModel.resetFlow()
+                        }
+                        CreateAIInfluencerScreen(
+                            modifier = Modifier.fillMaxSize().safeDrawingPadding(),
+                            viewModel = aiInfluencerViewModel,
+                            requestLoginFactory = rootComponent.createLoginRequestFactory(),
+                            onBack = rootComponent::onBackClicked,
+                            onCreateProfile = {
+                                aiInfluencerViewModel.createBotAccount {
+                                    rootComponent.onBackClicked()
+                                    rootComponent.onNavigationRequest(Profile)
+                                    ToastManager.showSuccess(
+                                        type = ToastType.Small(influencerCreatedMessage),
+                                    )
+                                }
+                            },
                         )
                     }
 
@@ -256,7 +347,10 @@ fun RootScreen(rootComponent: RootComponent) {
             // 1. after logout on account screen during anonymous sign in
             // 2. after social sign in
             // 3. after delete account during anonymous sign in
-            if (state.navigationTarget !is NavigationTarget.Splash && state.sessionState is SessionState.Loading) {
+            if (
+                state.navigationTarget !is NavigationTarget.Splash &&
+                state.sessionState is SessionState.Loading
+            ) {
                 BlockingLoader()
             }
 
@@ -279,6 +373,145 @@ fun RootScreen(rootComponent: RootComponent) {
         }
     }
 }
+
+@Composable
+private fun AccountSwitchSheet(
+    info: AccountDialogInfo,
+    selectionEnabled: Boolean,
+    onSelect: (String) -> Unit,
+) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, top = 26.dp, bottom = 36.dp),
+    ) {
+        SheetSection(
+            title = "Main Profile",
+            accounts = listOfNotNull(info.mainAccount),
+            selectionEnabled = selectionEnabled,
+            onSelect = onSelect,
+        )
+        if (info.botAccounts.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(20.dp))
+            SheetSection(
+                title = "AI Influencer Profile",
+                accounts = info.botAccounts,
+                selectionEnabled = selectionEnabled,
+                onSelect = onSelect,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SheetSection(
+    title: String,
+    accounts: List<AccountUi>,
+    selectionEnabled: Boolean,
+    onSelect: (String) -> Unit,
+) {
+    if (accounts.isEmpty()) return
+    Text(
+        text = title,
+        style = LocalAppTopography.current.baseSemiBold,
+        color = Color.White,
+        modifier = Modifier.padding(bottom = 10.dp),
+    )
+    accounts.forEachIndexed { index, account ->
+        val isFirst = index == 0
+        val isLast = index == accounts.lastIndex
+        AccountRow(
+            account = account,
+            selectionEnabled = selectionEnabled,
+            onSelect = onSelect,
+            isFirst = isFirst,
+            isLast = isLast,
+        )
+    }
+}
+
+@Composable
+private fun AccountRow(
+    account: AccountUi,
+    selectionEnabled: Boolean,
+    onSelect: (String) -> Unit,
+    isFirst: Boolean,
+    isLast: Boolean,
+) {
+    val shape = accountRowShape(isFirst = isFirst, isLast = isLast)
+    Surface(
+        shape = shape,
+        color = YralColors.Neutral900,
+        tonalElevation = 0.dp,
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(shape)
+                .border(width = 1.dp, color = YralColors.Neutral700, shape = shape)
+                .clickable(enabled = selectionEnabled) { onSelect(account.principal) },
+    ) {
+        AccountRowContent(account = account)
+    }
+}
+
+@Composable
+private fun AccountRowContent(account: AccountUi) {
+    Row(
+        modifier = Modifier.padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        YralAsyncImage(
+            imageUrl = account.avatarUrl,
+            modifier =
+                Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(YralColors.Neutral800),
+            contentScale = ContentScale.Crop,
+        )
+        Spacer(modifier = Modifier.width(10.dp))
+        Text(
+            text = account.name,
+            style = LocalAppTopography.current.mdMedium,
+            color = Color.White,
+            modifier = Modifier.weight(1f),
+        )
+        if (account.isActive) {
+            ActiveAccountIndicator()
+        }
+    }
+}
+
+@Composable
+private fun ActiveAccountIndicator() {
+    Box(
+        modifier =
+            Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(YralColors.Pink300),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Check,
+            contentDescription = "Selected",
+            tint = Color.White,
+            modifier = Modifier.size(18.dp),
+        )
+    }
+}
+
+private fun accountRowShape(
+    isFirst: Boolean,
+    isLast: Boolean,
+): RoundedCornerShape =
+    when {
+        isFirst && isLast -> RoundedCornerShape(8.dp)
+        isFirst -> RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
+        isLast -> RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp)
+        else -> RoundedCornerShape(0.dp)
+    }
 
 @Composable
 private fun BlockingLoader() {

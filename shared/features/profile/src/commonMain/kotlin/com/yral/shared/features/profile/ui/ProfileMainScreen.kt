@@ -54,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -71,6 +72,8 @@ import com.yral.shared.analytics.events.EditProfileSource
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.analytics.events.VideoDeleteCTA
+import com.yral.shared.core.session.AccountDirectory
+import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
@@ -123,6 +126,7 @@ import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.koin.compose.koinInject
 import yral_mobile.shared.features.profile.generated.resources.Res
 import yral_mobile.shared.features.profile.generated.resources.become_pro
 import yral_mobile.shared.features.profile.generated.resources.create_ai_video
@@ -149,6 +153,7 @@ import yral_mobile.shared.features.profile.generated.resources.storage_permissio
 import yral_mobile.shared.features.profile.generated.resources.video_will_be_deleted_permanently
 import yral_mobile.shared.features.profile.generated.resources.white_heart
 import yral_mobile.shared.libs.designsystem.generated.resources.account_nav
+import yral_mobile.shared.libs.designsystem.generated.resources.arrow
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.cancel
 import yral_mobile.shared.libs.designsystem.generated.resources.delete
@@ -162,6 +167,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.login
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.my_profile
+import yral_mobile.shared.libs.designsystem.generated.resources.my_profiles
 import yral_mobile.shared.libs.designsystem.generated.resources.oops
 import yral_mobile.shared.libs.designsystem.generated.resources.refresh
 import yral_mobile.shared.libs.designsystem.generated.resources.share_profile
@@ -178,6 +184,7 @@ internal const val PULL_TO_REFRESH_OFFSET_MULTIPLIER = 1.5f
 internal const val MAX_LINES_FOR_POST_DESCRIPTION = 5
 internal const val PADDING_BOTTOM_ACCOUNT_INFO = 20
 internal const val SHEET_GROWTH_PER_ITEM = 0.05f
+internal const val PROFILE_SWITCHER_ROTATION_DEGREES = 90f
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
@@ -187,9 +194,23 @@ fun ProfileMainScreen(
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel,
     profileVideos: LazyPagingItems<FeedDetails>,
+    onCreateInfluencerClick: () -> Unit,
 ) {
+    val sessionManager: SessionManager = koinInject()
+    // Use nullable to avoid showing CTA flash while loading
+    val botCount by
+        sessionManager
+            .observeSessionProperty(
+                selector = { it.botCount },
+            ).collectAsStateWithLifecycle(initialValue = null)
+    val accountDirectory by
+        sessionManager
+            .observeSessionProperty { it.accountDirectory }
+            .collectAsStateWithLifecycle(initialValue = null)
+    val hasBotAccounts = (botCount ?: 0) > 0
     val state by viewModel.state.collectAsStateWithLifecycle()
     val storagePermissionController = rememberStoragePermissionController()
+    val isBotAccount = sessionManager.isBotAccount == true
 
     val followers = viewModel.followers.collectAsLazyPagingItems()
     val following = viewModel.following.collectAsLazyPagingItems()
@@ -410,6 +431,7 @@ fun ProfileMainScreen(
                         viewModel.uploadVideoClicked()
                         component.onUploadVideoClick()
                     },
+                    openAccountSheet = { component.openAccountSheet() },
                     openAccount = { component.openAccount() },
                     openEditProfile = {
                         viewModel.onEditProfileOpened(EditProfileSource.PROFILE)
@@ -444,6 +466,11 @@ fun ProfileMainScreen(
                             ) {}
                         }
                     },
+                    isBotAccount = isBotAccount,
+                    hasBotAccounts = hasBotAccounts,
+                    botCount = botCount,
+                    accountDirectory = accountDirectory,
+                    onCreateInfluencerClick = onCreateInfluencerClick,
                 )
             }
         }
@@ -602,6 +629,7 @@ private fun MainContent(
     following: LazyPagingItems<PagedFollowerItem>?,
     deletingVideoId: String,
     uploadVideo: () -> Unit,
+    openAccountSheet: () -> Unit,
     openAccount: () -> Unit,
     openEditProfile: () -> Unit,
     onBackClicked: () -> Unit,
@@ -613,6 +641,11 @@ private fun MainContent(
     showBackButton: Boolean,
     onDownloadVideo: (FeedDetails) -> Unit,
     onSubscribe: () -> Unit,
+    isBotAccount: Boolean,
+    hasBotAccounts: Boolean,
+    botCount: Int?,
+    accountDirectory: AccountDirectory?,
+    onCreateInfluencerClick: () -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader(
@@ -620,9 +653,11 @@ private fun MainContent(
             isSubscriptionEnabled = state.isSubscriptionEnabled,
             isProUser = state.isProUser,
             userName = state.accountInfo?.displayName,
+            showAccountChevron = state.isOwnProfile && (isBotAccount || hasBotAccounts),
             showShareProfile = showHeaderShareButton && canShareProfile,
             isWalletEnabled = state.isWalletEnabled,
             onShareProfileClicked = onShareProfileClicked,
+            openAccountSheet = openAccountSheet,
             openAccount = openAccount,
             onBack = onBackClicked,
             showBackButton = showBackButton,
@@ -631,6 +666,20 @@ private fun MainContent(
         state.accountInfo?.let { info ->
             val followersCount = totalCount(followers)
             val followingCount = totalCount(following)
+            val parentBotUsernames =
+                accountDirectory
+                    ?.takeIf { state.isOwnProfile && !isBotAccount }
+                    ?.botPrincipals
+                    ?.mapNotNull { principal ->
+                        accountDirectory.profilesByPrincipal[principal]?.username?.takeUnless { it.isBlank() }
+                    }.orEmpty()
+            val createdByUsername =
+                accountDirectory
+                    ?.takeIf { state.isOwnProfile && isBotAccount }
+                    ?.mainPrincipal
+                    ?.let { principal ->
+                        accountDirectory.profilesByPrincipal[principal]?.username?.takeUnless { it.isBlank() }
+                    }
             AccountInfoView(
                 accountInfo = info,
                 totalFollowers = followersCount,
@@ -652,6 +701,15 @@ private fun MainContent(
                 onFollowingClick = { onFollowersSectionClick(FollowersSheetTab.Following) },
                 onTalkToMeClicked = viewModel::fetchInfluencerDetails,
                 isProUser = state.isProUser,
+                showCreateInfluencerCta =
+                    state.isOwnProfile &&
+                        state.isLoggedIn &&
+                        !isBotAccount &&
+                        botCount != null &&
+                        botCount!! < MAX_BOT_COUNT_FOR_CTA,
+                onCreateInfluencerClick = onCreateInfluencerClick,
+                botUsernames = parentBotUsernames,
+                createdByUsername = createdByUsername,
             )
         }
         when (profileVideos.loadState.refresh) {
@@ -716,6 +774,8 @@ private fun totalCount(data: LazyPagingItems<PagedFollowerItem>?) =
         }
     } ?: 0
 
+private const val MAX_BOT_COUNT_FOR_CTA = 3
+
 @Suppress("LongMethod")
 @Composable
 private fun ProfileHeader(
@@ -723,9 +783,11 @@ private fun ProfileHeader(
     isProUser: Boolean,
     isSubscriptionEnabled: Boolean,
     userName: String?,
+    showAccountChevron: Boolean,
     showShareProfile: Boolean,
     isWalletEnabled: Boolean,
     onShareProfileClicked: () -> Unit,
+    openAccountSheet: () -> Unit,
     openAccount: () -> Unit,
     onBack: () -> Unit,
     showBackButton: Boolean = false,
@@ -751,16 +813,40 @@ private fun ProfileHeader(
                             .clickable { onBack() },
                 )
             }
-            Text(
-                text =
-                    if (isOwnProfile) {
-                        stringResource(DesignRes.string.my_profile)
-                    } else {
-                        userName ?: ""
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier =
+                    Modifier.clickable(enabled = isOwnProfile && showAccountChevron) {
+                        openAccountSheet()
                     },
-                style = LocalAppTopography.current.xlBold,
-                color = YralColors.NeutralTextPrimary,
-            )
+            ) {
+                Text(
+                    text =
+                        if (isOwnProfile) {
+                            if (showAccountChevron) {
+                                stringResource(DesignRes.string.my_profiles)
+                            } else {
+                                stringResource(DesignRes.string.my_profile)
+                            }
+                        } else {
+                            userName ?: ""
+                        },
+                    style = LocalAppTopography.current.xlBold,
+                    color = YralColors.NeutralTextPrimary,
+                )
+                if (isOwnProfile && showAccountChevron) {
+                    Icon(
+                        painter = painterResource(DesignRes.drawable.arrow),
+                        contentDescription = "Profile switcher",
+                        tint = Color.White,
+                        modifier =
+                            Modifier
+                                .padding(start = 6.dp)
+                                .size(20.dp)
+                                .rotate(PROFILE_SWITCHER_ROTATION_DEGREES),
+                    )
+                }
+            }
         }
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
