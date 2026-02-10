@@ -29,4 +29,22 @@
     <!-- Subscription nudge (chat threshold) -->
     <string name="subscription_nudge_chat_title">Subscribe to YRAL Pro to continue chatting with %1$s.</string>
     <string name="subscription_nudge_chat_description">Go Pro to unlock unlimited chat with %1$s plus %2$d YRAL Credits.</string>
+
+    <!-- Error Bottom Sheet -->
+    <!-- Error titles -->
+    <string name="error_network_title">Having a little trouble loading</string>
+    <string name="error_auth_title">Session Expired</string>
+    <string name="error_server_title">Having a little trouble loading</string>
+    <string name="error_unknown_title">Having a little trouble loading</string>
+
+    <!-- Error messages -->
+    <string name="error_network_message">We are unable to load your chat at the moment. Please refresh or try again later.</string>
+    <string name="error_auth_message">Your session has expired. Please log in again to continue chatting.</string>
+    <string name="error_server_message">We are unable to load your chat at the moment. Please refresh or try again later.</string>
+    <string name="error_unknown_message">We are unable to load your chat at the moment. Please refresh or try again later.</string>
+    <string name="error_network_message_influencers">We are unable to reach influencers at the moment. Please refresh or try again in a moment.</string>
+
+    <!-- Actions -->
+    <string name="error_retry_action">Try Again</string>
+    <string name="error_dismiss_action">Dismiss</string>
 </resources>
