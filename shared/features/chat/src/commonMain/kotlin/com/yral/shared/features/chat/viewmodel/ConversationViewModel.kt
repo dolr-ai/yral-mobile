@@ -22,9 +22,11 @@ import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.chat.analytics.ChatTelemetry
 import com.yral.shared.features.chat.attachments.ChatAttachment
 import com.yral.shared.features.chat.attachments.FilePathChatAttachment
+import com.yral.shared.features.chat.domain.ChatErrorMapper
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.ConversationMessagesPagingSource
 import com.yral.shared.features.chat.domain.EmptyMessagesPagingSource
+import com.yral.shared.features.chat.domain.models.ChatError
 import com.yral.shared.features.chat.domain.models.ChatMessage
 import com.yral.shared.features.chat.domain.models.ChatMessageType
 import com.yral.shared.features.chat.domain.models.ConversationInfluencer
@@ -65,7 +67,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
-@Suppress("LongParameterList")
+@Suppress("LongParameterList", "TooManyFunctions")
 class ConversationViewModel(
     flagManager: FeatureFlagManager,
     private val chatRepository: ChatRepository,
@@ -79,6 +81,7 @@ class ConversationViewModel(
     private val crashlyticsManager: CrashlyticsManager,
     private val sessionManager: SessionManager,
     private val chatTelemetry: ChatTelemetry,
+    private val chatErrorMapper: ChatErrorMapper,
 ) : ViewModel() {
     /**
      * Message ordering:
@@ -322,7 +325,7 @@ class ConversationViewModel(
             ConversationViewState(
                 isCreating = false,
                 isDeleting = false,
-                error = null,
+                chatError = null,
                 conversationId = null,
                 influencer = null,
                 paginatedHistoryAvailable = false,
@@ -342,7 +345,7 @@ class ConversationViewModel(
     }
 
     private fun createConversation(influencerId: String) {
-        _viewState.update { it.copy(isCreating = true, error = null) }
+        _viewState.update { it.copy(isCreating = true, chatError = null) }
         viewModelScope.launch {
             createConversationUseCase(CreateConversationUseCase.Params(influencerId = influencerId))
                 .onSuccess { conversation ->
@@ -353,11 +356,15 @@ class ConversationViewModel(
                         messageCount = conversation.messageCount,
                     )
                     _viewState.update { it.copy(isCreating = false) }
-                }.onFailure { error ->
+                }.onFailure { throwable ->
+                    val chatError =
+                        chatErrorMapper.mapException(throwable) {
+                            retryConversationCreation()
+                        }
                     _viewState.update {
                         it.copy(
                             isCreating = false,
-                            error = error.message ?: "Failed to create conversation",
+                            chatError = chatError,
                         )
                     }
                 }
@@ -366,7 +373,7 @@ class ConversationViewModel(
 
     fun deleteAndRecreateConversation(influencerId: String) {
         val currentConversationId = _viewState.value.conversationId ?: return
-        _viewState.update { it.copy(isDeleting = true, error = null) }
+        _viewState.update { it.copy(isDeleting = true, chatError = null) }
         viewModelScope.launch {
             deleteConversationUseCase(DeleteConversationUseCase.Params(conversationId = currentConversationId))
                 .onSuccess {
@@ -374,12 +381,16 @@ class ConversationViewModel(
                     resetState()
                     createConversation(influencerId)
                     _viewState.update { it.copy(isDeleting = false) }
-                }.onFailure { error ->
+                }.onFailure { throwable ->
+                    val chatError =
+                        chatErrorMapper.mapException(throwable) {
+                            retryDeleteAndRecreateConversation()
+                        }
                     _viewState.update {
                         it.copy(
                             isDeleting = false,
                             isCreating = false,
-                            error = error.message ?: "Failed to delete conversation",
+                            chatError = chatError,
                         )
                     }
                 }
@@ -630,6 +641,22 @@ class ConversationViewModel(
         val message: ChatMessage,
     )
 
+    fun clearError() {
+        _viewState.update { it.copy(chatError = null) }
+    }
+
+    fun retryConversationCreation() {
+        val influencerId = _viewState.value.influencer?.id ?: return
+        clearError()
+        createConversation(influencerId)
+    }
+
+    fun retryDeleteAndRecreateConversation() {
+        val influencerId = _viewState.value.influencer?.id ?: return
+        clearError()
+        deleteAndRecreateConversation(influencerId)
+    }
+
     companion object {
         private const val PAGE_SIZE = 10
         private const val PREFETCH_DISTANCE = 5
@@ -639,7 +666,7 @@ class ConversationViewModel(
 data class ConversationViewState(
     val isCreating: Boolean = false,
     val isDeleting: Boolean = false,
-    val error: String? = null,
+    val chatError: ChatError? = null,
     val conversationId: String? = null,
     val influencer: ConversationInfluencer? = null,
     val paginatedHistoryAvailable: Boolean = false,
