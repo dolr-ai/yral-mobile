@@ -310,6 +310,13 @@ class FeedViewModel(
 
     private fun initialTournamentFeedData(tournamentId: String) {
         coroutineScope.launch {
+            val tournamentContext = feedContext as? FeedContext.Tournament
+            val restoredPage =
+                tournamentContext
+                    ?.loadSavedPage
+                    ?.invoke()
+                    ?.coerceAtLeast(0)
+                    ?: 0
             setLoadingMore(true)
             requiredUseCases.getTournamentFeedUseCase
                 .invoke(GetTournamentFeedUseCase.Params(tournamentId = tournamentId))
@@ -323,6 +330,15 @@ class FeedViewModel(
                             .distinctBy { it.videoID }
                             .sortedBy { stableTournamentOrderKey(tournamentId, userSeed, it.videoID) }
                     if (posts.isNotEmpty()) {
+                        // Pager reads initial page only at creation time; set restored page
+                        // before feed items are inserted so it starts at the expected index.
+                        val clampedPage = restoredPage.coerceIn(0, posts.lastIndex)
+                        _state.update { currentState ->
+                            currentState.copy(
+                                currentPageOfFeed = clampedPage,
+                                maxPageReached = maxOf(currentState.maxPageReached, clampedPage),
+                            )
+                        }
                         filterVotedAndFetchDetails(posts)
                     }
                     setLoadingMore(false)
@@ -748,6 +764,11 @@ class FeedViewModel(
                 currentPageOfFeed = pageNo,
                 maxPageReached = maxOf(currentState.maxPageReached, pageNo), // Update max page reached
             )
+        }
+        if (feedContext is FeedContext.Tournament) {
+            viewModelScope.launch {
+                feedContext.saveCurrentPage?.invoke(pageNo)
+            }
         }
         val currentState = _state.value
         if (currentState.currentPageOfFeed < currentState.feedDetails.size) {
