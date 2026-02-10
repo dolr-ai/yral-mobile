@@ -55,18 +55,17 @@ import yral_mobile.shared.features.tournament.generated.resources.daily_card_pla
 import yral_mobile.shared.features.tournament.generated.resources.daily_card_play_in
 import yral_mobile.shared.features.tournament.generated.resources.daily_card_restarts_in
 import yral_mobile.shared.features.tournament.generated.resources.daily_card_title
-import yral_mobile.shared.features.tournament.generated.resources.hourly_tournament_emoji
+import yral_mobile.shared.features.tournament.generated.resources.daily_tournament_emoji
+import yral_mobile.shared.features.tournament.generated.resources.ic_question_circle
 import yral_mobile.shared.features.tournament.generated.resources.ic_share
 import yral_mobile.shared.features.tournament.generated.resources.ic_timer
 import yral_mobile.shared.features.tournament.generated.resources.view_leaderboard
-import yral_mobile.shared.libs.designsystem.generated.resources.ic_information_circle
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import yral_mobile.shared.features.tournament.generated.resources.Res as TournamentRes
-import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 private sealed class DailyCardState {
     data object ReadyToPlay : DailyCardState()
@@ -147,9 +146,9 @@ private fun DailyCardHeader(
         Image(
             modifier =
                 Modifier
-                    .align(Alignment.Center)
-                    .size(80.dp),
-            painter = painterResource(TournamentRes.drawable.hourly_tournament_emoji),
+                    .fillMaxWidth()
+                    .height(100.dp),
+            painter = painterResource(TournamentRes.drawable.daily_tournament_emoji),
             contentDescription = null,
             contentScale = ContentScale.Fit,
         )
@@ -267,8 +266,7 @@ private fun DailyCardBody(
             Modifier
                 .fillMaxWidth()
                 .background(Color(0xFF1C1223))
-                .padding(horizontal = 10.dp)
-                .padding(bottom = 10.dp),
+                .padding(10.dp),
     ) {
         // Title row with info icon
         Row(
@@ -290,13 +288,13 @@ private fun DailyCardBody(
                         .clickable(onClick = onInfoClick)
                         .padding(4.dp)
                         .size(20.dp),
-                painter = painterResource(DesignRes.drawable.ic_information_circle),
+                painter = painterResource(TournamentRes.drawable.ic_question_circle),
                 contentDescription = "How to play",
                 tint = Color.Unspecified,
             )
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         // Description
         Text(
@@ -307,7 +305,7 @@ private fun DailyCardBody(
             overflow = TextOverflow.Ellipsis,
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // CTA Button
         DailyCtaButton(
@@ -347,7 +345,7 @@ private fun DailyCtaButton(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .height(48.dp)
+                        .height(42.dp)
                         .clip(buttonShape)
                         .angledGradientBackground(
                             degrees = 218f,
@@ -378,7 +376,7 @@ private fun DailyCtaButton(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .height(48.dp)
+                        .height(42.dp)
                         .clip(buttonShape),
                 contentAlignment = Alignment.Center,
             ) {
@@ -423,7 +421,7 @@ private fun DailyCtaButton(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .height(48.dp)
+                        .height(42.dp)
                         .clip(buttonShape)
                         .angledGradientBackground(
                             degrees = 218f,
@@ -452,17 +450,21 @@ private fun DailyCtaButton(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .height(48.dp)
+                        .height(42.dp)
                         .clip(buttonShape)
-                        .background(YralColors.Neutral800)
-                        .border(1.dp, YralColors.Neutral700, buttonShape)
+                        .background(Color.White)
                         .clickable(onClick = onCtaClick),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = stringResource(TournamentRes.string.view_leaderboard),
-                    style = LocalAppTopography.current.baseSemiBold,
-                    color = YralColors.NeutralIconsActive,
+                    style =
+                        LocalAppTopography.current.baseSemiBold.copy(
+                            brush =
+                                Brush.linearGradient(
+                                    colorStops = tournamentPinkGradientStops(),
+                                ),
+                        ),
                 )
             }
         }

@@ -25,6 +25,7 @@ internal sealed interface Config {
     data class TournamentLeaderboard(
         val tournamentId: String,
         val showResult: Boolean = false,
+        val isDaily: Boolean = false,
     ) : Config
 
     @Serializable

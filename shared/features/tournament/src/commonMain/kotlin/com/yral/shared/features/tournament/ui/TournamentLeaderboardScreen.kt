@@ -103,6 +103,7 @@ fun TournamentLeaderboardScreen(
     tournamentTitle: String,
     tournamentType: TournamentType = TournamentType.SMILEY,
     showResult: Boolean = false,
+    isDaily: Boolean = false,
     onBack: () -> Unit,
     onOpenProfile: (CanisterData) -> Unit,
     subscriptionCoordinator: SubscriptionCoordinator,
@@ -237,7 +238,8 @@ fun TournamentLeaderboardScreen(
                 val prizeAmount =
                     stringResource(Res.string.winner_amount_prefix) + prizeAmountValue.toString()
                 val totalPrizePoolAmount =
-                    stringResource(Res.string.winner_amount_prefix) + state.prizeMap.maxOf { it.value }.toString()
+                    stringResource(Res.string.winner_amount_prefix) +
+                        (state.prizeMap.maxOfOrNull { it.value } ?: 0).toString()
                 val shouldShowWinner = rank > 0 && (currentUser.prize != null || state.prizeMap.containsKey(rank))
                 val dismissResult = { viewModel.dismissResultOverlay() }
                 val closeResult = { onBack() }
@@ -253,7 +255,14 @@ fun TournamentLeaderboardScreen(
                     )
                 }
 
-                if (shouldShowWinner) {
+                if (isDaily) {
+                    DailyTournamentResultScreen(
+                        diamonds = currentUser.diamonds,
+                        rank = rank,
+                        onClose = closeResult,
+                        onViewLeaderboard = dismissResult,
+                    )
+                } else if (shouldShowWinner) {
                     TournamentWinnerScreen(
                         prizeAmount = prizeAmount,
                         rank = rank,
