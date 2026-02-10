@@ -174,7 +174,7 @@ class DefaultAuthClient(
             preferences.putString(PrefKeys.REFRESH_TOKEN.name, refreshToken)
         }
         if (accessToken.isNotEmpty()) {
-            preferences.putString(PrefKeys.ACCESS_TOKEN.name, refreshToken)
+            preferences.putString(PrefKeys.ACCESS_TOKEN.name, accessToken)
         }
     }
 
