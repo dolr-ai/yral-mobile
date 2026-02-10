@@ -40,8 +40,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.yral.shared.analytics.events.InfluencerSource
-import com.yral.shared.features.chat.domain.models.ChatError
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.features.chat.domain.models.ChatError
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencerStatus
 import com.yral.shared.features.chat.nav.wall.ChatWallComponent
@@ -68,8 +68,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Composable
 @Suppress("LongMethod")
-@OptIn(ExperimentalMaterial3Api::class)
-@OptIn(ExperimentalResourceApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalResourceApi::class)
 fun ChatWallScreen(
     component: ChatWallComponent,
     viewModel: ChatWallViewModel,
