@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -26,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.arkivanov.essenty.lifecycle.Lifecycle
 import com.yral.shared.features.tournament.domain.model.TournamentErrorCodes
 import com.yral.shared.features.tournament.nav.TournamentComponent
 import com.yral.shared.features.tournament.viewmodel.TournamentUiState
@@ -60,6 +62,17 @@ fun TournamentScreen(
     val uiState by viewModel.state.collectAsState()
     val insufficientBalanceMessage = stringResource(Res.string.tournament_insufficient_balance)
     val registrationFailedMessage = stringResource(Res.string.tournament_registration_failed)
+
+    DisposableEffect(component) {
+        val callbacks =
+            object : Lifecycle.Callbacks {
+                override fun onResume() {
+                    viewModel.loadTournaments()
+                }
+            }
+        component.lifecycle.subscribe(callbacks)
+        onDispose { component.lifecycle.unsubscribe(callbacks) }
+    }
 
     LaunchedEffect(key1 = component, viewModel) {
         viewModel.eventsFlow.collectLatest { value ->

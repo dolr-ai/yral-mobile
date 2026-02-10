@@ -1,6 +1,7 @@
 package com.yral.shared.features.tournament.nav
 
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.lifecycle.Lifecycle
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
@@ -8,6 +9,7 @@ import com.yral.shared.features.tournament.viewmodel.TournamentViewModel
 
 interface TournamentComponent {
     val subscriptionCoordinator: SubscriptionCoordinator?
+    val lifecycle: Lifecycle
 
     fun processEvent(value: TournamentViewModel.Event)
 
@@ -66,6 +68,7 @@ internal class DefaultTournamentComponent(
     override val subscriptionCoordinator: SubscriptionCoordinator? = null,
 ) : TournamentComponent,
     ComponentContext by componentContext {
+    override val lifecycle: Lifecycle = componentContext.lifecycle
     override fun processEvent(value: TournamentViewModel.Event) {
         when (value) {
             TournamentViewModel.Event.Login -> promptLogin(SignupPageName.TOURNAMENT)

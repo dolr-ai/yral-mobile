@@ -65,11 +65,13 @@ interface RootComponent {
     fun openTournamentLeaderboard(
         tournamentId: String,
         showResult: Boolean = false,
+        isDaily: Boolean = false,
     )
 
     fun openTournamentResults(
         tournamentId: String,
         showResult: Boolean = false,
+        isDaily: Boolean = false,
     )
 
     @Suppress("LongParameterList")
@@ -129,6 +131,7 @@ interface RootComponent {
         class TournamentLeaderboard(
             val tournamentId: String,
             val showResult: Boolean,
+            val isDaily: Boolean = false,
         ) : Child()
         class TournamentGame(
             val component: TournamentGameComponent,

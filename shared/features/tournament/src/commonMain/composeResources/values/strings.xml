@@ -86,4 +86,9 @@
     <string name="daily_card_description_waiting">Come back later for a fresh game and leaderboard.</string>
     <string name="daily_card_description_leaderboard">Come back later to play in the daily tournament</string>
     <string name="daily_card_title">Free 5-Minute Smily Game</string>
+    <string name="daily_result_diamonds_collected">%1$d Diamonds</string>
+    <string name="daily_result_collected_today"> collected today 💎</string>
+    <string name="daily_result_current_rank">Your current rank: #%1$d</string>
+    <string name="daily_result_subtitle">Ranks may change as other players play today. Come back tomorrow for a fresh game</string>
+    <string name="daily_result_view_leaderboard">View Global Leaderboard</string>
 </resources>

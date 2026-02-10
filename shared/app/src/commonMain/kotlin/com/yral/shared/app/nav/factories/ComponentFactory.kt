@@ -48,7 +48,9 @@ internal class ComponentFactory(
                 subscriptionCoordinator = rootComponent.getSubscriptionCoordinator(),
                 openEditProfile = rootComponent::openEditProfile,
                 openProfile = rootComponent::openProfile,
-                openTournamentLeaderboard = rootComponent::openTournamentLeaderboard,
+                openTournamentLeaderboard = { tournamentId, showResult ->
+                    rootComponent.openTournamentLeaderboard(tournamentId, showResult)
+                },
                 openTournamentGame = rootComponent::openTournamentGame,
                 openConversation = rootComponent::openConversation,
                 openWallet = rootComponent::openWallet,
@@ -204,10 +206,10 @@ internal class ComponentFactory(
             isDailyTournament = isDailyTournament,
             dailyTimeLimitMs = dailyTimeLimitMs,
             onLeaderboardClick = { clickedTournamentId, showResult ->
-                rootComponent.openTournamentLeaderboard(clickedTournamentId, showResult)
+                rootComponent.openTournamentLeaderboard(clickedTournamentId, showResult, isDailyTournament)
             },
             onTimeUp = {
-                rootComponent.openTournamentResults(tournamentId, true)
+                rootComponent.openTournamentResults(tournamentId, true, isDailyTournament)
             },
             onBack = rootComponent::onBackClicked,
         )

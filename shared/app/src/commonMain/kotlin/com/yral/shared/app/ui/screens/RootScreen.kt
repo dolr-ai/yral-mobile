@@ -155,6 +155,7 @@ fun RootScreen(rootComponent: RootComponent) {
                             tournamentId = child.tournamentId,
                             tournamentTitle = "",
                             showResult = child.showResult,
+                            isDaily = child.isDaily,
                             onBack = rootComponent::onBackClicked,
                             onOpenProfile = rootComponent::openProfile,
                             subscriptionCoordinator = rootComponent.getSubscriptionCoordinator(),

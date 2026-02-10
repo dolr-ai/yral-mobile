@@ -169,6 +169,7 @@ class DefaultRootComponent(
                 RootComponent.Child.TournamentLeaderboard(
                     tournamentId = config.tournamentId,
                     showResult = config.showResult,
+                    isDaily = config.isDaily,
                 )
             is Config.TournamentGame ->
                 RootComponent.Child.TournamentGame(
@@ -364,13 +365,15 @@ class DefaultRootComponent(
     override fun openTournamentLeaderboard(
         tournamentId: String,
         showResult: Boolean,
+        isDaily: Boolean,
     ) {
-        navigation.pushToFront(Config.TournamentLeaderboard(tournamentId, showResult))
+        navigation.pushToFront(Config.TournamentLeaderboard(tournamentId, showResult, isDaily))
     }
 
     override fun openTournamentResults(
         tournamentId: String,
         showResult: Boolean,
+        isDaily: Boolean,
     ) {
         navigation.navigate { stack ->
             // Remove TournamentGame from stack and add TournamentLeaderboard
@@ -378,6 +381,7 @@ class DefaultRootComponent(
                 Config.TournamentLeaderboard(
                     tournamentId = tournamentId,
                     showResult = true,
+                    isDaily = isDaily,
                 )
         }
     }
