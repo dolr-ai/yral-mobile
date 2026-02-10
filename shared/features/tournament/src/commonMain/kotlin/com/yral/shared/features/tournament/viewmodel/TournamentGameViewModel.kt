@@ -14,10 +14,12 @@ import com.yral.shared.features.tournament.cache.TournamentProgressData
 import com.yral.shared.features.tournament.cache.TournamentResumeCacheStore
 import com.yral.shared.features.tournament.domain.CastHotOrNotVoteUseCase
 import com.yral.shared.features.tournament.domain.CastTournamentVoteUseCase
+import com.yral.shared.features.tournament.domain.GetTournamentLeaderboardUseCase
 import com.yral.shared.features.tournament.domain.GetTournamentsUseCase
 import com.yral.shared.features.tournament.domain.GetVideoEmojisRequest
 import com.yral.shared.features.tournament.domain.GetVideoEmojisUseCase
 import com.yral.shared.features.tournament.domain.model.CastTournamentVoteRequest
+import com.yral.shared.features.tournament.domain.model.GetTournamentLeaderboardRequest
 import com.yral.shared.features.tournament.domain.model.GetTournamentsRequest
 import com.yral.shared.features.tournament.domain.model.HotOrNotVoteRequest
 import com.yral.shared.features.tournament.domain.model.HotOrNotVoteResult
@@ -43,6 +45,7 @@ class TournamentGameViewModel(
     private val castTournamentVoteUseCase: CastTournamentVoteUseCase,
     private val castHotOrNotVoteUseCase: CastHotOrNotVoteUseCase,
     private val getTournamentsUseCase: GetTournamentsUseCase,
+    private val getTournamentLeaderboardUseCase: GetTournamentLeaderboardUseCase,
     private val getVideoEmojisUseCase: GetVideoEmojisUseCase,
     private val tournamentResumeCacheStore: TournamentResumeCacheStore,
     private val telemetry: TournamentTelemetry,
@@ -77,6 +80,7 @@ class TournamentGameViewModel(
             // Refresh diamonds from API to get current balance
             viewModelScope.launch {
                 refreshDiamondsFromApi(tournamentId)
+                refreshRankFromLeaderboard(tournamentId)
             }
             return
         }
@@ -101,6 +105,7 @@ class TournamentGameViewModel(
         viewModelScope.launch {
             restoreCachedProgress(tournamentId)
             refreshDiamondsFromApi(tournamentId)
+            refreshRankFromLeaderboard(tournamentId)
         }
     }
 
@@ -143,6 +148,34 @@ class TournamentGameViewModel(
                         diamonds = userStats.diamonds,
                         hasPlayedBefore = hasPlayed,
                         activeParticipantCount = tournament.participantCount,
+                    )
+                }
+                viewModelScope.launch { persistCurrentProgress() }
+            }
+    }
+
+    private suspend fun refreshRankFromLeaderboard(tournamentId: String) {
+        val principalId = sessionManager.userPrincipal ?: return
+        getTournamentLeaderboardUseCase
+            .invoke(
+                GetTournamentLeaderboardRequest(
+                    principalId = principalId,
+                    tournamentId = tournamentId,
+                ),
+            ).onSuccess { leaderboard ->
+                val userRow = leaderboard.userRow
+                _state.update {
+                    it.copy(
+                        position = userRow?.position ?: it.position,
+                        wins = userRow?.wins ?: it.wins,
+                        losses = userRow?.losses ?: it.losses,
+                        activeParticipantCount =
+                            if (leaderboard.participantCount > 0) {
+                                leaderboard.participantCount
+                            } else {
+                                it.activeParticipantCount
+                            },
+                        hasPlayedBefore = userRow != null || it.hasPlayedBefore,
                     )
                 }
                 viewModelScope.launch { persistCurrentProgress() }
