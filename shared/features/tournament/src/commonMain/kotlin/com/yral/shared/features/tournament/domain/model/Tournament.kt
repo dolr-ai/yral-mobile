@@ -16,10 +16,24 @@ data class Tournament(
     val entryCostCredits: Int,
     val isRegistered: Boolean,
     val userDiamonds: Int,
+    val isDaily: Boolean = false,
+    val dailyTimeLimitMs: Long = 0,
+    val remainingTimeMs: Long? = null,
 ) {
     /**
-     * Calculate initial diamonds for the game (1.5x entry cost).
+     * Calculate initial diamonds for the game.
+     * Daily tournaments use a fixed value from config, regular tournaments use 1.5x entry cost.
      */
     @Suppress("MagicNumber")
-    val initialDiamonds: Int get() = (entryCost * 1.5).toInt()
+    val initialDiamonds: Int
+        get() =
+            if (isDaily) {
+                DAILY_INITIAL_DIAMONDS
+            } else {
+                (entryCost * 1.5).toInt()
+            }
+
+    companion object {
+        private const val DAILY_INITIAL_DIAMONDS = 20
+    }
 }

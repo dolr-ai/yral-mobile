@@ -181,6 +181,8 @@ class DefaultRootComponent(
                         config.endEpochMs,
                         config.totalPrizePool,
                         config.isHotOrNot,
+                        config.isDailyTournament,
+                        config.dailyTimeLimitMs,
                     ),
                 )
             is Config.Conversation ->
@@ -388,6 +390,8 @@ class DefaultRootComponent(
         endEpochMs: Long,
         totalPrizePool: Int,
         isHotOrNot: Boolean,
+        isDailyTournament: Boolean,
+        dailyTimeLimitMs: Long,
     ) {
         navigation.pushToFront(
             Config.TournamentGame(
@@ -398,6 +402,8 @@ class DefaultRootComponent(
                 endEpochMs,
                 totalPrizePool,
                 isHotOrNot = isHotOrNot,
+                isDailyTournament = isDailyTournament,
+                dailyTimeLimitMs = dailyTimeLimitMs,
             ),
         )
     }

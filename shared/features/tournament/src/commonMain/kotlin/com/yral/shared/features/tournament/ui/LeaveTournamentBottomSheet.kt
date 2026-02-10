@@ -44,6 +44,7 @@ fun LeaveTournamentBottomSheet(
     onDismissRequest: () -> Unit,
     onKeepPlayingClick: () -> Unit,
     onExitAnywayClick: () -> Unit,
+    isDailyTournament: Boolean = false,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     YralBottomSheet(
@@ -71,7 +72,12 @@ fun LeaveTournamentBottomSheet(
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = stringResource(Res.string.leave_tournament_message, totalPrizePool),
+                text =
+                    if (isDailyTournament) {
+                        DAILY_LEAVE_MESSAGE
+                    } else {
+                        stringResource(Res.string.leave_tournament_message, totalPrizePool)
+                    },
                 style = LocalAppTopography.current.mdRegular,
                 color = YralColors.Neutral300,
                 textAlign = TextAlign.Center,
@@ -87,6 +93,8 @@ fun LeaveTournamentBottomSheet(
         }
     }
 }
+
+private const val DAILY_LEAVE_MESSAGE = "Your progress is saved. Come back to use your remaining time!"
 
 @Composable
 private fun ExitAnywayButton(onClick: () -> Unit) {

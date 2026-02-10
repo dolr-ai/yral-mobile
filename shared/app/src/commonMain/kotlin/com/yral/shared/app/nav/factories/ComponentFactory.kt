@@ -178,6 +178,7 @@ internal class ComponentFactory(
             onNavigateToOtpVerification = { loginCoordinator.navigateToOtpVerification() },
         )
 
+    @Suppress("LongParameterList")
     fun createTournamentGame(
         componentContext: ComponentContext,
         tournamentId: String,
@@ -187,6 +188,8 @@ internal class ComponentFactory(
         endEpochMs: Long,
         totalPrizePool: Int,
         isHotOrNot: Boolean,
+        isDailyTournament: Boolean = false,
+        dailyTimeLimitMs: Long = 0,
     ): TournamentGameComponent =
         TournamentGameComponent(
             componentContext = componentContext,
@@ -198,6 +201,8 @@ internal class ComponentFactory(
             startEpochMs = startEpochMs,
             endEpochMs = endEpochMs,
             isHotOrNot = isHotOrNot,
+            isDailyTournament = isDailyTournament,
+            dailyTimeLimitMs = dailyTimeLimitMs,
             onLeaderboardClick = { clickedTournamentId, showResult ->
                 rootComponent.openTournamentLeaderboard(clickedTournamentId, showResult)
             },

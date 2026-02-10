@@ -72,4 +72,7 @@
     <string name="tournament_intro_reward">Win upto ₹10,000 worth of Bitcoin</string>
     <string name="tournament_intro_description">Play tournaments, rank up, and earn rewards.</string>
     <string name="tournament_intro_view_button">View Tournaments</string>
+    <string name="play_free">Play Free</string>
+    <string name="time_expired">View Leaderboard</string>
+    <string name="daily_time_to_play">5 min to play</string>
 </resources>

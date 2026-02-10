@@ -7,7 +7,10 @@ from .tournament_api import (
     tournament_vote,
     tournament_leaderboard,
     tournament_video_emojis,
+    start_daily_session,
+    end_daily_session,
 )
+from .daily_tournament import create_daily_tournament
 
 __all__ = [
     # Infrastructure
@@ -23,4 +26,8 @@ __all__ = [
     "tournament_vote",
     "tournament_leaderboard",
     "tournament_video_emojis",
+    # Daily tournament
+    "start_daily_session",
+    "end_daily_session",
+    "create_daily_tournament",
 ]

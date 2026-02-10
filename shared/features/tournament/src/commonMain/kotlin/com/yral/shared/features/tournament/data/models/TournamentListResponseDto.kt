@@ -54,6 +54,14 @@ data class TournamentDto(
     val userStats: UserStatsDto? = null,
     @SerialName("type")
     val type: String? = null,
+    @SerialName("is_daily")
+    val isDaily: Boolean = false,
+    @SerialName("daily_time_limit_ms")
+    val dailyTimeLimitMs: Long = 0,
+    @SerialName("initial_diamonds")
+    val initialDiamonds: Int = 0,
+    @SerialName("remaining_time_ms")
+    val remainingTimeMs: Long? = null,
 )
 
 fun TournamentListResponseDto.toTournamentList(): Result<List<TournamentData>, TournamentError> =
@@ -95,6 +103,10 @@ fun TournamentDto.toTournamentData(): TournamentData =
             } else {
                 null
             },
+        isDaily = isDaily,
+        dailyTimeLimitMs = dailyTimeLimitMs,
+        initialDiamonds = initialDiamonds,
+        remainingTimeMs = remainingTimeMs,
     )
 
 fun TournamentErrorDto.toTournamentError(): TournamentError =
