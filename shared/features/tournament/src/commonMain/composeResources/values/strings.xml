@@ -75,4 +75,15 @@
     <string name="play_free">Play Free</string>
     <string name="time_expired">View Leaderboard</string>
     <string name="daily_time_to_play">5 min to play</string>
+    <string name="daily_card_free_game">Free Game</string>
+    <string name="daily_card_daily">Daily</string>
+    <string name="daily_card_restarts_in">Restarts in %1$s</string>
+    <string name="daily_card_game_live_in">Game Live in %1$s</string>
+    <string name="daily_card_play_in">Play in %1$s</string>
+    <string name="daily_card_play_game_in">Play game in %1$s</string>
+    <string name="daily_card_play_for_free">Play For Free</string>
+    <string name="daily_card_description_ready">Play once daily to climb the global leaderboard.</string>
+    <string name="daily_card_description_waiting">Come back later for a fresh game and leaderboard.</string>
+    <string name="daily_card_description_leaderboard">Come back later to play in the daily tournament</string>
+    <string name="daily_card_title">Free 5-Minute Smily Game</string>
 </resources>

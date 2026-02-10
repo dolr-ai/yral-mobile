@@ -125,13 +125,22 @@ fun TournamentScreen(
                         items = sortedTournaments,
                         key = { it.id },
                     ) { tournament ->
-                        TournamentCard(
-                            tournament = tournament,
-                            proDetails = uiState.proDetails,
-                            onPrizeBreakdownClick = { viewModel.openPrizeBreakdown(tournament) },
-                            onShareClick = { viewModel.onShareClicked(tournament) },
-                            onTournamentCtaClick = { viewModel.onTournamentCtaClick(tournament) },
-                        )
+                        if (tournament.isDaily) {
+                            DailyTournamentCard(
+                                tournament = tournament,
+                                onShareClick = { viewModel.onShareClicked(tournament) },
+                                onInfoClick = { viewModel.openPrizeBreakdown(tournament) },
+                                onCtaClick = { viewModel.onTournamentCtaClick(tournament) },
+                            )
+                        } else {
+                            TournamentCard(
+                                tournament = tournament,
+                                proDetails = uiState.proDetails,
+                                onPrizeBreakdownClick = { viewModel.openPrizeBreakdown(tournament) },
+                                onShareClick = { viewModel.onShareClicked(tournament) },
+                                onTournamentCtaClick = { viewModel.onTournamentCtaClick(tournament) },
+                            )
+                        }
                     }
                 }
             }

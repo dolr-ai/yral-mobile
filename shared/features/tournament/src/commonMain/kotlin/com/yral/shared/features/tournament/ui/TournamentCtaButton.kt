@@ -227,7 +227,7 @@ private fun tournamentPinkGradientBrush(angleDegrees: Float): Brush? =
     )
 
 @Suppress("MagicNumber")
-private fun tournamentPinkGradientStops(): Array<Pair<Float, Color>> =
+internal fun tournamentPinkGradientStops(): Array<Pair<Float, Color>> =
     arrayOf(
         0.0983f to Color(0xFFFF78C1),
         0.4479f to YralColors.Pink300,
