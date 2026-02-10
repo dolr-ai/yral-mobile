@@ -26,26 +26,28 @@ internal fun MessagesList(
     historyPagingItems: LazyPagingItems<ConversationMessageItem>,
     onRetry: (localId: String) -> Unit,
 ) {
+    val overlayMessageIds = overlayMessageIdSet(overlayItems)
+
     LazyColumn(
         state = listState,
         modifier = modifier,
-        reverseLayout = true, // newest at bottom
+        // Newest messages at bottom
+        reverseLayout = true,
         contentPadding = PaddingValues(vertical = 8.dp),
     ) {
         items(
             items = overlayItems,
-            key = { item ->
-                when (item) {
-                    is ConversationMessageItem.Local -> "local-${item.message.localId}"
-                    is ConversationMessageItem.Remote -> "remote-${item.message.id}"
-                }
-            },
+            key = { item -> overlayItemKey(item) },
         ) { item ->
             MessageRow(item = item, onRetry = onRetry)
         }
 
-        items(count = historyPagingItems.itemCount) { idx ->
+        items(
+            count = historyPagingItems.itemCount,
+            key = { idx -> historyItemKey(historyPagingItems.peek(idx), idx) },
+        ) { idx ->
             val item = historyPagingItems[idx] ?: return@items
+            if (isDuplicateOfOverlay(item, overlayMessageIds)) return@items
             MessageRow(item = item, onRetry = onRetry)
         }
     }
