@@ -109,6 +109,7 @@ fun TournamentGameScaffoldScreen(
         }
         if (timeLeftMs <= 0 && gameConfig.endEpochMs > 0) {
             tournamentGameViewModel.trackTournamentEnded(gameConfig.tournamentTitle)
+            tournamentGameViewModel.clearTournamentCache(gameConfig.tournamentId)
             component.onTimeUp()
         }
     }
@@ -126,6 +127,7 @@ fun TournamentGameScaffoldScreen(
             tournamentType = tournamentType,
             initialDiamonds = gameConfig.initialDiamonds,
             endEpochMs = gameConfig.endEpochMs,
+            sessionScopeKey = sessionKey,
         )
     }
 
