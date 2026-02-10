@@ -197,17 +197,17 @@ fun ProfileMainScreen(
     onCreateInfluencerClick: () -> Unit,
 ) {
     val sessionManager: SessionManager = koinInject()
+    // Use nullable to avoid showing CTA flash while loading
     val botCount by
         sessionManager
-            .observeSessionPropertyWithDefault(
+            .observeSessionProperty(
                 selector = { it.botCount },
-                defaultValue = 0,
-            ).collectAsStateWithLifecycle(initialValue = 0)
+            ).collectAsStateWithLifecycle(initialValue = null)
     val accountDirectory by
         sessionManager
             .observeSessionProperty { it.accountDirectory }
             .collectAsStateWithLifecycle(initialValue = null)
-    val hasBotAccounts = botCount > 0
+    val hasBotAccounts = (botCount ?: 0) > 0
     val state by viewModel.state.collectAsStateWithLifecycle()
     val storagePermissionController = rememberStoragePermissionController()
     val isBotAccount = sessionManager.isBotAccount == true
@@ -643,7 +643,7 @@ private fun MainContent(
     onSubscribe: () -> Unit,
     isBotAccount: Boolean,
     hasBotAccounts: Boolean,
-    botCount: Int,
+    botCount: Int?,
     accountDirectory: AccountDirectory?,
     onCreateInfluencerClick: () -> Unit,
 ) {
@@ -705,7 +705,8 @@ private fun MainContent(
                     state.isOwnProfile &&
                         state.isLoggedIn &&
                         !isBotAccount &&
-                        botCount < MAX_BOT_COUNT_FOR_CTA,
+                        botCount != null &&
+                        botCount!! < MAX_BOT_COUNT_FOR_CTA,
                 onCreateInfluencerClick = onCreateInfluencerClick,
                 botUsernames = parentBotUsernames,
                 createdByUsername = createdByUsername,
