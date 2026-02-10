@@ -134,7 +134,7 @@ fun ChatWallScreen(
                 color = YralColors.Grey50,
                 modifier = Modifier.weight(1f),
             )
-            if (!isBotAccount && botCount != MAX_BOT_COUNT_FOR_CTA) {
+            if (!isBotAccount && botCount < MAX_BOT_COUNT_FOR_CTA) {
                 CreateInfluencerButton(
                     modifier = Modifier.height(32.dp),
                     alignIconToEnd = false,
