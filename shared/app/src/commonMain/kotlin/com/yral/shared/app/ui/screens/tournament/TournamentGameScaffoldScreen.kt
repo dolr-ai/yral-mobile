@@ -65,9 +65,13 @@ fun TournamentGameScaffoldScreen(
     val gameState by tournamentGameViewModel.state.collectAsStateWithLifecycle()
     val feedState by tournamentFeedViewModel.state.collectAsStateWithLifecycle()
     val isDailyTournament = gameConfig.isDailyTournament
-    var timeLeftMs by remember(gameConfig.endEpochMs) {
+    var timeLeftMs by remember(gameConfig.endEpochMs, isDailyTournament) {
         mutableLongStateOf(
-            maxOf(0L, gameConfig.endEpochMs - Clock.System.now().toEpochMilliseconds()),
+            if (isDailyTournament) {
+                gameConfig.dailyTimeLimitMs
+            } else {
+                maxOf(0L, gameConfig.endEpochMs - Clock.System.now().toEpochMilliseconds())
+            },
         )
     }
     // Show how-to-play only if user hasn't played yet in this tournament (from API)
