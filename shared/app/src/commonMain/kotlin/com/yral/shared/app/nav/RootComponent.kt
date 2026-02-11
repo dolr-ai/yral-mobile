@@ -4,6 +4,7 @@ import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.analytics.events.InfluencerSource
+import com.yral.shared.analytics.events.SubscriptionEntryPoint
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
@@ -53,6 +54,10 @@ interface RootComponent {
 
     fun onCompleteUpdateClicked()
 
+    fun showMandatoryUpdateSlot()
+
+    fun dismissMandatoryUpdateSlot()
+
     fun openEditProfile()
 
     fun openProfile(userCanisterData: CanisterData)
@@ -87,7 +92,10 @@ interface RootComponent {
 
     fun openLeaderboard()
 
-    fun openSubscription(purchaseTimeMs: Long?)
+    fun openSubscription(
+        purchaseTimeMs: Long?,
+        entryPoint: SubscriptionEntryPoint,
+    )
 
     fun onCreateVideo()
 
@@ -155,5 +163,7 @@ interface RootComponent {
         class SubscriptionAccountMismatchSheet : SlotChild()
 
         class SubscriptionNudge : SlotChild()
+
+        class MandatoryUpdate : SlotChild()
     }
 }

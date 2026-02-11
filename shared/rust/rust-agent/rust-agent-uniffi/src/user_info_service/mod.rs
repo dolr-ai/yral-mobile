@@ -546,6 +546,45 @@ impl UserInfoService {
     }
 
     #[uniffi::method]
+    pub async fn get_users_profile_details(
+        &self,
+        target_principal_texts: Vec<String>,
+    ) -> Result<Vec<UISUserProfileDetailsForFrontendV7>> {
+        if target_principal_texts.is_empty() {
+            return Ok(vec![]);
+        }
+        let agent = Arc::clone(&self.agent);
+        let principals: Vec<Principal> = target_principal_texts
+            .into_iter()
+            .map(|text| {
+                Principal::from_text(&text)
+                    .map_err(|e| FFIError::PrincipalError(format!("Invalid principal: {:?}", e)))
+            })
+            .collect::<Result<Vec<_>>>()?;
+        RUNTIME
+            .spawn(async move {
+                let service = yral_canisters_client::user_info_service::UserInfoService(
+                    yral_canisters_client::ic::USER_INFO_SERVICE_ID,
+                    &agent,
+                );
+                let res = service
+                    .get_users_profile_details(principals)
+                    .await
+                    .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?;
+                match res {
+                    yral_canisters_client::user_info_service::Result9::Ok(details) => {
+                        Ok(details.into_iter().map(|d| d.into()).collect())
+                    }
+                    yral_canisters_client::user_info_service::Result9::Err(msg) => {
+                        Err(FFIError::UnknownError(format!("{:?}", msg)))
+                    }
+                }
+            })
+            .await
+            .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
+    }
+
+    #[uniffi::method]
     pub async fn update_profile_details(&self, details: UISProfileUpdateDetails) -> Result<()> {
         let agent = Arc::clone(&self.agent);
         let update_details = details;

@@ -1,19 +1,20 @@
 <resources>
     <string name="about_game">About the Game</string>
     <string name="how_to_play">How to Play</string>
+    <string name="how_to_play_question">How to play?</string>
 
     <!-- Nudges -->
     <string name="smiley_game_nudge_1">Match the vibe, win the coin</string>
     <string name="smiley_game_nudge_2">Choose the top emojis &amp; get YRAL (Bitcoin)"</string>
     <string name="smiley_game_nudge_mandatory">React to this video to unlock the next one!</string>
-    
+
     <!-- Onboarding Nudges -->
     <string name="onboarding_nudge_game_start">React with the emoji you think fits the video — match the crowd and earn YRAL!</string>
     <string name="onboarding_nudge_game_start_highlight">match the crowd and earn YRAL!</string>
     <string name="onboarding_nudge_game_end">Watch the video and react with the right emoji!</string>
 
     <string name="congratulations">Congratulations!</string>
-    <string name="since_most_people_not_voted_on">Since most people didn’t vote on</string>
+    <string name="since_most_people_not_voted_on">Since most people didn't vote on</string>
     <string name="since_most_people_voted_on">Since most people voted on</string>
     <string name="you_win_x_coins">You win %1$d YRAL tokens!</string>
     <string name="you_lost_x_coins">You lost %1$d YRAL tokens!</string>
@@ -21,5 +22,25 @@
     <string name="learn_more">Learn More</string>
     <string name="was_most_people_choice">Your emoji was the most popular choice.</string>
     <string name="not_most_popular_pick">Not the most popular pick!</string>
+
+    <!-- Hot or Not -->
+    <string name="hot_or_not_win">You matched the majority!</string>
+    <string name="hot_or_not_loss">Not the popular choice!</string>
+
+    <!-- Hot or Not How to Play -->
+    <string name="hon_watch_video_title">Watch the video</string>
+    <string name="hon_watch_video_body">Watch the AI video and decide if it's 'Mast' or 'Bakwass'</string>
+    <string name="hon_swipe_title">Swipe to Pick Your Answer</string>
+    <string name="hon_swipe_body">Swipe Right for Mast. Swipe Left for Bakwass.</string>
+    <string name="hon_right_choice">Right choice = </string>
+    <string name="hon_right_choice_result">+1</string>
+    <string name="hon_wrong_choice">Wrong choice = </string>
+    <string name="hon_wrong_choice_result">-1</string>
+    <string name="hon_leaderboard_title">Global Leaderboard</string>
+    <string name="hon_leaderboard_body">Make the right calls, earn YRAL tokens, and rise up the leaderboard.</string>
+
+    <!-- Hot or Not Onboarding Overlay -->
+    <string name="hon_swipe_left_instruction">Swipe Left if you think video is "BAKWASS"</string>
+    <string name="hon_swipe_right_instruction">Swipe Right if you think video is "MAST"</string>
 
 </resources>

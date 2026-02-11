@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,6 +29,7 @@ import com.yral.shared.libs.designsystem.theme.YralColors
 fun YralBottomSheet(
     onDismissRequest: () -> Unit,
     bottomSheetState: SheetState,
+    shouldDismissOnBackPress: Boolean = true,
     dragHandle: @Composable (() -> Unit)? = null,
     containerColor: Color = YralColors.Neutral900,
     content: @Composable ColumnScope.() -> Unit,
@@ -51,6 +53,7 @@ fun YralBottomSheet(
             dragHandle = dragHandle,
             content = content,
             modifier = Modifier.padding(WindowInsets.statusBars.only(WindowInsetsSides.Top).asPaddingValues()),
+            properties = ModalBottomSheetProperties(shouldDismissOnBackPress = shouldDismissOnBackPress),
         )
     }
 }

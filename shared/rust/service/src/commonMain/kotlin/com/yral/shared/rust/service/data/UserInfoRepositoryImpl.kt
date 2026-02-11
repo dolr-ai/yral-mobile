@@ -50,6 +50,17 @@ class UserInfoRepositoryImpl(
                 .toDomain()
         }
 
+    override suspend fun getUsersProfileDetails(
+        principal: Principal,
+        targetPrincipalIds: List<String>,
+    ): Map<String, UserProfileDetails> =
+        traceApiCall(performanceTracer, "getUserProfileDetailsV7Bulk") {
+            dataSource
+                .getUsersProfileDetails(principal, targetPrincipalIds)
+                .map { it.toDomain() }
+                .associateBy { it.principalId }
+        }
+
     override suspend fun getFollowers(
         principal: Principal,
         targetPrincipal: Principal,

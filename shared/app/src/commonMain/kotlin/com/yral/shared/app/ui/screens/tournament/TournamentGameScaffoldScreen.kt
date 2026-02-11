@@ -137,22 +137,25 @@ fun TournamentGameScaffoldScreen(
                 },
                 bottomOverlay = { pageNo, _ ->
                     if (pageNo < feedState.feedDetails.size) {
+                        val totalDurationMs = gameConfig.endEpochMs - gameConfig.startEpochMs
                         TournamentBottomOverlay(
                             pageNo = pageNo,
                             feedDetails = feedState.feedDetails[pageNo],
                             gameState = gameState,
                             gameViewModel = tournamentGameViewModel,
                             timeLeftMs = timeLeftMs,
+                            totalDurationMs = totalDurationMs,
                             isHotOrNot = gameConfig.isHotOrNot,
-                            onHowToPlayClick = {
-                                howToPlayOpenedFromButton = true
-                                showHowToPlay = true
-                            },
                         )
                     }
                 },
                 actionsRight = { pageNo ->
                     TournamentGameActionsRight(
+                        onHowToPlayClick = {
+                            tournamentGameViewModel.trackHowToPlayClicked()
+                            howToPlayOpenedFromButton = true
+                            showHowToPlay = true
+                        },
                         onExit = {
                             tournamentGameViewModel.trackExitAttempted()
                             showLeaveTournamentConfirmation = true
@@ -169,7 +172,7 @@ fun TournamentGameScaffoldScreen(
                 },
                 onEdgeScrollAttempt = { _ -> },
                 limitReelCount = feedState.feedDetails.size,
-                onSwipeVote = { direction, pageIndex ->
+                onSwipeVote = { direction, pageIndex, _ ->
                     // Hot or Not voting: right swipe = hot, left swipe = not
                     val videoId = feedState.feedDetails.getOrNull(pageIndex)?.videoID
                     if (videoId != null) {

@@ -81,8 +81,15 @@ class LoginViewModel(
     }
 
     init {
-        // Auto-detect user's country from device locale (no permissions needed)
-        val deviceRegion = deviceLocaleDetector.getDeviceRegionCode()
+        // Auto-detect user's country from device locale (no permissions needed).
+        // Temporary: when device language is English, default to India (IN) until server-side geo is ready.
+        val deviceLanguage = deviceLocaleDetector.getDeviceLanguageCode()?.lowercase()
+        val deviceRegion =
+            if (deviceLanguage == "en") {
+                "IN"
+            } else {
+                deviceLocaleDetector.getDeviceRegionCode()
+            }
         val detectedCountry =
             deviceRegion
                 ?.let { countryRepository.getCountryByCode(it) }

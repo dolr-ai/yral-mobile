@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,24 +24,16 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.yral.shared.features.subscriptions.ui.components.SubscriptionNudgeGenericBenefits
 import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.appTypoGraphy
-import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import yral_mobile.shared.features.subscriptions.generated.resources.Res
-import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_ai
-import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_chat
-import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_global
-import yral_mobile.shared.features.subscriptions.generated.resources.subscription_benefit_rewards
-import yral_mobile.shared.features.subscriptions.generated.resources.subscription_nudge_benefit_ai
-import yral_mobile.shared.features.subscriptions.generated.resources.subscription_nudge_benefit_chat
-import yral_mobile.shared.features.subscriptions.generated.resources.subscription_nudge_benefit_global
-import yral_mobile.shared.features.subscriptions.generated.resources.subscription_nudge_benefit_rewards
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_nudge_cta_dismiss
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_nudge_cta_subscribe
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_nudge_cta_subscribe_with_price
@@ -124,28 +115,7 @@ fun SubscriptionNudge(
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
-                horizontalAlignment = Alignment.Start,
-            ) {
-                SubscriptionBenefitRow(
-                    iconRes = Res.drawable.subscription_benefit_ai,
-                    text = stringResource(Res.string.subscription_nudge_benefit_ai),
-                )
-                SubscriptionBenefitRow(
-                    iconRes = Res.drawable.subscription_benefit_chat,
-                    text = stringResource(Res.string.subscription_nudge_benefit_chat),
-                )
-                SubscriptionBenefitRow(
-                    iconRes = Res.drawable.subscription_benefit_global,
-                    text = stringResource(Res.string.subscription_nudge_benefit_global),
-                )
-                SubscriptionBenefitRow(
-                    iconRes = Res.drawable.subscription_benefit_rewards,
-                    text = stringResource(Res.string.subscription_nudge_benefit_rewards),
-                )
-            }
+            SubscriptionNudgeGenericBenefits(modifier = Modifier.fillMaxWidth())
 
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -179,29 +149,6 @@ fun SubscriptionNudge(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun SubscriptionBenefitRow(
-    iconRes: DrawableResource,
-    text: String,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Image(
-            painter = painterResource(iconRes),
-            contentDescription = text,
-            modifier = Modifier.size(30.dp),
-        )
-        Text(
-            text = text,
-            style = LocalAppTopography.current.baseMedium,
-            color = YralColors.Neutral50,
-        )
     }
 }
 

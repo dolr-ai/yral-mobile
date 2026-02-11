@@ -36,10 +36,12 @@ import yral_mobile.shared.features.tournament.generated.resources.Res
 import yral_mobile.shared.features.tournament.generated.resources.check_tick
 import yral_mobile.shared.features.tournament.generated.resources.join_now
 import yral_mobile.shared.features.tournament.generated.resources.join_now_with_tokens
+import yral_mobile.shared.features.tournament.generated.resources.join_with_credit
 import yral_mobile.shared.features.tournament.generated.resources.register_with_tokens
 import yral_mobile.shared.features.tournament.generated.resources.registered
 import yral_mobile.shared.features.tournament.generated.resources.view_leaderboard
 import yral_mobile.shared.features.tournament.generated.resources.yral_coin
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_thunder
 import yral_mobile.shared.libs.designsystem.generated.resources.pink_gradient_background_disabled
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
@@ -68,6 +70,7 @@ internal fun TournamentCtaButton(
                             when (participationState) {
                                 is TournamentParticipationState.JoinNow,
                                 is TournamentParticipationState.JoinNowWithTokens,
+                                is TournamentParticipationState.JoinNowWithCredit,
                                 -> {
                                     Modifier.angledGradientBackground(
                                         degrees = 218f,
@@ -150,20 +153,19 @@ internal fun TournamentCtaButton(
             )
 
             if (status != TournamentStatus.Ended) {
-                val coinRes =
+                val iconRes =
                     when (participationState) {
+                        is TournamentParticipationState.JoinNowWithCredit ->
+                            DesignRes.drawable.ic_thunder
                         is TournamentParticipationState.RegistrationRequired,
                         is TournamentParticipationState.JoinNowWithTokens,
-                        -> {
-                            Res.drawable.yral_coin
-                        }
-
+                        -> Res.drawable.yral_coin
                         else -> null
                     }
-                if (coinRes != null) {
+                if (iconRes != null) {
                     Image(
-                        modifier = Modifier.Companion.size(width = 15.dp, height = 16.dp),
-                        painter = painterResource(coinRes),
+                        modifier = Modifier.size(width = 15.dp, height = 16.dp),
+                        painter = painterResource(iconRes),
                         contentDescription = null,
                     )
                 }
@@ -188,7 +190,11 @@ private fun ctaLabel(
                         Res.string.join_now_with_tokens,
                         participationState.tokensRequired,
                     )
-
+                is TournamentParticipationState.JoinNowWithCredit ->
+                    stringResource(
+                        Res.string.join_with_credit,
+                        participationState.creditsRequired,
+                    )
                 is TournamentParticipationState.JoinNowDisabled -> stringResource(Res.string.join_now)
                 is TournamentParticipationState.RegistrationRequired ->
                     stringResource(

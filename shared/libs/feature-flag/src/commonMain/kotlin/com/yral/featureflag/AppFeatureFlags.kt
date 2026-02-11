@@ -41,6 +41,18 @@ object AppFeatureFlags {
                 description = "Toggle Firebase App Check usage on Android.",
                 defaultValue = false,
             )
+        val InAppUpdate: FeatureFlag<IAPConfig> =
+            json(
+                keySuffix = "inAppUpdate",
+                name = "In app update",
+                description = "Force users to update app or prompt them",
+                defaultValue =
+                    IAPConfig(
+                        minSupportedVersion = "1.0.0",
+                        recommendedVersion = "1.0.0",
+                    ),
+                serializer = IAPConfig.serializer(),
+            )
     }
 
     object Ios :

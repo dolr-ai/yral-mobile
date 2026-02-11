@@ -439,6 +439,10 @@ class TournamentGameViewModel(
             tournamentName = tournamentName,
         )
     }
+
+    fun trackHowToPlayClicked() {
+        telemetry.onHowToPlayClicked(tournamentType = _state.value.tournamentType)
+    }
 }
 
 data class TournamentGameState(

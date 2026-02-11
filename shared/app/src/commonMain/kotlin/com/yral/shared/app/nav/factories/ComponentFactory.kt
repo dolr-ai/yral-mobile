@@ -1,6 +1,8 @@
 package com.yral.shared.app.nav.factories
 
 import com.arkivanov.decompose.ComponentContext
+import com.yral.featureflag.FeatureFlagManager
+import com.yral.featureflag.FeedFeatureFlags
 import com.yral.shared.app.nav.Config
 import com.yral.shared.app.nav.RootComponent
 import com.yral.shared.app.nav.SplashComponent
@@ -11,12 +13,14 @@ import com.yral.shared.features.auth.nav.mandatorylogin.MandatoryLoginComponent
 import com.yral.shared.features.auth.nav.otpverification.OtpVerificationComponent
 import com.yral.shared.features.auth.ui.LoginCoordinator
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
+import com.yral.shared.features.leaderboard.domain.models.DailyRankGameType
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.subscriptions.nav.SubscriptionsComponent
 import com.yral.shared.features.tournament.nav.TournamentGameComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
+import com.yral.shared.koin.koinInstance
 import com.yral.shared.libs.phonevalidation.countries.Country
 import kotlinx.coroutines.flow.flowOf
 
@@ -104,8 +108,19 @@ internal class ComponentFactory(
             onBack = rootComponent::onBackClicked,
         )
 
-    fun createLeaderboard(componentContext: ComponentContext): LeaderboardComponent =
-        LeaderboardComponent.Companion(
+    fun createLeaderboard(componentContext: ComponentContext): LeaderboardComponent {
+        val flagManager = koinInstance.get<FeatureFlagManager>()
+        val isCardLayoutEnabled = flagManager.isEnabled(FeedFeatureFlags.CardLayout.Enabled)
+        val gameType =
+            if (isCardLayoutEnabled) {
+                DailyRankGameType.HOT_OR_NOT
+            } else {
+                DailyRankGameType.SMILEY
+            }
+        co.touchlab.kermit.Logger.d(
+            "LeaderboardHistory",
+        ) { "createLeaderboard: isCardLayoutEnabled=$isCardLayoutEnabled, gameType=$gameType" }
+        return LeaderboardComponent.Companion(
             componentContext = componentContext,
             snapshot = null,
             navigateToHome = {
@@ -115,7 +130,9 @@ internal class ComponentFactory(
             openProfile = rootComponent::openProfile,
             showBackIcon = true,
             onBack = rootComponent::onBackClicked,
+            gameType = gameType,
         )
+    }
 
     fun createSubscription(
         componentContext: ComponentContext,
@@ -124,6 +141,7 @@ internal class ComponentFactory(
         SubscriptionsComponent.Companion(
             componentContext = componentContext,
             purchaseTimeMs = config.purchaseTimeMs,
+            entryPoint = config.entryPoint,
             onBack = rootComponent::onBackClicked,
             onCreateVideo = rootComponent::onCreateVideo,
             onExploreFeed = rootComponent::onExploreFeed,

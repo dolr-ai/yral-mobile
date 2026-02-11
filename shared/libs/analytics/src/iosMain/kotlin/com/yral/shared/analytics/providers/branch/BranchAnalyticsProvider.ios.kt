@@ -35,6 +35,7 @@ actual class BranchAnalyticsProvider actual constructor(
                 "wallet_token_type" to (user.tokenType?.serialName ?: ""),
                 "canister_id" to user.canisterId,
                 "email_id" to user.emailId,
+                "pro_status" to (user.proStatus ?: false),
             )
 
         // Attach UTM attribution as user-level properties

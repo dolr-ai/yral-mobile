@@ -11,13 +11,17 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.lifecycle.lifecycleScope
 import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.defaultComponentContext
 import com.russhwolf.settings.Settings
 import com.yral.android.installReferrer.AttributionManager
 import com.yral.android.installReferrer.processors.BranchAttributionProcessor
 import com.yral.android.update.InAppUpdateManager
+import com.yral.featureflag.AppFeatureFlags
+import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.app.UpdateState
+import com.yral.shared.app.isVersionLower
 import com.yral.shared.app.nav.DefaultRootComponent
 import com.yral.shared.app.ui.MyApplicationTheme
 import com.yral.shared.app.ui.screens.RootScreen
@@ -37,17 +41,22 @@ import io.branch.indexing.BranchUniversalObject
 import io.branch.referral.Branch
 import io.branch.referral.BranchError
 import io.branch.referral.util.LinkProperties
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.koin.android.ext.android.inject
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
     private lateinit var oAuthUtils: OAuthUtils
     private lateinit var oAuthUtilsHelper: OAuthUtilsHelper
     private lateinit var rootComponent: DefaultRootComponent
-    private lateinit var inAppUpdateManager: InAppUpdateManager
+    private var inAppUpdateManager: InAppUpdateManager? = null
+    private var mandatoryUpdateSlotShown = false
+    private var resumeUpdateCheckJob: Job? = null
     private val crashlyticsManager: CrashlyticsManager by inject()
     private val settings: Settings by inject()
     private val routingService: RoutingService by inject()
@@ -61,7 +70,7 @@ class MainActivity : ComponentActivity() {
 
     private val updateResultLauncher: ActivityResultLauncher<IntentSenderRequest> =
         registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-            inAppUpdateManager.handleImmediateUpdateResult(result.resultCode)
+            inAppUpdateManager?.handleImmediateUpdateResult(result.resultCode)
         }
 
     // Shared Branch session callback for both init() and reInit()
@@ -111,8 +120,7 @@ class MainActivity : ComponentActivity() {
         // Always create the root component outside Compose on the main thread
         rootComponent = DefaultRootComponent(componentContext = defaultComponentContext())
 
-        // Initialize in-app update manager
-        inAppUpdateManager =
+        val updateManager =
             InAppUpdateManager(
                 context = this,
                 settings = settings,
@@ -124,9 +132,17 @@ class MainActivity : ComponentActivity() {
                     }
                 },
             )
-        inAppUpdateManager.setUpdateResultLauncher(updateResultLauncher)
-        rootComponent.setOnCompleteUpdateCallback { inAppUpdateManager.completeUpdate() }
-        lifecycle.addObserver(inAppUpdateManager)
+        inAppUpdateManager = updateManager
+        updateManager.setUpdateResultLauncher(updateResultLauncher)
+
+        lifecycleScope.launch {
+            if (runRemoteConfigUpdateCheck()) {
+                mandatoryUpdateSlotShown = true
+                rootComponent.showMandatoryUpdateSlot()
+            } else {
+                attachInAppUpdateManager(updateManager)
+            }
+        }
 
         handleIntent(intent)
         setContent {
@@ -138,6 +154,30 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (!mandatoryUpdateSlotShown) return
+        if (resumeUpdateCheckJob?.isActive == true) return
+        resumeUpdateCheckJob =
+            lifecycleScope.launch {
+                try {
+                    if (!runRemoteConfigUpdateCheck(forceRefresh = true)) {
+                        mandatoryUpdateSlotShown = false
+                        rootComponent.dismissMandatoryUpdateSlot()
+                        inAppUpdateManager?.let { attachInAppUpdateManager(it) }
+                    }
+                } finally {
+                    resumeUpdateCheckJob = null
+                }
+            }
+    }
+
+    private fun attachInAppUpdateManager(updateManager: InAppUpdateManager) {
+        rootComponent.setOnCompleteUpdateCallback { updateManager.completeUpdate() }
+        lifecycle.addObserver(updateManager)
+        updateManager.checkForUpdate()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -226,6 +266,25 @@ class MainActivity : ComponentActivity() {
         oAuthUtils.cleanup()
         super.onDestroy()
     }
+
+    private suspend fun runRemoteConfigUpdateCheck(forceRefresh: Boolean = false): Boolean =
+        try {
+            val flagManager = koinInstance.get<FeatureFlagManager>()
+            if (forceRefresh) {
+                flagManager.hydrateAndFetchRemotes()
+            } else {
+                flagManager.awaitRemoteFetch(5.seconds)
+            }
+            val config = flagManager.get(AppFeatureFlags.Android.InAppUpdate)
+            val currentVersion = BuildConfig.VERSION_NAME
+            isVersionLower(currentVersion, config.minSupportedVersion)
+        } catch (
+            @Suppress("TooGenericExceptionCaught") e: Exception,
+        ) {
+            Logger.w("MainActivity") { "Remote Config update check failed: ${e.message}" }
+            crashlyticsManager.recordException(e)
+            false
+        }
 
     private fun storeAffiliateAttribution(linkProperties: LinkProperties?) {
         val rawChannel =

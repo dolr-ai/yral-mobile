@@ -114,6 +114,8 @@ class RootViewModel(
                         utmParams = utmAttributionStore.get()?.toAnalyticsUtmParams(),
                         isMandatoryLogin = properties.isMandatoryLogin,
                         phoneNumber = properties.phoneNumber,
+                        proStatus = properties.proDetails?.isProPurchased,
+                        isHonExperiment = null,
                     )
                 }
             }

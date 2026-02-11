@@ -143,6 +143,10 @@ class SessionManager {
         mutableProperties.update { it.copy(dailyRank = dailyRank) }
     }
 
+    fun updateHonDailyRank(honDailyRank: Long?) {
+        mutableProperties.update { it.copy(honDailyRank = honDailyRank) }
+    }
+
     fun setPendingTournamentRegistrationId(tournamentId: String?) {
         mutableProperties.update { it.copy(pendingTournamentRegistrationId = tournamentId) }
     }

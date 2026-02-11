@@ -2,6 +2,8 @@ package com.yral.shared.features.tournament.analytics
 
 import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.events.AnalyticsTournamentType
+import com.yral.shared.analytics.events.GameType
+import com.yral.shared.analytics.events.HowToPlayClickedEventData
 import com.yral.shared.analytics.events.TournamentAnswerResult
 import com.yral.shared.analytics.events.TournamentAnswerSubmittedEventData
 import com.yral.shared.analytics.events.TournamentEndedEventData
@@ -75,13 +77,15 @@ class TournamentTelemetry(
     fun onTournamentRegistered(
         tournamentId: String,
         tournamentType: TournamentType,
-        entryFeePoints: Int,
+        entryFeePoints: Int?,
+        entryFeeCredits: Int?,
     ) {
         analyticsManager.trackEvent(
             TournamentRegisteredEventData(
                 tournamentId = tournamentId,
                 tournamentType = tournamentType.toAnalyticsType(),
                 entryFeePoints = entryFeePoints,
+                entryFeeCredits = entryFeeCredits,
                 registrationTime = currentTimestamp(),
                 sessionId = getSessionId(),
             ),
@@ -286,12 +290,22 @@ class TournamentTelemetry(
         )
     }
 
+    fun onHowToPlayClicked(tournamentType: TournamentType) {
+        val gameType =
+            when (tournamentType) {
+                TournamentType.SMILEY -> GameType.SMILEY
+                TournamentType.HOT_OR_NOT -> GameType.HOT_OR_NOT
+            }
+        analyticsManager.trackEvent(HowToPlayClickedEventData(gameType = gameType))
+    }
+
     private fun TournamentParticipationState.toAnalyticsState(): TournamentState =
         when (this) {
             is TournamentParticipationState.RegistrationRequired -> TournamentState.REGISTRATION_REQUIRED
             is TournamentParticipationState.Registered -> TournamentState.REGISTERED
             is TournamentParticipationState.JoinNow -> TournamentState.JOIN_NOW
             is TournamentParticipationState.JoinNowWithTokens -> TournamentState.JOIN_NOW_WITH_TOKENS
+            is TournamentParticipationState.JoinNowWithCredit -> TournamentState.JOIN_NOW_WITH_CREDIT
             is TournamentParticipationState.JoinNowDisabled -> TournamentState.JOIN_NOW_DISABLED
         }
 
@@ -306,6 +320,7 @@ class TournamentTelemetry(
         when (this) {
             is TournamentParticipationState.RegistrationRequired -> tokensRequired
             is TournamentParticipationState.JoinNowWithTokens -> tokensRequired
+            is TournamentParticipationState.JoinNowWithCredit -> null
             is TournamentParticipationState.JoinNow,
             is TournamentParticipationState.JoinNowDisabled,
             is TournamentParticipationState.Registered,
@@ -318,6 +333,7 @@ class TournamentTelemetry(
             is TournamentParticipationState.RegistrationRequired,
             is TournamentParticipationState.Registered,
             is TournamentParticipationState.JoinNowWithTokens,
+            is TournamentParticipationState.JoinNowWithCredit,
             is TournamentParticipationState.JoinNowDisabled,
             -> null
         }

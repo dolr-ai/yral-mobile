@@ -37,7 +37,10 @@ kotlin {
             implementation(projects.shared.features.feed)
             implementation(projects.shared.features.game)
             implementation(projects.shared.features.auth)
+            implementation(projects.shared.features.subscriptions)
+            implementation(projects.shared.libs.preferences)
             implementation(projects.shared.rust.service)
+            implementation(libs.kotlinx.datetime)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
