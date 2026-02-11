@@ -116,6 +116,7 @@ class RootViewModel(
     companion object {
         const val SPLASH_SCREEN_TIMEOUT = 31000L // 31 seconds timeout
         const val INITIAL_DELAY_FOR_SETUP = 300L
+        const val BOT_SOURCE_LOG_TAG = "BotIdentitySource"
         private const val ACCOUNT_DIALOG_RETRY_DELAY_MS = 500L
         private const val BOT_LOAD_MAX_ATTEMPTS = 3
         private const val BOT_LOAD_RETRY_DELAY_MS = 600L
@@ -577,8 +578,15 @@ class RootViewModel(
     }
 
     @Suppress("LongMethod")
-    fun switchToAccount(principal: String) {
-        if (_state.value.isAccountSwitchInProgress) return
+    fun switchToAccount(
+        principal: String,
+        onComplete: (Boolean) -> Unit = {},
+    ) {
+        if (_state.value.isAccountSwitchInProgress) {
+            coroutineScope.launch(appDispatchers.main) { onComplete(false) }
+            return
+        }
+        Logger.d("BotDeleteFlow") { "switchToAccount requested principal=$principal" }
         _state.update {
             it.copy(
                 showAccountDialog = false,
@@ -587,15 +595,18 @@ class RootViewModel(
         }
         coroutineScope.launch {
             val previousSessionState = _state.value.sessionState
+            var switched = false
             runCatching {
                 val current = sessionManager.userPrincipal
                 if (current == principal) {
+                    Logger.d("BotDeleteFlow") { "switchToAccount no-op principal already active=$principal" }
                     _state.update {
                         it.copy(
                             showAccountDialog = false,
                             isAccountSwitchInProgress = false,
                         )
                     }
+                    switched = true
                     return@runCatching
                 }
                 sessionManager.updateState(SessionState.Loading)
@@ -657,11 +668,19 @@ class RootViewModel(
                     username = resolvedUsername ?: principal,
                     avatarUrl = canisterData.profilePic ?: propicFromPrincipal(principal),
                 )
+                switched = true
+                Logger.d("BotDeleteFlow") {
+                    "switchToAccount success principal=$principal isBot=$isBot"
+                }
             }.onFailure { error ->
+                Logger.e("BotDeleteFlow", error) {
+                    "switchToAccount failed principal=$principal restoringPreviousState"
+                }
                 Logger.e("RootViewModel") { "Failed to switch account: ${error.message}" }
                 sessionManager.updateState(previousSessionState)
             }.also {
                 _state.update { current -> current.copy(isAccountSwitchInProgress = false) }
+                coroutineScope.launch(appDispatchers.main) { onComplete(switched) }
             }
         }
     }
@@ -677,6 +696,27 @@ class RootViewModel(
                 }
             }
             _state.update { it.copy(showAccountDialog = true) }
+        }
+    }
+
+    fun switchToMainAccount(onComplete: (Boolean) -> Unit = {}) {
+        coroutineScope.launch {
+            val mainPrincipal =
+                preferences.getString(PrefKeys.MAIN_PRINCIPAL.name)
+                    ?: preferences.getString(PrefKeys.USER_PRINCIPAL.name)
+            if (mainPrincipal == null) {
+                Logger.w("BotDeleteFlow") { "switchToMainAccount skipped: main principal missing" }
+                onComplete(false)
+                return@launch
+            }
+            preferences.putString(PrefKeys.LAST_ACTIVE_PRINCIPAL.name, mainPrincipal)
+            Logger.d("BotDeleteFlow") { "switchToMainAccount mainPrincipal=$mainPrincipal" }
+            switchToAccount(mainPrincipal) { switched ->
+                Logger.d("BotDeleteFlow") {
+                    "switchToMainAccount completion mainPrincipal=$mainPrincipal switched=$switched"
+                }
+                onComplete(switched)
+            }
         }
     }
 
@@ -864,34 +904,39 @@ class RootViewModel(
                     }
             if (!cachedBots.isNullOrEmpty()) {
                 Logger.d("RootViewModel") { "loadBotEntries: using cached ${cachedBots.size} bots" }
+                Logger.d(BOT_SOURCE_LOG_TAG) {
+                    "loadBotEntries source=local_pref count=${cachedBots.size}"
+                }
                 sessionManager.updateBotCount(cachedBots.size)
                 result = cachedBots
                 return@repeat
             }
 
-            val idToken = preferences.getString(PrefKeys.ID_TOKEN.name)
-            val entriesFromToken = idToken?.let { parseBotsFromToken(it) }.orEmpty()
-            if (entriesFromToken.isNotEmpty()) {
-                Logger.d("RootViewModel") {
-                    "loadBotEntries: parsed ${entriesFromToken.size} bots from token on attempt $attempt"
-                }
-                sessionManager.updateBotCount(entriesFromToken.size)
-                runCatching {
-                    preferences.putString(
-                        PrefKeys.BOT_IDENTITIES.name,
-                        json.encodeToString(entriesFromToken),
-                    )
-                }
-                result = entriesFromToken
+            val tokenBots =
+                preferences
+                    .getString(PrefKeys.ID_TOKEN.name)
+                    ?.let(::parseBotsFromToken)
+                    .orEmpty()
+            if (tokenBots.isNotEmpty()) {
+                preferences.putString(PrefKeys.BOT_IDENTITIES.name, json.encodeToString(tokenBots))
+                sessionManager.updateBotCount(tokenBots.size)
+                result = tokenBots
                 return@repeat
             }
+
             if (attempt < BOT_LOAD_MAX_ATTEMPTS - 1) {
                 Logger.d("RootViewModel") { "loadBotEntries: empty on attempt $attempt, retrying..." }
+                Logger.d(BOT_SOURCE_LOG_TAG) {
+                    "loadBotEntries source=none count=0 attempt=$attempt retry=true"
+                }
                 delay(BOT_LOAD_RETRY_DELAY_MS)
             }
         }
         if (result == null) {
             Logger.d("RootViewModel") { "loadBotEntries: no bots found after retries" }
+            Logger.d(BOT_SOURCE_LOG_TAG) {
+                "loadBotEntries source=none count=0 attempts=$BOT_LOAD_MAX_ATTEMPTS"
+            }
             sessionManager.updateBotCount(0)
         }
         return result ?: emptyList()

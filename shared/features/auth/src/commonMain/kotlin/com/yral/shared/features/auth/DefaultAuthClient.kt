@@ -103,10 +103,14 @@ class DefaultAuthClient(
             }
         }
         preferences.getString(PrefKeys.ID_TOKEN.name)?.let { idToken ->
+            val shouldPersistTokenState =
+                lastActivePrincipal == null || lastActivePrincipal == mainPrincipal
             handleToken(
                 idToken = idToken,
                 accessToken = "",
                 refreshToken = "",
+                persistTokenState = shouldPersistTokenState,
+                persistBotIdentities = false,
             )
         } ?: obtainAnonymousIdentity()
     }
@@ -120,6 +124,7 @@ class DefaultAuthClient(
                     idToken = tokenResponse.idToken,
                     refreshToken = tokenResponse.refreshToken,
                     accessToken = tokenResponse.accessToken,
+                    persistBotIdentities = false,
                 )
             }.onFailure {
                 Logger.e("DefaultAuthClient") { "Silent token refresh failed: ${it.message}" }
@@ -149,8 +154,17 @@ class DefaultAuthClient(
         accessToken: String,
         refreshToken: String,
         resetCanister: Boolean = false,
+        persistTokenState: Boolean = true,
+        persistBotIdentities: Boolean = true,
     ) {
-        saveTokens(idToken, refreshToken, accessToken)
+        if (persistTokenState) {
+            saveTokens(
+                idToken = idToken,
+                refreshToken = refreshToken,
+                accessToken = accessToken,
+                persistBotIdentities = persistBotIdentities,
+            )
+        }
         val tokenClaim = oAuthUtilsHelper.parseOAuthToken(idToken)
         if (tokenClaim.isValid(Clock.System.now().epochSeconds)) {
             tokenClaim.delegatedIdentity?.let {
@@ -205,6 +219,7 @@ class DefaultAuthClient(
         idToken: String,
         refreshToken: String,
         accessToken: String,
+        persistBotIdentities: Boolean = true,
     ) {
         preferences.putString(PrefKeys.ID_TOKEN.name, idToken)
         if (refreshToken.isNotEmpty()) {
@@ -213,8 +228,10 @@ class DefaultAuthClient(
         if (accessToken.isNotEmpty()) {
             preferences.putString(PrefKeys.ACCESS_TOKEN.name, accessToken)
         }
-        persistBotIdentitiesFromToken(idToken)
-        updateBotCountFromPrefs()
+        if (persistBotIdentities) {
+            persistBotIdentitiesFromToken(idToken)
+            updateBotCountFromPrefs()
+        }
     }
 
     private suspend fun updateBotCountFromPrefs() {
@@ -222,7 +239,32 @@ class DefaultAuthClient(
         val count =
             raw?.let { runCatching { json.decodeFromString<List<BotIdentityEntry>>(it).size }.getOrNull() }
                 ?: 0
+        Logger.d("BotIdentitySource") { "updateBotCountFromPrefs source=local_pref count=$count" }
         sessionManager.updateBotCount(count)
+    }
+
+    override suspend fun refreshTokensAfterBotDeletion() {
+        val refreshToken = preferences.getString(PrefKeys.REFRESH_TOKEN.name)
+        if (refreshToken.isNullOrBlank()) {
+            Logger.w("BotIdentitySource") {
+                "refreshTokensAfterBotDeletion skipped: refresh token missing"
+            }
+            return
+        }
+        requiredUseCases.refreshTokenUseCase
+            .invoke(refreshToken)
+            .onSuccess { tokenResponse ->
+                saveTokens(
+                    idToken = tokenResponse.idToken,
+                    refreshToken = tokenResponse.refreshToken,
+                    accessToken = tokenResponse.accessToken,
+                    persistBotIdentities = true,
+                )
+            }.onFailure { error ->
+                Logger.e("BotIdentitySource") {
+                    "refreshTokensAfterBotDeletion failed: ${error.message}"
+                }
+            }
     }
 
     override suspend fun logout() {
@@ -814,6 +856,10 @@ class DefaultAuthClient(
                             latest.copy(username = username)
                         }
                 preferences.putString(PrefKeys.BOT_IDENTITIES.name, json.encodeToString(merged))
+                Logger.d("BotIdentitySource") {
+                    "persistBotIdentitiesFromToken source=oauth_token existing=${existing.size} " +
+                        "new=${entries.size} merged=${merged.size}"
+                }
             }
         }
     }

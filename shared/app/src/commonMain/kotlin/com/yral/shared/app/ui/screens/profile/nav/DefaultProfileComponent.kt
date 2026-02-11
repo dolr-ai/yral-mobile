@@ -42,6 +42,7 @@ internal class DefaultProfileComponent(
         influencerSource: InfluencerSource,
     ) -> Unit,
     private val openAccountSheet: () -> Unit,
+    private val switchToMainProfile: (onComplete: (Boolean) -> Unit) -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
     override val promptLogin: (pageName: SignupPageName) -> Unit,
 ) : ProfileComponent(),
@@ -168,6 +169,7 @@ internal class DefaultProfileComponent(
         AccountComponent.Companion(
             componentContext = componentContext,
             onBack = this::onBackClicked,
+            switchToMainProfile = switchToMainProfile,
             promptLogin = promptLogin,
             subscriptionCoordinator = subscriptionCoordinator,
         )

@@ -55,6 +55,9 @@ internal class ComponentFactory(
                 openWallet = rootComponent::openWallet,
                 openLeaderboard = rootComponent::openLeaderboard,
                 openAccountSheet = { rootComponent.rootViewModel.showAccountSwitcher() },
+                switchToMainProfile = { onComplete ->
+                    rootComponent.rootViewModel.switchToMainAccount(onComplete)
+                },
                 showAlertsOnDialog = showAlertsOnDialog,
             )
         setHomeComponent(component)
