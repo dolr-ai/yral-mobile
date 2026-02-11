@@ -233,6 +233,15 @@ fun RootScreen(rootComponent: RootComponent) {
                         )
                     }
                 }
+                if (!rootComponent.isSplashActive()) {
+                    ToastHost(
+                        modifier =
+                            Modifier
+                                .padding(horizontal = 16.dp)
+                                .statusBarsPadding()
+                                .padding(top = 12.dp),
+                    )
+                }
             }
 
             // shows login error for both splash and account screen
@@ -258,16 +267,6 @@ fun RootScreen(rootComponent: RootComponent) {
             // 3. after delete account during anonymous sign in
             if (state.navigationTarget !is NavigationTarget.Splash && state.sessionState is SessionState.Loading) {
                 BlockingLoader()
-            }
-
-            if (!rootComponent.isSplashActive()) {
-                ToastHost(
-                    modifier =
-                        Modifier
-                            .padding(horizontal = 16.dp)
-                            .statusBarsPadding()
-                            .padding(top = 12.dp),
-                )
             }
 
             // Show update notifications (Snackbar) for flexible updates
