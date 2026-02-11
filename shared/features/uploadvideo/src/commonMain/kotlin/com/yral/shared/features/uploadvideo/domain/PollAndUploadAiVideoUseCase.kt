@@ -118,11 +118,11 @@ internal class PollAndUploadAiVideoUseCase(
                     }
                 }
             } catch (e: TimeoutCancellationException) {
-                pushGenerationFailed(
-                    model = parameters.modelName,
-                    prompt = parameters.prompt,
-                    reason = "Timeout",
-                )
+//                pushGenerationFailed(
+//                    model = parameters.modelName,
+//                    prompt = parameters.prompt,
+//                    reason = "Timeout",
+//                )
                 throw VideoGenerationTimeoutException.fromTimeoutCancellation(
                     timeoutException = e,
                     requestKey = parameters.requestKey.toString(),
