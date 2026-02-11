@@ -116,7 +116,10 @@ fun ChatWallScreen(
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             contentPadding = PaddingValues(bottom = 24.dp),
         ) {
-            items(influencers.itemCount) { index ->
+            items(
+                count = influencers.itemCount,
+                key = { index -> influencers.peek(index)?.id ?: "placeholder-$index" },
+            ) { index ->
                 influencers[index]?.let { influencer ->
                     InfluencerCard(
                         influencer = influencer,
