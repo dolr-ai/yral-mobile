@@ -150,6 +150,9 @@ class AccountsViewModel internal constructor(
                             onBotDeleted()
                         }
                         Logger.d(BOT_DELETE_LOG_TAG) { "bot delete: switchToMain callback dispatched" }
+                        coroutineScope.launch {
+                            authClient.refreshTokensAfterBotDeletion()
+                        }
                     } else {
                         Logger.d(BOT_DELETE_LOG_TAG) { "main account delete: triggering logout" }
                         logout()

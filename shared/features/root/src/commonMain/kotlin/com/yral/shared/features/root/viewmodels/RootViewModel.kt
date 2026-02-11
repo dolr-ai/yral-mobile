@@ -912,25 +912,18 @@ class RootViewModel(
                 return@repeat
             }
 
-            val idToken = preferences.getString(PrefKeys.ID_TOKEN.name)
-            val entriesFromToken = idToken?.let { parseBotsFromToken(it) }.orEmpty()
-            if (entriesFromToken.isNotEmpty()) {
-                Logger.d("RootViewModel") {
-                    "loadBotEntries: parsed ${entriesFromToken.size} bots from token on attempt $attempt"
-                }
-                Logger.d(BOT_SOURCE_LOG_TAG) {
-                    "loadBotEntries source=id_token_parse count=${entriesFromToken.size} attempt=$attempt"
-                }
-                sessionManager.updateBotCount(entriesFromToken.size)
-                runCatching {
-                    preferences.putString(
-                        PrefKeys.BOT_IDENTITIES.name,
-                        json.encodeToString(entriesFromToken),
-                    )
-                }
-                result = entriesFromToken
+            val tokenBots =
+                preferences
+                    .getString(PrefKeys.ID_TOKEN.name)
+                    ?.let(::parseBotsFromToken)
+                    .orEmpty()
+            if (tokenBots.isNotEmpty()) {
+                preferences.putString(PrefKeys.BOT_IDENTITIES.name, json.encodeToString(tokenBots))
+                sessionManager.updateBotCount(tokenBots.size)
+                result = tokenBots
                 return@repeat
             }
+
             if (attempt < BOT_LOAD_MAX_ATTEMPTS - 1) {
                 Logger.d("RootViewModel") { "loadBotEntries: empty on attempt $attempt, retrying..." }
                 Logger.d(BOT_SOURCE_LOG_TAG) {
