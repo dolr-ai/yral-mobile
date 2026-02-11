@@ -42,6 +42,10 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
+data class AccountEnv(
+    val isDebug: Boolean,
+)
+
 @Suppress("LongParameterList")
 class AccountsViewModel internal constructor(
     private val appDispatchers: AppDispatchers,
@@ -53,7 +57,7 @@ class AccountsViewModel internal constructor(
     private val firebaseStorage: FirebaseStorage,
     private val preferences: Preferences,
     private val httpClient: HttpClient,
-    private val isDebug: Boolean,
+    private val accountEnv: AccountEnv,
     private val registerNotificationTokenUseCase: RegisterNotificationTokenUseCase,
     private val deregisterNotificationTokenUseCase: DeregisterNotificationTokenUseCase,
 ) : ViewModel() {
@@ -175,7 +179,7 @@ class AccountsViewModel internal constructor(
             }
             return
         }
-        val environmentPrefix = if (isDebug) "staging" else ""
+        val environmentPrefix = if (accountEnv.isDebug) "staging" else ""
         Logger.d(BOT_DELETE_LOG_TAG) {
             "calling bot-server soft delete influencerId=$principal envPrefix=$environmentPrefix"
         }
