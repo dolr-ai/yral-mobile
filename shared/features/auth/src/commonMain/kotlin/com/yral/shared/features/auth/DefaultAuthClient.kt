@@ -126,17 +126,20 @@ class DefaultAuthClient(
                 sessionManager.updateLoggedInUserEmail(it)
             }
         } else {
-            refreshToken.takeIf { it.isNotEmpty() }?.let {
-                val rTokenClaim = oAuthUtilsHelper.parseOAuthToken(it)
-                if (rTokenClaim.isValid(Clock.System.now().epochSeconds)) {
-                    refreshAccessToken()
-                } else {
-                    trackAndLogoutForTokenExpiry(
-                        cause = AuthSessionCause.REFRESH_TOKEN_EXPIRED_OR_INVALID,
-                        flow = AuthSessionFlow.TOKEN_VALIDATION,
-                    )
-                }
-            } ?: trackAndLogoutForTokenExpiry(
+            preferences
+                .getString(PrefKeys.REFRESH_TOKEN.name)
+                .takeIf { it?.isNotEmpty() == true }
+                ?.let { refreshToken ->
+                    val rTokenClaim = oAuthUtilsHelper.parseOAuthToken(refreshToken)
+                    if (rTokenClaim.isValid(Clock.System.now().epochSeconds)) {
+                        refreshAccessToken(refreshToken)
+                    } else {
+                        trackAndLogoutForTokenExpiry(
+                            cause = AuthSessionCause.REFRESH_TOKEN_EXPIRED_OR_INVALID,
+                            flow = AuthSessionFlow.TOKEN_VALIDATION,
+                        )
+                    }
+                } ?: trackAndLogoutForTokenExpiry(
                 cause = AuthSessionCause.REFRESH_TOKEN_MISSING,
                 flow = AuthSessionFlow.TOKEN_VALIDATION,
             )
@@ -400,24 +403,21 @@ class DefaultAuthClient(
         }
     }
 
-    private suspend fun refreshAccessToken() {
-        val refreshToken = preferences.getString(PrefKeys.REFRESH_TOKEN.name)
-        refreshToken?.let {
-            requiredUseCases.refreshTokenUseCase
-                .invoke(refreshToken)
-                .onSuccess { tokenResponse ->
-                    handleToken(
-                        idToken = tokenResponse.idToken,
-                        accessToken = tokenResponse.accessToken,
-                        refreshToken = tokenResponse.refreshToken,
-                    )
-                }.onFailure {
-                    trackAndLogoutForTokenExpiry(
-                        cause = AuthSessionCause.REFRESH_ACCESS_TOKEN_FAILED,
-                        flow = AuthSessionFlow.TOKEN_REFRESH,
-                    )
-                }
-        } ?: obtainAnonymousIdentity()
+    private suspend fun refreshAccessToken(refreshToken: String) {
+        requiredUseCases.refreshTokenUseCase
+            .invoke(refreshToken)
+            .onSuccess { tokenResponse ->
+                handleToken(
+                    idToken = tokenResponse.idToken,
+                    accessToken = tokenResponse.accessToken,
+                    refreshToken = tokenResponse.refreshToken,
+                )
+            }.onFailure {
+                trackAndLogoutForTokenExpiry(
+                    cause = AuthSessionCause.REFRESH_ACCESS_TOKEN_FAILED,
+                    flow = AuthSessionFlow.TOKEN_REFRESH,
+                )
+            }
     }
 
     override suspend fun signInWithSocial(
