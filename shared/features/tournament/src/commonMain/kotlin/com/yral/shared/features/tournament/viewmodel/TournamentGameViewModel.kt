@@ -29,9 +29,12 @@ import com.yral.shared.features.tournament.domain.model.TournamentType
 import com.yral.shared.features.tournament.domain.model.VideoEmoji
 import com.yral.shared.features.tournament.domain.model.VoteOutcome
 import com.yral.shared.features.tournament.domain.model.VoteResult
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.time.Clock
@@ -52,6 +55,8 @@ class TournamentGameViewModel(
 ) : ViewModel() {
     private val _state = MutableStateFlow(TournamentGameState())
     val state: StateFlow<TournamentGameState> = _state.asStateFlow()
+    private val eventChannel = Channel<Event>(Channel.BUFFERED)
+    val eventsFlow: Flow<Event> = eventChannel.receiveAsFlow()
     private var sessionScopeKey: String = "INITIAL"
 
     // Separate StateFlow for video emojis to avoid triggering main state recompositions
@@ -297,10 +302,20 @@ class TournamentGameViewModel(
         viewModelScope.launch { persistCurrentProgress() }
     }
 
-    private fun handleVoteFailure(error: TournamentError) {
+    private fun handleVoteFailure(
+        error: TournamentError,
+        isHotOrNotVote: Boolean = false,
+    ) {
+        val shouldShowToast =
+            error.code != TournamentErrorCodes.NO_DIAMONDS &&
+                error.code != TournamentErrorCodes.TOURNAMENT_NOT_LIVE
+        if (shouldShowToast) {
+            send(Event.ShowVoteError(resolveVoteErrorMessage(error)))
+        }
         _state.update {
             it.copy(
-                isLoading = false,
+                isLoading = if (isHotOrNotVote) it.isLoading else false,
+                isHotOrNotVoting = if (isHotOrNotVote) false else it.isHotOrNotVoting,
                 noDiamondsError = error.code == TournamentErrorCodes.NO_DIAMONDS,
                 tournamentEndedError = error.code == TournamentErrorCodes.TOURNAMENT_NOT_LIVE,
             )
@@ -381,13 +396,7 @@ class TournamentGameViewModel(
                 }
                 viewModelScope.launch { persistCurrentProgress() }
             }.onFailure { error ->
-                _state.update {
-                    it.copy(
-                        isHotOrNotVoting = false,
-                        noDiamondsError = error.code == TournamentErrorCodes.NO_DIAMONDS,
-                        tournamentEndedError = error.code == TournamentErrorCodes.TOURNAMENT_NOT_LIVE,
-                    )
-                }
+                handleVoteFailure(error, isHotOrNotVote = true)
             }
     }
 
@@ -485,6 +494,13 @@ class TournamentGameViewModel(
         )
     }
 
+    private fun send(event: Event) {
+        viewModelScope.launch { eventChannel.send(event) }
+    }
+
+    private fun resolveVoteErrorMessage(error: TournamentError): String =
+        error.message.ifBlank { "Something went wrong. Please try again." }
+
     private suspend fun persistCurrentProgress() {
         val state = _state.value
         if (state.tournamentId.isEmpty() || state.endEpochMs <= 0L) return
@@ -544,6 +560,12 @@ class TournamentGameViewModel(
 
     fun trackHowToPlayClicked() {
         telemetry.onHowToPlayClicked(tournamentType = _state.value.tournamentType)
+    }
+
+    sealed class Event {
+        data class ShowVoteError(
+            val message: String,
+        ) : Event()
     }
 }
 
