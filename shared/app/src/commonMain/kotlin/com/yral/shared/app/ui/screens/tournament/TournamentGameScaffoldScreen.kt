@@ -30,8 +30,12 @@ import com.yral.shared.features.tournament.ui.TournamentHowToPlayScreen
 import com.yral.shared.features.tournament.ui.TournamentTopOverlay
 import com.yral.shared.features.tournament.viewmodel.TournamentGameViewModel
 import com.yral.shared.libs.designsystem.component.lottie.PreloadLottieAnimations
+import com.yral.shared.libs.designsystem.component.toast.ToastManager
+import com.yral.shared.libs.designsystem.component.toast.ToastType
+import com.yral.shared.libs.designsystem.component.toast.showError
 import com.yral.shared.libs.videoPlayer.cardstack.SwipeDirection
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -129,6 +133,15 @@ fun TournamentGameScaffoldScreen(
             endEpochMs = gameConfig.endEpochMs,
             sessionScopeKey = sessionKey,
         )
+    }
+
+    LaunchedEffect(tournamentGameViewModel) {
+        tournamentGameViewModel.eventsFlow.collectLatest { event ->
+            when (event) {
+                is TournamentGameViewModel.Event.ShowVoteError ->
+                    ToastManager.showError(type = ToastType.Small(message = event.message))
+            }
+        }
     }
 
     Scaffold(
