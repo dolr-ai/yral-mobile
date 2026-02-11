@@ -446,7 +446,8 @@ extension ProfileView {
         playToScroll: AppDIHelper().getFeatureFlagManager().isEnabled(
           flag: FeedFeatureFlags.SmileyGame.shared.StopAndVoteNudge
         ),
-        emailId: email
+        emailId: email,
+        phoneNumber: nil
       )
     )
   }
