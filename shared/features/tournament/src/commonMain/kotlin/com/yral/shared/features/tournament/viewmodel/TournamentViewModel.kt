@@ -5,8 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.github.michaelbull.result.runCatching
+import com.yral.shared.analytics.events.CreditFeature
+import com.yral.shared.core.session.ProDetails
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.game.domain.GetBalanceUseCase
+import com.yral.shared.features.subscriptions.analytics.SubscriptionTelemetry
 import com.yral.shared.features.tournament.analytics.TournamentTelemetry
 import com.yral.shared.features.tournament.domain.GetMyTournamentsUseCase
 import com.yral.shared.features.tournament.domain.GetTournamentsUseCase
@@ -39,7 +42,7 @@ import kotlinx.coroutines.launch
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-@Suppress("TooManyFunctions")
+@Suppress("TooManyFunctions", "LongParameterList")
 class TournamentViewModel(
     private val sessionManager: SessionManager,
     private val getTournamentsUseCase: GetTournamentsUseCase,
@@ -50,6 +53,7 @@ class TournamentViewModel(
     private val urlBuilder: UrlBuilder,
     private val linkGenerator: LinkGenerator,
     private val telemetry: TournamentTelemetry,
+    private val subscriptionTelemetry: SubscriptionTelemetry,
 ) : ViewModel() {
     private val tournamentDataListFlow: MutableStateFlow<List<TournamentData>> =
         MutableStateFlow(emptyList())
@@ -82,17 +86,15 @@ class TournamentViewModel(
                 var previousTournaments: List<Tournament> = emptyList()
                 while (true) {
                     val currentTimeMs = Clock.System.now().toEpochMilliseconds()
-                    val tournaments = tournamentDataList.map { it.toUiTournament() }
+                    val tournaments = tournamentDataList.map { it.toUiTournament(_state.value.proDetails) }
 
                     trackTournamentStateChanges(previousTournaments, tournaments)
                     previousTournaments = tournaments
 
                     _state.update { it.copy(tournaments = tournaments) }
 
-                    val nextBoundaryMs = findNextBoundaryTime(tournamentDataList, currentTimeMs)
-                    if (nextBoundaryMs == null) {
-                        break
-                    }
+                    val nextBoundaryMs =
+                        findNextBoundaryTime(tournamentDataList, currentTimeMs) ?: break
 
                     val delayMs = nextBoundaryMs - currentTimeMs
                     if (delayMs > 0) {
@@ -148,6 +150,23 @@ class TournamentViewModel(
 
                     if (isSocialSignIn) {
                         processPendingTournamentRegistration()
+                    }
+                }
+        }
+        viewModelScope.launch {
+            sessionManager
+                .observeSessionPropertyWithDefault(
+                    selector = { it.proDetails },
+                    defaultValue = ProDetails(),
+                ).collect { proDetails ->
+                    _state.update { state ->
+                        state.copy(
+                            proDetails = proDetails,
+                            tournaments =
+                                tournamentDataListFlow
+                                    .value
+                                    .map { it.toUiTournament(proDetails) },
+                        )
                     }
                 }
         }
@@ -214,6 +233,7 @@ class TournamentViewModel(
                     it.copy(
                         isLoading = false,
                         error = null,
+                        tournaments = tournamentDataList.map { data -> data.toUiTournament(it.proDetails) },
                     )
                 }
             }.onFailure { error ->
@@ -255,6 +275,7 @@ class TournamentViewModel(
                     it.copy(
                         isLoading = false,
                         error = null,
+                        tournaments = tournamentDataList.map { data -> data.toUiTournament(it.proDetails) },
                     )
                 }
             }.onFailure { error ->
@@ -287,6 +308,7 @@ class TournamentViewModel(
             _state.update { it.copy(isRegistering = true) }
             val tokensRequired =
                 when (val state = tournament.participationState) {
+                    is TournamentParticipationState.JoinNowWithCredit -> 0
                     is TournamentParticipationState.JoinNowWithTokens -> state.tokensRequired
                     is TournamentParticipationState.RegistrationRequired -> state.tokensRequired
                     else -> 0
@@ -318,11 +340,14 @@ class TournamentViewModel(
                 return@launch
             }
 
+            val isPro = tournament.participationState is TournamentParticipationState.JoinNowWithCredit
+
             registerForTournamentUseCase
                 .invoke(
                     RegisterForTournamentRequest(
                         tournamentId = tournament.id,
                         principalId = principalId,
+                        isPro = isPro,
                     ),
                 ).onSuccess { result ->
                     _state.update { it.copy(isRegistering = false) }
@@ -331,10 +356,28 @@ class TournamentViewModel(
                         tournamentId = result.tournamentId,
                         tournamentType = tournament.type,
                         entryFeePoints = result.coinsPaid,
+                        entryFeeCredits = result.creditsConsumed,
                     )
-                    // Refresh balance from server after entry fee was deducted
-                    refreshBalance(principalId)
-                    send(Event.RegistrationSuccess(result.tournamentId, result.coinsPaid))
+                    val coinsPaid = result.coinsPaid ?: 0
+                    if (coinsPaid > 0) {
+                        // Refresh balance from server after entry fee was deducted
+                        refreshBalance(principalId)
+                    }
+                    result.creditsConsumed?.let { creditsConsumed ->
+                        val creditsRemaining = _state.value.proDetails.availableCredits - 1
+                        subscriptionTelemetry.onCreditsConsumed(
+                            feature = CreditFeature.TOURNAMENT,
+                            creditsUsed = creditsConsumed,
+                            creditsRemaining = creditsRemaining.coerceAtLeast(0),
+                        )
+                    }
+                    send(
+                        Event.RegistrationSuccess(
+                            result.tournamentId,
+                            coinsPaid,
+                            isPro,
+                        ),
+                    )
                     // Refresh tournaments to update registration state
                     loadTournaments()
                 }.onFailure { error ->
@@ -394,7 +437,9 @@ class TournamentViewModel(
             )
         } else {
             when (tournament.participationState) {
-                is TournamentParticipationState.JoinNowWithTokens ->
+                is TournamentParticipationState.JoinNowWithCredit,
+                is TournamentParticipationState.JoinNowWithTokens,
+                ->
                     registerForTournament(
                         tournament,
                     )
@@ -452,6 +497,7 @@ class TournamentViewModel(
         data class RegistrationSuccess(
             val tournamentId: String,
             val coinsPaid: Int,
+            val isPro: Boolean,
         ) : Event()
 
         data class RegistrationFailed(

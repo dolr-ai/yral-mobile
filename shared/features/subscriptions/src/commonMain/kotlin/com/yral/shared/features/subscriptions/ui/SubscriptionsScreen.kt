@@ -3,9 +3,15 @@ package com.yral.shared.features.subscriptions.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -16,6 +22,7 @@ import com.yral.shared.features.subscriptions.viewmodel.SubscriptionViewModel
 import com.yral.shared.iap.utils.getPurchaseContext
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.YralLoader
+import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
@@ -26,6 +33,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 fun SubscriptionsScreen(
@@ -33,12 +41,22 @@ fun SubscriptionsScreen(
     modifier: Modifier = Modifier,
     viewModel: SubscriptionViewModel = koinViewModel(),
 ) {
+    var linkToOpen by remember { mutableStateOf("") }
+    val termsSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    // Set entry point on first composition
+    LaunchedEffect(component.entryPoint) {
+        viewModel.setEntryPoint(component.entryPoint)
+    }
     val viewState by viewModel.viewState.collectAsState()
     val purchaseContext = getPurchaseContext()
     val proDetails by viewModel.proDetails.collectAsStateWithLifecycle(ProDetails())
     val totalProCredits = proDetails.totalCredits
     val oldPrice = viewState.pricingInfo?.formattedOldPrice
     val newPrice = viewState.pricingInfo?.formattedCurrentPrice
+    val tncUrl = viewState.tncUrl
+    val privacyPolicyUrl = viewState.privacyPolicyUrl
+    val onOpenLink = remember { { url: String -> linkToOpen = url } }
     when (val state = viewState.purchaseState) {
         is UiState.Initial,
         is UiState.InProgress,
@@ -49,8 +67,11 @@ fun SubscriptionsScreen(
                     creditsReceived = totalProCredits,
                     oldPrice = oldPrice,
                     newPrice = newPrice,
+                    tncUrl = tncUrl,
+                    privacyPolicyUrl = privacyPolicyUrl,
                     onBack = { component.onBack() },
                     onSubscribe = { purchaseContext?.let { viewModel.subscribe(it) } },
+                    onOpenLink = onOpenLink,
                 )
                 if (state is UiState.InProgress) {
                     // Blocking loader
@@ -69,8 +90,11 @@ fun SubscriptionsScreen(
                         creditsReceived = totalProCredits,
                         oldPrice = oldPrice,
                         newPrice = newPrice,
+                        tncUrl = tncUrl,
+                        privacyPolicyUrl = privacyPolicyUrl,
                         onBack = { component.onBack() },
                         onSubscribe = { purchaseContext?.let { viewModel.subscribe(it) } },
+                        onOpenLink = onOpenLink,
                     )
                 }
                 is SubscriptionScreenType.Purchased -> {
@@ -90,8 +114,11 @@ fun SubscriptionsScreen(
                                 ?.let { formatMillisWithOrdinal(it) }
                                 ?: "",
                         creditsReceived = totalProCredits,
+                        tncUrl = tncUrl,
+                        privacyPolicyUrl = privacyPolicyUrl,
                         onBack = { component.onBack() },
                         onExploreHome = { component.onExploreFeed() },
+                        onOpenLink = onOpenLink,
                     )
                 }
                 is SubscriptionScreenType.Success -> {
@@ -131,6 +158,14 @@ fun SubscriptionsScreen(
                 onTryAgain = { purchaseContext?.let { viewModel.subscribe(it) } },
             )
         }
+    }
+
+    if (linkToOpen.isNotEmpty()) {
+        YralWebViewBottomSheet(
+            link = linkToOpen,
+            bottomSheetState = termsSheetState,
+            onDismissRequest = { linkToOpen = "" },
+        )
     }
 }
 

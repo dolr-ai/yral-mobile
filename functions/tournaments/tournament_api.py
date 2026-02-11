@@ -32,6 +32,8 @@ IST = timezone(timedelta(hours=5, minutes=30))
 TOURNAMENT_SHARDS = 5
 SMILEY_GAME_CONFIG_PATH = "config/smiley_game_v2"
 BALANCE_URL_YRAL_TOKEN = "https://yral-hot-or-not.go-bazzinga.workers.dev/update_balance/"
+BILLING_URL_DEDUCT_CREDITS = "https://billing.yral.com/credits/deduct"
+BILLING_ONE_CREDIT = 1  # 1 credit
 
 # ─────────────────────  DATABASE HELPER  ────────────────────────
 _db = None
@@ -110,6 +112,40 @@ def _push_delta_yral_token(token: str, principal_id: str, delta: int) -> tuple[b
     }
     try:
         resp = requests.post(url, json=body, timeout=30, headers=headers)
+        if resp.status_code == 200:
+            return True, None
+        return False, f"Status: {resp.status_code}, Body: {resp.text}"
+    except requests.RequestException as e:
+        return False, str(e)
+
+
+def _deduct_pro_credit(token: str, principal_id: str) -> tuple[bool, str | None]:
+    """Deduct 1 credit from billing API for Pro users.
+
+    Args:
+        token: The BALANCE_UPDATE_TOKEN secret
+        principal_id: User's principal ID
+
+    Returns:
+        Tuple of (success, error_message)
+    """
+    url = BILLING_URL_DEDUCT_CREDITS
+    auth_value = token if token.startswith("Bearer ") else f"Bearer {token}"
+    headers = {
+        "Authorization": auth_value,
+        "Content-Type": "application/json",
+    }
+    body = {
+        "amount": BILLING_ONE_CREDIT,
+        "user_principal": principal_id
+    }
+    # Debug logging
+    print(f"[DEBUG] Calling billing API: URL={url}", file=sys.stderr)
+    print(f"[DEBUG] Body: {body}", file=sys.stderr)
+    print(f"[DEBUG] Token present: {bool(token)}, Token length: {len(token) if token else 0}", file=sys.stderr)
+    try:
+        resp = requests.post(url, json=body, timeout=30, headers=headers)
+        print(f"[DEBUG] Response status: {resp.status_code}, headers: {dict(resp.headers)}", file=sys.stderr)
         if resp.status_code == 200:
             return True, None
         return False, f"Status: {resp.status_code}, Body: {resp.text}"
@@ -656,7 +692,10 @@ def register_for_tournament(request: Request):
 
     POST /register_for_tournament
     Request:
-        { "data": { "tournament_id": "...", "principal_id": "..." } }
+        { "data": { "tournament_id": "...", "principal_id": "...", "is_pro": false } }
+
+        - is_pro (optional, default false): If true, deducts 1 credit from billing API
+          instead of YRAL tokens.
 
     Response:
         {
@@ -682,6 +721,7 @@ def register_for_tournament(request: Request):
 
         tournament_id = str(data.get("tournament_id", "")).strip()
         principal_id = str(data.get("principal_id", "")).strip()
+        is_pro = bool(data.get("is_pro", False))
 
         if not tournament_id:
             return error_response(400, "MISSING_TOURNAMENT_ID", "tournament_id required")
@@ -720,16 +760,24 @@ def register_for_tournament(request: Request):
         if reg_snap.exists:
             return error_response(409, "ALREADY_REGISTERED", "Already registered for this tournament")
 
-        # Deduct YRAL tokens from actual balance via external API
+        # Deduct entry fee based on user type
         if entry_cost > 0:
             if not balance_update_token:
                 print("BALANCE_UPDATE_TOKEN not configured", file=sys.stderr)
                 return error_response(500, "CONFIG_ERROR", "Balance update not configured")
 
-            success, error_msg = _push_delta_yral_token(balance_update_token, principal_id, -entry_cost)
-            if not success:
-                print(f"Failed to deduct YRAL tokens for {principal_id}: {error_msg}", file=sys.stderr)
-                return error_response(402, "INSUFFICIENT_COINS", "Failed to deduct entry fee. Please check your balance.")
+            if is_pro:
+                # Pro users: Deduct 1 credit from billing API
+                success, error_msg = _deduct_pro_credit(balance_update_token, principal_id)
+                if not success:
+                    print(f"Failed to deduct credit for Pro user {principal_id}: {error_msg}", file=sys.stderr)
+                    return error_response(402, "INSUFFICIENT_CREDITS", "Failed to deduct entry credit. Please check your credit balance.")
+            else:
+                # Regular users: Deduct YRAL tokens
+                success, error_msg = _push_delta_yral_token(balance_update_token, principal_id, -entry_cost)
+                if not success:
+                    print(f"Failed to deduct YRAL tokens for {principal_id}: {error_msg}", file=sys.stderr)
+                    return error_response(402, "INSUFFICIENT_COINS", "Failed to deduct entry fee. Please check your balance.")
 
         # Create registration in Firestore
         initial_diamonds = 20  # Fixed 20 diamonds for all tournaments
@@ -743,6 +791,7 @@ def register_for_tournament(request: Request):
                 "wins": 0,
                 "losses": 0,
                 "status": "registered",
+                "is_pro": is_pro,
                 "updated_at": firestore.SERVER_TIMESTAMP
             })
         else:
@@ -753,6 +802,7 @@ def register_for_tournament(request: Request):
                 "tournament_wins": 0,
                 "tournament_losses": 0,
                 "status": "registered",
+                "is_pro": is_pro,
                 "updated_at": firestore.SERVER_TIMESTAMP
             })
 
@@ -766,9 +816,10 @@ def register_for_tournament(request: Request):
         user_ref = db().document(f"users/{principal_id}")
         ledger_ref = user_ref.collection("transactions").document(_tx_id())
         ledger_ref.set({
-            "delta": -entry_cost,
-            "reason": "TOURNAMENT_ENTRY",
+            "delta": -entry_cost if not is_pro else 0,  # 0 for Pro since we deduct credits, not tokens
+            "reason": "TOURNAMENT_ENTRY_PRO" if is_pro else "TOURNAMENT_ENTRY",
             "tournament_id": tournament_id,
+            "is_pro": is_pro,
             "at": firestore.SERVER_TIMESTAMP
         })
 
@@ -777,9 +828,11 @@ def register_for_tournament(request: Request):
         return jsonify({
             "status": "registered",
             "tournament_id": tournament_id,
-            "coins_paid": entry_cost,
+            "coins_paid": entry_cost if not is_pro else 0,  # Pro users don't pay coins
             "coins_remaining": 0,  # Client should refresh balance from YRAL API
-            "diamonds": initial_diamonds
+            "diamonds": initial_diamonds,
+            "credits_consumed": 1 if is_pro else 0,  # 1 credit for pro, 0 for regular
+            "is_pro": is_pro
         }), 200
 
     except auth.InvalidIdTokenError:

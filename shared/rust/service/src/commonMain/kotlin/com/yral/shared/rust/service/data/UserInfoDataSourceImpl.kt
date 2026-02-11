@@ -37,6 +37,14 @@ class UserInfoDataSourceImpl(
             .service(principal)
             .getUserProfileDetailsV7(targetPrincipal)
 
+    override suspend fun getUsersProfileDetails(
+        principal: Principal,
+        targetPrincipalIds: List<String>,
+    ): List<UisUserProfileDetailsForFrontendV7> =
+        userInfoServiceFactory
+            .service(principal)
+            .getUsersProfileDetails(targetPrincipalIds)
+
     override suspend fun getFollowers(
         principal: Principal,
         targetPrincipal: Principal,

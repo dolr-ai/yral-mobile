@@ -10,6 +10,8 @@ import com.yral.shared.analytics.events.GameResult
 import com.yral.shared.analytics.events.GameTutorialShownEventData
 import com.yral.shared.analytics.events.GameType
 import com.yral.shared.analytics.events.GameVotedEventData
+import com.yral.shared.analytics.events.HowToPlayClickedEventData
+import com.yral.shared.analytics.events.SwipeAction
 import com.yral.shared.analytics.events.TokenType
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.preferences.stores.AffiliateAttributionStore
@@ -23,6 +25,7 @@ class GameTelemetry(
         lossPenalty: Int,
         optionChosen: String,
         isTutorialVote: Boolean,
+        swipeAction: SwipeAction = SwipeAction.CLICK,
     ) {
         analyticsManager.trackEvent(
             event =
@@ -38,6 +41,7 @@ class GameTelemetry(
                     stakeAmount = lossPenalty,
                     optionChosen = optionChosen,
                     isTutorialVote = isTutorialVote,
+                    swipeAction = swipeAction,
                 ),
         )
     }
@@ -137,5 +141,65 @@ class GameTelemetry(
                 isAutoCredited = false,
             ),
         )
+    }
+
+    fun onHotOrNotVoted(
+        feedDetails: FeedDetails,
+        optionChosen: String,
+        swipeAction: SwipeAction,
+    ) {
+        analyticsManager.trackEvent(
+            event =
+                GameVotedEventData(
+                    videoId = feedDetails.videoID,
+                    publisherUserId = feedDetails.principalID,
+                    likeCount = feedDetails.likeCount.toLong(),
+                    viewCount = feedDetails.viewCount.toLong(),
+                    isNsfw = feedDetails.isNSFW(),
+                    shareCount = 0,
+                    gameType = GameType.HOT_OR_NOT,
+                    stakeType = TokenType.YRAL,
+                    stakeAmount = HOT_OR_NOT_STAKE,
+                    optionChosen = optionChosen,
+                    isTutorialVote = false,
+                    swipeAction = swipeAction,
+                ),
+        )
+    }
+
+    fun onHotOrNotPlayed(
+        feedDetails: FeedDetails,
+        optionChosen: String,
+        coinDelta: Int,
+    ) {
+        analyticsManager.trackEvent(
+            event =
+                GamePlayedEventData(
+                    videoId = feedDetails.videoID,
+                    publisherUserId = feedDetails.principalID,
+                    likeCount = feedDetails.likeCount.toLong(),
+                    viewCount = feedDetails.viewCount.toLong(),
+                    isNsfw = feedDetails.isNSFW(),
+                    shareCount = 0,
+                    gameType = GameType.HOT_OR_NOT,
+                    stakeType = TokenType.YRAL,
+                    stakeAmount = HOT_OR_NOT_STAKE,
+                    optionChosen = optionChosen,
+                    gameResult = if (coinDelta > 0) GameResult.WIN else GameResult.LOSS,
+                    wonLossAmount = coinDelta,
+                    isTutorialVote = false,
+                    affiliate = affiliateAttributionStore.peek(),
+                ),
+        )
+    }
+
+    fun onHowToPlayClicked(gameType: GameType) {
+        analyticsManager.trackEvent(
+            event = HowToPlayClickedEventData(gameType = gameType),
+        )
+    }
+
+    companion object {
+        private const val HOT_OR_NOT_STAKE = 1
     }
 }

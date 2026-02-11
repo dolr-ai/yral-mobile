@@ -8,11 +8,14 @@ import com.github.michaelbull.result.onSuccess
 import com.yral.featureflag.AppFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.events.AiVideoGenFailureType
+import com.yral.shared.analytics.events.CreditFeature
+import com.yral.shared.analytics.events.SubscriptionEntryPoint
 import com.yral.shared.analytics.events.VideoCreationType
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.core.session.ProDetails
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
+import com.yral.shared.features.subscriptions.analytics.SubscriptionTelemetry
 import com.yral.shared.features.uploadvideo.analytics.UploadVideoTelemetry
 import com.yral.shared.features.uploadvideo.data.remote.models.TokenType
 import com.yral.shared.features.uploadvideo.domain.GenerateVideoUseCase
@@ -50,6 +53,7 @@ class AiVideoGenViewModel internal constructor(
     private val sessionManager: SessionManager,
     private val preferences: Preferences,
     private val uploadVideoTelemetry: UploadVideoTelemetry,
+    private val subscriptionTelemetry: SubscriptionTelemetry,
     logger: YralLogger,
     flagManager: FeatureFlagManager,
 ) : ViewModel() {
@@ -375,6 +379,14 @@ class AiVideoGenViewModel internal constructor(
                                             )
                                         }
                                         if (_state.value.proDetails.isProPurchased) {
+                                            // Track credit consumption
+                                            val creditsRemaining =
+                                                _state.value.proDetails.availableCredits - 1
+                                            subscriptionTelemetry.onCreditsConsumed(
+                                                feature = CreditFeature.AI_VIDEO,
+                                                creditsUsed = 1,
+                                                creditsRemaining = creditsRemaining.coerceAtLeast(0),
+                                            )
                                             aiVideoGenEventChannel.trySend(AiVideoGenEvent.RefreshProDetails)
                                         }
                                     }
@@ -570,6 +582,7 @@ class AiVideoGenViewModel internal constructor(
         data class ShowSubscriptionNudge(
             val title: String,
             val description: String,
+            val entryPoint: SubscriptionEntryPoint = SubscriptionEntryPoint.AI_VIDEO,
         ) : AiVideoGenEvent()
         data object RefreshProDetails : AiVideoGenEvent()
     }

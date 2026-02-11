@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
+import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.EdgeScrollDetectConnection
 import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
@@ -28,7 +29,9 @@ import com.yral.shared.libs.videoplayback.ui.VideoFeedSync
 import com.yral.shared.libs.videoplayback.ui.VideoPagerEffects
 import com.yral.shared.libs.videoplayback.ui.VideoSurfaceSlot
 import com.yral.shared.libs.videoplayback.ui.rememberPlaybackCoordinatorWithLifecycle
+import com.yral.shared.libs.videoplayback.withLogging
 import kotlinx.coroutines.flow.distinctUntilChanged
+import org.koin.compose.koinInject
 
 @Suppress("LongMethod")
 @Composable
@@ -141,6 +144,7 @@ fun YRALReelPlayer(
 private fun rememberPlaybackEventReporter(
     didVideoEnd: () -> Unit,
     recordTime: (Int, Int) -> Unit,
+    yralLogger: YralLogger = koinInject(),
 ): PlaybackEventReporter =
     remember(didVideoEnd, recordTime) {
         object : PlaybackEventReporter {
@@ -231,5 +235,5 @@ private fun rememberPlaybackEventReporter(
                 id: String,
                 bytes: Long,
             ) = Unit
-        }
+        }.withLogging(yralLogger = yralLogger, enabled = false)
     }

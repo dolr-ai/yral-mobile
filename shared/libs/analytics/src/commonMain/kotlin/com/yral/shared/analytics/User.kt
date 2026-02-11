@@ -13,6 +13,8 @@ data class User(
     val utmParams: AnalyticsUtmParams?,
     val isMandatoryLogin: Boolean?,
     val phoneNumber: String?,
+    val proStatus: Boolean?,
+    val isHonExperiment: Boolean?,
 ) {
     constructor(
         userId: String,
@@ -28,5 +30,7 @@ data class User(
         utmParams = null,
         isMandatoryLogin = null,
         phoneNumber = null,
+        proStatus = null,
+        isHonExperiment = null,
     )
 }

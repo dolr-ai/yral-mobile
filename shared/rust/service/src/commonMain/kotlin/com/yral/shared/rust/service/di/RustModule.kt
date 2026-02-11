@@ -17,6 +17,7 @@ import com.yral.shared.rust.service.domain.performance.FirebaseRustApiTracer
 import com.yral.shared.rust.service.domain.performance.RustApiPerformanceTracer
 import com.yral.shared.rust.service.domain.usecases.FollowUserUseCase
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCase
+import com.yral.shared.rust.service.domain.usecases.GetUsersProfileDetailsUseCase
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserUseCase
 import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsUseCase
 import com.yral.shared.rust.service.services.ICPLedgerServiceFactory
@@ -59,6 +60,7 @@ val rustModule: Module =
         factoryOf(::FollowUserUseCase)
         factoryOf(::UnfollowUserUseCase)
         factoryOf(::GetUserProfileDetailsV7UseCase)
+        factoryOf(::GetUsersProfileDetailsUseCase)
         factoryOf(::UpdateProfileDetailsUseCase)
 
         // Paging Data Sources Factory

@@ -214,7 +214,7 @@ private fun PositionText(
         label = "Position change",
     ) { balance ->
         Text(
-            text = "#".plus(formatAbbreviation(balance)),
+            text = if (balance > 0) "#".plus(formatAbbreviation(balance)) else "--",
             style = LocalAppTopography.current.feedCanisterId,
             color = animatedColor,
             overflow = TextOverflow.Ellipsis,

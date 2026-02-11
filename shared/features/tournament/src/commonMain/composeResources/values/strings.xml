@@ -3,6 +3,8 @@
     <string name="register_with_tokens">Register with %1$d</string>
     <string name="join_now">Join Now</string>
     <string name="join_now_with_tokens">Join Now with %1$d</string>
+    <string name="play_with_credit">Play with %1$d Credit</string>
+    <string name="join_with_credit">Join with %1$d Credit</string>
     <string name="registered">Registered</string>
     <string name="starts_in">Starts in %1$s</string>
     <string name="ends_in">Ends in %1$s</string>

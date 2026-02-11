@@ -8,6 +8,7 @@ import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.leaderboard.analytics.LeaderBoardTelemetry
 import com.yral.shared.features.leaderboard.domain.GetLeaderboardHistoryUseCase
+import com.yral.shared.features.leaderboard.domain.models.DailyRankGameType
 import com.yral.shared.features.leaderboard.domain.models.LeaderboardHistory
 import com.yral.shared.features.leaderboard.domain.models.LeaderboardHistoryRequest
 import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel.Companion.TOP_N_THRESHOLD
@@ -30,8 +31,12 @@ class LeaderboardHistoryViewModel(
     private val _state = MutableStateFlow(LeaderboardHistoryState())
     val state: StateFlow<LeaderboardHistoryState> = _state.asStateFlow()
 
-    fun fetchHistory(countryCode: String) {
+    fun fetchHistory(
+        countryCode: String,
+        gameType: DailyRankGameType = DailyRankGameType.SMILEY,
+    ) {
         viewModelScope.launch {
+            Logger.d("LeaderboardHistory") { "fetchHistory called with gameType=$gameType" }
             _state.update { it.copy(isLoading = true, error = null) }
             val principal = sessionManager.userPrincipal
             if (principal == null) {
@@ -44,6 +49,7 @@ class LeaderboardHistoryViewModel(
                         LeaderboardHistoryRequest(
                             principalId = principal,
                             countryCode = countryCode,
+                            gameType = gameType,
                         ),
                 ).onSuccess { history ->
                     _state.update {

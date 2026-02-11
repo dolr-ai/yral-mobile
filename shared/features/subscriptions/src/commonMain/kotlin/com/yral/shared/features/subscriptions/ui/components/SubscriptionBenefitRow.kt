@@ -27,7 +27,7 @@ fun SubscriptionBenefitRow(
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(spacing),
+        horizontalArrangement = Arrangement.spacedBy(spacing, Alignment.Start),
     ) {
         Image(
             painter = painterResource(iconRes),

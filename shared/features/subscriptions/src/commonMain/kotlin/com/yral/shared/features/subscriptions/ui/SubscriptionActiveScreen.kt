@@ -29,6 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.shared.features.subscriptions.ui.components.BoltIcon
 import com.yral.shared.features.subscriptions.ui.components.SubscriptionBenefitRow
+import com.yral.shared.features.subscriptions.ui.components.SubscriptionTermsText
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.buildHighlightedText
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
@@ -48,7 +49,6 @@ import yral_mobile.shared.features.subscriptions.generated.resources.subscriptio
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_status_title
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_subtitle
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_tagline
-import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_terms
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_title
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_valid_prefix
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_welcome
@@ -67,8 +67,11 @@ fun SubscriptionActiveScreen(
     modifier: Modifier = Modifier,
     validTillText: String,
     creditsReceived: Int,
+    tncUrl: String,
+    privacyPolicyUrl: String,
     onBack: () -> Unit = {},
     onExploreHome: () -> Unit = {},
+    onOpenLink: (String) -> Unit = {},
 ) {
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -113,7 +116,10 @@ fun SubscriptionActiveScreen(
                     ActiveContent(
                         validTillText = validTillText,
                         creditsReceived = creditsReceived,
+                        tncUrl = tncUrl,
+                        privacyPolicyUrl = privacyPolicyUrl,
                         onExploreHome = onExploreHome,
+                        onOpenLink = onOpenLink,
                     )
                 }
             }
@@ -125,7 +131,10 @@ fun SubscriptionActiveScreen(
 private fun ActiveContent(
     validTillText: String,
     creditsReceived: Int,
+    tncUrl: String,
+    privacyPolicyUrl: String,
     onExploreHome: () -> Unit,
+    onOpenLink: (String) -> Unit,
 ) {
     Column(
         modifier =
@@ -173,10 +182,10 @@ private fun ActiveContent(
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(modifier = Modifier.height(24.dp))
-        Text(
-            text = stringResource(Res.string.subscription_active_terms),
-            style = LocalAppTopography.current.baseRegular,
-            color = YralColors.Neutral300,
+        SubscriptionTermsText(
+            tncUrl = tncUrl,
+            privacyPolicyUrl = privacyPolicyUrl,
+            onOpenLink = onOpenLink,
             textAlign = TextAlign.Center,
         )
     }
@@ -316,8 +325,11 @@ private fun SubscriptionActiveScreenPreview() {
         SubscriptionActiveScreen(
             validTillText = "31 Dec 2024",
             creditsReceived = 40,
+            tncUrl = "https://yral.com/terms",
+            privacyPolicyUrl = "https://yral.com/privacy-policy",
             onBack = {},
             onExploreHome = {},
+            onOpenLink = {},
         )
     }
 }

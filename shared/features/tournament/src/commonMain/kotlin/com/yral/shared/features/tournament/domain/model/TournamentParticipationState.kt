@@ -15,5 +15,10 @@ sealed class TournamentParticipationState {
         val tokensRequired: Int,
     ) : TournamentParticipationState()
 
+    /** Pro users join with subscription credits instead of tokens. */
+    data class JoinNowWithCredit(
+        val creditsRequired: Int,
+    ) : TournamentParticipationState()
+
     data object JoinNowDisabled : TournamentParticipationState()
 }

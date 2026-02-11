@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.yral.shared.analytics.events.SignupPageName
+import com.yral.shared.analytics.events.SubscriptionEntryPoint
 import com.yral.shared.core.session.ProDetails
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.auth.ui.LoginMode
@@ -205,6 +206,7 @@ fun ChatConversationScreen(
                         )
                     }
                 },
+                entryPoint = SubscriptionEntryPoint.AI_CHATBOT,
             )
         }
 

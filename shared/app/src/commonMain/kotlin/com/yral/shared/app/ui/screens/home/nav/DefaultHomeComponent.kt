@@ -270,8 +270,18 @@ internal class DefaultHomeComponent(
             openWallet = { onWalletTabClick() },
         )
 
-    private fun leaderboardComponent(componentContext: ComponentContext): LeaderboardComponent =
-        LeaderboardComponent.Companion(
+    private fun leaderboardComponent(componentContext: ComponentContext): LeaderboardComponent {
+        val isCardLayoutEnabled = flagManager.isEnabled(com.yral.featureflag.FeedFeatureFlags.CardLayout.Enabled)
+        val gameType =
+            if (isCardLayoutEnabled) {
+                com.yral.shared.features.leaderboard.domain.models.DailyRankGameType.HOT_OR_NOT
+            } else {
+                com.yral.shared.features.leaderboard.domain.models.DailyRankGameType.SMILEY
+            }
+        co.touchlab.kermit.Logger.d(
+            "LeaderboardHistory",
+        ) { "leaderboardComponent: isCardLayoutEnabled=$isCardLayoutEnabled, gameType=$gameType" }
+        return LeaderboardComponent.Companion(
             componentContext = componentContext,
             snapshot = childSnapshots[Config.Leaderboard] as? LeaderboardComponent.Snapshot,
             navigateToHome = { onFeedTabClick() },
@@ -284,7 +294,9 @@ internal class DefaultHomeComponent(
             },
             showBackIcon = false,
             onBack = { navigation.pop() },
+            gameType = gameType,
         )
+    }
 
     @Suppress("MaxLineLength")
     private fun tournamentComponent(componentContext: ComponentContext): TournamentComponent =
@@ -306,6 +318,7 @@ internal class DefaultHomeComponent(
                 )
             },
             showAlertsOnDialog = showAlertsOnDialog,
+            subscriptionCoordinator = subscriptionCoordinator,
         )
 
     private fun uploadVideoComponent(componentContext: ComponentContext): UploadVideoRootComponent =

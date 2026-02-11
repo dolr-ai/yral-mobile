@@ -122,6 +122,7 @@ fun TournamentScreen(
                     ) { tournament ->
                         TournamentCard(
                             tournament = tournament,
+                            proDetails = uiState.proDetails,
                             onPrizeBreakdownClick = { viewModel.openPrizeBreakdown(tournament) },
                             onShareClick = { viewModel.onShareClicked(tournament) },
                             onTournamentCtaClick = { viewModel.onTournamentCtaClick(tournament) },

@@ -33,6 +33,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.yral.shared.core.session.ProDetails
 import com.yral.shared.features.tournament.domain.model.PrizeBreakdownRow
 import com.yral.shared.features.tournament.domain.model.Tournament
 import com.yral.shared.features.tournament.domain.model.TournamentParticipationState
@@ -77,6 +78,7 @@ import yral_mobile.shared.features.tournament.generated.resources.Res as Tournam
 @Composable
 fun TournamentCard(
     tournament: Tournament,
+    proDetails: ProDetails,
     onPrizeBreakdownClick: () -> Unit,
     onShareClick: () -> Unit,
     onTournamentCtaClick: () -> Unit,
@@ -93,7 +95,7 @@ fun TournamentCard(
     }
 
     // Derive current participation state based on real-time
-    val currentParticipationState = deriveParticipationState(tournament, now)
+    val currentParticipationState = deriveParticipationState(tournament, now, proDetails)
 
     val cardShape = RoundedCornerShape(8.dp)
 
@@ -428,13 +430,14 @@ private fun titleLineHeight(status: TournamentStatus) =
 private fun deriveParticipationState(
     tournament: Tournament,
     currentTime: Instant,
+    proDetails: ProDetails,
 ): TournamentParticipationState {
     val startTime = Instant.fromEpochMilliseconds(tournament.startEpochMs)
     val endTime = Instant.fromEpochMilliseconds(tournament.endEpochMs)
 
-    // Determine current status based on real-time
-    val isLive = currentTime >= startTime && currentTime <= endTime
+    val isLive = currentTime in startTime..endTime
     val isUpcoming = currentTime < startTime
+    val canUseCredit = proDetails.isProPurchased && proDetails.availableCredits >= tournament.entryCostCredits
 
     return when {
         tournament.isRegistered -> {
@@ -451,8 +454,18 @@ private fun deriveParticipationState(
                 else -> TournamentParticipationState.Registered
             }
         }
-        isLive -> TournamentParticipationState.JoinNowWithTokens(tournament.entryCost)
-        else -> TournamentParticipationState.RegistrationRequired(tournament.entryCost)
+        isLive ->
+            if (canUseCredit) {
+                TournamentParticipationState.JoinNowWithCredit(tournament.entryCostCredits)
+            } else {
+                TournamentParticipationState.JoinNowWithTokens(tournament.entryCost)
+            }
+        else ->
+            if (canUseCredit) {
+                TournamentParticipationState.JoinNowWithCredit(tournament.entryCostCredits)
+            } else {
+                TournamentParticipationState.RegistrationRequired(tournament.entryCost)
+            }
     }
 }
 
@@ -476,12 +489,14 @@ private fun TournamentCardLivePreview() {
                     startEpochMs = Clock.System.now().toEpochMilliseconds(),
                     endEpochMs = (Clock.System.now() + 10.minutes).toEpochMilliseconds(),
                     entryCost = 20,
+                    entryCostCredits = 1,
                     isRegistered = false,
                     userDiamonds = 0,
                 ),
             onShareClick = {},
             onTournamentCtaClick = {},
             onPrizeBreakdownClick = {},
+            proDetails = ProDetails(isProPurchased = true, availableCredits = 0),
         )
     }
 }
@@ -506,12 +521,14 @@ private fun TournamentCardUpcomingPreview() {
                     startEpochMs = (Clock.System.now() + 20.minutes).toEpochMilliseconds(),
                     endEpochMs = (Clock.System.now() + 30.minutes).toEpochMilliseconds(),
                     entryCost = 20,
+                    entryCostCredits = 1,
                     isRegistered = false,
                     userDiamonds = 0,
                 ),
             onShareClick = {},
             onTournamentCtaClick = {},
             onPrizeBreakdownClick = {},
+            proDetails = ProDetails(),
         )
     }
 }
@@ -536,12 +553,14 @@ private fun TournamentCardEndedPreview() {
                     startEpochMs = (Clock.System.now() - 20.minutes).toEpochMilliseconds(),
                     endEpochMs = (Clock.System.now() - 10.minutes).toEpochMilliseconds(),
                     entryCost = 20,
+                    entryCostCredits = 1,
                     isRegistered = false,
                     userDiamonds = 0,
                 ),
             onShareClick = {},
             onTournamentCtaClick = {},
             onPrizeBreakdownClick = {},
+            proDetails = ProDetails(),
         )
     }
 }

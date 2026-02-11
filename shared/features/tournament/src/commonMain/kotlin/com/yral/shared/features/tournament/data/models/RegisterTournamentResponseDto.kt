@@ -17,9 +17,13 @@ sealed class RegisterTournamentResponseDto {
         @SerialName("tournament_id")
         val tournamentId: String,
         @SerialName("coins_paid")
-        val coinsPaid: Int,
+        val coinsPaid: Int? = null,
         @SerialName("coins_remaining")
-        val coinsRemaining: Int,
+        val coinsRemaining: Int? = null,
+        @SerialName("credits_consumed")
+        val creditsConsumed: Int? = null,
+        @SerialName("is_pro")
+        val isPro: Boolean,
     ) : RegisterTournamentResponseDto()
 
     @Serializable
@@ -38,6 +42,8 @@ fun RegisterTournamentResponseDto.toRegistrationResult(): Result<RegistrationRes
                     tournamentId = tournamentId,
                     coinsPaid = coinsPaid,
                     coinsRemaining = coinsRemaining,
+                    creditsConsumed = creditsConsumed,
+                    isPro = isPro,
                 ),
             )
         }

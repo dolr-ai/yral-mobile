@@ -681,6 +681,7 @@ data class GameVotedEventData(
     @SerialName("stake_type") val stakeType: TokenType,
     @SerialName("option_chosen") val optionChosen: String,
     @SerialName("is_tutorial_vote") val isTutorialVote: Boolean,
+    @SerialName("swipe_action") val swipeAction: SwipeAction? = null,
 ) : BaseEventData(),
     EventData {
     constructor(
@@ -695,6 +696,7 @@ data class GameVotedEventData(
         stakeType: TokenType,
         optionChosen: String,
         isTutorialVote: Boolean,
+        swipeAction: SwipeAction? = null,
     ) : this(
         FeatureEvents.GAME_VOTED.getEventName(),
         Features.AUTH.getFeatureName(),
@@ -709,6 +711,21 @@ data class GameVotedEventData(
         stakeType,
         optionChosen,
         isTutorialVote,
+        swipeAction,
+    )
+}
+
+@Serializable
+data class HowToPlayClickedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.HOW_TO_PLAY_CLICKED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+    @SerialName("game_type") val gameType: GameType,
+) : BaseEventData(),
+    EventData {
+    constructor(gameType: GameType) : this(
+        FeatureEvents.HOW_TO_PLAY_CLICKED.getEventName(),
+        Features.FEED.getFeatureName(),
+        gameType,
     )
 }
 
@@ -1955,6 +1972,15 @@ enum class GameConcludedCtaType {
 }
 
 @Serializable
+enum class SwipeAction {
+    @SerialName("swipe")
+    SWIPE,
+
+    @SerialName("click")
+    CLICK,
+}
+
+@Serializable
 enum class MenuCtaType {
     @SerialName("login")
     LOGIN,
@@ -2074,7 +2100,8 @@ data class TournamentRegisteredEventData(
     @SerialName("feature_name") override val featureName: String = Features.TOURNAMENT.getFeatureName(),
     @SerialName("tournament_id") val tournamentId: String,
     @SerialName("tournament_type") val tournamentType: AnalyticsTournamentType,
-    @SerialName("entry_fee_points") val entryFeePoints: Int,
+    @SerialName("entry_fee_points") val entryFeePoints: Int?,
+    @SerialName("entry_fee_credits") val entryFeeCredits: Int?,
     @SerialName("registration_time") val registrationTime: String,
     @SerialName("session_id") val sessionId: String,
 ) : BaseEventData(),
@@ -2227,6 +2254,9 @@ enum class TournamentState {
 
     @SerialName("join_now_with_tokens")
     JOIN_NOW_WITH_TOKENS,
+
+    @SerialName("join_now_with_credit")
+    JOIN_NOW_WITH_CREDIT,
 
     @SerialName("join_now_disabled")
     JOIN_NOW_DISABLED,

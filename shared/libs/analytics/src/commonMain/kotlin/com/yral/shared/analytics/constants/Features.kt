@@ -12,6 +12,7 @@ enum class Features {
     LEADERBOARD,
     AI_CHATBOT,
     TOURNAMENT,
+    SUBSCRIPTION,
     ;
 
     fun getFeatureName(): String = name.lowercase()

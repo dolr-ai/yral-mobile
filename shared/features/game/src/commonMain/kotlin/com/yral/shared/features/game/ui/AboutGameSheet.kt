@@ -40,6 +40,7 @@ import yral_mobile.shared.features.game.generated.resources.about_game
 fun AboutGameSheet(
     gameRules: List<AboutGameItem>,
     onDismissRequest: () -> Unit,
+    isHotOrNotMode: Boolean = false,
 ) {
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     YralBottomSheet(
@@ -47,21 +48,32 @@ fun AboutGameSheet(
         bottomSheetState = bottomSheetState,
         dragHandle = { DragHandle(color = YralColors.Neutral500) },
     ) {
-        Column(
-            modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 28.dp),
-        ) {
-            Text(
-                modifier = Modifier.padding(vertical = 12.dp),
-                text = stringResource(Res.string.about_game),
-                style = LocalAppTopography.current.xlBold,
+        if (isHotOrNotMode) {
+            HotOrNotHowToPlayContent(
+                onKeepPlayingClick = onDismissRequest,
             )
-            Spacer(Modifier.height(12.dp))
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                items(gameRules.size) { index ->
-                    AboutGameItem(gameRules[index])
-                }
+        } else {
+            SmileyGameHowToPlayContent(gameRules = gameRules)
+        }
+    }
+}
+
+@Composable
+private fun SmileyGameHowToPlayContent(gameRules: List<AboutGameItem>) {
+    Column(
+        modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 28.dp),
+    ) {
+        Text(
+            modifier = Modifier.padding(vertical = 12.dp),
+            text = stringResource(Res.string.about_game),
+            style = LocalAppTopography.current.xlBold,
+        )
+        Spacer(Modifier.height(12.dp))
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            items(gameRules.size) { index ->
+                AboutGameItem(gameRules[index])
             }
         }
     }

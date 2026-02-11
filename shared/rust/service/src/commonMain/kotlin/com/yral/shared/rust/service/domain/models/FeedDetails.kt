@@ -20,7 +20,9 @@ internal fun PostDetailsForFrontend.toFeedDetails(
     canisterId: String,
     nsfwProbability: Double?,
 ): FeedDetails {
-    if (status == PostStatus.BANNED_DUE_TO_USER_REPORTING) {
+    if (status == PostStatus.BANNED_DUE_TO_USER_REPORTING ||
+        status == PostStatus.BANNED_FOR_EXPLICITNESS
+    ) {
         throw YralException("Post is banned $postId")
     }
     val profileImageUrl = propicFromPrincipal(createdByUserPrincipalId)
@@ -50,7 +52,9 @@ internal fun UpsPostDetailsForFrontend.toFeedDetails(
     canisterId: String,
     nsfwProbability: Double?,
 ): FeedDetails {
-    if (status == UpsPostStatus.BANNED_DUE_TO_USER_REPORTING) {
+    if (status == UpsPostStatus.BANNED_DUE_TO_USER_REPORTING ||
+        status == UpsPostStatus.BANNED_FOR_EXPLICITNESS
+    ) {
         throw YralException("Post is banned $postId")
     }
     val profileImageUrl = propicFromPrincipal(createdByUserPrincipalId)
