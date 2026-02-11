@@ -5,6 +5,7 @@ import com.yral.shared.features.chat.analytics.ChatTelemetry
 import com.yral.shared.features.chat.data.ChatDataSource
 import com.yral.shared.features.chat.data.ChatRemoteDataSource
 import com.yral.shared.features.chat.data.ChatRepositoryImpl
+import com.yral.shared.features.chat.domain.ChatErrorMapper
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.usecases.CreateConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.DeleteConversationUseCase
@@ -13,6 +14,7 @@ import com.yral.shared.features.chat.domain.usecases.SendMessageUseCase
 import com.yral.shared.features.chat.viewmodel.ChatWallViewModel
 import com.yral.shared.features.chat.viewmodel.ConversationViewModel
 import org.koin.core.module.dsl.factoryOf
+import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -38,6 +40,7 @@ val chatModule =
         factoryOf(::GetInfluencerUseCase)
         factoryOf(::SendMessageUseCase)
         factoryOf(::ChatTelemetry)
+        singleOf(::ChatErrorMapper)
         viewModelOf(::ChatWallViewModel)
         viewModelOf(::ConversationViewModel)
     }

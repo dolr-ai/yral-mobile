@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,9 +34,11 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.yral.shared.analytics.events.InfluencerSource
+import com.yral.shared.features.chat.domain.models.ChatError
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencerStatus
 import com.yral.shared.features.chat.nav.wall.ChatWallComponent
+import com.yral.shared.features.chat.ui.components.ChatErrorBottomSheet
 import com.yral.shared.features.chat.viewmodel.ChatWallViewModel
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralButton
@@ -46,7 +50,11 @@ import yral_mobile.shared.features.chat.generated.resources.chat_wall_coming_soo
 import yral_mobile.shared.features.chat.generated.resources.chat_wall_subtitle
 import yral_mobile.shared.features.chat.generated.resources.chat_wall_talk_to_me
 import yral_mobile.shared.features.chat.generated.resources.chat_wall_title
+import yral_mobile.shared.features.chat.generated.resources.error_network_message_influencers
+import yral_mobile.shared.features.chat.generated.resources.influencers_error
 
+@Suppress("LongMethod")
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatWallScreen(
     component: ChatWallComponent,
@@ -55,6 +63,24 @@ fun ChatWallScreen(
 ) {
     val influencers = viewModel.influencers.collectAsLazyPagingItems()
     var trackedCardsViewed by remember { mutableStateOf(false) }
+
+    var pagingError by remember { mutableStateOf<ChatError?>(null) }
+    val errorBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    LaunchedEffect(influencers.loadState) {
+        val errorState =
+            influencers.loadState.run {
+                append as? LoadState.Error
+                    ?: prepend as? LoadState.Error
+                    ?: refresh as? LoadState.Error
+            }
+        errorState?.let {
+            pagingError =
+                ChatError.NetworkError(it.error) {
+                    pagingError = null
+                    influencers.retry()
+                }
+        }
+    }
 
     LaunchedEffect(influencers.loadState.refresh, influencers.itemSnapshotList.items.size) {
         val items = influencers.itemSnapshotList.items.filterNotNull()
@@ -90,7 +116,10 @@ fun ChatWallScreen(
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             contentPadding = PaddingValues(bottom = 24.dp),
         ) {
-            items(influencers.itemCount) { index ->
+            items(
+                count = influencers.itemCount,
+                key = { index -> influencers.peek(index)?.id ?: "placeholder-$index" },
+            ) { index ->
                 influencers[index]?.let { influencer ->
                     InfluencerCard(
                         influencer = influencer,
@@ -107,6 +136,16 @@ fun ChatWallScreen(
                 }
             }
         }
+    }
+
+    pagingError?.let { error ->
+        ChatErrorBottomSheet(
+            error = error,
+            bottomSheetState = errorBottomSheetState,
+            onDismissRequest = { pagingError = null },
+            description = stringResource(Res.string.error_network_message_influencers),
+            errorIllustration = Res.drawable.influencers_error,
+        )
     }
 }
 

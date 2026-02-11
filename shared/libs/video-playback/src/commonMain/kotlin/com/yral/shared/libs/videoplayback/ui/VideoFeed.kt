@@ -180,7 +180,7 @@ fun VideoSurfaceSlot(
             }
             onDispose {
                 if (bound) {
-                    coordinator.unbindSurface(index)
+                    handle?.let { coordinator.unbindSurface(index, it.id) }
                 }
             }
         }

@@ -174,7 +174,7 @@ class DefaultAuthClient(
             preferences.putString(PrefKeys.REFRESH_TOKEN.name, refreshToken)
         }
         if (accessToken.isNotEmpty()) {
-            preferences.putString(PrefKeys.ACCESS_TOKEN.name, refreshToken)
+            preferences.putString(PrefKeys.ACCESS_TOKEN.name, accessToken)
         }
     }
 
@@ -647,6 +647,7 @@ class DefaultAuthClient(
                             authTelemetry.otpValidationResult(
                                 status = OtpValidationStatus.FAILURE,
                                 reason = response.error,
+                                phoneNumber = phoneNumber,
                             )
                             authTelemetry.authFailed(SocialProvider.PHONE)
                             throw YralAuthException("Phone auth verification failed - ${response.errorMessage}")
@@ -655,6 +656,7 @@ class DefaultAuthClient(
                             authTelemetry.otpValidationResult(
                                 status = OtpValidationStatus.SUCCESS,
                                 reason = null,
+                                phoneNumber = phoneNumber,
                             )
                             preferences.putString(PrefKeys.PHONE_NUMBER.name, phoneNumber)
                             sessionManager.updatePhoneNumber(phoneNumber)
@@ -671,6 +673,7 @@ class DefaultAuthClient(
                     authTelemetry.otpValidationResult(
                         status = OtpValidationStatus.FAILURE,
                         reason = error.message,
+                        phoneNumber = phoneNumber,
                     )
                     authTelemetry.authFailed(SocialProvider.PHONE)
                     Logger.e("DefaultAuthClient") { "Phone auth verification failed: ${error.message}" }
