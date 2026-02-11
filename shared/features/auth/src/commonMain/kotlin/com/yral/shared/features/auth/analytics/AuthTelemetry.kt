@@ -84,11 +84,13 @@ class AuthTelemetry(
     fun otpValidationResult(
         status: OtpValidationStatus,
         reason: String? = null,
+        phoneNumber: String,
     ) {
         analyticsManager.trackEvent(
             OtpValidationResultEventData(
                 validationStatus = status,
                 failureReason = reason,
+                phoneNumber = phoneNumber,
             ),
         )
     }
