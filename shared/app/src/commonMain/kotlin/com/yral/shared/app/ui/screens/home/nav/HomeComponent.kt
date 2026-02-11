@@ -116,6 +116,7 @@ abstract class HomeComponent {
                 isHotOrNot: Boolean,
             ) -> Unit,
             openAccountSheet: () -> Unit,
+            switchToMainProfile: (onComplete: (Boolean) -> Unit) -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
         ): HomeComponent =
             DefaultHomeComponent(
@@ -131,6 +132,7 @@ abstract class HomeComponent {
                 openTournamentLeaderboard,
                 openTournamentGame,
                 openAccountSheet,
+                switchToMainProfile,
                 showAlertsOnDialog,
             )
     }

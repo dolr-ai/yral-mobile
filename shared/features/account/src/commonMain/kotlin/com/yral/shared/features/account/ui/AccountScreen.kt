@@ -62,6 +62,7 @@ import com.yral.shared.features.account.viewmodel.ErrorType
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
+import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.YralWebViewBottomSheet
 import com.yral.shared.libs.designsystem.component.features.AccountInfoView
 import com.yral.shared.libs.designsystem.component.features.DeleteConfirmationSheet
@@ -78,6 +79,10 @@ import yral_mobile.shared.features.account.generated.resources.accounts
 import yral_mobile.shared.features.account.generated.resources.delete_account
 import yral_mobile.shared.features.account.generated.resources.delete_account_disclaimer
 import yral_mobile.shared.features.account.generated.resources.delete_account_question
+import yral_mobile.shared.features.account.generated.resources.delete_ai_influencer
+import yral_mobile.shared.features.account.generated.resources.delete_ai_influencer_disclaimer
+import yral_mobile.shared.features.account.generated.resources.delete_ai_influencer_question
+import yral_mobile.shared.features.account.generated.resources.delete_ai_influencer_title
 import yral_mobile.shared.features.account.generated.resources.delete_your_account
 import yral_mobile.shared.features.account.generated.resources.discord
 import yral_mobile.shared.features.account.generated.resources.document
@@ -143,22 +148,46 @@ fun AccountScreen(
             }
         }
     Column(modifier = modifier.fillMaxSize()) {
-        AccountsTitle(state.isWalletEnabled) { component.onBack() }
-        AccountScreenContent(
-            state = state,
-            viewModel = viewModel,
-            subscriptionCoordinator = component.subscriptionCoordinator,
-            alertsEnabled = state.alertsEnabled,
-            onAlertsToggle = handleAlertsToggle,
-            onBack = { component.onBack() },
-            promptLogin = { component.promptLogin(SignupPageName.MENU) },
-        )
-        SheetContent(
-            bottomSheetState = bottomSheetState,
-            bottomSheetType = state.bottomSheetType,
-            onDismissRequest = { viewModel.setBottomSheetType(AccountBottomSheet.None) },
-            onDeleteAccount = { viewModel.deleteAccount() },
-        )
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                AccountsTitle(state.isWalletEnabled) { component.onBack() }
+                AccountScreenContent(
+                    state = state,
+                    viewModel = viewModel,
+                    subscriptionCoordinator = component.subscriptionCoordinator,
+                    alertsEnabled = state.alertsEnabled,
+                    onAlertsToggle = handleAlertsToggle,
+                    onBack = { component.onBack() },
+                    promptLogin = { component.promptLogin(SignupPageName.MENU) },
+                )
+                SheetContent(
+                    bottomSheetState = bottomSheetState,
+                    bottomSheetType = state.bottomSheetType,
+                    isBotAccount = state.isBotAccount,
+                    onDismissRequest = { viewModel.setBottomSheetType(AccountBottomSheet.None) },
+                    onDeleteAccount = {
+                        viewModel.setBottomSheetType(AccountBottomSheet.None)
+                        viewModel.deleteAccount {
+                            component.onBack()
+                            component.switchToMainProfile { switched ->
+                                viewModel.onBotSwitchToMainFinished(switched)
+                            }
+                        }
+                    },
+                )
+            }
+            if (state.isDeletingAccount) {
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .background(YralColors.Neutral900.copy(alpha = 0.7f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    YralLoader(size = 40.dp)
+                }
+            }
+        }
     }
 }
 
@@ -228,6 +257,7 @@ private fun AccountScreenContent(
         Spacer(modifier = Modifier.height(8.dp))
         HelpLinks(
             links = helperLinks,
+            isBotAccount = state.isBotAccount,
             alertsEnabled = alertsEnabled,
             onAlertsToggle = onAlertsToggle,
             onLinkClicked = {
@@ -259,6 +289,7 @@ private fun AccountScreenContent(
 private fun SheetContent(
     bottomSheetState: SheetState,
     bottomSheetType: AccountBottomSheet,
+    isBotAccount: Boolean,
     onDismissRequest: () -> Unit,
     onDeleteAccount: () -> Unit,
 ) {
@@ -291,9 +322,26 @@ private fun SheetContent(
         is AccountBottomSheet.DeleteAccount -> {
             DeleteConfirmationSheet(
                 bottomSheetState = bottomSheetState,
-                title = stringResource(Res.string.delete_your_account),
-                subTitle = stringResource(Res.string.delete_account_disclaimer),
-                confirmationMessage = stringResource(Res.string.delete_account_question),
+                title =
+                    stringResource(
+                        if (isBotAccount) Res.string.delete_ai_influencer_title else Res.string.delete_your_account,
+                    ),
+                subTitle =
+                    stringResource(
+                        if (isBotAccount) {
+                            Res.string.delete_ai_influencer_disclaimer
+                        } else {
+                            Res.string.delete_account_disclaimer
+                        },
+                    ),
+                confirmationMessage =
+                    stringResource(
+                        if (isBotAccount) {
+                            Res.string.delete_ai_influencer_question
+                        } else {
+                            Res.string.delete_account_question
+                        },
+                    ),
                 cancelButton = stringResource(Res.string.no_take_me_back),
                 deleteButton = stringResource(Res.string.yes_delete),
                 onDismissRequest = onDismissRequest,
@@ -382,6 +430,7 @@ private fun Divider() {
 @Composable
 private fun HelpLinks(
     links: List<AccountHelpLink>,
+    isBotAccount: Boolean,
     alertsEnabled: Boolean,
     onAlertsToggle: (Boolean) -> Unit,
     onLinkClicked: (link: AccountHelpLink) -> Unit,
@@ -410,6 +459,7 @@ private fun HelpLinks(
             links.forEach {
                 HelpLinkItem(
                     item = it,
+                    isBotAccount = isBotAccount,
                     onLinkClicked = onLinkClicked,
                 )
             }
@@ -461,6 +511,7 @@ private fun AlertsToggleRow(
 @Composable
 private fun HelpLinkItem(
     item: AccountHelpLink,
+    isBotAccount: Boolean,
     onLinkClicked: (link: AccountHelpLink) -> Unit,
 ) {
     Row(
@@ -490,7 +541,7 @@ private fun HelpLinkItem(
                     contentScale = ContentScale.None,
                 )
             }
-            item.getText()?.let {
+            item.getText(isBotAccount)?.let {
                 Text(
                     text = it,
                     style = LocalAppTopography.current.mdRegular,
@@ -583,13 +634,18 @@ private fun AccountHelpLink.getSocialIcon() =
     }
 
 @Composable
-private fun AccountHelpLink.getText() =
+private fun AccountHelpLink.getText(isBotAccount: Boolean) =
     when (type) {
         AccountHelpLinkType.TALK_TO_TEAM -> linkText ?: stringResource(Res.string.talk_to_the_team)
         AccountHelpLinkType.TERMS_OF_SERVICE -> stringResource(DesignRes.string.terms_of_service)
         AccountHelpLinkType.PRIVACY_POLICY -> stringResource(Res.string.privacy_policy)
         AccountHelpLinkType.LOGOUT -> stringResource(Res.string.logout)
-        AccountHelpLinkType.DELETE_ACCOUNT -> stringResource(Res.string.delete_account)
+        AccountHelpLinkType.DELETE_ACCOUNT ->
+            if (isBotAccount) {
+                stringResource(Res.string.delete_ai_influencer)
+            } else {
+                stringResource(Res.string.delete_account)
+            }
         else -> null
     }
 

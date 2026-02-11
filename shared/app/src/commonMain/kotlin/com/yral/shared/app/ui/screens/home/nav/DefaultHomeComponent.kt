@@ -79,6 +79,7 @@ internal class DefaultHomeComponent(
         isHotOrNot: Boolean,
     ) -> Unit,
     private val openAccountSheet: () -> Unit,
+    private val switchToMainProfile: (onComplete: (Boolean) -> Unit) -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
 ) : HomeComponent(),
     ComponentContext by componentContext {
@@ -350,6 +351,7 @@ internal class DefaultHomeComponent(
             openCreateInfluencer = openCreateInfluencer,
             openConversation = openConversation,
             openAccountSheet = openAccountSheet,
+            switchToMainProfile = switchToMainProfile,
             snapshot = childSnapshots[Config.Profile] as? ProfileComponent.Snapshot,
             showAlertsOnDialog = showAlertsOnDialog,
             promptLogin = { homeViewModel.showSignupPrompt(true, it) },
@@ -358,6 +360,7 @@ internal class DefaultHomeComponent(
     private fun accountComponent(componentContext: ComponentContext): AccountComponent =
         AccountComponent.Companion(
             componentContext = componentContext,
+            switchToMainProfile = switchToMainProfile,
             promptLogin = { homeViewModel.showSignupPrompt(true, it) },
             subscriptionCoordinator = subscriptionCoordinator,
         )

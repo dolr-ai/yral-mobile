@@ -222,6 +222,7 @@ class DefaultAuthClient(
         val count =
             raw?.let { runCatching { json.decodeFromString<List<BotIdentityEntry>>(it).size }.getOrNull() }
                 ?: 0
+        Logger.d("BotIdentitySource") { "updateBotCountFromPrefs source=local_pref count=$count" }
         sessionManager.updateBotCount(count)
     }
 
@@ -814,6 +815,10 @@ class DefaultAuthClient(
                             latest.copy(username = username)
                         }
                 preferences.putString(PrefKeys.BOT_IDENTITIES.name, json.encodeToString(merged))
+                Logger.d("BotIdentitySource") {
+                    "persistBotIdentitiesFromToken source=oauth_token existing=${existing.size} " +
+                        "new=${entries.size} merged=${merged.size}"
+                }
             }
         }
     }
