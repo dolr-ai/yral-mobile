@@ -39,13 +39,12 @@ jobs:
       - name: Install android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install android ndk
+      - name: Install android NDK
         if: steps.changed_files.outputs.any_changed == 'true'
-        uses: nttld/setup-ndk@v1
-        with:
-          ndk-version: r28
-          link-to-sdk: true
-          local-cache: true
+        run: |
+          echo "y" | sdkmanager --install "ndk;28.0.13004108" --channel=0
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/28.0.13004108" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/28.0.13004108" >> $GITHUB_ENV
 
       - name: Update version code
         run: |
