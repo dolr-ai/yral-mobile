@@ -121,7 +121,7 @@ jobs:
         env:
           GITHUB_USERNAME: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          JAVA_HOME: ${{ steps.setup-jdk.outputs.path }}
+          JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
 
       - name: Authenticate to Google Cloud
         id: auth
