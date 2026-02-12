@@ -62,6 +62,19 @@ jobs:
           ndk-version: r28
           link-to-sdk: true
           local-cache: true
+      
+      - name: Verify NDK installation
+        run: |
+          echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          ls -la $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/ | grep strip || echo "llvm-strip listing failed"
+          if [ -f "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip" ]; then
+            echo "llvm-strip found at: $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip"
+            $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip --version
+          else
+            echo "ERROR: llvm-strip not found!"
+            exit 1
+          fi
 
 #      - name: Bump version (ephemeral, no commit)
 #        run: |
