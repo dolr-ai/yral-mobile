@@ -24,7 +24,7 @@ internal class SentryLogWriter : LogWriter() {
             return
         }
 
-        Sentry.addBreadcrumb(Breadcrumb.info(formattedMessage))
+        Sentry.addBreadcrumb(severity.toBreadcrumb(formattedMessage))
         Sentry.captureMessage(formattedMessage) { scope ->
             scope.level = severity.toSentryLevel()
         }
@@ -38,6 +38,21 @@ internal class SentryLogWriter : LogWriter() {
             Severity.Warn -> SentryLevel.WARNING
             Severity.Error -> SentryLevel.ERROR
             Severity.Assert -> SentryLevel.FATAL
+        }
+
+    private fun Severity.toBreadcrumb(message: String): Breadcrumb =
+        when (this) {
+            Severity.Verbose,
+            Severity.Debug,
+            -> Breadcrumb.debug(message)
+
+            Severity.Info -> Breadcrumb.info(message)
+
+            Severity.Warn -> Breadcrumb(message = message, level = SentryLevel.WARNING, type = "warning")
+
+            Severity.Error -> Breadcrumb.error(message)
+
+            Severity.Assert -> Breadcrumb.error(message).apply { level = SentryLevel.FATAL }
         }
 
     private companion object {
