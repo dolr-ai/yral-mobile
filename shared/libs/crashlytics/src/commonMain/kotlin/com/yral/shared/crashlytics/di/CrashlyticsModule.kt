@@ -14,8 +14,12 @@ val crashlyticsModule =
         single { FirebaseCrashlyticsProvider(get()) }
         single { SentryCrashlyticsProvider() }
         single {
-            CrashlyticsManager()
-                .addProvider(get<FirebaseCrashlyticsProvider>())
-                .addProvider(get<SentryCrashlyticsProvider>())
+            CrashlyticsManager(
+                providers =
+                    listOf(
+                        get<FirebaseCrashlyticsProvider>(),
+                        get<SentryCrashlyticsProvider>(),
+                    ),
+            )
         }
     }
