@@ -16,7 +16,10 @@ interface PlaybackCoordinator {
         surface: VideoSurfaceHandle,
     )
 
-    fun unbindSurface(index: Int)
+    fun unbindSurface(
+        index: Int,
+        surfaceId: String,
+    )
 
     fun onAppForeground()
 

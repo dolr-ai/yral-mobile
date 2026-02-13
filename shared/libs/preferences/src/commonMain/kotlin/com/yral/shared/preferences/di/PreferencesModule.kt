@@ -16,6 +16,7 @@ import org.koin.dsl.module
 private const val USER_SHARED_PREF_NAME = "YRAL_PREF"
 private const val FEED_CACHE_PREF_NAME = "YRAL_FEED_CACHE_PREF"
 private const val UTM_SHARED_PREF_NAME = "YRAL_UTM_PREF"
+private const val TOURNAMENT_RESUME_CACHE_PREF_NAME = "YRAL_TOURNAMENT_RESUME_CACHE_PREF"
 
 @OptIn(ExperimentalSettingsApi::class)
 val preferencesModule =
@@ -38,6 +39,16 @@ val preferencesModule =
                 flowSettings =
                     get<PreferencesFactory>().createDataStore(
                         preferenceName = UTM_SHARED_PREF_NAME,
+                        appDispatchers = get<AppDispatchers>(),
+                    ),
+                appDispatchers = get(),
+            )
+        }
+        single<Preferences>(named("TournamentResumeCachePreferences")) {
+            FlowPreferencesImpl(
+                flowSettings =
+                    get<PreferencesFactory>().createDataStore(
+                        preferenceName = TOURNAMENT_RESUME_CACHE_PREF_NAME,
                         appDispatchers = get<AppDispatchers>(),
                     ),
                 appDispatchers = get(),

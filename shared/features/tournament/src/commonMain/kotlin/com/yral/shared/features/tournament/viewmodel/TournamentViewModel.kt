@@ -11,6 +11,7 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.game.domain.GetBalanceUseCase
 import com.yral.shared.features.subscriptions.analytics.SubscriptionTelemetry
 import com.yral.shared.features.tournament.analytics.TournamentTelemetry
+import com.yral.shared.features.tournament.cache.TournamentResumeCacheStore
 import com.yral.shared.features.tournament.domain.GetMyTournamentsUseCase
 import com.yral.shared.features.tournament.domain.GetTournamentsUseCase
 import com.yral.shared.features.tournament.domain.RegisterForTournamentUseCase
@@ -52,6 +53,7 @@ class TournamentViewModel(
     private val shareService: ShareService,
     private val urlBuilder: UrlBuilder,
     private val linkGenerator: LinkGenerator,
+    private val tournamentResumeCacheStore: TournamentResumeCacheStore,
     private val telemetry: TournamentTelemetry,
     private val subscriptionTelemetry: SubscriptionTelemetry,
 ) : ViewModel() {
@@ -68,6 +70,7 @@ class TournamentViewModel(
 
     init {
         observeSessionState()
+        cleanupExpiredTournamentCache()
         loadTournaments()
         tournamentListUpdater()
     }
@@ -204,6 +207,7 @@ class TournamentViewModel(
     }
 
     fun loadTournaments() {
+        cleanupExpiredTournamentCache()
         loadJob?.cancel()
         val requestId = ++loadRequestId
         loadJob =
@@ -215,6 +219,13 @@ class TournamentViewModel(
                     TournamentUiState.Tab.History -> loadMyTournaments(requestId)
                 }
             }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private fun cleanupExpiredTournamentCache() {
+        viewModelScope.launch {
+            tournamentResumeCacheStore.clearExpired(nowEpochMs = Clock.System.now().toEpochMilliseconds())
+        }
     }
 
     private fun isLatestRequest(requestId: Int): Boolean = requestId == loadRequestId

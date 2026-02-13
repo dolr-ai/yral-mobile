@@ -19,6 +19,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.shared.features.feed.ui.FeedScreen
 import com.yral.shared.features.feed.viewmodel.FeedContext
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
+import com.yral.shared.features.tournament.cache.TournamentResumeCacheStore
 import com.yral.shared.features.tournament.nav.TournamentGameComponent
 import com.yral.shared.features.tournament.ui.LeaveTournamentBottomSheet
 import com.yral.shared.features.tournament.ui.OutOfDiamondsBottomSheet
@@ -29,8 +30,13 @@ import com.yral.shared.features.tournament.ui.TournamentHowToPlayScreen
 import com.yral.shared.features.tournament.ui.TournamentTopOverlay
 import com.yral.shared.features.tournament.viewmodel.TournamentGameViewModel
 import com.yral.shared.libs.designsystem.component.lottie.PreloadLottieAnimations
+import com.yral.shared.libs.designsystem.component.toast.ToastManager
+import com.yral.shared.libs.designsystem.component.toast.ToastType
+import com.yral.shared.libs.designsystem.component.toast.showError
 import com.yral.shared.libs.videoPlayer.cardstack.SwipeDirection
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.time.Clock
@@ -44,6 +50,7 @@ fun TournamentGameScaffoldScreen(
     sessionKey: String,
 ) {
     val gameConfig = component.gameConfig
+    val tournamentResumeCacheStore: TournamentResumeCacheStore = koinInject()
     val tournamentGameViewModel =
         koinViewModel<TournamentGameViewModel>(
             key = "tournament-game-${gameConfig.tournamentId}-$sessionKey",
@@ -57,6 +64,21 @@ fun TournamentGameScaffoldScreen(
                         tournamentId = gameConfig.tournamentId,
                         sessionKey = sessionKey,
                         isHotOrNot = gameConfig.isHotOrNot,
+                        loadSavedPage = {
+                            tournamentResumeCacheStore.loadPage(
+                                scopeKey = sessionKey,
+                                tournamentId = gameConfig.tournamentId,
+                                nowEpochMs = Clock.System.now().toEpochMilliseconds(),
+                            )
+                        },
+                        saveCurrentPage = { pageNo ->
+                            tournamentResumeCacheStore.savePage(
+                                scopeKey = sessionKey,
+                                tournamentId = gameConfig.tournamentId,
+                                endEpochMs = gameConfig.endEpochMs,
+                                pageIndex = pageNo,
+                            )
+                        },
                     ),
                 )
             },
@@ -91,6 +113,7 @@ fun TournamentGameScaffoldScreen(
         }
         if (timeLeftMs <= 0 && gameConfig.endEpochMs > 0) {
             tournamentGameViewModel.trackTournamentEnded(gameConfig.tournamentTitle)
+            tournamentGameViewModel.clearTournamentCache(gameConfig.tournamentId)
             component.onTimeUp()
         }
     }
@@ -108,7 +131,17 @@ fun TournamentGameScaffoldScreen(
             tournamentType = tournamentType,
             initialDiamonds = gameConfig.initialDiamonds,
             endEpochMs = gameConfig.endEpochMs,
+            sessionScopeKey = sessionKey,
         )
+    }
+
+    LaunchedEffect(tournamentGameViewModel) {
+        tournamentGameViewModel.eventsFlow.collectLatest { event ->
+            when (event) {
+                is TournamentGameViewModel.Event.ShowVoteError ->
+                    ToastManager.showError(type = ToastType.Small(message = event.message))
+            }
+        }
     }
 
     Scaffold(
@@ -219,6 +252,7 @@ fun TournamentGameScaffoldScreen(
             if (gameState.tournamentEndedError) {
                 LaunchedEffect(gameState.tournamentEndedError) {
                     tournamentGameViewModel.clearTournamentEndedError()
+                    tournamentGameViewModel.clearTournamentCache(gameConfig.tournamentId)
                     component.onTimeUp()
                 }
             }

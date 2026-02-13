@@ -12,7 +12,7 @@ object ChatFeatureFlags {
                 keySuffix = "enabled",
                 name = "Enable or disable chat",
                 description = "Enable or disable chat",
-                defaultValue = false,
+                defaultValue = true,
             )
         val LoginPromptMessageThreshold: FeatureFlag<Int> =
             int(

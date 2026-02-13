@@ -43,6 +43,7 @@ internal fun ReelSwipeableCardStack(
     onEdgeScrollAttempt: (pageNo: Int, atStart: Boolean, direction: ReelScrollDirection) -> Unit,
     overlayContent: @Composable (pageNo: Int, scrollToNext: () -> Unit) -> Unit,
     onSwipeVote: ((direction: SwipeDirection, pageIndex: Int, isSwipe: Boolean) -> Unit)? = null,
+    shouldSuppressSwipeFeedback: ((pageIndex: Int) -> Boolean)? = null,
 ) {
     val pageCount = minOf(reels.size, maxReelsInPager)
     if (pageCount == 0) return
@@ -139,7 +140,10 @@ internal fun ReelSwipeableCardStack(
             key = { index -> visibleReels[index].videoId },
             onSwipeComplete = { direction ->
                 if (direction == SwipeDirection.LEFT || direction == SwipeDirection.RIGHT) {
-                    onSwipeVote?.invoke(direction, swipeState.settledIndex, true)
+                    val isSuppressed = shouldSuppressSwipeFeedback?.invoke(swipeState.settledIndex) == true
+                    if (!isSuppressed) {
+                        onSwipeVote?.invoke(direction, swipeState.settledIndex, true)
+                    }
                 }
             },
             onEdgeReached = { direction ->
@@ -168,7 +172,10 @@ internal fun ReelSwipeableCardStack(
                 swipeProgress = swipeProgress,
                 suppressShutter = reelIndex == activeFrameReadyIndex && !isTransitioning,
                 showPlaceholderOverlay = reelIndex == swipeState.currentIndex && activeFrameReadyIndex != reelIndex,
-                showSwipeOverlay = isFrontCard && !isTransitioning,
+                showSwipeOverlay =
+                    isFrontCard &&
+                        !isTransitioning &&
+                        shouldSuppressSwipeFeedback?.invoke(reelIndex) != true,
                 modifier = Modifier.fillMaxSize(),
                 overlayContent = {
                     overlayContent(reelIndex) {
@@ -198,7 +205,7 @@ internal fun ReelSwipeableCardStack(
                         swipeProgress = swipeState.calculateSwipeProgress(screenWidth, screenHeight),
                         suppressShutter = false,
                         showPlaceholderOverlay = true,
-                        showSwipeOverlay = true,
+                        showSwipeOverlay = shouldSuppressSwipeFeedback?.invoke(overlayIndex) != true,
                         modifier = Modifier.fillMaxSize(),
                         overlayContent = { overlayContent(overlayIndex) {} },
                     )
@@ -206,51 +213,54 @@ internal fun ReelSwipeableCardStack(
             }
         }
 
-        SwipeButtons(
-            onFlopClick = {
-                if (!swipeState.isAnimating) {
-                    val votedCardIndex = swipeState.settledIndex
-                    coroutineScope.launch {
-                        swipeState.swipeInDirection(
-                            direction = SwipeDirection.LEFT,
-                            screenWidth = screenWidth,
-                            screenHeight = screenHeight,
-                            onComplete = {
-                                onSwipeVote?.invoke(SwipeDirection.LEFT, votedCardIndex, false)
-                            },
-                        )
+        val isFrontCardSuppressed = shouldSuppressSwipeFeedback?.invoke(swipeState.settledIndex) == true
+        if (!isFrontCardSuppressed) {
+            SwipeButtons(
+                onFlopClick = {
+                    if (!swipeState.isAnimating) {
+                        val votedCardIndex = swipeState.settledIndex
+                        coroutineScope.launch {
+                            swipeState.swipeInDirection(
+                                direction = SwipeDirection.LEFT,
+                                screenWidth = screenWidth,
+                                screenHeight = screenHeight,
+                                onComplete = {
+                                    onSwipeVote?.invoke(SwipeDirection.LEFT, votedCardIndex, false)
+                                },
+                            )
+                        }
                     }
-                }
-            },
-            onHitClick = {
-                if (!swipeState.isAnimating) {
-                    val votedCardIndex = swipeState.settledIndex
-                    coroutineScope.launch {
-                        swipeState.swipeInDirection(
-                            direction = SwipeDirection.RIGHT,
-                            screenWidth = screenWidth,
-                            screenHeight = screenHeight,
-                            onComplete = {
-                                onSwipeVote?.invoke(SwipeDirection.RIGHT, votedCardIndex, false)
-                            },
-                        )
-                    }
-                }
-            },
-            swipeDirection = if (swipeState.isDragging) swipeState.swipeDirection else SwipeDirection.NONE,
-            swipeProgress =
-                if (swipeState.isDragging) {
-                    swipeState.calculateSwipeProgress(screenWidth, screenHeight)
-                } else {
-                    0f
                 },
-            modifier =
-                Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .zIndex(10f)
-                    .padding(bottom = 50.dp),
-        )
+                onHitClick = {
+                    if (!swipeState.isAnimating) {
+                        val votedCardIndex = swipeState.settledIndex
+                        coroutineScope.launch {
+                            swipeState.swipeInDirection(
+                                direction = SwipeDirection.RIGHT,
+                                screenWidth = screenWidth,
+                                screenHeight = screenHeight,
+                                onComplete = {
+                                    onSwipeVote?.invoke(SwipeDirection.RIGHT, votedCardIndex, false)
+                                },
+                            )
+                        }
+                    }
+                },
+                swipeDirection = if (swipeState.isDragging) swipeState.swipeDirection else SwipeDirection.NONE,
+                swipeProgress =
+                    if (swipeState.isDragging) {
+                        swipeState.calculateSwipeProgress(screenWidth, screenHeight)
+                    } else {
+                        0f
+                    },
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .zIndex(10f)
+                        .padding(bottom = 50.dp),
+            )
+        }
     }
 
     LaunchedEffect(autoScrollToNext) {
