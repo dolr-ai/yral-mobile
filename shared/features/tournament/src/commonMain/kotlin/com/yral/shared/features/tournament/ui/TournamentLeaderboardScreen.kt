@@ -140,13 +140,16 @@ fun TournamentLeaderboardScreen(
         containerColor = MaterialTheme.colorScheme.primaryContainer,
         modifier = Modifier.fillMaxSize(),
     ) {
+        val currentUser = state.currentUser
+        val shouldShowResultContent = showResultOverlay && !state.isLoading && currentUser != null
+
         Box(
             modifier =
                 Modifier
                     .fillMaxSize()
                     .padding(it),
         ) {
-            if (!showResultOverlay) {
+            if (!shouldShowResultContent) {
                 LazyColumn(
                     state = listState,
                     modifier =
@@ -230,8 +233,7 @@ fun TournamentLeaderboardScreen(
                 }
             }
 
-            val currentUser = state.currentUser
-            if (showResultOverlay && !state.isLoading && currentUser != null) {
+            if (shouldShowResultContent) {
                 val rank = currentUser.position
                 val prizeAmountValue = currentUser.prize ?: state.prizeMap[rank] ?: 0
                 val prizeAmount =

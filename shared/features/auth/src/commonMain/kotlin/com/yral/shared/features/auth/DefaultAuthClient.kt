@@ -126,17 +126,20 @@ class DefaultAuthClient(
                 sessionManager.updateLoggedInUserEmail(it)
             }
         } else {
-            refreshToken.takeIf { it.isNotEmpty() }?.let {
-                val rTokenClaim = oAuthUtilsHelper.parseOAuthToken(it)
-                if (rTokenClaim.isValid(Clock.System.now().epochSeconds)) {
-                    refreshAccessToken()
-                } else {
-                    trackAndLogoutForTokenExpiry(
-                        cause = AuthSessionCause.REFRESH_TOKEN_EXPIRED_OR_INVALID,
-                        flow = AuthSessionFlow.TOKEN_VALIDATION,
-                    )
-                }
-            } ?: trackAndLogoutForTokenExpiry(
+            preferences
+                .getString(PrefKeys.REFRESH_TOKEN.name)
+                .takeIf { it?.isNotEmpty() == true }
+                ?.let { refreshToken ->
+                    val rTokenClaim = oAuthUtilsHelper.parseOAuthToken(refreshToken)
+                    if (rTokenClaim.isValid(Clock.System.now().epochSeconds)) {
+                        refreshAccessToken(refreshToken)
+                    } else {
+                        trackAndLogoutForTokenExpiry(
+                            cause = AuthSessionCause.REFRESH_TOKEN_EXPIRED_OR_INVALID,
+                            flow = AuthSessionFlow.TOKEN_VALIDATION,
+                        )
+                    }
+                } ?: trackAndLogoutForTokenExpiry(
                 cause = AuthSessionCause.REFRESH_TOKEN_MISSING,
                 flow = AuthSessionFlow.TOKEN_VALIDATION,
             )
@@ -174,7 +177,7 @@ class DefaultAuthClient(
             preferences.putString(PrefKeys.REFRESH_TOKEN.name, refreshToken)
         }
         if (accessToken.isNotEmpty()) {
-            preferences.putString(PrefKeys.ACCESS_TOKEN.name, refreshToken)
+            preferences.putString(PrefKeys.ACCESS_TOKEN.name, accessToken)
         }
     }
 
@@ -400,24 +403,21 @@ class DefaultAuthClient(
         }
     }
 
-    private suspend fun refreshAccessToken() {
-        val refreshToken = preferences.getString(PrefKeys.REFRESH_TOKEN.name)
-        refreshToken?.let {
-            requiredUseCases.refreshTokenUseCase
-                .invoke(refreshToken)
-                .onSuccess { tokenResponse ->
-                    handleToken(
-                        idToken = tokenResponse.idToken,
-                        accessToken = tokenResponse.accessToken,
-                        refreshToken = tokenResponse.refreshToken,
-                    )
-                }.onFailure {
-                    trackAndLogoutForTokenExpiry(
-                        cause = AuthSessionCause.REFRESH_ACCESS_TOKEN_FAILED,
-                        flow = AuthSessionFlow.TOKEN_REFRESH,
-                    )
-                }
-        } ?: obtainAnonymousIdentity()
+    private suspend fun refreshAccessToken(refreshToken: String) {
+        requiredUseCases.refreshTokenUseCase
+            .invoke(refreshToken)
+            .onSuccess { tokenResponse ->
+                handleToken(
+                    idToken = tokenResponse.idToken,
+                    accessToken = tokenResponse.accessToken,
+                    refreshToken = tokenResponse.refreshToken,
+                )
+            }.onFailure {
+                trackAndLogoutForTokenExpiry(
+                    cause = AuthSessionCause.REFRESH_ACCESS_TOKEN_FAILED,
+                    flow = AuthSessionFlow.TOKEN_REFRESH,
+                )
+            }
     }
 
     override suspend fun signInWithSocial(
@@ -647,6 +647,7 @@ class DefaultAuthClient(
                             authTelemetry.otpValidationResult(
                                 status = OtpValidationStatus.FAILURE,
                                 reason = response.error,
+                                phoneNumber = phoneNumber,
                             )
                             authTelemetry.authFailed(SocialProvider.PHONE)
                             throw YralAuthException("Phone auth verification failed - ${response.errorMessage}")
@@ -655,6 +656,7 @@ class DefaultAuthClient(
                             authTelemetry.otpValidationResult(
                                 status = OtpValidationStatus.SUCCESS,
                                 reason = null,
+                                phoneNumber = phoneNumber,
                             )
                             preferences.putString(PrefKeys.PHONE_NUMBER.name, phoneNumber)
                             sessionManager.updatePhoneNumber(phoneNumber)
@@ -671,6 +673,7 @@ class DefaultAuthClient(
                     authTelemetry.otpValidationResult(
                         status = OtpValidationStatus.FAILURE,
                         reason = error.message,
+                        phoneNumber = phoneNumber,
                     )
                     authTelemetry.authFailed(SocialProvider.PHONE)
                     Logger.e("DefaultAuthClient") { "Phone auth verification failed: ${error.message}" }

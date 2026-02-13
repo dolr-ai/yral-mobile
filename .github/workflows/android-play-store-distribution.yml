@@ -56,12 +56,24 @@ jobs:
       - name: Install android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install android ndk
-        uses: nttld/setup-ndk@v1
-        with:
-          ndk-version: r28
-          link-to-sdk: true
-          local-cache: true
+      - name: Install android NDK
+        run: |
+          echo "y" | sdkmanager --install "ndk;28.0.13004108" --channel=0
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/28.0.13004108" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/28.0.13004108" >> $GITHUB_ENV
+      
+      - name: Verify NDK installation
+        run: |
+          echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          ls -la $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/ | grep strip || echo "llvm-strip listing failed"
+          if [ -f "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip" ]; then
+            echo "llvm-strip found at: $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip"
+            $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip --version
+          else
+            echo "ERROR: llvm-strip not found!"
+            exit 1
+          fi
 
 #      - name: Bump version (ephemeral, no commit)
 #        run: |
@@ -121,7 +133,7 @@ jobs:
         env:
           GITHUB_USERNAME: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          JAVA_HOME: ${{ steps.setup-jdk.outputs.path }}
+          JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
 
       - name: Authenticate to Google Cloud
         id: auth

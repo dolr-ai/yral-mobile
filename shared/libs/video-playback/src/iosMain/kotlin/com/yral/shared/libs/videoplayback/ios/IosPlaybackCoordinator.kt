@@ -8,6 +8,7 @@ import com.yral.shared.libs.videoplayback.PlaybackProgressTicker
 import com.yral.shared.libs.videoplayback.PreloadEventScheduler
 import com.yral.shared.libs.videoplayback.PreparedSlotScheduler
 import com.yral.shared.libs.videoplayback.VideoSurfaceHandle
+import com.yral.shared.libs.videoplayback.planFeedAlignment
 import com.yral.shared.libs.videoplayback.ui.IosVideoSurfaceHandle
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
@@ -108,10 +109,30 @@ private class IosPlaybackCoordinator(
     }
 
     override fun setFeed(items: List<MediaDescriptor>) {
+        val previousFeed = feed
+        val previousIds = previousFeed.map { it.id }
+        val currentIds = items.map { it.id }
+        val alignment =
+            planFeedAlignment(
+                previousIds = previousIds,
+                currentIds = currentIds,
+                activeIndex = activeIndex,
+                activeSlotIndex = activeSlot.index,
+                preparedSlotIndex = preparedSlot?.index,
+            )
         cancelPrefetch(reason = "feed_update")
         preparedScheduler.reset("feed_update") { feed.getOrNull(it)?.id }
         feed = items
-        if (items.isEmpty()) {
+
+        alignment.invalidatePreparedIndex?.let { stalePreparedIndex ->
+            preparedSlot?.let { slot ->
+                slot.player.pause()
+                detachSurface(stalePreparedIndex, slot.player)
+                slot.index = null
+            }
+        }
+
+        if (alignment.clearPlaybackState) {
             activeIndex = -1
             predictedIndex = -1
             rebuffering = false
@@ -123,8 +144,10 @@ private class IosPlaybackCoordinator(
             preparedSlot?.index = null
             return
         }
-        if (activeIndex >= items.size) {
-            setActiveIndex(items.lastIndex)
+
+        alignment.nextActiveIndex?.let { targetIndex ->
+            activeIndex = -1
+            setActiveIndex(targetIndex)
         }
     }
 
@@ -186,8 +209,13 @@ private class IosPlaybackCoordinator(
         }
     }
 
-    override fun unbindSurface(index: Int) {
-        val handle = surfaces.remove(index)
+    override fun unbindSurface(
+        index: Int,
+        surfaceId: String,
+    ) {
+        val handle = surfaces[index]
+        if (handle?.id != surfaceId) return
+        surfaces.remove(index)
         if (handle is IosVideoSurfaceHandle) {
             if (activeSlot.index == index && handle.controller.player == activeSlot.player) {
                 handle.controller.player = null

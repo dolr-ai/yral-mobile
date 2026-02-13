@@ -26,6 +26,6 @@ struct VideoEventRequest {
 }
 
 enum VideoEventType: String {
-  case like = "LikeVideo"
-  case durationWatched = "VideoDurationWatched"
+  case like = "like_video"
+  case durationWatched = "video_duration_watched"
 }

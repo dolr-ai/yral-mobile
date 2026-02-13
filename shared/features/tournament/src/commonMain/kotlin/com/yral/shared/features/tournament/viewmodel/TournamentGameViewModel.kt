@@ -10,12 +10,16 @@ import com.yral.shared.features.game.domain.GetGameIconsUseCase
 import com.yral.shared.features.game.domain.models.GameIcon
 import com.yral.shared.features.game.domain.models.GameIconNames
 import com.yral.shared.features.tournament.analytics.TournamentTelemetry
+import com.yral.shared.features.tournament.cache.TournamentProgressData
+import com.yral.shared.features.tournament.cache.TournamentResumeCacheStore
 import com.yral.shared.features.tournament.domain.CastHotOrNotVoteUseCase
 import com.yral.shared.features.tournament.domain.CastTournamentVoteUseCase
+import com.yral.shared.features.tournament.domain.GetTournamentLeaderboardUseCase
 import com.yral.shared.features.tournament.domain.GetTournamentsUseCase
 import com.yral.shared.features.tournament.domain.GetVideoEmojisRequest
 import com.yral.shared.features.tournament.domain.GetVideoEmojisUseCase
 import com.yral.shared.features.tournament.domain.model.CastTournamentVoteRequest
+import com.yral.shared.features.tournament.domain.model.GetTournamentLeaderboardRequest
 import com.yral.shared.features.tournament.domain.model.GetTournamentsRequest
 import com.yral.shared.features.tournament.domain.model.HotOrNotVoteRequest
 import com.yral.shared.features.tournament.domain.model.HotOrNotVoteResult
@@ -25,12 +29,18 @@ import com.yral.shared.features.tournament.domain.model.TournamentType
 import com.yral.shared.features.tournament.domain.model.VideoEmoji
 import com.yral.shared.features.tournament.domain.model.VoteOutcome
 import com.yral.shared.features.tournament.domain.model.VoteResult
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class)
 @Suppress("TooManyFunctions")
 class TournamentGameViewModel(
     private val sessionManager: SessionManager,
@@ -38,11 +48,16 @@ class TournamentGameViewModel(
     private val castTournamentVoteUseCase: CastTournamentVoteUseCase,
     private val castHotOrNotVoteUseCase: CastHotOrNotVoteUseCase,
     private val getTournamentsUseCase: GetTournamentsUseCase,
+    private val getTournamentLeaderboardUseCase: GetTournamentLeaderboardUseCase,
     private val getVideoEmojisUseCase: GetVideoEmojisUseCase,
+    private val tournamentResumeCacheStore: TournamentResumeCacheStore,
     private val telemetry: TournamentTelemetry,
 ) : ViewModel() {
     private val _state = MutableStateFlow(TournamentGameState())
     val state: StateFlow<TournamentGameState> = _state.asStateFlow()
+    private val eventChannel = Channel<Event>(Channel.BUFFERED)
+    val eventsFlow: Flow<Event> = eventChannel.receiveAsFlow()
+    private var sessionScopeKey: String = "INITIAL"
 
     // Separate StateFlow for video emojis to avoid triggering main state recompositions
     // when prefetching emojis for videos during scroll
@@ -61,12 +76,17 @@ class TournamentGameViewModel(
         tournamentType: TournamentType,
         initialDiamonds: Int,
         endEpochMs: Long,
+        sessionScopeKey: String,
     ) {
+        this.sessionScopeKey = sessionScopeKey
         val currentState = _state.value
         // If already set up for this tournament, just refresh diamonds from API
         if (currentState.tournamentId == tournamentId && currentState.diamonds > 0) {
             // Refresh diamonds from API to get current balance
-            refreshDiamondsFromApi(tournamentId)
+            viewModelScope.launch {
+                refreshDiamondsFromApi(tournamentId)
+                refreshRankFromLeaderboard(tournamentId)
+            }
             return
         }
 
@@ -87,32 +107,84 @@ class TournamentGameViewModel(
             diamondsAllocated = initialDiamonds,
         )
 
-        // Fetch fresh diamond balance from API
-        refreshDiamondsFromApi(tournamentId)
+        viewModelScope.launch {
+            restoreCachedProgress(tournamentId)
+            refreshDiamondsFromApi(tournamentId)
+            refreshRankFromLeaderboard(tournamentId)
+        }
     }
 
-    private fun refreshDiamondsFromApi(tournamentId: String) {
-        val principalId = sessionManager.userPrincipal ?: return
-        viewModelScope.launch {
-            getTournamentsUseCase
-                .invoke(
-                    GetTournamentsRequest(
-                        tournamentId = tournamentId,
-                        principalId = principalId,
-                    ),
-                ).onSuccess { tournaments ->
-                    val tournament = tournaments.firstOrNull() ?: return@onSuccess
-                    val userStats = tournament.userStats ?: return@onSuccess
-                    val hasPlayed = (userStats.tournamentWins + userStats.tournamentLosses) > 0
-                    _state.update {
-                        it.copy(
-                            diamonds = userStats.diamonds,
-                            hasPlayedBefore = hasPlayed,
-                            activeParticipantCount = tournament.participantCount,
-                        )
-                    }
-                }
+    private suspend fun restoreCachedProgress(tournamentId: String) {
+        val progress =
+            tournamentResumeCacheStore.loadProgress(
+                scopeKey = sessionScopeKey,
+                tournamentId = tournamentId,
+                nowEpochMs = Clock.System.now().toEpochMilliseconds(),
+            ) ?: return
+        _state.update {
+            it.copy(
+                diamonds = progress.diamonds,
+                position = progress.position,
+                activeParticipantCount = progress.activeParticipantCount,
+                wins = progress.wins,
+                losses = progress.losses,
+                voteResults = progress.voteResults,
+                hotOrNotVoteResults = progress.hotOrNotVoteResults,
+                shownCoinDeltaAnimations = progress.shownCoinDeltaAnimations,
+                hasPlayedBefore = (progress.wins + progress.losses) > 0,
+            )
         }
+    }
+
+    private suspend fun refreshDiamondsFromApi(tournamentId: String) {
+        val principalId = sessionManager.userPrincipal ?: return
+        getTournamentsUseCase
+            .invoke(
+                GetTournamentsRequest(
+                    tournamentId = tournamentId,
+                    principalId = principalId,
+                ),
+            ).onSuccess { tournaments ->
+                val tournament = tournaments.firstOrNull() ?: return@onSuccess
+                val userStats = tournament.userStats ?: return@onSuccess
+                val hasPlayed = (userStats.tournamentWins + userStats.tournamentLosses) > 0
+                _state.update {
+                    it.copy(
+                        diamonds = userStats.diamonds,
+                        hasPlayedBefore = hasPlayed,
+                        activeParticipantCount = tournament.participantCount,
+                    )
+                }
+                viewModelScope.launch { persistCurrentProgress() }
+            }
+    }
+
+    private suspend fun refreshRankFromLeaderboard(tournamentId: String) {
+        val principalId = sessionManager.userPrincipal ?: return
+        getTournamentLeaderboardUseCase
+            .invoke(
+                GetTournamentLeaderboardRequest(
+                    principalId = principalId,
+                    tournamentId = tournamentId,
+                ),
+            ).onSuccess { leaderboard ->
+                val userRow = leaderboard.userRow
+                _state.update {
+                    it.copy(
+                        position = userRow?.position ?: it.position,
+                        wins = userRow?.wins ?: it.wins,
+                        losses = userRow?.losses ?: it.losses,
+                        activeParticipantCount =
+                            if (leaderboard.participantCount > 0) {
+                                leaderboard.participantCount
+                            } else {
+                                it.activeParticipantCount
+                            },
+                        hasPlayedBefore = userRow != null || it.hasPlayedBefore,
+                    )
+                }
+                viewModelScope.launch { persistCurrentProgress() }
+            }
     }
 
     private suspend fun getGameIcons() {
@@ -227,12 +299,23 @@ class TournamentGameViewModel(
                 lastVotedCount = it.lastVotedCount + 1,
             )
         }
+        viewModelScope.launch { persistCurrentProgress() }
     }
 
-    private fun handleVoteFailure(error: TournamentError) {
+    private fun handleVoteFailure(
+        error: TournamentError,
+        isHotOrNotVote: Boolean = false,
+    ) {
+        val shouldShowToast =
+            error.code != TournamentErrorCodes.NO_DIAMONDS &&
+                error.code != TournamentErrorCodes.TOURNAMENT_NOT_LIVE
+        if (shouldShowToast) {
+            send(Event.ShowVoteError(resolveVoteErrorMessage(error)))
+        }
         _state.update {
             it.copy(
-                isLoading = false,
+                isLoading = if (isHotOrNotVote) it.isLoading else false,
+                isHotOrNotVoting = if (isHotOrNotVote) false else it.isHotOrNotVoting,
                 noDiamondsError = error.code == TournamentErrorCodes.NO_DIAMONDS,
                 tournamentEndedError = error.code == TournamentErrorCodes.TOURNAMENT_NOT_LIVE,
             )
@@ -311,14 +394,9 @@ class TournamentGameViewModel(
                         lastVotedCount = it.lastVotedCount + 1,
                     )
                 }
+                viewModelScope.launch { persistCurrentProgress() }
             }.onFailure { error ->
-                _state.update {
-                    it.copy(
-                        isHotOrNotVoting = false,
-                        noDiamondsError = error.code == TournamentErrorCodes.NO_DIAMONDS,
-                        tournamentEndedError = error.code == TournamentErrorCodes.TOURNAMENT_NOT_LIVE,
-                    )
-                }
+                handleVoteFailure(error, isHotOrNotVote = true)
             }
     }
 
@@ -345,12 +423,17 @@ class TournamentGameViewModel(
     fun hasShownCoinDeltaAnimation(videoId: String): Boolean = _state.value.shownCoinDeltaAnimations.contains(videoId)
 
     fun markCoinDeltaAnimationShown(videoId: String) {
+        var hasUpdated = false
         _state.update {
             if (it.shownCoinDeltaAnimations.contains(videoId)) {
                 it
             } else {
+                hasUpdated = true
                 it.copy(shownCoinDeltaAnimations = it.shownCoinDeltaAnimations + videoId)
             }
+        }
+        if (hasUpdated) {
+            viewModelScope.launch { persistCurrentProgress() }
         }
     }
 
@@ -404,6 +487,41 @@ class TournamentGameViewModel(
         _state.update { it.copy(tournamentEndedError = false) }
     }
 
+    suspend fun clearTournamentCache(tournamentId: String) {
+        tournamentResumeCacheStore.clearTournament(
+            scopeKey = sessionScopeKey,
+            tournamentId = tournamentId,
+        )
+    }
+
+    private fun send(event: Event) {
+        viewModelScope.launch { eventChannel.send(event) }
+    }
+
+    private fun resolveVoteErrorMessage(error: TournamentError): String =
+        error.message.ifBlank { "Something went wrong. Please try again." }
+
+    private suspend fun persistCurrentProgress() {
+        val state = _state.value
+        if (state.tournamentId.isEmpty() || state.endEpochMs <= 0L) return
+        tournamentResumeCacheStore.saveProgress(
+            scopeKey = sessionScopeKey,
+            tournamentId = state.tournamentId,
+            progress =
+                TournamentProgressData(
+                    endEpochMs = state.endEpochMs,
+                    diamonds = state.diamonds,
+                    position = state.position,
+                    activeParticipantCount = state.activeParticipantCount,
+                    wins = state.wins,
+                    losses = state.losses,
+                    voteResults = state.voteResults,
+                    hotOrNotVoteResults = state.hotOrNotVoteResults,
+                    shownCoinDeltaAnimations = state.shownCoinDeltaAnimations,
+                ),
+        )
+    }
+
     // Telemetry tracking methods
     fun trackExitAttempted() {
         val currentState = _state.value
@@ -442,6 +560,12 @@ class TournamentGameViewModel(
 
     fun trackHowToPlayClicked() {
         telemetry.onHowToPlayClicked(tournamentType = _state.value.tournamentType)
+    }
+
+    sealed class Event {
+        data class ShowVoteError(
+            val message: String,
+        ) : Event()
     }
 }
 
