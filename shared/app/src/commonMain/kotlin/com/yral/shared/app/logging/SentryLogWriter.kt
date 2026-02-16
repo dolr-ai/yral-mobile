@@ -13,7 +13,7 @@ internal class SentryLogWriter : LogWriter() {
         tag: String,
         throwable: Throwable?,
     ) {
-        val formattedMessage = "[${severity.name}] $tag: $message"
+        val formattedMessage = "$tag: $message"
         if (throwable != null) {
             Sentry.captureException(throwable) { scope ->
                 scope.level = severity.toSentryLevel()
