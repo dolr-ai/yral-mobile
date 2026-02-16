@@ -37,14 +37,12 @@ internal fun MessagesList(
     ) {
         items(
             items = overlayItems,
-            key = { item -> overlayItemKey(item) },
         ) { item ->
             MessageRow(item = item, onRetry = onRetry)
         }
 
         items(
             count = historyPagingItems.itemCount,
-            key = { idx -> historyItemKey(historyPagingItems.peek(idx), idx) },
         ) { idx ->
             val item = historyPagingItems[idx] ?: return@items
             if (isDuplicateOfOverlay(item, overlayMessageIds)) return@items
