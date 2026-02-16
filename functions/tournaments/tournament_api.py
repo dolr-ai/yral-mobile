@@ -265,17 +265,34 @@ def _compute_tournament_leaderboard(tournament_id: str, limit: int = 10, collect
     3. updated_at ASC (second tiebreaker: earlier = higher rank)
     """
     users_ref = db().collection(f"{collection_name}/{tournament_id}/users")
-    # Fetch extra users to account for filtering out those who never played
-    # Need high multiplier because many non-players have 20 diamonds (initial balance)
-    # which ranks higher than players who lost (< 20 diamonds)
-    snaps = (
-        users_ref.order_by("diamonds", direction=firestore.Query.DESCENDING)
-                 .limit(limit * 50)
-                 .stream()
-    )
 
     # Hot or Not uses "wins"/"losses", smiley uses "tournament_wins"/"tournament_losses"
     is_hot_or_not = collection_name == "hot_or_not_tournaments"
+
+    # Try optimized query first: only fetch users who have played
+    # (has_played is set on first vote for new tournaments)
+    # Falls back gracefully if composite index doesn't exist yet or no results
+    try:
+        optimized_snaps = list(
+            users_ref.where("has_played", "==", True)
+                     .order_by("diamonds", direction=firestore.Query.DESCENDING)
+                     .limit(limit)
+                     .stream()
+        )
+    except Exception:
+        optimized_snaps = []
+
+    if optimized_snaps:
+        snaps = optimized_snaps
+        needs_filter = False
+    else:
+        # Fallback for old tournaments without has_played flag or missing index
+        snaps = list(
+            users_ref.order_by("diamonds", direction=firestore.Query.DESCENDING)
+                     .limit(limit * 50)
+                     .stream()
+        )
+        needs_filter = True
 
     # Collect all qualifying users first
     candidates = []
@@ -288,8 +305,8 @@ def _compute_tournament_leaderboard(tournament_id: str, limit: int = 10, collect
             wins = int(data.get("tournament_wins") or 0)
             losses = int(data.get("tournament_losses") or 0)
 
-        # Skip users who never played
-        if wins == 0 and losses == 0:
+        # Skip users who never played (only needed for fallback path)
+        if needs_filter and wins == 0 and losses == 0:
             continue
 
         diamonds = int(data.get("diamonds") or 0)
@@ -397,9 +414,29 @@ def _get_user_tournament_position(
         }
 
     # Count users who rank higher using tiebreaker logic
-    # Fetch users with diamonds >= user_diamonds (need to check tiebreakers for equal diamonds)
+    # Try optimized query first (has_played filter), fallback for old tournaments
     users_ref = db().collection(f"{collection_name}/{tournament_id}/users")
-    snaps = users_ref.where("diamonds", ">=", user_diamonds).limit(1000).stream()
+
+    try:
+        optimized_snaps = list(
+            users_ref.where("has_played", "==", True)
+                     .where("diamonds", ">=", user_diamonds)
+                     .limit(1000)
+                     .stream()
+        )
+    except Exception:
+        optimized_snaps = []
+
+    if optimized_snaps:
+        snaps = optimized_snaps
+        needs_filter = False
+    else:
+        snaps = list(
+            users_ref.where("diamonds", ">=", user_diamonds)
+                     .limit(1000)
+                     .stream()
+        )
+        needs_filter = True
 
     user_updated_ts = user_updated_at.timestamp() if user_updated_at else float('inf')
 
@@ -416,8 +453,8 @@ def _get_user_tournament_position(
             w = int(data.get("tournament_wins") or 0)
             l = int(data.get("tournament_losses") or 0)
 
-        # Only count users who have played
-        if w == 0 and l == 0:
+        # Only count users who have played (only needed for fallback path)
+        if needs_filter and w == 0 and l == 0:
             continue
 
         diamonds = int(data.get("diamonds") or 0)
@@ -1147,18 +1184,16 @@ def tournament_vote(request: Request):
 
         # Update user's tournament stats and diamonds
         # Win: +1 diamond, Loss: -1 diamond
+        update_fields = {"updated_at": firestore.SERVER_TIMESTAMP}
         if outcome == "WIN":
-            reg_ref.update({
-                "tournament_wins": firestore.Increment(1),
-                "diamonds": firestore.Increment(1),
-                "updated_at": firestore.SERVER_TIMESTAMP
-            })
+            update_fields["tournament_wins"] = firestore.Increment(1)
+            update_fields["diamonds"] = firestore.Increment(1)
         else:
-            reg_ref.update({
-                "tournament_losses": firestore.Increment(1),
-                "diamonds": firestore.Increment(-1),
-                "updated_at": firestore.SERVER_TIMESTAMP
-            })
+            update_fields["tournament_losses"] = firestore.Increment(1)
+            update_fields["diamonds"] = firestore.Increment(-1)
+        if is_first_game:
+            update_fields["has_played"] = True
+        reg_ref.update(update_fields)
 
         # Increment active_participant_count if this is user's first game
         if is_first_game:
@@ -1271,11 +1306,11 @@ def tournament_leaderboard(request: Request):
         status = _compute_status(start_epoch_ms, end_epoch_ms)
         prize_map = t_data.get("prizeMap", {})
 
-        # Allow leaderboard viewing after ENDED or SETTLED (or anytime for daily tournaments)
+        # Allow leaderboard viewing once tournament is live (or anytime for daily tournaments)
         is_daily = t_data.get("is_daily", False)
-        if not is_daily and status not in [TournamentStatus.ENDED.value, TournamentStatus.SETTLED.value]:
-            return error_response(409, "TOURNAMENT_STILL_ACTIVE",
-                                  f"Leaderboard available after tournament ends (current: {status})")
+        if not is_daily and status not in [TournamentStatus.LIVE.value, TournamentStatus.ENDED.value, TournamentStatus.SETTLED.value]:
+            return error_response(409, "TOURNAMENT_NOT_STARTED",
+                                  f"Leaderboard available after tournament starts (current: {status})")
 
         # Get top rows
         top_rows = _compute_tournament_leaderboard(tournament_id, limit=10, collection_name=collection_name)
