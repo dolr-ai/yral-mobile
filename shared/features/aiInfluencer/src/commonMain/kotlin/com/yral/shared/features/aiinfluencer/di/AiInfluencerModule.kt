@@ -10,8 +10,8 @@ import com.yral.shared.features.aiinfluencer.domain.usecases.GeneratePromptUseCa
 import com.yral.shared.features.aiinfluencer.domain.usecases.ValidateAndGenerateMetadataUseCase
 import com.yral.shared.features.aiinfluencer.viewmodel.AiInfluencerViewModel
 import com.yral.shared.features.aiinfluencer.viewmodel.BotIdentityStorage
-import org.koin.compose.viewmodel.dsl.viewModelOf
 import org.koin.core.module.dsl.factoryOf
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
