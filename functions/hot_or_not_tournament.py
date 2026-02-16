@@ -725,8 +725,29 @@ def _compute_user_position(tournament_id: str, principal_id: str, user_diamonds:
     user_total_games = user_wins + user_losses
 
     # Count users who rank higher
+    # Try optimized query first (has_played filter), fallback for old tournaments
     users_ref = db().collection(f"{HOT_OR_NOT_TOURNAMENT_COLL}/{tournament_id}/users")
-    snaps = users_ref.where("diamonds", ">=", user_diamonds).limit(500).stream()
+
+    try:
+        optimized_snaps = list(
+            users_ref.where("has_played", "==", True)
+                     .where("diamonds", ">=", user_diamonds)
+                     .limit(500)
+                     .stream()
+        )
+    except Exception:
+        optimized_snaps = []
+
+    if optimized_snaps:
+        snaps = optimized_snaps
+        needs_filter = False
+    else:
+        snaps = list(
+            users_ref.where("diamonds", ">=", user_diamonds)
+                     .limit(500)
+                     .stream()
+        )
+        needs_filter = True
 
     higher = 0
     for snap in snaps:
@@ -737,8 +758,8 @@ def _compute_user_position(tournament_id: str, principal_id: str, user_diamonds:
         w = int(data.get("wins") or 0)
         l = int(data.get("losses") or 0)
 
-        # Only count users who have played
-        if w == 0 and l == 0:
+        # Only count users who have played (only needed for fallback path)
+        if needs_filter and w == 0 and l == 0:
             continue
 
         diamonds = int(data.get("diamonds") or 0)
@@ -861,12 +882,15 @@ def hot_or_not_tournament_vote(request: Request):
             win_increment = 1 if outcome == "WIN" else 0
             loss_increment = 1 if outcome == "LOSS" else 0
 
-            tx.update(user_ref, {
+            user_update = {
                 "diamonds": new_diamonds,
                 "wins": firestore.Increment(win_increment),
                 "losses": firestore.Increment(loss_increment),
                 "updated_at": firestore.SERVER_TIMESTAMP,
-            })
+            }
+            if is_first_game:
+                user_update["has_played"] = True
+            tx.update(user_ref, user_update)
 
             # Increment active_participant_count if this is user's first game
             if is_first_game:
