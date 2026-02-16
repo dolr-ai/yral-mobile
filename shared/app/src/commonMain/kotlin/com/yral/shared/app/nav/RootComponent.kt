@@ -8,6 +8,7 @@ import com.yral.shared.analytics.events.SubscriptionEntryPoint
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
+import com.yral.shared.features.aiinfluencer.nav.CreateInfluencerComponent
 import com.yral.shared.features.auth.nav.countryselector.CountrySelectorComponent
 import com.yral.shared.features.auth.nav.mandatorylogin.MandatoryLoginComponent
 import com.yral.shared.features.auth.nav.otpverification.OtpVerificationComponent
@@ -150,7 +151,9 @@ interface RootComponent {
         class Subscription(
             val component: SubscriptionsComponent,
         ) : Child()
-        data object CreateInfluencer : Child()
+        class CreateInfluencer(
+            val component: CreateInfluencerComponent,
+        ) : Child()
         class CountrySelector(
             val component: CountrySelectorComponent,
         ) : Child()

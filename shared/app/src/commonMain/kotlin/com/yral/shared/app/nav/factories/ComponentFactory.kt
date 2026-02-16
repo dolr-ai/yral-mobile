@@ -8,6 +8,7 @@ import com.yral.shared.app.nav.RootComponent
 import com.yral.shared.app.nav.SplashComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
 import com.yral.shared.data.AlertsRequestType
+import com.yral.shared.features.aiinfluencer.nav.CreateInfluencerComponent
 import com.yral.shared.features.auth.nav.countryselector.CountrySelectorComponent
 import com.yral.shared.features.auth.nav.mandatorylogin.MandatoryLoginComponent
 import com.yral.shared.features.auth.nav.otpverification.OtpVerificationComponent
@@ -21,7 +22,11 @@ import com.yral.shared.features.subscriptions.nav.SubscriptionsComponent
 import com.yral.shared.features.tournament.nav.TournamentGameComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.koin.koinInstance
+import com.yral.shared.libs.designsystem.component.toast.ToastManager
+import com.yral.shared.libs.designsystem.component.toast.ToastType
+import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.phonevalidation.countries.Country
+import com.yral.shared.libs.routing.routes.api.Profile
 import kotlinx.coroutines.flow.flowOf
 
 /**
@@ -70,6 +75,18 @@ internal class ComponentFactory(
         EditProfileComponent.Companion(
             componentContext = componentContext,
             onBack = rootComponent::onBackClicked,
+        )
+
+    fun createCreateInfluencer(componentContext: ComponentContext): CreateInfluencerComponent =
+        CreateInfluencerComponent(
+            componentContext = componentContext,
+            requestLoginFactory = rootComponent.createLoginRequestFactory(),
+            onBack = rootComponent::onBackClicked,
+            onProfileCreated = { successMessage ->
+                rootComponent.onBackClicked()
+                rootComponent.onNavigationRequest(Profile)
+                ToastManager.showSuccess(type = ToastType.Small(successMessage))
+            },
         )
 
     fun createProfile(

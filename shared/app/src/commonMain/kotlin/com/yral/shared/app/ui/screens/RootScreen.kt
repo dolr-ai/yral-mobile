@@ -84,17 +84,12 @@ import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
 import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.component.toast.ToastHost
-import com.yral.shared.libs.designsystem.component.toast.ToastManager
-import com.yral.shared.libs.designsystem.component.toast.ToastType
-import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
-import com.yral.shared.libs.routing.routes.api.Profile
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import yral_mobile.shared.app.generated.resources.Res
-import yral_mobile.shared.app.generated.resources.ai_influencer_created_success
 import yral_mobile.shared.app.generated.resources.error_retry
 import yral_mobile.shared.app.generated.resources.error_timeout
 import yral_mobile.shared.app.generated.resources.error_timeout_title
@@ -267,25 +262,13 @@ fun RootScreen(rootComponent: RootComponent) {
                     is Child.CreateInfluencer -> {
                         HandleSystemBars(show = true)
                         val aiInfluencerViewModel = koinViewModel<AiInfluencerViewModel>()
-                        val influencerCreatedMessage =
-                            stringResource(Res.string.ai_influencer_created_success)
                         LaunchedEffect(Unit) {
                             aiInfluencerViewModel.resetFlow()
                         }
                         CreateAIInfluencerScreen(
+                            component = child.component,
                             modifier = Modifier.fillMaxSize().safeDrawingPadding(),
                             viewModel = aiInfluencerViewModel,
-                            requestLoginFactory = rootComponent.createLoginRequestFactory(),
-                            onBack = rootComponent::onBackClicked,
-                            onCreateProfile = {
-                                aiInfluencerViewModel.createBotAccount {
-                                    rootComponent.onBackClicked()
-                                    rootComponent.onNavigationRequest(Profile)
-                                    ToastManager.showSuccess(
-                                        type = ToastType.Small(influencerCreatedMessage),
-                                    )
-                                }
-                            },
                         )
                     }
 

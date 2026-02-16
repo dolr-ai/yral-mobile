@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.features.aiinfluencer.nav.CreateInfluencerComponent
 import com.yral.shared.features.aiinfluencer.viewmodel.AiInfluencerStep
 import com.yral.shared.features.aiinfluencer.viewmodel.AiInfluencerUiState
 import com.yral.shared.features.aiinfluencer.viewmodel.AiInfluencerViewModel
@@ -68,6 +69,7 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.features.aiinfluencer.generated.resources.Res
 import yral_mobile.shared.features.aiinfluencer.generated.resources.ai_influencer_create_profile
+import yral_mobile.shared.features.aiinfluencer.generated.resources.ai_influencer_created_success
 import yral_mobile.shared.features.aiinfluencer.generated.resources.ai_influencer_description_label
 import yral_mobile.shared.features.aiinfluencer.generated.resources.ai_influencer_error_generic
 import yral_mobile.shared.features.aiinfluencer.generated.resources.ai_influencer_loading_metadata_subtitle
@@ -92,9 +94,29 @@ import yral_mobile.shared.libs.designsystem.generated.resources.edit_profile_ico
 import yral_mobile.shared.libs.designsystem.generated.resources.profile_placeholder
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
-@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 fun CreateAIInfluencerScreen(
+    component: CreateInfluencerComponent,
+    modifier: Modifier = Modifier,
+    viewModel: AiInfluencerViewModel = koinViewModel(),
+) {
+    val successMessage = stringResource(Res.string.ai_influencer_created_success)
+    CreateAIInfluencerScreen(
+        modifier = modifier,
+        viewModel = viewModel,
+        requestLoginFactory = component.createLoginRequestFactory(),
+        onBack = component::onBack,
+        onCreateProfile = {
+            viewModel.createBotAccount {
+                component.onProfileCreated(successMessage)
+            }
+        },
+    )
+}
+
+@Suppress("LongMethod", "CyclomaticComplexMethod")
+@Composable
+internal fun CreateAIInfluencerScreen(
     modifier: Modifier = Modifier,
     viewModel: AiInfluencerViewModel = koinViewModel(),
     sessionManager: SessionManager = koinInject(),

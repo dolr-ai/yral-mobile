@@ -164,7 +164,10 @@ class DefaultRootComponent(
             is Config.Splash -> RootComponent.Child.Splash(componentFactory.createSplash(context))
             is Config.Home -> RootComponent.Child.Home(componentFactory.createHome(context))
             is Config.EditProfile -> RootComponent.Child.EditProfile(componentFactory.createEditProfile(context))
-            is Config.CreateInfluencer -> RootComponent.Child.CreateInfluencer
+            is Config.CreateInfluencer ->
+                RootComponent.Child.CreateInfluencer(
+                    componentFactory.createCreateInfluencer(context),
+                )
             is Config.UserProfile -> RootComponent.Child.UserProfile(componentFactory.createProfile(context, config))
             is Config.TournamentLeaderboard ->
                 RootComponent.Child.TournamentLeaderboard(
