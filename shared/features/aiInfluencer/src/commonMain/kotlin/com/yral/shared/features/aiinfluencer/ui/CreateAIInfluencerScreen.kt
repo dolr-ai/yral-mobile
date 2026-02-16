@@ -85,14 +85,10 @@ import yral_mobile.shared.features.aiinfluencer.generated.resources.ai_influence
 import yral_mobile.shared.features.aiinfluencer.generated.resources.ai_influencer_take_photo
 import yral_mobile.shared.features.aiinfluencer.generated.resources.ai_influencer_title
 import yral_mobile.shared.features.aiinfluencer.generated.resources.ai_influencer_upload_photo
-import yral_mobile.shared.features.aiinfluencer.generated.resources.create_influencer_magic
-import yral_mobile.shared.features.aiinfluencer.generated.resources.create_influencer_puzzle
 import yral_mobile.shared.features.aiinfluencer.generated.resources.create_influencer_take_photo
 import yral_mobile.shared.features.aiinfluencer.generated.resources.create_influencer_upload_photo
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.edit_profile_icon
-import yral_mobile.shared.libs.designsystem.generated.resources.ic_camera
-import yral_mobile.shared.libs.designsystem.generated.resources.ic_gallery
 import yral_mobile.shared.libs.designsystem.generated.resources.profile_placeholder
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
