@@ -54,36 +54,17 @@ class MessageKeyUtilsTest {
     // region --- overlayItemKey ---
 
     @Test
-    fun `overlayItemKey returns local prefix for local items`() {
-        val item = createLocalItem(localId = "abc-123")
-        assertEquals("local-abc-123", overlayItemKey(item))
+    fun `overlayItemKey returns overlay prefix with index`() {
+        assertEquals("overlay-0", overlayItemKey(0))
+        assertEquals("overlay-5", overlayItemKey(5))
     }
 
     @Test
-    fun `overlayItemKey returns remote prefix for remote items`() {
-        val item = createRemoteItem(id = "xyz-456")
-        assertEquals("remote-xyz-456", overlayItemKey(item))
-    }
-
-    @Test
-    fun `overlayItemKey produces distinct keys for different local items`() {
-        val key1 = overlayItemKey(createLocalItem(localId = "a"))
-        val key2 = overlayItemKey(createLocalItem(localId = "b"))
-        assertTrue(key1 != key2, "Keys for different local items must differ")
-    }
-
-    @Test
-    fun `overlayItemKey produces distinct keys for different remote items`() {
-        val key1 = overlayItemKey(createRemoteItem(id = "a"))
-        val key2 = overlayItemKey(createRemoteItem(id = "b"))
-        assertTrue(key1 != key2, "Keys for different remote items must differ")
-    }
-
-    @Test
-    fun `overlayItemKey produces distinct keys for local and remote items with same id`() {
-        val localKey = overlayItemKey(createLocalItem(localId = "same-id"))
-        val remoteKey = overlayItemKey(createRemoteItem(id = "same-id"))
-        assertTrue(localKey != remoteKey, "Local and remote keys with same ID must differ due to prefix")
+    fun `overlayItemKey produces unique keys for different indices`() {
+        assertTrue(
+            overlayItemKey(0) != overlayItemKey(1),
+            "Different indices must get different keys",
+        )
     }
 
     // endregion
@@ -91,34 +72,17 @@ class MessageKeyUtilsTest {
     // region --- historyItemKey ---
 
     @Test
-    fun `historyItemKey returns history-local prefix for local items`() {
-        val item = createLocalItem(localId = "abc-123")
-        assertEquals("history-local-abc-123", historyItemKey(item, 0))
+    fun `historyItemKey returns history prefix with index`() {
+        assertEquals("history-0", historyItemKey(0))
+        assertEquals("history-5", historyItemKey(5))
     }
 
     @Test
-    fun `historyItemKey returns history-remote prefix for remote items`() {
-        val item = createRemoteItem(id = "xyz-456")
-        assertEquals("history-remote-xyz-456", historyItemKey(item, 0))
-    }
-
-    @Test
-    fun `historyItemKey returns placeholder key when item is null`() {
-        assertEquals("history-placeholder-0", historyItemKey(null, 0))
-        assertEquals("history-placeholder-5", historyItemKey(null, 5))
-    }
-
-    @Test
-    fun `historyItemKey ignores index when item is non-null`() {
-        val item = createRemoteItem(id = "msg-1")
-        assertEquals(historyItemKey(item, 0), historyItemKey(item, 99))
-    }
-
-    @Test
-    fun `historyItemKey produces unique placeholder keys for different indices`() {
-        val key1 = historyItemKey(null, 0)
-        val key2 = historyItemKey(null, 1)
-        assertTrue(key1 != key2, "Placeholder keys at different indices must differ")
+    fun `historyItemKey produces unique keys for different indices`() {
+        assertTrue(
+            historyItemKey(0) != historyItemKey(1),
+            "Different indices must get different keys to avoid LazyColumn duplicate key crash",
+        )
     }
 
     // endregion
@@ -126,21 +90,9 @@ class MessageKeyUtilsTest {
     // region --- overlay vs history key namespace separation ---
 
     @Test
-    fun `overlay and history keys never collide for same local item`() {
-        val item = createLocalItem(localId = "shared-id")
-        val overlayKey = overlayItemKey(item)
-        val historyKey = historyItemKey(item, 0)
-        assertTrue(
-            overlayKey != historyKey,
-            "Overlay key '$overlayKey' and history key '$historyKey' must not collide",
-        )
-    }
-
-    @Test
-    fun `overlay and history keys never collide for same remote item`() {
-        val item = createRemoteItem(id = "shared-id")
-        val overlayKey = overlayItemKey(item)
-        val historyKey = historyItemKey(item, 0)
+    fun `overlay and history keys never collide at same index`() {
+        val overlayKey = overlayItemKey(0)
+        val historyKey = historyItemKey(0)
         assertTrue(
             overlayKey != historyKey,
             "Overlay key '$overlayKey' and history key '$historyKey' must not collide",
@@ -149,23 +101,12 @@ class MessageKeyUtilsTest {
 
     @Test
     fun `all keys are unique across a mixed overlay and history list`() {
-        val overlayItems =
-            listOf(
-                createLocalItem(localId = "local-a"),
-                createLocalItem(localId = "local-b"),
-                createRemoteItem(id = "remote-a"),
-            )
-        val historyItems: List<ConversationMessageItem?> =
-            listOf(
-                createRemoteItem(id = "remote-b"),
-                createRemoteItem(id = "remote-c"),
-                createLocalItem(localId = "local-c"),
-                null, // placeholder
-            )
+        val overlaySlotCount = 3
+        val historySlotCount = 4
 
         val allKeys = mutableListOf<String>()
-        overlayItems.forEach { allKeys.add(overlayItemKey(it)) }
-        historyItems.forEachIndexed { idx, item -> allKeys.add(historyItemKey(item, idx)) }
+        repeat(overlaySlotCount) { idx -> allKeys.add(overlayItemKey(idx)) }
+        repeat(historySlotCount) { idx -> allKeys.add(historyItemKey(idx)) }
 
         assertEquals(
             allKeys.size,
@@ -276,10 +217,10 @@ class MessageKeyUtilsTest {
                 createRemoteItem(id = "old-msg-2"),
             )
 
-        // Step 1: Verify all keys are unique
+        // Step 1: Verify all keys are unique (keys are index-only when used)
         val allKeys = mutableListOf<String>()
-        overlayItems.forEach { allKeys.add(overlayItemKey(it)) }
-        historyItems.forEachIndexed { idx, item -> allKeys.add(historyItemKey(item, idx)) }
+        overlayItems.forEachIndexed { idx, _ -> allKeys.add(overlayItemKey(idx)) }
+        historyItems.forEachIndexed { idx, _ -> allKeys.add(historyItemKey(idx)) }
         assertEquals(
             allKeys.size,
             allKeys.toSet().size,
