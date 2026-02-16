@@ -44,28 +44,37 @@ class AttributionManager(
     private val utmAttributionStore: UtmAttributionStore by lazy { koinInstance.get<UtmAttributionStore>() }
     private val analyticsManager: AnalyticsManager by lazy { koinInstance.get<AnalyticsManager>() }
     private val logger = createLogger("AttributionManager")
+    private val sentryLogger = createLogger("AttributionManager", includeSentry = true)
 
     companion object {
         @Volatile
-        private var loggerFactory: ((String) -> Logger)? = null
+        private var loggerFactory: ((String, Boolean) -> Logger)? = null
 
         // Override logger factory for testing. Set to null to use default factory.
-        internal fun setLoggerFactory(factory: ((String) -> Logger)?) {
+        internal fun setLoggerFactory(factory: ((String, Boolean) -> Logger)?) {
             loggerFactory = factory
         }
 
-        fun createLogger(tag: String): Logger {
+        fun createLogger(
+            tag: String,
+            includeSentry: Boolean = false,
+        ): Logger {
             val factory = loggerFactory
             return if (factory != null) {
-                factory(tag)
+                factory(tag, includeSentry)
             } else {
                 runCatching {
                     val baseLogger = koinInstance.get<YralLogger>()
-                    val sentryLogWriter = koinInstance.get<LogWriter>(named("installReferrerLogWriter"))
-                    baseLogger.withAdditionalLogWriter(sentryLogWriter).withTag(tag)
-                }.getOrElse {
-                    Logger.withTag(tag)
-                }
+                    val withSentry =
+                        if (includeSentry) {
+                            val sentryWriter =
+                                koinInstance.get<LogWriter>(named("installReferrerLogWriter"))
+                            baseLogger.withAdditionalLogWriter(sentryWriter).withTag(tag)
+                        } else {
+                            baseLogger.withTag(tag)
+                        }
+                    withSentry
+                }.getOrElse { Logger.withTag(tag) }
             }
         }
     }
@@ -181,11 +190,7 @@ class AttributionManager(
                 ),
             )
             analyticsManager.flush()
-            logger.i {
-                "Attribution stored by $processorName: " +
-                    "source=${utmParams.source}, campaign=${utmParams.campaign}, " +
-                    "medium=${utmParams.medium}, term=${utmParams.term}, content=${utmParams.content}"
-            }
+            sentryLogger.i { "Attribution stored by $processorName: $utmParams" }
         }.onFailure {
             logger.e(it) { "Failed to store attribution from $processorName" }
             throw it
