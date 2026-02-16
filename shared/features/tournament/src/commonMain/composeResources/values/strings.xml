@@ -91,4 +91,5 @@
     <string name="daily_result_current_rank">Your current rank: #%1$d</string>
     <string name="daily_result_subtitle">Ranks may change as other players play today. Come back tomorrow for a fresh game</string>
     <string name="daily_result_view_leaderboard">View Global Leaderboard</string>
+    <string name="countdown_get_ready">Get ready to play\n%1$s in</string>
 </resources>

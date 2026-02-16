@@ -410,6 +410,31 @@ class TournamentViewModel(
         _state.update { it.copy(prizeBreakdownTournament = null) }
     }
 
+    fun showCountdown(tournament: Tournament) {
+        _state.update { it.copy(countdownTournament = tournament) }
+    }
+
+    fun dismissCountdown() {
+        _state.update { it.copy(countdownTournament = null) }
+    }
+
+    fun onCountdownFinished(tournament: Tournament) {
+        _state.update { it.copy(countdownTournament = null) }
+        send(
+            Event.NavigateToTournament(
+                tournamentId = tournament.id,
+                title = tournament.title,
+                initialDiamonds = tournament.initialDiamonds,
+                startEpochMs = tournament.startEpochMs,
+                endEpochMs = tournament.endEpochMs,
+                totalPrizePool = tournament.totalPrizePool,
+                isHotOrNot = tournament.type == TournamentType.HOT_OR_NOT,
+                isDailyTournament = tournament.isDaily,
+                dailyTimeLimitMs = tournament.dailyTimeLimitMs,
+            ),
+        )
+    }
+
     fun onShareClicked(tournament: Tournament) {
         viewModelScope.launch {
             val internalUrl = urlBuilder.build(Tournaments) ?: return@launch
@@ -450,15 +475,8 @@ class TournamentViewModel(
             when (tournament.participationState) {
                 is TournamentParticipationState.JoinNowWithCredit,
                 is TournamentParticipationState.JoinNowWithTokens,
-                ->
-                    registerForTournament(
-                        tournament,
-                    )
-
-                is TournamentParticipationState.RegistrationRequired ->
-                    registerForTournament(
-                        tournament,
-                    )
+                is TournamentParticipationState.RegistrationRequired,
+                -> registerForTournament(tournament)
 
                 is TournamentParticipationState.JoinNow ->
                     send(
@@ -490,7 +508,9 @@ class TournamentViewModel(
                     )
                 is TournamentParticipationState.TimeExpired ->
                     send(Event.NavigateToLeaderboard(tournamentId = tournament.id))
-                else -> {}
+                is TournamentParticipationState.Registered,
+                TournamentParticipationState.JoinNowDisabled,
+                -> showCountdown(tournament)
             }
         }
     }
