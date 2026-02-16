@@ -1,5 +1,7 @@
 package com.yral.shared.features.tournament.data
 
+import com.yral.shared.features.tournament.data.models.DailySessionRequestDto
+import com.yral.shared.features.tournament.data.models.DailySessionResponseDto
 import com.yral.shared.features.tournament.data.models.HotOrNotVoteRequestDto
 import com.yral.shared.features.tournament.data.models.HotOrNotVoteResponseDto
 import com.yral.shared.features.tournament.data.models.MyTournamentsRequestDto
@@ -82,4 +84,24 @@ interface ITournamentRemoteDataSource {
      * No authentication required.
      */
     suspend fun getVideoEmojis(request: VideoEmojisRequestDto): VideoEmojisResponseDto
+
+    /**
+     * Start a daily tournament session.
+     * Auto-registers user if not registered, handles session recovery.
+     * Requires authentication.
+     */
+    suspend fun startDailySession(
+        idToken: String,
+        request: DailySessionRequestDto,
+    ): DailySessionResponseDto
+
+    /**
+     * End a daily tournament session.
+     * Saves cumulative time played.
+     * Requires authentication.
+     */
+    suspend fun endDailySession(
+        idToken: String,
+        request: DailySessionRequestDto,
+    ): DailySessionResponseDto
 }

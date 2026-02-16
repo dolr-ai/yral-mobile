@@ -112,6 +112,8 @@ abstract class HomeComponent {
                 endEpochMs: Long,
                 totalPrizePool: Int,
                 isHotOrNot: Boolean,
+                isDailyTournament: Boolean,
+                dailyTimeLimitMs: Long,
             ) -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
         ): HomeComponent =
