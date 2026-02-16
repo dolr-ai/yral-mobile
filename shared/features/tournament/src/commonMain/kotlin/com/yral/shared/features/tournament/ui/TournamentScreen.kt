@@ -187,6 +187,15 @@ fun TournamentScreen(
             },
         )
     }
+
+    val countdownTournament = uiState.countdownTournament
+    if (countdownTournament != null) {
+        TournamentCountdownBottomSheet(
+            tournament = countdownTournament,
+            onDismissRequest = viewModel::dismissCountdown,
+            onCountdownFinished = { viewModel.onCountdownFinished(countdownTournament) },
+        )
+    }
 }
 
 @Composable
