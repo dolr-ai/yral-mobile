@@ -205,7 +205,7 @@ fun TournamentGameScaffoldScreen(
                     TournamentTopOverlay(
                         gameState = gameState,
                         tournamentTitle = gameConfig.tournamentTitle,
-                        onLeaderboardClick = { /*component.onLeaderboardClick()*/ },
+                        onLeaderboardClick = { component.onLeaderboardClick() },
                         onBack = {
                             tournamentGameViewModel.trackExitAttempted()
                             showLeaveTournamentConfirmation = true

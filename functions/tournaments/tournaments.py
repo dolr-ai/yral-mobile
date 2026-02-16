@@ -703,19 +703,36 @@ def _compute_settlement_leaderboard(tournament_id: str, limit: int = 10, collect
         collection_name: Either "tournaments" or "hot_or_not_tournaments"
     """
     users_ref = db().collection(f"{collection_name}/{tournament_id}/users")
-    # Fetch extra users to account for filtering out those who never played
-    # Need high multiplier because many non-players have 20 diamonds (initial balance)
-    # which ranks higher than players who lost (< 20 diamonds)
-    snaps = (
-        users_ref.order_by("diamonds", direction=firestore.Query.DESCENDING)
-                 .limit(limit * 50)
-                 .stream()
-    )
 
     # Hot or Not uses "wins"/"losses", smiley uses "tournament_wins"/"tournament_losses"
     is_hot_or_not = collection_name == "hot_or_not_tournaments"
     wins_field = "wins" if is_hot_or_not else "tournament_wins"
     losses_field = "losses" if is_hot_or_not else "tournament_losses"
+
+    # Try optimized query first: only fetch users who have played
+    # (has_played is set on first vote for new tournaments)
+    # Falls back gracefully if composite index doesn't exist yet or no results
+    try:
+        optimized_snaps = list(
+            users_ref.where("has_played", "==", True)
+                     .order_by("diamonds", direction=firestore.Query.DESCENDING)
+                     .limit(limit)
+                     .stream()
+        )
+    except Exception:
+        optimized_snaps = []
+
+    if optimized_snaps:
+        snaps = optimized_snaps
+        needs_filter = False
+    else:
+        # Fallback for old tournaments without has_played flag or missing index
+        snaps = list(
+            users_ref.order_by("diamonds", direction=firestore.Query.DESCENDING)
+                     .limit(limit * 50)
+                     .stream()
+        )
+        needs_filter = True
 
     # Collect all qualifying users first
     candidates = []
@@ -724,8 +741,8 @@ def _compute_settlement_leaderboard(tournament_id: str, limit: int = 10, collect
         wins = int(data.get(wins_field) or 0)
         losses = int(data.get(losses_field) or 0)
 
-        # Skip users who never played
-        if wins == 0 and losses == 0:
+        # Skip users who never played (only needed for fallback path)
+        if needs_filter and wins == 0 and losses == 0:
             continue
 
         diamonds = int(data.get("diamonds") or 0)
