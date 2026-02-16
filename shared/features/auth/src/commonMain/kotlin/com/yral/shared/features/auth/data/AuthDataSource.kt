@@ -7,6 +7,7 @@ import com.yral.shared.features.auth.data.models.PhoneAuthLoginResponseDto
 import com.yral.shared.features.auth.data.models.PhoneAuthVerifyResponseDto
 import com.yral.shared.features.auth.data.models.TokenResponseDto
 import com.yral.shared.features.auth.data.models.VerifyRequestDto
+import com.yral.shared.rust.service.utils.SignedDelegationPayload
 
 interface AuthDataSource {
     suspend fun obtainAnonymousIdentity(): TokenResponseDto
@@ -39,6 +40,6 @@ interface AuthDataSource {
         signedMessage: ByteArray,
         ingressExpirySecs: Long,
         ingressExpiryNanos: Int,
-        delegations: List<com.yral.shared.rust.service.utils.SignedDelegationPayload>?,
+        delegations: List<SignedDelegationPayload>?,
     ): CreateAiAccountResponseDto
 }

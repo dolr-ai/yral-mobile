@@ -5,6 +5,7 @@ import com.yral.shared.features.auth.domain.models.PhoneAuthLoginResponse
 import com.yral.shared.features.auth.domain.models.PhoneAuthVerifyResponse
 import com.yral.shared.features.auth.domain.models.TokenResponse
 import com.yral.shared.features.auth.utils.SocialProvider
+import com.yral.shared.rust.service.utils.SignedDelegationPayload
 import io.ktor.http.Url
 
 interface AuthRepository {
@@ -45,6 +46,6 @@ interface AuthRepository {
         signedMessage: ByteArray,
         ingressExpirySecs: Long,
         ingressExpiryNanos: Int,
-        delegations: List<com.yral.shared.rust.service.utils.SignedDelegationPayload>?,
+        delegations: List<SignedDelegationPayload>?,
     ): ByteArray
 }

@@ -4,6 +4,7 @@ import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.libs.arch.domain.SuspendUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
+import com.yral.shared.rust.service.utils.SignedDelegationPayload
 
 class CreateAiAccountUseCase(
     appDispatchers: AppDispatchers,
@@ -31,6 +32,6 @@ class CreateAiAccountUseCase(
         val signedMessage: ByteArray,
         val ingressExpirySecs: Long,
         val ingressExpiryNanos: Int,
-        val delegations: List<com.yral.shared.rust.service.utils.SignedDelegationPayload>?,
+        val delegations: List<SignedDelegationPayload>?,
     )
 }

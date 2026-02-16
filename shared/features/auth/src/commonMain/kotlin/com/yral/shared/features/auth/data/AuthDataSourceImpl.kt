@@ -31,6 +31,7 @@ import com.yral.shared.http.httpPostWithStringResponse
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.service.services.HelperService
+import com.yral.shared.rust.service.utils.SignedDelegationPayload
 import com.yral.shared.rust.service.utils.delegatedIdentityWireToJson
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.expectSuccess
@@ -279,7 +280,7 @@ class AuthDataSourceImpl(
         signedMessage: ByteArray,
         ingressExpirySecs: Long,
         ingressExpiryNanos: Int,
-        delegations: List<com.yral.shared.rust.service.utils.SignedDelegationPayload>?,
+        delegations: List<SignedDelegationPayload>?,
     ): CreateAiAccountResponseDto =
         httpPost<CreateAiAccountResponseDto>(
             httpClient = client,
