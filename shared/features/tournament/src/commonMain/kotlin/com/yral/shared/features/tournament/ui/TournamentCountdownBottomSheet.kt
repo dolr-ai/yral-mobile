@@ -24,12 +24,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yral.shared.features.tournament.domain.model.Tournament
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
+import com.yral.shared.libs.designsystem.component.lottie.LottieRes
+import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.delay
@@ -37,7 +40,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.tournament.generated.resources.Res
 import yral_mobile.shared.features.tournament.generated.resources.countdown_get_ready
-import yral_mobile.shared.features.tournament.generated.resources.sand_timer
+import yral_mobile.shared.features.tournament.generated.resources.golden_glow
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -95,11 +98,20 @@ fun TournamentCountdownBottomSheet(
         ) {
             DragHandle()
             Spacer(modifier = Modifier.height(24.dp))
-            Image(
-                painter = painterResource(Res.drawable.sand_timer),
-                contentDescription = null,
-                modifier = Modifier.size(150.dp),
-            )
+            Box(contentAlignment = Alignment.Center) {
+                Image(
+                    painter = painterResource(Res.drawable.golden_glow),
+                    contentDescription = null,
+                    modifier = Modifier.size(238.dp),
+                    contentScale = ContentScale.Fit,
+                )
+                YralLottieAnimation(
+                    rawRes = LottieRes.SAND_TIMER,
+                    modifier = Modifier.size(150.dp),
+                    contentScale = ContentScale.Fit,
+                    iterations = 1,
+                )
+            }
             Spacer(modifier = Modifier.height(24.dp))
             Text(
                 text = stringResource(Res.string.countdown_get_ready, tournament.title),
