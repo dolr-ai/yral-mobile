@@ -307,6 +307,8 @@ class TournamentTelemetry(
             is TournamentParticipationState.JoinNowWithTokens -> TournamentState.JOIN_NOW_WITH_TOKENS
             is TournamentParticipationState.JoinNowWithCredit -> TournamentState.JOIN_NOW_WITH_CREDIT
             is TournamentParticipationState.JoinNowDisabled -> TournamentState.JOIN_NOW_DISABLED
+            TournamentParticipationState.JoinNowFree -> TournamentState.JOIN_NOW
+            is TournamentParticipationState.TimeExpired -> TournamentState.ENDED
         }
 
     private fun Tournament.toAnalyticsState(): TournamentState =
@@ -324,17 +326,21 @@ class TournamentTelemetry(
             is TournamentParticipationState.JoinNow,
             is TournamentParticipationState.JoinNowDisabled,
             is TournamentParticipationState.Registered,
+            TournamentParticipationState.JoinNowFree,
+            is TournamentParticipationState.TimeExpired,
             -> null
         }
 
     private fun TournamentParticipationState.userDiamonds(): Int? =
         when (this) {
             is TournamentParticipationState.JoinNow -> userDiamonds
+            is TournamentParticipationState.TimeExpired -> userDiamonds
             is TournamentParticipationState.RegistrationRequired,
             is TournamentParticipationState.Registered,
             is TournamentParticipationState.JoinNowWithTokens,
             is TournamentParticipationState.JoinNowWithCredit,
             is TournamentParticipationState.JoinNowDisabled,
+            TournamentParticipationState.JoinNowFree,
             -> null
         }
 

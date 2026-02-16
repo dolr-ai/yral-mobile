@@ -810,6 +810,16 @@ def hot_or_not_tournament_vote(request: Request):
                 return {"error": "NOT_REGISTERED"}
 
             user_data = user_snap.to_dict() or {}
+
+            # Daily tournament time validation
+            if tournament_data.get("is_daily", False):
+                time_spent = int(user_data.get("time_spent_ms") or 0)
+                session_start = user_data.get("last_session_start_ms")
+                limit = tournament_data.get("daily_time_limit_ms", 300000)
+                elapsed = (int(time.time() * 1000) - int(session_start)) if session_start else 0
+                if (time_spent + max(0, elapsed)) >= limit:
+                    return {"error": "TIME_EXPIRED", "message": "Your 5 minutes are up!"}
+
             diamonds = int(user_data.get("diamonds", 0))
 
             if diamonds <= 0:
@@ -885,6 +895,7 @@ def hot_or_not_tournament_vote(request: Request):
                 "NO_DIAMONDS": ("No diamonds remaining", 402),
                 "DUPLICATE_VOTE": ("Already voted on this video", 409),
                 "VIDEO_NOT_FOUND": ("Video not found in tournament", 404),
+                "TIME_EXPIRED": ("Your 5 minutes are up!", 409),
             }
             msg, status = messages.get(error_code, ("Unknown error", 500))
             return error_response(status, error_code, msg)

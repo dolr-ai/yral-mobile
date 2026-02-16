@@ -169,6 +169,7 @@ class DefaultRootComponent(
                 RootComponent.Child.TournamentLeaderboard(
                     tournamentId = config.tournamentId,
                     showResult = config.showResult,
+                    isDaily = config.isDaily,
                 )
             is Config.TournamentGame ->
                 RootComponent.Child.TournamentGame(
@@ -181,6 +182,8 @@ class DefaultRootComponent(
                         config.endEpochMs,
                         config.totalPrizePool,
                         config.isHotOrNot,
+                        config.isDailyTournament,
+                        config.dailyTimeLimitMs,
                     ),
                 )
             is Config.Conversation ->
@@ -362,13 +365,15 @@ class DefaultRootComponent(
     override fun openTournamentLeaderboard(
         tournamentId: String,
         showResult: Boolean,
+        isDaily: Boolean,
     ) {
-        navigation.pushToFront(Config.TournamentLeaderboard(tournamentId, showResult))
+        navigation.pushToFront(Config.TournamentLeaderboard(tournamentId, showResult, isDaily))
     }
 
     override fun openTournamentResults(
         tournamentId: String,
         showResult: Boolean,
+        isDaily: Boolean,
     ) {
         navigation.navigate { stack ->
             // Remove TournamentGame from stack and add TournamentLeaderboard
@@ -376,6 +381,7 @@ class DefaultRootComponent(
                 Config.TournamentLeaderboard(
                     tournamentId = tournamentId,
                     showResult = true,
+                    isDaily = isDaily,
                 )
         }
     }
@@ -388,6 +394,8 @@ class DefaultRootComponent(
         endEpochMs: Long,
         totalPrizePool: Int,
         isHotOrNot: Boolean,
+        isDailyTournament: Boolean,
+        dailyTimeLimitMs: Long,
     ) {
         navigation.pushToFront(
             Config.TournamentGame(
@@ -398,6 +406,8 @@ class DefaultRootComponent(
                 endEpochMs,
                 totalPrizePool,
                 isHotOrNot = isHotOrNot,
+                isDailyTournament = isDailyTournament,
+                dailyTimeLimitMs = dailyTimeLimitMs,
             ),
         )
     }

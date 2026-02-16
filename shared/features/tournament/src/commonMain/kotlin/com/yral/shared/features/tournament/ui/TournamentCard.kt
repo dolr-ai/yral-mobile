@@ -52,6 +52,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import yral_mobile.shared.features.tournament.generated.resources.bitcoin
+import yral_mobile.shared.features.tournament.generated.resources.daily_time_to_play
 import yral_mobile.shared.features.tournament.generated.resources.dela_gothic_one_regular
 import yral_mobile.shared.features.tournament.generated.resources.ended
 import yral_mobile.shared.features.tournament.generated.resources.ends_in
@@ -170,25 +171,35 @@ fun TournamentCard(
                     overflow = TextOverflow.Ellipsis,
                 )
                 if (tournament.status !is TournamentStatus.Ended) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
+                    if (tournament.isDaily) {
                         Text(
-                            text = stringResource(TournamentRes.string.win_upto_prize, tournament.totalPrizePool),
+                            text = stringResource(TournamentRes.string.daily_time_to_play),
                             style = LocalAppTopography.current.xlBold,
                             color = YralColors.Yellow200,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
-                        Image(
-                            modifier =
-                                Modifier
-                                    .size(24.dp)
-                                    .graphicsLayer(rotationZ = 3.919f),
-                            painter = painterResource(TournamentRes.drawable.bitcoin),
-                            contentDescription = null,
-                        )
+                    } else {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Text(
+                                text = stringResource(TournamentRes.string.win_upto_prize, tournament.totalPrizePool),
+                                style = LocalAppTopography.current.xlBold,
+                                color = YralColors.Yellow200,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Image(
+                                modifier =
+                                    Modifier
+                                        .size(24.dp)
+                                        .graphicsLayer(rotationZ = 3.919f),
+                                painter = painterResource(TournamentRes.drawable.bitcoin),
+                                contentDescription = null,
+                            )
+                        }
                     }
                 }
 
@@ -428,6 +439,30 @@ private fun titleLineHeight(status: TournamentStatus) =
  */
 @OptIn(ExperimentalTime::class)
 private fun deriveParticipationState(
+    tournament: Tournament,
+    currentTime: Instant,
+    proDetails: ProDetails,
+): TournamentParticipationState {
+    if (tournament.isDaily) {
+        return deriveDailyParticipationState(tournament)
+    }
+    return deriveRegularParticipationState(tournament, currentTime, proDetails)
+}
+
+@OptIn(ExperimentalTime::class)
+private fun deriveDailyParticipationState(tournament: Tournament): TournamentParticipationState {
+    val remainingMs = tournament.remainingTimeMs ?: tournament.dailyTimeLimitMs
+    return when {
+        tournament.isRegistered && remainingMs <= 0 ->
+            TournamentParticipationState.TimeExpired(tournament.userDiamonds)
+        tournament.isRegistered ->
+            TournamentParticipationState.JoinNow(tournament.userDiamonds)
+        else -> TournamentParticipationState.JoinNowFree
+    }
+}
+
+@OptIn(ExperimentalTime::class)
+private fun deriveRegularParticipationState(
     tournament: Tournament,
     currentTime: Instant,
     proDetails: ProDetails,

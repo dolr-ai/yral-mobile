@@ -904,6 +904,37 @@ def _today_ist_str() -> str:
     return datetime.now(IST).strftime("%Y-%m-%d")
 
 
+def _end_all_active_daily_sessions(
+    tournament_id: str,
+    collection_name: str,
+    tournament_data: Dict[str, Any],
+) -> int:
+    """End all active daily sessions by finalizing time_spent_ms for users still in a session."""
+    daily_time_limit_ms = tournament_data.get("daily_time_limit_ms", 300000)
+    now_ms = int(time.time() * 1000)
+    users_ref = db().collection(collection_name).document(tournament_id).collection("users")
+    active_users = users_ref.where("session_active", "==", True).stream()
+    count = 0
+    for user_snap in active_users:
+        user_data = user_snap.to_dict() or {}
+        time_spent = int(user_data.get("time_spent_ms") or 0)
+        session_start = user_data.get("last_session_start_ms")
+        if session_start:
+            elapsed = max(0, now_ms - int(session_start))
+            new_time_spent = min(time_spent + elapsed, daily_time_limit_ms)
+        else:
+            new_time_spent = time_spent
+        user_snap.reference.update({
+            "time_spent_ms": new_time_spent,
+            "last_session_start_ms": None,
+            "session_active": False,
+            "updated_at": firestore.SERVER_TIMESTAMP,
+        })
+        count += 1
+    print(f"[_end_all_active_daily_sessions] Ended {count} active sessions for {tournament_id}")
+    return count
+
+
 def _normalize_prize_map(raw: Any) -> Dict[str, int]:
     if not isinstance(raw, dict):
         return {}
@@ -1223,6 +1254,28 @@ def update_tournament_status(request: Request):
                 "updated_at": firestore.SERVER_TIMESTAMP,
             })
             print(f"[update_tournament_status] {doc_id}: {current_status_raw} -> {target_status.value}")
+
+            # Daily tournament: end all active sessions and mark as settled (no prizes)
+            is_daily = tournament_data.get("is_daily", False)
+            if is_daily:
+                _end_all_active_daily_sessions(doc_id, collection_name, tournament_data)
+                ref.update({
+                    "status": TournamentStatus.SETTLED.value,
+                    "settlement_result": {
+                        "success": True,
+                        "message": "Daily tournament ended - no prizes to distribute",
+                        "is_daily": True,
+                    },
+                    "settled_at": firestore.SERVER_TIMESTAMP,
+                    "updated_at": firestore.SERVER_TIMESTAMP,
+                })
+                print(f"[update_tournament_status] {doc_id}: daily tournament -> {TournamentStatus.SETTLED.value}")
+                return jsonify({
+                    "status": "ok",
+                    "tournament_id": doc_id,
+                    "new_status": TournamentStatus.SETTLED.value,
+                    "settlement": {"message": "Daily tournament settled (no prizes)", "is_daily": True}
+                }), 200
 
             # Get prize map for settlement
             prize_map = _normalize_prize_map(snap.to_dict().get("prizeMap", {}))

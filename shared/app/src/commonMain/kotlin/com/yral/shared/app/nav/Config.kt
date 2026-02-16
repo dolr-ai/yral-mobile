@@ -25,6 +25,7 @@ internal sealed interface Config {
     data class TournamentLeaderboard(
         val tournamentId: String,
         val showResult: Boolean = false,
+        val isDaily: Boolean = false,
     ) : Config
 
     @Serializable
@@ -36,6 +37,8 @@ internal sealed interface Config {
         val endEpochMs: Long,
         val totalPrizePool: Int,
         val isHotOrNot: Boolean = false,
+        val isDailyTournament: Boolean = false,
+        val dailyTimeLimitMs: Long = 0,
     ) : Config
 
     @Serializable
