@@ -38,7 +38,7 @@ class MetaInstallReferrerAttributionTest {
     @BeforeTest
     fun setup() {
         // Set mock logger factory for tests
-        AttributionManager.setLoggerFactory { tag -> Logger.withTag(tag) }
+        AttributionManager.setLoggerFactory { tag, _ -> Logger.withTag(tag) }
     }
 
     @AfterTest
