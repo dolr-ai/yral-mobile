@@ -10,25 +10,20 @@ import com.yral.featureflag.WalletFeatureFlags
 import com.yral.featureflag.accountFeatureFlags.AccountFeatureFlags
 import com.yral.featureflag.accountFeatureFlags.AccountLinksDto
 import com.yral.shared.analytics.events.MenuCtaType
-import com.yral.shared.core.AppConfigurations.CHAT_BASE_URL
 import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.utils.getAccountInfo
 import com.yral.shared.features.account.analytics.AccountsTelemetry
+import com.yral.shared.features.account.domain.useCases.SoftDeleteInfluencerOnBotServerUseCase
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.domain.useCases.DeleteAccountUseCase
 import com.yral.shared.features.auth.domain.useCases.DeregisterNotificationTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.RegisterNotificationTokenUseCase
 import com.yral.shared.firebaseStore.getDownloadUrl
-import com.yral.shared.http.httpDelete
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import dev.gitlive.firebase.storage.FirebaseStorage
-import io.ktor.client.HttpClient
-import io.ktor.client.request.headers
-import io.ktor.http.HttpHeaders
-import io.ktor.http.path
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,12 +47,11 @@ class AccountsViewModel internal constructor(
     private val authClientFactory: AuthClientFactory,
     private val sessionManager: SessionManager,
     private val deleteAccountUseCase: DeleteAccountUseCase,
+    private val softDeleteInfluencerOnBotServerUseCase: SoftDeleteInfluencerOnBotServerUseCase,
     val accountsTelemetry: AccountsTelemetry,
     private val flagManager: FeatureFlagManager,
     private val firebaseStorage: FirebaseStorage,
     private val preferences: Preferences,
-    private val httpClient: HttpClient,
-    private val accountEnv: AccountEnv,
     private val registerNotificationTokenUseCase: RegisterNotificationTokenUseCase,
     private val deregisterNotificationTokenUseCase: DeregisterNotificationTokenUseCase,
 ) : ViewModel() {
@@ -136,7 +130,7 @@ class AccountsViewModel internal constructor(
             if (isBotAccount) {
                 _state.update { it.copy(isDeletingAccount = true) }
                 Logger.d(BOT_DELETE_LOG_TAG) { "bot delete: loader shown" }
-                softDeleteInfluencerOnBotServer(activePrincipal)
+                softDeleteInfluencerOnBotServerUseCase(activePrincipal)
             }
             deleteAccountUseCase
                 .invoke(Unit)
@@ -167,42 +161,6 @@ class AccountsViewModel internal constructor(
                         type = AccountBottomSheet.ErrorMessage(ErrorType.DELETE_ACCOUNT_FAILED),
                     )
                 }
-        }
-    }
-
-    private suspend fun softDeleteInfluencerOnBotServer(principal: String?) {
-        if (principal.isNullOrBlank()) {
-            Logger.w(BOT_DELETE_LOG_TAG) { "bot-server soft delete skipped: principal missing" }
-            return
-        }
-        val idToken = preferences.getString(PrefKeys.ID_TOKEN.name)
-        if (idToken.isNullOrBlank()) {
-            Logger.w(BOT_DELETE_LOG_TAG) {
-                "bot-server soft delete skipped: id token missing principal=$principal"
-            }
-            return
-        }
-        val environmentPrefix = if (accountEnv.isDebug) "staging" else ""
-        Logger.d(BOT_DELETE_LOG_TAG) {
-            "calling bot-server soft delete influencerId=$principal envPrefix=$environmentPrefix"
-        }
-        runCatching {
-            httpDelete(httpClient) {
-                url {
-                    host = CHAT_BASE_URL
-                    path(environmentPrefix, SOFT_DELETE_INFLUENCER_PATH, principal)
-                }
-                headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
-            }
-        }.onSuccess { response ->
-            Logger.d(BOT_DELETE_LOG_TAG) {
-                "bot-server soft delete success influencerId=$principal response=$response"
-            }
-        }.onFailure { error ->
-            Logger.w(BOT_DELETE_LOG_TAG, error) {
-                "bot-server soft delete failed; continuing with delete_user_info influencerId=$principal " +
-                    "message=${error.message}"
-            }
         }
     }
 
@@ -367,7 +325,6 @@ class AccountsViewModel internal constructor(
         const val BOT_DELETE_LOG_TAG = "BotDeleteFlow"
         const val LOGOUT_URI = "yral://logout"
         const val DELETE_ACCOUNT_URI = "yral://deleteAccount"
-        private const val SOFT_DELETE_INFLUENCER_PATH = "api/v1/influencers"
     }
 }
 
