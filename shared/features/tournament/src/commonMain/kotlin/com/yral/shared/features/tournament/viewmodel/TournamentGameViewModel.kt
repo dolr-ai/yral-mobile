@@ -43,7 +43,7 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
-@Suppress("TooManyFunctions")
+@Suppress("TooManyFunctions", "LongParameterList")
 class TournamentGameViewModel(
     private val sessionManager: SessionManager,
     private val gameIconsUseCase: GetGameIconsUseCase,
