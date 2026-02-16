@@ -267,6 +267,9 @@ class DefaultRootComponent(
             is SlotConfig.MandatoryUpdate -> {
                 RootComponent.SlotChild.MandatoryUpdate()
             }
+            is SlotConfig.AccountSwitcher -> {
+                RootComponent.SlotChild.AccountSwitcher()
+            }
         }
 
     // ==================== RootComponent Navigation ====================
@@ -611,6 +614,16 @@ class DefaultRootComponent(
 
     private fun dismissSubscriptionNudgeSlotIfActive() {
         if (slot.value.child?.instance is RootComponent.SlotChild.SubscriptionNudge) {
+            slotNavigation.dismiss()
+        }
+    }
+
+    override fun showAccountSwitcherSlot() {
+        slotNavigation.activate(SlotConfig.AccountSwitcher)
+    }
+
+    override fun dismissAccountSwitcherSlot() {
+        if (slot.value.child?.instance is RootComponent.SlotChild.AccountSwitcher) {
             slotNavigation.dismiss()
         }
     }

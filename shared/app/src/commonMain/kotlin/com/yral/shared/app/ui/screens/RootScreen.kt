@@ -22,11 +22,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.BottomSheetDefaults.DragHandle
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -79,6 +79,7 @@ import com.yral.shared.features.subscriptions.ui.SubscriptionsScreen
 import com.yral.shared.features.tournament.ui.TournamentLeaderboardScreen
 import com.yral.shared.features.wallet.ui.WalletScreen
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
+import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
@@ -108,31 +109,11 @@ fun RootScreen(rootComponent: RootComponent) {
         }
     }
 
-    if (state.showAccountDialog) {
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ModalBottomSheet(
-            onDismissRequest = { viewModel.dismissAccountDialog() },
-            sheetState = sheetState,
-            containerColor = YralColors.Neutral900,
-        ) {
-            val accountDialogInfo = state.accountDialogInfo
-            if (accountDialogInfo == null) {
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(24.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
-                }
-            } else {
-                AccountSwitchSheet(
-                    info = accountDialogInfo,
-                    selectionEnabled = !state.isAccountSwitchInProgress,
-                    onSelect = { principal ->
-                        viewModel.dismissAccountDialog()
-                        viewModel.switchToAccount(principal)
-                    },
-                )
-            }
+    LaunchedEffect(state.showAccountDialog) {
+        if (state.showAccountDialog) {
+            rootComponent.showAccountSwitcherSlot()
+        } else {
+            rootComponent.dismissAccountSwitcherSlot()
         }
     }
 
@@ -561,6 +542,38 @@ fun RootError.toErrorMessage(): String =
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+private fun AccountSwitcherSlotContent(component: RootComponent) {
+    val viewModel = component.rootViewModel
+    val state by viewModel.state.collectAsState()
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    YralBottomSheet(
+        onDismissRequest = { viewModel.dismissAccountDialog() },
+        bottomSheetState = bottomSheetState,
+        dragHandle = { DragHandle(color = YralColors.Neutral500) },
+    ) {
+        val accountDialogInfo = state.accountDialogInfo
+        if (accountDialogInfo == null) {
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(24.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator()
+            }
+        } else {
+            AccountSwitchSheet(
+                info = accountDialogInfo,
+                selectionEnabled = !state.isAccountSwitchInProgress,
+                onSelect = { principal ->
+                    viewModel.dismissAccountDialog()
+                    viewModel.switchToAccount(principal)
+                },
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 private fun SlotContent(component: RootComponent) {
     val slot by component.slot.subscribeAsState()
     slot.child?.instance?.also { slotChild ->
@@ -605,6 +618,9 @@ private fun SlotContent(component: RootComponent) {
             }
             is RootComponent.SlotChild.MandatoryUpdate -> {
                 MandatoryUpdateScreen()
+            }
+            is RootComponent.SlotChild.AccountSwitcher -> {
+                AccountSwitcherSlotContent(component = component)
             }
         }
     }

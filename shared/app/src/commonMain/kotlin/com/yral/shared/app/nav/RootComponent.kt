@@ -117,6 +117,10 @@ interface RootComponent {
 
     fun clearLoginState()
 
+    fun showAccountSwitcherSlot()
+
+    fun dismissAccountSwitcherSlot()
+
     // Defines all possible child components
     sealed class Child {
         class Splash(
@@ -177,5 +181,7 @@ interface RootComponent {
         class SubscriptionNudge : SlotChild()
 
         class MandatoryUpdate : SlotChild()
+
+        class AccountSwitcher : SlotChild()
     }
 }
