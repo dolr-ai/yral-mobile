@@ -228,8 +228,6 @@ pub fn sign_message_internal(
     signature_to_record(signature)
 }
 
-
-
 #[derive(uniffi::Object)]
 pub struct CanistersWrapper {
     inner: Canisters<true>,
@@ -443,7 +441,6 @@ pub async fn set_user_metadata(
         .await
         .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
 }
-
 
 #[derive(uniffi::Record)]
 pub struct PostDetailsWithUserInfo {
