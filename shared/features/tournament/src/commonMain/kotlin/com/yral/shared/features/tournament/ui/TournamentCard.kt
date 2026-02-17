@@ -24,15 +24,11 @@ import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.yral.shared.core.session.ProDetails
 import com.yral.shared.features.tournament.domain.model.PrizeBreakdownRow
 import com.yral.shared.features.tournament.domain.model.Tournament
@@ -43,27 +39,33 @@ import com.yral.shared.libs.designsystem.modifierx.conditional
 import com.yral.shared.libs.designsystem.modifierx.grayScale
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
-import com.yral.shared.libs.designsystem.theme.angledGradientBackground
 import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import kotlinx.coroutines.delay
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.DrawableResource
-import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import yral_mobile.shared.features.tournament.generated.resources.bitcoin
-import yral_mobile.shared.features.tournament.generated.resources.daily_time_to_play
-import yral_mobile.shared.features.tournament.generated.resources.dela_gothic_one_regular
 import yral_mobile.shared.features.tournament.generated.resources.ended
-import yral_mobile.shared.features.tournament.generated.resources.ends_in
-import yral_mobile.shared.features.tournament.generated.resources.hot_or_not_icon
-import yral_mobile.shared.features.tournament.generated.resources.hot_or_not_icon_disabled
-import yral_mobile.shared.features.tournament.generated.resources.hourly_tournament_emoji
+import yral_mobile.shared.features.tournament.generated.resources.game_live_time
+import yral_mobile.shared.features.tournament.generated.resources.game_starts_at_today
+import yral_mobile.shared.features.tournament.generated.resources.game_tomorrow_time
+import yral_mobile.shared.features.tournament.generated.resources.hot_or_not_subtitle
+import yral_mobile.shared.features.tournament.generated.resources.hot_or_not_tournament_banner
 import yral_mobile.shared.features.tournament.generated.resources.ic_calendar
+import yral_mobile.shared.features.tournament.generated.resources.ic_question_circle
 import yral_mobile.shared.features.tournament.generated.resources.ic_ranking
 import yral_mobile.shared.features.tournament.generated.resources.ic_share
 import yral_mobile.shared.features.tournament.generated.resources.ic_timer
+import yral_mobile.shared.features.tournament.generated.resources.ic_trophy_cup
 import yral_mobile.shared.features.tournament.generated.resources.ic_users
+import yral_mobile.shared.features.tournament.generated.resources.play_game_in
+import yral_mobile.shared.features.tournament.generated.resources.play_title
+import yral_mobile.shared.features.tournament.generated.resources.prize_label
+import yral_mobile.shared.features.tournament.generated.resources.smiley_subtitle
+import yral_mobile.shared.features.tournament.generated.resources.smiley_tournament_banner
 import yral_mobile.shared.features.tournament.generated.resources.starts_in
 import yral_mobile.shared.features.tournament.generated.resources.win_upto_prize
 import kotlin.time.Clock
@@ -73,6 +75,8 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import yral_mobile.shared.features.tournament.generated.resources.Res as TournamentRes
+
+private const val TEN_MINUTES_MS = 10 * 60 * 1000f
 
 @Suppress("MagicNumber", "LongMethod", "CyclomaticComplexMethod")
 @OptIn(ExperimentalTime::class)
@@ -84,7 +88,6 @@ fun TournamentCard(
     onShareClick: () -> Unit,
     onTournamentCtaClick: () -> Unit,
 ) {
-    // Single time source for both countdown and button state
     val now by produceState(initialValue = Clock.System.now(), tournament.status) {
         if (tournament.status is TournamentStatus.Ended) {
             return@produceState
@@ -95,236 +98,361 @@ fun TournamentCard(
         }
     }
 
-    // Derive current participation state based on real-time
     val currentParticipationState = deriveParticipationState(tournament, now, proDetails)
 
+    val colors = tournamentCardColors(tournament.type)
     val cardShape = RoundedCornerShape(8.dp)
 
-    val gradientColor =
-        when (tournament.status) {
-            TournamentStatus.Ended -> Color(0xFF878787)
-            is TournamentStatus.Live,
-            is TournamentStatus.Upcoming,
-            ->
-                when (tournament.type) {
-                    TournamentType.SMILEY ->
-                        if (tournament.status is TournamentStatus.Live) {
-                            YralColors.Red400
-                        } else {
-                            YralColors.Green400
-                        }
-                    TournamentType.HOT_OR_NOT -> Color(0xFFB3A126)
-                }
-        }
-
-    Box(
+    Column(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .clip(cardShape)
-                .wrapContentHeight()
-                .angledGradientBackground(
-                    colorStops =
-                        arrayOf(
-                            0.5141f to YralColors.Neutral900,
-                            1.5421f to gradientColor,
-                        ),
-                    degrees = 131f,
-                ),
+                .wrapContentHeight(),
     ) {
-        StatusChip(
-            status = tournament.status,
+        TournamentCardHeader(
+            tournament = tournament,
             now = now,
-            modifier = Modifier.align(Alignment.TopStart),
+            headerBgColor = colors.headerBg,
+            onShareClick = onShareClick,
         )
 
-        if (tournament.status !is TournamentStatus.Ended) {
-            ShareIcon(
-                modifier =
-                    Modifier
-                        .align(Alignment.TopEnd)
-                        .clickable(onClick = onShareClick)
-                        .padding(top = 16.dp, end = 20.dp),
-            )
-        }
+        TournamentCardBody(
+            tournament = tournament,
+            now = now,
+            currentParticipationState = currentParticipationState,
+            colors = colors,
+            onPrizeBreakdownClick = onPrizeBreakdownClick,
+            onTournamentCtaClick = onTournamentCtaClick,
+        )
+    }
+}
 
-        Row {
-            Column(
-                modifier =
-                    Modifier
-                        .padding(start = 12.dp, end = 12.dp, top = 44.dp)
-                        .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                Text(
-                    text = tournament.title,
-                    style =
-                        TextStyle(
-                            fontFamily = delaGothicOneFontFamily(),
-                            fontWeight = FontWeight.Normal,
-                            fontSize = titleSize(tournament.status),
-                            letterSpacing = titleLetterSpacing(tournament.status),
-                            lineHeight = titleLineHeight(tournament.status),
-                            color = YralColors.NeutralTextPrimary,
-                        ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                if (tournament.status !is TournamentStatus.Ended) {
-                    if (tournament.isDaily) {
-                        Text(
-                            text = stringResource(TournamentRes.string.daily_time_to_play),
-                            style = LocalAppTopography.current.xlBold,
-                            color = YralColors.Yellow200,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    } else {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            Text(
-                                text = stringResource(TournamentRes.string.win_upto_prize, tournament.totalPrizePool),
-                                style = LocalAppTopography.current.xlBold,
-                                color = YralColors.Yellow200,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            Image(
-                                modifier =
-                                    Modifier
-                                        .size(24.dp)
-                                        .graphicsLayer(rotationZ = 3.919f),
-                                painter = painterResource(TournamentRes.drawable.bitcoin),
-                                contentDescription = null,
-                            )
-                        }
-                    }
-                }
-
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    MetaChip(
-                        iconRes = TournamentRes.drawable.ic_users,
-                        iconTint = Color.Unspecified,
-                        alpha = 0.7f,
-                        cornerRadius = 64.dp,
-                        text = tournament.participantsLabel,
-                    )
-                    MetaChip(
-                        iconRes = TournamentRes.drawable.ic_calendar,
-                        iconTint = Color.Unspecified,
-                        alpha = 0.8f,
-                        cornerRadius = 30.dp,
-                        text = tournament.scheduleLabel,
-                    )
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(20.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    TournamentCtaButton(
-                        modifier =
-                            Modifier
-                                .height(40.dp)
-                                .weight(1f),
-                        status = tournament.status,
-                        participationState = currentParticipationState,
-                        onClick = onTournamentCtaClick,
-                    )
-                    if (tournament.status !is TournamentStatus.Ended) {
-                        RankingIconButton(onClick = onPrizeBreakdownClick)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-            }
-        }
-
+@Suppress("MagicNumber")
+@OptIn(ExperimentalTime::class)
+@Composable
+private fun TournamentCardHeader(
+    tournament: Tournament,
+    now: Instant,
+    headerBgColor: Color,
+    onShareClick: () -> Unit,
+) {
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(100.dp)
+                .background(headerBgColor),
+    ) {
         Image(
             modifier =
                 Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = 12.dp)
-                    .size(120.dp)
+                    .fillMaxWidth()
+                    .height(100.dp)
                     .conditional(
-                        condition =
-                            tournament.status is TournamentStatus.Ended &&
-                                tournament.type == TournamentType.SMILEY,
+                        condition = tournament.status is TournamentStatus.Ended,
                         ifTrue = { grayScale() },
                     ),
             painter =
                 painterResource(
                     when (tournament.type) {
-                        TournamentType.SMILEY -> TournamentRes.drawable.hourly_tournament_emoji
-                        TournamentType.HOT_OR_NOT ->
-                            if (tournament.status is TournamentStatus.Ended) {
-                                TournamentRes.drawable.hot_or_not_icon_disabled
-                            } else {
-                                TournamentRes.drawable.hot_or_not_icon
-                            }
+                        TournamentType.SMILEY -> TournamentRes.drawable.smiley_tournament_banner
+                        TournamentType.HOT_OR_NOT -> TournamentRes.drawable.hot_or_not_tournament_banner
                     },
                 ),
             contentDescription = null,
-            alignment = Alignment.CenterEnd,
+            contentScale = ContentScale.Crop,
         )
+
+        TimerPillBadge(
+            status = tournament.status,
+            now = now,
+            modifier =
+                Modifier
+                    .align(Alignment.TopStart)
+                    .padding(start = 8.dp, top = 8.dp),
+        )
+
+        if (tournament.status !is TournamentStatus.Ended) {
+            Icon(
+                modifier =
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .clickable(onClick = onShareClick)
+                        .padding(top = 12.dp, end = 12.dp)
+                        .size(20.dp),
+                painter = painterResource(TournamentRes.drawable.ic_share),
+                contentDescription = "Share",
+                tint = Color.Unspecified,
+            )
+        }
     }
 }
 
+@Suppress("MagicNumber")
+private fun pillStyle(status: TournamentStatus): Pair<Brush, Color> =
+    when (status) {
+        is TournamentStatus.Live ->
+            Brush.radialGradient(
+                colors = listOf(Color(0xFFC62C2C), Color(0xFF9C1F1F), Color(0xFF731212)),
+            ) to Color(0xFF4A0606)
+        is TournamentStatus.Upcoming ->
+            Brush.radialGradient(
+                colors = listOf(Color(0xFF2C8C2C), Color(0xFF1F6F1F), Color(0xFF124A12)),
+            ) to Color(0xFF0A2E0A)
+        TournamentStatus.Ended ->
+            Brush.linearGradient(
+                colors = listOf(Color(0xFF4A4A4A), Color(0xFF3A3A3A)),
+            ) to Color(0xFF2A2A2A)
+    }
+
 @Composable
 @OptIn(ExperimentalTime::class)
-private fun StatusChip(
+private fun TimerPillBadge(
     status: TournamentStatus,
     now: Instant,
     modifier: Modifier = Modifier,
 ) {
-    val bg =
-        when (status) {
-            is TournamentStatus.Live -> YralColors.Red400
-            is TournamentStatus.Upcoming -> YralColors.Green400
-            TournamentStatus.Ended -> YralColors.Neutral700
-        }
-
+    val pillShape = RoundedCornerShape(999.dp)
+    val (pillBackground, pillBorderColor) = pillStyle(status)
     val label =
         when (status) {
             is TournamentStatus.Live ->
-                stringResource(
-                    TournamentRes.string.ends_in,
-                    formatRemainingDuration(status.endTime - now),
-                )
+                stringResource(TournamentRes.string.game_live_time, formatRemainingDuration(status.endTime - now))
             is TournamentStatus.Upcoming ->
-                stringResource(
-                    TournamentRes.string.starts_in,
-                    formatRemainingDuration(status.startTime - now),
-                )
+                stringResource(TournamentRes.string.starts_in, formatRemainingDuration(status.startTime - now))
             TournamentStatus.Ended -> stringResource(TournamentRes.string.ended)
         }
 
     Row(
         modifier =
             modifier
-                .clip(RoundedCornerShape(bottomEnd = 12.dp))
-                .background(bg)
-                .height(28.dp)
-                .padding(horizontal = 10.dp),
+                .clip(pillShape)
+                .background(pillBackground)
+                .border(width = 1.dp, color = pillBorderColor, shape = pillShape)
+                .padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Icon(
-            modifier = Modifier.size(16.dp),
+            modifier = Modifier.size(12.dp),
             painter = painterResource(TournamentRes.drawable.ic_timer),
             contentDescription = null,
             tint = Color.Unspecified,
         )
         Text(
             text = label,
-            style = LocalAppTopography.current.baseMedium,
+            style = LocalAppTopography.current.regSemiBold,
             color = YralColors.NeutralIconsActive,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+    }
+}
+
+@Suppress("MagicNumber")
+@Composable
+@OptIn(ExperimentalTime::class)
+private fun scheduleText(
+    status: TournamentStatus,
+    startEpochMs: Long,
+    endEpochMs: Long,
+    now: Instant,
+): String =
+    when (status) {
+        is TournamentStatus.Live -> {
+            val tz = TimeZone.currentSystemDefault()
+            val startDt = Instant.fromEpochMilliseconds(startEpochMs).toLocalDateTime(tz)
+            val endDt = Instant.fromEpochMilliseconds(endEpochMs).toLocalDateTime(tz)
+            val startStr = formatHourMinute12h(startDt.hour, startDt.minute)
+            val endStr = formatHourMinute12h(endDt.hour, endDt.minute)
+            val timeRange = "$startStr-$endStr"
+            stringResource(TournamentRes.string.game_live_time, timeRange)
+        }
+        is TournamentStatus.Upcoming -> {
+            val tz = TimeZone.currentSystemDefault()
+            val nowDate = now.toLocalDateTime(tz).date
+            val startInstant = Instant.fromEpochMilliseconds(startEpochMs)
+            val startDt = startInstant.toLocalDateTime(tz)
+            val dayDiff = startDt.date.toEpochDays() - nowDate.toEpochDays()
+            val timeStr = formatHourMinute12h(startDt.hour, startDt.minute)
+            when (dayDiff) {
+                0L -> stringResource(TournamentRes.string.game_starts_at_today, timeStr)
+                1L -> stringResource(TournamentRes.string.game_tomorrow_time, timeStr)
+                else -> stringResource(TournamentRes.string.starts_in, formatRemainingDuration(startInstant - now))
+            }
+        }
+        TournamentStatus.Ended -> stringResource(TournamentRes.string.ended)
+    }
+
+@Suppress("MagicNumber", "LongMethod")
+@OptIn(ExperimentalTime::class)
+@Composable
+private fun TournamentCardBody(
+    tournament: Tournament,
+    now: Instant,
+    currentParticipationState: TournamentParticipationState,
+    colors: TournamentCardColors,
+    onPrizeBreakdownClick: () -> Unit,
+    onTournamentCtaClick: () -> Unit,
+) {
+    val fillFraction: Float
+    val countdownText: String?
+
+    if (currentParticipationState == TournamentParticipationState.JoinNowDisabled) {
+        val startTime = Instant.fromEpochMilliseconds(tournament.startEpochMs)
+        val timeRemainingMs = (startTime - now).inWholeMilliseconds.coerceAtLeast(0)
+        fillFraction = (1f - (timeRemainingMs.toFloat() / TEN_MINUTES_MS)).coerceIn(0f, 1f)
+        countdownText = stringResource(TournamentRes.string.play_game_in, formatRemainingDuration(startTime - now))
+    } else {
+        fillFraction = 0f
+        countdownText = null
+    }
+
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(colors.bodyBg)
+                .padding(10.dp),
+    ) {
+        // Title row with info icon
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(TournamentRes.string.play_title, tournament.title),
+                style = LocalAppTopography.current.baseSemiBold,
+                color = YralColors.NeutralTextPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+            Icon(
+                modifier =
+                    Modifier
+                        .clickable(onClick = onPrizeBreakdownClick)
+                        .padding(4.dp)
+                        .size(20.dp),
+                painter = painterResource(TournamentRes.drawable.ic_question_circle),
+                contentDescription = "How to play",
+                tint = Color.Unspecified,
+            )
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // Subtitle based on tournament type
+        Text(
+            text =
+                when (tournament.type) {
+                    TournamentType.SMILEY -> stringResource(TournamentRes.string.smiley_subtitle)
+                    TournamentType.HOT_OR_NOT -> stringResource(TournamentRes.string.hot_or_not_subtitle)
+                },
+            style = LocalAppTopography.current.baseRegular,
+            color = YralColors.NeutralTextSecondary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Meta row: schedule + participants (right-aligned)
+        val scheduleLabel = scheduleText(tournament.status, tournament.startEpochMs, tournament.endEpochMs, now)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            MetaChip(
+                iconRes = TournamentRes.drawable.ic_calendar,
+                iconTint = Color.Unspecified,
+                text = scheduleLabel,
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            MetaChip(
+                iconRes = TournamentRes.drawable.ic_users,
+                iconTint = Color.Unspecified,
+                text = tournament.participantsLabel,
+            )
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Prize row with ranking button (moved here from CTA row)
+        if (tournament.status !is TournamentStatus.Ended) {
+            PrizeRow(
+                totalPrizePool = tournament.totalPrizePool,
+                colors = colors,
+                onRankingClick = onPrizeBreakdownClick,
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+        }
+
+        // CTA button (full width, no ranking button beside it)
+        TournamentCtaButton(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(40.dp),
+            status = tournament.status,
+            participationState = currentParticipationState,
+            onClick = onTournamentCtaClick,
+            fillFraction = fillFraction,
+            countdownText = countdownText,
+        )
+    }
+}
+
+@Suppress("MagicNumber")
+@Composable
+private fun PrizeRow(
+    totalPrizePool: Int,
+    colors: TournamentCardColors,
+    onRankingClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(colors.prizeCardBg)
+                    .border(width = 1.dp, color = colors.prizeCardBorder, shape = RoundedCornerShape(8.dp))
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Image(
+                modifier = Modifier.size(20.dp),
+                painter = painterResource(TournamentRes.drawable.ic_trophy_cup),
+                contentDescription = null,
+            )
+            Text(
+                text = stringResource(TournamentRes.string.prize_label),
+                style = LocalAppTopography.current.baseSemiBold,
+                color = YralColors.NeutralTextSecondary,
+                modifier = Modifier.padding(start = 6.dp),
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = stringResource(TournamentRes.string.win_upto_prize, totalPrizePool),
+                style = LocalAppTopography.current.baseSemiBold,
+                color = YralColors.Yellow200,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Image(
+                modifier = Modifier.padding(start = 4.dp).size(16.dp),
+                painter = painterResource(TournamentRes.drawable.bitcoin),
+                contentDescription = null,
+            )
+        }
+        RankingIconButton(onClick = onRankingClick)
     }
 }
 
@@ -343,22 +471,25 @@ internal fun formatRemainingDuration(duration: Duration): String {
     }
 }
 
+@Suppress("MagicNumber")
+private fun formatHourMinute12h(
+    hour: Int,
+    minute: Int,
+): String {
+    val hour12 = ((hour + 11) % 12 + 1)
+    val amPm = if (hour < 12) "AM" else "PM"
+    return "$hour12:${minute.toString().padStart(2, '0')} $amPm"
+}
+
 @Composable
 private fun MetaChip(
     iconRes: DrawableResource,
     iconTint: Color,
-    alpha: Float,
-    cornerRadius: Dp,
     text: String,
 ) {
     Row(
-        modifier =
-            Modifier
-                .clip(RoundedCornerShape(cornerRadius))
-                .background(YralColors.Neutral800.copy(alpha = alpha))
-                .padding(horizontal = 10.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Icon(
             modifier = Modifier.size(16.dp),
@@ -377,23 +508,14 @@ private fun MetaChip(
 }
 
 @Composable
-private fun ShareIcon(modifier: Modifier = Modifier) {
-    Icon(
-        modifier =
-            modifier
-                .size(20.dp),
-        painter = painterResource(TournamentRes.drawable.ic_share),
-        contentDescription = "Share",
-        tint = Color.Unspecified,
-    )
-}
-
-@Composable
-private fun RankingIconButton(onClick: () -> Unit) {
+private fun RankingIconButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Box(
         modifier =
-            Modifier
-                .size(40.dp)
+            modifier
+                .size(32.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .background(YralColors.Neutral950)
                 .border(width = 1.dp, color = YralColors.Neutral700, shape = RoundedCornerShape(8.dp))
@@ -409,28 +531,30 @@ private fun RankingIconButton(onClick: () -> Unit) {
     }
 }
 
-@Composable
-private fun delaGothicOneFontFamily(): FontFamily =
-    FontFamily(
-        Font(TournamentRes.font.dela_gothic_one_regular, FontWeight.Normal),
-    )
+private data class TournamentCardColors(
+    val headerBg: Color,
+    val bodyBg: Color,
+    val prizeCardBg: Color,
+    val prizeCardBorder: Color,
+)
 
-private fun titleSize(status: TournamentStatus) =
-    when (status) {
-        TournamentStatus.Ended -> 18.sp
-        else -> 14.sp
-    }
-
-private fun titleLetterSpacing(status: TournamentStatus) =
-    when (status) {
-        TournamentStatus.Ended -> 0.54.sp
-        else -> 0.42.sp
-    }
-
-private fun titleLineHeight(status: TournamentStatus) =
-    when (status) {
-        TournamentStatus.Ended -> 25.2.sp
-        else -> 19.6.sp
+@Suppress("MagicNumber")
+private fun tournamentCardColors(type: TournamentType): TournamentCardColors =
+    when (type) {
+        TournamentType.SMILEY ->
+            TournamentCardColors(
+                headerBg = Color(0xFF231F12),
+                bodyBg = Color(0xFF231F12),
+                prizeCardBg = Color(0xFF17140C),
+                prizeCardBorder = Color(0xFF342D1A),
+            )
+        TournamentType.HOT_OR_NOT ->
+            TournamentCardColors(
+                headerBg = Color(0xFF0D1C1A),
+                bodyBg = Color(0xFF0D1C1A),
+                prizeCardBg = Color(0xFF0A1413),
+                prizeCardBorder = Color(0xFF162D2B),
+            )
     }
 
 /**
