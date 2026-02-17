@@ -136,7 +136,3 @@ Pods/
 
 # Sentry Config File
 sentry.properties
-.figma-token
-
-# MCP Tools (not part of main project)
-claude-talk-to-figma-mcp/
