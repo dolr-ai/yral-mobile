@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,6 +37,7 @@ import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.core.session.SessionState
 import com.yral.shared.features.chat.domain.models.ChatError
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencerStatus
@@ -67,22 +67,21 @@ import yral_mobile.shared.features.chat.generated.resources.influencers_error
 fun ChatWallScreen(
     component: ChatWallComponent,
     viewModel: ChatWallViewModel,
+    sessionManager: SessionManager = koinInject(),
     modifier: Modifier = Modifier,
     onCreateInfluencerClick: () -> Unit = {},
 ) {
-    val sessionManager: SessionManager = koinInject()
     val isBotAccount by
         sessionManager
-            .observeSessionState { state ->
-                (state as? com.yral.shared.core.session.SessionState.SignedIn)?.session?.isBotAccount == true
-            }.collectAsStateWithLifecycle(initialValue = false)
+            .observeSessionState { state -> (state as? SessionState.SignedIn)?.session?.isBotAccount == true }
+            .collectAsStateWithLifecycle(initialValue = false)
 
     // Use nullable to avoid showing CTA flash while loading
     val botCount by
         sessionManager
-            .observeSessionProperty(
-                selector = { it.botCount },
-            ).collectAsStateWithLifecycle(initialValue = null)
+            .observeSessionProperty { it.botCount }
+            .collectAsStateWithLifecycle(initialValue = null)
+
     val influencers = viewModel.influencers.collectAsLazyPagingItems()
     var trackedCardsViewed by remember { mutableStateOf(false) }
 
