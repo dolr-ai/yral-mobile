@@ -34,6 +34,7 @@ import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
+import com.yral.shared.preferences.stores.AccountDirectoryStore
 import com.yral.shared.preferences.stores.UtmAttributionStore
 import com.yral.shared.preferences.stores.UtmParams
 import com.yral.shared.rust.service.domain.models.SubscriptionPlan
@@ -90,6 +91,7 @@ class RootViewModel(
     private val rootTelemetry: RootTelemetry,
     private val flagManager: FeatureFlagManager,
     private val preferences: Preferences,
+    private val accountDirectoryStore: AccountDirectoryStore,
     private val utmAttributionStore: UtmAttributionStore,
     private val iapManager: IAPManager,
     private val queryPurchaseUseCase: QueryPurchaseUseCase,
@@ -504,12 +506,9 @@ class RootViewModel(
     }
 
     private suspend fun restoreAccountDialogFromCache(): AccountDialogInfo? =
-        preferences
-            .getString(PrefKeys.ACCOUNT_DIRECTORY_CACHE.name)
-            ?.let { encoded ->
-                runCatching { json.decodeFromString<AccountDirectoryCache>(encoded) }.getOrNull()
-            }?.let { cache ->
-                val directory = cache.toAccountDirectory()
+        accountDirectoryStore
+            .get()
+            ?.let { directory ->
                 sessionManager.updateAccountDirectory(directory)
                 toAccountDialogInfo(directory, sessionManager.userPrincipal)
             }
@@ -568,8 +567,7 @@ class RootViewModel(
     }
 
     private suspend fun persistAccountDirectoryCache(directory: AccountDirectory) {
-        val encoded = json.encodeToString(AccountDirectoryCache.from(directory))
-        preferences.putString(PrefKeys.ACCOUNT_DIRECTORY_CACHE.name, encoded)
+        accountDirectoryStore.put(directory)
     }
 
     fun dismissAccountDialog() {
@@ -1045,50 +1043,3 @@ private fun AccountDirectoryProfile.toAccountUi(activePrincipal: String?): Accou
         isBot = isBot,
         isActive = principal == activePrincipal,
     )
-
-@Serializable
-private data class AccountDirectoryCache(
-    val mainPrincipal: String?,
-    val botPrincipals: List<String>,
-    val profiles: List<AccountDirectoryProfileCache>,
-) {
-    fun toAccountDirectory(): AccountDirectory =
-        AccountDirectory(
-            mainPrincipal = mainPrincipal,
-            botPrincipals = botPrincipals,
-            profilesByPrincipal = profiles.associateBy({ it.principal }, { it.toProfile() }),
-        )
-
-    companion object {
-        fun from(directory: AccountDirectory): AccountDirectoryCache =
-            AccountDirectoryCache(
-                mainPrincipal = directory.mainPrincipal,
-                botPrincipals = directory.botPrincipals,
-                profiles =
-                    directory.profilesByPrincipal.values.map { profile ->
-                        AccountDirectoryProfileCache(
-                            principal = profile.principal,
-                            username = profile.username,
-                            avatarUrl = profile.avatarUrl,
-                            isBot = profile.isBot,
-                        )
-                    },
-            )
-    }
-}
-
-@Serializable
-private data class AccountDirectoryProfileCache(
-    val principal: String,
-    val username: String,
-    val avatarUrl: String,
-    val isBot: Boolean,
-) {
-    fun toProfile(): AccountDirectoryProfile =
-        AccountDirectoryProfile(
-            principal = principal,
-            username = username,
-            avatarUrl = avatarUrl,
-            isBot = isBot,
-        )
-}

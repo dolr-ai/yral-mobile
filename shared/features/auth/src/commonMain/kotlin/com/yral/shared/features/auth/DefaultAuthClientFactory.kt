@@ -8,6 +8,7 @@ import com.yral.shared.features.auth.domain.AuthRepository
 import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.preferences.Preferences
+import com.yral.shared.preferences.stores.AccountDirectoryStore
 import com.yral.shared.rust.service.services.HelperService
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CancellationException
@@ -21,6 +22,7 @@ class DefaultAuthClientFactory(
     private val analyticsManager: AnalyticsManager,
     private val crashlyticsManager: CrashlyticsManager,
     private val preferences: Preferences,
+    private val accountDirectoryStore: AccountDirectoryStore,
     private val auth: FirebaseAuth,
     private val authRepository: AuthRepository,
     private val requiredUseCases: DefaultAuthClient.RequiredUseCases,
@@ -37,6 +39,7 @@ class DefaultAuthClientFactory(
             analyticsManager = analyticsManager,
             crashlyticsManager = crashlyticsManager,
             preferences = preferences,
+            accountDirectoryStore = accountDirectoryStore,
             auth = auth,
             authRepository = authRepository,
             requiredUseCases = requiredUseCases,

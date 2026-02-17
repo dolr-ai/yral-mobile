@@ -6,6 +6,7 @@ import com.yral.shared.preferences.AsyncPreferencesImpl
 import com.yral.shared.preferences.FlowPreferencesImpl
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.preferences.PreferencesFactory
+import com.yral.shared.preferences.stores.AccountDirectoryStore
 import com.yral.shared.preferences.stores.AffiliateAttributionStore
 import com.yral.shared.preferences.stores.UtmAttributionStore
 import org.koin.core.module.dsl.bind
@@ -54,6 +55,7 @@ val preferencesModule =
                 appDispatchers = get(),
             )
         }
+        single { AccountDirectoryStore(get()) }
         single { AffiliateAttributionStore(get()) }
         single { UtmAttributionStore(get(named("UtmPreferences"))) }
     }

@@ -23,6 +23,7 @@ import com.yral.shared.firebaseStore.getDownloadUrl
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
+import com.yral.shared.preferences.stores.AccountDirectoryStore
 import dev.gitlive.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -52,6 +53,7 @@ class AccountsViewModel internal constructor(
     private val flagManager: FeatureFlagManager,
     private val firebaseStorage: FirebaseStorage,
     private val preferences: Preferences,
+    private val accountDirectoryStore: AccountDirectoryStore,
     private val registerNotificationTokenUseCase: RegisterNotificationTokenUseCase,
     private val deregisterNotificationTokenUseCase: DeregisterNotificationTokenUseCase,
 ) : ViewModel() {
@@ -249,7 +251,7 @@ class AccountsViewModel internal constructor(
                 )
             }
         sessionManager.updateAccountDirectory(updatedDirectory)
-        preferences.remove(PrefKeys.ACCOUNT_DIRECTORY_CACHE.name)
+        accountDirectoryStore.remove()
         Logger.d(BOT_DELETE_LOG_TAG) { "cache cleanup: account directory updated and cache cleared" }
 
         val lastActive = preferences.getString(PrefKeys.LAST_ACTIVE_PRINCIPAL.name)

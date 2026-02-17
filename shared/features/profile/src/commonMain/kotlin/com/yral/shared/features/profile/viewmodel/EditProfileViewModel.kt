@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
-import com.yral.shared.core.session.AccountDirectory
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.profile.analytics.ProfileTelemetry
@@ -13,6 +12,7 @@ import com.yral.shared.features.profile.domain.UploadProfileImageUseCase
 import com.yral.shared.features.profile.domain.UploadProfileImageUseCase.UploadProfileImageParams
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
+import com.yral.shared.preferences.stores.AccountDirectoryStore
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7Params
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCase
 import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsParams
@@ -38,6 +38,7 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 class EditProfileViewModel(
     private val sessionManager: SessionManager,
     private val preferences: Preferences,
+    private val accountDirectoryStore: AccountDirectoryStore,
     private val getUserProfileDetailsV7UseCase: GetUserProfileDetailsV7UseCase,
     private val updateProfileDetailsUseCase: UpdateProfileDetailsUseCase,
     private val uploadProfileImageUseCase: UploadProfileImageUseCase,
@@ -559,11 +560,7 @@ class EditProfileViewModel(
             avatarUrl = resolvedAvatar,
             isBot = isBot,
         )
-        val directory = sessionManager.accountDirectory ?: return
-        preferences.putString(
-            PrefKeys.ACCOUNT_DIRECTORY_CACHE.name,
-            json.encodeToString(AccountDirectoryCache.from(directory)),
-        )
+        sessionManager.accountDirectory?.let { accountDirectoryStore.put(it) }
     }
 
     private suspend fun updateBotIdentityUsernameIfNeeded(username: String) {
@@ -616,36 +613,4 @@ private data class BotIdentityEntry(
     val principal: String,
     val identity: String,
     val username: String? = null,
-)
-
-@Serializable
-private data class AccountDirectoryCache(
-    val mainPrincipal: String?,
-    val botPrincipals: List<String>,
-    val profiles: List<AccountDirectoryProfileCache>,
-) {
-    companion object {
-        fun from(directory: AccountDirectory): AccountDirectoryCache =
-            AccountDirectoryCache(
-                mainPrincipal = directory.mainPrincipal,
-                botPrincipals = directory.botPrincipals,
-                profiles =
-                    directory.profilesByPrincipal.values.map { profile ->
-                        AccountDirectoryProfileCache(
-                            principal = profile.principal,
-                            username = profile.username,
-                            avatarUrl = profile.avatarUrl,
-                            isBot = profile.isBot,
-                        )
-                    },
-            )
-    }
-}
-
-@Serializable
-private data class AccountDirectoryProfileCache(
-    val principal: String,
-    val username: String,
-    val avatarUrl: String,
-    val isBot: Boolean,
 )

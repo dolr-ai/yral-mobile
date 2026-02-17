@@ -46,6 +46,7 @@ import com.yral.shared.firebaseAuth.usecase.SignOutUseCase
 import com.yral.shared.firebaseStore.usecase.UpdateDocumentUseCase
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
+import com.yral.shared.preferences.stores.AccountDirectoryStore
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.YralFfiException
 import com.yral.shared.rust.service.utils.authenticateWithNetwork
@@ -71,6 +72,7 @@ class DefaultAuthClient(
     private val analyticsManager: AnalyticsManager,
     private val crashlyticsManager: CrashlyticsManager,
     private val preferences: Preferences,
+    private val accountDirectoryStore: AccountDirectoryStore,
     private val auth: FirebaseAuth,
     private val authRepository: AuthRepository,
     private val requiredUseCases: RequiredUseCases,
@@ -718,7 +720,7 @@ class DefaultAuthClient(
         preferences.remove(PrefKeys.USERNAME.name)
         preferences.remove(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name)
         preferences.remove(PrefKeys.BOT_IDENTITIES.name)
-        preferences.remove(PrefKeys.ACCOUNT_DIRECTORY_CACHE.name)
+        accountDirectoryStore.remove()
     }
 
     override suspend fun phoneAuthLogin(phoneNumber: String): PhoneAuthLoginResponse {
