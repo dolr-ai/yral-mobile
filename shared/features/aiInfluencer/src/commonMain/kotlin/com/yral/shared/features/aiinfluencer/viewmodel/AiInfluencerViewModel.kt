@@ -25,6 +25,9 @@ import com.yral.shared.features.uploadvideo.presentation.BotVideoGenManager
 import com.yral.shared.http.httpPost
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
+import com.yral.shared.preferences.stores.AccountSessionPreferences
+import com.yral.shared.preferences.stores.BotIdentitiesStore
+import com.yral.shared.preferences.stores.BotIdentityEntry
 import com.yral.shared.rust.service.domain.usecases.AcceptNewUserRegistrationV2Params
 import com.yral.shared.rust.service.domain.usecases.AcceptNewUserRegistrationV2UseCase
 import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsParams
@@ -53,8 +56,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
@@ -69,6 +70,7 @@ class AiInfluencerViewModel(
     private val createInfluencerUseCase: CreateInfluencerUseCase,
     private val sessionManager: SessionManager,
     private val preferences: Preferences,
+    private val accountSessionPreferences: AccountSessionPreferences,
     private val json: Json,
     private val botIdentityStorage: BotIdentityStorage,
     private val updateProfileDetailsUseCase: UpdateProfileDetailsUseCase,
@@ -724,12 +726,8 @@ class AiInfluencerViewModel(
             preferences.remove(PrefKeys.USERNAME.name)
         }
         // Preserve main account identity/principal if not already stored
-        mainIdentitySnapshot?.let { mainIdentity ->
-            preferences.putBytes(PrefKeys.MAIN_IDENTITY.name, mainIdentity)
-        }
-        mainPrincipalSnapshot?.let { mainPrincipal ->
-            preferences.putString(PrefKeys.MAIN_PRINCIPAL.name, mainPrincipal)
-        }
+        mainIdentitySnapshot?.let { accountSessionPreferences.setMainIdentity(it) }
+        mainPrincipalSnapshot?.let { accountSessionPreferences.setMainPrincipal(it) }
         preferences.putBoolean(
             PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name,
             canisterData.isCreatedFromServiceCanister,
@@ -768,8 +766,7 @@ class AiInfluencerViewModel(
 }
 
 class BotIdentityStorage(
-    private val preferences: Preferences,
-    private val json: Json,
+    private val botIdentitiesStore: BotIdentitiesStore,
     private val sessionManager: SessionManager,
 ) {
     suspend fun saveBotIdentity(
@@ -777,11 +774,7 @@ class BotIdentityStorage(
         identity: ByteArray,
         username: String? = null,
     ) {
-        val existing =
-            preferences
-                .getString(PrefKeys.BOT_IDENTITIES.name)
-                ?.let { runCatching { json.decodeFromString<List<BotIdentityEntry>>(it) }.getOrNull() }
-                ?: emptyList()
+        val existing = botIdentitiesStore.get()
         val updated =
             existing
                 .filterNot { it.principal == principal } +
@@ -790,17 +783,9 @@ class BotIdentityStorage(
                     identity = identity.encodeBase64(),
                     username = username?.takeIf { it.isNotBlank() },
                 )
-        val encoded = json.encodeToString(updated)
-        preferences.putString(PrefKeys.BOT_IDENTITIES.name, encoded)
+        botIdentitiesStore.put(updated)
         sessionManager.updateBotCount(updated.size)
     }
-
-    @Serializable
-    private data class BotIdentityEntry(
-        val principal: String,
-        val identity: String,
-        val username: String? = null,
-    )
 }
 
 @Serializable

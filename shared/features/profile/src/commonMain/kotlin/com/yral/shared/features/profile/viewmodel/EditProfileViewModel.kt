@@ -13,6 +13,7 @@ import com.yral.shared.features.profile.domain.UploadProfileImageUseCase.UploadP
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.preferences.stores.AccountDirectoryStore
+import com.yral.shared.preferences.stores.BotIdentitiesStore
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7Params
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCase
 import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsParams
@@ -24,10 +25,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.StringResource
 import yral_mobile.shared.features.profile.generated.resources.Res
 import yral_mobile.shared.features.profile.generated.resources.profile_picture_updated
@@ -39,6 +36,7 @@ class EditProfileViewModel(
     private val sessionManager: SessionManager,
     private val preferences: Preferences,
     private val accountDirectoryStore: AccountDirectoryStore,
+    private val botIdentitiesStore: BotIdentitiesStore,
     private val getUserProfileDetailsV7UseCase: GetUserProfileDetailsV7UseCase,
     private val updateProfileDetailsUseCase: UpdateProfileDetailsUseCase,
     private val uploadProfileImageUseCase: UploadProfileImageUseCase,
@@ -46,7 +44,7 @@ class EditProfileViewModel(
     private val crashlyticsManager: CrashlyticsManager,
 ) : ViewModel() {
     private val logger = Logger.withTag("EditProfileViewModel")
-    private val json = Json { ignoreUnknownKeys = true }
+
     companion object {
         private const val MIN_USERNAME_LENGTH = 3
         private const val MAX_USERNAME_LENGTH = 15
@@ -566,21 +564,18 @@ class EditProfileViewModel(
     private suspend fun updateBotIdentityUsernameIfNeeded(username: String) {
         if (sessionManager.isBotAccount == true) {
             sessionManager.userPrincipal?.let { principal ->
-                preferences
-                    .getString(PrefKeys.BOT_IDENTITIES.name)
-                    ?.let { raw ->
-                        runCatching { json.decodeFromString<List<BotIdentityEntry>>(raw) }.getOrNull()
-                    }?.let { existing ->
-                        val updated =
-                            existing.map { entry ->
-                                if (entry.principal == principal) {
-                                    entry.copy(username = username)
-                                } else {
-                                    entry
-                                }
+                val existing = botIdentitiesStore.get()
+                if (existing.isNotEmpty()) {
+                    val updated =
+                        existing.map { entry ->
+                            if (entry.principal == principal) {
+                                entry.copy(username = username)
+                            } else {
+                                entry
                             }
-                        preferences.putString(PrefKeys.BOT_IDENTITIES.name, json.encodeToString(updated))
-                    }
+                        }
+                    botIdentitiesStore.put(updated)
+                }
             }
         }
     }
@@ -606,11 +601,4 @@ data class EditProfileViewState(
     val isSavingProfile: Boolean = false,
     val isBioFocused: Boolean = false,
     val profileImageToastMessage: StringResource? = null,
-)
-
-@Serializable
-private data class BotIdentityEntry(
-    val principal: String,
-    val identity: String,
-    val username: String? = null,
 )

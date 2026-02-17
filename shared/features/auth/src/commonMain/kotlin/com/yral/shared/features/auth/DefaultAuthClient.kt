@@ -12,7 +12,6 @@ import com.yral.shared.analytics.events.AuthSessionInitiator
 import com.yral.shared.analytics.events.AuthSessionState
 import com.yral.shared.analytics.events.OtpValidationStatus
 import com.yral.shared.core.exceptions.YralException
-import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.core.session.DELAY_FOR_SESSION_PROPERTIES
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
@@ -47,19 +46,17 @@ import com.yral.shared.firebaseStore.usecase.UpdateDocumentUseCase
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.preferences.stores.AccountDirectoryStore
+import com.yral.shared.preferences.stores.AccountSessionPreferences
+import com.yral.shared.preferences.stores.BotIdentitiesStore
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.YralFfiException
 import com.yral.shared.rust.service.utils.authenticateWithNetwork
 import com.yral.shared.rust.service.utils.getSessionFromIdentity
 import dev.gitlive.firebase.auth.FirebaseAuth
 import io.ktor.util.decodeBase64Bytes
-import io.ktor.util.encodeBase64
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonObject
@@ -72,7 +69,9 @@ class DefaultAuthClient(
     private val analyticsManager: AnalyticsManager,
     private val crashlyticsManager: CrashlyticsManager,
     private val preferences: Preferences,
+    private val accountSessionPreferences: AccountSessionPreferences,
     private val accountDirectoryStore: AccountDirectoryStore,
+    private val botIdentitiesStore: BotIdentitiesStore,
     private val auth: FirebaseAuth,
     private val authRepository: AuthRepository,
     private val requiredUseCases: RequiredUseCases,
@@ -84,7 +83,6 @@ class DefaultAuthClient(
 ) : AuthClient {
     private var currentState: String? = null
     private var currentProvider: SocialProvider? = null
-    private val json = Json { ignoreUnknownKeys = true }
 
     override suspend fun initialize() {
         sessionManager.updateState(SessionState.Loading)
@@ -92,8 +90,8 @@ class DefaultAuthClient(
     }
 
     private suspend fun refreshAuthIfNeeded() {
-        val lastActivePrincipal = preferences.getString(PrefKeys.LAST_ACTIVE_PRINCIPAL.name)
-        val mainPrincipal = preferences.getString(PrefKeys.MAIN_PRINCIPAL.name)
+        val lastActivePrincipal = accountSessionPreferences.getLastActivePrincipal()
+        val mainPrincipal = accountSessionPreferences.getMainPrincipal()
         // If last active was a bot (or non-main) and we have it cached, restore it immediately
         // and skip main token handling.
         if (lastActivePrincipal != null && lastActivePrincipal != mainPrincipal) {
@@ -240,10 +238,7 @@ class DefaultAuthClient(
     }
 
     private suspend fun updateBotCountFromPrefs() {
-        val raw = preferences.getString(PrefKeys.BOT_IDENTITIES.name)
-        val count =
-            raw?.let { runCatching { json.decodeFromString<List<BotIdentityEntry>>(it).size }.getOrNull() }
-                ?: 0
+        val count = botIdentitiesStore.get().size
         Logger.d("BotIdentitySource") { "updateBotCountFromPrefs source=local_pref count=$count" }
         sessionManager.updateBotCount(count)
     }
@@ -647,9 +642,9 @@ class DefaultAuthClient(
 
     private suspend fun getCachedSession(): Session? {
         // Prefer explicitly stored main identity/principal when available
-        val mainIdentity = preferences.getBytes(PrefKeys.MAIN_IDENTITY.name)
-        val mainPrincipal = preferences.getString(PrefKeys.MAIN_PRINCIPAL.name)
-        val lastActivePrincipal = preferences.getString(PrefKeys.LAST_ACTIVE_PRINCIPAL.name)
+        val mainIdentity = accountSessionPreferences.getMainIdentity()
+        val mainPrincipal = accountSessionPreferences.getMainPrincipal()
+        val lastActivePrincipal = accountSessionPreferences.getLastActivePrincipal()
 
         // If last active was a bot (or non-main), try using the generic identity/principal first
         val preferredIdentity = preferences.getBytes(PrefKeys.IDENTITY.name)
@@ -705,9 +700,9 @@ class DefaultAuthClient(
             preferences.putBoolean(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name, isCreatedFromServiceCanister)
             // Always persist a main identity when the session is not a bot account
             if (!isBotAccount) {
-                preferences.putBytes(PrefKeys.MAIN_IDENTITY.name, identity)
-                preferences.putString(PrefKeys.MAIN_PRINCIPAL.name, userPrincipalId)
-                preferences.putString(PrefKeys.LAST_ACTIVE_PRINCIPAL.name, userPrincipalId)
+                accountSessionPreferences.setMainIdentity(identity)
+                accountSessionPreferences.setMainPrincipal(userPrincipalId)
+                accountSessionPreferences.setLastActivePrincipal(userPrincipalId)
             }
         }
     }
@@ -719,7 +714,10 @@ class DefaultAuthClient(
         preferences.remove(PrefKeys.PROFILE_PIC.name)
         preferences.remove(PrefKeys.USERNAME.name)
         preferences.remove(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name)
-        preferences.remove(PrefKeys.BOT_IDENTITIES.name)
+        accountSessionPreferences.setMainIdentity(null)
+        accountSessionPreferences.setMainPrincipal(null)
+        accountSessionPreferences.setLastActivePrincipal(null)
+        botIdentitiesStore.remove()
         accountDirectoryStore.remove()
     }
 
@@ -797,7 +795,6 @@ class DefaultAuthClient(
         } ?: throw YralAuthException("Phone auth verification failed - no state found")
     }
 
-    @Suppress("LongMethod")
     private suspend fun persistBotIdentitiesFromToken(idToken: String) {
         val claims = runCatching { oAuthUtilsHelper.parseOAuthToken(idToken) }.getOrNull()
         val botIdentities = claims?.botDelegatedIdentities?.takeIf { it.isNotEmpty() }
@@ -814,53 +811,20 @@ class DefaultAuthClient(
                 "persistBotIdentitiesFromToken: found ${botIdentities.size} bot identities. " +
                     "Payload keys=$payloadKeys"
             }
-            val existing =
-                preferences
-                    .getString(PrefKeys.BOT_IDENTITIES.name)
-                    ?.let { runCatching { json.decodeFromString<List<BotIdentityEntry>>(it) }.getOrNull() }
-                    .orEmpty()
-            val entries =
-                botIdentities
-                    .mapNotNull { raw ->
-                        runCatching {
-                            val decodedString = raw.decodeToString()
-                            val wire =
-                                runCatching { json.decodeFromString<KotlinDelegatedIdentityWire>(decodedString) }
-                                    .getOrElse {
-                                        val base64Decoded = decodedString.decodeBase64Bytes()
-                                        json.decodeFromString<KotlinDelegatedIdentityWire>(
-                                            base64Decoded.decodeToString(),
-                                        )
-                                    }
-                            val encoded = json.encodeToString(wire).encodeToByteArray()
-                            val principal = getSessionFromIdentity(encoded).userPrincipalId
-                            Logger.d("DefaultAuthClient") {
-                                "persistBotIdentitiesFromToken: decoded bot principal $principal"
-                            }
-                            BotIdentityEntry(principal = principal, identity = encoded.encodeBase64())
-                        }.onFailure { error ->
-                            Logger.e("DefaultAuthClient") {
-                                "Failed to persist bot identity from token: ${error.message}"
-                            }
-                        }.getOrNull()
-                    }.filter { it.principal.isNotBlank() }
-            if (entries.isNotEmpty()) {
-                val merged =
-                    (existing + entries)
-                        .groupBy { it.principal }
-                        .map { (_, list) ->
-                            val latest = list.last()
-                            val username =
-                                list
-                                    .asReversed()
-                                    .firstOrNull { !it.username.isNullOrBlank() }
-                                    ?.username
-                            latest.copy(username = username)
+            val result =
+                botIdentitiesStore.mergeFromOAuthTokenRawIdentities(
+                    rawPayloads = botIdentities,
+                    principalFromIdentityBytes = { encoded -> getSessionFromIdentity(encoded).userPrincipalId },
+                    onEntryParseFailure = { _, error ->
+                        Logger.e("DefaultAuthClient") {
+                            "Failed to persist bot identity from token: ${error.message}"
                         }
-                preferences.putString(PrefKeys.BOT_IDENTITIES.name, json.encodeToString(merged))
+                    },
+                )
+            result?.let { r ->
                 Logger.d("BotIdentitySource") {
-                    "persistBotIdentitiesFromToken source=oauth_token existing=${existing.size} " +
-                        "new=${entries.size} merged=${merged.size}"
+                    "persistBotIdentitiesFromToken source=oauth_token existing=${r.existingCount} " +
+                        "new=${r.addedCount} merged=${r.mergedCount}"
                 }
             }
         }
@@ -870,13 +834,6 @@ class DefaultAuthClient(
 class SecurityException(
     message: String,
 ) : Exception(message)
-
-@Serializable
-private data class BotIdentityEntry(
-    val principal: String,
-    val identity: String,
-    val username: String? = null,
-)
 
 private fun extractPayloadKeys(idToken: String): Set<String> {
     val payloadJson = extractPayloadJson(idToken)

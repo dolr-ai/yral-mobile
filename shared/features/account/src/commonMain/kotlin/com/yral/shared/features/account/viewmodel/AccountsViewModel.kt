@@ -24,6 +24,8 @@ import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.preferences.stores.AccountDirectoryStore
+import com.yral.shared.preferences.stores.AccountSessionPreferences
+import com.yral.shared.preferences.stores.BotIdentitiesStore
 import dev.gitlive.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -33,10 +35,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 
 data class AccountEnv(
     val isDebug: Boolean,
@@ -53,12 +51,13 @@ class AccountsViewModel internal constructor(
     private val flagManager: FeatureFlagManager,
     private val firebaseStorage: FirebaseStorage,
     private val preferences: Preferences,
+    private val accountSessionPreferences: AccountSessionPreferences,
     private val accountDirectoryStore: AccountDirectoryStore,
+    private val botIdentitiesStore: BotIdentitiesStore,
     private val registerNotificationTokenUseCase: RegisterNotificationTokenUseCase,
     private val deregisterNotificationTokenUseCase: DeregisterNotificationTokenUseCase,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
-    private val json = Json { ignoreUnknownKeys = true }
 
     private val authClient =
         authClientFactory
@@ -234,12 +233,10 @@ class AccountsViewModel internal constructor(
     private suspend fun removeDeletedBotFromLocalCaches(deletedPrincipal: String) {
         Logger.d(BOT_DELETE_LOG_TAG) { "cache cleanup: start deletedPrincipal=$deletedPrincipal" }
         val updatedBots =
-            preferences
-                .getString(PrefKeys.BOT_IDENTITIES.name)
-                ?.let { stored -> runCatching { json.decodeFromString<List<BotIdentityEntry>>(stored) }.getOrNull() }
-                .orEmpty()
+            botIdentitiesStore
+                .get()
                 .filterNot { entry -> entry.principal == deletedPrincipal }
-        preferences.putString(PrefKeys.BOT_IDENTITIES.name, json.encodeToString(updatedBots))
+        botIdentitiesStore.put(updatedBots)
         sessionManager.updateBotCount(updatedBots.size)
         Logger.d(BOT_DELETE_LOG_TAG) { "cache cleanup: bot identities updated count=${updatedBots.size}" }
 
@@ -254,10 +251,10 @@ class AccountsViewModel internal constructor(
         accountDirectoryStore.remove()
         Logger.d(BOT_DELETE_LOG_TAG) { "cache cleanup: account directory updated and cache cleared" }
 
-        val lastActive = preferences.getString(PrefKeys.LAST_ACTIVE_PRINCIPAL.name)
-        val mainPrincipal = preferences.getString(PrefKeys.MAIN_PRINCIPAL.name)
+        val lastActive = accountSessionPreferences.getLastActivePrincipal()
+        val mainPrincipal = accountSessionPreferences.getMainPrincipal()
         if (lastActive == deletedPrincipal && mainPrincipal != null) {
-            preferences.putString(PrefKeys.LAST_ACTIVE_PRINCIPAL.name, mainPrincipal)
+            accountSessionPreferences.setLastActivePrincipal(mainPrincipal)
             Logger.d(BOT_DELETE_LOG_TAG) {
                 "cache cleanup: last active principal moved to mainPrincipal=$mainPrincipal"
             }
@@ -378,10 +375,3 @@ enum class ErrorType {
     SIGNUP_FAILED,
     DELETE_ACCOUNT_FAILED,
 }
-
-@Serializable
-private data class BotIdentityEntry(
-    val principal: String,
-    val identity: String,
-    val username: String? = null,
-)

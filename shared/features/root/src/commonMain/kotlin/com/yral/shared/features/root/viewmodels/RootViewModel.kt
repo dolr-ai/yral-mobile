@@ -35,6 +35,9 @@ import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.preferences.stores.AccountDirectoryStore
+import com.yral.shared.preferences.stores.AccountSessionPreferences
+import com.yral.shared.preferences.stores.BotIdentitiesStore
+import com.yral.shared.preferences.stores.BotIdentityEntry
 import com.yral.shared.preferences.stores.UtmAttributionStore
 import com.yral.shared.preferences.stores.UtmParams
 import com.yral.shared.rust.service.domain.models.SubscriptionPlan
@@ -59,8 +62,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonArray
@@ -91,7 +92,9 @@ class RootViewModel(
     private val rootTelemetry: RootTelemetry,
     private val flagManager: FeatureFlagManager,
     private val preferences: Preferences,
+    private val accountSessionPreferences: AccountSessionPreferences,
     private val accountDirectoryStore: AccountDirectoryStore,
+    private val botIdentitiesStore: BotIdentitiesStore,
     private val utmAttributionStore: UtmAttributionStore,
     private val iapManager: IAPManager,
     private val queryPurchaseUseCase: QueryPurchaseUseCase,
@@ -363,10 +366,10 @@ class RootViewModel(
     private suspend fun refreshAccountDirectory(allowRetry: Boolean) {
         val activePrincipal = sessionManager.userPrincipal
         val mainPrincipal =
-            preferences.getString(PrefKeys.MAIN_PRINCIPAL.name)
+            accountSessionPreferences.getMainPrincipal()
                 ?: preferences.getString(PrefKeys.USER_PRINCIPAL.name)
         val mainIdentity =
-            preferences.getBytes(PrefKeys.MAIN_IDENTITY.name)
+            accountSessionPreferences.getMainIdentity()
                 ?: preferences
                     .getBytes(PrefKeys.IDENTITY.name)
                     ?.takeIf { activePrincipal == mainPrincipal }
@@ -516,14 +519,12 @@ class RootViewModel(
     private suspend fun seedAccountDialogFromLocalData(): AccountDialogInfo? {
         val activePrincipal = sessionManager.userPrincipal
         val mainPrincipal =
-            preferences.getString(PrefKeys.MAIN_PRINCIPAL.name)
+            accountSessionPreferences.getMainPrincipal()
                 ?: preferences.getString(PrefKeys.USER_PRINCIPAL.name)
                 ?: return null
         val botEntries =
-            preferences
-                .getString(PrefKeys.BOT_IDENTITIES.name)
-                ?.let { runCatching { json.decodeFromString<List<BotIdentityEntry>>(it) }.getOrNull() }
-                .orEmpty()
+            botIdentitiesStore
+                .get()
                 .filter { it.principal != mainPrincipal }
 
         val mainUsername =
@@ -610,19 +611,15 @@ class RootViewModel(
                 val identityBytes: ByteArray
                 val isBot: Boolean
                 val botUsername: String?
-                val storedMainPrincipal = preferences.getString(PrefKeys.MAIN_PRINCIPAL.name)
+                val storedMainPrincipal = accountSessionPreferences.getMainPrincipal()
                 if (principal == storedMainPrincipal) {
                     identityBytes =
-                        preferences.getBytes(PrefKeys.MAIN_IDENTITY.name)
+                        accountSessionPreferences.getMainIdentity()
                             ?: throw YralException("Main identity missing")
                     isBot = false
                     botUsername = null
                 } else {
-                    val storedBots =
-                        preferences
-                            .getString(PrefKeys.BOT_IDENTITIES.name)
-                            ?.let { runCatching { json.decodeFromString<List<BotIdentityEntry>>(it) }.getOrNull() }
-                            ?: emptyList()
+                    val storedBots = botIdentitiesStore.get()
                     val match =
                         storedBots.firstOrNull { it.principal == principal }
                             ?: throw YralException("Bot identity not found")
@@ -648,7 +645,7 @@ class RootViewModel(
                     )
                 sessionManager.updateState(SessionState.SignedIn(session = session))
                 cacheSession(identityBytes, session)
-                preferences.putString(PrefKeys.LAST_ACTIVE_PRINCIPAL.name, principal)
+                accountSessionPreferences.setLastActivePrincipal(principal)
                 // Refresh tokens and notification registration similar to post-login
                 if (isBot) {
                     // Skip auth initialization for bots to avoid overwriting the active bot session with parent tokens
@@ -699,14 +696,14 @@ class RootViewModel(
     fun switchToMainAccount(onComplete: (Boolean) -> Unit = {}) {
         coroutineScope.launch {
             val mainPrincipal =
-                preferences.getString(PrefKeys.MAIN_PRINCIPAL.name)
+                accountSessionPreferences.getMainPrincipal()
                     ?: preferences.getString(PrefKeys.USER_PRINCIPAL.name)
             if (mainPrincipal == null) {
                 Logger.w("BotDeleteFlow") { "switchToMainAccount skipped: main principal missing" }
                 onComplete(false)
                 return@launch
             }
-            preferences.putString(PrefKeys.LAST_ACTIVE_PRINCIPAL.name, mainPrincipal)
+            accountSessionPreferences.setLastActivePrincipal(mainPrincipal)
             Logger.d("BotDeleteFlow") { "switchToMainAccount mainPrincipal=$mainPrincipal" }
             switchToAccount(mainPrincipal) { switched ->
                 Logger.d("BotDeleteFlow") {
@@ -755,7 +752,7 @@ class RootViewModel(
                 )
             } else {
                 AccountDirectory(
-                    mainPrincipal = if (isBot) preferences.getString(PrefKeys.MAIN_PRINCIPAL.name) else principal,
+                    mainPrincipal = if (isBot) accountSessionPreferences.getMainPrincipal() else principal,
                     botPrincipals = if (isBot) listOf(principal) else emptyList(),
                     profilesByPrincipal =
                         mapOf(
@@ -792,15 +789,15 @@ class RootViewModel(
             session.isCreatedFromServiceCanister,
         )
         if (!session.isBotAccount) {
-            preferences.putBytes(PrefKeys.MAIN_IDENTITY.name, identity)
-            session.userPrincipal?.let { preferences.putString(PrefKeys.MAIN_PRINCIPAL.name, it) }
+            accountSessionPreferences.setMainIdentity(identity)
+            accountSessionPreferences.setMainPrincipal(session.userPrincipal)
         }
     }
 
     private suspend fun autoSwitchToLastActiveAccount() {
         if (!hasAttemptedAutoSwitch) {
             hasAttemptedAutoSwitch = true
-            val targetPrincipal = preferences.getString(PrefKeys.LAST_ACTIVE_PRINCIPAL.name)
+            val targetPrincipal = accountSessionPreferences.getLastActivePrincipal()
             val currentPrincipal = sessionManager.userPrincipal
             if (
                 targetPrincipal != null &&
@@ -808,7 +805,7 @@ class RootViewModel(
                 targetPrincipal != currentPrincipal
             ) {
                 val mainPrincipal =
-                    preferences.getString(PrefKeys.MAIN_PRINCIPAL.name)
+                    accountSessionPreferences.getMainPrincipal()
                         ?: preferences.getString(PrefKeys.USER_PRINCIPAL.name)
 
                 val shouldSwitchToMain = targetPrincipal == mainPrincipal
@@ -893,13 +890,8 @@ class RootViewModel(
         repeat(BOT_LOAD_MAX_ATTEMPTS) { attempt ->
             if (result != null) return@repeat
 
-            val cachedBots =
-                preferences
-                    .getString(PrefKeys.BOT_IDENTITIES.name)
-                    ?.let { stored ->
-                        runCatching { json.decodeFromString<List<BotIdentityEntry>>(stored) }.getOrNull()
-                    }
-            if (!cachedBots.isNullOrEmpty()) {
+            val cachedBots = botIdentitiesStore.get()
+            if (cachedBots.isNotEmpty()) {
                 Logger.d("RootViewModel") { "loadBotEntries: using cached ${cachedBots.size} bots" }
                 Logger.d(BOT_SOURCE_LOG_TAG) {
                     "loadBotEntries source=local_pref count=${cachedBots.size}"
@@ -915,7 +907,7 @@ class RootViewModel(
                     ?.let(::parseBotsFromToken)
                     .orEmpty()
             if (tokenBots.isNotEmpty()) {
-                preferences.putString(PrefKeys.BOT_IDENTITIES.name, json.encodeToString(tokenBots))
+                botIdentitiesStore.put(tokenBots)
                 sessionManager.updateBotCount(tokenBots.size)
                 result = tokenBots
                 return@repeat
@@ -1018,13 +1010,6 @@ data class RootState(
 data class AccountDialogInfo(
     val mainAccount: AccountUi?,
     val botAccounts: List<AccountUi>,
-)
-
-@Serializable
-private data class BotIdentityEntry(
-    val principal: String,
-    val identity: String,
-    val username: String? = null,
 )
 
 data class AccountUi(

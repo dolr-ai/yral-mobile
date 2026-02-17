@@ -24,6 +24,7 @@ import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
+import com.yral.shared.preferences.stores.AccountSessionPreferences
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -42,6 +43,7 @@ class ChatWallViewModel(
     private val getInfluencerUseCase: GetInfluencerUseCase,
     private val sessionManager: SessionManager,
     private val preferences: Preferences,
+    private val accountSessionPreferences: AccountSessionPreferences,
     private val chatTelemetry: ChatTelemetry,
     private val chatErrorMapper: ChatErrorMapper,
     private val flagManager: FeatureFlagManager,
@@ -94,11 +96,11 @@ class ChatWallViewModel(
             .observeSessionState { state ->
                 val signedIn = state as? com.yral.shared.core.session.SessionState.SignedIn
                 val principal = signedIn?.session?.userPrincipal
-                val lastActivePrincipal = preferences.getString(PrefKeys.LAST_ACTIVE_PRINCIPAL.name)
+                val lastActivePrincipal = accountSessionPreferences.getLastActivePrincipal()
                 val activePrincipal = principal ?: lastActivePrincipal
                 if (activePrincipal.isNullOrBlank()) return@observeSessionState null
                 val mainPrincipal =
-                    preferences.getString(PrefKeys.MAIN_PRINCIPAL.name)
+                    accountSessionPreferences.getMainPrincipal()
                         ?: preferences.getString(PrefKeys.USER_PRINCIPAL.name)
                 val isBotBySession = signedIn?.session?.isBotAccount == true
                 val isBotByPrincipal = mainPrincipal != null && activePrincipal != mainPrincipal
