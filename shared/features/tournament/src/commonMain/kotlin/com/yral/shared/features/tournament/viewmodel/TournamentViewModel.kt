@@ -389,6 +389,22 @@ class TournamentViewModel(
                             isPro,
                         ),
                     )
+                    // If tournament is live, navigate directly after registration
+                    if (tournament.status is TournamentStatus.Live) {
+                        send(
+                            Event.NavigateToTournament(
+                                tournamentId = tournament.id,
+                                title = tournament.title,
+                                initialDiamonds = tournament.userDiamonds,
+                                startEpochMs = tournament.startEpochMs,
+                                endEpochMs = tournament.endEpochMs,
+                                totalPrizePool = tournament.totalPrizePool,
+                                isHotOrNot = tournament.type == TournamentType.HOT_OR_NOT,
+                                isDailyTournament = tournament.isDaily,
+                                dailyTimeLimitMs = tournament.dailyTimeLimitMs,
+                            ),
+                        )
+                    }
                     // Refresh tournaments to update registration state
                     loadTournaments()
                 }.onFailure { error ->
