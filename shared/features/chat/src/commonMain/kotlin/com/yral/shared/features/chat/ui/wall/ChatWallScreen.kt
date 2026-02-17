@@ -37,7 +37,6 @@ import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.core.session.SessionManager
-import com.yral.shared.core.session.SessionState
 import com.yral.shared.features.chat.domain.models.ChatError
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencerStatus
@@ -71,16 +70,11 @@ fun ChatWallScreen(
     modifier: Modifier = Modifier,
     onCreateInfluencerClick: () -> Unit = {},
 ) {
-    val isBotAccount by
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val showCreateBotCta by
         sessionManager
-            .observeSessionState { state -> (state as? SessionState.SignedIn)?.session?.isBotAccount == true }
+            .shouldShowCreateBotCtaFlow(state.maxBotCountForCta)
             .collectAsStateWithLifecycle(initialValue = false)
-
-    // Use nullable to avoid showing CTA flash while loading
-    val botCount by
-        sessionManager
-            .observeSessionProperty { it.botCount }
-            .collectAsStateWithLifecycle(initialValue = null)
 
     val influencers = viewModel.influencers.collectAsLazyPagingItems()
     var trackedCardsViewed by remember { mutableStateOf(false) }
@@ -133,8 +127,7 @@ fun ChatWallScreen(
                     color = YralColors.Grey50,
                     modifier = Modifier.weight(1f),
                 )
-                // Only show CTA when botCount is loaded and less than max
-                if (!isBotAccount && botCount != null && botCount!! < MAX_BOT_COUNT_FOR_CTA) {
+                if (showCreateBotCta) {
                     CreateInfluencerButton(
                         modifier = Modifier.height(32.dp),
                         alignIconToEnd = false,
@@ -336,5 +329,3 @@ object ChatWallScreenConstants {
     const val GRADIENT_WEIGHT = 40f
     const val SOLID_WEIGHT = 20f
 }
-
-private const val MAX_BOT_COUNT_FOR_CTA = 3

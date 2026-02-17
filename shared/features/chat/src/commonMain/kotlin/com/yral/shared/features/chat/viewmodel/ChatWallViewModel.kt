@@ -9,6 +9,8 @@ import androidx.paging.cachedIn
 import androidx.paging.filter
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.featureflag.ChatFeatureFlags
+import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.events.InfluencerClickType
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.core.session.SessionManager
@@ -42,8 +44,14 @@ class ChatWallViewModel(
     private val preferences: Preferences,
     private val chatTelemetry: ChatTelemetry,
     private val chatErrorMapper: ChatErrorMapper,
+    private val flagManager: FeatureFlagManager,
 ) : ViewModel() {
-    private val _state = MutableStateFlow(ChatWallState())
+    private val _state =
+        MutableStateFlow(
+            ChatWallState(
+                maxBotCountForCta = flagManager.get(ChatFeatureFlags.Chat.MaxBotCountForCta),
+            ),
+        )
     val state: StateFlow<ChatWallState> = _state.asStateFlow()
 
     private var loadInfluencerJob: Job? = null
@@ -171,4 +179,5 @@ data class ChatWallState(
     val influencerDetail: Influencer? = null,
     val isInfluencerLoading: Boolean = false,
     val influencerError: ChatError? = null,
+    val maxBotCountForCta: Int = 3,
 )

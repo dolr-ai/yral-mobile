@@ -28,5 +28,19 @@ object ChatFeatureFlags {
                 description = "User message count at which to show subscription nudge in chat",
                 defaultValue = 15,
             )
+        val MaxBotCountForCta: FeatureFlag<Int> =
+            int(
+                keySuffix = "maxBotCountForCta",
+                name = "Max bot count for CTA",
+                description = "Maximum number of bots before hiding the create influencer CTA",
+                defaultValue = 3,
+            )
+        val MaxVisibleBotUsernames: FeatureFlag<Int> =
+            int(
+                keySuffix = "maxVisibleBotUsernames",
+                name = "Max visible bot usernames",
+                description = "Maximum number of bot usernames to show before '+N More'",
+                defaultValue = 2,
+            )
     }
 }

@@ -82,6 +82,7 @@ fun AccountInfoView(
     onCreateInfluencerClick: () -> Unit = {},
     botUsernames: List<String> = emptyList(),
     createdByUsername: String? = null,
+    maxVisibleBotUsernames: Int = 2,
 ) {
     Column(
         modifier =
@@ -179,7 +180,10 @@ fun AccountInfoView(
             )
         }
         if (botUsernames.isNotEmpty()) {
-            BotUsernamesRow(botUsernames = botUsernames)
+            BotUsernamesRow(
+                botUsernames = botUsernames,
+                maxVisible = maxVisibleBotUsernames,
+            )
         }
         createdByUsername
             ?.takeUnless { it.isBlank() }
@@ -320,8 +324,11 @@ fun AccountInfoView(
 }
 
 @Composable
-private fun BotUsernamesRow(botUsernames: List<String>) {
-    val visible = botUsernames.take(MAX_VISIBLE_BOT_USERNAMES)
+private fun BotUsernamesRow(
+    botUsernames: List<String>,
+    maxVisible: Int = 2,
+) {
+    val visible = botUsernames.take(maxVisible)
     val remainingCount = (botUsernames.size - visible.size).coerceAtLeast(0)
     Row(
         modifier = Modifier.padding(top = 0.dp, bottom = 0.dp),
@@ -370,8 +377,6 @@ private fun CreatedByRow(username: String) {
         modifier = Modifier.padding(top = 0.dp, bottom = 0.dp),
     )
 }
-
-private const val MAX_VISIBLE_BOT_USERNAMES = 2
 
 @Composable
 private fun ProfileButton(

@@ -1,5 +1,6 @@
 package com.yral.shared.core.session
 
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -276,6 +277,18 @@ class SessionManager {
     fun isCoinBalanceLoaded(): Boolean = mutableProperties.value.coinBalance != null
 
     fun isFirebaseLoggedIn(): Boolean = mutableProperties.value.isFirebaseLoggedIn
+
+    fun shouldShowCreateBotCtaFlow(maxBotCountForCta: Int): Flow<Boolean> =
+        combine(
+            mutableState
+                .asStateFlow()
+                .map { state -> (state as? SessionState.SignedIn)?.session?.isBotAccount == true },
+            mutableProperties
+                .asStateFlow()
+                .map { it.botCount },
+        ) { isBotAccount, botCount ->
+            !isBotAccount && botCount != null && botCount < maxBotCountForCta
+        }.distinctUntilChanged()
 
     fun resetSessionProperties() {
         mutableProperties.update {

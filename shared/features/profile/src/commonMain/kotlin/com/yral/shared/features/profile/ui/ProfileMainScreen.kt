@@ -209,6 +209,10 @@ fun ProfileMainScreen(
             .collectAsStateWithLifecycle(initialValue = null)
     val hasBotAccounts = (botCount ?: 0) > 0
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val showCreateBotCta by
+        sessionManager
+            .shouldShowCreateBotCtaFlow(state.maxBotCountForCta)
+            .collectAsStateWithLifecycle(initialValue = false)
     val storagePermissionController = rememberStoragePermissionController()
     val isBotAccount = sessionManager.isBotAccount == true
 
@@ -468,7 +472,7 @@ fun ProfileMainScreen(
                     },
                     isBotAccount = isBotAccount,
                     hasBotAccounts = hasBotAccounts,
-                    botCount = botCount,
+                    showCreateBotCta = showCreateBotCta,
                     accountDirectory = accountDirectory,
                     onCreateInfluencerClick = onCreateInfluencerClick,
                 )
@@ -643,7 +647,7 @@ private fun MainContent(
     onSubscribe: () -> Unit,
     isBotAccount: Boolean,
     hasBotAccounts: Boolean,
-    botCount: Int?,
+    showCreateBotCta: Boolean,
     accountDirectory: AccountDirectory?,
     onCreateInfluencerClick: () -> Unit,
 ) {
@@ -701,15 +705,11 @@ private fun MainContent(
                 onFollowingClick = { onFollowersSectionClick(FollowersSheetTab.Following) },
                 onTalkToMeClicked = viewModel::fetchInfluencerDetails,
                 isProUser = state.isProUser,
-                showCreateInfluencerCta =
-                    state.isOwnProfile &&
-                        state.isLoggedIn &&
-                        !isBotAccount &&
-                        botCount != null &&
-                        botCount!! < MAX_BOT_COUNT_FOR_CTA,
+                showCreateInfluencerCta = state.isOwnProfile && state.isLoggedIn && showCreateBotCta,
                 onCreateInfluencerClick = onCreateInfluencerClick,
                 botUsernames = parentBotUsernames,
                 createdByUsername = createdByUsername,
+                maxVisibleBotUsernames = state.maxVisibleBotUsernames,
             )
         }
         when (profileVideos.loadState.refresh) {
@@ -773,8 +773,6 @@ private fun totalCount(data: LazyPagingItems<PagedFollowerItem>?) =
             0
         }
     } ?: 0
-
-private const val MAX_BOT_COUNT_FOR_CTA = 3
 
 @Suppress("LongMethod")
 @Composable
