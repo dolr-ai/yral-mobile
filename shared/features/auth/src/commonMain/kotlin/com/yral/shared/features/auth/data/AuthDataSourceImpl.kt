@@ -313,7 +313,7 @@ class AuthDataSourceImpl(
             url {
                 host = OAUTH_BASE_URL
                 // Endpoint: POST https://auth.yral.com/api/create_ai_account
-                path("api", "create_ai_account")
+                path(PATH_CREATE_AI_ACCOUNT)
             }
             setBody(payload)
         }.also { response: CreateAiAccountResponseDto ->
@@ -331,5 +331,6 @@ class AuthDataSourceImpl(
         private const val DELETE_ACCOUNT = "api/v1/user"
         private const val PATH_PHONE_AUTH_LOGIN = "api/phone_auth_login"
         private const val PATH_VERIFY_PHONE_AUTH = "api/verify_phone_auth"
+        private const val PATH_CREATE_AI_ACCOUNT = "api/create_ai_account"
     }
 }
