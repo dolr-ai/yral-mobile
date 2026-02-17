@@ -30,7 +30,7 @@ fun TournamentData.toUiTournament(proDetails: ProDetails): Tournament {
         }
 
     val scheduleLabel = formatScheduleLabel(date, startTime.toHourMinute12h(), endTime.toHourMinute12h())
-    val participantsLabel = formatParticipantsLabel(participantCount, tournamentStatus)
+    val participantsLabel = formatParticipantsLabel(participantCount)
 
     return Tournament(
         id = id,
@@ -195,12 +195,4 @@ internal fun getOrdinalSuffix(number: Int): String =
         else -> "th"
     }
 
-internal fun formatParticipantsLabel(
-    count: Int,
-    status: TournamentStatus,
-): String =
-    when (status) {
-        TournamentStatus.Ended -> "$count Participants"
-        is TournamentStatus.Live -> "$count Playing"
-        is TournamentStatus.Upcoming -> "$count Registered"
-    }
+internal fun formatParticipantsLabel(count: Int): String = "$count Players"
