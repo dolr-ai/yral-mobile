@@ -19,10 +19,7 @@ import com.yral.shared.rust.service.domain.models.VideoGenRequestKey
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 internal class BotVideoGenCoordinator(
@@ -62,7 +59,11 @@ internal class BotVideoGenCoordinator(
     ) {
         scope.launch {
             if (!canEnqueue(botPrincipal, prompt)) return@launch
-            val providerConfig = loadProviderConfig()
+            val providerConfig =
+                loadProviderConfig() ?: run {
+                    logger.d { "bot_video_gen: no available provider, skipping generation for $botPrincipal" }
+                    return@launch
+                }
             val params = buildGenerateParams(botPrincipal, prompt, imageData, providerConfig)
             generateVideoUseCase(
                 parameter = GenerateVideoUseCase.Param(params = params),
@@ -191,16 +192,27 @@ internal class BotVideoGenCoordinator(
         return hasPrompt && !hasRequest
     }
 
-    private suspend fun loadProviderConfig(): ProviderConfig {
-        val provider = loadBotProvider()
-        return ProviderConfig(
-            providerId = provider?.id ?: BOT_PROVIDER_ID,
-            modelName = provider?.name ?: BOT_MODEL_NAME,
-            aspectRatio = provider?.defaultAspectRatio ?: DEFAULT_ASPECT_RATIO,
-            durationSeconds = provider?.defaultDuration ?: DEFAULT_DURATION_SECONDS,
-            resolution = provider?.defaultResolution,
-            generateAudio = if (provider?.supportsAudio == true) true else null,
-        )
+    private suspend fun loadProviderConfig(): ProviderConfig? {
+        val provider = loadBotProvider() ?: return null
+        val aspectRatio =
+            when {
+                provider.allowedAspectRatios.contains(PREFERRED_ASPECT_RATIO) -> PREFERRED_ASPECT_RATIO
+                provider.defaultAspectRatio != null -> provider.defaultAspectRatio
+                else -> provider.allowedAspectRatios.firstOrNull()
+            }
+        val durationSeconds = provider.defaultDuration ?: provider.allowedDurations.firstOrNull()
+        return if (aspectRatio != null && durationSeconds != null) {
+            ProviderConfig(
+                providerId = provider.id,
+                modelName = provider.name,
+                aspectRatio = aspectRatio,
+                durationSeconds = durationSeconds,
+                resolution = provider.defaultResolution,
+                generateAudio = if (provider.supportsAudio == true) true else null,
+            )
+        } else {
+            null
+        }
     }
 
     private fun buildGenerateParams(
@@ -259,7 +271,7 @@ internal class BotVideoGenCoordinator(
         var provider: Provider? = null
         getProvidersUseCase()
             .onSuccess { list ->
-                provider = list.firstOrNull { it.id == BOT_PROVIDER_ID }
+                provider = list.firstOrNull { it.isAvailable != false }
             }.onFailure { error ->
                 logger.e(error) { "bot_video_gen: failed to fetch providers" }
             }
@@ -294,9 +306,6 @@ internal class BotVideoGenCoordinator(
     )
 
     private companion object {
-        const val BOT_PROVIDER_ID = "wan2_5"
-        const val BOT_MODEL_NAME = "WAN 2.5"
-        const val DEFAULT_ASPECT_RATIO = "9:16"
-        const val DEFAULT_DURATION_SECONDS = 5
+        private const val PREFERRED_ASPECT_RATIO = "9:16"
     }
 }
