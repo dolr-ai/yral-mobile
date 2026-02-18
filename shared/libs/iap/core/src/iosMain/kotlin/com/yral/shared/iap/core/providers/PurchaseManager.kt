@@ -61,7 +61,7 @@ internal class PurchaseManager(
     fun startRestore(): Pair<
         CompletableDeferred<Result<List<IAPPurchase>>>?,
         CompletableDeferred<Result<List<IAPPurchase>>>?,
-        > =
+    > =
         restoreLock.withLock {
             if (restoreContinuation != null) {
                 Pair(restoreContinuation, null)
