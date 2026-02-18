@@ -8,13 +8,24 @@ import com.yral.shared.rust.service.domain.models.VideoGenRequestKey
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.InternalSerializationApi
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.descriptors.PolymorphicKind
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
-import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.put
 
 @Serializable
@@ -64,10 +75,79 @@ internal data class RequestKeyDto(
     @SerialName("principal") val principal: String,
 )
 
-@Serializable
-internal data class GenerateVideoProviderErrorDto(
-    @SerialName("ProviderError") val providerError: String,
-)
+@Serializable(with = VideoGenErrorDtoSerializer::class)
+internal sealed class VideoGenErrorDto {
+    data class ProviderError(
+        val message: String,
+    ) : VideoGenErrorDto()
+    data class InvalidInput(
+        val message: String,
+    ) : VideoGenErrorDto()
+    object AuthError : VideoGenErrorDto()
+    data class NetworkError(
+        val message: String,
+    ) : VideoGenErrorDto()
+    object InsufficientBalance : VideoGenErrorDto()
+    object InvalidSignature : VideoGenErrorDto()
+    data class UnsupportedModel(
+        val model: String,
+    ) : VideoGenErrorDto()
+
+    val errorMessage: String
+        get() =
+            when (this) {
+                is ProviderError -> message
+                is InvalidInput -> message
+                is AuthError -> "Authentication failed"
+                is NetworkError -> message
+                is InsufficientBalance -> "Insufficient balance"
+                is InvalidSignature -> "Invalid signature"
+                is UnsupportedModel -> "Unsupported model: $model"
+            }
+}
+
+internal object VideoGenErrorDtoSerializer : KSerializer<VideoGenErrorDto> {
+    @OptIn(InternalSerializationApi::class, ExperimentalSerializationApi::class)
+    override val descriptor: SerialDescriptor =
+        buildSerialDescriptor("VideoGenErrorDto", PolymorphicKind.SEALED)
+
+    @Suppress("CyclomaticComplexMethod")
+    override fun deserialize(decoder: Decoder): VideoGenErrorDto {
+        val jsonDecoder =
+            decoder as? JsonDecoder
+                ?: throw SerializationException("Only JSON decoding is supported")
+        return when (val element = jsonDecoder.decodeJsonElement()) {
+            is JsonPrimitive ->
+                when (element.content) {
+                    "AuthError" -> VideoGenErrorDto.AuthError
+                    "InsufficientBalance" -> VideoGenErrorDto.InsufficientBalance
+                    "InvalidSignature" -> VideoGenErrorDto.InvalidSignature
+                    else -> throw SerializationException("Unknown unit variant: ${element.content}")
+                }
+            is JsonObject -> {
+                val key =
+                    element.keys.firstOrNull()
+                        ?: throw SerializationException("Empty object for VideoGenError")
+                val value =
+                    (element[key] as? JsonPrimitive)?.content
+                        ?: throw SerializationException("Expected string value for variant $key")
+                when (key) {
+                    "ProviderError" -> VideoGenErrorDto.ProviderError(value)
+                    "InvalidInput" -> VideoGenErrorDto.InvalidInput(value)
+                    "NetworkError" -> VideoGenErrorDto.NetworkError(value)
+                    "UnsupportedModel" -> VideoGenErrorDto.UnsupportedModel(value)
+                    else -> throw SerializationException("Unknown tuple variant: $key")
+                }
+            }
+            else -> throw SerializationException("Unexpected JSON element type for VideoGenError")
+        }
+    }
+
+    override fun serialize(
+        encoder: Encoder,
+        value: VideoGenErrorDto,
+    ): Unit = throw UnsupportedOperationException("Serialization of VideoGenErrorDto is not supported")
+}
 
 @Suppress("MaxLineLength")
 internal fun GenerateVideoParams.toRequestDto(delegatedIdentityWire: KotlinDelegatedIdentityWire): GenerateVideoRequestDto =
@@ -120,15 +200,15 @@ internal suspend fun HttpResponse.parseGenerateVideoResponse(json: Json): Genera
             providerError = null,
         )
     } else {
-        val errorObj = runCatching { json.parseToJsonElement(text).jsonObject }.getOrNull()
+        val errorElement = runCatching { json.parseToJsonElement(text) }.getOrNull()
         val error =
-            errorObj
-                ?.let { runCatching { json.decodeFromJsonElement<GenerateVideoProviderErrorDto>(it) }.getOrNull() }
+            errorElement
+                ?.let { runCatching { json.decodeFromJsonElement<VideoGenErrorDto>(it) }.getOrNull() }
         GenerateVideoResult(
             operationId = null,
             provider = null,
             requestKey = null,
-            providerError = error?.providerError ?: text,
+            providerError = error?.errorMessage ?: text,
         )
     }
 }
