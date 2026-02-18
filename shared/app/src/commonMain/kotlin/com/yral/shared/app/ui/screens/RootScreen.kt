@@ -91,6 +91,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import yral_mobile.shared.app.generated.resources.Res
+import yral_mobile.shared.app.generated.resources.ai_influence_profile
 import yral_mobile.shared.app.generated.resources.error_retry
 import yral_mobile.shared.app.generated.resources.error_timeout
 import yral_mobile.shared.app.generated.resources.error_timeout_title
@@ -162,10 +163,7 @@ fun RootScreen(rootComponent: RootComponent) {
                         HandleSystemBars(show = true)
                         EditProfileScreen(
                             component = child.component,
-                            viewModel =
-                                koinViewModel<EditProfileViewModel>(
-                                    key = "edit-profile-$sessionKey",
-                                ),
+                            viewModel = koinViewModel<EditProfileViewModel>(key = "edit-profile-$sessionKey"),
                             modifier = Modifier.fillMaxSize().safeDrawingPadding(),
                         )
                     }
@@ -229,10 +227,7 @@ fun RootScreen(rootComponent: RootComponent) {
                     is Child.Leaderboard -> {
                         HandleSystemBars(show = true)
                         val sessionKey = state.sessionState.getKey()
-                        val leaderBoardViewModel =
-                            koinViewModel<LeaderBoardViewModel>(
-                                key = "leaderboard-$sessionKey",
-                            )
+                        val leaderBoardViewModel = koinViewModel<LeaderBoardViewModel>(key = "leaderboard-$sessionKey")
                         LeaderboardScreen(
                             component = child.component,
                             leaderBoardViewModel = leaderBoardViewModel,
@@ -243,9 +238,7 @@ fun RootScreen(rootComponent: RootComponent) {
                     is Child.CreateInfluencer -> {
                         HandleSystemBars(show = true)
                         val aiInfluencerViewModel = koinViewModel<AiInfluencerViewModel>()
-                        LaunchedEffect(Unit) {
-                            aiInfluencerViewModel.resetFlow()
-                        }
+                        LaunchedEffect(Unit) { aiInfluencerViewModel.resetFlow() }
                         CreateAIInfluencerScreen(
                             component = child.component,
                             modifier = Modifier.fillMaxSize().safeDrawingPadding(),
@@ -320,10 +313,7 @@ fun RootScreen(rootComponent: RootComponent) {
             // 1. after logout on account screen during anonymous sign in
             // 2. after social sign in
             // 3. after delete account during anonymous sign in
-            if (
-                state.navigationTarget !is NavigationTarget.Splash &&
-                state.sessionState is SessionState.Loading
-            ) {
+            if (state.navigationTarget !is NavigationTarget.Splash && state.sessionState is SessionState.Loading) {
                 BlockingLoader()
             }
 
@@ -358,7 +348,7 @@ private fun AccountSwitchSheet(
         if (info.botAccounts.isNotEmpty()) {
             Spacer(modifier = Modifier.height(20.dp))
             SheetSection(
-                title = "AI Influencer Profile",
+                title = stringResource(Res.string.ai_influence_profile),
                 accounts = info.botAccounts,
                 selectionEnabled = selectionEnabled,
                 onSelect = onSelect,

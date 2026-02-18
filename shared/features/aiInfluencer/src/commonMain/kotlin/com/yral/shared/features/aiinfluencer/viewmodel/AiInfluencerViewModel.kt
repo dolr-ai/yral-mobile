@@ -14,6 +14,7 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.utils.generateUsernameFromPrincipal
 import com.yral.shared.core.utils.resolveUsername
+import com.yral.shared.features.aiinfluencer.domain.models.CreatedInfluencer
 import com.yral.shared.features.aiinfluencer.domain.models.GeneratedInfluencerMetadata
 import com.yral.shared.features.aiinfluencer.domain.usecases.CreateInfluencerUseCase
 import com.yral.shared.features.aiinfluencer.domain.usecases.GeneratePromptUseCase
@@ -518,7 +519,7 @@ class AiInfluencerViewModel(
                         createInfluencerUseCase(
                             CreateInfluencerUseCase.Params(
                                 request =
-                                    com.yral.shared.features.aiinfluencer.domain.models.CreatedInfluencer(
+                                    CreatedInfluencer(
                                         name = usernameForCreateApi,
                                         displayName = profileDetails.displayName,
                                         description = profileDetails.description,
@@ -760,7 +761,7 @@ class AiInfluencerViewModel(
         var avatarBytes: ByteArray? = null,
         var uploadedAvatarUrl: String? = null,
         var profileUpdated: Boolean = false,
-        var createdInfluencer: com.yral.shared.features.aiinfluencer.domain.models.CreatedInfluencer? = null,
+        var createdInfluencer: CreatedInfluencer? = null,
         var finalized: Boolean = false,
     )
 }

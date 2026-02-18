@@ -200,9 +200,8 @@ fun ProfileMainScreen(
     // Use nullable to avoid showing CTA flash while loading
     val botCount by
         sessionManager
-            .observeSessionProperty(
-                selector = { it.botCount },
-            ).collectAsStateWithLifecycle(initialValue = null)
+            .observeSessionProperty { it.botCount }
+            .collectAsStateWithLifecycle(initialValue = null)
     val accountDirectory by
         sessionManager
             .observeSessionProperty { it.accountDirectory }

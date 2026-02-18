@@ -70,6 +70,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.features.aiinfluencer.generated.resources.Res
 import yral_mobile.shared.features.aiinfluencer.generated.resources.ai_influencer_create_profile
 import yral_mobile.shared.features.aiinfluencer.generated.resources.ai_influencer_created_success
+import yral_mobile.shared.features.aiinfluencer.generated.resources.ai_influencer_creating_overlay
 import yral_mobile.shared.features.aiinfluencer.generated.resources.ai_influencer_description_label
 import yral_mobile.shared.features.aiinfluencer.generated.resources.ai_influencer_error_generic
 import yral_mobile.shared.features.aiinfluencer.generated.resources.ai_influencer_loading_metadata_subtitle
@@ -240,7 +241,7 @@ internal fun CreateAIInfluencerScreen(
 
         if (state.isBotCreationLoading) {
             FullScreenLoadingOverlay(
-                text = "Creating an AI Influencer for you",
+                text = stringResource(Res.string.ai_influencer_creating_overlay),
             )
         }
 

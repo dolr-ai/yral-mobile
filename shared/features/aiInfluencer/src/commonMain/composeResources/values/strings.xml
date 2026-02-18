@@ -22,4 +22,5 @@
     <string name="ai_influencer_error_sheet_subtitle">We were unable to create your influencer profile. Please try again in a moment.</string>
     <string name="ai_influencer_error_sheet_retry">Try Again</string>
     <string name="ai_influencer_created_success">AI influencer created successfully</string>
+    <string name="ai_influencer_creating_overlay">Creating an AI Influencer for you</string>
 </resources>
