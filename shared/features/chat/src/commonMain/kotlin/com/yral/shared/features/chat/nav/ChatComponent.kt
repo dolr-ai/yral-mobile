@@ -18,6 +18,7 @@ abstract class ChatComponent : HomeChildSnapshotProvider {
     abstract val stack: Value<ChildStack<*, Child>>
 
     abstract fun onBackClicked(): Boolean
+    abstract fun openCreateInfluencer()
 
     sealed class Child {
         class Wall(
@@ -58,6 +59,7 @@ abstract class ChatComponent : HomeChildSnapshotProvider {
                 influencerCategory: String,
                 influencerSource: InfluencerSource,
             ) -> Unit,
+            openCreateInfluencer: () -> Unit,
         ): ChatComponent =
             DefaultChatComponent(
                 componentContext = componentContext,
@@ -66,6 +68,7 @@ abstract class ChatComponent : HomeChildSnapshotProvider {
                 snapshot = snapshot,
                 openProfile = openProfile,
                 openConversation = openConversation,
+                openCreateInfluencer = openCreateInfluencer,
             )
     }
 }

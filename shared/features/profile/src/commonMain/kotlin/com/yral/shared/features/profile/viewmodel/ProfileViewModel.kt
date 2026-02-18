@@ -13,6 +13,7 @@ import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.featureflag.AppFeatureFlags
+import com.yral.featureflag.ChatFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.WalletFeatureFlags
 import com.yral.shared.analytics.events.CtaType
@@ -130,6 +131,8 @@ class ProfileViewModel(
             ViewState(
                 isWalletEnabled = flagManager.isEnabled(WalletFeatureFlags.Wallet.Enabled),
                 isSubscriptionEnabled = flagManager.isEnabled(AppFeatureFlags.Common.EnableSubscription),
+                maxBotCountForCta = flagManager.get(ChatFeatureFlags.Chat.MaxBotCountForCta),
+                maxVisibleBotUsernames = flagManager.get(ChatFeatureFlags.Chat.MaxVisibleBotUsernames),
             ),
         )
     val state: StateFlow<ViewState> = _state.asStateFlow()
@@ -1037,6 +1040,8 @@ data class ViewState(
     val isTalkToMeInProgress: Boolean = false,
     val isProUser: Boolean = false,
     val isSubscriptionEnabled: Boolean = false,
+    val maxBotCountForCta: Int = 3,
+    val maxVisibleBotUsernames: Int = 2,
 )
 
 sealed interface ProfileBottomSheet {

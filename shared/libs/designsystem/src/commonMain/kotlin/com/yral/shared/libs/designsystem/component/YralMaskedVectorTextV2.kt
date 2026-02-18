@@ -29,7 +29,8 @@ fun YralMaskedVectorTextV2(
     text: String,
     drawableRes: DrawableResource,
     textStyle: TextStyle,
-    modifier: Modifier = Modifier, // width need to specified according to useCase
+    // width need to specified according to useCase
+    modifier: Modifier = Modifier,
     maxLines: Int = Int.MAX_VALUE,
     textOverflow: TextOverflow = TextOverflow.Clip,
 ) {

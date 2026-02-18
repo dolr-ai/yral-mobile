@@ -8,6 +8,7 @@ import com.yral.shared.analytics.events.SubscriptionEntryPoint
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
+import com.yral.shared.features.aiinfluencer.nav.CreateInfluencerComponent
 import com.yral.shared.features.auth.nav.countryselector.CountrySelectorComponent
 import com.yral.shared.features.auth.nav.mandatorylogin.MandatoryLoginComponent
 import com.yral.shared.features.auth.nav.otpverification.OtpVerificationComponent
@@ -102,6 +103,8 @@ interface RootComponent {
         entryPoint: SubscriptionEntryPoint,
     )
 
+    fun openCreateInfluencer()
+
     fun onCreateVideo()
 
     fun onExploreFeed()
@@ -113,6 +116,10 @@ interface RootComponent {
     fun createLoginRequestFactory(): RequestLoginFactory
 
     fun clearLoginState()
+
+    fun showAccountSwitcherSlot()
+
+    fun dismissAccountSwitcherSlot()
 
     // Defines all possible child components
     sealed class Child {
@@ -148,6 +155,9 @@ interface RootComponent {
         class Subscription(
             val component: SubscriptionsComponent,
         ) : Child()
+        class CreateInfluencer(
+            val component: CreateInfluencerComponent,
+        ) : Child()
         class CountrySelector(
             val component: CountrySelectorComponent,
         ) : Child()
@@ -171,5 +181,7 @@ interface RootComponent {
         class SubscriptionNudge : SlotChild()
 
         class MandatoryUpdate : SlotChild()
+
+        class AccountSwitcher : SlotChild()
     }
 }

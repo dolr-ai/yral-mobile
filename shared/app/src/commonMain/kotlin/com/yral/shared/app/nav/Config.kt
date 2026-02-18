@@ -17,6 +17,9 @@ internal sealed interface Config {
     data object EditProfile : Config
 
     @Serializable
+    data object CreateInfluencer : Config
+
+    @Serializable
     data class UserProfile(
         val userCanisterData: CanisterData,
     ) : Config

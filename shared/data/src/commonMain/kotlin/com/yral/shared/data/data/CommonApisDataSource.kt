@@ -4,4 +4,10 @@ import com.yral.shared.data.data.models.VideoViewsDto
 
 interface CommonApisDataSource {
     suspend fun getVideoViewsCount(videoId: List<String>): List<VideoViewsDto>
+
+    suspend fun softDeleteInfluencer(
+        principal: String,
+        idToken: String,
+        environmentPrefix: String,
+    ): Result<Unit>
 }

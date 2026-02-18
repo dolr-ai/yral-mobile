@@ -14,6 +14,7 @@ import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.crashlytics.di.crashlyticsModule
 import com.yral.shared.data.di.commonDataModule
 import com.yral.shared.features.account.di.accountsModule
+import com.yral.shared.features.aiinfluencer.di.aiInfluencerModule
 import com.yral.shared.features.auth.di.authModule
 import com.yral.shared.features.chat.di.chatModule
 import com.yral.shared.features.feed.di.feedModule
@@ -94,6 +95,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             walletModule,
             chatModule,
             subscriptionsModule,
+            aiInfluencerModule,
         )
     }
 }

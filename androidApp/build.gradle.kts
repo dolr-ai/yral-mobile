@@ -188,6 +188,7 @@ dependencies {
     implementation(projects.shared.features.wallet)
     implementation(projects.shared.libs.designsystem)
     implementation(projects.shared.features.reportVideo)
+    implementation(projects.shared.features.aiInfluencer)
     implementation(compose.components.resources)
     implementation(projects.shared.features.leaderboard)
     implementation(projects.shared.features.subscriptions)

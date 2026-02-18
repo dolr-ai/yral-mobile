@@ -1,10 +1,14 @@
 package com.yral.shared.data.data
 
+import com.yral.shared.core.AppConfigurations.CHAT_BASE_URL
 import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
 import com.yral.shared.data.data.models.VideoViewsDto
+import com.yral.shared.http.httpDelete
 import com.yral.shared.http.httpPost
 import io.ktor.client.HttpClient
+import io.ktor.client.request.headers
 import io.ktor.client.request.setBody
+import io.ktor.http.HttpHeaders
 import io.ktor.http.path
 import kotlinx.serialization.json.Json
 
@@ -21,7 +25,23 @@ class CommonApisRemoteDataSource(
             setBody(mapOf("video_ids" to videoId))
         }
 
+    override suspend fun softDeleteInfluencer(
+        principal: String,
+        idToken: String,
+        environmentPrefix: String,
+    ): Result<Unit> =
+        runCatching {
+            httpDelete(httpClient) {
+                url {
+                    host = CHAT_BASE_URL
+                    path(environmentPrefix, INFLUENCERS_PATH, principal)
+                }
+                headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
+            }
+        }
+
     companion object {
         private const val VIDEO_VIEWS_ENDPOINT = "/api/v1/rewards/videos/bulk-stats-v2"
+        private const val INFLUENCERS_PATH = "api/v1/influencers"
     }
 }

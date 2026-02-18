@@ -8,12 +8,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
@@ -22,9 +24,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.shared.core.session.AccountInfo
+import com.yral.shared.libs.designsystem.component.CreateInfluencerButton
 import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralGradientButton
@@ -40,6 +45,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.edit_profile
 import yral_mobile.shared.libs.designsystem.generated.resources.follow
 import yral_mobile.shared.libs.designsystem.generated.resources.followers
 import yral_mobile.shared.libs.designsystem.generated.resources.following
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_bot_username_star
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_thunder
 import yral_mobile.shared.libs.designsystem.generated.resources.login
 import yral_mobile.shared.libs.designsystem.generated.resources.pro
@@ -72,6 +78,11 @@ fun AccountInfoView(
     onFollowingClick: (() -> Unit)? = null,
     onTalkToMeClicked: () -> Unit = {},
     isProUser: Boolean = false,
+    showCreateInfluencerCta: Boolean = false,
+    onCreateInfluencerClick: () -> Unit = {},
+    botUsernames: List<String> = emptyList(),
+    createdByUsername: String? = null,
+    maxVisibleBotUsernames: Int = 2,
 ) {
     Column(
         modifier =
@@ -168,6 +179,17 @@ fun AccountInfoView(
                 color = YralColors.NeutralTextPrimary,
             )
         }
+        if (botUsernames.isNotEmpty()) {
+            BotUsernamesRow(
+                botUsernames = botUsernames,
+                maxVisible = maxVisibleBotUsernames,
+            )
+        }
+        createdByUsername
+            ?.takeUnless { it.isBlank() }
+            ?.let { username ->
+                CreatedByRow(username = username)
+            }
         when {
             !isSocialSignIn && showLogin -> {
                 Column(
@@ -282,6 +304,14 @@ fun AccountInfoView(
                 }
             }
         }
+        if (showCreateInfluencerCta) {
+            CreateInfluencerButton(
+                modifier = Modifier.fillMaxWidth().height(45.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                alignIconToEnd = true,
+                onClick = onCreateInfluencerClick,
+            )
+        }
         Spacer(
             modifier =
                 Modifier
@@ -291,6 +321,61 @@ fun AccountInfoView(
                     .padding(bottom = YralDimens.paddingLg),
         )
     }
+}
+
+@Composable
+private fun BotUsernamesRow(
+    botUsernames: List<String>,
+    maxVisible: Int = 2,
+) {
+    val visible = botUsernames.take(maxVisible)
+    val remainingCount = (botUsernames.size - visible.size).coerceAtLeast(0)
+    Row(
+        modifier = Modifier.padding(top = 0.dp, bottom = 0.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        visible.forEachIndexed { index, username ->
+            Image(
+                painter = painterResource(Res.drawable.ic_bot_username_star),
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+            )
+            Spacer(modifier = Modifier.width(2.dp))
+            Text(
+                text = "@$username",
+                style = LocalAppTopography.current.regBold,
+                color = YralColors.Pink200,
+            )
+            if (index != visible.lastIndex || remainingCount > 0) {
+                Spacer(modifier = Modifier.width(12.dp))
+            }
+        }
+        if (remainingCount > 0) {
+            Text(
+                text = "+$remainingCount More",
+                style = LocalAppTopography.current.regSemiBold,
+                color = YralColors.BlueTextPrimary,
+            )
+        }
+    }
+}
+
+@Composable
+private fun CreatedByRow(username: String) {
+    val text =
+        buildAnnotatedString {
+            append("Created by ")
+            pushStyle(SpanStyle(color = YralColors.BlueTextPrimary))
+            append("@")
+            append(username)
+            pop()
+        }
+    Text(
+        text = text,
+        style = LocalAppTopography.current.baseRegular,
+        color = YralColors.Grey50,
+        modifier = Modifier.padding(top = 0.dp, bottom = 0.dp),
+    )
 }
 
 @Composable
