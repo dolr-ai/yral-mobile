@@ -8,6 +8,7 @@ import org.koin.core.component.KoinComponent
 internal class DefaultAccountComponent(
     componentContext: ComponentContext,
     val onBack: () -> Unit = {},
+    val onSwitchToMainProfile: (onComplete: (Boolean) -> Unit) -> Unit = {},
     override val promptLogin: (pageName: SignupPageName) -> Unit,
     override val subscriptionCoordinator: SubscriptionCoordinator,
 ) : AccountComponent,
@@ -15,5 +16,9 @@ internal class DefaultAccountComponent(
     KoinComponent {
     override fun onBack() {
         onBack.invoke()
+    }
+
+    override fun switchToMainProfile(onComplete: (Boolean) -> Unit) {
+        onSwitchToMainProfile.invoke(onComplete)
     }
 }

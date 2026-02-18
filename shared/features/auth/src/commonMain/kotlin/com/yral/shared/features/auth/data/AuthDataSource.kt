@@ -1,11 +1,13 @@
 package com.yral.shared.features.auth.data
 
 import com.yral.shared.features.auth.data.models.AuthClientQuery
+import com.yral.shared.features.auth.data.models.CreateAiAccountResponseDto
 import com.yral.shared.features.auth.data.models.ExchangePrincipalResponseDto
 import com.yral.shared.features.auth.data.models.PhoneAuthLoginResponseDto
 import com.yral.shared.features.auth.data.models.PhoneAuthVerifyResponseDto
 import com.yral.shared.features.auth.data.models.TokenResponseDto
 import com.yral.shared.features.auth.data.models.VerifyRequestDto
+import com.yral.shared.rust.service.utils.SignedDelegationPayload
 
 interface AuthDataSource {
     suspend fun obtainAnonymousIdentity(): TokenResponseDto
@@ -31,4 +33,13 @@ interface AuthDataSource {
         authClientQuery: AuthClientQuery,
     ): PhoneAuthLoginResponseDto
     suspend fun verifyPhoneAuth(verifyRequest: VerifyRequestDto): PhoneAuthVerifyResponseDto
+    suspend fun createAiAccount(
+        userPrincipal: String,
+        signature: ByteArray,
+        publicKey: ByteArray,
+        signedMessage: ByteArray,
+        ingressExpirySecs: Long,
+        ingressExpiryNanos: Int,
+        delegations: List<SignedDelegationPayload>?,
+    ): CreateAiAccountResponseDto
 }

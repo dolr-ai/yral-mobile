@@ -21,4 +21,7 @@ internal sealed interface SlotConfig {
 
     @Serializable
     data object MandatoryUpdate : SlotConfig
+
+    @Serializable
+    data object AccountSwitcher : SlotConfig
 }

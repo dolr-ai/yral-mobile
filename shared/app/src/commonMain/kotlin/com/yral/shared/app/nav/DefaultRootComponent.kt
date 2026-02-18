@@ -164,6 +164,10 @@ class DefaultRootComponent(
             is Config.Splash -> RootComponent.Child.Splash(componentFactory.createSplash(context))
             is Config.Home -> RootComponent.Child.Home(componentFactory.createHome(context))
             is Config.EditProfile -> RootComponent.Child.EditProfile(componentFactory.createEditProfile(context))
+            is Config.CreateInfluencer ->
+                RootComponent.Child.CreateInfluencer(
+                    componentFactory.createCreateInfluencer(context),
+                )
             is Config.UserProfile -> RootComponent.Child.UserProfile(componentFactory.createProfile(context, config))
             is Config.TournamentLeaderboard ->
                 RootComponent.Child.TournamentLeaderboard(
@@ -262,6 +266,9 @@ class DefaultRootComponent(
             }
             is SlotConfig.MandatoryUpdate -> {
                 RootComponent.SlotChild.MandatoryUpdate()
+            }
+            is SlotConfig.AccountSwitcher -> {
+                RootComponent.SlotChild.AccountSwitcher()
             }
         }
 
@@ -451,6 +458,10 @@ class DefaultRootComponent(
         navigation.pushToFront(Config.Subscription(purchaseTimeMs, entryPoint))
     }
 
+    override fun openCreateInfluencer() {
+        navigation.pushToFront(Config.CreateInfluencer)
+    }
+
     override fun onCreateVideo() {
         if (stack.active.instance !is RootComponent.Child.Home) {
             navigateToHome()
@@ -603,6 +614,16 @@ class DefaultRootComponent(
 
     private fun dismissSubscriptionNudgeSlotIfActive() {
         if (slot.value.child?.instance is RootComponent.SlotChild.SubscriptionNudge) {
+            slotNavigation.dismiss()
+        }
+    }
+
+    override fun showAccountSwitcherSlot() {
+        slotNavigation.activate(SlotConfig.AccountSwitcher)
+    }
+
+    override fun dismissAccountSwitcherSlot() {
+        if (slot.value.child?.instance is RootComponent.SlotChild.AccountSwitcher) {
             slotNavigation.dismiss()
         }
     }

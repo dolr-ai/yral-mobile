@@ -5,6 +5,7 @@ import com.yral.shared.features.auth.domain.models.PhoneAuthLoginResponse
 import com.yral.shared.features.auth.domain.models.PhoneAuthVerifyResponse
 import com.yral.shared.features.auth.domain.models.TokenResponse
 import com.yral.shared.features.auth.utils.SocialProvider
+import com.yral.shared.rust.service.utils.SignedDelegationPayload
 import io.ktor.http.Url
 
 interface AuthRepository {
@@ -37,4 +38,14 @@ interface AuthRepository {
         code: String,
         clientState: String,
     ): PhoneAuthVerifyResponse
+
+    suspend fun createAiAccount(
+        userPrincipal: String,
+        signature: ByteArray,
+        publicKey: ByteArray,
+        signedMessage: ByteArray,
+        ingressExpirySecs: Long,
+        ingressExpiryNanos: Int,
+        delegations: List<SignedDelegationPayload>?,
+    ): ByteArray
 }

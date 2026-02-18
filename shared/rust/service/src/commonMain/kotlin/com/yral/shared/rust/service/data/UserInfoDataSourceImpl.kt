@@ -105,4 +105,19 @@ class UserInfoDataSourceImpl(
                 ),
             )
     }
+
+    override suspend fun acceptNewUserRegistrationV2(
+        principal: Principal,
+        newPrincipal: Principal,
+        authenticated: Boolean,
+        mainAccount: Principal?,
+    ) {
+        userInfoServiceFactory
+            .service(principal)
+            .acceptNewUserRegistrationV2(
+                newPrincipalText = newPrincipal,
+                authenticated = authenticated,
+                mainAccountText = mainAccount,
+            )
+    }
 }

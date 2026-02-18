@@ -22,6 +22,8 @@ data class TokenClaims(
     val delegatedIdentity: ByteArray?,
     @SerialName("email")
     val email: String? = null,
+    @SerialName("ext_ai_account_delegated_identities")
+    val botDelegatedIdentities: List<ByteArray>? = null,
 ) {
     fun isValid(currentTimeInEpochSeconds: Long): Boolean = expiry > currentTimeInEpochSeconds
 }

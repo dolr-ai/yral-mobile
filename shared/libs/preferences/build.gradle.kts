@@ -20,6 +20,7 @@ kotlin {
             api(libs.russhwolf.multiplatformSettings.core)
             api(libs.russhwolf.multiplatformSettings.coroutines)
             implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.kotlinx.serialization.json)
 
             implementation(projects.shared.core)
             implementation(projects.shared.libs.coroutinesX)
