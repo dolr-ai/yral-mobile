@@ -383,9 +383,11 @@ class ProfileViewModel(
                                     ?: currentInfo.profilePic,
                             bio = bio?.takeUnless { it.isBlank() } ?: currentInfo.bio,
                         )
+                    val isAiInfluencer =
+                        details.isAiInfluencer == true || details.accountType is UserAccountType.BotAccount
                     current.copy(
                         accountInfo = newInfo,
-                        isAiInfluencer = details.isAiInfluencer == true,
+                        isAiInfluencer = isAiInfluencer,
                         isProUser = proPlan != null,
                         createdByUsername = accountTypeData.createdByUsername,
                         createdByPrincipal = accountTypeData.createdByPrincipal,
@@ -421,10 +423,12 @@ class ProfileViewModel(
                                 details.profilePictureUrl?.takeUnless { it.isBlank() }
                                     ?: existingInfo.profilePic,
                         )
+                    val isAiInfluencer =
+                        details.isAiInfluencer == true || details.accountType is UserAccountType.BotAccount
                     current.copy(
                         accountInfo = updatedInfo,
                         isFollowing = details.callerFollowsUser ?: current.isFollowing,
-                        isAiInfluencer = details.isAiInfluencer == true,
+                        isAiInfluencer = isAiInfluencer,
                         isProUser = (details.subscriptionPlan as? SubscriptionPlan.Pro) != null,
                         createdByUsername = accountTypeData.createdByUsername,
                         createdByPrincipal = accountTypeData.createdByPrincipal,
