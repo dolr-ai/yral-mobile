@@ -25,6 +25,14 @@ class ChatRepositoryImpl(
             .listInfluencers(limit = limit, offset = offset)
             .toDomainActiveOnly()
 
+    override suspend fun getTrendingInfluencersPage(
+        limit: Int,
+        offset: Int,
+    ): InfluencersPageResult =
+        dataSource
+            .listTrendingInfluencers(limit = limit, offset = offset)
+            .toDomainActiveOnly()
+
     override suspend fun getInfluencer(id: String): Influencer =
         dataSource
             .getInfluencer(id)
