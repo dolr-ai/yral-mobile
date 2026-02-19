@@ -25,6 +25,7 @@ fun InfluencerDto.toDomain(): Influencer =
         status = InfluencerStatus.fromString(isActive),
         createdAt = createdAt,
         conversationCount = conversationCount,
+        messageCount = messageCount,
     )
 
 fun InfluencersResponseDto.toDomainActiveOnly(): InfluencersPageResult {
