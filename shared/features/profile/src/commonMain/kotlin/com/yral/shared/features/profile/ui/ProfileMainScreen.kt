@@ -72,7 +72,6 @@ import com.yral.shared.analytics.events.EditProfileSource
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.analytics.events.VideoDeleteCTA
-import com.yral.shared.core.session.AccountDirectory
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.domain.models.FeedDetails
@@ -472,8 +471,22 @@ fun ProfileMainScreen(
                     isBotAccount = isBotAccount,
                     hasBotAccounts = hasBotAccounts,
                     showCreateBotCta = showCreateBotCta,
-                    accountDirectory = accountDirectory,
                     onCreateInfluencerClick = onCreateInfluencerClick,
+                    onUsernameClick = { username ->
+                        val principal =
+                            state.botUsernameToCanisterData[username]
+                                ?: state.createdByPrincipal.takeIf { username == state.createdByUsername }
+                                ?: return@MainContent
+                        val canisterData =
+                            CanisterData(
+                                canisterId = getUserInfoServiceCanister(),
+                                userPrincipalId = principal,
+                                profilePic = propicFromPrincipal(principal),
+                                username = username,
+                                isCreatedFromServiceCanister = true,
+                            )
+                        component.openProfile(canisterData)
+                    },
                 )
             }
         }
@@ -647,8 +660,8 @@ private fun MainContent(
     isBotAccount: Boolean,
     hasBotAccounts: Boolean,
     showCreateBotCta: Boolean,
-    accountDirectory: AccountDirectory?,
     onCreateInfluencerClick: () -> Unit,
+    onUsernameClick: (String) -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader(
@@ -669,20 +682,7 @@ private fun MainContent(
         state.accountInfo?.let { info ->
             val followersCount = totalCount(followers)
             val followingCount = totalCount(following)
-            val parentBotUsernames =
-                accountDirectory
-                    ?.takeIf { state.isOwnProfile && !isBotAccount }
-                    ?.botPrincipals
-                    ?.mapNotNull { principal ->
-                        accountDirectory.profilesByPrincipal[principal]?.username?.takeUnless { it.isBlank() }
-                    }.orEmpty()
-            val createdByUsername =
-                accountDirectory
-                    ?.takeIf { state.isOwnProfile && isBotAccount }
-                    ?.mainPrincipal
-                    ?.let { principal ->
-                        accountDirectory.profilesByPrincipal[principal]?.username?.takeUnless { it.isBlank() }
-                    }
+            val createdByUsername = state.createdByUsername
             AccountInfoView(
                 accountInfo = info,
                 totalFollowers = followersCount,
@@ -706,9 +706,10 @@ private fun MainContent(
                 isProUser = state.isProUser,
                 showCreateInfluencerCta = state.isOwnProfile && state.isLoggedIn && showCreateBotCta,
                 onCreateInfluencerClick = onCreateInfluencerClick,
-                botUsernames = parentBotUsernames,
+                botUsernames = state.botUsernames,
                 createdByUsername = createdByUsername,
                 maxVisibleBotUsernames = state.maxVisibleBotUsernames,
+                onUsernameClick = onUsernameClick,
             )
         }
         when (profileVideos.loadState.refresh) {
