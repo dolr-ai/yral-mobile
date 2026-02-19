@@ -2,6 +2,153 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Commit Rules
+
+- **NEVER add a `Co-Authored-By: Claude` trailer** (or any AI co-author line) to commits in this repository.
+
+## Post Code Change Verification (MANDATORY)
+
+After every code change, run these steps **in order** before considering the task complete:
+
+1. **Format** — `./gradlew ktlintFormat`
+2. **Static analysis** — `./gradlew detekt`
+3. **Compile** — `./gradlew :androidApp:assembleDebug` (or the relevant module)
+
+Fix any errors before finishing. The task is only done when all three pass.
+
+## Clean Code Guidelines
+
+### Constants Over Magic Numbers
+- Replace hard-coded values with named constants that explain the value's purpose.
+
+### Meaningful Names
+- Variables, functions, and classes should reveal their purpose; avoid unexplained abbreviations.
+
+### Smart Comments
+- Don't comment *what* the code does — make code self-documenting.
+- Use comments to explain *why*, and to document APIs, complex algorithms, or non-obvious side effects.
+
+### Single Responsibility
+- Each function does exactly one thing. If it needs a comment to explain what it does, split it.
+
+### DRY
+- Extract repeated logic into reusable functions; maintain single sources of truth.
+
+### Clean Structure
+- Keep related code together, organized in a logical hierarchy with consistent naming.
+
+### Encapsulation
+- Hide implementation details; expose clear interfaces; move nested conditionals into well-named functions.
+
+### Components and Navigation
+- Do **not** use anonymous classes for components — always create a named `DefaultXxxComponent` following the existing pattern.
+- For one-time UI effects (e.g. show/hide bottom sheet), prefer `Channel`/slot config over ViewModel boolean flags; reuse `YralBottomSheet` where applicable.
+
+### Dependency Injection
+- Constructor parameters resolved via Koin should have default values (`= koinInject()`) at the **definition site**, not at every call site.
+
+### Layered Architecture
+- ViewModel → UseCase → Repository (domain) → DataSource (data). Never bypass layers.
+- Use mappers for domain ↔ data conversions; domain models stay in the domain layer, data models in the data layer.
+- ViewModel and iOS ViewModel must **not** call `HttpClient` or `DataSource` directly — always go through a UseCase.
+
+### Composables and ViewModels
+- Access `FeatureFlagManager` (and similar services) in the ViewModel, not inside Composables.
+
+## Compose UI Guidelines
+
+- Use `remember` and `derivedStateOf` appropriately to avoid redundant recomposition.
+- Follow correct Compose modifier ordering.
+- Implement proper error handling and loading states.
+- Use `MaterialTheme` / design system tokens for theming; follow accessibility guidelines.
+- Composable function naming must follow conventions (PascalCase for composables, no function-name lint suppression unless for composables).
+
+## Compose Performance Guidelines
+
+- Minimise recomposition — use stable keys in lazy lists, `remember` for expensive calculations.
+- Use `LazyColumn`/`LazyRow` for long lists; never `Column` with `forEach` in a scrollable context.
+- Use `YralGridImage` (not standard `Image`) for grid/scroll contexts — it is optimised for scrolling performance.
+- Prefer background processing over blocking the main thread; follow proper lifecycle awareness.
+
+## Git Worktree Convention
+
+When creating a new `git worktree`:
+- **Default base branch:** `develop`
+- **Override:** use whatever branch the user specifies.
+
+```bash
+# Default
+git worktree add -b feature/my-feature ../my-feature-worktree develop
+
+# User specifies base
+git worktree add -b feature/my-feature ../my-feature-worktree main
+```
+
+## Mixpanel Analytics Skill
+
+Use when asked for daily stats, engagement reports, DAU, retention, funnels, attribution, or any Mixpanel data.
+
+**Project:** GoBazzinga — Project ID `3662504`
+
+### Critical Rules
+- **Always** include the India country filter: `where: 'properties["mp_country_code"] == "IN"'`
+- Use ISO 2-letter code `"IN"` — **not** `"India"` (returns zero results).
+- **DAU ≠ `$ae_session`**: True DAU = unique users with any event. The segmentation API is event-scoped; obtain DAU from Mixpanel UI (Insights → Unique Users → Event: "All Events") or omit and note the limitation.
+
+### Core Metrics (run in parallel)
+
+| Metric | Event | Type |
+|--------|-------|------|
+| New Users | `first_app_launch` | unique |
+| Signups | `signup_success` | unique |
+| Signup attribution | `signup_success` + `on: properties["affiliate"]` | unique |
+| Home Page Views | `home_page_viewed` | unique |
+| Referrals Received | `referral_received` | unique |
+| Referral by Source | `referral_received` + `on: properties["source"]` | unique |
+| Referral by Campaign | `referral_received` + `on: properties["campaign"]` | unique |
+
+All use `unit: "day"` and `where: 'properties["mp_country_code"] == "IN"'`.
+
+### D1 Retention
+```
+Tool: run_retention_query
+project_id: 3662504
+event: "home_page_viewed"
+born_event: "home_page_viewed"
+retention_type: "birth"
+unit: "day"
+where: 'properties["mp_country_code"] == "IN" AND properties["device"] == "app"'
+```
+Note: board uses "any event" for retained users, so board D1 % may be higher.
+
+### Key Funnels
+- **Signup:** `first_app_launch → signup_success → home_page_viewed`
+- **Video engagement:** `home_page_viewed → video_viewed → video_liked`
+
+Use `run_funnels_query`, `length: 1`, `length_unit: "day"`, India filter.
+
+### Extended Metrics (when requested)
+Video: `video_viewed`, `video_liked`, `video_shared`, `video_comment_added`
+Tournaments: `tournament_joined`, `tournament_vote_submitted`
+Wallet: `wallet_opened`, `token_transferred`
+
+### Known Quirks
+- `video_liked` and `video_shared` currently report 0 — may not be instrumented.
+- UTM properties (`utm_source`, `utm_medium`, `utm_campaign`) are **user profile** properties, not event properties — won't appear in event-level segmentation.
+- `affiliate` is an event property on `signup_success` and `home_page_viewed`.
+- `source`, `campaign`, `term` are event properties on `referral_received`.
+
+### Discovery Tools
+```
+get_events(project_id: 3662504)                          # list all events
+get_property_names(project_id: 3662504, resource_type: "Event", event: "<name>")
+get_property_values(project_id: 3662504, resource_type: "Event", event: "<name>", property: "<prop>")
+```
+
+### Report Template
+Default range: last 7 days. Compare to prior equivalent period for trends.
+Present as: Key Highlights → DAU → New Users & Signups → Attribution → Referrals → Retention → Funnels → Observations.
+
 ## Project Overview
 
 YRAL Mobile is a Kotlin Multiplatform (KMM) video social platform with native iOS and Android apps. The codebase is ~90% shared code using Compose Multiplatform for UI, with unique Rust FFI integration for blockchain operations (Internet Computer Protocol).
