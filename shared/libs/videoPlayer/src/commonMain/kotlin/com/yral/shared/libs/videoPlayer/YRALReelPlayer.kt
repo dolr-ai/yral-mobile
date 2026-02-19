@@ -23,6 +23,7 @@ import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.EdgeScrollDetectConnection
 import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
 import com.yral.shared.libs.videoplayback.CoordinatorDeps
+import com.yral.shared.libs.videoplayback.FirebasePerfPlaybackReporter
 import com.yral.shared.libs.videoplayback.MediaDescriptor
 import com.yral.shared.libs.videoplayback.PlaybackEventReporter
 import com.yral.shared.libs.videoplayback.ui.VideoFeedSync
@@ -74,11 +75,17 @@ fun YRALReelPlayer(
             }
     }
 
-    val reporter =
+    val yralLogger: YralLogger = koinInject()
+    val baseReporter =
         rememberPlaybackEventReporter(
             didVideoEnd = didVideoEnd,
             recordTime = recordTime,
         )
+    val reporter =
+        remember(baseReporter) {
+            FirebasePerfPlaybackReporter(baseReporter)
+                .withLogging(yralLogger = yralLogger, enabled = false)
+        }
     val coordinator =
         rememberPlaybackCoordinatorWithLifecycle(
             deps = CoordinatorDeps(reporter = reporter),
@@ -144,7 +151,6 @@ fun YRALReelPlayer(
 private fun rememberPlaybackEventReporter(
     didVideoEnd: () -> Unit,
     recordTime: (Int, Int) -> Unit,
-    yralLogger: YralLogger = koinInject(),
 ): PlaybackEventReporter =
     remember(didVideoEnd, recordTime) {
         object : PlaybackEventReporter {
@@ -235,5 +241,20 @@ private fun rememberPlaybackEventReporter(
                 id: String,
                 bytes: Long,
             ) = Unit
-        }.withLogging(yralLogger = yralLogger, enabled = false)
+            override fun stallStart(
+                id: String,
+                index: Int,
+                reason: String,
+            ) = Unit
+            override fun stallEnd(
+                id: String,
+                index: Int,
+                durationMs: Long,
+            ) = Unit
+            override fun videoFullyBuffered(
+                id: String,
+                index: Int,
+                ms: Long,
+            ) = Unit
+        }
     }

@@ -79,6 +79,21 @@ interface PlaybackEventReporter {
         id: String,
         bytes: Long,
     )
+    fun stallStart(
+        id: String,
+        index: Int,
+        reason: String,
+    )
+    fun stallEnd(
+        id: String,
+        index: Int,
+        durationMs: Long,
+    )
+    fun videoFullyBuffered(
+        id: String,
+        index: Int,
+        ms: Long,
+    )
 }
 
 private const val DEFAULT_PLAYBACK_LOG_TAG = "PlaybackEventReporter"
@@ -243,6 +258,33 @@ class LoggingPlaybackEventReporter(
         logger.d("cacheMiss $id $bytes")
         delegate.cacheMiss(id, bytes)
     }
+
+    override fun stallStart(
+        id: String,
+        index: Int,
+        reason: String,
+    ) {
+        logger.d("stallStart $id $index $reason")
+        delegate.stallStart(id, index, reason)
+    }
+
+    override fun stallEnd(
+        id: String,
+        index: Int,
+        durationMs: Long,
+    ) {
+        logger.d("stallEnd $id $index $durationMs")
+        delegate.stallEnd(id, index, durationMs)
+    }
+
+    override fun videoFullyBuffered(
+        id: String,
+        index: Int,
+        ms: Long,
+    ) {
+        logger.d("videoFullyBuffered $id $index $ms")
+        delegate.videoFullyBuffered(id, index, ms)
+    }
 }
 
 fun PlaybackEventReporter.withLogging(
@@ -328,5 +370,20 @@ object NoopPlaybackEventReporter : PlaybackEventReporter {
     override fun cacheMiss(
         id: String,
         bytes: Long,
+    ) = Unit
+    override fun stallStart(
+        id: String,
+        index: Int,
+        reason: String,
+    ) = Unit
+    override fun stallEnd(
+        id: String,
+        index: Int,
+        durationMs: Long,
+    ) = Unit
+    override fun videoFullyBuffered(
+        id: String,
+        index: Int,
+        ms: Long,
     ) = Unit
 }

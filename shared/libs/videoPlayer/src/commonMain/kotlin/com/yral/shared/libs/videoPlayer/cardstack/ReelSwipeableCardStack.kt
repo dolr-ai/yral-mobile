@@ -16,16 +16,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.model.toPlayerData
 import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
 import com.yral.shared.libs.videoplayback.CoordinatorDeps
+import com.yral.shared.libs.videoplayback.FirebasePerfPlaybackReporter
 import com.yral.shared.libs.videoplayback.MediaDescriptor
 import com.yral.shared.libs.videoplayback.PlaybackEventReporter
 import com.yral.shared.libs.videoplayback.ui.VideoFeedSync
 import com.yral.shared.libs.videoplayback.ui.rememberPlaybackCoordinatorWithLifecycle
+import com.yral.shared.libs.videoplayback.withLogging
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 
 /**
  * Reel-specific card stack that wires video playback into the generic stack.
@@ -70,7 +74,8 @@ internal fun ReelSwipeableCardStack(
 
     var activeFrameReadyIndex by remember { mutableStateOf<Int?>(null) }
 
-    val reporter =
+    val yralLogger: YralLogger = koinInject()
+    val baseReporter =
         rememberPlaybackEventReporter(
             didVideoEnd = didVideoEnd,
             recordTime = recordTime,
@@ -80,6 +85,11 @@ internal fun ReelSwipeableCardStack(
                 }
             },
         )
+    val reporter =
+        remember(baseReporter) {
+            FirebasePerfPlaybackReporter(baseReporter)
+                .withLogging(yralLogger = yralLogger, enabled = false)
+        }
     val coordinator =
         rememberPlaybackCoordinatorWithLifecycle(
             deps = CoordinatorDeps(reporter = reporter),
@@ -378,6 +388,24 @@ private fun rememberPlaybackEventReporter(
             override fun cacheMiss(
                 id: String,
                 bytes: Long,
+            ) = Unit
+
+            override fun stallStart(
+                id: String,
+                index: Int,
+                reason: String,
+            ) = Unit
+
+            override fun stallEnd(
+                id: String,
+                index: Int,
+                durationMs: Long,
+            ) = Unit
+
+            override fun videoFullyBuffered(
+                id: String,
+                index: Int,
+                ms: Long,
             ) = Unit
         }
     }
