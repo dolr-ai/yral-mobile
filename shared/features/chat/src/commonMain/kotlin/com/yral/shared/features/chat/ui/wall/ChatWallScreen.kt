@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -33,18 +32,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.yral.shared.analytics.events.InfluencerSource
-import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.chat.domain.models.ChatError
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencerStatus
 import com.yral.shared.features.chat.nav.wall.ChatWallComponent
 import com.yral.shared.features.chat.ui.components.ChatErrorBottomSheet
 import com.yral.shared.features.chat.viewmodel.ChatWallViewModel
-import com.yral.shared.libs.designsystem.component.CreateInfluencerButton
 import com.yral.shared.libs.designsystem.component.YralGridImage
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.formatAbbreviation
@@ -53,10 +49,7 @@ import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.koinInject
 import yral_mobile.shared.features.chat.generated.resources.Res
-import yral_mobile.shared.features.chat.generated.resources.chat_wall_subtitle
-import yral_mobile.shared.features.chat.generated.resources.chat_wall_title
 import yral_mobile.shared.features.chat.generated.resources.error_network_message_influencers
 import yral_mobile.shared.features.chat.generated.resources.ic_chat_bubble
 import yral_mobile.shared.features.chat.generated.resources.influencers_error
@@ -67,15 +60,8 @@ import yral_mobile.shared.features.chat.generated.resources.influencers_error
 fun ChatWallScreen(
     component: ChatWallComponent,
     viewModel: ChatWallViewModel,
-    sessionManager: SessionManager = koinInject(),
     modifier: Modifier = Modifier,
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    val showCreateBotCta by
-        sessionManager
-            .shouldShowCreateBotCtaFlow(state.maxBotCountForCta)
-            .collectAsStateWithLifecycle(initialValue = false)
-
     val influencers = viewModel.influencers.collectAsLazyPagingItems()
     var trackedCardsViewed by remember { mutableStateOf(false) }
 
@@ -117,34 +103,6 @@ fun ChatWallScreen(
                     .fillMaxSize()
                     .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 22.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(Res.string.chat_wall_title),
-                    style = LocalAppTopography.current.xlBold,
-                    color = YralColors.Grey50,
-                    modifier = Modifier.weight(1f),
-                )
-                if (showCreateBotCta) {
-                    CreateInfluencerButton(
-                        modifier = Modifier.height(32.dp),
-                        alignIconToEnd = false,
-                        onClick = {
-                            viewModel.trackCreateInfluencerClicked()
-                            component.openCreateInfluencer()
-                        },
-                    )
-                }
-            }
-            Text(
-                text = stringResource(Res.string.chat_wall_subtitle),
-                style = LocalAppTopography.current.baseRegular,
-                color = YralColors.Grey0,
-                modifier = Modifier.padding(bottom = 20.dp),
-            )
-
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 verticalArrangement = Arrangement.spacedBy(14.dp),

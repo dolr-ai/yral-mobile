@@ -10,7 +10,7 @@ import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
-import com.yral.shared.features.chat.nav.wall.ChatWallComponent
+import com.yral.shared.features.chat.nav.home.ChatHomeComponent
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.serialization.Serializable
@@ -40,7 +40,7 @@ internal class DefaultChatComponent(
             initialStack = {
                 val saved = snapshot?.routes ?: emptyList()
                 if (saved.isEmpty()) {
-                    listOf(Config.Wall)
+                    listOf(Config.Home)
                 } else {
                     saved.map { it.toConfig() }
                 }
@@ -68,21 +68,21 @@ internal class DefaultChatComponent(
             routes =
                 stack.value.items.map { item ->
                     when (val configuration = item.configuration) {
-                        is Config.Wall -> Snapshot.Route.Wall
+                        is Config.Home -> Snapshot.Route.Home
                         is Config.Conversation ->
                             Snapshot.Route.Conversation(
                                 influencerId = configuration.influencerId,
                                 influencerCategory = configuration.influencerCategory,
                                 influencerSource = configuration.influencerSource,
                             )
-                        else -> Snapshot.Route.Wall
+                        else -> Snapshot.Route.Home
                     }
                 },
         )
 
     private fun Snapshot.Route.toConfig(): Config =
         when (this) {
-            Snapshot.Route.Wall -> Config.Wall
+            Snapshot.Route.Home -> Config.Home
             is Snapshot.Route.Conversation ->
                 Config.Conversation(
                     influencerId = influencerId,
@@ -96,12 +96,12 @@ internal class DefaultChatComponent(
         componentContext: ComponentContext,
     ): Child =
         when (config) {
-            Config.Wall -> Child.Wall(chatWallComponent(componentContext))
+            Config.Home -> Child.Home(chatHomeComponent(componentContext))
             is Config.Conversation -> Child.Conversation(conversationComponent(componentContext, config))
         }
 
-    private fun chatWallComponent(componentContext: ComponentContext): ChatWallComponent =
-        ChatWallComponent.Companion(
+    private fun chatHomeComponent(componentContext: ComponentContext): ChatHomeComponent =
+        ChatHomeComponent.Companion(
             componentContext = componentContext,
             openConversation = { influencerId, influencerCategory, influencerSource ->
                 // Use root navigation instead of local navigation
@@ -129,7 +129,7 @@ internal class DefaultChatComponent(
     @Serializable
     private sealed interface Config {
         @Serializable
-        data object Wall : Config
+        data object Home : Config
 
         @Serializable
         data class Conversation(

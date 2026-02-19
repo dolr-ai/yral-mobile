@@ -10,7 +10,7 @@ import com.arkivanov.decompose.extensions.compose.stack.animation.slide
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.yral.shared.features.chat.nav.ChatComponent
 import com.yral.shared.features.chat.ui.conversation.ChatConversationScreen
-import com.yral.shared.features.chat.ui.wall.ChatWallScreen
+import com.yral.shared.features.chat.ui.home.ChatHomeScreen
 import com.yral.shared.features.chat.viewmodel.ChatWallViewModel
 import com.yral.shared.features.chat.viewmodel.ConversationViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -31,10 +31,10 @@ fun ChatScreen(
             modifier = Modifier.fillMaxSize(),
         ) { child ->
             when (val instance = child.instance) {
-                is ChatComponent.Child.Wall ->
-                    ChatWallScreen(
+                is ChatComponent.Child.Home ->
+                    ChatHomeScreen(
                         component = instance.component,
-                        viewModel = chatWallViewModel,
+                        chatWallViewModel = chatWallViewModel,
                         modifier = Modifier.fillMaxSize(),
                     )
                 is ChatComponent.Child.Conversation ->

@@ -13,6 +13,7 @@ import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
 import com.yral.shared.features.chat.domain.usecases.SendMessageUseCase
 import com.yral.shared.features.chat.viewmodel.ChatWallViewModel
 import com.yral.shared.features.chat.viewmodel.ConversationViewModel
+import com.yral.shared.features.chat.viewmodel.InboxViewModel
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
@@ -43,4 +44,5 @@ val chatModule =
         singleOf(::ChatErrorMapper)
         viewModelOf(::ChatWallViewModel)
         viewModelOf(::ConversationViewModel)
+        viewModelOf(::InboxViewModel)
     }
