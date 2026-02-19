@@ -17,7 +17,7 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.chat.analytics.ChatTelemetry
 import com.yral.shared.features.chat.domain.ChatErrorMapper
 import com.yral.shared.features.chat.domain.ChatRepository
-import com.yral.shared.features.chat.domain.InfluencersPagingSource
+import com.yral.shared.features.chat.domain.TrendingInfluencersPagingSource
 import com.yral.shared.features.chat.domain.models.ChatError
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
@@ -110,7 +110,7 @@ class ChatWallViewModel(
                 // Create a new Pager when active bot changes to refresh influencers
                 Pager(
                     config = pagingConfig,
-                    pagingSourceFactory = { InfluencersPagingSource(chatRepository, useCaseFailureListener) },
+                    pagingSourceFactory = { TrendingInfluencersPagingSource(chatRepository, useCaseFailureListener) },
                 ).flow.map { pagingData ->
                     if (activeBotPrincipal.isNullOrBlank()) {
                         pagingData

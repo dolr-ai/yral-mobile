@@ -17,6 +17,11 @@ interface ChatDataSource {
         offset: Int,
     ): InfluencersResponseDto
 
+    suspend fun listTrendingInfluencers(
+        limit: Int,
+        offset: Int,
+    ): InfluencersResponseDto
+
     suspend fun getInfluencer(id: String): InfluencerDto
 
     suspend fun createConversation(influencerId: String): ConversationDto
