@@ -58,6 +58,25 @@ class ChatRemoteDataSource(
         }
     }
 
+    override suspend fun listTrendingInfluencers(
+        limit: Int,
+        offset: Int,
+    ): InfluencersResponseDto {
+        val idToken = getIdToken()
+        return httpGet(
+            httpClient = httpClient,
+            json = json,
+        ) {
+            url {
+                host = CHAT_BASE_URL
+                path(environmentPrefix, TRENDING_INFLUENCERS_PATH)
+                parameters.append("limit", limit.toString())
+                parameters.append("offset", offset.toString())
+            }
+            headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
+        }
+    }
+
     override suspend fun getInfluencer(id: String): InfluencerDto {
         val idToken = getIdToken()
         return httpGet(
@@ -220,6 +239,7 @@ class ChatRemoteDataSource(
 
     private companion object {
         private const val INFLUENCERS_PATH = "api/v1/influencers"
+        private const val TRENDING_INFLUENCERS_PATH = "api/v1/influencers/trending"
         private const val CONVERSATIONS_PATH = "api/v1/chat/conversations"
         private const val MESSAGES_PATH = "messages"
         private const val UPLOAD_PATH = "api/v1/media/upload"

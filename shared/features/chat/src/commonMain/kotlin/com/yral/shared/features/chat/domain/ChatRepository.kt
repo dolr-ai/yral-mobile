@@ -15,6 +15,11 @@ interface ChatRepository {
         offset: Int,
     ): InfluencersPageResult
 
+    suspend fun getTrendingInfluencersPage(
+        limit: Int,
+        offset: Int,
+    ): InfluencersPageResult
+
     suspend fun getInfluencer(id: String): Influencer
 
     suspend fun createConversation(influencerId: String): Conversation
