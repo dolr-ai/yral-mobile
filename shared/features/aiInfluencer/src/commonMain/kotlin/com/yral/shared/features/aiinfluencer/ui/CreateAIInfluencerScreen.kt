@@ -670,8 +670,7 @@ private fun LoadingScreen(
             modifier =
                 Modifier
                     .size(160.dp)
-                    .clip(CircleShape)
-                    .background(YralColors.NeutralBlack),
+                    .clip(CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             YralGifImage(
