@@ -36,10 +36,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-data class AccountEnv(
-    val isDebug: Boolean,
-)
-
 @Suppress("LongParameterList")
 class AccountsViewModel internal constructor(
     private val appDispatchers: AppDispatchers,
