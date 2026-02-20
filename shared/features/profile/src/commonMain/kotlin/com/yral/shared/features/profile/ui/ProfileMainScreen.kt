@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -55,7 +56,6 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
@@ -72,7 +72,6 @@ import com.yral.shared.analytics.events.EditProfileSource
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.analytics.events.VideoDeleteCTA
-import com.yral.shared.core.session.AccountDirectory
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.domain.models.FeedDetails
@@ -107,7 +106,6 @@ import com.yral.shared.libs.designsystem.component.features.DeleteConfirmationSh
 import com.yral.shared.libs.designsystem.component.features.VideoViewsSheet
 import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
-import com.yral.shared.libs.designsystem.component.neonBorder
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastType
 import com.yral.shared.libs.designsystem.component.toast.showError
@@ -472,8 +470,22 @@ fun ProfileMainScreen(
                     isBotAccount = isBotAccount,
                     hasBotAccounts = hasBotAccounts,
                     showCreateBotCta = showCreateBotCta,
-                    accountDirectory = accountDirectory,
                     onCreateInfluencerClick = onCreateInfluencerClick,
+                    onUsernameClick = { username ->
+                        val principal =
+                            state.botUsernameToCanisterData[username]
+                                ?: state.createdByPrincipal.takeIf { username == state.createdByUsername }
+                                ?: return@MainContent
+                        val canisterData =
+                            CanisterData(
+                                canisterId = getUserInfoServiceCanister(),
+                                userPrincipalId = principal,
+                                profilePic = propicFromPrincipal(principal),
+                                username = username,
+                                isCreatedFromServiceCanister = true,
+                            )
+                        component.openProfile(canisterData)
+                    },
                 )
             }
         }
@@ -647,8 +659,8 @@ private fun MainContent(
     isBotAccount: Boolean,
     hasBotAccounts: Boolean,
     showCreateBotCta: Boolean,
-    accountDirectory: AccountDirectory?,
     onCreateInfluencerClick: () -> Unit,
+    onUsernameClick: (String) -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader(
@@ -669,20 +681,7 @@ private fun MainContent(
         state.accountInfo?.let { info ->
             val followersCount = totalCount(followers)
             val followingCount = totalCount(following)
-            val parentBotUsernames =
-                accountDirectory
-                    ?.takeIf { state.isOwnProfile && !isBotAccount }
-                    ?.botPrincipals
-                    ?.mapNotNull { principal ->
-                        accountDirectory.profilesByPrincipal[principal]?.username?.takeUnless { it.isBlank() }
-                    }.orEmpty()
-            val createdByUsername =
-                accountDirectory
-                    ?.takeIf { state.isOwnProfile && isBotAccount }
-                    ?.mainPrincipal
-                    ?.let { principal ->
-                        accountDirectory.profilesByPrincipal[principal]?.username?.takeUnless { it.isBlank() }
-                    }
+            val createdByUsername = state.createdByUsername
             AccountInfoView(
                 accountInfo = info,
                 totalFollowers = followersCount,
@@ -706,9 +705,10 @@ private fun MainContent(
                 isProUser = state.isProUser,
                 showCreateInfluencerCta = state.isOwnProfile && state.isLoggedIn && showCreateBotCta,
                 onCreateInfluencerClick = onCreateInfluencerClick,
-                botUsernames = parentBotUsernames,
+                botUsernames = state.botUsernames,
                 createdByUsername = createdByUsername,
                 maxVisibleBotUsernames = state.maxVisibleBotUsernames,
+                onUsernameClick = onUsernameClick,
             )
         }
         when (profileVideos.loadState.refresh) {
@@ -1440,37 +1440,27 @@ fun BecomeProButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    val gradientColors =
-        listOf(
-            YralColors.ProGradientOrange,
-            YralColors.ProGradientPink,
-        )
     Row(
         modifier =
             modifier
-                .neonBorder(
-                    paddingValues = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
-                    cornerRadius = 8.dp,
-                    containerColor = Color.Transparent,
-                    animationDuration = 600L,
-                    neonColor = YralColors.YellowGlowShadow,
-                ).clip(RoundedCornerShape(8.dp))
-                .background(brush = Brush.linearGradient(colors = gradientColors))
+                .clip(RoundedCornerShape(4.dp))
+                .border(width = 1.dp, color = YralColors.Yellow200, shape = RoundedCornerShape(size = 4.dp))
+                .background(color = YralColors.Yellow400, shape = RoundedCornerShape(size = 4.dp))
                 .clickable(onClick = onClick)
-                .padding(horizontal = 10.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = stringResource(Res.string.become_pro),
-            style = LocalAppTopography.current.mdMedium,
-            color = Color.White,
+            style = LocalAppTopography.current.regSemiBold,
+            color = YralColors.Yellow200,
         )
         Image(
             painter = painterResource(DesignRes.drawable.ic_thunder),
             contentDescription = "Pro",
             contentScale = ContentScale.Inside,
-            modifier = Modifier.size(20.dp),
+            modifier = Modifier.size(14.dp),
         )
     }
 }

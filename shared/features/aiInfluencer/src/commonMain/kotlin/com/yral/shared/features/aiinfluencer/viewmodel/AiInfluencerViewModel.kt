@@ -269,7 +269,7 @@ class AiInfluencerViewModel(
     fun onProfileNameChanged(name: String) {
         _state.update { current ->
             when (val step = current.step) {
-                is AiInfluencerStep.ProfileDetails -> current.copy(step = step.copy(name = name))
+                is AiInfluencerStep.ProfileDetails -> current.copy(step = step.copy(displayName = name))
                 else -> current
             }
         }
@@ -414,11 +414,12 @@ class AiInfluencerViewModel(
     }
 
     companion object {
-        private const val PROMPT_CHAR_LIMIT = 200
+        const val PROMPT_CHAR_LIMIT = 200
         private const val DEFAULT_ERROR_MESSAGE = "Something went wrong. Please try again."
         private const val BOT_CREATE_MESSAGE = "yral_auth_v2_create_ai_account"
         private const val MIN_USERNAME_LENGTH = 3
-        private const val MAX_USERNAME_LENGTH = 15
+        const val MAX_USERNAME_LENGTH = 15
+        const val MAX_DISPLAY_NAME_LENGTH = 30
         private const val RETRY_SUFFIX_LENGTH = 3
         private val PNG_MAGIC =
             byteArrayOf(

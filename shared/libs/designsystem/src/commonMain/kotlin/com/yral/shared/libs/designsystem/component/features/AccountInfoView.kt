@@ -83,6 +83,7 @@ fun AccountInfoView(
     botUsernames: List<String> = emptyList(),
     createdByUsername: String? = null,
     maxVisibleBotUsernames: Int = 2,
+    onUsernameClick: ((String) -> Unit)? = null,
 ) {
     Column(
         modifier =
@@ -183,12 +184,16 @@ fun AccountInfoView(
             BotUsernamesRow(
                 botUsernames = botUsernames,
                 maxVisible = maxVisibleBotUsernames,
+                onUsernameClick = onUsernameClick,
             )
         }
         createdByUsername
             ?.takeUnless { it.isBlank() }
             ?.let { username ->
-                CreatedByRow(username = username)
+                CreatedByRow(
+                    username = username,
+                    onClick = onUsernameClick?.let { cb -> { cb(username) } },
+                )
             }
         when {
             !isSocialSignIn && showLogin -> {
@@ -327,6 +332,7 @@ fun AccountInfoView(
 private fun BotUsernamesRow(
     botUsernames: List<String>,
     maxVisible: Int = 2,
+    onUsernameClick: ((String) -> Unit)? = null,
 ) {
     val visible = botUsernames.take(maxVisible)
     val remainingCount = (botUsernames.size - visible.size).coerceAtLeast(0)
@@ -335,17 +341,25 @@ private fun BotUsernamesRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         visible.forEachIndexed { index, username ->
-            Image(
-                painter = painterResource(Res.drawable.ic_bot_username_star),
-                contentDescription = null,
-                modifier = Modifier.size(18.dp),
-            )
-            Spacer(modifier = Modifier.width(2.dp))
-            Text(
-                text = "@$username",
-                style = LocalAppTopography.current.regBold,
-                color = YralColors.Pink200,
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier =
+                    Modifier.clickable(enabled = onUsernameClick != null) {
+                        onUsernameClick?.invoke(username)
+                    },
+            ) {
+                Image(
+                    painter = painterResource(Res.drawable.ic_bot_username_star),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(modifier = Modifier.width(2.dp))
+                Text(
+                    text = "@$username",
+                    style = LocalAppTopography.current.regBold,
+                    color = YralColors.Pink200,
+                )
+            }
             if (index != visible.lastIndex || remainingCount > 0) {
                 Spacer(modifier = Modifier.width(12.dp))
             }
@@ -361,7 +375,10 @@ private fun BotUsernamesRow(
 }
 
 @Composable
-private fun CreatedByRow(username: String) {
+private fun CreatedByRow(
+    username: String,
+    onClick: (() -> Unit)? = null,
+) {
     val text =
         buildAnnotatedString {
             append("Created by ")
@@ -374,7 +391,10 @@ private fun CreatedByRow(username: String) {
         text = text,
         style = LocalAppTopography.current.baseRegular,
         color = YralColors.Grey50,
-        modifier = Modifier.padding(top = 0.dp, bottom = 0.dp),
+        modifier =
+            Modifier
+                .padding(top = 0.dp, bottom = 0.dp)
+                .clickable(enabled = onClick != null) { onClick?.invoke() },
     )
 }
 
