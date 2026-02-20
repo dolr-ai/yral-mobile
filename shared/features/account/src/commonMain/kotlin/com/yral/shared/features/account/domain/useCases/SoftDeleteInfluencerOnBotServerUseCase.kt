@@ -13,7 +13,7 @@ private const val SOFT_DELETE_LOG_TAG = "BotDeleteFlow"
 class SoftDeleteInfluencerOnBotServerUseCase(
     private val commonApis: CommonApis,
     private val preferences: Preferences,
-    private val isDebug: Boolean,
+    private val environmentPrefix: String,
     dispatchers: AppDispatchers,
     useCaseFailureListener: UseCaseFailureListener,
 ) : SuspendUseCase<String?, Unit>(dispatchers.network, useCaseFailureListener) {
@@ -29,7 +29,6 @@ class SoftDeleteInfluencerOnBotServerUseCase(
             }
             return
         }
-        val environmentPrefix = if (isDebug) "staging" else ""
         Logger.d(SOFT_DELETE_LOG_TAG) {
             "calling bot-server soft delete influencerId=$parameter envPrefix=$environmentPrefix"
         }
