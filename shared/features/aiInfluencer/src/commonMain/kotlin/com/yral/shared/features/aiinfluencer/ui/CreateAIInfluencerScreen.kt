@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -49,6 +48,8 @@ import com.yral.shared.features.aiinfluencer.nav.CreateInfluencerComponent
 import com.yral.shared.features.aiinfluencer.viewmodel.AiInfluencerStep
 import com.yral.shared.features.aiinfluencer.viewmodel.AiInfluencerUiState
 import com.yral.shared.features.aiinfluencer.viewmodel.AiInfluencerViewModel
+import com.yral.shared.features.aiinfluencer.viewmodel.AiInfluencerViewModel.Companion.MAX_DISPLAY_NAME_LENGTH
+import com.yral.shared.features.aiinfluencer.viewmodel.AiInfluencerViewModel.Companion.PROMPT_CHAR_LIMIT
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.auth.ui.LoginMode
 import com.yral.shared.features.auth.ui.LoginScreenType
@@ -512,6 +513,7 @@ private fun ProfileDetailsScreen(
                 value = step.displayName.ifBlank { step.name },
                 label = stringResource(Res.string.ai_influencer_name_label),
                 onValueChange = onNameChange,
+                maxLength = MAX_DISPLAY_NAME_LENGTH,
             )
             Spacer(modifier = Modifier.height(16.dp))
             ProfileTextField(
@@ -519,6 +521,7 @@ private fun ProfileDetailsScreen(
                 label = stringResource(Res.string.ai_influencer_description_label),
                 onValueChange = onDescriptionChange,
                 minLines = 2,
+                maxLength = PROMPT_CHAR_LIMIT,
             )
         }
         Spacer(modifier = Modifier.weight(1f))
@@ -756,6 +759,7 @@ private fun ProfileTextField(
     value: String,
     label: String,
     onValueChange: (String) -> Unit,
+    maxLength: Int,
     minLines: Int = 1,
 ) {
     Column(
@@ -769,7 +773,7 @@ private fun ProfileTextField(
         )
         TextField(
             value = value,
-            onValueChange = onValueChange,
+            onValueChange = { value -> onValueChange(value.take(maxLength)) },
             modifier =
                 Modifier
                     .fillMaxWidth()
