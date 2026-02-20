@@ -28,6 +28,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,15 +56,16 @@ import com.yral.shared.features.auth.ui.LoginMode
 import com.yral.shared.features.auth.ui.LoginScreenType
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.auth.ui.rememberLoginInfo
-import com.yral.shared.libs.designsystem.component.LoaderSize
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralButtonState
+import com.yral.shared.libs.designsystem.component.YralGifImage
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralLoader
+import com.yral.shared.libs.designsystem.component.clearGifResources
+import com.yral.shared.libs.designsystem.component.preloadGifResources
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.DrawableResource
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -161,6 +163,21 @@ internal fun CreateAIInfluencerScreen(
                 ) {}
             }
         }
+
+    LaunchedEffect(Unit) {
+        preloadGifResources(
+            "drawable/create_influencer_magic.gif",
+            "drawable/create_influencer_puzzle.gif",
+        )
+    }
+    DisposableEffect(Unit) {
+        onDispose {
+            clearGifResources(
+                "drawable/create_influencer_magic.gif",
+                "drawable/create_influencer_puzzle.gif",
+            )
+        }
+    }
 
     Box(
         modifier = backgroundModifier,
@@ -634,16 +651,11 @@ private fun AvatarBlock(
 }
 
 @Composable
-@OptIn(ExperimentalResourceApi::class)
 private fun LoadingScreen(
     title: String,
     subtitle: String,
     gifPath: String,
 ) {
-    var gifBytes by remember(gifPath) { mutableStateOf<ByteArray?>(null) }
-    LaunchedEffect(gifPath) {
-        gifBytes = Res.readBytes(gifPath)
-    }
     Column(
         modifier =
             Modifier
@@ -658,18 +670,14 @@ private fun LoadingScreen(
             modifier =
                 Modifier
                     .size(160.dp)
-                    .clip(CircleShape)
-                    .background(YralColors.NeutralBlack),
+                    .clip(CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            gifBytes?.let { bytes ->
-                YralAsyncImage(
-                    imageUrl = bytes,
-                    modifier = Modifier.size(160.dp),
-                    loaderSize = LoaderSize.None,
-                    contentScale = ContentScale.Fit,
-                )
-            }
+            YralGifImage(
+                resPath = gifPath,
+                modifier = Modifier.size(160.dp),
+                contentScale = ContentScale.Fit,
+            )
         }
         Spacer(modifier = Modifier.height(30.dp))
         Text(
