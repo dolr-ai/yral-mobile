@@ -31,12 +31,19 @@ fun YralGifImage(
     contentScale: ContentScale = ContentScale.Fit,
     shape: Shape = CircleShape,
 ) {
-    var bytes by remember(resPath) { mutableStateOf<ByteArray?>(null) }
-    var isLoading by remember { mutableStateOf(true) }
+    var bytes by remember(resPath) { mutableStateOf(GifBytesCache.get(resPath)) }
+    var isLoading by remember { mutableStateOf(bytes == null) }
     LaunchedEffect(resPath) {
-        isLoading = true
-        bytes = Res.readBytes(resPath)
-        isLoading = false
+        if (GifBytesCache.contains(resPath)) {
+            bytes = GifBytesCache.get(resPath)
+            isLoading = false
+        } else {
+            isLoading = true
+            val loaded = Res.readBytes(resPath)
+            GifBytesCache.put(resPath, loaded)
+            bytes = loaded
+            isLoading = false
+        }
     }
     BoxWithConstraints(
         modifier = modifier,
