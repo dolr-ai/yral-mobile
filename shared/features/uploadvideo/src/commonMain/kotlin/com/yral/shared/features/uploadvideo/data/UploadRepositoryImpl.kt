@@ -4,6 +4,7 @@ import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.uploadvideo.data.remote.UploadVideoRemoteDataSource
+import com.yral.shared.features.uploadvideo.data.remote.models.GetUploadUrlRequestDto
 import com.yral.shared.features.uploadvideo.data.remote.models.toDomain
 import com.yral.shared.features.uploadvideo.data.remote.models.toDto
 import com.yral.shared.features.uploadvideo.data.remote.models.toRequestDto
@@ -14,6 +15,7 @@ import com.yral.shared.features.uploadvideo.domain.UploadRepository
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoResult
 import com.yral.shared.features.uploadvideo.domain.models.UploadAiVideoFromUrlRequest
+import com.yral.shared.features.uploadvideo.domain.models.UploadEndpoint
 import com.yral.shared.features.uploadvideo.domain.models.UploadFileRequest
 import com.yral.shared.rust.service.utils.delegatedIdentityWireToJson
 import kotlinx.coroutines.flow.map
@@ -24,7 +26,18 @@ internal class UploadRepositoryImpl(
     private val sessionManager: SessionManager,
     private val json: Json,
 ) : UploadRepository {
-    override suspend fun fetchUploadUrl() = remoteDataSource.getUploadUrl().toUploadEndpoint()
+    override suspend fun fetchUploadUrl(): UploadEndpoint {
+        val publisherUserID =
+            sessionManager.userPrincipal
+                ?: throw YralException("Session not found while finalising video upload")
+        return remoteDataSource
+            .getUploadUrl(
+                dto =
+                    GetUploadUrlRequestDto(
+                        publisherUserId = publisherUserID,
+                    ),
+            ).toUploadEndpoint()
+    }
 
     override fun uploadVideo(
         uploadUrl: String,
