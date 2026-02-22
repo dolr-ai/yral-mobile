@@ -25,7 +25,6 @@ import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.plugins.onUpload
 import io.ktor.client.plugins.timeout
 import io.ktor.client.request.post
-import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
@@ -91,7 +90,7 @@ internal class UploadVideoRemoteDataSource(
                     source.readByteArray()
                 }
             val response =
-                client.put(uploadUrl) {
+                client.post(uploadUrl) {
                     expectSuccess = false
                     contentType(ContentType.defaultForFilePath(filePath))
                     setBody(bytes)
