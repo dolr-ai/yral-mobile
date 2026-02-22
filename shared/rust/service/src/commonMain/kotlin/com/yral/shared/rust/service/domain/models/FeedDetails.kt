@@ -116,7 +116,11 @@ fun Post.toPartialFeedDetails(): FeedDetails =
         videoID = videoID,
         canisterID = canisterID,
         principalID = publisherUserId,
-        url = videoUrl(videoID),
+        url =
+            videoUrl(
+                videoID,
+                publisherUserId = publisherUserId,
+            ),
         hashtags = emptyList(),
         thumbnail = thumbnailUrl(videoID),
         viewCount = numViewsAll ?: 0u,

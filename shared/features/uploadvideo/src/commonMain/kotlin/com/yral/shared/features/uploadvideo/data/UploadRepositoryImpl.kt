@@ -51,8 +51,11 @@ internal class UploadRepositoryImpl(
         val identityWireJson = delegatedIdentityWireToJson(identity)
         val delegatedIdentityWire =
             json.decodeFromString<KotlinDelegatedIdentityWire>(identityWireJson)
+        val creatorPrincipal =
+            sessionManager.userPrincipal
+                ?: throw YralException("Session not found while finalising video upload")
         remoteDataSource.updateMetadata(
-            uploadFileRequest.toUpdateMetaDataRequestDto(delegatedIdentityWire),
+            uploadFileRequest.toUpdateMetaDataRequestDto(delegatedIdentityWire, creatorPrincipal),
         )
     }
 
