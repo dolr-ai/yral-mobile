@@ -1,5 +1,6 @@
 package com.yral.shared.features.uploadvideo.domain
 
+import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.libs.arch.domain.UnitSuspendUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
@@ -10,5 +11,7 @@ internal class GetProvidersUseCase(
     failureListener: UseCaseFailureListener,
     private val repository: UploadRepository,
 ) : UnitSuspendUseCase<List<Provider>>(appDispatchers.network, failureListener) {
+    override val exceptionType: String = ExceptionType.AI_VIDEO.name
+
     override suspend fun execute(parameter: Unit): List<Provider> = repository.fetchProviders()
 }

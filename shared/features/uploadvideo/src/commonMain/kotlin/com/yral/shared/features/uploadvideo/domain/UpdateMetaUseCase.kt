@@ -1,5 +1,6 @@
 package com.yral.shared.features.uploadvideo.domain
 
+import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.uploadvideo.domain.models.UploadFileRequest
 import com.yral.shared.libs.arch.domain.SuspendUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
@@ -10,6 +11,8 @@ internal class UpdateMetaUseCase(
     failureListener: UseCaseFailureListener,
     private val repository: UploadRepository,
 ) : SuspendUseCase<UpdateMetaUseCase.Param, Unit>(appDispatchers.network, failureListener) {
+    override val exceptionType: String = ExceptionType.UPLOAD_VIDEO.name
+
     override suspend fun execute(parameter: Param) {
         repository.updateMetadata(parameter.uploadFileRequest)
     }
