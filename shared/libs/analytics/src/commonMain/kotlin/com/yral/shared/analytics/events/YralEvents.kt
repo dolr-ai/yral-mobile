@@ -419,6 +419,20 @@ data class FeedToggleClickedEventData(
     )
 }
 
+@Serializable
+data class FeedLoaderShownEventData(
+    @SerialName("event") override val event: String = FeatureEvents.FEED_LOADER_SHOWN.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+    @SerialName("duration_ms") val durationMs: Long,
+) : BaseEventData(),
+    EventData {
+    constructor(durationMs: Long) : this(
+        FeatureEvents.FEED_LOADER_SHOWN.getEventName(),
+        Features.FEED.getFeatureName(),
+        durationMs,
+    )
+}
+
 // --- Video ---
 
 @Serializable

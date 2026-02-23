@@ -5,6 +5,7 @@ import com.yral.shared.analytics.events.AnalyticsOnboardingStep
 import com.yral.shared.analytics.events.AppOnboardingShownEventData
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.CtaType
+import com.yral.shared.analytics.events.FeedLoaderShownEventData
 import com.yral.shared.analytics.events.FeedToggleClickedEventData
 import com.yral.shared.analytics.events.FeedType
 import com.yral.shared.analytics.events.GameType
@@ -219,6 +220,10 @@ class FeedTelemetry(
                     },
             ),
         )
+    }
+
+    fun onFeedLoaderShown(durationMs: Long) {
+        analyticsManager.trackEvent(FeedLoaderShownEventData(durationMs))
     }
 
     fun setHonExperimentStatus(isEnabled: Boolean) {

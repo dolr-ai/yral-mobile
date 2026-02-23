@@ -13,6 +13,10 @@ kotlin {
     )
 
     sourceSets {
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
+        }
         commonMain.dependencies {
             implementation(projects.shared.core)
             implementation(projects.shared.features.auth)
