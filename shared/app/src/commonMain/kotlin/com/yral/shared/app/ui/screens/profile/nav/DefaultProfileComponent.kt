@@ -9,6 +9,7 @@ import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.pushToFront
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
+import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.data.AlertsRequestType
@@ -35,7 +36,7 @@ internal class DefaultProfileComponent(
     private val onUploadVideoClicked: () -> Unit,
     private val openEditProfile: () -> Unit,
     private val openProfile: (CanisterData) -> Unit,
-    private val openCreateInfluencer: () -> Unit,
+    private val openCreateInfluencer: (source: BotCreationSource) -> Unit,
     private val openConversation: (
         influencerId: String,
         influencerCategory: String,
@@ -90,8 +91,8 @@ internal class DefaultProfileComponent(
         navigation.replaceAll(Config.Main)
     }
 
-    override fun openCreateInfluencer() {
-        openCreateInfluencer.invoke()
+    override fun openCreateInfluencer(source: BotCreationSource) {
+        openCreateInfluencer.invoke(source)
     }
 
     override fun openEditProfile() {

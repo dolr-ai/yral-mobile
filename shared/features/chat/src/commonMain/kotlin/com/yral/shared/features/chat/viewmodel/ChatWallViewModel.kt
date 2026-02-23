@@ -11,6 +11,7 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.featureflag.ChatFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
+import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.analytics.events.InfluencerClickType
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.core.session.SessionManager
@@ -168,6 +169,10 @@ class ChatWallViewModel(
                 influencerError = null,
             )
         }
+    }
+
+    fun trackCreateInfluencerClicked() {
+        chatTelemetry.createBotCtaClicked(BotCreationSource.CHAT_PAGE)
     }
 
     private companion object {

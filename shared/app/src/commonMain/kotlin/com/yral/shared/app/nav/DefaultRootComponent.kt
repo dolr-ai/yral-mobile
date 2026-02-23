@@ -22,6 +22,7 @@ import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.instancekeeper.InstanceKeeper
 import com.arkivanov.essenty.instancekeeper.getOrCreate
+import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.SubscriptionEntryPoint
 import com.yral.shared.app.UpdateState
@@ -166,7 +167,7 @@ class DefaultRootComponent(
             is Config.EditProfile -> RootComponent.Child.EditProfile(componentFactory.createEditProfile(context))
             is Config.CreateInfluencer ->
                 RootComponent.Child.CreateInfluencer(
-                    componentFactory.createCreateInfluencer(context),
+                    componentFactory.createCreateInfluencer(context, config),
                 )
             is Config.UserProfile -> RootComponent.Child.UserProfile(componentFactory.createProfile(context, config))
             is Config.TournamentLeaderboard ->
@@ -458,8 +459,8 @@ class DefaultRootComponent(
         navigation.pushToFront(Config.Subscription(purchaseTimeMs, entryPoint))
     }
 
-    override fun openCreateInfluencer() {
-        navigation.pushToFront(Config.CreateInfluencer)
+    override fun openCreateInfluencer(source: BotCreationSource) {
+        navigation.pushToFront(Config.CreateInfluencer(source))
     }
 
     override fun onCreateVideo() {

@@ -16,6 +16,7 @@ import com.yral.featureflag.AppFeatureFlags
 import com.yral.featureflag.ChatFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.WalletFeatureFlags
+import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.analytics.events.CtaType
 import com.yral.shared.analytics.events.EditProfileSource
 import com.yral.shared.analytics.events.FollowersListTab
@@ -1093,6 +1094,10 @@ class ProfileViewModel(
                     FollowersSheetTab.Following -> FollowersListTab.FOLLOWING
                 },
         )
+    }
+
+    fun trackCreateInfluencerClicked() {
+        chatTelemetry.createBotCtaClicked(BotCreationSource.PROFILE_PAGE)
     }
 }
 

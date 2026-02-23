@@ -181,7 +181,6 @@ fun RootScreen(rootComponent: RootComponent) {
                             modifier = Modifier.fillMaxSize().safeDrawingPadding(),
                             viewModel = profileViewModel,
                             profileVideos = profileVideos,
-                            onCreateInfluencerClick = rootComponent::openCreateInfluencer,
                         )
                     }
 
