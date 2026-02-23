@@ -6,6 +6,8 @@ import co.touchlab.kermit.Logger
 import com.github.michaelbull.result.getOrThrow
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
+import com.yral.shared.analytics.events.BotCreationErrorStage
+import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
@@ -14,6 +16,7 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.utils.generateUsernameFromPrincipal
 import com.yral.shared.core.utils.resolveUsername
+import com.yral.shared.features.aiinfluencer.analytics.AiInfluencerTelemetry
 import com.yral.shared.features.aiinfluencer.domain.models.CreatedInfluencer
 import com.yral.shared.features.aiinfluencer.domain.models.GeneratedInfluencerMetadata
 import com.yral.shared.features.aiinfluencer.domain.usecases.CreateInfluencerUseCase
@@ -77,13 +80,26 @@ class AiInfluencerViewModel(
     private val updateProfileDetailsUseCase: UpdateProfileDetailsUseCase,
     private val httpClient: HttpClient,
     private val botVideoGenCoordinator: BotVideoGenManager,
+    private val telemetry: AiInfluencerTelemetry,
 ) : ViewModel() {
     private val logger = Logger.withTag("AiInfluencerViewModel")
     private val _state = MutableStateFlow(AiInfluencerUiState())
     val state: StateFlow<AiInfluencerUiState> = _state.asStateFlow()
 
+    private var entryPoint: BotCreationSource = BotCreationSource.PROFILE_PAGE
+    private var createBotRetries: Int = 0
+    private var originalSystemInstructions: String? = null
+
+    fun initialize(source: BotCreationSource) {
+        entryPoint = source
+        createBotRetries = 0
+        telemetry.botCreationStarted(entryPoint = source)
+    }
+
     fun resetFlow() {
         clearBotCreationProgress()
+        createBotRetries = 0
+        originalSystemInstructions = null
         _state.value = AiInfluencerUiState()
     }
 
@@ -174,10 +190,13 @@ class AiInfluencerViewModel(
             )
         }
 
+        telemetry.botDescriptionSubmitted(descriptionText = description, entryPoint = entryPoint)
+
         requestJob =
             viewModelScope.launch {
                 generatePromptUseCase(GeneratePromptUseCase.Params(prompt = description))
                     .onSuccess { generated ->
+                        originalSystemInstructions = generated.systemInstructions
                         _state.update {
                             it.copy(
                                 step =
@@ -190,6 +209,12 @@ class AiInfluencerViewModel(
                             )
                         }
                     }.onFailure { throwable ->
+                        telemetry.botCreationFailed(
+                            errorCode = throwable.message ?: DEFAULT_ERROR_MESSAGE,
+                            errorStage = AiInfluencerStep.DescriptionEntry().errorStage(),
+                            retryAvailable = true,
+                            entryPoint = entryPoint,
+                        )
                         _state.update {
                             it.copy(
                                 step = AiInfluencerStep.DescriptionEntry(description = description),
@@ -214,6 +239,7 @@ class AiInfluencerViewModel(
         }
     }
 
+    @Suppress("LongMethod")
     fun submitPersona() {
         val currentStep = _state.value.step
         if (currentStep !is AiInfluencerStep.PersonaReview) return
@@ -234,12 +260,24 @@ class AiInfluencerViewModel(
             )
         }
 
+        val descriptionEdited = edited != originalSystemInstructions
+        telemetry.botDescriptionAccepted(
+            descriptionEdited = descriptionEdited,
+            descriptionText = currentStep.description,
+            entryPoint = entryPoint,
+        )
+
         requestJob =
             viewModelScope.launch {
                 validateAndGenerateMetadataUseCase(
                     ValidateAndGenerateMetadataUseCase.Params(systemInstructions = edited),
                 ).onSuccess { metadata ->
                     if (metadata.isValid) {
+                        telemetry.botProfileGenerated(
+                            nameGenerated = metadata.name,
+                            avatarGenerated = metadata.avatarUrl.isNotBlank(),
+                            entryPoint = entryPoint,
+                        )
                         _state.update {
                             it.copy(
                                 step = metadata.toProfileDetails(edited),
@@ -248,14 +286,27 @@ class AiInfluencerViewModel(
                             )
                         }
                     } else {
+                        val errorMessage = metadata.reason.ifBlank { DEFAULT_ERROR_MESSAGE }
+                        telemetry.botCreationFailed(
+                            errorCode = errorMessage,
+                            errorStage = currentStep.errorStage(),
+                            retryAvailable = true,
+                            entryPoint = entryPoint,
+                        )
                         _state.update {
                             it.copy(
                                 step = currentStep,
-                                errorMessage = metadata.reason.ifBlank { DEFAULT_ERROR_MESSAGE },
+                                errorMessage = errorMessage,
                             )
                         }
                     }
                 }.onFailure { throwable ->
+                    telemetry.botCreationFailed(
+                        errorCode = throwable.message ?: DEFAULT_ERROR_MESSAGE,
+                        errorStage = currentStep.errorStage(),
+                        retryAvailable = true,
+                        entryPoint = entryPoint,
+                    )
                     _state.update {
                         it.copy(
                             step = currentStep,
@@ -319,7 +370,7 @@ class AiInfluencerViewModel(
         _state.update { it.copy(isImagePickerVisible = false) }
     }
 
-    @Suppress("LongMethod")
+    @Suppress("LongMethod", "CyclomaticComplexMethod")
     fun createBotAccount(onSuccess: () -> Unit) {
         val currentStep = _state.value.step as? AiInfluencerStep.ProfileDetails
         val identity = sessionManager.identity
@@ -343,6 +394,9 @@ class AiInfluencerViewModel(
                 }
                 return
             }
+
+        telemetry.createBotClicked(retries = createBotRetries, entryPoint = entryPoint)
+        createBotRetries++
 
         requestJob?.cancel()
         _state.update { it.copy(isBotCreationLoading = true, errorMessage = null) }
@@ -398,11 +452,21 @@ class AiInfluencerViewModel(
                         profileDetails = currentStep,
                     ).getOrThrow()
                 }.onSuccess {
+                    telemetry.botCreationSuccess(
+                        botId = progress.botPrincipal.orEmpty(),
+                        entryPoint = entryPoint,
+                    )
                     _state.update { it.copy(isBotCreationLoading = false) }
                     clearBotCreationProgress()
                     onSuccess()
                 }.onFailure { throwable ->
                     val serverMessage = extractServerMessage(throwable)
+                    telemetry.botCreationFailed(
+                        errorCode = serverMessage ?: throwable.message ?: DEFAULT_ERROR_MESSAGE,
+                        errorStage = currentStep.errorStage(),
+                        retryAvailable = true,
+                        entryPoint = entryPoint,
+                    )
                     _state.update {
                         it.copy(
                             isBotCreationLoading = false,
@@ -417,6 +481,7 @@ class AiInfluencerViewModel(
         const val PROMPT_CHAR_LIMIT = 200
         private const val DEFAULT_ERROR_MESSAGE = "Something went wrong. Please try again."
         private const val BOT_CREATE_MESSAGE = "yral_auth_v2_create_ai_account"
+
         private const val MIN_USERNAME_LENGTH = 3
         const val MAX_USERNAME_LENGTH = 15
         const val MAX_DISPLAY_NAME_LENGTH = 30
@@ -866,6 +931,19 @@ sealed interface AiInfluencerStep {
         val isNsfw: Boolean = false,
     ) : AiInfluencerStep
 }
+
+private fun AiInfluencerStep.errorStage(): BotCreationErrorStage =
+    when (this) {
+        is AiInfluencerStep.DescriptionEntry,
+        is AiInfluencerStep.LoadingPrompt,
+        -> BotCreationErrorStage.USER_DESCRIPTION
+
+        is AiInfluencerStep.PersonaReview,
+        is AiInfluencerStep.LoadingMetadata,
+        -> BotCreationErrorStage.ASSET_GENERATION
+
+        is AiInfluencerStep.ProfileDetails -> BotCreationErrorStage.FINAL_CREATE
+    }
 
 private fun GeneratedInfluencerMetadata.toProfileDetails(systemInstructions: String): AiInfluencerStep.ProfileDetails =
     AiInfluencerStep.ProfileDetails(

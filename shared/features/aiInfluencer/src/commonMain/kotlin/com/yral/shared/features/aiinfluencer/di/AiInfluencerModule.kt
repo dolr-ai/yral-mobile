@@ -1,6 +1,7 @@
 package com.yral.shared.features.aiinfluencer.di
 
 import com.yral.shared.analytics.di.IS_DEBUG
+import com.yral.shared.features.aiinfluencer.analytics.AiInfluencerTelemetry
 import com.yral.shared.features.aiinfluencer.data.AiInfluencerDataSource
 import com.yral.shared.features.aiinfluencer.data.AiInfluencerRemoteDataSource
 import com.yral.shared.features.aiinfluencer.data.AiInfluencerRepositoryImpl
@@ -35,5 +36,6 @@ val aiInfluencerModule =
         factoryOf(::ValidateAndGenerateMetadataUseCase)
         factoryOf(::CreateInfluencerUseCase)
         factoryOf(::BotIdentityStorage)
+        factoryOf(::AiInfluencerTelemetry)
         viewModelOf(::AiInfluencerViewModel)
     }
