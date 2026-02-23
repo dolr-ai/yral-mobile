@@ -66,6 +66,7 @@ import com.yral.shared.features.auth.ui.LoginMode
 import com.yral.shared.features.auth.ui.LoginScreenType
 import com.yral.shared.features.auth.ui.rememberLoginInfo
 import com.yral.shared.features.chat.ui.ChatScreen
+import com.yral.shared.features.chat.viewmodel.ChatWallViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.leaderboard.ui.LeaderboardScreen
@@ -200,7 +201,7 @@ private fun HomeScreenContent(
     val accountViewModel = koinViewModel<AccountsViewModel>(key = "account-$sessionKey")
     val leaderBoardViewModel = koinViewModel<LeaderBoardViewModel>(key = "leaderboard-$sessionKey")
     val tournamentViewModel = koinViewModel<TournamentViewModel>(key = "tournament-$sessionKey")
-
+    val chatWallViewModel = koinViewModel<ChatWallViewModel>(key = "chatWall-$sessionKey")
     val profileVideos = getProfileVideos(profileViewModel, sessionKey, updateProfileVideosCount)
 
     val alertsPermissionController = rememberAlertsPermissionController(accountViewModel)
@@ -263,6 +264,7 @@ private fun HomeScreenContent(
             is HomeComponent.Child.Chat ->
                 ChatScreen(
                     component = child.component,
+                    chatWallViewModel = chatWallViewModel,
                 )
         }
         LoginIfRequired(

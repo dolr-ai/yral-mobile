@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -54,7 +55,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
@@ -71,6 +72,7 @@ import com.yral.shared.analytics.events.EditProfileSource
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.analytics.events.VideoDeleteCTA
+import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
@@ -104,7 +106,6 @@ import com.yral.shared.libs.designsystem.component.features.DeleteConfirmationSh
 import com.yral.shared.libs.designsystem.component.features.VideoViewsSheet
 import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
-import com.yral.shared.libs.designsystem.component.neonBorder
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastType
 import com.yral.shared.libs.designsystem.component.toast.showError
@@ -123,6 +124,7 @@ import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.koin.compose.koinInject
 import yral_mobile.shared.features.profile.generated.resources.Res
 import yral_mobile.shared.features.profile.generated.resources.become_pro
 import yral_mobile.shared.features.profile.generated.resources.create_ai_video
@@ -149,6 +151,7 @@ import yral_mobile.shared.features.profile.generated.resources.storage_permissio
 import yral_mobile.shared.features.profile.generated.resources.video_will_be_deleted_permanently
 import yral_mobile.shared.features.profile.generated.resources.white_heart
 import yral_mobile.shared.libs.designsystem.generated.resources.account_nav
+import yral_mobile.shared.libs.designsystem.generated.resources.arrow
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.cancel
 import yral_mobile.shared.libs.designsystem.generated.resources.delete
@@ -162,6 +165,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.login
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.my_profile
+import yral_mobile.shared.libs.designsystem.generated.resources.my_profiles
 import yral_mobile.shared.libs.designsystem.generated.resources.oops
 import yral_mobile.shared.libs.designsystem.generated.resources.refresh
 import yral_mobile.shared.libs.designsystem.generated.resources.share_profile
@@ -178,6 +182,7 @@ internal const val PULL_TO_REFRESH_OFFSET_MULTIPLIER = 1.5f
 internal const val MAX_LINES_FOR_POST_DESCRIPTION = 5
 internal const val PADDING_BOTTOM_ACCOUNT_INFO = 20
 internal const val SHEET_GROWTH_PER_ITEM = 0.05f
+internal const val PROFILE_SWITCHER_ROTATION_DEGREES = 90f
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
@@ -187,9 +192,26 @@ fun ProfileMainScreen(
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel,
     profileVideos: LazyPagingItems<FeedDetails>,
+    onCreateInfluencerClick: () -> Unit,
 ) {
+    val sessionManager: SessionManager = koinInject()
+    // Use nullable to avoid showing CTA flash while loading
+    val botCount by
+        sessionManager
+            .observeSessionProperty { it.botCount }
+            .collectAsStateWithLifecycle(initialValue = null)
+    val accountDirectory by
+        sessionManager
+            .observeSessionProperty { it.accountDirectory }
+            .collectAsStateWithLifecycle(initialValue = null)
+    val hasBotAccounts = (botCount ?: 0) > 0
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val showCreateBotCta by
+        sessionManager
+            .shouldShowCreateBotCtaFlow(state.maxBotCountForCta)
+            .collectAsStateWithLifecycle(initialValue = false)
     val storagePermissionController = rememberStoragePermissionController()
+    val isBotAccount = sessionManager.isBotAccount == true
 
     val followers = viewModel.followers.collectAsLazyPagingItems()
     val following = viewModel.following.collectAsLazyPagingItems()
@@ -410,6 +432,7 @@ fun ProfileMainScreen(
                         viewModel.uploadVideoClicked()
                         component.onUploadVideoClick()
                     },
+                    openAccountSheet = { component.openAccountSheet() },
                     openAccount = { component.openAccount() },
                     openEditProfile = {
                         viewModel.onEditProfileOpened(EditProfileSource.PROFILE)
@@ -443,6 +466,25 @@ fun ProfileMainScreen(
                                 null,
                             ) {}
                         }
+                    },
+                    isBotAccount = isBotAccount,
+                    hasBotAccounts = hasBotAccounts,
+                    showCreateBotCta = showCreateBotCta,
+                    onCreateInfluencerClick = onCreateInfluencerClick,
+                    onUsernameClick = { username ->
+                        val principal =
+                            state.botUsernameToCanisterData[username]
+                                ?: state.createdByPrincipal.takeIf { username == state.createdByUsername }
+                                ?: return@MainContent
+                        val canisterData =
+                            CanisterData(
+                                canisterId = getUserInfoServiceCanister(),
+                                userPrincipalId = principal,
+                                profilePic = propicFromPrincipal(principal),
+                                username = username,
+                                isCreatedFromServiceCanister = true,
+                            )
+                        component.openProfile(canisterData)
                     },
                 )
             }
@@ -602,6 +644,7 @@ private fun MainContent(
     following: LazyPagingItems<PagedFollowerItem>?,
     deletingVideoId: String,
     uploadVideo: () -> Unit,
+    openAccountSheet: () -> Unit,
     openAccount: () -> Unit,
     openEditProfile: () -> Unit,
     onBackClicked: () -> Unit,
@@ -613,6 +656,11 @@ private fun MainContent(
     showBackButton: Boolean,
     onDownloadVideo: (FeedDetails) -> Unit,
     onSubscribe: () -> Unit,
+    isBotAccount: Boolean,
+    hasBotAccounts: Boolean,
+    showCreateBotCta: Boolean,
+    onCreateInfluencerClick: () -> Unit,
+    onUsernameClick: (String) -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader(
@@ -620,9 +668,11 @@ private fun MainContent(
             isSubscriptionEnabled = state.isSubscriptionEnabled,
             isProUser = state.isProUser,
             userName = state.accountInfo?.displayName,
+            showAccountChevron = state.isOwnProfile && (isBotAccount || hasBotAccounts),
             showShareProfile = showHeaderShareButton && canShareProfile,
             isWalletEnabled = state.isWalletEnabled,
             onShareProfileClicked = onShareProfileClicked,
+            openAccountSheet = openAccountSheet,
             openAccount = openAccount,
             onBack = onBackClicked,
             showBackButton = showBackButton,
@@ -631,6 +681,7 @@ private fun MainContent(
         state.accountInfo?.let { info ->
             val followersCount = totalCount(followers)
             val followingCount = totalCount(following)
+            val createdByUsername = state.createdByUsername
             AccountInfoView(
                 accountInfo = info,
                 totalFollowers = followersCount,
@@ -652,6 +703,12 @@ private fun MainContent(
                 onFollowingClick = { onFollowersSectionClick(FollowersSheetTab.Following) },
                 onTalkToMeClicked = viewModel::fetchInfluencerDetails,
                 isProUser = state.isProUser,
+                showCreateInfluencerCta = state.isOwnProfile && state.isLoggedIn && showCreateBotCta,
+                onCreateInfluencerClick = onCreateInfluencerClick,
+                botUsernames = state.botUsernames,
+                createdByUsername = createdByUsername,
+                maxVisibleBotUsernames = state.maxVisibleBotUsernames,
+                onUsernameClick = onUsernameClick,
             )
         }
         when (profileVideos.loadState.refresh) {
@@ -723,9 +780,11 @@ private fun ProfileHeader(
     isProUser: Boolean,
     isSubscriptionEnabled: Boolean,
     userName: String?,
+    showAccountChevron: Boolean,
     showShareProfile: Boolean,
     isWalletEnabled: Boolean,
     onShareProfileClicked: () -> Unit,
+    openAccountSheet: () -> Unit,
     openAccount: () -> Unit,
     onBack: () -> Unit,
     showBackButton: Boolean = false,
@@ -751,16 +810,40 @@ private fun ProfileHeader(
                             .clickable { onBack() },
                 )
             }
-            Text(
-                text =
-                    if (isOwnProfile) {
-                        stringResource(DesignRes.string.my_profile)
-                    } else {
-                        userName ?: ""
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier =
+                    Modifier.clickable(enabled = isOwnProfile && showAccountChevron) {
+                        openAccountSheet()
                     },
-                style = LocalAppTopography.current.xlBold,
-                color = YralColors.NeutralTextPrimary,
-            )
+            ) {
+                Text(
+                    text =
+                        if (isOwnProfile) {
+                            if (showAccountChevron) {
+                                stringResource(DesignRes.string.my_profiles)
+                            } else {
+                                stringResource(DesignRes.string.my_profile)
+                            }
+                        } else {
+                            userName ?: ""
+                        },
+                    style = LocalAppTopography.current.xlBold,
+                    color = YralColors.NeutralTextPrimary,
+                )
+                if (isOwnProfile && showAccountChevron) {
+                    Icon(
+                        painter = painterResource(DesignRes.drawable.arrow),
+                        contentDescription = "Profile switcher",
+                        tint = Color.White,
+                        modifier =
+                            Modifier
+                                .padding(start = 6.dp)
+                                .size(20.dp)
+                                .rotate(PROFILE_SWITCHER_ROTATION_DEGREES),
+                    )
+                }
+            }
         }
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -1357,37 +1440,27 @@ fun BecomeProButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    val gradientColors =
-        listOf(
-            YralColors.ProGradientOrange,
-            YralColors.ProGradientPink,
-        )
     Row(
         modifier =
             modifier
-                .neonBorder(
-                    paddingValues = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
-                    cornerRadius = 8.dp,
-                    containerColor = Color.Transparent,
-                    animationDuration = 600L,
-                    neonColor = YralColors.YellowGlowShadow,
-                ).clip(RoundedCornerShape(8.dp))
-                .background(brush = Brush.linearGradient(colors = gradientColors))
+                .clip(RoundedCornerShape(4.dp))
+                .border(width = 1.dp, color = YralColors.Yellow200, shape = RoundedCornerShape(size = 4.dp))
+                .background(color = YralColors.Yellow400, shape = RoundedCornerShape(size = 4.dp))
                 .clickable(onClick = onClick)
-                .padding(horizontal = 10.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = stringResource(Res.string.become_pro),
-            style = LocalAppTopography.current.mdMedium,
-            color = Color.White,
+            style = LocalAppTopography.current.regSemiBold,
+            color = YralColors.Yellow200,
         )
         Image(
             painter = painterResource(DesignRes.drawable.ic_thunder),
             contentDescription = "Pro",
             contentScale = ContentScale.Inside,
-            modifier = Modifier.size(20.dp),
+            modifier = Modifier.size(14.dp),
         )
     }
 }

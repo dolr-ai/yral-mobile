@@ -45,23 +45,33 @@ import com.yral.shared.firebaseAuth.usecase.SignOutUseCase
 import com.yral.shared.firebaseStore.usecase.UpdateDocumentUseCase
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
+import com.yral.shared.preferences.stores.AccountDirectoryStore
+import com.yral.shared.preferences.stores.AccountSessionPreferences
+import com.yral.shared.preferences.stores.BotIdentitiesStore
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.YralFfiException
 import com.yral.shared.rust.service.utils.authenticateWithNetwork
 import com.yral.shared.rust.service.utils.getSessionFromIdentity
 import dev.gitlive.firebase.auth.FirebaseAuth
+import io.ktor.util.decodeBase64Bytes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.jsonObject
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-@Suppress("TooManyFunctions", "LongParameterList")
+@Suppress("TooManyFunctions", "LongParameterList", "LargeClass")
 class DefaultAuthClient(
     private val sessionManager: SessionManager,
     private val analyticsManager: AnalyticsManager,
     private val crashlyticsManager: CrashlyticsManager,
     private val preferences: Preferences,
+    private val accountSessionPreferences: AccountSessionPreferences,
+    private val accountDirectoryStore: AccountDirectoryStore,
+    private val botIdentitiesStore: BotIdentitiesStore,
     private val auth: FirebaseAuth,
     private val authRepository: AuthRepository,
     private val requiredUseCases: RequiredUseCases,
@@ -80,13 +90,45 @@ class DefaultAuthClient(
     }
 
     private suspend fun refreshAuthIfNeeded() {
+        val lastActivePrincipal = accountSessionPreferences.getLastActivePrincipal()
+        val mainPrincipal = accountSessionPreferences.getMainPrincipal()
+        // If last active was a bot (or non-main) and we have it cached, restore it immediately
+        // and skip main token handling.
+        if (lastActivePrincipal != null && lastActivePrincipal != mainPrincipal) {
+            getCachedSession()?.takeIf { it.userPrincipal == lastActivePrincipal }?.let { cached ->
+                setSession(cached)
+                // Refresh tokens to keep bot delegations alive without switching away from bot session
+                refreshTokensSilently()
+                return
+            }
+        }
         preferences.getString(PrefKeys.ID_TOKEN.name)?.let { idToken ->
+            val shouldPersistTokenState =
+                lastActivePrincipal == null || lastActivePrincipal == mainPrincipal
             handleToken(
                 idToken = idToken,
                 accessToken = "",
                 refreshToken = "",
+                persistTokenState = shouldPersistTokenState,
+                persistBotIdentities = false,
             )
         } ?: obtainAnonymousIdentity()
+    }
+
+    private suspend fun refreshTokensSilently() {
+        val refreshToken = preferences.getString(PrefKeys.REFRESH_TOKEN.name) ?: return
+        requiredUseCases.refreshTokenUseCase
+            .invoke(refreshToken)
+            .onSuccess { tokenResponse ->
+                saveTokens(
+                    idToken = tokenResponse.idToken,
+                    refreshToken = tokenResponse.refreshToken,
+                    accessToken = tokenResponse.accessToken,
+                    persistBotIdentities = false,
+                )
+            }.onFailure {
+                Logger.e("DefaultAuthClient") { "Silent token refresh failed: ${it.message}" }
+            }
     }
 
     private suspend fun obtainAnonymousIdentity() {
@@ -112,8 +154,17 @@ class DefaultAuthClient(
         accessToken: String,
         refreshToken: String,
         resetCanister: Boolean = false,
+        persistTokenState: Boolean = true,
+        persistBotIdentities: Boolean = true,
     ) {
-        saveTokens(idToken, refreshToken, accessToken)
+        if (persistTokenState) {
+            saveTokens(
+                idToken = idToken,
+                refreshToken = refreshToken,
+                accessToken = accessToken,
+                persistBotIdentities = persistBotIdentities,
+            )
+        }
         val tokenClaim = oAuthUtilsHelper.parseOAuthToken(idToken)
         if (tokenClaim.isValid(Clock.System.now().epochSeconds)) {
             tokenClaim.delegatedIdentity?.let {
@@ -171,6 +222,7 @@ class DefaultAuthClient(
         idToken: String,
         refreshToken: String,
         accessToken: String,
+        persistBotIdentities: Boolean = true,
     ) {
         preferences.putString(PrefKeys.ID_TOKEN.name, idToken)
         if (refreshToken.isNotEmpty()) {
@@ -179,6 +231,40 @@ class DefaultAuthClient(
         if (accessToken.isNotEmpty()) {
             preferences.putString(PrefKeys.ACCESS_TOKEN.name, accessToken)
         }
+        if (persistBotIdentities) {
+            persistBotIdentitiesFromToken(idToken)
+            updateBotCountFromPrefs()
+        }
+    }
+
+    private suspend fun updateBotCountFromPrefs() {
+        val count = botIdentitiesStore.get().size
+        Logger.d("BotIdentitySource") { "updateBotCountFromPrefs source=local_pref count=$count" }
+        sessionManager.updateBotCount(count)
+    }
+
+    override suspend fun refreshTokensAfterBotDeletion() {
+        val refreshToken = preferences.getString(PrefKeys.REFRESH_TOKEN.name)
+        if (refreshToken.isNullOrBlank()) {
+            Logger.w("BotIdentitySource") {
+                "refreshTokensAfterBotDeletion skipped: refresh token missing"
+            }
+            return
+        }
+        requiredUseCases.refreshTokenUseCase
+            .invoke(refreshToken)
+            .onSuccess { tokenResponse ->
+                saveTokens(
+                    idToken = tokenResponse.idToken,
+                    refreshToken = tokenResponse.refreshToken,
+                    accessToken = tokenResponse.accessToken,
+                    persistBotIdentities = true,
+                )
+            }.onFailure { error ->
+                Logger.e("BotIdentitySource") {
+                    "refreshTokensAfterBotDeletion failed: ${error.message}"
+                }
+            }
     }
 
     override suspend fun logout() {
@@ -555,12 +641,27 @@ class DefaultAuthClient(
     )
 
     private suspend fun getCachedSession(): Session? {
-        val identity = preferences.getBytes(PrefKeys.IDENTITY.name)
+        // Prefer explicitly stored main identity/principal when available
+        val mainIdentity = accountSessionPreferences.getMainIdentity()
+        val mainPrincipal = accountSessionPreferences.getMainPrincipal()
+        val lastActivePrincipal = accountSessionPreferences.getLastActivePrincipal()
+
+        // If last active was a bot (or non-main), try using the generic identity/principal first
+        val preferredIdentity = preferences.getBytes(PrefKeys.IDENTITY.name)
+        val preferredPrincipal = preferences.getString(PrefKeys.USER_PRINCIPAL.name)
+        val usePreferred =
+            lastActivePrincipal != null &&
+                preferredPrincipal == lastActivePrincipal &&
+                preferredIdentity != null
+
+        val identity = if (usePreferred) preferredIdentity else mainIdentity ?: preferredIdentity
         val canisterId = preferences.getString(PrefKeys.CANISTER_ID.name)
-        val userPrincipal = preferences.getString(PrefKeys.USER_PRINCIPAL.name)
+        val userPrincipal = if (usePreferred) preferredPrincipal else mainPrincipal ?: preferredPrincipal
         val profilePic = preferences.getString(PrefKeys.PROFILE_PIC.name)
         val username = preferences.getString(PrefKeys.USERNAME.name)
         val isCreatedFromServiceCanister = preferences.getBoolean(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name)
+        val resolvedIsBotAccount =
+            mainPrincipal?.let { main -> userPrincipal != null && userPrincipal != main } ?: false
         return listOf(identity, canisterId, userPrincipal, profilePic)
             .all { it != null }
             .let { allPresent ->
@@ -571,8 +672,8 @@ class DefaultAuthClient(
                         userPrincipal = userPrincipal!!,
                         profilePic = profilePic!!,
                         username = resolveUsername(username, userPrincipal),
-                        // default false for backward compatibility
                         isCreatedFromServiceCanister = isCreatedFromServiceCanister ?: false,
+                        isBotAccount = resolvedIsBotAccount,
                     )
                 } else {
                     null
@@ -583,6 +684,7 @@ class DefaultAuthClient(
     private suspend fun cacheSession(
         identity: ByteArray,
         canisterWrapper: CanisterData,
+        isBotAccount: Boolean = false,
     ) {
         with(canisterWrapper) {
             preferences.putBytes(PrefKeys.IDENTITY.name, identity)
@@ -596,6 +698,12 @@ class DefaultAuthClient(
                 preferences.remove(PrefKeys.USERNAME.name)
             }
             preferences.putBoolean(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name, isCreatedFromServiceCanister)
+            // Always persist a main identity when the session is not a bot account
+            if (!isBotAccount) {
+                accountSessionPreferences.setMainIdentity(identity)
+                accountSessionPreferences.setMainPrincipal(userPrincipalId)
+                accountSessionPreferences.setLastActivePrincipal(userPrincipalId)
+            }
         }
     }
 
@@ -606,6 +714,11 @@ class DefaultAuthClient(
         preferences.remove(PrefKeys.PROFILE_PIC.name)
         preferences.remove(PrefKeys.USERNAME.name)
         preferences.remove(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name)
+        accountSessionPreferences.setMainIdentity(null)
+        accountSessionPreferences.setMainPrincipal(null)
+        accountSessionPreferences.setLastActivePrincipal(null)
+        botIdentitiesStore.remove()
+        accountDirectoryStore.remove()
     }
 
     override suspend fun phoneAuthLogin(phoneNumber: String): PhoneAuthLoginResponse {
@@ -681,8 +794,60 @@ class DefaultAuthClient(
                 }.getOrThrow()
         } ?: throw YralAuthException("Phone auth verification failed - no state found")
     }
+
+    private suspend fun persistBotIdentitiesFromToken(idToken: String) {
+        val claims = runCatching { oAuthUtilsHelper.parseOAuthToken(idToken) }.getOrNull()
+        val botIdentities = claims?.botDelegatedIdentities?.takeIf { it.isNotEmpty() }
+        if (botIdentities == null) {
+            Logger.d("DefaultAuthClient") {
+                val payloadKeys = extractPayloadKeys(idToken)
+                val payloadJson = extractPayloadJson(idToken)
+                "persistBotIdentitiesFromToken: no bot identities in token. " +
+                    "Payload keys=$payloadKeys payload=$payloadJson"
+            }
+        } else {
+            Logger.d("DefaultAuthClient") {
+                val payloadKeys = extractPayloadKeys(idToken)
+                "persistBotIdentitiesFromToken: found ${botIdentities.size} bot identities. " +
+                    "Payload keys=$payloadKeys"
+            }
+            val result =
+                botIdentitiesStore.mergeFromOAuthTokenRawIdentities(
+                    rawPayloads = botIdentities,
+                    principalFromIdentityBytes = { encoded -> getSessionFromIdentity(encoded).userPrincipalId },
+                    onEntryParseFailure = { _, error ->
+                        Logger.e("DefaultAuthClient") {
+                            "Failed to persist bot identity from token: ${error.message}"
+                        }
+                    },
+                )
+            result?.let { r ->
+                Logger.d("BotIdentitySource") {
+                    "persistBotIdentitiesFromToken source=oauth_token existing=${r.existingCount} " +
+                        "new=${r.addedCount} merged=${r.mergedCount}"
+                }
+            }
+        }
+    }
 }
 
 class SecurityException(
     message: String,
 ) : Exception(message)
+
+private fun extractPayloadKeys(idToken: String): Set<String> {
+    val payloadJson = extractPayloadJson(idToken)
+    return if (payloadJson == null) {
+        emptySet()
+    } else {
+        runCatching<JsonElement> {
+            Json { ignoreUnknownKeys = true }.parseToJsonElement(payloadJson)
+        }.map { element -> element.jsonObject.keys }.getOrDefault(emptySet())
+    }
+}
+
+private fun extractPayloadJson(idToken: String): String? =
+    idToken
+        .split(".")
+        .getOrNull(1)
+        ?.let { runCatching { it.decodeBase64Bytes().decodeToString() }.getOrNull() }

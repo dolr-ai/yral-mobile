@@ -8,6 +8,7 @@ import com.yral.shared.analytics.events.SubscriptionEntryPoint
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
+import com.yral.shared.features.aiinfluencer.nav.CreateInfluencerComponent
 import com.yral.shared.features.auth.nav.countryselector.CountrySelectorComponent
 import com.yral.shared.features.auth.nav.mandatorylogin.MandatoryLoginComponent
 import com.yral.shared.features.auth.nav.otpverification.OtpVerificationComponent
@@ -65,13 +66,16 @@ interface RootComponent {
     fun openTournamentLeaderboard(
         tournamentId: String,
         showResult: Boolean = false,
+        isDaily: Boolean = false,
     )
 
     fun openTournamentResults(
         tournamentId: String,
         showResult: Boolean = false,
+        isDaily: Boolean = false,
     )
 
+    @Suppress("LongParameterList")
     fun openTournamentGame(
         tournamentId: String,
         tournamentTitle: String,
@@ -80,6 +84,8 @@ interface RootComponent {
         endEpochMs: Long,
         totalPrizePool: Int,
         isHotOrNot: Boolean = false,
+        isDailyTournament: Boolean = false,
+        dailyTimeLimitMs: Long = 0,
     )
 
     fun openConversation(
@@ -97,6 +103,8 @@ interface RootComponent {
         entryPoint: SubscriptionEntryPoint,
     )
 
+    fun openCreateInfluencer()
+
     fun onCreateVideo()
 
     fun onExploreFeed()
@@ -108,6 +116,10 @@ interface RootComponent {
     fun createLoginRequestFactory(): RequestLoginFactory
 
     fun clearLoginState()
+
+    fun showAccountSwitcherSlot()
+
+    fun dismissAccountSwitcherSlot()
 
     // Defines all possible child components
     sealed class Child {
@@ -126,6 +138,7 @@ interface RootComponent {
         class TournamentLeaderboard(
             val tournamentId: String,
             val showResult: Boolean,
+            val isDaily: Boolean = false,
         ) : Child()
         class TournamentGame(
             val component: TournamentGameComponent,
@@ -141,6 +154,9 @@ interface RootComponent {
         ) : Child()
         class Subscription(
             val component: SubscriptionsComponent,
+        ) : Child()
+        class CreateInfluencer(
+            val component: CreateInfluencerComponent,
         ) : Child()
         class CountrySelector(
             val component: CountrySelectorComponent,
@@ -165,5 +181,7 @@ interface RootComponent {
         class SubscriptionNudge : SlotChild()
 
         class MandatoryUpdate : SlotChild()
+
+        class AccountSwitcher : SlotChild()
     }
 }

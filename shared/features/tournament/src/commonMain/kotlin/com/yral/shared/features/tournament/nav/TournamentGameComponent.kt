@@ -22,6 +22,7 @@ interface TournamentGameComponent : FeedComponent {
     fun onBack()
 
     companion object {
+        @Suppress("LongParameterList")
         operator fun invoke(
             componentContext: ComponentContext,
             requestLoginFactory: RequestLoginFactory,
@@ -32,6 +33,8 @@ interface TournamentGameComponent : FeedComponent {
             endEpochMs: Long,
             totalPrizePool: Int,
             isHotOrNot: Boolean = false,
+            isDailyTournament: Boolean = false,
+            dailyTimeLimitMs: Long = 0,
             onLeaderboardClick: (tournamentId: String, showResult: Boolean) -> Unit,
             onTimeUp: () -> Unit,
             onBack: () -> Unit,
@@ -48,6 +51,8 @@ interface TournamentGameComponent : FeedComponent {
                         startEpochMs = startEpochMs,
                         endEpochMs = endEpochMs,
                         isHotOrNot = isHotOrNot,
+                        isDailyTournament = isDailyTournament,
+                        dailyTimeLimitMs = dailyTimeLimitMs,
                     ),
                 onLeaderboardClickCallback = onLeaderboardClick,
                 onTimeUpCallback = onTimeUp,
@@ -63,6 +68,8 @@ interface TournamentGameComponent : FeedComponent {
         val startEpochMs: Long,
         val endEpochMs: Long,
         val isHotOrNot: Boolean = false,
+        val isDailyTournament: Boolean = false,
+        val dailyTimeLimitMs: Long = 0,
     )
 }
 

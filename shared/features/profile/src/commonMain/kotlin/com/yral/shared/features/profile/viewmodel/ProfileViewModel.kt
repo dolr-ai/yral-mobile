@@ -13,6 +13,7 @@ import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.featureflag.AppFeatureFlags
+import com.yral.featureflag.ChatFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.WalletFeatureFlags
 import com.yral.shared.analytics.events.CtaType
@@ -58,8 +59,10 @@ import com.yral.shared.reportVideo.domain.ReportRequestParams
 import com.yral.shared.reportVideo.domain.ReportVideoUseCase
 import com.yral.shared.reportVideo.domain.models.ReportSheetState
 import com.yral.shared.reportVideo.domain.models.ReportVideoData
+import com.yral.shared.rust.service.domain.metadata.FollowersMetadataDataSource
 import com.yral.shared.rust.service.domain.models.PagedFollowerItem
 import com.yral.shared.rust.service.domain.models.SubscriptionPlan
+import com.yral.shared.rust.service.domain.models.UserAccountType
 import com.yral.shared.rust.service.domain.pagedDataSource.UserInfoPagingSourceFactory
 import com.yral.shared.rust.service.domain.usecases.FollowUserParams
 import com.yral.shared.rust.service.domain.usecases.FollowUserUseCase
@@ -117,6 +120,7 @@ class ProfileViewModel(
     private val getUserProfileDetailsV7UseCase: GetUserProfileDetailsV7UseCase,
     private val getInfluencerUseCase: GetInfluencerUseCase,
     private val fileDownloader: FileDownloader,
+    private val followersMetadataDataSource: FollowersMetadataDataSource,
 ) : ViewModel() {
     companion object {
         private const val POSTS_PER_PAGE = 20
@@ -130,6 +134,8 @@ class ProfileViewModel(
             ViewState(
                 isWalletEnabled = flagManager.isEnabled(WalletFeatureFlags.Wallet.Enabled),
                 isSubscriptionEnabled = flagManager.isEnabled(AppFeatureFlags.Common.EnableSubscription),
+                maxBotCountForCta = flagManager.get(ChatFeatureFlags.Chat.MaxBotCountForCta),
+                maxVisibleBotUsernames = flagManager.get(ChatFeatureFlags.Chat.MaxVisibleBotUsernames),
             ),
         )
     val state: StateFlow<ViewState> = _state.asStateFlow()
@@ -367,6 +373,7 @@ class ProfileViewModel(
                             ),
                     )
                 }
+                val accountTypeData = resolveAccountTypeData(details.accountType)
                 _state.update { current ->
                     val currentInfo = current.accountInfo
                     val newInfo =
@@ -376,10 +383,16 @@ class ProfileViewModel(
                                     ?: currentInfo.profilePic,
                             bio = bio?.takeUnless { it.isBlank() } ?: currentInfo.bio,
                         )
+                    val isAiInfluencer =
+                        details.isAiInfluencer == true || details.accountType is UserAccountType.BotAccount
                     current.copy(
                         accountInfo = newInfo,
-                        isAiInfluencer = details.isAiInfluencer == true,
+                        isAiInfluencer = isAiInfluencer,
                         isProUser = proPlan != null,
+                        createdByUsername = accountTypeData.createdByUsername,
+                        createdByPrincipal = accountTypeData.createdByPrincipal,
+                        botUsernames = accountTypeData.botsMap.values.toList(),
+                        botUsernameToCanisterData = accountTypeData.botsMap.entries.associate { (p, u) -> u to p },
                     )
                 }
             }.onFailure { error ->
@@ -400,6 +413,7 @@ class ProfileViewModel(
                     targetPrincipal = targetPrincipal,
                 ),
             ).onSuccess { details ->
+                val accountTypeData = resolveAccountTypeData(details.accountType)
                 _state.update { current ->
                     val existingInfo = current.accountInfo
                     val updatedInfo =
@@ -409,17 +423,86 @@ class ProfileViewModel(
                                 details.profilePictureUrl?.takeUnless { it.isBlank() }
                                     ?: existingInfo.profilePic,
                         )
+                    val isAiInfluencer =
+                        details.isAiInfluencer == true || details.accountType is UserAccountType.BotAccount
                     current.copy(
                         accountInfo = updatedInfo,
                         isFollowing = details.callerFollowsUser ?: current.isFollowing,
-                        isAiInfluencer = details.isAiInfluencer == true,
+                        isAiInfluencer = isAiInfluencer,
                         isProUser = (details.subscriptionPlan as? SubscriptionPlan.Pro) != null,
+                        createdByUsername = accountTypeData.createdByUsername,
+                        createdByPrincipal = accountTypeData.createdByPrincipal,
+                        botUsernames = accountTypeData.botsMap.values.toList(),
+                        botUsernameToCanisterData = accountTypeData.botsMap.entries.associate { (p, u) -> u to p },
                     )
                 }
             }.onFailure { error ->
                 Logger.e("refreshOtherProfileDetails") { "Failed to fetch profile details $error" }
             }
         }
+    }
+
+    private data class AccountTypeData(
+        val createdByUsername: String?,
+        val createdByPrincipal: String?,
+        val botsMap: Map<String, String>,
+    )
+
+    // Resolves display data from a UserAccountType in a single pass
+    private suspend fun resolveAccountTypeData(accountType: UserAccountType): AccountTypeData =
+        when (accountType) {
+            is UserAccountType.BotAccount -> {
+                val ownerPrincipal = accountType.owner
+                AccountTypeData(
+                    createdByUsername = resolveCreatedByUsername(accountType.owner),
+                    createdByPrincipal = ownerPrincipal,
+                    botsMap = emptyMap(),
+                )
+            }
+            is UserAccountType.MainAccount ->
+                AccountTypeData(
+                    createdByUsername = null,
+                    createdByPrincipal = null,
+                    botsMap = resolveBotsUsernames(accountType.bots.map { it }),
+                )
+        }
+
+    // Returns a map of principal -> username for all resolved bots
+    private suspend fun resolveBotsUsernames(botPrincipals: List<String>): Map<String, String> {
+        if (botPrincipals.isEmpty()) return emptyMap()
+        val directory = sessionManager.accountDirectory
+        val resolved = mutableMapOf<String, String>()
+        val missing = mutableListOf<String>()
+        for (principal in botPrincipals) {
+            val username =
+                directory
+                    ?.profilesByPrincipal
+                    ?.get(principal)
+                    ?.username
+                    ?.takeUnless { it.isBlank() }
+            if (username != null) resolved[principal] = username else missing.add(principal)
+        }
+        if (missing.isNotEmpty()) {
+            runCatching {
+                followersMetadataDataSource.fetchUsernames(missing)
+            }.getOrNull()?.forEach { (principal, username) ->
+                if (username.isNotBlank()) resolved[principal] = username
+            }
+        }
+        return resolved
+    }
+
+    private suspend fun resolveCreatedByUsername(owner: String): String? {
+        val fromDirectory =
+            sessionManager.accountDirectory
+                ?.profilesByPrincipal
+                ?.get(owner)
+                ?.username
+                ?.takeUnless { it.isBlank() }
+        if (fromDirectory != null) return fromDirectory
+        return runCatching {
+            followersMetadataDataSource.fetchUsernames(listOf(owner))[owner]
+        }.getOrNull()?.takeUnless { it.isBlank() }
     }
 
     fun fetchInfluencerDetails() {
@@ -1037,6 +1120,12 @@ data class ViewState(
     val isTalkToMeInProgress: Boolean = false,
     val isProUser: Boolean = false,
     val isSubscriptionEnabled: Boolean = false,
+    val maxBotCountForCta: Int = 3,
+    val maxVisibleBotUsernames: Int = 2,
+    val createdByUsername: String? = null,
+    val createdByPrincipal: String? = null,
+    val botUsernames: List<String> = emptyList(),
+    val botUsernameToCanisterData: Map<String, String> = emptyMap(),
 )
 
 sealed interface ProfileBottomSheet {

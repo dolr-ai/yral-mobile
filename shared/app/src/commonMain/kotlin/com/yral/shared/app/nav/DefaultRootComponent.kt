@@ -164,11 +164,16 @@ class DefaultRootComponent(
             is Config.Splash -> RootComponent.Child.Splash(componentFactory.createSplash(context))
             is Config.Home -> RootComponent.Child.Home(componentFactory.createHome(context))
             is Config.EditProfile -> RootComponent.Child.EditProfile(componentFactory.createEditProfile(context))
+            is Config.CreateInfluencer ->
+                RootComponent.Child.CreateInfluencer(
+                    componentFactory.createCreateInfluencer(context),
+                )
             is Config.UserProfile -> RootComponent.Child.UserProfile(componentFactory.createProfile(context, config))
             is Config.TournamentLeaderboard ->
                 RootComponent.Child.TournamentLeaderboard(
                     tournamentId = config.tournamentId,
                     showResult = config.showResult,
+                    isDaily = config.isDaily,
                 )
             is Config.TournamentGame ->
                 RootComponent.Child.TournamentGame(
@@ -181,6 +186,8 @@ class DefaultRootComponent(
                         config.endEpochMs,
                         config.totalPrizePool,
                         config.isHotOrNot,
+                        config.isDailyTournament,
+                        config.dailyTimeLimitMs,
                     ),
                 )
             is Config.Conversation ->
@@ -259,6 +266,9 @@ class DefaultRootComponent(
             }
             is SlotConfig.MandatoryUpdate -> {
                 RootComponent.SlotChild.MandatoryUpdate()
+            }
+            is SlotConfig.AccountSwitcher -> {
+                RootComponent.SlotChild.AccountSwitcher()
             }
         }
 
@@ -362,13 +372,15 @@ class DefaultRootComponent(
     override fun openTournamentLeaderboard(
         tournamentId: String,
         showResult: Boolean,
+        isDaily: Boolean,
     ) {
-        navigation.pushToFront(Config.TournamentLeaderboard(tournamentId, showResult))
+        navigation.pushToFront(Config.TournamentLeaderboard(tournamentId, showResult, isDaily))
     }
 
     override fun openTournamentResults(
         tournamentId: String,
         showResult: Boolean,
+        isDaily: Boolean,
     ) {
         navigation.navigate { stack ->
             // Remove TournamentGame from stack and add TournamentLeaderboard
@@ -376,6 +388,7 @@ class DefaultRootComponent(
                 Config.TournamentLeaderboard(
                     tournamentId = tournamentId,
                     showResult = true,
+                    isDaily = isDaily,
                 )
         }
     }
@@ -388,6 +401,8 @@ class DefaultRootComponent(
         endEpochMs: Long,
         totalPrizePool: Int,
         isHotOrNot: Boolean,
+        isDailyTournament: Boolean,
+        dailyTimeLimitMs: Long,
     ) {
         navigation.pushToFront(
             Config.TournamentGame(
@@ -398,6 +413,8 @@ class DefaultRootComponent(
                 endEpochMs,
                 totalPrizePool,
                 isHotOrNot = isHotOrNot,
+                isDailyTournament = isDailyTournament,
+                dailyTimeLimitMs = dailyTimeLimitMs,
             ),
         )
     }
@@ -439,6 +456,10 @@ class DefaultRootComponent(
         entryPoint: SubscriptionEntryPoint,
     ) {
         navigation.pushToFront(Config.Subscription(purchaseTimeMs, entryPoint))
+    }
+
+    override fun openCreateInfluencer() {
+        navigation.pushToFront(Config.CreateInfluencer)
     }
 
     override fun onCreateVideo() {
@@ -593,6 +614,16 @@ class DefaultRootComponent(
 
     private fun dismissSubscriptionNudgeSlotIfActive() {
         if (slot.value.child?.instance is RootComponent.SlotChild.SubscriptionNudge) {
+            slotNavigation.dismiss()
+        }
+    }
+
+    override fun showAccountSwitcherSlot() {
+        slotNavigation.activate(SlotConfig.AccountSwitcher)
+    }
+
+    override fun dismissAccountSwitcherSlot() {
+        if (slot.value.child?.instance is RootComponent.SlotChild.AccountSwitcher) {
             slotNavigation.dismiss()
         }
     }

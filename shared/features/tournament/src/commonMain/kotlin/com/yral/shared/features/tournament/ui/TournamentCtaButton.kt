@@ -1,14 +1,13 @@
 package com.yral.shared.features.tournament.ui
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,15 +32,14 @@ import com.yral.shared.libs.designsystem.theme.linearGradientBrush
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.tournament.generated.resources.Res
-import yral_mobile.shared.features.tournament.generated.resources.check_tick
 import yral_mobile.shared.features.tournament.generated.resources.join_now
 import yral_mobile.shared.features.tournament.generated.resources.join_now_with_tokens
 import yral_mobile.shared.features.tournament.generated.resources.join_with_credit
+import yral_mobile.shared.features.tournament.generated.resources.play_free
 import yral_mobile.shared.features.tournament.generated.resources.register_with_tokens
 import yral_mobile.shared.features.tournament.generated.resources.registered
+import yral_mobile.shared.features.tournament.generated.resources.time_expired
 import yral_mobile.shared.features.tournament.generated.resources.view_leaderboard
-import yral_mobile.shared.features.tournament.generated.resources.yral_coin
-import yral_mobile.shared.libs.designsystem.generated.resources.ic_thunder
 import yral_mobile.shared.libs.designsystem.generated.resources.pink_gradient_background_disabled
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
@@ -52,7 +50,14 @@ internal fun TournamentCtaButton(
     status: TournamentStatus,
     participationState: TournamentParticipationState,
     onClick: () -> Unit,
+    fillFraction: Float = 0f,
+    countdownText: String? = null,
 ) {
+    if (participationState == TournamentParticipationState.JoinNowDisabled && countdownText != null) {
+        FillingGradientButton(modifier = modifier, fillFraction = fillFraction, text = countdownText, onClick = onClick)
+        return
+    }
+
     val shape = RoundedCornerShape(8.dp)
 
     Box(
@@ -71,6 +76,7 @@ internal fun TournamentCtaButton(
                                 is TournamentParticipationState.JoinNow,
                                 is TournamentParticipationState.JoinNowWithTokens,
                                 is TournamentParticipationState.JoinNowWithCredit,
+                                TournamentParticipationState.JoinNowFree,
                                 -> {
                                     Modifier.angledGradientBackground(
                                         degrees = 218f,
@@ -97,80 +103,56 @@ internal fun TournamentCtaButton(
                                         .background(YralColors.Neutral50)
                                         .border(1.dp, YralColors.Neutral700, shape)
                                 }
+
+                                is TournamentParticipationState.TimeExpired -> {
+                                    Modifier.Companion
+                                        .background(YralColors.Neutral50)
+                                        .border(1.dp, YralColors.Neutral700, shape)
+                                }
                             }
                     },
                 ).clickable(onClick = onClick)
                 .padding(horizontal = 20.dp, vertical = 10.dp),
         contentAlignment = Alignment.Companion.Center,
     ) {
-        Row(
-            verticalAlignment = Alignment.Companion.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            if (status != TournamentStatus.Ended && participationState is TournamentParticipationState.Registered) {
-                Image(
-                    modifier = Modifier.Companion.size(20.dp),
-                    painter = painterResource(Res.drawable.check_tick),
-                    contentDescription = null,
-                )
-            }
-
-            val labelStyle =
-                LocalAppTopography.current.baseSemiBold.copy(
-                    color = Color.Companion.Unspecified,
-                )
-
-            val labelBrush =
-                when (status) {
-                    TournamentStatus.Ended -> tournamentPinkGradientBrush(angleDegrees = 198.93394f)
-                    else -> {
-                        when (participationState) {
-                            is TournamentParticipationState.RegistrationRequired -> {
-                                tournamentPinkGradientBrush(angleDegrees = 188.3126f)
-                            }
-
-                            else -> null
-                        }
-                    }
-                }
-
-            Text(
-                text = ctaLabel(status, participationState),
-                style =
-                    if (labelBrush == null) {
-                        val color =
-                            if (participationState is TournamentParticipationState.JoinNowDisabled) {
-                                YralColors.Pink100
-                            } else {
-                                YralColors.NeutralIconsActive
-                            }
-                        labelStyle.copy(color = color)
-                    } else {
-                        labelStyle.copy(brush = labelBrush)
-                    },
-                maxLines = 1,
-                overflow = TextOverflow.Companion.Ellipsis,
+        val labelStyle =
+            LocalAppTopography.current.baseSemiBold.copy(
+                color = Color.Companion.Unspecified,
             )
 
-            if (status != TournamentStatus.Ended) {
-                val iconRes =
+        val labelBrush =
+            when (status) {
+                TournamentStatus.Ended -> tournamentPinkGradientBrush(angleDegrees = 198.93394f)
+                else -> {
                     when (participationState) {
-                        is TournamentParticipationState.JoinNowWithCredit ->
-                            DesignRes.drawable.ic_thunder
                         is TournamentParticipationState.RegistrationRequired,
-                        is TournamentParticipationState.JoinNowWithTokens,
-                        -> Res.drawable.yral_coin
+                        is TournamentParticipationState.TimeExpired,
+                        -> {
+                            tournamentPinkGradientBrush(angleDegrees = 188.3126f)
+                        }
+
                         else -> null
                     }
-                if (iconRes != null) {
-                    Image(
-                        modifier = Modifier.size(width = 15.dp, height = 16.dp),
-                        painter = painterResource(iconRes),
-                        contentDescription = null,
-                    )
                 }
             }
-        }
+
+        Text(
+            text = ctaLabel(status, participationState),
+            style =
+                if (labelBrush == null) {
+                    val color =
+                        if (participationState is TournamentParticipationState.JoinNowDisabled) {
+                            YralColors.Pink100
+                        } else {
+                            YralColors.NeutralIconsActive
+                        }
+                    labelStyle.copy(color = color)
+                } else {
+                    labelStyle.copy(brush = labelBrush)
+                },
+            maxLines = 1,
+            overflow = TextOverflow.Companion.Ellipsis,
+        )
     }
 }
 
@@ -201,6 +183,8 @@ private fun ctaLabel(
                         Res.string.register_with_tokens,
                         participationState.tokensRequired,
                     )
+                TournamentParticipationState.JoinNowFree -> stringResource(Res.string.play_free)
+                is TournamentParticipationState.TimeExpired -> stringResource(Res.string.time_expired)
             }
     }
 
@@ -214,9 +198,56 @@ private fun tournamentPinkGradientBrush(angleDegrees: Float): Brush? =
     )
 
 @Suppress("MagicNumber")
-private fun tournamentPinkGradientStops(): Array<Pair<Float, Color>> =
+internal fun tournamentPinkGradientStops(): Array<Pair<Float, Color>> =
     arrayOf(
         0.0983f to Color(0xFFFF78C1),
         0.4479f to YralColors.Pink300,
         0.7848f to Color(0xFFAD005E),
     )
+
+@Suppress("MagicNumber")
+@Composable
+private fun FillingGradientButton(
+    modifier: Modifier = Modifier,
+    fillFraction: Float,
+    text: String,
+    onClick: () -> Unit,
+) {
+    val buttonShape = RoundedCornerShape(8.dp)
+
+    Box(
+        modifier =
+            modifier
+                .clip(buttonShape)
+                .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        // Layer 1: Dark pink background
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFF71003D), buttonShape),
+        )
+        // Layer 2: Pink gradient fill (progress)
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth(fraction = fillFraction)
+                    .align(Alignment.CenterStart)
+                    .angledGradientBackground(
+                        degrees = 218f,
+                        colorStops = tournamentPinkGradientStops(),
+                        angleConvention = GradientAngleConvention.CssDegrees,
+                        lengthMode = GradientLengthMode.Diagonal,
+                    ),
+        )
+        // Layer 3: Text
+        Text(
+            text = text,
+            style = LocalAppTopography.current.baseSemiBold,
+            color = YralColors.Pink100,
+        )
+    }
+}

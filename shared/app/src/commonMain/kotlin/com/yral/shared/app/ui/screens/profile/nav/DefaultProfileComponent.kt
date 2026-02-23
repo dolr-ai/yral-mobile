@@ -35,11 +35,14 @@ internal class DefaultProfileComponent(
     private val onUploadVideoClicked: () -> Unit,
     private val openEditProfile: () -> Unit,
     private val openProfile: (CanisterData) -> Unit,
+    private val openCreateInfluencer: () -> Unit,
     private val openConversation: (
         influencerId: String,
         influencerCategory: String,
         influencerSource: InfluencerSource,
     ) -> Unit,
+    private val openAccountSheet: () -> Unit,
+    private val switchToMainProfile: (onComplete: (Boolean) -> Unit) -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
     override val promptLogin: (pageName: SignupPageName) -> Unit,
 ) : ProfileComponent(),
@@ -85,6 +88,10 @@ internal class DefaultProfileComponent(
 
     override fun openProfile() {
         navigation.replaceAll(Config.Main)
+    }
+
+    override fun openCreateInfluencer() {
+        openCreateInfluencer.invoke()
     }
 
     override fun openEditProfile() {
@@ -147,9 +154,11 @@ internal class DefaultProfileComponent(
             subscriptionCoordinator = subscriptionCoordinator,
             pendingVideoNavigation = pendingVideoNavigation,
             onUploadVideoClicked = onUploadVideoClicked,
+            openAccountSheet = openAccountSheet,
             openAccount = this::openAccount,
             openEditProfile = this::openEditProfile,
             openProfile = openProfile,
+            openCreateInfluencer = openCreateInfluencer,
             openConversation = openConversation,
             onBackClicked = {},
             showAlertsOnDialog = showAlertsOnDialog,
@@ -160,6 +169,7 @@ internal class DefaultProfileComponent(
         AccountComponent.Companion(
             componentContext = componentContext,
             onBack = this::onBackClicked,
+            switchToMainProfile = switchToMainProfile,
             promptLogin = promptLogin,
             subscriptionCoordinator = subscriptionCoordinator,
         )

@@ -62,6 +62,7 @@ internal class DefaultHomeComponent(
         influencerCategory: String,
         influencerSource: InfluencerSource,
     ) -> Unit,
+    private val openCreateInfluencer: () -> Unit,
     private val openWallet: () -> Unit,
     private val openLeaderboard: () -> Unit,
     private val openTournamentLeaderboard: (
@@ -76,7 +77,11 @@ internal class DefaultHomeComponent(
         endEpochMs: Long,
         totalPrizePool: Int,
         isHotOrNot: Boolean,
+        isDailyTournament: Boolean,
+        dailyTimeLimitMs: Long,
     ) -> Unit,
+    private val openAccountSheet: () -> Unit,
+    private val switchToMainProfile: (onComplete: (Boolean) -> Unit) -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
 ) : HomeComponent(),
     ComponentContext by componentContext {
@@ -112,6 +117,10 @@ internal class DefaultHomeComponent(
 
     override val homeViewModel: HomeViewModel = koinInstance.get<HomeViewModel>()
     override val sessionManager: SessionManager = koinInstance.get<SessionManager>()
+
+    override fun openCreateInfluencer() {
+        openCreateInfluencer.invoke()
+    }
 
     private val slotNavigation = SlotNavigation<SlotConfig>()
 
@@ -306,7 +315,17 @@ internal class DefaultHomeComponent(
             navigateToLeaderboard = { tournamentId ->
                 openTournamentLeaderboard(tournamentId, false)
             },
-            navigateToTournament = { tournamentId, title, initialDiamonds, startEpochMs, endEpochMs, totalPrizePool, isHotOrNot ->
+            navigateToTournament = {
+                tournamentId,
+                title,
+                initialDiamonds,
+                startEpochMs,
+                endEpochMs,
+                totalPrizePool,
+                isHotOrNot,
+                isDailyTournament,
+                dailyTimeLimitMs,
+                ->
                 openTournamentGame(
                     tournamentId,
                     title,
@@ -315,6 +334,8 @@ internal class DefaultHomeComponent(
                     endEpochMs,
                     totalPrizePool,
                     isHotOrNot,
+                    isDailyTournament,
+                    dailyTimeLimitMs,
                 )
             },
             showAlertsOnDialog = showAlertsOnDialog,
@@ -341,7 +362,10 @@ internal class DefaultHomeComponent(
             onUploadVideoClicked = { onUploadVideoTabClick() },
             openEditProfile = openEditProfile,
             openProfile = openProfile,
+            openCreateInfluencer = openCreateInfluencer,
             openConversation = openConversation,
+            openAccountSheet = openAccountSheet,
+            switchToMainProfile = switchToMainProfile,
             snapshot = childSnapshots[Config.Profile] as? ProfileComponent.Snapshot,
             showAlertsOnDialog = showAlertsOnDialog,
             promptLogin = { homeViewModel.showSignupPrompt(true, it) },
@@ -350,6 +374,7 @@ internal class DefaultHomeComponent(
     private fun accountComponent(componentContext: ComponentContext): AccountComponent =
         AccountComponent.Companion(
             componentContext = componentContext,
+            switchToMainProfile = switchToMainProfile,
             promptLogin = { homeViewModel.showSignupPrompt(true, it) },
             subscriptionCoordinator = subscriptionCoordinator,
         )
@@ -368,6 +393,7 @@ internal class DefaultHomeComponent(
             snapshot = childSnapshots[Config.Chat] as? ChatComponent.Snapshot,
             openProfile = openProfile,
             openConversation = openConversation,
+            openCreateInfluencer = openCreateInfluencer,
         )
 
     private fun slotChild(

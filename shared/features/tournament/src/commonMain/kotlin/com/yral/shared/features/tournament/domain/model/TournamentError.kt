@@ -26,6 +26,8 @@ enum class TournamentErrorCodes {
     INVALID_DATE,
     INVALID_STATUS,
     METHOD_NOT_ALLOWED,
+    TIME_EXPIRED,
+    NOT_DAILY,
     INTERNAL,
     UNKNOWN,
     ;

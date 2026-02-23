@@ -17,12 +17,15 @@ class AppRustLogForwardingListener(
         formattedMessage: String,
     ) {
         val severity = logMessage.level.toSeverity()
-        logWriter.log(
-            severity = severity,
-            message = formattedMessage,
-            tag = "Rust",
-            throwable = null,
-        )
+        val isLogMessage = severity == Severity.Debug && logMessage.message == "get_log_messages"
+        if (!isLogMessage) {
+            logWriter.log(
+                severity = severity,
+                message = logMessage.message,
+                tag = "Rust",
+                throwable = null,
+            )
+        }
 
         if (logMessage.level == RustLogLevel.ERROR) {
             crashlyticsManager.recordException(

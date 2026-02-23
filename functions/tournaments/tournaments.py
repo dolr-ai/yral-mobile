@@ -703,19 +703,36 @@ def _compute_settlement_leaderboard(tournament_id: str, limit: int = 10, collect
         collection_name: Either "tournaments" or "hot_or_not_tournaments"
     """
     users_ref = db().collection(f"{collection_name}/{tournament_id}/users")
-    # Fetch extra users to account for filtering out those who never played
-    # Need high multiplier because many non-players have 20 diamonds (initial balance)
-    # which ranks higher than players who lost (< 20 diamonds)
-    snaps = (
-        users_ref.order_by("diamonds", direction=firestore.Query.DESCENDING)
-                 .limit(limit * 50)
-                 .stream()
-    )
 
     # Hot or Not uses "wins"/"losses", smiley uses "tournament_wins"/"tournament_losses"
     is_hot_or_not = collection_name == "hot_or_not_tournaments"
     wins_field = "wins" if is_hot_or_not else "tournament_wins"
     losses_field = "losses" if is_hot_or_not else "tournament_losses"
+
+    # Try optimized query first: only fetch users who have played
+    # (has_played is set on first vote for new tournaments)
+    # Falls back gracefully if composite index doesn't exist yet or no results
+    try:
+        optimized_snaps = list(
+            users_ref.where("has_played", "==", True)
+                     .order_by("diamonds", direction=firestore.Query.DESCENDING)
+                     .limit(limit)
+                     .stream()
+        )
+    except Exception:
+        optimized_snaps = []
+
+    if optimized_snaps:
+        snaps = optimized_snaps
+        needs_filter = False
+    else:
+        # Fallback for old tournaments without has_played flag or missing index
+        snaps = list(
+            users_ref.order_by("diamonds", direction=firestore.Query.DESCENDING)
+                     .limit(limit * 50)
+                     .stream()
+        )
+        needs_filter = True
 
     # Collect all qualifying users first
     candidates = []
@@ -724,8 +741,8 @@ def _compute_settlement_leaderboard(tournament_id: str, limit: int = 10, collect
         wins = int(data.get(wins_field) or 0)
         losses = int(data.get(losses_field) or 0)
 
-        # Skip users who never played
-        if wins == 0 and losses == 0:
+        # Skip users who never played (only needed for fallback path)
+        if needs_filter and wins == 0 and losses == 0:
             continue
 
         diamonds = int(data.get("diamonds") or 0)
@@ -902,6 +919,37 @@ def _settle_tournament_prizes(tournament_id: str, prize_map: Dict[str, int], col
 
 def _today_ist_str() -> str:
     return datetime.now(IST).strftime("%Y-%m-%d")
+
+
+def _end_all_active_daily_sessions(
+    tournament_id: str,
+    collection_name: str,
+    tournament_data: Dict[str, Any],
+) -> int:
+    """End all active daily sessions by finalizing time_spent_ms for users still in a session."""
+    daily_time_limit_ms = tournament_data.get("daily_time_limit_ms", 300000)
+    now_ms = int(time.time() * 1000)
+    users_ref = db().collection(collection_name).document(tournament_id).collection("users")
+    active_users = users_ref.where("session_active", "==", True).stream()
+    count = 0
+    for user_snap in active_users:
+        user_data = user_snap.to_dict() or {}
+        time_spent = int(user_data.get("time_spent_ms") or 0)
+        session_start = user_data.get("last_session_start_ms")
+        if session_start:
+            elapsed = max(0, now_ms - int(session_start))
+            new_time_spent = min(time_spent + elapsed, daily_time_limit_ms)
+        else:
+            new_time_spent = time_spent
+        user_snap.reference.update({
+            "time_spent_ms": new_time_spent,
+            "last_session_start_ms": None,
+            "session_active": False,
+            "updated_at": firestore.SERVER_TIMESTAMP,
+        })
+        count += 1
+    print(f"[_end_all_active_daily_sessions] Ended {count} active sessions for {tournament_id}")
+    return count
 
 
 def _normalize_prize_map(raw: Any) -> Dict[str, int]:
@@ -1223,6 +1271,28 @@ def update_tournament_status(request: Request):
                 "updated_at": firestore.SERVER_TIMESTAMP,
             })
             print(f"[update_tournament_status] {doc_id}: {current_status_raw} -> {target_status.value}")
+
+            # Daily tournament: end all active sessions and mark as settled (no prizes)
+            is_daily = tournament_data.get("is_daily", False)
+            if is_daily:
+                _end_all_active_daily_sessions(doc_id, collection_name, tournament_data)
+                ref.update({
+                    "status": TournamentStatus.SETTLED.value,
+                    "settlement_result": {
+                        "success": True,
+                        "message": "Daily tournament ended - no prizes to distribute",
+                        "is_daily": True,
+                    },
+                    "settled_at": firestore.SERVER_TIMESTAMP,
+                    "updated_at": firestore.SERVER_TIMESTAMP,
+                })
+                print(f"[update_tournament_status] {doc_id}: daily tournament -> {TournamentStatus.SETTLED.value}")
+                return jsonify({
+                    "status": "ok",
+                    "tournament_id": doc_id,
+                    "new_status": TournamentStatus.SETTLED.value,
+                    "settlement": {"message": "Daily tournament settled (no prizes)", "is_daily": True}
+                }), 200
 
             # Get prize map for settlement
             prize_map = _normalize_prize_map(snap.to_dict().get("prizeMap", {}))

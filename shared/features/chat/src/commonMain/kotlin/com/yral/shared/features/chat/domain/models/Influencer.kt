@@ -27,4 +27,5 @@ data class Influencer(
     val status: InfluencerStatus,
     val createdAt: String,
     val conversationCount: Int?,
+    val messageCount: Int?,
 )
