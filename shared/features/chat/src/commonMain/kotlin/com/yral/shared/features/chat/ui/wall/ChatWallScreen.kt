@@ -69,7 +69,6 @@ fun ChatWallScreen(
     viewModel: ChatWallViewModel,
     sessionManager: SessionManager = koinInject(),
     modifier: Modifier = Modifier,
-    onCreateInfluencerClick: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val showCreateBotCta by
@@ -132,7 +131,10 @@ fun ChatWallScreen(
                     CreateInfluencerButton(
                         modifier = Modifier.height(32.dp),
                         alignIconToEnd = false,
-                        onClick = onCreateInfluencerClick,
+                        onClick = {
+                            viewModel.trackCreateInfluencerClicked()
+                            component.openCreateInfluencer()
+                        },
                     )
                 }
             }

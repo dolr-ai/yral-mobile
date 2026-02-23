@@ -1,6 +1,7 @@
 package com.yral.shared.features.profile.nav
 
 import com.arkivanov.decompose.ComponentContext
+import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.auth.ui.RequestLoginFactory
@@ -22,7 +23,7 @@ internal class DefaultProfileMainComponent(
     private val openAccount: () -> Unit,
     private val openEditProfile: () -> Unit,
     private val openProfile: (CanisterData) -> Unit,
-    private val openCreateInfluencer: () -> Unit,
+    private val openCreateInfluencer: (source: BotCreationSource) -> Unit,
     private val openConversation: (
         influencerId: String,
         influencerCategory: String,
@@ -54,7 +55,7 @@ internal class DefaultProfileMainComponent(
     }
 
     override fun openCreateInfluencer() {
-        openCreateInfluencer.invoke()
+        openCreateInfluencer.invoke(BotCreationSource.PROFILE_PAGE)
     }
 
     override fun openConversation(

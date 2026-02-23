@@ -104,6 +104,7 @@ fun CreateAIInfluencerScreen(
     modifier: Modifier = Modifier,
     viewModel: AiInfluencerViewModel = koinViewModel(),
 ) {
+    LaunchedEffect(viewModel) { viewModel.initialize(component.source) }
     val successMessage = stringResource(Res.string.ai_influencer_created_success)
     CreateAIInfluencerScreen(
         modifier = modifier,
@@ -195,7 +196,7 @@ internal fun CreateAIInfluencerScreen(
             }
         }
 
-        when (val step = state.step) {
+        when (state.step) {
             is AiInfluencerStep.DescriptionEntry ->
                 PromptEntryScreen(
                     state = state,

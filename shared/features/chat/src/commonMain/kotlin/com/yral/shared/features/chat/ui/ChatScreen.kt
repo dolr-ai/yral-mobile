@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.slide
@@ -37,7 +36,6 @@ fun ChatScreen(
                         component = instance.component,
                         viewModel = chatWallViewModel,
                         modifier = Modifier.fillMaxSize(),
-                        onCreateInfluencerClick = { component.openCreateInfluencer() },
                     )
                 is ChatComponent.Child.Conversation ->
                     ChatConversationScreen(

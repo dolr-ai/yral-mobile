@@ -3,6 +3,7 @@ package com.yral.shared.features.chat.nav
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
+import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
@@ -18,7 +19,7 @@ abstract class ChatComponent : HomeChildSnapshotProvider {
     abstract val stack: Value<ChildStack<*, Child>>
 
     abstract fun onBackClicked(): Boolean
-    abstract fun openCreateInfluencer()
+    abstract fun openCreateInfluencer(source: BotCreationSource)
 
     sealed class Child {
         class Wall(
@@ -59,7 +60,7 @@ abstract class ChatComponent : HomeChildSnapshotProvider {
                 influencerCategory: String,
                 influencerSource: InfluencerSource,
             ) -> Unit,
-            openCreateInfluencer: () -> Unit,
+            openCreateInfluencer: (source: BotCreationSource) -> Unit,
         ): ChatComponent =
             DefaultChatComponent(
                 componentContext = componentContext,

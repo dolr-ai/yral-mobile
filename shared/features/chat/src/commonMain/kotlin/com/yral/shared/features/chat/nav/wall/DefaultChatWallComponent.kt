@@ -1,6 +1,7 @@
 package com.yral.shared.features.chat.nav.wall
 
 import com.arkivanov.decompose.ComponentContext
+import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.analytics.events.InfluencerSource
 import org.koin.core.component.KoinComponent
 
@@ -11,6 +12,7 @@ internal class DefaultChatWallComponent(
         influencerCategory: String,
         influencerSource: InfluencerSource,
     ) -> Unit,
+    private val openCreateInfluencer: (source: BotCreationSource) -> Unit,
 ) : ChatWallComponent(),
     ComponentContext by componentContext,
     KoinComponent {
@@ -20,5 +22,9 @@ internal class DefaultChatWallComponent(
         influencerSource: InfluencerSource,
     ) {
         openConversation.invoke(influencerId, influencerCategory, influencerSource)
+    }
+
+    override fun openCreateInfluencer() {
+        openCreateInfluencer.invoke(BotCreationSource.CHAT_PAGE)
     }
 }
