@@ -8,6 +8,7 @@ import com.yral.shared.features.tournament.data.TournamentRemoteDataSource
 import com.yral.shared.features.tournament.data.TournamentRepository
 import com.yral.shared.features.tournament.domain.CastHotOrNotVoteUseCase
 import com.yral.shared.features.tournament.domain.CastTournamentVoteUseCase
+import com.yral.shared.features.tournament.domain.EndDailySessionUseCase
 import com.yral.shared.features.tournament.domain.GetMyTournamentsUseCase
 import com.yral.shared.features.tournament.domain.GetTournamentLeaderboardUseCase
 import com.yral.shared.features.tournament.domain.GetTournamentStatusUseCase
@@ -15,6 +16,7 @@ import com.yral.shared.features.tournament.domain.GetTournamentsUseCase
 import com.yral.shared.features.tournament.domain.GetVideoEmojisUseCase
 import com.yral.shared.features.tournament.domain.ITournamentRepository
 import com.yral.shared.features.tournament.domain.RegisterForTournamentUseCase
+import com.yral.shared.features.tournament.domain.StartDailySessionUseCase
 import com.yral.shared.features.tournament.viewmodel.TournamentGameViewModel
 import com.yral.shared.features.tournament.viewmodel.TournamentLeaderboardViewModel
 import com.yral.shared.features.tournament.viewmodel.TournamentViewModel
@@ -52,6 +54,8 @@ val tournamentModule =
         factoryOf(::CastHotOrNotVoteUseCase)
         factoryOf(::GetTournamentLeaderboardUseCase)
         factoryOf(::GetVideoEmojisUseCase)
+        factoryOf(::StartDailySessionUseCase)
+        factoryOf(::EndDailySessionUseCase)
 
         // ViewModels
         viewModelOf(::TournamentViewModel)

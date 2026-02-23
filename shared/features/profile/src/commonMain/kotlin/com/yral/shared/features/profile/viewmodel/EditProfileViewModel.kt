@@ -12,6 +12,8 @@ import com.yral.shared.features.profile.domain.UploadProfileImageUseCase
 import com.yral.shared.features.profile.domain.UploadProfileImageUseCase.UploadProfileImageParams
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
+import com.yral.shared.preferences.stores.AccountDirectoryStore
+import com.yral.shared.preferences.stores.BotIdentitiesStore
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7Params
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCase
 import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsParams
@@ -33,6 +35,8 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 class EditProfileViewModel(
     private val sessionManager: SessionManager,
     private val preferences: Preferences,
+    private val accountDirectoryStore: AccountDirectoryStore,
+    private val botIdentitiesStore: BotIdentitiesStore,
     private val getUserProfileDetailsV7UseCase: GetUserProfileDetailsV7UseCase,
     private val updateProfileDetailsUseCase: UpdateProfileDetailsUseCase,
     private val uploadProfileImageUseCase: UploadProfileImageUseCase,
@@ -40,6 +44,7 @@ class EditProfileViewModel(
     private val crashlyticsManager: CrashlyticsManager,
 ) : ViewModel() {
     private val logger = Logger.withTag("EditProfileViewModel")
+
     companion object {
         private const val MIN_USERNAME_LENGTH = 3
         private const val MAX_USERNAME_LENGTH = 15
@@ -105,6 +110,7 @@ class EditProfileViewModel(
                     if (profileImage != null) {
                         sessionManager.updateProfilePicture(profileImage)
                         preferences.putString(PrefKeys.PROFILE_PIC.name, profileImage)
+                        updateAccountDirectoryCache(avatarUrl = profileImage)
                     }
                 }.onFailure { error ->
                     logger.e { "Failed to fetch profile details: ${error.message}" }
@@ -149,6 +155,7 @@ class EditProfileViewModel(
                     val isImageUpdated = imageUrl != previousImageUrl && imageUrl.isNotEmpty()
                     sessionManager.updateProfilePicture(imageUrl)
                     preferences.putString(PrefKeys.PROFILE_PIC.name, imageUrl)
+                    updateAccountDirectoryCache(avatarUrl = imageUrl)
                     _state.update { current ->
                         current.copy(
                             profileImageUrl = imageUrl,
@@ -393,6 +400,8 @@ class EditProfileViewModel(
                         }.onSuccess {
                             sessionManager.updateUsername(sanitizedUsername)
                             preferences.putString(PrefKeys.USERNAME.name, sanitizedUsername)
+                            updateAccountDirectoryCache(username = sanitizedUsername)
+                            updateBotIdentityUsernameIfNeeded(sanitizedUsername)
                             _state.update { current ->
                                 current.copy(
                                     usernameInput = sanitizedUsername,
@@ -527,6 +536,49 @@ class EditProfileViewModel(
             value.all { it.isLetterOrDigit() }
 
     private fun isValidOrEmpty(value: String): Boolean = value.isEmpty() || isValidUsername(value)
+
+    private suspend fun updateAccountDirectoryCache(
+        username: String? = null,
+        avatarUrl: String? = null,
+    ) {
+        val principal = sessionManager.userPrincipal ?: return
+        val isBot = sessionManager.isBotAccount == true
+        val resolvedUsername =
+            username
+                ?: sessionManager.username
+                ?: principal
+        val resolvedAvatar =
+            avatarUrl
+                ?: sessionManager.profilePic
+                ?: preferences.getString(PrefKeys.PROFILE_PIC.name)
+                ?: ""
+        sessionManager.upsertAccountDirectoryProfile(
+            principal = principal,
+            username = resolvedUsername,
+            avatarUrl = resolvedAvatar,
+            isBot = isBot,
+        )
+        sessionManager.accountDirectory?.let { accountDirectoryStore.put(it) }
+    }
+
+    private suspend fun updateBotIdentityUsernameIfNeeded(username: String) {
+        if (sessionManager.isBotAccount == true) {
+            sessionManager.userPrincipal?.let { principal ->
+                val existing = botIdentitiesStore.get()
+                if (existing.isNotEmpty()) {
+                    val updated =
+                        existing.map { entry ->
+                            if (entry.principal == principal) {
+                                entry.copy(username = username)
+                            } else {
+                                entry
+                            }
+                        }
+                    botIdentitiesStore.put(updated)
+                }
+            }
+        }
+    }
 
     private fun sanitizedSessionUsername(): String = sanitizeInput(sessionManager.username.orEmpty())
 }

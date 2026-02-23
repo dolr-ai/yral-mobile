@@ -14,6 +14,7 @@ import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.utils.getAccountInfo
 import com.yral.shared.features.account.analytics.AccountsTelemetry
+import com.yral.shared.features.account.domain.useCases.SoftDeleteInfluencerOnBotServerUseCase
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.domain.useCases.DeleteAccountUseCase
 import com.yral.shared.features.auth.domain.useCases.DeregisterNotificationTokenUseCase
@@ -22,6 +23,9 @@ import com.yral.shared.firebaseStore.getDownloadUrl
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
+import com.yral.shared.preferences.stores.AccountDirectoryStore
+import com.yral.shared.preferences.stores.AccountSessionPreferences
+import com.yral.shared.preferences.stores.BotIdentitiesStore
 import dev.gitlive.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -30,6 +34,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+data class AccountEnv(
+    val isDebug: Boolean,
+)
 
 @Suppress("LongParameterList")
 class AccountsViewModel internal constructor(
@@ -37,10 +46,14 @@ class AccountsViewModel internal constructor(
     private val authClientFactory: AuthClientFactory,
     private val sessionManager: SessionManager,
     private val deleteAccountUseCase: DeleteAccountUseCase,
+    private val softDeleteInfluencerOnBotServerUseCase: SoftDeleteInfluencerOnBotServerUseCase,
     val accountsTelemetry: AccountsTelemetry,
     private val flagManager: FeatureFlagManager,
     private val firebaseStorage: FirebaseStorage,
     private val preferences: Preferences,
+    private val accountSessionPreferences: AccountSessionPreferences,
+    private val accountDirectoryStore: AccountDirectoryStore,
+    private val botIdentitiesStore: BotIdentitiesStore,
     private val registerNotificationTokenUseCase: RegisterNotificationTokenUseCase,
     private val deregisterNotificationTokenUseCase: DeregisterNotificationTokenUseCase,
 ) : ViewModel() {
@@ -61,6 +74,7 @@ class AccountsViewModel internal constructor(
                     accountLinks = flagManager.get(AccountFeatureFlags.AccountLinks.Links),
                     isWalletEnabled = flagManager.isEnabled(WalletFeatureFlags.Wallet.Enabled),
                     isSubscriptionEnabled = flagManager.isEnabled(AppFeatureFlags.Common.EnableSubscription),
+                    isBotAccount = sessionManager.isBotAccount ?: false,
                 ),
         )
     val state: StateFlow<AccountsState> = _state.asStateFlow()
@@ -89,7 +103,14 @@ class AccountsViewModel internal constructor(
         coroutineScope.launch {
             sessionManager
                 .observeSessionState(transform = { sessionManager.getAccountInfo() })
-                .collect { info: AccountInfo? -> _state.update { it.copy(accountInfo = info) } }
+                .collect { info: AccountInfo? ->
+                    _state.update {
+                        it.copy(
+                            accountInfo = info,
+                            isBotAccount = sessionManager.isBotAccount ?: false,
+                        )
+                    }
+                }
         }
     }
 
@@ -99,19 +120,57 @@ class AccountsViewModel internal constructor(
         }
     }
 
-    fun deleteAccount() {
+    @Suppress("LongMethod")
+    fun deleteAccount(onBotDeleted: () -> Unit = {}) {
         coroutineScope.launch {
+            val activePrincipal = sessionManager.userPrincipal
+            val isBotAccount = sessionManager.isBotAccount == true
+            Logger.d(BOT_DELETE_LOG_TAG) {
+                "deleteAccount invoked principal=$activePrincipal isBot=$isBotAccount"
+            }
+            if (isBotAccount) {
+                _state.update { it.copy(isDeletingAccount = true) }
+                Logger.d(BOT_DELETE_LOG_TAG) { "bot delete: loader shown" }
+                softDeleteInfluencerOnBotServerUseCase(activePrincipal)
+            }
             deleteAccountUseCase
                 .invoke(Unit)
                 .onSuccess {
-                    Logger.d("Delete account $it")
-                    logout()
+                    Logger.d(BOT_DELETE_LOG_TAG) { "deleteAccount usecase success result=$it" }
+                    if (isBotAccount && activePrincipal != null) {
+                        Logger.d(BOT_DELETE_LOG_TAG) { "delete_user_info success principalToDelete=$activePrincipal" }
+                        removeDeletedBotFromLocalCaches(activePrincipal)
+                        Logger.d(BOT_DELETE_LOG_TAG) { "bot delete: local cache cleanup completed" }
+                        withContext(appDispatchers.main) {
+                            onBotDeleted()
+                        }
+                        Logger.d(BOT_DELETE_LOG_TAG) { "bot delete: switchToMain callback dispatched" }
+                        coroutineScope.launch {
+                            authClient.refreshTokensAfterBotDeletion()
+                        }
+                    } else {
+                        Logger.d(BOT_DELETE_LOG_TAG) { "main account delete: triggering logout" }
+                        logout()
+                    }
                 }.onFailure {
+                    _state.update { current -> current.copy(isDeletingAccount = false) }
+                    Logger.e(BOT_DELETE_LOG_TAG, it) {
+                        "deleteAccount failed principal=$activePrincipal isBot=$isBotAccount message=${it.message}"
+                    }
                     Logger.e("Failed to delete account: ${it.message}")
                     setBottomSheetType(
                         type = AccountBottomSheet.ErrorMessage(ErrorType.DELETE_ACCOUNT_FAILED),
                     )
                 }
+        }
+    }
+
+    fun onBotSwitchToMainFinished(success: Boolean) {
+        if (!success) {
+            _state.update { it.copy(isDeletingAccount = false) }
+            setBottomSheetType(
+                type = AccountBottomSheet.ErrorMessage(ErrorType.DELETE_ACCOUNT_FAILED),
+            )
         }
     }
 
@@ -169,6 +228,38 @@ class AccountsViewModel internal constructor(
             )
         }
         return links
+    }
+
+    private suspend fun removeDeletedBotFromLocalCaches(deletedPrincipal: String) {
+        Logger.d(BOT_DELETE_LOG_TAG) { "cache cleanup: start deletedPrincipal=$deletedPrincipal" }
+        val updatedBots =
+            botIdentitiesStore
+                .get()
+                .filterNot { entry -> entry.principal == deletedPrincipal }
+        botIdentitiesStore.put(updatedBots)
+        sessionManager.updateBotCount(updatedBots.size)
+        Logger.d(BOT_DELETE_LOG_TAG) { "cache cleanup: bot identities updated count=${updatedBots.size}" }
+
+        val updatedDirectory =
+            sessionManager.accountDirectory?.let { directory ->
+                directory.copy(
+                    botPrincipals = directory.botPrincipals.filterNot { it == deletedPrincipal },
+                    profilesByPrincipal = directory.profilesByPrincipal - deletedPrincipal,
+                )
+            }
+        sessionManager.updateAccountDirectory(updatedDirectory)
+        accountDirectoryStore.remove()
+        Logger.d(BOT_DELETE_LOG_TAG) { "cache cleanup: account directory updated and cache cleared" }
+
+        val lastActive = accountSessionPreferences.getLastActivePrincipal()
+        val mainPrincipal = accountSessionPreferences.getMainPrincipal()
+        if (lastActive == deletedPrincipal && mainPrincipal != null) {
+            accountSessionPreferences.setLastActivePrincipal(mainPrincipal)
+            Logger.d(BOT_DELETE_LOG_TAG) {
+                "cache cleanup: last active principal moved to mainPrincipal=$mainPrincipal"
+            }
+        }
+        Logger.d(BOT_DELETE_LOG_TAG) { "cache cleanup: complete deletedPrincipal=$deletedPrincipal" }
     }
 
     fun getSocialLinks(): List<AccountHelpLink> {
@@ -230,6 +321,7 @@ class AccountsViewModel internal constructor(
         }.isSuccess
 
     companion object {
+        const val BOT_DELETE_LOG_TAG = "BotDeleteFlow"
         const val LOGOUT_URI = "yral://logout"
         const val DELETE_ACCOUNT_URI = "yral://deleteAccount"
     }
@@ -264,6 +356,8 @@ data class AccountsState(
     val isSubscriptionEnabled: Boolean = false,
     val isLoggedIn: Boolean = false,
     val alertsEnabled: Boolean = false,
+    val isBotAccount: Boolean = false,
+    val isDeletingAccount: Boolean = false,
 )
 
 sealed interface AccountBottomSheet {

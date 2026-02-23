@@ -11,4 +11,10 @@ class CommonApisImpl(
         remoteDataSource
             .getVideoViewsCount(videoId)
             .map { it.toDomain() }
+
+    override suspend fun softDeleteInfluencer(
+        principal: String,
+        idToken: String,
+        environmentPrefix: String,
+    ): Result<Unit> = remoteDataSource.softDeleteInfluencer(principal, idToken, environmentPrefix)
 }

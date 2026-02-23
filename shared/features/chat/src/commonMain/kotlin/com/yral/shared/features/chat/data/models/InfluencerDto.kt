@@ -23,4 +23,6 @@ data class InfluencerDto(
     val createdAt: String,
     @SerialName("conversation_count")
     val conversationCount: Int? = null,
+    @SerialName("message_count")
+    val messageCount: Int? = null,
 )

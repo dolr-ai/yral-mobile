@@ -15,8 +15,8 @@ android {
     namespace = "com.yral.android"
     defaultConfig {
         applicationId = "com.yral.android"
-        versionCode = 66
-        versionName = "2.6.6"
+        versionCode = 69
+        versionName = "2.6.7"
         ndkVersion = "28.0.13004108"
         buildConfigField(
             type = "String",
@@ -188,6 +188,7 @@ dependencies {
     implementation(projects.shared.features.wallet)
     implementation(projects.shared.libs.designsystem)
     implementation(projects.shared.features.reportVideo)
+    implementation(projects.shared.features.aiInfluencer)
     implementation(compose.components.resources)
     implementation(projects.shared.features.leaderboard)
     implementation(projects.shared.features.subscriptions)

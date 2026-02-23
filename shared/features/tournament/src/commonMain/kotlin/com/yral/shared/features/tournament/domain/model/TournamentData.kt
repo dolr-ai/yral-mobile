@@ -17,6 +17,10 @@ data class TournamentData(
     val prizeMap: Map<Int, Int>,
     val participantCount: Int,
     val userStats: UserTournamentStats? = null,
+    val isDaily: Boolean = false,
+    val dailyTimeLimitMs: Long = 0,
+    val initialDiamonds: Int = 0,
+    val remainingTimeMs: Long? = null,
 )
 
 data class UserTournamentStats(

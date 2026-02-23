@@ -4,6 +4,7 @@ import com.yral.shared.koin.koinInstance
 import com.yral.shared.rust.service.domain.performance.traceApiCall
 import com.yral.shared.uniffi.generated.FfiException
 import com.yral.shared.uniffi.generated.ServiceCanistersDetails
+import kotlin.time.Duration.Companion.seconds
 
 fun delegatedIdentityWireToJson(bytes: ByteArray): String =
     com.yral.shared.uniffi.generated
@@ -58,3 +59,61 @@ suspend fun authenticateWithNetwork(data: ByteArray): CanisterData =
 fun yralAuthLoginHint(identity: ByteArray): String =
     com.yral.shared.uniffi.generated
         .yralAuthLoginHint(identity)
+
+data class SignedMessage(
+    val sig: ByteArray?,
+    val publicKey: ByteArray?,
+    val ingressExpirySecs: Long,
+    val ingressExpiryNanos: Int,
+    val delegations: List<SignedDelegationPayload>?,
+    val sender: String,
+)
+
+data class DelegationPayload(
+    val pubkey: ByteArray,
+    val expiration: Long,
+    val targets: List<String>?,
+)
+
+data class SignedDelegationPayload(
+    val delegation: DelegationPayload,
+    val signature: ByteArray,
+)
+
+fun signMessageWithIdentity(
+    identity: ByteArray,
+    message: String,
+): SignedMessage {
+    val result =
+        com.yral.shared.uniffi.generated
+            .signMessageInternal(identity, message)
+    val signatureBytes = result.sig?.map { it.toByte() }?.toByteArray()
+    val publicKeyBytes = result.publicKey?.map { it.toByte() }?.toByteArray()
+    val delegations =
+        result.delegations?.map { del ->
+            SignedDelegationPayload(
+                delegation =
+                    DelegationPayload(
+                        pubkey =
+                            del.delegation.pubkey
+                                .map { it.toByte() }
+                                .toByteArray(),
+                        expiration = del.delegation.expiration.toLong(),
+                        targets = del.delegation.targets,
+                    ),
+                signature = del.signature.map { it.toByte() }.toByteArray(),
+            )
+        }
+    val ingressExpiryDuration = result.ingressExpiry
+    val ingressExpirySeconds = ingressExpiryDuration.inWholeSeconds
+    val ingressExpiryNanos =
+        (ingressExpiryDuration - ingressExpirySeconds.seconds).inWholeNanoseconds.toInt()
+    return SignedMessage(
+        sig = signatureBytes,
+        publicKey = publicKeyBytes,
+        ingressExpirySecs = ingressExpirySeconds,
+        ingressExpiryNanos = ingressExpiryNanos,
+        delegations = delegations,
+        sender = result.sender,
+    )
+}

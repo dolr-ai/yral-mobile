@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -26,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.arkivanov.essenty.lifecycle.Lifecycle
 import com.yral.shared.features.tournament.domain.model.TournamentErrorCodes
 import com.yral.shared.features.tournament.nav.TournamentComponent
 import com.yral.shared.features.tournament.viewmodel.TournamentUiState
@@ -60,6 +62,17 @@ fun TournamentScreen(
     val uiState by viewModel.state.collectAsState()
     val insufficientBalanceMessage = stringResource(Res.string.tournament_insufficient_balance)
     val registrationFailedMessage = stringResource(Res.string.tournament_registration_failed)
+
+    DisposableEffect(component) {
+        val callbacks =
+            object : Lifecycle.Callbacks {
+                override fun onResume() {
+                    viewModel.loadTournaments()
+                }
+            }
+        component.lifecycle.subscribe(callbacks)
+        onDispose { component.lifecycle.unsubscribe(callbacks) }
+    }
 
     LaunchedEffect(key1 = component, viewModel) {
         viewModel.eventsFlow.collectLatest { value ->
@@ -111,22 +124,36 @@ fun TournamentScreen(
                     )
                 }
             } else {
+                // Separate daily tournaments (pinned at top) from regular tournaments
+                val dailyTournaments = uiState.tournaments.filter { it.isDaily }
+                val regularTournaments = uiState.tournaments.filter { !it.isDaily }
+                val sortedTournaments = dailyTournaments + regularTournaments
+
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     items(
-                        items = uiState.tournaments,
+                        items = sortedTournaments,
                         key = { it.id },
                     ) { tournament ->
-                        TournamentCard(
-                            tournament = tournament,
-                            proDetails = uiState.proDetails,
-                            onPrizeBreakdownClick = { viewModel.openPrizeBreakdown(tournament) },
-                            onShareClick = { viewModel.onShareClicked(tournament) },
-                            onTournamentCtaClick = { viewModel.onTournamentCtaClick(tournament) },
-                        )
+                        if (tournament.isDaily) {
+                            DailyTournamentCard(
+                                tournament = tournament,
+                                onShareClick = { viewModel.onShareClicked(tournament) },
+                                onInfoClick = { viewModel.openPrizeBreakdown(tournament) },
+                                onCtaClick = { viewModel.onTournamentCtaClick(tournament) },
+                            )
+                        } else {
+                            TournamentCard(
+                                tournament = tournament,
+                                proDetails = uiState.proDetails,
+                                onPrizeBreakdownClick = { viewModel.openPrizeBreakdown(tournament) },
+                                onShareClick = { viewModel.onShareClicked(tournament) },
+                                onTournamentCtaClick = { viewModel.onTournamentCtaClick(tournament) },
+                            )
+                        }
                     }
                 }
             }
@@ -158,6 +185,15 @@ fun TournamentScreen(
                 viewModel.closePrizeBreakdown()
                 viewModel.onTournamentCtaClick(selected)
             },
+        )
+    }
+
+    val countdownTournament = uiState.countdownTournament
+    if (countdownTournament != null) {
+        TournamentCountdownBottomSheet(
+            tournament = countdownTournament,
+            onDismissRequest = viewModel::dismissCountdown,
+            onCountdownFinished = { viewModel.onCountdownFinished(countdownTournament) },
         )
     }
 }

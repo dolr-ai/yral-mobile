@@ -389,6 +389,22 @@ class TournamentViewModel(
                             isPro,
                         ),
                     )
+                    // If tournament is live, navigate directly after registration
+                    if (tournament.status is TournamentStatus.Live) {
+                        send(
+                            Event.NavigateToTournament(
+                                tournamentId = tournament.id,
+                                title = tournament.title,
+                                initialDiamonds = tournament.userDiamonds,
+                                startEpochMs = tournament.startEpochMs,
+                                endEpochMs = tournament.endEpochMs,
+                                totalPrizePool = tournament.totalPrizePool,
+                                isHotOrNot = tournament.type == TournamentType.HOT_OR_NOT,
+                                isDailyTournament = tournament.isDaily,
+                                dailyTimeLimitMs = tournament.dailyTimeLimitMs,
+                            ),
+                        )
+                    }
                     // Refresh tournaments to update registration state
                     loadTournaments()
                 }.onFailure { error ->
@@ -408,6 +424,31 @@ class TournamentViewModel(
 
     fun closePrizeBreakdown() {
         _state.update { it.copy(prizeBreakdownTournament = null) }
+    }
+
+    fun showCountdown(tournament: Tournament) {
+        _state.update { it.copy(countdownTournament = tournament) }
+    }
+
+    fun dismissCountdown() {
+        _state.update { it.copy(countdownTournament = null) }
+    }
+
+    fun onCountdownFinished(tournament: Tournament) {
+        _state.update { it.copy(countdownTournament = null) }
+        send(
+            Event.NavigateToTournament(
+                tournamentId = tournament.id,
+                title = tournament.title,
+                initialDiamonds = tournament.initialDiamonds,
+                startEpochMs = tournament.startEpochMs,
+                endEpochMs = tournament.endEpochMs,
+                totalPrizePool = tournament.totalPrizePool,
+                isHotOrNot = tournament.type == TournamentType.HOT_OR_NOT,
+                isDailyTournament = tournament.isDaily,
+                dailyTimeLimitMs = tournament.dailyTimeLimitMs,
+            ),
+        )
     }
 
     fun onShareClicked(tournament: Tournament) {
@@ -450,15 +491,8 @@ class TournamentViewModel(
             when (tournament.participationState) {
                 is TournamentParticipationState.JoinNowWithCredit,
                 is TournamentParticipationState.JoinNowWithTokens,
-                ->
-                    registerForTournament(
-                        tournament,
-                    )
-
-                is TournamentParticipationState.RegistrationRequired ->
-                    registerForTournament(
-                        tournament,
-                    )
+                is TournamentParticipationState.RegistrationRequired,
+                -> registerForTournament(tournament)
 
                 is TournamentParticipationState.JoinNow ->
                     send(
@@ -470,9 +504,29 @@ class TournamentViewModel(
                             endEpochMs = tournament.endEpochMs,
                             totalPrizePool = tournament.totalPrizePool,
                             isHotOrNot = tournament.type == TournamentType.HOT_OR_NOT,
+                            isDailyTournament = tournament.isDaily,
+                            dailyTimeLimitMs = tournament.dailyTimeLimitMs,
                         ),
                     )
-                else -> {}
+                is TournamentParticipationState.JoinNowFree ->
+                    send(
+                        Event.NavigateToTournament(
+                            tournamentId = tournament.id,
+                            title = tournament.title,
+                            initialDiamonds = tournament.initialDiamonds,
+                            startEpochMs = tournament.startEpochMs,
+                            endEpochMs = tournament.endEpochMs,
+                            totalPrizePool = 0,
+                            isHotOrNot = tournament.type == TournamentType.HOT_OR_NOT,
+                            isDailyTournament = true,
+                            dailyTimeLimitMs = tournament.dailyTimeLimitMs,
+                        ),
+                    )
+                is TournamentParticipationState.TimeExpired ->
+                    send(Event.NavigateToLeaderboard(tournamentId = tournament.id))
+                is TournamentParticipationState.Registered,
+                TournamentParticipationState.JoinNowDisabled,
+                -> showCountdown(tournament)
             }
         }
     }
@@ -524,6 +578,8 @@ class TournamentViewModel(
             val endEpochMs: Long,
             val totalPrizePool: Int,
             val isHotOrNot: Boolean,
+            val isDailyTournament: Boolean = false,
+            val dailyTimeLimitMs: Long = 0,
         ) : Event()
 
         data class NavigateToLeaderboard(

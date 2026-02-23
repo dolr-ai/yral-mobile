@@ -1,7 +1,6 @@
 package com.yral.shared.crashlytics.core
 
 import io.sentry.kotlin.multiplatform.Sentry
-import io.sentry.kotlin.multiplatform.SentryLevel
 import io.sentry.kotlin.multiplatform.protocol.Breadcrumb
 import io.sentry.kotlin.multiplatform.protocol.User
 
@@ -24,9 +23,6 @@ internal class SentryCrashlyticsProvider : CrashlyticsProvider {
 
     override fun logMessage(message: String) {
         Sentry.addBreadcrumb(Breadcrumb.info(message))
-        Sentry.captureMessage(message) { scope ->
-            scope.level = SentryLevel.INFO
-        }
     }
 
     override fun setUserId(id: String) {

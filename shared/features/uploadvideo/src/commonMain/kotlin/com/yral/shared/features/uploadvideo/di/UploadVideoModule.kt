@@ -16,11 +16,14 @@ import com.yral.shared.features.uploadvideo.domain.UploadAiVideoFromUrlUseCase
 import com.yral.shared.features.uploadvideo.domain.UploadRepository
 import com.yral.shared.features.uploadvideo.domain.UploadVideoUseCase
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel
+import com.yral.shared.features.uploadvideo.presentation.BotVideoGenCoordinator
+import com.yral.shared.features.uploadvideo.presentation.BotVideoGenManager
 import com.yral.shared.features.uploadvideo.presentation.FlowSelectionViewModel
 import com.yral.shared.features.uploadvideo.presentation.UploadVideoViewModel
 import com.yral.shared.features.uploadvideo.presentation.UploadVideoViewModel.RequiredUseCases
 import com.yral.shared.features.uploadvideo.utils.VideoValidator
 import org.koin.core.module.dsl.factoryOf
+import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -49,6 +52,7 @@ val uploadVideoModule =
         factoryOf(::GetFreeCreditsStatusUseCase)
         factoryOf(::AiRequiredUseCases)
         viewModelOf(::AiVideoGenViewModel)
+        singleOf(::BotVideoGenCoordinator) bind BotVideoGenManager::class
 
         // Flow selection
         viewModelOf(::FlowSelectionViewModel)

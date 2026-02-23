@@ -13,10 +13,21 @@ data class GenerateVideoParams(
     val audioUrl: String? = null,
     val durationSeconds: Int? = null,
     val generateAudio: Boolean? = null,
-    val image: String? = null,
+    val image: ImageData? = null,
     val tokenType: TokenType? = null,
     val userId: String? = null,
     val extraParams: Map<String, String>? = null,
+)
+
+sealed interface ImageData {
+    data class Base64(
+        val image: ImageInput,
+    ) : ImageData
+}
+
+data class ImageInput(
+    val data: String,
+    val mimeType: String,
 )
 
 data class GenerateVideoResult(

@@ -3,8 +3,10 @@
 package com.yral.shared.features.tournament.data
 
 import com.github.michaelbull.result.Result
+import com.yral.shared.features.tournament.data.models.DailySessionRequestDto
 import com.yral.shared.features.tournament.data.models.HotOrNotVoteRequestDto
 import com.yral.shared.features.tournament.data.models.VideoEmojisRequestDto
+import com.yral.shared.features.tournament.data.models.toDailySessionResult
 import com.yral.shared.features.tournament.data.models.toRegistrationResult
 import com.yral.shared.features.tournament.data.models.toTournamentDataList
 import com.yral.shared.features.tournament.data.models.toTournamentLeaderboard
@@ -14,6 +16,7 @@ import com.yral.shared.features.tournament.data.models.toVideoEmojisResult
 import com.yral.shared.features.tournament.data.models.toVoteResult
 import com.yral.shared.features.tournament.domain.ITournamentRepository
 import com.yral.shared.features.tournament.domain.model.CastTournamentVoteRequest
+import com.yral.shared.features.tournament.domain.model.DailySessionResult
 import com.yral.shared.features.tournament.domain.model.GetMyTournamentsRequest
 import com.yral.shared.features.tournament.domain.model.GetTournamentLeaderboardRequest
 import com.yral.shared.features.tournament.domain.model.GetTournamentStatusRequest
@@ -98,4 +101,22 @@ class TournamentRepository(
         remoteDataSource
             .getVideoEmojis(VideoEmojisRequestDto(tournamentId, videoId))
             .toVideoEmojisResult()
+
+    override suspend fun startDailySession(
+        idToken: String,
+        tournamentId: String,
+        principalId: String,
+    ): Result<DailySessionResult, TournamentError> =
+        remoteDataSource
+            .startDailySession(idToken, DailySessionRequestDto(tournamentId, principalId))
+            .toDailySessionResult()
+
+    override suspend fun endDailySession(
+        idToken: String,
+        tournamentId: String,
+        principalId: String,
+    ): Result<DailySessionResult, TournamentError> =
+        remoteDataSource
+            .endDailySession(idToken, DailySessionRequestDto(tournamentId, principalId))
+            .toDailySessionResult()
 }
