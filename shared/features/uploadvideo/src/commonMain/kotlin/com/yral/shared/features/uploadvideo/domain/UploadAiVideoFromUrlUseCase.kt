@@ -1,5 +1,6 @@
 package com.yral.shared.features.uploadvideo.domain
 
+import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.uploadvideo.domain.models.UploadAiVideoFromUrlRequest
 import com.yral.shared.libs.arch.domain.SuspendUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
@@ -13,6 +14,8 @@ internal class UploadAiVideoFromUrlUseCase(
         coroutineDispatcher = appDispatchers.network,
         failureListener = failureListener,
     ) {
+    override val exceptionType: String = ExceptionType.AI_VIDEO.name
+
     override suspend fun execute(parameter: Params): String =
         repository.uploadAiVideoFromUrl(
             request =

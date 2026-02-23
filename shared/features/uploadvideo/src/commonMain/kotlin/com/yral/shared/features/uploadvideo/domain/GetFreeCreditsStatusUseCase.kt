@@ -1,6 +1,7 @@
 package com.yral.shared.features.uploadvideo.domain
 
 import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.libs.arch.domain.SuspendUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
@@ -15,6 +16,8 @@ internal class GetFreeCreditsStatusUseCase(
         appDispatchers.network,
         failureListener,
     ) {
+    override val exceptionType: String = ExceptionType.AI_VIDEO.name
+
     override suspend fun execute(parameter: Params): RateLimitStatus =
         repository
             .getVideoGenFreeCreditsStatus(
