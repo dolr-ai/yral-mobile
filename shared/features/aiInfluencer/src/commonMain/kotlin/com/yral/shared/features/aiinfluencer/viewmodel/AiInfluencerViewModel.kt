@@ -452,10 +452,6 @@ class AiInfluencerViewModel(
                         profileDetails = currentStep,
                     ).getOrThrow()
                 }.onSuccess {
-                    telemetry.botCreationSuccess(
-                        botId = progress.botPrincipal.orEmpty(),
-                        entryPoint = entryPoint,
-                    )
                     _state.update { it.copy(isBotCreationLoading = false) }
                     clearBotCreationProgress()
                     onSuccess()
@@ -617,6 +613,10 @@ class AiInfluencerViewModel(
                     principal = botPrincipal,
                     identity = botIdentity,
                     username = usernameForCreateApi.takeIf { usernameUpdated },
+                )
+                telemetry.botCreationSuccess(
+                    botId = botPrincipal,
+                    entryPoint = entryPoint,
                 )
                 setActiveBotSession(
                     botPrincipal = botPrincipal,
