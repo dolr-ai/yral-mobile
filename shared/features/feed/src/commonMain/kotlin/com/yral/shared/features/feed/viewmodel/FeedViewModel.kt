@@ -408,6 +408,24 @@ class FeedViewModel(
                         parameter = GetAIFeedUseCase.Params(userId = userPrincipal, batchSize = currentBatchSize),
                     ).onSuccess { result ->
                         val posts = result.posts
+                        val responseCount = posts.size
+                        if (responseCount < currentBatchSize) {
+                            Logger.d("FeedBatch") {
+                                "AI feed returned $responseCount/$currentBatchSize posts"
+                            }
+                            crashlyticsManager.logMessage(
+                                "AI feed batch deficit: $responseCount/$currentBatchSize",
+                            )
+                        }
+                        if (responseCount < currentBatchSize / 2) {
+                            Logger.w("FeedBatch") {
+                                "AI feed critically low: $responseCount/$currentBatchSize posts"
+                            }
+                            crashlyticsManager.recordException(
+                                YralException("AI feed critically low: $responseCount/$currentBatchSize"),
+                                ExceptionType.FEED,
+                            )
+                        }
                         Logger.d("FeedPagination") { "posts in ai feed ${posts.size}" }
                         if (posts.isEmpty()) {
                             setLoadingMore(false)
@@ -1050,6 +1068,10 @@ class FeedViewModel(
         isExpanded: Boolean,
     ) {
         feedTelemetry.feedToggleClicked(feedType, isExpanded)
+    }
+
+    fun trackLoaderDuration(durationMs: Long) {
+        feedTelemetry.onFeedLoaderShown(durationMs)
     }
 
     fun follow(canisterData: CanisterData) {
