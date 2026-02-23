@@ -19,4 +19,6 @@ enum class ExceptionType {
     FEED,
     DEEPLINK,
     CHAT,
+    UPLOAD_VIDEO,
+    AI_VIDEO,
 }

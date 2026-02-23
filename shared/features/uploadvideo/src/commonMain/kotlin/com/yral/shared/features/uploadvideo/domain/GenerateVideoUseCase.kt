@@ -1,5 +1,6 @@
 package com.yral.shared.features.uploadvideo.domain
 
+import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoResult
 import com.yral.shared.libs.arch.domain.SuspendUseCase
@@ -14,6 +15,8 @@ internal class GenerateVideoUseCase(
         coroutineDispatcher = appDispatchers.network,
         failureListener = failureListener,
     ) {
+    override val exceptionType: String = ExceptionType.AI_VIDEO.name
+
     override suspend fun execute(parameter: Param): GenerateVideoResult = repository.generateVideo(parameter.params)
 
     data class Param(
