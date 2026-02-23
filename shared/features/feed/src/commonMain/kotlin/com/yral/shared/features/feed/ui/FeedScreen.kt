@@ -16,7 +16,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
@@ -66,9 +68,11 @@ import yral_mobile.shared.libs.designsystem.generated.resources.could_not_login_
 import yral_mobile.shared.libs.designsystem.generated.resources.ok
 import yral_mobile.shared.libs.designsystem.generated.resources.shadow_bottom
 import yral_mobile.shared.libs.designsystem.generated.resources.started_following
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 fun FeedScreen(
@@ -130,6 +134,18 @@ fun FeedScreen(
         isNearEnd &&
             (state.isLoadingMore || state.pendingFetchDetails > 0) &&
             state.currentPageOfFeed == state.feedDetails.size - 1
+
+    var loaderStartTime by remember { mutableStateOf(0L) }
+
+    LaunchedEffect(showLoader) {
+        if (showLoader) {
+            loaderStartTime = Clock.System.now().toEpochMilliseconds()
+        } else if (loaderStartTime > 0L) {
+            val duration = Clock.System.now().toEpochMilliseconds() - loaderStartTime
+            viewModel.trackLoaderDuration(duration)
+            loaderStartTime = 0L
+        }
+    }
 
     // Cold-start deeplink overlay: block UI with a centered loader until deeplinked item is fetched
     if (state.isDeeplinkFetching) {
