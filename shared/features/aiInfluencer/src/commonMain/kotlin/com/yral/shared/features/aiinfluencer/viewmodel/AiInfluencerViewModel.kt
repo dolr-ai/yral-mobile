@@ -54,6 +54,7 @@ import io.ktor.http.URLProtocol
 import io.ktor.http.path
 import io.ktor.util.encodeBase64
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -64,6 +65,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalEncodingApi::class)
 @Suppress("LongParameterList", "TooManyFunctions", "LargeClass")
@@ -619,6 +621,8 @@ class AiInfluencerViewModel(
                     botId = botPrincipal,
                     entryPoint = entryPoint,
                 )
+                delay(0.5.seconds)
+                telemetry.flush()
                 setActiveBotSession(
                     botPrincipal = botPrincipal,
                     botIdentity = botIdentity,
