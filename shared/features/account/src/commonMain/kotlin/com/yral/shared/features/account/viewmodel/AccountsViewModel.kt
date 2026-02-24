@@ -20,6 +20,8 @@ import com.yral.shared.features.auth.domain.useCases.DeleteAccountUseCase
 import com.yral.shared.features.auth.domain.useCases.DeregisterNotificationTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.RegisterNotificationTokenUseCase
 import com.yral.shared.firebaseStore.getDownloadUrl
+import com.yral.shared.iap.IAPManager
+import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
@@ -52,6 +54,7 @@ class AccountsViewModel internal constructor(
     private val botIdentitiesStore: BotIdentitiesStore,
     private val registerNotificationTokenUseCase: RegisterNotificationTokenUseCase,
     private val deregisterNotificationTokenUseCase: DeregisterNotificationTokenUseCase,
+    private val iapManager: IAPManager,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
@@ -107,6 +110,15 @@ class AccountsViewModel internal constructor(
                         )
                     }
                 }
+        }
+        coroutineScope.launch {
+            runCatching {
+                iapManager.fetchProducts(listOf(ProductId.YRAL_PRO))
+            }.onSuccess { result ->
+                _state.update {
+                    it.copy(isYralProAvailable = result.getOrNull()?.isNotEmpty() == true)
+                }
+            }.onFailure { _state.update { it.copy(isYralProAvailable = false) } }
         }
     }
 
@@ -358,6 +370,7 @@ data class AccountsState(
     val supportIcon: String? = null,
     val isWalletEnabled: Boolean = false,
     val isSubscriptionEnabled: Boolean = false,
+    val isYralProAvailable: Boolean = false,
     val isLoggedIn: Boolean = false,
     val alertsEnabled: Boolean = false,
     val isBotAccount: Boolean = false,
