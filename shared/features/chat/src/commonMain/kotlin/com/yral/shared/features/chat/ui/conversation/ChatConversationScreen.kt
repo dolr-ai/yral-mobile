@@ -179,11 +179,16 @@ fun ChatConversationScreen(
         (overlayUserCount + historyUserCount) >= viewState.subscriptionMandatoryThreshold
     }
     val shouldShowInfluencerSubscriptionCard by derivedStateOf {
-        viewState.isSocialSignedIn &&
+        val allowedId = viewState.subscriptionAllowedInfluencerId
+        val currentInfluencerId = viewState.influencer?.id ?: component.influencerId
+        val allowedForThisInfluencer = currentInfluencerId == allowedId
+        !hasWaitingAssistant &&
+            viewState.isSocialSignedIn &&
             viewState.isSubscriptionEnabled &&
             !hasChatAccess &&
             atSubscriptionThreshold &&
-            viewState.isInfluencerSubscriptionAvailableToPurchase
+            viewState.isInfluencerSubscriptionAvailableToPurchase &&
+            allowedForThisInfluencer
     }
     val shouldShowSubscriptionNudge by derivedStateOf {
         viewState.isSocialSignedIn &&

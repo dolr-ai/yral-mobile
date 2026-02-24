@@ -106,6 +106,8 @@ class ConversationViewModel(
                 loginPromptMessageThreshold = flagManager.get(ChatFeatureFlags.Chat.LoginPromptMessageThreshold),
                 subscriptionMandatoryThreshold = flagManager.get(ChatFeatureFlags.Chat.SubscriptionMandatoryThreshold),
                 isSubscriptionEnabled = flagManager.isEnabled(AppFeatureFlags.Common.EnableSubscription),
+                subscriptionAllowedInfluencerId =
+                    flagManager.get(ChatFeatureFlags.Chat.SubscriptionAllowedInfluencerId),
             ),
         )
     val viewState: StateFlow<ConversationViewState> = _viewState.asStateFlow()
@@ -197,6 +199,19 @@ class ConversationViewModel(
                     _viewState.update { it.copy(isSocialSignedIn = isSocialSignIn) }
                 }
         }
+    }
+
+    private fun updateInfluencerSubscriptionProductState(influencerId: String) {
+        val allowedId = _viewState.value.subscriptionAllowedInfluencerId
+        val isAllowedInfluencer = allowedId.isNotBlank() && influencerId == allowedId
+        if (isAllowedInfluencer) {
+            fetchInfluencerSubscriptionAndYralProProducts()
+        } else {
+            clearInfluencerSubscriptionAndFetchYralProOnly()
+        }
+    }
+
+    private fun fetchInfluencerSubscriptionAndYralProProducts() {
         viewModelScope.launch {
             runCatching {
                 iapManager.isProductPurchased(ProductId.TARA_SUBSCRIPTION)
@@ -235,6 +250,27 @@ class ConversationViewModel(
                         influencerSubscriptionFormattedPrice = null,
                     )
                 }
+            }
+        }
+    }
+
+    private fun clearInfluencerSubscriptionAndFetchYralProOnly() {
+        _viewState.update {
+            it.copy(
+                isInfluencerSubscriptionPurchasedAndVerified = false,
+                isInfluencerSubscriptionAvailableToPurchase = false,
+                influencerSubscriptionFormattedPrice = null,
+            )
+        }
+        viewModelScope.launch {
+            runCatching {
+                iapManager.fetchProducts(listOf(ProductId.YRAL_PRO))
+            }.onSuccess { result ->
+                val products = result.getOrNull().orEmpty()
+                val yralProAvailable = ProductId.YRAL_PRO.productId in products.map { it.id }.toSet()
+                _viewState.update { it.copy(isYralProAvailableToPurchase = yralProAvailable) }
+            }.onFailure {
+                _viewState.update { it.copy(isYralProAvailableToPurchase = false) }
             }
         }
     }
@@ -368,6 +404,7 @@ class ConversationViewModel(
         }
 
         if (resolvedInfluencer != null) {
+            updateInfluencerSubscriptionProductState(resolvedInfluencer.id)
             refreshShareCopy()
         }
 
@@ -429,6 +466,7 @@ class ConversationViewModel(
                         ),
                 )
             }
+            updateInfluencerSubscriptionProductState(influencerId)
             createConversation(influencerId)
         }
     }
@@ -456,6 +494,7 @@ class ConversationViewModel(
                 isYralProAvailableToPurchase = current.isYralProAvailableToPurchase,
                 isInfluencerSubscriptionPurchaseInProgress = false,
                 influencerSubscriptionFormattedPrice = current.influencerSubscriptionFormattedPrice,
+                subscriptionAllowedInfluencerId = current.subscriptionAllowedInfluencerId,
             )
         }
         _overlay.value = OverlayState()
@@ -807,6 +846,7 @@ data class ConversationViewState(
     val isYralProAvailableToPurchase: Boolean = false,
     val isInfluencerSubscriptionPurchaseInProgress: Boolean = false,
     val influencerSubscriptionFormattedPrice: String? = null,
+    val subscriptionAllowedInfluencerId: String = "",
 )
 
 sealed class ConversationMessageItem {
