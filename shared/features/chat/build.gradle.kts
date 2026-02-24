@@ -32,6 +32,7 @@ kotlin {
 
             implementation(projects.shared.features.auth)
             implementation(projects.shared.features.subscriptions)
+            implementation(projects.shared.libs.iap.main)
 
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.io.core)

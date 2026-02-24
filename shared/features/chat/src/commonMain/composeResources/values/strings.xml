@@ -30,6 +30,13 @@
     <string name="subscription_nudge_chat_title">Subscribe to YRAL Pro to continue chatting with %1$s.</string>
     <string name="subscription_nudge_chat_description">Go Pro to unlock unlimited chat with %1$s plus %2$d YRAL Credits.</string>
 
+    <!-- Influencer subscription card (replaces ChatInputArea when at threshold) -->
+    <string name="influencer_subscription_limited_time_offer">Limited Time Offer</string>
+    <string name="influencer_subscription_plan_title">1 Day Plan</string>
+    <string name="influencer_subscription_plan_description">Unlimited chats for 24 hours</string>
+    <string name="influencer_subscription_cta">Subscribe</string>
+    <string name="influencer_subscription_unlocked_toast">Unlocked! You can now chat with %1$s for 24 hours.</string>
+
     <!-- Error Bottom Sheet -->
     <!-- Error titles -->
     <string name="error_network_title">Having a little trouble loading</string>

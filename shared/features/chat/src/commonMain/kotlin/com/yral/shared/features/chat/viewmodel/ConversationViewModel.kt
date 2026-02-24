@@ -36,7 +36,13 @@ import com.yral.shared.features.chat.domain.models.SendMessageResult
 import com.yral.shared.features.chat.domain.usecases.CreateConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.DeleteConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.SendMessageUseCase
+import com.yral.shared.iap.IAPManager
+import com.yral.shared.iap.PurchaseResult
+import com.yral.shared.iap.core.IAPError
+import com.yral.shared.iap.core.model.ProductId
+import com.yral.shared.iap.utils.PurchaseContext
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
+import com.yral.shared.libs.designsystem.component.toast.ToastStatus
 import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
 import com.yral.shared.libs.routing.routes.api.UserProfileRoute
 import com.yral.shared.libs.sharing.LinkGenerator
@@ -45,6 +51,7 @@ import com.yral.shared.libs.sharing.ShareService
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import com.yral.shared.rust.service.utils.propicFromPrincipal
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -54,10 +61,13 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
+import yral_mobile.shared.features.chat.generated.resources.Res
+import yral_mobile.shared.features.chat.generated.resources.influencer_subscription_unlocked_toast
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.profile_share_default_name
@@ -67,7 +77,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
-@Suppress("LongParameterList", "TooManyFunctions")
+@Suppress("LongParameterList", "TooManyFunctions", "LargeClass")
 class ConversationViewModel(
     flagManager: FeatureFlagManager,
     private val chatRepository: ChatRepository,
@@ -82,6 +92,7 @@ class ConversationViewModel(
     private val sessionManager: SessionManager,
     private val chatTelemetry: ChatTelemetry,
     private val chatErrorMapper: ChatErrorMapper,
+    private val iapManager: IAPManager,
 ) : ViewModel() {
     /**
      * Message ordering:
@@ -98,6 +109,9 @@ class ConversationViewModel(
             ),
         )
     val viewState: StateFlow<ConversationViewState> = _viewState.asStateFlow()
+
+    private val influencerSubscriptionToastChannel = Channel<InfluencerSubscriptionToastEvent>(Channel.CONFLATED)
+    val influencerSubscriptionToastFlow = influencerSubscriptionToastChannel.receiveAsFlow()
 
     private val conversationId: String?
         get() = _viewState.value.conversationId
@@ -182,6 +196,106 @@ class ConversationViewModel(
                     resetState()
                     _viewState.update { it.copy(isSocialSignedIn = isSocialSignIn) }
                 }
+        }
+        viewModelScope.launch {
+            runCatching {
+                iapManager.isProductPurchased(ProductId.TARA_SUBSCRIPTION)
+            }.onSuccess { result ->
+                val isPurchasedAndVerified = result.getOrNull() is PurchaseResult.PurchaseMatches
+                _viewState.update { it.copy(isInfluencerSubscriptionPurchasedAndVerified = isPurchasedAndVerified) }
+            }.onFailure {
+                _viewState.update { it.copy(isInfluencerSubscriptionPurchasedAndVerified = false) }
+            }
+        }
+        viewModelScope.launch {
+            runCatching {
+                iapManager.fetchProducts(listOf(ProductId.TARA_SUBSCRIPTION, ProductId.YRAL_PRO))
+            }.onSuccess { result ->
+                val products = result.getOrNull().orEmpty()
+                val productIds = products.map { it.id }.toSet()
+                val influencerAvailable =
+                    ProductId.TARA_SUBSCRIPTION.productId in productIds
+                val yralProAvailable = ProductId.YRAL_PRO.productId in productIds
+                val influencerOfferPrice =
+                    products
+                        .find { it.id == ProductId.TARA_SUBSCRIPTION.productId }
+                        ?.let { p -> p.offerPrice.ifBlank { p.price } }
+                _viewState.update {
+                    it.copy(
+                        isInfluencerSubscriptionAvailableToPurchase = influencerAvailable,
+                        isYralProAvailableToPurchase = yralProAvailable,
+                        influencerSubscriptionFormattedPrice = influencerOfferPrice,
+                    )
+                }
+            }.onFailure {
+                _viewState.update {
+                    it.copy(
+                        isInfluencerSubscriptionAvailableToPurchase = false,
+                        isYralProAvailableToPurchase = false,
+                        influencerSubscriptionFormattedPrice = null,
+                    )
+                }
+            }
+        }
+    }
+
+    fun launchInfluencerSubscriptionPurchase(purchaseContext: PurchaseContext?) {
+        if (purchaseContext == null) {
+            influencerSubscriptionToastChannel.trySend(
+                InfluencerSubscriptionToastEvent(ToastStatus.Error, "Purchase unavailable"),
+            )
+            return
+        }
+        _viewState.update { it.copy(isInfluencerSubscriptionPurchaseInProgress = true) }
+        viewModelScope.launch {
+            runCatching {
+                iapManager.purchaseProduct(
+                    productId = ProductId.TARA_SUBSCRIPTION,
+                    context = purchaseContext,
+                    acknowledgePurchase = false,
+                )
+            }.onSuccess {
+                runCatching {
+                    iapManager.isProductPurchased(ProductId.TARA_SUBSCRIPTION)
+                }.onSuccess { result ->
+                    val isPurchased = result.getOrNull() is PurchaseResult.PurchaseMatches
+                    _viewState.update {
+                        it.copy(
+                            isInfluencerSubscriptionPurchasedAndVerified = isPurchased,
+                            isInfluencerSubscriptionPurchaseInProgress = false,
+                        )
+                    }
+                    if (isPurchased) {
+                        val displayName =
+                            _viewState.value.influencer
+                                ?.displayName
+                                ?.takeIf { it.isNotBlank() }
+                                ?: _viewState.value.influencer?.name
+                                ?: getString(DesignRes.string.profile_share_default_name)
+                        val message = getString(Res.string.influencer_subscription_unlocked_toast, displayName)
+                        influencerSubscriptionToastChannel.trySend(
+                            InfluencerSubscriptionToastEvent(ToastStatus.Success, message),
+                        )
+                    }
+                }.onFailure {
+                    _viewState.update { it.copy(isInfluencerSubscriptionPurchaseInProgress = false) }
+                }
+            }.onFailure { error ->
+                _viewState.update { it.copy(isInfluencerSubscriptionPurchaseInProgress = false) }
+                when (error) {
+                    is IAPError.PurchaseCancelled -> return@launch
+                    else -> {
+                        val message =
+                            when (error) {
+                                is IAPError.PurchasePending -> "Purchase pending approval"
+                                else -> "Purchase failed. Please try again."
+                            }
+                        influencerSubscriptionToastChannel.trySend(
+                            InfluencerSubscriptionToastEvent(ToastStatus.Error, message),
+                        )
+                    }
+                }
+            }
         }
     }
 
@@ -337,6 +451,11 @@ class ConversationViewModel(
                 loginPromptMessageThreshold = current.loginPromptMessageThreshold,
                 subscriptionMandatoryThreshold = current.subscriptionMandatoryThreshold,
                 isSubscriptionEnabled = current.isSubscriptionEnabled,
+                isInfluencerSubscriptionPurchasedAndVerified = current.isInfluencerSubscriptionPurchasedAndVerified,
+                isInfluencerSubscriptionAvailableToPurchase = current.isInfluencerSubscriptionAvailableToPurchase,
+                isYralProAvailableToPurchase = current.isYralProAvailableToPurchase,
+                isInfluencerSubscriptionPurchaseInProgress = false,
+                influencerSubscriptionFormattedPrice = current.influencerSubscriptionFormattedPrice,
             )
         }
         _overlay.value = OverlayState()
@@ -663,6 +782,11 @@ class ConversationViewModel(
     }
 }
 
+data class InfluencerSubscriptionToastEvent(
+    val status: ToastStatus,
+    val message: String,
+)
+
 data class ConversationViewState(
     val isCreating: Boolean = false,
     val isDeleting: Boolean = false,
@@ -678,6 +802,11 @@ data class ConversationViewState(
     val loginPromptMessageThreshold: Int,
     val subscriptionMandatoryThreshold: Int,
     val isSubscriptionEnabled: Boolean,
+    val isInfluencerSubscriptionPurchasedAndVerified: Boolean = false,
+    val isInfluencerSubscriptionAvailableToPurchase: Boolean = false,
+    val isYralProAvailableToPurchase: Boolean = false,
+    val isInfluencerSubscriptionPurchaseInProgress: Boolean = false,
+    val influencerSubscriptionFormattedPrice: String? = null,
 )
 
 sealed class ConversationMessageItem {
