@@ -113,6 +113,7 @@ class AccountsViewModel internal constructor(
                 }
         }
         coroutineScope.launch {
+            if (!_state.value.isSubscriptionEnabled) return@launch
             runSuspendCatching {
                 iapManager.fetchProducts(listOf(ProductId.YRAL_PRO))
             }.onSuccess { result ->

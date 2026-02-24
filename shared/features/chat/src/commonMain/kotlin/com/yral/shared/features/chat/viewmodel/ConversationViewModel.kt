@@ -206,6 +206,7 @@ class ConversationViewModel(
     }
 
     private fun updateInfluencerSubscriptionProductState(influencerId: String) {
+        if (!_viewState.value.isSubscriptionEnabled) return
         val allowedId = _viewState.value.subscriptionAllowedInfluencerId
         val isAllowedInfluencer = allowedId.isNotBlank() && influencerId == allowedId
         if (isAllowedInfluencer) {
@@ -291,6 +292,7 @@ class ConversationViewModel(
             }
             return
         }
+        if (!_viewState.value.isSubscriptionEnabled) return
         _viewState.update { it.copy(isInfluencerSubscriptionPurchaseInProgress = true) }
         viewModelScope.launch {
             runCatching {
