@@ -19,10 +19,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
@@ -59,7 +57,6 @@ import com.yral.shared.libs.designsystem.component.toast.showError
 import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
-import kotlinx.coroutines.flow.map
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -157,26 +154,21 @@ fun ChatConversationScreen(
     )
 
     // Check if there's a waiting assistant message in overlay
-    val hasWaitingAssistant by derivedStateOf {
-        overlayItems.any { it.isWaitingAssistant() }
-    }
+    val hasWaitingAssistant by derivedStateOf { overlayItems.any { it.isWaitingAssistant() } }
 
-    val overlayUserCount by derivedStateOf { overlayItems.count { item -> item.isUser() } }
-    val historyUserCount by produceState(initialValue = 0, historyPagingItems) {
-        snapshotFlow { historyPagingItems.itemSnapshotList.items }
-            .map { items -> items.count { item -> item.isUser() } }
-            .collect { value = it }
-    }
+    val overlaySentCount by derivedStateOf { overlayItems.count { it is ConversationMessageItem.Remote } }
+    val totalMessageCount by derivedStateOf { viewState.totalHistoryMessageCount + overlaySentCount }
 
     val proDetails by component.subscriptionCoordinator.proDetails.collectAsStateWithLifecycle(ProDetails())
     val shouldPromptForLogin by derivedStateOf {
-        !viewState.isSocialSignedIn && (overlayUserCount + historyUserCount) >= viewState.loginPromptMessageThreshold
+        !viewState.isSocialSignedIn &&
+            totalMessageCount >= viewState.loginPromptMessageThreshold
     }
     val hasChatAccess by derivedStateOf {
         proDetails.isProPurchased || viewState.isInfluencerSubscriptionPurchasedAndVerified
     }
     val atSubscriptionThreshold by derivedStateOf {
-        (overlayUserCount + historyUserCount) >= viewState.subscriptionMandatoryThreshold
+        totalMessageCount >= viewState.subscriptionMandatoryThreshold
     }
     val shouldShowInfluencerSubscriptionCard by derivedStateOf {
         val allowedId = viewState.subscriptionAllowedInfluencerId

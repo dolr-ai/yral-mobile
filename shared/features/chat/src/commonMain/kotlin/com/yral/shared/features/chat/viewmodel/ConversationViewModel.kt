@@ -400,6 +400,7 @@ class ConversationViewModel(
                 conversationId = id,
                 influencer = resolvedInfluencer,
                 paginatedHistoryAvailable = paginatedHistoryAvailable,
+                totalHistoryMessageCount = messageCount,
             )
         }
 
@@ -495,6 +496,7 @@ class ConversationViewModel(
                 isInfluencerSubscriptionPurchaseInProgress = false,
                 influencerSubscriptionFormattedPrice = current.influencerSubscriptionFormattedPrice,
                 subscriptionAllowedInfluencerId = current.subscriptionAllowedInfluencerId,
+                totalHistoryMessageCount = 0,
             )
         }
         _overlay.value = OverlayState()
@@ -847,6 +849,7 @@ data class ConversationViewState(
     val isInfluencerSubscriptionPurchaseInProgress: Boolean = false,
     val influencerSubscriptionFormattedPrice: String? = null,
     val subscriptionAllowedInfluencerId: String = "",
+    val totalHistoryMessageCount: Int = 0,
 )
 
 sealed class ConversationMessageItem {
