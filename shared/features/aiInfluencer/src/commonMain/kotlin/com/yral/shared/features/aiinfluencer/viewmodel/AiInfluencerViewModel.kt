@@ -38,6 +38,7 @@ import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsParams
 import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsUseCase
 import com.yral.shared.rust.service.services.HelperService
 import com.yral.shared.rust.service.services.MetadataUpdateError
+import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.SignedMessage
 import com.yral.shared.rust.service.utils.authenticateWithNetwork
 import com.yral.shared.rust.service.utils.delegatedIdentityWireToJson
@@ -452,10 +453,6 @@ class AiInfluencerViewModel(
                         profileDetails = currentStep,
                     ).getOrThrow()
                 }.onSuccess {
-                    telemetry.botCreationSuccess(
-                        botId = progress.botPrincipal.orEmpty(),
-                        entryPoint = entryPoint,
-                    )
                     _state.update { it.copy(isBotCreationLoading = false) }
                     clearBotCreationProgress()
                     onSuccess()
@@ -618,6 +615,10 @@ class AiInfluencerViewModel(
                     identity = botIdentity,
                     username = usernameForCreateApi.takeIf { usernameUpdated },
                 )
+                telemetry.botCreationSuccess(
+                    botId = botPrincipal,
+                    entryPoint = entryPoint,
+                )
                 setActiveBotSession(
                     botPrincipal = botPrincipal,
                     botIdentity = botIdentity,
@@ -760,7 +761,7 @@ class AiInfluencerViewModel(
     private suspend fun setActiveBotSession(
         botPrincipal: String,
         botIdentity: ByteArray,
-        canisterData: com.yral.shared.rust.service.utils.CanisterData,
+        canisterData: CanisterData,
         profileDetails: AiInfluencerStep.ProfileDetails,
         profilePicUrl: String,
         displayUsername: String?,
