@@ -10,6 +10,7 @@
     <!-- Chat Header -->
     <string name="back">Back</string>
     <string name="view_profile">View Profile</string>
+    <string name="access_expires_in">Access Expires in %1$s</string>
     <string name="share_profile">Share Profile</string>
     <string name="clear_chat">Clear Chat</string>
 

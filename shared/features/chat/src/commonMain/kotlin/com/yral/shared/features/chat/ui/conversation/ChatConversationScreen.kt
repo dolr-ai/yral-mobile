@@ -19,6 +19,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -57,6 +58,7 @@ import com.yral.shared.libs.designsystem.component.toast.showError
 import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -64,6 +66,18 @@ import yral_mobile.shared.features.chat.generated.resources.Res
 import yral_mobile.shared.features.chat.generated.resources.chat_background_inverted
 import yral_mobile.shared.features.chat.generated.resources.subscription_nudge_chat_description
 import yral_mobile.shared.features.chat.generated.resources.subscription_nudge_chat_title
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
+
+private const val INFLUENCER_SUBSCRIPTION_ACCESS_DURATION_MS = 24L * 60 * 60 * 1000
+private const val EXPIRING_SOON_THRESHOLD_MS = 10L * 60 * 1000 // 10 minutes
+
+private data class AccessExpiryDisplay(
+    val text: String?,
+    val isExpiringSoon: Boolean,
+)
 
 /**
  * Chat screen for testing conversation functionality.
@@ -284,6 +298,26 @@ fun ChatConversationScreen(
                 ),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
+            val purchaseTimeMs = viewState.influencerSubscriptionPurchaseTimeMs
+            val showAccessExpiry =
+                viewState.isInfluencerSubscriptionPurchasedAndVerified && purchaseTimeMs != null
+            val accessExpiryDisplay by produceState(
+                initialValue = AccessExpiryDisplay(null, false),
+                purchaseTimeMs,
+                showAccessExpiry,
+            ) {
+                if (!showAccessExpiry) {
+                    value = AccessExpiryDisplay(null, false)
+                    return@produceState
+                }
+                while (true) {
+                    val remaining = remainingAccessMs(purchaseTimeMs)
+                    val text = if (remaining <= 0L) null else formatMillisToHHmmSS(remaining)
+                    val isExpiringSoon = remaining in 1..EXPIRING_SOON_THRESHOLD_MS
+                    value = AccessExpiryDisplay(text, isExpiringSoon)
+                    delay(1.seconds)
+                }
+            }
             // Header
             ChatHeader(
                 influencer = viewState.influencer,
@@ -302,6 +336,8 @@ fun ChatConversationScreen(
                 },
                 onClearChat = { viewModel.deleteAndRecreateConversation(component.influencerId) },
                 onShareProfile = { viewModel.shareProfile() },
+                accessExpiresInText = accessExpiryDisplay.text,
+                isAccessExpiringSoon = accessExpiryDisplay.isExpiringSoon,
             )
 
             Column(
@@ -422,4 +458,22 @@ fun ChatConversationScreen(
             )
         }
     }
+}
+
+@Suppress("MagicNumber")
+internal fun formatMillisToHHmmSS(millis: Long): String {
+    val duration = millis.milliseconds
+    val hours = duration.inWholeHours
+    val minutes = duration.inWholeMinutes % 60
+    val seconds = duration.inWholeSeconds % 60
+
+    fun Long.twoDigits(): String = this.toString().padStart(2, '0')
+
+    return "${hours.twoDigits()}:${minutes.twoDigits()}:${seconds.twoDigits()}"
+}
+
+@OptIn(ExperimentalTime::class)
+private fun remainingAccessMs(purchaseTimeMs: Long): Long {
+    val nowMs = Clock.System.now().toEpochMilliseconds()
+    return (purchaseTimeMs + INFLUENCER_SUBSCRIPTION_ACCESS_DURATION_MS) - nowMs
 }

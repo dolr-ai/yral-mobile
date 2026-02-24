@@ -221,10 +221,22 @@ class ConversationViewModel(
             runSuspendCatching {
                 iapManager.isProductPurchased(ProductId.TARA_SUBSCRIPTION)
             }.onSuccess { result ->
-                val isPurchasedAndVerified = result.getOrNull() is PurchaseResult.PurchaseMatches
-                _viewState.update { it.copy(isInfluencerSubscriptionPurchasedAndVerified = isPurchasedAndVerified) }
+                val purchaseResult = result.getOrNull()
+                val isPurchasedAndVerified = purchaseResult is PurchaseResult.PurchaseMatches
+                val purchaseTimeMs = (purchaseResult as? PurchaseResult.PurchaseMatches)?.purchaseTime
+                _viewState.update {
+                    it.copy(
+                        isInfluencerSubscriptionPurchasedAndVerified = isPurchasedAndVerified,
+                        influencerSubscriptionPurchaseTimeMs = if (isPurchasedAndVerified) purchaseTimeMs else null,
+                    )
+                }
             }.onFailure {
-                _viewState.update { it.copy(isInfluencerSubscriptionPurchasedAndVerified = false) }
+                _viewState.update {
+                    it.copy(
+                        isInfluencerSubscriptionPurchasedAndVerified = false,
+                        influencerSubscriptionPurchaseTimeMs = null,
+                    )
+                }
             }
         }
         viewModelScope.launch {
@@ -265,6 +277,7 @@ class ConversationViewModel(
                 isInfluencerSubscriptionPurchasedAndVerified = false,
                 isInfluencerSubscriptionAvailableToPurchase = false,
                 influencerSubscriptionFormattedPrice = null,
+                influencerSubscriptionPurchaseTimeMs = null,
             )
         }
         viewModelScope.launch {
@@ -305,8 +318,12 @@ class ConversationViewModel(
                 runCatching {
                     iapManager.isProductPurchased(ProductId.TARA_SUBSCRIPTION)
                 }.onSuccess { result ->
+                    val purchase = result.getOrNull()
+                    val isPurchased = purchase is PurchaseResult.PurchaseMatches
+                    val purchaseTime = (purchase as? PurchaseResult.PurchaseMatches)?.purchaseTime
                     handleInfluencerSubscriptionVerificationResult(
-                        isPurchased = result.getOrNull() is PurchaseResult.PurchaseMatches,
+                        isPurchased = isPurchased,
+                        purchaseTimeMs = purchaseTime,
                     )
                 }.onFailure {
                     _viewState.update { it.copy(isInfluencerSubscriptionPurchaseInProgress = false) }
@@ -332,11 +349,15 @@ class ConversationViewModel(
         }
     }
 
-    private suspend fun handleInfluencerSubscriptionVerificationResult(isPurchased: Boolean) {
+    private suspend fun handleInfluencerSubscriptionVerificationResult(
+        isPurchased: Boolean,
+        purchaseTimeMs: Long?,
+    ) {
         _viewState.update {
             it.copy(
                 isInfluencerSubscriptionPurchasedAndVerified = isPurchased,
                 isInfluencerSubscriptionPurchaseInProgress = false,
+                influencerSubscriptionPurchaseTimeMs = if (isPurchased) purchaseTimeMs else null,
             )
         }
         if (isPurchased) {
@@ -875,6 +896,7 @@ data class ConversationViewState(
     val influencerSubscriptionFormattedPrice: String? = null,
     val subscriptionAllowedInfluencerId: String = "",
     val totalHistoryMessageCount: Int = 0,
+    val influencerSubscriptionPurchaseTimeMs: Long? = null,
 )
 
 sealed class ConversationMessageItem {
