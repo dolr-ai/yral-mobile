@@ -24,22 +24,21 @@ import io.ktor.client.plugins.ServerResponseException
 import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.plugins.onUpload
 import io.ktor.client.plugins.timeout
+import io.ktor.client.request.forms.formData
+import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
+import io.ktor.http.Headers
+import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
-import io.ktor.http.defaultForFilePath
 import io.ktor.http.isSuccess
 import io.ktor.http.path
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.io.buffered
-import kotlinx.io.files.Path
-import kotlinx.io.files.SystemFileSystem
-import kotlinx.io.readByteArray
 import kotlinx.serialization.json.Json
 
 internal class UploadVideoRemoteDataSource(
@@ -84,16 +83,25 @@ internal class UploadVideoRemoteDataSource(
         progressListener: ProgressListener?,
     ): HttpResponse {
         try {
-            val path = Path(filePath)
-            val bytes =
-                SystemFileSystem.source(path).buffered().use { source ->
-                    source.readByteArray()
-                }
+            val bytes = readFileBytes(filePath)
+            val fileName = filePath.substringAfterLast('/')
             val response =
-                client.post(uploadUrl) {
+                client.submitFormWithBinaryData(
+                    url = uploadUrl,
+                    formData =
+                        formData {
+                            append(
+                                key = "file",
+                                value = bytes,
+                                headers =
+                                    Headers.build {
+                                        append(HttpHeaders.ContentType, ContentType.Video.MP4.toString())
+                                        append(HttpHeaders.ContentDisposition, "filename=\"$fileName\"")
+                                    },
+                            )
+                        },
+                ) {
                     expectSuccess = false
-                    contentType(ContentType.defaultForFilePath(filePath))
-                    setBody(bytes)
                     timeout {
                         connectTimeoutMillis = UPLOAD_FILE_TIME_OUT
                         requestTimeoutMillis = UPLOAD_FILE_TIME_OUT
