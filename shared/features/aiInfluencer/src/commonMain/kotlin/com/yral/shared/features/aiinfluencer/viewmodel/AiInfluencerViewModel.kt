@@ -38,6 +38,7 @@ import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsParams
 import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsUseCase
 import com.yral.shared.rust.service.services.HelperService
 import com.yral.shared.rust.service.services.MetadataUpdateError
+import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.SignedMessage
 import com.yral.shared.rust.service.utils.authenticateWithNetwork
 import com.yral.shared.rust.service.utils.delegatedIdentityWireToJson
@@ -760,7 +761,7 @@ class AiInfluencerViewModel(
     private suspend fun setActiveBotSession(
         botPrincipal: String,
         botIdentity: ByteArray,
-        canisterData: com.yral.shared.rust.service.utils.CanisterData,
+        canisterData: CanisterData,
         profileDetails: AiInfluencerStep.ProfileDetails,
         profilePicUrl: String,
         displayUsername: String?,

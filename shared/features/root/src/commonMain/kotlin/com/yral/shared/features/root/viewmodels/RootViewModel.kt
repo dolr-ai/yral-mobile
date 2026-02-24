@@ -136,6 +136,7 @@ class RootViewModel(
         sessionManager.observeSessionStateWithProperty { state, properties ->
             sessionManager.userPrincipal?.let { userPrincipal ->
                 sessionManager.canisterID?.let { canisterID ->
+                    val isBotAccount = sessionManager.isBotAccount
                     User(
                         userId = userPrincipal,
                         canisterId = canisterID,
@@ -149,6 +150,8 @@ class RootViewModel(
                         phoneNumber = properties.phoneNumber,
                         proStatus = properties.proDetails?.isProPurchased,
                         isHonExperiment = null,
+                        isBotAccount = isBotAccount,
+                        parentAccount = if (isBotAccount == true) properties.accountDirectory?.mainPrincipal else null,
                     )
                 }
             }

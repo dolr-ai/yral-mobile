@@ -312,7 +312,9 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
         ),
         phoneNumber: nil,
         proStatus: nil,
-        isHonExperiment: KotlinBoolean(bool: true)
+        isHonExperiment: KotlinBoolean(bool: true),
+        isBotAccount: nil,
+        parentAccount: nil
       )
     )
     MPSessionReplay.getInstance()?.identify(distinctId: Mixpanel.sharedInstance()?.distinctId ?? "")
