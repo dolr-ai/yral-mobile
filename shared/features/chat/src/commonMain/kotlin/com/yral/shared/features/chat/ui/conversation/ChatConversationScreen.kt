@@ -161,8 +161,7 @@ fun ChatConversationScreen(
 
     val proDetails by component.subscriptionCoordinator.proDetails.collectAsStateWithLifecycle(ProDetails())
     val shouldPromptForLogin by derivedStateOf {
-        !viewState.isSocialSignedIn &&
-            totalMessageCount >= viewState.loginPromptMessageThreshold
+        !viewState.isSocialSignedIn && totalMessageCount >= viewState.loginPromptMessageThreshold
     }
     val hasChatAccess by derivedStateOf {
         proDetails.isProPurchased || viewState.isInfluencerSubscriptionPurchasedAndVerified

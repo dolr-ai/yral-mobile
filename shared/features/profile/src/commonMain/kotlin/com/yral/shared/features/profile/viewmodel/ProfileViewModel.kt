@@ -146,7 +146,7 @@ class ProfileViewModel(
 
     init {
         viewModelScope.launch {
-            runCatching {
+            runSuspendCatching {
                 iapManager.fetchProducts(listOf(ProductId.YRAL_PRO))
             }.onSuccess { result ->
                 _state.update {

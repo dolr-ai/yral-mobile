@@ -72,11 +72,14 @@ fun InfluencerSubscriptionCard(
     isPurchaseInProgress: Boolean = false,
 ) {
     Column(
+        modifier = modifier.padding(horizontal = CARD_BODY_PADDING_HORIZONTAL),
         verticalArrangement = Arrangement.spacedBy(GAP_CARD_BUTTON, Alignment.Top),
         horizontalAlignment = Alignment.Start,
-        modifier = Modifier.padding(horizontal = CARD_BODY_PADDING_HORIZONTAL),
     ) {
-        InfluencerSubscriptionCardContent(modifier = modifier, formattedPrice = formattedPrice)
+        InfluencerSubscriptionCardContent(
+            modifier = Modifier,
+            formattedPrice = formattedPrice,
+        )
         YralGradientButton(
             text = stringResource(Res.string.influencer_subscription_cta),
             onClick = onSubscribe,

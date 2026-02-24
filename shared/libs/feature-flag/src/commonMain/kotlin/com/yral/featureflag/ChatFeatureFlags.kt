@@ -47,7 +47,7 @@ object ChatFeatureFlags {
                 keySuffix = "subscriptionAllowedInfluencerId",
                 name = "Influencer subscription allowed influencer ID",
                 description = "If set, influencer subscription only for this ID; empty = no restriction",
-                defaultValue = "qi6gd-esmrx-v2oyd-7fwhm-ibfs5-trflm-xm3iy-xq6d3-3hmwu-jb7tk-5qe",
+                defaultValue = "",
             )
     }
 }

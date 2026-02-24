@@ -2,6 +2,7 @@ package com.yral.shared.features.account.viewmodel
 
 import androidx.lifecycle.ViewModel
 import co.touchlab.kermit.Logger
+import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.featureflag.AppFeatureFlags
@@ -112,7 +113,7 @@ class AccountsViewModel internal constructor(
                 }
         }
         coroutineScope.launch {
-            runCatching {
+            runSuspendCatching {
                 iapManager.fetchProducts(listOf(ProductId.YRAL_PRO))
             }.onSuccess { result ->
                 _state.update {

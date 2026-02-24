@@ -67,7 +67,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
 import yral_mobile.shared.features.chat.generated.resources.Res
+import yral_mobile.shared.features.chat.generated.resources.influencer_subscription_purchase_failed
+import yral_mobile.shared.features.chat.generated.resources.influencer_subscription_purchase_pending
+import yral_mobile.shared.features.chat.generated.resources.influencer_subscription_purchase_unavailable
 import yral_mobile.shared.features.chat.generated.resources.influencer_subscription_unlocked_toast
+import yral_mobile.shared.features.chat.generated.resources.influencer_subscription_verification_pending
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.profile_share_default_name
@@ -213,7 +217,7 @@ class ConversationViewModel(
 
     private fun fetchInfluencerSubscriptionAndYralProProducts() {
         viewModelScope.launch {
-            runCatching {
+            runSuspendCatching {
                 iapManager.isProductPurchased(ProductId.TARA_SUBSCRIPTION)
             }.onSuccess { result ->
                 val isPurchasedAndVerified = result.getOrNull() is PurchaseResult.PurchaseMatches
@@ -223,7 +227,7 @@ class ConversationViewModel(
             }
         }
         viewModelScope.launch {
-            runCatching {
+            runSuspendCatching {
                 iapManager.fetchProducts(listOf(ProductId.TARA_SUBSCRIPTION, ProductId.YRAL_PRO))
             }.onSuccess { result ->
                 val products = result.getOrNull().orEmpty()
@@ -263,7 +267,7 @@ class ConversationViewModel(
             )
         }
         viewModelScope.launch {
-            runCatching {
+            runSuspendCatching {
                 iapManager.fetchProducts(listOf(ProductId.YRAL_PRO))
             }.onSuccess { result ->
                 val products = result.getOrNull().orEmpty()
@@ -277,9 +281,14 @@ class ConversationViewModel(
 
     fun launchInfluencerSubscriptionPurchase(purchaseContext: PurchaseContext?) {
         if (purchaseContext == null) {
-            influencerSubscriptionToastChannel.trySend(
-                InfluencerSubscriptionToastEvent(ToastStatus.Error, "Purchase unavailable"),
-            )
+            viewModelScope.launch {
+                influencerSubscriptionToastChannel.trySend(
+                    InfluencerSubscriptionToastEvent(
+                        ToastStatus.Error,
+                        getString(Res.string.influencer_subscription_purchase_unavailable),
+                    ),
+                )
+            }
             return
         }
         _viewState.update { it.copy(isInfluencerSubscriptionPurchaseInProgress = true) }
@@ -294,25 +303,9 @@ class ConversationViewModel(
                 runCatching {
                     iapManager.isProductPurchased(ProductId.TARA_SUBSCRIPTION)
                 }.onSuccess { result ->
-                    val isPurchased = result.getOrNull() is PurchaseResult.PurchaseMatches
-                    _viewState.update {
-                        it.copy(
-                            isInfluencerSubscriptionPurchasedAndVerified = isPurchased,
-                            isInfluencerSubscriptionPurchaseInProgress = false,
-                        )
-                    }
-                    if (isPurchased) {
-                        val displayName =
-                            _viewState.value.influencer
-                                ?.displayName
-                                ?.takeIf { it.isNotBlank() }
-                                ?: _viewState.value.influencer?.name
-                                ?: getString(DesignRes.string.profile_share_default_name)
-                        val message = getString(Res.string.influencer_subscription_unlocked_toast, displayName)
-                        influencerSubscriptionToastChannel.trySend(
-                            InfluencerSubscriptionToastEvent(ToastStatus.Success, message),
-                        )
-                    }
+                    handleInfluencerSubscriptionVerificationResult(
+                        isPurchased = result.getOrNull() is PurchaseResult.PurchaseMatches,
+                    )
                 }.onFailure {
                     _viewState.update { it.copy(isInfluencerSubscriptionPurchaseInProgress = false) }
                 }
@@ -323,8 +316,10 @@ class ConversationViewModel(
                     else -> {
                         val message =
                             when (error) {
-                                is IAPError.PurchasePending -> "Purchase pending approval"
-                                else -> "Purchase failed. Please try again."
+                                is IAPError.PurchasePending ->
+                                    getString(Res.string.influencer_subscription_purchase_pending)
+                                else ->
+                                    getString(Res.string.influencer_subscription_purchase_failed)
                             }
                         influencerSubscriptionToastChannel.trySend(
                             InfluencerSubscriptionToastEvent(ToastStatus.Error, message),
@@ -332,6 +327,34 @@ class ConversationViewModel(
                     }
                 }
             }
+        }
+    }
+
+    private suspend fun handleInfluencerSubscriptionVerificationResult(isPurchased: Boolean) {
+        _viewState.update {
+            it.copy(
+                isInfluencerSubscriptionPurchasedAndVerified = isPurchased,
+                isInfluencerSubscriptionPurchaseInProgress = false,
+            )
+        }
+        if (isPurchased) {
+            val displayName =
+                _viewState.value.influencer
+                    ?.displayName
+                    ?.takeIf { it.isNotBlank() }
+                    ?: _viewState.value.influencer?.name
+                    ?: getString(DesignRes.string.profile_share_default_name)
+            val message = getString(Res.string.influencer_subscription_unlocked_toast, displayName)
+            influencerSubscriptionToastChannel.trySend(
+                InfluencerSubscriptionToastEvent(ToastStatus.Success, message),
+            )
+        } else {
+            influencerSubscriptionToastChannel.trySend(
+                InfluencerSubscriptionToastEvent(
+                    ToastStatus.Info,
+                    getString(Res.string.influencer_subscription_verification_pending),
+                ),
+            )
         }
     }
 
