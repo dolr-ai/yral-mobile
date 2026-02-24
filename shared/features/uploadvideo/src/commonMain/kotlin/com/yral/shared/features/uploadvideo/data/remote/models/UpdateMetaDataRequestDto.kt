@@ -29,6 +29,8 @@ internal data class PostDetailsDto(
     val videoUid: String,
     @SerialName("hashtags")
     val hashtags: List<String>,
+    @SerialName("status")
+    val status: String = "Published",
 )
 
 internal fun UploadFileRequest.toUpdateMetaDataRequestDto(
