@@ -2229,6 +2229,22 @@ data class BotCreationFailedEventData(
 }
 
 @Serializable
+data class BotAccountDeletedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.BOT_ACCOUNT_DELETED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.CREATE_BOT.getFeatureName(),
+    @SerialName("bot_id") val botId: String,
+    @SerialName("soft_delete_succeeded") val softDeleteSucceeded: Boolean = true,
+) : BaseEventData(),
+    EventData {
+    constructor(botId: String, softDeleteSucceeded: Boolean = true) : this(
+        FeatureEvents.BOT_ACCOUNT_DELETED.getEventName(),
+        Features.CREATE_BOT.getFeatureName(),
+        botId,
+        softDeleteSucceeded,
+    )
+}
+
+@Serializable
 enum class BotCreationSource {
     @SerialName("chat_page")
     CHAT_PAGE,

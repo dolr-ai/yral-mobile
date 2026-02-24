@@ -1,6 +1,7 @@
 package com.yral.shared.features.account.analytics
 
 import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.analytics.events.BotAccountDeletedEventData
 import com.yral.shared.analytics.events.MenuClickedEventData
 import com.yral.shared.analytics.events.MenuCtaType
 import com.yral.shared.analytics.events.MenuPageViewedEventData
@@ -20,5 +21,21 @@ class AccountsTelemetry(
 
     fun onMenuClicked(ctaType: MenuCtaType) {
         analyticsManager.trackEvent(MenuClickedEventData(ctaType))
+    }
+
+    fun botAccountDeleted(
+        botId: String,
+        softDeleteSucceeded: Boolean,
+    ) {
+        analyticsManager.trackEvent(
+            BotAccountDeletedEventData(
+                botId = botId,
+                softDeleteSucceeded = softDeleteSucceeded,
+            ),
+        )
+    }
+
+    fun flush() {
+        analyticsManager.flush()
     }
 }
