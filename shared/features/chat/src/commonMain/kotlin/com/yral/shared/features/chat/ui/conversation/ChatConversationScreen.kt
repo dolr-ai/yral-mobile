@@ -63,7 +63,9 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.features.chat.generated.resources.Res
+import yral_mobile.shared.features.chat.generated.resources.access_activated_overlay_message
 import yral_mobile.shared.features.chat.generated.resources.chat_background_inverted
+import yral_mobile.shared.features.chat.generated.resources.subscription_card_overlay_message
 import yral_mobile.shared.features.chat.generated.resources.subscription_nudge_chat_description
 import yral_mobile.shared.features.chat.generated.resources.subscription_nudge_chat_title
 import kotlin.time.Clock
@@ -202,6 +204,25 @@ fun ChatConversationScreen(
             atSubscriptionThreshold &&
             !viewState.isInfluencerSubscriptionAvailableToPurchase &&
             viewState.isYralProAvailableToPurchase
+    }
+
+    val subscriptionCardOverlayMessage =
+        if (shouldShowInfluencerSubscriptionCard) {
+            stringResource(Res.string.subscription_card_overlay_message)
+        } else {
+            null
+        }
+    val accessActivatedOverlayMessage =
+        if (viewState.isInfluencerSubscriptionPurchasedAndVerified) {
+            stringResource(Res.string.access_activated_overlay_message)
+        } else {
+            null
+        }
+    LaunchedEffect(subscriptionCardOverlayMessage, accessActivatedOverlayMessage) {
+        viewModel.setSystemOverlayMessages(
+            subscriptionCardMessage = subscriptionCardOverlayMessage,
+            accessActivatedMessage = accessActivatedOverlayMessage,
+        )
     }
 
     val loginState =

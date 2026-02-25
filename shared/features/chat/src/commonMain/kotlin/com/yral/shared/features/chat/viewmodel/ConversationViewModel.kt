@@ -174,14 +174,19 @@ class ConversationViewModel(
         }
 
     private val _overlay = MutableStateFlow(OverlayState())
+    private val systemOverlayMessagesFlow = MutableStateFlow<List<SentMessage>>(emptyList())
+
     val overlay: StateFlow<List<ConversationMessageItem>> =
-        combine(_overlay, loadedMessageIds) { overlayState, loadedIds ->
+        combine(_overlay, loadedMessageIds, systemOverlayMessagesFlow) { overlayState, loadedIds, systemMessages ->
             val filteredSent = overlayState.sent.filterNot { it.message.id in loadedIds }
             buildList {
                 overlayState.pending.forEach { pending ->
                     add(pending.createdAtMs to ConversationMessageItem.Local(pending))
                 }
                 filteredSent.forEach { sent ->
+                    add(sent.insertedAtMs to ConversationMessageItem.Remote(sent.message))
+                }
+                systemMessages.forEach { sent ->
                     add(sent.insertedAtMs to ConversationMessageItem.Remote(sent.message))
                 }
             }.sortedWith(compareByDescending { it.first }).map { it.second }
@@ -204,6 +209,76 @@ class ConversationViewModel(
                 }
         }
     }
+
+    @OptIn(ExperimentalTime::class)
+    fun setSystemOverlayMessages(
+        subscriptionCardMessage: String?,
+        accessActivatedMessage: String?,
+    ) {
+        val convId =
+            _viewState.value.conversationId ?: run {
+                systemOverlayMessagesFlow.value = emptyList()
+                return
+            }
+        val now = Clock.System.now().toEpochMilliseconds()
+        val createdAt = Instant.fromEpochMilliseconds(now).toString()
+        val list =
+            when {
+                accessActivatedMessage != null ->
+                    listOf(
+                        createSystemSentMessage(
+                            now,
+                            convId,
+                            createdAt,
+                            "system-access-activated",
+                            accessActivatedMessage,
+                        ),
+                    )
+                subscriptionCardMessage != null ->
+                    listOf(
+                        createSystemSentMessage(
+                            now,
+                            convId,
+                            createdAt,
+                            "system-free-messages-over",
+                            subscriptionCardMessage,
+                        ),
+                    )
+                else -> emptyList()
+            }
+        systemOverlayMessagesFlow.value = list
+    }
+
+    private fun createSystemSentMessage(
+        insertedAtMs: Long,
+        conversationId: String,
+        createdAt: String,
+        messageId: String,
+        content: String,
+    ): SentMessage =
+        SentMessage(
+            insertedAtMs = insertedAtMs,
+            message = createSystemChatMessage(messageId, conversationId, content, createdAt),
+        )
+
+    private fun createSystemChatMessage(
+        id: String,
+        conversationId: String,
+        content: String,
+        createdAt: String,
+    ): ChatMessage =
+        ChatMessage(
+            id = id,
+            conversationId = conversationId,
+            role = ConversationMessageRole.ASSISTANT,
+            content = content,
+            messageType = ChatMessageType.TEXT,
+            mediaUrls = emptyList(),
+            audioUrl = null,
+            audioDurationSeconds = null,
+            tokenCount = null,
+            createdAt = createdAt,
+        )
 
     private fun updateInfluencerSubscriptionProductState(influencerId: String) {
         if (!_viewState.value.isSubscriptionEnabled) return
@@ -547,6 +622,7 @@ class ConversationViewModel(
             )
         }
         _overlay.value = OverlayState()
+        systemOverlayMessagesFlow.value = emptyList()
         loadedMessageIds.value = emptySet()
         initialOffset.value = null
     }

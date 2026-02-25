@@ -42,6 +42,10 @@
     <string name="influencer_subscription_purchase_failed">Purchase failed. Please try again.</string>
     <string name="influencer_subscription_verification_pending">We are verifying your purchase. Please try again in a moment.</string>
 
+    <!-- System overlay messages (shown as sent in conversation) -->
+    <string name="subscription_card_overlay_message">Your free messages are over, but baatein abhi baki hai. Subscribe to our plan to continue chatting with me.</string>
+    <string name="access_activated_overlay_message">Access activated! I'm all yours for the next 24 hours. Tell me, what's on your mind right now?</string>
+
     <!-- Error Bottom Sheet -->
     <!-- Error titles -->
     <string name="error_network_title">Having a little trouble loading</string>
