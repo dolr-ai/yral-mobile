@@ -34,6 +34,7 @@ kotlin {
             implementation(projects.shared.features.auth)
             implementation(projects.shared.features.chat)
             implementation(projects.shared.features.subscriptions)
+            implementation(projects.shared.libs.iap.main)
 
             implementation(libs.androidx.paging.common)
             implementation(libs.androidx.paging.compose)

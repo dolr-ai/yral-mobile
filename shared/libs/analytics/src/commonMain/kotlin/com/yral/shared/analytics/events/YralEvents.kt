@@ -1729,6 +1729,64 @@ data class AIMessageDeliveredEventData(
 }
 
 @Serializable
+data class FreeAccessExpiredEventData(
+    @SerialName("event") override val event: String = FeatureEvents.FREE_ACCESS_EXPIRED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AI_CHATBOT.getFeatureName(),
+    @SerialName("bot_id") val botId: String,
+) : BaseEventData(),
+    EventData {
+    constructor(botId: String) : this(
+        FeatureEvents.FREE_ACCESS_EXPIRED.getEventName(),
+        Features.AI_CHATBOT.getFeatureName(),
+        botId,
+    )
+}
+
+@Serializable
+data class SubscriptionClickedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.SUBSCRIPTION_CLICKED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AI_CHATBOT.getFeatureName(),
+    @SerialName("bot_id") val botId: String,
+) : BaseEventData(),
+    EventData {
+    constructor(botId: String) : this(
+        FeatureEvents.SUBSCRIPTION_CLICKED.getEventName(),
+        Features.AI_CHATBOT.getFeatureName(),
+        botId,
+    )
+}
+
+@Serializable
+data class SubscriptionSuccessEventData(
+    @SerialName("event") override val event: String = FeatureEvents.SUBSCRIPTION_SUCCESS.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AI_CHATBOT.getFeatureName(),
+    @SerialName("bot_id") val botId: String,
+) : BaseEventData(),
+    EventData {
+    constructor(botId: String) : this(
+        FeatureEvents.SUBSCRIPTION_SUCCESS.getEventName(),
+        Features.AI_CHATBOT.getFeatureName(),
+        botId,
+    )
+}
+
+@Serializable
+data class SubscriptionFailedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.SUBSCRIPTION_FAILED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.AI_CHATBOT.getFeatureName(),
+    @SerialName("bot_id") val botId: String,
+    @SerialName("reason") val reason: String,
+) : BaseEventData(),
+    EventData {
+    constructor(botId: String, reason: String) : this(
+        FeatureEvents.SUBSCRIPTION_FAILED.getEventName(),
+        Features.AI_CHATBOT.getFeatureName(),
+        botId,
+        reason,
+    )
+}
+
+@Serializable
 data class LeaderBoardPageViewedEventData(
     @SerialName("event") override val event: String = FeatureEvents.LEADERBOARD_PAGE_VIEWED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.LEADERBOARD.getFeatureName(),

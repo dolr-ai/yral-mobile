@@ -22,7 +22,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
@@ -49,18 +48,38 @@ import com.yral.shared.features.chat.ui.components.ChatErrorBottomSheet
 import com.yral.shared.features.chat.viewmodel.ConversationMessageItem
 import com.yral.shared.features.chat.viewmodel.ConversationViewModel
 import com.yral.shared.features.subscriptions.nav.SubscriptionNudgeContent
+import com.yral.shared.iap.utils.getPurchaseContext
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralLoader
+import com.yral.shared.libs.designsystem.component.toast.ToastManager
+import com.yral.shared.libs.designsystem.component.toast.ToastStatus
+import com.yral.shared.libs.designsystem.component.toast.ToastType
+import com.yral.shared.libs.designsystem.component.toast.showError
+import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.features.chat.generated.resources.Res
+import yral_mobile.shared.features.chat.generated.resources.access_activated_overlay_message
 import yral_mobile.shared.features.chat.generated.resources.chat_background_inverted
+import yral_mobile.shared.features.chat.generated.resources.subscription_card_overlay_message
 import yral_mobile.shared.features.chat.generated.resources.subscription_nudge_chat_description
 import yral_mobile.shared.features.chat.generated.resources.subscription_nudge_chat_title
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
+
+private const val INFLUENCER_SUBSCRIPTION_ACCESS_DURATION_MS = 24L * 60 * 60 * 1000
+private const val EXPIRING_SOON_THRESHOLD_MS = 10L * 60 * 1000 // 10 minutes
+
+private data class AccessExpiryDisplay(
+    val text: String?,
+    val isExpiringSoon: Boolean,
+)
 
 /**
  * Chat screen for testing conversation functionality.
@@ -79,6 +98,7 @@ fun ChatConversationScreen(
 ) {
     val viewState by viewModel.viewState.collectAsState()
     val errorBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val purchaseContext = getPurchaseContext()
 
     LaunchedEffect(component.influencerId, viewState.isSocialSignedIn) {
         viewModel.initializeForInfluencer(
@@ -86,6 +106,24 @@ fun ChatConversationScreen(
             influencerCategory = component.influencerCategory,
             influencerSource = component.influencerSource,
         )
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.influencerSubscriptionToastFlow.collect { event ->
+            when (event.status) {
+                ToastStatus.Success ->
+                    ToastManager.showSuccess(type = ToastType.Small(message = event.message))
+                ToastStatus.Error ->
+                    ToastManager.showError(type = ToastType.Small(message = event.message))
+                ToastStatus.Info,
+                ToastStatus.Warning,
+                ->
+                    ToastManager.showToast(
+                        type = ToastType.Small(message = event.message),
+                        status = event.status,
+                    )
+            }
+        }
     }
 
     val overlayItems by viewModel.overlay.collectAsState()
@@ -132,26 +170,64 @@ fun ChatConversationScreen(
     )
 
     // Check if there's a waiting assistant message in overlay
-    val hasWaitingAssistant by derivedStateOf {
-        overlayItems.any { it.isWaitingAssistant() }
-    }
+    val hasWaitingAssistant by derivedStateOf { overlayItems.any { it.isWaitingAssistant() } }
 
-    val overlayUserCount by derivedStateOf { overlayItems.count { item -> item.isUser() } }
-    val historyUserCount by produceState(initialValue = 0, historyPagingItems) {
-        snapshotFlow { historyPagingItems.itemSnapshotList.items }
-            .map { items -> items.count { item -> item.isUser() } }
-            .collect { value = it }
-    }
+    val overlaySentCount by derivedStateOf { overlayItems.count { it is ConversationMessageItem.Remote } }
+    val totalMessageCount by derivedStateOf { viewState.totalHistoryMessageCount + overlaySentCount }
 
     val proDetails by component.subscriptionCoordinator.proDetails.collectAsStateWithLifecycle(ProDetails())
     val shouldPromptForLogin by derivedStateOf {
-        !viewState.isSocialSignedIn && (overlayUserCount + historyUserCount) >= viewState.loginPromptMessageThreshold
+        !viewState.isSocialSignedIn && totalMessageCount >= viewState.loginPromptMessageThreshold
     }
-    val shouldPromptForSubscription by derivedStateOf {
+    val hasChatAccess by derivedStateOf {
+        proDetails.isProPurchased || viewState.isInfluencerSubscriptionPurchasedAndVerified
+    }
+    val atSubscriptionThreshold by derivedStateOf {
+        totalMessageCount >= viewState.subscriptionMandatoryThreshold
+    }
+    val shouldShowInfluencerSubscriptionCard by derivedStateOf {
+        val allowedId = viewState.subscriptionAllowedInfluencerId
+        val currentInfluencerId = viewState.influencer?.id ?: component.influencerId
+        val allowedForThisInfluencer = currentInfluencerId == allowedId
+        !hasWaitingAssistant &&
+            viewState.isSocialSignedIn &&
+            viewState.isSubscriptionEnabled &&
+            !hasChatAccess &&
+            atSubscriptionThreshold &&
+            viewState.isInfluencerSubscriptionAvailableToPurchase &&
+            allowedForThisInfluencer
+    }
+    val shouldShowSubscriptionNudge by derivedStateOf {
         viewState.isSocialSignedIn &&
             viewState.isSubscriptionEnabled &&
-            !proDetails.isProPurchased &&
-            (overlayUserCount + historyUserCount) >= viewState.subscriptionMandatoryThreshold
+            !hasChatAccess &&
+            atSubscriptionThreshold &&
+            !viewState.isInfluencerSubscriptionAvailableToPurchase &&
+            viewState.isYralProAvailableToPurchase
+    }
+
+    val subscriptionCardOverlayMessage =
+        if (shouldShowInfluencerSubscriptionCard) {
+            stringResource(Res.string.subscription_card_overlay_message)
+        } else {
+            null
+        }
+    val accessActivatedOverlayMessage =
+        if (viewState.isInfluencerSubscriptionPurchasedAndVerified) {
+            stringResource(Res.string.access_activated_overlay_message)
+        } else {
+            null
+        }
+    LaunchedEffect(subscriptionCardOverlayMessage, accessActivatedOverlayMessage) {
+        viewModel.setSystemOverlayMessages(
+            subscriptionCardMessage = subscriptionCardOverlayMessage,
+            accessActivatedMessage = accessActivatedOverlayMessage,
+        )
+    }
+    LaunchedEffect(shouldShowInfluencerSubscriptionCard, viewState.influencer?.id) {
+        if (shouldShowInfluencerSubscriptionCard) {
+            viewState.influencer?.id?.let { viewModel.trackFreeAccessExpired(it) }
+        }
     }
 
     val loginState =
@@ -216,16 +292,26 @@ fun ChatConversationScreen(
         draft: SendMessageDraft,
         onBeforeSend: () -> Unit = {},
     ) {
-        if (shouldPromptForLogin) {
-            promptLogin()
-            return
+        val blocked =
+            when {
+                shouldPromptForLogin -> {
+                    promptLogin()
+                    true
+                }
+                shouldShowInfluencerSubscriptionCard -> {
+                    purchaseContext?.let { viewModel.launchInfluencerSubscriptionPurchase(it) }
+                    true
+                }
+                shouldShowSubscriptionNudge -> {
+                    component.subscriptionCoordinator.showSubscriptionNudge(content = subscriptionNudgeContent)
+                    true
+                }
+                else -> false
+            }
+        if (!blocked) {
+            onBeforeSend()
+            viewModel.sendMessage(draft)
         }
-        if (shouldPromptForSubscription) {
-            component.subscriptionCoordinator.showSubscriptionNudge(content = subscriptionNudgeContent)
-            return
-        }
-        onBeforeSend()
-        viewModel.sendMessage(draft)
     }
 
     Box(
@@ -238,6 +324,26 @@ fun ChatConversationScreen(
                 ),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
+            val purchaseTimeMs = viewState.influencerSubscriptionPurchaseTimeMs
+            val showAccessExpiry =
+                viewState.isInfluencerSubscriptionPurchasedAndVerified && purchaseTimeMs != null
+            val accessExpiryDisplay by produceState(
+                initialValue = AccessExpiryDisplay(null, false),
+                purchaseTimeMs,
+                showAccessExpiry,
+            ) {
+                if (!showAccessExpiry) {
+                    value = AccessExpiryDisplay(null, false)
+                    return@produceState
+                }
+                while (true) {
+                    val remaining = remainingAccessMs(purchaseTimeMs)
+                    val text = if (remaining <= 0L) null else formatMillisToHHmmSS(remaining)
+                    val isExpiringSoon = remaining in 1..EXPIRING_SOON_THRESHOLD_MS
+                    value = AccessExpiryDisplay(text, isExpiringSoon)
+                    delay(1.seconds)
+                }
+            }
             // Header
             ChatHeader(
                 influencer = viewState.influencer,
@@ -256,6 +362,8 @@ fun ChatConversationScreen(
                 },
                 onClearChat = { viewModel.deleteAndRecreateConversation(component.influencerId) },
                 onShareProfile = { viewModel.shareProfile() },
+                accessExpiresInText = accessExpiryDisplay.text,
+                isAccessExpiringSoon = accessExpiryDisplay.isExpiringSoon,
             )
 
             Column(
@@ -318,26 +426,36 @@ fun ChatConversationScreen(
                             )
                         }
 
-                        // Input area with dropdown menu
-                        ChatInputArea(
-                            input = input,
-                            onInputChange = { input = it },
-                            onSendClick = {
-                                keyboardController?.hide()
-                                val text = input.trim()
-                                sendMessageIfAllowed(
-                                    SendMessageDraft(
-                                        messageType = ChatMessageType.TEXT,
-                                        content = text,
-                                    ),
-                                ) {
-                                    input = ""
-                                }
-                            },
-                            onCameraClick = imageCaptureLauncher,
-                            onGalleryClick = imagePickerLauncher,
-                            hasWaitingAssistant = hasWaitingAssistant,
-                        )
+                        // Influencer subscription card (replaces input when at threshold) or ChatInputArea
+                        if (shouldShowInfluencerSubscriptionCard) {
+                            InfluencerSubscriptionCard(
+                                onSubscribe = {
+                                    purchaseContext?.let { viewModel.launchInfluencerSubscriptionPurchase(it) }
+                                },
+                                isPurchaseInProgress = viewState.isInfluencerSubscriptionPurchaseInProgress,
+                                formattedPrice = viewState.influencerSubscriptionFormattedPrice,
+                            )
+                        } else {
+                            ChatInputArea(
+                                input = input,
+                                onInputChange = { input = it },
+                                onSendClick = {
+                                    keyboardController?.hide()
+                                    val text = input.trim()
+                                    sendMessageIfAllowed(
+                                        SendMessageDraft(
+                                            messageType = ChatMessageType.TEXT,
+                                            content = text,
+                                        ),
+                                    ) {
+                                        input = ""
+                                    }
+                                },
+                                onCameraClick = imageCaptureLauncher,
+                                onGalleryClick = imagePickerLauncher,
+                                hasWaitingAssistant = hasWaitingAssistant,
+                            )
+                        }
                     }
                 }
             }
@@ -366,4 +484,22 @@ fun ChatConversationScreen(
             )
         }
     }
+}
+
+@Suppress("MagicNumber")
+internal fun formatMillisToHHmmSS(millis: Long): String {
+    val duration = millis.milliseconds
+    val hours = duration.inWholeHours
+    val minutes = duration.inWholeMinutes % 60
+    val seconds = duration.inWholeSeconds % 60
+
+    fun Long.twoDigits(): String = this.toString().padStart(2, '0')
+
+    return "${hours.twoDigits()}:${minutes.twoDigits()}:${seconds.twoDigits()}"
+}
+
+@OptIn(ExperimentalTime::class)
+private fun remainingAccessMs(purchaseTimeMs: Long): Long {
+    val nowMs = Clock.System.now().toEpochMilliseconds()
+    return (purchaseTimeMs + INFLUENCER_SUBSCRIPTION_ACCESS_DURATION_MS) - nowMs
 }

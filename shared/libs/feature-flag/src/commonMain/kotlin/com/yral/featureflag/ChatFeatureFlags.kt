@@ -18,14 +18,14 @@ object ChatFeatureFlags {
             int(
                 keySuffix = "loginPromptMessageThreshold",
                 name = "Login prompt message limit",
-                description = "User message count at which to show login prompt in chat",
+                description = "Total message count at which to show login prompt in chat",
                 defaultValue = 5,
             )
         val SubscriptionMandatoryThreshold: FeatureFlag<Int> =
             int(
                 keySuffix = "subscriptionMandatoryThreshold",
                 name = "Subscription mandatory threshold",
-                description = "User message count at which to show subscription nudge in chat",
+                description = "Total message count at which to show subscription nudge in chat",
                 defaultValue = 15,
             )
         val MaxBotCountForCta: FeatureFlag<Int> =
@@ -41,6 +41,13 @@ object ChatFeatureFlags {
                 name = "Max visible bot usernames",
                 description = "Maximum number of bot usernames to show before '+N More'",
                 defaultValue = 2,
+            )
+        val SubscriptionAllowedInfluencerId: FeatureFlag<String> =
+            string(
+                keySuffix = "subscriptionAllowedInfluencerId",
+                name = "Influencer subscription allowed influencer ID",
+                description = "If set, influencer subscription only for this ID; empty = no restriction",
+                defaultValue = "",
             )
     }
 }
