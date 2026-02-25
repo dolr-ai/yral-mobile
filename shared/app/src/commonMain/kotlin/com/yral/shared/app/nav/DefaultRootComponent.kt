@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.router.slot.SlotNavigation
@@ -589,8 +590,11 @@ class DefaultRootComponent(
 
     // ==================== Subscription nudge ====================
     override fun showSubscriptionNudge(content: SubscriptionNudgeContent) {
-        subscriptionNudgeContent = content
-        slotNavigation.activate(SlotConfig.SubscriptionNudge)
+        Logger.d("SubscriptionX") { "Want to show subscription nudge" }
+        if (sessionManager.isYralProAvailable == true) {
+            subscriptionNudgeContent = content
+            slotNavigation.activate(SlotConfig.SubscriptionNudge)
+        }
     }
 
     override fun dismissSubscriptionNudge() {

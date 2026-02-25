@@ -2,7 +2,6 @@ package com.yral.shared.features.account.viewmodel
 
 import androidx.lifecycle.ViewModel
 import co.touchlab.kermit.Logger
-import com.github.michaelbull.result.coroutines.runSuspendCatching
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.featureflag.AppFeatureFlags
@@ -21,8 +20,6 @@ import com.yral.shared.features.auth.domain.useCases.DeleteAccountUseCase
 import com.yral.shared.features.auth.domain.useCases.DeregisterNotificationTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.RegisterNotificationTokenUseCase
 import com.yral.shared.firebaseStore.getDownloadUrl
-import com.yral.shared.iap.IAPManager
-import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
@@ -55,7 +52,6 @@ class AccountsViewModel internal constructor(
     private val botIdentitiesStore: BotIdentitiesStore,
     private val registerNotificationTokenUseCase: RegisterNotificationTokenUseCase,
     private val deregisterNotificationTokenUseCase: DeregisterNotificationTokenUseCase,
-    private val iapManager: IAPManager,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
@@ -113,14 +109,11 @@ class AccountsViewModel internal constructor(
                 }
         }
         coroutineScope.launch {
-            if (!_state.value.isSubscriptionEnabled) return@launch
-            runSuspendCatching {
-                iapManager.fetchProducts(listOf(ProductId.YRAL_PRO))
-            }.onSuccess { result ->
-                _state.update {
-                    it.copy(isYralProAvailable = result.getOrNull()?.isNotEmpty() == true)
+            sessionManager
+                .observeSessionProperty { it.isYralProAvailable }
+                .collect { isAvailable ->
+                    _state.update { it.copy(isYralProAvailable = isAvailable ?: false) }
                 }
-            }.onFailure { _state.update { it.copy(isYralProAvailable = false) } }
         }
     }
 

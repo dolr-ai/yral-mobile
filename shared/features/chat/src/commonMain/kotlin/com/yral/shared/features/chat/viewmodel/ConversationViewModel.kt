@@ -36,6 +36,8 @@ import com.yral.shared.features.chat.domain.models.SendMessageResult
 import com.yral.shared.features.chat.domain.usecases.CreateConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.DeleteConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.SendMessageUseCase
+import com.yral.shared.features.subscriptions.domain.FetchProductsUseCase
+import com.yral.shared.features.subscriptions.domain.QueryPurchaseUseCase
 import com.yral.shared.iap.IAPManager
 import com.yral.shared.iap.PurchaseResult
 import com.yral.shared.iap.core.IAPError
@@ -97,6 +99,8 @@ class ConversationViewModel(
     private val chatTelemetry: ChatTelemetry,
     private val chatErrorMapper: ChatErrorMapper,
     private val iapManager: IAPManager,
+    private val queryPurchaseUseCase: QueryPurchaseUseCase,
+    private val fetchProductsUseCase: FetchProductsUseCase,
 ) : ViewModel() {
     /**
      * Message ordering:
@@ -293,56 +297,49 @@ class ConversationViewModel(
 
     private fun fetchInfluencerSubscriptionAndYralProProducts() {
         viewModelScope.launch {
-            runSuspendCatching {
-                iapManager.isProductPurchased(ProductId.TARA_SUBSCRIPTION)
-            }.onSuccess { result ->
-                val purchaseResult = result.getOrNull()
-                val isPurchasedAndVerified = purchaseResult is PurchaseResult.PurchaseMatches
-                val purchaseTimeMs = (purchaseResult as? PurchaseResult.PurchaseMatches)?.purchaseTime
-                _viewState.update {
-                    it.copy(
-                        isInfluencerSubscriptionPurchasedAndVerified = isPurchasedAndVerified,
-                        influencerSubscriptionPurchaseTimeMs = if (isPurchasedAndVerified) purchaseTimeMs else null,
-                    )
+            queryPurchaseUseCase(ProductId.TARA_SUBSCRIPTION)
+                .onSuccess { purchaseResult ->
+                    val isPurchasedAndVerified = purchaseResult is PurchaseResult.PurchaseMatches
+                    val purchaseTimeMs = (purchaseResult as? PurchaseResult.PurchaseMatches)?.purchaseTime
+                    _viewState.update {
+                        it.copy(
+                            isInfluencerSubscriptionPurchasedAndVerified = isPurchasedAndVerified,
+                            influencerSubscriptionPurchaseTimeMs = if (isPurchasedAndVerified) purchaseTimeMs else null,
+                        )
+                    }
+                }.onFailure {
+                    _viewState.update {
+                        it.copy(
+                            isInfluencerSubscriptionPurchasedAndVerified = false,
+                            influencerSubscriptionPurchaseTimeMs = null,
+                        )
+                    }
                 }
-            }.onFailure {
-                _viewState.update {
-                    it.copy(
-                        isInfluencerSubscriptionPurchasedAndVerified = false,
-                        influencerSubscriptionPurchaseTimeMs = null,
-                    )
-                }
-            }
         }
         viewModelScope.launch {
-            runSuspendCatching {
-                iapManager.fetchProducts(listOf(ProductId.TARA_SUBSCRIPTION, ProductId.YRAL_PRO))
-            }.onSuccess { result ->
-                val products = result.getOrNull().orEmpty()
-                val productIds = products.map { it.id }.toSet()
-                val influencerAvailable =
-                    ProductId.TARA_SUBSCRIPTION.productId in productIds
-                val yralProAvailable = ProductId.YRAL_PRO.productId in productIds
-                val influencerOfferPrice =
-                    products
-                        .find { it.id == ProductId.TARA_SUBSCRIPTION.productId }
-                        ?.let { p -> p.offerPrice.ifBlank { p.price } }
-                _viewState.update {
-                    it.copy(
-                        isInfluencerSubscriptionAvailableToPurchase = influencerAvailable,
-                        isYralProAvailableToPurchase = yralProAvailable,
-                        influencerSubscriptionFormattedPrice = influencerOfferPrice,
-                    )
+            fetchProductsUseCase(listOf(ProductId.TARA_SUBSCRIPTION))
+                .onSuccess { products ->
+                    val influencerAvailable = ProductId.TARA_SUBSCRIPTION.productId in products.map { it.id }.toSet()
+                    val influencerOfferPrice =
+                        products
+                            .find { it.id == ProductId.TARA_SUBSCRIPTION.productId }
+                            ?.let { p -> p.offerPrice.ifBlank { p.price } }
+                    _viewState.update {
+                        it.copy(
+                            isInfluencerSubscriptionAvailableToPurchase = influencerAvailable,
+                            isYralProAvailableToPurchase = sessionManager.isYralProAvailable ?: false,
+                            influencerSubscriptionFormattedPrice = influencerOfferPrice,
+                        )
+                    }
+                }.onFailure {
+                    _viewState.update {
+                        it.copy(
+                            isInfluencerSubscriptionAvailableToPurchase = false,
+                            isYralProAvailableToPurchase = sessionManager.isYralProAvailable ?: false,
+                            influencerSubscriptionFormattedPrice = null,
+                        )
+                    }
                 }
-            }.onFailure {
-                _viewState.update {
-                    it.copy(
-                        isInfluencerSubscriptionAvailableToPurchase = false,
-                        isYralProAvailableToPurchase = false,
-                        influencerSubscriptionFormattedPrice = null,
-                    )
-                }
-            }
         }
     }
 
@@ -353,18 +350,8 @@ class ConversationViewModel(
                 isInfluencerSubscriptionAvailableToPurchase = false,
                 influencerSubscriptionFormattedPrice = null,
                 influencerSubscriptionPurchaseTimeMs = null,
+                isYralProAvailableToPurchase = sessionManager.isYralProAvailable ?: false,
             )
-        }
-        viewModelScope.launch {
-            runSuspendCatching {
-                iapManager.fetchProducts(listOf(ProductId.YRAL_PRO))
-            }.onSuccess { result ->
-                val products = result.getOrNull().orEmpty()
-                val yralProAvailable = ProductId.YRAL_PRO.productId in products.map { it.id }.toSet()
-                _viewState.update { it.copy(isYralProAvailableToPurchase = yralProAvailable) }
-            }.onFailure {
-                _viewState.update { it.copy(isYralProAvailableToPurchase = false) }
-            }
         }
     }
 
@@ -405,27 +392,25 @@ class ConversationViewModel(
                 acknowledgePurchase = false,
             )
         }.onSuccess {
-            runSuspendCatching {
-                iapManager.isProductPurchased(ProductId.TARA_SUBSCRIPTION)
-            }.onSuccess { result ->
-                val purchase = result.getOrNull()
-                val isPurchased = purchase is PurchaseResult.PurchaseMatches
-                val purchaseTime = (purchase as? PurchaseResult.PurchaseMatches)?.purchaseTime
-                if (purchase == null || purchase is PurchaseResult.NoPurchase) {
-                    botId?.let { chatTelemetry.subscriptionFailed(it, "no_purchase") }
+            queryPurchaseUseCase(ProductId.TARA_SUBSCRIPTION)
+                .onSuccess { purchase ->
+                    val isPurchased = purchase is PurchaseResult.PurchaseMatches
+                    val purchaseTime = (purchase as? PurchaseResult.PurchaseMatches)?.purchaseTime
+                    if (purchase is PurchaseResult.NoPurchase) {
+                        botId?.let { chatTelemetry.subscriptionFailed(it, "no_purchase") }
+                        _viewState.update { it.copy(isInfluencerSubscriptionPurchaseInProgress = false) }
+                        return@onSuccess
+                    }
+                    handleInfluencerSubscriptionVerificationResult(
+                        isPurchased = isPurchased,
+                        purchaseTimeMs = purchaseTime,
+                    )
+                }.onFailure { verificationError ->
                     _viewState.update { it.copy(isInfluencerSubscriptionPurchaseInProgress = false) }
-                    return@onSuccess
+                    botId?.let {
+                        chatTelemetry.subscriptionFailed(it, verificationError.message ?: "unknown")
+                    }
                 }
-                handleInfluencerSubscriptionVerificationResult(
-                    isPurchased = isPurchased,
-                    purchaseTimeMs = purchaseTime,
-                )
-            }.onFailure { verificationError ->
-                _viewState.update { it.copy(isInfluencerSubscriptionPurchaseInProgress = false) }
-                botId?.let {
-                    chatTelemetry.subscriptionFailed(it, verificationError.message ?: "unknown")
-                }
-            }
         }.onFailure { error ->
             _viewState.update { it.copy(isInfluencerSubscriptionPurchaseInProgress = false) }
             botId?.let { chatTelemetry.subscriptionFailed(it, error.message ?: "unknown") }
@@ -555,7 +540,6 @@ class ConversationViewModel(
         }
 
         if (resolvedInfluencer != null) {
-            updateInfluencerSubscriptionProductState(resolvedInfluencer.id)
             refreshShareCopy()
         }
 
