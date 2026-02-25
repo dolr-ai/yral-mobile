@@ -6,6 +6,7 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.analytics.events.AiVideoGenFailureType
 import com.yral.shared.analytics.events.VideoCreationType
+import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.uploadvideo.analytics.UploadVideoTelemetry
 import com.yral.shared.libs.arch.domain.FlowUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
@@ -34,6 +35,8 @@ internal class PollAndUploadAiVideoUseCase(
         coroutineDispatcher = appDispatchers.network,
         failureListener = failureListener,
     ) {
+    override val exceptionType: String = ExceptionType.AI_VIDEO.name
+
     @Suppress("LongMethod")
     override fun execute(parameters: Params): Flow<Result<PollAndUploadResult, Throwable>> =
         flow {

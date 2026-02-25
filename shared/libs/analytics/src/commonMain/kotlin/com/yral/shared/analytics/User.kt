@@ -15,6 +15,8 @@ data class User(
     val phoneNumber: String?,
     val proStatus: Boolean?,
     val isHonExperiment: Boolean?,
+    val isBotAccount: Boolean?,
+    val parentAccount: String?,
 ) {
     constructor(
         userId: String,
@@ -32,5 +34,7 @@ data class User(
         phoneNumber = null,
         proStatus = null,
         isHonExperiment = null,
+        isBotAccount = null,
+        parentAccount = null,
     )
 }

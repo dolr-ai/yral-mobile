@@ -36,10 +36,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-data class AccountEnv(
-    val isDebug: Boolean,
-)
-
 @Suppress("LongParameterList")
 class AccountsViewModel internal constructor(
     private val appDispatchers: AppDispatchers,
@@ -128,17 +124,25 @@ class AccountsViewModel internal constructor(
             Logger.d(BOT_DELETE_LOG_TAG) {
                 "deleteAccount invoked principal=$activePrincipal isBot=$isBotAccount"
             }
-            if (isBotAccount) {
-                _state.update { it.copy(isDeletingAccount = true) }
-                Logger.d(BOT_DELETE_LOG_TAG) { "bot delete: loader shown" }
-                softDeleteInfluencerOnBotServerUseCase(activePrincipal)
-            }
+            val softDeleteSucceeded =
+                if (isBotAccount) {
+                    _state.update { it.copy(isDeletingAccount = true) }
+                    Logger.d(BOT_DELETE_LOG_TAG) { "bot delete: loader shown" }
+                    softDeleteInfluencerOnBotServerUseCase(activePrincipal).isOk
+                } else {
+                    true
+                }
             deleteAccountUseCase
                 .invoke(Unit)
                 .onSuccess {
                     Logger.d(BOT_DELETE_LOG_TAG) { "deleteAccount usecase success result=$it" }
                     if (isBotAccount && activePrincipal != null) {
                         Logger.d(BOT_DELETE_LOG_TAG) { "delete_user_info success principalToDelete=$activePrincipal" }
+                        accountsTelemetry.botAccountDeleted(
+                            botId = activePrincipal,
+                            softDeleteSucceeded = softDeleteSucceeded,
+                        )
+                        accountsTelemetry.flush()
                         removeDeletedBotFromLocalCaches(activePrincipal)
                         Logger.d(BOT_DELETE_LOG_TAG) { "bot delete: local cache cleanup completed" }
                         withContext(appDispatchers.main) {

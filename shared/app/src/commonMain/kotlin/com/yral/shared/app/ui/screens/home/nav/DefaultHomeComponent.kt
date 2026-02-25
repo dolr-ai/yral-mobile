@@ -15,6 +15,7 @@ import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import com.yral.featureflag.FeatureFlagManager
+import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
@@ -62,7 +63,7 @@ internal class DefaultHomeComponent(
         influencerCategory: String,
         influencerSource: InfluencerSource,
     ) -> Unit,
-    private val openCreateInfluencer: () -> Unit,
+    private val openCreateInfluencer: (source: BotCreationSource) -> Unit,
     private val openWallet: () -> Unit,
     private val openLeaderboard: () -> Unit,
     private val openTournamentLeaderboard: (
@@ -118,8 +119,8 @@ internal class DefaultHomeComponent(
     override val homeViewModel: HomeViewModel = koinInstance.get<HomeViewModel>()
     override val sessionManager: SessionManager = koinInstance.get<SessionManager>()
 
-    override fun openCreateInfluencer() {
-        openCreateInfluencer.invoke()
+    override fun openCreateInfluencer(source: BotCreationSource) {
+        openCreateInfluencer.invoke(source)
     }
 
     private val slotNavigation = SlotNavigation<SlotConfig>()

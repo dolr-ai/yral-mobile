@@ -23,6 +23,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtime.compose)
 
             implementation(projects.shared.core)
+            implementation(projects.shared.libs.firebasePerf)
         }
         androidMain.dependencies {
             implementation(libs.androidx.media3.exoplayer)

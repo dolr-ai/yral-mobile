@@ -419,6 +419,20 @@ data class FeedToggleClickedEventData(
     )
 }
 
+@Serializable
+data class FeedLoaderShownEventData(
+    @SerialName("event") override val event: String = FeatureEvents.FEED_LOADER_SHOWN.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
+    @SerialName("duration_ms") val durationMs: Long,
+) : BaseEventData(),
+    EventData {
+    constructor(durationMs: Long) : this(
+        FeatureEvents.FEED_LOADER_SHOWN.getEventName(),
+        Features.FEED.getFeatureName(),
+        durationMs,
+    )
+}
+
 // --- Video ---
 
 @Serializable
@@ -2074,6 +2088,181 @@ enum class FollowersListTab {
 
     @SerialName("followers")
     FOLLOWERS,
+}
+
+// --- Create Bot ---
+@Serializable
+data class CreateBotCtaClickedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.CREATE_BOT_CTA_CLICKED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.CREATE_BOT.getFeatureName(),
+    @SerialName("source") val source: BotCreationSource,
+) : BaseEventData(),
+    EventData {
+    constructor(source: BotCreationSource) : this(
+        FeatureEvents.CREATE_BOT_CTA_CLICKED.getEventName(),
+        Features.CREATE_BOT.getFeatureName(),
+        source,
+    )
+}
+
+@Serializable
+data class BotCreationStartedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.BOT_CREATION_STARTED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.CREATE_BOT.getFeatureName(),
+    @SerialName("source") val entryPoint: BotCreationSource,
+) : BaseEventData(),
+    EventData {
+    constructor(entryPoint: BotCreationSource) : this(
+        FeatureEvents.BOT_CREATION_STARTED.getEventName(),
+        Features.CREATE_BOT.getFeatureName(),
+        entryPoint,
+    )
+}
+
+@Serializable
+data class BotDescriptionSubmittedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.BOT_DESCRIPTION_SUBMITTED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.CREATE_BOT.getFeatureName(),
+    @SerialName("description_text") val descriptionText: String,
+    @SerialName("source") val entryPoint: BotCreationSource,
+) : BaseEventData(),
+    EventData {
+    constructor(descriptionText: String, entryPoint: BotCreationSource) : this(
+        FeatureEvents.BOT_DESCRIPTION_SUBMITTED.getEventName(),
+        Features.CREATE_BOT.getFeatureName(),
+        descriptionText,
+        entryPoint,
+    )
+}
+
+@Serializable
+data class BotDescriptionAcceptedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.BOT_DESCRIPTION_ACCEPTED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.CREATE_BOT.getFeatureName(),
+    @SerialName("description_edited") val descriptionEdited: Boolean,
+    @SerialName("description_text") val descriptionText: String,
+    @SerialName("source") val entryPoint: BotCreationSource,
+) : BaseEventData(),
+    EventData {
+    constructor(descriptionEdited: Boolean, descriptionText: String, entryPoint: BotCreationSource) : this(
+        FeatureEvents.BOT_DESCRIPTION_ACCEPTED.getEventName(),
+        Features.CREATE_BOT.getFeatureName(),
+        descriptionEdited,
+        descriptionText,
+        entryPoint,
+    )
+}
+
+@Serializable
+data class BotProfileGeneratedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.BOT_PROFILE_GENERATED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.CREATE_BOT.getFeatureName(),
+    @SerialName("name_generated") val nameGenerated: String,
+    @SerialName("avatar_generated") val avatarGenerated: Boolean,
+    @SerialName("source") val entryPoint: BotCreationSource,
+) : BaseEventData(),
+    EventData {
+    constructor(nameGenerated: String, avatarGenerated: Boolean, entryPoint: BotCreationSource) : this(
+        FeatureEvents.BOT_PROFILE_GENERATED.getEventName(),
+        Features.CREATE_BOT.getFeatureName(),
+        nameGenerated,
+        avatarGenerated,
+        entryPoint,
+    )
+}
+
+@Serializable
+data class CreateBotClickedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.CREATE_BOT_CLICKED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.CREATE_BOT.getFeatureName(),
+    @SerialName("retries") val retries: Int,
+    @SerialName("source") val entryPoint: BotCreationSource,
+) : BaseEventData(),
+    EventData {
+    constructor(retries: Int, entryPoint: BotCreationSource) : this(
+        FeatureEvents.CREATE_BOT_CLICKED.getEventName(),
+        Features.CREATE_BOT.getFeatureName(),
+        retries,
+        entryPoint,
+    )
+}
+
+@Serializable
+data class BotCreationSuccessEventData(
+    @SerialName("event") override val event: String = FeatureEvents.BOT_CREATION_SUCCESS.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.CREATE_BOT.getFeatureName(),
+    @SerialName("bot_id") val botId: String,
+    @SerialName("source") val entryPoint: BotCreationSource,
+) : BaseEventData(),
+    EventData {
+    constructor(botId: String, entryPoint: BotCreationSource) : this(
+        FeatureEvents.BOT_CREATION_SUCCESS.getEventName(),
+        Features.CREATE_BOT.getFeatureName(),
+        botId,
+        entryPoint,
+    )
+}
+
+@Serializable
+data class BotCreationFailedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.BOT_CREATION_FAILED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.CREATE_BOT.getFeatureName(),
+    @SerialName("error_code") val errorCode: String,
+    @SerialName("error_stage") val errorStage: BotCreationErrorStage,
+    @SerialName("retry_available") val retryAvailable: Boolean,
+    @SerialName("source") val entryPoint: BotCreationSource,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        errorCode: String,
+        errorStage: BotCreationErrorStage,
+        retryAvailable: Boolean,
+        entryPoint: BotCreationSource,
+    ) : this(
+        FeatureEvents.BOT_CREATION_FAILED.getEventName(),
+        Features.CREATE_BOT.getFeatureName(),
+        errorCode,
+        errorStage,
+        retryAvailable,
+        entryPoint,
+    )
+}
+
+@Serializable
+data class BotAccountDeletedEventData(
+    @SerialName("event") override val event: String = FeatureEvents.BOT_ACCOUNT_DELETED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.CREATE_BOT.getFeatureName(),
+    @SerialName("bot_id") val botId: String,
+    @SerialName("soft_delete_succeeded") val softDeleteSucceeded: Boolean = true,
+) : BaseEventData(),
+    EventData {
+    constructor(botId: String, softDeleteSucceeded: Boolean = true) : this(
+        FeatureEvents.BOT_ACCOUNT_DELETED.getEventName(),
+        Features.CREATE_BOT.getFeatureName(),
+        botId,
+        softDeleteSucceeded,
+    )
+}
+
+@Serializable
+enum class BotCreationSource {
+    @SerialName("chat_page")
+    CHAT_PAGE,
+
+    @SerialName("profile_page")
+    PROFILE_PAGE,
+}
+
+@Serializable
+enum class BotCreationErrorStage {
+    @SerialName("user_description")
+    USER_DESCRIPTION,
+
+    @SerialName("asset_generation")
+    ASSET_GENERATION,
+
+    @SerialName("final_create")
+    FINAL_CREATE,
 }
 
 // --- Tournament ---

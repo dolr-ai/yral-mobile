@@ -86,6 +86,9 @@ private class AndroidPlaybackCoordinator(
     private val playStartMsById = mutableMapOf<String, Long>()
     private var firstFramePendingIndex: Int? = null
     private var rebuffering = false
+    private var stalling = false
+    private var stallStartMs: Long = 0
+    private var fullyBufferedReported = false
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val progressTicker =
         PlaybackProgressTicker(
@@ -99,6 +102,7 @@ private class AndroidPlaybackCoordinator(
                     progress.positionMs,
                     progress.durationMs,
                 )
+                checkFullyBuffered(progress)
             },
         )
 
@@ -146,6 +150,29 @@ private class AndroidPlaybackCoordinator(
                     code = error.errorCode,
                     message = error.message,
                 )
+            }
+
+            @Suppress("ReturnCount")
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                val index = activeSlot.index ?: return
+                val item = feed.getOrNull(index) ?: return
+                val player = activeSlot.player
+                val isNonBufferStall =
+                    player.playWhenReady &&
+                        player.playbackState != Player.STATE_BUFFERING &&
+                        !rebuffering
+                if (!isPlaying && isNonBufferStall) {
+                    if (!stalling) {
+                        stalling = true
+                        stallStartMs = nowMs()
+                        reporter.stallStart(item.id, index, "playback_suppressed")
+                    }
+                } else if (isPlaying && stalling) {
+                    val elapsed = nowMs() - stallStartMs
+                    stalling = false
+                    stallStartMs = 0
+                    reporter.stallEnd(item.id, index, elapsed)
+                }
             }
 
             @Suppress("ReturnCount")
@@ -224,6 +251,9 @@ private class AndroidPlaybackCoordinator(
             activeIndex = -1
             predictedIndex = -1
             rebuffering = false
+            stalling = false
+            stallStartMs = 0
+            fullyBufferedReported = false
             firstFramePendingIndex = null
             activeSlot.player.playWhenReady = false
             preparedSlot?.player?.playWhenReady = false
@@ -266,6 +296,15 @@ private class AndroidPlaybackCoordinator(
             }
             rebuffering = false
         }
+        if (stalling) {
+            feed.getOrNull(activeIndex)?.let { item ->
+                val elapsed = nowMs() - stallStartMs
+                reporter.stallEnd(item.id, activeIndex, elapsed)
+            }
+            stalling = false
+            stallStartMs = 0
+        }
+        fullyBufferedReported = false
         activeIndex = index
         predictedIndex = index
         preloadStatusControl.currentPlayingIndex = index
@@ -381,6 +420,19 @@ private class AndroidPlaybackCoordinator(
             if (prepared.index != nextIndex) {
                 prepareSlot(prepared, nextIndex, playWhenReady = false)
             }
+        }
+    }
+
+    @Suppress("ReturnCount")
+    private fun checkFullyBuffered(progress: PlaybackProgress) {
+        if (fullyBufferedReported) return
+        val player = activeSlot.player
+        val duration = player.duration
+        if (duration == C.TIME_UNSET || duration <= 0L) return
+        if (player.bufferedPosition >= duration - BUFFER_TOLERANCE_MS) {
+            fullyBufferedReported = true
+            val startMs = playStartMsById[progress.id] ?: return
+            reporter.videoFullyBuffered(progress.id, progress.index, nowMs() - startMs)
         }
     }
 
@@ -567,6 +619,7 @@ private class AndroidPlaybackCoordinator(
         private const val BUFFER_FOR_PLAYBACK_MS = 500
         private const val BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS =
             DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS
+        private const val BUFFER_TOLERANCE_MS = 500L
     }
 
     private data class PlayerSlot(

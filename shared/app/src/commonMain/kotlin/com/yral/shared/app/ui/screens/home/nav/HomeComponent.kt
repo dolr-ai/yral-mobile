@@ -7,6 +7,7 @@ import com.arkivanov.decompose.value.Value
 import com.yral.featureflag.ChatFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.WalletFeatureFlags
+import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.core.session.SessionManager
@@ -50,7 +51,7 @@ abstract class HomeComponent {
     )
     abstract fun openWallet()
     abstract fun openLeaderboard()
-    abstract fun openCreateInfluencer()
+    abstract fun openCreateInfluencer(source: BotCreationSource)
 
     sealed class Child {
         class Feed(
@@ -99,7 +100,7 @@ abstract class HomeComponent {
                 influencerCategory: String,
                 influencerSource: InfluencerSource,
             ) -> Unit,
-            openCreateInfluencer: () -> Unit,
+            openCreateInfluencer: (source: BotCreationSource) -> Unit,
             openWallet: () -> Unit,
             openLeaderboard: () -> Unit,
             openTournamentLeaderboard: (

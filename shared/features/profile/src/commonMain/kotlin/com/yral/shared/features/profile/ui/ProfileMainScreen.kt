@@ -192,7 +192,6 @@ fun ProfileMainScreen(
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel,
     profileVideos: LazyPagingItems<FeedDetails>,
-    onCreateInfluencerClick: () -> Unit,
 ) {
     val sessionManager: SessionManager = koinInject()
     // Use nullable to avoid showing CTA flash while loading
@@ -470,7 +469,10 @@ fun ProfileMainScreen(
                     isBotAccount = isBotAccount,
                     hasBotAccounts = hasBotAccounts,
                     showCreateBotCta = showCreateBotCta,
-                    onCreateInfluencerClick = onCreateInfluencerClick,
+                    onCreateInfluencerClick = {
+                        viewModel.trackCreateInfluencerClicked()
+                        component.openCreateInfluencer()
+                    },
                     onUsernameClick = { username ->
                         val principal =
                             state.botUsernameToCanisterData[username]

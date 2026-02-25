@@ -6,6 +6,7 @@ import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.value.Value
+import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
@@ -26,7 +27,7 @@ internal class DefaultChatComponent(
         influencerCategory: String,
         influencerSource: InfluencerSource,
     ) -> Unit,
-    private val openCreateInfluencer: () -> Unit,
+    private val openCreateInfluencer: (source: BotCreationSource) -> Unit,
 ) : ChatComponent(),
     ComponentContext by componentContext,
     KoinComponent {
@@ -58,8 +59,8 @@ internal class DefaultChatComponent(
         }
     }
 
-    override fun openCreateInfluencer() {
-        openCreateInfluencer.invoke()
+    override fun openCreateInfluencer(source: BotCreationSource) {
+        openCreateInfluencer.invoke(source)
     }
 
     override fun createHomeSnapshot(): Snapshot =
@@ -107,6 +108,7 @@ internal class DefaultChatComponent(
                 // navigation.pushNew(Config.Conversation(influencerId = influencerId))
                 openConversation.invoke(influencerId, influencerCategory, influencerSource)
             },
+            openCreateInfluencer = openCreateInfluencer,
         )
 
     private fun conversationComponent(
