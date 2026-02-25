@@ -368,6 +368,10 @@ class ConversationViewModel(
         }
     }
 
+    fun trackFreeAccessExpired(botId: String) {
+        chatTelemetry.freeAccessExpired(botId)
+    }
+
     fun launchInfluencerSubscriptionPurchase(purchaseContext: PurchaseContext?) {
         if (purchaseContext == null) {
             viewModelScope.launch {
@@ -381,45 +385,63 @@ class ConversationViewModel(
             return
         }
         if (!_viewState.value.isSubscriptionEnabled) return
+        _viewState.value.influencer
+            ?.id
+            ?.let { chatTelemetry.subscriptionClicked(it) }
         _viewState.update { it.copy(isInfluencerSubscriptionPurchaseInProgress = true) }
         viewModelScope.launch {
-            runCatching {
-                iapManager.purchaseProduct(
-                    productId = ProductId.TARA_SUBSCRIPTION,
-                    context = purchaseContext,
-                    acknowledgePurchase = false,
-                )
-            }.onSuccess {
-                runCatching {
-                    iapManager.isProductPurchased(ProductId.TARA_SUBSCRIPTION)
-                }.onSuccess { result ->
-                    val purchase = result.getOrNull()
-                    val isPurchased = purchase is PurchaseResult.PurchaseMatches
-                    val purchaseTime = (purchase as? PurchaseResult.PurchaseMatches)?.purchaseTime
-                    if (purchase == null || purchase is PurchaseResult.NoPurchase) return@launch
-                    handleInfluencerSubscriptionVerificationResult(
-                        isPurchased = isPurchased,
-                        purchaseTimeMs = purchaseTime,
-                    )
-                }.onFailure {
+            performInfluencerSubscriptionPurchase(purchaseContext, _viewState.value.influencer?.id)
+        }
+    }
+
+    private suspend fun performInfluencerSubscriptionPurchase(
+        purchaseContext: PurchaseContext,
+        botId: String?,
+    ) {
+        runSuspendCatching {
+            iapManager.purchaseProduct(
+                productId = ProductId.TARA_SUBSCRIPTION,
+                context = purchaseContext,
+                acknowledgePurchase = false,
+            )
+        }.onSuccess {
+            runSuspendCatching {
+                iapManager.isProductPurchased(ProductId.TARA_SUBSCRIPTION)
+            }.onSuccess { result ->
+                val purchase = result.getOrNull()
+                val isPurchased = purchase is PurchaseResult.PurchaseMatches
+                val purchaseTime = (purchase as? PurchaseResult.PurchaseMatches)?.purchaseTime
+                if (purchase == null || purchase is PurchaseResult.NoPurchase) {
+                    botId?.let { chatTelemetry.subscriptionFailed(it, "no_purchase") }
                     _viewState.update { it.copy(isInfluencerSubscriptionPurchaseInProgress = false) }
+                    return@onSuccess
                 }
-            }.onFailure { error ->
+                handleInfluencerSubscriptionVerificationResult(
+                    isPurchased = isPurchased,
+                    purchaseTimeMs = purchaseTime,
+                )
+            }.onFailure { verificationError ->
                 _viewState.update { it.copy(isInfluencerSubscriptionPurchaseInProgress = false) }
-                when (error) {
-                    is IAPError.PurchaseCancelled -> return@launch
-                    else -> {
-                        val message =
-                            when (error) {
-                                is IAPError.PurchasePending ->
-                                    getString(Res.string.influencer_subscription_purchase_pending)
-                                else ->
-                                    getString(Res.string.influencer_subscription_purchase_failed)
-                            }
-                        influencerSubscriptionToastChannel.trySend(
-                            InfluencerSubscriptionToastEvent(ToastStatus.Error, message),
-                        )
-                    }
+                botId?.let {
+                    chatTelemetry.subscriptionFailed(it, verificationError.message ?: "unknown")
+                }
+            }
+        }.onFailure { error ->
+            _viewState.update { it.copy(isInfluencerSubscriptionPurchaseInProgress = false) }
+            botId?.let { chatTelemetry.subscriptionFailed(it, error.message ?: "unknown") }
+            when (error) {
+                is IAPError.PurchaseCancelled -> return@onFailure
+                else -> {
+                    val message =
+                        when (error) {
+                            is IAPError.PurchasePending ->
+                                getString(Res.string.influencer_subscription_purchase_pending)
+                            else ->
+                                getString(Res.string.influencer_subscription_purchase_failed)
+                        }
+                    influencerSubscriptionToastChannel.trySend(
+                        InfluencerSubscriptionToastEvent(ToastStatus.Error, message),
+                    )
                 }
             }
         }
@@ -437,6 +459,9 @@ class ConversationViewModel(
             )
         }
         if (isPurchased) {
+            _viewState.value.influencer
+                ?.id
+                ?.let { chatTelemetry.subscriptionSuccess(it) }
             val displayName =
                 _viewState.value.influencer
                     ?.displayName
@@ -448,6 +473,9 @@ class ConversationViewModel(
                 InfluencerSubscriptionToastEvent(ToastStatus.Success, message),
             )
         } else {
+            _viewState.value.influencer?.id?.let {
+                chatTelemetry.subscriptionFailed(it, "verification_pending")
+            }
             influencerSubscriptionToastChannel.trySend(
                 InfluencerSubscriptionToastEvent(
                     ToastStatus.Info,

@@ -224,6 +224,11 @@ fun ChatConversationScreen(
             accessActivatedMessage = accessActivatedOverlayMessage,
         )
     }
+    LaunchedEffect(shouldShowInfluencerSubscriptionCard, viewState.influencer?.id) {
+        if (shouldShowInfluencerSubscriptionCard) {
+            viewState.influencer?.id?.let { viewModel.trackFreeAccessExpired(it) }
+        }
+    }
 
     val loginState =
         rememberLoginInfo(
