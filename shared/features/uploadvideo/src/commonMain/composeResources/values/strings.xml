@@ -49,6 +49,8 @@
     <string name="toast_ai_video_generating">Sit tight! Your AI video is being created.</string>
     <string name="toast_ai_video_generated_drafts">Your AI video was generated and added to Drafts in the profile section!</string>
     <string name="toast_view_drafts">View Drafts</string>
+    <string name="toast_video_publishing">Your video is publishing and will appear on your profile soon.</string>
+    <string name="toast_video_published_success">Your AI video has been Published successfully!</string>
 
     <string name="ai_video_subscription_nudge_title">You’ve used your free AI video!</string>
     <string name="ai_video_subscription_nudge_description">Why use tokens? Go Pro. Get %1$d YRAL Credits to create AI videos, unlimited chats &amp; free tournaments access.</string>
