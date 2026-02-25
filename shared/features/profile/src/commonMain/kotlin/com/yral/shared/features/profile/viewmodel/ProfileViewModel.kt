@@ -44,6 +44,8 @@ import com.yral.shared.features.profile.domain.FollowNotificationUseCase
 import com.yral.shared.features.profile.domain.ProfileVideosPagingSource
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
 import com.yral.shared.features.profile.domain.repository.ProfileRepository
+import com.yral.shared.iap.IAPManager
+import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastStatus
@@ -122,6 +124,7 @@ class ProfileViewModel(
     private val getInfluencerUseCase: GetInfluencerUseCase,
     private val fileDownloader: FileDownloader,
     private val followersMetadataDataSource: FollowersMetadataDataSource,
+    private val iapManager: IAPManager,
 ) : ViewModel() {
     companion object {
         private const val POSTS_PER_PAGE = 20
@@ -140,6 +143,19 @@ class ProfileViewModel(
             ),
         )
     val state: StateFlow<ViewState> = _state.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            if (!_state.value.isSubscriptionEnabled) return@launch
+            runSuspendCatching {
+                iapManager.fetchProducts(listOf(ProductId.YRAL_PRO))
+            }.onSuccess { result ->
+                _state.update {
+                    it.copy(isYralProAvailable = result.getOrNull()?.isNotEmpty() == true)
+                }
+            }.onFailure { _state.update { it.copy(isYralProAvailable = false) } }
+        }
+    }
 
     private val profileEventsChannel = Channel<ProfileEvents>(Channel.CONFLATED)
     val profileEvents = profileEventsChannel.receiveAsFlow()
@@ -1125,6 +1141,7 @@ data class ViewState(
     val isTalkToMeInProgress: Boolean = false,
     val isProUser: Boolean = false,
     val isSubscriptionEnabled: Boolean = false,
+    val isYralProAvailable: Boolean = false,
     val maxBotCountForCta: Int = 3,
     val maxVisibleBotUsernames: Int = 2,
     val createdByUsername: String? = null,

@@ -12,7 +12,9 @@ import com.yral.shared.features.profile.domain.repository.ProfileRepository
 import com.yral.shared.features.profile.viewmodel.EditProfileViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.rust.service.domain.metadata.FollowersMetadataDataSource
+import com.yral.shared.rust.service.utils.CanisterData
 import org.koin.core.module.dsl.factoryOf
+import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -26,6 +28,32 @@ val profileModule =
         factoryOf(::UploadProfileImageUseCase)
         factoryOf(::FollowNotificationUseCase)
         factoryOf(::ProfileTelemetry)
-        viewModelOf(::ProfileViewModel)
+        viewModel { parameters ->
+            ProfileViewModel(
+                canisterData = parameters.get<CanisterData>(),
+                sessionManager = get(),
+                profileRepository = get(),
+                commonApis = get(),
+                deleteVideoUseCase = get(),
+                reportVideoUseCase = get(),
+                followUserUseCase = get(),
+                unfollowUserUseCase = get(),
+                followNotificationUseCase = get(),
+                getVideoViewsUseCase = get(),
+                profileTelemetry = get(),
+                chatTelemetry = get(),
+                shareService = get(),
+                urlBuilder = get(),
+                linkGenerator = get(),
+                crashlyticsManager = get(),
+                flagManager = get(),
+                userInfoPagingSourceFactory = get(),
+                getUserProfileDetailsV7UseCase = get(),
+                getInfluencerUseCase = get(),
+                fileDownloader = get(),
+                followersMetadataDataSource = get(),
+                iapManager = get(),
+            )
+        }
         viewModelOf(::EditProfileViewModel)
     }
