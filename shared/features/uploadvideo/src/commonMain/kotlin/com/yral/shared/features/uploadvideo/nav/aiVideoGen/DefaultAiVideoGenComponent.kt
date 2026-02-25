@@ -9,6 +9,7 @@ internal class DefaultAiVideoGenComponent(
     private val onBack: () -> Unit,
     override val promptLogin: () -> Unit,
     override val subscriptionCoordinator: SubscriptionCoordinator,
+    private val goToProfile: () -> Unit,
 ) : AiVideoGenComponent(),
     ComponentContext by componentContext {
     override fun onBack() {
@@ -17,5 +18,9 @@ internal class DefaultAiVideoGenComponent(
 
     override fun goToHome() {
         goToHome.invoke()
+    }
+
+    override fun goToProfile() {
+        goToProfile.invoke()
     }
 }
