@@ -52,7 +52,6 @@ val profileModule =
                 getInfluencerUseCase = get(),
                 fileDownloader = get(),
                 followersMetadataDataSource = get(),
-                iapManager = get(),
             )
         }
         viewModelOf(::EditProfileViewModel)
