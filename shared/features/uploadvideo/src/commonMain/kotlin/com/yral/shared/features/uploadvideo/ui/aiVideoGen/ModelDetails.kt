@@ -146,7 +146,7 @@ private fun Cost(
                 style = LocalAppTopography.current.mdSemiBold,
                 color = YralColors.Neutral300,
             )
-            if (isCreditsAvailable) {
+            if (isCreditsAvailable && cost > 0) {
                 Text(
                     text = "$cost",
                     style = LocalAppTopography.current.baseMedium,

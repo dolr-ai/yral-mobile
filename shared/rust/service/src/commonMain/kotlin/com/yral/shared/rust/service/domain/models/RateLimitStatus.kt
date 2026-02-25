@@ -5,4 +5,6 @@ data class RateLimitStatus(
     val windowStart: ULong,
     val isLimited: Boolean,
     val requestCount: ULong,
+    val maxRequestsPerWindowPerUser: ULong,
+    val windowDurationSeconds: ULong,
 )

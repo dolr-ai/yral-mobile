@@ -29,7 +29,6 @@ import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
-import com.yral.shared.rust.service.domain.models.RateLimitStatus
 import com.yral.shared.rust.service.domain.models.VideoGenRequestKey
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -203,16 +202,17 @@ class AiVideoGenViewModel internal constructor(
                                     ),
                             ),
                     ).onSuccess { status ->
-                        val usedCredits = status.usedCredits()
+                        val usedCredits = status.requestCount.toInt()
+                        val totalCredits = status.maxRequestsPerWindowPerUser.toInt()
                         uploadVideoTelemetry.videoCreationPageViewed(
                             type = VideoCreationType.AI_VIDEO,
                             creditsFetched = true,
-                            creditsAvailable = 1 - usedCredits,
+                            creditsAvailable = totalCredits - usedCredits,
                         )
                         _state
-                            .update { it.copy(usedCredits = usedCredits) }
+                            .update { it.copy(usedCredits = usedCredits, totalCredits = totalCredits) }
                             .also { logger.d { "Used credits ${_state.value.usedCredits} $status" } }
-                        setSubscriptionNudgeShown(usedCredits)
+                        setSubscriptionNudgeShown(usedCredits >= totalCredits)
                     }.onFailure { error ->
                         uploadVideoTelemetry.videoCreationPageViewed(
                             type = VideoCreationType.AI_VIDEO,
@@ -224,13 +224,6 @@ class AiVideoGenViewModel internal constructor(
             }
         }
     }
-
-    private fun RateLimitStatus.usedCredits() =
-        if (_state.value.isLoggedIn) {
-            if (isLimited) 1 else 0
-        } else {
-            0
-        }
 
     @Suppress("LongMethod")
     fun generateAiVideo() {
@@ -522,8 +515,8 @@ class AiVideoGenViewModel internal constructor(
         _state.update { it.copy(currentBalance = balance) }
     }
 
-    suspend fun setSubscriptionNudgeShown(usedCredits: Int?) {
-        if (usedCredits == 1 && !_state.value.proDetails.isProPurchased) {
+    suspend fun setSubscriptionNudgeShown(isFreeCreditsExhausted: Boolean) {
+        if (isFreeCreditsExhausted && !_state.value.proDetails.isProPurchased) {
             val todayEpochDays =
                 Instant
                     .fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds())
