@@ -3,6 +3,7 @@ package com.yral.shared.features.uploadvideo.domain
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.libs.arch.domain.FlowUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
@@ -27,6 +28,8 @@ class PollGenerationStatusUseCase(
         coroutineDispatcher = appDispatchers.network,
         failureListener = failureListener,
     ) {
+    override val exceptionType: String = ExceptionType.AI_VIDEO.name
+
     override fun execute(parameters: Params): Flow<Result<VideoGenRequestStatus, Throwable>> =
         flow {
             val completed: Boolean =

@@ -3,6 +3,7 @@ package com.yral.shared.features.uploadvideo.domain
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
+import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.uploadvideo.domain.models.UploadState
 import com.yral.shared.features.uploadvideo.domain.models.UploadStatus
 import com.yral.shared.libs.arch.domain.FlowUseCase
@@ -16,6 +17,8 @@ internal class UploadVideoUseCase(
     failureListener: UseCaseFailureListener,
     private val repository: UploadRepository,
 ) : FlowUseCase<UploadVideoUseCase.Params, UploadState>(appDispatchers.network, failureListener) {
+    override val exceptionType: String = ExceptionType.UPLOAD_VIDEO.name
+
     override fun execute(parameters: Params): Flow<Result<UploadState, Throwable>> =
         repository
             .uploadVideo(parameters.uploadUrl, parameters.filePath)

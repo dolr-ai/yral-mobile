@@ -15,6 +15,8 @@ import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.core.session.ProDetails
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
+import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.subscriptions.analytics.SubscriptionTelemetry
 import com.yral.shared.features.uploadvideo.analytics.UploadVideoTelemetry
 import com.yral.shared.features.uploadvideo.data.remote.models.TokenType
@@ -54,6 +56,7 @@ class AiVideoGenViewModel internal constructor(
     private val preferences: Preferences,
     private val uploadVideoTelemetry: UploadVideoTelemetry,
     private val subscriptionTelemetry: SubscriptionTelemetry,
+    private val crashlyticsManager: CrashlyticsManager,
     logger: YralLogger,
     flagManager: FeatureFlagManager,
 ) : ViewModel() {
@@ -392,6 +395,10 @@ class AiVideoGenViewModel internal constructor(
                                     }
 
                                     is PollAndUploadAiVideoUseCase.PollAndUploadResult.Failed -> {
+                                        crashlyticsManager.recordException(
+                                            Exception(pollResult.errorMessage),
+                                            ExceptionType.AI_VIDEO,
+                                        )
                                         _state.update {
                                             it.copy(
                                                 bottomSheetType =
@@ -409,6 +416,10 @@ class AiVideoGenViewModel internal constructor(
                                     }
 
                                     is PollAndUploadAiVideoUseCase.PollAndUploadResult.UploadFailed -> {
+                                        crashlyticsManager.recordException(
+                                            Exception(pollResult.errorMessage),
+                                            ExceptionType.AI_VIDEO,
+                                        )
                                         _state.update {
                                             it.copy(
                                                 bottomSheetType = BottomSheetType.Error(""),

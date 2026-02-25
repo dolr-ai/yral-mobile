@@ -3,6 +3,7 @@ package com.yral.shared.app.ui.screens.profile.nav
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
+import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.data.AlertsRequestType
@@ -30,7 +31,7 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
     abstract fun openEditProfile()
     abstract fun onBackClicked(): Boolean
     abstract fun openProfile()
-    abstract fun openCreateInfluencer()
+    abstract fun openCreateInfluencer(source: BotCreationSource)
     abstract fun openConversation(
         influencerId: String,
         influencerCategory: String,
@@ -66,7 +67,7 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
             onUploadVideoClicked: () -> Unit,
             openEditProfile: () -> Unit,
             openProfile: (CanisterData) -> Unit,
-            openCreateInfluencer: () -> Unit,
+            openCreateInfluencer: (source: BotCreationSource) -> Unit,
             openConversation: (
                 influencerId: String,
                 influencerCategory: String,

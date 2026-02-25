@@ -77,9 +77,13 @@ internal class ComponentFactory(
             onBack = rootComponent::onBackClicked,
         )
 
-    fun createCreateInfluencer(componentContext: ComponentContext): CreateInfluencerComponent =
+    fun createCreateInfluencer(
+        componentContext: ComponentContext,
+        config: Config.CreateInfluencer,
+    ): CreateInfluencerComponent =
         CreateInfluencerComponent(
             componentContext = componentContext,
+            source = config.source,
             requestLoginFactory = rootComponent.createLoginRequestFactory(),
             onBack = rootComponent::onBackClicked,
             onProfileCreated = { successMessage ->

@@ -11,6 +11,7 @@ enum class Features {
     REFERRAL,
     LEADERBOARD,
     AI_CHATBOT,
+    CREATE_BOT,
     TOURNAMENT,
     SUBSCRIPTION,
     ;

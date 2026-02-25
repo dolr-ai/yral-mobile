@@ -2,8 +2,10 @@ package com.yral.shared.features.chat.analytics
 
 import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.events.AIMessageDeliveredEventData
+import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.analytics.events.ChatInfluencerClickedEventData
 import com.yral.shared.analytics.events.ChatSessionStartedEventData
+import com.yral.shared.analytics.events.CreateBotCtaClickedEventData
 import com.yral.shared.analytics.events.InfluencerCardClickedEventData
 import com.yral.shared.analytics.events.InfluencerCardsViewedEventData
 import com.yral.shared.analytics.events.InfluencerClickType
@@ -109,5 +111,9 @@ class ChatTelemetry(
                 message = message,
             ),
         )
+    }
+
+    fun createBotCtaClicked(source: BotCreationSource) {
+        analyticsManager.trackEvent(CreateBotCtaClickedEventData(source = source))
     }
 }

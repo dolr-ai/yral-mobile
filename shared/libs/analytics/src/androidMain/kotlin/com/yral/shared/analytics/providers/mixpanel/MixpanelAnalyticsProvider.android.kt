@@ -75,6 +75,8 @@ actual class MixpanelAnalyticsProvider actual constructor(
                 "email_id" to user.emailId,
                 "phone_number" to user.phoneNumber,
                 "pro_status" to (user.proStatus ?: false),
+                "is_ai_bot" to (user.isBotAccount ?: false),
+                "parent_account" to if (user.isBotAccount == true) user.parentAccount else null,
             )
 
         // Attach UTM attribution as user-level properties (people + super props)

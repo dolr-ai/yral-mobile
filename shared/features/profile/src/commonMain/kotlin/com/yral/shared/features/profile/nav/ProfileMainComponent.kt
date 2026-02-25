@@ -1,6 +1,7 @@
 package com.yral.shared.features.profile.nav
 
 import com.arkivanov.decompose.ComponentContext
+import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.auth.ui.RequestLoginFactory
@@ -40,7 +41,7 @@ interface ProfileMainComponent {
             openAccount: () -> Unit,
             openEditProfile: () -> Unit,
             openProfile: (CanisterData) -> Unit,
-            openCreateInfluencer: () -> Unit,
+            openCreateInfluencer: (source: BotCreationSource) -> Unit,
             openConversation: (
                 influencerId: String,
                 influencerCategory: String,

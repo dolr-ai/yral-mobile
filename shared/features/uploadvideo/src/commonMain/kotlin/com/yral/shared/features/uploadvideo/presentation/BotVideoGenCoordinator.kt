@@ -5,6 +5,8 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
+import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.uploadvideo.data.remote.models.TokenType
 import com.yral.shared.features.uploadvideo.domain.GenerateVideoUseCase
 import com.yral.shared.features.uploadvideo.domain.GetProvidersUseCase
@@ -28,6 +30,7 @@ internal class BotVideoGenCoordinator(
     private val generateVideoUseCase: GenerateVideoUseCase,
     private val pollAndUploadAiVideoUseCase: PollAndUploadAiVideoUseCase,
     private val getProvidersUseCase: GetProvidersUseCase,
+    private val crashlyticsManager: CrashlyticsManager,
     private val json: Json,
     appDispatchers: AppDispatchers,
 ) : BotVideoGenManager {
@@ -104,6 +107,7 @@ internal class BotVideoGenCoordinator(
         }
     }
 
+    @Suppress("LongMethod")
     private fun startPolling(
         botPrincipal: String,
         requestKey: VideoGenRequestKey,
@@ -148,6 +152,10 @@ internal class BotVideoGenCoordinator(
                                 }
 
                                 is PollAndUploadAiVideoUseCase.PollAndUploadResult.Failed -> {
+                                    crashlyticsManager.recordException(
+                                        Exception(pollResult.errorMessage),
+                                        ExceptionType.AI_VIDEO,
+                                    )
                                     logger.w {
                                         "bot_video_gen: generation failed for $botPrincipal " +
                                             "reason=${pollResult.errorMessage}"
@@ -157,6 +165,10 @@ internal class BotVideoGenCoordinator(
                                 }
 
                                 is PollAndUploadAiVideoUseCase.PollAndUploadResult.UploadFailed -> {
+                                    crashlyticsManager.recordException(
+                                        Exception(pollResult.errorMessage),
+                                        ExceptionType.AI_VIDEO,
+                                    )
                                     logger.w {
                                         "bot_video_gen: upload failed for $botPrincipal " +
                                             "reason=${pollResult.errorMessage}"
