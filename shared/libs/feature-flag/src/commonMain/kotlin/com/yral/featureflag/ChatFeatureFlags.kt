@@ -19,14 +19,14 @@ object ChatFeatureFlags {
                 keySuffix = "loginPromptMessageThreshold",
                 name = "Login prompt message limit",
                 description = "Total message count at which to show login prompt in chat",
-                defaultValue = 5,
+                defaultValue = 10,
             )
         val SubscriptionMandatoryThreshold: FeatureFlag<Int> =
             int(
                 keySuffix = "subscriptionMandatoryThreshold",
                 name = "Subscription mandatory threshold",
                 description = "Total message count at which to show subscription nudge in chat",
-                defaultValue = 15,
+                defaultValue = 100,
             )
         val MaxBotCountForCta: FeatureFlag<Int> =
             int(

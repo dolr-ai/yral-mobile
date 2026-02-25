@@ -29,6 +29,7 @@ data class SessionProperties(
     val isMandatoryLogin: Boolean? = null,
     val phoneNumber: String? = null,
     val proDetails: ProDetails? = null,
+    val isYralProAvailable: Boolean? = null,
 )
 
 data class ProDetails(
