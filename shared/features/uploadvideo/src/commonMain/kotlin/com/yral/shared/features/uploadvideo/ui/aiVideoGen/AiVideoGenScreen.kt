@@ -64,10 +64,16 @@ import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
 import com.yral.shared.libs.designsystem.component.getSVGImageModel
+import com.yral.shared.libs.designsystem.component.toast.ToastCTA
+import com.yral.shared.libs.designsystem.component.toast.ToastDuration
+import com.yral.shared.libs.designsystem.component.toast.ToastManager
+import com.yral.shared.libs.designsystem.component.toast.ToastType
+import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.videoPlayer.YralVideoPlayer
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -79,6 +85,8 @@ import yral_mobile.shared.features.uploadvideo.generated.resources.play_games
 import yral_mobile.shared.features.uploadvideo.generated.resources.stay_here
 import yral_mobile.shared.features.uploadvideo.generated.resources.this_may_take_few_minutes
 import yral_mobile.shared.features.uploadvideo.generated.resources.to_earn_token
+import yral_mobile.shared.features.uploadvideo.generated.resources.toast_ai_video_generated_drafts
+import yral_mobile.shared.features.uploadvideo.generated.resources.toast_view_drafts
 import yral_mobile.shared.features.uploadvideo.generated.resources.upload_completed_message
 import yral_mobile.shared.features.uploadvideo.generated.resources.upload_successful
 import yral_mobile.shared.features.uploadvideo.generated.resources.yes_take_me_back
@@ -126,6 +134,20 @@ fun AiVideoGenScreen(
                 }
                 is AiVideoGenViewModel.AiVideoGenEvent.RefreshProDetails -> {
                     component.subscriptionCoordinator.refreshCreditBalances()
+                }
+                is AiVideoGenViewModel.AiVideoGenEvent.ShowGeneratedToast -> {
+                    ToastManager.showSuccess(
+                        type =
+                            ToastType.Small(
+                                getString(Res.string.toast_ai_video_generated_drafts),
+                            ),
+                        cta =
+                            ToastCTA(
+                                text = getString(Res.string.toast_view_drafts),
+                                onClick = { component.goToProfile() },
+                            ),
+                        duration = ToastDuration.LONG,
+                    )
                 }
             }
         }

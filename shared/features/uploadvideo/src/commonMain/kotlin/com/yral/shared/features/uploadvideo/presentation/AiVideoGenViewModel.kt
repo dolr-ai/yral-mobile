@@ -27,6 +27,9 @@ import com.yral.shared.features.uploadvideo.domain.PollAndUploadAiVideoUseCase
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.libs.arch.presentation.UiState
+import com.yral.shared.libs.designsystem.component.toast.ToastManager
+import com.yral.shared.libs.designsystem.component.toast.ToastType
+import com.yral.shared.libs.designsystem.component.toast.showInfo
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.service.domain.models.RateLimitStatus
@@ -45,6 +48,7 @@ import org.jetbrains.compose.resources.getString
 import yral_mobile.shared.features.uploadvideo.generated.resources.Res
 import yral_mobile.shared.features.uploadvideo.generated.resources.ai_video_subscription_nudge_description
 import yral_mobile.shared.features.uploadvideo.generated.resources.ai_video_subscription_nudge_title
+import yral_mobile.shared.features.uploadvideo.generated.resources.toast_ai_video_generating
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -239,6 +243,9 @@ class AiVideoGenViewModel internal constructor(
             currentState.selectedProvider?.let { selectedProvider ->
                 sessionManager.userPrincipal?.let { userId ->
                     _state.update { it.copy(uiState = UiState.InProgress(0f)) }
+                    ToastManager.showInfo(
+                        type = ToastType.Small(getString(Res.string.toast_ai_video_generating)),
+                    )
                     currentRequestKey = null
                     requiredUseCases
                         .generateVideo(
@@ -381,6 +388,7 @@ class AiVideoGenViewModel internal constructor(
                                                 reservedBalance = null,
                                             )
                                         }
+                                        aiVideoGenEventChannel.trySend(AiVideoGenEvent.ShowGeneratedToast)
                                         if (_state.value.proDetails.isProPurchased) {
                                             // Track credit consumption
                                             val creditsRemaining =
@@ -596,5 +604,6 @@ class AiVideoGenViewModel internal constructor(
             val entryPoint: SubscriptionEntryPoint = SubscriptionEntryPoint.AI_VIDEO,
         ) : AiVideoGenEvent()
         data object RefreshProDetails : AiVideoGenEvent()
+        data object ShowGeneratedToast : AiVideoGenEvent()
     }
 }
