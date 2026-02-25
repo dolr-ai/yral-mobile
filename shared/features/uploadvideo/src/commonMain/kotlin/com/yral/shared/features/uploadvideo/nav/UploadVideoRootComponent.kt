@@ -48,6 +48,7 @@ abstract class UploadVideoRootComponent : HomeChildSnapshotProvider {
             promptLogin: (pageName: SignupPageName) -> Unit,
             subscriptionCoordinator: SubscriptionCoordinator,
             snapshot: Snapshot?,
+            goToProfile: () -> Unit = {},
         ): UploadVideoRootComponent =
             DefaultUploadVideoRootComponent(
                 componentContext = componentContext,
@@ -55,6 +56,7 @@ abstract class UploadVideoRootComponent : HomeChildSnapshotProvider {
                 promptLogin = promptLogin,
                 subscriptionCoordinator = subscriptionCoordinator,
                 snapshot = snapshot,
+                goToProfile = goToProfile,
             )
     }
 }

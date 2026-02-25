@@ -25,6 +25,7 @@ internal class DefaultUploadVideoRootComponent(
     private val goToHome: () -> Unit,
     override val subscriptionCoordinator: SubscriptionCoordinator,
     private val snapshot: Snapshot?,
+    private val goToProfile: () -> Unit = {},
 ) : UploadVideoRootComponent(),
     ComponentContext by componentContext,
     KoinComponent {
@@ -102,6 +103,10 @@ internal class DefaultUploadVideoRootComponent(
             goToHome = iGoToHome,
             promptLogin = { promptLogin(SignupPageName.VIDEO_CREATION) },
             subscriptionCoordinator = subscriptionCoordinator,
+            goToProfile = {
+                navigation.replaceAll(Config.FlowSelection)
+                goToProfile()
+            },
         )
 
     private fun uploadVideoComponent(componentContext: ComponentContext): UploadVideoComponent =
