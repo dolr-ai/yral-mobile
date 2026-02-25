@@ -23,6 +23,8 @@ pub struct RateLimitStatusWrapper {
   pub window_start: u64,
   pub is_limited: bool,
   pub request_count: u64,
+  pub max_requests_per_window_per_user: u64,
+  pub window_duration_seconds: u64,
 }
 
 impl From<RateLimitStatus> for RateLimitStatusWrapper {
@@ -32,6 +34,8 @@ impl From<RateLimitStatus> for RateLimitStatusWrapper {
             window_start: value.window_start,
             is_limited: value.is_limited,
             request_count: value.request_count,
+            max_requests_per_window_per_user: value.max_requests_per_window_per_user,
+            window_duration_seconds: value.window_duration_seconds
         }
     }
 }
