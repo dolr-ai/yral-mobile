@@ -22,6 +22,7 @@ import com.yral.shared.features.uploadvideo.analytics.UploadVideoTelemetry
 import com.yral.shared.features.uploadvideo.data.remote.models.TokenType
 import com.yral.shared.features.uploadvideo.domain.GenerateVideoUseCase
 import com.yral.shared.features.uploadvideo.domain.GetFreeCreditsStatusUseCase
+import com.yral.shared.features.uploadvideo.domain.GetPropertyRateLimitConfigUseCase
 import com.yral.shared.features.uploadvideo.domain.GetProvidersUseCase
 import com.yral.shared.features.uploadvideo.domain.PollAndUploadAiVideoUseCase
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
@@ -172,57 +173,110 @@ class AiVideoGenViewModel internal constructor(
 
     private fun getFreeCreditsStatus() {
         viewModelScope.launch {
-            with(_state.value.proDetails) {
-                if (isProPurchased) {
-                    _state.update {
-                        it.copy(
-                            usedCredits = totalCredits - availableCredits,
-                            totalCredits = totalCredits,
-                        )
-                    }
-                    uploadVideoTelemetry.videoCreationPageViewed(
-                        type = VideoCreationType.AI_VIDEO,
-                        creditsFetched = true,
-                        creditsAvailable = availableCredits,
-                    )
-                    return@launch
-                }
-            }
+            if (applyProCreditsIfPurchased()) return@launch
             _state.update { it.copy(usedCredits = null) }
-            sessionManager.userPrincipal?.let { userPrincipal ->
-                requiredUseCases
-                    .getFreeCreditsStatus(
-                        parameter =
-                            GetFreeCreditsStatusUseCase.Params(
-                                userPrincipal = userPrincipal,
-                                isRegistered =
-                                    sessionManager.readLatestSessionPropertyWithDefault(
-                                        selector = { it.isSocialSignIn },
-                                        defaultValue = false,
-                                    ),
-                            ),
-                    ).onSuccess { status ->
-                        val usedCredits = status.requestCount.toInt()
-                        val totalCredits = status.maxRequestsPerWindowPerUser.toInt()
-                        uploadVideoTelemetry.videoCreationPageViewed(
-                            type = VideoCreationType.AI_VIDEO,
-                            creditsFetched = true,
-                            creditsAvailable = totalCredits - usedCredits,
-                        )
-                        _state
-                            .update { it.copy(usedCredits = usedCredits, totalCredits = totalCredits) }
-                            .also { logger.d { "Used credits ${_state.value.usedCredits} $status" } }
-                        setSubscriptionNudgeShown(usedCredits >= totalCredits)
-                    }.onFailure { error ->
-                        uploadVideoTelemetry.videoCreationPageViewed(
-                            type = VideoCreationType.AI_VIDEO,
-                            creditsFetched = false,
-                        )
-                        logger.e(error) { "Error fetching free credits" }
-                        _state.update { it.copy(usedCredits = null) }
-                    }
+            val userPrincipal = sessionManager.userPrincipal ?: return@launch
+            val isRegistered =
+                sessionManager.readLatestSessionPropertyWithDefault(
+                    selector = { it.isSocialSignIn },
+                    defaultValue = false,
+                )
+            if (isRegistered) {
+                fetchCreditsForRegisteredUser(userPrincipal)
+            } else {
+                fetchCreditsForUnregisteredUser(userPrincipal)
             }
         }
+    }
+
+    private fun applyProCreditsIfPurchased(): Boolean {
+        with(_state.value.proDetails) {
+            if (!isProPurchased) return false
+            _state.update {
+                it.copy(
+                    usedCredits = totalCredits - availableCredits,
+                    totalCredits = totalCredits,
+                )
+            }
+            uploadVideoTelemetry.videoCreationPageViewed(
+                type = VideoCreationType.AI_VIDEO,
+                creditsFetched = true,
+                creditsAvailable = availableCredits,
+            )
+            return true
+        }
+    }
+
+    private suspend fun applyCreditsToState(
+        usedCredits: Int,
+        totalCredits: Int,
+        showSubscriptionNudgeWhenExhausted: Boolean,
+    ) {
+        uploadVideoTelemetry.videoCreationPageViewed(
+            type = VideoCreationType.AI_VIDEO,
+            creditsFetched = true,
+            creditsAvailable = totalCredits - usedCredits,
+        )
+        _state.update { it.copy(usedCredits = usedCredits, totalCredits = totalCredits) }
+        setSubscriptionNudgeShown(showSubscriptionNudgeWhenExhausted && usedCredits >= totalCredits)
+    }
+
+    private fun onCreditsFetchFailure(
+        error: Throwable,
+        logMessage: String,
+    ) {
+        uploadVideoTelemetry.videoCreationPageViewed(
+            type = VideoCreationType.AI_VIDEO,
+            creditsFetched = false,
+        )
+        logger.e(error) { logMessage }
+        _state.update { it.copy(usedCredits = null) }
+    }
+
+    private suspend fun fetchCreditsForRegisteredUser(userPrincipal: String) {
+        requiredUseCases
+            .getFreeCreditsStatus(
+                parameter =
+                    GetFreeCreditsStatusUseCase.Params(
+                        userPrincipal = userPrincipal,
+                        isRegistered = true,
+                    ),
+            ).onSuccess { status ->
+                val usedCredits = status.requestCount.toInt()
+                val totalCredits = status.maxRequestsPerWindowPerUser.toInt()
+                applyCreditsToState(
+                    usedCredits = usedCredits,
+                    totalCredits = totalCredits,
+                    showSubscriptionNudgeWhenExhausted = true,
+                )
+                logger.d { "Used credits ${_state.value.usedCredits} $status" }
+            }.onFailure { error ->
+                onCreditsFetchFailure(error, "Error fetching free credits")
+            }
+    }
+
+    private suspend fun fetchCreditsForUnregisteredUser(userPrincipal: String) {
+        requiredUseCases
+            .getPropertyRateLimitConfig(
+                parameter = GetPropertyRateLimitConfigUseCase.Params(userPrincipal = userPrincipal),
+            ).onSuccess { config ->
+                if (config != null) {
+                    val totalCredits = config.maxRequestsPerWindowRegistered.toInt()
+                    applyCreditsToState(
+                        usedCredits = 0,
+                        totalCredits = totalCredits,
+                        showSubscriptionNudgeWhenExhausted = false,
+                    )
+                    logger.d { "Property rate limit config: usedCredits=0 totalCredits=$totalCredits" }
+                } else {
+                    onCreditsFetchFailure(
+                        error = IllegalStateException("Property rate limit config is null"),
+                        logMessage = "Property rate limit config is null",
+                    )
+                }
+            }.onFailure { error ->
+                onCreditsFetchFailure(error, "Error fetching property rate limit config")
+            }
     }
 
     @Suppress("LongMethod")
@@ -578,6 +632,7 @@ class AiVideoGenViewModel internal constructor(
     internal data class RequiredUseCases(
         val getProviders: GetProvidersUseCase,
         val getFreeCreditsStatus: GetFreeCreditsStatusUseCase,
+        val getPropertyRateLimitConfig: GetPropertyRateLimitConfigUseCase,
         val generateVideo: GenerateVideoUseCase,
         val pollAndUploadAiVideo: PollAndUploadAiVideoUseCase,
     )

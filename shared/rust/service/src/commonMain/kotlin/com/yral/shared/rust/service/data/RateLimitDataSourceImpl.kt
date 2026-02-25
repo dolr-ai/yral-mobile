@@ -1,6 +1,7 @@
 package com.yral.shared.rust.service.data
 
 import com.yral.shared.rust.service.services.RateLimitServiceFactory
+import com.yral.shared.uniffi.generated.PropertyRateLimitConfigWrapper
 import com.yral.shared.uniffi.generated.RateLimitStatusWrapper
 import com.yral.shared.uniffi.generated.Result2Wrapper
 import com.yral.shared.uniffi.generated.VideoGenRequestKeyWrapper
@@ -23,6 +24,14 @@ internal class RateLimitDataSourceImpl(
         rateLimitServiceFactory
             .service(principal = userPrincipal)
             .getRateLimitStatus(VIDEO_GEN_RATE_LIMIT_PROPERTY, isRegistered)
+
+    override suspend fun getPropertyRateLimitConfig(
+        userPrincipal: String,
+        property: String,
+    ): PropertyRateLimitConfigWrapper? =
+        rateLimitServiceFactory
+            .service(principal = userPrincipal)
+            .getPropertyRateLimitConfig(property)
 
     companion object {
         private const val VIDEO_GEN_RATE_LIMIT_PROPERTY = "VIDEOGEN"
