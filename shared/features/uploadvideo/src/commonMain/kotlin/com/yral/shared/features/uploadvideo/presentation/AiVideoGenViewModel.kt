@@ -15,6 +15,7 @@ import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.core.session.ProDetails
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
+import com.yral.shared.core.videostate.VideoGenerationTracker
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.subscriptions.analytics.SubscriptionTelemetry
@@ -49,6 +50,7 @@ import yral_mobile.shared.features.uploadvideo.generated.resources.Res
 import yral_mobile.shared.features.uploadvideo.generated.resources.ai_video_subscription_nudge_description
 import yral_mobile.shared.features.uploadvideo.generated.resources.ai_video_subscription_nudge_title
 import yral_mobile.shared.features.uploadvideo.generated.resources.toast_ai_video_generating
+import kotlin.math.exp
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -243,6 +245,7 @@ class AiVideoGenViewModel internal constructor(
             currentState.selectedProvider?.let { selectedProvider ->
                 sessionManager.userPrincipal?.let { userId ->
                     _state.update { it.copy(uiState = UiState.InProgress(0f)) }
+                    VideoGenerationTracker.startGenerating()
                     ToastManager.showInfo(
                         type = ToastType.Small(getString(Res.string.toast_ai_video_generating)),
                     )
@@ -378,10 +381,14 @@ class AiVideoGenViewModel internal constructor(
                                 when (pollResult) {
                                     is PollAndUploadAiVideoUseCase.PollAndUploadResult.InProgress -> {
                                         _state.update { it.copy(uiState = UiState.InProgress(0f)) }
+                                        VideoGenerationTracker.updateProgress(
+                                            estimateProgress(pollResult.pollCount),
+                                        )
                                     }
 
                                     is PollAndUploadAiVideoUseCase.PollAndUploadResult.Success -> {
                                         logger.d { "Generated video uploaded successfully" }
+                                        VideoGenerationTracker.stopGenerating()
                                         _state.update {
                                             it.copy(
                                                 uiState = UiState.Success(pollResult.videoUrl),
@@ -403,6 +410,7 @@ class AiVideoGenViewModel internal constructor(
                                     }
 
                                     is PollAndUploadAiVideoUseCase.PollAndUploadResult.Failed -> {
+                                        VideoGenerationTracker.stopGenerating()
                                         crashlyticsManager.recordException(
                                             Exception(pollResult.errorMessage),
                                             ExceptionType.AI_VIDEO,
@@ -424,6 +432,7 @@ class AiVideoGenViewModel internal constructor(
                                     }
 
                                     is PollAndUploadAiVideoUseCase.PollAndUploadResult.UploadFailed -> {
+                                        VideoGenerationTracker.stopGenerating()
                                         crashlyticsManager.recordException(
                                             Exception(pollResult.errorMessage),
                                             ExceptionType.AI_VIDEO,
@@ -441,6 +450,7 @@ class AiVideoGenViewModel internal constructor(
                                 }
                             },
                             failure = { error ->
+                                VideoGenerationTracker.stopGenerating()
                                 uploadVideoTelemetry.aiVideoGenerated(
                                     model = _state.value.selectedProvider?.name ?: "",
                                     prompt = prompt,
@@ -501,6 +511,7 @@ class AiVideoGenViewModel internal constructor(
         }
 
     fun cleanup() {
+        VideoGenerationTracker.stopGenerating()
         _state.update { current ->
             ViewState(
                 isLoggedIn = current.isLoggedIn,
@@ -590,6 +601,12 @@ class AiVideoGenViewModel internal constructor(
         data object BackConfirmation : BottomSheetType()
     }
 
+    private fun estimateProgress(pollCount: Int): Float {
+        val maxProgress = MAX_GENERATION_PROGRESS
+        val rate = GENERATION_PROGRESS_RATE
+        return maxProgress * (1f - exp(-rate * pollCount))
+    }
+
     internal data class RequiredUseCases(
         val getProviders: GetProvidersUseCase,
         val getFreeCreditsStatus: GetFreeCreditsStatusUseCase,
@@ -605,5 +622,10 @@ class AiVideoGenViewModel internal constructor(
         ) : AiVideoGenEvent()
         data object RefreshProDetails : AiVideoGenEvent()
         data object ShowGeneratedToast : AiVideoGenEvent()
+    }
+
+    private companion object {
+        const val MAX_GENERATION_PROGRESS = 0.9f
+        const val GENERATION_PROGRESS_RATE = 0.1f
     }
 }

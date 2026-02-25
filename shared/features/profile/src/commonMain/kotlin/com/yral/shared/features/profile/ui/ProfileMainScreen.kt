@@ -44,6 +44,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,8 +55,10 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
@@ -73,6 +76,7 @@ import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.core.videostate.VideoGenerationTracker
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
@@ -148,6 +152,7 @@ import yral_mobile.shared.features.profile.generated.resources.profile_locked_ti
 import yral_mobile.shared.features.profile.generated.resources.profile_view_locked_subtitle
 import yral_mobile.shared.features.profile.generated.resources.profile_view_locked_title
 import yral_mobile.shared.features.profile.generated.resources.storage_permission_required
+import yral_mobile.shared.features.profile.generated.resources.video_generating
 import yral_mobile.shared.features.profile.generated.resources.video_will_be_deleted_permanently
 import yral_mobile.shared.features.profile.generated.resources.white_heart
 import yral_mobile.shared.libs.designsystem.generated.resources.account_nav
@@ -1107,6 +1112,9 @@ private fun VideoGridContent(
     onDownloadVideo: (FeedDetails) -> Unit,
     onViewsClick: (FeedDetails) -> Unit,
 ) {
+    val generatingState by VideoGenerationTracker.state.collectAsState()
+    val showGeneratingCard = generatingState.isGenerating && isOwnProfile
+
     LazyVerticalGrid(
         state = gridState,
         columns = GridCells.Fixed(2),
@@ -1118,6 +1126,15 @@ private fun VideoGridContent(
                 .fillMaxSize()
                 .offset(y = offset.dp),
     ) {
+        if (showGeneratingCard) {
+            item(
+                key = "video_generating_card",
+                contentType = "VideoGeneratingCard",
+            ) {
+                VideoGeneratingCard(progress = generatingState.progress)
+            }
+        }
+
         items(
             count = profileVideos.itemCount,
             key = profileVideos.itemKey { it.videoID },
@@ -1306,6 +1323,68 @@ private fun DeletingOverLay(
                     color = YralColors.NeutralTextPrimary,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+    }
+}
+
+@Suppress("MagicNumber")
+@Composable
+private fun VideoGeneratingCard(progress: Float) {
+    val percentText = "${(progress * 100).toInt()}%"
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .aspectRatio(GRID_ITEM_ASPECT_RATIO)
+                .clip(shape = RoundedCornerShape(8.dp))
+                .background(
+                    color = YralColors.Neutral900,
+                    shape = RoundedCornerShape(8.dp),
+                ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(horizontal = 12.dp),
+        ) {
+            Text(
+                text = percentText,
+                style = LocalAppTopography.current.xlBold,
+                color = YralColors.NeutralTextPrimary,
+            )
+            Text(
+                text = stringResource(Res.string.video_generating),
+                style = LocalAppTopography.current.regRegular,
+                color = YralColors.Neutral300,
+            )
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(100.dp))
+                        .background(YralColors.Neutral800),
+            ) {
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth(progress.coerceIn(0f, 1f))
+                            .height(6.dp)
+                            .clipToBounds()
+                            .clip(RoundedCornerShape(100.dp))
+                            .background(
+                                brush =
+                                    Brush.horizontalGradient(
+                                        colors =
+                                            listOf(
+                                                YralColors.Pink200,
+                                                YralColors.Pink300,
+                                            ),
+                                    ),
+                            ),
                 )
             }
         }
