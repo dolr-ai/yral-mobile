@@ -40,7 +40,7 @@
     <string name="influencer_subscription_purchase_unavailable">Purchase unavailable</string>
     <string name="influencer_subscription_purchase_pending">Purchase pending approval</string>
     <string name="influencer_subscription_purchase_failed">Purchase failed. Please try again.</string>
-    <string name="influencer_subscription_verification_pending">We\'re verifying your purchase. Please try again in a moment.</string>
+    <string name="influencer_subscription_verification_pending">We are verifying your purchase. Please try again in a moment.</string>
 
     <!-- Error Bottom Sheet -->
     <!-- Error titles -->

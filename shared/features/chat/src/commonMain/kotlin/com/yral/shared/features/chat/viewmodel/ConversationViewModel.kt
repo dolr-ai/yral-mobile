@@ -321,6 +321,7 @@ class ConversationViewModel(
                     val purchase = result.getOrNull()
                     val isPurchased = purchase is PurchaseResult.PurchaseMatches
                     val purchaseTime = (purchase as? PurchaseResult.PurchaseMatches)?.purchaseTime
+                    if (purchase == null || purchase is PurchaseResult.NoPurchase) return@launch
                     handleInfluencerSubscriptionVerificationResult(
                         isPurchased = isPurchased,
                         purchaseTimeMs = purchaseTime,
