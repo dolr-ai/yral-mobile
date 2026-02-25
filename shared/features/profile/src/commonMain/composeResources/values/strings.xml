@@ -28,4 +28,5 @@
     <string name="msg_principal_id_copied">Your Principal ID has been copied successfully!</string>
     <string name="become_pro">Become Pro</string>
     <string name="video_generating">Video generating…</string>
+    <string name="draft_label">Draft</string>
 </resources>

@@ -138,6 +138,7 @@ import yral_mobile.shared.features.profile.generated.resources.deleting
 import yral_mobile.shared.features.profile.generated.resources.download
 import yral_mobile.shared.features.profile.generated.resources.downloading_video
 import yral_mobile.shared.features.profile.generated.resources.downloading_video_desc
+import yral_mobile.shared.features.profile.generated.resources.draft_label
 import yral_mobile.shared.features.profile.generated.resources.error_loading_more_videos
 import yral_mobile.shared.features.profile.generated.resources.error_loading_videos
 import yral_mobile.shared.features.profile.generated.resources.failed_to_delete_video
@@ -1146,6 +1147,7 @@ private fun VideoGridContent(
                     video = video,
                     isOwnProfile = isOwnProfile,
                     isDeleting = deletingVideoId == video.videoID,
+                    isDraft = video.videoID in generatingState.draftVideoIds,
                     openVideoReel = { openVideoReel(index) },
                     onDeleteClick = { onDeleteVideo(video) },
                     onDownloadClick = { onDownloadVideo(video) },
@@ -1248,6 +1250,7 @@ private fun VideoGridItem(
     video: FeedDetails,
     isOwnProfile: Boolean,
     isDeleting: Boolean,
+    isDraft: Boolean = false,
     openVideoReel: () -> Unit,
     onDeleteClick: () -> Unit,
     onDownloadClick: () -> Unit,
@@ -1290,6 +1293,9 @@ private fun VideoGridItem(
         DeletingOverLay(
             isDeleting = isDeleting,
         )
+        DraftOverlay(
+            isDraft = isDraft,
+        )
     }
 }
 
@@ -1325,6 +1331,30 @@ private fun DeletingOverLay(
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun DraftOverlay(isDraft: Boolean) {
+    AnimatedVisibility(
+        visible = isDraft,
+        enter = fadeIn(),
+        exit = fadeOut(),
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(YralColors.ScrimColor),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = stringResource(Res.string.draft_label),
+                style = LocalAppTopography.current.lgBold,
+                color = YralColors.NeutralTextPrimary,
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }

@@ -389,6 +389,9 @@ class AiVideoGenViewModel internal constructor(
                                     is PollAndUploadAiVideoUseCase.PollAndUploadResult.Success -> {
                                         logger.d { "Generated video uploaded successfully" }
                                         VideoGenerationTracker.stopGenerating()
+                                        pollResult.videoId?.let {
+                                            VideoGenerationTracker.markAsDraft(it)
+                                        }
                                         _state.update {
                                             it.copy(
                                                 uiState = UiState.Success(pollResult.videoUrl),
@@ -601,18 +604,23 @@ class AiVideoGenViewModel internal constructor(
         data object BackConfirmation : BottomSheetType()
     }
 
-    private fun estimateProgress(pollCount: Int): Float {
-        val maxProgress = MAX_GENERATION_PROGRESS
-        val rate = GENERATION_PROGRESS_RATE
-        return maxProgress * (1f - exp(-rate * pollCount))
-    }
-
     internal data class RequiredUseCases(
         val getProviders: GetProvidersUseCase,
         val getFreeCreditsStatus: GetFreeCreditsStatusUseCase,
         val generateVideo: GenerateVideoUseCase,
         val pollAndUploadAiVideo: PollAndUploadAiVideoUseCase,
     )
+
+    private companion object {
+        const val MAX_GENERATION_PROGRESS = 0.9f
+        const val GENERATION_PROGRESS_RATE = 0.1f
+    }
+
+    private fun estimateProgress(pollCount: Int): Float {
+        val maxProgress = MAX_GENERATION_PROGRESS
+        val rate = GENERATION_PROGRESS_RATE
+        return maxProgress * (1f - exp(-rate * pollCount))
+    }
 
     sealed class AiVideoGenEvent {
         data class ShowSubscriptionNudge(
@@ -622,10 +630,5 @@ class AiVideoGenViewModel internal constructor(
         ) : AiVideoGenEvent()
         data object RefreshProDetails : AiVideoGenEvent()
         data object ShowGeneratedToast : AiVideoGenEvent()
-    }
-
-    private companion object {
-        const val MAX_GENERATION_PROGRESS = 0.9f
-        const val GENERATION_PROGRESS_RATE = 0.1f
     }
 }
