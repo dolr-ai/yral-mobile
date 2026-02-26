@@ -210,6 +210,7 @@ class AiVideoGenViewModel internal constructor(
     private suspend fun applyCreditsToState(
         usedCredits: Int,
         totalCredits: Int,
+        window: Int,
         showSubscriptionNudgeWhenExhausted: Boolean,
     ) {
         uploadVideoTelemetry.videoCreationPageViewed(
@@ -217,7 +218,13 @@ class AiVideoGenViewModel internal constructor(
             creditsFetched = true,
             creditsAvailable = totalCredits - usedCredits,
         )
-        _state.update { it.copy(usedCredits = usedCredits, totalCredits = totalCredits) }
+        _state.update {
+            it.copy(
+                usedCredits = usedCredits,
+                totalCredits = totalCredits,
+                freeCreditsWindow = window,
+            )
+        }
         setSubscriptionNudgeShown(showSubscriptionNudgeWhenExhausted && usedCredits >= totalCredits)
     }
 
@@ -244,9 +251,11 @@ class AiVideoGenViewModel internal constructor(
             ).onSuccess { status ->
                 val usedCredits = status.requestCount.toInt()
                 val totalCredits = status.maxRequestsPerWindowPerUser.toInt()
+                val window = status.windowDurationSeconds.toInt() / TOTAL_SECONDS_IN_A_DAY
                 applyCreditsToState(
                     usedCredits = usedCredits,
                     totalCredits = totalCredits,
+                    window = window,
                     showSubscriptionNudgeWhenExhausted = true,
                 )
                 logger.d { "Used credits ${_state.value.usedCredits} $status" }
@@ -262,9 +271,11 @@ class AiVideoGenViewModel internal constructor(
             ).onSuccess { config ->
                 if (config != null) {
                     val totalCredits = config.maxRequestsPerWindowRegistered.toInt()
+                    val window = config.windowDurationSeconds.toInt() / TOTAL_SECONDS_IN_A_DAY
                     applyCreditsToState(
                         usedCredits = 0,
                         totalCredits = totalCredits,
+                        window = window,
                         showSubscriptionNudgeWhenExhausted = false,
                     )
                     logger.d { "Property rate limit config: usedCredits=0 totalCredits=$totalCredits" }
@@ -604,6 +615,7 @@ class AiVideoGenViewModel internal constructor(
         val providers: List<Provider> = emptyList(),
         val usedCredits: Int? = null,
         val totalCredits: Int? = null,
+        val freeCreditsWindow: Int? = null,
         val prompt: String = "",
         val uiState: UiState<String> = UiState.Initial,
         val bottomSheetType: BottomSheetType = BottomSheetType.None,
@@ -644,5 +656,9 @@ class AiVideoGenViewModel internal constructor(
             val entryPoint: SubscriptionEntryPoint = SubscriptionEntryPoint.AI_VIDEO,
         ) : AiVideoGenEvent()
         data object RefreshProDetails : AiVideoGenEvent()
+    }
+
+    companion object {
+        const val TOTAL_SECONDS_IN_A_DAY = 60 * 60 * 24
     }
 }

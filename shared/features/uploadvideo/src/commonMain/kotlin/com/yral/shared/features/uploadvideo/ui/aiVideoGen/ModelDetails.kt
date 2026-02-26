@@ -85,7 +85,15 @@ fun ModelDetails(
                 usedCredits = viewState.usedCredits,
                 totalCredits = viewState.totalCredits,
             )
-            CreditsDisclaimer(viewState.isCreditsAvailable())
+            viewState.totalCredits?.let { totalCredits ->
+                viewState.freeCreditsWindow?.let { window ->
+                    CreditsDisclaimer(
+                        isCreditsAvailable = viewState.isCreditsAvailable(),
+                        totalCredits = totalCredits,
+                        window = window,
+                    )
+                }
+            }
         }
     }
 }
@@ -161,7 +169,11 @@ private fun CreditsCard(
 }
 
 @Composable
-private fun CreditsDisclaimer(isCreditsAvailable: Boolean) {
+private fun CreditsDisclaimer(
+    isCreditsAvailable: Boolean,
+    totalCredits: Int,
+    window: Int,
+) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
         verticalAlignment = Alignment.CenterVertically,
@@ -174,13 +186,13 @@ private fun CreditsDisclaimer(isCreditsAvailable: Boolean) {
         )
         if (isCreditsAvailable) {
             Text(
-                text = stringResource(Res.string.monthly_credits_disclaimer),
+                text = stringResource(Res.string.monthly_credits_disclaimer, totalCredits, window),
                 style = LocalAppTopography.current.regRegular,
                 color = YralColors.NeutralTextSecondary,
             )
         } else {
             Text(
-                text = stringResource(Res.string.monthly_credits_exhausted_disclaimer),
+                text = stringResource(Res.string.monthly_credits_exhausted_disclaimer, totalCredits, window),
                 style = LocalAppTopography.current.regRegular,
                 color = YralColors.Red300,
             )
