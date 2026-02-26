@@ -6,6 +6,7 @@ import com.yral.shared.features.uploadvideo.data.remote.models.FileUploadStatus
 import com.yral.shared.features.uploadvideo.data.remote.models.GenerateVideoRequestDto
 import com.yral.shared.features.uploadvideo.data.remote.models.GetUploadUrlRequestDto
 import com.yral.shared.features.uploadvideo.data.remote.models.GetUploadUrlResponseDTO
+import com.yral.shared.features.uploadvideo.data.remote.models.MarkPostAsPublishedRequestDto
 import com.yral.shared.features.uploadvideo.data.remote.models.ProvidersResponseDto
 import com.yral.shared.features.uploadvideo.data.remote.models.UpdateMetaDataRequestDto
 import com.yral.shared.features.uploadvideo.data.remote.models.UpdateMetaDataResponseDto
@@ -161,10 +162,22 @@ internal class UploadVideoRemoteDataSource(
             setBody(dto)
         }
 
+    suspend fun markPostAsPublished(dto: MarkPostAsPublishedRequestDto) {
+        httpPostWithStringResponse(client) {
+            url {
+                host = AppConfigurations.UPLOAD_BASE_URL
+                path(MARK_POST_AS_PUBLISHED_PATH)
+            }
+            contentType(ContentType.Application.Json)
+            setBody(dto)
+        }
+    }
+
     @Suppress("UnusedPrivateProperty")
     companion object {
         private const val GET_UPLOAD_URL_PATH = "get-upload-url"
         private const val UPDATE_VIDEO_METADATA_PATH = "update-video-metadata"
+        private const val MARK_POST_AS_PUBLISHED_PATH = "mark-post-as-published"
         private const val UPLOAD_AI_VIDEO_FROM_URL_PATH = "/api/upload_ai_video_from_url"
         private const val GET_PROVIDERS_PATH = "/api/v2/videogen/providers"
         private const val GET_ALL_PROVIDERS_PATH = "/api/v2/videogen/providers-all" // Use for internal builds

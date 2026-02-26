@@ -19,4 +19,5 @@ internal interface UploadRepository {
     suspend fun fetchProviders(): List<Provider>
     suspend fun generateVideo(params: GenerateVideoParams): GenerateVideoResult
     suspend fun uploadAiVideoFromUrl(request: UploadAiVideoFromUrlRequest): String
+    suspend fun markPostAsPublished(postId: String)
 }

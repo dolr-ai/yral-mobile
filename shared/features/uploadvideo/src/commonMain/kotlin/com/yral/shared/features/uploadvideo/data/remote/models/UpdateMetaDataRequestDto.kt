@@ -30,7 +30,15 @@ internal data class PostDetailsDto(
     @SerialName("hashtags")
     val hashtags: List<String>,
     @SerialName("status")
-    val status: String = "Published",
+    val status: String = "draft",
+)
+
+@Serializable
+internal data class MarkPostAsPublishedRequestDto(
+    @SerialName("post_id")
+    val postId: String,
+    @SerialName("delegated_identity_wire")
+    val delegatedIdentityWire: KotlinDelegatedIdentityWire,
 )
 
 internal fun UploadFileRequest.toUpdateMetaDataRequestDto(
@@ -47,6 +55,7 @@ internal fun UploadFileRequest.toUpdateMetaDataRequestDto(
             creatorPrincipal = creatorPrincipal,
             videoUid = videoUid,
             hashtags = hashtags,
+            status = status,
         ),
 )
 
