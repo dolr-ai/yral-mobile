@@ -53,6 +53,7 @@ val profileModule =
                 fileDownloader = get(),
                 followersMetadataDataSource = get(),
                 checkChatAccessUseCase = get(),
+                publishDraftVideoUseCase = get(),
             )
         }
         viewModelOf(::EditProfileViewModel)
