@@ -49,6 +49,6 @@
     <string name="ai_video_subscription_nudge_title">You’ve used your free AI video!</string>
     <string name="ai_video_subscription_nudge_description">Why use tokens? Go Pro. Get %1$d YRAL Credits to create AI videos, unlimited chats &amp; free tournaments access.</string>
 
-    <string name="monthly_credits_disclaimer">Your free 60 monthly credits refresh in every 30 days.</string>
-    <string name="monthly_credits_exhausted_disclaimer">You’ve used all 60 credits. Free credits renew every 30 days.</string>
+    <string name="monthly_credits_disclaimer">Your free %1$d monthly credits refresh in every %2$d days.</string>
+    <string name="monthly_credits_exhausted_disclaimer">You’ve used all %1$d credits. Free credits renew every %2$d days.</string>
 </resources>
