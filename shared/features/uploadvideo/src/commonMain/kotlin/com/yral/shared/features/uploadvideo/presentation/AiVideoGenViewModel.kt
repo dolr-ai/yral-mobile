@@ -603,7 +603,7 @@ class AiVideoGenViewModel internal constructor(
         val selectedProvider: Provider? = null,
         val providers: List<Provider> = emptyList(),
         val usedCredits: Int? = null,
-        val totalCredits: Int = 1,
+        val totalCredits: Int? = null,
         val prompt: String = "",
         val uiState: UiState<String> = UiState.Initial,
         val bottomSheetType: BottomSheetType = BottomSheetType.None,
@@ -616,7 +616,7 @@ class AiVideoGenViewModel internal constructor(
     ) {
         fun isBalanceLow() = (selectedProvider?.cost?.sats ?: 0) > (currentBalance ?: -1)
 
-        fun isCreditsAvailable() = (usedCredits ?: 1) < totalCredits
+        fun isCreditsAvailable() = usedCredits == null || totalCredits == null || usedCredits < totalCredits
     }
 
     sealed class BottomSheetType {

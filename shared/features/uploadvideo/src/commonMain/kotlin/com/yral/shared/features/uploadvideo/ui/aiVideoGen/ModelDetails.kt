@@ -1,12 +1,17 @@
 package com.yral.shared.features.uploadvideo.ui.aiVideoGen
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -29,21 +34,25 @@ import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel.ViewState
 import com.yral.shared.features.uploadvideo.ui.aiVideoGen.AiVideoGenScreenConstants.ARROW_ROTATION
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
-import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.getSVGImageModel
+import com.yral.shared.libs.designsystem.component.shimmer
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.uploadvideo.generated.resources.Res
+import yral_mobile.shared.features.uploadvideo.generated.resources.credits
 import yral_mobile.shared.features.uploadvideo.generated.resources.credits_required
 import yral_mobile.shared.features.uploadvideo.generated.resources.credits_used
 import yral_mobile.shared.features.uploadvideo.generated.resources.credits_used_use_token
 import yral_mobile.shared.features.uploadvideo.generated.resources.low_balance
 import yral_mobile.shared.features.uploadvideo.generated.resources.model
+import yral_mobile.shared.features.uploadvideo.generated.resources.monthly_credits_disclaimer
+import yral_mobile.shared.features.uploadvideo.generated.resources.monthly_credits_exhausted_disclaimer
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.coins
 import yral_mobile.shared.libs.designsystem.generated.resources.current_balance
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_gray_info_circle
 import yral_mobile.shared.libs.designsystem.generated.resources.yral
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
@@ -68,36 +77,144 @@ fun ModelDetails(
             )
             ProviderRow(provider = provider, onClick = onClick)
         }
-        viewState.usedCredits?.let { usedCredits ->
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
-                horizontalAlignment = Alignment.Start,
-            ) {
-                Text(
-                    text = stringResource(Res.string.credits_required),
-                    style = LocalAppTopography.current.baseMedium,
-                    color = YralColors.Neutral300,
-                )
-                CostRow(
-                    isCreditsAvailable = viewState.isCreditsAvailable(),
-                    selectedProvider = viewState.selectedProvider,
-                )
-                CreditsBalance(
-                    isCreditsAvailable = viewState.isCreditsAvailable(),
-                    isBalanceLow = viewState.isBalanceLow(),
-                    usedCredits = usedCredits,
-                    totalCredits = viewState.totalCredits,
-                    currentBalance = viewState.currentBalance,
-                )
-            }
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
+            horizontalAlignment = Alignment.Start,
+        ) {
+            CreditsCardWithShimmer(
+                usedCredits = viewState.usedCredits,
+                totalCredits = viewState.totalCredits,
+            )
+            CreditsDisclaimer(viewState.isCreditsAvailable())
         }
-            ?: Column(
-                modifier = Modifier.fillMaxWidth().height(130.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                YralLoader(size = 34.dp)
-            }
+    }
+}
+
+@Composable
+private fun CreditsCardWithShimmer(
+    usedCredits: Int?,
+    totalCredits: Int?,
+) {
+    Box(
+        modifier = Modifier.fillMaxWidth().height(56.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (usedCredits != null && totalCredits != null) {
+            CreditsCard(
+                usedCredits = usedCredits,
+                totalCredits = totalCredits,
+            )
+        }
+        AnimatedVisibility(
+            visible = usedCredits == null || totalCredits == null,
+            enter = fadeIn(),
+            exit = fadeOut(),
+        ) {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .border(
+                            width = 1.dp,
+                            color = YralColors.Neutral700,
+                            shape = RoundedCornerShape(size = 8.dp),
+                        ).background(
+                            color = YralColors.Neutral900,
+                            shape = RoundedCornerShape(size = 8.dp),
+                        ).shimmer(cornerRadius = 8.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun CreditsCard(
+    usedCredits: Int,
+    totalCredits: Int,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .border(
+                    width = 1.dp,
+                    color = YralColors.Neutral700,
+                    shape = RoundedCornerShape(size = 8.dp),
+                ).background(
+                    color = YralColors.Neutral900,
+                    shape = RoundedCornerShape(size = 8.dp),
+                ).padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(Res.string.credits),
+            style = LocalAppTopography.current.baseSemiBold,
+            color = YralColors.NeutralTextPrimary,
+        )
+        Text(
+            text = "$usedCredits / $totalCredits",
+            style = LocalAppTopography.current.lgBold,
+            color = if (usedCredits < totalCredits) YralColors.Yellow200 else YralColors.Red300,
+        )
+    }
+}
+
+@Composable
+private fun CreditsDisclaimer(isCreditsAvailable: Boolean) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Image(
+            painter = painterResource(DesignRes.drawable.ic_gray_info_circle),
+            contentDescription = "info",
+            contentScale = ContentScale.None,
+            modifier = Modifier.size(16.dp),
+        )
+        if (isCreditsAvailable) {
+            Text(
+                text = stringResource(Res.string.monthly_credits_disclaimer),
+                style = LocalAppTopography.current.regRegular,
+                color = YralColors.NeutralTextSecondary,
+            )
+        } else {
+            Text(
+                text = stringResource(Res.string.monthly_credits_exhausted_disclaimer),
+                style = LocalAppTopography.current.regRegular,
+                color = YralColors.Red300,
+            )
+        }
+    }
+}
+
+// Unused: previous credits UI (kept in case we need to restore).
+// Replaced by CreditsCard above per Figma design.
+@Composable
+@Suppress("UnusedPrivateMember")
+private fun CreditsSectionLegacy(viewState: ViewState) {
+    val usedCredits = viewState.usedCredits ?: return
+    val totalCredits = viewState.totalCredits ?: return
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
+        horizontalAlignment = Alignment.Start,
+    ) {
+        Text(
+            text = stringResource(Res.string.credits_required),
+            style = LocalAppTopography.current.baseMedium,
+            color = YralColors.Neutral300,
+        )
+        CostRow(
+            isCreditsAvailable = viewState.isCreditsAvailable(),
+            selectedProvider = viewState.selectedProvider,
+        )
+        CreditsBalance(
+            isCreditsAvailable = viewState.isCreditsAvailable(),
+            isBalanceLow = viewState.isBalanceLow(),
+            usedCredits = usedCredits,
+            totalCredits = totalCredits,
+            currentBalance = viewState.currentBalance,
+        )
     }
 }
 
