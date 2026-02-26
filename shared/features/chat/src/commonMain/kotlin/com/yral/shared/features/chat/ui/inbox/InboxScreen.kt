@@ -6,13 +6,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.pullToRefreshIndicator
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
@@ -24,6 +29,7 @@ import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.chat.domain.models.Conversation
 import com.yral.shared.features.chat.nav.inbox.InboxComponent
+import com.yral.shared.features.chat.viewmodel.InboxState
 import com.yral.shared.features.chat.viewmodel.InboxViewModel
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
@@ -34,6 +40,7 @@ import yral_mobile.shared.features.chat.generated.resources.Res
 import yral_mobile.shared.features.chat.generated.resources.error_load_conversations
 import yral_mobile.shared.features.chat.generated.resources.no_conversation_yet
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InboxScreen(
     component: InboxComponent,
@@ -53,21 +60,11 @@ fun InboxScreen(
                 if (pagingItems.itemCount == 0) {
                     InboxLoadingState()
                 } else {
-                    InboxConversationList(
+                    InboxContentWithPullToRefresh(
                         pagingItems = pagingItems,
-                        isBotAccount = inboxState.isBotAccount,
-                        profileDetailsByUserId = inboxState.profileDetailsByUserId,
-                        contentOffsetY = 0.dp,
-                        onConversationClick = { conversation ->
-                            component.openConversation(
-                                OpenConversationParams(
-                                    influencerId = conversation.influencer.id,
-                                    influencerCategory = conversation.influencer.category,
-                                    conversationId = conversation.id,
-                                    userId = conversation.userId,
-                                ),
-                            )
-                        },
+                        inboxState = inboxState,
+                        component = component,
+                        onRefresh = { pagingItems.refresh() },
                     )
                 }
             is LoadState.Error -> InboxErrorState()
@@ -75,24 +72,74 @@ fun InboxScreen(
                 if (pagingItems.itemCount == 0) {
                     InboxEmptyState()
                 } else {
-                    InboxConversationList(
+                    InboxContentWithPullToRefresh(
                         pagingItems = pagingItems,
-                        isBotAccount = inboxState.isBotAccount,
-                        profileDetailsByUserId = inboxState.profileDetailsByUserId,
-                        contentOffsetY = 0.dp,
-                        onConversationClick = { conversation ->
-                            component.openConversation(
-                                OpenConversationParams(
-                                    influencerId = conversation.influencer.id,
-                                    influencerCategory = conversation.influencer.category,
-                                    conversationId = conversation.id,
-                                    userId = conversation.userId,
-                                ),
-                            )
-                        },
+                        inboxState = inboxState,
+                        component = component,
+                        onRefresh = { pagingItems.refresh() },
                     )
                 }
         }
+    }
+}
+
+private const val INBOX_PULL_TO_REFRESH_INDICATOR_SIZE = 34f
+private const val INBOX_PULL_TO_REFRESH_THRESHOLD = 36f
+private const val INBOX_PULL_TO_REFRESH_OFFSET_MULTIPLIER = 1.5f
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun InboxContentWithPullToRefresh(
+    pagingItems: LazyPagingItems<Conversation>,
+    inboxState: InboxState,
+    component: InboxComponent,
+    onRefresh: () -> Unit,
+) {
+    val pullRefreshState = rememberPullToRefreshState()
+    val offset =
+        pullRefreshState.distanceFraction *
+            INBOX_PULL_TO_REFRESH_INDICATOR_SIZE *
+            INBOX_PULL_TO_REFRESH_OFFSET_MULTIPLIER
+    val isRefreshing = pagingItems.loadState.refresh is LoadState.Loading
+
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh,
+        state = pullRefreshState,
+        indicator = {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .pullToRefreshIndicator(
+                            state = pullRefreshState,
+                            isRefreshing = isRefreshing,
+                            containerColor = Color.Transparent,
+                            threshold = INBOX_PULL_TO_REFRESH_THRESHOLD.dp,
+                            elevation = 0.dp,
+                        ),
+                contentAlignment = Alignment.Center,
+            ) {
+                YralLoader(INBOX_PULL_TO_REFRESH_INDICATOR_SIZE.dp)
+            }
+        },
+    ) {
+        InboxConversationList(
+            pagingItems = pagingItems,
+            isBotAccount = inboxState.isBotAccount,
+            profileDetailsByUserId = inboxState.profileDetailsByUserId,
+            contentOffsetY = offset.dp,
+            onConversationClick = { conversation ->
+                component.openConversation(
+                    OpenConversationParams(
+                        influencerId = conversation.influencer.id,
+                        influencerCategory = conversation.influencer.category,
+                        conversationId = conversation.id,
+                        userId = conversation.userId,
+                    ),
+                )
+            },
+        )
     }
 }
 
