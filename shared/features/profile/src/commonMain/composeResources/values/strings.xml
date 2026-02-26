@@ -29,4 +29,6 @@
     <string name="become_pro">Become Pro</string>
     <string name="video_generating">Video generating…</string>
     <string name="draft_label">Draft</string>
+    <string name="publish_success">Your video has been Published successfully!</string>
+    <string name="publish_button">Publish</string>
 </resources>
