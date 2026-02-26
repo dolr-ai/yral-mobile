@@ -13,6 +13,7 @@ use yral_canisters_client::rate_limits::Result2;
 use yral_canisters_client::rate_limits::VideoGenRequestStatus;
 use yral_canisters_client::rate_limits::RateLimitStatus;
 use yral_canisters_client::rate_limits::RateLimits;
+use yral_canisters_client::rate_limits::PropertyRateLimitConfig;
 
 type Result<T> = std::result::Result<T, FFIError>;
 
@@ -23,6 +24,8 @@ pub struct RateLimitStatusWrapper {
   pub window_start: u64,
   pub is_limited: bool,
   pub request_count: u64,
+  pub max_requests_per_window_per_user: u64,
+  pub window_duration_seconds: u64,
 }
 
 impl From<RateLimitStatus> for RateLimitStatusWrapper {
@@ -32,10 +35,34 @@ impl From<RateLimitStatus> for RateLimitStatusWrapper {
             window_start: value.window_start,
             is_limited: value.is_limited,
             request_count: value.request_count,
+            max_requests_per_window_per_user: value.max_requests_per_window_per_user,
+            window_duration_seconds: value.window_duration_seconds
         }
     }
 }
 
+#[derive(Record)]
+pub struct PropertyRateLimitConfigWrapper {
+    pub property_rate_limit_window_duration_seconds: Option<u64>,
+    pub window_duration_seconds: u64,
+    pub max_requests_per_window_registered: u64,
+    pub max_requests_per_property_all_users: Option<u64>,
+    pub property: String,
+    pub max_requests_per_window_unregistered: u64,
+}
+
+impl From<PropertyRateLimitConfig> for PropertyRateLimitConfigWrapper {
+    fn from(value: PropertyRateLimitConfig) -> Self {
+        Self {
+            property_rate_limit_window_duration_seconds: value.property_rate_limit_window_duration_seconds,
+            window_duration_seconds: value.window_duration_seconds,
+            max_requests_per_window_registered: value.max_requests_per_window_registered,
+            max_requests_per_property_all_users: value.max_requests_per_property_all_users,
+            property: value.property,
+            max_requests_per_window_unregistered: value.max_requests_per_window_unregistered,
+        }
+    }
+}
 
 #[derive(CandidType, Deserialize, Record)]
 pub struct VideoGenRequestKeyWrapper {
@@ -136,7 +163,7 @@ impl RateLimitService {
     #[uniffi::method]
     pub async fn get_rate_limit_status(
         &self,
-        arg1: String, 
+        arg1: String,
         arg2: bool,
     ) -> Result<Option<RateLimitStatusWrapper>> {
         let agent = Arc::clone(&self.agent);
@@ -148,6 +175,22 @@ impl RateLimitService {
                 .await
                 .map_err(|e| FFIError::AgentError(format!("Error calling canister: {:?}", e)))?;
             Ok(status_opt.map(RateLimitStatusWrapper::from))
+        }).await.map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
+    }
+
+    #[uniffi::method]
+    pub async fn get_property_rate_limit_config(
+        &self,
+        property: String,
+    ) -> Result<Option<PropertyRateLimitConfigWrapper>> {
+        let agent = Arc::clone(&self.agent);
+        RUNTIME.spawn(async move {
+            let canister = RateLimits(RATE_LIMITS_ID, &agent);
+            let config_opt = canister
+                .get_property_rate_limit_config(property)
+                .await
+                .map_err(|e| FFIError::AgentError(format!("Error calling canister: {:?}", e)))?;
+            Ok(config_opt.map(PropertyRateLimitConfigWrapper::from))
         }).await.map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
     }
 }
