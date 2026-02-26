@@ -1,5 +1,6 @@
 package com.yral.shared.rust.service.domain
 
+import com.yral.shared.rust.service.domain.models.PropertyRateLimitConfig
 import com.yral.shared.rust.service.domain.models.RateLimitStatus
 import com.yral.shared.rust.service.domain.models.Result2
 import com.yral.shared.rust.service.domain.models.VideoGenRequestKey
@@ -13,4 +14,8 @@ interface RateLimitRepository {
         userPrincipal: String,
         isRegistered: Boolean,
     ): RateLimitStatus?
+    suspend fun getPropertyRateLimitConfig(
+        userPrincipal: String,
+        property: String,
+    ): PropertyRateLimitConfig?
 }

@@ -1,9 +1,11 @@
 package com.yral.shared.rust.service.data
 
+import com.yral.shared.rust.service.data.models.toConfig
 import com.yral.shared.rust.service.data.models.toResult
 import com.yral.shared.rust.service.data.models.toStatus
 import com.yral.shared.rust.service.data.models.toWrapper
 import com.yral.shared.rust.service.domain.RateLimitRepository
+import com.yral.shared.rust.service.domain.models.PropertyRateLimitConfig
 import com.yral.shared.rust.service.domain.models.RateLimitStatus
 import com.yral.shared.rust.service.domain.models.Result2
 import com.yral.shared.rust.service.domain.models.VideoGenRequestKey
@@ -34,5 +36,15 @@ internal class RateLimitRepositoryImpl(
             dataSource
                 .getVideoGenFreeCreditsStatus(userPrincipal, isRegistered)
                 ?.toStatus()
+        }
+
+    override suspend fun getPropertyRateLimitConfig(
+        userPrincipal: String,
+        property: String,
+    ): PropertyRateLimitConfig? =
+        traceApiCall(performanceTracer, "getPropertyRateLimitConfig") {
+            dataSource
+                .getPropertyRateLimitConfig(userPrincipal, property)
+                ?.toConfig()
         }
 }

@@ -9,4 +9,6 @@ internal fun RateLimitStatusWrapper.toStatus() =
         windowStart = windowStart,
         isLimited = isLimited,
         requestCount = requestCount,
+        maxRequestsPerWindowPerUser = maxRequestsPerWindowPerUser,
+        windowDurationSeconds = windowDurationSeconds,
     )
