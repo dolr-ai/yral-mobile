@@ -21,6 +21,8 @@ data class ConversationDto(
     val lastMessage: ConversationLastMessageDto? = null,
     @SerialName("recent_messages")
     val recentMessages: List<ChatMessageDto>? = null,
+    @SerialName("unread_count")
+    val unreadCount: Int = 0,
 )
 
 @Serializable

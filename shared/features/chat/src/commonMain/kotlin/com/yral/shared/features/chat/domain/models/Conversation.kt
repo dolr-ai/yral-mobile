@@ -9,6 +9,7 @@ data class Conversation(
     val messageCount: Int,
     val lastMessage: ConversationLastMessage?,
     val recentMessages: List<ChatMessage> = emptyList(),
+    val unreadCount: Int = 0,
 )
 
 data class ConversationInfluencer(

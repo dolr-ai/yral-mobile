@@ -76,6 +76,7 @@ fun ConversationDto.toDomain(): Conversation =
                 )
             },
         recentMessages = recentMessages?.map { it.toDomain(conversationIdFallback = id) } ?: emptyList(),
+        unreadCount = unreadCount,
     )
 
 fun ConversationsResponseDto.toDomain(): ConversationsPageResult {

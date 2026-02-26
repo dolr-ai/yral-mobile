@@ -100,12 +100,30 @@ fun ChatConversationScreen(
     val errorBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val purchaseContext = getPurchaseContext()
 
-    LaunchedEffect(component.influencerId, viewState.isSocialSignedIn) {
-        viewModel.initializeForInfluencer(
-            influencerId = component.influencerId,
-            influencerCategory = component.influencerCategory,
-            influencerSource = component.influencerSource,
-        )
+    val params = component.openConversationParams
+    LaunchedEffect(
+        params.influencerId,
+        params.conversationId,
+        params.userId,
+        viewState.isSocialSignedIn,
+    ) {
+        val conversationId = params.conversationId
+        val userId = params.userId
+        if (conversationId != null && userId != null) {
+            viewModel.initializeFromInbox(
+                conversationId = conversationId,
+                userId = userId,
+                influencerId = params.influencerId,
+                influencerCategory = params.influencerCategory,
+                influencerSource = params.influencerSource,
+            )
+        } else {
+            viewModel.initializeForChatWall(
+                influencerId = params.influencerId,
+                influencerCategory = params.influencerCategory,
+                influencerSource = params.influencerSource,
+            )
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -187,7 +205,7 @@ fun ChatConversationScreen(
     }
     val shouldShowInfluencerSubscriptionCard by derivedStateOf {
         val allowedId = viewState.subscriptionAllowedInfluencerId
-        val currentInfluencerId = viewState.influencer?.id ?: component.influencerId
+        val currentInfluencerId = viewState.influencer?.id ?: params.influencerId
         val allowedForThisInfluencer = currentInfluencerId == allowedId
         !hasWaitingAssistant &&
             viewState.isSocialSignedIn &&
@@ -360,7 +378,7 @@ fun ChatConversationScreen(
                         )
                     component.openProfile(canisterData)
                 },
-                onClearChat = { viewModel.deleteAndRecreateConversation(component.influencerId) },
+                onClearChat = { viewModel.deleteAndRecreateConversation(params.influencerId) },
                 onShareProfile = { viewModel.shareProfile() },
                 accessExpiresInText = accessExpiryDisplay.text,
                 isAccessExpiringSoon = accessExpiryDisplay.isExpiringSoon,

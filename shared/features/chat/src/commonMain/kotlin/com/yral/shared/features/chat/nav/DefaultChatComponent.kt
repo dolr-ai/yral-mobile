@@ -7,7 +7,7 @@ import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.analytics.events.BotCreationSource
-import com.yral.shared.analytics.events.InfluencerSource
+import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.chat.nav.home.ChatHomeComponent
@@ -22,11 +22,7 @@ internal class DefaultChatComponent(
     override val subscriptionCoordinator: SubscriptionCoordinator,
     private val snapshot: Snapshot?,
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
-    private val openConversation: (
-        influencerId: String,
-        influencerCategory: String,
-        influencerSource: InfluencerSource,
-    ) -> Unit,
+    private val openConversation: (OpenConversationParams) -> Unit,
     private val openCreateInfluencer: (source: BotCreationSource) -> Unit,
 ) : ChatComponent(),
     ComponentContext by componentContext,
@@ -71,9 +67,7 @@ internal class DefaultChatComponent(
                         is Config.Home -> Snapshot.Route.Home
                         is Config.Conversation ->
                             Snapshot.Route.Conversation(
-                                influencerId = configuration.influencerId,
-                                influencerCategory = configuration.influencerCategory,
-                                influencerSource = configuration.influencerSource,
+                                params = configuration.params,
                             )
                         else -> Snapshot.Route.Home
                     }
@@ -84,11 +78,7 @@ internal class DefaultChatComponent(
         when (this) {
             Snapshot.Route.Home -> Config.Home
             is Snapshot.Route.Conversation ->
-                Config.Conversation(
-                    influencerId = influencerId,
-                    influencerCategory = influencerCategory,
-                    influencerSource = influencerSource,
-                )
+                Config.Conversation(params = params)
         }
 
     private fun child(
@@ -103,11 +93,7 @@ internal class DefaultChatComponent(
     private fun chatHomeComponent(componentContext: ComponentContext): ChatHomeComponent =
         ChatHomeComponent.Companion(
             componentContext = componentContext,
-            openConversation = { influencerId, influencerCategory, influencerSource ->
-                // Use root navigation instead of local navigation
-                // navigation.pushNew(Config.Conversation(influencerId = influencerId))
-                openConversation.invoke(influencerId, influencerCategory, influencerSource)
-            },
+            openConversation = openConversation,
             openCreateInfluencer = openCreateInfluencer,
         )
 
@@ -119,9 +105,7 @@ internal class DefaultChatComponent(
             componentContext = componentContext,
             requestLoginFactory = requestLoginFactory,
             subscriptionCoordinator = subscriptionCoordinator,
-            influencerId = config.influencerId,
-            influencerCategory = config.influencerCategory,
-            influencerSource = config.influencerSource,
+            openConversationParams = config.params,
             onBack = { navigation.pop() },
             openProfile = openProfile,
         )
@@ -133,9 +117,7 @@ internal class DefaultChatComponent(
 
         @Serializable
         data class Conversation(
-            val influencerId: String,
-            val influencerCategory: String,
-            val influencerSource: InfluencerSource = InfluencerSource.CARD,
+            val params: OpenConversationParams,
         ) : Config
     }
 }

@@ -59,8 +59,11 @@
     <string name="error_server_message">We are unable to load your chat at the moment. Please refresh or try again later.</string>
     <string name="error_unknown_message">We are unable to load your chat at the moment. Please refresh or try again later.</string>
     <string name="error_network_message_influencers">We are unable to reach influencers at the moment. Please refresh or try again in a moment.</string>
+    <string name="error_load_conversations">We are unable to load conversation at the moment. Please refresh or try again later.</string>
 
     <!-- Actions -->
     <string name="error_retry_action">Try Again</string>
     <string name="error_dismiss_action">Dismiss</string>
+
+    <string name="no_conversation_yet">No conversations yet</string>
 </resources>

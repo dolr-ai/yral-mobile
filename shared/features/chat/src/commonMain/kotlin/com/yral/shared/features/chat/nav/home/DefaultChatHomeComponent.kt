@@ -7,18 +7,14 @@ import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.analytics.events.BotCreationSource
-import com.yral.shared.analytics.events.InfluencerSource
+import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.chat.nav.inbox.InboxComponent
 import com.yral.shared.features.chat.nav.wall.ChatWallComponent
 import kotlinx.serialization.Serializable
 
 internal class DefaultChatHomeComponent(
     componentContext: ComponentContext,
-    private val openConversation: (
-        influencerId: String,
-        influencerCategory: String,
-        influencerSource: InfluencerSource,
-    ) -> Unit,
+    private val openConversation: (OpenConversationParams) -> Unit,
     private val openCreateInfluencer: (source: BotCreationSource) -> Unit,
 ) : ChatHomeComponent(),
     ComponentContext by componentContext {
@@ -51,7 +47,13 @@ internal class DefaultChatHomeComponent(
     ): Child =
         when (config) {
             Config.Discover -> Child.Discover(chatWallComponent(componentContext))
-            Config.Inbox -> Child.Inbox(InboxComponent(componentContext))
+            Config.Inbox ->
+                Child.Inbox(
+                    InboxComponent(
+                        componentContext = componentContext,
+                        openConversation = openConversation,
+                    ),
+                )
         }
 
     private fun chatWallComponent(componentContext: ComponentContext): ChatWallComponent =

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -31,10 +32,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.yral.shared.analytics.events.InfluencerSource
+import com.yral.shared.data.domain.models.ConversationInfluencerSource
+import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.chat.domain.models.ChatError
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencerStatus
@@ -97,47 +101,32 @@ fun ChatWallScreen(
                 .fillMaxSize()
                 .background(Color.Black),
     ) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp),
-        ) {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-                contentPadding = PaddingValues(bottom = 24.dp),
-            ) {
-                items(
-                    count = influencers.itemCount,
-                    key = { index -> influencers.peek(index)?.id ?: "placeholder-$index" },
-                    contentType = { "influencer_card" },
-                ) { index ->
-                    influencers[index]?.let { influencer ->
-                        InfluencerCard(
-                            influencer = influencer,
-                            onClick = {
-                                viewModel.trackInfluencerCardClicked(influencer, index + 1)
-                                component.openConversation(
-                                    influencer.id,
-                                    influencer.category,
-                                    InfluencerSource.CARD,
-                                )
-                            },
-                        )
-                    }
+        when (influencers.loadState.refresh) {
+            is LoadState.Loading ->
+                if (influencers.itemCount == 0) {
+                    ChatWallLoadingState()
+                } else {
+                    ChatWallGridContent(
+                        influencers = influencers,
+                        component = component,
+                        viewModel = viewModel,
+                        contentOffsetY = 0.dp,
+                    )
                 }
-            }
-        }
-
-        // Show loader during initial load
-        if (influencers.loadState.refresh is LoadState.Loading && influencers.itemCount == 0) {
-            Box(
-                modifier = Modifier.align(Alignment.Center),
-            ) {
-                YralLoader(size = 60.dp)
-            }
+            is LoadState.Error ->
+                ChatWallGridContent(
+                    influencers = influencers,
+                    component = component,
+                    viewModel = viewModel,
+                    contentOffsetY = 0.dp,
+                )
+            is LoadState.NotLoading ->
+                ChatWallGridContent(
+                    influencers = influencers,
+                    component = component,
+                    viewModel = viewModel,
+                    contentOffsetY = 0.dp,
+                )
         }
     }
 
@@ -246,6 +235,61 @@ private fun InfluencerCardContent(
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
+    }
+}
+
+@Composable
+private fun ChatWallLoadingState() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
+        YralLoader(size = 60.dp)
+    }
+}
+
+@Composable
+private fun ChatWallGridContent(
+    influencers: LazyPagingItems<Influencer>,
+    component: ChatWallComponent,
+    viewModel: ChatWallViewModel,
+    contentOffsetY: Dp,
+) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .offset(y = contentOffsetY)
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp),
+    ) {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            contentPadding = PaddingValues(bottom = 24.dp),
+        ) {
+            items(
+                count = influencers.itemCount,
+                key = { index -> influencers.peek(index)?.id ?: "placeholder-$index" },
+                contentType = { "influencer_card" },
+            ) { index ->
+                influencers[index]?.let { influencer ->
+                    InfluencerCard(
+                        influencer = influencer,
+                        onClick = {
+                            viewModel.trackInfluencerCardClicked(influencer, index + 1)
+                            component.openConversation(
+                                OpenConversationParams(
+                                    influencerId = influencer.id,
+                                    influencerCategory = influencer.category,
+                                    influencerSource = ConversationInfluencerSource.CARD,
+                                ),
+                            )
+                        },
+                    )
+                }
+            }
+        }
     }
 }
 

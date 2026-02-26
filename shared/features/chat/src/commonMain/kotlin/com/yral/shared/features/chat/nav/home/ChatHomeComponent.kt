@@ -4,7 +4,7 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.analytics.events.BotCreationSource
-import com.yral.shared.analytics.events.InfluencerSource
+import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.chat.nav.inbox.InboxComponent
 import com.yral.shared.features.chat.nav.wall.ChatWallComponent
 
@@ -27,11 +27,7 @@ abstract class ChatHomeComponent {
     companion object Companion {
         operator fun invoke(
             componentContext: ComponentContext,
-            openConversation: (
-                influencerId: String,
-                influencerCategory: String,
-                influencerSource: InfluencerSource,
-            ) -> Unit,
+            openConversation: (OpenConversationParams) -> Unit,
             openCreateInfluencer: (source: BotCreationSource) -> Unit,
         ): ChatHomeComponent =
             DefaultChatHomeComponent(

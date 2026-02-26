@@ -122,7 +122,7 @@ class ChatRemoteDataSource(
         ) {
             url {
                 host = CHAT_BASE_URL
-                path(environmentPrefix, CONVERSATIONS_PATH)
+                path(environmentPrefix, CONVERSATIONS_LIST_PATH)
                 parameters.append("limit", limit.toString())
                 parameters.append("offset", offset.toString())
                 if (!influencerId.isNullOrBlank()) {
@@ -241,6 +241,7 @@ class ChatRemoteDataSource(
         private const val INFLUENCERS_PATH = "api/v1/influencers"
         private const val TRENDING_INFLUENCERS_PATH = "api/v1/influencers/trending"
         private const val CONVERSATIONS_PATH = "api/v1/chat/conversations"
+        private const val CONVERSATIONS_LIST_PATH = "api/v2/chat/conversations"
         private const val MESSAGES_PATH = "messages"
         private const val UPLOAD_PATH = "api/v1/media/upload"
     }

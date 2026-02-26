@@ -2,26 +2,18 @@ package com.yral.shared.features.chat.nav.wall
 
 import com.arkivanov.decompose.ComponentContext
 import com.yral.shared.analytics.events.BotCreationSource
-import com.yral.shared.analytics.events.InfluencerSource
+import com.yral.shared.data.domain.models.OpenConversationParams
 import org.koin.core.component.KoinComponent
 
 internal class DefaultChatWallComponent(
     componentContext: ComponentContext,
-    private val openConversation: (
-        influencerId: String,
-        influencerCategory: String,
-        influencerSource: InfluencerSource,
-    ) -> Unit,
+    private val openConversation: (OpenConversationParams) -> Unit,
     private val openCreateInfluencer: (source: BotCreationSource) -> Unit,
 ) : ChatWallComponent(),
     ComponentContext by componentContext,
     KoinComponent {
-    override fun openConversation(
-        influencerId: String,
-        influencerCategory: String,
-        influencerSource: InfluencerSource,
-    ) {
-        openConversation.invoke(influencerId, influencerCategory, influencerSource)
+    override fun openConversation(params: OpenConversationParams) {
+        openConversation.invoke(params)
     }
 
     override fun openCreateInfluencer() {
