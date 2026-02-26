@@ -19,6 +19,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.pullToRefreshIndicator
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -106,26 +109,23 @@ fun ChatWallScreen(
                 if (influencers.itemCount == 0) {
                     ChatWallLoadingState()
                 } else {
-                    ChatWallGridContent(
+                    ChatWallContentWithPullToRefresh(
                         influencers = influencers,
                         component = component,
                         viewModel = viewModel,
-                        contentOffsetY = 0.dp,
                     )
                 }
             is LoadState.Error ->
-                ChatWallGridContent(
+                ChatWallContentWithPullToRefresh(
                     influencers = influencers,
                     component = component,
                     viewModel = viewModel,
-                    contentOffsetY = 0.dp,
                 )
             is LoadState.NotLoading ->
-                ChatWallGridContent(
+                ChatWallContentWithPullToRefresh(
                     influencers = influencers,
                     component = component,
                     viewModel = viewModel,
-                    contentOffsetY = 0.dp,
                 )
         }
     }
@@ -248,6 +248,51 @@ private fun ChatWallLoadingState() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ChatWallContentWithPullToRefresh(
+    influencers: LazyPagingItems<Influencer>,
+    component: ChatWallComponent,
+    viewModel: ChatWallViewModel,
+) {
+    val pullRefreshState = rememberPullToRefreshState()
+    val offset =
+        pullRefreshState.distanceFraction *
+            ChatWallScreenConstants.PULL_TO_REFRESH_INDICATOR_SIZE *
+            ChatWallScreenConstants.PULL_TO_REFRESH_OFFSET_MULTIPLIER
+    val isRefreshing = influencers.loadState.refresh is LoadState.Loading
+
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = { influencers.refresh() },
+        state = pullRefreshState,
+        indicator = {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .pullToRefreshIndicator(
+                            state = pullRefreshState,
+                            isRefreshing = isRefreshing,
+                            containerColor = Color.Transparent,
+                            threshold = ChatWallScreenConstants.PULL_TO_REFRESH_THRESHOLD.dp,
+                            elevation = 0.dp,
+                        ),
+                contentAlignment = Alignment.Center,
+            ) {
+                YralLoader(size = ChatWallScreenConstants.PULL_TO_REFRESH_INDICATOR_SIZE.dp)
+            }
+        },
+    ) {
+        ChatWallGridContent(
+            influencers = influencers,
+            component = component,
+            viewModel = viewModel,
+            contentOffsetY = offset.dp,
+        )
+    }
+}
+
 @Composable
 private fun ChatWallGridContent(
     influencers: LazyPagingItems<Influencer>,
@@ -299,4 +344,7 @@ object ChatWallScreenConstants {
     const val TOP_FILL_WEIGHT = 40f
     const val GRADIENT_WEIGHT = 40f
     const val SOLID_WEIGHT = 20f
+    const val PULL_TO_REFRESH_INDICATOR_SIZE = 34f
+    const val PULL_TO_REFRESH_THRESHOLD = 36f
+    const val PULL_TO_REFRESH_OFFSET_MULTIPLIER = 1.5f
 }
