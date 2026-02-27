@@ -1123,7 +1123,7 @@ private fun VideoGridContent(
     ) {
         items(
             count = profileVideos.itemCount,
-            key = profileVideos.itemKey { it.videoID },
+            key = profileVideos.itemKey { "${it.canisterID}_${it.postID}" },
             contentType = profileVideos.itemContentType { "ProfileVideo" },
         ) { index ->
             val video = profileVideos[index]

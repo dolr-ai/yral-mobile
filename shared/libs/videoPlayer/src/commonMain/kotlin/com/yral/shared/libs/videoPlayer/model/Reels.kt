@@ -6,6 +6,7 @@ data class Reels(
     val videoUrl: String,
     val thumbnailUrl: String,
     val videoId: String,
+    val postId: String = "",
 )
 
 fun Reels.toPlayerData(
