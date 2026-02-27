@@ -350,7 +350,7 @@ class UploadVideoViewModel internal constructor(
                     type = ToastType.Small(getString(Res.string.toast_video_pushed_to_drafts)),
                 )
                 uploadVideoTelemetry.uploadSuccess(endpoint.videoID, VideoCreationType.UPLOAD_VIDEO)
-                send(Event.GoToHome)
+                send(Event.GoToProfile)
                 performPostPublishCleanup()
             }
         } catch (e: CancellationException) {
@@ -465,6 +465,7 @@ class UploadVideoViewModel internal constructor(
         ) : Event()
 
         data object GoToHome : Event()
+        data object GoToProfile : Event()
     }
 
     data class ViewState(
