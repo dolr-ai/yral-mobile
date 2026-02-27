@@ -89,8 +89,8 @@ internal class IndividualUserDataSourceImpl(
             .icrc1BalanceOf(Account(owner = principalId, subaccount = null))
 
     internal companion object {
-        private const val STORJ_PREFIX =
-            "https://link.storjshare.io/raw/jx6vm3ebgb4gt3gfkmcrw62bl7rq/yral-videos"
+        private const val HETZNER_PREFIX =
+            "https://hel1.your-objectstorage.com/yral-sfw"
         private const val CLOUD_FLARE_PREFIX = "https://customer-2p3jflss4r4hmpnz.cloudflarestream.com/"
 
 //        private const val CLOUD_FLARE_SUFFIX = "/manifest/video.m3u8"
@@ -102,7 +102,7 @@ internal class IndividualUserDataSourceImpl(
         fun videoUrl(
             videoUid: String,
             publisherUserId: String,
-        ) = "$STORJ_PREFIX/$publisherUserId/$videoUid.mp4"
+        ) = "$HETZNER_PREFIX/$publisherUserId/$videoUid.mp4"
 
 //        private fun mp4Url(videoUid: String) = "$CLOUD_FLARE_PREFIX$videoUid$CLOUD_FLARE_SUFFIX_MP4"
 //        private fun hlsUrl(videoUid: String) = "$CLOUD_FLARE_PREFIX$videoUid$CLOUD_FLARE_SUFFIX"
