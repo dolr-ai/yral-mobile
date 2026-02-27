@@ -1002,6 +1002,7 @@ class ConversationViewModel(
     }
 
     private fun markConversationAsRead(conversationId: String) {
+        if (_viewState.value.isBotAccount) return
         viewModelScope.launch {
             markConversationAsReadUseCase(conversationId)
                 .onFailure { error ->

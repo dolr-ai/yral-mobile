@@ -70,6 +70,7 @@ fun ConversationListItem(
         ConversationTimeAndBadge(
             timeText = conversation.lastMessage?.createdAt?.let(::formatConversationTime) ?: "",
             unreadCount = conversation.unreadCount,
+            isBot = conversation.conversationUser != null,
         )
     }
 }
@@ -126,6 +127,7 @@ private fun ConversationNameAndPreview(
 private fun ConversationTimeAndBadge(
     timeText: String,
     unreadCount: Int,
+    isBot: Boolean,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -136,7 +138,7 @@ private fun ConversationTimeAndBadge(
             style = LocalAppTopography.current.regRegular,
             color = YralColors.Neutral500,
         )
-        if (unreadCount > 0) {
+        if (unreadCount > 0 && !isBot) {
             Box(
                 modifier =
                     Modifier

@@ -457,7 +457,7 @@ fun ChatConversationScreen(
                         }
 
                         // Influencer subscription card (replaces input when at threshold) or ChatInputArea
-                        if (shouldShowInfluencerSubscriptionCard) {
+                        if (shouldShowInfluencerSubscriptionCard && !viewState.isBotAccount) {
                             InfluencerSubscriptionCard(
                                 onSubscribe = {
                                     purchaseContext?.let { viewModel.launchInfluencerSubscriptionPurchase(it) }
@@ -465,7 +465,7 @@ fun ChatConversationScreen(
                                 isPurchaseInProgress = viewState.isInfluencerSubscriptionPurchaseInProgress,
                                 formattedPrice = viewState.influencerSubscriptionFormattedPrice,
                             )
-                        } else {
+                        } else if (!viewState.isBotAccount) {
                             ChatInputArea(
                                 input = input,
                                 onInputChange = { input = it },
