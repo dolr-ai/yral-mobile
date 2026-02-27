@@ -30,6 +30,7 @@ interface ChatDataSource {
         limit: Int,
         offset: Int,
         influencerId: String? = null,
+        principal: String,
     ): ConversationsResponseDto
 
     suspend fun deleteConversation(conversationId: String): DeleteConversationResponseDto

@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.features.chat.domain.models.Conversation
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.formatAbbreviation
@@ -39,15 +40,18 @@ private const val MAX_LAST_MESSAGE_LINES = 1
 @Composable
 fun ConversationListItem(
     conversation: Conversation,
-    overrideAvatarUrl: String? = null,
-    overrideDisplayName: String? = null,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val avatarUrl = overrideAvatarUrl?.takeIf { it.isNotBlank() } ?: conversation.influencer.avatarUrl
+    val avatarUrl =
+        conversation.conversationUser?.profilePictureUrl?.takeIf { it.isNotBlank() }
+            ?: conversation.influencer.avatarUrl
     val displayName =
-        overrideDisplayName?.takeIf { it.isNotBlank() }
-            ?: conversation.influencer.displayName.ifBlank { conversation.influencer.name }
+        conversation.conversationUser?.let { user ->
+            user.username?.takeIf { it.isNotBlank() }
+                ?: resolveUsername("", user.principalId)
+                ?: ""
+        } ?: conversation.influencer.displayName.ifBlank { conversation.influencer.name }
     Row(
         modifier =
             modifier

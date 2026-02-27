@@ -15,7 +15,6 @@ import androidx.compose.material3.pulltorefresh.pullToRefreshIndicator
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,16 +29,13 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
-import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.chat.domain.models.Conversation
 import com.yral.shared.features.chat.nav.inbox.InboxComponent
-import com.yral.shared.features.chat.viewmodel.InboxState
 import com.yral.shared.features.chat.viewmodel.InboxViewModel
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
-import com.yral.shared.rust.service.domain.models.UserProfileDetails
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.chat.generated.resources.Res
 import yral_mobile.shared.features.chat.generated.resources.error_load_conversations
@@ -53,7 +49,6 @@ fun InboxScreen(
     modifier: Modifier = Modifier,
 ) {
     val pagingItems = viewModel.conversations.collectAsLazyPagingItems()
-    val inboxState by viewModel.state.collectAsState()
     var isManualRefresh by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -74,7 +69,6 @@ fun InboxScreen(
                 } else {
                     InboxContentWithPullToRefresh(
                         pagingItems = pagingItems,
-                        inboxState = inboxState,
                         isManualRefresh = isManualRefresh,
                         component = component,
                         onRefresh = {
@@ -90,7 +84,6 @@ fun InboxScreen(
                 } else {
                     InboxContentWithPullToRefresh(
                         pagingItems = pagingItems,
-                        inboxState = inboxState,
                         isManualRefresh = isManualRefresh,
                         component = component,
                         onRefresh = {
@@ -112,7 +105,6 @@ private const val INBOX_PTR_OFFSET_ANIMATION_DURATION_MS = 200
 @Composable
 private fun InboxContentWithPullToRefresh(
     pagingItems: LazyPagingItems<Conversation>,
-    inboxState: InboxState,
     isManualRefresh: Boolean,
     component: InboxComponent,
     onRefresh: () -> Unit,
@@ -160,8 +152,6 @@ private fun InboxContentWithPullToRefresh(
     ) {
         InboxConversationList(
             pagingItems = pagingItems,
-            isBotAccount = inboxState.isBotAccount,
-            profileDetailsByUserId = inboxState.profileDetailsByUserId,
             contentOffsetY = contentOffsetY,
             onConversationClick = { conversation ->
                 component.openConversation(
@@ -225,8 +215,6 @@ private fun InboxEmptyState() {
 @Composable
 private fun InboxConversationList(
     pagingItems: LazyPagingItems<Conversation>,
-    isBotAccount: Boolean,
-    profileDetailsByUserId: Map<String, UserProfileDetails>,
     contentOffsetY: androidx.compose.ui.unit.Dp = 0.dp,
     onConversationClick: (Conversation) -> Unit,
 ) {
@@ -242,11 +230,8 @@ private fun InboxConversationList(
             contentType = pagingItems.itemContentType { "Conversation" },
         ) { index ->
             val conversation = pagingItems[index] ?: return@items
-            val profileDetails = if (isBotAccount) profileDetailsByUserId[conversation.userId] else null
             ConversationListItem(
                 conversation = conversation,
-                overrideAvatarUrl = profileDetails?.profilePictureUrl,
-                overrideDisplayName = resolveUsername(null, profileDetails?.principalId),
                 onClick = { onConversationClick(conversation) },
             )
         }

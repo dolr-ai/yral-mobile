@@ -602,13 +602,13 @@ class ConversationViewModel(
         influencerCategory: String,
         influencerSource: ConversationInfluencerSource,
     ) {
-        _viewState.update { it.copy(influencerSource = influencerSource) }
+        val isBotAccount = sessionManager.isBotAccount == true
+        _viewState.update { it.copy(influencerSource = influencerSource, isBotAccount = isBotAccount) }
         val currentConversationId = _viewState.value.conversationId
         if (currentConversationId == conversationId) return
         if (_viewState.value.conversationId != null && _viewState.value.conversationId != conversationId) {
             resetState()
         }
-        val isBotAccount = sessionManager.isBotAccount == true
         viewModelScope.launch {
             if (isBotAccount) {
                 initializeFromInboxForBot(
@@ -711,7 +711,7 @@ class ConversationViewModel(
         ConversationInfluencer(
             id = profile.principalId,
             name = resolveUsername("", profile.principalId) ?: "",
-            displayName = "",
+            displayName = resolveUsername("", profile.principalId) ?: "",
             avatarUrl = profile.profilePictureUrl.orEmpty(),
             category = category,
         )
@@ -1124,6 +1124,7 @@ data class ConversationViewState(
     val chatError: ChatError? = null,
     val conversationId: String? = null,
     val influencer: ConversationInfluencer? = null,
+    val isBotAccount: Boolean = false,
     val paginatedHistoryAvailable: Boolean = false,
     val shareDisplayName: String = "",
     val shareMessage: String = "",

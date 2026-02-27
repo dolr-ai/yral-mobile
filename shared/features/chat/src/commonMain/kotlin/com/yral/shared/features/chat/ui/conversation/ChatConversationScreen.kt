@@ -409,6 +409,7 @@ fun ChatConversationScreen(
                             listState = listState,
                             overlayItems = overlayItems,
                             historyPagingItems = historyPagingItems,
+                            isBotAccount = viewState.isBotAccount,
                             onRetry = { localId -> viewModel.retry(localId) },
                         )
 

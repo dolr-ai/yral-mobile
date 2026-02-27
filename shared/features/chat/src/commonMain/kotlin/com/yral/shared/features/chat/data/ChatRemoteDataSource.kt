@@ -114,6 +114,7 @@ class ChatRemoteDataSource(
         limit: Int,
         offset: Int,
         influencerId: String?,
+        principal: String,
     ): ConversationsResponseDto {
         val idToken = getIdToken()
         return httpGet(
@@ -125,6 +126,7 @@ class ChatRemoteDataSource(
                 path(CONVERSATIONS_LIST_PATH)
                 parameters.append("limit", limit.toString())
                 parameters.append("offset", offset.toString())
+                parameters.append("principal", principal)
                 if (!influencerId.isNullOrBlank()) {
                     parameters.append("influencer_id", influencerId)
                 }
