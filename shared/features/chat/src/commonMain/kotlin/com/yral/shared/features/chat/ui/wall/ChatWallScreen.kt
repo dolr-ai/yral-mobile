@@ -1,5 +1,7 @@
 package com.yral.shared.features.chat.ui.wall
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -256,11 +258,23 @@ private fun ChatWallContentWithPullToRefresh(
     viewModel: ChatWallViewModel,
 ) {
     val pullRefreshState = rememberPullToRefreshState()
-    val offset =
+    val pullOffsetDp =
         pullRefreshState.distanceFraction *
             ChatWallScreenConstants.PULL_TO_REFRESH_INDICATOR_SIZE *
             ChatWallScreenConstants.PULL_TO_REFRESH_OFFSET_MULTIPLIER
     val isRefreshing = influencers.loadState.refresh is LoadState.Loading
+    val targetOffsetPx =
+        if (isRefreshing) {
+            ChatWallScreenConstants.PULL_TO_REFRESH_INDICATOR_SIZE
+        } else {
+            pullOffsetDp
+        }
+    val animatedOffsetPx by animateFloatAsState(
+        targetValue = targetOffsetPx,
+        animationSpec = tween(durationMillis = ChatWallScreenConstants.PTR_OFFSET_ANIMATION_DURATION_MS),
+        label = "ptrContentOffset",
+    )
+    val contentOffsetY = animatedOffsetPx.dp
 
     PullToRefreshBox(
         isRefreshing = isRefreshing,
@@ -288,7 +302,7 @@ private fun ChatWallContentWithPullToRefresh(
             influencers = influencers,
             component = component,
             viewModel = viewModel,
-            contentOffsetY = offset.dp,
+            contentOffsetY = contentOffsetY,
         )
     }
 }
@@ -347,4 +361,5 @@ object ChatWallScreenConstants {
     const val PULL_TO_REFRESH_INDICATOR_SIZE = 34f
     const val PULL_TO_REFRESH_THRESHOLD = 36f
     const val PULL_TO_REFRESH_OFFSET_MULTIPLIER = 1.5f
+    const val PTR_OFFSET_ANIMATION_DURATION_MS = 200
 }

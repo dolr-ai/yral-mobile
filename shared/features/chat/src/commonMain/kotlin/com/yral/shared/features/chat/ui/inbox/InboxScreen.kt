@@ -1,5 +1,7 @@
 package com.yral.shared.features.chat.ui.inbox
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -86,6 +88,7 @@ fun InboxScreen(
 private const val INBOX_PULL_TO_REFRESH_INDICATOR_SIZE = 34f
 private const val INBOX_PULL_TO_REFRESH_THRESHOLD = 36f
 private const val INBOX_PULL_TO_REFRESH_OFFSET_MULTIPLIER = 1.5f
+private const val INBOX_PTR_OFFSET_ANIMATION_DURATION_MS = 200
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -96,11 +99,23 @@ private fun InboxContentWithPullToRefresh(
     onRefresh: () -> Unit,
 ) {
     val pullRefreshState = rememberPullToRefreshState()
-    val offset =
+    val pullOffsetDp =
         pullRefreshState.distanceFraction *
             INBOX_PULL_TO_REFRESH_INDICATOR_SIZE *
             INBOX_PULL_TO_REFRESH_OFFSET_MULTIPLIER
     val isRefreshing = pagingItems.loadState.refresh is LoadState.Loading
+    val targetOffsetPx =
+        if (isRefreshing) {
+            INBOX_PULL_TO_REFRESH_INDICATOR_SIZE
+        } else {
+            pullOffsetDp
+        }
+    val animatedOffsetPx by animateFloatAsState(
+        targetValue = targetOffsetPx,
+        animationSpec = tween(durationMillis = INBOX_PTR_OFFSET_ANIMATION_DURATION_MS),
+        label = "ptrContentOffset",
+    )
+    val contentOffsetY = animatedOffsetPx.dp
 
     PullToRefreshBox(
         isRefreshing = isRefreshing,
@@ -128,7 +143,7 @@ private fun InboxContentWithPullToRefresh(
             pagingItems = pagingItems,
             isBotAccount = inboxState.isBotAccount,
             profileDetailsByUserId = inboxState.profileDetailsByUserId,
-            contentOffsetY = offset.dp,
+            contentOffsetY = contentOffsetY,
             onConversationClick = { conversation ->
                 component.openConversation(
                     OpenConversationParams(
