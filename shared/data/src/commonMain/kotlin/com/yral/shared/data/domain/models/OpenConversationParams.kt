@@ -9,6 +9,8 @@ data class OpenConversationParams(
     val influencerSource: ConversationInfluencerSource = ConversationInfluencerSource.CARD,
     val conversationId: String? = null,
     val userId: String? = null,
+    val displayName: String? = null,
+    val avatarUrl: String? = null,
 )
 
 @Serializable

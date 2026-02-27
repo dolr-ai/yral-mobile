@@ -342,6 +342,8 @@ private fun ChatWallGridContent(
                                     influencerId = influencer.id,
                                     influencerCategory = influencer.category,
                                     influencerSource = ConversationInfluencerSource.CARD,
+                                    displayName = influencer.displayName,
+                                    avatarUrl = influencer.avatarUrl,
                                 ),
                             )
                         },

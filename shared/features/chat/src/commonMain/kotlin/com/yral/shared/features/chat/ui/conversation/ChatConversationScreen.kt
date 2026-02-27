@@ -112,16 +112,19 @@ fun ChatConversationScreen(
         if (conversationId != null && userId != null) {
             viewModel.initializeFromInbox(
                 conversationId = conversationId,
-                userId = userId,
                 influencerId = params.influencerId,
                 influencerCategory = params.influencerCategory,
                 influencerSource = params.influencerSource,
+                displayName = params.displayName,
+                avatarUrl = params.avatarUrl,
             )
         } else {
             viewModel.initializeForChatWall(
                 influencerId = params.influencerId,
                 influencerCategory = params.influencerCategory,
                 influencerSource = params.influencerSource,
+                displayName = params.displayName,
+                avatarUrl = params.avatarUrl,
             )
         }
     }
@@ -367,12 +370,19 @@ fun ChatConversationScreen(
                 influencer = viewState.influencer,
                 onBackClick = { component.onBack() },
                 onProfileClick = { influencer ->
+                    val userPrincipal =
+                        if (viewState.isBotAccount) {
+                            component.openConversationParams.userId
+                        } else {
+                            influencer.id
+                        }
+                    if (userPrincipal == null) return@ChatHeader
                     val canisterData =
                         CanisterData(
                             canisterId = getUserInfoServiceCanister(),
-                            userPrincipalId = influencer.id,
-                            profilePic = influencer.avatarUrl,
-                            username = influencer.name,
+                            userPrincipalId = userPrincipal,
+                            profilePic = component.openConversationParams.avatarUrl.orEmpty(),
+                            username = component.openConversationParams.displayName.orEmpty(),
                             isCreatedFromServiceCanister = true,
                             isFollowing = false,
                         )
@@ -382,6 +392,7 @@ fun ChatConversationScreen(
                 onShareProfile = { viewModel.shareProfile() },
                 accessExpiresInText = accessExpiryDisplay.text,
                 isAccessExpiringSoon = accessExpiryDisplay.isExpiringSoon,
+                isBotAccount = viewState.isBotAccount,
             )
 
             Column(

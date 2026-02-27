@@ -29,6 +29,7 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
+import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.chat.domain.models.Conversation
 import com.yral.shared.features.chat.nav.inbox.InboxComponent
@@ -101,6 +102,7 @@ private const val INBOX_PULL_TO_REFRESH_THRESHOLD = 36f
 private const val INBOX_PULL_TO_REFRESH_OFFSET_MULTIPLIER = 1.5f
 private const val INBOX_PTR_OFFSET_ANIMATION_DURATION_MS = 200
 
+@Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun InboxContentWithPullToRefresh(
@@ -160,6 +162,15 @@ private fun InboxContentWithPullToRefresh(
                         influencerCategory = conversation.influencer.category,
                         conversationId = conversation.id,
                         userId = conversation.userId,
+                        displayName =
+                            conversation.conversationUser?.let { user ->
+                                user.username?.takeIf { it.isNotBlank() }
+                                    ?: resolveUsername("", user.principalId)
+                                    ?: ""
+                            } ?: conversation.influencer.displayName.ifBlank { conversation.influencer.name },
+                        avatarUrl =
+                            conversation.conversationUser?.profilePictureUrl?.takeIf { it.isNotBlank() }
+                                ?: conversation.influencer.avatarUrl,
                     ),
                 )
             },

@@ -16,7 +16,6 @@ import com.yral.featureflag.ChatFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
-import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.data.domain.models.ConversationInfluencerSource
@@ -36,7 +35,6 @@ import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.domain.models.SendMessageResult
 import com.yral.shared.features.chat.domain.usecases.CreateConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.DeleteConversationUseCase
-import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
 import com.yral.shared.features.chat.domain.usecases.MarkConversationAsReadUseCase
 import com.yral.shared.features.chat.domain.usecases.SendMessageUseCase
 import com.yral.shared.features.subscriptions.domain.FetchProductsUseCase
@@ -53,9 +51,6 @@ import com.yral.shared.libs.routing.routes.api.UserProfileRoute
 import com.yral.shared.libs.sharing.LinkGenerator
 import com.yral.shared.libs.sharing.LinkInput
 import com.yral.shared.libs.sharing.ShareService
-import com.yral.shared.rust.service.domain.models.UserProfileDetails
-import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7Params
-import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCase
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import com.yral.shared.rust.service.utils.propicFromPrincipal
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -97,8 +92,6 @@ class ConversationViewModel(
     private val useCaseFailureListener: UseCaseFailureListener,
     private val sendMessageUseCase: SendMessageUseCase,
     private val createConversationUseCase: CreateConversationUseCase,
-    private val getInfluencerUseCase: GetInfluencerUseCase,
-    private val getUserProfileDetailsV7UseCase: GetUserProfileDetailsV7UseCase,
     private val deleteConversationUseCase: DeleteConversationUseCase,
     private val markConversationAsReadUseCase: MarkConversationAsReadUseCase,
     private val shareService: ShareService,
@@ -597,10 +590,11 @@ class ConversationViewModel(
 
     fun initializeFromInbox(
         conversationId: String,
-        userId: String,
         influencerId: String,
         influencerCategory: String,
         influencerSource: ConversationInfluencerSource,
+        displayName: String? = null,
+        avatarUrl: String? = null,
     ) {
         val isBotAccount = sessionManager.isBotAccount == true
         _viewState.update { it.copy(influencerSource = influencerSource, isBotAccount = isBotAccount) }
@@ -609,117 +603,27 @@ class ConversationViewModel(
         if (_viewState.value.conversationId != null && _viewState.value.conversationId != conversationId) {
             resetState()
         }
-        viewModelScope.launch {
-            if (isBotAccount) {
-                initializeFromInboxForBot(
-                    conversationId,
-                    userId,
-                    influencerId,
-                    influencerCategory,
-                    influencerSource,
-                )
-            } else {
-                initializeFromInboxForUser(
-                    conversationId,
-                    userId,
-                    influencerId,
-                    influencerCategory,
-                    influencerSource,
-                )
-            }
-        }
-    }
-
-    private suspend fun initializeFromInboxForBot(
-        conversationId: String,
-        userId: String,
-        influencerId: String,
-        influencerCategory: String,
-        influencerSource: ConversationInfluencerSource,
-    ) {
-        val currentPrincipal = sessionManager.userPrincipal ?: return
-        getUserProfileDetailsV7UseCase(
-            GetUserProfileDetailsV7Params(
-                principal = currentPrincipal,
-                targetPrincipal = userId,
-            ),
-        ).onSuccess { profile ->
-            val influencer = profileToConversationInfluencer(profile, influencerCategory)
-            setConversationId(
-                id = conversationId,
-                influencer = influencer,
-                recentMessages = emptyList(),
-                messageCount = PAGE_SIZE + 1,
-            )
-        }.onFailure { throwable ->
-            val chatError =
-                chatErrorMapper.mapException(throwable) {
-                    initializeFromInbox(
-                        conversationId,
-                        userId,
-                        influencerId,
-                        influencerCategory,
-                        influencerSource,
-                    )
-                }
-            _viewState.update { it.copy(chatError = chatError) }
-        }
-    }
-
-    private suspend fun initializeFromInboxForUser(
-        conversationId: String,
-        userId: String,
-        influencerId: String,
-        influencerCategory: String,
-        influencerSource: ConversationInfluencerSource,
-    ) {
-        getInfluencerUseCase(GetInfluencerUseCase.Params(id = influencerId))
-            .onSuccess { influencer ->
-                val convInfluencer =
-                    ConversationInfluencer(
-                        id = influencer.id,
-                        name = influencer.name,
-                        displayName = influencer.displayName,
-                        avatarUrl = influencer.avatarUrl,
-                        category = influencer.category,
-                    )
-                setConversationId(
-                    id = conversationId,
-                    influencer = convInfluencer,
-                    recentMessages = emptyList(),
-                    messageCount = PAGE_SIZE + 1,
-                )
-            }.onFailure { throwable ->
-                val chatError =
-                    chatErrorMapper.mapException(throwable) {
-                        initializeFromInbox(
-                            conversationId,
-                            userId,
-                            influencerId,
-                            influencerCategory,
-                            influencerSource,
-                        )
-                    }
-                _viewState.update { it.copy(chatError = chatError) }
-            }
-    }
-
-    private fun profileToConversationInfluencer(
-        profile: UserProfileDetails,
-        category: String,
-    ): ConversationInfluencer =
-        ConversationInfluencer(
-            id = profile.principalId,
-            name = resolveUsername("", profile.principalId) ?: "",
-            displayName = resolveUsername("", profile.principalId) ?: "",
-            avatarUrl = profile.profilePictureUrl.orEmpty(),
-            category = category,
+        setConversationId(
+            id = conversationId,
+            influencer =
+                ConversationInfluencer(
+                    id = influencerId,
+                    name = displayName.orEmpty(),
+                    displayName = displayName.orEmpty(),
+                    avatarUrl = avatarUrl.orEmpty(),
+                    category = influencerCategory,
+                ),
+            recentMessages = emptyList(),
+            messageCount = PAGE_SIZE + 1,
         )
+    }
 
     fun initializeForChatWall(
         influencerId: String,
         influencerCategory: String,
         influencerSource: ConversationInfluencerSource = ConversationInfluencerSource.CARD,
+        displayName: String? = null,
+        avatarUrl: String? = null,
     ) {
         _viewState.update { it.copy(influencerSource = influencerSource) }
         val currentInfluencerId = _viewState.value.influencer?.id
@@ -739,8 +643,8 @@ class ConversationViewModel(
                         ConversationInfluencer(
                             id = influencerId,
                             name = "",
-                            displayName = "",
-                            avatarUrl = "",
+                            displayName = displayName.orEmpty(),
+                            avatarUrl = avatarUrl.orEmpty(),
                             category = influencerCategory,
                         ),
                 )
@@ -759,6 +663,7 @@ class ConversationViewModel(
                 chatError = null,
                 conversationId = null,
                 influencer = null,
+                isBotAccount = current.isBotAccount,
                 paginatedHistoryAvailable = false,
                 shareDisplayName = "",
                 shareMessage = "",
