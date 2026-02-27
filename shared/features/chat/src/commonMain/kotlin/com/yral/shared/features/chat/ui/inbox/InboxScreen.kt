@@ -17,6 +17,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -51,9 +54,16 @@ fun InboxScreen(
 ) {
     val pagingItems = viewModel.conversations.collectAsLazyPagingItems()
     val inboxState by viewModel.state.collectAsState()
+    var isManualRefresh by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.refreshConversations()
+    }
+
+    LaunchedEffect(pagingItems.loadState.refresh) {
+        if (pagingItems.loadState.refresh !is LoadState.Loading) {
+            isManualRefresh = false
+        }
     }
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -65,8 +75,12 @@ fun InboxScreen(
                     InboxContentWithPullToRefresh(
                         pagingItems = pagingItems,
                         inboxState = inboxState,
+                        isManualRefresh = isManualRefresh,
                         component = component,
-                        onRefresh = { pagingItems.refresh() },
+                        onRefresh = {
+                            isManualRefresh = true
+                            pagingItems.refresh()
+                        },
                     )
                 }
             is LoadState.Error -> InboxErrorState()
@@ -77,8 +91,12 @@ fun InboxScreen(
                     InboxContentWithPullToRefresh(
                         pagingItems = pagingItems,
                         inboxState = inboxState,
+                        isManualRefresh = isManualRefresh,
                         component = component,
-                        onRefresh = { pagingItems.refresh() },
+                        onRefresh = {
+                            isManualRefresh = true
+                            pagingItems.refresh()
+                        },
                     )
                 }
         }
@@ -95,6 +113,7 @@ private const val INBOX_PTR_OFFSET_ANIMATION_DURATION_MS = 200
 private fun InboxContentWithPullToRefresh(
     pagingItems: LazyPagingItems<Conversation>,
     inboxState: InboxState,
+    isManualRefresh: Boolean,
     component: InboxComponent,
     onRefresh: () -> Unit,
 ) {
@@ -103,7 +122,7 @@ private fun InboxContentWithPullToRefresh(
         pullRefreshState.distanceFraction *
             INBOX_PULL_TO_REFRESH_INDICATOR_SIZE *
             INBOX_PULL_TO_REFRESH_OFFSET_MULTIPLIER
-    val isRefreshing = pagingItems.loadState.refresh is LoadState.Loading
+    val isRefreshing = isManualRefresh && pagingItems.loadState.refresh is LoadState.Loading
     val targetOffsetPx =
         if (isRefreshing) {
             INBOX_PULL_TO_REFRESH_INDICATOR_SIZE
