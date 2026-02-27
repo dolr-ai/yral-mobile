@@ -21,7 +21,6 @@ import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastType
-import com.yral.shared.libs.designsystem.component.toast.showInfo
 import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -42,7 +41,6 @@ import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import org.jetbrains.compose.resources.getString
 import yral_mobile.shared.features.uploadvideo.generated.resources.Res
-import yral_mobile.shared.features.uploadvideo.generated.resources.toast_video_publishing
 import yral_mobile.shared.features.uploadvideo.generated.resources.toast_video_pushed_to_drafts
 
 @Suppress("TooManyFunctions")
@@ -222,9 +220,6 @@ class UploadVideoViewModel internal constructor(
         completeProcessJob =
             viewModelScope.launch {
                 _state.update { it.copy(updateMetadataUiState = UiState.InProgress(0f)) }
-                ToastManager.showInfo(
-                    type = ToastType.Small(getString(Res.string.toast_video_publishing)),
-                )
                 try {
                     // Ensure file upload is completed before proceeding
                     ensureFileUploadCompleted(filePath)
