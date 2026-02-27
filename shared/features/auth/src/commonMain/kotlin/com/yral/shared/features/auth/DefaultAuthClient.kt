@@ -126,6 +126,7 @@ class DefaultAuthClient(
                     accessToken = tokenResponse.accessToken,
                     persistBotIdentities = false,
                 )
+                getCachedSession()?.let { updateYralSession(it) }
             }.onFailure {
                 Logger.e("DefaultAuthClient") { "Silent token refresh failed: ${it.message}" }
             }
@@ -498,6 +499,7 @@ class DefaultAuthClient(
                     accessToken = tokenResponse.accessToken,
                     refreshToken = tokenResponse.refreshToken,
                 )
+                getCachedSession()?.let { updateYralSession(it) }
             }.onFailure {
                 trackAndLogoutForTokenExpiry(
                     cause = AuthSessionCause.REFRESH_ACCESS_TOKEN_FAILED,
