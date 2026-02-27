@@ -42,4 +42,6 @@ interface ChatRepository {
         conversationId: String,
         draft: SendMessageDraft,
     ): SendMessageResult
+
+    suspend fun markConversationAsRead(conversationId: String)
 }

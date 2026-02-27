@@ -113,4 +113,8 @@ class ChatRepositoryImpl(
             )
         return response.toDomain(conversationIdFallback = conversationId)
     }
+
+    override suspend fun markConversationAsRead(conversationId: String) {
+        dataSource.markConversationAsRead(conversationId)
+    }
 }

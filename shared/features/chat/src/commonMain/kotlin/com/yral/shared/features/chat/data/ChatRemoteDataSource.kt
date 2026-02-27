@@ -22,6 +22,7 @@ import io.ktor.client.request.forms.InputProvider
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.headers
+import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.Headers
@@ -229,6 +230,17 @@ class ChatRemoteDataSource(
         )
     }
 
+    override suspend fun markConversationAsRead(conversationId: String) {
+        val idToken = getIdToken()
+        httpClient.post {
+            url {
+                host = chatBaseUrl
+                path(CONVERSATIONS_PATH, conversationId, READ_PATH)
+            }
+            headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
+        }
+    }
+
     private suspend fun getIdToken() =
         preferences.getString(PrefKeys.ID_TOKEN.name)
             ?: throw YralException("Authorisation not found")
@@ -239,6 +251,7 @@ class ChatRemoteDataSource(
         private const val CONVERSATIONS_PATH = "api/v1/chat/conversations"
         private const val CONVERSATIONS_LIST_PATH = "api/v2/chat/conversations"
         private const val MESSAGES_PATH = "messages"
+        private const val READ_PATH = "read"
         private const val UPLOAD_PATH = "api/v1/media/upload"
     }
 }

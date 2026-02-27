@@ -50,4 +50,6 @@ interface ChatDataSource {
         attachment: ChatAttachment,
         type: String,
     ): UploadResponseDto
+
+    suspend fun markConversationAsRead(conversationId: String)
 }

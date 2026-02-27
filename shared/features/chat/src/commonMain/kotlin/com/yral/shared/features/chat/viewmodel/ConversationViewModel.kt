@@ -37,6 +37,7 @@ import com.yral.shared.features.chat.domain.models.SendMessageResult
 import com.yral.shared.features.chat.domain.usecases.CreateConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.DeleteConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
+import com.yral.shared.features.chat.domain.usecases.MarkConversationAsReadUseCase
 import com.yral.shared.features.chat.domain.usecases.SendMessageUseCase
 import com.yral.shared.features.subscriptions.domain.FetchProductsUseCase
 import com.yral.shared.features.subscriptions.domain.QueryPurchaseUseCase
@@ -66,6 +67,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -98,6 +100,7 @@ class ConversationViewModel(
     private val getInfluencerUseCase: GetInfluencerUseCase,
     private val getUserProfileDetailsV7UseCase: GetUserProfileDetailsV7UseCase,
     private val deleteConversationUseCase: DeleteConversationUseCase,
+    private val markConversationAsReadUseCase: MarkConversationAsReadUseCase,
     private val shareService: ShareService,
     private val urlBuilder: UrlBuilder,
     private val linkGenerator: LinkGenerator,
@@ -217,6 +220,19 @@ class ConversationViewModel(
                 ).collect { isSocialSignIn ->
                     resetState()
                     _viewState.update { it.copy(isSocialSignedIn = isSocialSignIn) }
+                }
+        }
+        viewModelScope.launch {
+            var markedReadConversationId: String? = null
+            combine(
+                _viewState.map { it.conversationId }.distinctUntilChanged(),
+                loadedMessageIds.filter { it.isNotEmpty() },
+            ) { convId, _ -> convId }
+                .collect { convId ->
+                    if (convId != null && convId != markedReadConversationId) {
+                        markedReadConversationId = convId
+                        markConversationAsRead(convId)
+                    }
                 }
         }
     }
@@ -1078,6 +1094,17 @@ class ConversationViewModel(
         val influencerId = _viewState.value.influencer?.id ?: return
         clearError()
         deleteAndRecreateConversation(influencerId)
+    }
+
+    private fun markConversationAsRead(conversationId: String) {
+        viewModelScope.launch {
+            markConversationAsReadUseCase(conversationId)
+                .onFailure { error ->
+                    Logger.w(ConversationViewModel::class.simpleName!!, error) {
+                        "Failed to mark conversation as read: $conversationId"
+                    }
+                }
+        }
     }
 
     companion object {

@@ -10,6 +10,7 @@ import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.usecases.CreateConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.DeleteConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
+import com.yral.shared.features.chat.domain.usecases.MarkConversationAsReadUseCase
 import com.yral.shared.features.chat.domain.usecases.SendMessageUseCase
 import com.yral.shared.features.chat.viewmodel.ChatWallViewModel
 import com.yral.shared.features.chat.viewmodel.ConversationViewModel
@@ -34,6 +35,7 @@ val chatModule =
         factoryOf(::CreateConversationUseCase)
         factoryOf(::DeleteConversationUseCase)
         factoryOf(::GetInfluencerUseCase)
+        factoryOf(::MarkConversationAsReadUseCase)
         factoryOf(::SendMessageUseCase)
         factoryOf(::ChatTelemetry)
         singleOf(::ChatErrorMapper)
