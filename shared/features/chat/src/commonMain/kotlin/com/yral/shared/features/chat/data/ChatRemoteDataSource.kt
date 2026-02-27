@@ -1,6 +1,5 @@
 package com.yral.shared.features.chat.data
 
-import com.yral.shared.core.AppConfigurations.CHAT_BASE_URL
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.features.chat.attachments.ChatAttachment
 import com.yral.shared.features.chat.data.models.ConversationDto
@@ -37,7 +36,7 @@ class ChatRemoteDataSource(
     private val httpClient: HttpClient,
     private val json: Json,
     private val preferences: Preferences,
-    private val environmentPrefix: String,
+    private val chatBaseUrl: String,
 ) : ChatDataSource {
     override suspend fun listInfluencers(
         limit: Int,
@@ -49,8 +48,8 @@ class ChatRemoteDataSource(
             json = json,
         ) {
             url {
-                host = CHAT_BASE_URL
-                path(environmentPrefix, INFLUENCERS_PATH)
+                host = chatBaseUrl
+                path(INFLUENCERS_PATH)
                 parameters.append("limit", limit.toString())
                 parameters.append("offset", offset.toString())
             }
@@ -68,8 +67,8 @@ class ChatRemoteDataSource(
             json = json,
         ) {
             url {
-                host = CHAT_BASE_URL
-                path(environmentPrefix, TRENDING_INFLUENCERS_PATH)
+                host = chatBaseUrl
+                path(TRENDING_INFLUENCERS_PATH)
                 parameters.append("limit", limit.toString())
                 parameters.append("offset", offset.toString())
             }
@@ -84,8 +83,8 @@ class ChatRemoteDataSource(
             json = json,
         ) {
             url {
-                host = CHAT_BASE_URL
-                path(environmentPrefix, INFLUENCERS_PATH, id)
+                host = chatBaseUrl
+                path(INFLUENCERS_PATH, id)
             }
             headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
         }
@@ -98,8 +97,8 @@ class ChatRemoteDataSource(
             json = json,
         ) {
             url {
-                host = CHAT_BASE_URL
-                path(environmentPrefix, CONVERSATIONS_PATH)
+                host = chatBaseUrl
+                path(CONVERSATIONS_PATH)
             }
             setBody(
                 CreateConversationRequestDto(
@@ -121,8 +120,8 @@ class ChatRemoteDataSource(
             json = json,
         ) {
             url {
-                host = CHAT_BASE_URL
-                path(environmentPrefix, CONVERSATIONS_LIST_PATH)
+                host = chatBaseUrl
+                path(CONVERSATIONS_LIST_PATH)
                 parameters.append("limit", limit.toString())
                 parameters.append("offset", offset.toString())
                 if (!influencerId.isNullOrBlank()) {
@@ -138,8 +137,8 @@ class ChatRemoteDataSource(
         val response =
             httpClient.delete {
                 url {
-                    host = CHAT_BASE_URL
-                    path(environmentPrefix, CONVERSATIONS_PATH, conversationId)
+                    host = chatBaseUrl
+                    path(CONVERSATIONS_PATH, conversationId)
                 }
                 headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
             }
@@ -162,8 +161,8 @@ class ChatRemoteDataSource(
             json = json,
         ) {
             url {
-                host = CHAT_BASE_URL
-                path(environmentPrefix, CONVERSATIONS_PATH, conversationId, MESSAGES_PATH)
+                host = chatBaseUrl
+                path(CONVERSATIONS_PATH, conversationId, MESSAGES_PATH)
                 parameters.append("limit", limit.toString())
                 parameters.append("offset", offset.toString())
                 parameters.append("order", order)
@@ -182,8 +181,8 @@ class ChatRemoteDataSource(
             json = json,
         ) {
             url {
-                host = CHAT_BASE_URL
-                path(environmentPrefix, CONVERSATIONS_PATH, conversationId, MESSAGES_PATH)
+                host = chatBaseUrl
+                path(CONVERSATIONS_PATH, conversationId, MESSAGES_PATH)
             }
             headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
             setBody(request)
@@ -196,11 +195,8 @@ class ChatRemoteDataSource(
     ): UploadResponseDto {
         val idToken = getIdToken()
         val url =
-            URLBuilder("https://$CHAT_BASE_URL")
+            URLBuilder("https://$chatBaseUrl")
                 .apply {
-                    if (environmentPrefix.isNotEmpty()) {
-                        appendPathSegments(environmentPrefix.split('/').filter { it.isNotBlank() })
-                    }
                     appendPathSegments(UPLOAD_PATH.split('/'))
                 }.build()
                 .toString()

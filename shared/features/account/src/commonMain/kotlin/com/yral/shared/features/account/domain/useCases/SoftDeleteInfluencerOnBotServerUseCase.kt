@@ -17,7 +17,7 @@ private const val SOFT_DELETE_LOG_TAG = "BotDeleteFlow"
 class SoftDeleteInfluencerOnBotServerUseCase(
     private val commonApis: CommonApis,
     private val preferences: Preferences,
-    private val environmentPrefix: String,
+    private val chatBaseUrl: String,
     dispatchers: AppDispatchers,
     useCaseFailureListener: UseCaseFailureListener,
 ) : SuspendUseCase<String?, Unit>(dispatchers.network, useCaseFailureListener) {
@@ -37,10 +37,10 @@ class SoftDeleteInfluencerOnBotServerUseCase(
                 }
                 else -> {
                     Logger.d(SOFT_DELETE_LOG_TAG) {
-                        "calling bot-server soft delete influencerId=$parameter envPrefix=$environmentPrefix"
+                        "calling bot-server soft delete influencerId=$parameter chatBaseUrl=$chatBaseUrl"
                     }
                     commonApis
-                        .softDeleteInfluencer(parameter, idToken, environmentPrefix)
+                        .softDeleteInfluencer(parameter, idToken, chatBaseUrl)
                         .fold(
                             onSuccess = {
                                 Logger.d(SOFT_DELETE_LOG_TAG) {

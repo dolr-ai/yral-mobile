@@ -1,6 +1,5 @@
 package com.yral.shared.data.data
 
-import com.yral.shared.core.AppConfigurations.CHAT_BASE_URL
 import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
 import com.yral.shared.data.data.models.VideoViewsDto
 import com.yral.shared.http.httpDelete
@@ -28,13 +27,13 @@ class CommonApisRemoteDataSource(
     override suspend fun softDeleteInfluencer(
         principal: String,
         idToken: String,
-        environmentPrefix: String,
+        chatBaseUrl: String,
     ): Result<Unit> =
         runCatching {
             httpDelete(httpClient) {
                 url {
-                    host = CHAT_BASE_URL
-                    path(environmentPrefix, INFLUENCERS_PATH, principal)
+                    host = chatBaseUrl
+                    path(INFLUENCERS_PATH, principal)
                 }
                 headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
             }

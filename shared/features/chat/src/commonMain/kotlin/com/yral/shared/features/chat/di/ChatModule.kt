@@ -1,6 +1,6 @@
 package com.yral.shared.features.chat.di
 
-import com.yral.shared.analytics.di.IS_DEBUG
+import com.yral.shared.core.di.CHAT_SERVER_BASE_URL
 import com.yral.shared.features.chat.analytics.ChatTelemetry
 import com.yral.shared.features.chat.data.ChatDataSource
 import com.yral.shared.features.chat.data.ChatRemoteDataSource
@@ -28,12 +28,7 @@ val chatModule =
                 httpClient = get(),
                 json = get(),
                 preferences = get(),
-                environmentPrefix =
-                    if (get(IS_DEBUG)) {
-                        "staging"
-                    } else {
-                        ""
-                    },
+                chatBaseUrl = get(CHAT_SERVER_BASE_URL),
             )
         }
         factoryOf(::CreateConversationUseCase)
