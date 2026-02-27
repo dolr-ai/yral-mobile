@@ -31,4 +31,5 @@
     <string name="draft_label">Draft</string>
     <string name="publish_success">Your video has been Published successfully!</string>
     <string name="publish_button">Publish</string>
+    <string name="publishing_video">Your video is publishing and will appear in your profile section.</string>
 </resources>

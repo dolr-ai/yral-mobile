@@ -50,6 +50,7 @@ import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastStatus
 import com.yral.shared.libs.designsystem.component.toast.ToastType
+import com.yral.shared.libs.designsystem.component.toast.showInfo
 import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.filedownloader.FileDownloader
 import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
@@ -92,6 +93,7 @@ import yral_mobile.shared.features.profile.generated.resources.Res
 import yral_mobile.shared.features.profile.generated.resources.download_failed
 import yral_mobile.shared.features.profile.generated.resources.download_successful
 import yral_mobile.shared.features.profile.generated.resources.publish_success
+import yral_mobile.shared.features.profile.generated.resources.publishing_video
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.profile_share_default_name
@@ -1118,6 +1120,9 @@ class ProfileViewModel(
     fun publishDraft(feedDetails: FeedDetails) {
         viewModelScope.launch {
             _state.update { it.copy(publishDraftUiState = UiState.InProgress()) }
+            ToastManager.showInfo(
+                type = ToastType.Small(getString(Res.string.publishing_video)),
+            )
             publishDraftVideoUseCase(
                 PublishDraftVideoUseCase.Param(postId = feedDetails.videoID),
             ).onSuccess {
