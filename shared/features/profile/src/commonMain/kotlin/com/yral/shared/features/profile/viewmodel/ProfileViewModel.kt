@@ -317,6 +317,13 @@ class ProfileViewModel(
                     }
                 }
         }
+        viewModelScope.launch {
+            sessionManager
+                .observeSessionProperty { it.isYralProAvailable }
+                .collect { isAvailable ->
+                    _state.update { it.copy(isYralProAvailable = isAvailable ?: false) }
+                }
+        }
     }
 
     private fun setAccountInfo(info: AccountInfo?) {
@@ -1125,6 +1132,7 @@ data class ViewState(
     val isTalkToMeInProgress: Boolean = false,
     val isProUser: Boolean = false,
     val isSubscriptionEnabled: Boolean = false,
+    val isYralProAvailable: Boolean = false,
     val maxBotCountForCta: Int = 3,
     val maxVisibleBotUsernames: Int = 2,
     val createdByUsername: String? = null,

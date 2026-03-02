@@ -108,6 +108,13 @@ class AccountsViewModel internal constructor(
                     }
                 }
         }
+        coroutineScope.launch {
+            sessionManager
+                .observeSessionProperty { it.isYralProAvailable }
+                .collect { isAvailable ->
+                    _state.update { it.copy(isYralProAvailable = isAvailable ?: false) }
+                }
+        }
     }
 
     private fun logout() {
@@ -358,6 +365,7 @@ data class AccountsState(
     val supportIcon: String? = null,
     val isWalletEnabled: Boolean = false,
     val isSubscriptionEnabled: Boolean = false,
+    val isYralProAvailable: Boolean = false,
     val isLoggedIn: Boolean = false,
     val alertsEnabled: Boolean = false,
     val isBotAccount: Boolean = false,

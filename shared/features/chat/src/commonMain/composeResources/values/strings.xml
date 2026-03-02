@@ -10,6 +10,7 @@
     <!-- Chat Header -->
     <string name="back">Back</string>
     <string name="view_profile">View Profile</string>
+    <string name="access_expires_in">Access Expires in %1$s</string>
     <string name="share_profile">Share Profile</string>
     <string name="clear_chat">Clear Chat</string>
 
@@ -29,6 +30,21 @@
     <!-- Subscription nudge (chat threshold) -->
     <string name="subscription_nudge_chat_title">Subscribe to YRAL Pro to continue chatting with %1$s.</string>
     <string name="subscription_nudge_chat_description">Go Pro to unlock unlimited chat with %1$s plus %2$d YRAL Credits.</string>
+
+    <!-- Influencer subscription card (replaces ChatInputArea when at threshold) -->
+    <string name="influencer_subscription_limited_time_offer">Limited Time Offer</string>
+    <string name="influencer_subscription_plan_title">1 Day Plan</string>
+    <string name="influencer_subscription_plan_description">Unlimited chats for 24 hours</string>
+    <string name="influencer_subscription_cta">Subscribe</string>
+    <string name="influencer_subscription_unlocked_toast">Unlocked! You can now chat with %1$s for 24 hours.</string>
+    <string name="influencer_subscription_purchase_unavailable">Purchase unavailable</string>
+    <string name="influencer_subscription_purchase_pending">Purchase pending approval</string>
+    <string name="influencer_subscription_purchase_failed">Purchase failed. Please try again.</string>
+    <string name="influencer_subscription_verification_pending">We are verifying your purchase. Please try again in a moment.</string>
+
+    <!-- System overlay messages (shown as sent in conversation) -->
+    <string name="subscription_card_overlay_message">Your free messages are over, but baatein abhi baki hai. Subscribe to our plan to continue chatting with me.</string>
+    <string name="access_activated_overlay_message">Access activated! I'm all yours for the next 24 hours. Tell me, what's on your mind right now?</string>
 
     <!-- Error Bottom Sheet -->
     <!-- Error titles -->
