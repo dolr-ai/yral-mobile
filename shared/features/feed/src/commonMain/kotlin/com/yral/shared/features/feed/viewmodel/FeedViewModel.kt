@@ -614,18 +614,21 @@ class FeedViewModel(
             Logger.d("FeedPagination") { "Added ${partialDetails.size} partial feed details immediately" }
         }
 
-        val count = MutableStateFlow(0)
+        _state.update { it.copy(pendingFetchDetails = it.pendingFetchDetails + newPosts.size) }
+
+        var notVotedCount = 0
+        val detailUpdates = mutableMapOf<String, FeedDetails>()
+        val votedRemovals = mutableSetOf<String>()
+        var completedCount = 0
+
         newPosts
             .processFirstNSuspendFlow(
                 n = newPosts.size,
                 process = { post ->
-                    println("Sarvesh post: $post")
-                    _state.update { it.copy(pendingFetchDetails = it.pendingFetchDetails + 1) }
                     requiredUseCases.fetchVideoDetailsWithCreatorInfoUseCase
                         .invoke(post)
                         .map { detail ->
                             if (detail == null) {
-                                println("Sarvesh post null")
                                 crashlyticsManager.recordException(
                                     YralException("Detail is null for ${post.postID}"),
                                     ExceptionType.FEED,
@@ -647,39 +650,34 @@ class FeedViewModel(
                         }
                 },
             ).collect { result ->
+                completedCount++
                 result
                     .onSuccess { (detail, isVoted) ->
-                        println("Sarvesh post details: $detail")
                         detail?.let {
                             if (isVoted == false) {
-                                count.update { it + 1 }
-                                _state.update { currentState ->
-                                    // Update existing partial entry with full details
-                                    val updatedFeedDetails =
-                                        currentState.feedDetails.map { existing ->
-                                            if (existing.videoID == detail.videoID) detail else existing
-                                        }
-                                    currentState.copy(
-                                        feedDetails = updatedFeedDetails,
-                                        pendingFetchDetails = currentState.pendingFetchDetails - 1,
-                                    )
-                                }
+                                notVotedCount++
+                                detailUpdates[detail.videoID] = detail
                             } else {
-                                // Video was already voted, remove the partial entry
-                                _state.update { currentState ->
-                                    currentState.copy(
-                                        feedDetails = currentState.feedDetails.filter { it.videoID != detail.videoID },
-                                        pendingFetchDetails = currentState.pendingFetchDetails - 1,
-                                    )
-                                }
+                                votedRemovals.add(detail.videoID)
                             }
-                        } ?: _state.update { it.copy(pendingFetchDetails = it.pendingFetchDetails - 1) }
+                        }
                     }.onFailure {
                         Logger.e("FeedPagination") { "Failed to fetch details $it" }
-                        _state.update { state -> state.copy(pendingFetchDetails = state.pendingFetchDetails - 1) }
                     }
             }
-        return count.value
+
+        _state.update { currentState ->
+            val updatedFeedDetails =
+                currentState.feedDetails
+                    .filter { it.videoID !in votedRemovals }
+                    .map { existing -> detailUpdates[existing.videoID] ?: existing }
+            currentState.copy(
+                feedDetails = updatedFeedDetails,
+                pendingFetchDetails = currentState.pendingFetchDetails - completedCount,
+            )
+        }
+
+        return notVotedCount
     }
 
     private suspend fun isAlreadyVoted(detail: FeedDetails): Boolean =

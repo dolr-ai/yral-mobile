@@ -2,6 +2,7 @@ package com.yral.shared.libs.videoPlayer.cardstack
 
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -36,7 +37,7 @@ fun Modifier.swipeableCard(
 ): Modifier =
     composed {
         val coroutineScope = rememberCoroutineScope()
-        val velocityTracker = VelocityTracker()
+        val velocityTracker = remember { VelocityTracker() }
 
         if (!enabled || state.isAnimating) {
             return@composed this
