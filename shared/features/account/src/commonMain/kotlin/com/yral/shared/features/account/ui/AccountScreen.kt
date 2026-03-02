@@ -248,7 +248,7 @@ private fun AccountScreenContent(
                 totalProCredits = totalProCredits,
                 onClick = proCardClick,
             )
-        } else if (state.isSubscriptionEnabled) {
+        } else if (state.isSubscriptionEnabled && state.isYralProAvailable) {
             ProSubscriptionCard(
                 totalProCredits = totalProCredits,
                 onClick = proCardClick,

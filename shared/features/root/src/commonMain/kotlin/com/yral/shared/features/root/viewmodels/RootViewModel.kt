@@ -26,8 +26,8 @@ import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.YralAuthException
 import com.yral.shared.features.auth.YralFBAuthException
 import com.yral.shared.features.root.analytics.RootTelemetry
+import com.yral.shared.features.subscriptions.domain.FetchProductsUseCase
 import com.yral.shared.features.subscriptions.domain.QueryPurchaseUseCase
-import com.yral.shared.iap.IAPManager
 import com.yral.shared.iap.PurchaseResult
 import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.libs.arch.presentation.UiState
@@ -96,7 +96,7 @@ class RootViewModel(
     private val accountDirectoryStore: AccountDirectoryStore,
     private val botIdentitiesStore: BotIdentitiesStore,
     private val utmAttributionStore: UtmAttributionStore,
-    private val iapManager: IAPManager,
+    private val fetchProductsUseCase: FetchProductsUseCase,
     private val queryPurchaseUseCase: QueryPurchaseUseCase,
     private val getUserProfileDetailsV7UseCase: GetUserProfileDetailsV7UseCase,
 ) : ViewModel() {
@@ -197,6 +197,9 @@ class RootViewModel(
                 preferences.putString(PrefKeys.FIRST_APP_OPEN_DATE_TIME.name, now.toString())
             }
         }
+        coroutineScope.launch {
+            fetchYralProAvailability()
+        }
     }
 
     fun initialize(isSessionPrincipalSame: Boolean = false) {
@@ -287,6 +290,17 @@ class RootViewModel(
             }
     }
 
+    private suspend fun fetchYralProAvailability() {
+        fetchProductsUseCase(listOf(ProductId.YRAL_PRO))
+            .onSuccess { products ->
+                val isAvailable = products.any { it.id == ProductId.YRAL_PRO.productId }
+                sessionManager.updateYralProAvailability(isAvailable)
+                Logger.d("SubscriptionX") { "YRAL Pro available: $isAvailable" }
+            }.onFailure { error ->
+                Logger.e("SubscriptionX", error) { "Failed to fetch IAP products for availability check" }
+            }
+    }
+
     @Suppress("UnusedPrivateMember")
     private fun restorePurchases() {
         coroutineScope.launch {
@@ -296,12 +310,9 @@ class RootViewModel(
                     defaultValue = false,
                 )
             if (!isSocialSignIn) return@launch
-            iapManager
-                .isProductPurchased(ProductId.YRAL_PRO)
-                .fold(
-                    onSuccess = { isPurchased -> Logger.d("SubscriptionX") { "isPurchased: $isPurchased" } },
-                    onFailure = { Logger.e("SubscriptionX", it) { "Failed to restore" } },
-                )
+            queryPurchaseUseCase(ProductId.YRAL_PRO)
+                .onSuccess { isPurchased -> Logger.d("SubscriptionX") { "isPurchased: $isPurchased" } }
+                .onFailure { Logger.e("SubscriptionX", it) { "Failed to restore" } }
         }
     }
 
@@ -841,7 +852,7 @@ class RootViewModel(
                 withContext(appDispatchers.main) { onError?.invoke() }
                 return@launch
             }
-            val result = queryPurchaseUseCase(Unit)
+            val result = queryPurchaseUseCase(ProductId.YRAL_PRO)
             result
                 .onSuccess { purchaseResult ->
                     withContext(appDispatchers.main) {

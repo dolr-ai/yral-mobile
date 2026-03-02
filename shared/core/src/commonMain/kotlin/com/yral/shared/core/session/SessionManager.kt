@@ -84,6 +84,7 @@ class SessionManager {
                 pendingTournamentRegistrationId = it.pendingTournamentRegistrationId,
                 botCount = it.botCount,
                 accountDirectory = it.accountDirectory,
+                isYralProAvailable = it.isYralProAvailable,
             )
         }
     }
@@ -247,6 +248,13 @@ class SessionManager {
         mutableProperties.update { it.copy(proDetails = null) }
     }
 
+    val isYralProAvailable: Boolean?
+        get() = mutableProperties.value.isYralProAvailable
+
+    fun updateYralProAvailability(isAvailable: Boolean) {
+        mutableProperties.update { it.copy(isYralProAvailable = isAvailable) }
+    }
+
     fun <T : Any> observeSessionPropertyWithDefault(
         selector: (SessionProperties) -> T?,
         defaultValue: T,
@@ -300,6 +308,8 @@ class SessionManager {
                 isSocialSignIn = false,
                 // Preserve pending tournament registration across session resets
                 pendingTournamentRegistrationId = it.pendingTournamentRegistrationId,
+                // Preserve device-level IAP availability across session resets
+                isYralProAvailable = it.isYralProAvailable,
             )
         }
     }

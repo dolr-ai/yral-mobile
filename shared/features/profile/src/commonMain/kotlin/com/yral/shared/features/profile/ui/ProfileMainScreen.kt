@@ -668,6 +668,7 @@ private fun MainContent(
         ProfileHeader(
             isOwnProfile = state.isOwnProfile,
             isSubscriptionEnabled = state.isSubscriptionEnabled,
+            isYralProAvailable = state.isYralProAvailable,
             isProUser = state.isProUser,
             userName = state.accountInfo?.displayName,
             showAccountChevron = state.isOwnProfile && (isBotAccount || hasBotAccounts),
@@ -775,12 +776,13 @@ private fun totalCount(data: LazyPagingItems<PagedFollowerItem>?) =
         }
     } ?: 0
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 private fun ProfileHeader(
     isOwnProfile: Boolean,
     isProUser: Boolean,
     isSubscriptionEnabled: Boolean,
+    isYralProAvailable: Boolean,
     userName: String?,
     showAccountChevron: Boolean,
     showShareProfile: Boolean,
@@ -847,11 +849,13 @@ private fun ProfileHeader(
                 }
             }
         }
+        val shouldShowBecomeProButton =
+            isOwnProfile && isSubscriptionEnabled && isYralProAvailable && !isProUser
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (isOwnProfile && isSubscriptionEnabled && !isProUser) {
+            if (shouldShowBecomeProButton) {
                 BecomeProButton { onSubscribe() }
             }
             if (showShareProfile) {
