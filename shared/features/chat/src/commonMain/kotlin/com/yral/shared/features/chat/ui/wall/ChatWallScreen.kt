@@ -326,6 +326,7 @@ private fun ChatWallGridContent(
             verticalArrangement = Arrangement.spacedBy(14.dp),
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             contentPadding = PaddingValues(bottom = 24.dp),
+            modifier = Modifier.fillMaxSize(),
         ) {
             items(
                 count = influencers.itemCount,

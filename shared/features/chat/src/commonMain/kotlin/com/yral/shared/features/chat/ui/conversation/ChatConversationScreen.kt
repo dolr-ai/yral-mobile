@@ -382,7 +382,7 @@ fun ChatConversationScreen(
                             canisterId = getUserInfoServiceCanister(),
                             userPrincipalId = userPrincipal,
                             profilePic = component.openConversationParams.avatarUrl.orEmpty(),
-                            username = component.openConversationParams.displayName.orEmpty(),
+                            username = component.openConversationParams.username.orEmpty(),
                             isCreatedFromServiceCanister = true,
                             isFollowing = false,
                         )

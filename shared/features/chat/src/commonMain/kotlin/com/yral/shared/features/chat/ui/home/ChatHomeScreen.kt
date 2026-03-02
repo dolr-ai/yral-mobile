@@ -43,6 +43,8 @@ import yral_mobile.shared.features.chat.generated.resources.chat_wall_subtitle
 import yral_mobile.shared.features.chat.generated.resources.chat_wall_title
 import yral_mobile.shared.features.chat.generated.resources.ic_tab_discover
 import yral_mobile.shared.features.chat.generated.resources.ic_tab_inbox
+import yral_mobile.shared.features.chat.generated.resources.tab_discover
+import yral_mobile.shared.features.chat.generated.resources.tab_inbox
 
 @Suppress("MagicNumber")
 private object ChatTabUi {
@@ -161,14 +163,14 @@ private fun ChatTabRow(
             ChatTabItem(
                 modifier = Modifier.align(Alignment.CenterStart),
                 iconRes = Res.drawable.ic_tab_discover,
-                label = "Discover",
+                label = stringResource(Res.string.tab_discover),
                 isSelected = isDiscoverSelected,
                 onClick = onDiscoverClick,
             )
             ChatTabItem(
                 modifier = Modifier.align(Alignment.CenterEnd),
                 iconRes = Res.drawable.ic_tab_inbox,
-                label = "Inbox",
+                label = stringResource(Res.string.tab_inbox),
                 isSelected = !isDiscoverSelected,
                 onClick = onInboxClick,
             )

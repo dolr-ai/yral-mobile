@@ -625,7 +625,8 @@ class ConversationViewModel(
         displayName: String? = null,
         avatarUrl: String? = null,
     ) {
-        _viewState.update { it.copy(influencerSource = influencerSource) }
+        val isBotAccount = sessionManager.isBotAccount == true
+        _viewState.update { it.copy(influencerSource = influencerSource, isBotAccount = isBotAccount) }
         val currentInfluencerId = _viewState.value.influencer?.id
         val currentConversationId = _viewState.value.conversationId
         // same influencer and conversation exists

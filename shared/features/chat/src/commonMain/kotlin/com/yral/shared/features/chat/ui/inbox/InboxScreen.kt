@@ -40,7 +40,7 @@ import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.chat.generated.resources.Res
 import yral_mobile.shared.features.chat.generated.resources.error_load_conversations
-import yral_mobile.shared.features.chat.generated.resources.no_conversation_yet
+import yral_mobile.shared.features.chat.generated.resources.no_conversations_yet
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -162,6 +162,7 @@ private fun InboxContentWithPullToRefresh(
                         influencerCategory = conversation.influencer.category,
                         conversationId = conversation.id,
                         userId = conversation.userId,
+                        username = conversation.conversationUser?.username,
                         displayName =
                             conversation.conversationUser?.let { user ->
                                 user.username?.takeIf { it.isNotBlank() }
@@ -214,7 +215,7 @@ private fun InboxEmptyState() {
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = stringResource(Res.string.no_conversation_yet),
+            text = stringResource(Res.string.no_conversations_yet),
             style = LocalAppTopography.current.baseRegular,
             color = YralColors.NeutralTextSecondary,
             textAlign = TextAlign.Center,

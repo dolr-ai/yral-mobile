@@ -3,6 +3,8 @@
     <string name="chat_wall_subtitle">Chat, learn, and vibe with your favorite creators.</string>
     <string name="chat_wall_coming_soon">coming soon...</string>
     <string name="chat_wall_talk_to_me">Talk To Me</string>
+    <string name="tab_discover">Discover</string>
+    <string name="tab_inbox">Inbox</string>
 
     <!-- Chat Conversation Screen -->
     <string name="no_conversation_id">No conversation ID</string>
@@ -59,11 +61,11 @@
     <string name="error_server_message">We are unable to load your chat at the moment. Please refresh or try again later.</string>
     <string name="error_unknown_message">We are unable to load your chat at the moment. Please refresh or try again later.</string>
     <string name="error_network_message_influencers">We are unable to reach influencers at the moment. Please refresh or try again in a moment.</string>
-    <string name="error_load_conversations">We are unable to load conversation at the moment. Please refresh or try again later.</string>
+    <string name="error_load_conversations">We are unable to load conversations at the moment. Please refresh or try again later.</string>
 
     <!-- Actions -->
     <string name="error_retry_action">Try Again</string>
     <string name="error_dismiss_action">Dismiss</string>
 
-    <string name="no_conversation_yet">No conversations yet</string>
+    <string name="no_conversations_yet">No conversations yet</string>
 </resources>

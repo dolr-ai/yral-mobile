@@ -14,8 +14,6 @@ import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
@@ -28,9 +26,6 @@ class InboxViewModel(
     private val sessionManager: SessionManager,
     private val useCaseFailureListener: UseCaseFailureListener,
 ) : ViewModel() {
-    private val _state = MutableStateFlow(InboxState())
-    val state: StateFlow<InboxState> = _state.asStateFlow()
-
     private val refreshTrigger = MutableStateFlow(0)
 
     private val pagingConfig =
@@ -65,7 +60,3 @@ class InboxViewModel(
         refreshTrigger.update { it + 1 }
     }
 }
-
-data class InboxState(
-    val isLoading: Boolean = false,
-)
