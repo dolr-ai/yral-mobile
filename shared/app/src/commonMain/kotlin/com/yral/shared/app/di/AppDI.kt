@@ -9,6 +9,8 @@ import com.yral.shared.app.config.AppRustLogForwardingListener
 import com.yral.shared.app.config.AppUseCaseFailureListener
 import com.yral.shared.app.config.NBRFailureListener
 import com.yral.shared.app.logging.SentryLogWriter
+import com.yral.shared.core.AppConfigurations
+import com.yral.shared.core.di.CHAT_SERVER_BASE_URL
 import com.yral.shared.core.di.coreModule
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.crashlytics.di.crashlyticsModule
@@ -60,6 +62,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
         modules(
             platformModule,
             coreModule,
+            featureUrlsModule,
             preferencesModule,
             analyticsModule,
             crashlyticsModule,
@@ -119,6 +122,13 @@ internal val loggerModule =
                 get(named("rustLogWriter")),
             )
         } bind RustLogForwardingListener::class
+    }
+
+internal val featureUrlsModule =
+    module {
+        single<String>(CHAT_SERVER_BASE_URL) {
+            if (get(IS_DEBUG)) AppConfigurations.CHAT_BASE_URL_DEBUG else AppConfigurations.CHAT_BASE_URL
+        }
     }
 
 internal val dispatchersModule = module { single { AppDispatchers() } }

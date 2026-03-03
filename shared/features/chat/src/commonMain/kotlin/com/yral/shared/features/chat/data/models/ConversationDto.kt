@@ -9,8 +9,12 @@ data class ConversationDto(
     val id: String,
     @SerialName("user_id")
     val userId: String,
+    @SerialName("influencer_id")
+    val influencerId: String? = null,
     @SerialName("influencer")
-    val influencer: ConversationInfluencerDto,
+    val influencer: ConversationInfluencerDto? = null,
+    @SerialName("user")
+    val user: ConversationUserDto? = null,
     @SerialName("created_at")
     val createdAt: String,
     @SerialName("updated_at")
@@ -21,6 +25,18 @@ data class ConversationDto(
     val lastMessage: ConversationLastMessageDto? = null,
     @SerialName("recent_messages")
     val recentMessages: List<ChatMessageDto>? = null,
+    @SerialName("unread_count")
+    val unreadCount: Int = 0,
+)
+
+@Serializable
+data class ConversationUserDto(
+    @SerialName("principal_id")
+    val principalId: String,
+    @SerialName("username")
+    val username: String? = null,
+    @SerialName("profile_picture_url")
+    val profilePictureUrl: String? = null,
 )
 
 @Serializable

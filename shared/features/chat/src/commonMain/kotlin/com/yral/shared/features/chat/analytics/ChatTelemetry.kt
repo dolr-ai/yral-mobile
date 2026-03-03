@@ -15,6 +15,7 @@ import com.yral.shared.analytics.events.SubscriptionClickedEventData
 import com.yral.shared.analytics.events.SubscriptionFailedEventData
 import com.yral.shared.analytics.events.SubscriptionSuccessEventData
 import com.yral.shared.analytics.events.UserMessageSentEventData
+import com.yral.shared.data.domain.models.ConversationInfluencerSource
 
 class ChatTelemetry(
     private val analyticsManager: AnalyticsManager,
@@ -50,13 +51,13 @@ class ChatTelemetry(
     fun chatInfluencerClicked(
         influencerId: String,
         influencerType: String,
-        source: InfluencerSource,
+        source: ConversationInfluencerSource,
     ) {
         analyticsManager.trackEvent(
             ChatInfluencerClickedEventData(
                 influencerId = influencerId,
                 influencerType = influencerType,
-                source = source,
+                source = source.toAnalyticsSource(),
             ),
         )
     }
@@ -65,14 +66,14 @@ class ChatTelemetry(
         influencerId: String,
         influencerType: String,
         chatSessionId: String,
-        source: InfluencerSource,
+        source: ConversationInfluencerSource,
     ) {
         analyticsManager.trackEvent(
             ChatSessionStartedEventData(
                 influencerId = influencerId,
                 influencerType = influencerType,
                 chatSessionId = chatSessionId,
-                source = source,
+                source = source.toAnalyticsSource(),
             ),
         )
     }
@@ -139,4 +140,10 @@ class ChatTelemetry(
     ) {
         analyticsManager.trackEvent(SubscriptionFailedEventData(botId = botId, reason = reason))
     }
+
+    private fun ConversationInfluencerSource.toAnalyticsSource(): InfluencerSource =
+        when (this) {
+            ConversationInfluencerSource.CARD -> InfluencerSource.CARD
+            ConversationInfluencerSource.PROFILE -> InfluencerSource.PROFILE
+        }
 }

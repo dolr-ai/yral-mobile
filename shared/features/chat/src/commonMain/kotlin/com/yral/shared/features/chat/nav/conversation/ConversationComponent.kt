@@ -1,7 +1,7 @@
 package com.yral.shared.features.chat.nav.conversation
 
 import com.arkivanov.decompose.ComponentContext
-import com.yral.shared.analytics.events.InfluencerSource
+import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.rust.service.utils.CanisterData
@@ -9,9 +9,7 @@ import com.yral.shared.rust.service.utils.CanisterData
 abstract class ConversationComponent {
     abstract val requestLoginFactory: RequestLoginFactory
     abstract val subscriptionCoordinator: SubscriptionCoordinator
-    abstract val influencerId: String
-    abstract val influencerCategory: String
-    abstract val influencerSource: InfluencerSource
+    abstract val openConversationParams: OpenConversationParams
     abstract val openProfile: (userCanisterData: CanisterData) -> Unit
     abstract fun onBack()
 
@@ -20,9 +18,7 @@ abstract class ConversationComponent {
             componentContext: ComponentContext,
             requestLoginFactory: RequestLoginFactory,
             subscriptionCoordinator: SubscriptionCoordinator,
-            influencerId: String,
-            influencerCategory: String,
-            influencerSource: InfluencerSource = InfluencerSource.CARD,
+            openConversationParams: OpenConversationParams,
             onBack: () -> Unit,
             openProfile: (userCanisterData: CanisterData) -> Unit,
         ): ConversationComponent =
@@ -30,9 +26,7 @@ abstract class ConversationComponent {
                 componentContext = componentContext,
                 requestLoginFactory = requestLoginFactory,
                 subscriptionCoordinator = subscriptionCoordinator,
-                influencerId = influencerId,
-                influencerCategory = influencerCategory,
-                influencerSource = influencerSource,
+                openConversationParams = openConversationParams,
                 onBack = onBack,
                 openProfile = openProfile,
             )

@@ -14,11 +14,11 @@ import com.github.michaelbull.result.onSuccess
 import com.yral.featureflag.AppFeatureFlags
 import com.yral.featureflag.ChatFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
-import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
+import com.yral.shared.data.domain.models.ConversationInfluencerSource
 import com.yral.shared.features.chat.analytics.ChatTelemetry
 import com.yral.shared.features.chat.attachments.ChatAttachment
 import com.yral.shared.features.chat.attachments.FilePathChatAttachment
@@ -35,6 +35,7 @@ import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.domain.models.SendMessageResult
 import com.yral.shared.features.chat.domain.usecases.CreateConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.DeleteConversationUseCase
+import com.yral.shared.features.chat.domain.usecases.MarkConversationAsReadUseCase
 import com.yral.shared.features.chat.domain.usecases.SendMessageUseCase
 import com.yral.shared.features.subscriptions.domain.FetchProductsUseCase
 import com.yral.shared.features.subscriptions.domain.QueryPurchaseUseCase
@@ -61,6 +62,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -91,6 +93,7 @@ class ConversationViewModel(
     private val sendMessageUseCase: SendMessageUseCase,
     private val createConversationUseCase: CreateConversationUseCase,
     private val deleteConversationUseCase: DeleteConversationUseCase,
+    private val markConversationAsReadUseCase: MarkConversationAsReadUseCase,
     private val shareService: ShareService,
     private val urlBuilder: UrlBuilder,
     private val linkGenerator: LinkGenerator,
@@ -210,6 +213,19 @@ class ConversationViewModel(
                 ).collect { isSocialSignIn ->
                     resetState()
                     _viewState.update { it.copy(isSocialSignedIn = isSocialSignIn) }
+                }
+        }
+        viewModelScope.launch {
+            var markedReadConversationId: String? = null
+            combine(
+                _viewState.map { it.conversationId }.distinctUntilChanged(),
+                loadedMessageIds.filter { it.isNotEmpty() },
+            ) { convId, _ -> convId }
+                .collect { convId ->
+                    if (convId != null && convId != markedReadConversationId) {
+                        markedReadConversationId = convId
+                        markConversationAsRead(convId)
+                    }
                 }
         }
     }
@@ -572,12 +588,45 @@ class ConversationViewModel(
         }
     }
 
-    fun initializeForInfluencer(
+    fun initializeFromInbox(
+        conversationId: String,
         influencerId: String,
         influencerCategory: String,
-        influencerSource: InfluencerSource = InfluencerSource.CARD,
+        influencerSource: ConversationInfluencerSource,
+        displayName: String? = null,
+        avatarUrl: String? = null,
     ) {
-        _viewState.update { it.copy(influencerSource = influencerSource) }
+        val isBotAccount = sessionManager.isBotAccount == true
+        _viewState.update { it.copy(influencerSource = influencerSource, isBotAccount = isBotAccount) }
+        val currentConversationId = _viewState.value.conversationId
+        if (currentConversationId == conversationId) return
+        if (_viewState.value.conversationId != null && _viewState.value.conversationId != conversationId) {
+            resetState()
+        }
+        setConversationId(
+            id = conversationId,
+            influencer =
+                ConversationInfluencer(
+                    id = influencerId,
+                    name = displayName.orEmpty(),
+                    displayName = displayName.orEmpty(),
+                    avatarUrl = avatarUrl.orEmpty(),
+                    category = influencerCategory,
+                ),
+            recentMessages = emptyList(),
+            messageCount = PAGE_SIZE + 1,
+        )
+    }
+
+    fun initializeForChatWall(
+        influencerId: String,
+        influencerCategory: String,
+        influencerSource: ConversationInfluencerSource = ConversationInfluencerSource.CARD,
+        displayName: String? = null,
+        avatarUrl: String? = null,
+    ) {
+        val isBotAccount = sessionManager.isBotAccount == true
+        _viewState.update { it.copy(influencerSource = influencerSource, isBotAccount = isBotAccount) }
         val currentInfluencerId = _viewState.value.influencer?.id
         val currentConversationId = _viewState.value.conversationId
         // same influencer and conversation exists
@@ -595,8 +644,8 @@ class ConversationViewModel(
                         ConversationInfluencer(
                             id = influencerId,
                             name = "",
-                            displayName = "",
-                            avatarUrl = "",
+                            displayName = displayName.orEmpty(),
+                            avatarUrl = avatarUrl.orEmpty(),
                             category = influencerCategory,
                         ),
                 )
@@ -615,6 +664,7 @@ class ConversationViewModel(
                 chatError = null,
                 conversationId = null,
                 influencer = null,
+                isBotAccount = current.isBotAccount,
                 paginatedHistoryAvailable = false,
                 shareDisplayName = "",
                 shareMessage = "",
@@ -952,6 +1002,18 @@ class ConversationViewModel(
         deleteAndRecreateConversation(influencerId)
     }
 
+    private fun markConversationAsRead(conversationId: String) {
+        if (_viewState.value.isBotAccount) return
+        viewModelScope.launch {
+            markConversationAsReadUseCase(conversationId)
+                .onFailure { error ->
+                    Logger.w(ConversationViewModel::class.simpleName!!, error) {
+                        "Failed to mark conversation as read: $conversationId"
+                    }
+                }
+        }
+    }
+
     companion object {
         private const val PAGE_SIZE = 10
         private const val PREFETCH_DISTANCE = 5
@@ -969,12 +1031,13 @@ data class ConversationViewState(
     val chatError: ChatError? = null,
     val conversationId: String? = null,
     val influencer: ConversationInfluencer? = null,
+    val isBotAccount: Boolean = false,
     val paginatedHistoryAvailable: Boolean = false,
     val shareDisplayName: String = "",
     val shareMessage: String = "",
     val shareDescription: String = "",
     val isSocialSignedIn: Boolean = false,
-    val influencerSource: InfluencerSource = InfluencerSource.CARD,
+    val influencerSource: ConversationInfluencerSource = ConversationInfluencerSource.CARD,
     val loginPromptMessageThreshold: Int,
     val subscriptionMandatoryThreshold: Int,
     val isSubscriptionEnabled: Boolean,
