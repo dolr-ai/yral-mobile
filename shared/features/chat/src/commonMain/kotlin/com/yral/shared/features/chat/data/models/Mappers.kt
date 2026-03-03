@@ -1,5 +1,6 @@
 package com.yral.shared.features.chat.data.models
 
+import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.features.chat.domain.models.ChatMessage
 import com.yral.shared.features.chat.domain.models.ChatMessageType
 import com.yral.shared.features.chat.domain.models.Conversation
@@ -66,7 +67,9 @@ fun ConversationDto.toDomain(): Conversation =
                     category = it.category.orEmpty(),
                     suggestedMessages = it.suggestedMessages.orEmpty(),
                 )
-            } ?: ConversationInfluencer(id = influencerId, name = "", displayName = "", avatarUrl = ""),
+            } ?: influencerId?.let { influencerId ->
+                ConversationInfluencer(id = influencerId, name = "", displayName = "", avatarUrl = "")
+            } ?: throw YralException("Conversation requires a valid influencer"),
         conversationUser =
             user?.let {
                 ConversationUser(

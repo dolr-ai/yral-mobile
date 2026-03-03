@@ -10,7 +10,7 @@ data class ConversationDto(
     @SerialName("user_id")
     val userId: String,
     @SerialName("influencer_id")
-    val influencerId: String,
+    val influencerId: String? = null,
     @SerialName("influencer")
     val influencer: ConversationInfluencerDto? = null,
     @SerialName("user")
