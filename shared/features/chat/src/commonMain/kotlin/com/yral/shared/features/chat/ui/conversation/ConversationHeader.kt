@@ -51,6 +51,7 @@ internal fun ChatHeader(
     onShareProfile: () -> Unit,
     accessExpiresInText: String? = null,
     isAccessExpiringSoon: Boolean = false,
+    isBotAccount: Boolean,
 ) {
     Box(
         modifier =
@@ -74,7 +75,7 @@ internal fun ChatHeader(
             )
 
             // Right side: More icon with context menu
-            RightPart(onClearChat = onClearChat, onShareProfile = onShareProfile)
+            RightPart(onClearChat = onClearChat, onShareProfile = onShareProfile, isBotAccount = isBotAccount)
         }
     }
 }
@@ -187,25 +188,33 @@ private fun HeaderSubtitle(onProfileClick: () -> Unit) {
 private fun RightPart(
     onClearChat: () -> Unit,
     onShareProfile: () -> Unit,
+    isBotAccount: Boolean,
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        YralContextMenu(
-            items =
-                listOf(
+        val menuItems =
+            buildList {
+                add(
                     YralContextMenuItem(
                         text = stringResource(Res.string.share_profile),
                         icon = DesignRes.drawable.ic_share,
                         onClick = onShareProfile,
                     ),
-                    YralContextMenuItem(
-                        text = stringResource(Res.string.clear_chat),
-                        icon = DesignRes.drawable.ic_x_circle,
-                        onClick = onClearChat,
-                    ),
-                ),
+                )
+                if (!isBotAccount) {
+                    add(
+                        YralContextMenuItem(
+                            text = stringResource(Res.string.clear_chat),
+                            icon = DesignRes.drawable.ic_x_circle,
+                            onClick = onClearChat,
+                        ),
+                    )
+                }
+            }
+        YralContextMenu(
+            items = menuItems,
             triggerIcon = DesignRes.drawable.ic_more,
             triggerSize = 24.dp,
             menuIconSize = 20.dp,

@@ -31,4 +31,7 @@ sealed class IAPError(
     data class UnknownError(
         override val cause: Throwable? = null,
     ) : IAPError("Unknown IAP error", cause)
+
+    override val message: String?
+        get() = cause?.message?.let { "${super.message}, cause: $it" } ?: super.message
 }

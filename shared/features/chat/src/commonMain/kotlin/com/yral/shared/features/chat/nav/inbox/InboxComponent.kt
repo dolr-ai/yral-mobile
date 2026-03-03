@@ -1,24 +1,20 @@
-package com.yral.shared.features.chat.nav.wall
+package com.yral.shared.features.chat.nav.inbox
 
 import com.arkivanov.decompose.ComponentContext
-import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.data.domain.models.OpenConversationParams
 
-abstract class ChatWallComponent {
+@Suppress("UtilityClassWithPublicConstructor")
+abstract class InboxComponent {
     abstract fun openConversation(params: OpenConversationParams)
-
-    abstract fun openCreateInfluencer()
 
     companion object Companion {
         operator fun invoke(
             componentContext: ComponentContext,
             openConversation: (OpenConversationParams) -> Unit,
-            openCreateInfluencer: (source: BotCreationSource) -> Unit,
-        ): ChatWallComponent =
-            DefaultChatWallComponent(
+        ): InboxComponent =
+            DefaultInboxComponent(
                 componentContext = componentContext,
                 openConversation = openConversation,
-                openCreateInfluencer = openCreateInfluencer,
             )
     }
 }

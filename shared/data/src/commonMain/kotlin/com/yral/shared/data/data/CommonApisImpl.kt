@@ -15,6 +15,6 @@ class CommonApisImpl(
     override suspend fun softDeleteInfluencer(
         principal: String,
         idToken: String,
-        environmentPrefix: String,
-    ): Result<Unit> = remoteDataSource.softDeleteInfluencer(principal, idToken, environmentPrefix)
+        chatBaseUrl: String,
+    ): Result<Unit> = remoteDataSource.softDeleteInfluencer(principal, idToken, chatBaseUrl)
 }

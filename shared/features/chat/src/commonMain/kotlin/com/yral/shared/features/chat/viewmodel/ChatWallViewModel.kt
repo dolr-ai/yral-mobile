@@ -13,8 +13,8 @@ import com.yral.featureflag.ChatFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.analytics.events.InfluencerClickType
-import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.data.domain.models.ConversationInfluencerSource
 import com.yral.shared.features.chat.analytics.ChatTelemetry
 import com.yral.shared.features.chat.domain.ChatErrorMapper
 import com.yral.shared.features.chat.domain.ChatRepository
@@ -87,7 +87,7 @@ class ChatWallViewModel(
         chatTelemetry.chatInfluencerClicked(
             influencerId = influencer.id,
             influencerType = influencer.category,
-            source = InfluencerSource.CARD,
+            source = ConversationInfluencerSource.CARD,
         )
     }
 

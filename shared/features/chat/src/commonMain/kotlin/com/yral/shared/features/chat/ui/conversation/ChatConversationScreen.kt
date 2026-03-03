@@ -100,12 +100,33 @@ fun ChatConversationScreen(
     val errorBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val purchaseContext = getPurchaseContext()
 
-    LaunchedEffect(component.influencerId, viewState.isSocialSignedIn) {
-        viewModel.initializeForInfluencer(
-            influencerId = component.influencerId,
-            influencerCategory = component.influencerCategory,
-            influencerSource = component.influencerSource,
-        )
+    val params = component.openConversationParams
+    LaunchedEffect(
+        params.influencerId,
+        params.conversationId,
+        params.userId,
+        viewState.isSocialSignedIn,
+    ) {
+        val conversationId = params.conversationId
+        val userId = params.userId
+        if (conversationId != null && userId != null) {
+            viewModel.initializeFromInbox(
+                conversationId = conversationId,
+                influencerId = params.influencerId,
+                influencerCategory = params.influencerCategory,
+                influencerSource = params.influencerSource,
+                displayName = params.displayName,
+                avatarUrl = params.avatarUrl,
+            )
+        } else {
+            viewModel.initializeForChatWall(
+                influencerId = params.influencerId,
+                influencerCategory = params.influencerCategory,
+                influencerSource = params.influencerSource,
+                displayName = params.displayName,
+                avatarUrl = params.avatarUrl,
+            )
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -187,7 +208,7 @@ fun ChatConversationScreen(
     }
     val shouldShowInfluencerSubscriptionCard by derivedStateOf {
         val allowedId = viewState.subscriptionAllowedInfluencerId
-        val currentInfluencerId = viewState.influencer?.id ?: component.influencerId
+        val currentInfluencerId = viewState.influencer?.id ?: params.influencerId
         val allowedForThisInfluencer = currentInfluencerId == allowedId
         !hasWaitingAssistant &&
             viewState.isSocialSignedIn &&
@@ -349,21 +370,29 @@ fun ChatConversationScreen(
                 influencer = viewState.influencer,
                 onBackClick = { component.onBack() },
                 onProfileClick = { influencer ->
+                    val userPrincipal =
+                        if (viewState.isBotAccount) {
+                            component.openConversationParams.userId
+                        } else {
+                            influencer.id
+                        }
+                    if (userPrincipal == null) return@ChatHeader
                     val canisterData =
                         CanisterData(
                             canisterId = getUserInfoServiceCanister(),
-                            userPrincipalId = influencer.id,
-                            profilePic = influencer.avatarUrl,
-                            username = influencer.name,
+                            userPrincipalId = userPrincipal,
+                            profilePic = component.openConversationParams.avatarUrl.orEmpty(),
+                            username = component.openConversationParams.username.orEmpty(),
                             isCreatedFromServiceCanister = true,
                             isFollowing = false,
                         )
                     component.openProfile(canisterData)
                 },
-                onClearChat = { viewModel.deleteAndRecreateConversation(component.influencerId) },
+                onClearChat = { viewModel.deleteAndRecreateConversation(params.influencerId) },
                 onShareProfile = { viewModel.shareProfile() },
                 accessExpiresInText = accessExpiryDisplay.text,
                 isAccessExpiringSoon = accessExpiryDisplay.isExpiringSoon,
+                isBotAccount = viewState.isBotAccount,
             )
 
             Column(
@@ -391,6 +420,7 @@ fun ChatConversationScreen(
                             listState = listState,
                             overlayItems = overlayItems,
                             historyPagingItems = historyPagingItems,
+                            isBotAccount = viewState.isBotAccount,
                             onRetry = { localId -> viewModel.retry(localId) },
                         )
 
@@ -427,7 +457,7 @@ fun ChatConversationScreen(
                         }
 
                         // Influencer subscription card (replaces input when at threshold) or ChatInputArea
-                        if (shouldShowInfluencerSubscriptionCard) {
+                        if (shouldShowInfluencerSubscriptionCard && !viewState.isBotAccount) {
                             InfluencerSubscriptionCard(
                                 onSubscribe = {
                                     purchaseContext?.let { viewModel.launchInfluencerSubscriptionPurchase(it) }
@@ -435,7 +465,7 @@ fun ChatConversationScreen(
                                 isPurchaseInProgress = viewState.isInfluencerSubscriptionPurchaseInProgress,
                                 formattedPrice = viewState.influencerSubscriptionFormattedPrice,
                             )
-                        } else {
+                        } else if (!viewState.isBotAccount) {
                             ChatInputArea(
                                 input = input,
                                 onInputChange = { input = it },

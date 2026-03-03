@@ -31,7 +31,6 @@ import androidx.compose.ui.unit.dp
 import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.model.DefaultMarkdownColors
 import com.mikepenz.markdown.model.DefaultMarkdownTypography
-import com.yral.shared.features.chat.domain.models.ConversationMessageRole
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralLoadingDots
 import com.yral.shared.libs.designsystem.theme.AppTopography
@@ -48,7 +47,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Composable
 internal fun MessageContent(
-    role: ConversationMessageRole,
+    isUser: Boolean,
     content: String?,
     mediaUrls: List<String>,
     maxWidth: Dp,
@@ -59,7 +58,7 @@ internal fun MessageContent(
     MessageBubble(
         content = content,
         mediaUrls = mediaUrls,
-        isUser = role == ConversationMessageRole.USER,
+        isUser = isUser,
         maxWidth = maxWidth,
         isFailed = isFailed,
         isWaiting = isWaiting,
