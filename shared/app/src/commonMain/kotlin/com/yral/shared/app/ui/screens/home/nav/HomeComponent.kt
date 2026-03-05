@@ -8,10 +8,10 @@ import com.yral.featureflag.ChatFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.featureflag.WalletFeatureFlags
 import com.yral.shared.analytics.events.BotCreationSource
-import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
+import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.chat.nav.ChatComponent
@@ -44,11 +44,7 @@ abstract class HomeComponent {
     abstract fun onWalletTabClick()
     abstract fun onChatTabClick()
     abstract fun onNavigationRequest(appRoute: AppRoute)
-    abstract fun openConversation(
-        influencerId: String,
-        influencerCategory: String = "",
-        influencerSource: InfluencerSource = InfluencerSource.CARD,
-    )
+    abstract fun openConversation(params: OpenConversationParams)
     abstract fun openWallet()
     abstract fun openLeaderboard()
     abstract fun openCreateInfluencer(source: BotCreationSource)
@@ -95,11 +91,7 @@ abstract class HomeComponent {
             subscriptionCoordinator: SubscriptionCoordinator,
             openEditProfile: () -> Unit,
             openProfile: (userCanisterData: CanisterData) -> Unit,
-            openConversation: (
-                influencerId: String,
-                influencerCategory: String,
-                influencerSource: InfluencerSource,
-            ) -> Unit,
+            openConversation: (OpenConversationParams) -> Unit,
             openCreateInfluencer: (source: BotCreationSource) -> Unit,
             openWallet: () -> Unit,
             openLeaderboard: () -> Unit,

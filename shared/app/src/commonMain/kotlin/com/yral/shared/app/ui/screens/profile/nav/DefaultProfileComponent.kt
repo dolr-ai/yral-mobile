@@ -10,9 +10,9 @@ import com.arkivanov.decompose.router.stack.pushToFront
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.analytics.events.BotCreationSource
-import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.data.AlertsRequestType
+import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.profile.nav.EditProfileComponent
@@ -37,11 +37,7 @@ internal class DefaultProfileComponent(
     private val openEditProfile: () -> Unit,
     private val openProfile: (CanisterData) -> Unit,
     private val openCreateInfluencer: (source: BotCreationSource) -> Unit,
-    private val openConversation: (
-        influencerId: String,
-        influencerCategory: String,
-        influencerSource: InfluencerSource,
-    ) -> Unit,
+    private val openConversation: (OpenConversationParams) -> Unit,
     private val openAccountSheet: () -> Unit,
     private val switchToMainProfile: (onComplete: (Boolean) -> Unit) -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
@@ -100,12 +96,8 @@ internal class DefaultProfileComponent(
         // navigation.pushToFront(Config.EditProfile)
     }
 
-    override fun openConversation(
-        influencerId: String,
-        influencerCategory: String,
-        influencerSource: InfluencerSource,
-    ) {
-        openConversation.invoke(influencerId, influencerCategory, influencerSource)
+    override fun openConversation(params: OpenConversationParams) {
+        openConversation.invoke(params)
     }
 
     override fun onBackClicked(): Boolean {

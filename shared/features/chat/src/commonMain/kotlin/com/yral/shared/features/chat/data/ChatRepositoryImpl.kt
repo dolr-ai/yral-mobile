@@ -47,12 +47,14 @@ class ChatRepositoryImpl(
         limit: Int,
         offset: Int,
         influencerId: String?,
+        principal: String,
     ): ConversationsPageResult =
         dataSource
             .listConversations(
                 limit = limit,
                 offset = offset,
                 influencerId = influencerId,
+                principal = principal,
             ).toDomain()
 
     override suspend fun deleteConversation(conversationId: String): DeleteConversationResult =
@@ -112,5 +114,9 @@ class ChatRepositoryImpl(
                     ),
             )
         return response.toDomain(conversationIdFallback = conversationId)
+    }
+
+    override suspend fun markConversationAsRead(conversationId: String) {
+        dataSource.markConversationAsRead(conversationId)
     }
 }

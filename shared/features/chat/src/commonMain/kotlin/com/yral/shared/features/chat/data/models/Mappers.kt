@@ -1,5 +1,6 @@
 package com.yral.shared.features.chat.data.models
 
+import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.features.chat.domain.models.ChatMessage
 import com.yral.shared.features.chat.domain.models.ChatMessageType
 import com.yral.shared.features.chat.domain.models.Conversation
@@ -7,6 +8,7 @@ import com.yral.shared.features.chat.domain.models.ConversationInfluencer
 import com.yral.shared.features.chat.domain.models.ConversationLastMessage
 import com.yral.shared.features.chat.domain.models.ConversationMessageRole
 import com.yral.shared.features.chat.domain.models.ConversationMessagesPageResult
+import com.yral.shared.features.chat.domain.models.ConversationUser
 import com.yral.shared.features.chat.domain.models.ConversationsPageResult
 import com.yral.shared.features.chat.domain.models.DeleteConversationResult
 import com.yral.shared.features.chat.domain.models.Influencer
@@ -56,14 +58,26 @@ fun ConversationDto.toDomain(): Conversation =
         id = id,
         userId = userId,
         influencer =
-            ConversationInfluencer(
-                id = influencer.id,
-                name = influencer.name,
-                displayName = influencer.displayName,
-                avatarUrl = influencer.avatarUrl,
-                category = influencer.category.orEmpty(),
-                suggestedMessages = influencer.suggestedMessages.orEmpty(),
-            ),
+            influencer?.let {
+                ConversationInfluencer(
+                    id = it.id,
+                    name = it.name,
+                    displayName = it.displayName,
+                    avatarUrl = it.avatarUrl,
+                    category = it.category.orEmpty(),
+                    suggestedMessages = it.suggestedMessages.orEmpty(),
+                )
+            } ?: influencerId?.let { influencerId ->
+                ConversationInfluencer(id = influencerId, name = "", displayName = "", avatarUrl = "")
+            } ?: throw YralException("Conversation requires a valid influencer"),
+        conversationUser =
+            user?.let {
+                ConversationUser(
+                    principalId = it.principalId,
+                    username = it.username,
+                    profilePictureUrl = it.profilePictureUrl,
+                )
+            },
         createdAt = createdAt,
         updatedAt = updatedAt,
         messageCount = messageCount,
@@ -76,6 +90,7 @@ fun ConversationDto.toDomain(): Conversation =
                 )
             },
         recentMessages = recentMessages?.map { it.toDomain(conversationIdFallback = id) } ?: emptyList(),
+        unreadCount = unreadCount,
     )
 
 fun ConversationsResponseDto.toDomain(): ConversationsPageResult {

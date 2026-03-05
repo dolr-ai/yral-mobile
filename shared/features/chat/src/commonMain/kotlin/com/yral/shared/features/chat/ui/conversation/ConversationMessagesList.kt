@@ -24,6 +24,7 @@ internal fun MessagesList(
     listState: LazyListState,
     overlayItems: List<ConversationMessageItem>,
     historyPagingItems: LazyPagingItems<ConversationMessageItem>,
+    isBotAccount: Boolean = false,
     onRetry: (localId: String) -> Unit,
 ) {
     val overlayMessageIds = overlayMessageIdSet(overlayItems)
@@ -38,7 +39,7 @@ internal fun MessagesList(
         items(
             items = overlayItems,
         ) { item ->
-            MessageRow(item = item, onRetry = onRetry)
+            MessageRow(item = item, isBotAccount = isBotAccount, onRetry = onRetry)
         }
 
         items(
@@ -46,7 +47,7 @@ internal fun MessagesList(
         ) { idx ->
             val item = historyPagingItems[idx] ?: return@items
             if (isDuplicateOfOverlay(item, overlayMessageIds)) return@items
-            MessageRow(item = item, onRetry = onRetry)
+            MessageRow(item = item, isBotAccount = isBotAccount, onRetry = onRetry)
         }
     }
 }
@@ -54,15 +55,19 @@ internal fun MessagesList(
 @Composable
 private fun MessageRow(
     item: ConversationMessageItem,
+    isBotAccount: Boolean,
     onRetry: (localId: String) -> Unit,
 ) {
     val screenWidth = LocalWindowInfo.current.containerSize.width
     val maxWidth = with(LocalDensity.current) { (screenWidth * MESSAGE_MAX_WIDTH_RATIO).toDp() }
-    val isUser =
+    val roleIsUser =
         when (item) {
             is ConversationMessageItem.Remote -> item.message.role == ConversationMessageRole.USER
             is ConversationMessageItem.Local -> item.message.role == ConversationMessageRole.USER
         }
+    // For bot accounts, roles are flipped: USER messages come from the AI (shown on left),
+    // ASSISTANT messages come from the human customer (shown on right).
+    val isUser = if (isBotAccount) !roleIsUser else roleIsUser
 
     Box(
         modifier = Modifier.fillMaxWidth().padding(vertical = MESSAGE_VERTICAL_PADDING_DP),
@@ -71,7 +76,7 @@ private fun MessageRow(
         when (item) {
             is ConversationMessageItem.Remote -> {
                 MessageContent(
-                    role = item.message.role,
+                    isUser = isUser,
                     content = item.message.content,
                     mediaUrls = item.message.mediaUrls,
                     maxWidth = maxWidth,
@@ -80,7 +85,7 @@ private fun MessageRow(
 
             is ConversationMessageItem.Local -> {
                 MessageContent(
-                    role = item.message.role,
+                    isUser = isUser,
                     content = if (item.message.isPlaceholder) "…" else item.message.content,
                     mediaUrls = item.message.mediaUrls,
                     maxWidth = maxWidth,

@@ -8,6 +8,6 @@ interface CommonApisDataSource {
     suspend fun softDeleteInfluencer(
         principal: String,
         idToken: String,
-        environmentPrefix: String,
+        chatBaseUrl: String,
     ): Result<Unit>
 }

@@ -4,9 +4,9 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.analytics.events.BotCreationSource
-import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.data.AlertsRequestType
+import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.profile.nav.EditProfileComponent
@@ -32,11 +32,7 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
     abstract fun onBackClicked(): Boolean
     abstract fun openProfile()
     abstract fun openCreateInfluencer(source: BotCreationSource)
-    abstract fun openConversation(
-        influencerId: String,
-        influencerCategory: String,
-        influencerSource: InfluencerSource = InfluencerSource.CARD,
-    )
+    abstract fun openConversation(params: OpenConversationParams)
 
     sealed class Child {
         class Main(
@@ -68,11 +64,7 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
             openEditProfile: () -> Unit,
             openProfile: (CanisterData) -> Unit,
             openCreateInfluencer: (source: BotCreationSource) -> Unit,
-            openConversation: (
-                influencerId: String,
-                influencerCategory: String,
-                influencerSource: InfluencerSource,
-            ) -> Unit,
+            openConversation: (OpenConversationParams) -> Unit,
             openAccountSheet: () -> Unit,
             switchToMainProfile: (onComplete: (Boolean) -> Unit) -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,

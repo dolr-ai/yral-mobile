@@ -2,8 +2,8 @@ package com.yral.shared.features.profile.nav
 
 import com.arkivanov.decompose.ComponentContext
 import com.yral.shared.analytics.events.BotCreationSource
-import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.data.AlertsRequestType
+import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.rust.service.utils.CanisterData
@@ -22,11 +22,7 @@ interface ProfileMainComponent {
     fun openEditProfile()
     fun openProfile(userCanisterData: CanisterData)
     fun openCreateInfluencer()
-    fun openConversation(
-        influencerId: String,
-        influencerCategory: String,
-        influencerSource: InfluencerSource = InfluencerSource.CARD,
-    )
+    fun openConversation(params: OpenConversationParams)
     fun onBackClicked()
     companion object Companion {
         @Suppress("LongParameterList")
@@ -42,11 +38,7 @@ interface ProfileMainComponent {
             openEditProfile: () -> Unit,
             openProfile: (CanisterData) -> Unit,
             openCreateInfluencer: (source: BotCreationSource) -> Unit,
-            openConversation: (
-                influencerId: String,
-                influencerCategory: String,
-                influencerSource: InfluencerSource,
-            ) -> Unit,
+            openConversation: (OpenConversationParams) -> Unit,
             onBackClicked: () -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
             showBackButton: Boolean = false,

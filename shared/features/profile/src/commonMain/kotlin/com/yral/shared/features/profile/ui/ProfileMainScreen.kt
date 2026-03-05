@@ -69,12 +69,13 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import com.yral.shared.analytics.events.EditProfileSource
-import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
+import com.yral.shared.data.domain.models.ConversationInfluencerSource
 import com.yral.shared.data.domain.models.FeedDetails
+import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.auth.ui.LoginMode
 import com.yral.shared.features.auth.ui.LoginScreenType
@@ -269,9 +270,11 @@ fun ProfileMainScreen(
 
                 is ProfileEvents.InfluencerDetailsFetched -> {
                     component.openConversation(
-                        influencerId = event.influencer.id,
-                        influencerCategory = event.influencer.category,
-                        influencerSource = InfluencerSource.PROFILE,
+                        OpenConversationParams(
+                            influencerId = event.influencer.id,
+                            influencerCategory = event.influencer.category,
+                            influencerSource = ConversationInfluencerSource.PROFILE,
+                        ),
                     )
                 }
 

@@ -123,9 +123,7 @@ internal class ComponentFactory(
             componentContext = componentContext,
             requestLoginFactory = rootComponent.createLoginRequestFactory(),
             subscriptionCoordinator = rootComponent.getSubscriptionCoordinator(),
-            influencerId = config.influencerId,
-            influencerCategory = config.influencerCategory,
-            influencerSource = config.influencerSource,
+            openConversationParams = config.params,
             onBack = rootComponent::onBackClicked,
             openProfile = rootComponent::openProfile,
         )

@@ -4,10 +4,10 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.analytics.events.BotCreationSource
-import com.yral.shared.analytics.events.InfluencerSource
+import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
-import com.yral.shared.features.chat.nav.wall.ChatWallComponent
+import com.yral.shared.features.chat.nav.home.ChatHomeComponent
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
 import com.yral.shared.rust.service.utils.CanisterData
@@ -22,8 +22,8 @@ abstract class ChatComponent : HomeChildSnapshotProvider {
     abstract fun openCreateInfluencer(source: BotCreationSource)
 
     sealed class Child {
-        class Wall(
-            val component: ChatWallComponent,
+        class Home(
+            val component: ChatHomeComponent,
         ) : Child()
         class Conversation(
             val component: ConversationComponent,
@@ -37,13 +37,11 @@ abstract class ChatComponent : HomeChildSnapshotProvider {
         @Serializable
         sealed interface Route {
             @Serializable
-            data object Wall : Route
+            data object Home : Route
 
             @Serializable
             data class Conversation(
-                val influencerId: String,
-                val influencerCategory: String = "",
-                val influencerSource: InfluencerSource = InfluencerSource.CARD,
+                val params: OpenConversationParams,
             ) : Route
         }
     }
@@ -55,11 +53,7 @@ abstract class ChatComponent : HomeChildSnapshotProvider {
             subscriptionCoordinator: SubscriptionCoordinator,
             snapshot: Snapshot?,
             openProfile: (userCanisterData: CanisterData) -> Unit,
-            openConversation: (
-                influencerId: String,
-                influencerCategory: String,
-                influencerSource: InfluencerSource,
-            ) -> Unit,
+            openConversation: (OpenConversationParams) -> Unit,
             openCreateInfluencer: (source: BotCreationSource) -> Unit,
         ): ChatComponent =
             DefaultChatComponent(
