@@ -6,10 +6,14 @@ import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
+import com.arkivanov.essenty.instancekeeper.InstanceKeeper
+import com.arkivanov.essenty.instancekeeper.getOrCreate
 import com.yral.shared.analytics.events.BotCreationSource
+import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.chat.nav.inbox.InboxComponent
 import com.yral.shared.features.chat.nav.wall.ChatWallComponent
+import com.yral.shared.koin.koinInstance
 import kotlinx.serialization.Serializable
 
 internal class DefaultChatHomeComponent(
@@ -18,13 +22,26 @@ internal class DefaultChatHomeComponent(
     private val openCreateInfluencer: (source: BotCreationSource) -> Unit,
 ) : ChatHomeComponent(),
     ComponentContext by componentContext {
+    private val sessionManager: SessionManager = koinInstance.get()
+
+    private class InitialConfigHolder : InstanceKeeper.Instance {
+        var config: Config = Config.Discover
+    }
+
+    private val initialConfigHolder: InitialConfigHolder =
+        instanceKeeper.getOrCreate("initialConfig") {
+            InitialConfigHolder().also { holder ->
+                holder.config = if (sessionManager.isBotAccount == true) Config.Inbox else Config.Discover
+            }
+        }
+
     private val navigation = StackNavigation<Config>()
 
     override val stack: Value<ChildStack<*, Child>> =
         childStack(
             source = navigation,
             serializer = Config.serializer(),
-            initialConfiguration = Config.Discover,
+            initialConfiguration = initialConfigHolder.config,
             handleBackButton = false,
             childFactory = ::child,
         )
