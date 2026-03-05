@@ -62,7 +62,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -213,19 +212,6 @@ class ConversationViewModel(
                 ).collect { isSocialSignIn ->
                     resetState()
                     _viewState.update { it.copy(isSocialSignedIn = isSocialSignIn) }
-                }
-        }
-        viewModelScope.launch {
-            var markedReadConversationId: String? = null
-            combine(
-                _viewState.map { it.conversationId }.distinctUntilChanged(),
-                loadedMessageIds.filter { it.isNotEmpty() },
-            ) { convId, _ -> convId }
-                .collect { convId ->
-                    if (convId != null && convId != markedReadConversationId) {
-                        markedReadConversationId = convId
-                        markConversationAsRead(convId)
-                    }
                 }
         }
     }
@@ -1002,7 +988,7 @@ class ConversationViewModel(
         deleteAndRecreateConversation(influencerId)
     }
 
-    private fun markConversationAsRead(conversationId: String) {
+    fun markConversationAsRead(conversationId: String) {
         if (_viewState.value.isBotAccount) return
         viewModelScope.launch {
             markConversationAsReadUseCase(conversationId)

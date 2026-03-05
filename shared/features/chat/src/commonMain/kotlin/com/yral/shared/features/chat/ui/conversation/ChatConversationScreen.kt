@@ -129,6 +129,13 @@ fun ChatConversationScreen(
         }
     }
 
+    LaunchedEffect(params.conversationId) {
+        val conversationId = params.conversationId
+        if (conversationId != null) {
+            viewModel.markConversationAsRead(conversationId)
+        }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.influencerSubscriptionToastFlow.collect { event ->
             when (event.status) {
