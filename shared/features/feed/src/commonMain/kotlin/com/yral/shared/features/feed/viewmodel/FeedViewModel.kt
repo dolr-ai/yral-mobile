@@ -830,6 +830,10 @@ class FeedViewModel(
         _state.update { it.copy(isPostDescriptionExpanded = isExpanded) }
     }
 
+    fun setSelectedFeedTab(tab: FeedTab) {
+        _state.update { it.copy(selectedFeedTab = tab) }
+    }
+
     fun recordTime(
         currentTime: Int,
         totalTime: Int,
@@ -1259,7 +1263,13 @@ data class FeedState(
     val isMandatoryLogin: Boolean = false,
     val isCardLayoutEnabled: Boolean = true,
     val showHotOrNotOnboarding: Boolean = false,
+    val selectedFeedTab: FeedTab = FeedTab.EXPLORE,
 )
+
+enum class FeedTab {
+    EXPLORE,
+    INFLUENCERS,
+}
 
 enum class OverlayType {
     DEFAULT,
