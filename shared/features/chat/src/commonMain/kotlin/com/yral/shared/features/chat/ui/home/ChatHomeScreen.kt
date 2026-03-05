@@ -67,6 +67,7 @@ fun ChatHomeScreen(
     val stack by component.stack.subscribeAsState()
     val activeChild = stack.active.instance
     val isDiscoverSelected = activeChild is Child.Discover
+    val isBotAccount = sessionManager.isBotAccount == true
 
     val wallState by chatWallViewModel.state.collectAsStateWithLifecycle()
     val showCreateBotCta by
@@ -80,18 +81,22 @@ fun ChatHomeScreen(
                 .fillMaxSize()
                 .background(Color.Black),
     ) {
-        ChatHomeHeader(
-            showCreateBotCta = showCreateBotCta,
-            onCreateInfluencerClick = {
-                chatWallViewModel.trackCreateInfluencerClicked()
-                component.openCreateInfluencer()
-            },
-        )
-        ChatTabRow(
-            isDiscoverSelected = isDiscoverSelected,
-            onDiscoverClick = component::onDiscoverTabClick,
-            onInboxClick = component::onInboxTabClick,
-        )
+        if (isBotAccount) {
+            InboxTitle()
+        } else {
+            ChatHomeHeader(
+                showCreateBotCta = showCreateBotCta,
+                onCreateInfluencerClick = {
+                    chatWallViewModel.trackCreateInfluencerClicked()
+                    component.openCreateInfluencer()
+                },
+            )
+            ChatTabRow(
+                isDiscoverSelected = isDiscoverSelected,
+                onDiscoverClick = component::onDiscoverTabClick,
+                onInboxClick = component::onInboxTabClick,
+            )
+        }
         Box(modifier = Modifier.fillMaxSize()) {
             when (activeChild) {
                 is Child.Discover ->
@@ -109,6 +114,20 @@ fun ChatHomeScreen(
             }
         }
     }
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+private fun InboxTitle() {
+    Text(
+        text = stringResource(Res.string.tab_inbox),
+        style = LocalAppTopography.current.xlBold,
+        color = YralColors.Grey50,
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, top = 16.dp, bottom = 16.dp, end = 16.dp),
+    )
 }
 
 @Suppress("MagicNumber")
