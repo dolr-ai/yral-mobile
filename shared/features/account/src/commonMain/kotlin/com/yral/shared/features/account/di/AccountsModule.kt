@@ -1,6 +1,6 @@
 package com.yral.shared.features.account.di
 
-import com.yral.shared.analytics.di.IS_DEBUG
+import com.yral.shared.core.di.CHAT_SERVER_BASE_URL
 import com.yral.shared.data.domain.CommonApis
 import com.yral.shared.features.account.analytics.AccountsTelemetry
 import com.yral.shared.features.account.domain.useCases.SoftDeleteInfluencerOnBotServerUseCase
@@ -16,12 +16,7 @@ val accountsModule =
             SoftDeleteInfluencerOnBotServerUseCase(
                 commonApis = get<CommonApis>(),
                 preferences = get(),
-                environmentPrefix =
-                    if (get(IS_DEBUG)) {
-                        "staging"
-                    } else {
-                        ""
-                    },
+                chatBaseUrl = get(CHAT_SERVER_BASE_URL),
                 dispatchers = get(),
                 useCaseFailureListener = get(),
             )

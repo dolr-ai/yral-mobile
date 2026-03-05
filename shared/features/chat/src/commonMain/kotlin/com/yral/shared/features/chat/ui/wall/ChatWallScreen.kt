@@ -1,5 +1,7 @@
 package com.yral.shared.features.chat.ui.wall
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -10,7 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -19,6 +21,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.pullToRefreshIndicator
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,19 +37,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.yral.shared.analytics.events.InfluencerSource
-import com.yral.shared.core.session.SessionManager
+import com.yral.shared.data.domain.models.ConversationInfluencerSource
+import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.chat.domain.models.ChatError
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencerStatus
 import com.yral.shared.features.chat.nav.wall.ChatWallComponent
 import com.yral.shared.features.chat.ui.components.ChatErrorBottomSheet
 import com.yral.shared.features.chat.viewmodel.ChatWallViewModel
-import com.yral.shared.libs.designsystem.component.CreateInfluencerButton
 import com.yral.shared.libs.designsystem.component.YralGridImage
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.formatAbbreviation
@@ -53,10 +58,7 @@ import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.koinInject
 import yral_mobile.shared.features.chat.generated.resources.Res
-import yral_mobile.shared.features.chat.generated.resources.chat_wall_subtitle
-import yral_mobile.shared.features.chat.generated.resources.chat_wall_title
 import yral_mobile.shared.features.chat.generated.resources.error_network_message_influencers
 import yral_mobile.shared.features.chat.generated.resources.ic_chat_bubble
 import yral_mobile.shared.features.chat.generated.resources.influencers_error
@@ -67,15 +69,8 @@ import yral_mobile.shared.features.chat.generated.resources.influencers_error
 fun ChatWallScreen(
     component: ChatWallComponent,
     viewModel: ChatWallViewModel,
-    sessionManager: SessionManager = koinInject(),
     modifier: Modifier = Modifier,
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    val showCreateBotCta by
-        sessionManager
-            .shouldShowCreateBotCtaFlow(state.maxBotCountForCta)
-            .collectAsStateWithLifecycle(initialValue = false)
-
     val influencers = viewModel.influencers.collectAsLazyPagingItems()
     var trackedCardsViewed by remember { mutableStateOf(false) }
 
@@ -111,75 +106,29 @@ fun ChatWallScreen(
                 .fillMaxSize()
                 .background(Color.Black),
     ) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 22.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(Res.string.chat_wall_title),
-                    style = LocalAppTopography.current.xlBold,
-                    color = YralColors.Grey50,
-                    modifier = Modifier.weight(1f),
-                )
-                if (showCreateBotCta) {
-                    CreateInfluencerButton(
-                        modifier = Modifier.height(32.dp),
-                        alignIconToEnd = false,
-                        onClick = {
-                            viewModel.trackCreateInfluencerClicked()
-                            component.openCreateInfluencer()
-                        },
+        when (influencers.loadState.refresh) {
+            is LoadState.Loading ->
+                if (influencers.itemCount == 0) {
+                    ChatWallLoadingState()
+                } else {
+                    ChatWallContentWithPullToRefresh(
+                        influencers = influencers,
+                        component = component,
+                        viewModel = viewModel,
                     )
                 }
-            }
-            Text(
-                text = stringResource(Res.string.chat_wall_subtitle),
-                style = LocalAppTopography.current.baseRegular,
-                color = YralColors.Grey0,
-                modifier = Modifier.padding(bottom = 20.dp),
-            )
-
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-                contentPadding = PaddingValues(bottom = 24.dp),
-            ) {
-                items(
-                    count = influencers.itemCount,
-                    key = { index -> influencers.peek(index)?.id ?: "placeholder-$index" },
-                    contentType = { "influencer_card" },
-                ) { index ->
-                    influencers[index]?.let { influencer ->
-                        InfluencerCard(
-                            influencer = influencer,
-                            onClick = {
-                                viewModel.trackInfluencerCardClicked(influencer, index + 1)
-                                component.openConversation(
-                                    influencer.id,
-                                    influencer.category,
-                                    InfluencerSource.CARD,
-                                )
-                            },
-                        )
-                    }
-                }
-            }
-        }
-
-        // Show loader during initial load
-        if (influencers.loadState.refresh is LoadState.Loading && influencers.itemCount == 0) {
-            Box(
-                modifier = Modifier.align(Alignment.Center),
-            ) {
-                YralLoader(size = 60.dp)
-            }
+            is LoadState.Error ->
+                ChatWallContentWithPullToRefresh(
+                    influencers = influencers,
+                    component = component,
+                    viewModel = viewModel,
+                )
+            is LoadState.NotLoading ->
+                ChatWallContentWithPullToRefresh(
+                    influencers = influencers,
+                    component = component,
+                    viewModel = viewModel,
+                )
         }
     }
 
@@ -291,10 +240,130 @@ private fun InfluencerCardContent(
     }
 }
 
+@Composable
+private fun ChatWallLoadingState() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
+        YralLoader(size = 60.dp)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ChatWallContentWithPullToRefresh(
+    influencers: LazyPagingItems<Influencer>,
+    component: ChatWallComponent,
+    viewModel: ChatWallViewModel,
+) {
+    val pullRefreshState = rememberPullToRefreshState()
+    val pullOffsetDp =
+        pullRefreshState.distanceFraction *
+            ChatWallScreenConstants.PULL_TO_REFRESH_INDICATOR_SIZE *
+            ChatWallScreenConstants.PULL_TO_REFRESH_OFFSET_MULTIPLIER
+    val isRefreshing = influencers.loadState.refresh is LoadState.Loading
+    val targetOffsetPx =
+        if (isRefreshing) {
+            ChatWallScreenConstants.PULL_TO_REFRESH_INDICATOR_SIZE
+        } else {
+            pullOffsetDp
+        }
+    val animatedOffsetPx by animateFloatAsState(
+        targetValue = targetOffsetPx,
+        animationSpec = tween(durationMillis = ChatWallScreenConstants.PTR_OFFSET_ANIMATION_DURATION_MS),
+        label = "ptrContentOffset",
+    )
+    val contentOffsetY = animatedOffsetPx.dp
+
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = { influencers.refresh() },
+        state = pullRefreshState,
+        indicator = {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .pullToRefreshIndicator(
+                            state = pullRefreshState,
+                            isRefreshing = isRefreshing,
+                            containerColor = Color.Transparent,
+                            threshold = ChatWallScreenConstants.PULL_TO_REFRESH_THRESHOLD.dp,
+                            elevation = 0.dp,
+                        ),
+                contentAlignment = Alignment.Center,
+            ) {
+                YralLoader(size = ChatWallScreenConstants.PULL_TO_REFRESH_INDICATOR_SIZE.dp)
+            }
+        },
+    ) {
+        ChatWallGridContent(
+            influencers = influencers,
+            component = component,
+            viewModel = viewModel,
+            contentOffsetY = contentOffsetY,
+        )
+    }
+}
+
+@Composable
+private fun ChatWallGridContent(
+    influencers: LazyPagingItems<Influencer>,
+    component: ChatWallComponent,
+    viewModel: ChatWallViewModel,
+    contentOffsetY: Dp,
+) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .offset(y = contentOffsetY)
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp),
+    ) {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            contentPadding = PaddingValues(bottom = 24.dp),
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            items(
+                count = influencers.itemCount,
+                key = { index -> influencers.peek(index)?.id ?: "placeholder-$index" },
+                contentType = { "influencer_card" },
+            ) { index ->
+                influencers[index]?.let { influencer ->
+                    InfluencerCard(
+                        influencer = influencer,
+                        onClick = {
+                            viewModel.trackInfluencerCardClicked(influencer, index + 1)
+                            component.openConversation(
+                                OpenConversationParams(
+                                    influencerId = influencer.id,
+                                    influencerCategory = influencer.category,
+                                    influencerSource = ConversationInfluencerSource.CARD,
+                                    displayName = influencer.displayName,
+                                    username = influencer.name,
+                                    avatarUrl = influencer.avatarUrl,
+                                ),
+                            )
+                        },
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Suppress("MagicNumber")
 object ChatWallScreenConstants {
     const val CARD_ASPECT_RATIO = 0.75f
     const val TOP_FILL_WEIGHT = 40f
     const val GRADIENT_WEIGHT = 40f
     const val SOLID_WEIGHT = 20f
+    const val PULL_TO_REFRESH_INDICATOR_SIZE = 34f
+    const val PULL_TO_REFRESH_THRESHOLD = 36f
+    const val PULL_TO_REFRESH_OFFSET_MULTIPLIER = 1.5f
+    const val PTR_OFFSET_ANIMATION_DURATION_MS = 200
 }

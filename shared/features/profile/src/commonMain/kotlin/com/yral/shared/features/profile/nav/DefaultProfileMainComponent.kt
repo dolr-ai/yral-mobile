@@ -2,8 +2,8 @@ package com.yral.shared.features.profile.nav
 
 import com.arkivanov.decompose.ComponentContext
 import com.yral.shared.analytics.events.BotCreationSource
-import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.data.AlertsRequestType
+import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.rust.service.utils.CanisterData
@@ -24,11 +24,7 @@ internal class DefaultProfileMainComponent(
     private val openEditProfile: () -> Unit,
     private val openProfile: (CanisterData) -> Unit,
     private val openCreateInfluencer: (source: BotCreationSource) -> Unit,
-    private val openConversation: (
-        influencerId: String,
-        influencerCategory: String,
-        influencerSource: InfluencerSource,
-    ) -> Unit,
+    private val openConversation: (OpenConversationParams) -> Unit,
     private val onBackClicked: () -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
 ) : ProfileMainComponent,
@@ -58,12 +54,8 @@ internal class DefaultProfileMainComponent(
         openCreateInfluencer.invoke(BotCreationSource.PROFILE_PAGE)
     }
 
-    override fun openConversation(
-        influencerId: String,
-        influencerCategory: String,
-        influencerSource: InfluencerSource,
-    ) {
-        openConversation.invoke(influencerId, influencerCategory, influencerSource)
+    override fun openConversation(params: OpenConversationParams) {
+        openConversation.invoke(params)
     }
 
     override fun onBackClicked() {

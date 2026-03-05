@@ -1,6 +1,6 @@
 package com.yral.shared.features.aiinfluencer.di
 
-import com.yral.shared.analytics.di.IS_DEBUG
+import com.yral.shared.core.di.CHAT_SERVER_BASE_URL
 import com.yral.shared.features.aiinfluencer.analytics.AiInfluencerTelemetry
 import com.yral.shared.features.aiinfluencer.data.AiInfluencerDataSource
 import com.yral.shared.features.aiinfluencer.data.AiInfluencerRemoteDataSource
@@ -24,12 +24,7 @@ val aiInfluencerModule =
                 httpClient = get(),
                 json = get(),
                 preferences = get(),
-                environmentPrefix =
-                    if (get(IS_DEBUG)) {
-                        "staging"
-                    } else {
-                        ""
-                    },
+                chatBaseUrl = get(CHAT_SERVER_BASE_URL),
             )
         }
         factoryOf(::GeneratePromptUseCase)

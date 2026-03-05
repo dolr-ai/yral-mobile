@@ -12,6 +12,8 @@ class ConversationsPagingSource(
     private val chatRepository: ChatRepository,
     private val useCaseFailureListener: UseCaseFailureListener,
     private val influencerId: String?,
+    private val principal: String,
+    private val onPageLoaded: ((List<Conversation>) -> Unit)? = null,
 ) : PagingSource<Int, Conversation>() {
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Conversation> =
         try {
@@ -23,7 +25,10 @@ class ConversationsPagingSource(
                     limit = limit,
                     offset = offset,
                     influencerId = influencerId,
+                    principal = principal,
                 )
+
+            onPageLoaded?.invoke(result.conversations)
 
             LoadResult.Page(
                 data = result.conversations,

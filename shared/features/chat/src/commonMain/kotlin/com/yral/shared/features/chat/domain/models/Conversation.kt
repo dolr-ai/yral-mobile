@@ -4,11 +4,19 @@ data class Conversation(
     val id: String,
     val userId: String,
     val influencer: ConversationInfluencer,
+    val conversationUser: ConversationUser? = null,
     val createdAt: String,
     val updatedAt: String,
     val messageCount: Int,
     val lastMessage: ConversationLastMessage?,
     val recentMessages: List<ChatMessage> = emptyList(),
+    val unreadCount: Int = 0,
+)
+
+data class ConversationUser(
+    val principalId: String,
+    val username: String?,
+    val profilePictureUrl: String?,
 )
 
 data class ConversationInfluencer(

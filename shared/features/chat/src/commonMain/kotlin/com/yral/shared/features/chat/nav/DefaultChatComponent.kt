@@ -7,10 +7,10 @@ import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.analytics.events.BotCreationSource
-import com.yral.shared.analytics.events.InfluencerSource
+import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
-import com.yral.shared.features.chat.nav.wall.ChatWallComponent
+import com.yral.shared.features.chat.nav.home.ChatHomeComponent
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.serialization.Serializable
@@ -22,11 +22,7 @@ internal class DefaultChatComponent(
     override val subscriptionCoordinator: SubscriptionCoordinator,
     private val snapshot: Snapshot?,
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
-    private val openConversation: (
-        influencerId: String,
-        influencerCategory: String,
-        influencerSource: InfluencerSource,
-    ) -> Unit,
+    private val openConversation: (OpenConversationParams) -> Unit,
     private val openCreateInfluencer: (source: BotCreationSource) -> Unit,
 ) : ChatComponent(),
     ComponentContext by componentContext,
@@ -40,7 +36,7 @@ internal class DefaultChatComponent(
             initialStack = {
                 val saved = snapshot?.routes ?: emptyList()
                 if (saved.isEmpty()) {
-                    listOf(Config.Wall)
+                    listOf(Config.Home)
                 } else {
                     saved.map { it.toConfig() }
                 }
@@ -68,27 +64,21 @@ internal class DefaultChatComponent(
             routes =
                 stack.value.items.map { item ->
                     when (val configuration = item.configuration) {
-                        is Config.Wall -> Snapshot.Route.Wall
+                        is Config.Home -> Snapshot.Route.Home
                         is Config.Conversation ->
                             Snapshot.Route.Conversation(
-                                influencerId = configuration.influencerId,
-                                influencerCategory = configuration.influencerCategory,
-                                influencerSource = configuration.influencerSource,
+                                params = configuration.params,
                             )
-                        else -> Snapshot.Route.Wall
+                        else -> Snapshot.Route.Home
                     }
                 },
         )
 
     private fun Snapshot.Route.toConfig(): Config =
         when (this) {
-            Snapshot.Route.Wall -> Config.Wall
+            Snapshot.Route.Home -> Config.Home
             is Snapshot.Route.Conversation ->
-                Config.Conversation(
-                    influencerId = influencerId,
-                    influencerCategory = influencerCategory,
-                    influencerSource = influencerSource,
-                )
+                Config.Conversation(params = params)
         }
 
     private fun child(
@@ -96,18 +86,14 @@ internal class DefaultChatComponent(
         componentContext: ComponentContext,
     ): Child =
         when (config) {
-            Config.Wall -> Child.Wall(chatWallComponent(componentContext))
+            Config.Home -> Child.Home(chatHomeComponent(componentContext))
             is Config.Conversation -> Child.Conversation(conversationComponent(componentContext, config))
         }
 
-    private fun chatWallComponent(componentContext: ComponentContext): ChatWallComponent =
-        ChatWallComponent.Companion(
+    private fun chatHomeComponent(componentContext: ComponentContext): ChatHomeComponent =
+        ChatHomeComponent.Companion(
             componentContext = componentContext,
-            openConversation = { influencerId, influencerCategory, influencerSource ->
-                // Use root navigation instead of local navigation
-                // navigation.pushNew(Config.Conversation(influencerId = influencerId))
-                openConversation.invoke(influencerId, influencerCategory, influencerSource)
-            },
+            openConversation = openConversation,
             openCreateInfluencer = openCreateInfluencer,
         )
 
@@ -119,9 +105,7 @@ internal class DefaultChatComponent(
             componentContext = componentContext,
             requestLoginFactory = requestLoginFactory,
             subscriptionCoordinator = subscriptionCoordinator,
-            influencerId = config.influencerId,
-            influencerCategory = config.influencerCategory,
-            influencerSource = config.influencerSource,
+            openConversationParams = config.params,
             onBack = { navigation.pop() },
             openProfile = openProfile,
         )
@@ -129,13 +113,11 @@ internal class DefaultChatComponent(
     @Serializable
     private sealed interface Config {
         @Serializable
-        data object Wall : Config
+        data object Home : Config
 
         @Serializable
         data class Conversation(
-            val influencerId: String,
-            val influencerCategory: String,
-            val influencerSource: InfluencerSource = InfluencerSource.CARD,
+            val params: OpenConversationParams,
         ) : Config
     }
 }

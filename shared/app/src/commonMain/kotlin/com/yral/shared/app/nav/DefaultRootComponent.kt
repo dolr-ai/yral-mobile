@@ -24,7 +24,6 @@ import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.instancekeeper.InstanceKeeper
 import com.arkivanov.essenty.instancekeeper.getOrCreate
 import com.yral.shared.analytics.events.BotCreationSource
-import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.SubscriptionEntryPoint
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.nav.factories.ComponentFactory
@@ -33,6 +32,7 @@ import com.yral.shared.app.ui.screens.home.nav.HomeComponent
 import com.yral.shared.core.session.ProDetails
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.AlertsRequestType
+import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.auth.ui.LoginCoordinator
 import com.yral.shared.features.auth.ui.LoginInfo
 import com.yral.shared.features.auth.ui.LoginOverlay
@@ -421,26 +421,21 @@ class DefaultRootComponent(
         )
     }
 
-    override fun openConversation(
-        influencerId: String,
-        influencerCategory: String,
-        influencerSource: InfluencerSource,
-    ) {
+    override fun openConversation(params: OpenConversationParams) {
         navigation.navigate { stack ->
             val existingIndex =
                 stack.indexOfLast { config ->
-                    config is Config.Conversation && config.influencerId == influencerId
+                    when {
+                        config is Config.Conversation && params.conversationId != null ->
+                            config.params.conversationId == params.conversationId
+                        config is Config.Conversation -> config.params.influencerId == params.influencerId
+                        else -> false
+                    }
                 }
             if (existingIndex != -1) {
-                // Conversation already in stack (e.g., came from Chat -> Profile -> Talk to Me); just go back to it.
                 stack.take(existingIndex + 1)
             } else {
-                stack +
-                    Config.Conversation(
-                        influencerId = influencerId,
-                        influencerCategory = influencerCategory,
-                        influencerSource = influencerSource,
-                    )
+                stack + Config.Conversation(params = params)
             }
         }
     }

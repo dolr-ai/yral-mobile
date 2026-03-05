@@ -1,6 +1,5 @@
 package com.yral.shared.features.aiinfluencer.data
 
-import com.yral.shared.core.AppConfigurations.CHAT_BASE_URL
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.features.aiinfluencer.data.models.CreateInfluencerRequestDto
 import com.yral.shared.features.aiinfluencer.data.models.CreateInfluencerResponseDto
@@ -22,7 +21,7 @@ class AiInfluencerRemoteDataSource(
     private val httpClient: HttpClient,
     private val json: Json,
     private val preferences: Preferences,
-    private val environmentPrefix: String,
+    private val chatBaseUrl: String,
 ) : AiInfluencerDataSource {
     override suspend fun generatePrompt(prompt: String): GeneratePromptResponseDto {
         val idToken = getIdToken()
@@ -31,8 +30,8 @@ class AiInfluencerRemoteDataSource(
             json = json,
         ) {
             url {
-                host = CHAT_BASE_URL
-                path(environmentPrefix, GENERATE_PROMPT_PATH)
+                host = chatBaseUrl
+                path(GENERATE_PROMPT_PATH)
             }
             headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
             setBody(GeneratePromptRequestDto(prompt = prompt))
@@ -47,8 +46,8 @@ class AiInfluencerRemoteDataSource(
             json = json,
         ) {
             url {
-                host = CHAT_BASE_URL
-                path(environmentPrefix, VALIDATE_AND_GENERATE_METADATA_PATH)
+                host = chatBaseUrl
+                path(VALIDATE_AND_GENERATE_METADATA_PATH)
             }
             headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
             setBody(
@@ -66,8 +65,8 @@ class AiInfluencerRemoteDataSource(
             json = json,
         ) {
             url {
-                host = CHAT_BASE_URL
-                path(environmentPrefix, CREATE_INFLUENCER_PATH)
+                host = chatBaseUrl
+                path(CREATE_INFLUENCER_PATH)
             }
             headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
             setBody(request)

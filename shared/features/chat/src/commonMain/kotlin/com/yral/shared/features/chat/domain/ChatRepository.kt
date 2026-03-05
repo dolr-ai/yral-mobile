@@ -28,6 +28,7 @@ interface ChatRepository {
         limit: Int,
         offset: Int,
         influencerId: String? = null,
+        principal: String,
     ): ConversationsPageResult
 
     suspend fun deleteConversation(conversationId: String): DeleteConversationResult
@@ -42,4 +43,6 @@ interface ChatRepository {
         conversationId: String,
         draft: SendMessageDraft,
     ): SendMessageResult
+
+    suspend fun markConversationAsRead(conversationId: String)
 }

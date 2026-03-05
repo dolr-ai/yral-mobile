@@ -4,11 +4,11 @@ import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.value.Value
 import com.yral.shared.analytics.events.BotCreationSource
-import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.SubscriptionEntryPoint
 import com.yral.shared.app.UpdateState
 import com.yral.shared.app.ui.screens.alertsrequest.nav.AlertsRequestComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
+import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.aiinfluencer.nav.CreateInfluencerComponent
 import com.yral.shared.features.auth.nav.countryselector.CountrySelectorComponent
 import com.yral.shared.features.auth.nav.mandatorylogin.MandatoryLoginComponent
@@ -89,11 +89,7 @@ interface RootComponent {
         dailyTimeLimitMs: Long = 0,
     )
 
-    fun openConversation(
-        influencerId: String,
-        influencerCategory: String = "",
-        influencerSource: InfluencerSource = InfluencerSource.CARD,
-    )
+    fun openConversation(params: OpenConversationParams)
 
     fun openWallet()
 

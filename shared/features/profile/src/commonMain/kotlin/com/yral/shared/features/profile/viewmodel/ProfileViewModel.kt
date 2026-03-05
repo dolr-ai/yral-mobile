@@ -21,7 +21,6 @@ import com.yral.shared.analytics.events.CtaType
 import com.yral.shared.analytics.events.EditProfileSource
 import com.yral.shared.analytics.events.FollowersListTab
 import com.yral.shared.analytics.events.InfluencerClickType
-import com.yral.shared.analytics.events.InfluencerSource
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.AccountInfo
@@ -32,6 +31,7 @@ import com.yral.shared.core.utils.getAccountInfo
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.data.domain.CommonApis
+import com.yral.shared.data.domain.models.ConversationInfluencerSource
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.data.domain.models.VideoViews
 import com.yral.shared.data.domain.useCases.GetVideoViewsUseCase
@@ -530,7 +530,7 @@ class ProfileViewModel(
                         chatTelemetry.chatInfluencerClicked(
                             influencerId = influencer.id,
                             influencerType = influencer.category,
-                            source = InfluencerSource.PROFILE,
+                            source = ConversationInfluencerSource.PROFILE,
                         )
                         profileEventsChannel.trySend(ProfileEvents.InfluencerDetailsFetched(influencer))
                     }.onFailure { error ->

@@ -1,5 +1,6 @@
 package com.yral.shared.rust.service.data
 
+import com.yral.shared.uniffi.generated.PropertyRateLimitConfigWrapper
 import com.yral.shared.uniffi.generated.RateLimitStatusWrapper
 import com.yral.shared.uniffi.generated.Result2Wrapper
 import com.yral.shared.uniffi.generated.VideoGenRequestKeyWrapper
@@ -13,4 +14,8 @@ internal interface RateLimitDataSource {
         userPrincipal: String,
         isRegistered: Boolean,
     ): RateLimitStatusWrapper?
+    suspend fun getPropertyRateLimitConfig(
+        userPrincipal: String,
+        property: String,
+    ): PropertyRateLimitConfigWrapper?
 }
