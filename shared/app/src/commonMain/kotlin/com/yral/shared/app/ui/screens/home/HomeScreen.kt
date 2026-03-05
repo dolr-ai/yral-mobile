@@ -219,6 +219,7 @@ private fun HomeScreenContent(
                     gameViewModel = gameViewModel,
                     leaderBoardViewModel = leaderBoardViewModel,
                     onNavigateToTournaments = { component.onTournamentTabClick() },
+                    onNavigateToChat = { component.onChatTabClick() },
                 )
 
             is HomeComponent.Child.Leaderboard ->
