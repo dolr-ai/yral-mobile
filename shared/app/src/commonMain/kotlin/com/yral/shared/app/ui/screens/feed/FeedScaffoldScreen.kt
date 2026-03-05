@@ -1,12 +1,21 @@
 package com.yral.shared.app.ui.screens.feed
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -16,7 +25,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.paint
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
@@ -56,6 +68,8 @@ import com.yral.shared.features.leaderboard.ui.DailyRanK
 import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
 import com.yral.shared.features.tournament.ui.TournamentIntroBottomSheet
 import com.yral.shared.libs.designsystem.component.lottie.PreloadLottieAnimations
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
+import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.videoPlayer.cardstack.SwipeDirection
 import com.yral.shared.rust.service.domain.models.toCanisterData
 import com.yral.shared.rust.service.utils.CanisterData
@@ -63,14 +77,24 @@ import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.app.generated.resources.Res
+import yral_mobile.shared.app.generated.resources.chat_nav
+import yral_mobile.shared.app.generated.resources.feed_tab_explore
+import yral_mobile.shared.app.generated.resources.feed_tab_influencers
 import yral_mobile.shared.app.generated.resources.onboarding_nudge_balance
 import yral_mobile.shared.app.generated.resources.onboarding_nudge_balance_highlight
 import yral_mobile.shared.app.generated.resources.onboarding_nudge_rank
 import yral_mobile.shared.app.generated.resources.onboarding_nudge_rank_highlight
+import yral_mobile.shared.libs.designsystem.generated.resources.cross
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_lightning_bolt
 import yral_mobile.shared.libs.designsystem.generated.resources.shadow
 import kotlin.time.Duration.Companion.seconds
 import com.yral.shared.features.feed.ui.components.ArrowAlignment as FeedArrowAlignment
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
+
+private enum class FeedTab {
+    EXPLORE,
+    INFLUENCERS,
+}
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
@@ -80,6 +104,7 @@ fun FeedScaffoldScreen(
     gameViewModel: GameViewModel,
     leaderBoardViewModel: LeaderBoardViewModel,
     onNavigateToTournaments: () -> Unit,
+    onNavigateToChat: () -> Unit,
 ) {
     val gameState by gameViewModel.state.collectAsStateWithLifecycle()
     val feedState by feedViewModel.state.collectAsStateWithLifecycle()
@@ -104,27 +129,47 @@ fun FeedScaffoldScreen(
     if (feedState.overlayType == OverlayType.DAILY_RANK) {
         leaderBoardViewModel.refreshRank.collectAsStateWithLifecycle(false)
     }
+    var selectedTab by remember { mutableStateOf(FeedTab.EXPLORE) }
     FeedScreen(
         component = component,
         viewModel = feedViewModel,
         topOverlay = { pageNo ->
-            OverLayTop(
-                pageNo = pageNo,
-                dailyRank = dailyRank,
-                feedState = feedState,
-                gameState = gameState,
-                componentAnimationInfo = TopComponentAnimationInfo(gameState.animateCoinBalance),
-                setAnimateCoinBalance = { gameViewModel.setAnimateCoinBalance(it) },
-                setPostDescriptionExpanded = { feedViewModel.setPostDescriptionExpanded(it) },
-                updateGameType = { gameViewModel.updateGameType(it) },
-                openUserProfile = { component.openProfile(it) },
-                feedViewModel = feedViewModel,
-                openLeaderboard = { component.openLeaderboard() },
-                openWallet = { component.openWallet() },
-            )
+            Column {
+                FeedTabBar(
+                    selectedTab = selectedTab,
+                    onTabSelected = { selectedTab = it },
+                )
+                OverLayTop(
+                    pageNo = pageNo,
+                    dailyRank = dailyRank,
+                    feedState = feedState,
+                    gameState = gameState,
+                    componentAnimationInfo = TopComponentAnimationInfo(gameState.animateCoinBalance),
+                    setAnimateCoinBalance = { gameViewModel.setAnimateCoinBalance(it) },
+                    setPostDescriptionExpanded = { feedViewModel.setPostDescriptionExpanded(it) },
+                    updateGameType = { gameViewModel.updateGameType(it) },
+                    openUserProfile = { component.openProfile(it) },
+                    feedViewModel = feedViewModel,
+                    openLeaderboard = { component.openLeaderboard() },
+                    openWallet = { component.openWallet() },
+                )
+            }
         },
         bottomOverlay = { pageNo, scrollToNext ->
-            OverlayBottom(pageNo, feedState, gameState, gameViewModel, feedViewModel, scrollToNext)
+            Box(modifier = Modifier.fillMaxSize()) {
+                if (selectedTab == FeedTab.EXPLORE) {
+                    OverlayBottom(pageNo, feedState, gameState, gameViewModel, feedViewModel, scrollToNext)
+                }
+                FeedActionButtons(
+                    selectedTab = selectedTab,
+                    onSkip = scrollToNext,
+                    onNavigateToChat = onNavigateToChat,
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 16.dp),
+                )
+            }
         },
         actionsRight = { pageNo ->
             FeedActionsRight(pageNo, feedState, feedViewModel, component::openProfile)
@@ -667,6 +712,127 @@ private fun OverlayBottom(
                         delay(1.seconds)
                         scrollToNext()
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FeedTabBar(
+    selectedTab: FeedTab,
+    onTabSelected: (FeedTab) -> Unit,
+) {
+    val typography = LocalAppTopography.current
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp),
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        FeedTab.entries.forEach { tab ->
+            val isSelected = tab == selectedTab
+            val label =
+                when (tab) {
+                    FeedTab.EXPLORE -> stringResource(Res.string.feed_tab_explore)
+                    FeedTab.INFLUENCERS -> stringResource(Res.string.feed_tab_influencers)
+                }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier =
+                    Modifier
+                        .clickable { onTabSelected(tab) }
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+            ) {
+                Text(
+                    text = label,
+                    style = typography.mdSemiBold,
+                    color = Color.White,
+                    modifier = if (!isSelected) Modifier.alpha(0.6f) else Modifier,
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Box(
+                    modifier =
+                        Modifier
+                            .width(40.dp)
+                            .height(3.dp)
+                            .background(
+                                color = if (isSelected) YralColors.Pink200 else Color.Transparent,
+                                shape = CircleShape,
+                            ),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FeedActionButtons(
+    selectedTab: FeedTab,
+    onSkip: () -> Unit,
+    onNavigateToChat: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(80.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // Skip (X) button - same for both tabs
+        Box(
+            modifier =
+                Modifier
+                    .size(70.dp)
+                    .background(color = Color.White.copy(alpha = 0.15f), shape = CircleShape)
+                    .clickable { onSkip() },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(DesignRes.drawable.cross),
+                contentDescription = "Skip",
+                tint = YralColors.Pink300,
+                modifier = Modifier.size(28.dp),
+            )
+        }
+        // Second button depends on tab
+        val pinkGradient =
+            Brush.linearGradient(
+                colors = listOf(YralColors.Pink200, YralColors.Pink300),
+            )
+        when (selectedTab) {
+            FeedTab.EXPLORE -> {
+                Box(
+                    modifier =
+                        Modifier
+                            .size(70.dp)
+                            .background(brush = pinkGradient, shape = CircleShape)
+                            .clickable { onSkip() },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(DesignRes.drawable.ic_lightning_bolt),
+                        contentDescription = "Yral",
+                        tint = Color(0xFFFFD700),
+                        modifier = Modifier.size(32.dp),
+                    )
+                }
+            }
+            FeedTab.INFLUENCERS -> {
+                Box(
+                    modifier =
+                        Modifier
+                            .size(70.dp)
+                            .background(brush = pinkGradient, shape = CircleShape)
+                            .clickable { onNavigateToChat() },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.chat_nav),
+                        contentDescription = "Chat",
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp),
+                    )
                 }
             }
         }
