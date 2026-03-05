@@ -44,4 +44,8 @@
     <string name="subscription_nudge_cta">Subscribe Now</string>
 
     <string name="ai_influence_profile">AI Influencer Profile</string>
+
+    <!-- Feed Tabs -->
+    <string name="feed_tab_explore">Explore</string>
+    <string name="feed_tab_influencers">Influencers</string>
 </resources>
