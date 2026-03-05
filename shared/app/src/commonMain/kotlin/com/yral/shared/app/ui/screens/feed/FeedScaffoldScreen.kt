@@ -1,5 +1,6 @@
 package com.yral.shared.app.ui.screens.feed
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,8 +26,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -47,6 +47,7 @@ import com.yral.shared.features.feed.ui.components.FeedTargetBounds
 import com.yral.shared.features.feed.ui.components.UserBrief
 import com.yral.shared.features.feed.ui.components.captureFeedOnboardingBounds
 import com.yral.shared.features.feed.viewmodel.FeedState
+import com.yral.shared.features.feed.viewmodel.FeedTab
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.OnboardingStep
 import com.yral.shared.features.feed.viewmodel.OverlayType
@@ -77,24 +78,19 @@ import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.app.generated.resources.Res
-import yral_mobile.shared.app.generated.resources.chat_nav
+import yral_mobile.shared.app.generated.resources.feed_btn_chat
+import yral_mobile.shared.app.generated.resources.feed_btn_skip
+import yral_mobile.shared.app.generated.resources.feed_btn_yral
 import yral_mobile.shared.app.generated.resources.feed_tab_explore
 import yral_mobile.shared.app.generated.resources.feed_tab_influencers
 import yral_mobile.shared.app.generated.resources.onboarding_nudge_balance
 import yral_mobile.shared.app.generated.resources.onboarding_nudge_balance_highlight
 import yral_mobile.shared.app.generated.resources.onboarding_nudge_rank
 import yral_mobile.shared.app.generated.resources.onboarding_nudge_rank_highlight
-import yral_mobile.shared.libs.designsystem.generated.resources.cross
-import yral_mobile.shared.libs.designsystem.generated.resources.ic_lightning_bolt
 import yral_mobile.shared.libs.designsystem.generated.resources.shadow
 import kotlin.time.Duration.Companion.seconds
 import com.yral.shared.features.feed.ui.components.ArrowAlignment as FeedArrowAlignment
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
-
-private enum class FeedTab {
-    EXPLORE,
-    INFLUENCERS,
-}
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
@@ -129,7 +125,7 @@ fun FeedScaffoldScreen(
     if (feedState.overlayType == OverlayType.DAILY_RANK) {
         leaderBoardViewModel.refreshRank.collectAsStateWithLifecycle(false)
     }
-    var selectedTab by remember { mutableStateOf(FeedTab.EXPLORE) }
+    val selectedTab = feedState.selectedFeedTab
     FeedScreen(
         component = component,
         viewModel = feedViewModel,
@@ -137,7 +133,7 @@ fun FeedScaffoldScreen(
             Column {
                 FeedTabBar(
                     selectedTab = selectedTab,
-                    onTabSelected = { selectedTab = it },
+                    onTabSelected = { feedViewModel.setSelectedFeedTab(it) },
                 )
                 OverLayTop(
                     pageNo = pageNo,
@@ -755,8 +751,8 @@ private fun FeedTabBar(
                 Box(
                     modifier =
                         Modifier
-                            .width(40.dp)
-                            .height(3.dp)
+                            .width(29.dp)
+                            .height(4.dp)
                             .background(
                                 color = if (isSelected) YralColors.Pink200 else Color.Transparent,
                                 shape = CircleShape,
@@ -779,61 +775,37 @@ private fun FeedActionButtons(
         horizontalArrangement = Arrangement.spacedBy(80.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Skip (X) button - same for both tabs
-        Box(
+        Image(
+            painter = painterResource(Res.drawable.feed_btn_skip),
+            contentDescription = "Skip",
             modifier =
                 Modifier
                     .size(70.dp)
-                    .background(color = Color.White.copy(alpha = 0.15f), shape = CircleShape)
+                    .clip(CircleShape)
                     .clickable { onSkip() },
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(DesignRes.drawable.cross),
-                contentDescription = "Skip",
-                tint = YralColors.Pink300,
-                modifier = Modifier.size(28.dp),
-            )
-        }
-        // Second button depends on tab
-        val pinkGradient =
-            Brush.linearGradient(
-                colors = listOf(YralColors.Pink200, YralColors.Pink300),
-            )
+        )
         when (selectedTab) {
             FeedTab.EXPLORE -> {
-                Box(
+                Image(
+                    painter = painterResource(Res.drawable.feed_btn_yral),
+                    contentDescription = "Yral",
                     modifier =
                         Modifier
                             .size(70.dp)
-                            .background(brush = pinkGradient, shape = CircleShape)
+                            .clip(CircleShape)
                             .clickable { onSkip() },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        painter = painterResource(DesignRes.drawable.ic_lightning_bolt),
-                        contentDescription = "Yral",
-                        tint = Color(0xFFFFD700),
-                        modifier = Modifier.size(32.dp),
-                    )
-                }
+                )
             }
             FeedTab.INFLUENCERS -> {
-                Box(
+                Image(
+                    painter = painterResource(Res.drawable.feed_btn_chat),
+                    contentDescription = "Chat",
                     modifier =
                         Modifier
                             .size(70.dp)
-                            .background(brush = pinkGradient, shape = CircleShape)
+                            .clip(CircleShape)
                             .clickable { onNavigateToChat() },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.chat_nav),
-                        contentDescription = "Chat",
-                        tint = Color.White,
-                        modifier = Modifier.size(28.dp),
-                    )
-                }
+                )
             }
         }
     }
