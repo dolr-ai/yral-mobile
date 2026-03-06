@@ -68,7 +68,6 @@ import com.yral.shared.features.auth.ui.rememberLoginInfo
 import com.yral.shared.features.chat.ui.ChatScreen
 import com.yral.shared.features.chat.viewmodel.ChatWallViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
-import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.wallet.ui.WalletScreen
 import com.yral.shared.features.wallet.ui.btcRewards.VideoViewsRewardsBottomSheet
@@ -183,7 +182,6 @@ private fun HomeScreenContent(
     val sessionKey = sessionState.getKey()
     val canisterData = sessionState.getCanisterData()
     val feedViewModel = koinViewModel<FeedViewModel>(key = "feed-$sessionKey")
-    val gameViewModel = koinViewModel<GameViewModel>(key = "game-$sessionKey")
     val profileViewModel =
         koinViewModel<ProfileViewModel>(key = "profile-$sessionKey") {
             parametersOf(canisterData)
@@ -204,7 +202,6 @@ private fun HomeScreenContent(
                 FeedScaffoldScreen(
                     component = child.component,
                     feedViewModel = feedViewModel,
-                    gameViewModel = gameViewModel,
                     onNavigateToChat = { component.onChatTabClick() },
                 )
 

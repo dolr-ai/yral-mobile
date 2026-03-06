@@ -19,4 +19,5 @@ interface WalletDataSource {
     ): String
     suspend fun getBtcRewardConfig(): BtcRewardConfigResponseDto
     suspend fun getDolrUsdPrice(): DolrPriceResponseDto
+    suspend fun getCoinBalance(userPrincipal: String): Long
 }

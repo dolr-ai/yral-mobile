@@ -53,7 +53,6 @@ kotlin {
             implementation(projects.shared.features.feed)
             implementation(projects.shared.features.root)
             implementation(projects.shared.features.account)
-            implementation(projects.shared.features.game)
             implementation(projects.shared.features.uploadvideo)
             implementation(projects.shared.features.profile)
             implementation(projects.shared.features.wallet)

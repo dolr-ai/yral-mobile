@@ -37,7 +37,7 @@ import com.yral.shared.features.auth.utils.OAuthResult
 import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.features.auth.utils.SocialProvider
-import com.yral.shared.features.game.domain.GetBalanceUseCase
+import com.yral.shared.features.wallet.domain.GetCoinBalanceUseCase
 import com.yral.shared.firebaseAuth.usecase.GetIdTokenUseCase
 import com.yral.shared.firebaseAuth.usecase.SignInAnonymouslyUseCase
 import com.yral.shared.firebaseAuth.usecase.SignInWithTokenUseCase
@@ -278,12 +278,9 @@ class DefaultAuthClient(
             PrefKeys.REFRESH_TOKEN.name,
             PrefKeys.ACCESS_TOKEN.name,
             PrefKeys.ID_TOKEN.name,
-            PrefKeys.HOW_TO_PLAY_SHOWN.name,
             PrefKeys.USERNAME.name,
-            // PrefKeys.SMILEY_GAME_NUDGE_SHOWN.name,
             PrefKeys.PHONE_NUMBER.name,
             PrefKeys.AI_VIDEO_SUBSCRIPTION_NUDGE_LAST_SHOWN_DATE.name,
-            PrefKeys.TOURNAMENT_LEADERBOARD_SUBSCRIPTION_NUDGE_LAST_SHOWN_DATE.name,
         ).forEach { key ->
             preferences.remove(key)
         }
@@ -631,7 +628,7 @@ class DefaultAuthClient(
         val signInAnonymouslyUseCase: SignInAnonymouslyUseCase,
         val signInWithTokenUseCase: SignInWithTokenUseCase,
         val exchangePrincipalIdUseCase: ExchangePrincipalIdUseCase,
-        val getBalanceUseCase: GetBalanceUseCase,
+        val getBalanceUseCase: GetCoinBalanceUseCase,
         val updateDocumentUseCase: UpdateDocumentUseCase,
         val getIdTokenUseCase: GetIdTokenUseCase,
         val registerNotificationTokenUseCase: RegisterNotificationTokenUseCase,

@@ -178,7 +178,6 @@ dependencies {
     implementation(projects.shared.features.account)
     implementation(projects.shared.app)
     implementation(projects.shared.libs.firebasePerf)
-    implementation(projects.shared.features.game)
     implementation(projects.shared.features.uploadvideo)
     implementation(projects.shared.features.profile)
     implementation(projects.shared.libs.arch)

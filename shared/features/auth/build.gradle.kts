@@ -19,7 +19,7 @@ kotlin {
         }
         commonMain.dependencies {
             implementation(projects.shared.core)
-            implementation(projects.shared.features.game)
+            implementation(projects.shared.features.wallet)
             implementation(projects.shared.libs.preferences)
             implementation(projects.shared.libs.http)
             implementation(projects.shared.libs.analytics)
