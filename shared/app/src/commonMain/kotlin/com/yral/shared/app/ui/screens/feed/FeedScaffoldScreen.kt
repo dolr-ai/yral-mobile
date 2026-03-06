@@ -67,7 +67,6 @@ import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.game.viewmodel.NudgeType
 import com.yral.shared.features.leaderboard.ui.DailyRanK
 import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
-import com.yral.shared.features.tournament.ui.TournamentIntroBottomSheet
 import com.yral.shared.libs.designsystem.component.lottie.PreloadLottieAnimations
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -99,7 +98,6 @@ fun FeedScaffoldScreen(
     feedViewModel: FeedViewModel,
     gameViewModel: GameViewModel,
     leaderBoardViewModel: LeaderBoardViewModel,
-    onNavigateToTournaments: () -> Unit,
     onNavigateToChat: () -> Unit,
 ) {
     val gameState by gameViewModel.state.collectAsStateWithLifecycle()
@@ -286,15 +284,6 @@ fun FeedScaffoldScreen(
             )
         }
     }
-    // Check and show tournament intro bottom sheet on 6th video (index 5)
-    LaunchedEffect(feedState.currentPageOfFeed, feedState.currentOnboardingStep) {
-        if (feedState.feedDetails.isNotEmpty() &&
-            feedState.currentOnboardingStep == null &&
-            feedState.currentPageOfFeed == FeedViewModel.TOURNAMENT_INTRO_PAGE
-        ) {
-            feedViewModel.checkAndShowTournamentIntroSheet()
-        }
-    }
     // Check and show Hot or Not onboarding when card layout is enabled
     LaunchedEffect(feedState.feedDetails.size, feedState.isCardLayoutEnabled) {
         if (feedState.feedDetails.isNotEmpty() &&
@@ -303,16 +292,6 @@ fun FeedScaffoldScreen(
         ) {
             feedViewModel.checkAndShowHotOrNotOnboarding()
         }
-    }
-    // Tournament intro bottom sheet
-    if (feedState.showTournamentIntroSheet) {
-        TournamentIntroBottomSheet(
-            onDismissRequest = { feedViewModel.dismissTournamentIntroSheet() },
-            onViewTournamentsClick = {
-                feedViewModel.dismissTournamentIntroSheet()
-                onNavigateToTournaments()
-            },
-        )
     }
     // Hot or Not onboarding overlay (shows on top of feed)
     if (feedState.showHotOrNotOnboarding) {
@@ -745,7 +724,12 @@ private fun FeedTabBar(
                     text = label,
                     style = typography.mdSemiBold,
                     color = Color.White,
-                    modifier = if (!isSelected) Modifier.alpha(0.6f) else Modifier,
+                    modifier =
+                        if (!isSelected) {
+                            Modifier.alpha(FeedScaffoldScreenConstants.UNSELECTED_TAB_ALPHA)
+                        } else {
+                            Modifier
+                        },
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Box(
@@ -813,4 +797,5 @@ private fun FeedActionButtons(
 
 private object FeedScaffoldScreenConstants {
     const val TOP_OVERLAY_ITEM_OFFSET_X = 18f
+    const val UNSELECTED_TAB_ALPHA = 0.6f
 }

@@ -28,7 +28,6 @@ import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.root.viewmodels.HomeViewModel
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
-import com.yral.shared.features.tournament.nav.TournamentComponent
 import com.yral.shared.features.uploadvideo.nav.UploadVideoRootComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.features.wallet.ui.btcRewards.nav.DefaultVideoViewRewardsComponent
@@ -45,7 +44,6 @@ import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.libs.routing.routes.api.Profile
 import com.yral.shared.libs.routing.routes.api.RewardOn
 import com.yral.shared.libs.routing.routes.api.RewardsReceived
-import com.yral.shared.libs.routing.routes.api.Tournaments
 import com.yral.shared.libs.routing.routes.api.VideoUploadSuccessful
 import com.yral.shared.libs.routing.routes.api.Wallet
 import com.yral.shared.rust.service.utils.CanisterData
@@ -62,21 +60,6 @@ internal class DefaultHomeComponent(
     private val openCreateInfluencer: (source: BotCreationSource) -> Unit,
     private val openWallet: () -> Unit,
     private val openLeaderboard: () -> Unit,
-    private val openTournamentLeaderboard: (
-        tournamentId: String,
-        showResult: Boolean,
-    ) -> Unit,
-    private val openTournamentGame: (
-        tournamentId: String,
-        tournamentTitle: String,
-        initialDiamonds: Int,
-        startEpochMs: Long,
-        endEpochMs: Long,
-        totalPrizePool: Int,
-        isHotOrNot: Boolean,
-        isDailyTournament: Boolean,
-        dailyTimeLimitMs: Long,
-    ) -> Unit,
     private val openAccountSheet: () -> Unit,
     private val switchToMainProfile: (onComplete: (Boolean) -> Unit) -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
@@ -138,10 +121,6 @@ internal class DefaultHomeComponent(
         // navigation.replaceKeepingFeed(Config.Leaderboard)
     }
 
-    override fun onTournamentTabClick() {
-        navigation.replaceKeepingFeed(Config.Tournament)
-    }
-
     override fun onUploadVideoTabClick() {
         navigation.replaceKeepingFeed(Config.UploadVideo)
     }
@@ -162,7 +141,6 @@ internal class DefaultHomeComponent(
 
             is Wallet -> onWalletTabClick()
             is Leaderboard -> onLeaderboardTabClick()
-            is Tournaments -> onTournamentTabClick()
             is Profile -> onProfileTabClick()
             is AddVideo -> onUploadVideoTabClick()
             is GenerateAIVideo ->
@@ -238,7 +216,6 @@ internal class DefaultHomeComponent(
         when (config) {
             is Config.Feed -> Child.Feed(feedComponent(componentContext))
             is Config.Leaderboard -> Child.Leaderboard(leaderboardComponent(componentContext))
-            is Config.Tournament -> Child.Tournament(tournamentComponent(componentContext))
             is Config.UploadVideo -> Child.UploadVideo(uploadVideoComponent(componentContext))
             is Config.Profile -> Child.Profile(profileComponent(componentContext))
             is Config.Account -> Child.Account(accountComponent(componentContext))
@@ -250,7 +227,6 @@ internal class DefaultHomeComponent(
         when (child) {
             is Child.Feed -> Config.Feed to (child.component as? HomeChildSnapshotProvider)
             is Child.Leaderboard -> Config.Leaderboard to (child.component as? HomeChildSnapshotProvider)
-            is Child.Tournament -> Config.Tournament to (child.component as? HomeChildSnapshotProvider)
             is Child.UploadVideo -> Config.UploadVideo to child.component
             is Child.Profile -> Config.Profile to (child.component as? HomeChildSnapshotProvider)
             is Child.Account -> Config.Account to (child.component as? HomeChildSnapshotProvider)
@@ -299,41 +275,6 @@ internal class DefaultHomeComponent(
             gameType = gameType,
         )
     }
-
-    @Suppress("MaxLineLength")
-    private fun tournamentComponent(componentContext: ComponentContext): TournamentComponent =
-        TournamentComponent(
-            componentContext = componentContext,
-            promptLogin = { homeViewModel.showSignupPrompt(true, it) },
-            navigateToLeaderboard = { tournamentId ->
-                openTournamentLeaderboard(tournamentId, false)
-            },
-            navigateToTournament = {
-                tournamentId,
-                title,
-                initialDiamonds,
-                startEpochMs,
-                endEpochMs,
-                totalPrizePool,
-                isHotOrNot,
-                isDailyTournament,
-                dailyTimeLimitMs,
-                ->
-                openTournamentGame(
-                    tournamentId,
-                    title,
-                    initialDiamonds,
-                    startEpochMs,
-                    endEpochMs,
-                    totalPrizePool,
-                    isHotOrNot,
-                    isDailyTournament,
-                    dailyTimeLimitMs,
-                )
-            },
-            showAlertsOnDialog = showAlertsOnDialog,
-            subscriptionCoordinator = subscriptionCoordinator,
-        )
 
     private fun uploadVideoComponent(componentContext: ComponentContext): UploadVideoRootComponent =
         UploadVideoRootComponent.Companion(
@@ -426,9 +367,6 @@ internal class DefaultHomeComponent(
 
         @Serializable
         data object Leaderboard : Config
-
-        @Serializable
-        data object Tournament : Config
 
         @Serializable
         data object UploadVideo : Config

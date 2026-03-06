@@ -28,26 +28,6 @@ internal sealed interface Config {
     ) : Config
 
     @Serializable
-    data class TournamentLeaderboard(
-        val tournamentId: String,
-        val showResult: Boolean = false,
-        val isDaily: Boolean = false,
-    ) : Config
-
-    @Serializable
-    data class TournamentGame(
-        val tournamentId: String,
-        val tournamentTitle: String = "",
-        val initialDiamonds: Int,
-        val startEpochMs: Long,
-        val endEpochMs: Long,
-        val totalPrizePool: Int,
-        val isHotOrNot: Boolean = false,
-        val isDailyTournament: Boolean = false,
-        val dailyTimeLimitMs: Long = 0,
-    ) : Config
-
-    @Serializable
     data class Conversation(
         val params: OpenConversationParams,
     ) : Config

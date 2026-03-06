@@ -24,7 +24,6 @@ import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.root.viewmodels.RootViewModel
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.features.subscriptions.nav.SubscriptionsComponent
-import com.yral.shared.features.tournament.nav.TournamentGameComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.rust.service.utils.CanisterData
@@ -63,31 +62,6 @@ interface RootComponent {
     fun openEditProfile()
 
     fun openProfile(userCanisterData: CanisterData)
-
-    fun openTournamentLeaderboard(
-        tournamentId: String,
-        showResult: Boolean = false,
-        isDaily: Boolean = false,
-    )
-
-    fun openTournamentResults(
-        tournamentId: String,
-        showResult: Boolean = false,
-        isDaily: Boolean = false,
-    )
-
-    @Suppress("LongParameterList")
-    fun openTournamentGame(
-        tournamentId: String,
-        tournamentTitle: String,
-        initialDiamonds: Int,
-        startEpochMs: Long,
-        endEpochMs: Long,
-        totalPrizePool: Int,
-        isHotOrNot: Boolean = false,
-        isDailyTournament: Boolean = false,
-        dailyTimeLimitMs: Long = 0,
-    )
 
     fun openConversation(params: OpenConversationParams)
 
@@ -131,14 +105,6 @@ interface RootComponent {
         ) : Child()
         class UserProfile(
             val component: ProfileMainComponent,
-        ) : Child()
-        class TournamentLeaderboard(
-            val tournamentId: String,
-            val showResult: Boolean,
-            val isDaily: Boolean = false,
-        ) : Child()
-        class TournamentGame(
-            val component: TournamentGameComponent,
         ) : Child()
         class Conversation(
             val component: ConversationComponent,

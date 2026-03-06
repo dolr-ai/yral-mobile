@@ -19,7 +19,6 @@ import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.subscriptions.nav.SubscriptionsComponent
-import com.yral.shared.features.tournament.nav.TournamentGameComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
@@ -54,10 +53,6 @@ internal class ComponentFactory(
                 openEditProfile = rootComponent::openEditProfile,
                 openProfile = rootComponent::openProfile,
                 openCreateInfluencer = rootComponent::openCreateInfluencer,
-                openTournamentLeaderboard = { tournamentId, showResult ->
-                    rootComponent.openTournamentLeaderboard(tournamentId, showResult)
-                },
-                openTournamentGame = rootComponent::openTournamentGame,
                 openConversation = rootComponent::openConversation,
                 openWallet = rootComponent::openWallet,
                 openLeaderboard = rootComponent::openLeaderboard,
@@ -204,39 +199,5 @@ internal class ComponentFactory(
                 }
             },
             onNavigateToOtpVerification = { loginCoordinator.navigateToOtpVerification() },
-        )
-
-    @Suppress("LongParameterList")
-    fun createTournamentGame(
-        componentContext: ComponentContext,
-        tournamentId: String,
-        tournamentTitle: String,
-        initialDiamonds: Int,
-        startEpochMs: Long,
-        endEpochMs: Long,
-        totalPrizePool: Int,
-        isHotOrNot: Boolean,
-        isDailyTournament: Boolean = false,
-        dailyTimeLimitMs: Long = 0,
-    ): TournamentGameComponent =
-        TournamentGameComponent(
-            componentContext = componentContext,
-            requestLoginFactory = rootComponent.createLoginRequestFactory(),
-            tournamentId = tournamentId,
-            tournamentTitle = tournamentTitle,
-            initialDiamonds = initialDiamonds,
-            totalPrizePool = totalPrizePool,
-            startEpochMs = startEpochMs,
-            endEpochMs = endEpochMs,
-            isHotOrNot = isHotOrNot,
-            isDailyTournament = isDailyTournament,
-            dailyTimeLimitMs = dailyTimeLimitMs,
-            onLeaderboardClick = { clickedTournamentId, showResult ->
-                rootComponent.openTournamentLeaderboard(clickedTournamentId, showResult, isDailyTournament)
-            },
-            onTimeUp = {
-                rootComponent.openTournamentResults(tournamentId, true, isDailyTournament)
-            },
-            onBack = rootComponent::onBackClicked,
         )
 }

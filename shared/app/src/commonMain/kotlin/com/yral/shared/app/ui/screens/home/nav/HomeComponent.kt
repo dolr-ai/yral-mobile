@@ -19,7 +19,6 @@ import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.root.viewmodels.HomeViewModel
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
-import com.yral.shared.features.tournament.nav.TournamentComponent
 import com.yral.shared.features.uploadvideo.nav.UploadVideoRootComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.features.wallet.ui.btcRewards.nav.VideoViewRewardsComponent
@@ -37,7 +36,6 @@ abstract class HomeComponent {
 
     abstract fun onFeedTabClick()
     abstract fun onLeaderboardTabClick()
-    abstract fun onTournamentTabClick()
     abstract fun onUploadVideoTabClick()
     abstract fun onProfileTabClick()
     abstract fun onAccountTabClick()
@@ -55,9 +53,6 @@ abstract class HomeComponent {
         ) : Child()
         class Leaderboard(
             val component: LeaderboardComponent,
-        ) : Child()
-        class Tournament(
-            val component: TournamentComponent,
         ) : Child()
         class UploadVideo(
             val component: UploadVideoRootComponent,
@@ -95,21 +90,6 @@ abstract class HomeComponent {
             openCreateInfluencer: (source: BotCreationSource) -> Unit,
             openWallet: () -> Unit,
             openLeaderboard: () -> Unit,
-            openTournamentLeaderboard: (
-                tournamentId: String,
-                showResult: Boolean,
-            ) -> Unit,
-            openTournamentGame: (
-                tournamentId: String,
-                tournamentTitle: String,
-                initialDiamonds: Int,
-                startEpochMs: Long,
-                endEpochMs: Long,
-                totalPrizePool: Int,
-                isHotOrNot: Boolean,
-                isDailyTournament: Boolean,
-                dailyTimeLimitMs: Long,
-            ) -> Unit,
             openAccountSheet: () -> Unit,
             switchToMainProfile: (onComplete: (Boolean) -> Unit) -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
@@ -124,8 +104,6 @@ abstract class HomeComponent {
                 openCreateInfluencer,
                 openWallet,
                 openLeaderboard,
-                openTournamentLeaderboard,
-                openTournamentGame,
                 openAccountSheet,
                 switchToMainProfile,
                 showAlertsOnDialog,

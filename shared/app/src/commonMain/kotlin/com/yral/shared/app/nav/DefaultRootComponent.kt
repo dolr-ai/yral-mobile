@@ -171,27 +171,6 @@ class DefaultRootComponent(
                     componentFactory.createCreateInfluencer(context, config),
                 )
             is Config.UserProfile -> RootComponent.Child.UserProfile(componentFactory.createProfile(context, config))
-            is Config.TournamentLeaderboard ->
-                RootComponent.Child.TournamentLeaderboard(
-                    tournamentId = config.tournamentId,
-                    showResult = config.showResult,
-                    isDaily = config.isDaily,
-                )
-            is Config.TournamentGame ->
-                RootComponent.Child.TournamentGame(
-                    componentFactory.createTournamentGame(
-                        context,
-                        config.tournamentId,
-                        config.tournamentTitle,
-                        config.initialDiamonds,
-                        config.startEpochMs,
-                        config.endEpochMs,
-                        config.totalPrizePool,
-                        config.isHotOrNot,
-                        config.isDailyTournament,
-                        config.dailyTimeLimitMs,
-                    ),
-                )
             is Config.Conversation ->
                 RootComponent.Child.Conversation(
                     componentFactory.createConversation(context, config),
@@ -369,56 +348,6 @@ class DefaultRootComponent(
 
     override fun openProfile(userCanisterData: CanisterData) {
         navigation.pushToFront(Config.UserProfile(userCanisterData))
-    }
-
-    override fun openTournamentLeaderboard(
-        tournamentId: String,
-        showResult: Boolean,
-        isDaily: Boolean,
-    ) {
-        navigation.pushToFront(Config.TournamentLeaderboard(tournamentId, showResult, isDaily))
-    }
-
-    override fun openTournamentResults(
-        tournamentId: String,
-        showResult: Boolean,
-        isDaily: Boolean,
-    ) {
-        navigation.navigate { stack ->
-            // Remove TournamentGame from stack and add TournamentLeaderboard
-            stack.dropLast(1) +
-                Config.TournamentLeaderboard(
-                    tournamentId = tournamentId,
-                    showResult = true,
-                    isDaily = isDaily,
-                )
-        }
-    }
-
-    override fun openTournamentGame(
-        tournamentId: String,
-        tournamentTitle: String,
-        initialDiamonds: Int,
-        startEpochMs: Long,
-        endEpochMs: Long,
-        totalPrizePool: Int,
-        isHotOrNot: Boolean,
-        isDailyTournament: Boolean,
-        dailyTimeLimitMs: Long,
-    ) {
-        navigation.pushToFront(
-            Config.TournamentGame(
-                tournamentId,
-                tournamentTitle,
-                initialDiamonds,
-                startEpochMs,
-                endEpochMs,
-                totalPrizePool,
-                isHotOrNot = isHotOrNot,
-                isDailyTournament = isDailyTournament,
-                dailyTimeLimitMs = dailyTimeLimitMs,
-            ),
-        )
     }
 
     override fun openConversation(params: OpenConversationParams) {
