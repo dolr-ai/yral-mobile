@@ -12,6 +12,8 @@ class TrendingInfluencersPagingSource(
     private val chatRepository: ChatRepository,
     private val useCaseFailureListener: UseCaseFailureListener,
 ) : PagingSource<Int, Influencer>() {
+    private val seenIds = mutableSetOf<String>()
+
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Influencer> =
         try {
             val offset = params.key ?: 0
@@ -23,8 +25,10 @@ class TrendingInfluencersPagingSource(
                     offset = offset,
                 )
 
+            val deduplicated = result.influencers.filter { seenIds.add(it.id) }
+
             LoadResult.Page(
-                data = result.influencers,
+                data = deduplicated,
                 prevKey = null,
                 nextKey = result.nextOffset,
             )
