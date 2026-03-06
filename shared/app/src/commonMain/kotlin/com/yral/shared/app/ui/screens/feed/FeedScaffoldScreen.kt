@@ -38,14 +38,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.shared.analytics.events.GameType
 import com.yral.shared.analytics.events.SwipeAction
-import com.yral.shared.app.ui.screens.feed.FeedScaffoldScreenConstants.TOP_OVERLAY_ITEM_OFFSET_X
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.feed.ui.FeedActionsRight
 import com.yral.shared.features.feed.ui.FeedScreen
 import com.yral.shared.features.feed.ui.components.FeedOnboardingNudge
 import com.yral.shared.features.feed.ui.components.FeedTargetBounds
 import com.yral.shared.features.feed.ui.components.UserBrief
-import com.yral.shared.features.feed.ui.components.captureFeedOnboardingBounds
 import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedTab
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
@@ -65,8 +63,6 @@ import com.yral.shared.features.game.ui.toRefreshBalanceAnimationState
 import com.yral.shared.features.game.viewmodel.GameState
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.game.viewmodel.NudgeType
-import com.yral.shared.features.leaderboard.ui.DailyRanK
-import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
 import com.yral.shared.libs.designsystem.component.lottie.PreloadLottieAnimations
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -97,32 +93,10 @@ fun FeedScaffoldScreen(
     component: FeedComponent,
     feedViewModel: FeedViewModel,
     gameViewModel: GameViewModel,
-    leaderBoardViewModel: LeaderBoardViewModel,
     onNavigateToChat: () -> Unit,
 ) {
     val gameState by gameViewModel.state.collectAsStateWithLifecycle()
     val feedState by feedViewModel.state.collectAsStateWithLifecycle()
-    // Collect both ranks separately
-    val smileyDailyRank by if (feedState.overlayType == OverlayType.DAILY_RANK) {
-        leaderBoardViewModel.dailyRank.collectAsStateWithLifecycle(null)
-    } else {
-        remember { mutableStateOf(null) }
-    }
-    val honDailyRank by if (feedState.overlayType == OverlayType.DAILY_RANK) {
-        leaderBoardViewModel.honDailyRank.collectAsStateWithLifecycle(null)
-    } else {
-        remember { mutableStateOf(null) }
-    }
-    // In HON mode use HON rank (0 if null to show "--"), in Smiley mode use smiley rank
-    val dailyRank =
-        if (feedState.isCardLayoutEnabled) {
-            honDailyRank ?: 0L // Show 0 to display "--" when no HON rank
-        } else {
-            smileyDailyRank
-        }
-    if (feedState.overlayType == OverlayType.DAILY_RANK) {
-        leaderBoardViewModel.refreshRank.collectAsStateWithLifecycle(false)
-    }
     val selectedTab = feedState.selectedFeedTab
     FeedScreen(
         component = component,
@@ -135,7 +109,6 @@ fun FeedScaffoldScreen(
                 )
                 OverLayTop(
                     pageNo = pageNo,
-                    dailyRank = dailyRank,
                     feedState = feedState,
                     gameState = gameState,
                     componentAnimationInfo = TopComponentAnimationInfo(gameState.animateCoinBalance),
@@ -144,7 +117,6 @@ fun FeedScaffoldScreen(
                     updateGameType = { gameViewModel.updateGameType(it) },
                     openUserProfile = { component.openProfile(it) },
                     feedViewModel = feedViewModel,
-                    openLeaderboard = { component.openLeaderboard() },
                     openWallet = { component.openWallet() },
                 )
             }
@@ -305,7 +277,6 @@ fun FeedScaffoldScreen(
 @Composable
 private fun OverLayTop(
     pageNo: Int,
-    dailyRank: Long?,
     feedState: FeedState,
     gameState: GameState,
     componentAnimationInfo: TopComponentAnimationInfo,
@@ -314,13 +285,14 @@ private fun OverLayTop(
     updateGameType: (GameType) -> Unit,
     openUserProfile: (canisterData: CanisterData) -> Unit,
     feedViewModel: FeedViewModel,
-    openLeaderboard: () -> Unit,
     openWallet: () -> Unit,
 ) {
     var targetBounds by remember { mutableStateOf<FeedTargetBounds?>(null) }
     Box(modifier = Modifier.fillMaxSize()) {
         when (feedState.overlayType) {
-            OverlayType.DEFAULT -> {
+            OverlayType.DEFAULT,
+            OverlayType.DAILY_RANK,
+            -> {
                 OverlayTopDefault(
                     pageNo = pageNo,
                     feedState = feedState,
@@ -340,30 +312,18 @@ private fun OverLayTop(
                     openWallet = openWallet,
                 )
             }
-            OverlayType.DAILY_RANK ->
-                OverlayTopDailyRank(
-                    dailyRank = dailyRank,
-                    feedState = feedState,
-                    gameState = gameState,
-                    setAnimateCoinBalance = setAnimateCoinBalance,
-                    onTargetBoundsCaptured = { targetBounds = it },
-                    openLeaderboard = openLeaderboard,
-                    openWallet = openWallet,
-                )
         }
         if (feedState.currentPageOfFeed >= 0) {
             when (feedState.currentOnboardingStep) {
                 OnboardingStep.INTRO_RANK -> {
-                    dailyRank?.let {
-                        FeedOnboardingNudge(
-                            text = stringResource(Res.string.onboarding_nudge_rank),
-                            highlightText = stringResource(Res.string.onboarding_nudge_rank_highlight),
-                            arrowAlignment = FeedArrowAlignment.TOP_START,
-                            isDismissible = false,
-                            targetBounds = targetBounds,
-                            onDismiss = { feedViewModel.dismissOnboardingStep() },
-                        )
-                    }
+                    FeedOnboardingNudge(
+                        text = stringResource(Res.string.onboarding_nudge_rank),
+                        highlightText = stringResource(Res.string.onboarding_nudge_rank_highlight),
+                        arrowAlignment = FeedArrowAlignment.TOP_START,
+                        isDismissible = false,
+                        targetBounds = targetBounds,
+                        onDismiss = { feedViewModel.dismissOnboardingStep() },
+                    )
                 }
 
                 OnboardingStep.INTRO_BALANCE -> {
@@ -442,95 +402,6 @@ private fun OverlayTopDefault(
                 modifier = Modifier.padding(vertical = 22.dp).clickable { openWallet() },
             )
         }
-    }
-}
-
-@Suppress("LongMethod")
-@Composable
-private fun OverlayTopDailyRank(
-    dailyRank: Long?,
-    feedState: FeedState,
-    gameState: GameState,
-    setAnimateCoinBalance: (Boolean) -> Unit,
-    onTargetBoundsCaptured: (FeedTargetBounds?) -> Unit,
-    openLeaderboard: () -> Unit,
-    openWallet: () -> Unit,
-) {
-    val density = LocalDensity.current
-    val isShowingRankNudge = feedState.currentOnboardingStep == OnboardingStep.INTRO_RANK
-    val isShowingBalanceNudge = feedState.currentOnboardingStep == OnboardingStep.INTRO_BALANCE
-    Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .paint(
-                    painter = painterResource(DesignRes.drawable.shadow),
-                    contentScale = ContentScale.FillBounds,
-                ).padding(horizontal = 26.dp),
-    ) {
-        dailyRank?.let {
-            DailyRanK(
-                position = dailyRank,
-                animate = gameState.animateCoinBalance,
-                setAnimate = { setAnimateCoinBalance(it) },
-                isShowingNudge = isShowingRankNudge,
-                modifier =
-                    Modifier
-                        .padding(vertical = 32.dp)
-                        .align(Alignment.TopStart)
-                        .clickable { openLeaderboard() }
-                        .then(
-                            if (isShowingRankNudge) {
-                                Modifier
-                                    .captureFeedOnboardingBounds(
-                                        targetBounds = { onTargetBoundsCaptured(it) },
-                                        adjustBounds = { bounds ->
-                                            val trophyOffsetPx = with(density) { TOP_OVERLAY_ITEM_OFFSET_X.dp.toPx() }
-                                            FeedTargetBounds(
-                                                left = bounds.left,
-                                                top = bounds.top,
-                                                right = bounds.right + trophyOffsetPx,
-                                                bottom = bounds.bottom,
-                                            )
-                                        },
-                                    )
-                            } else {
-                                Modifier
-                            },
-                        ),
-            )
-        }
-        CoinBalance(
-            coinBalance = gameState.coinBalance,
-            coinDelta = gameState.lastBalanceDifference,
-            animateBag = gameState.animateCoinBalance,
-            setAnimate = { setAnimateCoinBalance(it) },
-            isShowingNudge = isShowingBalanceNudge,
-            modifier =
-                Modifier
-                    .padding(vertical = 32.dp)
-                    .align(Alignment.TopEnd)
-                    .clickable { openWallet() }
-                    .then(
-                        if (isShowingBalanceNudge) {
-                            Modifier
-                                .captureFeedOnboardingBounds(
-                                    targetBounds = { onTargetBoundsCaptured(it) },
-                                    adjustBounds = { bounds ->
-                                        val bagOffsetPx = with(density) { TOP_OVERLAY_ITEM_OFFSET_X.dp.toPx() }
-                                        FeedTargetBounds(
-                                            left = bounds.left - bagOffsetPx,
-                                            top = bounds.top,
-                                            right = bounds.right,
-                                            bottom = bounds.bottom,
-                                        )
-                                    },
-                                )
-                        } else {
-                            Modifier
-                        },
-                    ),
-        )
     }
 }
 
@@ -796,6 +667,5 @@ private fun FeedActionButtons(
 }
 
 private object FeedScaffoldScreenConstants {
-    const val TOP_OVERLAY_ITEM_OFFSET_X = 18f
     const val UNSELECTED_TAB_ALPHA = 0.6f
 }

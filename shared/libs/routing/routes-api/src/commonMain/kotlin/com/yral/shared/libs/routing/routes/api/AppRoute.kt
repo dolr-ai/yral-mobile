@@ -39,11 +39,6 @@ object Wallet : AppRoute, ExternallyExposedRoute {
 }
 
 @Serializable
-object Leaderboard : AppRoute, ExternallyExposedRoute {
-    const val PATH = "/leaderboard"
-}
-
-@Serializable
 object AddVideo : AppRoute, ExternallyExposedRoute {
     const val PATH = "/addVideo"
 }

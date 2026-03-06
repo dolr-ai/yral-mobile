@@ -16,7 +16,6 @@ import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.chat.nav.ChatComponent
 import com.yral.shared.features.feed.nav.FeedComponent
-import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.root.viewmodels.HomeViewModel
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.features.uploadvideo.nav.UploadVideoRootComponent
@@ -35,7 +34,6 @@ abstract class HomeComponent {
     abstract val subscriptionCoordinator: SubscriptionCoordinator
 
     abstract fun onFeedTabClick()
-    abstract fun onLeaderboardTabClick()
     abstract fun onUploadVideoTabClick()
     abstract fun onProfileTabClick()
     abstract fun onAccountTabClick()
@@ -44,15 +42,11 @@ abstract class HomeComponent {
     abstract fun onNavigationRequest(appRoute: AppRoute)
     abstract fun openConversation(params: OpenConversationParams)
     abstract fun openWallet()
-    abstract fun openLeaderboard()
     abstract fun openCreateInfluencer(source: BotCreationSource)
 
     sealed class Child {
         class Feed(
             val component: FeedComponent,
-        ) : Child()
-        class Leaderboard(
-            val component: LeaderboardComponent,
         ) : Child()
         class UploadVideo(
             val component: UploadVideoRootComponent,
@@ -89,7 +83,6 @@ abstract class HomeComponent {
             openConversation: (OpenConversationParams) -> Unit,
             openCreateInfluencer: (source: BotCreationSource) -> Unit,
             openWallet: () -> Unit,
-            openLeaderboard: () -> Unit,
             openAccountSheet: () -> Unit,
             switchToMainProfile: (onComplete: (Boolean) -> Unit) -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
@@ -103,7 +96,6 @@ abstract class HomeComponent {
                 openConversation,
                 openCreateInfluencer,
                 openWallet,
-                openLeaderboard,
                 openAccountSheet,
                 switchToMainProfile,
                 showAlertsOnDialog,

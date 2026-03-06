@@ -120,7 +120,6 @@ class DefaultRootComponent(
             loginCoordinator = this,
             setHomeComponent = { homeComponent = it },
             showAlertsOnDialog = ::showAlertsSlot,
-            onFeedTabClick = { homeComponent?.onFeedTabClick() },
         )
 
     // ==================== Navigation Stacks ====================
@@ -176,7 +175,6 @@ class DefaultRootComponent(
                     componentFactory.createConversation(context, config),
                 )
             is Config.Wallet -> RootComponent.Child.Wallet(componentFactory.createWallet(context))
-            is Config.Leaderboard -> RootComponent.Child.Leaderboard(componentFactory.createLeaderboard(context))
             is Config.Subscription ->
                 RootComponent.Child.Subscription(
                     componentFactory.createSubscription(
@@ -371,10 +369,6 @@ class DefaultRootComponent(
 
     override fun openWallet() {
         navigation.pushToFront(Config.Wallet)
-    }
-
-    override fun openLeaderboard() {
-        navigation.pushToFront(Config.Leaderboard)
     }
 
     override fun openSubscription(

@@ -18,7 +18,6 @@ import com.yral.shared.features.auth.ui.LoginInfo
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
-import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.root.viewmodels.RootViewModel
@@ -67,8 +66,6 @@ interface RootComponent {
 
     fun openWallet()
 
-    fun openLeaderboard()
-
     fun openSubscription(
         purchaseTimeMs: Long?,
         entryPoint: SubscriptionEntryPoint,
@@ -111,9 +108,6 @@ interface RootComponent {
         ) : Child()
         class Wallet(
             val component: WalletComponent,
-        ) : Child()
-        class Leaderboard(
-            val component: LeaderboardComponent,
         ) : Child()
         class Subscription(
             val component: SubscriptionsComponent,

@@ -69,8 +69,6 @@ import com.yral.shared.features.chat.ui.ChatScreen
 import com.yral.shared.features.chat.viewmodel.ChatWallViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.game.viewmodel.GameViewModel
-import com.yral.shared.features.leaderboard.ui.LeaderboardScreen
-import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.wallet.ui.WalletScreen
 import com.yral.shared.features.wallet.ui.btcRewards.VideoViewsRewardsBottomSheet
@@ -91,8 +89,6 @@ import yral_mobile.shared.app.generated.resources.chat_nav
 import yral_mobile.shared.app.generated.resources.chat_nav_unselected
 import yral_mobile.shared.app.generated.resources.home_nav_selected
 import yral_mobile.shared.app.generated.resources.home_nav_unselected
-import yral_mobile.shared.app.generated.resources.leaderboard_nav_selected
-import yral_mobile.shared.app.generated.resources.leaderboard_nav_unselected
 import yral_mobile.shared.app.generated.resources.new_
 import yral_mobile.shared.app.generated.resources.profile_nav_selected
 import yral_mobile.shared.app.generated.resources.profile_nav_unselected
@@ -121,7 +117,6 @@ internal fun HomeScreen(
             val currentTab =
                 when (activeComponent) {
                     is HomeComponent.Child.Feed -> HomeTab.HOME
-                    is HomeComponent.Child.Leaderboard -> HomeTab.LEADER_BOARD
                     is HomeComponent.Child.Profile -> HomeTab.PROFILE
                     is HomeComponent.Child.UploadVideo -> HomeTab.UPLOAD_VIDEO
                     is HomeComponent.Child.Chat -> HomeTab.CHAT
@@ -131,7 +126,6 @@ internal fun HomeScreen(
             val updateCurrentTab: (tab: HomeTab) -> Unit = { tab ->
                 when (tab) {
                     HomeTab.HOME -> component.onFeedTabClick()
-                    HomeTab.LEADER_BOARD -> component.onLeaderboardTabClick()
                     HomeTab.PROFILE -> component.onProfileTabClick()
                     HomeTab.UPLOAD_VIDEO -> component.onUploadVideoTabClick()
                     HomeTab.CHAT -> component.onChatTabClick()
@@ -195,7 +189,6 @@ private fun HomeScreenContent(
             parametersOf(canisterData)
         }
     val accountViewModel = koinViewModel<AccountsViewModel>(key = "account-$sessionKey")
-    val leaderBoardViewModel = koinViewModel<LeaderBoardViewModel>(key = "leaderboard-$sessionKey")
     val chatWallViewModel = koinViewModel<ChatWallViewModel>(key = "chatWall-$sessionKey")
     val profileVideos = getProfileVideos(profileViewModel, sessionKey, updateProfileVideosCount)
 
@@ -212,14 +205,7 @@ private fun HomeScreenContent(
                     component = child.component,
                     feedViewModel = feedViewModel,
                     gameViewModel = gameViewModel,
-                    leaderBoardViewModel = leaderBoardViewModel,
                     onNavigateToChat = { component.onChatTabClick() },
-                )
-
-            is HomeComponent.Child.Leaderboard ->
-                LeaderboardScreen(
-                    component = child.component,
-                    leaderBoardViewModel = leaderBoardViewModel,
                 )
 
             is HomeComponent.Child.UploadVideo ->
@@ -479,12 +465,6 @@ private enum class HomeTab(
         icon = Res.drawable.upload_video_nav_selected,
         unSelectedIcon = Res.drawable.upload_video_nav_unselected,
     ),
-    LEADER_BOARD(
-        title = "LeaderBoard",
-        categoryName = CategoryName.LEADERBOARD,
-        icon = Res.drawable.leaderboard_nav_selected,
-        unSelectedIcon = Res.drawable.leaderboard_nav_unselected,
-    ),
     PROFILE(
         title = "Profile",
         categoryName = CategoryName.PROFILE,
@@ -583,32 +563,6 @@ private fun LoginIfRequired(
             else -> {
                 loginState.clearLogin()
             }
-        }
-    }
-    LaunchedEffect(currentChild, homeState.hasShownSignupPrompt, homeState.isSocialSignedIn) {
-        if (homeState.isSocialSignedIn) {
-            loginState.clearLogin()
-            return@LaunchedEffect
-        }
-        when (currentChild) {
-            is HomeComponent.Child.Leaderboard -> {
-                if (homeState.hasShownSignupPrompt[SignupPageName.LEADERBOARD] != true) {
-                    val onDismissOrSuccess = {
-                        dismissSheet()
-                        component.homeViewModel.onSignupPromptShown(SignupPageName.LEADERBOARD)
-                    }
-                    loginState.requestLogin(
-                        SignupPageName.LEADERBOARD,
-                        LoginScreenType.BottomSheet(LoginBottomSheetType.DEFAULT),
-                        LoginMode.BOTH,
-                        onDismissOrSuccess,
-                        onDismissOrSuccess,
-                    ) {}
-                } else {
-                    loginState.clearLogin()
-                }
-            }
-            else -> Unit
         }
     }
 }

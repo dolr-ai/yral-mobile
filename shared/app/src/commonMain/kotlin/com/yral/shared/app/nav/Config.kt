@@ -36,9 +36,6 @@ internal sealed interface Config {
     data object Wallet : Config
 
     @Serializable
-    data object Leaderboard : Config
-
-    @Serializable
     data object CountrySelector : Config
 
     @Serializable
