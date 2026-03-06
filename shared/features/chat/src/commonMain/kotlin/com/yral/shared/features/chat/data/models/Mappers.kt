@@ -1,6 +1,7 @@
 package com.yral.shared.features.chat.data.models
 
 import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.features.chat.domain.models.ChatMessage
 import com.yral.shared.features.chat.domain.models.ChatMessageType
 import com.yral.shared.features.chat.domain.models.Conversation
@@ -15,6 +16,7 @@ import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencerStatus
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
 import com.yral.shared.features.chat.domain.models.SendMessageResult
+import com.yral.shared.rust.service.utils.propicFromPrincipal
 
 fun InfluencerDto.toDomain(): Influencer =
     Influencer(
@@ -63,19 +65,33 @@ fun ConversationDto.toDomain(): Conversation =
                     id = it.id,
                     name = it.name,
                     displayName = it.displayName,
-                    avatarUrl = it.avatarUrl,
+                    avatarUrl =
+                        it.avatarUrl
+                            .takeIf { url -> url.isNotEmpty() }
+                            ?: propicFromPrincipal(it.id),
                     category = it.category.orEmpty(),
                     suggestedMessages = it.suggestedMessages.orEmpty(),
                 )
             } ?: influencerId?.let { influencerId ->
-                ConversationInfluencer(id = influencerId, name = "", displayName = "", avatarUrl = "")
+                ConversationInfluencer(
+                    id = influencerId,
+                    name = "",
+                    displayName = "",
+                    avatarUrl = "",
+                )
             } ?: throw YralException("Conversation requires a valid influencer"),
         conversationUser =
             user?.let {
                 ConversationUser(
                     principalId = it.principalId,
-                    username = it.username,
-                    profilePictureUrl = it.profilePictureUrl,
+                    username =
+                        it.username
+                            .takeIf { name -> name?.isNotEmpty() == true }
+                            ?: resolveUsername("", it.principalId),
+                    profilePictureUrl =
+                        it.profilePictureUrl
+                            .takeIf { url -> url?.isNotEmpty() == true }
+                            ?: propicFromPrincipal(it.principalId),
                 )
             },
         createdAt = createdAt,
