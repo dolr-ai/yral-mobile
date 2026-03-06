@@ -317,6 +317,7 @@ private fun FeedDetails.toReel() =
         videoUrl = url,
         thumbnailUrl = thumbnail,
         videoId = videoID,
+        postId = postID,
     )
 
 @Composable

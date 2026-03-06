@@ -472,15 +472,14 @@ private class AndroidPlaybackCoordinator(
         if (previousIndex != null && previousIndex != index) {
             detachSurface(previousIndex, slot.player)
         }
-        var mediaSource = preloadManager.getMediaSource(mediaItem)
-        if (mediaSource == null) {
-            preloadManager.add(mediaItem, index)
-            preloadManager.invalidate()
-            mediaSource = preloadManager.getMediaSource(mediaItem)
-        }
-        if (mediaSource == null) return
         slot.index = index
-        slot.player.setMediaSource(mediaSource)
+        val mediaSource = preloadManager.getMediaSource(mediaItem)
+        if (mediaSource != null) {
+            slot.player.setMediaSource(mediaSource)
+        } else {
+            // Preloaded source not ready yet — let the player create its own source.
+            slot.player.setMediaItem(mediaItem)
+        }
         slot.player.prepare()
         slot.player.playWhenReady = playWhenReady
     }
