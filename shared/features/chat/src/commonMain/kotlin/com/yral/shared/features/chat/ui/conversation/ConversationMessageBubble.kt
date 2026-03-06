@@ -127,8 +127,19 @@ private fun RegularBubble(
         isOnlyMedia = onlyMedia,
     ) {
         if (!content.isNullOrBlank()) {
+            // The intellij-markdown parser crashes with StringIndexOutOfBoundsException when
+            // content contains supplementary Unicode chars (emoji/surrogate pairs) that cause
+            // AST node offsets to exceed the actual string length. Strip them before rendering.
+            val safeContent =
+                remember(content) {
+                    if (content.any { it.isHighSurrogate() }) {
+                        content.filter { !it.isHighSurrogate() && !it.isLowSurrogate() }
+                    } else {
+                        content
+                    }
+                }
             Markdown(
-                content = content,
+                content = safeContent,
                 colors = markdownColors,
                 typography = markdownTypography,
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),

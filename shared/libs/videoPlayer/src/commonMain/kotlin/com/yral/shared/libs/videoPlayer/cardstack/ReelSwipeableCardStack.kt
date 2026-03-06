@@ -147,7 +147,7 @@ internal fun ReelSwipeableCardStack(
             count = pageCount,
             maxVisibleCards = 2,
             verticalSwipeEnabled = false,
-            key = { index -> visibleReels[index].videoId },
+            key = { index -> "${visibleReels[index].postId}_${visibleReels[index].videoId}" },
             onSwipeComplete = { direction ->
                 if (direction == SwipeDirection.LEFT || direction == SwipeDirection.RIGHT) {
                     val isSuppressed = shouldSuppressSwipeFeedback?.invoke(swipeState.settledIndex) == true
