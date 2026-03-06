@@ -407,16 +407,12 @@ class DefaultAuthClient(
                         idToken = idToken,
                         userPrincipal = userPrincipal,
                     ),
-                ).onSuccess { signInWithToken(session, it) }
+                ).onSuccess { signInWithToken(it) }
                 .onFailure { throw YralFBAuthException("exchanging principal failed - ${it.message}") }
         } ?: throw YralFBAuthException("exchanging principal failed - user principal not found")
     }
 
-    @Suppress("UnusedParameter")
-    private suspend fun signInWithToken(
-        session: Session,
-        exchangeResult: ExchangePrincipalResponse,
-    ) {
+    private suspend fun signInWithToken(exchangeResult: ExchangePrincipalResponse) {
         requiredUseCases
             .signOutUseCase
             .invoke(Unit)
