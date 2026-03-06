@@ -27,4 +27,10 @@
     <string name="storage_permission_required">Storage permission is required to download videos. Please grant permission in Settings.</string>
     <string name="msg_principal_id_copied">Your Principal ID has been copied successfully!</string>
     <string name="become_pro">Become Pro</string>
+    <string name="subscriber_only_videos">Subscriber-Only Videos</string>
+    <string name="subscriber_only_description">Get access to %s\'s exclusive content, early releases, and premium drops.</string>
+    <string name="unlock_now">Unlock Now</string>
+    <string name="exclusive_videos_empty">No exclusive videos yet</string>
+    <string name="draft_videos_empty">No draft videos yet</string>
+    <string name="draft_videos_empty_subtitle">Videos you save as drafts will appear here.</string>
 </resources>
