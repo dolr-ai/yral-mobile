@@ -15,8 +15,8 @@ android {
     namespace = "com.yral.android"
     defaultConfig {
         applicationId = "com.yral.android"
-        versionCode = 73
-        versionName = "2.7.1"
+        versionCode = 74
+        versionName = "2.7.2"
         ndkVersion = "28.0.13004108"
         buildConfigField(
             type = "String",
