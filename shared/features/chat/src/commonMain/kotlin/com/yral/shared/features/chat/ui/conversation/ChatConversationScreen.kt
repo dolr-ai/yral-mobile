@@ -116,6 +116,7 @@ fun ChatConversationScreen(
                 influencerCategory = params.influencerCategory,
                 influencerSource = params.influencerSource,
                 displayName = params.displayName,
+                userName = params.username,
                 avatarUrl = params.avatarUrl,
             )
         } else {
@@ -124,6 +125,7 @@ fun ChatConversationScreen(
                 influencerCategory = params.influencerCategory,
                 influencerSource = params.influencerSource,
                 displayName = params.displayName,
+                userName = params.username,
                 avatarUrl = params.avatarUrl,
             )
         }

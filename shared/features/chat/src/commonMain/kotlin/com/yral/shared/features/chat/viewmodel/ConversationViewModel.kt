@@ -580,6 +580,7 @@ class ConversationViewModel(
         influencerCategory: String,
         influencerSource: ConversationInfluencerSource,
         displayName: String? = null,
+        userName: String? = null,
         avatarUrl: String? = null,
     ) {
         val isBotAccount = sessionManager.isBotAccount == true
@@ -594,7 +595,7 @@ class ConversationViewModel(
             influencer =
                 ConversationInfluencer(
                     id = influencerId,
-                    name = displayName.orEmpty(),
+                    name = userName.orEmpty(),
                     displayName = displayName.orEmpty(),
                     avatarUrl = avatarUrl.orEmpty(),
                     category = influencerCategory,
@@ -609,6 +610,7 @@ class ConversationViewModel(
         influencerCategory: String,
         influencerSource: ConversationInfluencerSource = ConversationInfluencerSource.CARD,
         displayName: String? = null,
+        userName: String? = null,
         avatarUrl: String? = null,
     ) {
         val isBotAccount = sessionManager.isBotAccount == true
@@ -629,7 +631,7 @@ class ConversationViewModel(
                     influencer =
                         ConversationInfluencer(
                             id = influencerId,
-                            name = "",
+                            name = userName.orEmpty(),
                             displayName = displayName.orEmpty(),
                             avatarUrl = avatarUrl.orEmpty(),
                             category = influencerCategory,
