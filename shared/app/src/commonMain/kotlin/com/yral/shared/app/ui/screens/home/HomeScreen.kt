@@ -300,11 +300,13 @@ private fun getVisibleTabs(): List<HomeTab> {
     val chatWalletConfig = flagManager.getChatAndWalletConfig()
     return buildList {
         add(HomeTab.HOME)
-        when {
-            chatWalletConfig.first -> add(HomeTab.CHAT)
-            chatWalletConfig.second -> add(HomeTab.WALLET)
+        if (chatWalletConfig.first) {
+            add(HomeTab.CHAT)
         }
         add(HomeTab.UPLOAD_VIDEO)
+        if (chatWalletConfig.second) {
+            add(HomeTab.WALLET)
+        }
         add(HomeTab.PROFILE)
     }
 }

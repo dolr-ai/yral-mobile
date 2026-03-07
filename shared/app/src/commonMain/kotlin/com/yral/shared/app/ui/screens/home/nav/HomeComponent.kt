@@ -106,7 +106,5 @@ abstract class HomeComponent {
 internal fun FeatureFlagManager.getChatAndWalletConfig(): Pair<Boolean, Boolean> {
     val isWalletEnabled = isEnabled(WalletFeatureFlags.Wallet.Enabled)
     val isChatEnabled = isEnabled(ChatFeatureFlags.Chat.Enabled)
-    // Show chat if enabled, otherwise show wallet if enabled
-    // Chat takes precedence if both are enabled
-    return isChatEnabled to (isWalletEnabled && !isChatEnabled)
+    return isChatEnabled to isWalletEnabled
 }
