@@ -18,31 +18,20 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.feed.ui.FeedActionsRight
 import com.yral.shared.features.feed.ui.FeedScreen
-import com.yral.shared.features.feed.ui.components.FeedOnboardingNudge
-import com.yral.shared.features.feed.ui.components.FeedTargetBounds
-import com.yral.shared.features.feed.ui.components.UserBrief
-import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedTab
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
-import com.yral.shared.features.feed.viewmodel.OnboardingStep
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
-import com.yral.shared.rust.service.domain.models.toCanisterData
-import com.yral.shared.rust.service.utils.CanisterData
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.app.generated.resources.Res
@@ -51,13 +40,6 @@ import yral_mobile.shared.app.generated.resources.feed_btn_skip
 import yral_mobile.shared.app.generated.resources.feed_btn_yral
 import yral_mobile.shared.app.generated.resources.feed_tab_explore
 import yral_mobile.shared.app.generated.resources.feed_tab_influencers
-import yral_mobile.shared.app.generated.resources.onboarding_nudge_balance
-import yral_mobile.shared.app.generated.resources.onboarding_nudge_balance_highlight
-import yral_mobile.shared.app.generated.resources.onboarding_nudge_rank
-import yral_mobile.shared.app.generated.resources.onboarding_nudge_rank_highlight
-import yral_mobile.shared.libs.designsystem.generated.resources.shadow
-import com.yral.shared.features.feed.ui.components.ArrowAlignment as FeedArrowAlignment
-import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Composable
 fun FeedScaffoldScreen(
@@ -70,18 +52,11 @@ fun FeedScaffoldScreen(
     FeedScreen(
         component = component,
         viewModel = feedViewModel,
-        topOverlay = { pageNo ->
+        topOverlay = { _ ->
             Column {
                 FeedTabBar(
                     selectedTab = selectedTab,
                     onTabSelected = { feedViewModel.setSelectedFeedTab(it) },
-                )
-                OverLayTop(
-                    pageNo = pageNo,
-                    feedState = feedState,
-                    setPostDescriptionExpanded = { feedViewModel.setPostDescriptionExpanded(it) },
-                    openUserProfile = { component.openProfile(it) },
-                    feedViewModel = feedViewModel,
                 )
             }
         },
@@ -105,86 +80,6 @@ fun FeedScaffoldScreen(
         onEdgeScrollAttempt = { _ -> },
         limitReelCount = feedState.feedDetails.size,
     )
-}
-
-@Composable
-private fun OverLayTop(
-    pageNo: Int,
-    feedState: FeedState,
-    setPostDescriptionExpanded: (Boolean) -> Unit,
-    openUserProfile: (canisterData: CanisterData) -> Unit,
-    feedViewModel: FeedViewModel,
-) {
-    val targetBounds by remember { mutableStateOf<FeedTargetBounds?>(null) }
-    Box(modifier = Modifier.fillMaxSize()) {
-        OverlayTopDefault(
-            pageNo = pageNo,
-            feedState = feedState,
-            setPostDescriptionExpanded = setPostDescriptionExpanded,
-            openUserProfile = openUserProfile,
-        )
-        if (feedState.currentPageOfFeed >= 0) {
-            when (feedState.currentOnboardingStep) {
-                OnboardingStep.INTRO_RANK -> {
-                    FeedOnboardingNudge(
-                        text = stringResource(Res.string.onboarding_nudge_rank),
-                        highlightText = stringResource(Res.string.onboarding_nudge_rank_highlight),
-                        arrowAlignment = FeedArrowAlignment.TOP_START,
-                        isDismissible = false,
-                        targetBounds = targetBounds,
-                        onDismiss = { feedViewModel.dismissOnboardingStep() },
-                    )
-                }
-
-                OnboardingStep.INTRO_BALANCE -> {
-                    FeedOnboardingNudge(
-                        text = stringResource(Res.string.onboarding_nudge_balance),
-                        highlightText = stringResource(Res.string.onboarding_nudge_balance_highlight),
-                        arrowAlignment = FeedArrowAlignment.TOP_END,
-                        isDismissible = feedState.isMandatoryLogin,
-                        targetBounds = targetBounds,
-                        onDismiss = { feedViewModel.dismissOnboardingStep() },
-                        isShowNext = !feedState.isMandatoryLogin,
-                    )
-                }
-
-                else -> {}
-            }
-        }
-    }
-}
-
-@Composable
-private fun OverlayTopDefault(
-    pageNo: Int,
-    feedState: FeedState,
-    setPostDescriptionExpanded: (Boolean) -> Unit,
-    openUserProfile: (canisterData: CanisterData) -> Unit,
-) {
-    val feedDetails = feedState.feedDetails[pageNo]
-    Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .paint(
-                    painter = painterResource(DesignRes.drawable.shadow),
-                    contentScale = ContentScale.FillBounds,
-                ).padding(end = 26.dp),
-    ) {
-        UserBrief(
-            principalId = feedDetails.principalID,
-            profileImageUrl = feedDetails.profileImageURL,
-            displayName = feedDetails.displayName.ifBlank { null },
-            postDescription = feedDetails.postDescription,
-            isPostDescriptionExpanded = feedState.isPostDescriptionExpanded,
-            setPostDescriptionExpanded = { setPostDescriptionExpanded(it) },
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(end = 46.dp)
-                    .clickable { openUserProfile(feedDetails.toCanisterData()) },
-        )
-    }
 }
 
 @Composable
