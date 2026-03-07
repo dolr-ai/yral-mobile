@@ -51,6 +51,7 @@ import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.YralFfiException
 import com.yral.shared.rust.service.utils.authenticateWithNetwork
 import com.yral.shared.rust.service.utils.getSessionFromIdentity
+import dev.gitlive.firebase.auth.FirebaseAuth
 import io.ktor.util.decodeBase64Bytes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -70,6 +71,7 @@ class DefaultAuthClient(
     private val accountSessionPreferences: AccountSessionPreferences,
     private val accountDirectoryStore: AccountDirectoryStore,
     private val botIdentitiesStore: BotIdentitiesStore,
+    private val auth: FirebaseAuth,
     private val authRepository: AuthRepository,
     private val requiredUseCases: RequiredUseCases,
     private val oAuthUtils: OAuthUtils,
@@ -371,16 +373,18 @@ class DefaultAuthClient(
     }
 
     private suspend fun doFirebaseAuth(session: Session) {
-        requiredUseCases
-            .signOutUseCase
-            .invoke(Unit)
-            .onSuccess {
-                requiredUseCases
-                    .signInAnonymouslyUseCase
-                    .invoke(Unit)
-                    .onSuccess { getIdTokenAndProceed(session) }
-                    .onFailure { Logger.e(TAG) { "Firebase anon sign in failed: ${it.message}" } }
-            }.onFailure { Logger.e(TAG) { "Firebase sign out failed: ${it.message}" } }
+        if (auth.currentUser?.uid != session.userPrincipal) {
+            requiredUseCases
+                .signOutUseCase
+                .invoke(Unit)
+                .onSuccess {
+                    requiredUseCases
+                        .signInAnonymouslyUseCase
+                        .invoke(Unit)
+                        .onSuccess { getIdTokenAndProceed(session) }
+                        .onFailure { Logger.e(TAG) { "Firebase anon sign in failed: ${it.message}" } }
+                }.onFailure { Logger.e(TAG) { "Firebase sign out failed: ${it.message}" } }
+        }
     }
 
     private suspend fun getIdTokenAndProceed(session: Session) {
