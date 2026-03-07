@@ -24,7 +24,6 @@ import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.YralAuthException
-import com.yral.shared.features.auth.YralFBAuthException
 import com.yral.shared.features.root.analytics.RootTelemetry
 import com.yral.shared.features.subscriptions.domain.FetchProductsUseCase
 import com.yral.shared.features.subscriptions.domain.QueryPurchaseUseCase
@@ -158,7 +157,6 @@ class RootViewModel(
         }
 
     private var initialisationJob: Job? = null
-    private var firebaseJob: Job? = null
 
     init {
         coroutineScope.launch {
@@ -231,9 +229,6 @@ class RootViewModel(
     private suspend fun checkLoginAndInitialize(isSessionPrincipalSame: Boolean) {
         delay(initialDelayForSetup)
         sessionManager.identity?.let {
-            sessionManager.updateIsForcedGamePlayUser(
-                isForcedGamePlayUser = flagManager.isEnabled(FeedFeatureFlags.SmileyGame.StopAndVoteNudge),
-            )
             sessionManager.updateIsAutoScrolledEnabled(
                 isAutoScrollEnabled = flagManager.isEnabled(FeedFeatureFlags.SmileyGame.AutoScrollEnabled),
             )
@@ -242,7 +237,6 @@ class RootViewModel(
             )
             if (!isSessionPrincipalSame) {
                 resolveNavigationTarget()
-                initializeFirebase()
                 // Not used as of now we will get details from canister in profileDetailsV6
                 // restorePurchases()
             }
@@ -262,32 +256,6 @@ class RootViewModel(
             }
             autoSwitchToLastActiveAccount()
         } ?: authClient.initialize()
-    }
-
-    private suspend fun initializeFirebase() {
-        val isFirebaseAuthenticated =
-            sessionManager.readLatestSessionPropertyWithDefault(
-                selector = { it.isFirebaseLoggedIn },
-                defaultValue = false,
-            )
-        if (isFirebaseAuthenticated || isPendingLogin()) return
-        firebaseJob?.cancel()
-        val session = (_state.value.sessionState as? SessionState.SignedIn)?.session ?: return
-        firebaseJob =
-            coroutineScope.launch {
-                try {
-                    authClient.fetchBalance(session)
-                    authClient.authorizeFirebase(session)
-                } catch (e: YralFBAuthException) {
-                    // Do not update error in state since no error message required
-                    Logger.e("Firebase Auth error - $e")
-                    crashlyticsManager.recordException(e, ExceptionType.AUTH)
-                } catch (e: YralAuthException) {
-                    // can be triggered in postFirebaseLogin when getting balance
-                    Logger.e("Fetch Balance error - $e")
-                    crashlyticsManager.recordException(e, ExceptionType.AUTH)
-                }
-            }
     }
 
     private suspend fun fetchYralProAvailability() {
@@ -661,14 +629,9 @@ class RootViewModel(
                 cacheSession(identityBytes, session)
                 accountSessionPreferences.setLastActivePrincipal(principal)
                 // Refresh tokens and notification registration similar to post-login
-                if (isBot) {
-                    // Skip auth initialization for bots to avoid overwriting the active bot session with parent tokens
-                    sessionManager.updateFirebaseLoginState(false)
-                    authClient.fetchBalance(session)
-                } else {
+                if (!isBot) {
+                    // For bots, skip auth initialization to avoid overwriting the active bot session with parent tokens
                     authClient.initialize()
-                    authClient.authorizeFirebase(session)
-                    authClient.fetchBalance(session)
                 }
                 updateAccountDialogForSwitchedProfile(
                     principal = principal,

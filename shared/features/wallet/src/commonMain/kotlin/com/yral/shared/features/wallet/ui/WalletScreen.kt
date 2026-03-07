@@ -75,8 +75,8 @@ fun WalletScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val countryCode = Locale.current.region
-    LaunchedEffect(Unit) { viewModel.onScreenViewed() }
-    LaunchedEffect(state.isFirebaseLoggedIn) {
+    LaunchedEffect(Unit) {
+        viewModel.onScreenViewed()
         viewModel.refresh(countryCode)
     }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)

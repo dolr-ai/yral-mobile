@@ -57,13 +57,6 @@ class WalletViewModel(
         }
         viewModelScope.launch {
             sessionManager
-                .observeSessionProperty { it.isFirebaseLoggedIn }
-                .collect { isFirebaseLoggedIn ->
-                    _state.update { it.copy(isFirebaseLoggedIn = isFirebaseLoggedIn) }
-                }
-        }
-        viewModelScope.launch {
-            sessionManager
                 .observeSessionProperty { it.proDetails }
                 .collect { proDetails ->
                     _state.update { it.copy(isProUser = proDetails?.isProPurchased ?: false) }
@@ -93,9 +86,7 @@ class WalletViewModel(
         getUserBtcBalanceUseCase()
         getUserDolrBalanceUseCase()
         fetchDolrPrice()
-        if (_state.value.isFirebaseLoggedIn) {
-            getBtcValueConversion(countryCode)
-        }
+        getBtcValueConversion(countryCode)
     }
 
     private fun fetchDolrPrice() {
@@ -191,6 +182,5 @@ data class WalletState(
     val howToEarnHelpVisible: Boolean = false,
     val howToGetDolrHelpVisible: Boolean = false,
     val rewardConfig: BtcRewardConfig? = null,
-    val isFirebaseLoggedIn: Boolean = false,
     val isProUser: Boolean = false,
 )
