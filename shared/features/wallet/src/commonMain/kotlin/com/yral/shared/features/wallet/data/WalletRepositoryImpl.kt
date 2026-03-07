@@ -42,5 +42,8 @@ class WalletRepositoryImpl(
             .getDolrUsdPrice()
             .toDomain()
 
-    override suspend fun getCoinBalance(userPrincipal: String): Long = dataSource.getCoinBalance(userPrincipal)
+    override suspend fun getCoinBalance(userPrincipal: String): Long =
+        dataSource
+            .getCoinBalance(userPrincipal)
+            .balance
 }

@@ -346,11 +346,8 @@ class DefaultAuthClient(
             val reAuthenticatedSession = refreshAuthenticateWithNetwork(data)
             val finalSession = reAuthenticatedSession ?: cachedSession
             setSession(session = finalSession)
-            fetchBalance(finalSession)
-            scope.launch {
-                val result = requiredUseCases.registerNotificationTokenUseCase()
-                Logger.d(DefaultAuthClient::class.simpleName!!) { "Notification token registered: $result" }
-            }
+            scope.launch { fetchBalance(finalSession) }
+            scope.launch { requiredUseCases.registerNotificationTokenUseCase() }
             scope.launch { doFirebaseAuth(finalSession) }
         } catch (e: YralFfiException) {
             resetCachedCanisterData()
