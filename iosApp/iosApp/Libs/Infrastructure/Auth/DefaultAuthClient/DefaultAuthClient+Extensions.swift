@@ -312,7 +312,6 @@ extension DefaultAuthClient: ASWebAuthenticationPresentationContextProviding {
         ),
         phoneNumber: nil,
         proStatus: nil,
-        isHonExperiment: KotlinBoolean(bool: true),
         isBotAccount: nil,
         parentAccount: nil
       )

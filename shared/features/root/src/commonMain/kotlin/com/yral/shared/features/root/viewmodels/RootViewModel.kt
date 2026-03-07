@@ -148,7 +148,6 @@ class RootViewModel(
                         isMandatoryLogin = properties.isMandatoryLogin,
                         phoneNumber = properties.phoneNumber,
                         proStatus = properties.proDetails?.isProPurchased,
-                        isHonExperiment = null,
                         isBotAccount = isBotAccount,
                         parentAccount = if (isBotAccount == true) properties.accountDirectory?.mainPrincipal else null,
                     )

@@ -161,6 +161,43 @@ The following Firebase infrastructure remains because it is still actively used 
 | `shared/features/wallet/ui/WalletScreen.kt` | Removed `isFirebaseLoggedIn` key from `LaunchedEffect` |
 | `shared/features/wallet/domain/GetCoinBalanceUseCase.kt` | **New** — migrated from deleted game module |
 
+### 9. Tournament Feed Context Removed from FeedViewModel
+
+Removed residual tournament feed support that remained in `FeedViewModel` after the tournament feature module was deleted:
+
+**Deleted files:**
+- `shared/features/feed/viewmodel/FeedContext.kt` — removed `FeedContext.Tournament` subclass; `FeedContext` sealed class retained with only `Default` for future extensibility
+- `shared/features/feed/domain/useCases/GetTournamentFeedUseCase.kt`
+- `shared/features/feed/data/models/TournamentPostResponseDTO.kt`
+
+**Updated files:**
+
+| File | Change |
+|------|--------|
+| `shared/features/feed/viewmodel/FeedViewModel.kt` | Removed `feedContext: FeedContext` constructor param; removed `initialTournamentFeedData()`, `stableTournamentOrderKey()`; removed tournament guards in `initializeFeed()`, `loadMoreFeed()`, `onCurrentPageChange()`; removed `checkAndShowTournamentIntroSheet()`, `dismissTournamentIntroSheet()`; removed `showTournamentIntroSheet`/`tournamentIntroCheckedThisSession` from `FeedState`; removed `TOURNAMENT_INTRO_PAGE` constant |
+| `shared/features/feed/di/FeedModule.kt` | Removed `GetTournamentFeedUseCase` registration; `viewModel` block passes `FeedContext` parameter (retained for future extensibility) |
+| `shared/features/feed/domain/IFeedRepository.kt` | Removed `getTournamentFeeds()` |
+| `shared/features/feed/data/IFeedDataSource.kt` | Removed `getTournamentFeeds()` |
+| `shared/features/feed/data/FeedRepository.kt` | Removed `getTournamentFeeds()` implementation |
+| `shared/features/feed/data/FeedRemoteDataSource.kt` | Removed `getTournamentFeeds()` implementation and `TOURNAMENT_FEED_PATH`/`TOURNAMENT_FEED_VIDEOS_PATH` constants |
+| `shared/core/AppConfigurations.kt` | Removed `TOURNAMENT_FEED_BASE_URL` |
+| `shared/libs/preferences/PrefKeys.kt` | Removed `TOURNAMENT_INTRO_SHOWN`, `TOURNAMENT_LEADERBOARD_SUBSCRIPTION_NUDGE_LAST_SHOWN_DATE` |
+
+### 10. Game Remnants Removed from Feed
+
+Removed leftover game-specific state and UI that remained in the feed module after the game feature was deleted:
+
+| File | Change |
+|------|--------|
+| `shared/features/feed/viewmodel/FeedViewModel.kt` | Removed `OnboardingStep.INTRO_GAME/INTRO_RANK/INTRO_GAME_END`; simplified `dismissOnboardingStep()` and `trackOnboardingShown()`; removed `showHotOrNotOnboarding` from `FeedState`; removed `OverlayType` enum entirely; removed `init` call to `setHonExperimentStatus()` |
+| `shared/features/feed/ui/FeedActionsRight.kt` | Removed `OverlayType.GAME_TOGGLE` guard; profile/follow UI now always rendered (was always-true default) |
+| `shared/features/feed/ui/FeedScreen.kt` | Removed `OnboardingStep.INTRO_RANK` from onboarding condition |
+| `shared/features/feed/analytics/FeedTelemetry.kt` | Removed `INTRO_GAME/INTRO_RANK/INTRO_GAME_END` from `onboardingStepShown()` mapping; set `isGameEnabled = false` in all video tracking events; removed `setHonExperimentStatus()` wrapper |
+| `shared/libs/analytics/events/YralEvents.kt` | Removed `INTRO_GAME/INTRO_RANK/INTRO_GAME_END` from `AnalyticsOnboardingStep` |
+| `shared/libs/analytics/AnalyticsManager.kt` | Removed `setHonExperimentStatus()` method |
+| `shared/libs/analytics/User.kt` | Removed `isHonExperiment` user property |
+| `shared/features/root/viewmodels/RootViewModel.kt` | Removed `isHonExperiment = null` from `User` construction |
+
 ---
 
 ## Scale of Change

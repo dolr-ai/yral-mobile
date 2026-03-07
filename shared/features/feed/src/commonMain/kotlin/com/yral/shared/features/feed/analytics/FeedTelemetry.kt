@@ -92,7 +92,7 @@ class FeedTelemetry(
                     viewCount = feedDetails.viewCount.toLong(),
                     isNsfw = feedDetails.isNSFW(),
                     shareCount = 0,
-                    isGameEnabled = true,
+                    isGameEnabled = false,
                     gameType = GameType.SMILEY,
                 ),
         )
@@ -110,7 +110,7 @@ class FeedTelemetry(
                     viewCount = feedDetails.viewCount.toLong(),
                     isNsfw = feedDetails.isNSFW(),
                     shareCount = 0,
-                    isGameEnabled = true,
+                    isGameEnabled = false,
                     gameType = GameType.SMILEY,
                 ),
         )
@@ -130,7 +130,7 @@ class FeedTelemetry(
                     viewCount = feedDetails.viewCount.toLong(),
                     isNsfw = feedDetails.isNSFW(),
                     shareCount = 0,
-                    isGameEnabled = true,
+                    isGameEnabled = false,
                     gameType = GameType.SMILEY,
                 ),
         )
@@ -150,7 +150,7 @@ class FeedTelemetry(
                     isNsfw = feedDetails.isNSFW(),
                     ctaType = ctaType,
                     shareCount = 0,
-                    isGameEnabled = true,
+                    isGameEnabled = false,
                     gameType = GameType.SMILEY,
                     pageName = CategoryName.HOME,
                 ),
@@ -167,7 +167,7 @@ class FeedTelemetry(
                     videoId = feedDetails.videoID,
                     publisherUserId = feedDetails.principalID,
                     isNsfw = feedDetails.isNSFW(),
-                    isGameEnabled = true,
+                    isGameEnabled = false,
                     gameType = GameType.SMILEY,
                     reason = reason.reason,
                 ),
@@ -213,10 +213,7 @@ class FeedTelemetry(
             AppOnboardingShownEventData(
                 step =
                     when (step) {
-                        OnboardingStep.INTRO_GAME -> AnalyticsOnboardingStep.INTRO_GAME
                         OnboardingStep.INTRO_BALANCE -> AnalyticsOnboardingStep.INTRO_BALANCE
-                        OnboardingStep.INTRO_RANK -> AnalyticsOnboardingStep.INTRO_RANK
-                        OnboardingStep.INTRO_GAME_END -> AnalyticsOnboardingStep.INTRO_GAME_END
                     },
             ),
         )
@@ -224,9 +221,5 @@ class FeedTelemetry(
 
     fun onFeedLoaderShown(durationMs: Long) {
         analyticsManager.trackEvent(FeedLoaderShownEventData(durationMs))
-    }
-
-    fun setHonExperimentStatus(isEnabled: Boolean) {
-        analyticsManager.setHonExperimentStatus(isEnabled)
     }
 }

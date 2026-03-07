@@ -20,7 +20,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
-import com.yral.shared.features.feed.viewmodel.OverlayType
 import com.yral.shared.libs.designsystem.component.YralLoadingDots
 import com.yral.shared.libs.designsystem.component.features.ProfileImageView
 import com.yral.shared.libs.designsystem.component.formatAbbreviation
@@ -52,63 +51,61 @@ fun ColumnScope.FeedActionsRight(
         verticalArrangement = Arrangement.Top,
     ) { }
     val feedDetails = state.feedDetails[pageNo]
-    if (state.overlayType in listOf(OverlayType.GAME_TOGGLE, OverlayType.DAILY_RANK)) {
-        feedDetails.profileImageURL?.let { profileImage ->
-            Column(modifier = Modifier.offset(y = 16.dp)) {
-                Box(
-                    modifier =
-                        Modifier
-                            .clickable { openProfile(feedDetails.toCanisterData()) },
-                ) {
-                    if (feedDetails.isProUser) {
-                        ProfileImageView(
-                            imageUrl = profileImage,
-                            applyFrame = true,
-                            size = 36.dp,
-                            frameBorderWidth = 2.dp,
-                            frameBadgeSizeFraction = 0.5f,
-                        )
-                    } else {
-                        ProfileImageView(
-                            imageUrl = profileImage,
-                            applyFrame = true,
-                            size = 36.dp,
-                            frameBrush = linearGradient(colors = listOf(Color.White, Color.White)),
-                            frameBadgeSizeFraction = 0f,
-                            frameBorderWidth = 2.dp,
-                        )
-                    }
+    feedDetails.profileImageURL?.let { profileImage ->
+        Column(modifier = Modifier.offset(y = 16.dp)) {
+            Box(
+                modifier =
+                    Modifier
+                        .clickable { openProfile(feedDetails.toCanisterData()) },
+            ) {
+                if (feedDetails.isProUser) {
+                    ProfileImageView(
+                        imageUrl = profileImage,
+                        applyFrame = true,
+                        size = 36.dp,
+                        frameBorderWidth = 2.dp,
+                        frameBadgeSizeFraction = 0.5f,
+                    )
+                } else {
+                    ProfileImageView(
+                        imageUrl = profileImage,
+                        applyFrame = true,
+                        size = 36.dp,
+                        frameBrush = linearGradient(colors = listOf(Color.White, Color.White)),
+                        frameBadgeSizeFraction = 0f,
+                        frameBorderWidth = 2.dp,
+                    )
                 }
-                Image(
-                    painter =
-                        painterResource(
-                            resource =
-                                if (feedDetails.isFollowing) {
-                                    DesignRes.drawable.ic_following
-                                } else {
-                                    DesignRes.drawable.ic_follow
-                                },
-                        ),
-                    contentDescription = "follow",
-                    contentScale = ContentScale.None,
-                    modifier =
-                        Modifier
-                            .size(36.dp)
-                            .offset(y = (-10).dp)
-                            .clickable {
-                                if (feedDetails.isFollowing) {
-                                    openProfile(feedDetails.toCanisterData())
-                                } else {
-                                    if (state.isLoggedIn) {
-                                        feedViewModel.follow(feedDetails.toCanisterData())
-                                    } else {
-                                        feedViewModel.pushFollowClicked(feedDetails.principalID)
-                                        openProfile(feedDetails.toCanisterData())
-                                    }
-                                }
-                            },
-                )
             }
+            Image(
+                painter =
+                    painterResource(
+                        resource =
+                            if (feedDetails.isFollowing) {
+                                DesignRes.drawable.ic_following
+                            } else {
+                                DesignRes.drawable.ic_follow
+                            },
+                    ),
+                contentDescription = "follow",
+                contentScale = ContentScale.None,
+                modifier =
+                    Modifier
+                        .size(36.dp)
+                        .offset(y = (-10).dp)
+                        .clickable {
+                            if (feedDetails.isFollowing) {
+                                openProfile(feedDetails.toCanisterData())
+                            } else {
+                                if (state.isLoggedIn) {
+                                    feedViewModel.follow(feedDetails.toCanisterData())
+                                } else {
+                                    feedViewModel.pushFollowClicked(feedDetails.principalID)
+                                    openProfile(feedDetails.toCanisterData())
+                                }
+                            }
+                        },
+            )
         }
     }
     val msgFeedVideoShare = stringResource(DesignRes.string.msg_feed_video_share)

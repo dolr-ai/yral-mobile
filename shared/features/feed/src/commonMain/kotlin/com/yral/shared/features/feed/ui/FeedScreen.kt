@@ -334,9 +334,7 @@ private fun FeedOverlay(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.TopStart,
     ) {
-        if (currentOnboardingStep == OnboardingStep.INTRO_RANK ||
-            currentOnboardingStep == OnboardingStep.INTRO_BALANCE
-        ) {
+        if (currentOnboardingStep == OnboardingStep.INTRO_BALANCE) {
             BottomView(
                 bottomOverlay = bottomOverlay,
                 actionsRight = actionsRight,

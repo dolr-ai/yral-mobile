@@ -2562,18 +2562,6 @@ enum class AnalyticsAlertsRequestType {
 
 @Serializable
 enum class AnalyticsOnboardingStep {
-    @SerialName("game_intro_start")
-    INTRO_GAME,
-
-    // Step 1
     @SerialName("balance_intro")
     INTRO_BALANCE,
-
-    // Step 2
-    @SerialName("rank_intro")
-    INTRO_RANK,
-
-    // Step 3
-    @SerialName("game_intro_end")
-    INTRO_GAME_END, // Step 4
 }

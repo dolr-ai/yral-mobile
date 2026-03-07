@@ -84,7 +84,6 @@ final class SessionManager: ObservableObject {
           isMandatoryLogin: isMandatoryLogin,
           phoneNumber: nil,
           proStatus: nil,
-          isHonExperiment: KotlinBoolean(bool: true),
           isBotAccount: nil,
           parentAccount: nil
         )
@@ -111,7 +110,6 @@ final class SessionManager: ObservableObject {
           isMandatoryLogin: isMandatoryLogin,
           phoneNumber: nil,
           proStatus: nil,
-          isHonExperiment: KotlinBoolean(bool: true),
           isBotAccount: nil,
           parentAccount: nil
         )
