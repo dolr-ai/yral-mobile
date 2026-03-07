@@ -29,6 +29,16 @@ internal data class PostDetailsDto(
     val videoUid: String,
     @SerialName("creator_consent_for_inclusion_in_hot_or_not")
     val creatorConsentForInclusionInHotOrNot: Boolean,
+    @SerialName("status")
+    val status: String = "draft",
+)
+
+@Serializable
+internal data class MarkPostAsPublishedRequestDto(
+    @SerialName("post_id")
+    val postId: String,
+    @SerialName("delegated_identity_wire")
+    val delegatedIdentityWire: KotlinDelegatedIdentityWire,
 )
 
 internal fun UploadFileRequest.toUpdateMetaDataRequestDto(delegatedIdentityWire: KotlinDelegatedIdentityWire) =
@@ -43,5 +53,6 @@ internal fun UploadFileRequest.toUpdateMetaDataRequestDto(delegatedIdentityWire:
                 description = caption,
                 videoUid = videoUid,
                 creatorConsentForInclusionInHotOrNot = true,
+                status = status,
             ),
     )

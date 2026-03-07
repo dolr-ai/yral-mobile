@@ -27,4 +27,9 @@
     <string name="storage_permission_required">Storage permission is required to download videos. Please grant permission in Settings.</string>
     <string name="msg_principal_id_copied">Your Principal ID has been copied successfully!</string>
     <string name="become_pro">Become Pro</string>
+    <string name="video_generating">Video generating…</string>
+    <string name="draft_label">Draft</string>
+    <string name="publish_success">Your video has been Published successfully!</string>
+    <string name="publish_button">Publish</string>
+    <string name="publishing_video">Your video is publishing and will appear in your profile section.</string>
 </resources>

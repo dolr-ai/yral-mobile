@@ -345,6 +345,7 @@ internal class DefaultHomeComponent(
             promptLogin = { homeViewModel.showSignupPrompt(true, it) },
             subscriptionCoordinator = subscriptionCoordinator,
             snapshot = childSnapshots[Config.UploadVideo] as? UploadVideoRootComponent.Snapshot,
+            goToProfile = { onProfileTabClick() },
         )
 
     private fun profileComponent(componentContext: ComponentContext): ProfileComponent =

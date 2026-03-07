@@ -44,6 +44,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,8 +55,10 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
@@ -72,6 +75,7 @@ import com.yral.shared.analytics.events.EditProfileSource
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.core.videostate.VideoGenerationTracker
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.domain.models.ConversationInfluencerSource
 import com.yral.shared.data.domain.models.FeedDetails
@@ -114,6 +118,7 @@ import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.appTypoGraphy
+import com.yral.shared.libs.videoPlayer.YralVideoPlayer
 import com.yral.shared.rust.service.domain.models.FollowerItem
 import com.yral.shared.rust.service.domain.models.PagedFollowerItem
 import com.yral.shared.rust.service.utils.CanisterData
@@ -135,6 +140,7 @@ import yral_mobile.shared.features.profile.generated.resources.deleting
 import yral_mobile.shared.features.profile.generated.resources.download
 import yral_mobile.shared.features.profile.generated.resources.downloading_video
 import yral_mobile.shared.features.profile.generated.resources.downloading_video_desc
+import yral_mobile.shared.features.profile.generated.resources.draft_label
 import yral_mobile.shared.features.profile.generated.resources.error_loading_more_videos
 import yral_mobile.shared.features.profile.generated.resources.error_loading_videos
 import yral_mobile.shared.features.profile.generated.resources.failed_to_delete_video
@@ -148,7 +154,9 @@ import yral_mobile.shared.features.profile.generated.resources.profile_locked_su
 import yral_mobile.shared.features.profile.generated.resources.profile_locked_title
 import yral_mobile.shared.features.profile.generated.resources.profile_view_locked_subtitle
 import yral_mobile.shared.features.profile.generated.resources.profile_view_locked_title
+import yral_mobile.shared.features.profile.generated.resources.publish_button
 import yral_mobile.shared.features.profile.generated.resources.storage_permission_required
+import yral_mobile.shared.features.profile.generated.resources.video_generating
 import yral_mobile.shared.features.profile.generated.resources.video_will_be_deleted_permanently
 import yral_mobile.shared.features.profile.generated.resources.white_heart
 import yral_mobile.shared.libs.designsystem.generated.resources.account_nav
@@ -295,7 +303,7 @@ fun ProfileMainScreen(
     }
 
     val backHandlerEnabled by remember(state.videoView) {
-        mutableStateOf(state.videoView is VideoViewState.ViewingReels)
+        mutableStateOf(state.videoView is VideoViewState.ViewingReels || state.videoView is VideoViewState.ViewingDraft)
     }
 
     LaunchedEffect(Unit) { viewModel.pushScreenView(profileVideos.itemCount) }
@@ -329,7 +337,12 @@ fun ProfileMainScreen(
 
     BackHandler(
         enabled = backHandlerEnabled,
-        onBack = { viewModel.closeVideoReel() },
+        onBack = {
+            when (state.videoView) {
+                is VideoViewState.ViewingDraft -> viewModel.closeDraftVideo()
+                else -> viewModel.closeVideoReel()
+            }
+        },
     )
 
     val deletingVideoId =
@@ -418,6 +431,15 @@ fun ProfileMainScreen(
                 } else {
                     viewModel.closeVideoReel()
                 }
+            }
+
+            is VideoViewState.ViewingDraft -> {
+                DraftVideoDetailScreen(
+                    feedDetails = videoViewState.feedDetails,
+                    isPublishing = state.publishDraftUiState is UiState.InProgress,
+                    onBack = { viewModel.closeDraftVideo() },
+                    onPublish = { viewModel.publishDraft(videoViewState.feedDetails) },
+                )
             }
 
             VideoViewState.None -> {
@@ -745,6 +767,7 @@ private fun MainContent(
                         deletingVideoId = deletingVideoId,
                         uploadVideo = uploadVideo,
                         openVideoReel = { viewModel.openVideoReel(it) },
+                        openDraftVideo = { viewModel.openDraftVideo(it) },
                         onDeleteVideo = {
                             viewModel.confirmDelete(
                                 feedDetails = it,
@@ -927,6 +950,7 @@ private fun SuccessContent(
     deletingVideoId: String,
     uploadVideo: () -> Unit,
     openVideoReel: (Int) -> Unit,
+    openDraftVideo: (FeedDetails) -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
     onDownloadVideo: (FeedDetails) -> Unit,
     onViewsClick: (FeedDetails) -> Unit,
@@ -985,6 +1009,7 @@ private fun SuccessContent(
                     isOwnProfile = isOwnProfile,
                     deletingVideoId = deletingVideoId,
                     openVideoReel = openVideoReel,
+                    openDraftVideo = openDraftVideo,
                     onDeleteVideo = onDeleteVideo,
                     onDownloadVideo = onDownloadVideo,
                     onViewsClick = onViewsClick,
@@ -1106,10 +1131,14 @@ private fun VideoGridContent(
     isOwnProfile: Boolean,
     deletingVideoId: String,
     openVideoReel: (Int) -> Unit,
+    openDraftVideo: (FeedDetails) -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
     onDownloadVideo: (FeedDetails) -> Unit,
     onViewsClick: (FeedDetails) -> Unit,
 ) {
+    val generatingState by VideoGenerationTracker.state.collectAsState()
+    val showGeneratingCard = generatingState.isGenerating && isOwnProfile
+
     LazyVerticalGrid(
         state = gridState,
         columns = GridCells.Fixed(2),
@@ -1121,6 +1150,15 @@ private fun VideoGridContent(
                 .fillMaxSize()
                 .offset(y = offset.dp),
     ) {
+        if (showGeneratingCard) {
+            item(
+                key = "video_generating_card",
+                contentType = "VideoGeneratingCard",
+            ) {
+                VideoGeneratingCard(progress = generatingState.progress)
+            }
+        }
+
         items(
             count = profileVideos.itemCount,
             key = profileVideos.itemKey { "${it.canisterID}_${it.postID}" },
@@ -1128,11 +1166,19 @@ private fun VideoGridContent(
         ) { index ->
             val video = profileVideos[index]
             if (video != null) {
+                val isDraft = video.videoID in generatingState.draftVideoIds
                 VideoGridItem(
                     video = video,
                     isOwnProfile = isOwnProfile,
                     isDeleting = deletingVideoId == video.videoID,
-                    openVideoReel = { openVideoReel(index) },
+                    isDraft = isDraft,
+                    openVideoReel = {
+                        if (isDraft) {
+                            openDraftVideo(video)
+                        } else {
+                            openVideoReel(index)
+                        }
+                    },
                     onDeleteClick = { onDeleteVideo(video) },
                     onDownloadClick = { onDownloadVideo(video) },
                     onViewsClick = { onViewsClick(video) },
@@ -1234,6 +1280,7 @@ private fun VideoGridItem(
     video: FeedDetails,
     isOwnProfile: Boolean,
     isDeleting: Boolean,
+    isDraft: Boolean = false,
     openVideoReel: () -> Unit,
     onDeleteClick: () -> Unit,
     onDownloadClick: () -> Unit,
@@ -1276,6 +1323,9 @@ private fun VideoGridItem(
         DeletingOverLay(
             isDeleting = isDeleting,
         )
+        DraftOverlay(
+            isDraft = isDraft,
+        )
     }
 }
 
@@ -1309,6 +1359,92 @@ private fun DeletingOverLay(
                     color = YralColors.NeutralTextPrimary,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DraftOverlay(isDraft: Boolean) {
+    AnimatedVisibility(
+        visible = isDraft,
+        enter = fadeIn(),
+        exit = fadeOut(),
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(YralColors.ScrimColor),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = stringResource(Res.string.draft_label),
+                style = LocalAppTopography.current.lgBold,
+                color = YralColors.NeutralTextPrimary,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
+
+@Suppress("MagicNumber")
+@Composable
+private fun VideoGeneratingCard(progress: Float) {
+    val percentText = "${(progress * 100).toInt()}%"
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .aspectRatio(GRID_ITEM_ASPECT_RATIO)
+                .clip(shape = RoundedCornerShape(8.dp))
+                .background(
+                    color = YralColors.Neutral900,
+                    shape = RoundedCornerShape(8.dp),
+                ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(horizontal = 12.dp),
+        ) {
+            Text(
+                text = percentText,
+                style = LocalAppTopography.current.xlBold,
+                color = YralColors.NeutralTextPrimary,
+            )
+            Text(
+                text = stringResource(Res.string.video_generating),
+                style = LocalAppTopography.current.regRegular,
+                color = YralColors.Neutral300,
+            )
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(100.dp))
+                        .background(YralColors.Neutral800),
+            ) {
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth(progress.coerceIn(0f, 1f))
+                            .height(6.dp)
+                            .clipToBounds()
+                            .clip(RoundedCornerShape(100.dp))
+                            .background(
+                                brush =
+                                    Brush.horizontalGradient(
+                                        colors =
+                                            listOf(
+                                                YralColors.Pink200,
+                                                YralColors.Pink300,
+                                            ),
+                                    ),
+                            ),
                 )
             }
         }
@@ -1441,6 +1577,49 @@ private fun DownloadTriggeredSheet(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun DraftVideoDetailScreen(
+    feedDetails: FeedDetails,
+    isPublishing: Boolean,
+    onBack: () -> Unit,
+    onPublish: () -> Unit,
+) {
+    Box(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(Color.Black),
+    ) {
+        YralVideoPlayer(
+            url = feedDetails.url,
+            autoPlay = true,
+            loop = true,
+            modifier = Modifier.fillMaxSize(),
+        )
+        Icon(
+            painter = painterResource(DesignRes.drawable.arrow_left),
+            contentDescription = "back",
+            tint = Color.White,
+            modifier =
+                Modifier
+                    .padding(16.dp)
+                    .size(24.dp)
+                    .align(Alignment.TopStart)
+                    .clickable { onBack() },
+        )
+        YralGradientButton(
+            text = stringResource(Res.string.publish_button),
+            onClick = onPublish,
+            buttonState = if (isPublishing) YralButtonState.Loading else YralButtonState.Enabled,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 24.dp)
+                    .align(Alignment.BottomCenter),
+        )
     }
 }
 

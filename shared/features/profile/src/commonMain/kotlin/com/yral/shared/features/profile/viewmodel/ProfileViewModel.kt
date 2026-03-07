@@ -28,6 +28,7 @@ import com.yral.shared.core.session.ProDetails
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.utils.getAccountInfo
+import com.yral.shared.core.videostate.VideoGenerationTracker
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.data.domain.CommonApis
@@ -44,10 +45,12 @@ import com.yral.shared.features.profile.domain.FollowNotificationUseCase
 import com.yral.shared.features.profile.domain.ProfileVideosPagingSource
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
 import com.yral.shared.features.profile.domain.repository.ProfileRepository
+import com.yral.shared.features.uploadvideo.domain.PublishDraftVideoUseCase
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastStatus
 import com.yral.shared.libs.designsystem.component.toast.ToastType
+import com.yral.shared.libs.designsystem.component.toast.showInfo
 import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.filedownloader.FileDownloader
 import com.yral.shared.libs.routing.deeplink.engine.UrlBuilder
@@ -89,6 +92,8 @@ import org.jetbrains.compose.resources.getString
 import yral_mobile.shared.features.profile.generated.resources.Res
 import yral_mobile.shared.features.profile.generated.resources.download_failed
 import yral_mobile.shared.features.profile.generated.resources.download_successful
+import yral_mobile.shared.features.profile.generated.resources.publish_success
+import yral_mobile.shared.features.profile.generated.resources.publishing_video
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.profile_share_default_name
@@ -122,6 +127,7 @@ class ProfileViewModel(
     private val getInfluencerUseCase: GetInfluencerUseCase,
     private val fileDownloader: FileDownloader,
     private val followersMetadataDataSource: FollowersMetadataDataSource,
+    private val publishDraftVideoUseCase: PublishDraftVideoUseCase,
 ) : ViewModel() {
     companion object {
         private const val POSTS_PER_PAGE = 20
@@ -1103,6 +1109,35 @@ class ProfileViewModel(
         )
     }
 
+    fun openDraftVideo(feedDetails: FeedDetails) {
+        updateVideoViewIfDifferent(VideoViewState.ViewingDraft(feedDetails))
+    }
+
+    fun closeDraftVideo() {
+        updateVideoViewIfDifferent(VideoViewState.None)
+    }
+
+    fun publishDraft(feedDetails: FeedDetails) {
+        viewModelScope.launch {
+            _state.update { it.copy(publishDraftUiState = UiState.InProgress()) }
+            ToastManager.showInfo(
+                type = ToastType.Small(getString(Res.string.publishing_video)),
+            )
+            publishDraftVideoUseCase(
+                PublishDraftVideoUseCase.Param(postId = feedDetails.videoID),
+            ).onSuccess {
+                VideoGenerationTracker.clearDraft(feedDetails.videoID)
+                ToastManager.showSuccess(
+                    type = ToastType.Small(getString(Res.string.publish_success)),
+                )
+                closeDraftVideo()
+                _state.update { it.copy(publishDraftUiState = UiState.Initial) }
+            }.onFailure { error ->
+                _state.update { it.copy(publishDraftUiState = UiState.Failure(error)) }
+            }
+        }
+    }
+
     fun trackCreateInfluencerClicked() {
         chatTelemetry.createBotCtaClicked(BotCreationSource.PROFILE_PAGE)
     }
@@ -1139,6 +1174,7 @@ data class ViewState(
     val createdByPrincipal: String? = null,
     val botUsernames: List<String> = emptyList(),
     val botUsernameToCanisterData: Map<String, String> = emptyMap(),
+    val publishDraftUiState: UiState<Unit> = UiState.Initial,
 )
 
 sealed interface ProfileBottomSheet {
@@ -1172,6 +1208,9 @@ sealed class VideoViewState {
     data object None : VideoViewState()
     data class ViewingReels(
         val initialPage: Int = 0,
+    ) : VideoViewState()
+    data class ViewingDraft(
+        val feedDetails: FeedDetails,
     ) : VideoViewState()
 }
 

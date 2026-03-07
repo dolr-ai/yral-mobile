@@ -52,6 +52,7 @@ val profileModule =
                 getInfluencerUseCase = get(),
                 fileDownloader = get(),
                 followersMetadataDataSource = get(),
+                publishDraftVideoUseCase = get(),
             )
         }
         viewModelOf(::EditProfileViewModel)

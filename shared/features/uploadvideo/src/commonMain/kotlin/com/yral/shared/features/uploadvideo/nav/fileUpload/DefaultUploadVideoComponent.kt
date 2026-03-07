@@ -9,12 +9,14 @@ internal class DefaultUploadVideoComponent(
     private val goToHome: () -> Unit,
     private val onBack: () -> Unit,
     override val promptLogin: () -> Unit,
+    private val goToProfile: () -> Unit,
 ) : UploadVideoComponent(),
     ComponentContext by componentContext,
     KoinComponent {
     override fun processEvent(value: UploadVideoViewModel.Event) {
         when (value) {
             UploadVideoViewModel.Event.GoToHome -> goToHome()
+            UploadVideoViewModel.Event.GoToProfile -> goToProfile()
             else -> {}
         }
     }
