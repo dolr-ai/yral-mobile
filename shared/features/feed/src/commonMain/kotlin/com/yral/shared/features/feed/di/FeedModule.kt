@@ -12,7 +12,6 @@ import com.yral.shared.features.feed.domain.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetAIFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetGlobalCacheFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
-import com.yral.shared.features.feed.domain.useCases.GetTournamentFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.LoadCachedFeedDetailsUseCase
 import com.yral.shared.features.feed.domain.useCases.SaveFeedDetailsCacheUseCase
 import com.yral.shared.features.feed.viewmodel.FeedContext
@@ -32,7 +31,6 @@ val feedModule =
         factoryOf(::FetchFeedDetailsUseCase)
         factoryOf(::FetchFeedDetailsWithCreatorInfoUseCase)
         factoryOf(::GetAIFeedUseCase)
-        factoryOf(::GetTournamentFeedUseCase)
         factoryOf(::CheckVideoVoteUseCase)
         factory {
             LoadCachedFeedDetailsUseCase(

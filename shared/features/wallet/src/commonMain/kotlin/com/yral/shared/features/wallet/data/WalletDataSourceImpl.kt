@@ -1,9 +1,11 @@
 package com.yral.shared.features.wallet.data
 
 import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
+import com.yral.shared.core.AppConfigurations.PUMP_DUMP_BASE_URL
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.features.wallet.data.models.BtcPriceResponseDto
 import com.yral.shared.features.wallet.data.models.BtcRewardConfigResponseDto
+import com.yral.shared.features.wallet.data.models.CoinBalanceDto
 import com.yral.shared.features.wallet.data.models.DolrPriceResponseDto
 import com.yral.shared.firebaseStore.cloudFunctionUrl
 import com.yral.shared.firebaseStore.firebaseAppCheckToken
@@ -94,6 +96,14 @@ class WalletDataSourceImpl(
             },
         )
 
+    override suspend fun getCoinBalance(userPrincipal: String): CoinBalanceDto =
+        httpGet(httpClient, json) {
+            url {
+                host = PUMP_DUMP_BASE_URL
+                path(GET_BALANCE_PATH, userPrincipal)
+            }
+        }
+
     companion object {
         private const val BTC_VALUE_BY_COUNTRY_PATH = "btc_value_by_country"
         private const val HEADER_X_FIREBASE_APPCHECK = "X-Firebase-AppCheck"
@@ -101,5 +111,6 @@ class WalletDataSourceImpl(
         private const val COINGECKO_API_HOST = "api.coingecko.com"
         private const val COINGECKO_PRICE_PATH = "api/v3/simple/price"
         private const val DOLR_COIN_ID = "dolr-ai"
+        private const val GET_BALANCE_PATH = "v2/balance"
     }
 }

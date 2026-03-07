@@ -60,10 +60,6 @@ class DefaultAuthClientFactory(
                                 throw throwable
                             }
 
-                            is YralFBAuthException -> {
-                                // No op, firebase login and reporting handled in root
-                            }
-
                             is YralAuthException -> {
                                 onAuthError(throwable)
                             }

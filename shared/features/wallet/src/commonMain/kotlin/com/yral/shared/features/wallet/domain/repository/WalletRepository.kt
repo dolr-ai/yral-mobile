@@ -19,4 +19,5 @@ interface WalletRepository {
     ): String
     suspend fun getBtcRewardConfig(): BtcRewardConfig?
     suspend fun getDolrPrice(): DolrPrice
+    suspend fun getCoinBalance(userPrincipal: String): Long
 }

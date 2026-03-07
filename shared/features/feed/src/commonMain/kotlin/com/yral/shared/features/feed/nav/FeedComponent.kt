@@ -13,7 +13,6 @@ interface FeedComponent {
     val showAlertsOnDialog: (type: AlertsRequestType) -> Unit
     val openPostDetails: Flow<PostDetailsRoute?>
     val promptLogin: (pendingRoute: AppRoute) -> Unit
-    val openLeaderboard: () -> Unit
     val openWallet: () -> Unit
     fun openPostDetails(postDetailsRoute: PostDetailsRoute)
     fun openProfile(userCanisterData: CanisterData)
@@ -25,7 +24,6 @@ interface FeedComponent {
             openProfile: (userCanisterData: CanisterData) -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
             promptLogin: (pendingRoute: AppRoute) -> Unit,
-            openLeaderboard: () -> Unit,
             openWallet: () -> Unit,
         ): FeedComponent =
             DefaultFeedComponent(
@@ -34,7 +32,6 @@ interface FeedComponent {
                 showAlertsOnDialog,
                 openProfile,
                 promptLogin,
-                openLeaderboard,
                 openWallet,
             )
     }

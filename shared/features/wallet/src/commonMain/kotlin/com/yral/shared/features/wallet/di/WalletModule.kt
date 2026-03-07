@@ -5,6 +5,7 @@ import com.yral.shared.features.wallet.data.WalletDataSource
 import com.yral.shared.features.wallet.data.WalletDataSourceImpl
 import com.yral.shared.features.wallet.data.WalletRepositoryImpl
 import com.yral.shared.features.wallet.domain.GetBtcConversionUseCase
+import com.yral.shared.features.wallet.domain.GetCoinBalanceUseCase
 import com.yral.shared.features.wallet.domain.GetDolrUsdPriceUseCase
 import com.yral.shared.features.wallet.domain.GetRewardConfigUseCase
 import com.yral.shared.features.wallet.domain.GetUserBtcBalanceUseCase
@@ -22,6 +23,7 @@ val walletModule =
         factoryOf(::WalletRepositoryImpl).bind<WalletRepository>()
         factoryOf(::WalletTelemetry)
         factoryOf(::GetBtcConversionUseCase)
+        factoryOf(::GetCoinBalanceUseCase)
         factoryOf(::GetUserBtcBalanceUseCase)
         factoryOf(::GetUserDolrBalanceUseCase)
         factoryOf(::GetRewardConfigUseCase)

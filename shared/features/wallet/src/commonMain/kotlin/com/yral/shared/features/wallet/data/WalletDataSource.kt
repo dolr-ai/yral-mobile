@@ -2,6 +2,7 @@ package com.yral.shared.features.wallet.data
 
 import com.yral.shared.features.wallet.data.models.BtcPriceResponseDto
 import com.yral.shared.features.wallet.data.models.BtcRewardConfigResponseDto
+import com.yral.shared.features.wallet.data.models.CoinBalanceDto
 import com.yral.shared.features.wallet.data.models.DolrPriceResponseDto
 
 interface WalletDataSource {
@@ -19,4 +20,5 @@ interface WalletDataSource {
     ): String
     suspend fun getBtcRewardConfig(): BtcRewardConfigResponseDto
     suspend fun getDolrUsdPrice(): DolrPriceResponseDto
+    suspend fun getCoinBalance(userPrincipal: String): CoinBalanceDto
 }

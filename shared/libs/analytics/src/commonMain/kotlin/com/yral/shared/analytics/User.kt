@@ -14,7 +14,6 @@ data class User(
     val isMandatoryLogin: Boolean?,
     val phoneNumber: String?,
     val proStatus: Boolean?,
-    val isHonExperiment: Boolean?,
     val isBotAccount: Boolean?,
     val parentAccount: String?,
 ) {
@@ -33,7 +32,6 @@ data class User(
         isMandatoryLogin = null,
         phoneNumber = null,
         proStatus = null,
-        isHonExperiment = null,
         isBotAccount = null,
         parentAccount = null,
     )

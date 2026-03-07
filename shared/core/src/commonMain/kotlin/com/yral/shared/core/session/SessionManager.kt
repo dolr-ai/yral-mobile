@@ -79,9 +79,7 @@ class SessionManager {
     fun updateState(state: SessionState) {
         mutableState.update { state }
         mutableProperties.update {
-            // Preserve pending tournament registration across session changes
             SessionProperties(
-                pendingTournamentRegistrationId = it.pendingTournamentRegistrationId,
                 botCount = it.botCount,
                 accountDirectory = it.accountDirectory,
                 isYralProAvailable = it.isYralProAvailable,
@@ -148,10 +146,6 @@ class SessionManager {
         }
     }
 
-    fun updateIsForcedGamePlayUser(isForcedGamePlayUser: Boolean) {
-        mutableProperties.update { it.copy(isForcedGamePlayUser = isForcedGamePlayUser) }
-    }
-
     fun updateIsAutoScrolledEnabled(isAutoScrollEnabled: Boolean) {
         mutableProperties.update { it.copy(isAutoScrollEnabled = isAutoScrollEnabled) }
     }
@@ -196,30 +190,6 @@ class SessionManager {
                 state
             }
         }
-    }
-
-    fun updateFirebaseLoginState(isLoggedIn: Boolean) {
-        mutableProperties.update { it.copy(isFirebaseLoggedIn = isLoggedIn) }
-    }
-
-    fun updateDailyRank(dailyRank: Long?) {
-        mutableProperties.update { it.copy(dailyRank = dailyRank) }
-    }
-
-    fun updateHonDailyRank(honDailyRank: Long?) {
-        mutableProperties.update { it.copy(honDailyRank = honDailyRank) }
-    }
-
-    fun setPendingTournamentRegistrationId(tournamentId: String?) {
-        mutableProperties.update { it.copy(pendingTournamentRegistrationId = tournamentId) }
-    }
-
-    fun consumePendingTournamentRegistrationId(): String? {
-        val pending = mutableProperties.value.pendingTournamentRegistrationId
-        if (pending != null) {
-            mutableProperties.update { it.copy(pendingTournamentRegistrationId = null) }
-        }
-        return pending
     }
 
     fun addPrincipalToFollow(principal: String) {
@@ -284,8 +254,6 @@ class SessionManager {
 
     fun isCoinBalanceLoaded(): Boolean = mutableProperties.value.coinBalance != null
 
-    fun isFirebaseLoggedIn(): Boolean = mutableProperties.value.isFirebaseLoggedIn
-
     fun shouldShowCreateBotCtaFlow(maxBotCountForCta: Int): Flow<Boolean> =
         combine(
             mutableState
@@ -306,8 +274,6 @@ class SessionManager {
                 botCount = null,
                 accountDirectory = null,
                 isSocialSignIn = false,
-                // Preserve pending tournament registration across session resets
-                pendingTournamentRegistrationId = it.pendingTournamentRegistrationId,
                 // Preserve device-level IAP availability across session resets
                 isYralProAvailable = it.isYralProAvailable,
             )
