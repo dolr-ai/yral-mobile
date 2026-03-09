@@ -16,12 +16,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -29,7 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -74,6 +74,7 @@ fun Game(
     onOnboardingNudgeComplete: () -> Unit = {},
 ) {
     val gameState by gameViewModel.state.collectAsStateWithLifecycle()
+    val gameIcons by gameViewModel.gameIcons.collectAsStateWithLifecycle()
     val effectiveNudgeType =
         when {
             onboardingNudgeType == NudgeType.ONBOARDING_OTHERS -> null
@@ -81,9 +82,9 @@ fun Game(
             else -> gameState.nudgeType
         }
     Logger.d("SmileyGame") { "Current nudge type $effectiveNudgeType" }
-    if (gameState.gameIcons.isNotEmpty()) {
+    if (gameIcons.isNotEmpty()) {
         SmileyGame(
-            gameIcons = gameState.gameIcons,
+            gameIcons = gameIcons,
             clickedIcon = gameState.gameResult[feedDetails.videoID]?.first,
             onIconClicked = { icon, isTutorialVote ->
                 gameViewModel.setClickedIcon(
@@ -331,21 +332,25 @@ private fun SmileyGameNudge(
             durationMillis = NUDGE_ANIMATION_DURATION.toInt(),
             easing = FastOutLinearInEasing,
         )
-    val offsetY by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 15f,
-        animationSpec = infiniteRepeatable(tweenSpec, RepeatMode.Reverse),
-    )
-    val alpha by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 0f,
-        animationSpec = infiniteRepeatable(tweenSpec, RepeatMode.Reverse),
-    )
+    // Keep as State<Float> — do NOT delegate with `by`.
+    // Values are read only in graphicsLayer (draw phase), avoiding per-frame recomposition.
+    val offsetYState =
+        infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 15f,
+            animationSpec = infiniteRepeatable(tweenSpec, RepeatMode.Reverse),
+        )
+    val alphaState =
+        infiniteTransition.animateFloat(
+            initialValue = 1f,
+            targetValue = 0f,
+            animationSpec = infiniteRepeatable(tweenSpec, RepeatMode.Reverse),
+        )
     animatingNudgeIconPosition?.let {
         SmileyGameNudgeContent(
             modifier = modifier,
-            alpha = alpha,
-            offsetY = offsetY,
+            alphaState = alphaState,
+            offsetYState = offsetYState,
             nudgeType = nudgeType,
         )
     }
@@ -355,10 +360,11 @@ private fun SmileyGameNudge(
 @Composable
 private fun SmileyGameNudgeContent(
     modifier: Modifier,
-    alpha: Float,
-    offsetY: Float,
+    alphaState: State<Float>,
+    offsetYState: State<Float>,
     nudgeType: NudgeType?,
 ) {
+    val density = LocalDensity.current
     Box(
         modifier =
             modifier
@@ -367,7 +373,6 @@ private fun SmileyGameNudgeContent(
                 .padding(horizontal = 16.dp),
         contentAlignment = Alignment.BottomCenter,
     ) {
-        val density = LocalDensity.current
         var textWidth by remember { mutableIntStateOf(0) }
         if (nudgeType != NudgeType.MANDATORY) {
             Image(
@@ -378,7 +383,7 @@ private fun SmileyGameNudgeContent(
                         .padding(bottom = 226.dp)
                         .width(with(density) { textWidth.toDp() + 16.dp })
                         .height(130.dp)
-                        .alpha(alpha),
+                        .graphicsLayer { alpha = alphaState.value },
                 contentScale = ContentScale.FillBounds,
             )
         }
@@ -387,7 +392,7 @@ private fun SmileyGameNudgeContent(
                 Modifier
                     .fillMaxWidth()
                     .padding(bottom = 100.dp, start = 36.dp, end = 36.dp)
-                    .offset(y = offsetY.dp),
+                    .graphicsLayer { translationY = with(density) { offsetYState.value.dp.toPx() } },
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {

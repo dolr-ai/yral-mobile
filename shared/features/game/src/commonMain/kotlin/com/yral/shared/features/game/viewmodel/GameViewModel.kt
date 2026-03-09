@@ -56,12 +56,14 @@ class GameViewModel(
     private val _state =
         MutableStateFlow(
             GameState(
-                gameIcons = emptyList(),
                 gameRules = emptyList(),
                 coinBalance = 0,
             ),
         )
     val state: StateFlow<GameState> = _state.asStateFlow()
+
+    private val _gameIcons = MutableStateFlow<List<GameIcon>>(emptyList())
+    val gameIcons: StateFlow<List<GameIcon>> = _gameIcons.asStateFlow()
 
     init {
         viewModelScope.launch { restoreDataFromPrefs() }
@@ -125,9 +127,9 @@ class GameViewModel(
         gameIconsUseCase
             .invoke(Unit)
             .onSuccess { config ->
+                _gameIcons.value = config.availableSmileys
                 _state.update { currentState ->
                     currentState.copy(
-                        gameIcons = config.availableSmileys,
                         lossPenalty = config.lossPenalty,
                     )
                 }
@@ -593,7 +595,6 @@ class GameViewModel(
 
 data class GameState(
     val lossPenalty: Int = Int.MAX_VALUE,
-    val gameIcons: List<GameIcon>,
     val gameResult: Map<String, Pair<GameIcon, VoteResult>> = emptyMap(),
     val hotOrNotResult: Map<String, HotOrNotVoteResult> = emptyMap(),
     val coinBalance: Long,

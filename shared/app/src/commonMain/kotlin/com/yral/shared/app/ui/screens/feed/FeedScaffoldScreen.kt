@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -34,7 +35,6 @@ import com.yral.shared.features.feed.ui.components.FeedOnboardingNudge
 import com.yral.shared.features.feed.ui.components.FeedTargetBounds
 import com.yral.shared.features.feed.ui.components.UserBrief
 import com.yral.shared.features.feed.ui.components.captureFeedOnboardingBounds
-import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.OnboardingStep
 import com.yral.shared.features.feed.viewmodel.OverlayType
@@ -49,7 +49,6 @@ import com.yral.shared.features.game.ui.HotOrNotResultOverlay
 import com.yral.shared.features.game.ui.HowToPlay
 import com.yral.shared.features.game.ui.RefreshBalanceAnimation
 import com.yral.shared.features.game.ui.toRefreshBalanceAnimationState
-import com.yral.shared.features.game.viewmodel.GameState
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.game.viewmodel.NudgeType
 import com.yral.shared.features.leaderboard.ui.DailyRanK
@@ -81,67 +80,67 @@ fun FeedScaffoldScreen(
     leaderBoardViewModel: LeaderBoardViewModel,
     onNavigateToTournaments: () -> Unit,
 ) {
+    // State collected here is ONLY used for sheets/effects — NOT passed into FeedScreen lambdas.
     val gameState by gameViewModel.state.collectAsStateWithLifecycle()
     val feedState by feedViewModel.state.collectAsStateWithLifecycle()
-    // Collect both ranks separately
-    val smileyDailyRank by if (feedState.overlayType == OverlayType.DAILY_RANK) {
-        leaderBoardViewModel.dailyRank.collectAsStateWithLifecycle(null)
-    } else {
-        remember { mutableStateOf(null) }
-    }
-    val honDailyRank by if (feedState.overlayType == OverlayType.DAILY_RANK) {
-        leaderBoardViewModel.honDailyRank.collectAsStateWithLifecycle(null)
-    } else {
-        remember { mutableStateOf(null) }
-    }
-    // In HON mode use HON rank (0 if null to show "--"), in Smiley mode use smiley rank
-    val dailyRank =
-        if (feedState.isCardLayoutEnabled) {
-            honDailyRank ?: 0L // Show 0 to display "--" when no HON rank
-        } else {
-            smileyDailyRank
+    val gameIcons by gameViewModel.gameIcons.collectAsStateWithLifecycle()
+
+    // derivedStateOf: only re-emit when the computed Int actually changes.
+    val limitReelCount by remember {
+        derivedStateOf {
+            if (gameState.isStopAndVote || feedState.currentOnboardingStep != null) {
+                gameState.lastVotedCount
+            } else {
+                feedState.feedDetails.size
+            }
         }
-    if (feedState.overlayType == OverlayType.DAILY_RANK) {
-        leaderBoardViewModel.refreshRank.collectAsStateWithLifecycle(false)
     }
+
+    // isCardLayoutEnabled is constant for the ViewModel lifetime, read once.
+    val isCardLayoutEnabled = feedState.isCardLayoutEnabled
+
+    // ── FeedScreen — all lambdas capture only stable ViewModel / component refs ──
     FeedScreen(
         component = component,
         viewModel = feedViewModel,
         topOverlay = { pageNo ->
             OverLayTop(
                 pageNo = pageNo,
-                dailyRank = dailyRank,
-                feedState = feedState,
-                gameState = gameState,
-                componentAnimationInfo = TopComponentAnimationInfo(gameState.animateCoinBalance),
-                setAnimateCoinBalance = { gameViewModel.setAnimateCoinBalance(it) },
-                setPostDescriptionExpanded = { feedViewModel.setPostDescriptionExpanded(it) },
-                updateGameType = { gameViewModel.updateGameType(it) },
-                openUserProfile = { component.openProfile(it) },
                 feedViewModel = feedViewModel,
-                openLeaderboard = { component.openLeaderboard() },
-                openWallet = { component.openWallet() },
+                gameViewModel = gameViewModel,
+                leaderBoardViewModel = leaderBoardViewModel,
+                openUserProfile = component::openProfile,
+                openLeaderboard = component.openLeaderboard,
+                openWallet = component.openWallet,
             )
         },
         bottomOverlay = { pageNo, scrollToNext ->
-            OverlayBottom(pageNo, feedState, gameState, gameViewModel, feedViewModel, scrollToNext)
+            OverlayBottom(
+                pageNo = pageNo,
+                gameViewModel = gameViewModel,
+                feedViewModel = feedViewModel,
+                scrollToNext = scrollToNext,
+            )
         },
         actionsRight = { pageNo ->
-            FeedActionsRight(pageNo, feedState, feedViewModel, component::openProfile)
+            FeedActionsRight(
+                pageNo = pageNo,
+                feedViewModel = feedViewModel,
+                openProfile = component::openProfile,
+            )
         },
+        // Event callbacks read state.value at invocation time — no captured state values.
         onPageChanged = { pageNo, currentPageOfFeed ->
-            if (pageNo >= 0 && pageNo < feedState.feedDetails.size) {
-                // Set current video ID for the new page
-                gameViewModel.setCurrentVideoId(feedState.feedDetails[pageNo].videoID)
-                // Mark animation as shown for the previous page when changing pages
-                if (pageNo != currentPageOfFeed && currentPageOfFeed < feedState.feedDetails.size) {
+            val details = feedViewModel.state.value.feedDetails
+            if (pageNo >= 0 && pageNo < details.size) {
+                gameViewModel.setCurrentVideoId(details[pageNo].videoID)
+                if (pageNo != currentPageOfFeed && currentPageOfFeed < details.size) {
                     gameViewModel.markCoinDeltaAnimationShown(
-                        videoId = feedState.feedDetails[currentPageOfFeed].videoID,
+                        videoId = details[currentPageOfFeed].videoID,
                     )
-                    // Also mark Hot or Not animation as shown for previous page
-                    if (feedState.isCardLayoutEnabled) {
+                    if (feedViewModel.state.value.isCardLayoutEnabled) {
                         gameViewModel.markHotOrNotAnimationShown(
-                            feedState.feedDetails[currentPageOfFeed].videoID,
+                            details[currentPageOfFeed].videoID,
                         )
                     }
                 }
@@ -149,33 +148,28 @@ fun FeedScaffoldScreen(
             gameViewModel.showNudge(
                 nudgeIntention = NudgeType.INTRO,
                 pageNo = pageNo,
-                feedDetailsSize = feedState.feedDetails.size,
+                feedDetailsSize = details.size,
             )
         },
         onEdgeScrollAttempt = { pageNo ->
-            // Don't show mandatory nudge during onboarding
-            if (feedState.currentOnboardingStep == null) {
+            if (feedViewModel.state.value.currentOnboardingStep == null) {
                 gameViewModel.showNudge(
                     nudgeIntention = NudgeType.MANDATORY,
                     pageNo = pageNo,
-                    feedDetailsSize = feedState.feedDetails.size,
+                    feedDetailsSize = feedViewModel.state.value.feedDetails.size,
                 )
             }
         },
-        limitReelCount =
-            if (gameState.isStopAndVote || feedState.currentOnboardingStep != null) {
-                gameState.lastVotedCount
-            } else {
-                feedState.feedDetails.size
-            },
+        limitReelCount = limitReelCount,
         onSwipeVote =
-            if (feedState.isCardLayoutEnabled) {
+            if (isCardLayoutEnabled) {
                 { direction, pageIndex, isSwipe ->
-                    if (pageIndex < feedState.feedDetails.size) {
+                    val details = feedViewModel.state.value.feedDetails
+                    if (pageIndex < details.size) {
                         val isHot = direction == SwipeDirection.RIGHT
                         gameViewModel.castHotOrNotVote(
                             isHot = isHot,
-                            feedDetails = feedState.feedDetails[pageIndex],
+                            feedDetails = details[pageIndex],
                             swipeAction = if (isSwipe) SwipeAction.SWIPE else SwipeAction.CLICK,
                         )
                     }
@@ -184,6 +178,8 @@ fun FeedScaffoldScreen(
                 null
             },
     )
+
+    // ── Sheets & effects — sibling of FeedScreen, own recomposition scope ──
     RefreshBalanceAnimation(
         refreshBalanceState = gameState.refreshBalanceState.toRefreshBalanceAnimationState(),
         onAnimationComplete = { gameViewModel.hideRefreshBalanceAnimation() },
@@ -221,20 +217,18 @@ fun FeedScaffoldScreen(
             isHotOrNotMode = feedState.isCardLayoutEnabled,
         )
     }
-    if (gameState.gameIcons.isNotEmpty()) {
-        PreloadLottieAnimations(
-            urls = gameState.gameIcons.map { it.clickAnimation },
-        )
+    val lottieUrls = remember(gameIcons) { gameIcons.map { it.clickAnimation } }
+    if (lottieUrls.isNotEmpty()) {
+        PreloadLottieAnimations(urls = lottieUrls)
     }
     LaunchedEffect(
         feedState.feedDetails.size,
-        gameState.gameIcons.size,
+        gameIcons.size,
         feedState.currentOnboardingStep,
     ) {
         @Suppress("ComplexCondition")
-        // Only show mandatory nudge after onboarding is complete
         if (feedState.feedDetails.isNotEmpty() &&
-            gameState.gameIcons.isNotEmpty() &&
+            gameIcons.isNotEmpty() &&
             !gameState.isDefaultMandatoryNudgeShown &&
             feedState.currentOnboardingStep == null
         ) {
@@ -245,7 +239,6 @@ fun FeedScaffoldScreen(
             )
         }
     }
-    // Check and show tournament intro bottom sheet on 6th video (index 5)
     LaunchedEffect(feedState.currentPageOfFeed, feedState.currentOnboardingStep) {
         if (feedState.feedDetails.isNotEmpty() &&
             feedState.currentOnboardingStep == null &&
@@ -254,7 +247,6 @@ fun FeedScaffoldScreen(
             feedViewModel.checkAndShowTournamentIntroSheet()
         }
     }
-    // Check and show Hot or Not onboarding when card layout is enabled
     LaunchedEffect(feedState.feedDetails.size, feedState.isCardLayoutEnabled) {
         if (feedState.feedDetails.isNotEmpty() &&
             feedState.isCardLayoutEnabled &&
@@ -263,7 +255,6 @@ fun FeedScaffoldScreen(
             feedViewModel.checkAndShowHotOrNotOnboarding()
         }
     }
-    // Tournament intro bottom sheet
     if (feedState.showTournamentIntroSheet) {
         TournamentIntroBottomSheet(
             onDismissRequest = { feedViewModel.dismissTournamentIntroSheet() },
@@ -273,7 +264,6 @@ fun FeedScaffoldScreen(
             },
         )
     }
-    // Hot or Not onboarding overlay (shows on top of feed)
     if (feedState.showHotOrNotOnboarding) {
         HotOrNotOnboardingOverlay(
             onDismiss = { feedViewModel.dismissHotOrNotOnboarding() },
@@ -281,22 +271,45 @@ fun FeedScaffoldScreen(
     }
 }
 
+// ──────────────────────────────────────────────────────────────────────────────
+//  Overlay composables — each collects only the state it needs from ViewModels
+// ──────────────────────────────────────────────────────────────────────────────
+
 @Suppress("LongMethod")
 @Composable
 private fun OverLayTop(
     pageNo: Int,
-    dailyRank: Long?,
-    feedState: FeedState,
-    gameState: GameState,
-    componentAnimationInfo: TopComponentAnimationInfo,
-    setAnimateCoinBalance: (Boolean) -> Unit,
-    setPostDescriptionExpanded: (Boolean) -> Unit,
-    updateGameType: (GameType) -> Unit,
-    openUserProfile: (canisterData: CanisterData) -> Unit,
     feedViewModel: FeedViewModel,
+    gameViewModel: GameViewModel,
+    leaderBoardViewModel: LeaderBoardViewModel,
+    openUserProfile: (canisterData: CanisterData) -> Unit,
     openLeaderboard: () -> Unit,
     openWallet: () -> Unit,
 ) {
+    val feedState by feedViewModel.state.collectAsStateWithLifecycle()
+    val gameState by gameViewModel.state.collectAsStateWithLifecycle()
+
+    // Daily rank — collected locally so the lambda capturing OverLayTop stays stable
+    val smileyDailyRank by if (feedState.overlayType == OverlayType.DAILY_RANK) {
+        leaderBoardViewModel.dailyRank.collectAsStateWithLifecycle(null)
+    } else {
+        remember { mutableStateOf(null) }
+    }
+    val honDailyRank by if (feedState.overlayType == OverlayType.DAILY_RANK) {
+        leaderBoardViewModel.honDailyRank.collectAsStateWithLifecycle(null)
+    } else {
+        remember { mutableStateOf(null) }
+    }
+    val dailyRank =
+        if (feedState.isCardLayoutEnabled) {
+            honDailyRank ?: 0L
+        } else {
+            smileyDailyRank
+        }
+    if (feedState.overlayType == OverlayType.DAILY_RANK) {
+        leaderBoardViewModel.refreshRank.collectAsStateWithLifecycle(false)
+    }
+
     var targetBounds by remember { mutableStateOf<FeedTargetBounds?>(null) }
     Box(modifier = Modifier.fillMaxSize()) {
         when (feedState.overlayType) {
@@ -304,28 +317,34 @@ private fun OverLayTop(
                 OverlayTopDefault(
                     pageNo = pageNo,
                     feedState = feedState,
-                    gameState = gameState,
-                    componentInfo = componentAnimationInfo,
-                    setPostDescriptionExpanded = setPostDescriptionExpanded,
-                    setAnimateCoinBalance = setAnimateCoinBalance,
+                    coinBalance = gameState.coinBalance,
+                    lastBalanceDifference = gameState.lastBalanceDifference,
+                    animateCoinBalance = gameState.animateCoinBalance,
+                    setPostDescriptionExpanded = { feedViewModel.setPostDescriptionExpanded(it) },
+                    setAnimateCoinBalance = { gameViewModel.setAnimateCoinBalance(it) },
                     openUserProfile = openUserProfile,
                     openWallet = openWallet,
                 )
             }
             OverlayType.GAME_TOGGLE -> {
                 OverlayTopGameToggle(
-                    gameState = gameState,
-                    setAnimateCoinBalance = setAnimateCoinBalance,
-                    updateGameType = updateGameType,
+                    gameType = gameState.gameType,
+                    coinBalance = gameState.coinBalance,
+                    lastBalanceDifference = gameState.lastBalanceDifference,
+                    animateCoinBalance = gameState.animateCoinBalance,
+                    setAnimateCoinBalance = { gameViewModel.setAnimateCoinBalance(it) },
+                    updateGameType = { gameViewModel.updateGameType(it) },
                     openWallet = openWallet,
                 )
             }
             OverlayType.DAILY_RANK ->
                 OverlayTopDailyRank(
                     dailyRank = dailyRank,
-                    feedState = feedState,
-                    gameState = gameState,
-                    setAnimateCoinBalance = setAnimateCoinBalance,
+                    currentOnboardingStep = feedState.currentOnboardingStep,
+                    coinBalance = gameState.coinBalance,
+                    lastBalanceDifference = gameState.lastBalanceDifference,
+                    animateCoinBalance = gameState.animateCoinBalance,
+                    setAnimateCoinBalance = { gameViewModel.setAnimateCoinBalance(it) },
                     onTargetBoundsCaptured = { targetBounds = it },
                     openLeaderboard = openLeaderboard,
                     openWallet = openWallet,
@@ -368,9 +387,10 @@ private fun OverLayTop(
 @Composable
 private fun OverlayTopDefault(
     pageNo: Int,
-    feedState: FeedState,
-    gameState: GameState,
-    componentInfo: TopComponentAnimationInfo,
+    feedState: com.yral.shared.features.feed.viewmodel.FeedState,
+    coinBalance: Long,
+    lastBalanceDifference: Int,
+    animateCoinBalance: Boolean,
     setPostDescriptionExpanded: (Boolean) -> Unit,
     setAnimateCoinBalance: (Boolean) -> Unit,
     openUserProfile: (canisterData: CanisterData) -> Unit,
@@ -408,16 +428,16 @@ private fun OverlayTopDefault(
                     .align(Alignment.TopEnd)
                     .padding(vertical = 10.dp)
                     .onGloballyPositioned { coordinates ->
-                        if (!componentInfo.isTopRightAnimating) {
+                        if (!animateCoinBalance) {
                             val x = coordinates.positionInParent().x
                             paddingEnd = screenWidthPx - x
                         }
                     },
         ) {
             CoinBalance(
-                coinBalance = gameState.coinBalance,
-                coinDelta = gameState.lastBalanceDifference,
-                animateBag = gameState.animateCoinBalance,
+                coinBalance = coinBalance,
+                coinDelta = lastBalanceDifference,
+                animateBag = animateCoinBalance,
                 setAnimate = { setAnimateCoinBalance(it) },
                 modifier = Modifier.padding(vertical = 22.dp).clickable { openWallet() },
             )
@@ -429,16 +449,18 @@ private fun OverlayTopDefault(
 @Composable
 private fun OverlayTopDailyRank(
     dailyRank: Long?,
-    feedState: FeedState,
-    gameState: GameState,
+    currentOnboardingStep: OnboardingStep?,
+    coinBalance: Long,
+    lastBalanceDifference: Int,
+    animateCoinBalance: Boolean,
     setAnimateCoinBalance: (Boolean) -> Unit,
     onTargetBoundsCaptured: (FeedTargetBounds?) -> Unit,
     openLeaderboard: () -> Unit,
     openWallet: () -> Unit,
 ) {
     val density = LocalDensity.current
-    val isShowingRankNudge = feedState.currentOnboardingStep == OnboardingStep.INTRO_RANK
-    val isShowingBalanceNudge = feedState.currentOnboardingStep == OnboardingStep.INTRO_BALANCE
+    val isShowingRankNudge = currentOnboardingStep == OnboardingStep.INTRO_RANK
+    val isShowingBalanceNudge = currentOnboardingStep == OnboardingStep.INTRO_BALANCE
     Box(
         modifier =
             Modifier
@@ -451,7 +473,7 @@ private fun OverlayTopDailyRank(
         dailyRank?.let {
             DailyRanK(
                 position = dailyRank,
-                animate = gameState.animateCoinBalance,
+                animate = animateCoinBalance,
                 setAnimate = { setAnimateCoinBalance(it) },
                 isShowingNudge = isShowingRankNudge,
                 modifier =
@@ -481,9 +503,9 @@ private fun OverlayTopDailyRank(
             )
         }
         CoinBalance(
-            coinBalance = gameState.coinBalance,
-            coinDelta = gameState.lastBalanceDifference,
-            animateBag = gameState.animateCoinBalance,
+            coinBalance = coinBalance,
+            coinDelta = lastBalanceDifference,
+            animateBag = animateCoinBalance,
             setAnimate = { setAnimateCoinBalance(it) },
             isShowingNudge = isShowingBalanceNudge,
             modifier =
@@ -516,7 +538,10 @@ private fun OverlayTopDailyRank(
 
 @Composable
 private fun OverlayTopGameToggle(
-    gameState: GameState,
+    gameType: GameType,
+    coinBalance: Long,
+    lastBalanceDifference: Int,
+    animateCoinBalance: Boolean,
     setAnimateCoinBalance: (Boolean) -> Unit,
     updateGameType: (GameType) -> Unit,
     openWallet: () -> Unit,
@@ -532,7 +557,7 @@ private fun OverlayTopGameToggle(
         contentAlignment = Alignment.TopStart,
     ) {
         GameToggle(
-            gameType = gameState.gameType,
+            gameType = gameType,
             modifier =
                 Modifier
                     .align(Alignment.TopCenter)
@@ -547,9 +572,9 @@ private fun OverlayTopGameToggle(
         ) {
             Spacer(modifier = Modifier.weight(1f))
             CoinBalance(
-                coinBalance = gameState.coinBalance,
-                coinDelta = gameState.lastBalanceDifference,
-                animateBag = gameState.animateCoinBalance,
+                coinBalance = coinBalance,
+                coinDelta = lastBalanceDifference,
+                animateBag = animateCoinBalance,
                 setAnimate = { setAnimateCoinBalance(it) },
                 modifier = Modifier.padding(vertical = 22.dp).clickable { openWallet() },
             )
@@ -557,22 +582,20 @@ private fun OverlayTopGameToggle(
     }
 }
 
-data class TopComponentAnimationInfo(
-    val isTopRightAnimating: Boolean,
-)
-
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 private fun OverlayBottom(
     pageNo: Int,
-    feedState: FeedState,
-    gameState: GameState,
     gameViewModel: GameViewModel,
     feedViewModel: FeedViewModel,
     scrollToNext: () -> Unit,
 ) {
+    val feedState by feedViewModel.state.collectAsStateWithLifecycle()
+    val gameState by gameViewModel.state.collectAsStateWithLifecycle()
+    val gameIcons by gameViewModel.gameIcons.collectAsStateWithLifecycle()
+
     Box(modifier = Modifier.fillMaxSize()) {
-        if (gameState.gameIcons.isNotEmpty()) {
+        if (gameIcons.isNotEmpty()) {
             HowToPlay(
                 modifier =
                     Modifier
@@ -593,7 +616,6 @@ private fun OverlayBottom(
         if (pageNo < feedState.feedDetails.size) {
             val currentVideoId = feedState.feedDetails[pageNo].videoID
 
-            // Map OnboardingStep to NudgeType for game module
             val onboardingNudgeType =
                 when (feedState.currentOnboardingStep) {
                     OnboardingStep.INTRO_GAME -> NudgeType.ONBOARDING_START
@@ -602,7 +624,6 @@ private fun OverlayBottom(
                     else -> NudgeType.ONBOARDING_OTHERS
                 }
 
-            // Hot or Not mode: show result overlay when card layout is enabled
             if (feedState.isCardLayoutEnabled) {
                 val hotOrNotResult = gameViewModel.getHotOrNotResult(currentVideoId)
                 if (hotOrNotResult != null) {
@@ -615,7 +636,6 @@ private fun OverlayBottom(
                     )
                 }
             } else if (!feedState.isCardLayoutEnabled) {
-                // Smiley game mode: show smiley game when card layout is disabled
                 Game(
                     feedDetails = feedState.feedDetails[pageNo],
                     pageNo = pageNo,
@@ -625,21 +645,18 @@ private fun OverlayBottom(
                 )
             }
 
-            // Auto-scroll logic for smiley game mode
             if (!feedState.isCardLayoutEnabled &&
                 (gameState.isAutoScrollEnabled || feedState.currentOnboardingStep != null)
             ) {
                 var resultOfCurrentPage by remember { mutableStateOf<VoteResult?>(null) }
                 val voteResult = gameState.gameResult[currentVideoId]?.second
 
-                // Track when result becomes available for the current page
                 LaunchedEffect(voteResult?.coinDelta, pageNo) {
                     if (voteResult != null && pageNo == feedState.currentPageOfFeed) {
                         resultOfCurrentPage = voteResult
                     }
                 }
 
-                // Auto-scroll logic: wait for result sheet to be dismissed if it should be shown
                 LaunchedEffect(
                     resultOfCurrentPage?.coinDelta,
                     gameState.showResultSheet,
@@ -648,15 +665,7 @@ private fun OverlayBottom(
                     val resultCoinDelta = resultOfCurrentPage?.coinDelta ?: 0
                     val resultHasShownAnimation = resultOfCurrentPage?.hasShownAnimation ?: false
                     val isCurrentPage = pageNo == feedState.currentPageOfFeed
-
-                    // Check if result sheet is being shown for this page
                     val isResultSheetShown = gameState.showResultSheet && resultCoinDelta != 0 && isCurrentPage
-
-                    // Only auto-scroll if:
-                    // 1. There's a result with non-zero coinDelta
-                    // 2. Animation hasn't been shown
-                    // 3. It's the current page
-                    // 4. Result sheet is not currently being shown (has been dismissed or doesn't need to be shown)
                     val shouldAutoScroll =
                         resultCoinDelta != 0 &&
                             !resultHasShownAnimation &&

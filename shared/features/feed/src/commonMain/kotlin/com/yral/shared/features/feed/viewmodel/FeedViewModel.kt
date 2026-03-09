@@ -142,16 +142,25 @@ class FeedViewModel(
                 .observeSessionProperty { it.followedPrincipals to it.unFollowedPrincipals }
                 .collect { (followedPrincipals, unfollowedPrincipals) ->
                     _state.update {
-                        it.copy(
-                            feedDetails =
-                                it.feedDetails.map { details ->
-                                    when (details.principalID) {
-                                        in followedPrincipals -> details.copy(isFollowing = true)
-                                        in unfollowedPrincipals -> details.copy(isFollowing = false)
-                                        else -> details
-                                    }
-                                },
-                        )
+                        val needsUpdate =
+                            it.feedDetails.any { details ->
+                                (details.principalID in followedPrincipals && !details.isFollowing) ||
+                                    (details.principalID in unfollowedPrincipals && details.isFollowing)
+                            }
+                        if (!needsUpdate) {
+                            it
+                        } else {
+                            it.copy(
+                                feedDetails =
+                                    it.feedDetails.map { details ->
+                                        when (details.principalID) {
+                                            in followedPrincipals -> details.copy(isFollowing = true)
+                                            in unfollowedPrincipals -> details.copy(isFollowing = false)
+                                            else -> details
+                                        }
+                                    },
+                            )
+                        }
                     }
                 }
         }
@@ -774,6 +783,7 @@ class FeedViewModel(
     }
 
     fun onCurrentPageChange(pageNo: Int) {
+        if (_state.value.currentPageOfFeed == pageNo) return
         videoData = VideoData()
         _state.update { currentState ->
             currentState.copy(
@@ -809,12 +819,17 @@ class FeedViewModel(
                             if (index == -1) {
                                 currentState
                             } else {
-                                currentState.copy(
-                                    feedDetails =
-                                        list.update(index) {
-                                            it.copy(viewCount = allViews, bulkViewCount = allViews)
-                                        },
-                                )
+                                val existingDetail = list[index]
+                                if (existingDetail.bulkViewCount == allViews) {
+                                    currentState
+                                } else {
+                                    currentState.copy(
+                                        feedDetails =
+                                            list.update(index) {
+                                                it.copy(viewCount = allViews, bulkViewCount = allViews)
+                                            },
+                                    )
+                                }
                             }
                         }
                     }
@@ -825,6 +840,7 @@ class FeedViewModel(
     }
 
     fun setPostDescriptionExpanded(isExpanded: Boolean) {
+        if (_state.value.isPostDescriptionExpanded == isExpanded) return
         _state.update { it.copy(isPostDescriptionExpanded = isExpanded) }
     }
 

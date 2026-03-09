@@ -30,8 +30,8 @@ import androidx.compose.ui.graphics.Brush.Companion.linearGradient
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.shared.analytics.events.FeedType
-import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.OverlayType
 import com.yral.shared.libs.designsystem.component.YralLoadingDots
@@ -62,10 +62,13 @@ import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 @Composable
 fun ColumnScope.FeedActionsRight(
     pageNo: Int,
-    state: FeedState,
     feedViewModel: FeedViewModel,
     openProfile: (userCanisterData: CanisterData) -> Unit,
 ) {
+    val state by feedViewModel.state.collectAsStateWithLifecycle()
+    if (pageNo >= state.feedDetails.size) return
+    val feedDetails = state.feedDetails[pageNo]
+
     Column(
         modifier = Modifier.weight(1f).padding(top = 65.dp, end = 10.dp),
         verticalArrangement = Arrangement.Top,
@@ -82,7 +85,6 @@ fun ColumnScope.FeedActionsRight(
             )
         }
     }
-    val feedDetails = state.feedDetails[pageNo]
     if (state.overlayType in listOf(OverlayType.GAME_TOGGLE, OverlayType.DAILY_RANK)) {
         feedDetails.profileImageURL?.let { profileImage ->
             Column(modifier = Modifier.offset(y = 16.dp)) {
