@@ -309,15 +309,15 @@ internal class DefaultHomeComponent(
                 openTournamentLeaderboard(tournamentId, false)
             },
             navigateToTournament = {
-                tournamentId,
-                title,
-                initialDiamonds,
-                startEpochMs,
-                endEpochMs,
-                totalPrizePool,
-                isHotOrNot,
-                isDailyTournament,
-                dailyTimeLimitMs,
+                    tournamentId,
+                    title,
+                    initialDiamonds,
+                    startEpochMs,
+                    endEpochMs,
+                    totalPrizePool,
+                    isHotOrNot,
+                    isDailyTournament,
+                    dailyTimeLimitMs,
                 ->
                 openTournamentGame(
                     tournamentId,
