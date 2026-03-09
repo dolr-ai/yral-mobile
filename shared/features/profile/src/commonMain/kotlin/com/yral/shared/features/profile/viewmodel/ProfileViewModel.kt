@@ -1106,6 +1106,20 @@ class ProfileViewModel(
     fun trackCreateInfluencerClicked() {
         chatTelemetry.createBotCtaClicked(BotCreationSource.PROFILE_PAGE)
     }
+
+    fun selectVideoTab(tab: ProfileVideoTab) {
+        _state.update {
+            it.copy(
+                selectedVideoTab = tab,
+                bottomSheet =
+                    if (tab == ProfileVideoTab.Exclusive && !it.isOwnProfile) {
+                        ProfileBottomSheet.SubscriberOnly
+                    } else {
+                        it.bottomSheet
+                    },
+            )
+        }
+    }
 }
 
 data class ViewState(
@@ -1139,7 +1153,20 @@ data class ViewState(
     val createdByPrincipal: String? = null,
     val botUsernames: List<String> = emptyList(),
     val botUsernameToCanisterData: Map<String, String> = emptyMap(),
-)
+    val selectedVideoTab: ProfileVideoTab = ProfileVideoTab.Published,
+) {
+    val availableTabs: List<ProfileVideoTab>
+        get() =
+            when {
+                !isOwnProfile && isAiInfluencer ->
+                    listOf(ProfileVideoTab.Published, ProfileVideoTab.Exclusive)
+                isOwnProfile && isAiInfluencer ->
+                    listOf(ProfileVideoTab.Published, ProfileVideoTab.Exclusive, ProfileVideoTab.Drafts)
+                isOwnProfile && !isAiInfluencer ->
+                    listOf(ProfileVideoTab.Published, ProfileVideoTab.Drafts)
+                else -> emptyList()
+            }
+}
 
 sealed interface ProfileBottomSheet {
     data object None : ProfileBottomSheet
@@ -1150,6 +1177,7 @@ sealed interface ProfileBottomSheet {
         val tab: FollowersSheetTab,
     ) : ProfileBottomSheet
     data object DownloadTriggered : ProfileBottomSheet
+    data object SubscriberOnly : ProfileBottomSheet
 }
 
 sealed class DeleteConfirmationState {
@@ -1194,4 +1222,10 @@ data class PagingState(
 enum class FollowersSheetTab {
     Followers,
     Following,
+}
+
+enum class ProfileVideoTab {
+    Published,
+    Exclusive,
+    Drafts,
 }

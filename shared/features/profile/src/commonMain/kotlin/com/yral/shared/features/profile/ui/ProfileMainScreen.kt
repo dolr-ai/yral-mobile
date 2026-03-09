@@ -53,6 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.draw.rotate
@@ -86,6 +87,7 @@ import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
 import com.yral.shared.features.profile.viewmodel.FollowersSheetTab
 import com.yral.shared.features.profile.viewmodel.ProfileBottomSheet
 import com.yral.shared.features.profile.viewmodel.ProfileEvents
+import com.yral.shared.features.profile.viewmodel.ProfileVideoTab
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.profile.viewmodel.VideoViewState
 import com.yral.shared.features.profile.viewmodel.ViewState
@@ -135,9 +137,16 @@ import yral_mobile.shared.features.profile.generated.resources.deleting
 import yral_mobile.shared.features.profile.generated.resources.download
 import yral_mobile.shared.features.profile.generated.resources.downloading_video
 import yral_mobile.shared.features.profile.generated.resources.downloading_video_desc
+import yral_mobile.shared.features.profile.generated.resources.draft_videos_empty
+import yral_mobile.shared.features.profile.generated.resources.draft_videos_empty_subtitle
 import yral_mobile.shared.features.profile.generated.resources.error_loading_more_videos
 import yral_mobile.shared.features.profile.generated.resources.error_loading_videos
+import yral_mobile.shared.features.profile.generated.resources.exclusive_videos_empty
 import yral_mobile.shared.features.profile.generated.resources.failed_to_delete_video
+import yral_mobile.shared.features.profile.generated.resources.ic_crown
+import yral_mobile.shared.features.profile.generated.resources.ic_folder
+import yral_mobile.shared.features.profile.generated.resources.ic_grid_category
+import yral_mobile.shared.features.profile.generated.resources.ic_lock_open
 import yral_mobile.shared.features.profile.generated.resources.pink_heart
 import yral_mobile.shared.features.profile.generated.resources.pro_profile_background
 import yral_mobile.shared.features.profile.generated.resources.profile_empty_other_subtitle
@@ -149,6 +158,9 @@ import yral_mobile.shared.features.profile.generated.resources.profile_locked_ti
 import yral_mobile.shared.features.profile.generated.resources.profile_view_locked_subtitle
 import yral_mobile.shared.features.profile.generated.resources.profile_view_locked_title
 import yral_mobile.shared.features.profile.generated.resources.storage_permission_required
+import yral_mobile.shared.features.profile.generated.resources.subscriber_only_description
+import yral_mobile.shared.features.profile.generated.resources.subscriber_only_videos
+import yral_mobile.shared.features.profile.generated.resources.unlock_now
 import yral_mobile.shared.features.profile.generated.resources.video_will_be_deleted_permanently
 import yral_mobile.shared.features.profile.generated.resources.white_heart
 import yral_mobile.shared.libs.designsystem.generated.resources.account_nav
@@ -414,6 +426,12 @@ fun ProfileMainScreen(
                             viewModel.recordTime(currentTime, totalTime, video)
                         },
                         modifier = Modifier.fillMaxSize(),
+                        maxVideos =
+                            if (state.selectedVideoTab == ProfileVideoTab.Exclusive && !state.isOwnProfile) {
+                                1
+                            } else {
+                                Int.MAX_VALUE
+                            },
                     )
                 } else {
                     viewModel.closeVideoReel()
@@ -633,6 +651,24 @@ fun ProfileMainScreen(
                 onDismissRequest = { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
             )
         }
+
+        ProfileBottomSheet.SubscriberOnly -> {
+            YralBottomSheet(
+                bottomSheetState = bottomSheetState,
+                onDismissRequest = { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
+                dragHandle = { YralDragHandle() },
+            ) {
+                SubscriberOnlyCta(
+                    displayName = state.accountInfo?.displayName ?: "",
+                    onUnlockClick = {
+                        viewModel.setBottomSheetType(ProfileBottomSheet.None)
+                        if (state.isLoggedIn) {
+                            component.subscriptionCoordinator.buySubscription()
+                        }
+                    },
+                )
+            }
+        }
     }
 }
 
@@ -717,45 +753,71 @@ private fun MainContent(
                 onUsernameClick = onUsernameClick,
             )
         }
-        when (profileVideos.loadState.refresh) {
-            is LoadState.Loading -> {
-                LoadingContent()
-            }
-
-            is LoadState.Error -> {
-                if (state.manualRefreshTriggered) viewModel.setManualRefreshTriggered(false)
-                ErrorContent(message = stringResource(Res.string.error_loading_videos))
-            }
-
-            is LoadState.NotLoading -> {
-                if (!state.isLoggedIn) {
-                    LockedProfileContent(
-                        onLoginClick = promptLogin,
-                        isOwnProfile = state.isOwnProfile,
-                    )
-                } else {
-                    if (state.manualRefreshTriggered) {
-                        viewModel.pushScreenView(profileVideos.itemCount)
-                        viewModel.setManualRefreshTriggered(false)
+        val availableTabs = state.availableTabs
+        if (availableTabs.isNotEmpty()) {
+            ProfileVideoTabBar(
+                tabs = availableTabs,
+                selectedTab = state.selectedVideoTab,
+                onTabSelected = { viewModel.selectVideoTab(it) },
+            )
+        }
+        when (state.selectedVideoTab) {
+            ProfileVideoTab.Published -> {
+                when (profileVideos.loadState.refresh) {
+                    is LoadState.Loading -> {
+                        LoadingContent()
                     }
-                    SuccessContent(
-                        gridState = gridState,
-                        profileVideos = profileVideos,
-                        isOwnProfile = state.isOwnProfile,
-                        deletingVideoId = deletingVideoId,
-                        uploadVideo = uploadVideo,
-                        openVideoReel = { viewModel.openVideoReel(it) },
-                        onDeleteVideo = {
-                            viewModel.confirmDelete(
-                                feedDetails = it,
-                                ctaType = VideoDeleteCTA.PROFILE_THUMBNAIL,
+
+                    is LoadState.Error -> {
+                        if (state.manualRefreshTriggered) viewModel.setManualRefreshTriggered(false)
+                        ErrorContent(message = stringResource(Res.string.error_loading_videos))
+                    }
+
+                    is LoadState.NotLoading -> {
+                        if (!state.isLoggedIn) {
+                            LockedProfileContent(
+                                onLoginClick = promptLogin,
+                                isOwnProfile = state.isOwnProfile,
                             )
-                        },
-                        onDownloadVideo = onDownloadVideo,
-                        onViewsClick = { viewModel.showVideoViews(it) },
-                        onManualRefreshTriggered = { viewModel.setManualRefreshTriggered(it) },
-                    )
+                        } else {
+                            if (state.manualRefreshTriggered) {
+                                viewModel.pushScreenView(profileVideos.itemCount)
+                                viewModel.setManualRefreshTriggered(false)
+                            }
+                            SuccessContent(
+                                gridState = gridState,
+                                profileVideos = profileVideos,
+                                isOwnProfile = state.isOwnProfile,
+                                deletingVideoId = deletingVideoId,
+                                uploadVideo = uploadVideo,
+                                openVideoReel = { viewModel.openVideoReel(it) },
+                                onDeleteVideo = {
+                                    viewModel.confirmDelete(
+                                        feedDetails = it,
+                                        ctaType = VideoDeleteCTA.PROFILE_THUMBNAIL,
+                                    )
+                                },
+                                onDownloadVideo = onDownloadVideo,
+                                onViewsClick = { viewModel.showVideoViews(it) },
+                                onManualRefreshTriggered = { viewModel.setManualRefreshTriggered(it) },
+                            )
+                        }
+                    }
                 }
+            }
+
+            ProfileVideoTab.Exclusive -> {
+                ExclusiveVideoContent(
+                    profileVideos = profileVideos,
+                    displayName = state.accountInfo?.displayName ?: "",
+                    isOwnProfile = state.isOwnProfile,
+                    onUnlockClick = onSubscribe,
+                    onFirstVideoClick = { viewModel.openVideoReel(0) },
+                )
+            }
+
+            ProfileVideoTab.Drafts -> {
+                DraftVideoContent()
             }
         }
     }
@@ -1443,6 +1505,213 @@ private fun DownloadTriggeredSheet(
         }
     }
 }
+
+@Composable
+private fun ProfileVideoTabBar(
+    tabs: List<ProfileVideoTab>,
+    selectedTab: ProfileVideoTab,
+    onTabSelected: (ProfileVideoTab) -> Unit,
+) {
+    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+        ) {
+            tabs.forEach { tab ->
+                val isSelected = tab == selectedTab
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .clickable { onTabSelected(tab) }
+                            .padding(vertical = 8.dp),
+                ) {
+                    val icon =
+                        when (tab) {
+                            ProfileVideoTab.Published -> Res.drawable.ic_grid_category
+                            ProfileVideoTab.Exclusive -> Res.drawable.ic_crown
+                            ProfileVideoTab.Drafts -> Res.drawable.ic_folder
+                        }
+                    Icon(
+                        painter = painterResource(icon),
+                        contentDescription = tab.name,
+                        tint = if (isSelected) YralColors.Pink300 else YralColors.NeutralTextSecondary,
+                        modifier = Modifier.size(24.dp),
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(if (isSelected) 3.dp else 1.dp)
+                                .background(
+                                    color = if (isSelected) YralColors.Pink300 else YralColors.Neutral800,
+                                    shape = RoundedCornerShape(10.dp),
+                                ),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExclusiveVideoContent(
+    profileVideos: LazyPagingItems<FeedDetails>,
+    displayName: String,
+    isOwnProfile: Boolean,
+    onUnlockClick: () -> Unit,
+    onFirstVideoClick: () -> Unit,
+) {
+    val itemCount = profileVideos.itemCount.coerceAtMost(EXCLUSIVE_PLACEHOLDER_COUNT)
+    if (isOwnProfile && itemCount == 0) {
+        EmptyExclusiveContent()
+        return
+    }
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        items(count = itemCount) { index ->
+            val video = profileVideos[index]
+            val isFirst = index == 0
+            val shouldBlur = !isOwnProfile && !isFirst
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(GRID_ITEM_ASPECT_RATIO)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(YralColors.Neutral900, RoundedCornerShape(8.dp))
+                        .then(
+                            if (isFirst && !isOwnProfile) {
+                                Modifier.clickable { onFirstVideoClick() }
+                            } else {
+                                Modifier
+                            },
+                        ),
+            ) {
+                YralAsyncImage(
+                    imageUrl = video?.thumbnail ?: "",
+                    loaderSize = LoaderSize.Fixed,
+                    modifier =
+                        if (shouldBlur) {
+                            Modifier.fillMaxSize().blur(16.dp)
+                        } else {
+                            Modifier.fillMaxSize()
+                        },
+                    shape = RoundedCornerShape(8.dp),
+                    contentScale = ContentScale.Crop,
+                )
+                if (!isOwnProfile && isFirst) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_lock_open),
+                        contentDescription = "Exclusive",
+                        tint = Color.White,
+                        modifier =
+                            Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(8.dp)
+                                .size(20.dp),
+                    )
+                }
+            }
+        }
+
+        if (!isOwnProfile) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                SubscriberOnlyCta(
+                    displayName = displayName,
+                    onUnlockClick = onUnlockClick,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyExclusiveContent() {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = stringResource(Res.string.exclusive_videos_empty),
+            style = LocalAppTopography.current.mdSemiBold,
+            color = YralColors.NeutralTextPrimary,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
+private fun SubscriberOnlyCta(
+    displayName: String,
+    onUnlockClick: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            text = stringResource(Res.string.subscriber_only_videos),
+            style = LocalAppTopography.current.mdSemiBold,
+            color = YralColors.NeutralTextPrimary,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            text = stringResource(Res.string.subscriber_only_description, displayName),
+            style = LocalAppTopography.current.baseRegular,
+            color = YralColors.NeutralTextSecondary,
+            textAlign = TextAlign.Center,
+        )
+        YralGradientButton(
+            modifier = Modifier.fillMaxWidth(),
+            text = stringResource(Res.string.unlock_now),
+            onClick = onUnlockClick,
+        )
+    }
+}
+
+@Composable
+private fun DraftVideoContent() {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = stringResource(Res.string.draft_videos_empty),
+            style = LocalAppTopography.current.mdSemiBold,
+            color = YralColors.NeutralTextPrimary,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            text = stringResource(Res.string.draft_videos_empty_subtitle),
+            style = LocalAppTopography.current.baseRegular,
+            color = YralColors.NeutralTextSecondary,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+private const val EXCLUSIVE_PLACEHOLDER_COUNT = 6
 
 @Composable
 fun BecomeProButton(

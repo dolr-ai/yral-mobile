@@ -83,11 +83,14 @@ fun ProfileReelPlayer(
     onViewsClick: (FeedDetails) -> Unit,
     onRecordTime: (currentTime: Int, totalTime: Int, video: FeedDetails) -> Unit,
     modifier: Modifier = Modifier,
+    maxVideos: Int = Int.MAX_VALUE,
 ) {
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val videoReels =
-        remember(reelVideos.itemSnapshotList) {
-            reelVideos.itemSnapshotList.items.map { it.toReel() }
+        remember(reelVideos.itemSnapshotList, maxVideos) {
+            reelVideos.itemSnapshotList.items
+                .take(maxVideos)
+                .map { it.toReel() }
         }
     var currentPage by remember { mutableStateOf(initialPage) }
     if (videoReels.isNotEmpty()) {

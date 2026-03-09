@@ -2,7 +2,6 @@ package com.yral.shared.libs.designsystem.component.features
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -317,14 +316,7 @@ fun AccountInfoView(
                 onClick = onCreateInfluencerClick,
             )
         }
-        Spacer(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(YralColors.Divider)
-                    .padding(bottom = YralDimens.paddingLg),
-        )
+        Spacer(modifier = Modifier.height(YralDimens.paddingLg))
     }
 }
 
