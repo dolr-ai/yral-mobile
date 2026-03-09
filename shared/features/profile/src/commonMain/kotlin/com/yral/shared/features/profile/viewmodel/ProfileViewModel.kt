@@ -1108,11 +1108,17 @@ class ProfileViewModel(
     }
 
     fun selectVideoTab(tab: ProfileVideoTab) {
-        _state.update { it.copy(selectedVideoTab = tab) }
-    }
-
-    fun showSubscriberSheet() {
-        _state.update { it.copy(bottomSheet = ProfileBottomSheet.SubscriberOnly) }
+        _state.update {
+            it.copy(
+                selectedVideoTab = tab,
+                bottomSheet =
+                    if (tab == ProfileVideoTab.Exclusive && !it.isOwnProfile) {
+                        ProfileBottomSheet.SubscriberOnly
+                    } else {
+                        it.bottomSheet
+                    },
+            )
+        }
     }
 }
 

@@ -30,11 +30,9 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetState
@@ -132,8 +130,6 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 import yral_mobile.shared.features.profile.generated.resources.Res
 import yral_mobile.shared.features.profile.generated.resources.become_pro
-import yral_mobile.shared.features.profile.generated.resources.draft_videos_empty
-import yral_mobile.shared.features.profile.generated.resources.draft_videos_empty_subtitle
 import yral_mobile.shared.features.profile.generated.resources.create_ai_video
 import yral_mobile.shared.features.profile.generated.resources.delete
 import yral_mobile.shared.features.profile.generated.resources.delete_video
@@ -141,9 +137,11 @@ import yral_mobile.shared.features.profile.generated.resources.deleting
 import yral_mobile.shared.features.profile.generated.resources.download
 import yral_mobile.shared.features.profile.generated.resources.downloading_video
 import yral_mobile.shared.features.profile.generated.resources.downloading_video_desc
+import yral_mobile.shared.features.profile.generated.resources.draft_videos_empty
+import yral_mobile.shared.features.profile.generated.resources.draft_videos_empty_subtitle
 import yral_mobile.shared.features.profile.generated.resources.error_loading_more_videos
-import yral_mobile.shared.features.profile.generated.resources.exclusive_videos_empty
 import yral_mobile.shared.features.profile.generated.resources.error_loading_videos
+import yral_mobile.shared.features.profile.generated.resources.exclusive_videos_empty
 import yral_mobile.shared.features.profile.generated.resources.failed_to_delete_video
 import yral_mobile.shared.features.profile.generated.resources.ic_crown
 import yral_mobile.shared.features.profile.generated.resources.ic_folder
@@ -428,6 +426,12 @@ fun ProfileMainScreen(
                             viewModel.recordTime(currentTime, totalTime, video)
                         },
                         modifier = Modifier.fillMaxSize(),
+                        maxVideos =
+                            if (state.selectedVideoTab == ProfileVideoTab.Exclusive && !state.isOwnProfile) {
+                                1
+                            } else {
+                                Int.MAX_VALUE
+                            },
                     )
                 } else {
                     viewModel.closeVideoReel()
@@ -806,8 +810,9 @@ private fun MainContent(
                 ExclusiveVideoContent(
                     profileVideos = profileVideos,
                     displayName = state.accountInfo?.displayName ?: "",
+                    isOwnProfile = state.isOwnProfile,
                     onUnlockClick = onSubscribe,
-                    onBlurredVideoClick = { viewModel.showSubscriberSheet() },
+                    onFirstVideoClick = { viewModel.openVideoReel(0) },
                 )
             }
 
@@ -1507,7 +1512,7 @@ private fun ProfileVideoTabBar(
     selectedTab: ProfileVideoTab,
     onTabSelected: (ProfileVideoTab) -> Unit,
 ) {
-    Column {
+    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         Row(
             modifier =
                 Modifier
@@ -1521,38 +1526,36 @@ private fun ProfileVideoTabBar(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier =
                         Modifier
+                            .weight(1f)
                             .clickable { onTabSelected(tab) }
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                            .padding(vertical = 8.dp),
                 ) {
-                    val icon = when (tab) {
-                        ProfileVideoTab.Published -> Res.drawable.ic_grid_category
-                        ProfileVideoTab.Exclusive -> Res.drawable.ic_crown
-                        ProfileVideoTab.Drafts -> Res.drawable.ic_folder
-                    }
+                    val icon =
+                        when (tab) {
+                            ProfileVideoTab.Published -> Res.drawable.ic_grid_category
+                            ProfileVideoTab.Exclusive -> Res.drawable.ic_crown
+                            ProfileVideoTab.Drafts -> Res.drawable.ic_folder
+                        }
                     Icon(
                         painter = painterResource(icon),
                         contentDescription = tab.name,
-                        tint = if (isSelected) YralColors.NeutralTextPrimary else YralColors.NeutralTextSecondary,
+                        tint = if (isSelected) YralColors.Pink300 else YralColors.NeutralTextSecondary,
                         modifier = Modifier.size(24.dp),
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
                     Box(
                         modifier =
                             Modifier
-                                .width(29.dp)
-                                .height(3.dp)
+                                .fillMaxWidth()
+                                .height(if (isSelected) 3.dp else 1.dp)
                                 .background(
-                                    color = if (isSelected) YralColors.Pink300 else Color.Transparent,
-                                    shape = CircleShape,
+                                    color = if (isSelected) YralColors.Pink300 else YralColors.Neutral800,
+                                    shape = RoundedCornerShape(10.dp),
                                 ),
                     )
                 }
             }
         }
-        HorizontalDivider(
-            thickness = 1.dp,
-            color = YralColors.Neutral800,
-        )
     }
 }
 
@@ -1560,9 +1563,15 @@ private fun ProfileVideoTabBar(
 private fun ExclusiveVideoContent(
     profileVideos: LazyPagingItems<FeedDetails>,
     displayName: String,
+    isOwnProfile: Boolean,
     onUnlockClick: () -> Unit,
-    onBlurredVideoClick: () -> Unit,
+    onFirstVideoClick: () -> Unit,
 ) {
+    val itemCount = profileVideos.itemCount.coerceAtMost(EXCLUSIVE_PLACEHOLDER_COUNT)
+    if (isOwnProfile && itemCount == 0) {
+        EmptyExclusiveContent()
+        return
+    }
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -1570,11 +1579,10 @@ private fun ExclusiveVideoContent(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier.fillMaxSize(),
     ) {
-        items(
-            count = profileVideos.itemCount.coerceAtMost(EXCLUSIVE_PLACEHOLDER_COUNT),
-        ) { index ->
+        items(count = itemCount) { index ->
             val video = profileVideos[index]
             val isFirst = index == 0
+            val shouldBlur = !isOwnProfile && !isFirst
             Box(
                 modifier =
                     Modifier
@@ -1582,21 +1590,27 @@ private fun ExclusiveVideoContent(
                         .aspectRatio(GRID_ITEM_ASPECT_RATIO)
                         .clip(RoundedCornerShape(8.dp))
                         .background(YralColors.Neutral900, RoundedCornerShape(8.dp))
-                        .clickable { onBlurredVideoClick() },
+                        .then(
+                            if (isFirst && !isOwnProfile) {
+                                Modifier.clickable { onFirstVideoClick() }
+                            } else {
+                                Modifier
+                            },
+                        ),
             ) {
                 YralAsyncImage(
                     imageUrl = video?.thumbnail ?: "",
                     loaderSize = LoaderSize.Fixed,
                     modifier =
-                        if (isFirst) {
-                            Modifier.fillMaxSize()
-                        } else {
+                        if (shouldBlur) {
                             Modifier.fillMaxSize().blur(16.dp)
+                        } else {
+                            Modifier.fillMaxSize()
                         },
                     shape = RoundedCornerShape(8.dp),
                     contentScale = ContentScale.Crop,
                 )
-                if (isFirst) {
+                if (!isOwnProfile && isFirst) {
                     Icon(
                         painter = painterResource(Res.drawable.ic_lock_open),
                         contentDescription = "Exclusive",
@@ -1611,12 +1625,33 @@ private fun ExclusiveVideoContent(
             }
         }
 
-        item(span = { GridItemSpan(maxLineSpan) }) {
-            SubscriberOnlyCta(
-                displayName = displayName,
-                onUnlockClick = onUnlockClick,
-            )
+        if (!isOwnProfile) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                SubscriberOnlyCta(
+                    displayName = displayName,
+                    onUnlockClick = onUnlockClick,
+                )
+            }
         }
+    }
+}
+
+@Composable
+private fun EmptyExclusiveContent() {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = stringResource(Res.string.exclusive_videos_empty),
+            style = LocalAppTopography.current.mdSemiBold,
+            color = YralColors.NeutralTextPrimary,
+            textAlign = TextAlign.Center,
+        )
     }
 }
 
