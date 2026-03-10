@@ -1,6 +1,9 @@
 package com.yral.shared.libs.videoplayback.android
 
 import android.content.Context
+import android.os.HandlerThread
+import android.os.Process
+import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -60,9 +63,29 @@ private class AndroidPlaybackCoordinator(
 
     private val cache = ShortformCacheProvider.acquire(appContext, policy)
     private val preloadStatusControl = DefaultTargetPreloadStatusControl(policy)
+
+    // Own the preload thread so we can install an UncaughtExceptionHandler.
+    // Media3 1.9.0 has a race condition in PreloadMediaSource where clear()
+    // can null out internal state while an in-flight onPrepared callback is
+    // queued on this thread, causing a checkNotNull() NPE. By owning the
+    // thread we convert that fatal crash into a non-fatal log.
+    private val preloadThread =
+        HandlerThread("YralPreload", Process.THREAD_PRIORITY_AUDIO).apply {
+            start()
+            uncaughtExceptionHandler =
+                Thread.UncaughtExceptionHandler { _, throwable ->
+                    Log.e(
+                        "AndroidPlaybackCoord",
+                        "Non-fatal crash on preload thread (Media3 race condition)",
+                        throwable,
+                    )
+                }
+        }
+
     private val preloadManagerBuilder =
         DefaultPreloadManager
             .Builder(appContext, preloadStatusControl)
+            .setPreloadLooper(preloadThread.looper)
             .setCache(cache)
             .setLoadControl(createLoadControl())
 
@@ -78,6 +101,7 @@ private class AndroidPlaybackCoordinator(
     private var mediaItems: List<MediaItem> = emptyList()
     private var mediaIndexById: Map<String, Int> = emptyMap()
 
+    private var released = false
     private var activeIndex: Int = -1
     private var predictedIndex: Int = -1
     private val preloadScheduler = PreloadEventScheduler(policy, reporter)
@@ -213,7 +237,9 @@ private class AndroidPlaybackCoordinator(
         progressTicker.start()
     }
 
+    @Suppress("LongMethod")
     override fun setFeed(items: List<MediaDescriptor>) {
+        if (released) return
         val previousFeed = feed
         val previousIds = previousFeed.map { it.id }
         val currentIds = items.map { it.id }
@@ -227,17 +253,39 @@ private class AndroidPlaybackCoordinator(
             )
         preloadScheduler.reset("feed_update") { feed.getOrNull(it)?.id }
         preparedScheduler.reset("feed_update") { feed.getOrNull(it)?.id }
-        if (mediaItems.isNotEmpty()) {
-            preloadManager.removeMediaItems(mediaItems)
-        }
-        feed = items
-        mediaItems = items.mapIndexed { index, descriptor -> buildMediaItem(descriptor) }
-        mediaIndexById = items.mapIndexed { index, descriptor -> descriptor.id to index }.toMap()
 
-        if (mediaItems.isNotEmpty()) {
-            val ranking = mediaItems.indices.toList()
-            preloadManager.addMediaItems(mediaItems, ranking)
+        // Build new state
+        val newMediaItems = items.map { buildMediaItem(it) }
+        val newMediaIndexById = items.mapIndexed { index, d -> d.id to index }.toMap()
+
+        // Compute position-aware diff: only keep items at the same index
+        val oldIdAtIndex = mediaItems.withIndex().associate { (i, mi) -> mi.mediaId to i }
+        val newIdAtIndex = newMediaItems.withIndex().associate { (i, mi) -> mi.mediaId to i }
+
+        // An item is "stable" only if it exists in both feeds at the same index
+        val stableIds =
+            oldIdAtIndex.keys
+                .intersect(newIdAtIndex.keys)
+                .filter { id ->
+                    oldIdAtIndex[id] == newIdAtIndex[id]
+                }.toSet()
+
+        // Remove items that are gone or moved
+        val itemsToRemove = mediaItems.filter { it.mediaId !in stableIds }
+        if (itemsToRemove.isNotEmpty()) {
+            preloadManager.removeMediaItems(itemsToRemove)
         }
+
+        // Add items that are new or moved (with correct rankings)
+        val itemsToAdd = newMediaItems.filter { it.mediaId !in stableIds }
+        val rankingsToAdd = itemsToAdd.map { newIdAtIndex[it.mediaId] ?: 0 }
+        if (itemsToAdd.isNotEmpty()) {
+            preloadManager.addMediaItems(itemsToAdd, rankingsToAdd)
+        }
+
+        feed = items
+        mediaItems = newMediaItems
+        mediaIndexById = newMediaIndexById
 
         alignment.invalidatePreparedIndex?.let { stalePreparedIndex ->
             preparedSlot?.let { slot ->
@@ -269,6 +317,7 @@ private class AndroidPlaybackCoordinator(
     }
 
     override fun appendFeed(items: List<MediaDescriptor>) {
+        if (released) return
         if (items.isEmpty()) return
         val startIndex = feed.size
         feed = feed + items
@@ -286,7 +335,9 @@ private class AndroidPlaybackCoordinator(
         }
     }
 
+    @Suppress("ReturnCount")
     override fun setActiveIndex(index: Int) {
+        if (released) return
         if (index !in feed.indices) return
         if (index == activeIndex && activeSlot.index == index) return
 
@@ -332,10 +383,12 @@ private class AndroidPlaybackCoordinator(
         schedulePreparedSlot(index)
     }
 
+    @Suppress("ReturnCount")
     override fun setScrollHint(
         predictedIndex: Int,
         velocity: Float?,
     ) {
+        if (released) return
         if (predictedIndex !in feed.indices) return
         if (predictedIndex == this.predictedIndex) return
         this.predictedIndex = predictedIndex
@@ -348,6 +401,7 @@ private class AndroidPlaybackCoordinator(
         index: Int,
         surface: VideoSurfaceHandle,
     ) {
+        if (released) return
         surfaces[index] = surface
         if (activeSlot.index == index) {
             attachIfBound(activeSlot)
@@ -360,6 +414,7 @@ private class AndroidPlaybackCoordinator(
         index: Int,
         surfaceId: String,
     ) {
+        if (released) return
         val handle = surfaces[index]
         if (handle?.id != surfaceId) return
         surfaces.remove(index)
@@ -378,40 +433,40 @@ private class AndroidPlaybackCoordinator(
     }
 
     override fun onAppForeground() {
+        if (released) return
         if (activeSlot.index in feed.indices) {
             activeSlot.player.playWhenReady = true
         }
     }
 
     override fun onAppBackground() {
+        if (released) return
         activeSlot.player.playWhenReady = false
         preparedSlot?.player?.playWhenReady = false
     }
 
     override fun release() {
+        if (released) return
+        released = true
         preloadScheduler.reset("release") { feed.getOrNull(it)?.id }
         preparedScheduler.reset("release") { feed.getOrNull(it)?.id }
         progressTicker.stop()
         scope.cancel()
-
-        // Stop preload manager from starting new operations
         preloadManager.removeListener(preloadListener)
-        preloadManager.invalidate()
 
-        // Remove all media items to cancel ongoing downloads
-        // Note: This is asynchronous - downloads may still be active for a short time
-        if (mediaItems.isNotEmpty()) {
-            preloadManager.removeMediaItems(mediaItems)
-        }
+        // Release preload manager FIRST. Its release() internally uses
+        // releasePreloadMediaSource() (safe: atomically nullifies +
+        // removeCallbacksAndMessages). Then posts looper quit, dropping
+        // any remaining handler messages (stale onPrepared callbacks).
+        //
+        // Do NOT call removeMediaItems() or invalidate() before release().
+        // invalidate() triggers clear() which has a race condition with
+        // in-flight onPrepared callbacks (Media3 bug).
+        preloadManager.release()
+        preloadThread.quitSafely()
 
-        // Release players first - they may have MediaSources using the cache
-        // This ensures all cache references from players are closed
         playerA.release()
         playerB?.release()
-
-        // Release the preload manager - this should stop all preload operations
-        preloadManager.release()
-//        ShortformCacheProvider.release()
     }
 
     private fun schedulePreparedSlot(activeIndex: Int) {

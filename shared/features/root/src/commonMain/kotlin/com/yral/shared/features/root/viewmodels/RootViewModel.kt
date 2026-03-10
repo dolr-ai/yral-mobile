@@ -160,6 +160,10 @@ class RootViewModel(
     private var initialisationJob: Job? = null
     private var firebaseJob: Job? = null
 
+    @OptIn(ExperimentalTime::class)
+    private val splashStartTime = Clock.System.now()
+    private var isFirstTimeUser: Boolean? = null
+
     init {
         coroutineScope.launch {
             sessionManager
@@ -191,7 +195,9 @@ class RootViewModel(
             analyticsUser.collect { user -> rootTelemetry.setUser(user) }
         }
         coroutineScope.launch {
-            if (preferences.getString(PrefKeys.FIRST_APP_OPEN_DATE_TIME.name) == null) {
+            val isFirst = preferences.getString(PrefKeys.FIRST_APP_OPEN_DATE_TIME.name) == null
+            isFirstTimeUser = isFirst
+            if (isFirst) {
                 val now = Clock.System.now()
                 rootTelemetry.onFirstAppLaunch(now)
                 preferences.putString(PrefKeys.FIRST_APP_OPEN_DATE_TIME.name, now.toString())
@@ -337,6 +343,9 @@ class RootViewModel(
             } else {
                 NavigationTarget.Home to false
             }
+        if (navigationTarget.first == NavigationTarget.Home) {
+            trackSplashDurationForFirstUser()
+        }
         _state.update {
             it.copy(
                 navigationTarget = navigationTarget.first,
@@ -356,6 +365,13 @@ class RootViewModel(
 
     fun splashScreenViewed() {
         rootTelemetry.onSplashScreenViewed()
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private fun trackSplashDurationForFirstUser() {
+        if (isFirstTimeUser != true) return
+        val durationMs = (Clock.System.now() - splashStartTime).inWholeMilliseconds
+        rootTelemetry.onSplashScreenDuration(durationMs)
     }
 
     fun bottomNavigationClicked(categoryName: CategoryName) {
