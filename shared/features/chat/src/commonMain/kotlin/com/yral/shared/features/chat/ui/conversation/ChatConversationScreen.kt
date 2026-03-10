@@ -73,7 +73,6 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
-private const val INFLUENCER_SUBSCRIPTION_ACCESS_DURATION_MS = 24L * 60 * 60 * 1000
 private const val EXPIRING_SOON_THRESHOLD_MS = 10L * 60 * 1000 // 10 minutes
 
 private data class AccessExpiryDisplay(
@@ -216,16 +215,12 @@ fun ChatConversationScreen(
         totalMessageCount >= viewState.subscriptionMandatoryThreshold
     }
     val shouldShowInfluencerSubscriptionCard by derivedStateOf {
-        val allowedId = viewState.subscriptionAllowedInfluencerId
-        val currentInfluencerId = viewState.influencer?.id ?: params.influencerId
-        val allowedForThisInfluencer = currentInfluencerId == allowedId
         !hasWaitingAssistant &&
             viewState.isSocialSignedIn &&
             viewState.isSubscriptionEnabled &&
             !hasChatAccess &&
             atSubscriptionThreshold &&
-            viewState.isInfluencerSubscriptionAvailableToPurchase &&
-            allowedForThisInfluencer
+            viewState.isInfluencerSubscriptionAvailableToPurchase
     }
     val shouldShowSubscriptionNudge by derivedStateOf {
         viewState.isSocialSignedIn &&
@@ -354,12 +349,12 @@ fun ChatConversationScreen(
                 ),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            val purchaseTimeMs = viewState.influencerSubscriptionPurchaseTimeMs
+            val expiresAtMs = viewState.chatAccessExpiresAtMs
             val showAccessExpiry =
-                viewState.isInfluencerSubscriptionPurchasedAndVerified && purchaseTimeMs != null
+                viewState.isInfluencerSubscriptionPurchasedAndVerified && expiresAtMs != null
             val accessExpiryDisplay by produceState(
                 initialValue = AccessExpiryDisplay(null, false),
-                purchaseTimeMs,
+                expiresAtMs,
                 showAccessExpiry,
             ) {
                 if (!showAccessExpiry) {
@@ -367,7 +362,7 @@ fun ChatConversationScreen(
                     return@produceState
                 }
                 while (true) {
-                    val remaining = remainingAccessMs(purchaseTimeMs)
+                    val remaining = remainingAccessMs(expiresAtMs)
                     val text = if (remaining <= 0L) null else formatMillisToHHmmSS(remaining)
                     val isExpiringSoon = remaining in 1..EXPIRING_SOON_THRESHOLD_MS
                     value = AccessExpiryDisplay(text, isExpiringSoon)
@@ -538,7 +533,8 @@ internal fun formatMillisToHHmmSS(millis: Long): String {
 }
 
 @OptIn(ExperimentalTime::class)
-private fun remainingAccessMs(purchaseTimeMs: Long): Long {
+private fun remainingAccessMs(expiresAtMs: Long?): Long {
+    if (expiresAtMs == null) return 0L
     val nowMs = Clock.System.now().toEpochMilliseconds()
-    return (purchaseTimeMs + INFLUENCER_SUBSCRIPTION_ACCESS_DURATION_MS) - nowMs
+    return expiresAtMs - nowMs
 }
