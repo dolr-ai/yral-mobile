@@ -10,15 +10,15 @@ enum class ProductId(
     @SerialName("yral_pro")
     YRAL_PRO("yral_pro"),
 
-    @SerialName("tara_subscription")
-    TARA_SUBSCRIPTION("tara_subscription"),
+    @SerialName("daily_chat")
+    DAILY_CHAT("daily_chat"),
     ;
 
     val productType: ProductType
         get() =
             when (this) {
                 YRAL_PRO -> ProductType.SUBS
-                TARA_SUBSCRIPTION -> ProductType.SUBS
+                DAILY_CHAT -> ProductType.ONE_TIME
             }
 
     companion object {
