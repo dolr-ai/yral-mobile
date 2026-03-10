@@ -7,8 +7,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 internal data class UpdateMetaDataRequestDto(
-    @SerialName("video_uid")
-    val videoUid: String,
     @SerialName("delegated_identity_wire")
     val delegatedIdentityWire: KotlinDelegatedIdentityWire,
     @SerialName("meta")
@@ -19,29 +17,43 @@ internal data class UpdateMetaDataRequestDto(
 
 @Serializable
 internal data class PostDetailsDto(
-    @SerialName("is_nsfw")
-    val isNsfw: Boolean,
-    @SerialName("hashtags")
-    val hashtags: List<String>,
+    @SerialName("id")
+    val id: String,
+    @SerialName("title")
+    val title: String,
     @SerialName("description")
     val description: String,
+    @SerialName("creator_principal")
+    val creatorPrincipal: String,
     @SerialName("video_uid")
     val videoUid: String,
-    @SerialName("creator_consent_for_inclusion_in_hot_or_not")
-    val creatorConsentForInclusionInHotOrNot: Boolean,
+    @SerialName("hashtags")
+    val hashtags: List<String>,
+    @SerialName("status")
+    val status: String = "Published",
 )
 
-internal fun UploadFileRequest.toUpdateMetaDataRequestDto(delegatedIdentityWire: KotlinDelegatedIdentityWire) =
-    UpdateMetaDataRequestDto(
-        videoUid = videoUid,
-        delegatedIdentityWire = delegatedIdentityWire,
-        meta = emptyMap(),
-        postDetails =
-            PostDetailsDto(
-                isNsfw = isNSFW,
-                hashtags = hashtags,
-                description = caption,
-                videoUid = videoUid,
-                creatorConsentForInclusionInHotOrNot = true,
-            ),
-    )
+internal fun UploadFileRequest.toUpdateMetaDataRequestDto(
+    delegatedIdentityWire: KotlinDelegatedIdentityWire,
+    creatorPrincipal: String,
+) = UpdateMetaDataRequestDto(
+    delegatedIdentityWire = delegatedIdentityWire,
+    meta = emptyMap(),
+    postDetails =
+        PostDetailsDto(
+            id = videoUid,
+            title = caption,
+            description = caption,
+            creatorPrincipal = creatorPrincipal,
+            videoUid = videoUid,
+            hashtags = hashtags,
+        ),
+)
+
+@Serializable
+internal data class UpdateMetaDataResponseDto(
+    val success: Boolean,
+    @SerialName("error_message")
+    val errorMessage: String?,
+    val data: String?,
+)

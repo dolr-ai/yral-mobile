@@ -33,6 +33,14 @@ data class SplashScreenViewedEventData(
 }
 
 @Serializable
+data class SplashScreenDurationEventData(
+    @SerialName("event") override val event: String = FeatureEvents.SPLASH_SCREEN_DURATION.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.APP.getFeatureName(),
+    @SerialName("duration_ms") val durationMs: Long,
+) : BaseEventData(),
+    EventData
+
+@Serializable
 data class AppOnboardingShownEventData(
     @SerialName("event") override val event: String = FeatureEvents.APP_ONBOARDING_SHOWN.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),

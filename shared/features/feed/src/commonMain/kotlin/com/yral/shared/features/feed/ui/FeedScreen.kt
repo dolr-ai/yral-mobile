@@ -115,11 +115,13 @@ fun FeedScreen(
         viewModel.consumePendingSharedVideoRouteIfNeeded()
     }
 
-    // Pagination logic
+    // Pagination logic - read specific fields to avoid recomputing on unrelated state changes
+    val feedDetailsSize = state.feedDetails.size
+    val currentPage = state.currentPageOfFeed
     val isNearEnd by remember {
         derivedStateOf {
-            state.feedDetails.isNotEmpty() &&
-                (state.feedDetails.size - state.currentPageOfFeed) <= PRE_FETCH_BEFORE_LAST
+            feedDetailsSize > 0 &&
+                (feedDetailsSize - currentPage) <= PRE_FETCH_BEFORE_LAST
         }
     }
     LaunchedEffect(isNearEnd, state.isLoadingMore, state.pendingFetchDetails) {
@@ -159,7 +161,7 @@ fun FeedScreen(
     }
 
     val reels =
-        remember(state.feedDetails) {
+        remember(state.feedDetails.size) {
             state.feedDetails.map { it.toReel() }
         }
 

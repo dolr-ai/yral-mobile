@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.sp
 import com.yral.shared.features.game.domain.models.GameIcon
-import com.yral.shared.libs.designsystem.component.YralAsyncImage
+import com.yral.shared.libs.designsystem.component.YralAsyncImageV2
 
 @Composable
 fun GameIcon(
@@ -63,9 +63,11 @@ fun AsyncGameIcon(
     icon: GameIcon,
     loadLocal: () -> Unit,
 ) {
-    YralAsyncImage(
+    YralAsyncImageV2(
         imageUrl = icon.imageUrl,
         modifier = modifier,
+        showLoader = false,
+        enableCrossfade = false,
         onError = { loadLocal() },
     )
 }

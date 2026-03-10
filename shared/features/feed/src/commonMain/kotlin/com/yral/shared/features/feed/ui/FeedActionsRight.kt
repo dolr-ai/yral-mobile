@@ -66,6 +66,9 @@ fun ColumnScope.FeedActionsRight(
     feedViewModel: FeedViewModel,
     openProfile: (userCanisterData: CanisterData) -> Unit,
 ) {
+    if (pageNo >= state.feedDetails.size) return
+    val feedDetails = state.feedDetails[pageNo]
+
     Column(
         modifier = Modifier.weight(1f).padding(top = 65.dp, end = 10.dp),
         verticalArrangement = Arrangement.Top,
@@ -82,7 +85,6 @@ fun ColumnScope.FeedActionsRight(
             )
         }
     }
-    val feedDetails = state.feedDetails[pageNo]
     if (state.overlayType in listOf(OverlayType.GAME_TOGGLE, OverlayType.DAILY_RANK)) {
         feedDetails.profileImageURL?.let { profileImage ->
             Column(modifier = Modifier.offset(y = 16.dp)) {

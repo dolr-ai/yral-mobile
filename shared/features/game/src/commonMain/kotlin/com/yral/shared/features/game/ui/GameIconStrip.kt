@@ -40,6 +40,7 @@ fun GameIconStrip(
     onIconAnimationComplete: () -> Unit = {},
     setNudgeShown: () -> Unit = {},
 ) {
+    var iconPositions by remember { mutableStateOf(mapOf<Int, Float>()) }
     var playSound by remember { mutableStateOf(false) }
     var animatingIcon by remember(clickedIcon) { mutableStateOf(clickedIcon) }
     LaunchedEffect(animatingNudgeIconPosition) {
@@ -65,7 +66,11 @@ fun GameIconStrip(
             Box(
                 modifier =
                     Modifier.onGloballyPositioned { coordinates ->
-                        onIconPositioned(index, coordinates.positionInParent().x)
+                        val xPos = coordinates.positionInParent().x
+                        if (iconPositions[index] != xPos) {
+                            iconPositions = iconPositions.plus(index to xPos)
+                            onIconPositioned(index, xPos)
+                        }
                     },
             ) {
                 val animationDuration =
