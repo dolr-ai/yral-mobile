@@ -29,6 +29,7 @@ import com.yral.shared.libs.videoplayback.PlaybackEventReporter
 import com.yral.shared.libs.videoplayback.ui.VideoFeedSync
 import com.yral.shared.libs.videoplayback.ui.VideoPagerEffects
 import com.yral.shared.libs.videoplayback.ui.VideoSurfaceSlot
+import com.yral.shared.libs.videoplayback.ui.VideoSurfaceType
 import com.yral.shared.libs.videoplayback.ui.rememberPlaybackCoordinatorWithLifecycle
 import com.yral.shared.libs.videoplayback.withLogging
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -131,6 +132,7 @@ fun YRALReelPlayer(
                 index = page,
                 coordinator = coordinator,
                 modifier = Modifier.fillMaxSize(),
+                surfaceType = scrollingFeedSurfaceType(),
                 shutter = {
                     if (reel != null) {
                         AsyncImage(
@@ -146,6 +148,8 @@ fun YRALReelPlayer(
         }
     }
 }
+
+internal fun scrollingFeedSurfaceType(): VideoSurfaceType = VideoSurfaceType.TextureView
 
 @Composable
 private fun rememberPlaybackEventReporter(
