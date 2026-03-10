@@ -26,7 +26,7 @@ object ChatFeatureFlags {
                 keySuffix = "subscriptionMandatoryThreshold",
                 name = "Subscription mandatory threshold",
                 description = "Total message count at which to show subscription nudge in chat",
-                defaultValue = 100,
+                defaultValue = 1,
             )
         val MaxBotCountForCta: FeatureFlag<Int> =
             int(
