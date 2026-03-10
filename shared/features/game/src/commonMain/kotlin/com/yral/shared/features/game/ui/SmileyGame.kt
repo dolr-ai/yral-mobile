@@ -39,13 +39,13 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.touchlab.kermit.Logger
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.features.game.domain.models.GameIcon
 import com.yral.shared.features.game.ui.SmileyGameConstants.MANDATORY_NUDGE_ANIMATION_ICON_ITERATIONS
 import com.yral.shared.features.game.ui.SmileyGameConstants.NUDGE_ANIMATION_DURATION
 import com.yral.shared.features.game.ui.SmileyGameConstants.NUDGE_ANIMATION_ICON_ITERATIONS
+import com.yral.shared.features.game.viewmodel.GameState
 import com.yral.shared.features.game.viewmodel.GameViewModel
 import com.yral.shared.features.game.viewmodel.NudgeType
 import com.yral.shared.libs.designsystem.component.YralFeedback
@@ -69,12 +69,12 @@ import kotlin.coroutines.cancellation.CancellationException
 fun Game(
     feedDetails: FeedDetails,
     pageNo: Int,
+    gameState: GameState,
+    gameIcons: List<GameIcon>,
     gameViewModel: GameViewModel,
     onboardingNudgeType: NudgeType? = null,
     onOnboardingNudgeComplete: () -> Unit = {},
 ) {
-    val gameState by gameViewModel.state.collectAsStateWithLifecycle()
-    val gameIcons by gameViewModel.gameIcons.collectAsStateWithLifecycle()
     val effectiveNudgeType =
         when {
             onboardingNudgeType == NudgeType.ONBOARDING_OTHERS -> null
@@ -117,6 +117,12 @@ fun Game(
         )
     }
 }
+
+fun shouldRenderSmileyGameOverlay(
+    pageNo: Int,
+    currentPage: Int,
+    isCardLayoutEnabled: Boolean,
+): Boolean = !isCardLayoutEnabled && pageNo == currentPage
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable

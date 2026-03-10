@@ -331,6 +331,7 @@ class GameViewModel(
     }
 
     fun setAnimateCoinBalance(shouldAnimate: Boolean) {
+        if (_state.value.animateCoinBalance == shouldAnimate) return
         _state.update { it.copy(animateCoinBalance = shouldAnimate) }
     }
 
@@ -339,14 +340,17 @@ class GameViewModel(
     }
 
     fun toggleResultSheet(isVisible: Boolean) {
+        if (_state.value.showResultSheet == isVisible) return
         _state.update { it.copy(showResultSheet = isVisible) }
     }
 
     fun toggleAboutGame(isVisible: Boolean) {
+        if (_state.value.showAboutGame == isVisible) return
         _state.update { it.copy(showAboutGame = isVisible) }
     }
 
     fun setCurrentVideoId(videoId: String) {
+        if (_state.value.currentVideoId == videoId) return
         _state.update { it.copy(currentVideoId = videoId) }
     }
 
@@ -362,6 +366,7 @@ class GameViewModel(
     }
 
     fun updateGameType(gameType: GameType) {
+        if (_state.value.gameType == gameType) return
         _state.update { it.copy(gameType = gameType) }
         // if we require to toggle value on game type change
         // setHowToPlayShown(false)
