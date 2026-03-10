@@ -215,12 +215,22 @@ fun ChatConversationScreen(
         totalMessageCount >= viewState.subscriptionMandatoryThreshold
     }
     val shouldShowInfluencerSubscriptionCard by derivedStateOf {
-        !hasWaitingAssistant &&
-            viewState.isSocialSignedIn &&
-            viewState.isSubscriptionEnabled &&
-            !hasChatAccess &&
-            atSubscriptionThreshold &&
-            viewState.isInfluencerSubscriptionAvailableToPurchase
+        val result =
+            !hasWaitingAssistant &&
+                viewState.isSocialSignedIn &&
+                viewState.isSubscriptionEnabled &&
+                !hasChatAccess &&
+                atSubscriptionThreshold &&
+                viewState.isInfluencerSubscriptionAvailableToPurchase
+        co.touchlab.kermit.Logger.d("SubDebug") {
+            "shouldShow=$result | waiting=$hasWaitingAssistant | signed=${viewState.isSocialSignedIn}" +
+                " | subEnabled=${viewState.isSubscriptionEnabled} | access=$hasChatAccess" +
+                " | threshold=$atSubscriptionThreshold(count=$totalMessageCount/" +
+                "${viewState.subscriptionMandatoryThreshold})" +
+                " | productAvail=${viewState.isInfluencerSubscriptionAvailableToPurchase}" +
+                " | loading=${viewState.isChatAccessLoading}"
+        }
+        result
     }
     val shouldShowSubscriptionNudge by derivedStateOf {
         viewState.isSocialSignedIn &&
