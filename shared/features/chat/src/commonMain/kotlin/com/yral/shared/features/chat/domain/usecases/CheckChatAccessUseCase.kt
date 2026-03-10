@@ -21,8 +21,7 @@ class CheckChatAccessUseCase(
     @OptIn(ExperimentalTime::class)
     override suspend fun execute(parameter: String): ChatAccessStatus {
         val userId =
-            sessionManager.userPrincipal
-                ?: throw IllegalStateException("User not signed in")
+            checkNotNull(sessionManager.userPrincipal) { "User not signed in" }
         val response = dataSource.checkChatAccess(userId = userId, botId = parameter)
         val data = response.data
         return ChatAccessStatus(
