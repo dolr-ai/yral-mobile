@@ -42,12 +42,5 @@ object ChatFeatureFlags {
                 description = "Maximum number of bot usernames to show before '+N More'",
                 defaultValue = 2,
             )
-        val SubscriptionAllowedInfluencerId: FeatureFlag<String> =
-            string(
-                keySuffix = "subscriptionAllowedInfluencerId",
-                name = "Influencer subscription allowed influencer ID",
-                description = "If set, influencer subscription only for this ID; empty = no restriction",
-                defaultValue = "",
-            )
     }
 }
