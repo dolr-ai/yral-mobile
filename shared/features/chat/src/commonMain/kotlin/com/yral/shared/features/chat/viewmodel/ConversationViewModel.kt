@@ -44,6 +44,7 @@ import com.yral.shared.features.subscriptions.domain.FetchProductsUseCase
 import com.yral.shared.iap.IAPManager
 import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.ProductId
+import com.yral.shared.iap.core.model.PurchaseState
 import com.yral.shared.iap.utils.PurchaseContext
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.designsystem.component.toast.ToastStatus
@@ -301,13 +302,61 @@ class ConversationViewModel(
                             )
                         }
                     } else {
-                        _viewState.update { it.copy(isChatAccessLoading = false) }
-                        fetchInfluencerSubscriptionProducts()
+                        migrateLegacyTaraSubscription(influencerId)
                     }
                 }.onFailure {
                     _viewState.update { it.copy(isChatAccessLoading = false) }
                     fetchInfluencerSubscriptionProducts()
                 }
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private suspend fun migrateLegacyTaraSubscription(botId: String) {
+        runSuspendCatching {
+            iapManager.restorePurchases()
+        }.onSuccess { restoreResult ->
+            val legacyPurchase =
+                restoreResult.getOrNull()?.purchases?.firstOrNull { purchase ->
+                    purchase.productId == ProductId.TARA_SUBSCRIPTION &&
+                        purchase.state == PurchaseState.PURCHASED &&
+                        purchase.isActiveSubscription()
+                }
+            val purchaseToken = legacyPurchase?.purchaseToken
+            if (legacyPurchase != null && purchaseToken != null) {
+                Logger.d("SubscriptionX") { "Found legacy tara_subscription, migrating..." }
+                grantChatAccessUseCase(
+                    GrantChatAccessParams(
+                        botId = botId,
+                        purchaseToken = purchaseToken,
+                        productId = ProductId.TARA_SUBSCRIPTION.productId,
+                    ),
+                ).onSuccess { grantStatus ->
+                    _viewState.update {
+                        it.copy(
+                            isInfluencerSubscriptionPurchasedAndVerified = true,
+                            chatAccessExpiresAtMs = grantStatus.expiresAtMs,
+                            isChatAccessLoading = false,
+                        )
+                    }
+                }.onFailure {
+                    Logger.e("SubscriptionX", it) { "Legacy migration grant failed" }
+                    _viewState.update {
+                        it.copy(
+                            isInfluencerSubscriptionPurchasedAndVerified = true,
+                            chatAccessExpiresAtMs = legacyPurchase.purchaseTime + FALLBACK_ACCESS_DURATION_MS,
+                            isChatAccessLoading = false,
+                        )
+                    }
+                }
+            } else {
+                _viewState.update { it.copy(isChatAccessLoading = false) }
+                fetchInfluencerSubscriptionProducts()
+            }
+        }.onFailure {
+            Logger.e("SubscriptionX", it) { "Legacy migration restore failed" }
+            _viewState.update { it.copy(isChatAccessLoading = false) }
+            fetchInfluencerSubscriptionProducts()
         }
     }
 
