@@ -35,6 +35,7 @@ class ChatAccessBillingRemoteDataSource(
     }
 
     override suspend fun grantChatAccess(request: GrantChatAccessRequestDto): ChatAccessApiResponse {
+        Logger.d(TAG) { "grantChatAccess request: botId=${request.botId}, productId=${request.productId}" }
         val response =
             httpClient.post {
                 expectSuccess = false
@@ -45,7 +46,7 @@ class ChatAccessBillingRemoteDataSource(
                 setBody(request)
             }
         val body = response.bodyAsText()
-        Logger.d(TAG) { "grantChatAccess response: $body" }
+        Logger.d(TAG) { "grantChatAccess status=${response.status}, response: $body" }
         return json.decodeFromString<ChatAccessApiResponse>(body)
     }
 
@@ -53,6 +54,7 @@ class ChatAccessBillingRemoteDataSource(
         userId: String,
         botId: String,
     ): ChatAccessApiResponse {
+        Logger.d(TAG) { "checkChatAccess request: userId=$userId, botId=$botId" }
         val response =
             httpClient.get {
                 expectSuccess = false
@@ -64,7 +66,7 @@ class ChatAccessBillingRemoteDataSource(
                 parameter("bot_id", botId)
             }
         val body = response.bodyAsText()
-        Logger.d(TAG) { "checkChatAccess response: $body" }
+        Logger.d(TAG) { "checkChatAccess status=${response.status}, response: $body" }
         return json.decodeFromString<ChatAccessApiResponse>(body)
     }
 }

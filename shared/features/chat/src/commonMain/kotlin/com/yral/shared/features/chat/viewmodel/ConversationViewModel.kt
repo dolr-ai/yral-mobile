@@ -290,10 +290,14 @@ class ConversationViewModel(
 
     private fun updateInfluencerSubscriptionProductState(influencerId: String) {
         if (!_viewState.value.isSubscriptionEnabled) return
+        Logger.d("SubscriptionX") { "checkChatAccess for influencer=$influencerId" }
         _viewState.update { it.copy(isChatAccessLoading = true) }
         viewModelScope.launch {
             checkChatAccessUseCase(influencerId)
                 .onSuccess { status ->
+                    Logger.d("SubscriptionX") {
+                        "checkChatAccess result: hasAccess=${status.hasAccess}, expiresAtMs=${status.expiresAtMs}"
+                    }
                     if (status.hasAccess) {
                         _viewState.update {
                             it.copy(
@@ -305,7 +309,8 @@ class ConversationViewModel(
                     } else {
                         migrateLegacyTaraSubscription(influencerId)
                     }
-                }.onFailure {
+                }.onFailure { error ->
+                    Logger.e("SubscriptionX", error) { "checkChatAccess failed" }
                     _viewState.update { it.copy(isChatAccessLoading = false) }
                     fetchInfluencerSubscriptionProducts()
                 }
@@ -451,11 +456,20 @@ class ConversationViewModel(
         }
     }
 
-    @Suppress("LongMethod")
+    @Suppress("LongMethod", "CyclomaticComplexMethod")
     private suspend fun performInfluencerSubscriptionPurchase(
         purchaseContext: PurchaseContext,
         botId: String?,
     ) {
+        // Check for unconsumed DAILY_CHAT from a previous failed grant
+        val existingPurchase = findUnconsumedDailyChat()
+        if (existingPurchase != null && botId != null) {
+            Logger.d("SubscriptionX") { "Found unconsumed DAILY_CHAT, retrying grant instead of new purchase" }
+            retryGrantAccess(botId, existingPurchase, ProductId.DAILY_CHAT.productId, true)
+            _viewState.update { it.copy(isInfluencerSubscriptionPurchaseInProgress = false) }
+            return
+        }
+
         runSuspendCatching {
             iapManager.purchaseProduct(
                 productId = ProductId.DAILY_CHAT,
@@ -466,12 +480,16 @@ class ConversationViewModel(
             val purchase = purchaseKotlinResult.getOrNull()
             val purchaseToken = purchase?.purchaseToken
             val purchaseTime = purchase?.purchaseTime
+            Logger.d("SubscriptionX") {
+                "Purchase result: token=${purchaseToken != null}, time=$purchaseTime, state=${purchase?.state}"
+            }
             if (purchase == null || purchaseToken == null) {
                 botId?.let { chatTelemetry.subscriptionFailed(it, "no_purchase") }
                 _viewState.update { it.copy(isInfluencerSubscriptionPurchaseInProgress = false) }
                 return@onSuccess
             }
             if (botId != null) {
+                Logger.d("SubscriptionX") { "Calling grantChatAccess for botId=$botId" }
                 grantChatAccessUseCase(
                     GrantChatAccessParams(
                         botId = botId,
@@ -479,18 +497,23 @@ class ConversationViewModel(
                         productId = ProductId.DAILY_CHAT.productId,
                     ),
                 ).onSuccess { grantStatus ->
+                    Logger.d("SubscriptionX") {
+                        "Grant succeeded: hasAccess=${grantStatus.hasAccess}, expiresAtMs=${grantStatus.expiresAtMs}"
+                    }
                     consumePurchaseInBackground(purchaseToken)
                     handleInfluencerSubscriptionVerificationResult(
                         isPurchased = true,
                         expiresAtMs = grantStatus.expiresAtMs,
                     )
-                }.onFailure {
+                }.onFailure { grantError ->
+                    Logger.e("SubscriptionX", grantError) { "Grant failed, using fallback 24h access" }
                     handleInfluencerSubscriptionVerificationResult(
                         isPurchased = true,
                         expiresAtMs = purchaseTime?.let { t -> t + FALLBACK_ACCESS_DURATION_MS },
                     )
                 }
             } else {
+                Logger.w("SubscriptionX") { "No botId, using fallback 24h access" }
                 handleInfluencerSubscriptionVerificationResult(
                     isPurchased = true,
                     expiresAtMs = purchaseTime?.let { t -> t + FALLBACK_ACCESS_DURATION_MS },
@@ -1092,6 +1115,20 @@ class ConversationViewModel(
                 .onFailure { Logger.e("SubscriptionX", it) { "Failed to consume purchase" } }
         }
     }
+
+    @Suppress("TooGenericExceptionCaught")
+    private suspend fun findUnconsumedDailyChat(): Purchase? =
+        try {
+            iapManager
+                .restorePurchases()
+                .getOrNull()
+                ?.purchases
+                ?.firstOrNull { purchase ->
+                    purchase.productId == ProductId.DAILY_CHAT && purchase.state == PurchaseState.PURCHASED
+                }
+        } catch (_: Exception) {
+            null
+        }
 
     companion object {
         private const val PAGE_SIZE = 10
