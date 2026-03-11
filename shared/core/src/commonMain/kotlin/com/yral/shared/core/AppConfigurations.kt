@@ -9,7 +9,7 @@ object AppConfigurations {
     const val TOURNAMENT_FEED_BASE_URL = "recsys-on-premise.fly.dev"
     const val OFF_CHAIN_BASE_URL = "offchain.yral.com"
     const val PUMP_DUMP_BASE_URL = "yral-hot-or-not.go-bazzinga.workers.dev"
-    const val UPLOAD_BASE_URL = "yral-upload-video.go-bazzinga.workers.dev"
+    const val UPLOAD_BASE_URL = "upload.yral.com"
     const val ANALYTICS_BASE_URL = "analytics.yral.com"
     const val CHAT_BASE_URL = "chat.yral.com"
     const val CHAT_BASE_URL_DEBUG = "staging-yral-ai-chat.fly.dev"

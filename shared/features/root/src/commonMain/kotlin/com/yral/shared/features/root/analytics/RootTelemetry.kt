@@ -5,6 +5,7 @@ import com.yral.shared.analytics.User
 import com.yral.shared.analytics.events.BottomNavigationClickedEventData
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.FirstAppLaunchEventData
+import com.yral.shared.analytics.events.SplashScreenDurationEventData
 import com.yral.shared.analytics.events.SplashScreenViewedEventData
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -20,6 +21,10 @@ class RootTelemetry(
 
     fun onSplashScreenViewed() {
         analyticsManager.trackEvent(SplashScreenViewedEventData())
+    }
+
+    fun onSplashScreenDuration(durationMs: Long) {
+        analyticsManager.trackEvent(SplashScreenDurationEventData(durationMs = durationMs))
     }
 
     fun bottomNavigationClicked(categoryName: CategoryName) {

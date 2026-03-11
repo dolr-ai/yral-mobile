@@ -56,12 +56,14 @@ class GameViewModel(
     private val _state =
         MutableStateFlow(
             GameState(
-                gameIcons = emptyList(),
                 gameRules = emptyList(),
                 coinBalance = 0,
             ),
         )
     val state: StateFlow<GameState> = _state.asStateFlow()
+
+    private val _gameIcons = MutableStateFlow<List<GameIcon>>(emptyList())
+    val gameIcons: StateFlow<List<GameIcon>> = _gameIcons.asStateFlow()
 
     init {
         viewModelScope.launch { restoreDataFromPrefs() }
@@ -125,9 +127,9 @@ class GameViewModel(
         gameIconsUseCase
             .invoke(Unit)
             .onSuccess { config ->
+                _gameIcons.value = config.availableSmileys
                 _state.update { currentState ->
                     currentState.copy(
-                        gameIcons = config.availableSmileys,
                         lossPenalty = config.lossPenalty,
                     )
                 }
@@ -329,6 +331,7 @@ class GameViewModel(
     }
 
     fun setAnimateCoinBalance(shouldAnimate: Boolean) {
+        if (_state.value.animateCoinBalance == shouldAnimate) return
         _state.update { it.copy(animateCoinBalance = shouldAnimate) }
     }
 
@@ -337,14 +340,17 @@ class GameViewModel(
     }
 
     fun toggleResultSheet(isVisible: Boolean) {
+        if (_state.value.showResultSheet == isVisible) return
         _state.update { it.copy(showResultSheet = isVisible) }
     }
 
     fun toggleAboutGame(isVisible: Boolean) {
+        if (_state.value.showAboutGame == isVisible) return
         _state.update { it.copy(showAboutGame = isVisible) }
     }
 
     fun setCurrentVideoId(videoId: String) {
+        if (_state.value.currentVideoId == videoId) return
         _state.update { it.copy(currentVideoId = videoId) }
     }
 
@@ -360,6 +366,7 @@ class GameViewModel(
     }
 
     fun updateGameType(gameType: GameType) {
+        if (_state.value.gameType == gameType) return
         _state.update { it.copy(gameType = gameType) }
         // if we require to toggle value on game type change
         // setHowToPlayShown(false)
@@ -593,7 +600,6 @@ class GameViewModel(
 
 data class GameState(
     val lossPenalty: Int = Int.MAX_VALUE,
-    val gameIcons: List<GameIcon>,
     val gameResult: Map<String, Pair<GameIcon, VoteResult>> = emptyMap(),
     val hotOrNotResult: Map<String, HotOrNotVoteResult> = emptyMap(),
     val coinBalance: Long,
