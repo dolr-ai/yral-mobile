@@ -6,6 +6,21 @@ import com.yral.buildlogic.ifAppleBuild
 
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 
+fun envValue(key: String): String? {
+    System.getenv(key)?.let { return it }
+    val envFile = rootProject.file(".env")
+    if (envFile.exists()) {
+        envFile.readLines().forEach { line ->
+            val trimmed = line.trim()
+            if (!trimmed.startsWith("#") && "=" in trimmed) {
+                val (k, v) = trimmed.split("=", limit = 2)
+                if (k.trim() == key) return v.trim().removeSurrounding("\"").removeSurrounding("'")
+            }
+        }
+    }
+    return null
+}
+
 plugins {
     alias(libs.plugins.yral.shared.library)
     alias(libs.plugins.yral.android.library)
@@ -36,8 +51,8 @@ publishing {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/dolr-ai/yral-mobile")
             credentials {
-                username = System.getenv("GITHUB_USERNAME")
-                password = System.getenv("GITHUB_TOKEN")
+                username = envValue("GITHUB_USERNAME")
+                password = envValue("GITHUB_TOKEN")
             }
         }
     }
