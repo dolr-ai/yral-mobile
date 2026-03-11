@@ -12,7 +12,7 @@ Key directories:
 - `/shared` - shared app, features, libs, routing, Rust wrappers
 - `/rust-agent` - Rust backend and FFI sources
 
-## Non-Negotiable
+## Non-Negotiables
 
 - Every code change must include or update tests.
 - A task is not complete until relevant tests pass and `./gradlew detekt` passes.
