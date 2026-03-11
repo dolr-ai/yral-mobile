@@ -1,5 +1,9 @@
 @file:OptIn(ExperimentalKotlinGradlePluginApi::class)
 
+import com.yral.buildlogic.applyCocoapodsIfApple
+import com.yral.buildlogic.configureIosTargets
+import com.yral.buildlogic.ifAppleBuild
+
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 
 plugins {
@@ -19,10 +23,7 @@ kotlin {
     androidTarget {
         publishAllLibraryVariants()
     }
-    listOf(
-        iosArm64(),
-        iosSimulatorArm64(),
-    )
+    configureIosTargets(project)
 
     sourceSets {
         commonMain.dependencies { }
@@ -44,7 +45,7 @@ publishing {
 
 android {
     defaultConfig {
-        ndkVersion = "28.0.13004108"
+        ndkVersion = "29.0.14206865"
     }
     packaging {
         jniLibs.keepDebugSymbols += "**/*.so"

@@ -1,36 +1,38 @@
+import com.yral.buildlogic.applyCocoapodsIfApple
+import com.yral.buildlogic.configureCocoapods
+import com.yral.buildlogic.configureIosTargets
+import com.yral.buildlogic.ifAppleBuild
 plugins {
     alias(libs.plugins.yral.shared.library)
     alias(libs.plugins.yral.android.library)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.kotlinCocoapods)
+}
+
+applyCocoapodsIfApple()
+
+configureCocoapods {
+    version = "1.0"
+    summary = "Analytics module with Firebase, Mixpanel and OneSignal"
+    homepage = "https://github.com/dolr-ai/yral-mobile"
+    ios.deploymentTarget = "15.6"
+
+    noPodspec()
+
+    // Add Mixpanel pod
+    pod("Mixpanel") {
+//            extraOpts += listOf("-compiler-option", "-fmodules")
+        version = "5.0.8"
+    }
+    pod("FBSDKCoreKit") {
+        version = "18.0.0"
+        extraOpts += listOf("-compiler-option", "-fmodules")
+    }
 }
 
 kotlin {
 
     androidTarget()
-    listOf(
-        iosArm64(),
-        iosSimulatorArm64(),
-    )
-
-    cocoapods {
-        version = "1.0"
-        summary = "Analytics module with Firebase, Mixpanel and OneSignal"
-        homepage = "https://github.com/dolr-ai/yral-mobile"
-        ios.deploymentTarget = "15.6"
-
-        noPodspec()
-
-        // Add Mixpanel pod
-        pod("Mixpanel") {
-//            extraOpts += listOf("-compiler-option", "-fmodules")
-            version = "5.0.8"
-        }
-        pod("FBSDKCoreKit") {
-            version = "18.0.0"
-            extraOpts += listOf("-compiler-option", "-fmodules")
-        }
-    }
+    configureIosTargets(project)
 
     sourceSets {
         commonMain.dependencies {

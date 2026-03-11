@@ -1,34 +1,38 @@
+import com.yral.buildlogic.applyCocoapodsIfApple
+import com.yral.buildlogic.configureCocoapods
+import com.yral.buildlogic.configureIosTargets
+import com.yral.buildlogic.ifAppleBuild
 plugins {
     alias(libs.plugins.yral.shared.feature)
     alias(libs.plugins.yral.shared.library.compose)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.kotlinCocoapods)
+}
+
+applyCocoapodsIfApple()
+
+configureCocoapods {
+    summary = "Umbrella framework for shared KMM code"
+    homepage = "https://github.com/dolr-ai/yral-mobile"
+    license = "MIT"
+    ios.deploymentTarget = "15.6"
+    podfile = project.file("../iosApp/Podfile")
+
+    framework {
+        baseName = "iosSharedUmbrella"
+        isStatic = true
+        export(projects.shared.libs.analytics)
+        export(projects.shared.libs.crashlytics)
+        export(projects.shared.app)
+        export(projects.shared.libs.featureFlag)
+        export(projects.shared.libs.routing.routesApi)
+        export(libs.decompose.decompose)
+        export(libs.essenty.lifecycle)
+    }
 }
 
 version = "1.0"
 kotlin {
-    iosArm64()
-    iosSimulatorArm64()
-
-    cocoapods {
-        summary = "Umbrella framework for shared KMM code"
-        homepage = "https://github.com/dolr-ai/yral-mobile"
-        license = "MIT"
-        ios.deploymentTarget = "15.6"
-        podfile = project.file("../iosApp/Podfile")
-
-        framework {
-            baseName = "iosSharedUmbrella"
-            isStatic = true
-            export(projects.shared.libs.analytics)
-            export(projects.shared.libs.crashlytics)
-            export(projects.shared.app)
-            export(projects.shared.libs.featureFlag)
-            export(projects.shared.libs.routing.routesApi)
-            export(libs.decompose.decompose)
-            export(libs.essenty.lifecycle)
-        }
-    }
+    configureIosTargets(project)
 
     sourceSets {
         iosMain.dependencies {
