@@ -450,17 +450,20 @@ class ConversationViewModel(
                         productId = ProductId.DAILY_CHAT.productId,
                     ),
                 ).onSuccess { grantStatus ->
+                    consumePurchaseInBackground(purchaseToken)
                     handleInfluencerSubscriptionVerificationResult(
                         isPurchased = true,
                         expiresAtMs = grantStatus.expiresAtMs,
                     )
                 }.onFailure {
+                    consumePurchaseInBackground(purchaseToken)
                     handleInfluencerSubscriptionVerificationResult(
                         isPurchased = true,
                         expiresAtMs = purchaseTime?.let { t -> t + FALLBACK_ACCESS_DURATION_MS },
                     )
                 }
             } else {
+                consumePurchaseInBackground(purchaseToken)
                 handleInfluencerSubscriptionVerificationResult(
                     isPurchased = true,
                     expiresAtMs = purchaseTime?.let { t -> t + FALLBACK_ACCESS_DURATION_MS },
@@ -1052,6 +1055,14 @@ class ConversationViewModel(
                         "Failed to mark conversation as read: $conversationId"
                     }
                 }
+        }
+    }
+
+    private fun consumePurchaseInBackground(purchaseToken: String) {
+        viewModelScope.launch {
+            iapManager
+                .consumePurchase(purchaseToken)
+                .onFailure { Logger.e("SubscriptionX", it) { "Failed to consume purchase" } }
         }
     }
 

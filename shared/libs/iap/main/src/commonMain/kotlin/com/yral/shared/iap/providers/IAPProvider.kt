@@ -29,4 +29,6 @@ interface IAPProvider {
     ): Result<RestoreResult>
 
     suspend fun isProductPurchased(productId: ProductId): Result<PurchaseResult>
+
+    suspend fun consumePurchase(purchaseToken: String): Result<Unit>
 }

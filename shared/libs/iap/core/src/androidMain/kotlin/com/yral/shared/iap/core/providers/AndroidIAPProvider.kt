@@ -176,6 +176,9 @@ internal class AndroidIAPProvider(
         purchaseManager
             .restorePurchases(acknowledgePurchase)
 
+    @Suppress("MaxLineLength")
+    override suspend fun consumePurchase(purchaseToken: String): Result<Unit> = purchaseManager.consumePurchase(purchaseToken)
+
     override suspend fun isProductPurchased(productId: ProductId): Result<Boolean> =
         restorePurchases()
             .map { purchases ->
