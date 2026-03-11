@@ -44,6 +44,7 @@ import com.yral.shared.features.subscriptions.domain.FetchProductsUseCase
 import com.yral.shared.iap.IAPManager
 import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.ProductId
+import com.yral.shared.iap.core.model.Purchase
 import com.yral.shared.iap.core.model.PurchaseState
 import com.yral.shared.iap.utils.PurchaseContext
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
@@ -311,52 +312,80 @@ class ConversationViewModel(
         }
     }
 
-    @Suppress("DEPRECATION")
+    @Suppress("DEPRECATION", "LongMethod", "CyclomaticComplexMethod")
     private suspend fun migrateLegacyTaraSubscription(botId: String) {
         runSuspendCatching {
             iapManager.restorePurchases()
         }.onSuccess { restoreResult ->
+            val purchases = restoreResult.getOrNull()?.purchases.orEmpty()
+
+            // Check for legacy tara_subscription (active subscription)
             val legacyPurchase =
-                restoreResult.getOrNull()?.purchases?.firstOrNull { purchase ->
+                purchases.firstOrNull { purchase ->
                     purchase.productId == ProductId.TARA_SUBSCRIPTION &&
                         purchase.state == PurchaseState.PURCHASED &&
                         purchase.isActiveSubscription()
                 }
-            val purchaseToken = legacyPurchase?.purchaseToken
-            if (legacyPurchase != null && purchaseToken != null) {
-                Logger.d("SubscriptionX") { "Found legacy tara_subscription, migrating..." }
-                grantChatAccessUseCase(
-                    GrantChatAccessParams(
-                        botId = botId,
-                        purchaseToken = purchaseToken,
-                        productId = ProductId.TARA_SUBSCRIPTION.productId,
-                    ),
-                ).onSuccess { grantStatus ->
-                    _viewState.update {
-                        it.copy(
-                            isInfluencerSubscriptionPurchasedAndVerified = true,
-                            chatAccessExpiresAtMs = grantStatus.expiresAtMs,
-                            isChatAccessLoading = false,
-                        )
-                    }
-                }.onFailure {
-                    Logger.e("SubscriptionX", it) { "Legacy migration grant failed" }
-                    _viewState.update {
-                        it.copy(
-                            isInfluencerSubscriptionPurchasedAndVerified = true,
-                            chatAccessExpiresAtMs = legacyPurchase.purchaseTime + FALLBACK_ACCESS_DURATION_MS,
-                            isChatAccessLoading = false,
-                        )
-                    }
+
+            // Check for unconsumed daily_chat (failed grant from previous session)
+            val unconsumedDailyChat =
+                purchases.firstOrNull { purchase ->
+                    purchase.productId == ProductId.DAILY_CHAT &&
+                        purchase.state == PurchaseState.PURCHASED
                 }
-            } else {
-                _viewState.update { it.copy(isChatAccessLoading = false) }
-                fetchInfluencerSubscriptionProducts()
+
+            when {
+                legacyPurchase != null && legacyPurchase.purchaseToken != null -> {
+                    Logger.d("SubscriptionX") { "Found legacy tara_subscription, migrating..." }
+                    retryGrantAccess(botId, legacyPurchase, ProductId.TARA_SUBSCRIPTION.productId, false)
+                }
+                unconsumedDailyChat != null && unconsumedDailyChat.purchaseToken != null -> {
+                    Logger.d("SubscriptionX") { "Found unconsumed daily_chat, retrying grant..." }
+                    retryGrantAccess(botId, unconsumedDailyChat, ProductId.DAILY_CHAT.productId, true)
+                }
+                else -> {
+                    _viewState.update { it.copy(isChatAccessLoading = false) }
+                    fetchInfluencerSubscriptionProducts()
+                }
             }
         }.onFailure {
             Logger.e("SubscriptionX", it) { "Legacy migration restore failed" }
             _viewState.update { it.copy(isChatAccessLoading = false) }
             fetchInfluencerSubscriptionProducts()
+        }
+    }
+
+    private suspend fun retryGrantAccess(
+        botId: String,
+        purchase: Purchase,
+        productId: String,
+        consumeOnSuccess: Boolean,
+    ) {
+        val purchaseToken = checkNotNull(purchase.purchaseToken)
+        grantChatAccessUseCase(
+            GrantChatAccessParams(
+                botId = botId,
+                purchaseToken = purchaseToken,
+                productId = productId,
+            ),
+        ).onSuccess { grantStatus ->
+            if (consumeOnSuccess) consumePurchaseInBackground(purchaseToken)
+            _viewState.update {
+                it.copy(
+                    isInfluencerSubscriptionPurchasedAndVerified = true,
+                    chatAccessExpiresAtMs = grantStatus.expiresAtMs,
+                    isChatAccessLoading = false,
+                )
+            }
+        }.onFailure {
+            Logger.e("SubscriptionX", it) { "Grant retry failed for $productId" }
+            _viewState.update {
+                it.copy(
+                    isInfluencerSubscriptionPurchasedAndVerified = true,
+                    chatAccessExpiresAtMs = purchase.purchaseTime + FALLBACK_ACCESS_DURATION_MS,
+                    isChatAccessLoading = false,
+                )
+            }
         }
     }
 
@@ -456,14 +485,12 @@ class ConversationViewModel(
                         expiresAtMs = grantStatus.expiresAtMs,
                     )
                 }.onFailure {
-                    consumePurchaseInBackground(purchaseToken)
                     handleInfluencerSubscriptionVerificationResult(
                         isPurchased = true,
                         expiresAtMs = purchaseTime?.let { t -> t + FALLBACK_ACCESS_DURATION_MS },
                     )
                 }
             } else {
-                consumePurchaseInBackground(purchaseToken)
                 handleInfluencerSubscriptionVerificationResult(
                     isPurchased = true,
                     expiresAtMs = purchaseTime?.let { t -> t + FALLBACK_ACCESS_DURATION_MS },
