@@ -97,6 +97,9 @@ internal class IAPProviderImpl(
             } ?: throw IAPError.UnknownError(Exception("User principal is null"))
         }
 
+    @Suppress("MaxLineLength")
+    override suspend fun consumePurchase(purchaseToken: String): Result<Unit> = coreProvider.consumePurchase(purchaseToken)
+
     override suspend fun isProductPurchased(productId: ProductId): Result<PurchaseResult> =
         handleIAPResultOperation {
             sessionManager.userPrincipal?.let { userId ->

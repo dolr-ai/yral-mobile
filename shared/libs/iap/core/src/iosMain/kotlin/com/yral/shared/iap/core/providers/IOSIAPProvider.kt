@@ -138,4 +138,7 @@ internal class IOSIAPProvider : IAPProvider {
                     (purchase.subscriptionStatus == null || purchase.isActiveSubscription())
             }
         }
+
+    override suspend fun consumePurchase(purchaseToken: String): Result<Unit> =
+        Result.success(Unit) // iOS doesn't require explicit consumption
 }
