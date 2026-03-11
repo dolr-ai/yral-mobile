@@ -360,7 +360,15 @@ class ConversationViewModel(
         }
     }
 
+    @Suppress("DEPRECATION")
     private fun fetchInfluencerSubscriptionProducts() {
+        // Diagnostic: check if tara_subscription also returns empty on this app
+        viewModelScope.launch {
+            Logger.d("SubscriptionX") { "DEBUG: Also querying tara_subscription to diagnose billing" }
+            fetchProductsUseCase(listOf(ProductId.TARA_SUBSCRIPTION))
+                .onSuccess { Logger.d("SubscriptionX") { "DEBUG: tara_subscription returned: $it" } }
+                .onFailure { Logger.e("SubscriptionX", it) { "DEBUG: tara_subscription failed" } }
+        }
         viewModelScope.launch {
             fetchProductsUseCase(listOf(ProductId.DAILY_CHAT))
                 .onSuccess { products ->
