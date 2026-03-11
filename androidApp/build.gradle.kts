@@ -17,7 +17,7 @@ android {
         applicationId = "com.yral.android"
         versionCode = 74
         versionName = "2.7.2"
-        ndkVersion = "28.0.13004108"
+        ndkVersion = "29.0.14206865"
         buildConfigField(
             type = "String",
             name = "BRANCH_KEY_TEST",
