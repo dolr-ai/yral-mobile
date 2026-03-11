@@ -98,6 +98,8 @@ class IAPManager(
         provider
             .isProductPurchased(productId)
 
+    suspend fun consumePurchase(purchaseToken: String): Result<Unit> = provider.consumePurchase(purchaseToken)
+
     fun notifyWarning(message: String) {
         Logger.w("SubscriptionXM") { message }
         managerScope.launch {
