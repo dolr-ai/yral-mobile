@@ -124,7 +124,8 @@ fun Project.applyCocoapodsIfApple() {
  */
 fun Project.configureCocoapods(configure: Action<CocoapodsExtension>) {
     pluginManager.withPlugin("org.jetbrains.kotlin.native.cocoapods") {
-        extensions.configure(CocoapodsExtension::class.java, configure)
+        val kotlin = extensions.getByType(KotlinMultiplatformExtension::class.java)
+        kotlin.extensions.configure(CocoapodsExtension::class.java, configure)
     }
 }
 

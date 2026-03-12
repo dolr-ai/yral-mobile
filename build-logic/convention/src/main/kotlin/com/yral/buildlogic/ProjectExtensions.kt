@@ -69,4 +69,3 @@ fun Project.isLocalRustEnabled(): Boolean =
         .map { it.toBoolean() }
         .orElse(false)
         .get()
-
