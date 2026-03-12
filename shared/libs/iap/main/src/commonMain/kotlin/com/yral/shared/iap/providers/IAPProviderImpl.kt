@@ -33,6 +33,7 @@ internal class IAPProviderImpl(
         productId: ProductId,
         context: PurchaseContext?,
         acknowledgePurchase: Boolean,
+        verifyPurchase: Boolean,
     ): Result<CorePurchase> =
         handleIAPResultOperation {
             sessionManager.userPrincipal?.let { userId ->
@@ -43,17 +44,22 @@ internal class IAPProviderImpl(
                         obfuscatedAccountId = userId,
                         acknowledgePurchase = acknowledgePurchase,
                     ).map { purchase ->
-                        Logger.d("SubscriptionX") { "verify purchase $purchase" }
-                        verificationService.verifyPurchase(purchase, userId).fold(
-                            onSuccess = {
-                                Logger.d("SubscriptionXM") { "purchase acknowledged" }
-                                purchase
-                            },
-                            onFailure = { error ->
-                                Logger.e("SubscriptionXM", error) { "purchase acknowledge failed" }
-                                throw error
-                            },
-                        )
+                        if (verifyPurchase) {
+                            Logger.d("SubscriptionX") { "verify purchase $purchase" }
+                            verificationService.verifyPurchase(purchase, userId).fold(
+                                onSuccess = {
+                                    Logger.d("SubscriptionXM") { "purchase acknowledged" }
+                                    purchase
+                                },
+                                onFailure = { error ->
+                                    Logger.e("SubscriptionXM", error) { "purchase acknowledge failed" }
+                                    throw error
+                                },
+                            )
+                        } else {
+                            Logger.d("SubscriptionXM") { "skipping verification for ${productId.productId}" }
+                            purchase
+                        }
                     }
             } ?: throw IAPError.UnknownError(Exception("User principal is null"))
         }
