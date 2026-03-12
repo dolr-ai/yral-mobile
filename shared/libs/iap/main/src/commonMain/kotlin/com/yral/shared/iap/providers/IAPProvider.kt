@@ -21,6 +21,7 @@ interface IAPProvider {
         productId: ProductId,
         context: PurchaseContext? = null,
         acknowledgePurchase: Boolean = false,
+        verifyPurchase: Boolean = true,
     ): Result<Purchase>
 
     suspend fun restorePurchases(
@@ -29,4 +30,6 @@ interface IAPProvider {
     ): Result<RestoreResult>
 
     suspend fun isProductPurchased(productId: ProductId): Result<PurchaseResult>
+
+    suspend fun consumePurchase(purchaseToken: String): Result<Unit>
 }

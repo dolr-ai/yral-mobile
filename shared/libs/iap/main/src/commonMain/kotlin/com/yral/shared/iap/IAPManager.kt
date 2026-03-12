@@ -53,9 +53,10 @@ class IAPManager(
         productId: ProductId,
         context: PurchaseContext? = null,
         acknowledgePurchase: Boolean = false,
+        verifyPurchase: Boolean = true,
     ): Result<Purchase> {
         Logger.d("SubscriptionXM") { "purchaseProduct $productId" }
-        val result = provider.purchaseProduct(productId, context, acknowledgePurchase)
+        val result = provider.purchaseProduct(productId, context, acknowledgePurchase, verifyPurchase)
         Logger.d("SubscriptionXM") { "purchaseProduct $result" }
         notifyListeners {
             if (result.isSuccess) {
@@ -97,6 +98,8 @@ class IAPManager(
     suspend fun isProductPurchased(productId: ProductId): Result<PurchaseResult> =
         provider
             .isProductPurchased(productId)
+
+    suspend fun consumePurchase(purchaseToken: String): Result<Unit> = provider.consumePurchase(purchaseToken)
 
     fun notifyWarning(message: String) {
         Logger.w("SubscriptionXM") { message }

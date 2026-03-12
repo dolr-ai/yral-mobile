@@ -4,8 +4,10 @@ import co.touchlab.kermit.Logger
 import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingResult
+import com.android.billingclient.api.ConsumeParams
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.QueryPurchasesParams
+import com.android.billingclient.api.consumePurchase
 import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.ProductId
 import com.yral.shared.iap.core.model.PurchaseState
@@ -161,6 +163,29 @@ internal class PurchaseManager(
             isAutoRenewing == false -> SubscriptionStatus.CANCELLED
             else -> SubscriptionStatus.ACTIVE
         }
+
+    suspend fun consumePurchase(purchaseToken: String): Result<Unit> {
+        val client = connectionManager.ensureReady()
+        val consumeParams =
+            ConsumeParams
+                .newBuilder()
+                .setPurchaseToken(purchaseToken)
+                .build()
+        val result = client.consumePurchase(consumeParams)
+        Logger.d("SubscriptionX") {
+            "consumePurchase: responseCode=${result.billingResult.responseCode}, " +
+                "debugMessage=${result.billingResult.debugMessage}"
+        }
+        return if (result.billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+            Result.success(Unit)
+        } else {
+            Result.failure(
+                IAPError.UnknownError(
+                    Exception("Failed to consume purchase: ${result.billingResult.debugMessage}"),
+                ),
+            )
+        }
+    }
 
     suspend fun acknowledgePurchaseIfNeeded(
         client: BillingClient,
