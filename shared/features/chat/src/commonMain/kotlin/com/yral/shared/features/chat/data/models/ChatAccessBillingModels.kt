@@ -19,6 +19,11 @@ data class ChatAccessApiResponse(
     val data: ChatAccessDataDto? = null,
 )
 
+data class GrantResult(
+    val httpStatus: Int,
+    val apiResponse: ChatAccessApiResponse,
+)
+
 @Serializable
 data class ChatAccessDataDto(
     @SerialName("has_access") val hasAccess: Boolean,
