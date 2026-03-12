@@ -41,11 +41,20 @@ check(JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
     """.trimIndent()
 }
 
+val isMacOs: Boolean = System.getProperty("os.name").orEmpty().startsWith("Mac", ignoreCase = true)
+
 val isLocalRust: Boolean =
     providers
         .gradleProperty("isLocalRust")
         .map { it.toBoolean() }
         .orElse(false)
+        .get()
+
+val isAppleBuild: Boolean =
+    providers
+        .gradleProperty("isAppleBuild")
+        .map { it.toBoolean() }
+        .orElse(isMacOs)
         .get()
 
 include(":androidApp")
@@ -72,7 +81,9 @@ include(":shared:libs:firebasePerf")
 include(":shared:features:game")
 include(":shared:libs:firebaseAuth")
 include(":shared:libs:firebaseStore")
-include(":iosSharedUmbrella")
+if (isAppleBuild) {
+    include(":iosSharedUmbrella")
+}
 include(":shared:app")
 include(":shared:libs:coroutines-x")
 include(":shared:libs:arch")
