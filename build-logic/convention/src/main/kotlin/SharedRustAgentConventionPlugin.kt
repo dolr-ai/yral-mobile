@@ -1,3 +1,4 @@
+import com.yral.buildlogic.isLocalRustEnabled
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.dependencies
@@ -5,7 +6,7 @@ import org.gradle.kotlin.dsl.dependencies
 class SharedRustAgentConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
-            val isLocalRust = isLocalRust(this@with)
+            val isLocalRust = isLocalRustEnabled()
             dependencies {
                 val dependencyNotation =
                     when {
@@ -24,12 +25,6 @@ class SharedRustAgentConventionPlugin : Plugin<Project> {
             }
         }
     }
-
-    private fun isLocalRust(project: Project): Boolean =
-        project
-            .findProperty("isLocalRust")
-            ?.toString()
-            ?.toBoolean() ?: true
 
     companion object {
         private const val YRAL_RUST_VERSION = "3.5"

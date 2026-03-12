@@ -1,3 +1,4 @@
+import com.yral.buildlogic.configureIosTargets
 plugins {
     alias(libs.plugins.yral.shared.feature)
     alias(libs.plugins.yral.android.feature)
@@ -7,10 +8,7 @@ plugins {
 
 kotlin {
     androidTarget()
-    listOf(
-        iosArm64(),
-        iosSimulatorArm64(),
-    )
+    configureIosTargets(project)
 
     sourceSets {
         commonTest.dependencies {

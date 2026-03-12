@@ -1,5 +1,6 @@
 @file:OptIn(ExperimentalKotlinGradlePluginApi::class)
 
+import com.yral.buildlogic.configureIosTargets
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 
 plugins {
@@ -11,10 +12,7 @@ plugins {
 
 kotlin {
     androidTarget()
-    listOf(
-        iosArm64(),
-        iosSimulatorArm64(),
-    )
+    configureIosTargets(project)
 
     sourceSets {
         commonMain.dependencies {
