@@ -7,3 +7,11 @@
 
 # https://help.branch.io/developers-hub/docs/android-basic-integration#7-configure-proguard
 -keep class com.google.android.gms.** { *; }
+
+# Snowplow Android Tracker — reflection for platform context (appSetId and AAID)
+# https://docs.snowplow.io/docs/sources/mobile-trackers/installation-and-set-up/?platform=android
+-keep class com.google.android.gms.appset.AppSet { *; }
+-keep class com.google.android.gms.appset.AppSetIdInfo { *; }
+-keep class com.google.android.gms.internal.appset.zzr { *; }
+-keep class com.google.android.gms.tasks.Tasks { *; }
+-keep class com.google.android.gms.ads.identifier.** { *; }
