@@ -376,6 +376,7 @@ class ConversationViewModel(
             ),
         ).onSuccess { grantStatus ->
             if (consumeOnSuccess) consumePurchaseInBackground(purchaseToken)
+            chatTelemetry.subscriptionSuccess(botId)
             _viewState.update {
                 it.copy(
                     isInfluencerSubscriptionPurchasedAndVerified = true,
@@ -385,6 +386,7 @@ class ConversationViewModel(
             }
         }.onFailure { error ->
             Logger.e("SubscriptionX", error) { "Grant retry failed for $productId" }
+            chatTelemetry.subscriptionFailed(botId, "grant_retry_${error.message}")
             handleGrantFailure(error, purchaseToken, purchase.purchaseTime)
         }
     }
@@ -551,6 +553,7 @@ class ConversationViewModel(
                     )
                 }.onFailure { grantError ->
                     Logger.e("SubscriptionX", grantError) { "Grant failed after purchase" }
+                    botId.let { chatTelemetry.subscriptionFailed(it, "grant_${grantError.message}") }
                     handleGrantFailure(grantError, purchaseToken, purchaseTime)
                 }
             } else {
