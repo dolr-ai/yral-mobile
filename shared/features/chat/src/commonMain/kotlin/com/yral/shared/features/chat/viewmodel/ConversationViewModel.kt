@@ -518,6 +518,7 @@ class ConversationViewModel(
                 productId = ProductId.DAILY_CHAT,
                 context = purchaseContext,
                 acknowledgePurchase = false,
+                verifyPurchase = false,
             )
         }.onSuccess { purchaseKotlinResult ->
             val purchase = purchaseKotlinResult.getOrNull()
