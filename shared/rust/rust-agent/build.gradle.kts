@@ -1,9 +1,6 @@
 @file:OptIn(ExperimentalKotlinGradlePluginApi::class)
 
-import com.yral.buildlogic.applyCocoapodsIfApple
 import com.yral.buildlogic.configureIosTargets
-import com.yral.buildlogic.ifAppleBuild
-
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 
 fun envValue(key: String): String? {

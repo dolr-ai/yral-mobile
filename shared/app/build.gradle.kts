@@ -15,7 +15,6 @@ kotlin {
     androidTarget()
     configureIosTargets(project)
 
-
     sourceSets {
         commonMain.dependencies {
             implementation(projects.shared.core)
