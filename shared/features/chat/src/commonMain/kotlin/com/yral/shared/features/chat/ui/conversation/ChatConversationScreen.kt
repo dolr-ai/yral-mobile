@@ -240,6 +240,14 @@ fun ChatConversationScreen(
             !viewState.isInfluencerSubscriptionAvailableToPurchase &&
             viewState.isYralProAvailableToPurchase
     }
+    val shouldBlockChatNoProduct by derivedStateOf {
+        viewState.isSocialSignedIn &&
+            viewState.isSubscriptionEnabled &&
+            !hasChatAccess &&
+            atSubscriptionThreshold &&
+            !viewState.isInfluencerSubscriptionAvailableToPurchase &&
+            !viewState.isYralProAvailableToPurchase
+    }
 
     val subscriptionCardOverlayMessage =
         if (shouldShowInfluencerSubscriptionCard) {
@@ -339,6 +347,10 @@ fun ChatConversationScreen(
                 }
                 shouldShowSubscriptionNudge -> {
                     component.subscriptionCoordinator.showSubscriptionNudge(content = subscriptionNudgeContent)
+                    true
+                }
+                shouldBlockChatNoProduct -> {
+                    viewModel.showPurchaseUnavailableToast()
                     true
                 }
                 else -> false
@@ -478,6 +490,12 @@ fun ChatConversationScreen(
                                 },
                                 isPurchaseInProgress = viewState.isInfluencerSubscriptionPurchaseInProgress,
                                 formattedPrice = viewState.influencerSubscriptionFormattedPrice,
+                            )
+                        } else if (shouldBlockChatNoProduct && !viewState.isBotAccount) {
+                            InfluencerSubscriptionCard(
+                                onSubscribe = { viewModel.showPurchaseUnavailableToast() },
+                                isPurchaseInProgress = false,
+                                formattedPrice = null,
                             )
                         } else if (!viewState.isBotAccount) {
                             ChatInputArea(

@@ -466,6 +466,17 @@ class ConversationViewModel(
         chatTelemetry.freeAccessExpired(botId)
     }
 
+    fun showPurchaseUnavailableToast() {
+        viewModelScope.launch {
+            influencerSubscriptionToastChannel.trySend(
+                InfluencerSubscriptionToastEvent(
+                    ToastStatus.Error,
+                    getString(Res.string.influencer_subscription_purchase_unavailable),
+                ),
+            )
+        }
+    }
+
     fun launchInfluencerSubscriptionPurchase(purchaseContext: PurchaseContext?) {
         if (purchaseContext == null) {
             viewModelScope.launch {
