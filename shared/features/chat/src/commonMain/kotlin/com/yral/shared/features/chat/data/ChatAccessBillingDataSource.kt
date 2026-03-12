@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import com.yral.shared.core.AppConfigurations
 import com.yral.shared.features.chat.data.models.ChatAccessApiResponse
 import com.yral.shared.features.chat.data.models.GrantChatAccessRequestDto
+import com.yral.shared.features.chat.data.models.GrantResult
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.get
@@ -16,7 +17,7 @@ import kotlinx.serialization.json.Json
 
 interface ChatAccessBillingDataSource {
     val packageName: String
-    suspend fun grantChatAccess(request: GrantChatAccessRequestDto): ChatAccessApiResponse
+    suspend fun grantChatAccess(request: GrantChatAccessRequestDto): GrantResult
     suspend fun checkChatAccess(
         userId: String,
         botId: String,
@@ -34,7 +35,7 @@ class ChatAccessBillingRemoteDataSource(
         private const val CHECK_ENDPOINT = "google/chat-access/check"
     }
 
-    override suspend fun grantChatAccess(request: GrantChatAccessRequestDto): ChatAccessApiResponse {
+    override suspend fun grantChatAccess(request: GrantChatAccessRequestDto): GrantResult {
         Logger.d(TAG) { "grantChatAccess request: botId=${request.botId}, productId=${request.productId}" }
         val response =
             httpClient.post {
@@ -47,7 +48,10 @@ class ChatAccessBillingRemoteDataSource(
             }
         val body = response.bodyAsText()
         Logger.d(TAG) { "grantChatAccess status=${response.status}, response: $body" }
-        return json.decodeFromString<ChatAccessApiResponse>(body)
+        return GrantResult(
+            httpStatus = response.status.value,
+            apiResponse = json.decodeFromString<ChatAccessApiResponse>(body),
+        )
     }
 
     override suspend fun checkChatAccess(

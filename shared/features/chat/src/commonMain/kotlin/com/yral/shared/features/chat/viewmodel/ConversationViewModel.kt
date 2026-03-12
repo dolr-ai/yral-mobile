@@ -31,6 +31,7 @@ import com.yral.shared.features.chat.domain.models.ChatMessage
 import com.yral.shared.features.chat.domain.models.ChatMessageType
 import com.yral.shared.features.chat.domain.models.ConversationInfluencer
 import com.yral.shared.features.chat.domain.models.ConversationMessageRole
+import com.yral.shared.features.chat.domain.models.GrantError
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.domain.models.SendMessageResult
 import com.yral.shared.features.chat.domain.usecases.CheckChatAccessUseCase
@@ -382,13 +383,44 @@ class ConversationViewModel(
                     isChatAccessLoading = false,
                 )
             }
-        }.onFailure {
-            Logger.e("SubscriptionX", it) { "Grant retry failed for $productId" }
-            _viewState.update {
-                it.copy(
-                    isInfluencerSubscriptionPurchasedAndVerified = true,
-                    chatAccessExpiresAtMs = purchase.purchaseTime + FALLBACK_ACCESS_DURATION_MS,
-                    isChatAccessLoading = false,
+        }.onFailure { error ->
+            Logger.e("SubscriptionX", error) { "Grant retry failed for $productId" }
+            handleGrantFailure(error, purchaseToken, purchase.purchaseTime)
+        }
+    }
+
+    private suspend fun handleGrantFailure(
+        error: Throwable,
+        purchaseToken: String,
+        purchaseTime: Long?,
+    ) {
+        when (error) {
+            is GrantError.ClientError -> {
+                // 400: Token rejected (wrong bot, expired, cancelled). Consume to stop retry loop.
+                Logger.w("SubscriptionX") { "Grant rejected (400): ${error.errorMsg}. Consuming purchase." }
+                consumePurchaseInBackground(purchaseToken)
+                _viewState.update {
+                    it.copy(
+                        isInfluencerSubscriptionPurchasedAndVerified = false,
+                        isChatAccessLoading = false,
+                    )
+                }
+                fetchInfluencerSubscriptionProducts()
+            }
+            is GrantError.ServerError -> {
+                // 5xx: Transient failure. Keep unconsumed for retry on next launch.
+                Logger.w("SubscriptionX") { "Grant server error (${error.httpStatus}). Keeping purchase for retry." }
+                handleInfluencerSubscriptionVerificationResult(
+                    isPurchased = true,
+                    expiresAtMs = purchaseTime?.let { it + FALLBACK_ACCESS_DURATION_MS },
+                )
+            }
+            else -> {
+                // Network error or unknown. Keep unconsumed for retry.
+                Logger.w("SubscriptionX") { "Grant failed (network/unknown). Keeping purchase for retry." }
+                handleInfluencerSubscriptionVerificationResult(
+                    isPurchased = true,
+                    expiresAtMs = purchaseTime?.let { it + FALLBACK_ACCESS_DURATION_MS },
                 )
             }
         }
@@ -506,11 +538,8 @@ class ConversationViewModel(
                         expiresAtMs = grantStatus.expiresAtMs,
                     )
                 }.onFailure { grantError ->
-                    Logger.e("SubscriptionX", grantError) { "Grant failed, using fallback 24h access" }
-                    handleInfluencerSubscriptionVerificationResult(
-                        isPurchased = true,
-                        expiresAtMs = purchaseTime?.let { t -> t + FALLBACK_ACCESS_DURATION_MS },
-                    )
+                    Logger.e("SubscriptionX", grantError) { "Grant failed after purchase" }
+                    handleGrantFailure(grantError, purchaseToken, purchaseTime)
                 }
             } else {
                 Logger.w("SubscriptionX") { "No botId, using fallback 24h access" }
