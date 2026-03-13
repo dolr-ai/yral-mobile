@@ -343,11 +343,11 @@ class ConversationViewModel(
             when {
                 legacyPurchase != null && legacyPurchase.purchaseToken != null -> {
                     Logger.d("SubscriptionX") { "Found legacy tara_subscription, migrating..." }
-                    retryGrantAccess(botId, legacyPurchase, ProductId.TARA_SUBSCRIPTION.productId, false)
+                    retryGrantAccess(botId, legacyPurchase, ProductId.TARA_SUBSCRIPTION.productId)
                 }
                 unconsumedDailyChat != null && unconsumedDailyChat.purchaseToken != null -> {
                     Logger.d("SubscriptionX") { "Found unconsumed daily_chat, retrying grant..." }
-                    retryGrantAccess(botId, unconsumedDailyChat, ProductId.DAILY_CHAT.productId, true)
+                    retryGrantAccess(botId, unconsumedDailyChat, ProductId.DAILY_CHAT.productId)
                 }
                 else -> {
                     _viewState.update { it.copy(isChatAccessLoading = false) }
@@ -365,7 +365,6 @@ class ConversationViewModel(
         botId: String,
         purchase: Purchase,
         productId: String,
-        consumeOnSuccess: Boolean,
     ) {
         val purchaseToken = checkNotNull(purchase.purchaseToken)
         grantChatAccessUseCase(
@@ -375,7 +374,6 @@ class ConversationViewModel(
                 productId = productId,
             ),
         ).onSuccess { grantStatus ->
-            if (consumeOnSuccess) consumePurchaseInBackground(purchaseToken)
             chatTelemetry.subscriptionSuccess(botId)
             _viewState.update {
                 it.copy(
@@ -510,7 +508,7 @@ class ConversationViewModel(
         val existingPurchase = findUnconsumedDailyChat()
         if (existingPurchase != null && botId != null) {
             Logger.d("SubscriptionX") { "Found unconsumed DAILY_CHAT, retrying grant instead of new purchase" }
-            retryGrantAccess(botId, existingPurchase, ProductId.DAILY_CHAT.productId, true)
+            retryGrantAccess(botId, existingPurchase, ProductId.DAILY_CHAT.productId)
             _viewState.update { it.copy(isInfluencerSubscriptionPurchaseInProgress = false) }
             return
         }
@@ -546,7 +544,6 @@ class ConversationViewModel(
                     Logger.d("SubscriptionX") {
                         "Grant succeeded: hasAccess=${grantStatus.hasAccess}, expiresAtMs=${grantStatus.expiresAtMs}"
                     }
-                    consumePurchaseInBackground(purchaseToken)
                     handleInfluencerSubscriptionVerificationResult(
                         isPurchased = true,
                         expiresAtMs = grantStatus.expiresAtMs,
@@ -813,7 +810,7 @@ class ConversationViewModel(
                 loginPromptMessageThreshold = current.loginPromptMessageThreshold,
                 subscriptionMandatoryThreshold = current.subscriptionMandatoryThreshold,
                 isSubscriptionEnabled = current.isSubscriptionEnabled,
-                isInfluencerSubscriptionPurchasedAndVerified = current.isInfluencerSubscriptionPurchasedAndVerified,
+                isInfluencerSubscriptionPurchasedAndVerified = false,
                 isInfluencerSubscriptionAvailableToPurchase = current.isInfluencerSubscriptionAvailableToPurchase,
                 isYralProAvailableToPurchase = current.isYralProAvailableToPurchase,
                 isInfluencerSubscriptionPurchaseInProgress = false,
