@@ -14,7 +14,7 @@ object AppFeatureFlags {
                 keySuffix = "enableSubscription",
                 name = "Enable Subscription",
                 description = "Toggle subscription usage on App.",
-                defaultValue = false,
+                defaultValue = true,
             )
         val InitialBalanceReward: FeatureFlag<Int> =
             int(

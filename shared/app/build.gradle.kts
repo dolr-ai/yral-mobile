@@ -1,24 +1,19 @@
+import com.yral.buildlogic.applyCocoapodsIfApple
+import com.yral.buildlogic.configureIosTargets
 plugins {
     alias(libs.plugins.yral.shared.library)
     alias(libs.plugins.yral.android.library)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.yral.shared.library.compose)
-    alias(libs.plugins.kotlinCocoapods)
     alias(libs.plugins.sentryKmp)
 }
+
+applyCocoapodsIfApple()
 
 version = "1.0"
 kotlin {
     androidTarget()
-    listOf(
-        iosArm64(),
-        iosSimulatorArm64(),
-    )
-
-    cocoapods {
-        ios.deploymentTarget = "15.6"
-        noPodspec()
-    }
+    configureIosTargets(project)
 
     sourceSets {
         commonMain.dependencies {

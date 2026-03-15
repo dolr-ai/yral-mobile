@@ -17,6 +17,7 @@
 package com.yral.buildlogic
 
 import com.android.build.api.dsl.CommonExtension
+import org.gradle.api.Action
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPluginExtension
@@ -26,6 +27,7 @@ import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.plugin.cocoapods.CocoapodsExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 /**
@@ -79,6 +81,92 @@ internal fun Project.configureKotlinMultiplatform(kotlinMultiplatformExtension: 
         jvm()
     }*/
     configureKotlin()
+}
+
+/**
+ * Applies the Kotlin CocoaPods plugin only when [isAppleBuildEnabled] is true.
+ *
+ * Use this at the top of a module's `build.gradle.kts` instead of
+ * `alias(libs.plugins.kotlinCocoapods)` inside `plugins {}` (which cannot be conditional).
+ *
+ * ```
+ * import com.yral.buildlogic.applyCocoapodsIfApple
+ * applyCocoapodsIfApple()
+ * ```
+ */
+fun Project.applyCocoapodsIfApple() {
+    if (isAppleBuildEnabled()) {
+        pluginManager.apply("org.jetbrains.kotlin.native.cocoapods")
+    }
+}
+
+/**
+ * Configures the CocoaPods extension only when the CocoaPods plugin has been applied
+ * (i.e. only on Apple builds). Uses [pluginManager.withPlugin] so the action is:
+ *  - Never executed on non-Apple hosts (plugin not applied → callback never fires).
+ *  - Fully type-safe via [CocoapodsExtension] in the `build-logic` classpath.
+ *  - Never present as a typed lambda in the module's own `build.gradle.kts`, so the
+ *    Kotlin script compiler never needs the CocoaPods DSL types to be in scope there.
+ *
+ * Usage in `build.gradle.kts`:
+ * ```
+ * import com.yral.buildlogic.applyCocoapodsIfApple
+ * import com.yral.buildlogic.configureCocoapods
+ *
+ * applyCocoapodsIfApple()
+ * configureCocoapods {
+ *     version = "1.0"
+ *     ios.deploymentTarget = "15.6"
+ *     noPodspec()
+ *     pod("SomePod") { version = "1.2.3" }
+ * }
+ * ```
+ */
+fun Project.configureCocoapods(configure: Action<CocoapodsExtension>) {
+    pluginManager.withPlugin("org.jetbrains.kotlin.native.cocoapods") {
+        val kotlin = extensions.getByType(KotlinMultiplatformExtension::class.java)
+        kotlin.extensions.configure(CocoapodsExtension::class.java, configure)
+    }
+}
+
+/**
+ * Registers iosArm64 and iosSimulatorArm64 targets only when [isAppleBuildEnabled] is true.
+ *
+ * ```
+ * import com.yral.buildlogic.configureIosTargets
+ * kotlin {
+ *     androidTarget()
+ *     configureIosTargets(project)
+ * }
+ * ```
+ */
+fun KotlinMultiplatformExtension.configureIosTargets(project: Project) {
+    if (project.isAppleBuildEnabled()) {
+        iosArm64()
+        iosSimulatorArm64()
+    }
+}
+
+/** Executes [block] only on Apple builds. Use at the project level. */
+fun Project.ifAppleBuild(block: () -> Unit) {
+    if (isAppleBuildEnabled()) block()
+}
+
+/**
+ * Executes [block] only on Apple builds. Use inside `kotlin { }` to guard `cocoapods { }`.
+ *
+ * ```
+ * import com.yral.buildlogic.ifAppleBuild
+ * kotlin {
+ *     ifAppleBuild(project) { cocoapods { ... } }
+ * }
+ * ```
+ */
+fun KotlinMultiplatformExtension.ifAppleBuild(
+    project: Project,
+    block: KotlinMultiplatformExtension.() -> Unit,
+) {
+    if (project.isAppleBuildEnabled()) block()
 }
 
 /**

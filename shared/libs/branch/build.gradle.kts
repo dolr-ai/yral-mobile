@@ -1,29 +1,30 @@
+import com.yral.buildlogic.applyCocoapodsIfApple
+import com.yral.buildlogic.configureCocoapods
+import com.yral.buildlogic.configureIosTargets
 plugins {
     alias(libs.plugins.yral.shared.library)
     alias(libs.plugins.yral.android.library)
-    alias(libs.plugins.kotlinCocoapods)
+}
+
+applyCocoapodsIfApple()
+
+configureCocoapods {
+    version = "1.0"
+    summary = "Branch SDK module providing Branch dependencies and cinterop"
+    homepage = "https://github.com/dolr-ai/yral-mobile"
+    ios.deploymentTarget = "15.6"
+
+    noPodspec()
+
+    pod("BranchSDK") {
+        extraOpts += listOf("-compiler-option", "-fmodules")
+        version = "3.12.1"
+    }
 }
 
 kotlin {
     androidTarget()
-    listOf(
-        iosArm64(),
-        iosSimulatorArm64(),
-    )
-
-    cocoapods {
-        version = "1.0"
-        summary = "Branch SDK module providing Branch dependencies and cinterop"
-        homepage = "https://github.com/dolr-ai/yral-mobile"
-        ios.deploymentTarget = "15.6"
-
-        noPodspec()
-
-        pod("BranchSDK") {
-            extraOpts += listOf("-compiler-option", "-fmodules")
-            version = "3.12.1"
-        }
-    }
+    configureIosTargets(project)
 
     sourceSets {
         commonMain {

@@ -17,13 +17,18 @@ internal class ProductFetcher(
     @Suppress("CyclomaticComplexMethod")
     suspend fun fetchProducts(productIds: List<ProductId>): Result<List<Product>> =
         handleIAPResultOperation {
-            Logger.d("SubscriptionX") { "Fetching products " }
+            Logger.d("SubscriptionX") {
+                "Fetching products: ${productIds.map { "${it.name}(${it.productId}, type=${it.productType})" }}"
+            }
             val client = connectionManager.ensureReady()
             val productList = mutableListOf<Product>()
             val (oneTimeProductIds, subscriptionProductIds) =
                 productIds.partition { it.productType == ProductType.ONE_TIME }
             val oneTimeProductIdStrings = oneTimeProductIds.map { it.productId }
             val subscriptionProductIdStrings = subscriptionProductIds.map { it.productId }
+            Logger.d("SubscriptionX") {
+                "Product partition: oneTime=$oneTimeProductIdStrings, subs=$subscriptionProductIdStrings"
+            }
             if (oneTimeProductIdStrings.isNotEmpty()) {
                 val inAppProducts = fetchInAppProducts(client, oneTimeProductIdStrings)
                 inAppProducts.fold(
@@ -96,13 +101,22 @@ internal class ProductFetcher(
         }
     }
 
+    @Suppress("LongMethod")
     private suspend fun fetchInAppProducts(
         client: BillingClient,
         productIds: List<String>,
     ): Result<List<Product>> {
+        Logger.d("SubscriptionX") {
+            "fetchInAppProducts: querying for productIds=$productIds as INAPP"
+        }
         val params = getQueryProductParams(productIds, BillingClient.ProductType.INAPP)
 
         val result = client.queryProductDetails(params)
+        Logger.d("SubscriptionX") {
+            "fetchInAppProducts: responseCode=${result.billingResult.responseCode}, " +
+                "debugMessage=${result.billingResult.debugMessage}, " +
+                "productDetailsCount=${result.productDetailsList?.size ?: "null"}"
+        }
         if (result.billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
             return Result.failure(
                 IAPError.UnknownError(
@@ -113,6 +127,12 @@ internal class ProductFetcher(
 
         val products =
             result.productDetailsList?.mapNotNull { productDetails ->
+                Logger.d("SubscriptionX") {
+                    "fetchInAppProducts: product=${productDetails.productId}, " +
+                        "title=${productDetails.title}, " +
+                        "oneTimePurchaseOfferDetails=${productDetails.oneTimePurchaseOfferDetails}, " +
+                        "oneTimePurchaseOfferDetailsList=${productDetails.oneTimePurchaseOfferDetailsList}"
+                }
                 val oneTimeOffers = productDetails.oneTimePurchaseOfferDetailsList
                 val (baseOffer, promoOffer) = resolveBaseAndPromo(oneTimeOffers) { it.offerId }
                 val effectiveOffer = promoOffer ?: baseOffer

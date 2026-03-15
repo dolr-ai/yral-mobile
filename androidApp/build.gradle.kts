@@ -15,9 +15,9 @@ android {
     namespace = "com.yral.android"
     defaultConfig {
         applicationId = "com.yral.android"
-        versionCode = 76
-        versionName = "2.8.0"
-        ndkVersion = "28.0.13004108"
+        versionCode = 80
+        versionName = "2.8.1"
+        ndkVersion = "29.0.14206865"
         buildConfigField(
             type = "String",
             name = "BRANCH_KEY_TEST",
