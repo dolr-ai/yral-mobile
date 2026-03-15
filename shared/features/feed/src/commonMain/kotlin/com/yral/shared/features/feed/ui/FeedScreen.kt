@@ -36,7 +36,6 @@ import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.feed.viewmodel.FeedEvents
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.FOLLOW_NUDGE_PAGE
-import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.PRE_FETCH_BEFORE_LAST
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.SIGN_UP_PAGE
 import com.yral.shared.features.feed.viewmodel.OnboardingStep
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
@@ -115,13 +114,11 @@ fun FeedScreen(
         viewModel.consumePendingSharedVideoRouteIfNeeded()
     }
 
-    // Pagination logic - read specific fields to avoid recomputing on unrelated state changes
-    val feedDetailsSize = state.feedDetails.size
-    val currentPage = state.currentPageOfFeed
+    // Pagination logic — reads MUST be inside derivedStateOf so Compose tracks state changes.
+    // Do NOT hoist state.feedDetails.size / state.currentPageOfFeed into local vals above this block.
     val isNearEnd by remember {
         derivedStateOf {
-            feedDetailsSize > 0 &&
-                (feedDetailsSize - currentPage) <= PRE_FETCH_BEFORE_LAST
+            FeedPaginationUtils.isNearEnd(state.feedDetails.size, state.currentPageOfFeed)
         }
     }
     LaunchedEffect(isNearEnd, state.isLoadingMore, state.pendingFetchDetails) {
@@ -133,9 +130,12 @@ fun FeedScreen(
 
     // Determine if we should show the loader
     val showLoader =
-        isNearEnd &&
-            (state.isLoadingMore || state.pendingFetchDetails > 0) &&
-            state.currentPageOfFeed == state.feedDetails.size - 1
+        FeedPaginationUtils.shouldShowLoader(
+            feedDetailsSize = state.feedDetails.size,
+            currentPage = state.currentPageOfFeed,
+            isLoadingMore = state.isLoadingMore,
+            pendingFetchDetails = state.pendingFetchDetails,
+        )
 
     var loaderStartTime by remember { mutableStateOf(0L) }
 

@@ -21,6 +21,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -334,7 +338,8 @@ private fun BotUsernamesRow(
     maxVisible: Int = 2,
     onUsernameClick: ((String) -> Unit)? = null,
 ) {
-    val visible = botUsernames.take(maxVisible)
+    var expanded by remember { mutableStateOf(false) }
+    val visible = if (expanded) botUsernames else botUsernames.take(maxVisible)
     val remainingCount = (botUsernames.size - visible.size).coerceAtLeast(0)
     Row(
         modifier = Modifier.padding(top = 0.dp, bottom = 0.dp),
@@ -369,6 +374,7 @@ private fun BotUsernamesRow(
                 text = "+$remainingCount More",
                 style = LocalAppTopography.current.regSemiBold,
                 color = YralColors.BlueTextPrimary,
+                modifier = Modifier.clickable { expanded = true },
             )
         }
     }
