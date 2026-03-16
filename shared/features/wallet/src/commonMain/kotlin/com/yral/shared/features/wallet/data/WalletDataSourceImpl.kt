@@ -1,10 +1,12 @@
 package com.yral.shared.features.wallet.data
 
 import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
+import com.yral.shared.core.AppConfigurations.PUMP_DUMP_BASE_URL
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.features.wallet.data.models.BtcPriceResponseDto
 import com.yral.shared.features.wallet.data.models.BtcRewardConfigResponseDto
 import com.yral.shared.features.wallet.data.models.DolrPriceResponseDto
+import com.yral.shared.features.wallet.data.models.GetBalanceResponseDto
 import com.yral.shared.firebaseStore.cloudFunctionUrl
 import com.yral.shared.firebaseStore.firebaseAppCheckToken
 import com.yral.shared.http.httpGet
@@ -94,7 +96,19 @@ class WalletDataSourceImpl(
             },
         )
 
+    override suspend fun getBalance(userPrincipal: String): GetBalanceResponseDto =
+        httpGet(
+            httpClient,
+            json,
+        ) {
+            url {
+                host = PUMP_DUMP_BASE_URL
+                path(GET_BALANCE_PATH, userPrincipal)
+            }
+        }
+
     companion object {
+        private const val GET_BALANCE_PATH = "v2/balance"
         private const val BTC_VALUE_BY_COUNTRY_PATH = "btc_value_by_country"
         private const val HEADER_X_FIREBASE_APPCHECK = "X-Firebase-AppCheck"
         private const val BTC_REWARD_CONFIG_PATH = "api/v1/rewards/config_v2"

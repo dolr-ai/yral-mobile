@@ -58,15 +58,12 @@ import com.yral.shared.app.ui.screens.login.LoginBottomSheetSlotContent
 import com.yral.shared.app.ui.screens.login.LoginScreenContent
 import com.yral.shared.app.ui.screens.subscription.SubscriptionAccountMismatchSheet
 import com.yral.shared.app.ui.screens.subscription.SubscriptionNudgeBottomSheet
-import com.yral.shared.app.ui.screens.tournament.TournamentGameScaffoldScreen
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.session.getKey
 import com.yral.shared.features.aiinfluencer.ui.CreateAIInfluencerScreen
 import com.yral.shared.features.aiinfluencer.viewmodel.AiInfluencerViewModel
 import com.yral.shared.features.chat.ui.conversation.ChatConversationScreen
 import com.yral.shared.features.chat.viewmodel.ConversationViewModel
-import com.yral.shared.features.leaderboard.ui.LeaderboardScreen
-import com.yral.shared.features.leaderboard.viewmodel.LeaderBoardViewModel
 import com.yral.shared.features.profile.ui.EditProfileScreen
 import com.yral.shared.features.profile.ui.ProfileMainScreen
 import com.yral.shared.features.profile.viewmodel.EditProfileViewModel
@@ -76,7 +73,6 @@ import com.yral.shared.features.root.viewmodels.AccountUi
 import com.yral.shared.features.root.viewmodels.NavigationTarget
 import com.yral.shared.features.root.viewmodels.RootError
 import com.yral.shared.features.subscriptions.ui.SubscriptionsScreen
-import com.yral.shared.features.tournament.ui.TournamentLeaderboardScreen
 import com.yral.shared.features.wallet.ui.WalletScreen
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
@@ -184,28 +180,6 @@ fun RootScreen(rootComponent: RootComponent) {
                         )
                     }
 
-                    is Child.TournamentLeaderboard -> {
-                        HandleSystemBars(show = true)
-                        TournamentLeaderboardScreen(
-                            tournamentId = child.tournamentId,
-                            tournamentTitle = "",
-                            showResult = child.showResult,
-                            isDaily = child.isDaily,
-                            onBack = rootComponent::onBackClicked,
-                            onOpenProfile = rootComponent::openProfile,
-                            subscriptionCoordinator = rootComponent.getSubscriptionCoordinator(),
-                        )
-                    }
-
-                    is Child.TournamentGame -> {
-                        val sessionKey = state.sessionState.getKey()
-                        HandleSystemBars(show = true)
-                        TournamentGameScaffoldScreen(
-                            component = child.component,
-                            sessionKey = sessionKey,
-                        )
-                    }
-
                     is Child.Conversation -> {
                         HandleSystemBars(show = true)
                         ChatConversationScreen(
@@ -219,17 +193,6 @@ fun RootScreen(rootComponent: RootComponent) {
                         HandleSystemBars(show = true)
                         WalletScreen(
                             component = child.component,
-                            modifier = Modifier.fillMaxSize().safeDrawingPadding(),
-                        )
-                    }
-
-                    is Child.Leaderboard -> {
-                        HandleSystemBars(show = true)
-                        val sessionKey = state.sessionState.getKey()
-                        val leaderBoardViewModel = koinViewModel<LeaderBoardViewModel>(key = "leaderboard-$sessionKey")
-                        LeaderboardScreen(
-                            component = child.component,
-                            leaderBoardViewModel = leaderBoardViewModel,
                             modifier = Modifier.fillMaxSize().safeDrawingPadding(),
                         )
                     }
