@@ -23,17 +23,24 @@
 	"hostRequirements": {
 		"memory": "16gb"
 	},
-	// Mount SSH agent socket from WSL host into container
+	// The .git file in this repo is a gitdir pointer:
+	//   gitdir: ../../.git/modules/apps/yral-mobile
+	// Inside the container (workspace at /workspaces/yral-mobile) that path
+	// resolves to /.git/modules/apps/yral-mobile. We mount the real git data
+	// from the host directly there — no scripts needed.
+	// GIT_WORK_TREE overrides core.worktree in the submodule git config, which
+	// stores the host-relative path and would otherwise break inside the container.
 	"mounts": [
 		"type=bind,source=${env:HOME}/.ssh/agent.sock,target=/ssh-agent,consistency=cached",
-		"type=bind,source=${env:HOME}/.config/gh,target=/home/vscode/.config/gh,consistency=cached"
+		"type=bind,source=${env:HOME}/.config/gh,target=/home/vscode/.config/gh,consistency=cached",
+		"type=bind,source=${localWorkspaceFolder}/../../.git/modules/apps/yral-mobile,target=/.git/modules/apps/yral-mobile,consistency=cached"
 	],
-	// Set SSH_AUTH_SOCK environment variable to point to mounted socket
 	"remoteEnv": {
-		"SSH_AUTH_SOCK": "/ssh-agent"
+		"SSH_AUTH_SOCK": "/ssh-agent",
+		"GIT_WORK_TREE": "/workspaces/yral-mobile"
 	},
 	// Run post-create setup script
-	"postCreateCommand": ".devcontainer/postCreate.sh"
+	"postCreateCommand": "bash .devcontainer/postCreate.sh"
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 	// Configure tool-specific properties.
