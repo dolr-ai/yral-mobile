@@ -27,7 +27,7 @@ actual class SnowplowAnalyticsProvider actual constructor(
 
     private val tracker = Snowplow.createTracker(
         context,
-        "yral-mob",
+        "yral-mobile",
         NetworkConfiguration(
             "https://${AppConfigurations.SNOWPLOW_COLLECTOR_URL}",
             HttpMethod.POST,
