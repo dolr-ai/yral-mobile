@@ -41,12 +41,9 @@ import yral_mobile.shared.features.auth.generated.resources.create_ai_influencer
 import yral_mobile.shared.features.auth.generated.resources.create_ai_influencer_title
 import yral_mobile.shared.features.auth.generated.resources.create_ai_videos_earn_bitcoin
 import yral_mobile.shared.features.auth.generated.resources.create_ai_videos_earn_bitcoin_dis
-import yral_mobile.shared.features.auth.generated.resources.join_tournament
-import yral_mobile.shared.features.auth.generated.resources.join_tournament_disclaimer
 import yral_mobile.shared.features.auth.generated.resources.join_yral_create_influencer
 import yral_mobile.shared.features.auth.generated.resources.login_to_chat_with_influencer
 import yral_mobile.shared.features.auth.generated.resources.login_to_get_25_tokens
-import yral_mobile.shared.features.auth.generated.resources.login_to_join_tournament
 import yral_mobile.shared.features.auth.generated.resources.upload_ai_videos_earn_bitcoin
 import yral_mobile.shared.features.auth.generated.resources.upload_ai_videos_earn_bitcoin_dis
 import yral_mobile.shared.libs.designsystem.generated.resources.btc_giftbox
@@ -139,11 +136,6 @@ private fun getHeaderText(
             val maskedText = fullText.substringAfter(".")
             getAnnotatedHeaderForLogin(fullText, maskedText)
         }
-        LoginBottomSheetType.TOURNAMENT -> {
-            val fullText = stringResource(Res.string.login_to_join_tournament)
-            val maskedText = stringResource(Res.string.join_tournament)
-            getAnnotatedHeaderForLogin(fullText, maskedText)
-        }
         LoginBottomSheetType.CREATE_INFLUENCER -> {
             getAnnotatedHeaderForLogin(
                 stringResource(Res.string.create_ai_influencer_title),
@@ -163,7 +155,6 @@ private fun getDisclaimerText(type: LoginBottomSheetType) =
     when (type) {
         LoginBottomSheetType.UPLOAD_AI_VIDEO -> stringResource(Res.string.upload_ai_videos_earn_bitcoin_dis)
         LoginBottomSheetType.CREATE_AI_VIDEO -> stringResource(Res.string.create_ai_videos_earn_bitcoin_dis)
-        LoginBottomSheetType.TOURNAMENT -> stringResource(Res.string.join_tournament_disclaimer)
         LoginBottomSheetType.CREATE_INFLUENCER -> stringResource(Res.string.create_ai_influencer_subtext)
         else -> null
     }
@@ -173,7 +164,6 @@ private fun getTopIcon(type: LoginBottomSheetType) =
     when (type) {
         LoginBottomSheetType.UPLOAD_AI_VIDEO -> painterResource(DesignRes.drawable.btc_giftbox)
         LoginBottomSheetType.CREATE_AI_VIDEO -> painterResource(DesignRes.drawable.btc_giftbox)
-        LoginBottomSheetType.TOURNAMENT -> painterResource(DesignRes.drawable.victory_cup)
         LoginBottomSheetType.CREATE_INFLUENCER -> painterResource(Res.drawable.join_yral_create_influencer)
         is LoginBottomSheetType.CONVERSATION -> painterResource(DesignRes.drawable.victory_cup)
         else -> null
@@ -215,7 +205,6 @@ private fun getTopIconSize(type: LoginBottomSheetType) =
     when (type) {
         LoginBottomSheetType.UPLOAD_AI_VIDEO -> DpSize(AI_VIDEO_TOP_ICON_WIDTH.dp, AI_VIDEO_TOP_ICON_HEIGHT.dp)
         LoginBottomSheetType.CREATE_AI_VIDEO -> DpSize(AI_VIDEO_TOP_ICON_WIDTH.dp, AI_VIDEO_TOP_ICON_HEIGHT.dp)
-        LoginBottomSheetType.TOURNAMENT -> DpSize(TOURNAMENT_TOP_ICON_WIDTH.dp, TOURNAMENT_TOP_ICON_HEIGHT.dp)
         is LoginBottomSheetType.CONVERSATION -> DpSize(CONVERSATION_TOP_ICON_WIDTH.dp, CONVERSATION_TOP_ICON_HEIGHT.dp)
         else -> null
     }
@@ -236,9 +225,6 @@ sealed interface LoginBottomSheetType {
     data object UPLOAD_AI_VIDEO : LoginBottomSheetType
 
     @Serializable
-    data object TOURNAMENT : LoginBottomSheetType
-
-    @Serializable
     data object CREATE_INFLUENCER : LoginBottomSheetType
 
     @Serializable
@@ -250,7 +236,5 @@ sealed interface LoginBottomSheetType {
 
 private const val AI_VIDEO_TOP_ICON_WIDTH = 200f
 private const val AI_VIDEO_TOP_ICON_HEIGHT = 165f
-private const val TOURNAMENT_TOP_ICON_WIDTH = 176f
-private const val TOURNAMENT_TOP_ICON_HEIGHT = 156f
 private const val CONVERSATION_TOP_ICON_WIDTH = 120f
 private const val CONVERSATION_TOP_ICON_HEIGHT = 120f

@@ -178,7 +178,6 @@ dependencies {
     implementation(projects.shared.features.account)
     implementation(projects.shared.app)
     implementation(projects.shared.libs.firebasePerf)
-    implementation(projects.shared.features.game)
     implementation(projects.shared.features.uploadvideo)
     implementation(projects.shared.features.profile)
     implementation(projects.shared.libs.arch)
@@ -190,7 +189,6 @@ dependencies {
     implementation(projects.shared.features.reportVideo)
     implementation(projects.shared.features.aiInfluencer)
     implementation(compose.components.resources)
-    implementation(projects.shared.features.leaderboard)
     implementation(projects.shared.features.subscriptions)
 
     testImplementation(libs.kotlin.test)

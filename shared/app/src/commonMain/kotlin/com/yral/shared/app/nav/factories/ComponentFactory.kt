@@ -1,8 +1,6 @@
 package com.yral.shared.app.nav.factories
 
 import com.arkivanov.decompose.ComponentContext
-import com.yral.featureflag.FeatureFlagManager
-import com.yral.featureflag.FeedFeatureFlags
 import com.yral.shared.app.nav.Config
 import com.yral.shared.app.nav.RootComponent
 import com.yral.shared.app.nav.SplashComponent
@@ -14,14 +12,10 @@ import com.yral.shared.features.auth.nav.mandatorylogin.MandatoryLoginComponent
 import com.yral.shared.features.auth.nav.otpverification.OtpVerificationComponent
 import com.yral.shared.features.auth.ui.LoginCoordinator
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
-import com.yral.shared.features.leaderboard.domain.models.DailyRankGameType
-import com.yral.shared.features.leaderboard.nav.LeaderboardComponent
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.subscriptions.nav.SubscriptionsComponent
-import com.yral.shared.features.tournament.nav.TournamentGameComponent
 import com.yral.shared.features.wallet.nav.WalletComponent
-import com.yral.shared.koin.koinInstance
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastType
 import com.yral.shared.libs.designsystem.component.toast.showSuccess
@@ -38,7 +32,6 @@ internal class ComponentFactory(
     private val loginCoordinator: LoginCoordinator,
     private val setHomeComponent: (HomeComponent) -> Unit,
     private val showAlertsOnDialog: (AlertsRequestType) -> Unit,
-    private val onFeedTabClick: () -> Unit,
 ) {
     fun createSplash(componentContext: ComponentContext): SplashComponent =
         SplashComponent(
@@ -54,13 +47,8 @@ internal class ComponentFactory(
                 openEditProfile = rootComponent::openEditProfile,
                 openProfile = rootComponent::openProfile,
                 openCreateInfluencer = rootComponent::openCreateInfluencer,
-                openTournamentLeaderboard = { tournamentId, showResult ->
-                    rootComponent.openTournamentLeaderboard(tournamentId, showResult)
-                },
-                openTournamentGame = rootComponent::openTournamentGame,
                 openConversation = rootComponent::openConversation,
                 openWallet = rootComponent::openWallet,
-                openLeaderboard = rootComponent::openLeaderboard,
                 openAccountSheet = { rootComponent.rootViewModel.showAccountSwitcher() },
                 switchToMainProfile = { onComplete ->
                     rootComponent.rootViewModel.switchToMainAccount(onComplete)
@@ -136,32 +124,6 @@ internal class ComponentFactory(
             onBack = rootComponent::onBackClicked,
         )
 
-    fun createLeaderboard(componentContext: ComponentContext): LeaderboardComponent {
-        val flagManager = koinInstance.get<FeatureFlagManager>()
-        val isCardLayoutEnabled = flagManager.isEnabled(FeedFeatureFlags.CardLayout.Enabled)
-        val gameType =
-            if (isCardLayoutEnabled) {
-                DailyRankGameType.HOT_OR_NOT
-            } else {
-                DailyRankGameType.SMILEY
-            }
-        co.touchlab.kermit.Logger.d(
-            "LeaderboardHistory",
-        ) { "createLeaderboard: isCardLayoutEnabled=$isCardLayoutEnabled, gameType=$gameType" }
-        return LeaderboardComponent.Companion(
-            componentContext = componentContext,
-            snapshot = null,
-            navigateToHome = {
-                rootComponent.onBackClicked()
-                onFeedTabClick()
-            },
-            openProfile = rootComponent::openProfile,
-            showBackIcon = true,
-            onBack = rootComponent::onBackClicked,
-            gameType = gameType,
-        )
-    }
-
     fun createSubscription(
         componentContext: ComponentContext,
         config: Config.Subscription,
@@ -204,39 +166,5 @@ internal class ComponentFactory(
                 }
             },
             onNavigateToOtpVerification = { loginCoordinator.navigateToOtpVerification() },
-        )
-
-    @Suppress("LongParameterList")
-    fun createTournamentGame(
-        componentContext: ComponentContext,
-        tournamentId: String,
-        tournamentTitle: String,
-        initialDiamonds: Int,
-        startEpochMs: Long,
-        endEpochMs: Long,
-        totalPrizePool: Int,
-        isHotOrNot: Boolean,
-        isDailyTournament: Boolean = false,
-        dailyTimeLimitMs: Long = 0,
-    ): TournamentGameComponent =
-        TournamentGameComponent(
-            componentContext = componentContext,
-            requestLoginFactory = rootComponent.createLoginRequestFactory(),
-            tournamentId = tournamentId,
-            tournamentTitle = tournamentTitle,
-            initialDiamonds = initialDiamonds,
-            totalPrizePool = totalPrizePool,
-            startEpochMs = startEpochMs,
-            endEpochMs = endEpochMs,
-            isHotOrNot = isHotOrNot,
-            isDailyTournament = isDailyTournament,
-            dailyTimeLimitMs = dailyTimeLimitMs,
-            onLeaderboardClick = { clickedTournamentId, showResult ->
-                rootComponent.openTournamentLeaderboard(clickedTournamentId, showResult, isDailyTournament)
-            },
-            onTimeUp = {
-                rootComponent.openTournamentResults(tournamentId, true, isDailyTournament)
-            },
-            onBack = rootComponent::onBackClicked,
         )
 }

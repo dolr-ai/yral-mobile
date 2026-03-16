@@ -73,7 +73,7 @@ class UploadVideoTelemetry(
                     publisherUserId = sessionManager.userPrincipal ?: "",
                     isNsfw = false,
                     gameType = GameType.SMILEY,
-                    isGameEnabled = true,
+                    isGameEnabled = false,
                     type = type,
                     affiliate = affiliateAttributionStore.peek(),
                 ),
