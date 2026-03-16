@@ -53,8 +53,8 @@ YRAL Mobile is a Kotlin Multiplatform (KMM) video social platform. ~90% of the p
 ./gradlew build
 
 # Tests
-./gradlew allTests
-./gradlew :shared:features:<module>:allTests
+./gradlew test                                        # all unit tests (root)
+./gradlew :shared:features:<module>:allTests             # per-module (KMP, includes commonTest)
 
 # Code quality
 ./gradlew ktlintCheck
@@ -244,7 +244,7 @@ data class UserProfileRoute(
 
 All code changes must have tests. A task is only done when:
 1. Tests for new/modified code are written.
-2. `./gradlew :shared:features:<module>:allTests` (or `./gradlew allTests`) passes.
+2. `./gradlew :shared:features:<module>:allTests` (or `./gradlew test` at root) passes.
 3. `./gradlew detekt` passes.
 
 ### Patterns
