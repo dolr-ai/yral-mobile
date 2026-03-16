@@ -278,6 +278,17 @@ fun ProfileMainScreen(
                     )
                 }
 
+                is ProfileEvents.SubscribeInfluencerDetailsFetched -> {
+                    component.openConversation(
+                        OpenConversationParams(
+                            influencerId = event.influencer.id,
+                            influencerCategory = event.influencer.category,
+                            influencerSource = ConversationInfluencerSource.PROFILE,
+                            autoTriggerPurchase = true,
+                        ),
+                    )
+                }
+
                 is ProfileEvents.Failed -> {
                     ToastManager.showError(type = ToastType.Small(message = event.message))
                 }
@@ -708,6 +719,8 @@ private fun MainContent(
                 onFollowersClick = { onFollowersSectionClick(FollowersSheetTab.Followers) },
                 onFollowingClick = { onFollowersSectionClick(FollowersSheetTab.Following) },
                 onTalkToMeClicked = viewModel::fetchInfluencerDetails,
+                showSubscribe = !state.isOwnProfile && state.isAiInfluencer && state.isLoggedIn,
+                onSubscribeClicked = { viewModel.onSubscribeClicked() },
                 isProUser = state.isProUser,
                 showCreateInfluencerCta = state.isOwnProfile && state.isLoggedIn && showCreateBotCta,
                 onCreateInfluencerClick = onCreateInfluencerClick,

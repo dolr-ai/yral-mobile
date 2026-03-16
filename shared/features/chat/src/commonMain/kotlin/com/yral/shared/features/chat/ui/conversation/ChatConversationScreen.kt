@@ -155,6 +155,17 @@ fun ChatConversationScreen(
         }
     }
 
+    // Auto-trigger purchase when navigated from Subscribe button on profile
+    if (params.autoTriggerPurchase) {
+        var purchaseTriggered by remember { mutableStateOf(false) }
+        LaunchedEffect(viewState.influencer?.id) {
+            if (viewState.influencer != null && !purchaseTriggered) {
+                purchaseTriggered = true
+                purchaseContext?.let { viewModel.launchInfluencerSubscriptionPurchase(it) }
+            }
+        }
+    }
+
     val overlayItems by viewModel.overlay.collectAsState()
     val historyPagingItems = viewModel.history.collectAsLazyPagingItems()
 
