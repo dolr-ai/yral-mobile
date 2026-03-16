@@ -74,6 +74,8 @@ class IAPManager(
 
     suspend fun isProductPurchased(productId: ProductId): Result<Boolean> = provider.isProductPurchased(productId)
 
+    suspend fun consumePurchase(purchaseToken: String): Result<Unit> = provider.consumePurchase(purchaseToken)
+
     private suspend fun notifyListeners(action: IAPListener.() -> Unit) {
         val currentListeners = listenersMutex.withLock { listeners.toList() }
         currentListeners.forEach { listener ->
