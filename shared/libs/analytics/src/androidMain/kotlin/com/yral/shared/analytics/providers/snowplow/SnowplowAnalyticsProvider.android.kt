@@ -4,7 +4,7 @@ import android.content.Context
 import com.snowplowanalytics.snowplow.Snowplow
 import com.snowplowanalytics.snowplow.configuration.NetworkConfiguration
 import com.snowplowanalytics.snowplow.configuration.TrackerConfiguration
-import com.snowplowanalytics.snowplow.event.StructuredEvent
+import com.snowplowanalytics.snowplow.event.Structured
 import com.snowplowanalytics.snowplow.network.HttpMethod
 import com.snowplowanalytics.snowplow.tracker.DevicePlatform
 import com.snowplowanalytics.snowplow.tracker.LogLevel
@@ -39,11 +39,11 @@ actual class SnowplowAnalyticsProvider actual constructor(
             .sessionContext(true)
             .platformContext(true)
             .applicationContext(true)
-            .lifecycleAutotracking(false)
-            .screenViewAutotracking(false)
-            .screenEngagementAutotracking(false)
-            .installAutotracking(false)
-            .exceptionAutotracking(false)
+            .lifecycleAutotracking(true)
+            .screenViewAutotracking(true)
+            .screenEngagementAutotracking(true)
+            .installAutotracking(true)
+            .exceptionAutotracking(true)
             .diagnosticAutotracking(false),
     )
 
@@ -52,7 +52,7 @@ actual class SnowplowAnalyticsProvider actual constructor(
     override fun trackEvent(event: EventData) {
         val properties = mapConverter.toMap(event)
         val propertyJson = JSONObject(properties.mapValues { it.value.toString() }).toString()
-        val snowplowEvent = StructuredEvent(
+        val snowplowEvent = Structured(
             category = event.featureName,
             action = event.event,
         ).property(propertyJson)
