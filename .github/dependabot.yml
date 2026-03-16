@@ -30,11 +30,6 @@ updates:
     schedule:
       interval: "weekly"
 
-  - package-ecosystem: "cocoapods"
-    directory: "/iosApp"
-    schedule:
-      interval: "weekly"
-
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
