@@ -17,7 +17,7 @@ echo "✓ Installed dnsutils (dig, nslookup, host)"
 # Install Python packages
 echo ""
 echo "Installing Python packages..."
-pip install --user -r requirements.txt
+# pip install --user -r requirements.txt
 echo "✓ Installed Python packages from requirements.txt"
 
 # Check SSH Agent accessibility
