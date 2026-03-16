@@ -64,6 +64,7 @@ fastlane/test_output
 # General ignore patterns
 *.iml
 .gradle
+gradle/gradle-daemon-jvm.properties
 .idea
 .DS_Store
 build
