@@ -1,7 +1,6 @@
 import com.yral.buildlogic.applyCocoapodsIfApple
 import com.yral.buildlogic.configureCocoapods
 import com.yral.buildlogic.configureIosTargets
-import com.yral.buildlogic.ifAppleBuild
 plugins {
     alias(libs.plugins.yral.shared.feature)
     alias(libs.plugins.yral.shared.library.compose)

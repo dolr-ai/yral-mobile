@@ -26,7 +26,7 @@ object ChatFeatureFlags {
                 keySuffix = "subscriptionMandatoryThreshold",
                 name = "Subscription mandatory threshold",
                 description = "Total message count at which to show subscription nudge in chat",
-                defaultValue = 100,
+                defaultValue = 70,
             )
         val MaxBotCountForCta: FeatureFlag<Int> =
             int(
@@ -41,13 +41,6 @@ object ChatFeatureFlags {
                 name = "Max visible bot usernames",
                 description = "Maximum number of bot usernames to show before '+N More'",
                 defaultValue = 2,
-            )
-        val SubscriptionAllowedInfluencerId: FeatureFlag<String> =
-            string(
-                keySuffix = "subscriptionAllowedInfluencerId",
-                name = "Influencer subscription allowed influencer ID",
-                description = "If set, influencer subscription only for this ID; empty = no restriction",
-                defaultValue = "",
             )
     }
 }
