@@ -1,2 +1,0 @@
-- make tests work
-- remove the .logcat file
