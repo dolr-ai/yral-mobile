@@ -468,7 +468,7 @@ fun ChatConversationScreen(
                         val shouldShowSuggestions = !hasUserMessages && suggestions.isNotEmpty()
                         // Show suggestion messages if there are no user messages
                         if (shouldShowSuggestions) {
-                            SuggestionMessagesRow(
+                            SuggestionMessagesColumn(
                                 suggestions = suggestions,
                                 onSuggestionClick = { suggestion ->
                                     sendMessageIfAllowed(

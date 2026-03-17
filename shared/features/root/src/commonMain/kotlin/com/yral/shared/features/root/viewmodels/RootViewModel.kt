@@ -6,7 +6,6 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.featureflag.AppFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
-import com.yral.featureflag.FeedFeatureFlags
 import com.yral.shared.analytics.AnalyticsUtmParams
 import com.yral.shared.analytics.User
 import com.yral.shared.analytics.events.CategoryName
@@ -237,12 +236,6 @@ class RootViewModel(
     private suspend fun checkLoginAndInitialize(isSessionPrincipalSame: Boolean) {
         delay(initialDelayForSetup)
         sessionManager.identity?.let {
-            sessionManager.updateIsForcedGamePlayUser(
-                isForcedGamePlayUser = flagManager.isEnabled(FeedFeatureFlags.SmileyGame.StopAndVoteNudge),
-            )
-            sessionManager.updateIsAutoScrolledEnabled(
-                isAutoScrollEnabled = flagManager.isEnabled(FeedFeatureFlags.SmileyGame.AutoScrollEnabled),
-            )
             sessionManager.updateSocialSignInStatus(
                 isSocialSignIn = preferences.getBoolean(PrefKeys.SOCIAL_SIGN_IN_SUCCESSFUL.name) ?: false,
             )

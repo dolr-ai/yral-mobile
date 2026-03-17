@@ -9,8 +9,4 @@ interface IFeedRepository {
     suspend fun fetchMoreFeeds(feedRequest: FeedRequest): PostResponse
     suspend fun fetchAIFeeds(feedRequest: AIFeedRequest): PostResponse
     suspend fun getInitialCachedFeeds(feedRequest: FeedRequest): PostResponse
-    suspend fun getTournamentFeeds(
-        tournamentId: String,
-        withMetadata: Boolean,
-    ): PostResponse
 }

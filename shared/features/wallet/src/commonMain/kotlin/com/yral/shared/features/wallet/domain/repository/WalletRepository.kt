@@ -3,6 +3,7 @@ package com.yral.shared.features.wallet.domain.repository
 import com.yral.shared.features.wallet.domain.models.BtcRewardConfig
 import com.yral.shared.features.wallet.domain.models.BtcToCurrency
 import com.yral.shared.features.wallet.domain.models.DolrPrice
+import com.yral.shared.features.wallet.domain.models.GetBalanceResponse
 
 interface WalletRepository {
     suspend fun getBtcConversionRate(
@@ -19,4 +20,5 @@ interface WalletRepository {
     ): String
     suspend fun getBtcRewardConfig(): BtcRewardConfig?
     suspend fun getDolrPrice(): DolrPrice
+    suspend fun getBalance(userPrincipal: String): GetBalanceResponse
 }
