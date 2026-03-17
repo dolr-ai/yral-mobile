@@ -1,0 +1,14 @@
+[project]
+name = "yral-mobile-devtools"
+version = "0.1.0"
+description = "Development tooling for the yral-mobile devcontainer"
+requires-python = ">=3.11"
+dependencies = [
+    # Used to purge files from git history (e.g. accidentally committed logs).
+    # Run: git-filter-repo --path <file> --invert-paths
+    "git-filter-repo",
+]
+
+[tool.setuptools]
+# This project has no Python source packages — it only declares tool dependencies.
+packages = []
