@@ -50,6 +50,7 @@ kotlin {
             implementation(libs.facebook.sdk.android.core)
             implementation(libs.mixpanel.android)
             implementation(libs.mixpanel.session.replay.android)
+            implementation(libs.snowplow.android)
         }
     }
 }

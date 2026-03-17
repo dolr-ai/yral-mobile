@@ -13,6 +13,7 @@ import com.yral.shared.analytics.providers.branch.BranchAnalyticsProvider
 import com.yral.shared.analytics.providers.facebook.FacebookAnalyticsProvider
 import com.yral.shared.analytics.providers.firebase.FirebaseAnalyticsProvider
 import com.yral.shared.analytics.providers.mixpanel.MixpanelAnalyticsProvider
+import com.yral.shared.analytics.providers.snowplow.SnowplowAnalyticsProvider
 import com.yral.shared.analytics.providers.yral.AnalyticsApiService
 import com.yral.shared.analytics.providers.yral.CoreService
 import com.yral.shared.koin.koinInstance
@@ -63,6 +64,12 @@ val analyticsModule =
             )
         }
         single {
+            SnowplowAnalyticsProvider(
+                eventFilter = { true },
+                mapConverter = get(),
+            )
+        }
+        single {
             AnalyticsManager(
                 providers =
                     listOf(
@@ -70,6 +77,7 @@ val analyticsModule =
                         get<MixpanelAnalyticsProvider>(),
                         get<FacebookAnalyticsProvider>(),
                         get<BranchAnalyticsProvider>(),
+                        get<SnowplowAnalyticsProvider>(),
                     ),
                 coreService = get<CoreService>(),
                 deviceInstallIdStore = get(),
