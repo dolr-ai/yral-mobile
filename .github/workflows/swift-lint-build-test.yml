@@ -2,6 +2,7 @@ name: iOS Checks
 
 permissions:
   contents: read
+  packages: write # required to pull/push the cached devcontainer image from ghcr.io
 
 on:
   pull_request:
@@ -86,6 +87,10 @@ jobs:
         run: pod install
 
       - name: Run tests
+        env:
+          # Required for GitHub Packages dependency resolution (see CLAUDE.md)
+          GITHUB_USERNAME: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         working-directory: iosApp
         run: |
           xcodebuild test \
