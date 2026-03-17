@@ -2435,15 +2435,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "itertools"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
-dependencies = [
- "either",
-]
-
-[[package]]
 name = "itoa"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3078,7 +3069,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a56d757972c98b346a9b766e3f02746cde6dd1cd1d1d563472929fdd74bec4d"
 dependencies = [
  "anyhow",
- "itertools 0.14.0",
+ "itertools 0.11.0",
  "proc-macro2",
  "quote",
  "syn 2.0.114",
@@ -5125,7 +5116,7 @@ dependencies = [
 [[package]]
 name = "yral-identity"
 version = "0.1.0"
-source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#da9b702beffac3e7f9d0eef4b157d25a9df37033"
+source = "git+https://github.com/dolr-ai/yral-common.git?branch=master#f83d1b2d71d63c2e14d385089d53e73c4d860e7e"
 dependencies = [
  "candid",
  "getrandom 0.2.16",
@@ -5140,7 +5131,7 @@ dependencies = [
 [[package]]
 name = "yral-metadata-client"
 version = "0.1.0"
-source = "git+https://github.com/yral-dapp/yral-metadata?branch=master#7d4cd6163616ce9f744cca83bb799a436121c65c"
+source = "git+https://github.com/yral-dapp/yral-metadata?branch=master#c8db8ef3163646ba033808c1d8abb7586203bd43"
 dependencies = [
  "ic-agent",
  "reqwest",
@@ -5152,7 +5143,7 @@ dependencies = [
 [[package]]
 name = "yral-metadata-types"
 version = "0.1.0"
-source = "git+https://github.com/yral-dapp/yral-metadata?branch=master#7d4cd6163616ce9f744cca83bb799a436121c65c"
+source = "git+https://github.com/yral-dapp/yral-metadata?branch=master#c8db8ef3163646ba033808c1d8abb7586203bd43"
 dependencies = [
  "candid",
  "chrono",
