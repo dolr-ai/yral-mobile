@@ -19,7 +19,7 @@ class FeatureFlagManager(
     private val providersInPriority: List<FeatureFlagProvider>,
     private val localProviderId: String,
     private val providerControls: Map<String, FeatureFlag<Boolean>> = emptyMap(),
-    private val listener: Listener,
+    private val listener: Listener = NoOpListener,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -129,6 +129,31 @@ class FeatureFlagManager(
         return local.getRaw(flag.key) is FlagResult.Sourced
     }
 
+    fun exportLocalOverrides(flags: List<FeatureFlag<*>>): Map<String, String> {
+        val local = localProvider ?: return emptyMap()
+        return flags.mapNotNull { flag ->
+            when (val result = local.getRaw(flag.key)) {
+                is FlagResult.Sourced -> flag.key to result.value
+                FlagResult.NotSet -> null
+            }
+        }.toMap()
+    }
+
+    fun importLocalOverrides(
+        overrides: Map<String, String>,
+        flags: List<FeatureFlag<*>>,
+    ): Int {
+        val local = localProvider as? MutableFeatureFlagProvider ?: return 0
+        var applied = 0
+        for (flag in flags) {
+            val value = overrides[flag.key] ?: continue
+            local.setRaw(flag.key, value)
+            applied++
+        }
+        if (applied > 0) clearResolvedCaches()
+        return applied
+    }
+
     private fun isProviderToggle(flag: FeatureFlag<*>): Boolean = providerControls.values.any { it.key == flag.key }
 
     private fun recomputeActiveProviders() {
@@ -160,5 +185,12 @@ class FeatureFlagManager(
             provider: String,
             throwable: Throwable,
         )
+    }
+
+    private object NoOpListener : Listener {
+        override fun onRemoteFetchFailed(
+            provider: String,
+            throwable: Throwable,
+        ) = Unit
     }
 }

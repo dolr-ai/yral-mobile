@@ -427,7 +427,7 @@ class MetaInstallReferrerAttributionTest {
         val attribution = createTestInstance()
 
         // Test 1: Test decryption with the new key (this doesn't require Koin)
-        if (!skipDecryptionTests) {
+        if (!skipDecryptionTests && newDecryptionKey.isNotBlank()) {
             try {
                 val decrypted = attribution.decryptAesGcm(actualDataHex, actualNonceHex, newDecryptionKey)
                 val metadata = Json.decodeFromString(JsonObject.serializer(), decrypted)
