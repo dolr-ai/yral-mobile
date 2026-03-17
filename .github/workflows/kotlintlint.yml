@@ -30,7 +30,7 @@ jobs:
 
       - name: Get Changed Files
         id: changed_files
-        uses: step-security/changed-files@v45
+        uses: step-security/changed-files@v47
         with:
           files: |
             **/*.kt
