@@ -1,6 +1,6 @@
 [versions]
 # AGP and tools should be updated together
-agp = "8.10.1"
+agp = "8.13.2"
 android-tools = "31.10.1"
 compileSDK = "35"
 minSDK = "24"
@@ -63,6 +63,7 @@ truth = "1.4.4"
 accompanist-permission = "0.37.3"
 moko-permissions="0.19.1"
 branch="5.19.0"
+snowplow-android-tracker = "6.3.1"
 play-services-ads-identifier="18.0.1"
 installreferrer = "2.2"
 emoji2 = "1.5.0"
@@ -136,6 +137,8 @@ essenty-instanceKeeper = { group = "com.arkivanov.essenty", name = "instance-kee
 essenty-backHandler = { group = "com.arkivanov.essenty", name = "back-handler", version.ref = "essenty" }
 
 facebook-sdk-android-core = { module = "com.facebook.android:facebook-core", version.ref = "facebook-sdk-android" }
+
+snowplow-android = { module = "com.snowplowanalytics:snowplow-android-tracker", version.ref = "snowplow-android-tracker" }
 
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
