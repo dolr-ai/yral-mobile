@@ -14,12 +14,8 @@ import yral_mobile.shared.app.generated.resources.enable_video_nudge_msg
 import yral_mobile.shared.app.generated.resources.follow_back_nudge
 import yral_mobile.shared.app.generated.resources.nudge_default
 import yral_mobile.shared.app.generated.resources.nudge_follow
-import yral_mobile.shared.app.generated.resources.nudge_tournament
 import yral_mobile.shared.app.generated.resources.nudge_video
-import yral_mobile.shared.app.generated.resources.tournament_nudge_subtitle
-import yral_mobile.shared.app.generated.resources.tournament_nudge_title
 import yral_mobile.shared.app.generated.resources.turn_on_alerts
-import yral_mobile.shared.app.generated.resources.turn_on_notifications
 import yral_mobile.shared.app.generated.resources.video_nudge
 
 data class AlertsRequestInfo(
@@ -54,13 +50,5 @@ fun getAlertRequestInfo(type: AlertsRequestType): AlertsRequestInfo =
                 title = stringResource(Res.string.a_little_nudge),
                 subTitle = stringResource(Res.string.enable_notification_message),
                 buttonText = stringResource(Res.string.turn_on_alerts),
-            )
-        AlertsRequestType.TOURNAMENT ->
-            AlertsRequestInfo(
-                icon = painterResource(Res.drawable.nudge_tournament),
-                title = stringResource(Res.string.tournament_nudge_title),
-                subTitle = stringResource(Res.string.tournament_nudge_subtitle),
-                buttonText = stringResource(Res.string.turn_on_notifications),
-                buttonType = YralButtonType.White,
             )
     }

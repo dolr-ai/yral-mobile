@@ -29,7 +29,6 @@ import com.yral.shared.features.feed.domain.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetAIFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetGlobalCacheFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
-import com.yral.shared.features.feed.domain.useCases.GetTournamentFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.LoadCachedFeedDetailsUseCase
 import com.yral.shared.features.feed.domain.useCases.SaveFeedDetailsCacheUseCase
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
@@ -81,7 +80,6 @@ class FeedViewModel(
     private val linkGenerator: LinkGenerator,
     private val flagManager: FeatureFlagManager,
     private val preferences: Preferences,
-    private val feedContext: FeedContext,
 ) : ViewModel() {
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
 
@@ -99,17 +97,12 @@ class FeedViewModel(
         const val SIGN_UP_PAGE = 9
         private const val PAGER_STATE_REFRESH_BUFFER_MS = 100L
         const val FOLLOW_NUDGE_PAGE = 5
-        const val TOURNAMENT_INTRO_PAGE = 5
     }
 
     private val _state =
         MutableStateFlow(
             FeedState(
-                isCardLayoutEnabled =
-                    when (feedContext) {
-                        is FeedContext.Tournament -> feedContext.isHotOrNot
-                        is FeedContext.Default -> flagManager.isEnabled(FeedFeatureFlags.CardLayout.Enabled)
-                    },
+                isCardLayoutEnabled = flagManager.isEnabled(FeedFeatureFlags.CardLayout.Enabled),
             ),
         )
     val state: StateFlow<FeedState> = _state.asStateFlow()
@@ -125,18 +118,8 @@ class FeedViewModel(
         // Set HON experiment super property for analytics
         feedTelemetry.setHonExperimentStatus(_state.value.isCardLayoutEnabled)
 
-        if (feedContext is FeedContext.Default) {
-            initAvailableFeeds()
-            loadCachedFeedDetails()
-            viewModelScope.launch {
-//                if (preferences.getBoolean(PrefKeys.IS_ONBOARDING_COMPLETE.name) != true) {
-//                    _state.update { it.copy(currentOnboardingStep = OnboardingStep.INTRO_GAME) }
-//                }
-//                preferences.remove(PrefKeys.IS_ONBOARDING_COMPLETE.name)
-            }
-        } else {
-            initializeFeed()
-        }
+        initAvailableFeeds()
+        loadCachedFeedDetails()
         viewModelScope.launch {
             sessionManager
                 .observeSessionProperty { it.followedPrincipals to it.unFollowedPrincipals }
@@ -179,18 +162,16 @@ class FeedViewModel(
                     }
                 }
         }
-        if (feedContext is FeedContext.Default) {
-            // Save cache whenever feed details or max page reached changes
-            viewModelScope.launch {
-                _state
-                    .distinctUntilChanged { old, new ->
-                        old.feedDetails == new.feedDetails && old.maxPageReached == new.maxPageReached
-                    }.debounce(1000.milliseconds) // Debounce to avoid too frequent saves
-                    .collect { saveCacheToPreferences() }
-            }
-            // Track onboarding steps only once when they're first shown
-            viewModelScope.launch { trackOnboardingShown() }
+        // Save cache whenever feed details or max page reached changes
+        viewModelScope.launch {
+            _state
+                .distinctUntilChanged { old, new ->
+                    old.feedDetails == new.feedDetails && old.maxPageReached == new.maxPageReached
+                }.debounce(1000.milliseconds) // Debounce to avoid too frequent saves
+                .collect { saveCacheToPreferences() }
         }
+        // Track onboarding steps only once when they're first shown
+        viewModelScope.launch { trackOnboardingShown() }
     }
 
     private fun initAvailableFeeds() {
@@ -199,12 +180,12 @@ class FeedViewModel(
                 .get(FeedFeatureFlags.FeedTypes.AvailableTypes)
                 .split(",")
                 .mapNotNull { name -> FeedType.entries.firstOrNull { it.name.equals(name.trim(), ignoreCase = true) } }
-        val selectedType = availableFeedTypes.firstOrNull() ?: FeedType.AI
+        // val selectedType = availableFeedTypes.firstOrNull() ?: FeedType.AI
         val isLoginMandatory = flagManager.isEnabled(AppFeatureFlags.Common.MandatoryLogin)
         _state.update {
             it.copy(
-                availableFeedTypes = availableFeedTypes,
-                feedType = selectedType,
+                availableFeedTypes = listOf(FeedType.AI),
+                feedType = FeedType.AI,
                 isMandatoryLogin = isLoginMandatory,
             )
         }
@@ -307,61 +288,11 @@ class FeedViewModel(
     }
 
     private fun initializeFeed() {
-        when (val context = feedContext) {
-            is FeedContext.Tournament -> initialTournamentFeedData(context.tournamentId)
-            FeedContext.Default ->
-                when (_state.value.feedType) {
-                    FeedType.AI -> initialRemoteCachedFeedData()
-                    else -> initialFeedData()
-                }
+        when (_state.value.feedType) {
+            FeedType.AI -> initialRemoteCachedFeedData()
+            else -> initialFeedData()
         }
     }
-
-    private fun initialTournamentFeedData(tournamentId: String) {
-        coroutineScope.launch {
-            val tournamentContext = feedContext as? FeedContext.Tournament
-            val restoredPage =
-                tournamentContext
-                    ?.loadSavedPage
-                    ?.invoke()
-                    ?.coerceAtLeast(0)
-                    ?: 0
-            setLoadingMore(true)
-            requiredUseCases.getTournamentFeedUseCase
-                .invoke(GetTournamentFeedUseCase.Params(tournamentId = tournamentId))
-                .onSuccess { result ->
-                    val userSeed =
-                        sessionManager.userPrincipal
-                            ?: (feedContext as? FeedContext.Tournament)?.sessionKey
-                            ?: "anonymous"
-                    val posts =
-                        result.posts
-                            .distinctBy { it.videoID }
-                            .sortedBy { stableTournamentOrderKey(tournamentId, userSeed, it.videoID) }
-                    if (posts.isNotEmpty()) {
-                        // Pager reads initial page only at creation time; set restored page
-                        // before feed items are inserted so it starts at the expected index.
-                        val clampedPage = restoredPage.coerceIn(0, posts.lastIndex)
-                        _state.update { currentState ->
-                            currentState.copy(
-                                currentPageOfFeed = clampedPage,
-                                maxPageReached = maxOf(currentState.maxPageReached, clampedPage),
-                            )
-                        }
-                        filterVotedAndFetchDetails(posts)
-                    }
-                    setLoadingMore(false)
-                }.onFailure {
-                    setLoadingMore(false)
-                }
-        }
-    }
-
-    private fun stableTournamentOrderKey(
-        tournamentId: String,
-        userSeed: String,
-        videoId: String,
-    ): Int = "$tournamentId|$userSeed|$videoId".hashCode()
 
     private suspend fun saveCacheToPreferences() {
         sessionManager.userPrincipal?.let { userPrincipal ->
@@ -702,7 +633,6 @@ class FeedViewModel(
 
     fun loadMoreFeed() {
         if (_state.value.isLoadingMore) return
-        if (feedContext is FeedContext.Tournament) return
         coroutineScope.launch {
             if (_state.value.feedType == FeedType.AI) {
                 fetchAIFeed(
@@ -790,11 +720,6 @@ class FeedViewModel(
                 currentPageOfFeed = pageNo,
                 maxPageReached = maxOf(currentState.maxPageReached, pageNo), // Update max page reached
             )
-        }
-        if (feedContext is FeedContext.Tournament) {
-            viewModelScope.launch {
-                feedContext.saveCurrentPage?.invoke(pageNo)
-            }
         }
         val currentState = _state.value
         if (currentState.currentPageOfFeed < currentState.feedDetails.size) {
@@ -1160,50 +1085,6 @@ class FeedViewModel(
             }
     }
 
-    fun checkAndShowTournamentIntroSheet() {
-        viewModelScope.launch {
-            // Only check once per app session
-            if (_state.value.tournamentIntroCheckedThisSession) return@launch
-
-            val shownCount = preferences.getInt(PrefKeys.TOURNAMENT_INTRO_SHOWN.name) ?: 0
-            if (shownCount < 2 && _state.value.feedDetails.isNotEmpty()) {
-                // Increment counter when showing
-                preferences.putInt(PrefKeys.TOURNAMENT_INTRO_SHOWN.name, shownCount + 1)
-                _state.update {
-                    it.copy(
-                        showTournamentIntroSheet = true,
-                        tournamentIntroCheckedThisSession = true,
-                    )
-                }
-            } else {
-                // Mark as checked even if not showing
-                _state.update { it.copy(tournamentIntroCheckedThisSession = true) }
-            }
-        }
-    }
-
-    fun dismissTournamentIntroSheet() {
-        _state.update { it.copy(showTournamentIntroSheet = false) }
-    }
-
-    fun checkAndShowHotOrNotOnboarding() {
-        viewModelScope.launch {
-            if (_state.value.isCardLayoutEnabled) {
-                val hasShown = preferences.getBoolean(PrefKeys.HOT_OR_NOT_ONBOARDING_SHOWN.name) ?: false
-                if (!hasShown) {
-                    _state.update { it.copy(showHotOrNotOnboarding = true) }
-                }
-            }
-        }
-    }
-
-    fun dismissHotOrNotOnboarding() {
-        viewModelScope.launch {
-            preferences.putBoolean(PrefKeys.HOT_OR_NOT_ONBOARDING_SHOWN.name, true)
-            _state.update { it.copy(showHotOrNotOnboarding = false) }
-        }
-    }
-
     private fun trackOnboardingShown() {
         viewModelScope.launch {
             _state
@@ -1240,7 +1121,6 @@ class FeedViewModel(
         val reportVideoUseCase: ReportVideoUseCase,
         val checkVideoVoteUseCase: CheckVideoVoteUseCase,
         val getAIFeedUseCase: GetAIFeedUseCase,
-        val getTournamentFeedUseCase: GetTournamentFeedUseCase,
         val followUserUseCase: FollowUserUseCase,
         val videoViewsUseCase: GetVideoViewsUseCase,
         val loadCachedFeedDetailsUseCase: LoadCachedFeedDetailsUseCase,
@@ -1262,24 +1142,14 @@ data class FeedState(
     val isDeeplinkFetching: Boolean = false,
     val reportSheetState: ReportSheetState = ReportSheetState.Closed,
     val showSignupFailedSheet: Boolean = false,
-    val overlayType: OverlayType = OverlayType.DAILY_RANK,
     val isLoggedIn: Boolean = false,
     val availableFeedTypes: List<FeedType> = listOf(FeedType.DEFAULT),
     val feedType: FeedType = FeedType.DEFAULT,
     val isFollowInProgress: Boolean = false,
     val currentOnboardingStep: OnboardingStep? = null,
-    val showTournamentIntroSheet: Boolean = false,
-    val tournamentIntroCheckedThisSession: Boolean = false,
     val isMandatoryLogin: Boolean = false,
     val isCardLayoutEnabled: Boolean = true,
-    val showHotOrNotOnboarding: Boolean = false,
 )
-
-enum class OverlayType {
-    DEFAULT,
-    GAME_TOGGLE,
-    DAILY_RANK,
-}
 
 data class VideoData(
     val didLog3SecondWatched: Boolean = false,

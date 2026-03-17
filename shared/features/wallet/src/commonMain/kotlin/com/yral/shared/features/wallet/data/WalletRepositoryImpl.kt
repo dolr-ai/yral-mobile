@@ -1,9 +1,11 @@
 package com.yral.shared.features.wallet.data
 
 import com.yral.shared.features.wallet.data.models.toDomain
+import com.yral.shared.features.wallet.data.models.toGetBalanceResponse
 import com.yral.shared.features.wallet.domain.models.BtcRewardConfig
 import com.yral.shared.features.wallet.domain.models.BtcToCurrency
 import com.yral.shared.features.wallet.domain.models.DolrPrice
+import com.yral.shared.features.wallet.domain.models.GetBalanceResponse
 import com.yral.shared.features.wallet.domain.repository.WalletRepository
 
 class WalletRepositoryImpl(
@@ -41,4 +43,9 @@ class WalletRepositoryImpl(
         dataSource
             .getDolrUsdPrice()
             .toDomain()
+
+    override suspend fun getBalance(userPrincipal: String): GetBalanceResponse =
+        dataSource
+            .getBalance(userPrincipal)
+            .toGetBalanceResponse()
 }
