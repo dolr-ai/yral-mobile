@@ -1,7 +1,7 @@
 name: Gradle Tests
 
 on:
-  pull_request:
+  push:
 
 permissions:
   contents: read
