@@ -14,11 +14,11 @@ echo "Installing system packages..."
 sudo apt-get update -qq && sudo apt-get install -y -qq dnsutils
 echo "✓ Installed dnsutils (dig, nslookup, host)"
 
-# Install Python packages
+# Install Python packages declared in pyproject.toml (devcontainer tooling)
 echo ""
 echo "Installing Python packages..."
-# pip install --user -r requirements.txt
-echo "✓ Installed Python packages from requirements.txt"
+pip install --quiet "$(dirname "$(dirname "$0")")"
+echo "✓ Installed Python packages from pyproject.toml"
 
 # Check SSH Agent accessibility
 echo ""

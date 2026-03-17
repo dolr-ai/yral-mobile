@@ -4,9 +4,7 @@ version = "0.1.0"
 description = "Development tooling for the yral-mobile devcontainer"
 requires-python = ">=3.11"
 dependencies = [
-    # Used to purge files from git history (e.g. accidentally committed logs).
-    # Run: git-filter-repo --path <file> --invert-paths
-    "git-filter-repo",
+    # Add devcontainer tool dependencies here.
 ]
 
 [tool.setuptools]
