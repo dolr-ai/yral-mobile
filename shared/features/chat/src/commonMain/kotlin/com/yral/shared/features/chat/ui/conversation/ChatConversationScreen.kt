@@ -155,6 +155,17 @@ fun ChatConversationScreen(
         }
     }
 
+    // Auto-trigger purchase when navigated from Subscribe button on profile
+    if (params.autoTriggerPurchase) {
+        var purchaseTriggered by remember { mutableStateOf(false) }
+        LaunchedEffect(viewState.influencer?.id) {
+            if (viewState.influencer != null && !purchaseTriggered) {
+                purchaseTriggered = true
+                purchaseContext?.let { viewModel.launchInfluencerSubscriptionPurchase(it) }
+            }
+        }
+    }
+
     val overlayItems by viewModel.overlay.collectAsState()
     val historyPagingItems = viewModel.history.collectAsLazyPagingItems()
 
@@ -391,6 +402,13 @@ fun ChatConversationScreen(
                     delay(1.seconds)
                 }
             }
+            val showHeaderSubscribe by derivedStateOf {
+                viewState.isSocialSignedIn &&
+                    viewState.isSubscriptionEnabled &&
+                    !viewState.isBotAccount &&
+                    viewState.isInfluencerSubscriptionAvailableToPurchase &&
+                    !viewState.isInfluencerSubscriptionPurchasedAndVerified
+            }
             // Header
             ChatHeader(
                 influencer = viewState.influencer,
@@ -419,6 +437,11 @@ fun ChatConversationScreen(
                 accessExpiresInText = accessExpiryDisplay.text,
                 isAccessExpiringSoon = accessExpiryDisplay.isExpiringSoon,
                 isBotAccount = viewState.isBotAccount,
+                showSubscribe = showHeaderSubscribe,
+                isSubscribeLoading = viewState.isInfluencerSubscriptionPurchaseInProgress,
+                onSubscribeClick = {
+                    purchaseContext?.let { viewModel.launchInfluencerSubscriptionPurchase(it) }
+                },
             )
 
             Column(
