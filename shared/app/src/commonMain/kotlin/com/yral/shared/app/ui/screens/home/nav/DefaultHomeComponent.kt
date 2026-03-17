@@ -272,6 +272,7 @@ internal class DefaultHomeComponent(
         WalletComponent.Companion(
             componentContext = componentContext,
             showAlertsOnDialog = showAlertsOnDialog,
+            onCreateInfluencer = { openCreateInfluencer(BotCreationSource.WALLET) },
         )
 
     private fun chatComponent(componentContext: ComponentContext): ChatComponent =

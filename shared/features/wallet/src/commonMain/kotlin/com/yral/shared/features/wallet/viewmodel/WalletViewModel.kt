@@ -2,20 +2,8 @@ package com.yral.shared.features.wallet.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.touchlab.kermit.Logger
-import com.github.michaelbull.result.onFailure
-import com.github.michaelbull.result.onSuccess
-import com.yral.shared.core.session.AccountInfo
 import com.yral.shared.core.session.SessionManager
-import com.yral.shared.core.utils.getAccountInfo
 import com.yral.shared.features.wallet.analytics.WalletTelemetry
-import com.yral.shared.features.wallet.domain.GetBtcConversionUseCase
-import com.yral.shared.features.wallet.domain.GetDolrUsdPriceUseCase
-import com.yral.shared.features.wallet.domain.GetRewardConfigUseCase
-import com.yral.shared.features.wallet.domain.GetUserBtcBalanceUseCase
-import com.yral.shared.features.wallet.domain.GetUserDolrBalanceUseCase
-import com.yral.shared.features.wallet.domain.models.BtcRewardConfig
-import com.yral.shared.features.wallet.domain.models.DolrPrice
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,37 +12,12 @@ import kotlinx.coroutines.launch
 
 class WalletViewModel(
     private val sessionManager: SessionManager,
-    private val getBtcConversionUseCase: GetBtcConversionUseCase,
-    private val getUserBtcBalanceUseCase: GetUserBtcBalanceUseCase,
-    private val getUserDolrBalanceUseCase: GetUserDolrBalanceUseCase,
-    private val getRewardConfigUseCase: GetRewardConfigUseCase,
-    private val getDolrUsdPriceUseCase: GetDolrUsdPriceUseCase,
     private val walletTelemetry: WalletTelemetry,
 ) : ViewModel() {
     private val _state = MutableStateFlow(WalletState())
     val state: StateFlow<WalletState> = _state.asStateFlow()
 
     init {
-        observeBalance()
-        viewModelScope.launch {
-            getRewardConfigUseCase
-                .invoke()
-                .onSuccess { rewardConfig ->
-                    _state.update {
-                        it.copy(rewardConfig = rewardConfig)
-                    }
-                }.onFailure { Logger.e("Wallet") { "error fetching reward config $it" } }
-        }
-        viewModelScope.launch {
-            getDolrUsdPriceUseCase
-                .invoke()
-                .onSuccess { dolrPrice ->
-                    _state.update {
-                        it.copy(dolrPrice = dolrPrice)
-                    }
-                    updateDolrConversionRate()
-                }.onFailure { Logger.e("Wallet") { "error fetching dolr price $it" } }
-        }
         viewModelScope.launch {
             sessionManager
                 .observeSessionProperty { it.isFirebaseLoggedIn }
@@ -62,135 +25,27 @@ class WalletViewModel(
                     _state.update { it.copy(isFirebaseLoggedIn = isFirebaseLoggedIn) }
                 }
         }
-        viewModelScope.launch {
-            sessionManager
-                .observeSessionProperty { it.proDetails }
-                .collect { proDetails ->
-                    _state.update { it.copy(isProUser = proDetails?.isProPurchased ?: false) }
-                }
-        }
-    }
-
-    private fun updateDolrConversionRate() {
-        val dolrPrice = _state.value.dolrPrice ?: return
-        val currencyCode = _state.value.btcConversionCurrency
-        val rate =
-            if (currencyCode == "INR") {
-                dolrPrice.inrPrice
-            } else {
-                dolrPrice.usdPrice
-            }
-        _state.update { it.copy(dolrConversionRate = rate) }
     }
 
     fun onScreenViewed() {
-        _state.value.accountInfo?.userPrincipal ?: return
         walletTelemetry.onWalletScreenViewed()
     }
 
-    fun refresh(countryCode: String) {
-        _state.update { it.copy(accountInfo = sessionManager.getAccountInfo()) }
-        getUserBtcBalanceUseCase()
-        getUserDolrBalanceUseCase()
-        fetchDolrPrice()
-        if (_state.value.isFirebaseLoggedIn) {
-            getBtcValueConversion(countryCode)
-        }
-    }
-
-    private fun fetchDolrPrice() {
-        viewModelScope.launch {
-            getDolrUsdPriceUseCase
-                .invoke()
-                .onSuccess { dolrPrice ->
-                    _state.update {
-                        it.copy(dolrPrice = dolrPrice)
-                    }
-                    updateDolrConversionRate()
-                }.onFailure { Logger.e("Wallet") { "error fetching dolr price $it" } }
-        }
-    }
-
-    private fun observeBalance() {
-        viewModelScope.launch {
-            sessionManager
-                .observeSessionPropertyWithDefault(
-                    selector = { it.coinBalance },
-                    defaultValue = 0,
-                ).collect { coinBalance ->
-                    Logger.d("coinBalance") { "coin balance collected $coinBalance" }
-                    _state.update { it.copy(yralTokenBalance = coinBalance) }
-                }
-        }
-    }
-
-    private fun getBtcValueConversion(countryCode: String) {
-        viewModelScope.launch {
-            getBtcConversionUseCase(parameter = GetBtcConversionUseCase.Params(countryCode))
-                .onSuccess { btcInInr ->
-                    _state.update {
-                        it.copy(
-                            btcConversionRate = btcInInr.conversionRate,
-                            btcConversionCurrency = btcInInr.currencyCode,
-                        )
-                    }
-                    updateDolrConversionRate()
-                }
-        }
-    }
-
-    private fun getUserBtcBalanceUseCase() {
-        viewModelScope.launch {
-            sessionManager.userPrincipal?.let { principal ->
-                getUserBtcBalanceUseCase(principal)
-                    .onSuccess { bal ->
-                        Logger.d("coinBalance") { "btc balance collected $bal" }
-                        _state.update { it.copy(bitcoinBalance = bal) }
-                    }.onFailure {
-                        Logger.d("coinBalance") { "error fetching btc balance $it" }
-                    }
-            }
-        }
-    }
-
-    private fun getUserDolrBalanceUseCase() {
-        viewModelScope.launch {
-            sessionManager.userPrincipal?.let { principal ->
-                getUserDolrBalanceUseCase(principal)
-                    .onSuccess { bal ->
-                        Logger.d("coinBalance") { "dolr balance collected $bal" }
-                        _state.update { it.copy(dolrBalance = bal) }
-                    }.onFailure {
-                        Logger.d("coinBalance") { "error fetching dolr balance $it" }
-                    }
-            }
-        }
-    }
-
     fun toggleHowToEarnHelp(isOpen: Boolean) {
-        _state.update { it.copy(howToEarnHelpVisible = isOpen) }
+        _state.update { it.copy(howToEarnVisible = isOpen) }
         if (isOpen) {
             walletTelemetry.onHowToEarnClicked()
         }
     }
 
-    fun toggleHowToGetDolrHelp(isOpen: Boolean) {
-        _state.update { it.copy(howToGetDolrHelpVisible = isOpen) }
+    fun toggleTransactionHistory(show: Boolean) {
+        _state.update { it.copy(showTransactionHistory = show) }
     }
 }
 
 data class WalletState(
-    val yralTokenBalance: Long? = null,
-    val bitcoinBalance: Double? = null,
-    val btcConversionRate: Double? = null,
-    val btcConversionCurrency: String? = null,
-    val dolrBalance: Double? = null,
-    val dolrConversionRate: Double? = null,
-    val dolrPrice: DolrPrice? = null,
-    val accountInfo: AccountInfo? = null,
-    val howToEarnHelpVisible: Boolean = false,
-    val howToGetDolrHelpVisible: Boolean = false,
-    val rewardConfig: BtcRewardConfig? = null,
+    val totalEarningsInr: String = "₹800",
     val isFirebaseLoggedIn: Boolean = false,
-    val isProUser: Boolean = false,
+    val howToEarnVisible: Boolean = false,
+    val showTransactionHistory: Boolean = false,
 )

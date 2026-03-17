@@ -1,3 +1,5 @@
+@file:Suppress("EmptyFunctionBlock", "UnusedPrivateProperty")
+
 package com.yral.shared.analytics.providers.snowplow
 
 import com.yral.shared.analytics.AnalyticsProvider

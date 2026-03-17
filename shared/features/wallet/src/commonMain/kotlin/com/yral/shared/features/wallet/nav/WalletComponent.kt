@@ -7,18 +7,21 @@ interface WalletComponent {
     val showAlertsOnDialog: (type: AlertsRequestType) -> Unit
     val showBackIcon: Boolean
     val onBack: () -> Unit
+    val onCreateInfluencer: () -> Unit
     companion object Companion {
         operator fun invoke(
             componentContext: ComponentContext,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
             showBackIcon: Boolean = false,
             onBack: () -> Unit = {},
+            onCreateInfluencer: () -> Unit = {},
         ): WalletComponent =
             DefaultWalletComponent(
                 componentContext,
                 showAlertsOnDialog,
                 showBackIcon,
                 onBack,
+                onCreateInfluencer,
             )
     }
 }

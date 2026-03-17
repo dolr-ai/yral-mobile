@@ -1,10 +1,11 @@
+@file:Suppress("LongMethod", "MagicNumber")
+
 package com.yral.shared.features.wallet.ui
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,8 +15,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -26,46 +30,44 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.features.wallet.nav.WalletComponent
 import com.yral.shared.features.wallet.viewmodel.WalletViewModel
-import com.yral.shared.libs.CurrencyFormatter
-import com.yral.shared.libs.NumberFormatter
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.component.YralGradientButton
-import com.yral.shared.libs.designsystem.component.features.AccountInfoView
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.features.wallet.generated.resources.Res
-import yral_mobile.shared.features.wallet.generated.resources.bit_coin
-import yral_mobile.shared.features.wallet.generated.resources.bitcoin
-import yral_mobile.shared.features.wallet.generated.resources.currency_balance
-import yral_mobile.shared.features.wallet.generated.resources.dolr
-import yral_mobile.shared.features.wallet.generated.resources.engaged_view_equals_dolr
-import yral_mobile.shared.features.wallet.generated.resources.engaged_views_description
-import yral_mobile.shared.features.wallet.generated.resources.get_engaged_views
+import yral_mobile.shared.features.wallet.generated.resources.create_influencer
 import yral_mobile.shared.features.wallet.generated.resources.got_it
-import yral_mobile.shared.features.wallet.generated.resources.how_to_get_dolr
-import yral_mobile.shared.features.wallet.generated.resources.how_to_get_dolr_title
-import yral_mobile.shared.features.wallet.generated.resources.ic_dolr
-import yral_mobile.shared.features.wallet.generated.resources.ic_dolr_stack
+import yral_mobile.shared.features.wallet.generated.resources.history
+import yral_mobile.shared.features.wallet.generated.resources.how_to_earn
+import yral_mobile.shared.features.wallet.generated.resources.ic_rupee
+import yral_mobile.shared.features.wallet.generated.resources.min_withdrawal_limit
 import yral_mobile.shared.features.wallet.generated.resources.my_wallet
-import yral_mobile.shared.features.wallet.generated.resources.what_are_engaged_views
+import yral_mobile.shared.features.wallet.generated.resources.step_1_desc
+import yral_mobile.shared.features.wallet.generated.resources.step_1_title
+import yral_mobile.shared.features.wallet.generated.resources.step_2_desc
+import yral_mobile.shared.features.wallet.generated.resources.step_2_title
+import yral_mobile.shared.features.wallet.generated.resources.step_3_desc
+import yral_mobile.shared.features.wallet.generated.resources.step_3_title
+import yral_mobile.shared.features.wallet.generated.resources.step_4_desc
+import yral_mobile.shared.features.wallet.generated.resources.step_4_title
+import yral_mobile.shared.features.wallet.generated.resources.total_earnings_inr
+import yral_mobile.shared.features.wallet.generated.resources.transaction_history
+import yral_mobile.shared.features.wallet.generated.resources.wallet_locked
+import yral_mobile.shared.features.wallet.generated.resources.wallet_locked_description
+import yral_mobile.shared.libs.designsystem.generated.resources.arrow
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
-import yral_mobile.shared.libs.designsystem.generated.resources.coins
-import yral_mobile.shared.libs.designsystem.generated.resources.yral
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
-@Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WalletScreen(
@@ -74,70 +76,31 @@ fun WalletScreen(
     viewModel: WalletViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val countryCode = Locale.current.region
     LaunchedEffect(Unit) { viewModel.onScreenViewed() }
-    LaunchedEffect(state.isFirebaseLoggedIn) {
-        viewModel.refresh(countryCode)
-    }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    Column(modifier = modifier.fillMaxSize()) {
-        WalletHeader(component = component)
-        Spacer(modifier = Modifier.height(4.dp))
-        state.accountInfo?.let { info ->
-            // Defaults since login not required on wallet
-            AccountInfoView(
-                accountInfo = info,
-                isSocialSignIn = true,
-                onLoginClicked = {},
-                isProUser = state.isProUser,
-            )
-        }
-        state.yralTokenBalance?.let { coinBalance ->
-            YralTokenBalance(coinBalance)
-        }
-        state.bitcoinBalance?.let {
-            BitCoinBalance(
-                balance = it,
-                btcConversionRate = state.btcConversionRate,
-                currencyCode = state.btcConversionCurrency,
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-        state.dolrBalance?.let {
-            DolrBalance(
-                balance = it,
-                dolrConversionRate = state.dolrConversionRate,
-                currencyCode = state.btcConversionCurrency,
-            )
-        }
-        state.rewardConfig?.let {
-            YralButton(
-                text = stringResource(Res.string.how_to_get_dolr),
-                onClick = { viewModel.toggleHowToGetDolrHelp(true) },
-                modifier =
-                    Modifier
-                        .padding(start = 16.dp, top = 24.dp)
-                        .width(162.dp)
-                        .height(40.dp),
-                textStyle = LocalAppTopography.current.baseBold,
-            )
-        }
+
+    if (state.showTransactionHistory) {
+        TransactionHistoryScreen(onBack = { viewModel.toggleTransactionHistory(false) })
+    } else if (state.isFirebaseLoggedIn) {
+        WalletUnlockedContent(
+            component = component,
+            state = state,
+            viewModel = viewModel,
+            modifier = modifier,
+        )
+    } else {
+        WalletLockedContent(
+            component = component,
+            modifier = modifier,
+        )
     }
-    if (state.howToGetDolrHelpVisible) {
+
+    if (state.howToEarnVisible) {
         YralBottomSheet(
-            onDismissRequest = {
-                viewModel.toggleHowToGetDolrHelp(false)
-                component.showAlertsOnDialog(AlertsRequestType.DEFAULT)
-            },
+            onDismissRequest = { viewModel.toggleHowToEarnHelp(false) },
             bottomSheetState = bottomSheetState,
-            dragHandle = null,
             content = {
-                HowToGetDolrSheet(
-                    onDismiss = {
-                        viewModel.toggleHowToGetDolrHelp(false)
-                        component.showAlertsOnDialog(AlertsRequestType.DEFAULT)
-                    },
-                )
+                HowToEarnSheet(onDismiss = { viewModel.toggleHowToEarnHelp(false) })
             },
         )
     }
@@ -160,6 +123,7 @@ private fun WalletHeader(component: WalletComponent) {
                         .size(24.dp)
                         .clickable { component.onBack() },
             )
+            Spacer(modifier = Modifier.width(8.dp))
         }
         Text(
             text = stringResource(Res.string.my_wallet),
@@ -170,424 +134,349 @@ private fun WalletHeader(component: WalletComponent) {
 }
 
 @Composable
-private fun YralTokenBalance(coinBalance: Long) {
-    Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-        modifier =
-            Modifier
-                .padding(horizontal = 16.dp, vertical = 24.dp)
-                .border(width = 1.dp, color = YralColors.Neutral700, shape = RoundedCornerShape(size = 8.dp))
-                .fillMaxWidth()
-                .background(color = YralColors.Neutral800, shape = RoundedCornerShape(size = 8.dp))
-                .background(color = YralColors.ScrimColorBalance, shape = RoundedCornerShape(size = 8.dp))
-                .padding(start = 8.dp, top = 8.dp, end = 8.dp, bottom = 8.dp),
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f),
-            ) {
-                Image(
-                    painter = painterResource(DesignRes.drawable.yral),
-                    contentDescription = stringResource(DesignRes.string.coins),
-                    contentScale = ContentScale.Inside,
-                    modifier = Modifier.size(48.dp),
-                )
-                Text(
-                    text = stringResource(DesignRes.string.coins),
-                    style = LocalAppTopography.current.xlBold,
-                    color = YralColors.NeutralTextPrimary,
-                    textAlign = TextAlign.Center,
-                )
-            }
-            Text(
-                text = coinBalance.toString(),
-                style = LocalAppTopography.current.xlBold,
-                color = YralColors.NeutralTextPrimary,
-                textAlign = TextAlign.Center,
-            )
-        }
-    }
-}
-
-@Composable
-private fun BitCoinBalance(
-    balance: Double,
-    btcConversionRate: Double?,
-    currencyCode: String?,
+private fun WalletLockedContent(
+    component: WalletComponent,
+    modifier: Modifier = Modifier,
 ) {
-    Column {
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier =
-                Modifier
-                    .padding(start = 16.dp, end = 16.dp, bottom = 6.dp)
-                    .border(
-                        width = 1.dp,
-                        color = YralColors.Neutral700,
-                        shape = RoundedCornerShape(size = 8.dp),
-                    ).fillMaxWidth()
-                    .height(65.dp)
-                    .background(
-                        color = YralColors.Neutral800,
-                        shape = RoundedCornerShape(size = 8.dp),
-                    ).background(
-                        color = YralColors.ScrimColorBalance,
-                        shape = RoundedCornerShape(size = 8.dp),
-                    ).padding(horizontal = 8.dp, vertical = 4.dp),
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Image(
-                    painter = painterResource(Res.drawable.bitcoin),
-                    contentDescription = stringResource(Res.string.bit_coin),
-                    contentScale = ContentScale.Inside,
-                    modifier = Modifier.size(48.dp),
-                )
-                Text(
-                    text = stringResource(Res.string.bit_coin),
-                    style = LocalAppTopography.current.xlBold,
-                    color = YralColors.NeutralTextPrimary,
-                    textAlign = TextAlign.Center,
-                )
-            }
-            Text(
-                text = NumberFormatter().format(value = balance, maximumFractionDigits = 8),
-                style = LocalAppTopography.current.xxlBold,
-                color = YralColors.NeutralTextPrimary,
-                textAlign = TextAlign.Center,
-            )
-        }
-        BtcConversionRow(
-            btcBalance = balance,
-            btcConversionRate = btcConversionRate,
-            currencyCode = currencyCode,
-        )
-    }
-}
-
-@Suppress("LongMethod")
-@Composable
-private fun BtcConversionRow(
-    btcBalance: Double,
-    btcConversionRate: Double?,
-    currencyCode: String?,
-) {
-    if (btcConversionRate == null || currencyCode == null) return
-
-    val currencySymbol = if (currencyCode == "INR") "₹" else "$"
-    val formattedRate =
-        NumberFormatter().format(
-            value = btcConversionRate,
-            maximumFractionDigits = 2,
-        )
-
-    Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-    ) {
-        // Left: "1 Bitcoin = ₹ X INR" (conversion rate with bold amount)
-        Row {
-            Text(
-                text = "1 Bitcoin = $currencySymbol ",
-                style = LocalAppTopography.current.regRegular,
-                color = YralColors.NeutralTextSecondary,
-            )
-            Text(
-                text = formattedRate,
-                style = LocalAppTopography.current.regBold,
-                color = YralColors.NeutralTextSecondary,
-            )
-            Text(
-                text = " $currencyCode",
-                style = LocalAppTopography.current.regRegular,
-                color = YralColors.NeutralTextSecondary,
-            )
-        }
-        // Right: "INR Balance: ₹X" (btcBalance * conversion rate)
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(Res.string.currency_balance, currencyCode),
-                style = LocalAppTopography.current.regRegular,
-                color = YralColors.NeutralTextPrimary,
-            )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier =
-                    Modifier
-                        .background(
-                            color = YralColors.Green400,
-                            shape = RoundedCornerShape(size = 6.dp),
-                        ).padding(horizontal = 6.dp, vertical = 2.dp),
-            ) {
-                Text(
-                    text = (btcBalance * btcConversionRate).toCurrencyString(currencyCode),
-                    style = LocalAppTopography.current.regSemiBold,
-                    color = YralColors.Neutral50,
-                )
-            }
-        }
-    }
-}
-
-private fun Double.toCurrencyString(currencyCode: String) =
-    CurrencyFormatter()
-        .format(
-            amount = this,
-            currencyCode = currencyCode,
-            withCurrencySymbol = true,
-            minimumFractionDigits = 2,
-            maximumFractionDigits = 2,
-        )
-
-@Composable
-private fun DolrBalance(
-    balance: Double,
-    dolrConversionRate: Double?,
-    currencyCode: String?,
-) {
-    Column {
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier =
-                Modifier
-                    .padding(start = 16.dp, end = 16.dp, bottom = 6.dp)
-                    .border(
-                        width = 1.dp,
-                        color = YralColors.Neutral700,
-                        shape = RoundedCornerShape(size = 8.dp),
-                    ).fillMaxWidth()
-                    .height(65.dp)
-                    .background(
-                        color = YralColors.Neutral800,
-                        shape = RoundedCornerShape(size = 8.dp),
-                    ).background(
-                        color = YralColors.ScrimColorBalance,
-                        shape = RoundedCornerShape(size = 8.dp),
-                    ).padding(horizontal = 8.dp, vertical = 4.dp),
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Image(
-                    painter = painterResource(Res.drawable.ic_dolr),
-                    contentDescription = stringResource(Res.string.dolr),
-                    contentScale = ContentScale.Inside,
-                    modifier = Modifier.size(48.dp),
-                )
-                Text(
-                    text = stringResource(Res.string.dolr),
-                    style = LocalAppTopography.current.xlBold,
-                    color = YralColors.NeutralTextPrimary,
-                    textAlign = TextAlign.Center,
-                )
-            }
-            Text(
-                text = NumberFormatter().format(value = balance, maximumFractionDigits = 2),
-                style = LocalAppTopography.current.xxlBold,
-                color = YralColors.NeutralTextPrimary,
-                textAlign = TextAlign.Center,
-            )
-        }
-        DolrConversionRow(
-            dolrBalance = balance,
-            dolrConversionRate = dolrConversionRate,
-            currencyCode = currencyCode,
-        )
-    }
-}
-
-@Suppress("LongMethod")
-@Composable
-private fun DolrConversionRow(
-    dolrBalance: Double,
-    dolrConversionRate: Double?,
-    currencyCode: String?,
-) {
-    if (dolrConversionRate == null || currencyCode == null) return
-
-    val currencySymbol = if (currencyCode == "INR") "₹" else "$"
-    val formattedRate =
-        NumberFormatter().format(
-            value = dolrConversionRate,
-            maximumFractionDigits = 2,
-        )
-
-    Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-    ) {
-        // Left: "1 DOLR = ₹ X INR" (conversion rate with bold amount)
-        Row {
-            Text(
-                text = "1 DOLR = $currencySymbol ",
-                style = LocalAppTopography.current.regRegular,
-                color = YralColors.NeutralTextSecondary,
-            )
-            Text(
-                text = formattedRate,
-                style = LocalAppTopography.current.regBold,
-                color = YralColors.NeutralTextSecondary,
-            )
-            Text(
-                text = " $currencyCode",
-                style = LocalAppTopography.current.regRegular,
-                color = YralColors.NeutralTextSecondary,
-            )
-        }
-        // Right: "INR Balance: ₹X" (dolrBalance * conversion rate)
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(Res.string.currency_balance, currencyCode),
-                style = LocalAppTopography.current.regRegular,
-                color = YralColors.NeutralTextPrimary,
-            )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier =
-                    Modifier
-                        .background(
-                            color = YralColors.Green400,
-                            shape = RoundedCornerShape(size = 6.dp),
-                        ).padding(horizontal = 6.dp, vertical = 2.dp),
-            ) {
-                Text(
-                    text = (dolrBalance * dolrConversionRate).toCurrencyString(currencyCode),
-                    style = LocalAppTopography.current.regSemiBold,
-                    color = YralColors.Neutral50,
-                )
-            }
-        }
-    }
-}
-
-@Suppress("LongMethod")
-@Composable
-private fun HowToGetDolrSheet(onDismiss: () -> Unit) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(28.dp),
+        modifier = modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        WalletHeader(component = component)
+        Spacer(modifier = Modifier.weight(1f))
+        Text(
+            text = "\uD83D\uDD12",
+            fontSize = 80.sp,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = stringResource(Res.string.wallet_locked),
+            style = LocalAppTopography.current.xlBold,
+            color = YralColors.NeutralTextPrimary,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = stringResource(Res.string.wallet_locked_description),
+            style = LocalAppTopography.current.baseRegular,
+            color = YralColors.NeutralTextSecondary,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 32.dp),
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        YralGradientButton(
+            text = stringResource(Res.string.create_influencer),
+            onClick = { component.onCreateInfluencer() },
+            modifier = Modifier.padding(horizontal = 32.dp),
+        )
+        Spacer(modifier = Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun WalletUnlockedContent(
+    component: WalletComponent,
+    state: com.yral.shared.features.wallet.viewmodel.WalletState,
+    viewModel: WalletViewModel,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxSize(),
+    ) {
+        WalletHeader(component = component)
+        Spacer(modifier = Modifier.height(8.dp))
+        EarningsCard(totalEarnings = state.totalEarningsInr)
+        Spacer(modifier = Modifier.height(16.dp))
+        TransactionHistoryCard(onClick = { viewModel.toggleTransactionHistory(true) })
+        Spacer(modifier = Modifier.height(16.dp))
+        HowToEarnButton(onClick = { viewModel.toggleHowToEarnHelp(true) })
+    }
+}
+
+@Composable
+private fun EarningsCard(totalEarnings: String) {
+    val gradientBrush =
+        Brush.linearGradient(
+            colors =
+                listOf(
+                    Color(0xFF81546D),
+                    Color(0xFFC45D95),
+                    Color(0xFFDE98BE),
+                    Color(0xFFC45D95),
+                    Color(0xFF81546D),
+                ),
+        )
+    Column(
+        modifier =
+            Modifier
+                .padding(horizontal = 16.dp)
+                .fillMaxWidth()
+                .background(brush = gradientBrush, shape = RoundedCornerShape(12.dp))
+                .padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = stringResource(Res.string.total_earnings_inr),
+            style = LocalAppTopography.current.baseSemiBold,
+            color = Color.White.copy(alpha = 0.8f),
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = totalEarnings,
+            style = LocalAppTopography.current.xxlBold.copy(fontSize = 32.sp),
+            color = Color.White,
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(color = Color.White.copy(alpha = 0.3f))
+        Spacer(modifier = Modifier.height(12.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Text(
+                text = "\uD83D\uDD12",
+                fontSize = 14.sp,
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = stringResource(Res.string.min_withdrawal_limit),
+                style = LocalAppTopography.current.regRegular,
+                color = Color.White.copy(alpha = 0.7f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun TransactionHistoryCard(onClick: () -> Unit) {
+    Row(
+        modifier =
+            Modifier
+                .padding(horizontal = 16.dp)
+                .fillMaxWidth()
+                .background(color = YralColors.Neutral800, shape = RoundedCornerShape(12.dp))
+                .clickable(onClick = onClick)
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(Res.string.transaction_history),
+            style = LocalAppTopography.current.mdBold,
+            color = YralColors.NeutralTextPrimary,
+        )
+        Icon(
+            painter = painterResource(DesignRes.drawable.arrow),
+            contentDescription = null,
+            tint = YralColors.NeutralTextSecondary,
+            modifier = Modifier.size(20.dp),
+        )
+    }
+}
+
+@Composable
+private fun HowToEarnButton(onClick: () -> Unit) {
+    Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+        YralButton(
+            text = stringResource(Res.string.how_to_earn),
+            onClick = onClick,
+            modifier = Modifier.width(162.dp).height(40.dp),
+            textStyle = LocalAppTopography.current.baseBold,
+        )
+    }
+}
+
+@Composable
+private fun HowToEarnSheet(onDismiss: () -> Unit) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 36.dp),
     ) {
-        // Stacked coins image
-        Image(
-            painter = painterResource(Res.drawable.ic_dolr_stack),
-            contentDescription = stringResource(Res.string.dolr),
-            contentScale = ContentScale.Fit,
-            modifier = Modifier.size(width = 100.dp, height = 90.dp),
+        Icon(
+            painter = painterResource(Res.drawable.ic_rupee),
+            contentDescription = null,
+            tint = Color.Unspecified,
+            modifier = Modifier.size(100.dp),
         )
 
-        // Text content section
-        Column(
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            // "How to get DOLR?" - yellow title
-            Text(
-                text = stringResource(Res.string.how_to_get_dolr_title),
-                style = LocalAppTopography.current.mdBold,
-                color = YralColors.Yellow200,
-                textAlign = TextAlign.Center,
-            )
+        Text(
+            text = stringResource(Res.string.how_to_earn),
+            style = LocalAppTopography.current.xxlBold,
+            color = Color.White,
+            textAlign = TextAlign.Center,
+        )
 
-            // "Get engaged views on your video."
-            Text(
-                text = stringResource(Res.string.get_engaged_views),
-                style = LocalAppTopography.current.baseMedium,
-                color = YralColors.NeutralTextPrimary,
-                textAlign = TextAlign.Center,
-            )
-
-            // "1 Engaged View = 1 DOLR" with metallic gradient and coin icon
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                @Suppress("MagicNumber")
-                val metallicGradient =
-                    Brush.horizontalGradient(
-                        colors =
-                            listOf(
-                                Color(0xFF5A5A5A),
-                                Color(0xFF838383),
-                                Color(0xFFACACAC),
-                                Color(0xFFD6D6D6),
-                                Color(0xFFFFFFFF),
-                                Color(0xFFDDDDDD),
-                                Color(0xFFBBBBBB),
-                                Color(0xFF989898),
-                                Color(0xFF767676),
-                            ),
-                    )
-                Text(
-                    text = stringResource(Res.string.engaged_view_equals_dolr),
-                    style = LocalAppTopography.current.baseMedium.copy(brush = metallicGradient),
-                    textAlign = TextAlign.Center,
-                )
-                Image(
-                    painter = painterResource(Res.drawable.ic_dolr),
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
-        }
-
-        // "What are Engaged Views?" card
         Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .background(
-                        color = YralColors.Neutral800,
-                        shape = RoundedCornerShape(8.dp),
-                    ).padding(10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                    .background(color = YralColors.Neutral800, shape = RoundedCornerShape(12.dp))
+                    .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(
-                text = stringResource(Res.string.what_are_engaged_views),
-                style = LocalAppTopography.current.baseSemiBold,
-                color = YralColors.Neutral50,
-                textAlign = TextAlign.Center,
+            EarnStep(
+                number = "1",
+                title = stringResource(Res.string.step_1_title),
+                description = stringResource(Res.string.step_1_desc),
             )
-            Text(
-                text = stringResource(Res.string.engaged_views_description),
-                style = LocalAppTopography.current.baseRegular,
-                color = YralColors.NeutralTextSecondary,
-                textAlign = TextAlign.Center,
+            EarnStep(
+                number = "2",
+                title = stringResource(Res.string.step_2_title),
+                description = stringResource(Res.string.step_2_desc),
+            )
+            EarnStep(
+                number = "3",
+                title = stringResource(Res.string.step_3_title),
+                description = stringResource(Res.string.step_3_desc),
+            )
+            EarnStep(
+                number = "4",
+                title = stringResource(Res.string.step_4_title),
+                description = stringResource(Res.string.step_4_desc),
             )
         }
 
-        // "Got It!" button with pink gradient
         YralGradientButton(
             text = stringResource(Res.string.got_it),
             onClick = onDismiss,
             modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+@Composable
+private fun EarnStep(
+    number: String,
+    title: String,
+    description: String,
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Text(
+            text = "$number.",
+            style = LocalAppTopography.current.baseSemiBold,
+            color = YralColors.Yellow200,
+        )
+        Column {
+            Text(
+                text = title,
+                style = LocalAppTopography.current.baseSemiBold,
+                color = YralColors.Yellow200,
+            )
+            Text(
+                text = description,
+                style = LocalAppTopography.current.baseRegular,
+                color = Color.White,
+            )
+        }
+    }
+}
+
+private data class TransactionItemData(
+    val title: String,
+    val subtitle: String,
+    val amount: String,
+)
+
+private val dummyTransactions =
+    listOf(
+        TransactionItemData(
+            title = "@fitabhi Chatbot subscription",
+            subtitle = "Today, 10:00 AM  \u2022  1 Day Subscription",
+            amount = "+ \u20B99",
+        ),
+        TransactionItemData(
+            title = "@techguru Chatbot subscription",
+            subtitle = "Today, 9:30 AM  \u2022  1 Day Subscription",
+            amount = "+ \u20B99",
+        ),
+        TransactionItemData(
+            title = "@dancequeen Chatbot subscription",
+            subtitle = "Yesterday, 4:15 PM  \u2022  7 Day Subscription",
+            amount = "+ \u20B949",
+        ),
+        TransactionItemData(
+            title = "@foodielife Chatbot subscription",
+            subtitle = "Yesterday, 2:00 PM  \u2022  1 Day Subscription",
+            amount = "+ \u20B99",
+        ),
+        TransactionItemData(
+            title = "@travelvibes Chatbot subscription",
+            subtitle = "Mar 15, 11:00 AM  \u2022  30 Day Subscription",
+            amount = "+ \u20B9149",
+        ),
+    )
+
+@Composable
+private fun TransactionHistoryScreen(onBack: () -> Unit) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                painter = painterResource(DesignRes.drawable.arrow_left),
+                contentDescription = "back",
+                tint = Color.White,
+                modifier =
+                    Modifier
+                        .size(24.dp)
+                        .clickable(onClick = onBack),
+            )
+            Text(
+                text = stringResource(Res.string.history),
+                style = LocalAppTopography.current.xlBold,
+                color = YralColors.NeutralTextPrimary,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(modifier = Modifier.size(24.dp))
+        }
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            itemsIndexed(dummyTransactions) { index, item ->
+                TransactionItem(item)
+                if (index < dummyTransactions.lastIndex) {
+                    HorizontalDivider(
+                        color = YralColors.Neutral700,
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TransactionItem(item: TransactionItemData) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = item.title,
+                style = LocalAppTopography.current.baseRegular,
+                color = YralColors.NeutralTextPrimary,
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = item.subtitle,
+                style = LocalAppTopography.current.regRegular,
+                color = YralColors.NeutralTextTertiary,
+            )
+        }
+        Text(
+            text = item.amount,
+            style = LocalAppTopography.current.baseSemiBold,
+            color = YralColors.Green300,
         )
     }
 }

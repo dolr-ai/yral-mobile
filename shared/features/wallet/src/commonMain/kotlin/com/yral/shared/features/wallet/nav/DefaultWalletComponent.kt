@@ -9,6 +9,7 @@ internal class DefaultWalletComponent(
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
     override val showBackIcon: Boolean,
     override val onBack: () -> Unit,
+    override val onCreateInfluencer: () -> Unit,
 ) : WalletComponent,
     ComponentContext by componentContext,
     KoinComponent
