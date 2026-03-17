@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -442,8 +443,9 @@ private fun ProfileButton(
 }
 
 @Composable
-private fun SubscribeButton(
+fun SubscribeButton(
     modifier: Modifier = Modifier,
+    isLoading: Boolean = false,
     onClick: () -> Unit,
 ) {
     Surface(
@@ -458,17 +460,25 @@ private fun SubscribeButton(
             horizontalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = stringResource(Res.string.subscribe),
-                style = LocalAppTopography.current.regSemiBold,
-                color = YralColors.Yellow200,
-            )
-            Image(
-                painter = painterResource(Res.drawable.ic_thunder),
-                contentDescription = null,
-                contentScale = ContentScale.Inside,
-                modifier = Modifier.size(14.dp),
-            )
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(14.dp),
+                    color = YralColors.Yellow200,
+                    strokeWidth = 2.dp,
+                )
+            } else {
+                Text(
+                    text = stringResource(Res.string.subscribe),
+                    style = LocalAppTopography.current.regSemiBold,
+                    color = YralColors.Yellow200,
+                )
+                Image(
+                    painter = painterResource(Res.drawable.ic_thunder),
+                    contentDescription = null,
+                    contentScale = ContentScale.Inside,
+                    modifier = Modifier.size(14.dp),
+                )
+            }
         }
     }
 }

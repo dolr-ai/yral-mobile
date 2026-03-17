@@ -402,6 +402,13 @@ fun ChatConversationScreen(
                     delay(1.seconds)
                 }
             }
+            val showHeaderSubscribe by derivedStateOf {
+                viewState.isSocialSignedIn &&
+                    viewState.isSubscriptionEnabled &&
+                    !viewState.isBotAccount &&
+                    viewState.isInfluencerSubscriptionAvailableToPurchase &&
+                    !viewState.isInfluencerSubscriptionPurchasedAndVerified
+            }
             // Header
             ChatHeader(
                 influencer = viewState.influencer,
@@ -430,6 +437,11 @@ fun ChatConversationScreen(
                 accessExpiresInText = accessExpiryDisplay.text,
                 isAccessExpiringSoon = accessExpiryDisplay.isExpiringSoon,
                 isBotAccount = viewState.isBotAccount,
+                showSubscribe = showHeaderSubscribe,
+                isSubscribeLoading = viewState.isInfluencerSubscriptionPurchaseInProgress,
+                onSubscribeClick = {
+                    purchaseContext?.let { viewModel.launchInfluencerSubscriptionPurchase(it) }
+                },
             )
 
             Column(
