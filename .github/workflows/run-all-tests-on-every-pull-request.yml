@@ -1,0 +1,75 @@
+name: Gradle Tests
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  packages: write # required to pull/push the cached devcontainer image from ghcr.io
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # devcontainer.json bind-mounts ~/.ssh/agent.sock from the host so
+      # developers can forward their SSH agent into the container. In CI
+      # there is no SSH agent socket, so create a placeholder file to
+      # prevent Docker from failing on the missing bind-mount source.
+      - name: Create SSH agent socket placeholder
+        run: mkdir -p ~/.ssh && touch ~/.ssh/agent.sock
+
+      # devcontainer.json bind-mounts ~/.config/gh so the gh CLI config is
+      # available inside the container. GitHub-hosted runners don't pre-create
+      # this directory, so Docker refuses to start with a "bind source path
+      # does not exist" error. Create an empty directory as a placeholder.
+      - name: Create gh config placeholder
+        run: mkdir -p ~/.config/gh
+
+      # devcontainer.json bind-mounts the repository's git submodule data
+      # directory (../../.git/modules/apps/yral-mobile relative to the workspace).
+      # On a GitHub Actions runner the path doesn't exist, so create an empty
+      # directory placeholder to satisfy the Docker bind-mount requirement.
+      - name: Create git submodule data placeholder
+        run: mkdir -p "${{ github.workspace }}/../../.git/modules/apps/yral-mobile"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Gradle tests inside dev container
+        uses: devcontainers/ci@v0.3
+        env:
+          # Required for GitHub Packages dependency resolution (see CLAUDE.md)
+          GITHUB_USERNAME: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Cache the built devcontainer image in ghcr.io.
+          # It is pushed only when running on the default branch so that PRs
+          # always get a warm cache without needing write access on forks.
+          imageName: ghcr.io/${{ github.repository_owner }}/yral-mobile-devcontainer
+          cacheFrom: ghcr.io/${{ github.repository_owner }}/yral-mobile-devcontainer
+          push: filter
+          refFilterForPush: refs/heads/develop
+          runCmd: |
+            ./gradlew test \
+              --console=plain
+          env: |
+            GITHUB_USERNAME
+            GITHUB_TOKEN

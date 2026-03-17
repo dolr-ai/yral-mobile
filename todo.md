@@ -1,0 +1,3 @@
+- make tests work
+- tests run on devcontainer ci
+- remove the .logcat file
