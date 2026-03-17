@@ -29,7 +29,9 @@ jobs:
       - name: Set up Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable name: Set up Java (for Gradle)
+          xcode-version: latest-stable
+
+      - name: Set up Java (for Gradle)
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
@@ -51,7 +53,7 @@ jobs:
           xcodebuild build \
             -workspace iosApp.xcworkspace \
             -scheme iosApp \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -destination 'generic/platform=iOS' \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO \
             | xcpretty && exit ${PIPESTATUS[0]}
