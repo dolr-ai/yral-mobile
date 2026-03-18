@@ -33,6 +33,7 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
+import co.touchlab.kermit.Logger
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.analytics.events.SubscriptionEntryPoint
 import com.yral.shared.core.session.ProDetails
@@ -57,6 +58,7 @@ import com.yral.shared.libs.designsystem.component.toast.ToastStatus
 import com.yral.shared.libs.designsystem.component.toast.ToastType
 import com.yral.shared.libs.designsystem.component.toast.showError
 import com.yral.shared.libs.designsystem.component.toast.showSuccess
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import kotlinx.coroutines.delay
@@ -200,6 +202,12 @@ fun ChatConversationScreen(
     }
 
     // Auto-scroll to show last line of new assistant replies
+    // Standard line height for "text" message content mapped to Markdown typography
+    val messageLineHeightPx =
+        with(density) {
+            LocalAppTopography.current.baseRegular.lineHeight
+                .toPx()
+        }
     AutoScrollToAssistantMessage(
         readyForAutoScroll = readyForAutoScroll,
         latestAssistantMessage = latestAssistantState.value,
@@ -209,6 +217,7 @@ fun ChatConversationScreen(
         density = density,
         overlayItems = overlayItems,
         scrollToLastLine = true,
+        lineHeightPx = messageLineHeightPx,
     )
 
     // Check if there's a waiting assistant message in overlay
@@ -235,7 +244,7 @@ fun ChatConversationScreen(
                 !hasChatAccess &&
                 atSubscriptionThreshold &&
                 viewState.isInfluencerSubscriptionAvailableToPurchase
-        co.touchlab.kermit.Logger.d("SubDebug") {
+        Logger.d("SubDebug") {
             "shouldShow=$result | waiting=$hasWaitingAssistant | signed=${viewState.isSocialSignedIn}" +
                 " | subEnabled=${viewState.isSubscriptionEnabled} | access=$hasChatAccess" +
                 " | threshold=$atSubscriptionThreshold(count=$totalMessageCount/" +
