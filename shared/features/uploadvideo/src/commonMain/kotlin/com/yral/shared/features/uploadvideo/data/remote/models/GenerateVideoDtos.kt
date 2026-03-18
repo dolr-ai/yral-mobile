@@ -32,6 +32,7 @@ import kotlinx.serialization.json.put
 internal data class GenerateVideoRequestDto(
     @SerialName("delegated_identity") val delegatedIdentity: KotlinDelegatedIdentityWire,
     @SerialName("request") val request: RequestBodyDto,
+    @SerialName("upload_handling") val uploadHandling: String? = null,
 )
 
 @Serializable
@@ -168,6 +169,7 @@ internal fun GenerateVideoParams.toRequestDto(delegatedIdentityWire: KotlinDeleg
                 tokenType = tokenType,
                 userId = userId ?: "",
             ),
+        uploadHandling = uploadHandling,
     )
 
 private fun ImageData.toJsonElement(): JsonElement =

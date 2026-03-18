@@ -30,7 +30,7 @@ internal data class PostDetailsDto(
     @SerialName("hashtags")
     val hashtags: List<String>,
     @SerialName("status")
-    val status: String = "draft",
+    val status: String = "Draft",
 )
 
 @Serializable

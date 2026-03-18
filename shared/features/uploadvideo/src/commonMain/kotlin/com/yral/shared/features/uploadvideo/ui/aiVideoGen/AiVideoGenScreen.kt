@@ -149,6 +149,10 @@ fun AiVideoGenScreen(
                         duration = ToastDuration.LONG,
                     )
                 }
+                is AiVideoGenViewModel.AiVideoGenEvent.NavigateToProfile -> {
+                    viewModel.cleanup()
+                    component.goToProfile()
+                }
             }
         }
     }

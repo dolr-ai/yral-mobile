@@ -115,10 +115,6 @@ internal class DefaultUploadVideoRootComponent(
             goToHome = iGoToHome,
             onBack = { navigation.pop() },
             promptLogin = { promptLogin(SignupPageName.UPLOAD_VIDEO) },
-            goToProfile = {
-                navigation.replaceAll(Config.FlowSelection)
-                goToProfile()
-            },
         )
 
     override fun handleNavigation(appRoute: AppRoute) {

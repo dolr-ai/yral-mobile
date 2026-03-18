@@ -8,7 +8,6 @@ import com.yral.shared.analytics.events.VideoCreationType
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.core.session.SessionManager
-import com.yral.shared.core.videostate.VideoGenerationTracker
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.uploadvideo.analytics.UploadVideoTelemetry
 import com.yral.shared.features.uploadvideo.domain.GetUploadEndpointUseCase
@@ -19,9 +18,6 @@ import com.yral.shared.features.uploadvideo.domain.models.UploadFileRequest
 import com.yral.shared.features.uploadvideo.domain.models.UploadState
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
-import com.yral.shared.libs.designsystem.component.toast.ToastManager
-import com.yral.shared.libs.designsystem.component.toast.ToastType
-import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -39,9 +35,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
-import org.jetbrains.compose.resources.getString
-import yral_mobile.shared.features.uploadvideo.generated.resources.Res
-import yral_mobile.shared.features.uploadvideo.generated.resources.toast_video_pushed_to_drafts
 
 @Suppress("TooManyFunctions")
 class UploadVideoViewModel internal constructor(
@@ -315,6 +308,7 @@ class UploadVideoViewModel internal constructor(
                 videoUid = endpoint.videoID,
                 caption = caption,
                 hashtags = hashtagsList,
+                status = VIDEO_STATUS_PUBLISHED,
             )
 
         try {
@@ -340,12 +334,8 @@ class UploadVideoViewModel internal constructor(
                 delay(SUCCESS_TRANSITION_DELAY_MS)
 
                 _state.update { it.copy(updateMetadataUiState = UiState.Success(Unit)) }
-                VideoGenerationTracker.markAsDraft(endpoint.videoID)
-                ToastManager.showSuccess(
-                    type = ToastType.Small(getString(Res.string.toast_video_pushed_to_drafts)),
-                )
+                send(Event.UploadSuccess)
                 uploadVideoTelemetry.uploadSuccess(endpoint.videoID, VideoCreationType.UPLOAD_VIDEO)
-                send(Event.GoToProfile)
                 performPostPublishCleanup()
             }
         } catch (e: CancellationException) {
@@ -460,7 +450,6 @@ class UploadVideoViewModel internal constructor(
         ) : Event()
 
         data object GoToHome : Event()
-        data object GoToProfile : Event()
     }
 
     data class ViewState(
@@ -524,6 +513,7 @@ class UploadVideoViewModel internal constructor(
         private const val SUCCESS_TRANSITION_DELAY_MS = 200L // 200 ms delay after success
         private const val IS_CAPTION_REQUIRED = false
         private const val IS_HASHTAGS_REQUIRED = false
+        private const val VIDEO_STATUS_PUBLISHED = "Published"
     }
 
     internal data class RequiredUseCases(

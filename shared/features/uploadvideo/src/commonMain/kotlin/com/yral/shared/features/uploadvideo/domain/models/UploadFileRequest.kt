@@ -6,5 +6,5 @@ internal data class UploadFileRequest(
     val hashtags: List<String>,
     val isNSFW: Boolean = false,
     val creatorConsentForInclusionInHotOrNot: Boolean = true,
-    val status: String = "draft",
+    val status: String = "Draft",
 )

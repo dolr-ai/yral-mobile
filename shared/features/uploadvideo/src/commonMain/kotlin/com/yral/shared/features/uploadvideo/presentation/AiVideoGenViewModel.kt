@@ -330,21 +330,13 @@ class AiVideoGenViewModel internal constructor(
                                                     TokenType.SATS
                                                 },
                                             userId = userId,
+                                            uploadHandling = SERVER_DRAFT,
                                         ),
                                 ),
                         ).onSuccess { result ->
                             logger.d { "Video generated: $result" }
-                            result.requestKey?.let { requestKey ->
-                                currentRequestKey = requestKey
-                                reserveBalance()
-                                pollAndUploadVideo(
-                                    modelName = selectedProvider.name,
-                                    prompt = currentState.prompt.trim(),
-                                    requestKey = requestKey,
-                                )
-                                return@onSuccess
-                            }
                             result.providerError?.let { error ->
+                                VideoGenerationTracker.stopGenerating()
                                 pushTriggerFailed(
                                     model = selectedProvider.name,
                                     prompt = currentState.prompt.trim(),
@@ -353,8 +345,30 @@ class AiVideoGenViewModel internal constructor(
                                 _state.update {
                                     it.copy(bottomSheetType = BottomSheetType.Error(error, true))
                                 }
+                                return@onSuccess
+                            }
+                            // Server handles upload as draft, no polling needed
+                            VideoGenerationTracker.stopGenerating()
+                            _state.update {
+                                it.copy(
+                                    uiState = UiState.Initial,
+                                    reservedBalance = null,
+                                )
+                            }
+                            aiVideoGenEventChannel.trySend(AiVideoGenEvent.ShowGeneratedToast)
+                            aiVideoGenEventChannel.trySend(AiVideoGenEvent.NavigateToProfile)
+                            if (currentState.proDetails.isProPurchased) {
+                                val creditsRemaining =
+                                    currentState.proDetails.availableCredits - 1
+                                subscriptionTelemetry.onCreditsConsumed(
+                                    feature = CreditFeature.AI_VIDEO,
+                                    creditsUsed = 1,
+                                    creditsRemaining = creditsRemaining.coerceAtLeast(0),
+                                )
+                                aiVideoGenEventChannel.trySend(AiVideoGenEvent.RefreshProDetails)
                             }
                         }.onFailure { error ->
+                            VideoGenerationTracker.stopGenerating()
                             logger.e(error) { "Error generating video" }
                             pushTriggerFailed(
                                 model = selectedProvider.name,
@@ -365,19 +379,6 @@ class AiVideoGenViewModel internal constructor(
                                 it.copy(bottomSheetType = BottomSheetType.Error("", true))
                             }
                         }
-                }
-            }
-        }
-    }
-
-    private fun reserveBalance() {
-        if (_state.value.isCreditsAvailable()) return
-        _state.value.selectedProvider?.let { selectedProvider ->
-            val reservedBalance = selectedProvider.cost?.sats
-            reservedBalance?.let { cost ->
-                _state.update { it.copy(reservedBalance = cost) }
-                _state.value.currentBalance?.let { balance ->
-                    sessionManager.updateCoinBalance(balance.minus(cost))
                 }
             }
         }
@@ -673,6 +674,7 @@ class AiVideoGenViewModel internal constructor(
         const val MAX_GENERATION_PROGRESS = 0.9f
         const val GENERATION_PROGRESS_RATE = 0.1f
         const val TOTAL_SECONDS_IN_A_DAY = 60 * 60 * 24
+        const val SERVER_DRAFT = "ServerDraft"
     }
 
     private fun estimateProgress(pollCount: Int): Float {
@@ -689,5 +691,6 @@ class AiVideoGenViewModel internal constructor(
         ) : AiVideoGenEvent()
         data object RefreshProDetails : AiVideoGenEvent()
         data object ShowGeneratedToast : AiVideoGenEvent()
+        data object NavigateToProfile : AiVideoGenEvent()
     }
 }

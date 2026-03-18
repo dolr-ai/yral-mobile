@@ -14,14 +14,12 @@ abstract class UploadVideoComponent {
             goToHome: () -> Unit,
             onBack: () -> Unit,
             promptLogin: () -> Unit,
-            goToProfile: () -> Unit = {},
         ): UploadVideoComponent =
             DefaultUploadVideoComponent(
                 componentContext,
                 goToHome,
                 onBack,
                 promptLogin,
-                goToProfile,
             )
     }
 }

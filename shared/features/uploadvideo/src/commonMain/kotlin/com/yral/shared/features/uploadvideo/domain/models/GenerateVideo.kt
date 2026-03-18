@@ -17,6 +17,7 @@ data class GenerateVideoParams(
     val tokenType: TokenType? = null,
     val userId: String? = null,
     val extraParams: Map<String, String>? = null,
+    val uploadHandling: String? = null,
 )
 
 sealed interface ImageData {
