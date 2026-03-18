@@ -356,6 +356,7 @@ class AiVideoGenViewModel internal constructor(
                                 )
                             }
                             aiVideoGenEventChannel.trySend(AiVideoGenEvent.ShowGeneratedToast)
+                            VideoGenerationTracker.requestDraftsTab()
                             aiVideoGenEventChannel.trySend(AiVideoGenEvent.NavigateToProfile)
                             if (currentState.proDetails.isProPurchased) {
                                 val creditsRemaining =

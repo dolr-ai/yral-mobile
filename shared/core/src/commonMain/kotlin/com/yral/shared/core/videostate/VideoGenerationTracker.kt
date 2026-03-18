@@ -15,6 +15,17 @@ object VideoGenerationTracker {
     private val _state = MutableStateFlow(State())
     val state: StateFlow<State> = _state.asStateFlow()
 
+    private val _selectDraftsTab = MutableStateFlow(false)
+    val selectDraftsTab: StateFlow<Boolean> = _selectDraftsTab.asStateFlow()
+
+    fun requestDraftsTab() {
+        _selectDraftsTab.value = true
+    }
+
+    fun consumeDraftsTabRequest() {
+        _selectDraftsTab.value = false
+    }
+
     fun startGenerating() {
         _state.update { it.copy(isGenerating = true, progress = 0f) }
     }
