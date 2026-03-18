@@ -8,8 +8,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,6 +28,7 @@ import com.yral.shared.features.chat.domain.models.ConversationInfluencer
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralContextMenu
 import com.yral.shared.libs.designsystem.component.YralContextMenuItem
+import com.yral.shared.libs.designsystem.component.features.SubscribeButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
@@ -52,6 +55,9 @@ internal fun ChatHeader(
     accessExpiresInText: String? = null,
     isAccessExpiringSoon: Boolean = false,
     isBotAccount: Boolean,
+    showSubscribe: Boolean = false,
+    isSubscribeLoading: Boolean = false,
+    onSubscribeClick: () -> Unit = {},
 ) {
     Box(
         modifier =
@@ -74,8 +80,15 @@ internal fun ChatHeader(
                 isAccessExpiringSoon = isAccessExpiringSoon,
             )
 
-            // Right side: More icon with context menu
-            RightPart(onClearChat = onClearChat, onShareProfile = onShareProfile, isBotAccount = isBotAccount)
+            // Right side: Subscribe button + More icon with context menu
+            RightPart(
+                onClearChat = onClearChat,
+                onShareProfile = onShareProfile,
+                isBotAccount = isBotAccount,
+                showSubscribe = showSubscribe,
+                isSubscribeLoading = isSubscribeLoading,
+                onSubscribeClick = onSubscribeClick,
+            )
         }
     }
 }
@@ -189,11 +202,21 @@ private fun RightPart(
     onClearChat: () -> Unit,
     onShareProfile: () -> Unit,
     isBotAccount: Boolean,
+    showSubscribe: Boolean = false,
+    isSubscribeLoading: Boolean = false,
+    onSubscribeClick: () -> Unit = {},
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (showSubscribe) {
+            SubscribeButton(
+                modifier = Modifier.width(88.dp).height(29.dp),
+                isLoading = isSubscribeLoading,
+                onClick = onSubscribeClick,
+            )
+        }
         val menuItems =
             buildList {
                 add(

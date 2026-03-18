@@ -546,6 +546,30 @@ class ProfileViewModel(
         }
     }
 
+    fun onSubscribeClicked() {
+        val influencerId = canisterData.userPrincipalId
+        if (influencerId.isBlank()) return
+        viewModelScope.launch {
+            _state.update { it.copy(isTalkToMeInProgress = true) }
+            try {
+                getInfluencerUseCase(GetInfluencerUseCase.Params(id = influencerId))
+                    .onSuccess { influencer ->
+                        profileEventsChannel.trySend(
+                            ProfileEvents.SubscribeInfluencerDetailsFetched(influencer),
+                        )
+                    }.onFailure { error ->
+                        Logger.e("onSubscribeClicked") { "Failed to fetch influencer details $error" }
+                        val message =
+                            error.message
+                                ?: getString(DesignRes.string.something_went_wrong)
+                        profileEventsChannel.trySend(ProfileEvents.Failed(message))
+                    }
+            } finally {
+                _state.update { it.copy(isTalkToMeInProgress = false) }
+            }
+        }
+    }
+
     fun confirmDelete(
         feedDetails: FeedDetails,
         ctaType: VideoDeleteCTA,
@@ -1179,6 +1203,9 @@ sealed class ProfileEvents {
     data object FollowedSuccessfully : ProfileEvents()
     data object UnfollowedSuccessfully : ProfileEvents()
     data class InfluencerDetailsFetched(
+        val influencer: Influencer,
+    ) : ProfileEvents()
+    data class SubscribeInfluencerDetailsFetched(
         val influencer: Influencer,
     ) : ProfileEvents()
     data class Failed(

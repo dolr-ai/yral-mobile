@@ -12,6 +12,7 @@ data class OpenConversationParams(
     val username: String? = null,
     val displayName: String? = null,
     val avatarUrl: String? = null,
+    val autoTriggerPurchase: Boolean = false,
 )
 
 @Serializable

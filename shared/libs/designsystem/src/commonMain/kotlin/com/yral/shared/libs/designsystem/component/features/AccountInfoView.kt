@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -54,6 +55,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.ic_thunder
 import yral_mobile.shared.libs.designsystem.generated.resources.login
 import yral_mobile.shared.libs.designsystem.generated.resources.pro
 import yral_mobile.shared.libs.designsystem.generated.resources.share_profile
+import yral_mobile.shared.libs.designsystem.generated.resources.subscribe
 import yral_mobile.shared.libs.designsystem.generated.resources.talk_to_me
 
 @Suppress("LongMethod", "LongParameterList", "CyclomaticComplexMethod")
@@ -81,6 +83,8 @@ fun AccountInfoView(
     onFollowersClick: (() -> Unit)? = null,
     onFollowingClick: (() -> Unit)? = null,
     onTalkToMeClicked: () -> Unit = {},
+    showSubscribe: Boolean = false,
+    onSubscribeClicked: () -> Unit = {},
     isProUser: Boolean = false,
     showCreateInfluencerCta: Boolean = false,
     onCreateInfluencerClick: () -> Unit = {},
@@ -285,6 +289,12 @@ fun AccountInfoView(
                                     ),
                         )
                     }
+                    if (showSubscribe) {
+                        SubscribeButton(
+                            modifier = Modifier.weight(1f),
+                            onClick = onSubscribeClicked,
+                        )
+                    }
                     if (isAiInfluencer) {
                         val talkButtonState =
                             if (isTalkToMeInProgress) YralButtonState.Loading else YralButtonState.Enabled
@@ -428,6 +438,47 @@ private fun ProfileButton(
                 color = YralColors.NeutralTextPrimary,
                 textAlign = TextAlign.Center,
             )
+        }
+    }
+}
+
+@Composable
+fun SubscribeButton(
+    modifier: Modifier = Modifier,
+    isLoading: Boolean = false,
+    onClick: () -> Unit,
+) {
+    Surface(
+        modifier = modifier.height(40.dp),
+        shape = RoundedCornerShape(4.dp),
+        color = YralColors.Yellow400,
+        border = BorderStroke(1.dp, YralColors.Yellow200),
+        onClick = onClick,
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(14.dp),
+                    color = YralColors.Yellow200,
+                    strokeWidth = 2.dp,
+                )
+            } else {
+                Text(
+                    text = stringResource(Res.string.subscribe),
+                    style = LocalAppTopography.current.regSemiBold,
+                    color = YralColors.Yellow200,
+                )
+                Image(
+                    painter = painterResource(Res.drawable.ic_thunder),
+                    contentDescription = null,
+                    contentScale = ContentScale.Inside,
+                    modifier = Modifier.size(14.dp),
+                )
+            }
         }
     }
 }
