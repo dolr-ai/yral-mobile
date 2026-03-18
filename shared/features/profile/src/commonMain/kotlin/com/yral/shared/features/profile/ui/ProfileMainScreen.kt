@@ -1203,7 +1203,7 @@ private fun VideoGridContent(
         ) { index ->
             val video = profileVideos[index]
             if (video != null) {
-                val isDraft = video.videoID in generatingState.draftVideoIds
+                val isDraft = video.isDraft || video.videoID in generatingState.draftVideoIds
                 VideoGridItem(
                     video = video,
                     isOwnProfile = isOwnProfile,

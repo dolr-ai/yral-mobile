@@ -22,6 +22,10 @@ internal interface IndividualUserDataSource {
         startIndex: ULong,
         pageSize: ULong,
     ): UpsResult3
+    suspend fun getDraftPostsWithPagination(
+        startIndex: ULong,
+        pageSize: ULong,
+    ): UpsResult3
     suspend fun getUserBitcoinBalance(
         canisterId: String,
         principalId: String,

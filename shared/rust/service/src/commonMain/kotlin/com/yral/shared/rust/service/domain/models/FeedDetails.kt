@@ -76,6 +76,7 @@ internal fun UpsPostDetailsForFrontend.toFeedDetails(
         isFollowing = false,
         isFromServiceCanister = true,
         userName = null,
+        isDraft = status == UpsPostStatus.DRAFT,
     )
 }
 

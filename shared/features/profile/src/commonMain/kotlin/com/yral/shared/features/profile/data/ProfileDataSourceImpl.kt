@@ -75,6 +75,37 @@ class ProfileDataSourceImpl(
         }
     }
 
+    override suspend fun getDraftVideos(
+        canisterId: String,
+        startIndex: ULong,
+        pageSize: ULong,
+    ): ProfileVideosPageResult {
+        val result =
+            individualUserRepository.getDraftPostsWithPagination(
+                canisterId = canisterId,
+                startIndex = startIndex,
+                pageSize = pageSize,
+            )
+        return when (result) {
+            is Posts.Ok -> {
+                val posts = result.v1
+                ProfileVideosPageResult(
+                    posts = posts.filterNotNull(),
+                    hasNextPage = posts.size == pageSize.toInt(),
+                    nextStartIndex = startIndex + pageSize,
+                )
+            }
+
+            is Posts.Err -> {
+                ProfileVideosPageResult(
+                    posts = emptyList(),
+                    hasNextPage = false,
+                    nextStartIndex = startIndex,
+                )
+            }
+        }
+    }
+
     override suspend fun deleteVideo(request: DeleteVideoRequest) {
         val userPrincipal = sessionManager.userPrincipal ?: throw YralException("No user principal found")
         val identity = sessionManager.identity ?: throw YralException("No identity found")

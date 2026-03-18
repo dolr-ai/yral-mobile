@@ -13,6 +13,12 @@ interface ProfileRepository {
         pageSize: ULong,
     ): ProfileVideosPageResult
 
+    suspend fun getDraftVideos(
+        canisterId: String,
+        startIndex: ULong,
+        pageSize: ULong,
+    ): ProfileVideosPageResult
+
     suspend fun deleteVideo(request: DeleteVideoRequest)
 
     suspend fun uploadProfileImage(imageBase64: String): String

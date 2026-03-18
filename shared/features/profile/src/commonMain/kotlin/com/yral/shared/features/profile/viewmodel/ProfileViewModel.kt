@@ -177,6 +177,7 @@ class ProfileViewModel(
                         canisterId = canisterData.canisterId,
                         userPrincipal = canisterData.userPrincipalId,
                         isFromServiceCanister = canisterData.isCreatedFromServiceCanister,
+                        isOwnProfile = canisterData.userPrincipalId == sessionManager.userPrincipal,
                     )
                 },
             ).flow.cachedIn(viewModelScope)
@@ -1170,6 +1171,14 @@ class ProfileViewModel(
                 PublishDraftVideoUseCase.Param(postId = feedDetails.videoID),
             ).onSuccess {
                 VideoGenerationTracker.clearDraft(feedDetails.videoID)
+                // Update paging data to remove draft status
+                pagingState.update { state ->
+                    state.copy(
+                        updatedDetails =
+                            state.updatedDetails +
+                                (feedDetails.videoID to feedDetails.copy(isDraft = false)),
+                    )
+                }
                 ToastManager.showSuccess(
                     type = ToastType.Small(getString(Res.string.publish_success)),
                 )

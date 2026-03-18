@@ -63,6 +63,17 @@ internal class IndividualUserRepositoryImpl(
             }
         }
 
+    override suspend fun getDraftPostsWithPagination(
+        canisterId: String,
+        startIndex: ULong,
+        pageSize: ULong,
+    ): Posts =
+        traceApiCall(performanceTracer, "getDraftPostsWithPagination") {
+            dataSource
+                .getDraftPostsWithPagination(startIndex, pageSize)
+                .toPosts(canisterId)
+        }
+
     override suspend fun fetchFeedDetailsWithCreatorInfo(post: Post): FeedDetails? =
         traceApiCall(performanceTracer, "fetchFeedDetailsWithCreatorInfo") {
             dataSource

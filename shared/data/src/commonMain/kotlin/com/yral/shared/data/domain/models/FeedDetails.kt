@@ -21,6 +21,7 @@ data class FeedDetails(
     val userName: String?,
     val isProUser: Boolean = false,
     val isAiInfluencer: Boolean? = null,
+    val isDraft: Boolean = false,
 ) {
     fun isNSFW(): Boolean = (nsfwProbability ?: 0.0) > NSFW_PROBABILITY
 
