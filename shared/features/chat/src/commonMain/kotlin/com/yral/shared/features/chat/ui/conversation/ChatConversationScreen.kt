@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,10 +25,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -198,7 +199,7 @@ fun ChatConversationScreen(
         )
     }
 
-    // Auto-scroll to show first line of new assistant replies
+    // Auto-scroll to show last line of new assistant replies
     AutoScrollToAssistantMessage(
         readyForAutoScroll = readyForAutoScroll,
         latestAssistantMessage = latestAssistantState.value,
@@ -207,6 +208,7 @@ fun ChatConversationScreen(
         screenWidth = screenWidth,
         density = density,
         overlayItems = overlayItems,
+        scrollToLastLine = true,
     )
 
     // Check if there's a waiting assistant message in overlay
@@ -372,16 +374,16 @@ fun ChatConversationScreen(
         }
     }
 
-    Box(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .paint(
-                    painter = painterResource(Res.drawable.chat_background_inverted),
-                    contentScale = ContentScale.Crop,
-                ),
-    ) {
-        Column(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = modifier.safeDrawingPadding().clipToBounds()) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .paint(
+                        painter = painterResource(Res.drawable.chat_background_inverted),
+                        contentScale = ContentScale.Crop,
+                    ),
+        ) {
             val expiresAtMs = viewState.chatAccessExpiresAtMs
             val showAccessExpiry =
                 viewState.isInfluencerSubscriptionPurchasedAndVerified && expiresAtMs != null
@@ -463,7 +465,6 @@ fun ChatConversationScreen(
                     }
 
                     else -> {
-                        val keyboardController = LocalSoftwareKeyboardController.current
                         MessagesList(
                             modifier = Modifier.weight(1f).fillMaxWidth(),
                             listState = listState,
@@ -525,7 +526,6 @@ fun ChatConversationScreen(
                                 input = input,
                                 onInputChange = { input = it },
                                 onSendClick = {
-                                    keyboardController?.hide()
                                     val text = input.trim()
                                     sendMessageIfAllowed(
                                         SendMessageDraft(

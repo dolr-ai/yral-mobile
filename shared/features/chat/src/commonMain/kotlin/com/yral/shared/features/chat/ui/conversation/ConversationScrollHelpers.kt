@@ -73,6 +73,7 @@ internal fun AutoScrollToAssistantMessage(
     screenWidth: Int,
     density: Density,
     overlayItems: List<ConversationMessageItem>,
+    scrollToLastLine: Boolean = false,
 ) {
     val failedUserState = findLatestFailedUserIndex(overlayItems)
     val hasFailedUser = failedUserState.index >= 0
@@ -96,6 +97,7 @@ internal fun AutoScrollToAssistantMessage(
                 density = density,
                 additionalOffset = pendingUserMessagesHeight,
                 isWaiting = isWaiting,
+                scrollToLastLine = scrollToLastLine,
             )
         }
     }
@@ -155,10 +157,11 @@ private data class ScrollTarget(
     val density: Density,
     val additionalOffset: Int = 0,
     val isWaiting: Boolean = false,
+    val scrollToLastLine: Boolean = false,
 ) {
     val scrollOffset: Int
         get() =
-            if (isWaiting) {
+            if (isWaiting || scrollToLastLine) {
                 additionalOffset
             } else {
                 val (content, mediaUrls) =
