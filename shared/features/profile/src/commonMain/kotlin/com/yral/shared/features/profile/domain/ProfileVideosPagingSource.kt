@@ -13,20 +13,11 @@ class ProfileVideosPagingSource(
     private val isFromServiceCanister: Boolean,
     private val profileRepository: ProfileRepository,
     private val commonApis: CommonApis,
-    private val isOwnProfile: Boolean = false,
 ) : PagingSource<ULong, FeedDetails>() {
     override suspend fun load(params: LoadParams<ULong>): LoadResult<ULong, FeedDetails> =
         runCatching {
             val startIndex = params.key ?: 0UL
             val pageSize = params.loadSize.toULong()
-
-            // On first page for own profile, prepend draft videos
-            val draftVideos =
-                if (startIndex == 0UL && isOwnProfile) {
-                    fetchDraftVideos()
-                } else {
-                    emptyList()
-                }
 
             val result =
                 profileRepository
@@ -39,10 +30,9 @@ class ProfileVideosPagingSource(
                     )
             var profileVideos = result.posts
 
-            val allVideos = draftVideos + profileVideos
             val videoStats =
                 commonApis
-                    .getVideoViewsCount(allVideos.map { it.videoID })
+                    .getVideoViewsCount(profileVideos.map { it.videoID })
                     .associate { it.videoId to it.allViews }
             if (videoStats.isNotEmpty()) {
                 profileVideos =
@@ -54,7 +44,7 @@ class ProfileVideosPagingSource(
                     }
             }
             LoadResult.Page(
-                data = draftVideos + profileVideos,
+                data = profileVideos,
                 prevKey = null,
                 nextKey = if (result.hasNextPage) result.nextStartIndex else null,
             )
@@ -63,22 +53,5 @@ class ProfileVideosPagingSource(
             LoadResult.Error(it)
         }
 
-    private suspend fun fetchDraftVideos(): List<FeedDetails> =
-        runCatching {
-            profileRepository
-                .getDraftVideos(
-                    canisterId = canisterId,
-                    startIndex = 0UL,
-                    pageSize = DRAFT_PAGE_SIZE,
-                ).posts
-        }.getOrElse {
-            Logger.e("ProfileVideosPaging", it) { "Error fetching draft videos" }
-            emptyList()
-        }
-
     override fun getRefreshKey(state: PagingState<ULong, FeedDetails>): ULong? = null
-
-    private companion object {
-        const val DRAFT_PAGE_SIZE = 100UL
-    }
 }

@@ -60,6 +60,7 @@ import androidx.compose.ui.draw.paint
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -91,6 +92,7 @@ import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
 import com.yral.shared.features.profile.viewmodel.FollowersSheetTab
 import com.yral.shared.features.profile.viewmodel.ProfileBottomSheet
 import com.yral.shared.features.profile.viewmodel.ProfileEvents
+import com.yral.shared.features.profile.viewmodel.ProfileTab
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.profile.viewmodel.VideoViewState
 import com.yral.shared.features.profile.viewmodel.ViewState
@@ -143,9 +145,15 @@ import yral_mobile.shared.features.profile.generated.resources.download
 import yral_mobile.shared.features.profile.generated.resources.downloading_video
 import yral_mobile.shared.features.profile.generated.resources.downloading_video_desc
 import yral_mobile.shared.features.profile.generated.resources.draft_label
+import yral_mobile.shared.features.profile.generated.resources.drafts_empty_subtitle
+import yral_mobile.shared.features.profile.generated.resources.drafts_empty_title
 import yral_mobile.shared.features.profile.generated.resources.error_loading_more_videos
 import yral_mobile.shared.features.profile.generated.resources.error_loading_videos
 import yral_mobile.shared.features.profile.generated.resources.failed_to_delete_video
+import yral_mobile.shared.features.profile.generated.resources.ic_drafts_selected
+import yral_mobile.shared.features.profile.generated.resources.ic_drafts_unselected
+import yral_mobile.shared.features.profile.generated.resources.ic_published_selected
+import yral_mobile.shared.features.profile.generated.resources.ic_published_unselected
 import yral_mobile.shared.features.profile.generated.resources.pink_heart
 import yral_mobile.shared.features.profile.generated.resources.pro_profile_background
 import yral_mobile.shared.features.profile.generated.resources.profile_empty_other_subtitle
@@ -158,6 +166,7 @@ import yral_mobile.shared.features.profile.generated.resources.profile_view_lock
 import yral_mobile.shared.features.profile.generated.resources.profile_view_locked_title
 import yral_mobile.shared.features.profile.generated.resources.publish_button
 import yral_mobile.shared.features.profile.generated.resources.storage_permission_required
+import yral_mobile.shared.features.profile.generated.resources.tab_new
 import yral_mobile.shared.features.profile.generated.resources.video_generating
 import yral_mobile.shared.features.profile.generated.resources.video_will_be_deleted_permanently
 import yral_mobile.shared.features.profile.generated.resources.white_heart
@@ -225,6 +234,7 @@ fun ProfileMainScreen(
 
     val followers = viewModel.followers.collectAsLazyPagingItems()
     val following = viewModel.following.collectAsLazyPagingItems()
+    val draftVideos = viewModel.draftVideos.collectAsLazyPagingItems()
 
     val loginState = rememberLoginInfo(requestLoginFactory = component.requestLoginFactory)
 
@@ -467,6 +477,7 @@ fun ProfileMainScreen(
                     viewModel = viewModel,
                     gridState = gridState,
                     profileVideos = profileVideos,
+                    draftVideos = draftVideos,
                     followers = followers,
                     following = following,
                     deletingVideoId = deletingVideoId,
@@ -685,6 +696,7 @@ private fun MainContent(
     viewModel: ProfileViewModel,
     gridState: LazyGridState,
     profileVideos: LazyPagingItems<FeedDetails>,
+    draftVideos: LazyPagingItems<FeedDetails>,
     followers: LazyPagingItems<PagedFollowerItem>?,
     following: LazyPagingItems<PagedFollowerItem>?,
     deletingVideoId: String,
@@ -790,6 +802,8 @@ private fun MainContent(
                     SuccessContent(
                         gridState = gridState,
                         profileVideos = profileVideos,
+                        draftVideos = draftVideos,
+                        selectedTab = state.selectedTab,
                         isOwnProfile = state.isOwnProfile,
                         deletingVideoId = deletingVideoId,
                         uploadVideo = uploadVideo,
@@ -804,6 +818,7 @@ private fun MainContent(
                         onDownloadVideo = onDownloadVideo,
                         onViewsClick = { viewModel.showVideoViews(it) },
                         onManualRefreshTriggered = { viewModel.setManualRefreshTriggered(it) },
+                        onTabSelected = { viewModel.selectTab(it) },
                     )
                 }
             }
@@ -977,12 +992,14 @@ private fun ErrorContent(message: String) {
     }
 }
 
-@Suppress("LongMethod")
+@Suppress("LongMethod", "LongParameterList")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SuccessContent(
     gridState: LazyGridState,
     profileVideos: LazyPagingItems<FeedDetails>,
+    draftVideos: LazyPagingItems<FeedDetails>,
+    selectedTab: ProfileTab,
     isOwnProfile: Boolean,
     deletingVideoId: String,
     uploadVideo: () -> Unit,
@@ -992,6 +1009,7 @@ private fun SuccessContent(
     onDownloadVideo: (FeedDetails) -> Unit,
     onViewsClick: (FeedDetails) -> Unit,
     onManualRefreshTriggered: (Boolean) -> Unit,
+    onTabSelected: (ProfileTab) -> Unit,
 ) {
     Column(
         modifier =
@@ -999,19 +1017,28 @@ private fun SuccessContent(
                 .fillMaxSize()
                 .padding(top = PADDING_BOTTOM_ACCOUNT_INFO.dp),
     ) {
+        if (isOwnProfile) {
+            ProfileTabBar(
+                selectedTab = selectedTab,
+                onTabSelected = onTabSelected,
+                hasDrafts = draftVideos.itemCount > 0,
+            )
+        }
+
         val pullRefreshState = rememberPullToRefreshState()
         val offset =
             pullRefreshState.distanceFraction *
                 PULL_TO_REFRESH_INDICATOR_SIZE *
                 PULL_TO_REFRESH_OFFSET_MULTIPLIER
 
-        val isRefreshing = profileVideos.loadState.refresh is LoadState.Loading
+        val activeVideos = if (selectedTab == ProfileTab.Drafts) draftVideos else profileVideos
+        val isRefreshing = activeVideos.loadState.refresh is LoadState.Loading
 
         PullToRefreshBox(
             isRefreshing = isRefreshing,
             onRefresh = {
                 onManualRefreshTriggered(true)
-                profileVideos.refresh()
+                activeVideos.refresh()
             },
             state = pullRefreshState,
             indicator = {
@@ -1032,25 +1059,39 @@ private fun SuccessContent(
                 }
             },
         ) {
-            if (profileVideos.itemCount == 0 && profileVideos.loadState.refresh is LoadState.NotLoading) {
-                EmptyStateContent(
-                    offset = offset,
-                    isOwnProfile = isOwnProfile,
-                    uploadVideo = uploadVideo,
-                )
+            if (activeVideos.itemCount == 0 && activeVideos.loadState.refresh is LoadState.NotLoading) {
+                if (selectedTab == ProfileTab.Drafts) {
+                    DraftsEmptyStateContent(
+                        offset = offset,
+                        uploadVideo = uploadVideo,
+                    )
+                } else {
+                    EmptyStateContent(
+                        offset = offset,
+                        isOwnProfile = isOwnProfile,
+                        uploadVideo = uploadVideo,
+                    )
+                }
             } else {
-                VideoGridContent(
-                    gridState = gridState,
-                    profileVideos = profileVideos,
-                    offset = offset,
-                    isOwnProfile = isOwnProfile,
-                    deletingVideoId = deletingVideoId,
-                    openVideoReel = openVideoReel,
-                    openDraftVideo = openDraftVideo,
-                    onDeleteVideo = onDeleteVideo,
-                    onDownloadVideo = onDownloadVideo,
-                    onViewsClick = onViewsClick,
-                )
+                if (selectedTab == ProfileTab.Drafts) {
+                    DraftVideoGridContent(
+                        draftVideos = draftVideos,
+                        offset = offset,
+                        openDraftVideo = openDraftVideo,
+                    )
+                } else {
+                    VideoGridContent(
+                        gridState = gridState,
+                        profileVideos = profileVideos,
+                        offset = offset,
+                        isOwnProfile = isOwnProfile,
+                        deletingVideoId = deletingVideoId,
+                        openVideoReel = openVideoReel,
+                        onDeleteVideo = onDeleteVideo,
+                        onDownloadVideo = onDownloadVideo,
+                        onViewsClick = onViewsClick,
+                    )
+                }
             }
         }
     }
@@ -1106,6 +1147,188 @@ private fun EmptyStateContent(
                 modifier = Modifier.width(236.dp),
                 text = stringResource(Res.string.create_ai_video),
                 onClick = uploadVideo,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProfileTabBar(
+    selectedTab: ProfileTab,
+    onTabSelected: (ProfileTab) -> Unit,
+    hasDrafts: Boolean,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        ProfileTabItem(
+            icon =
+                painterResource(
+                    if (selectedTab == ProfileTab.Published) {
+                        Res.drawable.ic_published_selected
+                    } else {
+                        Res.drawable.ic_published_unselected
+                    },
+                ),
+            isSelected = selectedTab == ProfileTab.Published,
+            onClick = { onTabSelected(ProfileTab.Published) },
+            modifier = Modifier.weight(1f),
+        )
+        Box(modifier = Modifier.weight(1f)) {
+            ProfileTabItem(
+                icon =
+                    painterResource(
+                        if (selectedTab == ProfileTab.Drafts) {
+                            Res.drawable.ic_drafts_selected
+                        } else {
+                            Res.drawable.ic_drafts_unselected
+                        },
+                    ),
+                isSelected = selectedTab == ProfileTab.Drafts,
+                onClick = { onTabSelected(ProfileTab.Drafts) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            if (hasDrafts && selectedTab != ProfileTab.Drafts) {
+                Box(
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopCenter)
+                            .offset(x = 24.dp, y = 0.dp)
+                            .background(
+                                color = YralColors.Pink300,
+                                shape = RoundedCornerShape(12.dp),
+                            ).padding(horizontal = 6.dp, vertical = 1.dp),
+                ) {
+                    Text(
+                        text = stringResource(Res.string.tab_new),
+                        style = LocalAppTopography.current.xsBold,
+                        color = Color.White,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProfileTabItem(
+    icon: Painter,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier =
+            modifier
+                .clickable(onClick = onClick)
+                .padding(vertical = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Icon(
+            painter = icon,
+            contentDescription = null,
+            tint = Color.Unspecified,
+            modifier = Modifier.size(24.dp),
+        )
+        if (isSelected) {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(3.dp)
+                        .background(
+                            color = YralColors.Pink300,
+                            shape = RoundedCornerShape(10.dp),
+                        ),
+            )
+        }
+    }
+}
+
+@Composable
+private fun DraftsEmptyStateContent(
+    offset: Float,
+    uploadVideo: () -> Unit,
+) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp)
+                .offset(y = (offset - PADDING_BOTTOM_ACCOUNT_INFO).dp)
+                .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = stringResource(Res.string.drafts_empty_title),
+            style = LocalAppTopography.current.mdSemiBold,
+            color = YralColors.NeutralTextPrimary,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            text = stringResource(Res.string.drafts_empty_subtitle),
+            style = LocalAppTopography.current.baseRegular,
+            color = YralColors.NeutralTextSecondary,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(modifier = Modifier.height(30.dp))
+        YralGradientButton(
+            modifier = Modifier.width(236.dp),
+            text = stringResource(Res.string.create_ai_video),
+            onClick = uploadVideo,
+        )
+    }
+}
+
+@Composable
+private fun DraftVideoGridContent(
+    draftVideos: LazyPagingItems<FeedDetails>,
+    offset: Float,
+    openDraftVideo: (FeedDetails) -> Unit,
+) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .offset(y = offset.dp),
+    ) {
+        items(
+            count = draftVideos.itemCount,
+            key = { index -> draftVideos.peek(index)?.let { "${it.canisterID}_${it.postID}" } ?: "draft_$index" },
+            contentType = { "DraftVideo" },
+        ) { index ->
+            val video = draftVideos[index]
+            if (video != null) {
+                VideoGridItem(
+                    video = video,
+                    isOwnProfile = true,
+                    isDeleting = false,
+                    isDraft = true,
+                    openVideoReel = { openDraftVideo(video) },
+                    onDeleteClick = {},
+                    onDownloadClick = {},
+                    onViewsClick = {},
+                )
+            }
+        }
+
+        item(
+            span = { GridItemSpan(maxLineSpan) },
+        ) {
+            PagingAppendIndicator(
+                loadState = draftVideos.loadState.append,
+                onRetry = { draftVideos.retry() },
             )
         }
     }
@@ -1168,7 +1391,6 @@ private fun VideoGridContent(
     isOwnProfile: Boolean,
     deletingVideoId: String,
     openVideoReel: (Int) -> Unit,
-    openDraftVideo: (FeedDetails) -> Unit,
     onDeleteVideo: (FeedDetails) -> Unit,
     onDownloadVideo: (FeedDetails) -> Unit,
     onViewsClick: (FeedDetails) -> Unit,
@@ -1203,19 +1425,12 @@ private fun VideoGridContent(
         ) { index ->
             val video = profileVideos[index]
             if (video != null) {
-                val isDraft = video.isDraft || video.videoID in generatingState.draftVideoIds
                 VideoGridItem(
                     video = video,
                     isOwnProfile = isOwnProfile,
                     isDeleting = deletingVideoId == video.videoID,
-                    isDraft = isDraft,
-                    openVideoReel = {
-                        if (isDraft) {
-                            openDraftVideo(video)
-                        } else {
-                            openVideoReel(index)
-                        }
-                    },
+                    isDraft = false,
+                    openVideoReel = { openVideoReel(index) },
                     onDeleteClick = { onDeleteVideo(video) },
                     onDownloadClick = { onDownloadVideo(video) },
                     onViewsClick = { onViewsClick(video) },
@@ -1687,6 +1902,25 @@ fun BecomeProButton(
             contentScale = ContentScale.Inside,
             modifier = Modifier.size(14.dp),
         )
+    }
+}
+
+@Suppress("UnusedPrivateMember")
+@Preview
+@Composable
+private fun DraftsEmptyStatePreview() {
+    CompositionLocalProvider(LocalAppTopography provides appTypoGraphy()) {
+        Box(
+            modifier =
+                Modifier
+                    .background(YralColors.Neutral900)
+                    .fillMaxSize(),
+        ) {
+            DraftsEmptyStateContent(
+                offset = 0f,
+                uploadVideo = {},
+            )
+        }
     }
 }
 

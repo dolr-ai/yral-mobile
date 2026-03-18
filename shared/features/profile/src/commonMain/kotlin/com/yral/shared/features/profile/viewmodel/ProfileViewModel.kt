@@ -41,6 +41,7 @@ import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
 import com.yral.shared.features.profile.analytics.ProfileTelemetry
 import com.yral.shared.features.profile.domain.DeleteVideoUseCase
+import com.yral.shared.features.profile.domain.DraftVideosPagingSource
 import com.yral.shared.features.profile.domain.FollowNotificationUseCase
 import com.yral.shared.features.profile.domain.ProfileVideosPagingSource
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
@@ -177,7 +178,29 @@ class ProfileViewModel(
                         canisterId = canisterData.canisterId,
                         userPrincipal = canisterData.userPrincipalId,
                         isFromServiceCanister = canisterData.isCreatedFromServiceCanister,
-                        isOwnProfile = canisterData.userPrincipalId == sessionManager.userPrincipal,
+                    )
+                },
+            ).flow.cachedIn(viewModelScope)
+        } else {
+            flowOf()
+        }
+
+    private val _draftVideos: Flow<PagingData<FeedDetails>> =
+        if (canisterData.userPrincipalId.isNotEmpty() &&
+            canisterData.userPrincipalId == sessionManager.userPrincipal
+        ) {
+            Pager(
+                config =
+                    PagingConfig(
+                        pageSize = POSTS_PER_PAGE,
+                        initialLoadSize = POSTS_PER_PAGE,
+                        prefetchDistance = POSTS_PREFETCH_DISTANCE,
+                        enablePlaceholders = false,
+                    ),
+                pagingSourceFactory = {
+                    DraftVideosPagingSource(
+                        canisterId = canisterData.canisterId,
+                        profileRepository = profileRepository,
                     )
                 },
             ).flow.cachedIn(viewModelScope)
@@ -187,6 +210,20 @@ class ProfileViewModel(
 
     val profileVideos: Flow<PagingData<FeedDetails>> =
         _profileVideos
+            .combine(pagingState) { pagingData, state ->
+                val videoIds = mutableSetOf<String>()
+                pagingData
+                    .filter { video ->
+                        video.videoID.isNotEmpty() &&
+                            videoIds.add(video.videoID) &&
+                            video.videoID !in state.deletedVideoIds
+                    }.map { details ->
+                        state.updatedDetails[details.videoID] ?: details
+                    }
+            }.distinctUntilChanged()
+
+    val draftVideos: Flow<PagingData<FeedDetails>> =
+        _draftVideos
             .combine(pagingState) { pagingData, state ->
                 val videoIds = mutableSetOf<String>()
                 pagingData
@@ -1153,6 +1190,10 @@ class ProfileViewModel(
         )
     }
 
+    fun selectTab(tab: ProfileTab) {
+        _state.update { it.copy(selectedTab = tab) }
+    }
+
     fun openDraftVideo(feedDetails: FeedDetails) {
         updateVideoViewIfDifferent(VideoViewState.ViewingDraft(feedDetails))
     }
@@ -1228,7 +1269,13 @@ data class ViewState(
     val botUsernames: List<String> = emptyList(),
     val botUsernameToCanisterData: Map<String, String> = emptyMap(),
     val publishDraftUiState: UiState<Unit> = UiState.Initial,
+    val selectedTab: ProfileTab = ProfileTab.Published,
 )
+
+enum class ProfileTab {
+    Published,
+    Drafts,
+}
 
 sealed interface ProfileBottomSheet {
     data object None : ProfileBottomSheet

@@ -32,4 +32,7 @@
     <string name="publish_success">Your video has been Published successfully!</string>
     <string name="publish_button">Publish</string>
     <string name="publishing_video">Your video is publishing and will appear in your profile section.</string>
+    <string name="drafts_empty_title">Drafts Empty!</string>
+    <string name="drafts_empty_subtitle">Create your first AI video and it will appear here,\nready to be shared with the world.</string>
+    <string name="tab_new">New</string>
 </resources>
