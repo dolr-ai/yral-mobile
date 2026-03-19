@@ -42,9 +42,12 @@ jobs:
           java-version: '17'
 
       - name: Install CocoaPods
-        run: gem install cocoapods --no-document
+        run: brew install cocoapods
 
       - name: Build KMM framework
+        env:
+          GITHUB_USERNAME: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew :iosSharedUmbrella:podInstall --stacktrace
 
       - name: pod install
@@ -60,6 +63,8 @@ jobs:
             -destination 'generic/platform=iOS' \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO \
+            GITHUB_USERNAME="${{ github.actor }}" \
+            GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" \
             | xcpretty && exit ${PIPESTATUS[0]}
 
   swift-tests:
@@ -83,9 +88,12 @@ jobs:
           java-version: '17'
 
       - name: Install CocoaPods
-        run: gem install cocoapods --no-document
+        run: brew install cocoapods
 
       - name: Build KMM framework
+        env:
+          GITHUB_USERNAME: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew :iosSharedUmbrella:podInstall --stacktrace
 
       - name: pod install
@@ -93,10 +101,6 @@ jobs:
         run: pod install
 
       - name: Run tests
-        env:
-          # Required for GitHub Packages dependency resolution (see CLAUDE.md)
-          GITHUB_USERNAME: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         working-directory: iosApp
         run: |
           xcodebuild test \
@@ -105,4 +109,6 @@ jobs:
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO \
+            GITHUB_USERNAME="${{ github.actor }}" \
+            GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" \
             | xcpretty && exit ${PIPESTATUS[0]}
