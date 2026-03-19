@@ -2,7 +2,6 @@ name: iOS Checks
 
 permissions:
   contents: read
-  packages: write # required to pull/push the cached devcontainer image from ghcr.io
 
 on:
   pull_request:
@@ -10,6 +9,8 @@ on:
 jobs:
   swiftlint:
     runs-on: macos-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -23,6 +24,8 @@ jobs:
 
   swift-build:
     runs-on: macos-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -61,6 +64,9 @@ jobs:
 
   swift-tests:
     runs-on: macos-latest
+    permissions:
+      contents: read
+      packages: read
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
