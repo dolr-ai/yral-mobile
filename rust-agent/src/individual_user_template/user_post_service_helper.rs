@@ -5,12 +5,12 @@ use yral_canisters_client::user_post_service::UserPostServiceError;
 use std::sync::Arc;
 use crate::individual_user_template::individual_user_template_helper::*;
 use crate::RUNTIME;
-use yral_canisters_client::user_post_service::Result1;
+use yral_canisters_client::user_post_service::Result2;
 use yral_canisters_client::user_post_service::Post;
 use yral_canisters_client::user_post_service::PostStatus;
 use std::time::SystemTime;
 use ic_agent::identity::DelegatedIdentity;
-use yral_canisters_client::user_post_service::Result3;
+use yral_canisters_client::user_post_service::Result1;
 
 
 pub struct ServiceCanistersDetails {
@@ -60,7 +60,7 @@ impl UserPostService {
     pub async fn get_individual_post_details_by_id(
         &self,
         arg0: String,
-    ) -> Result<Result1, String> {
+    ) -> Result<Result2, String> {
 
         let agent = Arc::clone(&self.agent);
         let service = yral_canisters_client::user_post_service::UserPostService(
@@ -70,7 +70,7 @@ impl UserPostService {
         service
             .get_individual_post_details_by_id(arg0)
             .await
-            .map(|op: Result1| op)
+            .map(|op: Result2| op)
             .map_err(|e| e.to_string())
     }
 
@@ -79,7 +79,7 @@ impl UserPostService {
         arg0: Principal,
         arg1: u64,
         arg2: u64,
-    ) -> Result<Result3, String> {
+    ) -> Result<Result1, String> {
         let agent = Arc::clone(&self.agent);
         let service = yral_canisters_client::user_post_service::UserPostService(
             yral_canisters_client::ic::USER_POST_SERVICE_ID,

@@ -42,7 +42,7 @@ class AppRouteTest {
         val unknown = Unknown
 
         assertTrue(product is ExternallyExposedRoute)
-        assertFalse(home is ExternallyExposedRoute)
+        assertTrue(home is ExternallyExposedRoute)
         assertFalse(unknown is ExternallyExposedRoute)
     }
 

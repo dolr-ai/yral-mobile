@@ -1,18 +1,42 @@
-// swiftlint: disable all
 public func get_secp256k1_identity(_ jwk_key: JwkEcKey) throws -> Secp256k1Identity {
-    try { let val = __swift_bridge__$get_secp256k1_identity({jwk_key.isOwned = false; return jwk_key.ptr;}()); if val.is_ok { return Secp256k1Identity(ptr: val.ok_or_err!) } else { throw Secp256k1Error(ptr: val.ok_or_err!) } }()
+    let val = __swift_bridge__$get_secp256k1_identity({jwk_key.isOwned = false; return jwk_key.ptr;}())
+    if val.is_ok {
+        return Secp256k1Identity(ptr: val.ok_or_err!)
+    } else {
+        throw Secp256k1Error(ptr: val.ok_or_err!)
+    }
 }
 public func get_jwk_ec_key<GenericIntoRustString: IntoRustString>(_ json_string: GenericIntoRustString) throws -> JwkEcKey {
-    try { let val = __swift_bridge__$get_jwk_ec_key({ let rustString = json_string.intoRustString(); rustString.isOwned = false; return rustString.ptr }()); if val.is_ok { return JwkEcKey(ptr: val.ok_or_err!) } else { throw Secp256k1Error(ptr: val.ok_or_err!) } }()
+    let val = __swift_bridge__$get_jwk_ec_key({ let rustString = json_string.intoRustString(); rustString.isOwned = false; return rustString.ptr }())
+    if val.is_ok {
+        return JwkEcKey(ptr: val.ok_or_err!)
+    } else {
+        throw Secp256k1Error(ptr: val.ok_or_err!)
+    }
 }
 public func delegated_identity_from_bytes(_ data: UnsafeBufferPointer<UInt8>) throws -> DelegatedIdentity {
-    try { let val = __swift_bridge__$delegated_identity_from_bytes(data.toFfiSlice()); if val.is_ok { return DelegatedIdentity(ptr: val.ok_or_err!) } else { throw RustString(ptr: val.ok_or_err!) } }()
+    let val = __swift_bridge__$delegated_identity_from_bytes(data.toFfiSlice())
+    if val.is_ok {
+        return DelegatedIdentity(ptr: val.ok_or_err!)
+    } else {
+        throw RustString(ptr: val.ok_or_err!)
+    }
 }
 public func delegated_identity_wire_from_bytes(_ data: UnsafeBufferPointer<UInt8>) throws -> DelegatedIdentityWire {
-    try { let val = __swift_bridge__$delegated_identity_wire_from_bytes(data.toFfiSlice()); if val.is_ok { return DelegatedIdentityWire(ptr: val.ok_or_err!) } else { throw RustString(ptr: val.ok_or_err!) } }()
+    let val = __swift_bridge__$delegated_identity_wire_from_bytes(data.toFfiSlice())
+    if val.is_ok {
+        return DelegatedIdentityWire(ptr: val.ok_or_err!)
+    } else {
+        throw RustString(ptr: val.ok_or_err!)
+    }
 }
 public func delegate_identity_with_max_age_public(_ parent_wire: DelegatedIdentityWire, _ new_pub_jwk_json: RustVec<UInt8>, _ max_age_seconds: UInt64) throws -> DelegatedIdentityWire {
-    try { let val = __swift_bridge__$delegate_identity_with_max_age_public({parent_wire.isOwned = false; return parent_wire.ptr;}(), { let val = new_pub_jwk_json; val.isOwned = false; return val.ptr }(), max_age_seconds); if val.is_ok { return DelegatedIdentityWire(ptr: val.ok_or_err!) } else { throw RustString(ptr: val.ok_or_err!) } }()
+    let val = __swift_bridge__$delegate_identity_with_max_age_public({parent_wire.isOwned = false; return parent_wire.ptr;}(), { let val = new_pub_jwk_json; val.isOwned = false; return val.ptr }(), max_age_seconds)
+    if val.is_ok {
+        return DelegatedIdentityWire(ptr: val.ok_or_err!)
+    } else {
+        throw RustString(ptr: val.ok_or_err!)
+    }
 }
 public func delegated_identity_wire_to_json(_ wire: DelegatedIdentityWireRef) -> RustString {
     RustString(ptr: __swift_bridge__$delegated_identity_wire_to_json(wire.ptr))
@@ -49,7 +73,12 @@ public func extract_time_as_double(_ result: Result11) -> Optional<UInt64> {
     __swift_bridge__$extract_time_as_double({result.isOwned = false; return result.ptr;}()).intoSwiftRepr()
 }
 public func get_principal<GenericIntoRustString: IntoRustString>(_ text: GenericIntoRustString) throws -> Principal {
-    try { let val = __swift_bridge__$get_principal({ let rustString = text.intoRustString(); rustString.isOwned = false; return rustString.ptr }()); if val.is_ok { return Principal(ptr: val.ok_or_err!) } else { throw PrincipalError(ptr: val.ok_or_err!) } }()
+    let val = __swift_bridge__$get_principal({ let rustString = text.intoRustString(); rustString.isOwned = false; return rustString.ptr }())
+    if val.is_ok {
+        return Principal(ptr: val.ok_or_err!)
+    } else {
+        throw PrincipalError(ptr: val.ok_or_err!)
+    }
 }
 public func get_principal_from_identity(_ identity: DelegatedIdentity) -> RustString {
     RustString(ptr: __swift_bridge__$get_principal_from_identity({identity.isOwned = false; return identity.ptr;}()))
@@ -58,7 +87,12 @@ public func propic_from_principal(_ principal: Principal) -> RustString {
     RustString(ptr: __swift_bridge__$propic_from_principal({principal.isOwned = false; return principal.ptr;}()))
 }
 public func yral_auth_login_hint(_ data: UnsafeBufferPointer<UInt8>) throws -> RustString {
-    try { let val = __swift_bridge__$yral_auth_login_hint(data.toFfiSlice()); if val.is_ok { return RustString(ptr: val.ok_or_err!) } else { throw RustString(ptr: val.ok_or_err!) } }()
+    let val = __swift_bridge__$yral_auth_login_hint(data.toFfiSlice())
+    if val.is_ok {
+        return RustString(ptr: val.ok_or_err!)
+    } else {
+        throw RustString(ptr: val.ok_or_err!)
+    }
 }
 public func register_device<GenericIntoRustString: IntoRustString>(_ identity: DelegatedIdentity, _ token: GenericIntoRustString) async throws -> () {
     func onComplete(cbWrapperPtr: UnsafeMutableRawPointer?, rustFnRetVal: UnsafeMutableRawPointer?) {
@@ -9632,18 +9666,14 @@ public class Service: ServiceRefMut {
     }
 }
 extension Service {
-  public convenience init(_ principal: Principal, _ identity: DelegatedIdentity) throws {
-    let val = __swift_bridge__$Service$new(
-      { principal.isOwned = false; return principal.ptr }(),
-      { identity.isOwned = false; return identity.ptr }()
-    )
-
-    if val.is_ok {
-      self.init(ptr: val.ok_or_err!)
-    } else {
-      throw PrincipalError(ptr: val.ok_or_err!)
+    public convenience init(_ principal: Principal, _ identity: DelegatedIdentity) throws {
+        let val = __swift_bridge__$Service$new({principal.isOwned = false; return principal.ptr;}(), {identity.isOwned = false; return identity.ptr;}())
+        if val.is_ok {
+            self.init(ptr: val.ok_or_err!)
+        } else {
+            throw PrincipalError(ptr: val.ok_or_err!)
+        }
     }
-  }
 }
 public class ServiceRefMut: ServiceRef {
     public override init(ptr: UnsafeMutableRawPointer) {
@@ -12483,18 +12513,14 @@ public class UserPostService: UserPostServiceRefMut {
     }
 }
 extension UserPostService {
-  public convenience init(_ principal: Principal, _ identity: DelegatedIdentity) throws {
-    let val = __swift_bridge__$UserPostService$new(
-      { principal.isOwned = false; return principal.ptr }(),
-      { identity.isOwned = false; return identity.ptr }()
-    )
-
-    if val.is_ok {
-      self.init(ptr: val.ok_or_err!)
-    } else {
-      throw PrincipalError(ptr: val.ok_or_err!)
+    public convenience init(_ principal: Principal, _ identity: DelegatedIdentity) throws {
+        let val = __swift_bridge__$UserPostService$new({principal.isOwned = false; return principal.ptr;}(), {identity.isOwned = false; return identity.ptr;}())
+        if val.is_ok {
+            self.init(ptr: val.ok_or_err!)
+        } else {
+            throw PrincipalError(ptr: val.ok_or_err!)
+        }
     }
-  }
 }
 public class UserPostServiceRefMut: UserPostServiceRef {
     public override init(ptr: UnsafeMutableRawPointer) {
@@ -13456,4 +13482,6 @@ extension Icrc1Tokens: Vectorizable {
         __swift_bridge__$Vec_Icrc1Tokens$len(vecPtr)
     }
 }
-// swiftlint: enable all
+
+
+

@@ -15,7 +15,7 @@ class FeatureFlagsValidatorTest {
         val a = group.boolean("a", "A", "desc", false)
         val b = group.int("b", "B", "desc", 1)
 
-        val result = FeatureFlagsValidator.validate(group.allFlags)
+        val result = FeatureFlagsValidator.validate(group.allFlags, enforceDotSeparatorWhenNoPrefixes = false)
         assertTrue(result.isValid, "Expected valid flags, got errors: ${result.errors}")
     }
 

@@ -32,19 +32,20 @@ class DeepLinkParserTest {
 
     @Test
     fun testParseValidPostDetailsDeepLink() {
-        val result = parser.parse("https://example.com/post/details/can-1/123")
+        val result = parser.parse("https://example.com/post/details/can-1/123/user-456")
 
         println("result: $result")
 
         assertTrue(result is PostDetailsRoute)
         assertEquals("can-1", result.canisterId)
         assertEquals("123", result.postId)
+        assertEquals("user-456", result.publisherUserId)
     }
 
     @Test
     fun testParseInvalidPostDetailsUrlReturnsUnknown() {
-        // Missing canisterId segment: only one segment after /details/
-        val result = parser.parse("https://example.com/post/details/123")
+        // Missing publisherUserId segment: only two segments after /details/
+        val result = parser.parse("https://example.com/post/details/can-1/123")
 
         assertTrue(result is Unknown)
     }

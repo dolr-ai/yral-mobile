@@ -16,6 +16,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
+    guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil else { return true }
     if UIApplication.shared.isProtectedDataAvailable {
       migrateKeychain()
     }
@@ -259,6 +260,9 @@ struct IosApp: App {
     _eventBus = StateObject(
       wrappedValue: container.eventBus
     )
+    // Skip KMM/Koin initialization when running unit tests:
+    // the Kotlin/Native runtime is incompatible with the current iOS simulator.
+    guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil else { return }
     AppDIKt.doInitKoin { coreApplication in
       coreApplication.installExternalDependencyModule(provider: IosDependencyProvider())
     }
@@ -267,7 +271,8 @@ struct IosApp: App {
 
   var body: some Scene {
     WindowGroup {
-      RootView(root: delegate.root)
+      if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil {
+        RootView(root: delegate.root)
         .ignoresSafeArea(edges: .all)
         .ignoresSafeArea(.keyboard)
         .edgesIgnoringSafeArea(.all)
@@ -308,6 +313,7 @@ struct IosApp: App {
             self.showRecommendedAppUpdate = true
           }
         }
+      } // end if !isRunningTests
 
       //     contentView()
       //       .environmentObject(deepLinkRouter)

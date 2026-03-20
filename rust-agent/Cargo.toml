@@ -6,13 +6,13 @@ edition = "2021"
 build = "build.rs"
 
 [build-dependencies]
-swift-bridge-build = "0.1.57"
+swift-bridge-build = "0.1.59"
 
 [lib]
 crate-type = ["staticlib"]
 
 [dependencies]
-swift-bridge = {version = "0.1.57", features = ["async"]}
+swift-bridge = {version = "0.1.59", features = ["async"]}
 tokio = { version = "1.28", features = ["macros", "rt-multi-thread"] }
 ic-agent = "0.41.0"
 lazy_static = "1.4"
