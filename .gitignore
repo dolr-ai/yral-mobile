@@ -132,6 +132,9 @@ iosApp/**/Pods/
 Pods/
 **/Pods/
 
+# SwiftLint generated rule documentation
+iosApp/rule_docs/
+
 # Sentry Config File
 sentry.properties
 
