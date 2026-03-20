@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -28,6 +29,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
@@ -72,6 +74,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 @Composable
 fun WalletScreen(
     component: WalletComponent,
+    onCreateInfluencerClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: WalletViewModel = koinViewModel(),
 ) {
@@ -80,8 +83,11 @@ fun WalletScreen(
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     if (state.showTransactionHistory) {
-        TransactionHistoryScreen(onBack = { viewModel.toggleTransactionHistory(false) })
-    } else if (state.isFirebaseLoggedIn) {
+        TransactionHistoryScreen(
+            state = state,
+            onBack = { viewModel.toggleTransactionHistory(false) },
+        )
+    } else if (state.isSocialSignedIn && state.hasBots) {
         WalletUnlockedContent(
             component = component,
             state = state,
@@ -91,6 +97,7 @@ fun WalletScreen(
     } else {
         WalletLockedContent(
             component = component,
+            onCreateInfluencerClick = onCreateInfluencerClick,
             modifier = modifier,
         )
     }
@@ -136,6 +143,7 @@ private fun WalletHeader(component: WalletComponent) {
 @Composable
 private fun WalletLockedContent(
     component: WalletComponent,
+    onCreateInfluencerClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -167,7 +175,7 @@ private fun WalletLockedContent(
         Spacer(modifier = Modifier.height(24.dp))
         YralGradientButton(
             text = stringResource(Res.string.create_influencer),
-            onClick = { component.onCreateInfluencer() },
+            onClick = onCreateInfluencerClick,
             modifier = Modifier.padding(horizontal = 32.dp),
         )
         Spacer(modifier = Modifier.weight(1f))
@@ -185,12 +193,21 @@ private fun WalletUnlockedContent(
         modifier = modifier.fillMaxSize(),
     ) {
         WalletHeader(component = component)
-        Spacer(modifier = Modifier.height(8.dp))
-        EarningsCard(totalEarnings = state.totalEarningsInr)
-        Spacer(modifier = Modifier.height(16.dp))
-        TransactionHistoryCard(onClick = { viewModel.toggleTransactionHistory(true) })
-        Spacer(modifier = Modifier.height(16.dp))
-        HowToEarnButton(onClick = { viewModel.toggleHowToEarnHelp(true) })
+        if (state.isLoading) {
+            Spacer(modifier = Modifier.weight(1f))
+            CircularProgressIndicator(
+                color = Color.White,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
+            Spacer(modifier = Modifier.weight(1f))
+        } else {
+            Spacer(modifier = Modifier.height(8.dp))
+            EarningsCard(totalEarnings = state.totalEarningsInr)
+            Spacer(modifier = Modifier.height(16.dp))
+            TransactionHistoryCard(onClick = { viewModel.toggleTransactionHistory(true) })
+            Spacer(modifier = Modifier.height(16.dp))
+            HowToEarnButton(onClick = { viewModel.toggleHowToEarnHelp(true) })
+        }
     }
 }
 
@@ -198,14 +215,14 @@ private fun WalletUnlockedContent(
 private fun EarningsCard(totalEarnings: String) {
     val gradientBrush =
         Brush.linearGradient(
-            colors =
-                listOf(
-                    Color(0xFF81546D),
-                    Color(0xFFC45D95),
-                    Color(0xFFDE98BE),
-                    Color(0xFFC45D95),
-                    Color(0xFF81546D),
+            colorStops =
+                arrayOf(
+                    0.2f to Color(0xFFDE98BE),
+                    0.45f to Color(0xFFC45D95),
+                    0.98f to Color(0xFF81546D),
                 ),
+            start = Offset(Float.POSITIVE_INFINITY, 0f),
+            end = Offset(0f, Float.POSITIVE_INFINITY),
         )
     Column(
         modifier =
@@ -214,19 +231,23 @@ private fun EarningsCard(totalEarnings: String) {
                 .fillMaxWidth()
                 .background(brush = gradientBrush, shape = RoundedCornerShape(12.dp))
                 .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(
-            text = stringResource(Res.string.total_earnings_inr),
-            style = LocalAppTopography.current.baseSemiBold,
-            color = Color.White.copy(alpha = 0.8f),
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = totalEarnings,
-            style = LocalAppTopography.current.xxlBold.copy(fontSize = 32.sp),
-            color = Color.White,
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(Res.string.total_earnings_inr),
+                style = LocalAppTopography.current.baseSemiBold,
+                color = Color.White.copy(alpha = 0.8f),
+            )
+            Text(
+                text = totalEarnings,
+                style = LocalAppTopography.current.xxlBold.copy(fontSize = 32.sp),
+                color = Color.White,
+            )
+        }
         Spacer(modifier = Modifier.height(16.dp))
         HorizontalDivider(color = Color.White.copy(alpha = 0.3f))
         Spacer(modifier = Modifier.height(12.dp))
@@ -376,43 +397,11 @@ private fun EarnStep(
     }
 }
 
-private data class TransactionItemData(
-    val title: String,
-    val subtitle: String,
-    val amount: String,
-)
-
-private val dummyTransactions =
-    listOf(
-        TransactionItemData(
-            title = "@fitabhi Chatbot subscription",
-            subtitle = "Today, 10:00 AM  \u2022  1 Day Subscription",
-            amount = "+ \u20B99",
-        ),
-        TransactionItemData(
-            title = "@techguru Chatbot subscription",
-            subtitle = "Today, 9:30 AM  \u2022  1 Day Subscription",
-            amount = "+ \u20B99",
-        ),
-        TransactionItemData(
-            title = "@dancequeen Chatbot subscription",
-            subtitle = "Yesterday, 4:15 PM  \u2022  7 Day Subscription",
-            amount = "+ \u20B949",
-        ),
-        TransactionItemData(
-            title = "@foodielife Chatbot subscription",
-            subtitle = "Yesterday, 2:00 PM  \u2022  1 Day Subscription",
-            amount = "+ \u20B99",
-        ),
-        TransactionItemData(
-            title = "@travelvibes Chatbot subscription",
-            subtitle = "Mar 15, 11:00 AM  \u2022  30 Day Subscription",
-            amount = "+ \u20B9149",
-        ),
-    )
-
 @Composable
-private fun TransactionHistoryScreen(onBack: () -> Unit) {
+private fun TransactionHistoryScreen(
+    state: com.yral.shared.features.wallet.viewmodel.WalletState,
+    onBack: () -> Unit,
+) {
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -436,14 +425,27 @@ private fun TransactionHistoryScreen(onBack: () -> Unit) {
             )
             Spacer(modifier = Modifier.size(24.dp))
         }
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-            itemsIndexed(dummyTransactions) { index, item ->
-                TransactionItem(item)
-                if (index < dummyTransactions.lastIndex) {
-                    HorizontalDivider(
-                        color = YralColors.Neutral700,
-                        modifier = Modifier.padding(horizontal = 16.dp),
+        if (state.isTransactionsLoading) {
+            Spacer(modifier = Modifier.weight(1f))
+            CircularProgressIndicator(
+                color = Color.White,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
+            Spacer(modifier = Modifier.weight(1f))
+        } else {
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                itemsIndexed(state.transactions) { index, tx ->
+                    TransactionItem(
+                        title = "@${tx.relatedBotId} Chatbot subscription",
+                        subtitle = "${tx.createdAt} \u2022 ${tx.transactionType}",
+                        amount = "+ \u20B9${tx.amountPaise / PAISE_PER_RUPEE}",
                     )
+                    if (index < state.transactions.lastIndex) {
+                        HorizontalDivider(
+                            color = YralColors.Neutral700,
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                        )
+                    }
                 }
             }
         }
@@ -451,7 +453,11 @@ private fun TransactionHistoryScreen(onBack: () -> Unit) {
 }
 
 @Composable
-private fun TransactionItem(item: TransactionItemData) {
+private fun TransactionItem(
+    title: String,
+    subtitle: String,
+    amount: String,
+) {
     Row(
         modifier =
             Modifier
@@ -462,21 +468,23 @@ private fun TransactionItem(item: TransactionItemData) {
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = item.title,
+                text = title,
                 style = LocalAppTopography.current.baseRegular,
                 color = YralColors.NeutralTextPrimary,
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                text = item.subtitle,
+                text = subtitle,
                 style = LocalAppTopography.current.regRegular,
                 color = YralColors.NeutralTextTertiary,
             )
         }
         Text(
-            text = item.amount,
+            text = amount,
             style = LocalAppTopography.current.baseSemiBold,
             color = YralColors.Green300,
         )
     }
 }
+
+private const val PAISE_PER_RUPEE = 100

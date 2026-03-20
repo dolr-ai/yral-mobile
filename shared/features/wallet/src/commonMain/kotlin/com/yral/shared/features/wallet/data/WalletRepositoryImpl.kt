@@ -1,11 +1,14 @@
 package com.yral.shared.features.wallet.data
 
+import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.features.wallet.data.models.toDomain
 import com.yral.shared.features.wallet.data.models.toGetBalanceResponse
+import com.yral.shared.features.wallet.domain.models.BillingBalance
 import com.yral.shared.features.wallet.domain.models.BtcRewardConfig
 import com.yral.shared.features.wallet.domain.models.BtcToCurrency
 import com.yral.shared.features.wallet.domain.models.DolrPrice
 import com.yral.shared.features.wallet.domain.models.GetBalanceResponse
+import com.yral.shared.features.wallet.domain.models.Transaction
 import com.yral.shared.features.wallet.domain.repository.WalletRepository
 
 class WalletRepositoryImpl(
@@ -48,4 +51,24 @@ class WalletRepositoryImpl(
         dataSource
             .getBalance(userPrincipal)
             .toGetBalanceResponse()
+
+    override suspend fun getBillingBalance(recipientId: String): BillingBalance {
+        val dto = dataSource.getBillingBalance(recipientId)
+        val data = dto.data ?: throw YralException(dto.error ?: "Failed to fetch balance")
+        return BillingBalance(balancePaise = data.balancePaise, balanceRupees = data.balanceRupees)
+    }
+
+    override suspend fun getTransactions(recipientId: String): List<Transaction> {
+        val dto = dataSource.getTransactions(recipientId)
+        val data = dto.data ?: throw YralException(dto.error ?: "Failed to fetch transactions")
+        return data.map {
+            Transaction(
+                id = it.id,
+                transactionType = it.transactionType,
+                amountPaise = it.amountPaise,
+                relatedBotId = it.relatedBotId,
+                createdAt = it.createdAt,
+            )
+        }
+    }
 }

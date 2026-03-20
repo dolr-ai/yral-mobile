@@ -5,9 +5,11 @@ import com.yral.shared.features.wallet.data.WalletDataSource
 import com.yral.shared.features.wallet.data.WalletDataSourceImpl
 import com.yral.shared.features.wallet.data.WalletRepositoryImpl
 import com.yral.shared.features.wallet.domain.GetBalanceUseCase
+import com.yral.shared.features.wallet.domain.GetBillingBalanceUseCase
 import com.yral.shared.features.wallet.domain.GetBtcConversionUseCase
 import com.yral.shared.features.wallet.domain.GetDolrUsdPriceUseCase
 import com.yral.shared.features.wallet.domain.GetRewardConfigUseCase
+import com.yral.shared.features.wallet.domain.GetTransactionsUseCase
 import com.yral.shared.features.wallet.domain.GetUserBtcBalanceUseCase
 import com.yral.shared.features.wallet.domain.GetUserDolrBalanceUseCase
 import com.yral.shared.features.wallet.domain.repository.WalletRepository
@@ -28,5 +30,7 @@ val walletModule =
         factoryOf(::GetRewardConfigUseCase)
         factoryOf(::GetBalanceUseCase)
         factoryOf(::GetDolrUsdPriceUseCase)
+        factoryOf(::GetBillingBalanceUseCase)
+        factoryOf(::GetTransactionsUseCase)
         viewModelOf(::WalletViewModel)
     }
