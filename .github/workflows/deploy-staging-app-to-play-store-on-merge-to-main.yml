@@ -1,22 +1,9 @@
-name: Build App for preview
+name: Deploy Play Store App to yral-alpha on merge to main
+
 on:
-  pull_request:
+  push:
     branches:
-      - develop
-    types:
-      - opened
-      - ready_for_review
-      - synchronize
-      - reopened
-      - labeled
-    paths:
-      - '**/*.kt'
-      - '**/*.kts'
-      - '**/*.gradle*'
-      - 'gradle/**'
-      - 'gradle.properties'
-      - '**/version.properties'
-      - 'androidApp/src/**/res/values/version.xml'
+      - main
 
 permissions:
   id-token: write
@@ -25,7 +12,6 @@ permissions:
 
 jobs:
   build-app:
-    if: ${{ github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     env:
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
