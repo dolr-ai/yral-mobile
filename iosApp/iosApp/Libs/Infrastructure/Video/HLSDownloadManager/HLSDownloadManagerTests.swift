@@ -19,8 +19,8 @@ final class HLSDownloadManagerTests: XCTestCase {
   private var mockFileManager: MockFileManager!
   private var delegateSpy: DelegateSpy!
 
-  @MainActor override func setUpWithError() throws {
-    try super.setUpWithError()
+  @MainActor override func setUp() async throws {
+    try await super.setUp()
     mockSession = MockAssetDownloadSession()
     mockMonitor = MockNetworkMonitor()
     mockFileManager = MockFileManager()
@@ -29,9 +29,10 @@ final class HLSDownloadManagerTests: XCTestCase {
     sut = HLSDownloadManager(
       downloadSession: mockSession,
       networkMonitor: mockMonitor,
-      fileManager: mockFileManager
+      fileManager: mockFileManager,
+      crashReporter: MockCrashReporter()
     )
-    sut.delegate = delegateSpy
+    await sut.setDelegate(delegateSpy)
   }
 
   override func tearDownWithError() throws {
@@ -74,7 +75,10 @@ final class HLSDownloadManagerTests: XCTestCase {
         assetTitle: "SomeTitle"
       )
     }
-    await Task.yield()
+    // Give startDownloadAsync time to reach the actor and register in activeDownloads
+    // before we call cancelDownload. A single Task.yield() is not always sufficient
+    // due to the hop to the actor's executor.
+    try await Task.sleep(nanoseconds: 50_000_000)
     await sut.cancelDownload(for: testURL)
     try await Task.sleep(nanoseconds: 50_000_000)
     mockSession.mockTask?.simulateFinish(
@@ -95,11 +99,11 @@ final class HLSDownloadManagerTests: XCTestCase {
     let max = HLSDownloadManager.Constants.maxOfflineAssets
     for item in 0..<(max + 1) {
       let url = URL(string: "https://customer-2p3jflss4r4hmpnz.cloudflarestream.com/86990fde9b46455d8b191a9019e89e96/manifest\(item)/video.m3u8")! // swiftlint:disable:this line_length
-      await MainActor.run {
-        sut.assetTitleForURL[url] = "Asset\(item)"
-        sut.downloadedAssetsLRU["Asset\(item)"] = Date(timeIntervalSince1970: TimeInterval(item))
-        sut.localRemoteUrlMapping[url] = URL(string: "/some/local/path")
-      }
+      await sut.setupTestEntry(
+        url: url,
+        assetTitle: "Asset\(item)",
+        date: Date(timeIntervalSince1970: TimeInterval(item))
+      )
     }
     let testURL = URL(string: "https://customer-2p3jflss4r4hmpnz.cloudflarestream.com/86990fde9b46455d8b191a9019e89e96/manifest/video.m3u8")! // swiftlint:disable:this line_length
     let finishURL = URL(fileURLWithPath: "/some/local/path")
@@ -115,9 +119,8 @@ final class HLSDownloadManagerTests: XCTestCase {
     )
     let url = try await downloadTask.value
     print(url)
-    await MainActor.run {
-      XCTAssertNil(sut.downloadedAssetsLRU["Asset0"], "Oldest asset was not removed from the LRU.")
-    }
+    let lruDate = await sut.downloadedLRUDate(for: "Asset0")
+    XCTAssertNil(lruDate, "Oldest asset was not removed from the LRU.")
   }
 
   final class MockAssetDownloadSession: AVAssetDownloadURLSessionProtocol {
@@ -178,11 +181,44 @@ final class HLSDownloadManagerTests: XCTestCase {
     }
   }
 
+  final class MockCrashReporter: CrashReporter {
+    func setUserId(_ userId: String) {}
+    func recordException(_ error: Error) {}
+    func log(_ message: String) {}
+    func setMetadata(key: String, value: String) {}
+  }
+
   final class DelegateSpy: HLSDownloadManagerProtocol {
     private(set) var clearedCacheCalled = false
 
     func clearedCache(for assetTitle: String) {
       clearedCacheCalled = true
     }
+
+    func downloadManager(
+      _ manager: any HLSDownloadManaging,
+      didFinishAssetFor remoteURL: URL,
+      localFileURL: URL,
+      assetTitle: String
+    ) {}
+
+    func downloadManager(
+      _ manager: any HLSDownloadManaging,
+      didBeginAssetFor remoteURL: URL,
+      tempDirURL: URL,
+      assetTitle: String
+    ) {}
+  }
+}
+
+// MARK: - Test helpers
+extension HLSDownloadManager {
+  func setupTestEntry(url: URL, assetTitle: String, date: Date) {
+    assetTitleForURL[url] = assetTitle
+    downloadedAssetsLRU[assetTitle] = date
+  }
+
+  func downloadedLRUDate(for title: String) -> Date? {
+    downloadedAssetsLRU[title]
   }
 }

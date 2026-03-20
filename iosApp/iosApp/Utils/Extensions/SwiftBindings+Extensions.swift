@@ -22,12 +22,6 @@ extension PrincipalError: LocalizedError {
   }
 }
 
-extension RustString: Error {
-  public var localizedDescription: String? {
-    return self.toString()
-  }
-}
-
 extension RustString: LocalizedError {
   public var errorDescription: String? {
     return self.toString()

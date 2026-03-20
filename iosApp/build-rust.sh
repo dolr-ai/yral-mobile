@@ -29,16 +29,10 @@ fi
 #    - CI => only aarch64-apple-ios
 #    - Local => depends on PLATFORM_NAME (sim vs device).
 ####################################################
-if [[ "$CI" == "true" ]]; then
-  # For CI, build only device arch
-  TARGETS="aarch64-apple-ios"
+if [[ "$PLATFORM_NAME" == "iphonesimulator" ]]; then
+  TARGETS="aarch64-apple-ios-sim,x86_64-apple-ios"
 else
-  # Local development
-  if [[ "$PLATFORM_NAME" == "iphonesimulator" ]]; then
-    TARGETS="aarch64-apple-ios-sim,x86_64-apple-ios"
-  else
-    TARGETS="aarch64-apple-ios,x86_64-apple-ios"
-  fi
+  TARGETS="aarch64-apple-ios"
 fi
 
 echo "[rust-build] manifest : $MANIFEST_PATH"
