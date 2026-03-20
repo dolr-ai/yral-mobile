@@ -5,7 +5,10 @@ on:
     branches:
       - develop
     types:
-      - closed
+      - opened
+      - ready_for_review
+      - synchronize
+      - reopened
     paths:
       - 'iosApp/**/*.swift'
       - 'iosApp/**/*.h'
@@ -30,7 +33,7 @@ on:
 
 jobs:
   build-testflight-staging:
-    if: ${{ github.event.pull_request.merged == true }}
+    if: ${{ github.event.pull_request.draft == false }}
     runs-on: macos-latest
 
     steps:
