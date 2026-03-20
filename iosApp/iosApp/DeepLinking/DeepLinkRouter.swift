@@ -36,12 +36,12 @@ final class DeepLinkRouter: ObservableObject {
     }
     return pendingDestination
   }
-  
+
   func setRoute(route: AppRoute) {
     appRoute = route
     pendingDestination = mapRouteToDestination(route)
   }
-    
+
   func clearResolution() {
     appRoute = nil
     pendingDestination = nil
@@ -82,8 +82,6 @@ final class DeepLinkRouter: ObservableObject {
       )
     case _ as Home:
       return .home
-    case _ as Leaderboard:
-      return .leaderboard
     case _ as AddVideo:
       return .addVideo
     case _ as GenerateAIVideo:
