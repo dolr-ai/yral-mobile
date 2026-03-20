@@ -185,7 +185,7 @@ fun RootScreen(rootComponent: RootComponent) {
                         ChatConversationScreen(
                             component = child.component,
                             viewModel = koinViewModel<ConversationViewModel>(),
-                            modifier = Modifier.fillMaxSize().safeDrawingPadding(),
+                            modifier = Modifier.fillMaxSize(),
                         )
                     }
 
