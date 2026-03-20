@@ -64,9 +64,16 @@ jobs:
           gem install cocoapods --no-document
 
       - name: Run KMM podInstall
+        env:
+          GITHUB_USERNAME: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Runs the Gradle task that Android Studio launches on sync.
           ./gradlew :iosSharedUmbrella:podInstall --stacktrace
+
+      - name: pod install
+        working-directory: iosApp
+        run: pod install
 
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
@@ -122,3 +129,13 @@ jobs:
         env:
           FIREBASE_APP_ID_STAGING: ${{ secrets.FIREBASE_APP_ID_STAGING }}
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          GITHUB_USERNAME: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload gym build log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gym-build-log
+          path: ~/Library/Logs/gym/
+          retention-days: 5
