@@ -44,6 +44,21 @@ final class HLSDownloadManagerTests: XCTestCase {
     delegateSpy = nil
   }
 
+  /// Polls until `startDownloadAsync` has stored its continuation on the actor, with a
+  /// 10-second deadline. Using a fixed `Task.sleep` is unreliable on slow CI machines
+  /// because the actor hop can take longer than the fixed delay, leaving `simulateFinish`
+  /// or `cancelDownload` running before the continuation is registered.
+  private func waitForContinuation(url: URL) async throws {
+    let deadline = Date().addingTimeInterval(10)
+    while await !sut.hasContinuation(for: url) {
+      guard Date() < deadline else {
+        XCTFail("startDownloadAsync did not register its continuation within 10 seconds")
+        return
+      }
+      try await Task.sleep(nanoseconds: 10_000_000) // 10 ms poll
+    }
+  }
+
   func testStartDownloadAsync_SetsUpAndResumesTask() async throws {
     let testURL = URL(string: "https://customer-2p3jflss4r4hmpnz.cloudflarestream.com/86990fde9b46455d8b191a9019e89e96/manifest/video.m3u8")! // swiftlint:disable:this line_length
     let testTitle = "TestAsset"
@@ -52,7 +67,11 @@ final class HLSDownloadManagerTests: XCTestCase {
     let downloadTask = Task {
       return try await sut.startDownloadAsync(hlsURL: testURL, assetTitle: testTitle)
     }
-    try await Task.sleep(nanoseconds: 50_000_000) // 50 ms
+    // Poll until startDownloadAsync has registered its continuation on the actor.
+    // A fixed sleep is not reliable on slow CI machines — the actor hop can take longer
+    // than 50 ms, causing simulateFinish to run before the continuation is stored,
+    // which would leave the continuation un-resumed and hang the test.
+    try await waitForContinuation(url: testURL)
     mockSession.mockTask?.simulateFinish(
       downloadURL: finishURL,
       manager: sut,
@@ -75,11 +94,13 @@ final class HLSDownloadManagerTests: XCTestCase {
         assetTitle: "SomeTitle"
       )
     }
-    // Give startDownloadAsync time to reach the actor and register in activeDownloads
-    // before we call cancelDownload. A single Task.yield() is not always sufficient
-    // due to the hop to the actor's executor.
-    try await Task.sleep(nanoseconds: 50_000_000)
+    // Poll until startDownloadAsync has registered its continuation on the actor.
+    // cancelDownload must run after the continuation exists so it can resume it with
+    // CancellationError; otherwise cancelDownload is a no-op and simulateFinish later
+    // completes the continuation leaving the test assertion wrong or hanging forever.
+    try await waitForContinuation(url: testURL)
     await sut.cancelDownload(for: testURL)
+    // Give the cancellation Tasks a moment to propagate before simulateFinish
     try await Task.sleep(nanoseconds: 50_000_000)
     mockSession.mockTask?.simulateFinish(
       downloadURL: finishURL,
@@ -110,8 +131,9 @@ final class HLSDownloadManagerTests: XCTestCase {
     let downloadTask = Task {
       try await sut.startDownloadAsync(hlsURL: testURL, assetTitle: "Asset random")
     }
-    await Task.yield()
-    try await Task.sleep(nanoseconds: 50_000_000) // 50 ms
+    // Same polling strategy: wait for the continuation to be registered before
+    // calling simulateFinish so the resume actually reaches it.
+    try await waitForContinuation(url: testURL)
     mockSession.mockTask?.simulateFinish(
       downloadURL: finishURL,
       manager: sut,
@@ -220,5 +242,9 @@ extension HLSDownloadManager {
 
   func downloadedLRUDate(for title: String) -> Date? {
     downloadedAssetsLRU[title]
+  }
+
+  func hasContinuation(for url: URL) -> Bool {
+    downloadContinuations[url] != nil
   }
 }

@@ -130,8 +130,10 @@ jobs:
             -scheme iosApp \
             -destination 'platform=iOS Simulator,name=iPhone 16' \
             -configuration Debug \
+            -test-timeouts-enabled YES \
+            -maximum-test-execution-time-allowance 120 \
             CODE_SIGNING_ALLOWED=NO \
             ENABLE_USER_SCRIPT_SANDBOXING=NO \
             GITHUB_USERNAME="${{ github.actor }}" \
             GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" \
-            | xcpretty && exit ${PIPESTATUS[0]}
+            | xcpretty --test && exit ${PIPESTATUS[0]}
