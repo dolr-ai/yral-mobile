@@ -16,7 +16,11 @@ final class FeedsPlayerTests: XCTestCase {
         canisterID: "\(index)",
         principalID: "\(index)",
         url: url,
+        hashtags: [],
         thumbnail: URL(string: "https://www.google.com/\(index).jpg")!,
+        viewCount: 0,
+        viewCountLoggedIn: 0,
+        displayName: "",
         postDescription: "sample description \(index)",
         likeCount: index,
         isLiked: (index % 2 == 1),
@@ -33,7 +37,7 @@ final class FeedsPlayerTests: XCTestCase {
       mockDownloadManager.localURLsForTest[feed.url] = feed.url
     }
 
-    let sut = FeedsPlayer(player: mockQueuePlayer, hlsDownloadManager: mockDownloadManager)
+    let sut = FeedsPlayer(player: mockQueuePlayer, hlsDownloadManager: mockDownloadManager, networkMonitor: MockNetworkMonitor(), crashReporter: MockCrashReporter())
 
     sut.loadInitialVideos(feedResults)
 
@@ -53,7 +57,7 @@ final class FeedsPlayerTests: XCTestCase {
       mockDownloadManager.localURLsForTest[feed.url] = feed.url
     }
 
-    let sut = FeedsPlayer(player: mockPlayer, hlsDownloadManager: mockDownloadManager)
+    let sut = FeedsPlayer(player: mockPlayer, hlsDownloadManager: mockDownloadManager, networkMonitor: MockNetworkMonitor(), crashReporter: MockCrashReporter())
 
     sut.loadInitialVideos(feedResults)
     XCTAssertEqual(mockPlayer.playCallCount, 0)
@@ -74,7 +78,7 @@ final class FeedsPlayerTests: XCTestCase {
       mockDownloadManager.localURLsForTest[feed.url] = feed.url
     }
 
-    let sut = FeedsPlayer(player: mockPlayer, hlsDownloadManager: mockDownloadManager)
+    let sut = FeedsPlayer(player: mockPlayer, hlsDownloadManager: mockDownloadManager, networkMonitor: MockNetworkMonitor(), crashReporter: MockCrashReporter())
 
     sut.loadInitialVideos(initialFeeds)
     sut.addFeedResults(additionalFeeds)
@@ -102,7 +106,7 @@ final class FeedsPlayerTests: XCTestCase {
       mockDownloadManager.localURLsForTest[feed.url] = feed.url
     }
 
-    let sut = FeedsPlayer(player: mockPlayer, hlsDownloadManager: mockDownloadManager)
+    let sut = FeedsPlayer(player: mockPlayer, hlsDownloadManager: mockDownloadManager, networkMonitor: MockNetworkMonitor(), crashReporter: MockCrashReporter())
     sut.loadInitialVideos(feedResults)
 
     await fulfillment(of: [expectations[0]], timeout: 2)
@@ -129,12 +133,12 @@ final class FeedsPlayerTests: XCTestCase {
       mockDownloadManager.localURLsForTest[feed.url] = feed.url
     }
 
-    let sut = FeedsPlayer(player: mockPlayer, hlsDownloadManager: mockDownloadManager)
+    let sut = FeedsPlayer(player: mockPlayer, hlsDownloadManager: mockDownloadManager, networkMonitor: MockNetworkMonitor(), crashReporter: MockCrashReporter())
 
     var flag = false
 
     sut.onPlayerItemsChanged = { newValue, count in
-      let value = newValue ?? -1
+      let value = Int(newValue ?? "") ?? -1
       if count == 5 {
         expectations[0].fulfill()
       } else if count == 10 && value < 10 {
@@ -168,7 +172,7 @@ final class FeedsPlayerTests: XCTestCase {
       mockDownloadManager.localURLsForTest[feed.url] = feed.url
     }
 
-    let sut = FeedsPlayer(player: mockPlayer, hlsDownloadManager: mockDownloadManager)
+    let sut = FeedsPlayer(player: mockPlayer, hlsDownloadManager: mockDownloadManager, networkMonitor: MockNetworkMonitor(), crashReporter: MockCrashReporter())
     sut.loadInitialVideos(feedResults)
 
     sut.advanceToVideo(at: 20)
@@ -187,7 +191,7 @@ final class FeedsPlayerTests: XCTestCase {
       mockDownloadManager.localURLsForTest[feed.url] = feed.url
     }
 
-    let sut = FeedsPlayer(player: mockQueuePlayer, hlsDownloadManager: mockDownloadManager)
+    let sut = FeedsPlayer(player: mockQueuePlayer, hlsDownloadManager: mockDownloadManager, networkMonitor: MockNetworkMonitor(), crashReporter: MockCrashReporter())
 
     sut.onPlayerItemsChanged = { _, count in
       if count == 5 {
@@ -215,7 +219,7 @@ final class FeedsPlayerTests: XCTestCase {
       mockDownloadManager.localURLsForTest[feed.url] = feed.url
     }
 
-    let sut = FeedsPlayer(player: mockPlayer, hlsDownloadManager: mockDownloadManager)
+    let sut = FeedsPlayer(player: mockPlayer, hlsDownloadManager: mockDownloadManager, networkMonitor: MockNetworkMonitor(), crashReporter: MockCrashReporter())
 
     let expectation = expectation(description: "Wait for 5 items")
 
@@ -240,7 +244,7 @@ final class FeedsPlayerTests: XCTestCase {
     let mockPlayer = MockQueuePlayer {}
     let mockDownloadManager = MockHLSDownloadManager()
 
-    let sut = FeedsPlayer(player: mockPlayer, hlsDownloadManager: mockDownloadManager)
+    let sut = FeedsPlayer(player: mockPlayer, hlsDownloadManager: mockDownloadManager, networkMonitor: MockNetworkMonitor(), crashReporter: MockCrashReporter())
 
     sut.removeFeeds(feedResults)
     XCTAssertEqual(sut.feedResults.count, 0)
@@ -252,7 +256,7 @@ final class FeedsPlayerTests: XCTestCase {
     let mockPlayer = MockQueuePlayer {}
     let mockDownloadManager = MockHLSDownloadManager()
 
-    let sut = FeedsPlayer(player: mockPlayer, hlsDownloadManager: mockDownloadManager)
+    let sut = FeedsPlayer(player: mockPlayer, hlsDownloadManager: mockDownloadManager, networkMonitor: MockNetworkMonitor(), crashReporter: MockCrashReporter())
 
     sut.removeFeeds(emptyFeedResults)
     XCTAssertEqual(sut.feedResults.count, 0)
@@ -301,13 +305,13 @@ final class MockQueuePlayer: YralQueuePlayer {
   }
 }
 
-@MainActor
-final class MockHLSDownloadManager: HLSDownloadManaging {
+actor MockHLSDownloadManager: HLSDownloadManaging {
   weak var delegate: HLSDownloadManagerProtocol?
+  var activeDownloads: [URL: AVAssetDownloadTaskProtocol] = [:]
 
-  var localURLsForTest: [URL: URL] = [:]
-  var downloadedAssetsLRU: [String: Date] = [:]
-  var assetTitleForURL: [URL: String] = [:]
+  nonisolated(unsafe) var localURLsForTest: [URL: URL] = [:]
+  nonisolated(unsafe) var downloadedAssetsLRU: [String: Date] = [:]
+  nonisolated(unsafe) var assetTitleForURL: [URL: String] = [:]
   private var maxOfflineAssets: Int
 
   init(maxOfflineAssets: Int = 10) {
@@ -346,6 +350,18 @@ final class MockHLSDownloadManager: HLSDownloadManaging {
     delegate?.clearedCache(for: assetTitle)
   }
 
+  func prefetch(url: URL, assetTitle: String) async {}
+
+  func localOrInflightAsset(for hlsURL: URL) -> AVURLAsset? {
+    return createLocalAssetIfAvailable(for: hlsURL)
+  }
+
+  func elevatePriority(for url: URL) {}
+
+  func setDelegate(_ delegate: HLSDownloadManagerProtocol?) {
+    self.delegate = delegate
+  }
+
   private func enforceCacheLimitIfNeeded() {
     while downloadedAssetsLRU.count > maxOfflineAssets {
       let sorted = downloadedAssetsLRU.sorted { $0.value < $1.value }
@@ -358,4 +374,17 @@ final class MockHLSDownloadManager: HLSDownloadManaging {
       clearMappingsAndCache(for: hlsURL, assetTitle: oldest.key)
     }
   }
+}
+
+final class MockNetworkMonitor: NetworkMonitorProtocol {
+  var isGoodForPrefetch: Bool = true
+  var isNetworkAvailable: Bool = true
+  func startMonitoring() {}
+}
+
+final class MockCrashReporter: CrashReporter {
+  func setUserId(_ userId: String) {}
+  func recordException(_ error: Error) {}
+  func log(_ message: String) {}
+  func setMetadata(key: String, value: String) {}
 }

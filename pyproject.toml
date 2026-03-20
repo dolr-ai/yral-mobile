@@ -1,0 +1,12 @@
+[project]
+name = "yral-mobile-devtools"
+version = "0.1.0"
+description = "Development tooling for the yral-mobile devcontainer"
+requires-python = ">=3.11"
+dependencies = [
+    # Add devcontainer tool dependencies here.
+]
+
+[tool.setuptools]
+# This project has no Python source packages — it only declares tool dependencies.
+packages = []

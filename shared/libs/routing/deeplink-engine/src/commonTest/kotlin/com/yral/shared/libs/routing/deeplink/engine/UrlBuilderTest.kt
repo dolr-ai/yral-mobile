@@ -84,10 +84,10 @@ class UrlBuilderTest {
                 host = "",
             )
 
-        val route = PostDetailsRoute(canisterId = "can-123", postId = "789")
+        val route = PostDetailsRoute(canisterId = "can-123", postId = "789", publisherUserId = "user-456")
         val url = customBuilder.build(route)
 
-        assertEquals("yralm://post/details/can-123/789", url)
+        assertEquals("yralm://post/details/can-123/789/user-456", url)
     }
 
     @Test
@@ -178,10 +178,10 @@ class UrlBuilderTest {
                 host = "",
             )
 
-        val route = PostDetailsRoute(canisterId = "cid-123", postId = "789")
+        val route = PostDetailsRoute(canisterId = "cid-123", postId = "789", publisherUserId = "uid-123")
         val url = customBuilder.build(route)
 
-        assertEquals("yralm://post/details/cid-123/789", url)
+        assertEquals("yralm://post/details/cid-123/789/uid-123", url)
     }
 
     @Test
@@ -206,7 +206,7 @@ class UrlBuilderTest {
                 scheme = "yralm",
                 host = "",
             )
-        val url = customBuilder.build(PostDetailsRoute(canisterId = "", postId = "999"))
+        val url = customBuilder.build(PostDetailsRoute(canisterId = "", postId = "999", publisherUserId = "uid-999"))
         // canisterId is required in the path -> URL cannot be constructed
         assertNull(url)
     }

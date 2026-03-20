@@ -11,7 +11,7 @@ import FirebaseAuth
 import FirebaseAppCheck
 
 class FirebaseService: FirebaseServiceProtocol {
-  private let database = Firestore.firestore()
+  private lazy var database = Firestore.firestore()
 
   func signInAnonymously(with principal: String) async throws -> Bool {
     if let hasLaunchedAppBefore = (UserDefaultsManager.shared.get(for: DefaultsKey.hasLaunchedAppBefore) ?? false),

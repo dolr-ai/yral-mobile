@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,14 +25,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
+import co.touchlab.kermit.Logger
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.analytics.events.SubscriptionEntryPoint
 import com.yral.shared.core.session.ProDetails
@@ -56,6 +58,7 @@ import com.yral.shared.libs.designsystem.component.toast.ToastStatus
 import com.yral.shared.libs.designsystem.component.toast.ToastType
 import com.yral.shared.libs.designsystem.component.toast.showError
 import com.yral.shared.libs.designsystem.component.toast.showSuccess
+import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import kotlinx.coroutines.delay
@@ -155,6 +158,17 @@ fun ChatConversationScreen(
         }
     }
 
+    // Auto-trigger purchase when navigated from Subscribe button on profile
+    if (params.autoTriggerPurchase) {
+        var purchaseTriggered by remember { mutableStateOf(false) }
+        LaunchedEffect(viewState.influencer?.id) {
+            if (viewState.influencer != null && !purchaseTriggered) {
+                purchaseTriggered = true
+                purchaseContext?.let { viewModel.launchInfluencerSubscriptionPurchase(it) }
+            }
+        }
+    }
+
     val overlayItems by viewModel.overlay.collectAsState()
     val historyPagingItems = viewModel.history.collectAsLazyPagingItems()
 
@@ -187,7 +201,13 @@ fun ChatConversationScreen(
         )
     }
 
-    // Auto-scroll to show first line of new assistant replies
+    // Auto-scroll to show last line of new assistant replies
+    // Standard line height for "text" message content mapped to Markdown typography
+    val messageLineHeightPx =
+        with(density) {
+            LocalAppTopography.current.baseRegular.lineHeight
+                .toPx()
+        }
     AutoScrollToAssistantMessage(
         readyForAutoScroll = readyForAutoScroll,
         latestAssistantMessage = latestAssistantState.value,
@@ -196,6 +216,8 @@ fun ChatConversationScreen(
         screenWidth = screenWidth,
         density = density,
         overlayItems = overlayItems,
+        scrollToLastLine = true,
+        lineHeightPx = messageLineHeightPx,
     )
 
     // Check if there's a waiting assistant message in overlay
@@ -222,7 +244,7 @@ fun ChatConversationScreen(
                 !hasChatAccess &&
                 atSubscriptionThreshold &&
                 viewState.isInfluencerSubscriptionAvailableToPurchase
-        co.touchlab.kermit.Logger.d("SubDebug") {
+        Logger.d("SubDebug") {
             "shouldShow=$result | waiting=$hasWaitingAssistant | signed=${viewState.isSocialSignedIn}" +
                 " | subEnabled=${viewState.isSubscriptionEnabled} | access=$hasChatAccess" +
                 " | threshold=$atSubscriptionThreshold(count=$totalMessageCount/" +
@@ -361,16 +383,16 @@ fun ChatConversationScreen(
         }
     }
 
-    Box(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .paint(
-                    painter = painterResource(Res.drawable.chat_background_inverted),
-                    contentScale = ContentScale.Crop,
-                ),
-    ) {
-        Column(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = modifier.safeDrawingPadding().clipToBounds()) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .paint(
+                        painter = painterResource(Res.drawable.chat_background_inverted),
+                        contentScale = ContentScale.Crop,
+                    ),
+        ) {
             val expiresAtMs = viewState.chatAccessExpiresAtMs
             val showAccessExpiry =
                 viewState.isInfluencerSubscriptionPurchasedAndVerified && expiresAtMs != null
@@ -390,6 +412,13 @@ fun ChatConversationScreen(
                     value = AccessExpiryDisplay(text, isExpiringSoon)
                     delay(1.seconds)
                 }
+            }
+            val showHeaderSubscribe by derivedStateOf {
+                viewState.isSocialSignedIn &&
+                    viewState.isSubscriptionEnabled &&
+                    !viewState.isBotAccount &&
+                    viewState.isInfluencerSubscriptionAvailableToPurchase &&
+                    !viewState.isInfluencerSubscriptionPurchasedAndVerified
             }
             // Header
             ChatHeader(
@@ -419,6 +448,11 @@ fun ChatConversationScreen(
                 accessExpiresInText = accessExpiryDisplay.text,
                 isAccessExpiringSoon = accessExpiryDisplay.isExpiringSoon,
                 isBotAccount = viewState.isBotAccount,
+                showSubscribe = showHeaderSubscribe,
+                isSubscribeLoading = viewState.isInfluencerSubscriptionPurchaseInProgress,
+                onSubscribeClick = {
+                    purchaseContext?.let { viewModel.launchInfluencerSubscriptionPurchase(it) }
+                },
             )
 
             Column(
@@ -440,7 +474,6 @@ fun ChatConversationScreen(
                     }
 
                     else -> {
-                        val keyboardController = LocalSoftwareKeyboardController.current
                         MessagesList(
                             modifier = Modifier.weight(1f).fillMaxWidth(),
                             listState = listState,
@@ -468,7 +501,7 @@ fun ChatConversationScreen(
                         val shouldShowSuggestions = !hasUserMessages && suggestions.isNotEmpty()
                         // Show suggestion messages if there are no user messages
                         if (shouldShowSuggestions) {
-                            SuggestionMessagesRow(
+                            SuggestionMessagesColumn(
                                 suggestions = suggestions,
                                 onSuggestionClick = { suggestion ->
                                     sendMessageIfAllowed(
@@ -502,7 +535,6 @@ fun ChatConversationScreen(
                                 input = input,
                                 onInputChange = { input = it },
                                 onSendClick = {
-                                    keyboardController?.hide()
                                     val text = input.trim()
                                     sendMessageIfAllowed(
                                         SendMessageDraft(

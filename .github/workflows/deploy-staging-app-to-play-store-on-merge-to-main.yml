@@ -1,0 +1,115 @@
+name: Deploy Play Store App to yral-alpha on merge to main
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: read
+
+jobs:
+  build-app:
+    runs-on: ubuntu-latest
+    env:
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+      SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+      SENTRY_URL: ${{ vars.SENTRY_URL }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with: 
+          java-version: 21
+          distribution: 'temurin'
+          
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Install android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install android NDK
+        run: |
+          echo "y" | sdkmanager --install "ndk;28.0.13004108" --channel=0
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/28.0.13004108" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/28.0.13004108" >> $GITHUB_ENV
+
+      - name: Bump version (ephemeral, no commit)
+        run: |
+          echo "GITHUB_RUN_NUMBER is $GITHUB_RUN_NUMBER"
+          sed -i 's/versionCode[[:space:]]*=[[:space:]]*[0-9][0-9]*/versionCode = '"$GITHUB_RUN_NUMBER"'/' ./androidApp/build.gradle.kts
+          cat ./androidApp/build.gradle.kts | grep versionCode
+
+      - name: Setup keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_ALPHA_KEYSTORE_CONTENTS_BASE_64 }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > ./androidApp/my-alpha-release-key.keystore
+
+      - name: Setup environment variables
+        run: |
+          echo "KEYSTORE_PASSWORD=${{ secrets.ANDROID_ALPHA_SIGNING_SECRET_PASSWORD }}" >> $GITHUB_ENV
+          echo "KEY_PASSWORD=${{ secrets.ANDROID_ALPHA_SIGNING_SECRET_PASSWORD }}" >> $GITHUB_ENV
+          echo "YRAL_BRANCH_KEY_TEST=${{ secrets.YRAL_BRANCH_KEY_TEST }}" >> $GITHUB_ENV
+          echo "YRAL_BRANCH_KEY=${{ secrets.YRAL_BRANCH_KEY }}" >> $GITHUB_ENV
+          echo "YRAL_META_INSTALL_REFERRER_DECRYPTION_KEY=${{ secrets.YRAL_META_INSTALL_REFERRER_DECRYPTION_KEY }}" >> $GITHUB_ENV
+
+      - name: Determine update priority from PR labels
+        id: update-priority
+        run: |
+          PRIORITY="0"
+          LABELS="${{ join(github.event.pull_request.labels.*.name, ' ') }}"
+          echo "PR labels: $LABELS"
+          
+          if echo "$LABELS" | grep -q "update-immediate"; then
+            PRIORITY="4"
+            echo "Found 'update-immediate' label, setting priority to 4"
+          elif echo "$LABELS" | grep -q "update-flexible"; then
+            PRIORITY="2"
+            echo "Found 'update-flexible' label, setting priority to 2"
+          else
+            echo "No relevant update label found, using default priority 0"
+          fi
+          
+          echo "update_priority=$PRIORITY" >> $GITHUB_OUTPUT
+          echo "Set update priority to: $PRIORITY"
+
+      - name: Clean project
+        run: ./gradlew clean
+
+      - name: Build APK
+        run: ./gradlew androidApp:bundleStagingRelease
+        env:
+          GITHUB_USERNAME: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/1035262663512/locations/global/workloadIdentityPools/github/providers/yral-mobile'
+          service_account: 'my-service-account@yral-mobile.iam.gserviceaccount.com'
+          
+      - name: Upload to Play Store
+        id: Upload
+        uses: r0adkll/upload-google-play@v1.1.3
+        with:
+          serviceAccountJson: ${{ steps.auth.outputs.credentials_file_path }}
+          packageName: com.yral.android
+          releaseFiles: androidApp/build/outputs/bundle/stagingRelease/androidApp-staging-release.aab
+          track: internal
+          status: draft
+          inAppUpdatePriority: ${{ steps.update-priority.outputs.update_priority }}

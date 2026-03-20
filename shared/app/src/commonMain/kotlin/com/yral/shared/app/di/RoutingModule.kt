@@ -10,13 +10,11 @@ import com.yral.shared.libs.routing.routes.api.AddVideo
 import com.yral.shared.libs.routing.routes.api.Chat
 import com.yral.shared.libs.routing.routes.api.GenerateAIVideo
 import com.yral.shared.libs.routing.routes.api.Home
-import com.yral.shared.libs.routing.routes.api.Leaderboard
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
 import com.yral.shared.libs.routing.routes.api.Profile
 import com.yral.shared.libs.routing.routes.api.RewardsReceived
 import com.yral.shared.libs.routing.routes.api.TestProductRoute
 import com.yral.shared.libs.routing.routes.api.TestUserRoute
-import com.yral.shared.libs.routing.routes.api.Tournaments
 import com.yral.shared.libs.routing.routes.api.Unknown
 import com.yral.shared.libs.routing.routes.api.UserProfileRoute
 import com.yral.shared.libs.routing.routes.api.VideoUploadSuccessful
@@ -32,8 +30,6 @@ val routingModule =
                 route<Home>(Home.PATH)
                 route<Unknown>(Unknown.PATH)
                 route<Wallet>(Wallet.PATH)
-                route<Leaderboard>(Leaderboard.PATH)
-                route<Tournaments>(Tournaments.PATH)
                 route<AddVideo>(AddVideo.PATH)
                 route<GenerateAIVideo>(GenerateAIVideo.PATH)
                 route<Profile>(Profile.PATH)

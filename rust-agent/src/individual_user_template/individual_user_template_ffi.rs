@@ -17,12 +17,12 @@ use yral_canisters_client::rate_limits::RateLimitStatus;
 use yral_canisters_client::rate_limits::VideoGenRequestKey;
 use yral_canisters_client::rate_limits::VideoGenRequestStatus;
 pub type RateLimitsResult2 = yral_canisters_client::rate_limits::Result2;
-pub type PostServiceResult1 = yral_canisters_client::user_post_service::Result1;
-pub type PostServicePost = yral_canisters_client::user_post_service:: Post;
-pub type PostServicePostError = yral_canisters_client::user_post_service:: UserPostServiceError;
+pub type PostServiceResult1 = yral_canisters_client::user_post_service::Result2;
+pub type PostServicePost = yral_canisters_client::user_post_service::Post;
+pub type PostServicePostError = yral_canisters_client::user_post_service::UserPostServiceError;
 pub type PostServicePostStatus = yral_canisters_client::user_post_service::PostStatus;
 pub type PostServicePostViewStatistics = yral_canisters_client::user_post_service::PostViewStatistics;
-pub type PostServiceResult3 = yral_canisters_client::user_post_service::Result3;
+pub type PostServiceResult3 = yral_canisters_client::user_post_service::Result1;
 pub type PostServiceGetPostsOfUserProfileError = yral_canisters_client::user_post_service::GetPostsOfUserProfileError;
 
 #[swift_bridge::bridge]

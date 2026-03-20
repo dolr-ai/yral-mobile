@@ -28,8 +28,8 @@ Key directories:
 ./gradlew build
 
 # Tests
-./gradlew allTests
-./gradlew :shared:features:<module>:allTests
+./gradlew test                                        # all unit tests (root)
+./gradlew :shared:features:<module>:allTests             # per-module (KMP, includes commonTest)
 
 # Code quality
 ./gradlew ktlintCheck

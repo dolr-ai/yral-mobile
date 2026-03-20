@@ -104,6 +104,7 @@ import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.YralLoadingDots
 import com.yral.shared.libs.designsystem.component.features.AccountInfoView
 import com.yral.shared.libs.designsystem.component.features.DeleteConfirmationSheet
+import com.yral.shared.libs.designsystem.component.features.SubscribeButton
 import com.yral.shared.libs.designsystem.component.features.VideoViewsSheet
 import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
@@ -274,6 +275,17 @@ fun ProfileMainScreen(
                             influencerId = event.influencer.id,
                             influencerCategory = event.influencer.category,
                             influencerSource = ConversationInfluencerSource.PROFILE,
+                        ),
+                    )
+                }
+
+                is ProfileEvents.SubscribeInfluencerDetailsFetched -> {
+                    component.openConversation(
+                        OpenConversationParams(
+                            influencerId = event.influencer.id,
+                            influencerCategory = event.influencer.category,
+                            influencerSource = ConversationInfluencerSource.PROFILE,
+                            autoTriggerPurchase = true,
                         ),
                     )
                 }
@@ -683,6 +695,9 @@ private fun MainContent(
             onBack = onBackClicked,
             showBackButton = showBackButton,
             onSubscribe = onSubscribe,
+            showSubscribeButton = !state.isOwnProfile && state.isAiInfluencer && state.isLoggedIn,
+            isSubscribeLoading = state.isTalkToMeInProgress,
+            onSubscribeClicked = { viewModel.onSubscribeClicked() },
         )
         state.accountInfo?.let { info ->
             val followersCount = totalCount(followers)
@@ -708,6 +723,8 @@ private fun MainContent(
                 onFollowersClick = { onFollowersSectionClick(FollowersSheetTab.Followers) },
                 onFollowingClick = { onFollowersSectionClick(FollowersSheetTab.Following) },
                 onTalkToMeClicked = viewModel::fetchInfluencerDetails,
+                showSubscribe = false,
+                onSubscribeClicked = {},
                 isProUser = state.isProUser,
                 showCreateInfluencerCta = state.isOwnProfile && state.isLoggedIn && showCreateBotCta,
                 onCreateInfluencerClick = onCreateInfluencerClick,
@@ -779,7 +796,7 @@ private fun totalCount(data: LazyPagingItems<PagedFollowerItem>?) =
         }
     } ?: 0
 
-@Suppress("LongMethod", "CyclomaticComplexMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod", "LongParameterList")
 @Composable
 private fun ProfileHeader(
     isOwnProfile: Boolean,
@@ -796,6 +813,9 @@ private fun ProfileHeader(
     onBack: () -> Unit,
     showBackButton: Boolean = false,
     onSubscribe: () -> Unit,
+    showSubscribeButton: Boolean = false,
+    isSubscribeLoading: Boolean = false,
+    onSubscribeClicked: () -> Unit = {},
 ) {
     Row(
         modifier =
@@ -860,6 +880,13 @@ private fun ProfileHeader(
         ) {
             if (shouldShowBecomeProButton) {
                 BecomeProButton { onSubscribe() }
+            }
+            if (showSubscribeButton) {
+                SubscribeButton(
+                    modifier = Modifier.width(88.dp).height(29.dp),
+                    isLoading = isSubscribeLoading,
+                    onClick = onSubscribeClicked,
+                )
             }
             if (showShareProfile) {
                 Icon(

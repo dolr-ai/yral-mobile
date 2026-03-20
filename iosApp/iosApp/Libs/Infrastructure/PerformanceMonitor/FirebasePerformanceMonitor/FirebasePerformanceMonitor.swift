@@ -6,12 +6,17 @@
 //  Copyright © 2025 orgName. All rights reserved.
 //
 
+import FirebaseCore
 import FirebasePerformance
 
 public final class FirebasePerformanceMonitor: PerformanceMonitor {
   private let trace: Trace?
 
   public init(traceName: String) {
+    guard FirebaseApp.app() != nil else {
+      self.trace = nil
+      return
+    }
     self.trace = Performance().trace(name: traceName)
   }
 

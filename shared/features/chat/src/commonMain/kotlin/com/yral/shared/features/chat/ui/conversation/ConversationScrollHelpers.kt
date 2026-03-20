@@ -73,6 +73,9 @@ internal fun AutoScrollToAssistantMessage(
     screenWidth: Int,
     density: Density,
     overlayItems: List<ConversationMessageItem>,
+    scrollToLastLine: Boolean = false,
+    visibleLines: Int = 0,
+    lineHeightPx: Float = 0f,
 ) {
     val failedUserState = findLatestFailedUserIndex(overlayItems)
     val hasFailedUser = failedUserState.index >= 0
@@ -88,6 +91,7 @@ internal fun AutoScrollToAssistantMessage(
                     beforeIndex = targetIndex,
                     screenWidth = screenWidth,
                     density = density,
+                    lineHeightPx = lineHeightPx,
                 )
             ScrollTarget(
                 index = targetIndex,
@@ -96,6 +100,9 @@ internal fun AutoScrollToAssistantMessage(
                 density = density,
                 additionalOffset = pendingUserMessagesHeight,
                 isWaiting = isWaiting,
+                scrollToLastLine = scrollToLastLine,
+                visibleLines = visibleLines,
+                lineHeightPx = lineHeightPx,
             )
         }
     }
@@ -128,6 +135,7 @@ private fun calculatePendingUserMessagesHeight(
     beforeIndex: Int,
     screenWidth: Int,
     density: Density,
+    lineHeightPx: Float,
 ): Int {
     var totalHeight = 0
     val messageSpacing = with(density) { MESSAGE_VERTICAL_PADDING_DP.toPx().toInt() * 2 }
@@ -141,6 +149,7 @@ private fun calculatePendingUserMessagesHeight(
                     mediaUrls = item.message.mediaUrls,
                     screenWidth = screenWidth,
                     density = density,
+                    lineHeightPx = lineHeightPx,
                 )
             totalHeight += messageSpacing
         }
@@ -155,21 +164,35 @@ private data class ScrollTarget(
     val density: Density,
     val additionalOffset: Int = 0,
     val isWaiting: Boolean = false,
+    val scrollToLastLine: Boolean = false,
+    val visibleLines: Int = 0,
+    val lineHeightPx: Float = 0f,
 ) {
+    private fun messageContentAndMedia(): Pair<String, List<String>> =
+        when (message) {
+            is ConversationMessageItem.Remote ->
+                message.message.content.orEmpty() to message.message.mediaUrls
+            is ConversationMessageItem.Local ->
+                message.message.content.orEmpty() to message.message.mediaUrls
+        }
+
     val scrollOffset: Int
         get() =
-            if (isWaiting) {
-                additionalOffset
-            } else {
-                val (content, mediaUrls) =
-                    when (message) {
-                        is ConversationMessageItem.Remote ->
-                            message.message.content.orEmpty() to message.message.mediaUrls
-                        is ConversationMessageItem.Local ->
-                            message.message.content.orEmpty() to message.message.mediaUrls
-                    }
-                val messageHeight = estimateMessageHeight(content, mediaUrls, screenWidth, density)
-                ((messageHeight * SCROLL_OFFSET_RATIO) + additionalOffset).toInt()
+            when {
+                isWaiting || scrollToLastLine -> additionalOffset
+                visibleLines > 0 -> {
+                    val (content, mediaUrls) = messageContentAndMedia()
+                    val messageHeight =
+                        estimateMessageHeight(content, mediaUrls, screenWidth, density, lineHeightPx)
+                    val visibleHeight = (visibleLines * lineHeightPx).toInt()
+                    (messageHeight - visibleHeight).coerceAtLeast(0) + additionalOffset
+                }
+                else -> {
+                    val (content, mediaUrls) = messageContentAndMedia()
+                    val messageHeight =
+                        estimateMessageHeight(content, mediaUrls, screenWidth, density, lineHeightPx)
+                    ((messageHeight * SCROLL_OFFSET_RATIO) + additionalOffset).toInt()
+                }
             }
 }
 
@@ -178,8 +201,8 @@ internal fun estimateMessageHeight(
     mediaUrls: List<String>,
     screenWidth: Int,
     density: Density,
+    lineHeightPx: Float,
 ): Int {
-    val lineHeight = with(density) { 20.dp.toPx() }
     val charWidth = with(density) { 8.dp.toPx() }
     val horizontalPadding = with(density) { 16.dp.toPx() }
     val verticalPadding = with(density) { 16.dp.toPx() }
@@ -190,6 +213,6 @@ internal fun estimateMessageHeight(
 
     val mediaHeight = with(density) { CHAT_MEDIA_IMAGE_SIZE.toPx() + 8.dp.toPx() }
 
-    val estimatedHeight = ((estimatedLines * lineHeight) + (mediaUrls.size * mediaHeight) + verticalPadding).toInt()
+    val estimatedHeight = ((estimatedLines * lineHeightPx) + (mediaUrls.size * mediaHeight) + verticalPadding).toInt()
     return estimatedHeight.coerceAtLeast(with(density) { 36.dp.toPx() }.toInt())
 }
