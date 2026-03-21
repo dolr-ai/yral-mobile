@@ -1,0 +1,2 @@
+- delete develop branch
+- reevaluate detekt config to remove the config and just use the default config

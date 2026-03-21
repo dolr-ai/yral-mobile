@@ -1,29 +1,20 @@
-name: Gradle Tests
+name: Android Checks
 
 on:
-  push:
+  pull_request:
 
 permissions:
   contents: read
-  packages: write # required to pull/push the cached devcontainer image from ghcr.io
+  packages: write    # pull/push cached devcontainer image from ghcr.io
+  security-events: write  # upload detekt SARIF report
 
 jobs:
-  test:
+  android-checks:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
 
       # devcontainer.json bind-mounts ~/.ssh/agent.sock from the host so
       # developers can forward their SSH agent into the container. In CI
@@ -53,7 +44,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run Gradle tests inside dev container
+      - name: Run lint and tests inside dev container
         uses: devcontainers/ci@v0.3
         env:
           # Required for GitHub Packages dependency resolution (see CLAUDE.md)
@@ -68,8 +59,23 @@ jobs:
           push: filter
           refFilterForPush: refs/heads/main
           runCmd: |
-            ./gradlew test \
-              --console=plain
+            set -e
+            echo "=== Running ktlint ==="
+            ./gradlew ktlintCheck --console=plain || true
+
+            echo "=== Running detekt ==="
+            ./gradlew detekt reportMerge --continue --console=plain || true
+
+            echo "=== Running tests ==="
+            ./gradlew test --console=plain
           env: |
             GITHUB_USERNAME
             GITHUB_TOKEN
+
+      # The detekt SARIF file is written to the workspace by the container step
+      # above and is readable from the runner because they share the same directory.
+      - name: Upload detekt SARIF report
+        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: build/reports/detekt/merge.sarif
