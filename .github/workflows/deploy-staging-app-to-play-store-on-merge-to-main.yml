@@ -49,7 +49,10 @@ jobs:
       - name: Bump version (ephemeral, no commit)
         run: |
           echo "GITHUB_RUN_NUMBER is $GITHUB_RUN_NUMBER"
-          sed -i 's/versionCode[[:space:]]*=[[:space:]]*[0-9][0-9]*/versionCode = '"$GITHUB_RUN_NUMBER"'/' ./androidApp/build.gradle.kts
+          BASE_VERSION_CODE=$(grep -oP 'versionCode\s*=\s*\K[0-9]+' ./androidApp/build.gradle.kts)
+          NEW_VERSION_CODE=$((BASE_VERSION_CODE + GITHUB_RUN_NUMBER))
+          echo "Setting versionCode to $NEW_VERSION_CODE (base: $BASE_VERSION_CODE + run: $GITHUB_RUN_NUMBER)"
+          sed -i "s/versionCode[[:space:]]*=[[:space:]]*[0-9][0-9]*/versionCode = $NEW_VERSION_CODE/" ./androidApp/build.gradle.kts
           cat ./androidApp/build.gradle.kts | grep versionCode
 
       - name: Setup keystore
