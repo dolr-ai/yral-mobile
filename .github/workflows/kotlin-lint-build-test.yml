@@ -1,9 +1,7 @@
 name: Android Checks
 
 on:
-  push:
   pull_request:
-    types: [opened, ready_for_review, synchronize]
 
 permissions:
   contents: read
