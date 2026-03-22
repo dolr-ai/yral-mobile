@@ -64,6 +64,10 @@ jobs:
             STORED=$(grep -oP 'versionCode\s*=\s*\K[0-9]+' ./androidApp/build.gradle.kts)
             echo "No repo variable found; bootstrapping from build.gradle.kts: $STORED"
           fi
+          if ! [[ "$STORED" =~ ^[0-9]+$ ]]; then
+            echo "Error: ALPHA_VERSION_CODE (or bootstrapped versionCode) must be a positive integer, got: '$STORED'" >&2
+            exit 1
+          fi
           NEW=$((STORED + 1))
           echo "versionCode: $STORED -> $NEW"
           sed -i "s/versionCode[[:space:]]*=[[:space:]]*[0-9]\+/versionCode = $NEW/" ./androidApp/build.gradle.kts
