@@ -15,7 +15,7 @@ permissions:
   # on the GITHUB_TOKEN. Keep this in sync with any variable update steps below.
 
 # Serialize all Play Store deployments to prevent race conditions on the
-# ALPHA_VERSION_CODE repo variable. Two concurrent runs could read the same
+# PLAY_STORE_ALPHA_APP_VERSION_CODE repo variable. Two concurrent runs could read the same
 # stored value and compute the same versionCode, causing duplicate-versionCode
 # rejections from the Play Store. `cancel-in-progress: false` ensures the
 # in-flight run completes before the queued run starts (rather than aborting it).
@@ -62,20 +62,20 @@ jobs:
       - name: Resolve versionCode
         run: |
           # The authoritative versionCode is stored in the repository variable
-          # ALPHA_VERSION_CODE (Settings → Variables → Actions). Using a repo variable
+          # PLAY_STORE_ALPHA_APP_VERSION_CODE (Settings → Variables → Actions). Using a repo variable
           # instead of committing back to build.gradle.kts avoids fighting branch
           # protection rules that require changes to go through pull requests.
           # The value in build.gradle.kts (versionCode = ...) is only the seed used
           # when the variable does not yet exist; once bootstrapped, the variable is
           # the single source of truth and is incremented after every successful upload.
-          STORED="${{ vars.ALPHA_VERSION_CODE }}"
+          STORED="${{ vars.PLAY_STORE_ALPHA_APP_VERSION_CODE }}"
           if [ -z "$STORED" ]; then
             # First run: bootstrap from build.gradle.kts
             STORED=$(grep -oP 'versionCode\s*=\s*\K[0-9]+' ./androidApp/build.gradle.kts)
             echo "No repo variable found; bootstrapping from build.gradle.kts: $STORED"
           fi
           if ! [[ "$STORED" =~ ^[0-9]+$ ]]; then
-            echo "Error: ALPHA_VERSION_CODE (or bootstrapped versionCode) must be a positive integer, got: '$STORED'" >&2
+            echo "Error: PLAY_STORE_ALPHA_APP_VERSION_CODE (or bootstrapped versionCode) must be a positive integer, got: '$STORED'" >&2
             exit 1
           fi
           NEW=$((STORED + 1))
@@ -147,36 +147,20 @@ jobs:
 
       - name: Persist new versionCode to repo variable
         run: |
-          # Update (or create) the ALPHA_VERSION_CODE Actions variable so the next
-          # run picks up the incremented value without any commit to the repo.
-          # PATCH upserts: it creates the variable if absent, updates it if present.
-          PATCH_RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" \
+          # Increment PLAY_STORE_ALPHA_APP_VERSION_CODE (Settings → Secrets and variables → Actions → Variables).
+          # The variable must be created manually before the first run — PATCH only updates an
+          # existing variable (HTTP 204) and returns 404 if it is absent. Any non-204 response
+          # is treated as a hard failure so version drift is caught immediately.
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
             -X PATCH \
             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/${{ github.repository }}/actions/variables/ALPHA_VERSION_CODE" \
-            -d "{\"name\":\"ALPHA_VERSION_CODE\",\"value\":\"$NEW_VERSION_CODE\"}")
-          PATCH_HTTP_STATUS="${PATCH_RESPONSE##*HTTPSTATUS:}"
-          PATCH_BODY="${PATCH_RESPONSE%HTTPSTATUS:*}"
-          if [ "$PATCH_HTTP_STATUS" = "204" ]; then
-            echo "ALPHA_VERSION_CODE updated to $NEW_VERSION_CODE"
+            "https://api.github.com/repos/${{ github.repository }}/actions/variables/PLAY_STORE_ALPHA_APP_VERSION_CODE" \
+            -d "{\"name\":\"PLAY_STORE_ALPHA_APP_VERSION_CODE\",\"value\":\"$NEW_VERSION_CODE\"}")
+          if [ "$HTTP_STATUS" = "204" ]; then
+            echo "PLAY_STORE_ALPHA_APP_VERSION_CODE updated to $NEW_VERSION_CODE"
           else
-            echo "PATCH failed to persist ALPHA_VERSION_CODE (HTTP $PATCH_HTTP_STATUS): $PATCH_BODY"
-            # Variable may not exist yet or PATCH may be unsupported; fall back to POST (create)
-            POST_RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" \
-              -X POST \
-              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-              -H "Accept: application/vnd.github+json" \
-              -H "X-GitHub-Api-Version: 2022-11-28" \
-              "https://api.github.com/repos/${{ github.repository }}/actions/variables" \
-              -d "{\"name\":\"ALPHA_VERSION_CODE\",\"value\":\"$NEW_VERSION_CODE\"}")
-            POST_HTTP_STATUS="${POST_RESPONSE##*HTTPSTATUS:}"
-            POST_BODY="${POST_RESPONSE%HTTPSTATUS:*}"
-            if [ "$POST_HTTP_STATUS" = "201" ]; then
-              echo "ALPHA_VERSION_CODE created at $NEW_VERSION_CODE"
-            else
-              echo "Error: failed to create ALPHA_VERSION_CODE via POST (HTTP $POST_HTTP_STATUS): $POST_BODY"
-              exit 1
-            fi
+            echo "Error: failed to update PLAY_STORE_ALPHA_APP_VERSION_CODE (HTTP $HTTP_STATUS). Ensure the variable exists under Settings → Secrets and variables → Actions → Variables."
+            exit 1
           fi

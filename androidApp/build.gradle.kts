@@ -16,7 +16,7 @@ android {
     defaultConfig {
         applicationId = "com.yral.android"
         // Bootstrap seed only. Once the CI workflow has run once, the authoritative
-        // versionCode is stored in the GitHub Actions repository variable ALPHA_VERSION_CODE
+        // versionCode is stored in the GitHub Actions repository variable PLAY_STORE_ALPHA_APP_VERSION_CODE
         // (Settings → Secrets and variables → Actions → Variables) and is incremented
         // automatically after every successful Play Store upload. This value is never
         // modified by CI; change it manually only to reset/re-seed the counter.
