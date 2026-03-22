@@ -15,7 +15,12 @@ android {
     namespace = "com.yral.android"
     defaultConfig {
         applicationId = "com.yral.android"
-        versionCode = 80
+        // Bootstrap seed only. Once the CI workflow has run once, the authoritative
+        // versionCode is stored in the GitHub Actions repository variable ALPHA_VERSION_CODE
+        // (Settings → Secrets and variables → Actions → Variables) and is incremented
+        // automatically after every successful Play Store upload. This value is never
+        // modified by CI; change it manually only to reset/re-seed the counter.
+        versionCode = 1580
         versionName = "2.8.1"
         ndkVersion = "29.0.14206865"
         buildConfigField(

@@ -9,6 +9,9 @@ permissions:
   id-token: write
   contents: read
   pull-requests: read
+  # `variables: write` does not exist as a fine-grained permission scope; GITHUB_TOKEN
+  # can update Actions variables via the REST API as long as the token has repo-level
+  # access, which the default workflow token provides. No extra permission needed.
 
 jobs:
   build-app:
@@ -46,14 +49,25 @@ jobs:
           echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/28.0.13004108" >> $GITHUB_ENV
           echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/28.0.13004108" >> $GITHUB_ENV
 
-      - name: Bump version (ephemeral, no commit)
+      - name: Resolve versionCode
         run: |
-          echo "GITHUB_RUN_NUMBER is $GITHUB_RUN_NUMBER"
-          BASE_VERSION_CODE=$(grep -oP 'versionCode\s*=\s*\K[0-9]+' ./androidApp/build.gradle.kts)
-          NEW_VERSION_CODE=$((BASE_VERSION_CODE + GITHUB_RUN_NUMBER))
-          echo "Setting versionCode to $NEW_VERSION_CODE (base: $BASE_VERSION_CODE + run: $GITHUB_RUN_NUMBER)"
-          sed -i "s/versionCode[[:space:]]*=[[:space:]]*[0-9][0-9]*/versionCode = $NEW_VERSION_CODE/" ./androidApp/build.gradle.kts
-          cat ./androidApp/build.gradle.kts | grep versionCode
+          # The authoritative versionCode is stored in the repository variable
+          # ALPHA_VERSION_CODE (Settings → Variables → Actions). Using a repo variable
+          # instead of committing back to build.gradle.kts avoids fighting branch
+          # protection rules that require changes to go through pull requests.
+          # The value in build.gradle.kts (versionCode = ...) is only the seed used
+          # when the variable does not yet exist; once bootstrapped, the variable is
+          # the single source of truth and is incremented after every successful upload.
+          STORED="${{ vars.ALPHA_VERSION_CODE }}"
+          if [ -z "$STORED" ]; then
+            # First run: bootstrap from build.gradle.kts
+            STORED=$(grep -oP 'versionCode\s*=\s*\K[0-9]+' ./androidApp/build.gradle.kts)
+            echo "No repo variable found; bootstrapping from build.gradle.kts: $STORED"
+          fi
+          NEW=$((STORED + 1))
+          echo "versionCode: $STORED -> $NEW"
+          sed -i "s/versionCode[[:space:]]*=[[:space:]]*[0-9]\+/versionCode = $NEW/" ./androidApp/build.gradle.kts
+          echo "NEW_VERSION_CODE=$NEW" >> $GITHUB_ENV
 
       - name: Setup keystore
         env:
@@ -114,5 +128,32 @@ jobs:
           packageName: com.yral.android
           releaseFiles: androidApp/build/outputs/bundle/stagingRelease/androidApp-staging-release.aab
           track: internal
-          status: draft
+          status: completed
           inAppUpdatePriority: ${{ steps.update-priority.outputs.update_priority }}
+
+      - name: Persist new versionCode to repo variable
+        run: |
+          # Update (or create) the ALPHA_VERSION_CODE Actions variable so the next
+          # run picks up the incremented value without any commit to the repo.
+          # PATCH upserts: it creates the variable if absent, updates it if present.
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X PATCH \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/variables/ALPHA_VERSION_CODE" \
+            -d "{\"name\":\"ALPHA_VERSION_CODE\",\"value\":\"$NEW_VERSION_CODE\"}")
+          if [ "$HTTP_STATUS" = "204" ]; then
+            echo "ALPHA_VERSION_CODE updated to $NEW_VERSION_CODE"
+          else
+            # Variable may not exist yet; fall back to POST (create)
+            curl -s -f \
+              -X POST \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/${{ github.repository }}/actions/variables" \
+              -d "{\"name\":\"ALPHA_VERSION_CODE\",\"value\":\"$NEW_VERSION_CODE\"}" \
+            && echo "ALPHA_VERSION_CODE created at $NEW_VERSION_CODE" \
+            || echo "Warning: failed to persist ALPHA_VERSION_CODE (HTTP $HTTP_STATUS)"
+          fi
