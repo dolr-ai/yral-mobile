@@ -3,6 +3,10 @@ name: Android Checks
 on:
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   packages: write    # pull/push cached devcontainer image from ghcr.io
