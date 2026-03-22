@@ -13,6 +13,16 @@ permissions:
   # This workflow updates a repository Actions variable via the REST API
   # (`/repos/{owner}/{repo}/actions/variables/...`), which requires `actions: write`
   # on the GITHUB_TOKEN. Keep this in sync with any variable update steps below.
+
+# Serialize all Play Store deployments to prevent race conditions on the
+# ALPHA_VERSION_CODE repo variable. Two concurrent runs could read the same
+# stored value and compute the same versionCode, causing duplicate-versionCode
+# rejections from the Play Store. `cancel-in-progress: false` ensures the
+# in-flight run completes before the queued run starts (rather than aborting it).
+concurrency:
+  group: play-store-deploy-internal
+  cancel-in-progress: false
+
 jobs:
   build-app:
     runs-on: ubuntu-latest
