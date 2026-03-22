@@ -9,10 +9,10 @@ permissions:
   id-token: write
   contents: read
   pull-requests: read
-  # `variables: write` does not exist as a fine-grained permission scope; GITHUB_TOKEN
-  # can update Actions variables via the REST API as long as the token has repo-level
-  # access, which the default workflow token provides. No extra permission needed.
-
+  actions: write
+  # This workflow updates a repository Actions variable via the REST API
+  # (`/repos/{owner}/{repo}/actions/variables/...`), which requires `actions: write`
+  # on the GITHUB_TOKEN. Keep this in sync with any variable update steps below.
 jobs:
   build-app:
     runs-on: ubuntu-latest
