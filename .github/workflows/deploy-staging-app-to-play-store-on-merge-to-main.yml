@@ -9,6 +9,19 @@ permissions:
   id-token: write
   contents: read
   pull-requests: read
+  actions: write
+  # This workflow updates a repository Actions variable via the REST API
+  # (`/repos/{owner}/{repo}/actions/variables/...`), which requires `actions: write`
+  # on the GITHUB_TOKEN. Keep this in sync with any variable update steps below.
+
+# Serialize all Play Store deployments to prevent race conditions on the
+# PLAY_STORE_ALPHA_APP_VERSION_CODE repo variable. Two concurrent runs could read the same
+# stored value and compute the same versionCode, causing duplicate-versionCode
+# rejections from the Play Store. `cancel-in-progress: false` ensures the
+# in-flight run completes before the queued run starts (rather than aborting it).
+concurrency:
+  group: play-store-deploy-internal
+  cancel-in-progress: false
 
 jobs:
   build-app:
@@ -46,14 +59,29 @@ jobs:
           echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/28.0.13004108" >> $GITHUB_ENV
           echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/28.0.13004108" >> $GITHUB_ENV
 
-      - name: Bump version (ephemeral, no commit)
+      - name: Resolve versionCode
         run: |
-          echo "GITHUB_RUN_NUMBER is $GITHUB_RUN_NUMBER"
-          BASE_VERSION_CODE=$(grep -oP 'versionCode\s*=\s*\K[0-9]+' ./androidApp/build.gradle.kts)
-          NEW_VERSION_CODE=$((BASE_VERSION_CODE + GITHUB_RUN_NUMBER))
-          echo "Setting versionCode to $NEW_VERSION_CODE (base: $BASE_VERSION_CODE + run: $GITHUB_RUN_NUMBER)"
-          sed -i "s/versionCode[[:space:]]*=[[:space:]]*[0-9][0-9]*/versionCode = $NEW_VERSION_CODE/" ./androidApp/build.gradle.kts
-          cat ./androidApp/build.gradle.kts | grep versionCode
+          # The authoritative versionCode is stored in the repository variable
+          # PLAY_STORE_ALPHA_APP_VERSION_CODE (Settings → Variables → Actions). Using a repo variable
+          # instead of committing back to build.gradle.kts avoids fighting branch
+          # protection rules that require changes to go through pull requests.
+          # The value in build.gradle.kts (versionCode = ...) is only the seed used
+          # when the variable does not yet exist; once bootstrapped, the variable is
+          # the single source of truth and is incremented after every successful upload.
+          STORED="${{ vars.PLAY_STORE_ALPHA_APP_VERSION_CODE }}"
+          if [ -z "$STORED" ]; then
+            # First run: bootstrap from build.gradle.kts
+            STORED=$(grep -oP 'versionCode\s*=\s*\K[0-9]+' ./androidApp/build.gradle.kts)
+            echo "No repo variable found; bootstrapping from build.gradle.kts: $STORED"
+          fi
+          if ! [[ "$STORED" =~ ^[0-9]+$ ]]; then
+            echo "Error: PLAY_STORE_ALPHA_APP_VERSION_CODE (or bootstrapped versionCode) must be a positive integer, got: '$STORED'" >&2
+            exit 1
+          fi
+          NEW=$((STORED + 1))
+          echo "versionCode: $STORED -> $NEW"
+          sed -i "s/versionCode[[:space:]]*=[[:space:]]*[0-9]\+/versionCode = $NEW/" ./androidApp/build.gradle.kts
+          echo "NEW_VERSION_CODE=$NEW" >> $GITHUB_ENV
 
       - name: Setup keystore
         env:
@@ -114,5 +142,25 @@ jobs:
           packageName: com.yral.android
           releaseFiles: androidApp/build/outputs/bundle/stagingRelease/androidApp-staging-release.aab
           track: internal
-          status: draft
+          status: completed
           inAppUpdatePriority: ${{ steps.update-priority.outputs.update_priority }}
+
+      - name: Persist new versionCode to repo variable
+        run: |
+          # Increment PLAY_STORE_ALPHA_APP_VERSION_CODE (Settings → Secrets and variables → Actions → Variables).
+          # The variable must be created manually before the first run — PATCH only updates an
+          # existing variable (HTTP 204) and returns 404 if it is absent. Any non-204 response
+          # is treated as a hard failure so version drift is caught immediately.
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X PATCH \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/variables/PLAY_STORE_ALPHA_APP_VERSION_CODE" \
+            -d "{\"name\":\"PLAY_STORE_ALPHA_APP_VERSION_CODE\",\"value\":\"$NEW_VERSION_CODE\"}")
+          if [ "$HTTP_STATUS" = "204" ]; then
+            echo "PLAY_STORE_ALPHA_APP_VERSION_CODE updated to $NEW_VERSION_CODE"
+          else
+            echo "Error: failed to update PLAY_STORE_ALPHA_APP_VERSION_CODE (HTTP $HTTP_STATUS). Ensure the variable exists under Settings → Secrets and variables → Actions → Variables."
+            exit 1
+          fi
