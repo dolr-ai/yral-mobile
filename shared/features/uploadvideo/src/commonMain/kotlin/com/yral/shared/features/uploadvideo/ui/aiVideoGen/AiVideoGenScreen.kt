@@ -144,7 +144,10 @@ fun AiVideoGenScreen(
                         cta =
                             ToastCTA(
                                 text = getString(Res.string.toast_view_drafts),
-                                onClick = { component.goToProfile() },
+                                onClick = {
+                                    viewModel.cleanup()
+                                    component.goToProfile()
+                                },
                             ),
                         duration = ToastDuration.LONG,
                     )

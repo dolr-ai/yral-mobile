@@ -97,11 +97,23 @@ class ProfileDataSourceImpl(
             }
 
             is Posts.Err -> {
-                ProfileVideosPageResult(
-                    posts = emptyList(),
-                    hasNextPage = false,
-                    nextStartIndex = startIndex,
-                )
+                when (result.v1) {
+                    PostsOfUserProfileError.REACHED_END_OF_ITEMS_LIST -> {
+                        ProfileVideosPageResult(
+                            posts = emptyList(),
+                            hasNextPage = false,
+                            nextStartIndex = startIndex,
+                        )
+                    }
+
+                    PostsOfUserProfileError.INVALID_BOUNDS_PASSED -> {
+                        throw YralException("Invalid bounds passed for pagination")
+                    }
+
+                    PostsOfUserProfileError.EXCEEDED_MAX_NUMBER_OF_ITEMS_ALLOWED_IN_ONE_REQUEST -> {
+                        throw YralException("Exceeded max number of items allowed in one request")
+                    }
+                }
             }
         }
     }

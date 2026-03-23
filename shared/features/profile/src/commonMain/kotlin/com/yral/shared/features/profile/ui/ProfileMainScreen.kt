@@ -1728,30 +1728,29 @@ private fun BoxScope.VideoGridItemActions(
         }
     val leftIconDescription = if (isLikeVisible) "likes" else "views"
     val leftText = if (isLikeVisible) likeCount else viewCount
-    val downLoadText = stringResource(Res.string.download)
+    val downloadText = stringResource(Res.string.download)
     val deleteText = stringResource(Res.string.delete)
     val menuItems =
-        remember(downLoadText) {
-            mutableListOf(
-                YralContextMenuItem(
-                    text = downLoadText,
-                    icon = DesignRes.drawable.ic_download,
-                    onClick = onDownloadVideo,
-                ),
-            )
+        remember(isDraft, downloadText, deleteText) {
+            buildList {
+                add(
+                    YralContextMenuItem(
+                        text = downloadText,
+                        icon = DesignRes.drawable.ic_download,
+                        onClick = onDownloadVideo,
+                    ),
+                )
+                if (!isDraft) {
+                    add(
+                        YralContextMenuItem(
+                            text = deleteText,
+                            icon = DesignRes.drawable.delete,
+                            onClick = onDeleteVideo,
+                        ),
+                    )
+                }
+            }
         }
-    LaunchedEffect(isDraft) {
-        menuItems.removeAll { it.text == deleteText }
-        if (!isDraft) {
-            menuItems.add(
-                YralContextMenuItem(
-                    text = deleteText,
-                    icon = DesignRes.drawable.delete,
-                    onClick = onDeleteVideo,
-                ),
-            )
-        }
-    }
     Row(
         modifier =
             Modifier
