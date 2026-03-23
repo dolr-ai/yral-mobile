@@ -15,7 +15,7 @@ import com.yral.shared.features.wallet.domain.GetUserDolrBalanceUseCase
 import com.yral.shared.features.wallet.domain.repository.WalletRepository
 import com.yral.shared.features.wallet.viewmodel.WalletViewModel
 import org.koin.core.module.dsl.factoryOf
-import org.koin.core.module.dsl.viewModelOf
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
@@ -32,5 +32,13 @@ val walletModule =
         factoryOf(::GetDolrUsdPriceUseCase)
         factoryOf(::GetBillingBalanceUseCase)
         factoryOf(::GetTransactionsUseCase)
-        viewModelOf(::WalletViewModel)
+        viewModel {
+            WalletViewModel(
+                sessionManager = get(),
+                walletTelemetry = get(),
+                getBillingBalanceUseCase = get<GetBillingBalanceUseCase>(),
+                getTransactionsUseCase = get<GetTransactionsUseCase>(),
+                metadataDataSource = get(),
+            )
+        }
     }
