@@ -2,12 +2,14 @@ package com.yral.shared.features.wallet.nav
 
 import com.arkivanov.decompose.ComponentContext
 import com.yral.shared.data.AlertsRequestType
+import com.yral.shared.rust.service.utils.CanisterData
 
 interface WalletComponent {
     val showAlertsOnDialog: (type: AlertsRequestType) -> Unit
     val showBackIcon: Boolean
     val onBack: () -> Unit
     val onCreateInfluencer: () -> Unit
+    val onOpenProfile: (CanisterData) -> Unit
     companion object Companion {
         operator fun invoke(
             componentContext: ComponentContext,
@@ -15,6 +17,7 @@ interface WalletComponent {
             showBackIcon: Boolean = false,
             onBack: () -> Unit = {},
             onCreateInfluencer: () -> Unit = {},
+            onOpenProfile: (CanisterData) -> Unit = {},
         ): WalletComponent =
             DefaultWalletComponent(
                 componentContext,
@@ -22,6 +25,7 @@ interface WalletComponent {
                 showBackIcon,
                 onBack,
                 onCreateInfluencer,
+                onOpenProfile,
             )
     }
 }

@@ -5,10 +5,12 @@ import androidx.lifecycle.viewModelScope
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.features.wallet.analytics.WalletTelemetry
 import com.yral.shared.features.wallet.domain.GetBillingBalanceUseCase
 import com.yral.shared.features.wallet.domain.GetTransactionsUseCase
 import com.yral.shared.features.wallet.domain.models.Transaction
+import com.yral.shared.rust.service.domain.metadata.FollowersMetadataDataSource
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +22,7 @@ class WalletViewModel(
     private val walletTelemetry: WalletTelemetry,
     private val getBillingBalanceUseCase: GetBillingBalanceUseCase,
     private val getTransactionsUseCase: GetTransactionsUseCase,
+    private val metadataDataSource: FollowersMetadataDataSource,
 ) : ViewModel() {
     private val _state = MutableStateFlow(WalletState())
     val state: StateFlow<WalletState> = _state.asStateFlow()
@@ -59,6 +62,28 @@ class WalletViewModel(
         _state.update { it.copy(showTransactionHistory = show) }
     }
 
+    @Suppress("TooGenericExceptionCaught")
+    private fun resolveUsernames(transactions: List<Transaction>) {
+        val principals = transactions.map { it.userId }.distinct()
+        if (principals.isEmpty()) return
+        viewModelScope.launch {
+            val usernameMap =
+                try {
+                    metadataDataSource.fetchUsernames(principals)
+                } catch (_: Exception) {
+                    emptyMap()
+                }
+            _state.update { state ->
+                state.copy(
+                    transactions =
+                        state.transactions.map { tx ->
+                            tx.copy(username = resolveUsername(usernameMap[tx.userId], tx.userId))
+                        },
+                )
+            }
+        }
+    }
+
     private fun loadWalletData() {
         val userPrincipal = sessionManager.userPrincipal ?: return
         viewModelScope.launch {
@@ -82,6 +107,7 @@ class WalletViewModel(
                     _state.update {
                         it.copy(transactions = transactions, isTransactionsLoading = false)
                     }
+                    resolveUsernames(transactions)
                 }.onFailure {
                     _state.update { it.copy(isTransactionsLoading = false) }
                 }

@@ -44,6 +44,9 @@ import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
+import com.yral.shared.rust.service.utils.propicFromPrincipal
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -93,6 +96,7 @@ fun WalletScreen(
         TransactionHistoryScreen(
             state = state,
             onBack = { viewModel.toggleTransactionHistory(false) },
+            onOpenProfile = component.onOpenProfile,
         )
     } else if (state.isSocialSignedIn && state.hasBots) {
         WalletUnlockedContent(
@@ -405,6 +409,7 @@ private fun EarnStep(
 private fun TransactionHistoryScreen(
     state: com.yral.shared.features.wallet.viewmodel.WalletState,
     onBack: () -> Unit,
+    onOpenProfile: (CanisterData) -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
@@ -440,9 +445,20 @@ private fun TransactionHistoryScreen(
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 itemsIndexed(state.transactions) { index, tx ->
                     TransactionItem(
-                        title = "@${tx.userId}",
+                        title = "@${tx.username ?: tx.userId}",
                         subtitle = "${formatTransactionDate(tx.createdAt)}  \u2022  1 Day Subscription",
                         amount = "+ \u20B9${tx.amountPaise / PAISE_PER_RUPEE}",
+                        onClick = {
+                            onOpenProfile(
+                                CanisterData(
+                                    canisterId = getUserInfoServiceCanister(),
+                                    userPrincipalId = tx.userId,
+                                    profilePic = propicFromPrincipal(tx.userId),
+                                    username = tx.username,
+                                    isCreatedFromServiceCanister = true,
+                                ),
+                            )
+                        },
                     )
                     if (index < state.transactions.lastIndex) {
                         HorizontalDivider(
@@ -461,11 +477,13 @@ private fun TransactionItem(
     title: String,
     subtitle: String,
     amount: String,
+    onClick: () -> Unit,
 ) {
     Row(
         modifier =
             Modifier
                 .fillMaxWidth()
+                .clickable(onClick = onClick)
                 .padding(horizontal = 16.dp, vertical = 14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
