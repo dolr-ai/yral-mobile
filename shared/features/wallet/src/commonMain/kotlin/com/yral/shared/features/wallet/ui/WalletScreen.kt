@@ -2,6 +2,7 @@
 
 package com.yral.shared.features.wallet.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -43,6 +44,9 @@ import com.yral.shared.libs.designsystem.component.YralButton
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -51,7 +55,9 @@ import yral_mobile.shared.features.wallet.generated.resources.create_influencer
 import yral_mobile.shared.features.wallet.generated.resources.got_it
 import yral_mobile.shared.features.wallet.generated.resources.history
 import yral_mobile.shared.features.wallet.generated.resources.how_to_earn
-import yral_mobile.shared.features.wallet.generated.resources.ic_rupee
+import yral_mobile.shared.features.wallet.generated.resources.ic_lock
+import yral_mobile.shared.features.wallet.generated.resources.ic_lock_small
+import yral_mobile.shared.features.wallet.generated.resources.ic_rupee_coin
 import yral_mobile.shared.features.wallet.generated.resources.min_withdrawal_limit
 import yral_mobile.shared.features.wallet.generated.resources.my_wallet
 import yral_mobile.shared.features.wallet.generated.resources.step_1_desc
@@ -68,6 +74,7 @@ import yral_mobile.shared.features.wallet.generated.resources.wallet_locked
 import yral_mobile.shared.features.wallet.generated.resources.wallet_locked_description
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
+import kotlin.time.ExperimentalTime
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -152,10 +159,10 @@ private fun WalletLockedContent(
     ) {
         WalletHeader(component = component)
         Spacer(modifier = Modifier.weight(1f))
-        Text(
-            text = "\uD83D\uDD12",
-            fontSize = 80.sp,
-            textAlign = TextAlign.Center,
+        Image(
+            painter = painterResource(Res.drawable.ic_lock),
+            contentDescription = stringResource(Res.string.wallet_locked),
+            modifier = Modifier.size(120.dp),
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
@@ -217,9 +224,9 @@ private fun EarningsCard(totalEarnings: String) {
         Brush.linearGradient(
             colorStops =
                 arrayOf(
-                    0.2f to Color(0xFFDE98BE),
-                    0.45f to Color(0xFFC45D95),
-                    0.98f to Color(0xFF81546D),
+                    0.0f to Color(0xFFFF78C1),
+                    0.51f to Color(0xFFE2017B),
+                    1.0f to Color(0xFFAD005E),
                 ),
             start = Offset(Float.POSITIVE_INFINITY, 0f),
             end = Offset(0f, Float.POSITIVE_INFINITY),
@@ -255,9 +262,10 @@ private fun EarningsCard(totalEarnings: String) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
         ) {
-            Text(
-                text = "\uD83D\uDD12",
-                fontSize = 14.sp,
+            Image(
+                painter = painterResource(Res.drawable.ic_lock_small),
+                contentDescription = null,
+                modifier = Modifier.size(14.dp),
             )
             Spacer(modifier = Modifier.width(6.dp))
             Text(
@@ -311,14 +319,13 @@ private fun HowToEarnButton(onClick: () -> Unit) {
 @Composable
 private fun HowToEarnSheet(onDismiss: () -> Unit) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+        verticalArrangement = Arrangement.spacedBy(28.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 36.dp),
     ) {
-        Icon(
-            painter = painterResource(Res.drawable.ic_rupee),
+        Image(
+            painter = painterResource(Res.drawable.ic_rupee_coin),
             contentDescription = null,
-            tint = Color.Unspecified,
             modifier = Modifier.size(100.dp),
         )
 
@@ -333,9 +340,9 @@ private fun HowToEarnSheet(onDismiss: () -> Unit) {
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .background(color = YralColors.Neutral800, shape = RoundedCornerShape(12.dp))
-                    .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+                    .background(color = YralColors.Neutral800, shape = RoundedCornerShape(8.dp))
+                    .padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             EarnStep(
                 number = "1",
@@ -373,27 +380,24 @@ private fun EarnStep(
     title: String,
     description: String,
 ) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.Top,
-    ) {
-        Text(
-            text = "$number.",
-            style = LocalAppTopography.current.baseSemiBold,
-            color = YralColors.Yellow200,
-        )
-        Column {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                text = "$number.",
+                style = LocalAppTopography.current.baseSemiBold,
+                color = YralColors.Yellow200,
+            )
             Text(
                 text = title,
                 style = LocalAppTopography.current.baseSemiBold,
                 color = YralColors.Yellow200,
             )
-            Text(
-                text = description,
-                style = LocalAppTopography.current.baseRegular,
-                color = Color.White,
-            )
         }
+        Text(
+            text = description,
+            style = LocalAppTopography.current.baseRegular,
+            color = Color.White,
+        )
     }
 }
 
@@ -436,8 +440,8 @@ private fun TransactionHistoryScreen(
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 itemsIndexed(state.transactions) { index, tx ->
                     TransactionItem(
-                        title = "@${tx.relatedBotId} Chatbot subscription",
-                        subtitle = "${tx.createdAt} \u2022 ${tx.transactionType}",
+                        title = "@${tx.userId}",
+                        subtitle = "${formatTransactionDate(tx.createdAt)}  \u2022  1 Day Subscription",
                         amount = "+ \u20B9${tx.amountPaise / PAISE_PER_RUPEE}",
                     )
                     if (index < state.transactions.lastIndex) {
@@ -488,3 +492,37 @@ private fun TransactionItem(
 }
 
 private const val PAISE_PER_RUPEE = 100
+
+private val MONTH_NAMES =
+    listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+private const val ORDINAL_TEEN_START = 11
+private const val ORDINAL_TEEN_END = 13
+private const val ORDINAL_DIVISOR = 10
+
+@Suppress("MagicNumber")
+private fun getOrdinalSuffix(day: Int): String =
+    when {
+        day in ORDINAL_TEEN_START..ORDINAL_TEEN_END -> "th"
+        day % ORDINAL_DIVISOR == 1 -> "st"
+        day % ORDINAL_DIVISOR == 2 -> "nd"
+        day % ORDINAL_DIVISOR == 3 -> "rd"
+        else -> "th"
+    }
+
+@Suppress("MagicNumber")
+@OptIn(ExperimentalTime::class)
+private fun formatTransactionDate(createdAt: String): String =
+    try {
+        val instant = Instant.parse(createdAt)
+        val dt = instant.toLocalDateTime(TimeZone.currentSystemDefault())
+        val day = dt.dayOfMonth
+        val month = MONTH_NAMES[dt.monthNumber - 1]
+        val year = dt.year
+        val hour = (dt.hour + 11) % 12 + 1
+        val minute = dt.minute.toString().padStart(2, '0')
+        val amPm = if (dt.hour < 12) "AM" else "PM"
+        "$day${getOrdinalSuffix(day)} $month $year, $hour:$minute $amPm"
+    } catch (_: Exception) {
+        createdAt
+    }

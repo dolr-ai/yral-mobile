@@ -64,6 +64,7 @@ class WalletRepositoryImpl(
         return data.map {
             Transaction(
                 id = it.id,
+                userId = it.userId,
                 transactionType = it.transactionType,
                 amountPaise = it.amountPaise,
                 relatedBotId = it.relatedBotId,
