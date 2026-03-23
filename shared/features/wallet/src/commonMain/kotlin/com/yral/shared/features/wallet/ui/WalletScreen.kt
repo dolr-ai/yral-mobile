@@ -47,9 +47,6 @@ import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import com.yral.shared.rust.service.utils.propicFromPrincipal
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -77,7 +74,6 @@ import yral_mobile.shared.features.wallet.generated.resources.wallet_locked
 import yral_mobile.shared.features.wallet.generated.resources.wallet_locked_description
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
-import kotlin.time.ExperimentalTime
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -508,39 +504,3 @@ private fun TransactionItem(
         )
     }
 }
-
-private const val PAISE_PER_RUPEE = 100
-
-private val MONTH_NAMES =
-    listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-
-private const val ORDINAL_TEEN_START = 11
-private const val ORDINAL_TEEN_END = 13
-private const val ORDINAL_DIVISOR = 10
-
-@Suppress("MagicNumber")
-private fun getOrdinalSuffix(day: Int): String =
-    when {
-        day in ORDINAL_TEEN_START..ORDINAL_TEEN_END -> "th"
-        day % ORDINAL_DIVISOR == 1 -> "st"
-        day % ORDINAL_DIVISOR == 2 -> "nd"
-        day % ORDINAL_DIVISOR == 3 -> "rd"
-        else -> "th"
-    }
-
-@Suppress("MagicNumber")
-@OptIn(ExperimentalTime::class)
-private fun formatTransactionDate(createdAt: String): String =
-    try {
-        val instant = Instant.parse(createdAt)
-        val dt = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-        val day = dt.dayOfMonth
-        val month = MONTH_NAMES[dt.monthNumber - 1]
-        val year = dt.year
-        val hour = (dt.hour + 11) % 12 + 1
-        val minute = dt.minute.toString().padStart(2, '0')
-        val amPm = if (dt.hour < 12) "AM" else "PM"
-        "$day${getOrdinalSuffix(day)} $month $year, $hour:$minute $amPm"
-    } catch (_: Exception) {
-        createdAt
-    }

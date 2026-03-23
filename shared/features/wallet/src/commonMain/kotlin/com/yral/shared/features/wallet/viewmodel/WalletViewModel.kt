@@ -7,9 +7,9 @@ import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.features.wallet.analytics.WalletTelemetry
-import com.yral.shared.features.wallet.domain.GetBillingBalanceUseCase
-import com.yral.shared.features.wallet.domain.GetTransactionsUseCase
+import com.yral.shared.features.wallet.domain.models.BillingBalance
 import com.yral.shared.features.wallet.domain.models.Transaction
+import com.yral.shared.libs.arch.domain.SuspendUseCase
 import com.yral.shared.rust.service.domain.metadata.FollowersMetadataDataSource
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,8 +20,8 @@ import kotlinx.coroutines.launch
 class WalletViewModel(
     private val sessionManager: SessionManager,
     private val walletTelemetry: WalletTelemetry,
-    private val getBillingBalanceUseCase: GetBillingBalanceUseCase,
-    private val getTransactionsUseCase: GetTransactionsUseCase,
+    private val getBillingBalanceUseCase: SuspendUseCase<String, BillingBalance>,
+    private val getTransactionsUseCase: SuspendUseCase<String, List<Transaction>>,
     private val metadataDataSource: FollowersMetadataDataSource,
 ) : ViewModel() {
     private val _state = MutableStateFlow(WalletState())
