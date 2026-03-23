@@ -96,7 +96,6 @@ class WalletRepositoryImplTest {
                                 transactionType = "SUBSCRIPTION",
                                 amountPaise = 10000L,
                                 recipientId = "recipient-1",
-                                relatedBotId = "bot-1",
                                 purchaseToken = "token-1",
                                 createdAt = "2024-01-15T14:30:00Z",
                             ),
@@ -112,7 +111,6 @@ class WalletRepositoryImplTest {
             assertEquals("recipient-1", tx.recipientId)
             assertEquals("SUBSCRIPTION", tx.transactionType)
             assertEquals(10000L, tx.amountPaise)
-            assertEquals("bot-1", tx.relatedBotId)
             assertEquals("2024-01-15T14:30:00Z", tx.createdAt)
         }
 
@@ -202,7 +200,6 @@ class WalletRepositoryImplTest {
         transactionType: String = "SUBSCRIPTION",
         amountPaise: Long = 10000L,
         recipientId: String = "recipient-1",
-        relatedBotId: String = "bot-1",
         purchaseToken: String = "token-1",
         createdAt: String = "2024-01-15T14:30:00Z",
     ) = TransactionResponseDto(
@@ -211,7 +208,6 @@ class WalletRepositoryImplTest {
         transactionType = transactionType,
         amountPaise = amountPaise,
         recipientId = recipientId,
-        relatedBotId = relatedBotId,
         purchaseToken = purchaseToken,
         createdAt = createdAt,
     )

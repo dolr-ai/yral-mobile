@@ -305,7 +305,6 @@ class WalletViewModelTest {
         recipientId: String = "recipient-1",
         transactionType: String = "SUBSCRIPTION",
         amountPaise: Long = 10000L,
-        relatedBotId: String = "bot-1",
         createdAt: String = "2024-01-15T14:30:00Z",
     ) = Transaction(
         id = id,
@@ -313,7 +312,6 @@ class WalletViewModelTest {
         recipientId = recipientId,
         transactionType = transactionType,
         amountPaise = amountPaise,
-        relatedBotId = relatedBotId,
         createdAt = createdAt,
         username = null,
     )

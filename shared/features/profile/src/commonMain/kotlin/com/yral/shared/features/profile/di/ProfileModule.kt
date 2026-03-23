@@ -52,6 +52,7 @@ val profileModule =
                 getInfluencerUseCase = get(),
                 fileDownloader = get(),
                 followersMetadataDataSource = get(),
+                checkChatAccessUseCase = get(),
             )
         }
         viewModelOf(::EditProfileViewModel)

@@ -68,7 +68,6 @@ class WalletRepositoryImpl(
                 recipientId = it.recipientId,
                 transactionType = it.transactionType,
                 amountPaise = it.amountPaise,
-                relatedBotId = it.relatedBotId,
                 createdAt = it.createdAt,
                 username = null,
             )

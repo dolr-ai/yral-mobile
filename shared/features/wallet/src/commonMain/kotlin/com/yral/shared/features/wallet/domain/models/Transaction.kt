@@ -6,7 +6,6 @@ data class Transaction(
     val recipientId: String,
     val transactionType: String,
     val amountPaise: Long,
-    val relatedBotId: String,
     val createdAt: String,
     val username: String? = null,
 )

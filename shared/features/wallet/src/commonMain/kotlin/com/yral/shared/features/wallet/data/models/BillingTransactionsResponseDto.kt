@@ -18,7 +18,6 @@ data class TransactionResponseDto(
     @SerialName("transaction_type") val transactionType: String,
     @SerialName("amount_paise") val amountPaise: Long,
     @SerialName("recipient_id") val recipientId: String,
-    @SerialName("related_bot_id") val relatedBotId: String,
     @SerialName("purchase_token") val purchaseToken: String,
     @SerialName("created_at") val createdAt: String,
 )
