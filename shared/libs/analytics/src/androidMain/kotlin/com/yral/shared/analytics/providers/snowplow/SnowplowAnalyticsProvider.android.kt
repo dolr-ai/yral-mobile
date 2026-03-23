@@ -25,37 +25,39 @@ actual class SnowplowAnalyticsProvider actual constructor(
     private val context: Context by inject()
     override val name: String = "snowplow"
 
-    private val tracker = Snowplow.createTracker(
-        context,
-        "yral-mobile",
-        NetworkConfiguration(
-            "https://${AppConfigurations.SNOWPLOW_COLLECTOR_URL}",
-            HttpMethod.POST,
-        ),
-        TrackerConfiguration("yral-mobile")
-            .devicePlatform(DevicePlatform.Mobile)
-            .base64encoding(false)
-            .logLevel(LogLevel.OFF)
-            .sessionContext(true)
-            .platformContext(true)
-            .applicationContext(true)
-            .lifecycleAutotracking(true)
-            .screenViewAutotracking(true)
-            .screenEngagementAutotracking(true)
-            .installAutotracking(true)
-            .exceptionAutotracking(true)
-            .diagnosticAutotracking(false),
-    )
+    private val tracker =
+        Snowplow.createTracker(
+            context,
+            "yral-mobile",
+            NetworkConfiguration(
+                "https://${AppConfigurations.SNOWPLOW_COLLECTOR_URL}",
+                HttpMethod.POST,
+            ),
+            TrackerConfiguration("yral-mobile")
+                .devicePlatform(DevicePlatform.Mobile)
+                .base64encoding(false)
+                .logLevel(LogLevel.OFF)
+                .sessionContext(true)
+                .platformContext(true)
+                .applicationContext(true)
+                .lifecycleAutotracking(true)
+                .screenViewAutotracking(true)
+                .screenEngagementAutotracking(true)
+                .installAutotracking(true)
+                .exceptionAutotracking(true)
+                .diagnosticAutotracking(false),
+        )
 
     override fun shouldTrackEvent(event: EventData): Boolean = eventFilter(event)
 
     override fun trackEvent(event: EventData) {
         val properties = mapConverter.toMap(event)
         val propertyJson = JSONObject(properties.mapValues { it.value.toString() }).toString()
-        val snowplowEvent = Structured(
-            category = event.featureName,
-            action = event.event,
-        ).property(propertyJson)
+        val snowplowEvent =
+            Structured(
+                category = event.featureName,
+                action = event.event,
+            ).property(propertyJson)
         tracker.track(snowplowEvent)
     }
 
