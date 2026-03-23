@@ -13,7 +13,6 @@ import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
-import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.app.ui.screens.profile.nav.ProfileComponent
@@ -65,8 +64,6 @@ internal class DefaultHomeComponent(
     private val childSnapshots: MutableMap<Config, Any> = LinkedHashMap()
     private var lastActiveConfig: Config? = null
     private var lastActiveProvider: HomeChildSnapshotProvider? = null
-
-    private val flagManager = koinInstance.get<FeatureFlagManager>()
 
     override val stack: Value<ChildStack<*, Child>> =
         childStack(
@@ -168,12 +165,7 @@ internal class DefaultHomeComponent(
     }
 
     override fun onWalletTabClick() {
-        val chatWalletConfig = flagManager.getWalletConfig()
-        if (chatWalletConfig.second) {
-            navigation.replaceKeepingFeed(Config.Wallet)
-        } else {
-            openWallet.invoke()
-        }
+        navigation.replaceKeepingFeed(Config.Wallet)
     }
 
     override fun onChatTabClick() {
@@ -272,6 +264,8 @@ internal class DefaultHomeComponent(
         WalletComponent.Companion(
             componentContext = componentContext,
             showAlertsOnDialog = showAlertsOnDialog,
+            onCreateInfluencer = { openCreateInfluencer(BotCreationSource.WALLET) },
+            onOpenProfile = openProfile,
         )
 
     private fun chatComponent(componentContext: ComponentContext): ChatComponent =

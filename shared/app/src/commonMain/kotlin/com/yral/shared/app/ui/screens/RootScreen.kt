@@ -193,6 +193,7 @@ fun RootScreen(rootComponent: RootComponent) {
                         HandleSystemBars(show = true)
                         WalletScreen(
                             component = child.component,
+                            onCreateInfluencerClick = { child.component.onCreateInfluencer() },
                             modifier = Modifier.fillMaxSize().safeDrawingPadding(),
                         )
                     }

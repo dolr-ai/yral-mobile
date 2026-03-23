@@ -131,12 +131,13 @@ class FeatureFlagManager(
 
     fun exportLocalOverrides(flags: List<FeatureFlag<*>>): Map<String, String> {
         val local = localProvider ?: return emptyMap()
-        return flags.mapNotNull { flag ->
-            when (val result = local.getRaw(flag.key)) {
-                is FlagResult.Sourced -> flag.key to result.value
-                FlagResult.NotSet -> null
-            }
-        }.toMap()
+        return flags
+            .mapNotNull { flag ->
+                when (val result = local.getRaw(flag.key)) {
+                    is FlagResult.Sourced -> flag.key to result.value
+                    FlagResult.NotSet -> null
+                }
+            }.toMap()
     }
 
     fun importLocalOverrides(

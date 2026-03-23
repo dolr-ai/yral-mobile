@@ -62,6 +62,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
@@ -311,6 +312,11 @@ fun ProfileMainScreen(
     }
 
     LaunchedEffect(Unit) { viewModel.pushScreenView(profileVideos.itemCount) }
+
+    LifecycleResumeEffect(Unit) {
+        viewModel.recheckSubscriptionIfNeeded()
+        onPauseOrDispose {}
+    }
 
     var pendingVideoIdState by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(Unit) {
@@ -695,7 +701,11 @@ private fun MainContent(
             onBack = onBackClicked,
             showBackButton = showBackButton,
             onSubscribe = onSubscribe,
-            showSubscribeButton = !state.isOwnProfile && state.isAiInfluencer && state.isLoggedIn,
+            showSubscribeButton =
+                !state.isOwnProfile &&
+                    state.isAiInfluencer &&
+                    state.isLoggedIn &&
+                    !state.isSubscribedToInfluencer,
             isSubscribeLoading = state.isTalkToMeInProgress,
             onSubscribeClicked = { viewModel.onSubscribeClicked() },
         )

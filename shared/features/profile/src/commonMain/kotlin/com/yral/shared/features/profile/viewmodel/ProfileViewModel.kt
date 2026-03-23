@@ -122,6 +122,7 @@ class ProfileViewModel(
     private val getInfluencerUseCase: GetInfluencerUseCase,
     private val fileDownloader: FileDownloader,
     private val followersMetadataDataSource: FollowersMetadataDataSource,
+    private val checkChatAccessUseCase: com.yral.shared.features.chat.domain.usecases.CheckChatAccessUseCase,
 ) : ViewModel() {
     companion object {
         private const val POSTS_PER_PAGE = 20
@@ -422,6 +423,8 @@ class ProfileViewModel(
                 ),
             ).onSuccess { details ->
                 val accountTypeData = resolveAccountTypeData(details.accountType)
+                val isAiInfluencer =
+                    details.isAiInfluencer == true || details.accountType is UserAccountType.BotAccount
                 _state.update { current ->
                     val existingInfo = current.accountInfo
                     val updatedInfo =
@@ -431,8 +434,6 @@ class ProfileViewModel(
                                 details.profilePictureUrl?.takeUnless { it.isBlank() }
                                     ?: existingInfo.profilePic,
                         )
-                    val isAiInfluencer =
-                        details.isAiInfluencer == true || details.accountType is UserAccountType.BotAccount
                     current.copy(
                         accountInfo = updatedInfo,
                         isFollowing = details.callerFollowsUser ?: current.isFollowing,
@@ -444,9 +445,27 @@ class ProfileViewModel(
                         botUsernameToCanisterData = accountTypeData.botsMap.entries.associate { (p, u) -> u to p },
                     )
                 }
+                if (isAiInfluencer) {
+                    checkInfluencerSubscription(targetPrincipal)
+                }
             }.onFailure { error ->
                 Logger.e("refreshOtherProfileDetails") { "Failed to fetch profile details $error" }
             }
+        }
+    }
+
+    fun recheckSubscriptionIfNeeded() {
+        val targetPrincipal = canisterData.userPrincipalId
+        if (targetPrincipal.isBlank() || !_state.value.isAiInfluencer || _state.value.isOwnProfile) return
+        checkInfluencerSubscription(targetPrincipal)
+    }
+
+    private fun checkInfluencerSubscription(botPrincipal: String) {
+        viewModelScope.launch {
+            checkChatAccessUseCase(botPrincipal)
+                .onSuccess { status ->
+                    _state.update { it.copy(isSubscribedToInfluencer = status.hasAccess) }
+                }
         }
     }
 
@@ -1153,6 +1172,7 @@ data class ViewState(
     val shareDescription: String = "",
     val canShareProfile: Boolean = false,
     val isAiInfluencer: Boolean = false,
+    val isSubscribedToInfluencer: Boolean = false,
     val isTalkToMeInProgress: Boolean = false,
     val isProUser: Boolean = false,
     val isSubscriptionEnabled: Boolean = false,

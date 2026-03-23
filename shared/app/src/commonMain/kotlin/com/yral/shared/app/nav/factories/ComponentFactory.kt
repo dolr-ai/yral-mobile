@@ -1,6 +1,7 @@
 package com.yral.shared.app.nav.factories
 
 import com.arkivanov.decompose.ComponentContext
+import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.app.nav.Config
 import com.yral.shared.app.nav.RootComponent
 import com.yral.shared.app.nav.SplashComponent
@@ -122,6 +123,8 @@ internal class ComponentFactory(
             showAlertsOnDialog = showAlertsOnDialog,
             showBackIcon = true,
             onBack = rootComponent::onBackClicked,
+            onCreateInfluencer = { rootComponent.openCreateInfluencer(BotCreationSource.WALLET) },
+            onOpenProfile = rootComponent::openProfile,
         )
 
     fun createSubscription(

@@ -216,10 +216,29 @@ private fun HomeScreenContent(
                     onAlertsToggleRequest = alertsPermissionController.toggle,
                 )
 
-            is HomeComponent.Child.Wallet ->
+            is HomeComponent.Child.Wallet -> {
+                val homeState by component.homeViewModel.state.collectAsStateWithLifecycle()
+                val walletLoginState =
+                    rememberLoginInfo(requestLoginFactory = component.requestLoginFactory)
                 WalletScreen(
                     component = child.component,
+                    onCreateInfluencerClick = {
+                        if (homeState.isSocialSignedIn) {
+                            child.component.onCreateInfluencer()
+                        } else {
+                            walletLoginState.requestLogin(
+                                SignupPageName.CREATE_INFLUENCER,
+                                LoginScreenType.BottomSheet(
+                                    LoginBottomSheetType.CREATE_INFLUENCER,
+                                ),
+                                LoginMode.BOTH,
+                                { child.component.onCreateInfluencer() },
+                                null,
+                            ) {}
+                        }
+                    },
                 )
+            }
 
             is HomeComponent.Child.Profile ->
                 profileVideos?.let {
@@ -299,11 +318,9 @@ private fun getVisibleTabs(): List<HomeTab> {
     val chatWalletConfig = flagManager.getWalletConfig()
     return buildList {
         add(HomeTab.HOME)
-        when {
-            chatWalletConfig.first -> add(HomeTab.CHAT)
-            chatWalletConfig.second -> add(HomeTab.WALLET)
-        }
+        if (chatWalletConfig.first) add(HomeTab.CHAT)
         add(HomeTab.UPLOAD_VIDEO)
+        add(HomeTab.WALLET)
         add(HomeTab.PROFILE)
     }
 }

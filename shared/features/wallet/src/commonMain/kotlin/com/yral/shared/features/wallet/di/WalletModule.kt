@@ -5,15 +5,17 @@ import com.yral.shared.features.wallet.data.WalletDataSource
 import com.yral.shared.features.wallet.data.WalletDataSourceImpl
 import com.yral.shared.features.wallet.data.WalletRepositoryImpl
 import com.yral.shared.features.wallet.domain.GetBalanceUseCase
+import com.yral.shared.features.wallet.domain.GetBillingBalanceUseCase
 import com.yral.shared.features.wallet.domain.GetBtcConversionUseCase
 import com.yral.shared.features.wallet.domain.GetDolrUsdPriceUseCase
 import com.yral.shared.features.wallet.domain.GetRewardConfigUseCase
+import com.yral.shared.features.wallet.domain.GetTransactionsUseCase
 import com.yral.shared.features.wallet.domain.GetUserBtcBalanceUseCase
 import com.yral.shared.features.wallet.domain.GetUserDolrBalanceUseCase
 import com.yral.shared.features.wallet.domain.repository.WalletRepository
 import com.yral.shared.features.wallet.viewmodel.WalletViewModel
 import org.koin.core.module.dsl.factoryOf
-import org.koin.core.module.dsl.viewModelOf
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
@@ -28,5 +30,15 @@ val walletModule =
         factoryOf(::GetRewardConfigUseCase)
         factoryOf(::GetBalanceUseCase)
         factoryOf(::GetDolrUsdPriceUseCase)
-        viewModelOf(::WalletViewModel)
+        factoryOf(::GetBillingBalanceUseCase)
+        factoryOf(::GetTransactionsUseCase)
+        viewModel {
+            WalletViewModel(
+                sessionManager = get(),
+                walletTelemetry = get(),
+                getBillingBalanceUseCase = get<GetBillingBalanceUseCase>(),
+                getTransactionsUseCase = get<GetTransactionsUseCase>(),
+                metadataDataSource = get(),
+            )
+        }
     }

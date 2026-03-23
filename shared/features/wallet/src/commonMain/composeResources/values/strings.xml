@@ -20,4 +20,20 @@
     <string name="what_are_engaged_views">What are Engaged Views?</string>
     <string name="engaged_views_description">A logged-in user watches your video for 3+ sec.</string>
     <string name="got_it">Got It!</string>
+    <string name="wallet_locked">Wallet Locked!</string>
+    <string name="wallet_locked_description">Login &amp; create an influencer to start earning\nfrom every subscription and unlock wallet.</string>
+    <string name="create_influencer">Create Influencer</string>
+    <string name="total_earnings_inr">Total Earnings ( INR )</string>
+    <string name="min_withdrawal_limit">Minimum withdrawal limit is ₹1000</string>
+    <string name="transaction_history">Transaction History</string>
+    <string name="how_to_earn">How To Earn?</string>
+    <string name="history">History</string>
+    <string name="step_1_title">Create an Influencer</string>
+    <string name="step_1_desc">Build an AI influencer in any category.</string>
+    <string name="step_2_title">Create More Videos</string>
+    <string name="step_2_desc">More content = better discoverability.</string>
+    <string name="step_3_title">Share your influencer</string>
+    <string name="step_3_desc">More visibility = more subscribers</string>
+    <string name="step_4_title">Earn INR on every subscription</string>
+    <string name="step_4_desc">Every new subscriber adds money to your wallet instantly.</string>
 </resources>

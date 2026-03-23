@@ -11,6 +11,9 @@ kotlin {
     configureIosTargets(project)
 
     sourceSets {
+        commonTest.dependencies {
+            implementation(libs.kotlinx.coroutines.test)
+        }
         commonMain.dependencies {
             implementation(projects.shared.core)
             implementation(projects.shared.data)

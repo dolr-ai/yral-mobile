@@ -2317,6 +2317,9 @@ enum class BotCreationSource {
 
     @SerialName("profile_page")
     PROFILE_PAGE,
+
+    @SerialName("wallet")
+    WALLET,
 }
 
 @Serializable
