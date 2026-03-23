@@ -368,7 +368,8 @@ fun ProfileMainScreen(
         onBack = {
             when (state.videoView) {
                 is VideoViewState.ViewingDraft -> viewModel.closeDraftVideo()
-                else -> viewModel.closeVideoReel()
+                is VideoViewState.ViewingReels -> viewModel.closeVideoReel()
+                else -> {}
             }
         },
     )
@@ -1077,6 +1078,7 @@ private fun SuccessContent(
                     DraftVideoGridContent(
                         draftVideos = draftVideos,
                         offset = offset,
+                        isOwnProfile = isOwnProfile,
                         openDraftVideo = openDraftVideo,
                     )
                 } else {
@@ -1159,9 +1161,7 @@ private fun ProfileTabBar(
     hasDrafts: Boolean,
 ) {
     Row(
-        modifier =
-            Modifier
-                .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -1291,8 +1291,12 @@ private fun DraftsEmptyStateContent(
 private fun DraftVideoGridContent(
     draftVideos: LazyPagingItems<FeedDetails>,
     offset: Float,
+    isOwnProfile: Boolean,
     openDraftVideo: (FeedDetails) -> Unit,
 ) {
+    val generatingState by VideoGenerationTracker.state.collectAsState()
+    val showGeneratingCard = generatingState.isGenerating && isOwnProfile
+
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -1303,6 +1307,15 @@ private fun DraftVideoGridContent(
                 .fillMaxSize()
                 .offset(y = offset.dp),
     ) {
+        if (showGeneratingCard) {
+            item(
+                key = "video_generating_card",
+                contentType = "VideoGeneratingCard",
+            ) {
+                VideoGeneratingCard(progress = generatingState.progress)
+            }
+        }
+
         items(
             count = draftVideos.itemCount,
             key = { index -> draftVideos.peek(index)?.let { "${it.canisterID}_${it.postID}" } ?: "draft_$index" },
@@ -1323,9 +1336,7 @@ private fun DraftVideoGridContent(
             }
         }
 
-        item(
-            span = { GridItemSpan(maxLineSpan) },
-        ) {
+        item(span = { GridItemSpan(maxLineSpan) }) {
             PagingAppendIndicator(
                 loadState = draftVideos.loadState.append,
                 onRetry = { draftVideos.retry() },
@@ -1395,9 +1406,6 @@ private fun VideoGridContent(
     onDownloadVideo: (FeedDetails) -> Unit,
     onViewsClick: (FeedDetails) -> Unit,
 ) {
-    val generatingState by VideoGenerationTracker.state.collectAsState()
-    val showGeneratingCard = generatingState.isGenerating && isOwnProfile
-
     LazyVerticalGrid(
         state = gridState,
         columns = GridCells.Fixed(2),
@@ -1409,15 +1417,6 @@ private fun VideoGridContent(
                 .fillMaxSize()
                 .offset(y = offset.dp),
     ) {
-        if (showGeneratingCard) {
-            item(
-                key = "video_generating_card",
-                contentType = "VideoGeneratingCard",
-            ) {
-                VideoGeneratingCard(progress = generatingState.progress)
-            }
-        }
-
         items(
             count = profileVideos.itemCount,
             key = profileVideos.itemKey { "${it.canisterID}_${it.postID}" },
@@ -1567,6 +1566,7 @@ private fun VideoGridItem(
                 likeCount = video.likeCount,
                 viewCount = video.bulkViewCount,
                 isOwnProfile = isOwnProfile,
+                isDraft = isDraft,
                 onDeleteVideo = onDeleteClick,
                 onDownloadVideo = onDownloadClick,
                 onViewsClick = onViewsClick,
@@ -1628,7 +1628,7 @@ private fun DraftOverlay(isDraft: Boolean) {
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .background(YralColors.ScrimColor),
+                    .background(YralColors.ScrimColorDraft),
             contentAlignment = Alignment.Center,
         ) {
             Text(
@@ -1711,6 +1711,7 @@ private fun BoxScope.VideoGridItemActions(
     viewCount: ULong?,
     isLikeVisible: Boolean = false,
     isOwnProfile: Boolean,
+    isDraft: Boolean = false,
     onDeleteVideo: () -> Unit,
     onDownloadVideo: () -> Unit,
     onViewsClick: () -> Unit,
@@ -1727,6 +1728,30 @@ private fun BoxScope.VideoGridItemActions(
         }
     val leftIconDescription = if (isLikeVisible) "likes" else "views"
     val leftText = if (isLikeVisible) likeCount else viewCount
+    val downLoadText = stringResource(Res.string.download)
+    val deleteText = stringResource(Res.string.delete)
+    val menuItems =
+        remember(downLoadText) {
+            mutableListOf(
+                YralContextMenuItem(
+                    text = downLoadText,
+                    icon = DesignRes.drawable.ic_download,
+                    onClick = onDownloadVideo,
+                ),
+            )
+        }
+    LaunchedEffect(isDraft) {
+        menuItems.removeAll { it.text == deleteText }
+        if (!isDraft) {
+            menuItems.add(
+                YralContextMenuItem(
+                    text = deleteText,
+                    icon = DesignRes.drawable.delete,
+                    onClick = onDeleteVideo,
+                ),
+            )
+        }
+    }
     Row(
         modifier =
             Modifier
@@ -1757,7 +1782,7 @@ private fun BoxScope.VideoGridItemActions(
                     style = LocalAppTopography.current.baseMedium,
                     color = YralColors.NeutralTextPrimary,
                 )
-            } ?: if (!isLikeVisible) {
+            } ?: if (!isLikeVisible && !isDraft) {
                 YralLoadingDots()
             } else {
                 Unit
@@ -1765,19 +1790,7 @@ private fun BoxScope.VideoGridItemActions(
         }
         if (isOwnProfile) {
             YralContextMenu(
-                items =
-                    listOf(
-                        YralContextMenuItem(
-                            text = stringResource(Res.string.download),
-                            icon = DesignRes.drawable.ic_download,
-                            onClick = onDownloadVideo,
-                        ),
-                        YralContextMenuItem(
-                            text = stringResource(Res.string.delete),
-                            icon = DesignRes.drawable.delete,
-                            onClick = onDeleteVideo,
-                        ),
-                    ),
+                items = menuItems,
                 triggerIcon = DesignRes.drawable.ic_dots_vertical,
             )
         }
