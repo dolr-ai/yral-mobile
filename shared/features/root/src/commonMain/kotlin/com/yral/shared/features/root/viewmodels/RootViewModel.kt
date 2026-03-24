@@ -397,36 +397,13 @@ class RootViewModel(
                     .getBytes(PrefKeys.IDENTITY.name)
                     ?.takeIf { activePrincipal == mainPrincipal }
         val botEntries = loadBotEntries().filter { it.principal != mainPrincipal }
-        val mainFallbackUsername = sessionManager.username
-        val resolvedAccounts =
-            coroutineScope {
-                val mainDeferred =
-                    async {
-                        resolveAccountUi(
-                            principal = mainPrincipal,
-                            identityBytes = mainIdentity,
-                            isBot = false,
-                            activePrincipal = activePrincipal,
-                            fallbackUsername = mainFallbackUsername,
-                        )
-                    }
-                val botDeferred =
-                    botEntries.map { entry ->
-                        async {
-                            val identityBytes = runCatching { Base64.decode(entry.identity) }.getOrNull()
-                            resolveAccountUi(
-                                principal = entry.principal,
-                                identityBytes = identityBytes,
-                                isBot = true,
-                                activePrincipal = activePrincipal,
-                                fallbackUsername = entry.username,
-                            )
-                        }
-                    }
-                mainDeferred.await() to botDeferred.awaitAll().filterNotNull()
-            }
-        val mainAccount = resolvedAccounts.first
-        val botAccounts = resolvedAccounts.second
+        val (mainAccount, botAccounts) =
+            resolveAllAccounts(
+                activePrincipal = activePrincipal,
+                mainPrincipal = mainPrincipal,
+                mainIdentity = mainIdentity,
+                botEntries = botEntries,
+            )
 
         if (mainAccount != null || botAccounts.isNotEmpty()) {
             val directory =
@@ -441,9 +418,56 @@ class RootViewModel(
             delay(ACCOUNT_DIALOG_RETRY_DELAY_MS)
             refreshAccountDirectory(allowRetry = false)
         } else {
-            Logger.d("RootViewModel") { "refreshAccountDirectory: no accounts resolved, keeping cached directory" }
+            Logger.d("RootViewModel") {
+                "refreshAccountDirectory: no accounts resolved, keeping cached directory"
+            }
         }
     }
+
+    private suspend fun resolveAllAccounts(
+        activePrincipal: String?,
+        mainPrincipal: String?,
+        mainIdentity: ByteArray?,
+        botEntries: List<BotIdentityEntry>,
+    ): Pair<AccountUi?, List<AccountUi>> {
+        val mainFallbackUsername = sessionManager.username
+        return coroutineScope {
+            val mainDeferred =
+                async {
+                    resolveAccountUi(
+                        principal = mainPrincipal,
+                        identityBytes = mainIdentity,
+                        isBot = false,
+                        activePrincipal = activePrincipal,
+                        fallbackUsername = mainFallbackUsername,
+                    )
+                }
+            val botDeferred =
+                botEntries.map { entry ->
+                    async {
+                        resolveAccountUi(
+                            principal = entry.principal,
+                            identityBytes = decodeBotIdentity(entry),
+                            isBot = true,
+                            activePrincipal = activePrincipal,
+                            fallbackUsername = entry.username,
+                        )
+                    }
+                }
+            mainDeferred.await() to botDeferred.awaitAll().filterNotNull()
+        }
+    }
+
+    private fun decodeBotIdentity(entry: BotIdentityEntry): ByteArray? =
+        runCatching { Base64.decode(entry.identity) }
+            .onFailure {
+                crashlyticsManager.recordException(
+                    YralException("Base64 decode failed for bot ${entry.principal}", it),
+                )
+                Logger.d("RootViewModel") {
+                    "Base64 decode failed for bot ${entry.principal}: ${it.message}"
+                }
+            }.getOrNull()
 
     private fun buildAccountDirectory(
         mainPrincipal: String?,
@@ -493,6 +517,13 @@ class RootViewModel(
         val details =
             runCatching {
                 identityBytes?.let { authenticateWithNetwork(it) }
+            }.onFailure {
+                crashlyticsManager.recordException(
+                    YralException("authenticateWithNetwork failed for $principal", it),
+                )
+                Logger.d("RootViewModel") {
+                    "authenticateWithNetwork failed for $principal: ${it.message}"
+                }
             }.getOrNull()
         val resolvedUsername =
             resolveUsername(details?.username, principal)
