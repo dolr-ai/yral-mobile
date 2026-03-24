@@ -15,7 +15,7 @@ android {
     namespace = "com.yral.android"
     defaultConfig {
         applicationId = "com.yral.android"
-        versionCode = 1582
+        versionCode = 1584
         versionName = "2.8.1"
         ndkVersion = "29.0.14206865"
         buildConfigField(
@@ -78,7 +78,7 @@ android {
     productFlavors {
         create("staging") {
             dimension = "version"
-            versionCode = 1582 // ci:staging-version-code
+            versionCode = 1584 // ci:staging-version-code
             signingConfig = signingConfigs.getByName("staging")
         }
         create("prod") {
