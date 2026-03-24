@@ -32,8 +32,8 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install SwiftLint and CocoaPods
-        run: brew install swiftlint cocoapods
+      - name: Install SwiftLint, CocoaPods, and xcbeautify
+        run: brew install swiftlint cocoapods xcbeautify
 
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
@@ -62,23 +62,13 @@ jobs:
         working-directory: iosApp
         run: swiftlint
 
-      - name: Build (compile check)
+      - name: Build and run tests
         working-directory: iosApp
+        env:
+          GITHUB_USERNAME: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          xcodebuild build \
-            -workspace iosApp.xcworkspace \
-            -scheme iosApp \
-            -destination 'generic/platform=iOS' \
-            -configuration Debug \
-            CODE_SIGNING_ALLOWED=NO \
-            ENABLE_USER_SCRIPT_SANDBOXING=NO \
-            GITHUB_USERNAME="${{ github.actor }}" \
-            GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" \
-            | xcpretty && exit ${PIPESTATUS[0]}
-
-      - name: Run tests
-        working-directory: iosApp
-        run: |
+          set -o pipefail
           xcodebuild test \
             -workspace iosApp.xcworkspace \
             -scheme iosApp \
@@ -88,6 +78,4 @@ jobs:
             -maximum-test-execution-time-allowance 120 \
             CODE_SIGNING_ALLOWED=NO \
             ENABLE_USER_SCRIPT_SANDBOXING=NO \
-            GITHUB_USERNAME="${{ github.actor }}" \
-            GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" \
-            | xcpretty --test && exit ${PIPESTATUS[0]}
+            | xcbeautify --is-ci
