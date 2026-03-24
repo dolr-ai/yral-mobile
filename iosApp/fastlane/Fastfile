@@ -37,7 +37,9 @@ platform :ios do
       scheme: "iosAppStaging",
       export_method: "app-store",
       export_options: {
-        "com.yral.iosApp.staging" => "Yral-Staging-Dist"
+        provisioningProfiles: {
+          "com.yral.iosApp.staging" => "Yral-Staging-Prod"
+        }
       }
     )
     pilot(
@@ -59,7 +61,9 @@ platform :ios do
       scheme: "iosApp",
       export_method: "app-store",
       export_options: {
-        "com.yral.iosApp" => "Yral-Prod-Dist"
+        provisioningProfiles: {
+          "com.yral.iosApp" => "Yral-Distribution"
+        }
       }
     )
     pilot(

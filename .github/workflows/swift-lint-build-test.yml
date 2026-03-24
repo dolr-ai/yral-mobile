@@ -71,6 +71,7 @@ jobs:
             -destination 'generic/platform=iOS' \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO \
+            ENABLE_USER_SCRIPT_SANDBOXING=NO \
             GITHUB_USERNAME="${{ github.actor }}" \
             GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}" \
             | xcpretty && exit ${PIPESTATUS[0]}
