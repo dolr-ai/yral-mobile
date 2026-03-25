@@ -1,2 +1,2 @@
-- delete develop branch
 - reevaluate detekt config to remove the config and just use the default config
+- clean up the unused version code since we have separatee version codes in for alpha and production apps in #build.gradle.kts
