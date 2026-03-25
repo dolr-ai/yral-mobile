@@ -72,7 +72,7 @@ final class HLSDownloadManagerTests: XCTestCase {
     // than 50 ms, causing simulateFinish to run before the continuation is stored,
     // which would leave the continuation un-resumed and hang the test.
     try await waitForContinuation(url: testURL)
-    mockSession.mockTask?.simulateFinish(
+    await mockSession.mockTask?.simulateFinish(
       downloadURL: finishURL,
       manager: sut,
       sourceURL: testURL
@@ -100,9 +100,7 @@ final class HLSDownloadManagerTests: XCTestCase {
     // completes the continuation leaving the test assertion wrong or hanging forever.
     try await waitForContinuation(url: testURL)
     await sut.cancelDownload(for: testURL)
-    // Give the cancellation Tasks a moment to propagate before simulateFinish
-    try await Task.sleep(nanoseconds: 50_000_000)
-    mockSession.mockTask?.simulateFinish(
+    await mockSession.mockTask?.simulateFinish(
       downloadURL: finishURL,
       manager: sut,
       sourceURL: testURL
@@ -134,7 +132,7 @@ final class HLSDownloadManagerTests: XCTestCase {
     // Same polling strategy: wait for the continuation to be registered before
     // calling simulateFinish so the resume actually reaches it.
     try await waitForContinuation(url: testURL)
-    mockSession.mockTask?.simulateFinish(
+    await mockSession.mockTask?.simulateFinish(
       downloadURL: finishURL,
       manager: sut,
       sourceURL: testURL
@@ -171,20 +169,18 @@ final class HLSDownloadManagerTests: XCTestCase {
     func cancel() {
       cancelCallCount += 1
     }
-    func simulateFinish(downloadURL: URL, manager: HLSDownloadManager, sourceURL: URL) {
+    func simulateFinish(downloadURL: URL, manager: HLSDownloadManager, sourceURL: URL) async {
       let castedTask = unsafeBitCast(fakeReference, to: AVAssetDownloadTask.self)
-      Task.detached {
-        manager.urlSession(
-          URLSession.shared,
-          assetDownloadTask: castedTask,
-          willDownloadTo: downloadURL
-        )
-        manager.urlSession(
-          URLSession.shared,
-          assetDownloadTask: castedTask,
-          didFinishDownloadingTo: downloadURL
-        )
-      }
+      await manager.onStartDownload(
+        URLSession.shared,
+        assetDownloadTask: castedTask,
+        didFinishDownloadingTo: downloadURL
+      )
+      await manager.onEndDownload(
+        URLSession.shared,
+        assetDownloadTask: castedTask,
+        didFinishDownloadingTo: downloadURL
+      )
     }
   }
 

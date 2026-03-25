@@ -36,12 +36,12 @@ final class FeedsPlayerTests: XCTestCase {
     }
   }
 
-  func testLoadInitialVideo_ShouldAddFeeds() throws {
+  func testLoadInitialVideo_ShouldAddFeeds() async throws {
     let feedResults = getMockFeeds(count: 20)
     let mockQueuePlayer = MockQueuePlayer {}
     let mockDownloadManager = MockHLSDownloadManager()
     for feed in feedResults {
-      mockDownloadManager.localURLsForTest[feed.url] = feed.url
+      await mockDownloadManager.setLocalURL(feed.url, for: feed.url)
     }
 
     let sut = makeSUT(player: mockQueuePlayer, downloadManager: mockDownloadManager)
@@ -61,7 +61,7 @@ final class FeedsPlayerTests: XCTestCase {
     }
     let mockDownloadManager = MockHLSDownloadManager()
     for feed in feedResults {
-      mockDownloadManager.localURLsForTest[feed.url] = feed.url
+      await mockDownloadManager.setLocalURL(feed.url, for: feed.url)
     }
 
     let sut = makeSUT(player: mockPlayer, downloadManager: mockDownloadManager)
@@ -82,7 +82,7 @@ final class FeedsPlayerTests: XCTestCase {
     let additionalFeeds = Array(feedResults[10...19])
 
     for feed in feedResults {
-      mockDownloadManager.localURLsForTest[feed.url] = feed.url
+      await mockDownloadManager.setLocalURL(feed.url, for: feed.url)
     }
 
     let sut = makeSUT(player: mockPlayer, downloadManager: mockDownloadManager)
@@ -110,7 +110,7 @@ final class FeedsPlayerTests: XCTestCase {
 
     let mockDownloadManager = MockHLSDownloadManager()
     for feed in feedResults {
-      mockDownloadManager.localURLsForTest[feed.url] = feed.url
+      await mockDownloadManager.setLocalURL(feed.url, for: feed.url)
     }
 
     let sut = makeSUT(player: mockPlayer, downloadManager: mockDownloadManager)
@@ -137,7 +137,7 @@ final class FeedsPlayerTests: XCTestCase {
     let mockPlayer = MockQueuePlayer {}
     let mockDownloadManager = MockHLSDownloadManager(maxOfflineAssets: 8)
     for feed in feedResults {
-      mockDownloadManager.localURLsForTest[feed.url] = feed.url
+      await mockDownloadManager.setLocalURL(feed.url, for: feed.url)
     }
 
     let sut = makeSUT(player: mockPlayer, downloadManager: mockDownloadManager)
@@ -174,13 +174,13 @@ final class FeedsPlayerTests: XCTestCase {
     XCTAssertEqual(sut.playerItems.count, 10)
   }
 
-  func testAdvanceToVideo_ShouldNotAdvanceToNextVideo() throws {
+  func testAdvanceToVideo_ShouldNotAdvanceToNextVideo() async throws {
     let feedResults = getMockFeeds(count: 20)
     let mockPlayer = MockQueuePlayer {}
     let mockDownloadManager = MockHLSDownloadManager()
 
     for feed in feedResults {
-      mockDownloadManager.localURLsForTest[feed.url] = feed.url
+      await mockDownloadManager.setLocalURL(feed.url, for: feed.url)
     }
 
     let sut = makeSUT(player: mockPlayer, downloadManager: mockDownloadManager)
@@ -199,13 +199,15 @@ final class FeedsPlayerTests: XCTestCase {
 
     let subset = Array(feedResults[0...4])
     for feed in subset {
-      mockDownloadManager.localURLsForTest[feed.url] = feed.url
+      await mockDownloadManager.setLocalURL(feed.url, for: feed.url)
     }
 
     let sut = makeSUT(player: mockQueuePlayer, downloadManager: mockDownloadManager)
 
+    var fulfilled = false
     sut.onPlayerItemsChanged = { _, count in
-      if count == 5 {
+      if count == 5 && !fulfilled {
+        fulfilled = true
         expectation.fulfill()
       }
     }
@@ -227,15 +229,17 @@ final class FeedsPlayerTests: XCTestCase {
 
     let subset = Array(feedResults[5...9])
     for feed in subset {
-      mockDownloadManager.localURLsForTest[feed.url] = feed.url
+      await mockDownloadManager.setLocalURL(feed.url, for: feed.url)
     }
 
     let sut = makeSUT(player: mockPlayer, downloadManager: mockDownloadManager)
 
     let expectation = expectation(description: "Wait for 5 items")
 
+    var fulfilled = false
     sut.onPlayerItemsChanged = { _, count in
-      if count == 5 {
+      if count == 5 && !fulfilled {
+        fulfilled = true
         expectation.fulfill()
       }
     }
@@ -320,14 +324,15 @@ actor MockHLSDownloadManager: HLSDownloadManaging {
   weak var delegate: HLSDownloadManagerProtocol?
   var activeDownloads: [URL: AVAssetDownloadTaskProtocol] = [:]
 
-  nonisolated(unsafe) var localURLsForTest: [URL: URL] = [:]
-  nonisolated(unsafe) var downloadedAssetsLRU: [String: Date] = [:]
-  nonisolated(unsafe) var assetTitleForURL: [URL: String] = [:]
+  var localURLsForTest: [URL: URL] = [:]
+  var downloadedAssetsLRU: [String: Date] = [:]
+  var assetTitleForURL: [URL: String] = [:]
   private var maxOfflineAssets: Int
 
-  init(maxOfflineAssets: Int = 10) {
-    self.maxOfflineAssets = maxOfflineAssets
-  }
+  init(maxOfflineAssets: Int = 10) { self.maxOfflineAssets = maxOfflineAssets }
+
+  func setLocalURL(_ localURL: URL, for hlsURL: URL) { localURLsForTest[hlsURL] = localURL }
+
   func startDownloadAsync(hlsURL: URL, assetTitle: String) async throws -> URL {
     guard let localURL = localURLsForTest[hlsURL] else {
       throw NSError(
@@ -346,14 +351,13 @@ actor MockHLSDownloadManager: HLSDownloadManaging {
   }
 
   func createLocalAssetIfAvailable(for hlsURL: URL) -> AVURLAsset? {
-    guard let localURL = localURLsForTest[hlsURL] else {
-      return nil
-    }
+    guard let localURL = localURLsForTest[hlsURL] else { return nil }
     return AVURLAsset(url: localURL)
   }
 
-  func cancelDownload(for hls: URL) {
-  }
+  func cancelDownload(for hls: URL) {}
+  func prefetch(url: URL, assetTitle: String) async {}
+  func elevatePriority(for url: URL) {}
 
   func clearMappingsAndCache(for hls: URL, assetTitle: String) {
     localURLsForTest.removeValue(forKey: hls)
@@ -361,17 +365,8 @@ actor MockHLSDownloadManager: HLSDownloadManaging {
     delegate?.clearedCache(for: assetTitle)
   }
 
-  func prefetch(url: URL, assetTitle: String) async {}
-
-  func localOrInflightAsset(for hlsURL: URL) -> AVURLAsset? {
-    return createLocalAssetIfAvailable(for: hlsURL)
-  }
-
-  func elevatePriority(for url: URL) {}
-
-  func setDelegate(_ delegate: HLSDownloadManagerProtocol?) {
-    self.delegate = delegate
-  }
+  func localOrInflightAsset(for hlsURL: URL) -> AVURLAsset? { createLocalAssetIfAvailable(for: hlsURL) }
+  func setDelegate(_ delegate: HLSDownloadManagerProtocol?) { self.delegate = delegate }
 
   private func enforceCacheLimitIfNeeded() {
     while downloadedAssetsLRU.count > maxOfflineAssets {
