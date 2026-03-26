@@ -72,6 +72,7 @@ import yral_mobile.shared.features.wallet.generated.resources.total_earnings_inr
 import yral_mobile.shared.features.wallet.generated.resources.transaction_history
 import yral_mobile.shared.features.wallet.generated.resources.wallet_locked
 import yral_mobile.shared.features.wallet.generated.resources.wallet_locked_description
+import yral_mobile.shared.features.wallet.generated.resources.wallet_locked_switch_account
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
@@ -94,12 +95,19 @@ fun WalletScreen(
             onBack = { viewModel.toggleTransactionHistory(false) },
             onOpenProfile = component.onOpenProfile,
         )
-    } else if (state.isSocialSignedIn && state.hasBots) {
+    } else if (state.isSocialSignedIn && state.hasBots && state.isBotAccount) {
         WalletUnlockedContent(
             component = component,
             state = state,
             viewModel = viewModel,
             modifier = modifier,
+        )
+    } else if (state.isSocialSignedIn && state.hasBots) {
+        WalletLockedContent(
+            component = component,
+            onCreateInfluencerClick = null,
+            modifier = modifier,
+            descriptionOverride = stringResource(Res.string.wallet_locked_switch_account),
         )
     } else {
         WalletLockedContent(
@@ -150,8 +158,9 @@ private fun WalletHeader(component: WalletComponent) {
 @Composable
 private fun WalletLockedContent(
     component: WalletComponent,
-    onCreateInfluencerClick: () -> Unit,
+    onCreateInfluencerClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    descriptionOverride: String? = null,
 ) {
     Column(
         modifier = modifier.fillMaxSize(),
@@ -173,18 +182,20 @@ private fun WalletLockedContent(
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = stringResource(Res.string.wallet_locked_description),
+            text = descriptionOverride ?: stringResource(Res.string.wallet_locked_description),
             style = LocalAppTopography.current.baseRegular,
             color = YralColors.NeutralTextSecondary,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 32.dp),
         )
-        Spacer(modifier = Modifier.height(24.dp))
-        YralGradientButton(
-            text = stringResource(Res.string.create_influencer),
-            onClick = onCreateInfluencerClick,
-            modifier = Modifier.padding(horizontal = 32.dp),
-        )
+        if (onCreateInfluencerClick != null) {
+            Spacer(modifier = Modifier.height(24.dp))
+            YralGradientButton(
+                text = stringResource(Res.string.create_influencer),
+                onClick = onCreateInfluencerClick,
+                modifier = Modifier.padding(horizontal = 32.dp),
+            )
+        }
         Spacer(modifier = Modifier.weight(1f))
     }
 }
