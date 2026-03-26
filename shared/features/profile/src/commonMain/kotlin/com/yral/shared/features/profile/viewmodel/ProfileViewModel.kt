@@ -93,7 +93,6 @@ import org.jetbrains.compose.resources.getString
 import yral_mobile.shared.features.profile.generated.resources.Res
 import yral_mobile.shared.features.profile.generated.resources.download_failed
 import yral_mobile.shared.features.profile.generated.resources.download_successful
-import yral_mobile.shared.features.profile.generated.resources.publish_success
 import yral_mobile.shared.features.profile.generated.resources.publishing_video
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share_desc
@@ -1230,11 +1229,14 @@ class ProfileViewModel(
                                 (feedDetails.videoID to feedDetails.copy(isDraft = false)),
                     )
                 }
-                ToastManager.showSuccess(
-                    type = ToastType.Small(getString(Res.string.publish_success)),
-                )
                 closeDraftVideo()
-                _state.update { it.copy(publishDraftUiState = UiState.Initial) }
+                _state.update {
+                    it.copy(
+                        publishDraftUiState = UiState.Initial,
+                        selectedTab = ProfileTab.Published,
+                    )
+                }
+                profileEventsChannel.trySend(ProfileEvents.RefreshDrafts)
             }.onFailure { error ->
                 ToastManager.showToast(
                     type = ToastType.Small(getString(DesignRes.string.something_went_wrong)),
@@ -1340,6 +1342,7 @@ sealed class ProfileEvents {
     data class Failed(
         val message: String,
     ) : ProfileEvents()
+    data object RefreshDrafts : ProfileEvents()
 }
 
 data class PagingState(

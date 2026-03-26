@@ -165,6 +165,7 @@ import yral_mobile.shared.features.profile.generated.resources.profile_locked_ti
 import yral_mobile.shared.features.profile.generated.resources.profile_view_locked_subtitle
 import yral_mobile.shared.features.profile.generated.resources.profile_view_locked_title
 import yral_mobile.shared.features.profile.generated.resources.publish_button
+import yral_mobile.shared.features.profile.generated.resources.publish_success
 import yral_mobile.shared.features.profile.generated.resources.storage_permission_required
 import yral_mobile.shared.features.profile.generated.resources.tab_new
 import yral_mobile.shared.features.profile.generated.resources.video_generating
@@ -311,6 +312,14 @@ fun ProfileMainScreen(
 
                 is ProfileEvents.Failed -> {
                     ToastManager.showError(type = ToastType.Small(message = event.message))
+                }
+
+                is ProfileEvents.RefreshDrafts -> {
+                    ToastManager.showSuccess(
+                        type = ToastType.Small(getString(Res.string.publish_success)),
+                    )
+                    profileVideos.refresh()
+                    draftVideos.refresh()
                 }
             }
         }
