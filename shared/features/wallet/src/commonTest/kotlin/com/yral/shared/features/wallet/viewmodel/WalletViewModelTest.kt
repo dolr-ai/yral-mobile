@@ -59,9 +59,14 @@ class WalletViewModelTest {
             metadataDataSource = fakeMetadataDataSource,
         )
 
-    private fun signInUser(userPrincipal: String = "test-principal-123") {
+    private fun signInUser(
+        userPrincipal: String = "test-principal-123",
+        isBotAccount: Boolean = false,
+    ) {
         sessionManager.updateState(
-            SessionState.SignedIn(Session(userPrincipal = userPrincipal)),
+            SessionState.SignedIn(
+                Session(userPrincipal = userPrincipal, isBotAccount = isBotAccount),
+            ),
         )
     }
 
@@ -265,6 +270,26 @@ class WalletViewModelTest {
             advanceUntilIdle()
 
             assertFalse(viewModel.state.value.hasBots)
+        }
+
+    @Test
+    fun `isBotAccount is true when session is bot account`() =
+        runTest {
+            signInUser(isBotAccount = true)
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertTrue(viewModel.state.value.isBotAccount)
+        }
+
+    @Test
+    fun `isBotAccount is false when session is not bot account`() =
+        runTest {
+            signInUser(isBotAccount = false)
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertFalse(viewModel.state.value.isBotAccount)
         }
 
     // endregion

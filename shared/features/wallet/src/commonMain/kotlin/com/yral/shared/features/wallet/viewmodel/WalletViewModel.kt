@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.features.wallet.analytics.WalletTelemetry
 import com.yral.shared.features.wallet.domain.models.BillingBalance
@@ -43,6 +44,14 @@ class WalletViewModel(
                 .observeSessionProperty { it.botCount }
                 .collect { botCount ->
                     _state.update { it.copy(hasBots = botCount != null && botCount > 0) }
+                }
+        }
+        viewModelScope.launch {
+            sessionManager
+                .observeSessionState { state ->
+                    (state as? SessionState.SignedIn)?.session?.isBotAccount == true
+                }.collect { isBot ->
+                    _state.update { it.copy(isBotAccount = isBot) }
                 }
         }
     }
@@ -119,6 +128,7 @@ data class WalletState(
     val totalEarningsInr: String = "",
     val isSocialSignedIn: Boolean = false,
     val hasBots: Boolean = false,
+    val isBotAccount: Boolean = false,
     val howToEarnVisible: Boolean = false,
     val showTransactionHistory: Boolean = false,
     val isLoading: Boolean = false,
