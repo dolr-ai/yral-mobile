@@ -1769,32 +1769,36 @@ private fun BoxScope.VideoGridItemActions(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            modifier =
-                Modifier.clickable {
-                    if (!isLikeVisible) {
-                        onViewsClick()
-                    }
-                },
-        ) {
-            Image(
-                painter = painterResource(leftIcon),
-                contentDescription = leftIconDescription,
-                modifier = Modifier.size(24.dp),
-            )
-            leftText?.let {
-                Text(
-                    text = formatAbbreviation(it.toLong()),
-                    style = LocalAppTopography.current.baseMedium,
-                    color = YralColors.NeutralTextPrimary,
+        if (!isDraft) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                modifier =
+                    Modifier.clickable {
+                        if (!isLikeVisible) {
+                            onViewsClick()
+                        }
+                    },
+            ) {
+                Image(
+                    painter = painterResource(leftIcon),
+                    contentDescription = leftIconDescription,
+                    modifier = Modifier.size(24.dp),
                 )
-            } ?: if (!isLikeVisible && !isDraft) {
-                YralLoadingDots()
-            } else {
-                Unit
+                leftText?.let {
+                    Text(
+                        text = formatAbbreviation(it.toLong()),
+                        style = LocalAppTopography.current.baseMedium,
+                        color = YralColors.NeutralTextPrimary,
+                    )
+                } ?: if (!isLikeVisible) {
+                    YralLoadingDots()
+                } else {
+                    Unit
+                }
             }
+        } else {
+            Spacer(Modifier)
         }
         if (isOwnProfile) {
             YralContextMenu(

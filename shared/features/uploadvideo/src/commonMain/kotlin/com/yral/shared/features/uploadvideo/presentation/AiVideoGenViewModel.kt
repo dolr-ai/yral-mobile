@@ -29,9 +29,6 @@ import com.yral.shared.features.uploadvideo.domain.PollAndUploadAiVideoUseCase
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.libs.arch.presentation.UiState
-import com.yral.shared.libs.designsystem.component.toast.ToastManager
-import com.yral.shared.libs.designsystem.component.toast.ToastType
-import com.yral.shared.libs.designsystem.component.toast.showInfo
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.rust.service.domain.models.VideoGenRequestKey
@@ -49,7 +46,6 @@ import org.jetbrains.compose.resources.getString
 import yral_mobile.shared.features.uploadvideo.generated.resources.Res
 import yral_mobile.shared.features.uploadvideo.generated.resources.ai_video_subscription_nudge_description
 import yral_mobile.shared.features.uploadvideo.generated.resources.ai_video_subscription_nudge_title
-import yral_mobile.shared.features.uploadvideo.generated.resources.toast_ai_video_generating
 import kotlin.math.exp
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -304,9 +300,6 @@ class AiVideoGenViewModel internal constructor(
                 sessionManager.userPrincipal?.let { userId ->
                     _state.update { it.copy(uiState = UiState.InProgress(0f)) }
                     VideoGenerationTracker.startGenerating()
-                    ToastManager.showInfo(
-                        type = ToastType.Small(getString(Res.string.toast_ai_video_generating)),
-                    )
                     currentRequestKey = null
                     requiredUseCases
                         .generateVideo(
@@ -356,8 +349,7 @@ class AiVideoGenViewModel internal constructor(
                                 )
                             }
                             aiVideoGenEventChannel.trySend(AiVideoGenEvent.ShowGeneratedToast)
-                            VideoGenerationTracker.requestDraftsTab()
-                            aiVideoGenEventChannel.trySend(AiVideoGenEvent.NavigateToProfile)
+                            aiVideoGenEventChannel.trySend(AiVideoGenEvent.NavigateToHome)
                             if (currentState.proDetails.isProPurchased) {
                                 val creditsRemaining =
                                     currentState.proDetails.availableCredits - 1
@@ -692,6 +684,6 @@ class AiVideoGenViewModel internal constructor(
         ) : AiVideoGenEvent()
         data object RefreshProDetails : AiVideoGenEvent()
         data object ShowGeneratedToast : AiVideoGenEvent()
-        data object NavigateToProfile : AiVideoGenEvent()
+        data object NavigateToHome : AiVideoGenEvent()
     }
 }
