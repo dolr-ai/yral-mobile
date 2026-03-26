@@ -221,7 +221,7 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
     }
   }
 
-  private func onStartDownload(
+  func onStartDownload(
     _ session: URLSession,
     assetDownloadTask: AVAssetDownloadTask,
     didFinishDownloadingTo location: URL
@@ -244,9 +244,11 @@ actor HLSDownloadManager: NSObject, HLSDownloadManaging {
     print("Started writing to location: \(location)")
   }
 
-  private func onEndDownload(_ session: URLSession,
-                             assetDownloadTask: AVAssetDownloadTask,
-                             didFinishDownloadingTo location: URL) {
+  func onEndDownload(
+    _ session: URLSession,
+    assetDownloadTask: AVAssetDownloadTask,
+    didFinishDownloadingTo location: URL
+  ) {
     let matchingEntry = self.activeDownloads.first {
       $0.value.underlyingTask === assetDownloadTask
     }

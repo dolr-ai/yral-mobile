@@ -86,6 +86,9 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp "certs/Yral-Staging-Distribution.mobileprovision" ~/Library/MobileDevice/Provisioning\ Profiles/
   
+      - name: Install Sentry CLI
+        run: brew install getsentry/tools/sentry-cli
+
       - name: Build & Upload to TestFlight
         run: fastlane ios build_staging_testflight
         env:
@@ -94,6 +97,10 @@ jobs:
           APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
           GITHUB_USERNAME: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+          SENTRY_URL: ${{ vars.SENTRY_URL }}
 
       - name: Upload gym build log
         if: failure()
