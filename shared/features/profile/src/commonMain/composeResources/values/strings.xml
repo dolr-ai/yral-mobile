@@ -29,9 +29,7 @@
     <string name="become_pro">Become Pro</string>
     <string name="video_generating">Generating video…</string>
     <string name="draft_label">Draft</string>
-    <string name="publish_success">Your video has been published successfully!</string>
     <string name="publish_button">Publish</string>
-    <string name="publishing_video">Your video is being published and will appear in your profile section.</string>
     <string name="drafts_empty_title">Drafts Empty!</string>
     <string name="drafts_empty_subtitle">Create your first AI video and it will appear here,\nready to be shared with the world.</string>
     <string name="tab_new">New</string>
