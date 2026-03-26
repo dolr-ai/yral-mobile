@@ -50,13 +50,24 @@ final class DeepLinkRouter: ObservableObject {
   private func resolveAppRoute(fromPNs userInfo: [AnyHashable: Any]) -> AppRoute? {
     guard let payloadString = userInfo[Constants.payloadString] as? String,
           let payloadData = payloadString.data(using: .utf8),
-          let payloadDict = try? JSONSerialization.jsonObject(with: payloadData) as? [String: Any],
-          let internalURL = payloadDict[Constants.internalURL] as? String else {
+          let payloadDict = try? JSONSerialization.jsonObject(with: payloadData) as? [String: Any] else {
       return nil
     }
 
-    let route = AppDIHelper().getRoutingService().parseUrl(url: internalURL)
-    return route
+    let type = payloadDict[Constants.typeString] as? String
+    if type == Constants.draftCreatedType {
+      VideoGenerationTracker.shared.requestDraftsTab()
+    }
+
+    if let internalURL = payloadDict[Constants.internalURL] as? String {
+      return AppDIHelper().getRoutingService().parseUrl(url: internalURL)
+    }
+
+    if type == Constants.draftCreatedType {
+      return Profile()
+    }
+
+    return nil
   }
 
   private func resolveBranchAppRoute(fromBranch params: [AnyHashable: Any]) -> AppRoute? {
@@ -121,6 +132,7 @@ extension DeepLinkRouter {
     static let typeString = "type"
     static let internalURL = "internalUrl"
     static let videoUploadSuccessType = "VideoUploadSuccessful"
+    static let draftCreatedType = "VideoUploadedToDraft"
     static let branchParameters = "Branch parameters:"
     static let branchError = "Branch error:"
   }

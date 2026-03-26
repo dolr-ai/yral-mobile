@@ -40,30 +40,40 @@ enum AppRouteResolver {
     static let deeplinkPath = "$deeplink_path"
     static let branchClick = "+clicked_branch_link"
     static let videoUploadSuccessType = "VideoUploadSuccessful"
+    static let draftCreatedType = "VideoUploadedToDraft"
   }
 
   static func notificationRoute(
     from userInfo: [AnyHashable: Any],
     parseUrl: (String) -> AppRoute = defaultParseUrl
   ) -> AppRoute? {
-    guard let payloadString = userInfo[Constants.payloadString] as? String,
-          let payloadData = payloadString.data(using: .utf8),
-          let rawPayload = try? JSONSerialization.jsonObject(with: payloadData),
-          let payload = rawPayload as? [String: Any]
+    guard let payload = notificationPayload(from: userInfo)
     else {
       return nil
+    }
+
+    let type = payload[Constants.typeString] as? String
+    if type == Constants.draftCreatedType {
+      VideoGenerationTracker.shared.requestDraftsTab()
     }
 
     if let internalURL = payload[Constants.internalURL] as? String {
       return parseUrl(internalURL)
     }
 
-    if let type = payload[Constants.typeString] as? String,
-       type == Constants.videoUploadSuccessType {
+    if type == Constants.videoUploadSuccessType {
       return VideoUploadSuccessful(videoID: nil)
     }
 
+    if type == Constants.draftCreatedType {
+      return Profile()
+    }
+
     return nil
+  }
+
+  static func notificationType(from userInfo: [AnyHashable: Any]) -> String? {
+    notificationPayload(from: userInfo)?[Constants.typeString] as? String
   }
 
   static func branchRoute(
@@ -102,6 +112,18 @@ enum AppRouteResolver {
 
   private static func defaultParseUrl(_ url: String) -> AppRoute {
     AppDIHelper().getRoutingService().parseUrl(url: url)
+  }
+
+  private static func notificationPayload(from userInfo: [AnyHashable: Any]) -> [String: Any]? {
+    guard let payloadString = userInfo[Constants.payloadString] as? String,
+          let payloadData = payloadString.data(using: .utf8),
+          let rawPayload = try? JSONSerialization.jsonObject(with: payloadData),
+          let payload = rawPayload as? [String: Any]
+    else {
+      return nil
+    }
+
+    return payload
   }
 }
 
@@ -195,7 +217,26 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     _ center: UNUserNotificationCenter,
     willPresent notification: UNNotification
   ) async -> UNNotificationPresentationOptions {
-    []
+    let userInfo = notification.request.content.userInfo
+
+    guard let route = AppRouteResolver.notificationRoute(from: userInfo) else {
+      return []
+    }
+
+    switch AppRouteResolver.notificationType(from: userInfo) {
+    case AppRouteResolver.Constants.videoUploadSuccessType:
+      ToastManager.showToast(type: .uploadSuccess, onTap: { [weak self] in
+        self?.navigate(to: route)
+      })
+    case AppRouteResolver.Constants.draftCreatedType:
+      ToastManager.showToast(type: .draftCreated, onTap: { [weak self] in
+        self?.navigate(to: route)
+      })
+    default:
+      navigate(to: route)
+    }
+
+    return []
   }
 
   func application(
@@ -219,7 +260,6 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     guard AppRouteResolver.isBranchClick(params["+clicked_branch_link"]) else {
       return
     }
-
     guard let channel = (
       params["~channel"] as? String
       ?? params["channel"] as? String

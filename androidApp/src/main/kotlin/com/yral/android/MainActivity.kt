@@ -25,6 +25,7 @@ import com.yral.shared.app.isVersionLower
 import com.yral.shared.app.nav.DefaultRootComponent
 import com.yral.shared.app.ui.MyApplicationTheme
 import com.yral.shared.app.ui.screens.RootScreen
+import com.yral.shared.core.videostate.VideoGenerationTracker
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.utils.OAuthResult
 import com.yral.shared.features.auth.utils.OAuthUtils
@@ -34,6 +35,7 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import com.yral.shared.libs.routing.deeplink.engine.RoutingService
 import com.yral.shared.libs.routing.routes.api.AppRoute
+import com.yral.shared.libs.routing.routes.api.Profile
 import com.yral.shared.preferences.stores.AffiliateAttributionStore
 import com.yral.shared.rust.service.services.HelperService.initRustLogger
 import com.yral.shared.rust.service.services.RustLogLevel
@@ -227,8 +229,13 @@ class MainActivity : ComponentActivity() {
     private fun mapPayloadToRoute(payload: String): AppRoute? =
         try {
             val jsonObject = Json.decodeFromString(JsonObject.serializer(), payload)
+            val type = jsonObject["type"]?.jsonPrimitive?.content
             val internalUrl = jsonObject["internalUrl"]?.jsonPrimitive?.content
-            internalUrl?.let { routingService.parseUrl(internalUrl) }
+            if (type == "VideoUploadedToDraft") {
+                VideoGenerationTracker.requestDraftsTab()
+            }
+            internalUrl?.let { routingService.parseUrl(it) }
+                ?: if (type == "VideoUploadedToDraft") Profile else null
         } catch (
             @Suppress("TooGenericExceptionCaught") e: Exception,
         ) {

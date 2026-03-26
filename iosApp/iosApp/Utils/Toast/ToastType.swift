@@ -12,6 +12,7 @@ enum ToastType {
   case uploadSuccess
   case uploadFailure
   case reportSuccess
+  case draftCreated
 
   var title: String {
     switch self {
@@ -21,6 +22,8 @@ enum ToastType {
       return Constants.failureTitle
     case .reportSuccess:
       return Constants.reportSuccessTitle
+    case .draftCreated:
+      return Constants.draftCreatedTitle
     }
   }
 
@@ -32,12 +35,14 @@ enum ToastType {
       return Constants.failureSubtitle
     case .reportSuccess:
       return Constants.reportSuccessSubtitle
+    case .draftCreated:
+      return Constants.draftCreatedSubtitle
     }
   }
 
   var subtitleColor: UIColor {
     switch self {
-    case .uploadSuccess, .reportSuccess:
+    case .uploadSuccess, .reportSuccess, .draftCreated:
       return Constants.successSubtitleColor
     case .uploadFailure:
       return Constants.failureSubtitleColor
@@ -50,12 +55,14 @@ enum ToastType {
       return nil
     case .uploadFailure:
       return Constants.failureButtonTitle
+    case .draftCreated:
+      return Constants.draftCreatedButtonTitle
     }
   }
 
   var icon: UIImage? {
     switch self {
-    case .uploadSuccess, .reportSuccess:
+    case .uploadSuccess, .reportSuccess, .draftCreated:
       return UIImage(named: Constants.successIconName)
     case .uploadFailure:
       return UIImage(named: Constants.failureIconName)
@@ -64,7 +71,7 @@ enum ToastType {
 
   var backgroundColor: UIColor {
     switch self {
-    case .uploadSuccess, .uploadFailure, .reportSuccess:
+    case .uploadSuccess, .uploadFailure, .reportSuccess, .draftCreated:
       return Constants.bgColor
     }
   }
@@ -86,6 +93,9 @@ Browse and add more videos.
     static let failureButtonTitle = "Retry"
     static let successIconName = "toast_success"
     static let failureIconName = "toast_failure"
+    static let draftCreatedTitle = "Draft Ready"
+    static let draftCreatedSubtitle = "Your AI video has been generated and added to Drafts."
+    static let draftCreatedButtonTitle = "View Drafts"
     static let bgColor = UIColor(red: 0.09, green: 0.09, blue: 0.09, alpha: 1)
   }
 }
