@@ -1215,6 +1215,10 @@ class ProfileViewModel(
             publishDraftVideoUseCase(
                 PublishDraftVideoUseCase.Param(postId = feedDetails.videoID),
             ).onSuccess {
+                profileTelemetry.onVideoPublished(
+                    videoId = feedDetails.videoID,
+                    isSuccess = true,
+                )
                 VideoGenerationTracker.clearDraft(feedDetails.videoID)
                 // Update paging data to remove draft status
                 pagingState.update { state ->
@@ -1233,6 +1237,11 @@ class ProfileViewModel(
                 }
                 profileEventsChannel.trySend(ProfileEvents.RefreshDrafts)
             }.onFailure { error ->
+                profileTelemetry.onVideoPublished(
+                    videoId = feedDetails.videoID,
+                    isSuccess = false,
+                    reason = error.message,
+                )
                 _state.update { it.copy(publishDraftUiState = UiState.Failure(error)) }
                 ToastManager.showToast(
                     type = ToastType.Small(getString(DesignRes.string.something_went_wrong)),

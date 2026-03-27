@@ -21,6 +21,7 @@ import com.yral.shared.analytics.events.VideoClickedEventData
 import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.analytics.events.VideoDeletedEventData
 import com.yral.shared.analytics.events.VideoDownloadedEventData
+import com.yral.shared.analytics.events.VideoPublishedData
 import com.yral.shared.analytics.events.VideoReportedEventData
 import com.yral.shared.analytics.events.VideoShareClickedEventData
 import com.yral.shared.analytics.events.VideoStartedEventData
@@ -114,6 +115,20 @@ class ProfileTelemetry(
                     videoId = feedDetails.videoID,
                     ctaType = catType,
                 ),
+        )
+    }
+
+    fun onVideoPublished(
+        videoId: String,
+        isSuccess: Boolean,
+        reason: String? = null,
+    ) {
+        analyticsManager.trackEvent(
+            VideoPublishedData(
+                videoId = videoId,
+                isSuccess = isSuccess,
+                reason = reason,
+            ),
         )
     }
 

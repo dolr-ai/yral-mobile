@@ -1176,6 +1176,28 @@ data class AiVideoRequestSubmittedData(
 
 // --- Profile ---
 @Serializable
+data class VideoPublishedData(
+    @SerialName("event") override val event: String = FeatureEvents.VIDEO_PUBLISHED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.PROFILE.getFeatureName(),
+    @SerialName("video_id") val videoId: String,
+    @SerialName("is_success") val isSuccess: Boolean,
+    @SerialName("reason") val reason: String?,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        videoId: String,
+        isSuccess: Boolean,
+        reason: String?,
+    ) : this(
+        FeatureEvents.VIDEO_PUBLISHED.getEventName(),
+        Features.PROFILE.getFeatureName(),
+        videoId,
+        isSuccess,
+        reason,
+    )
+}
+
+@Serializable
 data class ProfilePageViewedEventData(
     @SerialName("event") override val event: String = FeatureEvents.PROFILE_PAGE_VIEWED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.PROFILE.getFeatureName(),

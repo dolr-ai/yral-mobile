@@ -8,6 +8,10 @@ import androidx.lifecycle.viewModelScope
 import com.github.michaelbull.result.Err
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.analytics.AnalyticsProvider
+import com.yral.shared.analytics.User
+import com.yral.shared.analytics.events.EventData
+import com.yral.shared.analytics.events.VideoPublishedData
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
@@ -76,6 +80,7 @@ import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
@@ -98,6 +103,7 @@ class ProfileViewModelTest {
     private lateinit var sessionManager: SessionManager
     private lateinit var fakeUploadRepository: FakeUploadRepository
     private lateinit var fakeProfileRepository: FakeProfileRepository
+    private lateinit var fakeAnalyticsProvider: FakeAnalyticsProvider
     private var viewModel: ProfileViewModel? = null
 
     companion object {
@@ -146,6 +152,7 @@ class ProfileViewModelTest {
         sessionManager = SessionManager()
         fakeUploadRepository = FakeUploadRepository()
         fakeProfileRepository = FakeProfileRepository()
+        fakeAnalyticsProvider = FakeAnalyticsProvider()
         VideoGenerationTracker.stopGenerating()
         VideoGenerationTracker.consumeDraftsTabRequest()
     }
@@ -169,6 +176,7 @@ class ProfileViewModelTest {
         val failureListener = NoOpUseCaseFailureListener()
         val appDispatchers = AppDispatchers()
         val fakeUserInfoRepository = FakeUserInfoRepository()
+        val analyticsManager = AnalyticsManager(providers = listOf(fakeAnalyticsProvider))
 
         return ProfileViewModel(
             canisterData =
@@ -222,8 +230,8 @@ class ProfileViewModelTest {
                     appDispatchers,
                     failureListener,
                 ),
-            profileTelemetry = ProfileTelemetry(AnalyticsManager()),
-            chatTelemetry = ChatTelemetry(AnalyticsManager()),
+            profileTelemetry = ProfileTelemetry(analyticsManager),
+            chatTelemetry = ChatTelemetry(analyticsManager),
             shareService = FakeShareService(),
             urlBuilder = UrlBuilder(RoutingTable(emptyList()), "https", "example.com"),
             linkGenerator = FakeLinkGenerator(),
@@ -311,6 +319,21 @@ class ProfileViewModelTest {
             Unit
         }
 
+    @Test
+    fun `publishDraft success tracks video published success event`() =
+        runBlocking {
+            signInUser()
+            val vm = createViewModel()
+
+            vm.publishDraft(TEST_FEED_DETAILS)
+
+            val event =
+                awaitVideoPublishedEvent()
+            assertEquals(TEST_FEED_DETAILS.videoID, event.videoId)
+            assertEquals(true, event.isSuccess)
+            assertEquals(null, event.reason)
+        }
+
     // endregion
 
     // region publishDraft failure
@@ -329,6 +352,22 @@ class ProfileViewModelTest {
             }
             assertIs<UiState.Failure>(vm.state.value.publishDraftUiState)
             Unit
+        }
+
+    @Test
+    fun `publishDraft failure tracks video published failure event`() =
+        runBlocking {
+            signInUser()
+            fakeUploadRepository.markPostAsPublishedShouldThrow = true
+            val vm = createViewModel()
+
+            vm.publishDraft(TEST_FEED_DETAILS)
+
+            val event =
+                awaitVideoPublishedEvent()
+            assertEquals(TEST_FEED_DETAILS.videoID, event.videoId)
+            assertEquals(false, event.isSuccess)
+            assertEquals(true, event.reason?.contains("Publish failed"))
         }
 
     // endregion
@@ -350,6 +389,15 @@ class ProfileViewModelTest {
         }
 
     // endregion
+
+    private suspend fun awaitVideoPublishedEvent(): VideoPublishedData {
+        withTimeout(TIMEOUT_MS) {
+            while (fakeAnalyticsProvider.events.filterIsInstance<VideoPublishedData>().isEmpty()) {
+                delay(10)
+            }
+        }
+        return fakeAnalyticsProvider.events.filterIsInstance<VideoPublishedData>().first()
+    }
 }
 
 // region Fake implementations
@@ -363,6 +411,24 @@ private class NoOpUseCaseFailureListener : UseCaseFailureListener {
     ) {
         // no-op
     }
+}
+
+private class FakeAnalyticsProvider : AnalyticsProvider {
+    val events = mutableListOf<EventData>()
+
+    override val name: String = "fake"
+
+    override fun shouldTrackEvent(event: EventData): Boolean = true
+
+    override fun trackEvent(event: EventData) {
+        events += event
+    }
+
+    override fun setUserProperties(user: User) = Unit
+
+    override fun reset() = Unit
+
+    override fun toValidKeyName(key: String): String = key
 }
 
 private class FakeUploadRepository : UploadRepository {
