@@ -88,4 +88,9 @@ class AppRouteTest {
         // Metadata should not be included in serialization due to @Transient
         assertFalse(json.contains("metadata"))
     }
+
+    @Test
+    fun testProfilePathHelper() {
+        assertEquals(Profile.PATH, profilePath())
+    }
 }

@@ -16,15 +16,20 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-class ForegroundNotificationHandlerTest {
-    private lateinit var handler: ForegroundNotificationHandler
+class NotificationHandlerTest {
+    private val draftsInternalUrl = "/profile"
+    private val viewDraftsCtaText = "View Drafts"
+    private lateinit var handler: NotificationHandler
     private var lastNavigatedPayload: String? = null
 
     @BeforeTest
     fun setup() {
         ToastManager.clear()
         lastNavigatedPayload = null
-        handler = ForegroundNotificationHandler(viewDraftsCtaText = "View Drafts")
+        handler =
+            NotificationHandler(
+                notificationConfigByType = notificationConfigByType(viewDraftsCtaText),
+            )
     }
 
     @AfterTest
@@ -62,7 +67,7 @@ class ForegroundNotificationHandlerTest {
         assertEquals("Your video draft is ready", toast.type.message)
         assertEquals(ToastStatus.Success, toast.status)
         assertNotNull(toast.cta)
-        assertEquals("View Drafts", toast.cta!!.text)
+        assertEquals(viewDraftsCtaText, toast.cta!!.text)
         assertEquals(ToastDuration.LONG, toast.duration)
 
         // CTA navigates with a wrapped payload containing internalUrl
@@ -70,7 +75,7 @@ class ForegroundNotificationHandlerTest {
         assertNotNull(lastNavigatedPayload)
         val payload = Json.decodeFromString(JsonObject.serializer(), lastNavigatedPayload!!)
         assertEquals("VideoUploadedToDraft", payload["type"]?.jsonPrimitive?.content)
-        assertEquals("profile", payload["internalUrl"]?.jsonPrimitive?.content)
+        assertEquals(draftsInternalUrl, payload["internalUrl"]?.jsonPrimitive?.content)
     }
 
     // --- Message 2: VideoUploadSuccessful (has payload JSON with internalUrl) ---
@@ -129,7 +134,8 @@ class ForegroundNotificationHandlerTest {
 
     @Test
     fun `VideoUploadedToDraft inside payload uses payload as-is for navigation`() {
-        val payloadJson = """{"type":"VideoUploadedToDraft","post_id":"e85287ee","internalUrl":"profile"}"""
+        val payloadJson =
+            """{"type":"VideoUploadedToDraft","post_id":"e85287ee","internalUrl":"$draftsInternalUrl"}"""
         val data = mapOf("payload" to payloadJson)
 
         handler.handle(
@@ -144,7 +150,7 @@ class ForegroundNotificationHandlerTest {
         val toast = toasts.first()
         assertEquals(ToastStatus.Success, toast.status)
         assertNotNull(toast.cta)
-        assertEquals("View Drafts", toast.cta!!.text)
+        assertEquals(viewDraftsCtaText, toast.cta!!.text)
 
         // CTA uses the original payload directly
         toast.cta!!.onClick()
@@ -188,7 +194,7 @@ class ForegroundNotificationHandlerTest {
         val json = Json.decodeFromString(JsonObject.serializer(), result)
         assertEquals("VideoUploadedToDraft", json["type"]?.jsonPrimitive?.content)
         assertEquals("123", json["post_id"]?.jsonPrimitive?.content)
-        assertEquals("profile", json["internalUrl"]?.jsonPrimitive?.content)
+        assertEquals(draftsInternalUrl, json["internalUrl"]?.jsonPrimitive?.content)
     }
 
     @Test
@@ -199,6 +205,48 @@ class ForegroundNotificationHandlerTest {
         val json = Json.decodeFromString(JsonObject.serializer(), result)
         assertEquals("VideoPublished", json["type"]?.jsonPrimitive?.content)
         assertNull(json["internalUrl"])
+    }
+
+    @Test
+    fun `resolvePayloadOrNull returns payload when present`() {
+        val payloadJson = """{"type":"RewardEarned","internalUrl":"wallet/rewards"}"""
+
+        val result = handler.resolvePayloadOrNull(mapOf("payload" to payloadJson))
+
+        assertEquals(payloadJson, result)
+    }
+
+    @Test
+    fun `resolvePayloadOrNull wraps top level notification data`() {
+        val result =
+            handler.resolvePayloadOrNull(
+                mapOf(
+                    "type" to "VideoUploadedToDraft",
+                    "post_id" to "123",
+                ),
+            )
+
+        assertNotNull(result)
+        val json = Json.decodeFromString(JsonObject.serializer(), result)
+        assertEquals("VideoUploadedToDraft", json["type"]?.jsonPrimitive?.content)
+        assertEquals(draftsInternalUrl, json["internalUrl"]?.jsonPrimitive?.content)
+    }
+
+    @Test
+    fun `resolvePayloadOrNull returns null for unrelated extras`() {
+        val result = handler.resolvePayloadOrNull(mapOf("google.message_id" to "abc"))
+
+        assertNull(result)
+    }
+
+    @Test
+    fun `notificationConfigByType creates draft config with profile path fallback`() {
+        val config = notificationConfigByType(viewDraftsCtaText)[DRAFT_CREATED_TYPE]
+
+        assertNotNull(config)
+        assertEquals(draftsInternalUrl, config.fallbackInternalUrl)
+        assertEquals(viewDraftsCtaText, config.ctaText)
+        assertEquals(false, config.navigateDirectly)
     }
 
     // --- Edge cases ---

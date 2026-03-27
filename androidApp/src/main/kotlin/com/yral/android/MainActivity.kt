@@ -69,6 +69,7 @@ class MainActivity : ComponentActivity() {
     private val branchAttributionProcessor: BranchAttributionProcessor? by lazy {
         (application as YralApp).getBranchAttributionProcessor()
     }
+    private val notificationHandler: NotificationHandler by inject()
 
     private val updateResultLauncher: ActivityResultLauncher<IntentSenderRequest> =
         registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
@@ -205,7 +206,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleIntent(intent: Intent?) {
-        Logger.d("MainActivity") { "onNewIntent: ${intent?.data}" }
+        Logger.d("MainActivity") { "onNewIntent: ${intent?.data}, extras=${intent?.extras?.keySet()}" }
 
         // Handle OAuth redirect URIs
         handleOAuthIntent(intent)?.let {
@@ -214,7 +215,7 @@ class MainActivity : ComponentActivity() {
         }
 
         // Handle notification deep links with payload format
-        val payload = intent?.getStringExtra("payload")
+        val payload = intent?.extractNotificationPayload()
         if (payload != null) {
             Logger.d("MainActivity") { "Handling notification payload: $payload" }
             mapPayloadToRoute(payload)?.let { route -> handleNotificationDeepLink(route) }
@@ -303,5 +304,18 @@ class MainActivity : ComponentActivity() {
             }
         val channel = rawChannel?.takeIf { it.isNotBlank() } ?: return
         affiliateAttributionStore.storeIfEmpty(channel)
+    }
+
+    private fun Intent.extractNotificationPayload(): String? {
+        val extrasData =
+            extras
+                ?.let { bundle ->
+                    bundle.keySet().mapNotNull { key ->
+                        bundle.getString(key)?.let { key to it }
+                    }
+                }?.toMap()
+                .orEmpty()
+
+        return notificationHandler.resolvePayloadOrNull(extrasData)
     }
 }

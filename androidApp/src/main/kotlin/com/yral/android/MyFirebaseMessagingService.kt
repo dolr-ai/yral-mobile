@@ -11,6 +11,7 @@ import org.koin.android.ext.android.inject
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
     private val registerNotificationTokenUseCase: RegisterNotificationTokenUseCase by inject()
+    private val notificationHandler: NotificationHandler by inject()
 
     @WorkerThread
     override fun onNewToken(token: String) {
@@ -24,11 +25,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         }
 
         if (message.notification != null) {
-            val handler =
-                ForegroundNotificationHandler(
-                    viewDraftsCtaText = getString(R.string.view_drafts),
-                )
-            handler.handle(
+            notificationHandler.handle(
                 title = message.notification?.title,
                 body = message.notification?.body,
                 data = message.data,

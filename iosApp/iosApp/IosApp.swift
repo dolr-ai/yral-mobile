@@ -32,101 +32,6 @@ private enum LegacyAuthKeychainKeys {
 private final class EmptyExternalDependencyProvider: ExternalDependencyProvider {
 }
 
-enum AppRouteResolver {
-  enum Constants {
-    static let payloadString = "payload"
-    static let typeString = "type"
-    static let internalURL = "internalUrl"
-    static let deeplinkPath = "$deeplink_path"
-    static let branchClick = "+clicked_branch_link"
-    static let videoUploadSuccessType = "VideoUploadSuccessful"
-    static let draftCreatedType = "VideoUploadedToDraft"
-  }
-
-  static func notificationRoute(
-    from userInfo: [AnyHashable: Any],
-    parseUrl: (String) -> AppRoute = defaultParseUrl
-  ) -> AppRoute? {
-    guard let payload = notificationPayload(from: userInfo)
-    else {
-      return nil
-    }
-
-    let type = payload[Constants.typeString] as? String
-    if type == Constants.draftCreatedType {
-      VideoGenerationTracker.shared.requestDraftsTab()
-    }
-
-    if let internalURL = payload[Constants.internalURL] as? String {
-      return parseUrl(internalURL)
-    }
-
-    if type == Constants.videoUploadSuccessType {
-      return VideoUploadSuccessful(videoID: nil)
-    }
-
-    if type == Constants.draftCreatedType {
-      return Profile()
-    }
-
-    return nil
-  }
-
-  static func notificationType(from userInfo: [AnyHashable: Any]) -> String? {
-    notificationPayload(from: userInfo)?[Constants.typeString] as? String
-  }
-
-  static func branchRoute(
-    from params: [AnyHashable: Any],
-    parseUrl: (String) -> AppRoute = defaultParseUrl
-  ) -> AppRoute? {
-    guard isBranchClick(params[Constants.branchClick]) else {
-      return nil
-    }
-
-    if let type = params[Constants.typeString] as? String,
-       type == Constants.videoUploadSuccessType {
-      return VideoUploadSuccessful(videoID: nil)
-    }
-
-    if let deeplinkPath = params[Constants.deeplinkPath] as? String {
-      return parseUrl(deeplinkPath)
-    }
-
-    return nil
-  }
-
-  static func isBranchClick(_ value: Any?) -> Bool {
-    switch value {
-    case let bool as Bool:
-      return bool
-    case let number as NSNumber:
-      return number.intValue == 1
-    case let string as String:
-      let lowered = string.lowercased()
-      return lowered == "1" || lowered == "true"
-    default:
-      return false
-    }
-  }
-
-  private static func defaultParseUrl(_ url: String) -> AppRoute {
-    AppDIHelper().getRoutingService().parseUrl(url: url)
-  }
-
-  private static func notificationPayload(from userInfo: [AnyHashable: Any]) -> [String: Any]? {
-    guard let payloadString = userInfo[Constants.payloadString] as? String,
-          let payloadData = payloadString.data(using: .utf8),
-          let rawPayload = try? JSONSerialization.jsonObject(with: payloadData),
-          let payload = rawPayload as? [String: Any]
-    else {
-      return nil
-    }
-
-    return payload
-  }
-}
-
 final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
   lazy var root: RootComponent = DefaultRootComponent(
     componentContext: DefaultComponentContext(lifecycle: ApplicationLifecycle())
@@ -158,7 +63,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
       }
 
       self.handleAffiliateAttribution(params: params)
-      self.navigate(to: AppRouteResolver.branchRoute(from: params))
+      self.navigate(to: NotificationHandler.branchRoute(from: params))
     }
 
     NotificationCenter.default.addObserver(
@@ -209,7 +114,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     didReceive response: UNNotificationResponse,
     withCompletionHandler completionHandler: @escaping () -> Void
   ) {
-    navigate(to: AppRouteResolver.notificationRoute(from: response.notification.request.content.userInfo))
+    navigate(to: NotificationHandler.notificationRoute(from: response.notification.request.content.userInfo))
     completionHandler()
   }
 
@@ -217,25 +122,13 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     _ center: UNUserNotificationCenter,
     willPresent notification: UNNotification
   ) async -> UNNotificationPresentationOptions {
-    let userInfo = notification.request.content.userInfo
-
-    guard let route = AppRouteResolver.notificationRoute(from: userInfo) else {
-      return []
+    NotificationHandler.handleForegroundNotification(
+      userInfo: notification.request.content.userInfo,
+      title: notification.request.content.title.nilIfEmpty,
+      body: notification.request.content.body.nilIfEmpty
+    ) { [weak self] route in
+      self?.navigate(to: route)
     }
-
-    switch AppRouteResolver.notificationType(from: userInfo) {
-    case AppRouteResolver.Constants.videoUploadSuccessType:
-      ToastManager.showToast(type: .uploadSuccess, onTap: { [weak self] in
-        self?.navigate(to: route)
-      })
-    case AppRouteResolver.Constants.draftCreatedType:
-      ToastManager.showToast(type: .draftCreated, onTap: { [weak self] in
-        self?.navigate(to: route)
-      })
-    default:
-      navigate(to: route)
-    }
-
     return []
   }
 
@@ -257,7 +150,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
   }
 
   private func handleAffiliateAttribution(params: [AnyHashable: Any]) {
-    guard AppRouteResolver.isBranchClick(params["+clicked_branch_link"]) else {
+    guard NotificationHandler.isBranchClick(params["+clicked_branch_link"]) else {
       return
     }
     guard let channel = (
