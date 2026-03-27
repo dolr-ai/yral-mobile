@@ -6,20 +6,8 @@ import co.touchlab.kermit.Logger
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.yral.shared.features.auth.domain.useCases.RegisterNotificationTokenUseCase
-import com.yral.shared.libs.designsystem.component.toast.ToastCTA
-import com.yral.shared.libs.designsystem.component.toast.ToastDuration
-import com.yral.shared.libs.designsystem.component.toast.ToastManager
-import com.yral.shared.libs.designsystem.component.toast.ToastStatus
-import com.yral.shared.libs.designsystem.component.toast.ToastType
-import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import org.koin.android.ext.android.inject
-
-private val NOTIF_THAT_REQUIRES_NAVIGATION = listOf("RewardEarned")
-private const val DRAFT_CREATED_TYPE = "VideoUploadedToDraft"
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
     private val registerNotificationTokenUseCase: RegisterNotificationTokenUseCase by inject()
@@ -36,77 +24,26 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         }
 
         if (message.notification != null) {
-            // notification messages are received here only when app is in foreground
-            showToastForForegroundMessage(message)
+            val handler =
+                ForegroundNotificationHandler(
+                    viewDraftsCtaText = getString(R.string.view_drafts),
+                )
+            handler.handle(
+                title = message.notification?.title,
+                body = message.notification?.body,
+                data = message.data,
+                onNavigate = { payload -> navigateToActivity(payload) },
+            )
         }
 
         super.onMessageReceived(message)
     }
 
-    private fun showToastForForegroundMessage(message: RemoteMessage) {
-        message.notification?.let { notification ->
-            message.data["payload"]?.let { payload ->
-                val jsonObject = Json.decodeFromString(JsonObject.serializer(), payload)
-                val type = jsonObject["type"]?.jsonPrimitive?.content
-                when (type) {
-                    in NOTIF_THAT_REQUIRES_NAVIGATION -> handleNotificationsWithInternalUrl(message)
-                    DRAFT_CREATED_TYPE -> handleDraftCreatedNotification(notification, message)
-                    else -> handleToastNotification(notification)
-                }
-            } ?: handleToastNotification(notification)
-        }
-    }
-
-    private fun handleToastNotification(notification: RemoteMessage.Notification) {
-        val title = notification.title
-        val body = notification.body
-        val toastType =
-            if (title != null && body != null) {
-                ToastType.Big(title, body)
-            } else {
-                val message = title ?: body
-                if (message != null) {
-                    ToastType.Small(message)
-                } else {
-                    return
-                }
-            }
-
-        ToastManager.showToast(
-            type = toastType,
-            status = ToastStatus.Success, // currently we don't have any information about status
-        )
-    }
-
-    private fun handleDraftCreatedNotification(
-        notification: RemoteMessage.Notification,
-        message: RemoteMessage,
-    ) {
-        val title = notification.title
-        val body = notification.body
-        val toastType =
-            if (title != null && body != null) {
-                ToastType.Big(title, body)
-            } else {
-                ToastType.Small(title ?: body ?: return)
-            }
-        val ctaText = getString(R.string.view_drafts)
-        ToastManager.showSuccess(
-            type = toastType,
-            cta =
-                ToastCTA(
-                    text = ctaText,
-                    onClick = { handleNotificationsWithInternalUrl(message) },
-                ),
-            duration = ToastDuration.LONG,
-        )
-    }
-
-    private fun handleNotificationsWithInternalUrl(message: RemoteMessage) {
+    private fun navigateToActivity(payload: String) {
         val intent = Intent(this, MainActivity::class.java)
         // Use these flags to bring an existing instance to the front or create a new one if needed
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-        intent.putExtra("payload", message.data["payload"])
+        intent.putExtra("payload", payload)
         startActivity(intent)
     }
 

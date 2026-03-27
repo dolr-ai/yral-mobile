@@ -231,11 +231,11 @@ class MainActivity : ComponentActivity() {
             val jsonObject = Json.decodeFromString(JsonObject.serializer(), payload)
             val type = jsonObject["type"]?.jsonPrimitive?.content
             val internalUrl = jsonObject["internalUrl"]?.jsonPrimitive?.content
-            if (type == "VideoUploadedToDraft") {
+            if (type == DRAFT_CREATED_TYPE) {
                 VideoGenerationTracker.requestDraftsTab()
             }
             internalUrl?.let { routingService.parseUrl(it) }
-                ?: if (type == "VideoUploadedToDraft") Profile else null
+                ?: if (type == DRAFT_CREATED_TYPE) Profile else null
         } catch (
             @Suppress("TooGenericExceptionCaught") e: Exception,
         ) {
