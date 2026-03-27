@@ -1,5 +1,6 @@
 package com.yral.android
 
+import com.yral.shared.core.videostate.VideoGenerationTracker
 import com.yral.shared.libs.designsystem.component.toast.ToastDuration
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastStatus
@@ -11,6 +12,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -26,6 +28,7 @@ class NotificationHandlerTest {
     fun setup() {
         ToastManager.clear()
         lastNavigatedPayload = null
+        VideoGenerationTracker.clearPendingGenerations()
         handler =
             NotificationHandler(
                 notificationConfigByType = notificationConfigByType(viewDraftsCtaText),
@@ -35,6 +38,7 @@ class NotificationHandlerTest {
     @AfterTest
     fun tearDown() {
         ToastManager.clear()
+        VideoGenerationTracker.clearPendingGenerations()
     }
 
     private fun onNavigate(payload: String) {
@@ -45,6 +49,8 @@ class NotificationHandlerTest {
 
     @Test
     fun `VideoUploadedToDraft without payload wraps data and shows toast with CTA`() {
+        VideoGenerationTracker.startGenerating()
+        VideoGenerationTracker.startGenerating()
         val data =
             mapOf(
                 "post_id" to "e85287ee-c7be-42f1-b07f-4c58d1d51c34",
@@ -69,6 +75,8 @@ class NotificationHandlerTest {
         assertNotNull(toast.cta)
         assertEquals(viewDraftsCtaText, toast.cta!!.text)
         assertEquals(ToastDuration.LONG, toast.duration)
+        assertTrue(VideoGenerationTracker.state.value.isGenerating)
+        assertEquals(1, VideoGenerationTracker.state.value.pendingGenerations.size)
 
         // CTA navigates with a wrapped payload containing internalUrl
         toast.cta!!.onClick()

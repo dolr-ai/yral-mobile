@@ -233,7 +233,7 @@ class MainActivity : ComponentActivity() {
             val type = jsonObject["type"]?.jsonPrimitive?.content
             val internalUrl = jsonObject["internalUrl"]?.jsonPrimitive?.content
             if (type == DRAFT_CREATED_TYPE) {
-                VideoGenerationTracker.requestDraftsTab()
+                VideoGenerationTracker.onDraftCreatedAndRequestDraftsTab()
             }
             internalUrl?.let { routingService.parseUrl(it) }
                 ?: if (type == DRAFT_CREATED_TYPE) Profile else null

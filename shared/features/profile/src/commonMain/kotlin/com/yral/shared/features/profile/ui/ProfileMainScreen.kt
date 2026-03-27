@@ -47,9 +47,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -203,6 +205,7 @@ internal const val MAX_LINES_FOR_POST_DESCRIPTION = 5
 internal const val PADDING_BOTTOM_ACCOUNT_INFO = 20
 internal const val SHEET_GROWTH_PER_ITEM = 0.05f
 internal const val PROFILE_SWITCHER_ROTATION_DEGREES = 90f
+internal const val NANOSECONDS_PER_MILLISECOND = 1_000_000L
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
@@ -1300,7 +1303,11 @@ private fun DraftVideoGridContent(
     openDraftVideo: (FeedDetails) -> Unit,
 ) {
     val generatingState by VideoGenerationTracker.state.collectAsState()
-    val showGeneratingCard = generatingState.isGenerating && isOwnProfile
+    val pendingGenerations = if (isOwnProfile) generatingState.pendingGenerations else emptyList()
+    RefreshDraftVideosOnPendingGenerationChange(
+        draftVideos = draftVideos,
+        pendingGenerations = pendingGenerations,
+    )
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -1312,12 +1319,15 @@ private fun DraftVideoGridContent(
                 .fillMaxSize()
                 .offset(y = offset.dp),
     ) {
-        if (showGeneratingCard) {
+        pendingGenerations.forEach { pendingGeneration ->
             item(
-                key = "video_generating_card",
+                key = "video_generating_card_${pendingGeneration.id}",
                 contentType = "VideoGeneratingCard",
             ) {
-                VideoGeneratingCard(progress = generatingState.progress)
+                VideoGeneratingCard(
+                    pendingGenerationId = pendingGeneration.id,
+                    progress = pendingGeneration.progress,
+                )
             }
         }
 
@@ -1347,6 +1357,23 @@ private fun DraftVideoGridContent(
                 onRetry = { draftVideos.retry() },
             )
         }
+    }
+}
+
+@Composable
+private fun RefreshDraftVideosOnPendingGenerationChange(
+    draftVideos: LazyPagingItems<FeedDetails>,
+    pendingGenerations: List<VideoGenerationTracker.PendingGeneration>,
+) {
+    val pendingGenerationIds = remember(pendingGenerations) { pendingGenerations.map { it.id } }
+    var previousPendingGenerationIds by remember { mutableStateOf<List<Long>?>(null) }
+
+    LaunchedEffect(pendingGenerationIds) {
+        val previousIds = previousPendingGenerationIds
+        if (previousIds != pendingGenerationIds && (previousIds != null || pendingGenerationIds.isNotEmpty())) {
+            draftVideos.refresh()
+        }
+        previousPendingGenerationIds = pendingGenerationIds
     }
 }
 
@@ -1648,8 +1675,12 @@ private fun DraftOverlay(isDraft: Boolean) {
 
 @Suppress("MagicNumber")
 @Composable
-private fun VideoGeneratingCard(progress: Float) {
-    val percentText = "${(progress * 100).toInt()}%"
+private fun VideoGeneratingCard(
+    pendingGenerationId: Long,
+    progress: Float,
+) {
+    val displayProgress = rememberGeneratingCardProgress(pendingGenerationId = pendingGenerationId, progress = progress)
+    val percentText = "${(displayProgress * 100).toInt()}%"
     Box(
         modifier =
             Modifier
@@ -1677,34 +1708,90 @@ private fun VideoGeneratingCard(progress: Float) {
                 style = LocalAppTopography.current.regRegular,
                 color = YralColors.Neutral300,
             )
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(100.dp))
-                        .background(YralColors.Neutral800),
-            ) {
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth(progress.coerceIn(0f, 1f))
-                            .height(6.dp)
-                            .clipToBounds()
-                            .clip(RoundedCornerShape(100.dp))
-                            .background(
-                                brush =
-                                    Brush.horizontalGradient(
-                                        colors =
-                                            listOf(
-                                                YralColors.Pink200,
-                                                YralColors.Pink300,
-                                            ),
-                                    ),
-                            ),
+            GeneratingProgressBar(progress = displayProgress)
+        }
+    }
+}
+
+@Composable
+private fun rememberGeneratingCardProgress(
+    pendingGenerationId: Long,
+    progress: Float,
+): Float {
+    val displayProgress by produceState(
+        initialValue =
+            VideoGenerationTracker.displayedGeneratingProgress(
+                animatedProgress = progress,
+                reportedProgress = progress,
+            ),
+        key1 = pendingGenerationId,
+        key2 = progress,
+    ) {
+        var animationStartNanos: Long? = null
+        var lastPersistedProgress = progress
+        while (true) {
+            val animatedProgress =
+                withFrameNanos { frameTimeNanos ->
+                    val startNanos =
+                        animationStartNanos
+                            ?: (
+                                frameTimeNanos -
+                                    VideoGenerationTracker.elapsedMillisForProgress(progress) *
+                                    NANOSECONDS_PER_MILLISECOND
+                            ).also { animationStartNanos = it }
+                    VideoGenerationTracker.generatingProgressTargetForElapsed(
+                        (frameTimeNanos - startNanos) / NANOSECONDS_PER_MILLISECOND,
+                    )
+                }
+            val nextDisplayProgress =
+                VideoGenerationTracker.displayedGeneratingProgress(
+                    animatedProgress = animatedProgress,
+                    reportedProgress = progress,
                 )
+            value = nextDisplayProgress
+            if (nextDisplayProgress > lastPersistedProgress) {
+                VideoGenerationTracker.updateProgress(
+                    pendingGenerationId = pendingGenerationId,
+                    progress = nextDisplayProgress,
+                )
+                lastPersistedProgress = nextDisplayProgress
+            }
+            if (animatedProgress >= VideoGenerationTracker.ANIMATION_MAX_PROGRESS) {
+                break
             }
         }
+    }
+    return displayProgress
+}
+
+@Composable
+private fun GeneratingProgressBar(progress: Float) {
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(RoundedCornerShape(100.dp))
+                .background(YralColors.Neutral800),
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth(progress)
+                    .height(6.dp)
+                    .clipToBounds()
+                    .clip(RoundedCornerShape(100.dp))
+                    .background(
+                        brush =
+                            Brush.horizontalGradient(
+                                colors =
+                                    listOf(
+                                        YralColors.Pink200,
+                                        YralColors.Pink300,
+                                    ),
+                            ),
+                    ),
+        )
     }
 }
 
@@ -1736,7 +1823,7 @@ private fun BoxScope.VideoGridItemActions(
     val downloadText = stringResource(Res.string.download)
     val deleteText = stringResource(Res.string.delete)
     val menuItems =
-        remember(isDraft, downloadText, deleteText) {
+        remember(isDraft, downloadText, deleteText, onDownloadVideo, onDeleteVideo) {
             buildList {
                 add(
                     YralContextMenuItem(

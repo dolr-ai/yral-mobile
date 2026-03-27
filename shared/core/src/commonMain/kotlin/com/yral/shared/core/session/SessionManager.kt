@@ -1,5 +1,6 @@
 package com.yral.shared.core.session
 
+import com.yral.shared.core.videostate.VideoGenerationTracker
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -78,6 +79,9 @@ class SessionManager {
 
     fun updateState(state: SessionState) {
         mutableState.update { state }
+        if (state !is SessionState.SignedIn) {
+            VideoGenerationTracker.reset()
+        }
         mutableProperties.update {
             SessionProperties(
                 botCount = it.botCount,

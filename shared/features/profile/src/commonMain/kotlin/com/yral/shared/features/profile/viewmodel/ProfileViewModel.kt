@@ -1219,7 +1219,6 @@ class ProfileViewModel(
                     videoId = feedDetails.videoID,
                     isSuccess = true,
                 )
-                VideoGenerationTracker.clearDraft(feedDetails.videoID)
                 // Update paging data to remove draft status
                 pagingState.update { state ->
                     state.copy(

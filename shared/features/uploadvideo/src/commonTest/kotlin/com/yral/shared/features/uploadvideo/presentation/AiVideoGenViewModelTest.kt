@@ -17,10 +17,6 @@ import com.yral.shared.features.uploadvideo.domain.GenerateVideoUseCase
 import com.yral.shared.features.uploadvideo.domain.GetFreeCreditsStatusUseCase
 import com.yral.shared.features.uploadvideo.domain.GetPropertyRateLimitConfigUseCase
 import com.yral.shared.features.uploadvideo.domain.GetProvidersUseCase
-import com.yral.shared.features.uploadvideo.domain.PollAndUploadAiVideoUseCase
-import com.yral.shared.features.uploadvideo.domain.PollingConfigProvider
-import com.yral.shared.features.uploadvideo.domain.PollingDefaults
-import com.yral.shared.features.uploadvideo.domain.UploadAiVideoFromUrlUseCase
 import com.yral.shared.features.uploadvideo.domain.UploadRepository
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoResult
@@ -45,6 +41,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -71,14 +69,14 @@ class AiVideoGenViewModelTest {
         fakeUploadRepository = FakeUploadRepository()
         fakeRateLimitRepository = FakeRateLimitRepository()
         fakePreferences = FakePreferences()
-        VideoGenerationTracker.stopGenerating()
+        VideoGenerationTracker.clearPendingGenerations()
         VideoGenerationTracker.consumeDraftsTabRequest()
     }
 
     @AfterTest
     fun tearDown() {
         Dispatchers.resetMain()
-        VideoGenerationTracker.stopGenerating()
+        VideoGenerationTracker.clearPendingGenerations()
     }
 
     private fun createViewModel(): AiVideoGenViewModel {
@@ -99,22 +97,11 @@ class AiVideoGenViewModelTest {
                     getPropertyRateLimitConfig =
                         GetPropertyRateLimitConfigUseCase(appDispatchers, failureListener, fakeRateLimitRepository),
                     generateVideo = GenerateVideoUseCase(appDispatchers, failureListener, fakeUploadRepository),
-                    pollAndUploadAiVideo =
-                        PollAndUploadAiVideoUseCase(
-                            rateLimitRepository = fakeRateLimitRepository,
-                            uploadAiVideoFromUrlUseCase =
-                                UploadAiVideoFromUrlUseCase(appDispatchers, failureListener, fakeUploadRepository),
-                            config = TestPollingConfigProvider(),
-                            uploadVideoTelemetry = uploadVideoTelemetry,
-                            appDispatchers = appDispatchers,
-                            failureListener = failureListener,
-                        ),
                 ),
             sessionManager = sessionManager,
             preferences = fakePreferences,
             uploadVideoTelemetry = uploadVideoTelemetry,
             subscriptionTelemetry = SubscriptionTelemetry(AnalyticsManager()),
-            crashlyticsManager = CrashlyticsManager(),
             logger = YralLogger(),
             flagManager = FeatureFlagManager(providersInPriority = emptyList(), localProviderId = "test"),
         )
@@ -174,13 +161,13 @@ class AiVideoGenViewModelTest {
 
             viewModel.generateAiVideo()
             // Wait for the state to settle (use case runs on Dispatchers.IO then resumes on Main)
-            viewModel.state.first { it.uiState == UiState.Initial && it.reservedBalance == null }
+            viewModel.state.first { it.uiState == UiState.Initial }
 
             assertEquals(UiState.Initial, viewModel.state.value.uiState)
         }
 
     @Test
-    fun `successful generation stops VideoGenerationTracker`() =
+    fun `successful generation keeps VideoGenerationTracker active until draft is created`() =
         runTest {
             signInUser()
             fakeUploadRepository.generateVideoResult = SUCCESS_RESULT
@@ -188,19 +175,17 @@ class AiVideoGenViewModelTest {
             setupProviderAndPrompt(viewModel)
 
             viewModel.generateAiVideo()
-            viewModel.state.first { it.uiState == UiState.Initial && it.reservedBalance == null }
+            viewModel.state.first { it.uiState == UiState.Initial }
 
-            assertFalse(VideoGenerationTracker.state.value.isGenerating)
+            assertTrue(VideoGenerationTracker.state.value.isGenerating)
         }
 
     // endregion
 
-    // region 3: successful generation sends NavigateToHome event
-    // Note: Channel is CONFLATED, so with quick sequential sends, only the last event may
-    // survive if no collector is active. We verify the last event (NavigateToHome) is delivered.
+    // region 3: successful generation sends both toast and navigation events
 
     @Test
-    fun `successful generation sends NavigateToHome as last event`() =
+    fun `successful generation sends toast and navigation events in order`() =
         runTest {
             signInUser()
             fakeUploadRepository.generateVideoResult = SUCCESS_RESULT
@@ -209,12 +194,12 @@ class AiVideoGenViewModelTest {
 
             viewModel.generateAiVideo()
             // Wait for the state to settle (generation complete)
-            viewModel.state.first { it.uiState == UiState.Initial && it.reservedBalance == null }
+            viewModel.state.first { it.uiState == UiState.Initial }
 
-            // With CONFLATED channel, the last sent event is NavigateToHome (or RefreshProDetails)
-            // Since pro is not purchased, last event should be NavigateToHome
-            val event = viewModel.aiVideoGenEvents.first()
-            assertIs<AiVideoGenViewModel.AiVideoGenEvent.NavigateToHome>(event)
+            val events = viewModel.aiVideoGenEvents.take(2).toList()
+
+            assertIs<AiVideoGenViewModel.AiVideoGenEvent.ShowGeneratedToast>(events[0])
+            assertIs<AiVideoGenViewModel.AiVideoGenEvent.NavigateToHome>(events[1])
         }
 
     // endregion
@@ -230,7 +215,7 @@ class AiVideoGenViewModelTest {
             setupProviderAndPrompt(viewModel)
 
             viewModel.generateAiVideo()
-            viewModel.state.first { it.uiState == UiState.Initial && it.reservedBalance == null }
+            viewModel.state.first { it.uiState == UiState.Initial }
 
             assertFalse(VideoGenerationTracker.selectDraftsTab.value)
         }
@@ -531,14 +516,5 @@ private class FakePreferences : Preferences {
     }
 }
 
-private class TestPollingConfigProvider : PollingConfigProvider {
-    override val earlyPolls = PollingDefaults.EARLY_POLLS
-    override val earlyIntervalMs = PollingDefaults.EARLY_INTERVAL_MS
-    override val initialIntervalMs = PollingDefaults.INITIAL_INTERVAL_MS
-    override val maxIntervalMs = PollingDefaults.MAX_INTERVAL_MS
-    override val minIntervalMs = PollingDefaults.MIN_INTERVAL_MS
-    override val backoffMultiplier = PollingDefaults.BACKOFF_MULTIPLIER
-    override val decayMultiplier = PollingDefaults.DECAY_MULTIPLIER
-}
 
 // endregion

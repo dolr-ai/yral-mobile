@@ -153,7 +153,7 @@ class ProfileViewModelTest {
         fakeUploadRepository = FakeUploadRepository()
         fakeProfileRepository = FakeProfileRepository()
         fakeAnalyticsProvider = FakeAnalyticsProvider()
-        VideoGenerationTracker.stopGenerating()
+        VideoGenerationTracker.clearPendingGenerations()
         VideoGenerationTracker.consumeDraftsTabRequest()
     }
 
@@ -162,7 +162,7 @@ class ProfileViewModelTest {
         viewModel?.viewModelScope?.cancel()
         viewModel = null
         Dispatchers.resetMain()
-        VideoGenerationTracker.stopGenerating()
+        VideoGenerationTracker.clearPendingGenerations()
         VideoGenerationTracker.consumeDraftsTabRequest()
     }
 
