@@ -19,6 +19,7 @@ configureCocoapods {
     framework {
         baseName = "iosSharedUmbrella"
         isStatic = true
+        export(projects.shared.core)
         export(projects.shared.libs.analytics)
         export(projects.shared.libs.crashlytics)
         export(projects.shared.app)
@@ -35,6 +36,7 @@ kotlin {
 
     sourceSets {
         iosMain.dependencies {
+            api(projects.shared.core)
             api(projects.shared.app)
             api(projects.shared.libs.analytics)
             api(projects.shared.libs.crashlytics)
