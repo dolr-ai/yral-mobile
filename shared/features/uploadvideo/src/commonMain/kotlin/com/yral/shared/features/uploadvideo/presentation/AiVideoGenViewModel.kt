@@ -342,6 +342,13 @@ class AiVideoGenViewModel internal constructor(
                             }
                             // Server handles upload as draft, no polling needed
                             VideoGenerationTracker.stopGenerating()
+                            uploadVideoTelemetry.aiVideoRequestSubmitted(
+                                model = selectedProvider.name,
+                                prompt = currentState.prompt.trim(),
+                                isSuccess = true,
+                                reason = null,
+                                reasonType = null,
+                            )
                             _state.update {
                                 it.copy(
                                     uiState = UiState.Initial,
@@ -393,7 +400,7 @@ class AiVideoGenViewModel internal constructor(
         prompt: String,
         reason: String,
     ) {
-        uploadVideoTelemetry.aiVideoGenerated(
+        uploadVideoTelemetry.aiVideoRequestSubmitted(
             model = model,
             prompt = prompt,
             isSuccess = false,

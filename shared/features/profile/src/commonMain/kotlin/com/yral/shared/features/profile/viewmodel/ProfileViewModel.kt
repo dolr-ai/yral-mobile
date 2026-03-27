@@ -1233,11 +1233,11 @@ class ProfileViewModel(
                 }
                 profileEventsChannel.trySend(ProfileEvents.RefreshDrafts)
             }.onFailure { error ->
+                _state.update { it.copy(publishDraftUiState = UiState.Failure(error)) }
                 ToastManager.showToast(
                     type = ToastType.Small(getString(DesignRes.string.something_went_wrong)),
                     status = ToastStatus.Error,
                 )
-                _state.update { it.copy(publishDraftUiState = UiState.Failure(error)) }
             }
         }
     }

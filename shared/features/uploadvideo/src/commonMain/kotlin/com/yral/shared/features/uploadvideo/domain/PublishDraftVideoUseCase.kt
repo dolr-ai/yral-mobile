@@ -5,7 +5,7 @@ import com.yral.shared.libs.arch.domain.SuspendUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 
-class PublishDraftVideoUseCase internal constructor(
+class PublishDraftVideoUseCase(
     appDispatchers: AppDispatchers,
     failureListener: UseCaseFailureListener,
     private val repository: UploadRepository,

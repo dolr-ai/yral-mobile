@@ -9,7 +9,7 @@ import com.yral.shared.features.uploadvideo.domain.models.UploadFileRequest
 import com.yral.shared.features.uploadvideo.domain.models.UploadStatus
 import kotlinx.coroutines.flow.Flow
 
-internal interface UploadRepository {
+interface UploadRepository {
     suspend fun fetchUploadUrl(): UploadEndpoint
     fun uploadVideo(
         uploadUrl: String,

@@ -1,3 +1,5 @@
+@file:OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
+
 import com.yral.buildlogic.configureIosTargets
 plugins {
     alias(libs.plugins.yral.shared.feature)
@@ -11,6 +13,15 @@ kotlin {
     configureIosTargets(project)
 
     sourceSets {
+        commonTest.dependencies {
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(compose.uiTest)
+        }
+        val androidUnitTest by getting {
+            dependencies {
+                implementation(libs.robolectric)
+            }
+        }
         commonMain.dependencies {
             implementation(projects.shared.core)
             implementation(projects.shared.data)

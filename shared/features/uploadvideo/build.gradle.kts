@@ -11,6 +11,10 @@ kotlin {
     configureIosTargets(project)
 
     sourceSets {
+        commonTest.dependencies {
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.russhwolf.multiplatformSettings.test)
+        }
         commonMain.dependencies {
             implementation(projects.shared.core)
             implementation(projects.shared.libs.koin)

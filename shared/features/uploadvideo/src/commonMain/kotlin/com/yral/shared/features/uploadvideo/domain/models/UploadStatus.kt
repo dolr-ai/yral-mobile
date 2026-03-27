@@ -1,6 +1,6 @@
 package com.yral.shared.features.uploadvideo.domain.models
 
-internal sealed interface UploadStatus {
+sealed interface UploadStatus {
     data class InProgress(
         val bytesSent: Long,
         val totalBytes: Long?,
