@@ -19,6 +19,12 @@ class ProfileRepositoryImpl(
         dataSource
             .getProfileVideos(canisterId, userPrincipal, isFromServiceCanister, startIndex, pageSize)
 
+    override suspend fun getDraftVideos(
+        canisterId: String,
+        startIndex: ULong,
+        pageSize: ULong,
+    ): ProfileVideosPageResult = dataSource.getDraftVideos(canisterId, startIndex, pageSize)
+
     override suspend fun deleteVideo(request: DeleteVideoRequest) =
         dataSource
             .deleteVideo(request)

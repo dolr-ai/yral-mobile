@@ -254,4 +254,24 @@ impl UserPostService {
             Ok(UPSResult3::from(details))
         }).await.map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
     }
+
+    #[uniffi::method]
+    pub async fn get_draft_posts_of_this_user_profile_with_pagination(
+        &self,
+        arg0: u64,
+        arg1: u64,
+    ) -> Result<UPSResult3> {
+        let agent = Arc::clone(&self.agent);
+        RUNTIME.spawn(async move {
+            let service = yral_canisters_client::user_post_service::UserPostService(
+                yral_canisters_client::ic::USER_POST_SERVICE_ID,
+                &agent,
+            );
+            let details = service
+                .get_draft_posts_of_this_user_profile_with_pagination(arg0, arg1)
+                .await
+                .map_err(|e| FFIError::AgentError(format!("{:?}", e)))?;
+            Ok(UPSResult3::from(details))
+        }).await.map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
+    }
 }

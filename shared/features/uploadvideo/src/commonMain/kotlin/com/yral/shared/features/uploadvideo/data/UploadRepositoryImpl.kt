@@ -5,6 +5,7 @@ import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.uploadvideo.data.remote.UploadVideoRemoteDataSource
 import com.yral.shared.features.uploadvideo.data.remote.models.GetUploadUrlRequestDto
+import com.yral.shared.features.uploadvideo.data.remote.models.MarkPostAsPublishedRequestDto
 import com.yral.shared.features.uploadvideo.data.remote.models.toDomain
 import com.yral.shared.features.uploadvideo.data.remote.models.toDto
 import com.yral.shared.features.uploadvideo.data.remote.models.toRequestDto
@@ -83,5 +84,20 @@ internal class UploadRepositoryImpl(
         val delegatedIdentityWire =
             json.decodeFromString<KotlinDelegatedIdentityWire>(identityWireJson)
         return remoteDataSource.uploadAiVideoFromUrl(request.toDto(delegatedIdentityWire))
+    }
+
+    override suspend fun markPostAsPublished(postId: String) {
+        val identity =
+            sessionManager.identity
+                ?: throw YralException("Session not found while publishing draft video")
+        val identityWireJson = delegatedIdentityWireToJson(identity)
+        val delegatedIdentityWire =
+            json.decodeFromString<KotlinDelegatedIdentityWire>(identityWireJson)
+        remoteDataSource.markPostAsPublished(
+            MarkPostAsPublishedRequestDto(
+                postId = postId,
+                delegatedIdentityWire = delegatedIdentityWire,
+            ),
+        )
     }
 }

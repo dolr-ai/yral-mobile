@@ -27,4 +27,10 @@
     <string name="storage_permission_required">Storage permission is required to download videos. Please grant permission in Settings.</string>
     <string name="msg_principal_id_copied">Your Principal ID has been copied successfully!</string>
     <string name="become_pro">Become Pro</string>
+    <string name="video_generating">Generating video…</string>
+    <string name="draft_label">Draft</string>
+    <string name="publish_button">Publish</string>
+    <string name="drafts_empty_title">Drafts Empty!</string>
+    <string name="drafts_empty_subtitle">Create your first AI video and it will appear here,\nready to be shared with the world.</string>
+    <string name="tab_new">New</string>
 </resources>

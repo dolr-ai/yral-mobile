@@ -28,6 +28,7 @@ import com.yral.shared.core.session.ProDetails
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.utils.getAccountInfo
+import com.yral.shared.core.videostate.VideoGenerationTracker
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.data.domain.CommonApis
@@ -40,10 +41,12 @@ import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
 import com.yral.shared.features.profile.analytics.ProfileTelemetry
 import com.yral.shared.features.profile.domain.DeleteVideoUseCase
+import com.yral.shared.features.profile.domain.DraftVideosPagingSource
 import com.yral.shared.features.profile.domain.FollowNotificationUseCase
 import com.yral.shared.features.profile.domain.ProfileVideosPagingSource
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
 import com.yral.shared.features.profile.domain.repository.ProfileRepository
+import com.yral.shared.features.uploadvideo.domain.PublishDraftVideoUseCase
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastStatus
@@ -123,6 +126,7 @@ class ProfileViewModel(
     private val fileDownloader: FileDownloader,
     private val followersMetadataDataSource: FollowersMetadataDataSource,
     private val checkChatAccessUseCase: com.yral.shared.features.chat.domain.usecases.CheckChatAccessUseCase,
+    private val publishDraftVideoUseCase: PublishDraftVideoUseCase,
 ) : ViewModel() {
     companion object {
         private const val POSTS_PER_PAGE = 20
@@ -178,8 +182,45 @@ class ProfileViewModel(
             flowOf()
         }
 
+    private val _draftVideos: Flow<PagingData<FeedDetails>> =
+        if (canisterData.userPrincipalId.isNotEmpty() &&
+            canisterData.userPrincipalId == sessionManager.userPrincipal
+        ) {
+            Pager(
+                config =
+                    PagingConfig(
+                        pageSize = POSTS_PER_PAGE,
+                        initialLoadSize = POSTS_PER_PAGE,
+                        prefetchDistance = POSTS_PREFETCH_DISTANCE,
+                        enablePlaceholders = false,
+                    ),
+                pagingSourceFactory = {
+                    DraftVideosPagingSource(
+                        canisterId = canisterData.canisterId,
+                        profileRepository = profileRepository,
+                    )
+                },
+            ).flow.cachedIn(viewModelScope)
+        } else {
+            flowOf()
+        }
+
     val profileVideos: Flow<PagingData<FeedDetails>> =
         _profileVideos
+            .combine(pagingState) { pagingData, state ->
+                val videoIds = mutableSetOf<String>()
+                pagingData
+                    .filter { video ->
+                        video.videoID.isNotEmpty() &&
+                            videoIds.add(video.videoID) &&
+                            video.videoID !in state.deletedVideoIds
+                    }.map { details ->
+                        state.updatedDetails[details.videoID] ?: details
+                    }
+            }.distinctUntilChanged()
+
+    val draftVideos: Flow<PagingData<FeedDetails>> =
+        _draftVideos
             .combine(pagingState) { pagingData, state ->
                 val videoIds = mutableSetOf<String>()
                 pagingData
@@ -255,6 +296,16 @@ class ProfileViewModel(
         }
         refreshShareCopy()
         val isOwnProfile = canisterData.userPrincipalId == sessionManager.userPrincipal
+        if (isOwnProfile) {
+            viewModelScope.launch {
+                VideoGenerationTracker.selectDraftsTab.collect { shouldSelect ->
+                    if (shouldSelect) {
+                        VideoGenerationTracker.consumeDraftsTabRequest()
+                        _state.update { it.copy(selectedTab = ProfileTab.Drafts) }
+                    }
+                }
+            }
+        }
         if (!isOwnProfile) {
             _state.update {
                 it.copy(
@@ -1146,6 +1197,59 @@ class ProfileViewModel(
         )
     }
 
+    fun selectTab(tab: ProfileTab) {
+        _state.update { it.copy(selectedTab = tab) }
+    }
+
+    fun openDraftVideo(feedDetails: FeedDetails) {
+        updateVideoViewIfDifferent(VideoViewState.ViewingDraft(feedDetails))
+    }
+
+    fun closeDraftVideo() {
+        updateVideoViewIfDifferent(VideoViewState.None)
+    }
+
+    fun publishDraft(feedDetails: FeedDetails) {
+        viewModelScope.launch {
+            _state.update { it.copy(publishDraftUiState = UiState.InProgress()) }
+            publishDraftVideoUseCase(
+                PublishDraftVideoUseCase.Param(postId = feedDetails.videoID),
+            ).onSuccess {
+                profileTelemetry.onVideoPublished(
+                    videoId = feedDetails.videoID,
+                    isSuccess = true,
+                )
+                // Update paging data to remove draft status
+                pagingState.update { state ->
+                    state.copy(
+                        updatedDetails =
+                            state.updatedDetails +
+                                (feedDetails.videoID to feedDetails.copy(isDraft = false)),
+                    )
+                }
+                closeDraftVideo()
+                _state.update {
+                    it.copy(
+                        publishDraftUiState = UiState.Initial,
+                        selectedTab = ProfileTab.Published,
+                    )
+                }
+                profileEventsChannel.trySend(ProfileEvents.RefreshDrafts)
+            }.onFailure { error ->
+                profileTelemetry.onVideoPublished(
+                    videoId = feedDetails.videoID,
+                    isSuccess = false,
+                    reason = error.message,
+                )
+                _state.update { it.copy(publishDraftUiState = UiState.Failure(error)) }
+                ToastManager.showToast(
+                    type = ToastType.Small(getString(DesignRes.string.something_went_wrong)),
+                    status = ToastStatus.Error,
+                )
+            }
+        }
+    }
+
     fun trackCreateInfluencerClicked() {
         chatTelemetry.createBotCtaClicked(BotCreationSource.PROFILE_PAGE)
     }
@@ -1183,7 +1287,14 @@ data class ViewState(
     val createdByPrincipal: String? = null,
     val botUsernames: List<String> = emptyList(),
     val botUsernameToCanisterData: Map<String, String> = emptyMap(),
+    val publishDraftUiState: UiState<Unit> = UiState.Initial,
+    val selectedTab: ProfileTab = ProfileTab.Published,
 )
+
+enum class ProfileTab {
+    Published,
+    Drafts,
+}
 
 sealed interface ProfileBottomSheet {
     data object None : ProfileBottomSheet
@@ -1217,6 +1328,9 @@ sealed class VideoViewState {
     data class ViewingReels(
         val initialPage: Int = 0,
     ) : VideoViewState()
+    data class ViewingDraft(
+        val feedDetails: FeedDetails,
+    ) : VideoViewState()
 }
 
 sealed class ProfileEvents {
@@ -1231,6 +1345,7 @@ sealed class ProfileEvents {
     data class Failed(
         val message: String,
     ) : ProfileEvents()
+    data object RefreshDrafts : ProfileEvents()
 }
 
 data class PagingState(

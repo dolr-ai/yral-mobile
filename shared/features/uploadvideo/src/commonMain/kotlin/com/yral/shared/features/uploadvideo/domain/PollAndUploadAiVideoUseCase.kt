@@ -87,7 +87,14 @@ internal class PollAndUploadAiVideoUseCase(
                                                     videoId = videoId,
                                                     type = VideoCreationType.AI_VIDEO,
                                                 )
-                                                emit(Ok(PollAndUploadResult.Success(videoStatus.v1)))
+                                                emit(
+                                                    Ok(
+                                                        PollAndUploadResult.Success(
+                                                            videoUrl = videoStatus.v1,
+                                                            videoId = videoId,
+                                                        ),
+                                                    ),
+                                                )
                                                 return@withTimeout
                                             }.onFailure {
                                                 uploadVideoTelemetry.uploadFailed(
@@ -228,6 +235,7 @@ internal class PollAndUploadAiVideoUseCase(
 
         data class Success(
             val videoUrl: String,
+            val videoId: String? = null,
         ) : PollAndUploadResult()
 
         data class Failed(

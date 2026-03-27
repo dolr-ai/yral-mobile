@@ -7,6 +7,7 @@ import com.yral.shared.analytics.EventToMapConverter
 import com.yral.shared.analytics.User
 import com.yral.shared.analytics.events.EventData
 
+@Suppress("UnusedPrivateProperty", "EmptyFunctionBlock")
 actual class SnowplowAnalyticsProvider actual constructor(
     private val eventFilter: (EventData) -> Boolean,
     private val mapConverter: EventToMapConverter,

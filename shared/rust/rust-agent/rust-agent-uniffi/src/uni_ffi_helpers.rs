@@ -1,4 +1,3 @@
-use crate::UniffiCustomTypeConverter;
 use candid::Error as CandidError;
 use candid::{CandidType, Deserialize, Nat, Principal};
 use ic_agent::export::PrincipalError;
@@ -7,42 +6,23 @@ use serde_bytes::ByteBuf;
 use std::str::FromStr;
 use uniffi::{Enum, Record};
 
-uniffi::custom_type!(Principal, String);
-impl UniffiCustomTypeConverter for Principal {
-    type Builtin = String;
+uniffi::custom_type!(Principal, String, {
+    remote,
+    try_lift: |val| Ok(Principal::from_text(val)?),
+    lower: |obj| obj.to_text(),
+});
 
-    fn into_custom(val: Self::Builtin) -> uniffi::Result<Self> {
-        Ok(Principal::from_text(val)?)
-    }
+uniffi::custom_type!(Nat, String, {
+    remote,
+    try_lift: |val| Ok(Nat::from_str(&val)?),
+    lower: |obj| obj.0.to_string(),
+});
 
-    fn from_custom(obj: Self) -> Self::Builtin {
-        obj.to_text()
-    }
-}
-
-uniffi::custom_type!(Nat, String);
-impl UniffiCustomTypeConverter for Nat {
-    type Builtin = String;
-    fn into_custom(val: Self::Builtin) -> uniffi::Result<Self> {
-        Ok(Nat::from_str(&val)?)
-    }
-
-    fn from_custom(obj: Self) -> Self::Builtin {
-        obj.0.to_string()
-    }
-}
-
-uniffi::custom_type!(ByteBuf, Vec<u8>);
-impl UniffiCustomTypeConverter for ByteBuf {
-    type Builtin = Vec<u8>;
-    fn into_custom(val: Self::Builtin) -> uniffi::Result<Self> {
-        Ok(ByteBuf::from(val))
-    }
-
-    fn from_custom(obj: Self) -> Self::Builtin {
-        obj.into_vec()
-    }
-}
+uniffi::custom_type!(ByteBuf, Vec<u8>, {
+    remote,
+    try_lift: |val| Ok(ByteBuf::from(val)),
+    lower: |obj| obj.into_vec(),
+});
 
 #[derive(CandidType, Deserialize, Record)]
 pub struct IntBytePair {

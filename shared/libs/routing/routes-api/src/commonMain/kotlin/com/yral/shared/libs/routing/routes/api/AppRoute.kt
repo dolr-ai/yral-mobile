@@ -189,3 +189,5 @@ data class TestInternalRoute(
 
 @Serializable
 object TestUnknownRoute : AppRoute
+
+fun profilePath(): String = Profile.PATH

@@ -3,6 +3,7 @@ package com.yral.shared.features.uploadvideo.analytics
 import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.events.AiVideoGenFailureType
 import com.yral.shared.analytics.events.AiVideoGeneratedData
+import com.yral.shared.analytics.events.AiVideoRequestSubmittedData
 import com.yral.shared.analytics.events.CreateAIVideoClickedData
 import com.yral.shared.analytics.events.FileSelectionSuccessEventData
 import com.yral.shared.analytics.events.GameType
@@ -117,6 +118,24 @@ class UploadVideoTelemetry(
     ) {
         analyticsManager.trackEvent(
             AiVideoGeneratedData(
+                model,
+                prompt,
+                isSuccess,
+                reason,
+                reasonType,
+            ),
+        )
+    }
+
+    fun aiVideoRequestSubmitted(
+        model: String,
+        prompt: String,
+        isSuccess: Boolean,
+        reason: String?,
+        reasonType: AiVideoGenFailureType?,
+    ) {
+        analyticsManager.trackEvent(
+            AiVideoRequestSubmittedData(
                 model,
                 prompt,
                 isSuccess,

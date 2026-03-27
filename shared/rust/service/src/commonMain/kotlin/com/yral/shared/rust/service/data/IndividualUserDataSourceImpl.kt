@@ -72,6 +72,18 @@ internal class IndividualUserDataSourceImpl(
             .service(principalId)
             .getPostsOfThisUserProfileWithPaginationCursor(principalId, startIndex, pageSize)
 
+    override suspend fun getDraftPostsWithPagination(
+        startIndex: ULong,
+        pageSize: ULong,
+    ): UpsResult3 {
+        val principalId =
+            sessionManager.userPrincipal
+                ?: throw YralException("No user principal found")
+        return userPostServiceFactory
+            .service(principalId)
+            .getDraftPostsOfThisUserProfileWithPagination(startIndex, pageSize)
+    }
+
     override suspend fun getUserBitcoinBalance(
         canisterId: String,
         principalId: String,

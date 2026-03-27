@@ -18,6 +18,11 @@ interface IndividualUserRepository {
         pageSize: ULong,
         shouldFetchFromServiceCanisters: Boolean,
     ): Posts
+    suspend fun getDraftPostsWithPagination(
+        canisterId: String,
+        startIndex: ULong,
+        pageSize: ULong,
+    ): Posts
     suspend fun getUserBitcoinBalance(
         canisterId: String,
         principalId: String,

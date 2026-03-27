@@ -10,6 +10,8 @@ abstract class AiVideoGenComponent {
 
     abstract fun goToHome()
 
+    abstract fun goToProfile()
+
     companion object Companion {
         operator fun invoke(
             componentContext: ComponentContext,
@@ -17,6 +19,7 @@ abstract class AiVideoGenComponent {
             onBack: () -> Unit,
             promptLogin: () -> Unit,
             subscriptionCoordinator: SubscriptionCoordinator,
+            goToProfile: () -> Unit,
         ): AiVideoGenComponent =
             DefaultAiVideoGenComponent(
                 componentContext = componentContext,
@@ -24,6 +27,7 @@ abstract class AiVideoGenComponent {
                 onBack = onBack,
                 promptLogin = promptLogin,
                 subscriptionCoordinator = subscriptionCoordinator,
+                goToProfile = goToProfile,
             )
     }
 }

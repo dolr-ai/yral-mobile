@@ -36,4 +36,5 @@
     <!-- Wallet -->
     <string name="rupee_symbol">₹</string>
     <string name="currency_balance">%s Balance</string>
+    <string name="view_drafts">View Drafts</string>
 </resources>

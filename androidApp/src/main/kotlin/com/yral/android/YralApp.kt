@@ -51,6 +51,14 @@ class YralApp : Application() {
                 module {
                     val pkg = this@YralApp.packageName
                     single<Boolean>(IS_DEBUG) { pkg != "com.yral.android.app" }
+                    single {
+                        NotificationHandler(
+                            notificationConfigByType =
+                                notificationConfigByType(
+                                    this@YralApp.getString(R.string.view_drafts),
+                                ),
+                        )
+                    }
                 },
             )
         }

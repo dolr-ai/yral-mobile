@@ -308,6 +308,7 @@ class UploadVideoViewModel internal constructor(
                 videoUid = endpoint.videoID,
                 caption = caption,
                 hashtags = hashtagsList,
+                status = VIDEO_STATUS_PUBLISHED,
             )
 
         try {
@@ -512,6 +513,7 @@ class UploadVideoViewModel internal constructor(
         private const val SUCCESS_TRANSITION_DELAY_MS = 200L // 200 ms delay after success
         private const val IS_CAPTION_REQUIRED = false
         private const val IS_HASHTAGS_REQUIRED = false
+        private const val VIDEO_STATUS_PUBLISHED = "Published"
     }
 
     internal data class RequiredUseCases(

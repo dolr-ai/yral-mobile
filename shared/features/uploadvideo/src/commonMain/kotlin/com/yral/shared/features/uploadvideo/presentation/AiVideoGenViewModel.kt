@@ -15,8 +15,7 @@ import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.core.session.ProDetails
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
-import com.yral.shared.crashlytics.core.CrashlyticsManager
-import com.yral.shared.crashlytics.core.ExceptionType
+import com.yral.shared.core.videostate.VideoGenerationTracker
 import com.yral.shared.features.subscriptions.analytics.SubscriptionTelemetry
 import com.yral.shared.features.uploadvideo.analytics.UploadVideoTelemetry
 import com.yral.shared.features.uploadvideo.data.remote.models.TokenType
@@ -24,14 +23,11 @@ import com.yral.shared.features.uploadvideo.domain.GenerateVideoUseCase
 import com.yral.shared.features.uploadvideo.domain.GetFreeCreditsStatusUseCase
 import com.yral.shared.features.uploadvideo.domain.GetPropertyRateLimitConfigUseCase
 import com.yral.shared.features.uploadvideo.domain.GetProvidersUseCase
-import com.yral.shared.features.uploadvideo.domain.PollAndUploadAiVideoUseCase
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
-import com.yral.shared.rust.service.domain.models.VideoGenRequestKey
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -56,7 +52,6 @@ class AiVideoGenViewModel internal constructor(
     private val preferences: Preferences,
     private val uploadVideoTelemetry: UploadVideoTelemetry,
     private val subscriptionTelemetry: SubscriptionTelemetry,
-    private val crashlyticsManager: CrashlyticsManager,
     logger: YralLogger,
     flagManager: FeatureFlagManager,
 ) : ViewModel() {
@@ -70,7 +65,7 @@ class AiVideoGenViewModel internal constructor(
         )
     val state: StateFlow<ViewState> = _state.asStateFlow()
 
-    private val aiVideoGenEventChannel = Channel<AiVideoGenEvent>(Channel.CONFLATED)
+    private val aiVideoGenEventChannel = Channel<AiVideoGenEvent>(Channel.BUFFERED)
     val aiVideoGenEvents = aiVideoGenEventChannel.receiveAsFlow()
 
     val sessionObserver =
@@ -82,9 +77,6 @@ class AiVideoGenViewModel internal constructor(
                 }
             canisterId to properties.coinBalance
         }
-
-    private var currentRequestKey: VideoGenRequestKey? = null
-    private var pollingJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -297,7 +289,7 @@ class AiVideoGenViewModel internal constructor(
             currentState.selectedProvider?.let { selectedProvider ->
                 sessionManager.userPrincipal?.let { userId ->
                     _state.update { it.copy(uiState = UiState.InProgress(0f)) }
-                    currentRequestKey = null
+                    VideoGenerationTracker.startGenerating()
                     requiredUseCases
                         .generateVideo(
                             parameter =
@@ -320,21 +312,13 @@ class AiVideoGenViewModel internal constructor(
                                                     TokenType.SATS
                                                 },
                                             userId = userId,
+                                            uploadHandling = SERVER_DRAFT,
                                         ),
                                 ),
                         ).onSuccess { result ->
                             logger.d { "Video generated: $result" }
-                            result.requestKey?.let { requestKey ->
-                                currentRequestKey = requestKey
-                                reserveBalance()
-                                pollAndUploadVideo(
-                                    modelName = selectedProvider.name,
-                                    prompt = currentState.prompt.trim(),
-                                    requestKey = requestKey,
-                                )
-                                return@onSuccess
-                            }
                             result.providerError?.let { error ->
+                                VideoGenerationTracker.stopGenerating()
                                 pushTriggerFailed(
                                     model = selectedProvider.name,
                                     prompt = currentState.prompt.trim(),
@@ -343,8 +327,36 @@ class AiVideoGenViewModel internal constructor(
                                 _state.update {
                                     it.copy(bottomSheetType = BottomSheetType.Error(error, true))
                                 }
+                                return@onSuccess
+                            }
+                            // Server handles the long-running generation and draft creation.
+                            // Keep the tracker active until the draft-created notification arrives.
+                            uploadVideoTelemetry.aiVideoRequestSubmitted(
+                                model = selectedProvider.name,
+                                prompt = currentState.prompt.trim(),
+                                isSuccess = true,
+                                reason = null,
+                                reasonType = null,
+                            )
+                            _state.update {
+                                it.copy(
+                                    uiState = UiState.Initial,
+                                )
+                            }
+                            aiVideoGenEventChannel.trySend(AiVideoGenEvent.ShowGeneratedToast)
+                            aiVideoGenEventChannel.trySend(AiVideoGenEvent.NavigateToHome)
+                            if (currentState.proDetails.isProPurchased) {
+                                val creditsRemaining =
+                                    currentState.proDetails.availableCredits - 1
+                                subscriptionTelemetry.onCreditsConsumed(
+                                    feature = CreditFeature.AI_VIDEO,
+                                    creditsUsed = 1,
+                                    creditsRemaining = creditsRemaining.coerceAtLeast(0),
+                                )
+                                aiVideoGenEventChannel.trySend(AiVideoGenEvent.RefreshProDetails)
                             }
                         }.onFailure { error ->
+                            VideoGenerationTracker.stopGenerating()
                             logger.e(error) { "Error generating video" }
                             pushTriggerFailed(
                                 model = selectedProvider.name,
@@ -360,36 +372,12 @@ class AiVideoGenViewModel internal constructor(
         }
     }
 
-    private fun reserveBalance() {
-        if (_state.value.isCreditsAvailable()) return
-        _state.value.selectedProvider?.let { selectedProvider ->
-            val reservedBalance = selectedProvider.cost?.sats
-            reservedBalance?.let { cost ->
-                _state.update { it.copy(reservedBalance = cost) }
-                _state.value.currentBalance?.let { balance ->
-                    sessionManager.updateCoinBalance(balance.minus(cost))
-                }
-            }
-        }
-    }
-
-    private fun returnBalance() {
-        with(_state.value) {
-            reservedBalance?.let { reserved ->
-                _state.update { it.copy(reservedBalance = null) }
-                _state.value.currentBalance?.let { balance ->
-                    sessionManager.updateCoinBalance(balance.plus(reserved))
-                }
-            }
-        }
-    }
-
     private fun pushTriggerFailed(
         model: String,
         prompt: String,
         reason: String,
     ) {
-        uploadVideoTelemetry.aiVideoGenerated(
+        uploadVideoTelemetry.aiVideoRequestSubmitted(
             model = model,
             prompt = prompt,
             isSuccess = false,
@@ -398,133 +386,10 @@ class AiVideoGenViewModel internal constructor(
         )
     }
 
-    @Suppress("LongMethod")
-    private fun pollAndUploadVideo(
-        modelName: String,
-        prompt: String,
-        requestKey: VideoGenRequestKey,
-    ) {
-        pollingJob?.cancel()
-        pollingJob =
-            viewModelScope.launch {
-                val userPrincipal = sessionManager.userPrincipal ?: return@launch
-                requiredUseCases
-                    .pollAndUploadAiVideo
-                    .invoke(
-                        parameters =
-                            PollAndUploadAiVideoUseCase.Params(
-                                userPrincipal = userPrincipal,
-                                modelName = modelName,
-                                prompt = prompt,
-                                requestKey = requestKey,
-                                isFastInitially = false,
-                                hashtags = emptyList(),
-                                description = "",
-                                isNsfw = false,
-                                enableHotOrNot = false,
-                            ),
-                    ).collect { result ->
-                        result.fold(
-                            success = { pollResult ->
-                                when (pollResult) {
-                                    is PollAndUploadAiVideoUseCase.PollAndUploadResult.InProgress -> {
-                                        _state.update { it.copy(uiState = UiState.InProgress(0f)) }
-                                    }
-
-                                    is PollAndUploadAiVideoUseCase.PollAndUploadResult.Success -> {
-                                        logger.d { "Generated video uploaded successfully" }
-                                        _state.update {
-                                            it.copy(
-                                                uiState = UiState.Success(pollResult.videoUrl),
-                                                reservedBalance = null,
-                                            )
-                                        }
-                                        if (_state.value.proDetails.isProPurchased) {
-                                            // Track credit consumption
-                                            val creditsRemaining =
-                                                _state.value.proDetails.availableCredits - 1
-                                            subscriptionTelemetry.onCreditsConsumed(
-                                                feature = CreditFeature.AI_VIDEO,
-                                                creditsUsed = 1,
-                                                creditsRemaining = creditsRemaining.coerceAtLeast(0),
-                                            )
-                                            aiVideoGenEventChannel.trySend(AiVideoGenEvent.RefreshProDetails)
-                                        }
-                                    }
-
-                                    is PollAndUploadAiVideoUseCase.PollAndUploadResult.Failed -> {
-                                        crashlyticsManager.recordException(
-                                            Exception(pollResult.errorMessage),
-                                            ExceptionType.AI_VIDEO,
-                                        )
-                                        _state.update {
-                                            it.copy(
-                                                bottomSheetType =
-                                                    BottomSheetType.Error(
-                                                        pollResult.errorMessage,
-                                                        true,
-                                                    ),
-                                            )
-                                        }
-                                        // if endFlow true then only return balance
-                                        returnBalance()
-                                        if (_state.value.proDetails.isProPurchased) {
-                                            aiVideoGenEventChannel.trySend(AiVideoGenEvent.RefreshProDetails)
-                                        }
-                                    }
-
-                                    is PollAndUploadAiVideoUseCase.PollAndUploadResult.UploadFailed -> {
-                                        crashlyticsManager.recordException(
-                                            Exception(pollResult.errorMessage),
-                                            ExceptionType.AI_VIDEO,
-                                        )
-                                        _state.update {
-                                            it.copy(
-                                                bottomSheetType = BottomSheetType.Error(""),
-                                                reservedBalance = null,
-                                            )
-                                        }
-                                        if (_state.value.proDetails.isProPurchased) {
-                                            aiVideoGenEventChannel.trySend(AiVideoGenEvent.RefreshProDetails)
-                                        }
-                                    }
-                                }
-                            },
-                            failure = { error ->
-                                uploadVideoTelemetry.aiVideoGenerated(
-                                    model = _state.value.selectedProvider?.name ?: "",
-                                    prompt = prompt,
-                                    isSuccess = false,
-                                    reason = error.message,
-                                    reasonType = AiVideoGenFailureType.GENERATION_FAILED,
-                                )
-                                _state.update { it.copy(bottomSheetType = BottomSheetType.Error("")) }
-                                if (_state.value.proDetails.isProPurchased) {
-                                    aiVideoGenEventChannel.trySend(AiVideoGenEvent.RefreshProDetails)
-                                }
-                            },
-                        )
-                    }
-            }
-    }
-
     fun tryAgain() {
         viewModelScope.launch {
             _state.update { it.copy(bottomSheetType = BottomSheetType.None) }
-            when {
-                // If we have a request key, retry polling and uploading
-                currentRequestKey != null && _state.value.reservedBalance != null -> {
-                    pollAndUploadVideo(
-                        modelName = _state.value.selectedProvider?.name ?: "",
-                        prompt = _state.value.prompt.trim(),
-                        requestKey = currentRequestKey!!,
-                    )
-                }
-                // Otherwise, retry from the beginning (generate video)
-                else -> {
-                    generateAiVideo()
-                }
-            }
+            generateAiVideo()
         }
     }
 
@@ -558,8 +423,6 @@ class AiVideoGenViewModel internal constructor(
                 isSubscriptionEnabled = current.isSubscriptionEnabled,
             )
         }
-        currentRequestKey = null
-        pollingJob?.cancel()
     }
 
     fun createAiVideoClicked() {
@@ -621,7 +484,6 @@ class AiVideoGenViewModel internal constructor(
         val bottomSheetType: BottomSheetType = BottomSheetType.None,
         val currentCanister: String? = null,
         val currentBalance: Long? = null,
-        val reservedBalance: Long? = null,
         val isLoggedIn: Boolean = false,
         val proDetails: ProDetails = ProDetails(),
         val isSubscriptionEnabled: Boolean,
@@ -646,8 +508,12 @@ class AiVideoGenViewModel internal constructor(
         val getFreeCreditsStatus: GetFreeCreditsStatusUseCase,
         val getPropertyRateLimitConfig: GetPropertyRateLimitConfigUseCase,
         val generateVideo: GenerateVideoUseCase,
-        val pollAndUploadAiVideo: PollAndUploadAiVideoUseCase,
     )
+
+    private companion object {
+        const val TOTAL_SECONDS_IN_A_DAY = 60 * 60 * 24
+        const val SERVER_DRAFT = "ServerDraft"
+    }
 
     sealed class AiVideoGenEvent {
         data class ShowSubscriptionNudge(
@@ -656,9 +522,7 @@ class AiVideoGenViewModel internal constructor(
             val entryPoint: SubscriptionEntryPoint = SubscriptionEntryPoint.AI_VIDEO,
         ) : AiVideoGenEvent()
         data object RefreshProDetails : AiVideoGenEvent()
-    }
-
-    companion object {
-        const val TOTAL_SECONDS_IN_A_DAY = 60 * 60 * 24
+        data object ShowGeneratedToast : AiVideoGenEvent()
+        data object NavigateToHome : AiVideoGenEvent()
     }
 }

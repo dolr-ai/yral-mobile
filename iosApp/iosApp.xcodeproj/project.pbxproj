@@ -221,6 +221,7 @@
 		10FEA9882E720AC5000103EB /* SizeReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA9872E720AC1000103EB /* SizeReader.swift */; };
 		10FEA9892E720AC5000103EB /* SizeReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FEA9872E720AC1000103EB /* SizeReader.swift */; };
 		2152FB042600AC8F00CF470E /* IosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* IosApp.swift */; };
+		2152FB062600AC8F00CF470E /* NotificationHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB052600AC8F00CF470E /* NotificationHandler.swift */; };
 		63997C25DF21E5569B7BCFF5 /* Pods_Yral_Staging.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D57B68D9945A635CA2480172 /* Pods_Yral_Staging.framework */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
 		A88CCB832E95C483001D43D7 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A88CCB822E95C480001D43D7 /* RootView.swift */; };
@@ -609,6 +610,7 @@
 		ACD8C36A2E7C6B770066027B /* ExchangeRateUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD8C3692E7C6B750066027B /* ExchangeRateUseCase.swift */; };
 		ACD8C36B2E7C6B770066027B /* ExchangeRateUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD8C3692E7C6B750066027B /* ExchangeRateUseCase.swift */; };
 		ACD941872CFF575C0038FCB6 /* IosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* IosApp.swift */; };
+		ACD941882CFF575C0038FCB6 /* NotificationHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB052600AC8F00CF470E /* NotificationHandler.swift */; };
 		ACD9418A2CFF575C0038FCB6 /* Data+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09AA732CDD2107009A39A4 /* Data+Extensions.swift */; };
 		ACD9418B2CFF575C0038FCB6 /* SwiftBindings+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC09A9F92CDB7A5D009A39A4 /* SwiftBindings+Extensions.swift */; };
 		ACD9418C2CFF575C0038FCB6 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
@@ -913,6 +915,7 @@
 		10FEA91B2E705598000103EB /* leaderboard_confetti.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = leaderboard_confetti.json; sourceTree = "<group>"; };
 		10FEA9872E720AC1000103EB /* SizeReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SizeReader.swift; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* IosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IosApp.swift; sourceTree = "<group>"; };
+		2152FB052600AC8F00CF470E /* NotificationHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationHandler.swift; sourceTree = "<group>"; };
 		74294ECFE2C99B0DF03151D3 /* Pods-YralTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YralTests.debug.xcconfig"; path = "Target Support Files/Pods-YralTests/Pods-YralTests.debug.xcconfig"; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Yral.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Yral.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF82242A565900829871 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -1583,6 +1586,7 @@
 			children = (
 				A88CCB822E95C480001D43D7 /* RootView.swift */,
 				2152FB032600AC8F00CF470E /* IosApp.swift */,
+				2152FB052600AC8F00CF470E /* NotificationHandler.swift */,
 				ACB46A2B2D0EC82F002E200C /* AppDIContainer.swift */,
 				10C1B38A2E5375D000CFC41B /* AppDIContainerKey.swift */,
 				ACC0F3932D2ED5B700FA5BD0 /* Splash */,
@@ -3546,6 +3550,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2152FB042600AC8F00CF470E /* IosApp.swift in Sources */,
+				2152FB062600AC8F00CF470E /* NotificationHandler.swift in Sources */,
 				A88CCB842E95C483001D43D7 /* RootView.swift in Sources */,
 				AC04D3022E059EA50055C4AA /* AppCheckProviderFactory.swift in Sources */,
 				AC638BF62D2309C000481E94 /* KeychainHelper.swift in Sources */,
@@ -3564,6 +3569,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				ACD941872CFF575C0038FCB6 /* IosApp.swift in Sources */,
+				ACD941882CFF575C0038FCB6 /* NotificationHandler.swift in Sources */,
 				A88CCB832E95C483001D43D7 /* RootView.swift in Sources */,
 				AC04D3032E059EA50055C4AA /* AppCheckProviderFactory.swift in Sources */,
 				AC638BF52D2309C000481E94 /* KeychainHelper.swift in Sources */,

@@ -75,6 +75,49 @@ class ProfileDataSourceImpl(
         }
     }
 
+    override suspend fun getDraftVideos(
+        canisterId: String,
+        startIndex: ULong,
+        pageSize: ULong,
+    ): ProfileVideosPageResult {
+        val result =
+            individualUserRepository.getDraftPostsWithPagination(
+                canisterId = canisterId,
+                startIndex = startIndex,
+                pageSize = pageSize,
+            )
+        return when (result) {
+            is Posts.Ok -> {
+                val posts = result.v1
+                ProfileVideosPageResult(
+                    posts = posts.filterNotNull(),
+                    hasNextPage = posts.size == pageSize.toInt(),
+                    nextStartIndex = startIndex + pageSize,
+                )
+            }
+
+            is Posts.Err -> {
+                when (result.v1) {
+                    PostsOfUserProfileError.REACHED_END_OF_ITEMS_LIST -> {
+                        ProfileVideosPageResult(
+                            posts = emptyList(),
+                            hasNextPage = false,
+                            nextStartIndex = startIndex,
+                        )
+                    }
+
+                    PostsOfUserProfileError.INVALID_BOUNDS_PASSED -> {
+                        throw YralException("Invalid bounds passed for pagination")
+                    }
+
+                    PostsOfUserProfileError.EXCEEDED_MAX_NUMBER_OF_ITEMS_ALLOWED_IN_ONE_REQUEST -> {
+                        throw YralException("Exceeded max number of items allowed in one request")
+                    }
+                }
+            }
+        }
+    }
+
     override suspend fun deleteVideo(request: DeleteVideoRequest) {
         val userPrincipal = sessionManager.userPrincipal ?: throw YralException("No user principal found")
         val identity = sessionManager.identity ?: throw YralException("No identity found")

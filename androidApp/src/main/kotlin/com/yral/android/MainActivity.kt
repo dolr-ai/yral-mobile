@@ -25,6 +25,7 @@ import com.yral.shared.app.isVersionLower
 import com.yral.shared.app.nav.DefaultRootComponent
 import com.yral.shared.app.ui.MyApplicationTheme
 import com.yral.shared.app.ui.screens.RootScreen
+import com.yral.shared.core.videostate.VideoGenerationTracker
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.utils.OAuthResult
 import com.yral.shared.features.auth.utils.OAuthUtils
@@ -34,6 +35,7 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import com.yral.shared.libs.routing.deeplink.engine.RoutingService
 import com.yral.shared.libs.routing.routes.api.AppRoute
+import com.yral.shared.libs.routing.routes.api.Profile
 import com.yral.shared.preferences.stores.AffiliateAttributionStore
 import com.yral.shared.rust.service.services.HelperService.initRustLogger
 import com.yral.shared.rust.service.services.RustLogLevel
@@ -67,6 +69,7 @@ class MainActivity : ComponentActivity() {
     private val branchAttributionProcessor: BranchAttributionProcessor? by lazy {
         (application as YralApp).getBranchAttributionProcessor()
     }
+    private val notificationHandler: NotificationHandler by inject()
 
     private val updateResultLauncher: ActivityResultLauncher<IntentSenderRequest> =
         registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
@@ -203,7 +206,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleIntent(intent: Intent?) {
-        Logger.d("MainActivity") { "onNewIntent: ${intent?.data}" }
+        Logger.d("MainActivity") { "onNewIntent: ${intent?.data}, extras=${intent?.extras?.keySet()}" }
 
         // Handle OAuth redirect URIs
         handleOAuthIntent(intent)?.let {
@@ -212,7 +215,7 @@ class MainActivity : ComponentActivity() {
         }
 
         // Handle notification deep links with payload format
-        val payload = intent?.getStringExtra("payload")
+        val payload = intent?.extractNotificationPayload()
         if (payload != null) {
             Logger.d("MainActivity") { "Handling notification payload: $payload" }
             mapPayloadToRoute(payload)?.let { route -> handleNotificationDeepLink(route) }
@@ -227,8 +230,13 @@ class MainActivity : ComponentActivity() {
     private fun mapPayloadToRoute(payload: String): AppRoute? =
         try {
             val jsonObject = Json.decodeFromString(JsonObject.serializer(), payload)
+            val type = jsonObject["type"]?.jsonPrimitive?.content
             val internalUrl = jsonObject["internalUrl"]?.jsonPrimitive?.content
-            internalUrl?.let { routingService.parseUrl(internalUrl) }
+            if (type == DRAFT_CREATED_TYPE) {
+                VideoGenerationTracker.onDraftCreatedAndRequestDraftsTab()
+            }
+            internalUrl?.let { routingService.parseUrl(it) }
+                ?: if (type == DRAFT_CREATED_TYPE) Profile else null
         } catch (
             @Suppress("TooGenericExceptionCaught") e: Exception,
         ) {
@@ -296,5 +304,18 @@ class MainActivity : ComponentActivity() {
             }
         val channel = rawChannel?.takeIf { it.isNotBlank() } ?: return
         affiliateAttributionStore.storeIfEmpty(channel)
+    }
+
+    private fun Intent.extractNotificationPayload(): String? {
+        val extrasData =
+            extras
+                ?.let { bundle ->
+                    bundle.keySet().mapNotNull { key ->
+                        bundle.getString(key)?.let { key to it }
+                    }
+                }?.toMap()
+                .orEmpty()
+
+        return notificationHandler.resolvePayloadOrNull(extrasData)
     }
 }

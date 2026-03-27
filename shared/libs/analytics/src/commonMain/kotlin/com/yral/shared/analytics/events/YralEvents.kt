@@ -1146,7 +1146,57 @@ data class AiVideoGeneratedData(
     )
 }
 
+@Serializable
+data class AiVideoRequestSubmittedData(
+    @SerialName("event") override val event: String = FeatureEvents.AI_VIDEO_REQUEST_SUBMITTED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.UPLOAD.getFeatureName(),
+    @SerialName("model") val model: String,
+    @SerialName("prompt") val prompt: String,
+    @SerialName("is_success") val isSuccess: Boolean,
+    @SerialName("reason") val reason: String?,
+    @SerialName("reason_type") val reasonType: AiVideoGenFailureType?,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        model: String,
+        prompt: String,
+        isSuccess: Boolean,
+        reason: String?,
+        reasonType: AiVideoGenFailureType?,
+    ) : this(
+        FeatureEvents.AI_VIDEO_REQUEST_SUBMITTED.getEventName(),
+        Features.UPLOAD.getFeatureName(),
+        model,
+        prompt,
+        isSuccess,
+        reason,
+        reasonType,
+    )
+}
+
 // --- Profile ---
+@Serializable
+data class VideoPublishedData(
+    @SerialName("event") override val event: String = FeatureEvents.VIDEO_PUBLISHED.getEventName(),
+    @SerialName("feature_name") override val featureName: String = Features.PROFILE.getFeatureName(),
+    @SerialName("video_id") val videoId: String,
+    @SerialName("is_success") val isSuccess: Boolean,
+    @SerialName("reason") val reason: String?,
+) : BaseEventData(),
+    EventData {
+    constructor(
+        videoId: String,
+        isSuccess: Boolean,
+        reason: String?,
+    ) : this(
+        FeatureEvents.VIDEO_PUBLISHED.getEventName(),
+        Features.PROFILE.getFeatureName(),
+        videoId,
+        isSuccess,
+        reason,
+    )
+}
+
 @Serializable
 data class ProfilePageViewedEventData(
     @SerialName("event") override val event: String = FeatureEvents.PROFILE_PAGE_VIEWED.getEventName(),

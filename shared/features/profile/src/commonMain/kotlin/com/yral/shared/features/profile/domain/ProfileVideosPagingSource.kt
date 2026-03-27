@@ -18,6 +18,7 @@ class ProfileVideosPagingSource(
         runCatching {
             val startIndex = params.key ?: 0UL
             val pageSize = params.loadSize.toULong()
+
             val result =
                 profileRepository
                     .getProfileVideos(
@@ -28,6 +29,7 @@ class ProfileVideosPagingSource(
                         pageSize = pageSize,
                     )
             var profileVideos = result.posts
+
             val videoStats =
                 commonApis
                     .getVideoViewsCount(profileVideos.map { it.videoID })

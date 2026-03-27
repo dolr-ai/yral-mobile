@@ -1,12 +1,8 @@
 package com.yral.shared.features.uploadvideo.ui.aiVideoGen
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
@@ -27,14 +22,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
@@ -50,35 +42,32 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.touchlab.kermit.Logger
 import com.yral.shared.features.subscriptions.nav.SubscriptionNudgeContent
 import com.yral.shared.features.subscriptions.ui.components.BoltIcon
-import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.features.uploadvideo.nav.aiVideoGen.AiVideoGenComponent
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel.BottomSheetType
-import com.yral.shared.features.uploadvideo.ui.aiVideoGen.AiVideoGenScreenConstants.LOADING_MESSAGE_DELAY
 import com.yral.shared.libs.arch.presentation.UiState
-import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralConfirmationMessage
 import com.yral.shared.libs.designsystem.component.YralGradientButton
-import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
-import com.yral.shared.libs.designsystem.component.getSVGImageModel
+import com.yral.shared.libs.designsystem.component.toast.ToastManager
+import com.yral.shared.libs.designsystem.component.toast.ToastType
+import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.videoPlayer.YralVideoPlayer
-import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.features.uploadvideo.generated.resources.Res
 import yral_mobile.shared.features.uploadvideo.generated.resources.create_ai_video
 import yral_mobile.shared.features.uploadvideo.generated.resources.generate_video
-import yral_mobile.shared.features.uploadvideo.generated.resources.generating_video
 import yral_mobile.shared.features.uploadvideo.generated.resources.play_games
 import yral_mobile.shared.features.uploadvideo.generated.resources.stay_here
-import yral_mobile.shared.features.uploadvideo.generated.resources.this_may_take_few_minutes
 import yral_mobile.shared.features.uploadvideo.generated.resources.to_earn_token
+import yral_mobile.shared.features.uploadvideo.generated.resources.toast_ai_video_generating
 import yral_mobile.shared.features.uploadvideo.generated.resources.upload_completed_message
 import yral_mobile.shared.features.uploadvideo.generated.resources.upload_successful
 import yral_mobile.shared.features.uploadvideo.generated.resources.yes_take_me_back
@@ -127,33 +116,42 @@ fun AiVideoGenScreen(
                 is AiVideoGenViewModel.AiVideoGenEvent.RefreshProDetails -> {
                     component.subscriptionCoordinator.refreshCreditBalances()
                 }
+                is AiVideoGenViewModel.AiVideoGenEvent.ShowGeneratedToast -> {
+                    ToastManager.showSuccess(
+                        type =
+                            ToastType.Small(
+                                getString(Res.string.toast_ai_video_generating),
+                            ),
+                    )
+                }
+                is AiVideoGenViewModel.AiVideoGenEvent.NavigateToHome -> {
+                    viewModel.cleanup()
+                    component.goToHome()
+                }
             }
         }
     }
     BackHandler(
-        enabled = viewState.uiState is UiState.Success,
+        enabled = viewState.uiState is UiState.Success || viewState.uiState is UiState.InProgress,
         onBack = {
-            viewModel.cleanup()
-            component.goToHome()
+            if (viewState.uiState is UiState.InProgress) {
+                viewModel.setBottomSheetType(BottomSheetType.BackConfirmation)
+            } else {
+                viewModel.cleanup()
+                component.goToHome()
+            }
         },
     )
     Column(modifier.fillMaxSize()) {
         when (viewState.uiState) {
-            is UiState.InProgress -> {
-                Header { viewModel.setBottomSheetType(BottomSheetType.BackConfirmation) }
-                viewState.selectedProvider?.let { provider ->
-                    Column(modifier = Modifier.padding(top = 20.dp)) {
-                        GenerationInProgressScreen(
-                            promptText = viewState.prompt,
-                            provider = provider,
-                        )
-                    }
-                }
-            }
-            UiState.Initial -> {
+            UiState.Initial, is UiState.InProgress -> {
                 Header {
-                    viewModel.cleanup()
-                    component.onBack()
+                    if (viewState.uiState is UiState.InProgress) {
+                        viewModel.setBottomSheetType(BottomSheetType.BackConfirmation)
+                    } else {
+                        viewModel.cleanup()
+                        component.onBack()
+                    }
                 }
                 val focusManager = LocalFocusManager.current
                 Column(
@@ -259,8 +257,10 @@ private fun PromptScreen(
     promptLogin: () -> Unit,
 ) {
     val buttonState =
-        remember(viewState.usedCredits, viewState.prompt) {
-            if (viewModel.shouldEnableButton()) {
+        remember(viewState.usedCredits, viewState.prompt, viewState.uiState) {
+            if (viewState.uiState is UiState.InProgress) {
+                YralButtonState.Loading
+            } else if (viewModel.shouldEnableButton()) {
                 YralButtonState.Enabled
             } else {
                 YralButtonState.Disabled
@@ -338,96 +338,6 @@ private fun PlayGameText(goToHome: () -> Unit) {
             style = LocalAppTopography.current.baseRegular,
             color = YralColors.NeutralTextPrimary,
         )
-    }
-}
-
-@Suppress("LongMethod")
-@Composable
-private fun GenerationInProgressScreen(
-    promptText: String,
-    provider: Provider,
-) {
-    val loadingMessages =
-        listOf(
-            stringResource(Res.string.generating_video),
-            stringResource(Res.string.this_may_take_few_minutes),
-        )
-    var messageIndex by remember { mutableIntStateOf(0) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(LOADING_MESSAGE_DELAY)
-            messageIndex = (messageIndex + 1) % loadingMessages.size
-        }
-    }
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top),
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top)) {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .background(YralColors.Neutral800, RoundedCornerShape(8.dp))
-                        .border(
-                            width = 1.dp,
-                            color = YralColors.Neutral700,
-                            shape = RoundedCornerShape(size = 8.dp),
-                        ).clip(RoundedCornerShape(8.dp)),
-                verticalArrangement = Arrangement.spacedBy(0.dp, Alignment.Top),
-            ) {
-                Text(
-                    text = promptText,
-                    style = LocalAppTopography.current.baseRegular,
-                    color = YralColors.NeutralTextPrimary,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
-                )
-            }
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.Start),
-                verticalAlignment = Alignment.Bottom,
-            ) {
-                provider.modelIcon?.let { url ->
-                    YralAsyncImage(
-                        imageUrl = getSVGImageModel(url),
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-                Text(
-                    text = provider.name,
-                    style = LocalAppTopography.current.regRegular,
-                    color = YralColors.NeutralTextPrimary,
-                )
-            }
-        }
-        BoxWithConstraints(modifier = Modifier.weight(1f).padding(bottom = 83.dp)) {
-            val widthToHeightRatio = 1f / provider.toDefaultAspectRatio()
-            val boxHeight = (maxWidth * widthToHeightRatio).coerceAtMost(maxHeight)
-            Box(
-                modifier =
-                    Modifier
-                        .height(boxHeight)
-                        .fillMaxWidth()
-                        .background(YralColors.Neutral800, RoundedCornerShape(8.dp))
-                        .clip(RoundedCornerShape(8.dp)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(11.dp, Alignment.CenterVertically),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    YralLoader(size = 34.dp)
-                    Text(
-                        text = loadingMessages[messageIndex],
-                        style = LocalAppTopography.current.baseRegular,
-                        color = YralColors.NeutralTextPrimary,
-                    )
-                }
-            }
-        }
     }
 }
 
@@ -556,7 +466,6 @@ private fun Header(onBack: () -> Unit) {
 object AiVideoGenScreenConstants {
     const val ARROW_ROTATION = -90f
     const val PROMPT_MAX_CHAR = 500
-    const val LOADING_MESSAGE_DELAY = 10000L // 10 sec
 }
 
 @Composable
