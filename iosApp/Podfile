@@ -6,9 +6,18 @@ FIREBASE_VERSION = '11.14.0'
 
 def add_common_pods
   pod 'FirebaseCore', FIREBASE_VERSION
+  # These native iOS pods are still linked by iosSharedUmbrella via KMP Firebase/Mixpanel/Sentry usage.
+  pod 'FirebaseAnalytics', FIREBASE_VERSION
+  pod 'FirebaseCrashlytics', FIREBASE_VERSION
+  pod 'FirebasePerformance', FIREBASE_VERSION
+  pod 'FirebaseFirestore', FIREBASE_VERSION
   pod 'FirebaseAppCheck', FIREBASE_VERSION
+  pod 'FirebaseStorage', FIREBASE_VERSION
+  pod 'FirebaseAuth', FIREBASE_VERSION
   pod 'FirebaseMessaging', FIREBASE_VERSION
+  pod 'Mixpanel', '5.0.8'
   pod 'FBSDKCoreKit', '18.0.0'
+  pod 'Sentry', '8.57.1'
 end
 
 target 'Yral' do

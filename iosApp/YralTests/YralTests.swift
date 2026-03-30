@@ -135,8 +135,9 @@ struct YralTests {
   }
 
   @Test
-  func distributionWorkflowsNoLongerBuildRustLocally() throws {
+  func iosWorkflowsNoLongerBuildRustLocally() throws {
     let workflowPaths = [
+      ".github/workflows/swift-lint-build-test.yml",
       ".github/workflows/deploy-staging-app-to-apple-app-store-on-merge-to-main.yml",
       ".github/workflows/ios-prod-distribution.yml"
     ]
@@ -148,6 +149,16 @@ struct YralTests {
       #expect(!contents.contains("cargo-lipo"))
       #expect(!contents.contains("build-rust.sh"))
       #expect(!contents.contains("rust-agent"))
+    }
+
+    let distributionWorkflowPaths = [
+      ".github/workflows/deploy-staging-app-to-apple-app-store-on-merge-to-main.yml",
+      ".github/workflows/ios-prod-distribution.yml"
+    ]
+
+    for path in distributionWorkflowPaths {
+      let contents = try Self.repoText(path)
+
       #expect(contents.contains("compose.ios.resources.platform=iphoneos"))
       #expect(contents.contains("compose.ios.resources.archs=arm64"))
     }
@@ -177,19 +188,22 @@ struct YralTests {
     let podfile = try Self.repoText("iosApp/Podfile")
 
     #expect(podfile.contains("pod 'FirebaseCore'"))
+    #expect(podfile.contains("pod 'FirebaseAnalytics'"))
+    #expect(podfile.contains("pod 'FirebaseCrashlytics'"))
+    #expect(podfile.contains("pod 'FirebasePerformance'"))
+    #expect(podfile.contains("pod 'FirebaseFirestore'"))
     #expect(podfile.contains("pod 'FirebaseAppCheck'"))
+    #expect(podfile.contains("pod 'FirebaseStorage'"))
+    #expect(podfile.contains("pod 'FirebaseAuth'"))
     #expect(podfile.contains("pod 'FirebaseMessaging'"))
+    #expect(podfile.contains("pod 'Mixpanel'"))
     #expect(podfile.contains("pod 'FBSDKCoreKit'"))
-    #expect(!podfile.contains("pod 'FirebaseAnalytics'"))
-    #expect(!podfile.contains("pod 'FirebaseCrashlytics'"))
-    #expect(!podfile.contains("pod 'FirebasePerformance'"))
+    #expect(podfile.contains("pod 'Sentry'"))
     #expect(!podfile.contains("pod 'FirebaseInstallations'"))
-    #expect(!podfile.contains("pod 'FirebaseFirestore'"))
-    #expect(!podfile.contains("pod 'FirebaseStorage'"))
-    #expect(!podfile.contains("pod 'FirebaseAuth'"))
     #expect(!podfile.contains("pod 'FirebaseInAppMessaging'"))
-    #expect(!podfile.contains("pod 'Mixpanel'"))
-    #expect(!podfile.contains("pod 'Sentry'"))
+    #expect(!podfile.contains("pod 'FirebaseCoreInternal'"))
+    #expect(!podfile.contains("pod 'GoogleUtilities'"))
+    #expect(!podfile.contains("pod 'nanopb'"))
   }
 
   @Test
