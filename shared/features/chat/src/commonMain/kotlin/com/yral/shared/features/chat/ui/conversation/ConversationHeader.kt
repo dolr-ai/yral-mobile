@@ -29,6 +29,7 @@ import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralContextMenu
 import com.yral.shared.libs.designsystem.component.YralContextMenuItem
 import com.yral.shared.libs.designsystem.component.features.SubscribeButton
+import com.yral.shared.libs.designsystem.component.features.SubscribeButtonState
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
@@ -56,6 +57,7 @@ internal fun ChatHeader(
     isAccessExpiringSoon: Boolean = false,
     isBotAccount: Boolean,
     showSubscribe: Boolean = false,
+    isSubscribed: Boolean = false,
     isSubscribeLoading: Boolean = false,
     onSubscribeClick: () -> Unit = {},
 ) {
@@ -86,6 +88,7 @@ internal fun ChatHeader(
                 onShareProfile = onShareProfile,
                 isBotAccount = isBotAccount,
                 showSubscribe = showSubscribe,
+                isSubscribed = isSubscribed,
                 isSubscribeLoading = isSubscribeLoading,
                 onSubscribeClick = onSubscribeClick,
             )
@@ -203,6 +206,7 @@ private fun RightPart(
     onShareProfile: () -> Unit,
     isBotAccount: Boolean,
     showSubscribe: Boolean = false,
+    isSubscribed: Boolean = false,
     isSubscribeLoading: Boolean = false,
     onSubscribeClick: () -> Unit = {},
 ) {
@@ -213,6 +217,12 @@ private fun RightPart(
         if (showSubscribe) {
             SubscribeButton(
                 modifier = Modifier.width(88.dp).height(29.dp),
+                buttonState =
+                    if (isSubscribed) {
+                        SubscribeButtonState.Subscribed
+                    } else {
+                        SubscribeButtonState.Subscribe
+                    },
                 isLoading = isSubscribeLoading,
                 onClick = onSubscribeClick,
             )

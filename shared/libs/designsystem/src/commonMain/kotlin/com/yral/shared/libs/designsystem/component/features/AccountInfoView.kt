@@ -56,6 +56,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.login
 import yral_mobile.shared.libs.designsystem.generated.resources.pro
 import yral_mobile.shared.libs.designsystem.generated.resources.share_profile
 import yral_mobile.shared.libs.designsystem.generated.resources.subscribe
+import yral_mobile.shared.libs.designsystem.generated.resources.subscribed
 import yral_mobile.shared.libs.designsystem.generated.resources.talk_to_me
 
 @Suppress("LongMethod", "LongParameterList", "CyclomaticComplexMethod")
@@ -446,25 +447,38 @@ private fun ProfileButton(
 fun SubscribeButton(
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
+    buttonState: SubscribeButtonState = SubscribeButtonState.Subscribe,
     onClick: () -> Unit,
 ) {
+    val isSubscribed = buttonState == SubscribeButtonState.Subscribed
+    val showLoading = isLoading && !isSubscribed
     Surface(
         modifier = modifier.height(40.dp),
         shape = RoundedCornerShape(4.dp),
-        color = YralColors.Yellow400,
-        border = BorderStroke(1.dp, YralColors.Yellow200),
-        onClick = onClick,
+        color = if (isSubscribed) YralColors.Neutral800 else YralColors.Yellow400,
+        border =
+            BorderStroke(
+                width = 1.dp,
+                color = if (isSubscribed) YralColors.Neutral700 else YralColors.Yellow200,
+            ),
+        onClick = if (isSubscribed || showLoading) ({}) else onClick,
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
             horizontalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (isLoading) {
+            if (showLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(14.dp),
                     color = YralColors.Yellow200,
                     strokeWidth = 2.dp,
+                )
+            } else if (isSubscribed) {
+                Text(
+                    text = stringResource(Res.string.subscribed),
+                    style = LocalAppTopography.current.regSemiBold,
+                    color = YralColors.Grey50,
                 )
             } else {
                 Text(
@@ -481,6 +495,11 @@ fun SubscribeButton(
             }
         }
     }
+}
+
+enum class SubscribeButtonState {
+    Subscribe,
+    Subscribed,
 }
 
 @Composable

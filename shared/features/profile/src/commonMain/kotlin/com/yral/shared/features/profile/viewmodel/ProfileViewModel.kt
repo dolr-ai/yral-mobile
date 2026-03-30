@@ -489,6 +489,7 @@ class ProfileViewModel(
                         accountInfo = updatedInfo,
                         isFollowing = details.callerFollowsUser ?: current.isFollowing,
                         isAiInfluencer = isAiInfluencer,
+                        isInfluencerSubscriptionStateLoading = isAiInfluencer && !current.isOwnProfile,
                         isProUser = (details.subscriptionPlan as? SubscriptionPlan.Pro) != null,
                         createdByUsername = accountTypeData.createdByUsername,
                         createdByPrincipal = accountTypeData.createdByPrincipal,
@@ -512,10 +513,19 @@ class ProfileViewModel(
     }
 
     private fun checkInfluencerSubscription(botPrincipal: String) {
+        _state.update { it.copy(isInfluencerSubscriptionStateLoading = true) }
         viewModelScope.launch {
             checkChatAccessUseCase(botPrincipal)
                 .onSuccess { status ->
-                    _state.update { it.copy(isSubscribedToInfluencer = status.hasAccess) }
+                    _state.update {
+                        it.copy(
+                            isSubscribedToInfluencer = status.hasAccess,
+                            isInfluencerSubscriptionStateLoading = false,
+                        )
+                    }
+                }.onFailure { error ->
+                    Logger.e("checkInfluencerSubscription") { "Failed to fetch subscription status $error" }
+                    _state.update { it.copy(isInfluencerSubscriptionStateLoading = false) }
                 }
         }
     }
@@ -1277,6 +1287,7 @@ data class ViewState(
     val canShareProfile: Boolean = false,
     val isAiInfluencer: Boolean = false,
     val isSubscribedToInfluencer: Boolean = false,
+    val isInfluencerSubscriptionStateLoading: Boolean = false,
     val isTalkToMeInProgress: Boolean = false,
     val isProUser: Boolean = false,
     val isSubscriptionEnabled: Boolean = false,
