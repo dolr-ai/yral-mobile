@@ -3,27 +3,12 @@ platform :ios, '15.6'
 use_frameworks!
 
 FIREBASE_VERSION = '11.14.0'
-FIREBASE_IAM_VERSION = '11.14.0-beta'
 
 def add_common_pods
   pod 'FirebaseCore', FIREBASE_VERSION
-  pod 'FirebaseAnalytics', FIREBASE_VERSION
-  pod 'FirebaseCrashlytics', FIREBASE_VERSION
-  pod 'FirebasePerformance', FIREBASE_VERSION
-  pod 'FirebaseInstallations', FIREBASE_VERSION
-  pod 'FirebaseCoreInternal', FIREBASE_VERSION
-  pod 'FirebaseFirestore', FIREBASE_VERSION
   pod 'FirebaseAppCheck', FIREBASE_VERSION
-  pod 'FirebaseStorage', FIREBASE_VERSION
-  pod 'FirebaseAuth', FIREBASE_VERSION
   pod 'FirebaseMessaging', FIREBASE_VERSION
-  # In-App Messaging currently only has a beta release for 11.14.x
-  pod 'FirebaseInAppMessaging', FIREBASE_IAM_VERSION
-  pod 'GoogleUtilities', '8.1'
-  pod 'nanopb', '3.30910.0'
-  pod 'Mixpanel', '5.0.8'
   pod 'FBSDKCoreKit', '18.0.0'
-  pod 'Sentry', '8.57.1'
 end
 
 target 'Yral' do
