@@ -21,6 +21,23 @@ class ConversationSubscribeButtonStateTest {
 
         assertTrue(uiState.shouldShow)
         assertTrue(uiState.isSubscribed)
+        assertFalse(uiState.isLoading)
+    }
+
+    @Test
+    fun `loading chat access shows loader instead of subscribe`() {
+        val uiState =
+            ConversationViewState(
+                loginPromptMessageThreshold = 1,
+                subscriptionMandatoryThreshold = 1,
+                isSubscriptionEnabled = true,
+                isSocialSignedIn = true,
+                isChatAccessLoading = true,
+            ).headerSubscribeButtonUiState()
+
+        assertTrue(uiState.shouldShow)
+        assertFalse(uiState.isSubscribed)
+        assertTrue(uiState.isLoading)
     }
 
     @Test
@@ -39,6 +56,7 @@ class ConversationSubscribeButtonStateTest {
             ConversationSubscribeButtonUiState(
                 shouldShow = true,
                 isSubscribed = false,
+                isLoading = false,
             ),
             uiState,
         )
@@ -58,5 +76,6 @@ class ConversationSubscribeButtonStateTest {
 
         assertFalse(uiState.shouldShow)
         assertFalse(uiState.isSubscribed)
+        assertFalse(uiState.isLoading)
     }
 }

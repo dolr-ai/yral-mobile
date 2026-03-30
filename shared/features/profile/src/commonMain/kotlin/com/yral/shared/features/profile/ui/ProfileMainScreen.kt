@@ -748,7 +748,7 @@ private fun MainContent(
             onSubscribe = onSubscribe,
             showSubscribeButton = subscribeButtonUiState.shouldShow,
             isSubscribedToInfluencer = subscribeButtonUiState.isSubscribed,
-            isSubscribeLoading = state.isTalkToMeInProgress,
+            isSubscribeLoading = subscribeButtonUiState.isLoading || state.isTalkToMeInProgress,
             onSubscribeClicked = { viewModel.onSubscribeClicked() },
         )
         state.accountInfo?.let { info ->

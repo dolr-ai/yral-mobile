@@ -5,6 +5,7 @@ import com.yral.shared.features.chat.viewmodel.ConversationViewState
 internal data class ConversationSubscribeButtonUiState(
     val shouldShow: Boolean,
     val isSubscribed: Boolean,
+    val isLoading: Boolean,
 )
 
 internal fun ConversationViewState.headerSubscribeButtonUiState(): ConversationSubscribeButtonUiState =
@@ -14,8 +15,10 @@ internal fun ConversationViewState.headerSubscribeButtonUiState(): ConversationS
                 isSubscriptionEnabled &&
                 !isBotAccount &&
                 (
-                    isInfluencerSubscriptionPurchasedAndVerified ||
+                    isChatAccessLoading ||
+                        isInfluencerSubscriptionPurchasedAndVerified ||
                         isInfluencerSubscriptionAvailableToPurchase
                 ),
         isSubscribed = isInfluencerSubscriptionPurchasedAndVerified,
+        isLoading = isChatAccessLoading && !isInfluencerSubscriptionPurchasedAndVerified,
     )

@@ -446,7 +446,9 @@ fun ChatConversationScreen(
                 isBotAccount = viewState.isBotAccount,
                 showSubscribe = headerSubscribeButtonUiState.shouldShow,
                 isSubscribed = headerSubscribeButtonUiState.isSubscribed,
-                isSubscribeLoading = viewState.isInfluencerSubscriptionPurchaseInProgress,
+                isSubscribeLoading =
+                    headerSubscribeButtonUiState.isLoading ||
+                        viewState.isInfluencerSubscriptionPurchaseInProgress,
                 onSubscribeClick = {
                     purchaseContext?.let { viewModel.launchInfluencerSubscriptionPurchase(it) }
                 },

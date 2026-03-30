@@ -21,6 +21,22 @@ class ProfileSubscribeButtonStateTest {
 
         assertTrue(uiState.shouldShow)
         assertTrue(uiState.isSubscribed)
+        assertFalse(uiState.isLoading)
+    }
+
+    @Test
+    fun `unknown influencer subscription state shows loader`() {
+        val uiState =
+            ViewState(
+                isOwnProfile = false,
+                isAiInfluencer = true,
+                isLoggedIn = true,
+                isInfluencerSubscriptionStateLoading = true,
+            ).profileSubscribeButtonUiState()
+
+        assertTrue(uiState.shouldShow)
+        assertFalse(uiState.isSubscribed)
+        assertTrue(uiState.isLoading)
     }
 
     @Test
@@ -37,6 +53,7 @@ class ProfileSubscribeButtonStateTest {
 
         assertFalse(uiState.shouldShow)
         assertFalse(uiState.isSubscribed)
+        assertFalse(uiState.isLoading)
     }
 
     @Test
@@ -53,6 +70,7 @@ class ProfileSubscribeButtonStateTest {
             ProfileSubscribeButtonUiState(
                 shouldShow = false,
                 isSubscribed = true,
+                isLoading = false,
             ),
             uiState,
         )
