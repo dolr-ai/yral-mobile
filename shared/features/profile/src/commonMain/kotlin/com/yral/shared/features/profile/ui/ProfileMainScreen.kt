@@ -114,6 +114,7 @@ import com.yral.shared.libs.designsystem.component.YralLoadingDots
 import com.yral.shared.libs.designsystem.component.features.AccountInfoView
 import com.yral.shared.libs.designsystem.component.features.DeleteConfirmationSheet
 import com.yral.shared.libs.designsystem.component.features.SubscribeButton
+import com.yral.shared.libs.designsystem.component.features.SubscribeButtonState
 import com.yral.shared.libs.designsystem.component.features.VideoViewsSheet
 import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
@@ -728,6 +729,7 @@ private fun MainContent(
     onCreateInfluencerClick: () -> Unit,
     onUsernameClick: (String) -> Unit,
 ) {
+    val subscribeButtonUiState = state.profileSubscribeButtonUiState()
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader(
             isOwnProfile = state.isOwnProfile,
@@ -744,11 +746,8 @@ private fun MainContent(
             onBack = onBackClicked,
             showBackButton = showBackButton,
             onSubscribe = onSubscribe,
-            showSubscribeButton =
-                !state.isOwnProfile &&
-                    state.isAiInfluencer &&
-                    state.isLoggedIn &&
-                    !state.isSubscribedToInfluencer,
+            showSubscribeButton = subscribeButtonUiState.shouldShow,
+            isSubscribedToInfluencer = subscribeButtonUiState.isSubscribed,
             isSubscribeLoading = state.isTalkToMeInProgress,
             onSubscribeClicked = { viewModel.onSubscribeClicked() },
         )
@@ -871,6 +870,7 @@ private fun ProfileHeader(
     showBackButton: Boolean = false,
     onSubscribe: () -> Unit,
     showSubscribeButton: Boolean = false,
+    isSubscribedToInfluencer: Boolean = false,
     isSubscribeLoading: Boolean = false,
     onSubscribeClicked: () -> Unit = {},
 ) {
@@ -941,6 +941,12 @@ private fun ProfileHeader(
             if (showSubscribeButton) {
                 SubscribeButton(
                     modifier = Modifier.width(88.dp).height(29.dp),
+                    buttonState =
+                        if (isSubscribedToInfluencer) {
+                            SubscribeButtonState.Subscribed
+                        } else {
+                            SubscribeButtonState.Subscribe
+                        },
                     isLoading = isSubscribeLoading,
                     onClick = onSubscribeClicked,
                 )
