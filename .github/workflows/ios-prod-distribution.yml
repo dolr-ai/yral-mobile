@@ -46,24 +46,6 @@ jobs:
         working-directory: iosApp
         run: pod install
 
-      - name: Set up Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: aarch64-apple-ios
-          override: true
-
-      - name: Install cargo-lipo
-        run: cargo install cargo-lipo
-
-      - name: Make build script executable
-        run: chmod +x iosApp/build-rust.sh
-
-      - name: Build Rust Library
-        run: |
-          PROJECT_DIR="${PWD}/rust-agent" CONFIGURATION=Release iosApp/build-rust.sh
-          ls -la rust-agent/target || true
-
       - name: Install Fastlane
         run: |
           gem install fastlane
@@ -96,6 +78,9 @@ jobs:
           APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
           GITHUB_USERNAME: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GRADLE_OPTS: >-
+            -Dorg.gradle.project.compose.ios.resources.platform=iphoneos
+            -Dorg.gradle.project.compose.ios.resources.archs=arm64
 
       - name: Upload gym build log
         if: failure()

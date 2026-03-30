@@ -134,6 +134,32 @@ struct YralTests {
     #expect(type == "VideoUploadedToDraft")
   }
 
+  @Test
+  func distributionWorkflowsNoLongerBuildRustLocally() throws {
+    let workflowPaths = [
+      ".github/workflows/deploy-staging-app-to-apple-app-store-on-merge-to-main.yml",
+      ".github/workflows/ios-prod-distribution.yml"
+    ]
+
+    for path in workflowPaths {
+      let contents = try Self.repoText(path)
+
+      #expect(!contents.contains("actions-rs/toolchain@v1"))
+      #expect(!contents.contains("cargo-lipo"))
+      #expect(!contents.contains("build-rust.sh"))
+      #expect(!contents.contains("rust-agent"))
+      #expect(contents.contains("compose.ios.resources.platform=iphoneos"))
+      #expect(contents.contains("compose.ios.resources.archs=arm64"))
+    }
+
+    let stagingWorkflow = try Self.repoText(
+      ".github/workflows/deploy-staging-app-to-apple-app-store-on-merge-to-main.yml"
+    )
+    #expect(!stagingWorkflow.contains("getsentry/tools/sentry-cli"))
+    #expect(!stagingWorkflow.contains("SENTRY_AUTH_TOKEN"))
+  }
+
+  @Test
   func podfileMatchesTheRemainingCompiledImports() throws {
     let podfile = try Self.repoText("iosApp/Podfile")
 
