@@ -35,18 +35,9 @@ jobs:
       - name: Install SwiftLint, CocoaPods, and xcbeautify
         run: brew install swiftlint cocoapods xcbeautify
 
-      - name: Set up Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: aarch64-apple-ios
-          override: true
-
-      - name: Add Rust iOS simulator targets
-        run: rustup target add aarch64-apple-ios-sim x86_64-apple-ios
-
-      - name: Install cargo-lipo
-        run: cargo install cargo-lipo
+      - name: Pin CocoaPods executable for Kotlin
+        run: |
+          printf 'kotlin.apple.cocoapods.bin=%s\n' "$(which pod)" > local.properties
 
       - name: Build KMM framework
         env:
