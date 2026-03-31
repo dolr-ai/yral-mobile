@@ -648,13 +648,15 @@ data class DeleteVideoInitiatedEventData(
     @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
     @SerialName("page_name") val pageName: CategoryName,
     @SerialName("video_id") val videoId: String,
+    @SerialName("is_draft") val isDraft: Boolean,
 ) : BaseEventData(),
     EventData {
-    constructor(pageName: CategoryName, videoId: String) : this(
+    constructor(pageName: CategoryName, videoId: String, isDraft: Boolean) : this(
         FeatureEvents.DELETE_VIDEO_INITIATED.getEventName(),
         Features.AUTH.getFeatureName(),
         pageName,
         videoId,
+        isDraft,
     )
 }
 
@@ -665,14 +667,16 @@ data class VideoDeletedEventData(
     @SerialName("page_name") val pageName: CategoryName,
     @SerialName("video_id") val videoId: String,
     @SerialName(value = "cta_type") val ctaType: VideoDeleteCTA,
+    @SerialName("is_draft") val isDraft: Boolean,
 ) : BaseEventData(),
     EventData {
-    constructor(pageName: CategoryName, videoId: String, ctaType: VideoDeleteCTA) : this(
+    constructor(pageName: CategoryName, videoId: String, ctaType: VideoDeleteCTA, isDraft: Boolean) : this(
         FeatureEvents.VIDEO_DELETED.getEventName(),
         Features.AUTH.getFeatureName(),
         pageName,
         videoId,
         ctaType,
+        isDraft,
     )
 }
 

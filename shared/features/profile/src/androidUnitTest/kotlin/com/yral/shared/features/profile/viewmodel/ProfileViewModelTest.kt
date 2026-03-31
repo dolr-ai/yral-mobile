@@ -8,6 +8,9 @@ import androidx.lifecycle.viewModelScope
 import com.github.michaelbull.result.Err
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.AnalyticsManager
+import com.yral.shared.analytics.events.DeleteVideoInitiatedEventData
+import com.yral.shared.analytics.events.VideoDeleteCTA
+import com.yral.shared.analytics.events.VideoDeletedEventData
 import com.yral.shared.analytics.events.VideoPublishedData
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.Session
@@ -95,6 +98,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 @RunWith(RobolectricTestRunner::class)
 class ProfileViewModelTest {
@@ -388,6 +392,90 @@ class ProfileViewModelTest {
 
     // endregion
 
+    // region delete draft
+
+    @Test
+    fun `deleteVideo for draft sends same request through delete use case`() =
+        runBlocking {
+            signInUser()
+            val vm = createViewModel()
+
+            vm.confirmDelete(
+                TEST_FEED_DETAILS,
+                VideoDeleteCTA.PROFILE_THUMBNAIL,
+            )
+            vm.deleteVideo()
+
+            withTimeout(TIMEOUT_MS) {
+                vm.state.first { it.deleteConfirmation is DeleteConfirmationState.None }
+            }
+            assertEquals(1, fakeProfileRepository.deleteRequests.size)
+            assertEquals(
+                TEST_FEED_DETAILS.postID,
+                fakeProfileRepository
+                    .deleteRequests
+                    .single()
+                    .feedDetails
+                    .postID,
+            )
+            assertEquals(
+                TEST_FEED_DETAILS.videoID,
+                fakeProfileRepository
+                    .deleteRequests
+                    .single()
+                    .feedDetails
+                    .videoID,
+            )
+            assertTrue(
+                fakeProfileRepository
+                    .deleteRequests
+                    .single()
+                    .feedDetails
+                    .isDraft,
+            )
+        }
+
+    @Test
+    fun `deleteVideo failure for draft sets error state`() =
+        runBlocking {
+            signInUser()
+            fakeProfileRepository.deleteVideoShouldThrow = true
+            val vm = createViewModel()
+
+            vm.confirmDelete(
+                TEST_FEED_DETAILS,
+                VideoDeleteCTA.PROFILE_THUMBNAIL,
+            )
+            vm.deleteVideo()
+
+            withTimeout(TIMEOUT_MS) {
+                vm.state.first { it.deleteConfirmation is DeleteConfirmationState.Error }
+            }
+            assertIs<DeleteConfirmationState.Error>(vm.state.value.deleteConfirmation)
+            Unit
+        }
+
+    @Test
+    fun `deleteVideo for draft tracks draft flag in delete telemetry`() =
+        runBlocking {
+            signInUser()
+            val vm = createViewModel()
+
+            vm.confirmDelete(
+                TEST_FEED_DETAILS,
+                VideoDeleteCTA.PROFILE_THUMBNAIL,
+            )
+            vm.deleteVideo()
+
+            val initiatedEvent = awaitDeleteVideoInitiatedEvent()
+            val deletedEvent = awaitVideoDeletedEvent()
+
+            assertTrue(initiatedEvent.isDraft)
+            assertTrue(deletedEvent.isDraft)
+        }
+
+    // endregion
+
     private suspend fun awaitVideoPublishedEvent(): VideoPublishedData {
         withTimeout(TIMEOUT_MS) {
             while (fakeAnalyticsProvider.events.filterIsInstance<VideoPublishedData>().isEmpty()) {
@@ -395,6 +483,24 @@ class ProfileViewModelTest {
             }
         }
         return fakeAnalyticsProvider.events.filterIsInstance<VideoPublishedData>().first()
+    }
+
+    private suspend fun awaitDeleteVideoInitiatedEvent(): DeleteVideoInitiatedEventData {
+        withTimeout(TIMEOUT_MS) {
+            while (fakeAnalyticsProvider.events.filterIsInstance<DeleteVideoInitiatedEventData>().isEmpty()) {
+                delay(10)
+            }
+        }
+        return fakeAnalyticsProvider.events.filterIsInstance<DeleteVideoInitiatedEventData>().first()
+    }
+
+    private suspend fun awaitVideoDeletedEvent(): VideoDeletedEventData {
+        withTimeout(TIMEOUT_MS) {
+            while (fakeAnalyticsProvider.events.filterIsInstance<VideoDeletedEventData>().isEmpty()) {
+                delay(10)
+            }
+        }
+        return fakeAnalyticsProvider.events.filterIsInstance<VideoDeletedEventData>().first()
     }
 }
 
@@ -418,6 +524,9 @@ private class FakeUploadRepository : UploadRepository {
 }
 
 private class FakeProfileRepository : ProfileRepository {
+    val deleteRequests = mutableListOf<DeleteVideoRequest>()
+    var deleteVideoShouldThrow = false
+
     override suspend fun getProfileVideos(
         canisterId: String,
         userPrincipal: String,
@@ -442,7 +551,10 @@ private class FakeProfileRepository : ProfileRepository {
             nextStartIndex = 0u,
         )
 
-    override suspend fun deleteVideo(request: DeleteVideoRequest) {}
+    override suspend fun deleteVideo(request: DeleteVideoRequest) {
+        deleteRequests += request
+        if (deleteVideoShouldThrow) throw YralException("Delete failed")
+    }
     override suspend fun uploadProfileImage(imageBase64: String): String = ""
     override suspend fun followNotification(request: FollowNotification) {}
 }
