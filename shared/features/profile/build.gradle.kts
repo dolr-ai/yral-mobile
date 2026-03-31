@@ -17,10 +17,12 @@ kotlin {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
             implementation(compose.uiTest)
+            implementation(projects.shared.testSupport)
         }
         val androidUnitTest by getting {
             dependencies {
                 implementation(libs.robolectric)
+                implementation(projects.shared.testSupport)
             }
         }
         commonMain.dependencies {

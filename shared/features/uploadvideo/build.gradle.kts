@@ -14,6 +14,7 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlinx.coroutines.test)
             implementation(libs.russhwolf.multiplatformSettings.test)
+            implementation(projects.shared.testSupport)
         }
         commonMain.dependencies {
             implementation(projects.shared.core)

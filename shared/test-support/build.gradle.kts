@@ -2,7 +2,6 @@ import com.yral.buildlogic.configureIosTargets
 plugins {
     alias(libs.plugins.yral.shared.library)
     alias(libs.plugins.yral.android.library)
-    alias(libs.plugins.kotlin.serialization)
 }
 
 kotlin {
@@ -11,15 +10,16 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(projects.shared.libs.analytics)
+            implementation(projects.shared.libs.featureFlag)
             implementation(libs.kotlinx.coroutines.core)
-            implementation(libs.kotlinx.serialization.json)
-            api(libs.russhwolf.multiplatformSettings.core)
-            implementation(libs.gitlive.firebase.config)
+            implementation(projects.shared.libs.arch)
+            implementation(projects.shared.libs.preferences)
+            implementation(projects.shared.rust.service)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
-            implementation(projects.shared.testSupport)
         }
     }
 }

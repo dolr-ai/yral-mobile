@@ -13,8 +13,8 @@ import com.yral.shared.features.wallet.analytics.WalletTelemetry
 import com.yral.shared.features.wallet.domain.models.BillingBalance
 import com.yral.shared.features.wallet.domain.models.Transaction
 import com.yral.shared.libs.arch.domain.SuspendUseCase
-import com.yral.shared.libs.arch.domain.UseCaseFailureListener
-import com.yral.shared.rust.service.domain.metadata.FollowersMetadataDataSource
+import com.yral.shared.testsupport.metadata.FakeFollowersMetadataDataSource
+import com.yral.shared.testsupport.usecase.NoOpUseCaseFailureListener
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -149,7 +149,7 @@ class WalletViewModelTest {
                     createTransaction(id = "tx-2", userId = "user-2", amountPaise = 20000L),
                 )
             fakeTransactionsUseCase.result = Ok(testTransactions)
-            fakeMetadataDataSource.usernameMap =
+            fakeMetadataDataSource.usernamesByPrincipal =
                 mapOf(
                     "user-1" to "alice",
                     "user-2" to "bob",
@@ -199,7 +199,7 @@ class WalletViewModelTest {
                         createTransaction(id = "tx-2", userId = "principal-xyz"),
                     ),
                 )
-            fakeMetadataDataSource.usernameMap =
+            fakeMetadataDataSource.usernamesByPrincipal =
                 mapOf(
                     "principal-abc" to "alice",
                     "principal-xyz" to "bob",
@@ -372,26 +372,5 @@ private class FakeTransactionsUseCase(
 // endregion
 
 // region fakes
-
-private class FakeFollowersMetadataDataSource : FollowersMetadataDataSource {
-    var usernameMap: Map<String, String> = emptyMap()
-    var shouldThrow: Boolean = false
-
-    override suspend fun fetchUsernames(principals: List<String>): Map<String, String> {
-        if (shouldThrow) throw RuntimeException("Metadata fetch failed")
-        return usernameMap
-    }
-}
-
-private class NoOpUseCaseFailureListener : UseCaseFailureListener {
-    override fun onFailure(
-        throwable: Throwable,
-        tag: String?,
-        message: () -> String,
-        exceptionType: String?,
-    ) {
-        // no-op for tests
-    }
-}
 
 // endregion

@@ -60,6 +60,7 @@ val isAppleBuild: Boolean =
 include(":androidApp")
 include(":shared:core")
 include(":shared:data")
+include(":shared:test-support")
 if (isLocalRust) {
     include(":shared:rust:rust-agent")
 }

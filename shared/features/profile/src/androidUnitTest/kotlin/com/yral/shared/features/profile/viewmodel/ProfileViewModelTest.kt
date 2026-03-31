@@ -8,9 +8,6 @@ import androidx.lifecycle.viewModelScope
 import com.github.michaelbull.result.Err
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.AnalyticsManager
-import com.yral.shared.analytics.AnalyticsProvider
-import com.yral.shared.analytics.User
-import com.yral.shared.analytics.events.EventData
 import com.yral.shared.analytics.events.VideoPublishedData
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.Session
@@ -54,7 +51,6 @@ import com.yral.shared.features.uploadvideo.domain.models.UploadAiVideoFromUrlRe
 import com.yral.shared.features.uploadvideo.domain.models.UploadEndpoint
 import com.yral.shared.features.uploadvideo.domain.models.UploadFileRequest
 import com.yral.shared.features.uploadvideo.domain.models.UploadStatus
-import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.libs.filedownloader.FileDownloader
@@ -67,7 +63,6 @@ import com.yral.shared.reportVideo.domain.IReportVideoRepository
 import com.yral.shared.reportVideo.domain.ReportVideoUseCase
 import com.yral.shared.reportVideo.domain.models.ReportRequest
 import com.yral.shared.rust.service.domain.UserInfoRepository
-import com.yral.shared.rust.service.domain.metadata.FollowersMetadataDataSource
 import com.yral.shared.rust.service.domain.models.FollowersPageResult
 import com.yral.shared.rust.service.domain.models.FollowingPageResult
 import com.yral.shared.rust.service.domain.models.ProfileUpdateDetailsV2
@@ -77,6 +72,9 @@ import com.yral.shared.rust.service.domain.usecases.FollowUserUseCase
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCase
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserUseCase
 import com.yral.shared.rust.service.utils.CanisterData
+import com.yral.shared.testsupport.analytics.RecordingAnalyticsProvider
+import com.yral.shared.testsupport.metadata.FakeFollowersMetadataDataSource
+import com.yral.shared.testsupport.usecase.NoOpUseCaseFailureListener
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
@@ -103,7 +101,7 @@ class ProfileViewModelTest {
     private lateinit var sessionManager: SessionManager
     private lateinit var fakeUploadRepository: FakeUploadRepository
     private lateinit var fakeProfileRepository: FakeProfileRepository
-    private lateinit var fakeAnalyticsProvider: FakeAnalyticsProvider
+    private lateinit var fakeAnalyticsProvider: RecordingAnalyticsProvider
     private var viewModel: ProfileViewModel? = null
 
     companion object {
@@ -152,7 +150,7 @@ class ProfileViewModelTest {
         sessionManager = SessionManager()
         fakeUploadRepository = FakeUploadRepository()
         fakeProfileRepository = FakeProfileRepository()
-        fakeAnalyticsProvider = FakeAnalyticsProvider()
+        fakeAnalyticsProvider = RecordingAnalyticsProvider()
         VideoGenerationTracker.clearPendingGenerations()
         VideoGenerationTracker.consumeDraftsTabRequest()
     }
@@ -402,35 +400,6 @@ class ProfileViewModelTest {
 
 // region Fake implementations
 
-private class NoOpUseCaseFailureListener : UseCaseFailureListener {
-    override fun onFailure(
-        throwable: Throwable,
-        tag: String?,
-        message: () -> String,
-        exceptionType: String?,
-    ) {
-        // no-op
-    }
-}
-
-private class FakeAnalyticsProvider : AnalyticsProvider {
-    val events = mutableListOf<EventData>()
-
-    override val name: String = "fake"
-
-    override fun shouldTrackEvent(event: EventData): Boolean = true
-
-    override fun trackEvent(event: EventData) {
-        events += event
-    }
-
-    override fun setUserProperties(user: User) = Unit
-
-    override fun reset() = Unit
-
-    override fun toValidKeyName(key: String): String = key
-}
-
 private class FakeUploadRepository : UploadRepository {
     var markPostAsPublishedShouldThrow = false
 
@@ -552,10 +521,6 @@ private class FakeFileDownloader : FileDownloader {
         fileName: String,
         saveToGallery: Boolean,
     ): com.github.michaelbull.result.Result<String, YralException> = Err(YralException("not implemented"))
-}
-
-private class FakeFollowersMetadataDataSource : FollowersMetadataDataSource {
-    override suspend fun fetchUsernames(principals: List<String>): Map<String, String> = emptyMap()
 }
 
 private class FakeChatRepository : ChatRepository {
