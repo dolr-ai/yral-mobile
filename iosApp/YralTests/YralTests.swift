@@ -187,7 +187,7 @@ struct YralTests {
     #expect(podfile.contains("pod 'FirebaseMessaging'"))
     #expect(podfile.contains("pod 'Mixpanel'"))
     #expect(podfile.contains("pod 'FBSDKCoreKit'"))
-    #expect(podfile.contains("pod 'Sentry'"))
+    #expect(!podfile.contains("pod 'Sentry'"))
     #expect(!podfile.contains("pod 'FirebaseInstallations'"))
     #expect(!podfile.contains("pod 'FirebaseInAppMessaging'"))
     #expect(!podfile.contains("pod 'FirebaseCoreInternal'"))
