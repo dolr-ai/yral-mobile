@@ -1,12 +1,9 @@
 name: Deploy Apple App Store App to yral-staging on merge to main
 
 on:
-  pull_request:
+  push:
     branches:
       - main
-    types:
-      - opened
-      - synchronize
 
 jobs:
   build-testflight-staging:
