@@ -19,12 +19,6 @@ jobs:
   deploy-prod:
     if: contains(github.event.release.tag_name, 'Android')
     runs-on: ubuntu-latest
-    env:
-      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-      SENTRY_ORG: ${{ vars.SENTRY_ORG }}
-      SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
-      SENTRY_URL: ${{ vars.SENTRY_URL }}
-
     steps:
       - name: Extract version from release tag
         id: version

@@ -8,7 +8,6 @@ plugins {
     alias(libs.plugins.gms)
     alias(libs.plugins.firebase.perf)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.sentry)
 }
 
 android {
@@ -96,25 +95,6 @@ android {
     }
 }
 
-sentry {
-    // Prevent Sentry dependencies from being included in the Android app through the AGP.
-    autoInstallation {
-        enabled.set(false)
-    }
-
-    // The slug of the Sentry organization to use for uploading proguard mappings/source contexts.
-    org.set(System.getenv("SENTRY_ORG"))
-    // The slug of the Sentry project to use for uploading proguard mappings/source contexts.
-    projectName.set(System.getenv("SENTRY_PROJECT"))
-    // The authentication token to use for uploading proguard mappings/source contexts.
-    // WARNING: Do not expose this token in your build.gradle files, but rather set an environment
-    // variable and read it into this property.
-    authToken.set(System.getenv("SENTRY_AUTH_TOKEN"))
-    url.set(System.getenv("SENTRY_URL"))
-
-    ignoredBuildTypes.set(setOf("debug"))
-}
-
 dependencies {
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.tooling.preview)
@@ -123,13 +103,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.paging.compose)
     implementation(libs.androidx.emoji2)
-    implementation(platform(libs.sentry.bom))
-    implementation(libs.sentry.compose.android)
-    implementation(libs.sentry.android.navigation)
-    implementation(libs.sentry.android.fragment)
-    implementation(libs.sentry.android.sqlite)
-    implementation(libs.sentry.okhttp)
-    implementation(libs.sentry.kotlin.extensions)
     debugImplementation(libs.compose.ui.tooling)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)

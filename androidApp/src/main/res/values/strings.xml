@@ -26,13 +26,6 @@
     <!-- MixPanel SDK Configuration -->
     <string name="mixpanel_token">609abef3172b5fc64554f5ac6c77414d</string>
 
-    <!-- Sentry Configuration -->
-    <string name="sentry_dsn">https://a5d4d8ed198025785f555aad4dddb1a7@sentry.yral.com/3</string>
-    <string name="sentry_environment">prod</string>
-
-
-
-
     <!-- Wallet -->
     <string name="rupee_symbol">₹</string>
     <string name="currency_balance">%s Balance</string>
