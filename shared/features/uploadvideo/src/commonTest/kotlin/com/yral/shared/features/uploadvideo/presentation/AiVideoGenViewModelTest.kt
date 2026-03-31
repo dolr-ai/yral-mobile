@@ -10,7 +10,6 @@ import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.videostate.VideoGenerationTracker
-import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.subscriptions.analytics.SubscriptionTelemetry
 import com.yral.shared.features.uploadvideo.analytics.UploadVideoTelemetry
 import com.yral.shared.features.uploadvideo.domain.GenerateVideoUseCase
@@ -26,16 +25,16 @@ import com.yral.shared.features.uploadvideo.domain.models.UploadAiVideoFromUrlRe
 import com.yral.shared.features.uploadvideo.domain.models.UploadEndpoint
 import com.yral.shared.features.uploadvideo.domain.models.UploadFileRequest
 import com.yral.shared.features.uploadvideo.domain.models.UploadStatus
-import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
-import com.yral.shared.preferences.Preferences
 import com.yral.shared.preferences.stores.AffiliateAttributionStore
 import com.yral.shared.rust.service.domain.RateLimitRepository
 import com.yral.shared.rust.service.domain.models.PropertyRateLimitConfig
 import com.yral.shared.rust.service.domain.models.RateLimitStatus
 import com.yral.shared.rust.service.domain.models.Result2
 import com.yral.shared.rust.service.domain.models.VideoGenRequestKey
+import com.yral.shared.testsupport.preferences.FakePreferences
+import com.yral.shared.testsupport.usecase.NoOpUseCaseFailureListener
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -429,92 +428,5 @@ internal class FakeRateLimitRepository : RateLimitRepository {
         property: String,
     ): PropertyRateLimitConfig? = null
 }
-
-private class NoOpUseCaseFailureListener : UseCaseFailureListener {
-    override fun onFailure(
-        throwable: Throwable,
-        tag: String?,
-        message: () -> String,
-        exceptionType: String?,
-    ) {
-        // no-op
-    }
-}
-
-private class FakePreferences : Preferences {
-    private val storage = mutableMapOf<String, Any?>()
-
-    override suspend fun putBoolean(
-        key: String,
-        boolean: Boolean,
-    ) {
-        storage[key] = boolean
-    }
-
-    override suspend fun getBoolean(key: String): Boolean? = storage[key] as? Boolean
-
-    override suspend fun putString(
-        key: String,
-        value: String,
-    ) {
-        storage[key] = value
-    }
-
-    override suspend fun getString(key: String): String? = storage[key] as? String
-
-    override suspend fun putInt(
-        key: String,
-        int: Int,
-    ) {
-        storage[key] = int
-    }
-
-    override suspend fun getInt(key: String): Int? = storage[key] as? Int
-
-    override suspend fun putLong(
-        key: String,
-        long: Long,
-    ) {
-        storage[key] = long
-    }
-
-    override suspend fun getLong(key: String): Long? = storage[key] as? Long
-
-    override suspend fun putFloat(
-        key: String,
-        float: Float,
-    ) {
-        storage[key] = float
-    }
-
-    override suspend fun getFloat(key: String): Float? = storage[key] as? Float
-
-    override suspend fun putDouble(
-        key: String,
-        double: Double,
-    ) {
-        storage[key] = double
-    }
-
-    override suspend fun getDouble(key: String): Double? = storage[key] as? Double
-
-    override suspend fun putBytes(
-        key: String,
-        bytes: ByteArray,
-    ) {
-        storage[key] = bytes
-    }
-
-    override suspend fun getBytes(key: String): ByteArray? = storage[key] as? ByteArray
-
-    override suspend fun remove(key: String) {
-        storage.remove(key)
-    }
-
-    override suspend fun clearAll() {
-        storage.clear()
-    }
-}
-
 
 // endregion

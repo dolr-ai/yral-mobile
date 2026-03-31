@@ -1,39 +1,18 @@
 package com.yral.featureflag
 
 import com.yral.featureflag.core.FlagGroup
-import com.yral.featureflag.core.FlagResult
-import com.yral.featureflag.core.MutableFeatureFlagProvider
 import com.yral.featureflag.providers.FirebaseRemoteConfigProvider
+import com.yral.shared.testsupport.featureflag.FakeMutableFeatureFlagProvider
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-private class FakeProvider(
-    override val id: String,
-    override val name: String,
-    private val map: MutableMap<String, String> = mutableMapOf(),
-    override val isRemote: Boolean = false,
-) : MutableFeatureFlagProvider {
-    override fun getRaw(key: String): FlagResult<String> = map[key]?.let { FlagResult.Sourced(it) } ?: FlagResult.NotSet
-
-    override fun setRaw(
-        key: String,
-        value: String,
-    ) {
-        map[key] = value
-    }
-
-    override fun clear(key: String) {
-        map.remove(key)
-    }
-}
-
 class FeatureFlagManagerTest {
     @Test
     fun precedence_local_over_remote_over_default() {
-        val local = FakeProvider(id = "local_overrides", name = "Local")
-        val remote = FakeProvider(id = "remote", name = "Remote", isRemote = true)
+        val local = FakeMutableFeatureFlagProvider(id = "local_overrides", name = "Local")
+        val remote = FakeMutableFeatureFlagProvider(id = "remote", name = "Remote", isRemote = true)
         val flag = FlagGroup("group").boolean("flag", "Flag", "desc", defaultValue = false)
 
         val mgr =
@@ -57,8 +36,8 @@ class FeatureFlagManagerTest {
 
     @Test
     fun provider_gating_via_local_flag() {
-        val local = FakeProvider(id = "local_overrides", name = "Local")
-        val remote = FakeProvider(id = "firebase_remote_config", name = "Remote", isRemote = true)
+        val local = FakeMutableFeatureFlagProvider(id = "local_overrides", name = "Local")
+        val remote = FakeMutableFeatureFlagProvider(id = "firebase_remote_config", name = "Remote", isRemote = true)
         val toggle = ProviderFlags.FirebaseEnabled
         val flag = FlagGroup("group").boolean("flag", "Flag", "desc", defaultValue = false)
 
@@ -82,8 +61,8 @@ class FeatureFlagManagerTest {
 
     @Test
     fun import_export_round_trip() {
-        val local = FakeProvider(id = "local_overrides", name = "Local")
-        val remote = FakeProvider(id = "remote", name = "Remote", isRemote = true)
+        val local = FakeMutableFeatureFlagProvider(id = "local_overrides", name = "Local")
+        val remote = FakeMutableFeatureFlagProvider(id = "remote", name = "Remote", isRemote = true)
         val flagA = FlagGroup("a").string("flag", "A", "desc", defaultValue = "x")
         val flagB = FlagGroup("b").int("flag", "B", "desc", defaultValue = 1)
 
