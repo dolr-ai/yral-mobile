@@ -35,6 +35,10 @@ jobs:
       - name: Install SwiftLint, CocoaPods, and xcbeautify
         run: brew install swiftlint cocoapods xcbeautify
 
+      - name: Pin CocoaPods executable for Kotlin
+        run: |
+          printf 'kotlin.apple.cocoapods.bin=%s\n' "$(which pod)" > local.properties
+
       - name: Build KMM framework
         env:
           GITHUB_USERNAME: ${{ github.actor }}

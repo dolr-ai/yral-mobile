@@ -149,6 +149,8 @@ struct YralTests {
       #expect(!contents.contains("cargo-lipo"))
       #expect(!contents.contains("build-rust.sh"))
       #expect(!contents.contains("rust-agent"))
+      #expect(contents.contains("kotlin.apple.cocoapods.bin="))
+      #expect(contents.contains("which pod"))
     }
 
     let distributionWorkflowPaths = [
