@@ -1,6 +1,5 @@
 package com.yral.shared.features.auth.data
 
-import com.yral.shared.core.AppConfigurations.OAUTH_BASE_URL
 import com.yral.shared.features.auth.YralAuthException
 import com.yral.shared.features.auth.data.models.AuthClientQuery
 import com.yral.shared.features.auth.data.models.PhoneAuthLoginResponseDto
@@ -17,7 +16,6 @@ import com.yral.shared.features.auth.domain.models.TokenResponse
 import com.yral.shared.features.auth.utils.OAuthUtilsHelper
 import com.yral.shared.features.auth.utils.SocialProvider
 import com.yral.shared.rust.service.utils.SignedDelegationPayload
-import com.yral.shared.rust.service.utils.yralAuthLoginHint
 import io.ktor.http.Parameters
 import io.ktor.http.URLBuilder
 import io.ktor.http.URLProtocol
@@ -30,6 +28,8 @@ class AuthRepositoryImpl(
     private val oAuthUtilsHelper: OAuthUtilsHelper,
     private val authEnv: AuthEnv,
     private val json: Json,
+    private val authHostResolver: SessionAuthHostResolver,
+    private val authLoginHintProvider: AuthLoginHintProvider,
 ) : AuthRepository {
     private var verifier: String = ""
 
@@ -42,7 +42,7 @@ class AuthRepositoryImpl(
         val authUrl =
             URLBuilder(
                 protocol = URLProtocol.HTTPS,
-                host = OAUTH_BASE_URL,
+                host = authHostResolver.currentHost(),
                 pathSegments = listOf("oauth", "auth"),
                 parameters =
                     Parameters.build {
@@ -54,7 +54,7 @@ class AuthRepositoryImpl(
                         append("scope", "openid")
                         append("code_challenge", codeChallenge)
                         append("code_challenge_method", "S256")
-                        append("login_hint", yralAuthLoginHint(identity))
+                        append("login_hint", authLoginHintProvider.build(identity))
                         append("state", codeChallenge)
                     },
             ).build()
@@ -109,7 +109,7 @@ class AuthRepositoryImpl(
     ): PhoneAuthLoginResponse {
         verifier = oAuthUtilsHelper.generateCodeVerifier()
         val codeChallenge = oAuthUtilsHelper.generateCodeChallenge(verifier)
-        val loginHint = yralAuthLoginHint(identity)
+        val loginHint = authLoginHintProvider.build(identity)
         val authClientQuery =
             AuthClientQuery(
                 responseType = "code",
