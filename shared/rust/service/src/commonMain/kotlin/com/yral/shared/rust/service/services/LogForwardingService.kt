@@ -14,7 +14,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
- * Service for forwarding Rust logs to external logging services like Crashlytics or Sentry.
+ * Service for forwarding Rust logs to external logging services like Crashlytics.
  *
  * This service polls the Rust logger for new log messages and forwards them to the configured
  * external logging service. This approach is used because UniFFI doesn't support callback

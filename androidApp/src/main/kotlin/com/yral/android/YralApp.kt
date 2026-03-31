@@ -22,7 +22,6 @@ import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.di.IS_DEBUG
 import com.yral.shared.analytics.providers.mixpanel.MixpanelAnalyticsProvider
 import com.yral.shared.app.di.initKoin
-import com.yral.shared.app.initializeApp
 import com.yral.shared.features.uploadvideo.utils.di.videoWidgetModule
 import com.yral.shared.koin.koinInstance
 import dev.gitlive.firebase.crashlytics.FirebaseCrashlytics
@@ -62,7 +61,6 @@ class YralApp : Application() {
                 },
             )
         }
-        initializeApp()
         setupFirebase()
         checkInstallReferrer()
         observeAndAddDistinctIdToBranch()

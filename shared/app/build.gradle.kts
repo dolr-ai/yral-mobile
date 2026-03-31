@@ -5,7 +5,6 @@ plugins {
     alias(libs.plugins.yral.android.library)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.yral.shared.library.compose)
-    alias(libs.plugins.sentryKmp)
 }
 
 applyCocoapodsIfApple()

@@ -8,7 +8,6 @@ import com.yral.shared.app.config.AppHTTPEventListener
 import com.yral.shared.app.config.AppRustLogForwardingListener
 import com.yral.shared.app.config.AppUseCaseFailureListener
 import com.yral.shared.app.config.NBRFailureListener
-import com.yral.shared.app.logging.SentryLogWriter
 import com.yral.shared.core.AppConfigurations
 import com.yral.shared.core.di.CHAT_SERVER_BASE_URL
 import com.yral.shared.core.di.coreModule
@@ -99,10 +98,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
 
 internal val loggerModule =
     module {
-        single { SentryLogWriter() }
-        single<LogWriter>(named("httpLogWriter")) { SentryLogWriter() }
-        single<LogWriter>(named("rustLogWriter")) { SentryLogWriter() }
-        single<LogWriter>(named("installReferrerLogWriter")) { SentryLogWriter() }
+        single<LogWriter>(named("rustLogWriter")) { platformLogWriter() }
         single {
             val writers = mutableListOf<LogWriter>()
             if (get(IS_DEBUG)) {

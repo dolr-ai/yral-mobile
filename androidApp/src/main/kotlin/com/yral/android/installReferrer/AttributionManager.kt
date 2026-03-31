@@ -1,6 +1,5 @@
 package com.yral.android.installReferrer
 
-import co.touchlab.kermit.LogWriter
 import co.touchlab.kermit.Logger
 import com.yral.shared.analytics.AnalyticsManager
 import com.yral.shared.analytics.events.AttributionFailedEventData
@@ -16,7 +15,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.koin.core.qualifier.named
 import kotlin.coroutines.resume
 
 /**
@@ -44,36 +42,23 @@ class AttributionManager(
     private val utmAttributionStore: UtmAttributionStore by lazy { koinInstance.get<UtmAttributionStore>() }
     private val analyticsManager: AnalyticsManager by lazy { koinInstance.get<AnalyticsManager>() }
     private val logger = createLogger("AttributionManager")
-    private val sentryLogger = createLogger("AttributionManager", includeSentry = true)
 
     companion object {
         @Volatile
-        private var loggerFactory: ((String, Boolean) -> Logger)? = null
+        private var loggerFactory: ((String) -> Logger)? = null
 
         // Override logger factory for testing. Set to null to use default factory.
-        internal fun setLoggerFactory(factory: ((String, Boolean) -> Logger)?) {
+        internal fun setLoggerFactory(factory: ((String) -> Logger)?) {
             loggerFactory = factory
         }
 
-        fun createLogger(
-            tag: String,
-            includeSentry: Boolean = false,
-        ): Logger {
+        fun createLogger(tag: String): Logger {
             val factory = loggerFactory
             return if (factory != null) {
-                factory(tag, includeSentry)
+                factory(tag)
             } else {
                 runCatching {
-                    val baseLogger = koinInstance.get<YralLogger>()
-                    val withSentry =
-                        if (includeSentry) {
-                            val sentryWriter =
-                                koinInstance.get<LogWriter>(named("installReferrerLogWriter"))
-                            baseLogger.withAdditionalLogWriter(sentryWriter).withTag(tag)
-                        } else {
-                            baseLogger.withTag(tag)
-                        }
-                    withSentry
+                    koinInstance.get<YralLogger>().withTag(tag)
                 }.getOrElse { Logger.withTag(tag) }
             }
         }
@@ -190,7 +175,7 @@ class AttributionManager(
                 ),
             )
             analyticsManager.flush()
-            sentryLogger.i { "Attribution stored by $processorName: $utmParams" }
+            logger.i { "Attribution stored by $processorName: $utmParams" }
         }.onFailure {
             logger.e(it) { "Failed to store attribution from $processorName" }
             throw it

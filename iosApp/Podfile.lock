@@ -1489,9 +1489,6 @@ PODS:
   - PromisesSwift (2.4.0):
     - PromisesObjC (= 2.4.0)
   - RecaptchaInterop (101.0.0)
-  - Sentry (8.57.1):
-    - Sentry/Core (= 8.57.1)
-  - Sentry/Core (8.57.1)
 
 DEPENDENCIES:
   - FBSDKCoreKit (= 18.0.0)
@@ -1506,7 +1503,6 @@ DEPENDENCIES:
   - FirebaseStorage (= 11.14.0)
   - iosSharedUmbrella (from `../iosSharedUmbrella`)
   - Mixpanel (= 5.0.8)
-  - Sentry (= 8.57.1)
 
 SPEC REPOS:
   trunk:
@@ -1549,7 +1545,6 @@ SPEC REPOS:
     - PromisesObjC
     - PromisesSwift
     - RecaptchaInterop
-    - Sentry
 
 EXTERNAL SOURCES:
   iosSharedUmbrella:
@@ -1596,8 +1591,7 @@ SPEC CHECKSUMS:
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   PromisesSwift: 9d77319bbe72ebf6d872900551f7eeba9bce2851
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
-  Sentry: ea4ca7cd1a46c77dcc8123804ce36d8f5603a841
 
-PODFILE CHECKSUM: a08626f6d160eda1c51d24742c4b83dca546970b
+PODFILE CHECKSUM: af66932bb230d34cb8f10ff884bac62444ca47bf
 
 COCOAPODS: 1.16.2

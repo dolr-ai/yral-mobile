@@ -11,6 +11,11 @@ kotlin {
     configureIosTargets(project)
 
     sourceSets {
+        commonTest.dependencies {
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.ktor.client.mock)
+            implementation(projects.shared.testSupport)
+        }
         androidMain.dependencies {
             implementation(libs.nimbus.jose.jwt)
             implementation(libs.androidx.browser)

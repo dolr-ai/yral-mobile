@@ -65,10 +65,6 @@
 	<string>Yral needs access to your photo library so you can choose a profile picture.</string>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>This helps Yral personalise content that we show you.</string>
-	<key>SENTRY_DSN</key>
-	<string>https://5307b43281accab3750a5231deeffd4d@sentry.yral.com/4</string>
-	<key>SENTRY_ENVIRONMENT</key>
-	<string>prod</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

@@ -30,12 +30,17 @@ class CustomDnsResolver(
             // Try system DNS first
             systemDns.lookup(hostname)
         } catch (e: UnknownHostException) {
-            httpEventListener.logException(DNSLookupException("SystemDNS failed", e))
             try {
                 // Fallback to DNS over HTTPS
                 dnsOverHttps.lookup(hostname)
             } catch (fallbackException: UnknownHostException) {
-                httpEventListener.logException(DNSLookupException("DNSOverHttp failed", fallbackException))
+                httpEventListener.logException(
+                    DNSLookupException(
+                        hostname = hostname,
+                        lookupSource = "dns_over_https_after_system_dns",
+                        cause = fallbackException,
+                    ),
+                )
                 throw fallbackException
             }
         }

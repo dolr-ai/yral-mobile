@@ -25,6 +25,7 @@ import com.yral.shared.features.auth.data.models.VerifyRequestDto
 import com.yral.shared.features.auth.di.AuthEnv
 import com.yral.shared.firebaseStore.cloudFunctionUrl
 import com.yral.shared.firebaseStore.firebaseAppCheckToken
+import com.yral.shared.http.HTTPEventListener
 import com.yral.shared.http.httpDelete
 import com.yral.shared.http.httpPost
 import com.yral.shared.http.httpPostWithStringResponse
@@ -35,9 +36,11 @@ import com.yral.shared.rust.service.utils.SignedDelegationPayload
 import com.yral.shared.rust.service.utils.delegatedIdentityWireToJson
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.expectSuccess
+import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.headers
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
@@ -47,11 +50,15 @@ import io.ktor.http.path
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
+private typealias AuthRequestBlock = HttpRequestBuilder.(host: String) -> Unit
+
 class AuthDataSourceImpl(
     private val client: HttpClient,
     private val json: Json,
     private val preferences: Preferences,
     private val authEnv: AuthEnv,
+    private val authHostResolver: SessionAuthHostResolver,
+    private val httpEventListener: HTTPEventListener,
 ) : AuthDataSource {
     private val logger = Logger.withTag("AuthDataSourceImpl")
 
@@ -64,9 +71,9 @@ class AuthDataSourceImpl(
                 "$key=$value"
             }
         val response =
-            httpPostWithStringResponse(client) {
+            authPostWithStringResponse { host ->
                 url {
-                    host = OAUTH_BASE_URL
+                    this.host = host
                     path(PATH_AUTHENTICATE_TOKEN)
                 }
                 setBody(formData)
@@ -90,9 +97,9 @@ class AuthDataSourceImpl(
                 "$key=$value"
             }
         val response =
-            httpPostWithStringResponse(client) {
+            authPostWithStringResponse { host ->
                 url {
-                    host = OAUTH_BASE_URL
+                    this.host = host
                     path(PATH_AUTHENTICATE_TOKEN)
                 }
                 setBody(formData)
@@ -111,9 +118,9 @@ class AuthDataSourceImpl(
                 "$key=$value"
             }
         val response =
-            httpPostWithStringResponse(client) {
+            authPostWithStringResponse { host ->
                 url {
-                    host = OAUTH_BASE_URL
+                    this.host = host
                     path(PATH_AUTHENTICATE_TOKEN)
                 }
                 setBody(formData)
@@ -225,10 +232,10 @@ class AuthDataSourceImpl(
                 phoneNumber = phoneNumber,
             )
         val response =
-            client.post {
+            authPostResponse { host ->
                 expectSuccess = false
                 url {
-                    host = OAUTH_BASE_URL
+                    this.host = host
                     path(PATH_PHONE_AUTH_LOGIN)
                 }
                 setBody(requestBody)
@@ -245,10 +252,10 @@ class AuthDataSourceImpl(
     override suspend fun verifyPhoneAuth(verifyRequest: VerifyRequestDto): PhoneAuthVerifyResponseDto {
         val requestBody = PhoneAuthVerifyRequestDto(verifyRequest = verifyRequest)
         val response =
-            client.post {
+            authPostResponse { host ->
                 expectSuccess = false
                 url {
-                    host = OAUTH_BASE_URL
+                    this.host = host
                     path(PATH_VERIFY_PHONE_AUTH)
                 }
                 setBody(requestBody)
@@ -282,10 +289,7 @@ class AuthDataSourceImpl(
         ingressExpiryNanos: Int,
         delegations: List<SignedDelegationPayload>?,
     ): CreateAiAccountResponseDto =
-        httpPost<CreateAiAccountResponseDto>(
-            httpClient = client,
-            json = json,
-        ) {
+        authPost<CreateAiAccountResponseDto> {
             val payload =
                 CreateAiAccountRequestDto(
                     userPrincipal = userPrincipal,
@@ -311,7 +315,7 @@ class AuthDataSourceImpl(
                 )
             logger.d { "create_ai_account request=${json.encodeToString(payload)}" }
             url {
-                host = OAUTH_BASE_URL
+                this.host = host
                 // Endpoint: POST https://auth.yral.com/api/create_ai_account
                 path(PATH_CREATE_AI_ACCOUNT)
             }
@@ -319,6 +323,73 @@ class AuthDataSourceImpl(
         }.also { response: CreateAiAccountResponseDto ->
             logger.d { "create_ai_account response=${json.encodeToString(response)}" }
         }
+
+    private suspend inline fun <reified T> authPost(crossinline block: AuthRequestBlock): T =
+        executeAuthRequestWithFallback { host ->
+            httpPost(
+                httpClient = client,
+                json = json,
+            ) {
+                block(host)
+            }
+        }
+
+    private suspend fun authPostResponse(block: AuthRequestBlock): HttpResponse =
+        executeAuthRequestWithFallback { host ->
+            client.post {
+                block(host)
+            }
+        }
+
+    private suspend fun authPostWithStringResponse(block: AuthRequestBlock): String =
+        executeAuthRequestWithFallback { host ->
+            httpPostWithStringResponse(client) {
+                block(host)
+            }
+        }
+
+    @Suppress("TooGenericExceptionCaught")
+    private suspend fun <T> executeAuthRequestWithFallback(request: suspend (host: String) -> T): T {
+        val initialHost = authHostResolver.currentHost()
+        return runAuthRequestForHost(
+            host = initialHost,
+            allowFallback = initialHost == OAUTH_BASE_URL,
+            request = request,
+        )
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    private suspend fun <T> runAuthRequestForHost(
+        host: String,
+        allowFallback: Boolean,
+        request: suspend (host: String) -> T,
+    ): T {
+        return try {
+            request(host)
+        } catch (exception: Exception) {
+            if (exception.isDnsResolutionFailure()) {
+                reportDnsFailureIfNeeded(host, exception)
+                if (allowFallback) {
+                    val fallbackHost = authHostResolver.activateFallback(host)
+                    return runAuthRequestForHost(
+                        host = fallbackHost,
+                        allowFallback = false,
+                        request = request,
+                    )
+                }
+            }
+            throw exception
+        }
+    }
+
+    private fun reportDnsFailureIfNeeded(
+        host: String,
+        exception: Throwable,
+    ) {
+        if (!platformReportsDnsLookupFailure()) {
+            httpEventListener.logException(exception.toDnsLookupException(host))
+        }
+    }
 
     companion object {
         private const val PATH_AUTHENTICATE_TOKEN = "oauth/token"
