@@ -54,11 +54,6 @@ object Profile : AppRoute, ExternallyExposedRoute {
 }
 
 @Serializable
-object Leaderboard : AppRoute, ExternallyExposedRoute {
-    const val PATH = "/leaderboard"
-}
-
-@Serializable
 object Chat : AppRoute, ExternallyExposedRoute {
     const val PATH = "/chat"
 }
