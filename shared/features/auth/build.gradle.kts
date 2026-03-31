@@ -22,13 +22,12 @@ kotlin {
         }
         commonMain.dependencies {
             implementation(projects.shared.core)
+            implementation(projects.shared.data)
             implementation(projects.shared.features.wallet)
             implementation(projects.shared.libs.preferences)
             implementation(projects.shared.libs.http)
             implementation(projects.shared.libs.analytics)
             implementation(projects.shared.libs.crashlytics)
-            implementation(projects.shared.libs.firebaseAuth)
-            implementation(projects.shared.libs.firebaseStore)
             implementation(projects.shared.libs.koin)
             implementation(projects.shared.libs.arch)
             implementation(projects.shared.libs.coroutinesX)

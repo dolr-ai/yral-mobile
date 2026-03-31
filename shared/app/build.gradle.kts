@@ -38,10 +38,7 @@ kotlin {
             implementation(projects.shared.libs.routing.routesApi)
             implementation(projects.shared.libs.routing.deeplinkEngine)
 
-            implementation(projects.shared.libs.firebaseStore)
-            implementation(projects.shared.libs.firebaseAuth)
             implementation(projects.shared.libs.firebasePerf)
-            implementation(libs.gitlive.firebase.storage)
             implementation(projects.shared.libs.phoneValidation)
             implementation(projects.shared.features.auth)
             implementation(projects.shared.features.feed)

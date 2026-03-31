@@ -79,8 +79,6 @@ include(":shared:libs:videoPlayer")
 include(":shared:libs:video-playback")
 include(":shared:features:account")
 include(":shared:libs:firebasePerf")
-include(":shared:libs:firebaseAuth")
-include(":shared:libs:firebaseStore")
 if (isAppleBuild) {
     include(":iosSharedUmbrella")
 }

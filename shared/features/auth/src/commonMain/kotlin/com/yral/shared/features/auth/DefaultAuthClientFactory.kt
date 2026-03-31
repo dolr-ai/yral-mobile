@@ -12,7 +12,6 @@ import com.yral.shared.preferences.stores.AccountDirectoryStore
 import com.yral.shared.preferences.stores.AccountSessionPreferences
 import com.yral.shared.preferences.stores.BotIdentitiesStore
 import com.yral.shared.rust.service.services.HelperService
-import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -27,7 +26,6 @@ class DefaultAuthClientFactory(
     private val accountSessionPreferences: AccountSessionPreferences,
     private val accountDirectoryStore: AccountDirectoryStore,
     private val botIdentitiesStore: BotIdentitiesStore,
-    private val auth: FirebaseAuth,
     private val authRepository: AuthRepository,
     private val requiredUseCases: DefaultAuthClient.RequiredUseCases,
     private val oAuthUtils: OAuthUtils,
@@ -46,7 +44,6 @@ class DefaultAuthClientFactory(
             accountSessionPreferences = accountSessionPreferences,
             accountDirectoryStore = accountDirectoryStore,
             botIdentitiesStore = botIdentitiesStore,
-            auth = auth,
             authRepository = authRepository,
             requiredUseCases = requiredUseCases,
             oAuthUtils = oAuthUtils,

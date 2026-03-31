@@ -11,7 +11,7 @@ interface AuthClient {
         provider: SocialProvider,
     )
     suspend fun logout()
-    suspend fun authorizeFirebase(session: Session)
+    suspend fun authorizeFirebase()
     suspend fun fetchBalance(session: Session)
     suspend fun phoneAuthLogin(phoneNumber: String): PhoneAuthLoginResponse
     suspend fun verifyPhoneAuth(
