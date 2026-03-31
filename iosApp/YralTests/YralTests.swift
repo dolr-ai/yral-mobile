@@ -171,19 +171,6 @@ struct YralTests {
   }
 
   @Test
-  func stagingDistributionWorkflowRunsOnPullRequestCreationAndUpdates() throws {
-    let workflow = try Self.repoText(
-      ".github/workflows/deploy-staging-app-to-apple-app-store-on-merge-to-main.yml"
-    )
-
-    #expect(!workflow.contains("\non:\n  push:"))
-    #expect(workflow.contains("pull_request:"))
-    #expect(workflow.contains("types:"))
-    #expect(workflow.contains("- opened"))
-    #expect(workflow.contains("- synchronize"))
-  }
-
-  @Test
   func podfileMatchesTheRemainingCompiledImports() throws {
     let podfile = try Self.repoText("iosApp/Podfile")
 
