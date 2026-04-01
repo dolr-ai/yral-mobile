@@ -8,6 +8,7 @@ import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.chat.nav.home.ChatHomeComponent
+import com.yral.shared.features.chat.nav.home.ChatHomeComponent.InitialTab
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
 import com.yral.shared.rust.service.utils.CanisterData
@@ -55,6 +56,7 @@ abstract class ChatComponent : HomeChildSnapshotProvider {
             openProfile: (userCanisterData: CanisterData) -> Unit,
             openConversation: (OpenConversationParams) -> Unit,
             openCreateInfluencer: (source: BotCreationSource) -> Unit,
+            initialTab: InitialTab = InitialTab.DISCOVER,
         ): ChatComponent =
             DefaultChatComponent(
                 componentContext = componentContext,
@@ -64,6 +66,7 @@ abstract class ChatComponent : HomeChildSnapshotProvider {
                 openProfile = openProfile,
                 openConversation = openConversation,
                 openCreateInfluencer = openCreateInfluencer,
+                initialTab = initialTab,
             )
     }
 }

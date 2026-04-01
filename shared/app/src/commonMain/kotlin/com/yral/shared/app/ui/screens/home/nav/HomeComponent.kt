@@ -39,6 +39,7 @@ abstract class HomeComponent {
     abstract fun onAccountTabClick()
     abstract fun onWalletTabClick()
     abstract fun onChatTabClick()
+    abstract fun onChatInboxClick()
     abstract fun onNavigationRequest(appRoute: AppRoute)
     abstract fun openConversation(params: OpenConversationParams)
     abstract fun openWallet()

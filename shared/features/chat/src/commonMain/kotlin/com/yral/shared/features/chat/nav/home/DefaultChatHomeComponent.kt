@@ -20,6 +20,7 @@ internal class DefaultChatHomeComponent(
     componentContext: ComponentContext,
     private val openConversation: (OpenConversationParams) -> Unit,
     private val openCreateInfluencer: (source: BotCreationSource) -> Unit,
+    private val initialTab: InitialTab = InitialTab.DISCOVER,
 ) : ChatHomeComponent(),
     ComponentContext by componentContext {
     private val sessionManager: SessionManager = koinInstance.get()
@@ -31,7 +32,12 @@ internal class DefaultChatHomeComponent(
     private val initialConfigHolder: InitialConfigHolder =
         instanceKeeper.getOrCreate("initialConfig") {
             InitialConfigHolder().also { holder ->
-                holder.config = if (sessionManager.isBotAccount == true) Config.Inbox else Config.Discover
+                holder.config =
+                    when {
+                        sessionManager.isBotAccount == true -> Config.Inbox
+                        initialTab == InitialTab.INBOX -> Config.Inbox
+                        else -> Config.Discover
+                    }
             }
         }
 

@@ -22,6 +22,7 @@ import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.chat.nav.ChatComponent
+import com.yral.shared.features.chat.nav.home.ChatHomeComponent.InitialTab
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.root.viewmodels.HomeViewModel
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
@@ -169,7 +170,11 @@ internal class DefaultHomeComponent(
     }
 
     override fun onChatTabClick() {
-        navigation.replaceKeepingFeed(Config.Chat)
+        navigation.replaceKeepingFeed(Config.Chat())
+    }
+
+    override fun onChatInboxClick() {
+        navigation.replaceKeepingFeed(Config.Chat(initialTab = InitialTab.INBOX))
     }
 
     override fun openConversation(params: OpenConversationParams) {
@@ -197,7 +202,7 @@ internal class DefaultHomeComponent(
             is Config.Profile -> Child.Profile(profileComponent(componentContext))
             is Config.Account -> Child.Account(accountComponent(componentContext))
             is Config.Wallet -> Child.Wallet(walletComponent(componentContext))
-            is Config.Chat -> Child.Chat(chatComponent(componentContext))
+            is Config.Chat -> Child.Chat(chatComponent(componentContext, config.initialTab))
         }
 
     private fun mapActiveChild(child: Child): Pair<Config, HomeChildSnapshotProvider?> =
@@ -207,7 +212,7 @@ internal class DefaultHomeComponent(
             is Child.Profile -> Config.Profile to (child.component as? HomeChildSnapshotProvider)
             is Child.Account -> Config.Account to (child.component as? HomeChildSnapshotProvider)
             is Child.Wallet -> Config.Wallet to (child.component as? HomeChildSnapshotProvider)
-            is Child.Chat -> Config.Chat to (child.component as? HomeChildSnapshotProvider)
+            is Child.Chat -> Config.Chat() to (child.component as? HomeChildSnapshotProvider)
         }
 
     private fun feedComponent(componentContext: ComponentContext): FeedComponent =
@@ -269,15 +274,19 @@ internal class DefaultHomeComponent(
             onOpenProfile = openProfile,
         )
 
-    private fun chatComponent(componentContext: ComponentContext): ChatComponent =
+    private fun chatComponent(
+        componentContext: ComponentContext,
+        initialTab: InitialTab = InitialTab.DISCOVER,
+    ): ChatComponent =
         ChatComponent.Companion(
             componentContext = componentContext,
             requestLoginFactory = requestLoginFactory,
             subscriptionCoordinator = subscriptionCoordinator,
-            snapshot = childSnapshots[Config.Chat] as? ChatComponent.Snapshot,
+            snapshot = childSnapshots[Config.Chat()] as? ChatComponent.Snapshot,
             openProfile = openProfile,
             openConversation = openConversation,
             openCreateInfluencer = openCreateInfluencer,
+            initialTab = initialTab,
         )
 
     private fun slotChild(
@@ -328,7 +337,9 @@ internal class DefaultHomeComponent(
         data object Wallet : Config
 
         @Serializable
-        data object Chat : Config
+        data class Chat(
+            val initialTab: InitialTab = InitialTab.DISCOVER,
+        ) : Config
     }
 
     @Serializable
