@@ -173,6 +173,30 @@ struct YralTests {
   }
 
   @Test
+  func androidReleaseWorkflowsUploadCrashlyticsMappings() throws {
+    let stagingWorkflow = try Self.repoText(
+      ".github/workflows/deploy-staging-app-to-play-store-on-merge-to-main.yml"
+    )
+    #expect(stagingWorkflow.contains("androidApp:bundleStagingRelease"))
+    #expect(stagingWorkflow.contains("androidApp:uploadCrashlyticsMappingFileStagingRelease"))
+
+    let prodWorkflow = try Self.repoText(
+      ".github/workflows/deploy-prod-app-to-play-store-on-release.yml"
+    )
+    #expect(prodWorkflow.contains("androidApp:bundleProdRelease"))
+    #expect(prodWorkflow.contains("androidApp:uploadCrashlyticsMappingFileProdRelease"))
+
+    let gradleFile = try Self.repoText("androidApp/build.gradle.kts")
+    #expect(gradleFile.contains("uploadCrashlyticsSymbolFileStagingRelease"))
+    #expect(gradleFile.contains("uploadCrashlyticsSymbolFileProdRelease"))
+    #expect(!gradleFile.contains("uploadCrashlyticsSymbolFileRelease"))
+
+    let proguardRules = try Self.repoText("androidApp/proguard-rules.pro")
+    #expect(proguardRules.contains("-keepnames class com.yral.shared.core.exceptions.**"))
+    #expect(proguardRules.contains("-keepnames class com.yral.shared.http.exception.**"))
+  }
+
+  @Test
   func podfileMatchesTheRemainingCompiledImports() throws {
     let podfile = try Self.repoText("iosApp/Podfile")
 
