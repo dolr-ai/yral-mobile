@@ -1,5 +1,4 @@
 import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
-import java.util.Locale
 
 plugins {
     alias(libs.plugins.yral.android.application)
@@ -173,18 +172,12 @@ dependencies {
 }
 
 afterEvaluate {
-    android.buildTypes.forEach { buildType ->
-        if (buildType.name.equals("release", ignoreCase = true)) {
-            tasks
-                .named(
-                    "bundle${
-                        buildType.name.replaceFirstChar {
-                            if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-                        }
-                    }",
-                ).configure {
-                    dependsOn("uploadCrashlyticsSymbolFileRelease")
-                }
+    listOf(
+        "StagingRelease" to "uploadCrashlyticsSymbolFileStagingRelease",
+        "ProdRelease" to "uploadCrashlyticsSymbolFileProdRelease",
+    ).forEach { (bundleVariant, symbolUploadTask) ->
+        tasks.named("bundle$bundleVariant").configure {
+            dependsOn(symbolUploadTask)
         }
     }
 }
