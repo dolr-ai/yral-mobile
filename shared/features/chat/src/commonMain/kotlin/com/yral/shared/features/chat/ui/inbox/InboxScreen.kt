@@ -74,7 +74,7 @@ fun InboxScreen(
                         component = component,
                         onRefresh = {
                             isManualRefresh = true
-                            pagingItems.refresh()
+                            viewModel.refreshConversations()
                         },
                     )
                 }
@@ -89,7 +89,7 @@ fun InboxScreen(
                         component = component,
                         onRefresh = {
                             isManualRefresh = true
-                            pagingItems.refresh()
+                            viewModel.refreshConversations()
                         },
                     )
                 }

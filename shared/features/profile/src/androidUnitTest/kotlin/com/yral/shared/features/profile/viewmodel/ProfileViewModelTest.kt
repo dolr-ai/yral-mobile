@@ -524,6 +524,8 @@ private class FakeFileDownloader : FileDownloader {
 }
 
 private class FakeChatRepository : ChatRepository {
+    override suspend fun getUnreadConversationCount(principal: String): Int = throw NotImplementedError()
+
     override suspend fun getInfluencersPage(
         limit: Int,
         offset: Int,

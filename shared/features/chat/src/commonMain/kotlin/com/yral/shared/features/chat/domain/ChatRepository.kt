@@ -10,6 +10,8 @@ import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.domain.models.SendMessageResult
 
 interface ChatRepository {
+    suspend fun getUnreadConversationCount(principal: String): Int
+
     suspend fun getInfluencersPage(
         limit: Int,
         offset: Int,
