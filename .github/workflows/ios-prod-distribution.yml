@@ -5,14 +5,42 @@ on:
     types:
       - published
 
+permissions:
+  contents: write
+
 jobs:
   build-release-branch:
     if: contains(github.event.release.tag_name, 'iOS')
     runs-on: macos-latest
 
     steps:
-      - name: Check out repository
+      - name: Extract version from release tag
+        id: version
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          VERSION=$(echo "$TAG" | sed -E 's/^v?([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Could not extract valid semver from tag '$TAG', got: '$VERSION'" >&2
+            exit 1
+          fi
+          echo "Extracted version: $VERSION from tag: $TAG"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout main branch
         uses: actions/checkout@v4
+        with:
+          ref: main
+          ssh-key: ${{ secrets.DEPLOY_KEY_SSH_PRIVATE_KEY }}
+
+      - name: Update iOS version files
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          sed -i '' -E "/INFOPLIST_FILE = Prod\/Info\.plist;/,/PRODUCT_BUNDLE_IDENTIFIER = com\.yral\.iosApp;/ s/MARKETING_VERSION = [^;]+;/MARKETING_VERSION = ${VERSION};/" iosApp/iosApp.xcodeproj/project.pbxproj
+          sed -i '' -E "/CFBundleShortVersionString/{n;s#<string>[^<]+</string>#<string>${VERSION}</string>#;}" iosApp/Prod/Info.plist
+          echo "Updated production MARKETING_VERSION entries:"
+          rg -n "INFOPLIST_FILE = Prod/Info.plist;|MARKETING_VERSION =" iosApp/iosApp.xcodeproj/project.pbxproj -n
+          echo "Updated production Info.plist version:"
+          sed -n '15,24p' iosApp/Prod/Info.plist
 
       - name: Set up Xcode
         uses: maxim-lobanov/setup-xcode@v1
@@ -85,6 +113,16 @@ jobs:
           GRADLE_OPTS: >-
             -Dorg.gradle.project.compose.ios.resources.platform=iphoneos
             -Dorg.gradle.project.compose.ios.resources.archs=arm64
+
+      - name: Commit version changes to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add iosApp/iosApp.xcodeproj/project.pbxproj
+          git add iosApp/Prod/Info.plist
+          git add iosApp/Staging/Info-Staging.plist
+          git commit -m "[skip ci] chore: bump iOS prod version to ${{ steps.version.outputs.version }}"
+          git push origin main
 
       - name: Upload gym build log
         if: failure()
