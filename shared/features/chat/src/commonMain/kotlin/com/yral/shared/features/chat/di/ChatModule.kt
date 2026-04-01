@@ -16,6 +16,7 @@ import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
 import com.yral.shared.features.chat.domain.usecases.GrantChatAccessUseCase
 import com.yral.shared.features.chat.domain.usecases.MarkConversationAsReadUseCase
 import com.yral.shared.features.chat.domain.usecases.SendMessageUseCase
+import com.yral.shared.features.chat.viewmodel.ChatUnreadRefreshSignal
 import com.yral.shared.features.chat.viewmodel.ChatWallViewModel
 import com.yral.shared.features.chat.viewmodel.ConversationViewModel
 import com.yral.shared.features.chat.viewmodel.InboxViewModel
@@ -53,6 +54,7 @@ val chatModule =
         factoryOf(::SendMessageUseCase)
         factoryOf(::ChatTelemetry)
         singleOf(::ChatErrorMapper)
+        singleOf(::ChatUnreadRefreshSignal)
         viewModelOf(::ChatWallViewModel)
         viewModelOf(::ConversationViewModel)
         viewModelOf(::InboxViewModel)

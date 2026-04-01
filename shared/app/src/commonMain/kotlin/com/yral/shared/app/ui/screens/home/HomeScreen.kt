@@ -6,8 +6,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -65,8 +67,10 @@ import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.auth.ui.LoginMode
 import com.yral.shared.features.auth.ui.LoginScreenType
 import com.yral.shared.features.auth.ui.rememberLoginInfo
+import com.yral.shared.features.chat.domain.models.formatChatUnreadBadgeCount
 import com.yral.shared.features.chat.ui.ChatScreen
 import com.yral.shared.features.chat.viewmodel.ChatWallViewModel
+import com.yral.shared.features.chat.viewmodel.InboxViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.wallet.ui.WalletScreen
@@ -107,6 +111,10 @@ internal fun HomeScreen(
     sessionState: SessionState,
     isPendingLogin: Boolean,
 ) {
+    val sessionKey = sessionState.getKey()
+    val inboxViewModel = koinViewModel<InboxViewModel>(key = "inbox-$sessionKey")
+    val chatUnreadCount by inboxViewModel.unreadConversationCount.collectAsStateWithLifecycle()
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.primaryContainer,
         modifier = Modifier.fillMaxSize(),
@@ -134,6 +142,7 @@ internal fun HomeScreen(
             }
             HomeNavigationBar(
                 currentTab = currentTab,
+                chatUnreadCount = chatUnreadCount,
                 updateCurrentTab = updateCurrentTab,
                 bottomNavigationClicked = bottomNavigationAnalytics,
             )
@@ -148,6 +157,7 @@ internal fun HomeScreen(
                 Modifier
                     .padding(innerPadding)
                     .background(MaterialTheme.colorScheme.primaryContainer),
+            inboxViewModel = inboxViewModel,
             sessionState = sessionState,
             updateProfileVideosCount = updateProfileVideosCount,
         )
@@ -176,6 +186,7 @@ private fun SlotContent(component: HomeComponent) {
 private fun HomeScreenContent(
     component: HomeComponent,
     modifier: Modifier,
+    inboxViewModel: InboxViewModel,
     sessionState: SessionState,
     updateProfileVideosCount: (count: Int) -> Unit,
 ) {
@@ -255,6 +266,7 @@ private fun HomeScreenContent(
                 ChatScreen(
                     component = child.component,
                     chatWallViewModel = chatWallViewModel,
+                    inboxViewModel = inboxViewModel,
                 )
         }
         LoginIfRequired(
@@ -328,6 +340,7 @@ private fun getVisibleTabs(): List<HomeTab> {
 @Composable
 private fun HomeNavigationBar(
     currentTab: HomeTab,
+    chatUnreadCount: Int,
     updateCurrentTab: (tab: HomeTab) -> Unit,
     bottomNavigationClicked: (categoryName: CategoryName) -> Unit,
 ) {
@@ -354,6 +367,7 @@ private fun HomeNavigationBar(
                     NavBarIcon(
                         isSelected = currentTab == tab,
                         tab = tab,
+                        badgeCount = if (tab == HomeTab.CHAT) chatUnreadCount else 0,
                     )
                 },
                 colors =
@@ -377,6 +391,7 @@ private fun HomeNavigationBar(
 private fun NavBarIcon(
     isSelected: Boolean,
     tab: HomeTab,
+    badgeCount: Int,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -401,6 +416,7 @@ private fun NavBarIcon(
         NewTaggedColumn(
             tab = tab,
             isSelected = isSelected,
+            badgeCount = badgeCount,
         )
     }
 }
@@ -409,6 +425,7 @@ private fun NavBarIcon(
 private fun NewTaggedColumn(
     tab: HomeTab,
     isSelected: Boolean,
+    badgeCount: Int,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -444,11 +461,57 @@ private fun NewTaggedColumn(
             } else {
                 tab.unSelectedIcon
             }
+        NavBarIconWithBadge(
+            icon = icon,
+            title = tab.title,
+            badgeText = formatChatUnreadBadgeCount(badgeCount),
+        )
+    }
+}
+
+@Composable
+private fun NavBarIconWithBadge(
+    icon: DrawableResource,
+    title: String,
+    badgeText: String?,
+) {
+    Box {
         Icon(
             modifier = Modifier.size(32.dp),
             painter = painterResource(icon),
-            contentDescription = tab.title,
+            contentDescription = title,
             tint = Color.White,
+        )
+        if (badgeText != null) {
+            ChatTabBadge(
+                text = badgeText,
+                modifier = Modifier.align(Alignment.TopEnd),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ChatTabBadge(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier =
+            modifier
+                .offset(x = 12.dp, y = (-4).dp)
+                .defaultMinSize(minWidth = 18.dp, minHeight = 18.dp)
+                .background(
+                    color = YralColors.Pink300,
+                    shape = RoundedCornerShape(100.dp),
+                ).padding(horizontal = 5.dp, vertical = 1.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = text,
+            style = LocalAppTopography.current.smSemiBold,
+            color = Color.White,
+            textAlign = TextAlign.Center,
         )
     }
 }

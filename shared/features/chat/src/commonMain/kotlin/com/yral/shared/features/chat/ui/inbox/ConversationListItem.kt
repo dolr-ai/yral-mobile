@@ -20,6 +20,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.features.chat.domain.models.Conversation
+import com.yral.shared.features.chat.domain.models.countsTowardUnreadConversationBadge
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.formatAbbreviation
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
@@ -70,7 +71,7 @@ fun ConversationListItem(
         ConversationTimeAndBadge(
             timeText = conversation.lastMessage?.createdAt?.let(::formatConversationTime) ?: "",
             unreadCount = conversation.unreadCount,
-            isBot = conversation.conversationUser != null,
+            shouldShowBadge = conversation.countsTowardUnreadConversationBadge(),
         )
     }
 }
@@ -127,7 +128,7 @@ private fun ConversationNameAndPreview(
 private fun ConversationTimeAndBadge(
     timeText: String,
     unreadCount: Int,
-    isBot: Boolean,
+    shouldShowBadge: Boolean,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -138,7 +139,7 @@ private fun ConversationTimeAndBadge(
             style = LocalAppTopography.current.regRegular,
             color = YralColors.Neutral500,
         )
-        if (unreadCount > 0 && !isBot) {
+        if (shouldShowBadge) {
             Box(
                 modifier =
                     Modifier

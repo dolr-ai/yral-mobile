@@ -124,6 +124,7 @@ internal class ComponentFactory(
             showBackIcon = true,
             onBack = rootComponent::onBackClicked,
             onCreateInfluencer = { rootComponent.openCreateInfluencer(BotCreationSource.WALLET) },
+            onSwitchProfile = { rootComponent.rootViewModel.showAccountSwitcher() },
             onOpenProfile = rootComponent::openProfile,
         )
 

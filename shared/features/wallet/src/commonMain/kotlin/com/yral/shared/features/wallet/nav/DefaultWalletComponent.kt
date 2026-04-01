@@ -11,6 +11,7 @@ internal class DefaultWalletComponent(
     override val showBackIcon: Boolean,
     override val onBack: () -> Unit,
     override val onCreateInfluencer: () -> Unit,
+    override val onSwitchProfile: () -> Unit,
     override val onOpenProfile: (CanisterData) -> Unit,
 ) : WalletComponent,
     ComponentContext by componentContext,

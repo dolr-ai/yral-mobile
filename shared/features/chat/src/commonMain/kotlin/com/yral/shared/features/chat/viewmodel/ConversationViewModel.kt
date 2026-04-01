@@ -108,6 +108,7 @@ class ConversationViewModel(
     private val fetchProductsUseCase: FetchProductsUseCase,
     private val checkChatAccessUseCase: CheckChatAccessUseCase,
     private val grantChatAccessUseCase: GrantChatAccessUseCase,
+    private val chatUnreadRefreshSignal: ChatUnreadRefreshSignal,
 ) : ViewModel() {
     /**
      * Message ordering:
@@ -1141,6 +1142,7 @@ class ConversationViewModel(
         if (_viewState.value.isBotAccount) return
         viewModelScope.launch {
             markConversationAsReadUseCase(conversationId)
+                .onSuccess { chatUnreadRefreshSignal.requestRefresh() }
                 .onFailure { error ->
                     Logger.w(ConversationViewModel::class.simpleName!!, error) {
                         "Failed to mark conversation as read: $conversationId"
