@@ -22,8 +22,9 @@
     <string name="got_it">Got It!</string>
     <string name="wallet_locked">Wallet Locked!</string>
     <string name="wallet_locked_description">Login &amp; create an influencer to start earning\nfrom every subscription and unlock wallet.</string>
-    <string name="wallet_locked_switch_account">Please switch to your AI influencer account to see your wallet balance</string>
+    <string name="wallet_locked_switch_profile_description">Check out how your virtual influencers are doing</string>
     <string name="create_influencer">Create Influencer</string>
+    <string name="switch_profile">Switch Profile</string>
     <string name="total_earnings_inr">Total Earnings ( INR )</string>
     <string name="min_withdrawal_limit">Minimum withdrawal limit is ₹1000</string>
     <string name="transaction_history">Transaction History</string>

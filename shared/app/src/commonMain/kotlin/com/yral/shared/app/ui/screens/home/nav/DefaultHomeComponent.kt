@@ -266,6 +266,7 @@ internal class DefaultHomeComponent(
             componentContext = componentContext,
             showAlertsOnDialog = showAlertsOnDialog,
             onCreateInfluencer = { openCreateInfluencer(BotCreationSource.WALLET) },
+            onSwitchProfile = openAccountSheet,
             onOpenProfile = openProfile,
         )
 

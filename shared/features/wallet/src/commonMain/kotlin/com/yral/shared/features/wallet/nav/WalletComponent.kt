@@ -9,6 +9,7 @@ interface WalletComponent {
     val showBackIcon: Boolean
     val onBack: () -> Unit
     val onCreateInfluencer: () -> Unit
+    val onSwitchProfile: () -> Unit
     val onOpenProfile: (CanisterData) -> Unit
     companion object Companion {
         operator fun invoke(
@@ -17,6 +18,7 @@ interface WalletComponent {
             showBackIcon: Boolean = false,
             onBack: () -> Unit = {},
             onCreateInfluencer: () -> Unit = {},
+            onSwitchProfile: () -> Unit = {},
             onOpenProfile: (CanisterData) -> Unit = {},
         ): WalletComponent =
             DefaultWalletComponent(
@@ -25,6 +27,7 @@ interface WalletComponent {
                 showBackIcon,
                 onBack,
                 onCreateInfluencer,
+                onSwitchProfile,
                 onOpenProfile,
             )
     }
