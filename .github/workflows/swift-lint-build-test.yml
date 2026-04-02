@@ -53,6 +53,21 @@ jobs:
         working-directory: iosApp
         run: swiftlint
 
+      - name: Resolve iOS Simulator destination
+        id: sim
+        run: |
+          SIM_NAME=$(xcrun simctl list devices available -j \
+            | python3 -c "
+          import json, sys
+          data = json.load(sys.stdin)
+          for runtime, devices in data['devices'].items():
+              if 'iOS' in runtime:
+                  for d in devices:
+                      if 'iPhone' in d['name']:
+                          print(d['name']); sys.exit(0)
+          sys.exit(1)")
+          echo "name=$SIM_NAME" >> "$GITHUB_OUTPUT"
+
       - name: Build and run tests
         working-directory: iosApp
         env:
@@ -63,7 +78,7 @@ jobs:
           xcodebuild test \
             -workspace iosApp.xcworkspace \
             -scheme iosApp \
-            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -destination 'platform=iOS Simulator,name=${{ steps.sim.outputs.name }}' \
             -configuration Debug \
             -test-timeouts-enabled YES \
             -maximum-test-execution-time-allowance 120 \
