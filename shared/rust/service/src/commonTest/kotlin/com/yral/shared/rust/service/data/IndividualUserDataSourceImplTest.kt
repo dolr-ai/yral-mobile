@@ -17,9 +17,9 @@ class IndividualUserDataSourceImplTest {
     }
 
     @Test
-    fun thumbnailUrl_keepsExistingStorageHost() {
+    fun thumbnailUrl_usesCdnHost() {
         assertEquals(
-            expected = "https://hel1.your-objectstorage.com/yral-sfw/publisher-principal/video-uid_thumbnail.png",
+            expected = "https://cdn-yral-sfw.yral.com/publisher-principal/video-uid_thumbnail.png",
             actual =
                 IndividualUserDataSourceImpl.thumbnailUrl(
                     videoUid = "video-uid",
