@@ -50,7 +50,7 @@ jobs:
           echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/28.0.13004108" >> $GITHUB_ENV
           echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/28.0.13004108" >> $GITHUB_ENV
 
-      - name: Resolve versionCode
+      - name: Resolve version metadata
         run: |
           CURRENT=$(grep -oP 'versionCode = \K[0-9]+(?= // ci:staging-version-code)' ./androidApp/build.gradle.kts)
           if ! [[ "$CURRENT" =~ ^[0-9]+$ ]]; then
@@ -58,9 +58,14 @@ jobs:
             exit 1
           fi
           NEW=$((CURRENT + 1))
+          VERSION=$(./.github/helperscripts/resolve_next_android_flavor_version.sh staging ./androidApp/build.gradle.kts)
+
           echo "staging versionCode: $CURRENT -> $NEW"
+          echo "staging versionName -> $VERSION"
           sed -i "s/versionCode = [0-9]\+ \/\/ ci:staging-version-code/versionCode = $NEW \/\/ ci:staging-version-code/" ./androidApp/build.gradle.kts
+          sed -i "s/versionName = \"[^\"]*\" \/\/ ci:staging-version-name/versionName = \"$VERSION\" \/\/ ci:staging-version-name/" ./androidApp/build.gradle.kts
           echo "NEW_VERSION_CODE=$NEW" >> $GITHUB_ENV
+          echo "NEW_VERSION_NAME=$VERSION" >> $GITHUB_ENV
 
       - name: Setup keystore
         env:
@@ -131,10 +136,10 @@ jobs:
           status: completed
           inAppUpdatePriority: ${{ steps.update-priority.outputs.update_priority }}
 
-      - name: Commit updated versionCode to main
+      - name: Commit updated staging version metadata to main
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add ./androidApp/build.gradle.kts
-          git commit -m "[skip ci] chore: bump staging versionCode to $NEW_VERSION_CODE"
+          git commit -m "[skip ci] chore: bump staging version to $NEW_VERSION_NAME (versionCode $NEW_VERSION_CODE)"
           git push origin main
