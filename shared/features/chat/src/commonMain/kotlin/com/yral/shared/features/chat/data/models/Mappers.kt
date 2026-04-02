@@ -32,6 +32,29 @@ fun InfluencerDto.toDomain(): Influencer =
         messageCount = messageCount,
     )
 
+fun InfluencerFeedResponseDto.toInfluencersResponseDto(): InfluencersResponseDto =
+    InfluencersResponseDto(
+        influencers =
+            influencers.map { influencer ->
+                InfluencerDto(
+                    id = influencer.id,
+                    name = influencer.name,
+                    displayName = influencer.displayName,
+                    avatarUrl = influencer.avatarUrl,
+                    description = influencer.description,
+                    category = influencer.category,
+                    isActive = InfluencerStatus.ACTIVE.value,
+                    createdAt = influencer.createdAt,
+                    conversationCount = influencer.signals?.conversationCount,
+                    messageCount = influencer.signals?.messageCount,
+                )
+            },
+        total = totalCount,
+        limit = limit,
+        offset = offset,
+        hasMore = hasMore,
+    )
+
 fun InfluencersResponseDto.toDomainActiveOnly(): InfluencersPageResult {
     val rawCount = influencers.size
     val activeInfluencers =
@@ -39,10 +62,11 @@ fun InfluencersResponseDto.toDomainActiveOnly(): InfluencersPageResult {
             .filter { it.isActive in listOf(InfluencerStatus.ACTIVE.value, InfluencerStatus.COMING_SOON.value) }
             .map { it.toDomain() }
     val nextOffset =
-        if (rawCount > 0 && offset + rawCount < total) {
-            offset + rawCount
-        } else {
-            null
+        when {
+            rawCount == 0 -> null
+            hasMore != null -> if (hasMore) offset + rawCount else null
+            offset + rawCount < total -> offset + rawCount
+            else -> null
         }
 
     return InfluencersPageResult(
