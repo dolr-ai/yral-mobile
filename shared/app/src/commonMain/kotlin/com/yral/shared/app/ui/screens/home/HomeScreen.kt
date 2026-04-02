@@ -213,6 +213,7 @@ private fun HomeScreenContent(
                 FeedScaffoldScreen(
                     component = child.component,
                     feedViewModel = feedViewModel,
+                    onInboxClick = component::onChatInboxClick,
                 )
 
             is HomeComponent.Child.UploadVideo ->

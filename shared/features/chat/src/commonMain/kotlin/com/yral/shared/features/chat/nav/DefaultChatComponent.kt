@@ -11,6 +11,7 @@ import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.chat.nav.home.ChatHomeComponent
+import com.yral.shared.features.chat.nav.home.ChatHomeComponent.InitialTab
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.serialization.Serializable
@@ -24,6 +25,7 @@ internal class DefaultChatComponent(
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
     private val openConversation: (OpenConversationParams) -> Unit,
     private val openCreateInfluencer: (source: BotCreationSource) -> Unit,
+    private val initialTab: InitialTab = InitialTab.DISCOVER,
 ) : ChatComponent(),
     ComponentContext by componentContext,
     KoinComponent {
@@ -95,6 +97,7 @@ internal class DefaultChatComponent(
             componentContext = componentContext,
             openConversation = openConversation,
             openCreateInfluencer = openCreateInfluencer,
+            initialTab = initialTab,
         )
 
     private fun conversationComponent(
