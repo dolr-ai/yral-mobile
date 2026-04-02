@@ -20,30 +20,23 @@ jobs:
     if: contains(github.event.release.tag_name, 'Android')
     runs-on: ubuntu-latest
     steps:
+      - name: Extract version from release tag
+        id: version
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          VERSION=$(echo "$TAG" | sed -E 's/^v?([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Could not extract valid semver from tag '$TAG', got: '$VERSION'" >&2
+            exit 1
+          fi
+          echo "Extracted version: $VERSION from tag: $TAG"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
       - name: Checkout main branch
         uses: actions/checkout@v4
         with:
           ref: main
           ssh-key: ${{ secrets.DEPLOY_KEY_SSH_PRIVATE_KEY }}
-
-      - name: Resolve next prod versionName
-        id: version
-        run: |
-          TAG="${{ github.event.release.tag_name }}"
-          TAG_VERSION=$(echo "$TAG" | sed -E 's/^v?([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
-          if ! [[ "$TAG_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Error: Could not extract valid semver from tag '$TAG', got: '$TAG_VERSION'" >&2
-            exit 1
-          fi
-
-          VERSION=$(./.github/helperscripts/resolve_next_prod_android_version.sh ./androidApp/build.gradle.kts)
-          if [[ "$VERSION" != "$TAG_VERSION" ]]; then
-            echo "Error: computed next prod version '$VERSION' does not match tag version '$TAG_VERSION'" >&2
-            exit 1
-          fi
-
-          echo "Resolved next prod version: $VERSION from current build.gradle.kts"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Set up JDK
         id: setup-jdk
