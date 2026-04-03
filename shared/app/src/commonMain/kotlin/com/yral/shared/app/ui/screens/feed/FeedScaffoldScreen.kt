@@ -12,6 +12,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.yral.shared.app.ui.ChatUnreadBadge
+import com.yral.shared.app.ui.chatUnreadBadgeText
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.feed.ui.FeedActionsRight
 import com.yral.shared.features.feed.ui.FeedScreen
@@ -24,9 +26,11 @@ import yral_mobile.shared.app.generated.resources.inbox
 fun FeedScaffoldScreen(
     component: FeedComponent,
     feedViewModel: FeedViewModel,
+    chatUnreadCount: Int,
     onInboxClick: () -> Unit,
 ) {
     val feedState by feedViewModel.state.collectAsStateWithLifecycle()
+    val badgeText = chatUnreadBadgeText(chatUnreadCount)
 
     FeedScreen(
         component = component,
@@ -39,14 +43,22 @@ fun FeedScaffoldScreen(
                         .padding(top = 16.dp, end = 16.dp),
                 contentAlignment = Alignment.TopEnd,
             ) {
-                Image(
-                    painter = painterResource(Res.drawable.inbox),
-                    contentDescription = "Inbox",
-                    modifier =
-                        Modifier
-                            .size(38.dp)
-                            .clickable { onInboxClick() },
-                )
+                Box {
+                    Image(
+                        painter = painterResource(Res.drawable.inbox),
+                        contentDescription = "Inbox",
+                        modifier =
+                            Modifier
+                                .size(38.dp)
+                                .clickable { onInboxClick() },
+                    )
+                    badgeText?.let { unreadBadgeText ->
+                        ChatUnreadBadge(
+                            text = unreadBadgeText,
+                            modifier = Modifier.align(Alignment.TopEnd),
+                        )
+                    }
+                }
             }
         },
         bottomOverlay = { _, _ -> },
