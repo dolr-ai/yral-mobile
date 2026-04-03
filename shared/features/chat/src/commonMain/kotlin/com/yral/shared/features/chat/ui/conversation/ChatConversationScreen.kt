@@ -71,6 +71,9 @@ import yral_mobile.shared.features.chat.generated.resources.chat_background_inve
 import yral_mobile.shared.features.chat.generated.resources.subscription_card_overlay_message
 import yral_mobile.shared.features.chat.generated.resources.subscription_nudge_chat_description
 import yral_mobile.shared.features.chat.generated.resources.subscription_nudge_chat_title
+import yral_mobile.shared.features.chat.generated.resources.switch_profile
+import yral_mobile.shared.features.chat.generated.resources.switch_profile_failed
+import yral_mobile.shared.features.chat.generated.resources.switch_to_human_profile_to_chat
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -174,6 +177,7 @@ fun ChatConversationScreen(
 
     var input by remember { mutableStateOf("") }
     var selectedImage by remember { mutableStateOf<FilePathChatAttachment?>(null) }
+    var isSwitchingProfile by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val screenWidth = LocalWindowInfo.current.containerSize.width
     val density = LocalDensity.current
@@ -352,6 +356,16 @@ fun ChatConversationScreen(
                 entryPoint = SubscriptionEntryPoint.AI_CHATBOT,
             )
         }
+    val switchProfileMessage = stringResource(Res.string.switch_to_human_profile_to_chat)
+    val switchProfileButtonText = stringResource(Res.string.switch_profile)
+    val switchProfileFailedMessage = stringResource(Res.string.switch_profile_failed)
+    val bottomAreaState by derivedStateOf {
+        resolveConversationBottomAreaState(
+            isBotAccount = viewState.isBotAccount,
+            shouldShowInfluencerSubscriptionCard = shouldShowInfluencerSubscriptionCard,
+            shouldBlockChatNoProduct = shouldBlockChatNoProduct,
+        )
+    }
 
     fun sendMessageIfAllowed(
         draft: SendMessageDraft,
@@ -359,6 +373,7 @@ fun ChatConversationScreen(
     ) {
         val blocked =
             when {
+                viewState.isBotAccount -> true
                 shouldPromptForLogin -> {
                     promptLogin()
                     true
@@ -497,7 +512,8 @@ fun ChatConversationScreen(
                             }
                         }
                         val suggestions = viewState.influencer?.suggestedMessages.orEmpty()
-                        val shouldShowSuggestions = !hasUserMessages && suggestions.isNotEmpty()
+                        val shouldShowSuggestions =
+                            !viewState.isBotAccount && !hasUserMessages && suggestions.isNotEmpty()
                         // Show suggestion messages if there are no user messages
                         if (shouldShowSuggestions) {
                             SuggestionMessagesColumn(
@@ -514,40 +530,65 @@ fun ChatConversationScreen(
                             )
                         }
 
-                        // Influencer subscription card (replaces input when at threshold) or ChatInputArea
-                        if (shouldShowInfluencerSubscriptionCard && !viewState.isBotAccount) {
-                            InfluencerSubscriptionCard(
-                                onSubscribe = {
-                                    purchaseContext?.let { viewModel.launchInfluencerSubscriptionPurchase(it) }
-                                },
-                                isPurchaseInProgress = viewState.isInfluencerSubscriptionPurchaseInProgress,
-                                formattedPrice = viewState.influencerSubscriptionFormattedPrice,
-                            )
-                        } else if (shouldBlockChatNoProduct && !viewState.isBotAccount) {
-                            InfluencerSubscriptionCard(
-                                onSubscribe = { viewModel.showPurchaseUnavailableToast() },
-                                isPurchaseInProgress = false,
-                                formattedPrice = null,
-                            )
-                        } else if (!viewState.isBotAccount) {
-                            ChatInputArea(
-                                input = input,
-                                onInputChange = { input = it },
-                                onSendClick = {
-                                    val text = input.trim()
-                                    sendMessageIfAllowed(
-                                        SendMessageDraft(
-                                            messageType = ChatMessageType.TEXT,
-                                            content = text,
-                                        ),
-                                    ) {
-                                        input = ""
-                                    }
-                                },
-                                onCameraClick = imageCaptureLauncher,
-                                onGalleryClick = imagePickerLauncher,
-                                hasWaitingAssistant = hasWaitingAssistant,
-                            )
+                        when (bottomAreaState) {
+                            ConversationBottomAreaState.BotAccountPrompt ->
+                                BotAccountConversationPrompt(
+                                    message = switchProfileMessage,
+                                    buttonText = switchProfileButtonText,
+                                    avatarUrl = viewState.influencer?.avatarUrl,
+                                    isSwitching = isSwitchingProfile,
+                                    onSwitchClick = {
+                                        if (isSwitchingProfile) return@BotAccountConversationPrompt
+                                        isSwitchingProfile = true
+                                        component.switchToMainProfile { switched ->
+                                            isSwitchingProfile = false
+                                            if (!switched) {
+                                                ToastManager.showError(
+                                                    type = ToastType.Small(message = switchProfileFailedMessage),
+                                                )
+                                            }
+                                        }
+                                    },
+                                )
+
+                            ConversationBottomAreaState.InfluencerSubscription ->
+                                InfluencerSubscriptionCard(
+                                    onSubscribe = {
+                                        purchaseContext?.let {
+                                            viewModel.launchInfluencerSubscriptionPurchase(it)
+                                        }
+                                    },
+                                    isPurchaseInProgress =
+                                        viewState.isInfluencerSubscriptionPurchaseInProgress,
+                                    formattedPrice = viewState.influencerSubscriptionFormattedPrice,
+                                )
+
+                            ConversationBottomAreaState.SubscriptionUnavailable ->
+                                InfluencerSubscriptionCard(
+                                    onSubscribe = { viewModel.showPurchaseUnavailableToast() },
+                                    isPurchaseInProgress = false,
+                                    formattedPrice = null,
+                                )
+
+                            ConversationBottomAreaState.ChatInput ->
+                                ChatInputArea(
+                                    input = input,
+                                    onInputChange = { input = it },
+                                    onSendClick = {
+                                        val text = input.trim()
+                                        sendMessageIfAllowed(
+                                            SendMessageDraft(
+                                                messageType = ChatMessageType.TEXT,
+                                                content = text,
+                                            ),
+                                        ) {
+                                            input = ""
+                                        }
+                                    },
+                                    onCameraClick = imageCaptureLauncher,
+                                    onGalleryClick = imagePickerLauncher,
+                                    hasWaitingAssistant = hasWaitingAssistant,
+                                )
                         }
                     }
                 }
