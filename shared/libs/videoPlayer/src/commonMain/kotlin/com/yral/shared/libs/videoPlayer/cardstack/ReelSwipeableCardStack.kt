@@ -19,7 +19,9 @@ import androidx.compose.ui.zIndex
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.model.toPlayerData
+import com.yral.shared.libs.videoPlayer.rememberMediaLoadCrashlyticsReporter
 import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
+import com.yral.shared.libs.videoPlayer.withCrashlytics
 import com.yral.shared.libs.videoplayback.CoordinatorDeps
 import com.yral.shared.libs.videoplayback.FirebasePerfPlaybackReporter
 import com.yral.shared.libs.videoplayback.MediaDescriptor
@@ -75,6 +77,7 @@ internal fun ReelSwipeableCardStack(
     var activeFrameReadyIndex by remember { mutableStateOf<Int?>(null) }
 
     val yralLogger: YralLogger = koinInject()
+    val mediaLoadCrashlyticsReporter = rememberMediaLoadCrashlyticsReporter()
     val baseReporter =
         rememberPlaybackEventReporter(
             didVideoEnd = didVideoEnd,
@@ -86,8 +89,9 @@ internal fun ReelSwipeableCardStack(
             },
         )
     val reporter =
-        remember(baseReporter) {
+        remember(baseReporter, mediaItems, mediaLoadCrashlyticsReporter) {
             FirebasePerfPlaybackReporter(baseReporter)
+                .withCrashlytics(mediaLoadCrashlyticsReporter) { index -> mediaItems.getOrNull(index) }
                 .withLogging(yralLogger = yralLogger, enabled = false)
         }
     val coordinator =

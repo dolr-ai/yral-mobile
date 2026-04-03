@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 
@@ -14,7 +13,8 @@ private const val RENDER_PIXELS = 100
 @Composable
 fun YralBlurredThumbnail(url: String) {
     // Enable haze effect to some other blur logic when want to use
-    AsyncImage(
+    MediaThumbnailImage(
+        thumbnailUrl = url,
         model =
             ImageRequest
                 .Builder(LocalPlatformContext.current)
