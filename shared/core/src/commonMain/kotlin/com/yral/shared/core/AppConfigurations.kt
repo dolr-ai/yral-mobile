@@ -14,7 +14,6 @@ object AppConfigurations {
     const val UPLOAD_BASE_URL = "upload.yral.com"
     const val ANALYTICS_BASE_URL = "analytics.yral.com"
     const val CHAT_BASE_URL = "chat.yral.com"
-    const val CHAT_BASE_URL_DEBUG = "staging-yral-ai-chat.fly.dev"
     const val BILLING_BASE_URL = "billing.yral.com"
     const val SNOWPLOW_COLLECTOR_URL = "snowplow-collector.yral.com"
     const val FIREBASE_APP_NAME = "yral"
