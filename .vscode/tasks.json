@@ -1,0 +1,168 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        // ─── Android individual steps ─────────────────────────────────────────
+        {
+            "label": "Android: ktlint",
+            "type": "shell",
+            "command": "./gradlew ktlintCheck --console=plain",
+            "options": {
+                "env": {
+                    "GITHUB_USERNAME": "${env:GITHUB_USERNAME}",
+                    "GITHUB_TOKEN": "${env:GITHUB_TOKEN}"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "group": "android-checks"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Android: detekt",
+            "type": "shell",
+            "command": "./gradlew detekt reportMerge --continue --console=plain",
+            "options": {
+                "env": {
+                    "GITHUB_USERNAME": "${env:GITHUB_USERNAME}",
+                    "GITHUB_TOKEN": "${env:GITHUB_TOKEN}"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "group": "android-checks"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Android: tests",
+            "type": "shell",
+            "command": "./gradlew test --console=plain",
+            "options": {
+                "env": {
+                    "GITHUB_USERNAME": "${env:GITHUB_USERNAME}",
+                    "GITHUB_TOKEN": "${env:GITHUB_TOKEN}"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "group": "android-checks"
+            },
+            "problemMatcher": []
+        },
+        // ─── Android compound check (mirrors CI runCmd) ───────────────────────
+        {
+            "label": "Android Checks",
+            "dependsOn": [
+                "Android: ktlint",
+                "Android: detekt",
+                "Android: tests"
+            ],
+            "dependsOrder": "sequence",
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            },
+            "problemMatcher": []
+        },
+        // ─── iOS individual steps ─────────────────────────────────────────────
+        {
+            // Writes kotlin.apple.cocoapods.bin into local.properties so Gradle
+            // can locate the pod executable (mirrors CI's "Pin CocoaPods" step).
+            "label": "iOS: Pin CocoaPods bin",
+            "type": "shell",
+            "command": "printf 'kotlin.apple.cocoapods.bin=%s\\n' \"$(which pod)\" > local.properties",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "group": "ios-checks"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "iOS: Build KMM framework",
+            "type": "shell",
+            "command": "./gradlew :iosSharedUmbrella:podInstall --stacktrace",
+            "options": {
+                "env": {
+                    "GITHUB_USERNAME": "${env:GITHUB_USERNAME}",
+                    "GITHUB_TOKEN": "${env:GITHUB_TOKEN}"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "group": "ios-checks"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "iOS: pod install",
+            "type": "shell",
+            "command": "pod install",
+            "options": {
+                "cwd": "${workspaceFolder}/iosApp"
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "group": "ios-checks"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "iOS: SwiftLint",
+            "type": "shell",
+            "command": "swiftlint",
+            "options": {
+                "cwd": "${workspaceFolder}/iosApp"
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "group": "ios-checks"
+            },
+            "problemMatcher": []
+        },
+        {
+            // Detects the first available iPhone simulator, then builds and tests.
+            // Mirrors the CI "Resolve iOS Simulator destination" + "Build and run tests" steps.
+            "label": "iOS: xcodebuild test",
+            "type": "shell",
+            "command": "SIM_NAME=$(xcrun simctl list devices available | grep -m 1 'iPhone' | sed 's/^[[:space:]]*//' | sed 's/ (.*//' ) && set -o pipefail && xcodebuild test -workspace iosApp.xcworkspace -scheme iosApp -destination \"platform=iOS Simulator,name=$SIM_NAME\" -configuration Debug -test-timeouts-enabled YES -maximum-test-execution-time-allowance 120 CODE_SIGNING_ALLOWED=NO ENABLE_USER_SCRIPT_SANDBOXING=NO | xcbeautify --is-ci",
+            "options": {
+                "cwd": "${workspaceFolder}/iosApp",
+                "env": {
+                    "GITHUB_USERNAME": "${env:GITHUB_USERNAME}",
+                    "GITHUB_TOKEN": "${env:GITHUB_TOKEN}"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "group": "ios-checks"
+            },
+            "problemMatcher": []
+        },
+        // ─── iOS compound check (mirrors CI ios-checks job) ───────────────────
+        {
+            "label": "iOS Checks",
+            "dependsOn": [
+                "iOS: Pin CocoaPods bin",
+                "iOS: Build KMM framework",
+                "iOS: pod install",
+                "iOS: SwiftLint",
+                "iOS: xcodebuild test"
+            ],
+            "dependsOrder": "sequence",
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            },
+            "problemMatcher": []
+        }
+    ]
+}
