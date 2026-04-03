@@ -15,10 +15,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import coil3.ImageLoader
-import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import com.yral.shared.core.logging.YralLogger
+import com.yral.shared.libs.videoPlayer.MediaThumbnailImage
 import com.yral.shared.libs.videoPlayer.PlatformPlaybackState
 import com.yral.shared.libs.videoPlayer.PlatformPlayer
 import com.yral.shared.libs.videoPlayer.PlatformPlayerError
@@ -28,6 +28,7 @@ import com.yral.shared.libs.videoPlayer.model.PlayerSpeed
 import com.yral.shared.libs.videoPlayer.model.ScreenResize
 import com.yral.shared.libs.videoPlayer.pool.PlayerPool
 import com.yral.shared.libs.videoPlayer.pool.VideoListener
+import com.yral.shared.libs.videoPlayer.rememberMediaLoadCrashlyticsReporter
 import com.yral.shared.libs.videoPlayer.rememberPooledPlatformPlayer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -77,6 +78,7 @@ fun CMPPlayer(
     }
 
     val logger = koinInject<YralLogger>().withTag("CMPPlayer")
+    val mediaLoadCrashlyticsReporter = rememberMediaLoadCrashlyticsReporter()
     // Match thumbnail content scale with video player
     val thumbnailContentScale =
         when (playerParams.size) {
@@ -87,13 +89,11 @@ fun CMPPlayer(
         // YralBlurredThumbnail(playerData.thumbnailUrl)
         PlatformVideoPlayerView(Modifier.fillMaxSize(), platformPlayer, playerParams.size)
         if (showThumbnail) {
-            AsyncImage(
-                model = playerData.thumbnailUrl,
+            MediaThumbnailImage(
+                thumbnailUrl = playerData.thumbnailUrl,
+                mediaId = playerData.videoId,
                 contentDescription = "Thumbnail",
                 contentScale = thumbnailContentScale,
-                onState = { state ->
-                    // logger.d { "onState: $state" }
-                },
                 modifier =
                     Modifier
                         .fillMaxSize()
@@ -147,6 +147,14 @@ fun CMPPlayer(
 
                     override fun onPlayerError(error: PlatformPlayerError) {
                         logger.d { "onPlayerError: $error" }
+                        mediaLoadCrashlyticsReporter.reportVideoPlaybackFailure(
+                            videoUrl = playerData.url,
+                            mediaId = playerData.videoId,
+                            category = "platform_player",
+                            code = error.code,
+                            message = error.message,
+                            throwable = error,
+                        )
                         // Check if it's a decoder initialization exception
                         if (isDecoderInitFailed(error)) {
                             // Attempt to play again with a 1-second delay

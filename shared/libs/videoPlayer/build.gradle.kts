@@ -34,6 +34,7 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
 
             implementation(projects.shared.core)
+            implementation(projects.shared.libs.crashlytics)
             implementation(projects.shared.libs.koin)
             implementation(projects.shared.libs.videoPlayback)
 
