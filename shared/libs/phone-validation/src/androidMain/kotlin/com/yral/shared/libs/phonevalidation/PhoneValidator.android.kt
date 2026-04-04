@@ -25,12 +25,17 @@ actual class PhoneValidator {
         try {
             val number = phoneUtil.parse(phoneNumber, regionCode)
             when (format) {
-                PhoneNumberFormat.E164 ->
+                PhoneNumberFormat.E164 -> {
                     phoneUtil.format(number, PhoneNumberUtil.PhoneNumberFormat.E164)
-                PhoneNumberFormat.INTERNATIONAL ->
+                }
+
+                PhoneNumberFormat.INTERNATIONAL -> {
                     phoneUtil.format(number, PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL)
-                PhoneNumberFormat.NATIONAL ->
+                }
+
+                PhoneNumberFormat.NATIONAL -> {
                     phoneUtil.format(number, PhoneNumberUtil.PhoneNumberFormat.NATIONAL)
+                }
             }
         } catch (e: NumberParseException) {
             phoneNumber

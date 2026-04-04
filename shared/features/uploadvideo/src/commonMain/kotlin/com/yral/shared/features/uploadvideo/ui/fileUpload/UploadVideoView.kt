@@ -215,23 +215,33 @@ internal fun VideoSelectionPickerErrorDialog(
 @Composable
 private fun VideoPickerError.toErrorMessage(): String =
     when (this) {
-        is VideoPickerError.Validation ->
+        is VideoPickerError.Validation -> {
             when (val error = this.error) {
-                is VideoValidationError.UnableToReadDuration ->
+                is VideoValidationError.UnableToReadDuration -> {
                     stringResource(Res.string.video_validation_unable_to_read_duration)
-                is VideoValidationError.UnableToReadFileSize ->
+                }
+
+                is VideoValidationError.UnableToReadFileSize -> {
                     stringResource(Res.string.video_validation_unable_to_read_file_size)
-                is VideoValidationError.DurationExceedsLimit ->
+                }
+
+                is VideoValidationError.DurationExceedsLimit -> {
                     stringResource(
                         Res.string.video_validation_duration_exceeds_limit_with_data,
                         error.limit.toInt(),
                     )
-                is VideoValidationError.FileSizeExceedsLimit ->
+                }
+
+                is VideoValidationError.FileSizeExceedsLimit -> {
                     stringResource(
                         Res.string.video_validation_file_size_exceeds_limit_with_data,
                         formatFileSize(error.limit, precision = 0),
                     )
+                }
             }
+        }
 
-        is VideoPickerError.ProcessingFailed -> stringResource(Res.string.video_validation_processing_failed)
+        is VideoPickerError.ProcessingFailed -> {
+            stringResource(Res.string.video_validation_processing_failed)
+        }
     }

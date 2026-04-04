@@ -146,17 +146,22 @@ fun ChatConversationScreen(
     LaunchedEffect(Unit) {
         viewModel.influencerSubscriptionToastFlow.collect { event ->
             when (event.status) {
-                ToastStatus.Success ->
+                ToastStatus.Success -> {
                     ToastManager.showSuccess(type = ToastType.Small(message = event.message))
-                ToastStatus.Error ->
+                }
+
+                ToastStatus.Error -> {
                     ToastManager.showError(type = ToastType.Small(message = event.message))
+                }
+
                 ToastStatus.Info,
                 ToastStatus.Warning,
-                ->
+                -> {
                     ToastManager.showToast(
                         type = ToastType.Small(message = event.message),
                         status = event.status,
                     )
+                }
             }
         }
     }
@@ -373,24 +378,33 @@ fun ChatConversationScreen(
     ) {
         val blocked =
             when {
-                viewState.isBotAccount -> true
+                viewState.isBotAccount -> {
+                    true
+                }
+
                 shouldPromptForLogin -> {
                     promptLogin()
                     true
                 }
+
                 shouldShowInfluencerSubscriptionCard -> {
                     purchaseContext?.let { viewModel.launchInfluencerSubscriptionPurchase(it) }
                     true
                 }
+
                 shouldShowSubscriptionNudge -> {
                     component.subscriptionCoordinator.showSubscriptionNudge(content = subscriptionNudgeContent)
                     true
                 }
+
                 shouldBlockChatNoProduct -> {
                     viewModel.showPurchaseUnavailableToast()
                     true
                 }
-                else -> false
+
+                else -> {
+                    false
+                }
             }
         if (!blocked) {
             onBeforeSend()
@@ -504,10 +518,13 @@ fun ChatConversationScreen(
                         val hasUserMessages by derivedStateOf {
                             overlayItems.any { item ->
                                 when (item) {
-                                    is ConversationMessageItem.Local ->
+                                    is ConversationMessageItem.Local -> {
                                         item.message.role == ConversationMessageRole.USER
-                                    is ConversationMessageItem.Remote ->
+                                    }
+
+                                    is ConversationMessageItem.Remote -> {
                                         item.message.role == ConversationMessageRole.USER
+                                    }
                                 }
                             }
                         }
@@ -531,7 +548,7 @@ fun ChatConversationScreen(
                         }
 
                         when (bottomAreaState) {
-                            ConversationBottomAreaState.BotAccountPrompt ->
+                            ConversationBottomAreaState.BotAccountPrompt -> {
                                 BotAccountConversationPrompt(
                                     message = switchProfileMessage,
                                     buttonText = switchProfileButtonText,
@@ -550,8 +567,9 @@ fun ChatConversationScreen(
                                         }
                                     },
                                 )
+                            }
 
-                            ConversationBottomAreaState.InfluencerSubscription ->
+                            ConversationBottomAreaState.InfluencerSubscription -> {
                                 InfluencerSubscriptionCard(
                                     onSubscribe = {
                                         purchaseContext?.let {
@@ -562,15 +580,17 @@ fun ChatConversationScreen(
                                         viewState.isInfluencerSubscriptionPurchaseInProgress,
                                     formattedPrice = viewState.influencerSubscriptionFormattedPrice,
                                 )
+                            }
 
-                            ConversationBottomAreaState.SubscriptionUnavailable ->
+                            ConversationBottomAreaState.SubscriptionUnavailable -> {
                                 InfluencerSubscriptionCard(
                                     onSubscribe = { viewModel.showPurchaseUnavailableToast() },
                                     isPurchaseInProgress = false,
                                     formattedPrice = null,
                                 )
+                            }
 
-                            ConversationBottomAreaState.ChatInput ->
+                            ConversationBottomAreaState.ChatInput -> {
                                 ChatInputArea(
                                     input = input,
                                     onInputChange = { input = it },
@@ -589,6 +609,7 @@ fun ChatConversationScreen(
                                     onGalleryClick = imagePickerLauncher,
                                     hasWaitingAssistant = hasWaitingAssistant,
                                 )
+                            }
                         }
                     }
                 }

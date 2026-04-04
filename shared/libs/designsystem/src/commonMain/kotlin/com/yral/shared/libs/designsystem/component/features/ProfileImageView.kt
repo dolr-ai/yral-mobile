@@ -105,10 +105,12 @@ private fun computeProBadgeOffsetPx(
                     (frameBadgePx / 2 - sizePx / 2 + sizePx / (2 * sqrt(2.0))).toFloat()
                 o to o
             }
+
             shape === RectangleShape -> {
                 val nudgePx = (frameBadgeSize.value * 0.4f).dp.toPx()
                 nudgePx to -nudgePx
             }
+
             else -> {
                 val cornerPx = cornerRadiusPxFromShape(shape, sizePx, density)
                 val o = frameBadgePx / 2 - cornerPx * (1f - 1f / sqrt2)

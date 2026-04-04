@@ -547,12 +547,14 @@ class ProfileViewModel(
                     botsMap = emptyMap(),
                 )
             }
-            is UserAccountType.MainAccount ->
+
+            is UserAccountType.MainAccount -> {
                 AccountTypeData(
                     createdByUsername = null,
                     createdByPrincipal = null,
                     botsMap = resolveBotsUsernames(accountType.bots.map { it }),
                 )
+            }
         }
 
     // Returns a map of principal -> username for all resolved bots
@@ -1121,12 +1123,18 @@ class ProfileViewModel(
         viewModelScope.launch {
             val shouldRefresh =
                 when (val currentViews = _state.value.viewsData[video.videoID]) {
-                    is UiState.InProgress -> return@launch
+                    is UiState.InProgress -> {
+                        return@launch
+                    }
+
                     is UiState.Success -> {
                         val now = Clock.System.now()
                         now - currentViews.data.lastFetched > VIEWS_REFRESH_THRESHOLD
                     }
-                    else -> true
+
+                    else -> {
+                        true
+                    }
                 }
             _state.update {
                 it.copy(

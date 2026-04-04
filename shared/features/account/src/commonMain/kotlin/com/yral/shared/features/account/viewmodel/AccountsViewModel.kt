@@ -299,14 +299,21 @@ class AccountsViewModel internal constructor(
 
     fun handleHelpLink(link: AccountHelpLink) {
         when (link.link) {
-            LOGOUT_URI -> logout()
-            DELETE_ACCOUNT_URI -> setBottomSheetType(AccountBottomSheet.DeleteAccount)
-            else ->
+            LOGOUT_URI -> {
+                logout()
+            }
+
+            DELETE_ACCOUNT_URI -> {
+                setBottomSheetType(AccountBottomSheet.DeleteAccount)
+            }
+
+            else -> {
                 setBottomSheetType(
                     AccountBottomSheet.ShowWebView(
                         linkToOpen = link,
                     ),
                 )
+            }
         }
     }
 

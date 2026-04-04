@@ -73,9 +73,11 @@ class SubscriptionViewModel(
                             // Update based on proDetails
                             _viewState.update { it.copy(purchaseState = UiState.Success(screenType)) }
                         }
+
                         is UiState.InProgress -> {
                             // Don't update during purchase flow
                         }
+
                         is UiState.Success -> {
                             // Handle different screen types
                             when (currentState.data) {
@@ -84,6 +86,7 @@ class SubscriptionViewModel(
                                 -> {
                                     // Keep failure state, don't update
                                 }
+
                                 is SubscriptionScreenType.UnPurchased,
                                 is SubscriptionScreenType.Purchased,
                                 -> {
@@ -94,6 +97,7 @@ class SubscriptionViewModel(
                                 }
                             }
                         }
+
                         is UiState.Failure -> {
                             // Update based on proDetails after failure
                             _viewState.update {
@@ -116,16 +120,19 @@ class SubscriptionViewModel(
                             it.copy(purchaseState = UiState.Success(screenType))
                         }
                     }
+
                     is SubscriptionScreenType.Failure -> {
                         _viewState.update {
                             it.copy(purchaseState = UiState.Success(screenType))
                         }
                     }
+
                     else -> {
                         // No need to clear for other screen types
                     }
                 }
             }
+
             else -> {
                 // No need to clear for non-success states
             }

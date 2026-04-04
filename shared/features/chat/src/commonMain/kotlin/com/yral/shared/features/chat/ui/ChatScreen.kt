@@ -33,19 +33,22 @@ fun ChatScreen(
             modifier = Modifier.fillMaxSize(),
         ) { child ->
             when (val instance = child.instance) {
-                is ChatComponent.Child.Home ->
+                is ChatComponent.Child.Home -> {
                     ChatHomeScreen(
                         component = instance.component,
                         chatWallViewModel = chatWallViewModel,
                         inboxViewModel = inboxViewModel,
                         modifier = Modifier.fillMaxSize(),
                     )
-                is ChatComponent.Child.Conversation ->
+                }
+
+                is ChatComponent.Child.Conversation -> {
                     ChatConversationScreen(
                         component = instance.component,
                         viewModel = conversationViewModel,
                         modifier = conversationModifier.fillMaxSize(),
                     )
+                }
             }
         }
     }

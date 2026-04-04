@@ -16,8 +16,12 @@ class ChatErrorMapper {
     ): ChatError =
         when (throwable) {
             is NetworkException -> mapNetworkException(throwable, retry)
+
             is YralException -> mapYralException(throwable, retry)
-            is CancellationException -> throw throwable // Don't catch cancellation
+
+            is CancellationException -> throw throwable
+
+            // Don't catch cancellation
             else -> ChatError.UnknownError(throwable = throwable, retry = retry)
         }
 
@@ -40,6 +44,7 @@ class ChatErrorMapper {
             HttpStatusCode.Unauthorized,
             HttpStatusCode.Forbidden,
             -> ChatError.AuthenticationError(throwable = exception)
+
             else -> ChatError.NetworkError(throwable = exception, retry = retry)
         }
 
@@ -49,9 +54,13 @@ class ChatErrorMapper {
     ): ChatError {
         val message = exception.text ?: exception.message
         return when {
-            message?.contains("Authorisation", ignoreCase = true) == true ->
+            message?.contains("Authorisation", ignoreCase = true) == true -> {
                 ChatError.AuthenticationError(throwable = exception)
-            else -> ChatError.UnknownError(throwable = exception, retry = retry)
+            }
+
+            else -> {
+                ChatError.UnknownError(throwable = exception, retry = retry)
+            }
         }
     }
 }

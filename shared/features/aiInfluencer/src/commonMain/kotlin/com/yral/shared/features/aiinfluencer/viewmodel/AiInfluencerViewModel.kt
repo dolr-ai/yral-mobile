@@ -113,21 +113,25 @@ class AiInfluencerViewModel(
         val clamped = prompt.take(PROMPT_CHAR_LIMIT)
         _state.update { current ->
             when (val step = current.step) {
-                is AiInfluencerStep.DescriptionEntry ->
+                is AiInfluencerStep.DescriptionEntry -> {
                     current.copy(
                         promptInput = clamped,
                         step = step.copy(description = clamped),
                         errorMessage = null,
                     )
+                }
 
-                is AiInfluencerStep.PersonaReview ->
+                is AiInfluencerStep.PersonaReview -> {
                     current.copy(
                         promptInput = clamped,
                         step = step.copy(description = clamped),
                         errorMessage = null,
                     )
+                }
 
-                else -> current
+                else -> {
+                    current
+                }
             }
         }
     }
@@ -170,7 +174,9 @@ class AiInfluencerViewModel(
                 true
             }
 
-            else -> false
+            else -> {
+                false
+            }
         }
     }
 
@@ -342,12 +348,16 @@ class AiInfluencerViewModel(
     fun onAvatarUpdated(newAvatar: String) {
         _state.update { current ->
             when (val step = current.step) {
-                is AiInfluencerStep.ProfileDetails ->
+                is AiInfluencerStep.ProfileDetails -> {
                     current.copy(
                         step = step.copy(avatarUrl = newAvatar),
                         isImagePickerVisible = false,
                     )
-                else -> current
+                }
+
+                else -> {
+                    current
+                }
             }
         }
     }
@@ -355,12 +365,16 @@ class AiInfluencerViewModel(
     fun onAvatarSelected(bytes: ByteArray) {
         _state.update { current ->
             when (val step = current.step) {
-                is AiInfluencerStep.ProfileDetails ->
+                is AiInfluencerStep.ProfileDetails -> {
                     current.copy(
                         step = step.copy(avatarBytes = bytes),
                         isImagePickerVisible = false,
                     )
-                else -> current
+                }
+
+                else -> {
+                    current
+                }
             }
         }
     }

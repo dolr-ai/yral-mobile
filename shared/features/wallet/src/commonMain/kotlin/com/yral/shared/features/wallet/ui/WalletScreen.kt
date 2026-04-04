@@ -104,23 +104,27 @@ fun WalletScreen(
         )
     } else {
         when (accessState) {
-            WalletAccessState.Unlocked ->
+            WalletAccessState.Unlocked -> {
                 WalletUnlockedContent(
                     component = component,
                     state = state,
                     viewModel = viewModel,
                     modifier = modifier,
                 )
+            }
 
-            is WalletAccessState.Locked ->
+            is WalletAccessState.Locked -> {
                 WalletLockedContent(
                     component = component,
                     ctaText =
                         when (accessState.cta) {
-                            WalletLockedCta.CreateInfluencer ->
+                            WalletLockedCta.CreateInfluencer -> {
                                 stringResource(Res.string.create_influencer)
-                            WalletLockedCta.SwitchProfile ->
+                            }
+
+                            WalletLockedCta.SwitchProfile -> {
                                 stringResource(Res.string.switch_profile)
+                            }
                         },
                     onCtaClick =
                         when (accessState.cta) {
@@ -130,11 +134,16 @@ fun WalletScreen(
                     modifier = modifier,
                     descriptionOverride =
                         when (accessState.subtitle) {
-                            WalletLockedSubtitle.Default -> null
-                            WalletLockedSubtitle.SwitchProfile ->
+                            WalletLockedSubtitle.Default -> {
+                                null
+                            }
+
+                            WalletLockedSubtitle.SwitchProfile -> {
                                 stringResource(Res.string.wallet_locked_switch_profile_description)
+                            }
                         },
                 )
+            }
         }
     }
 

@@ -140,13 +140,22 @@ internal object IosVideoPrefetchRegistry {
         fun notifyInitialState(callback: PrefetchCallback) {
             dispatch_async(mainQueue) {
                 when (state) {
-                    PlatformPlaybackState.BUFFERING -> callback.listener?.onBuffer()
+                    PlatformPlaybackState.BUFFERING -> {
+                        callback.listener?.onBuffer()
+                    }
+
                     PlatformPlaybackState.READY -> {
                         callback.listener?.onReady()
                         callback.onUrlReady(url)
                     }
-                    PlatformPlaybackState.IDLE -> callback.listener?.onIdle()
-                    PlatformPlaybackState.ENDED -> Unit
+
+                    PlatformPlaybackState.IDLE -> {
+                        callback.listener?.onIdle()
+                    }
+
+                    PlatformPlaybackState.ENDED -> {
+                        Unit
+                    }
                 }
             }
         }

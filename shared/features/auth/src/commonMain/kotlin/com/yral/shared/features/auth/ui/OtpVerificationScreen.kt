@@ -189,6 +189,7 @@ private fun ResendOtpText(
             errorContent != null -> {
                 ErrorMessage(errorContent, onResendClick)
             }
+
             // Scenario 2: Timer is running - "Resend in 00:12"
             isTimerRunning -> {
                 Text(
@@ -202,6 +203,7 @@ private fun ResendOtpText(
                     textAlign = TextAlign.Center,
                 )
             }
+
             // Scenario 1: First time - "Didn't receive the OTP?  Resend"
             else -> {
                 Text(

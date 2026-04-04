@@ -107,7 +107,7 @@ fun ChatWallScreen(
                 .background(Color.Black),
     ) {
         when (influencers.loadState.refresh) {
-            is LoadState.Loading ->
+            is LoadState.Loading -> {
                 if (influencers.itemCount == 0) {
                     ChatWallLoadingState()
                 } else {
@@ -117,18 +117,23 @@ fun ChatWallScreen(
                         viewModel = viewModel,
                     )
                 }
-            is LoadState.Error ->
+            }
+
+            is LoadState.Error -> {
                 ChatWallContentWithPullToRefresh(
                     influencers = influencers,
                     component = component,
                     viewModel = viewModel,
                 )
-            is LoadState.NotLoading ->
+            }
+
+            is LoadState.NotLoading -> {
                 ChatWallContentWithPullToRefresh(
                     influencers = influencers,
                     component = component,
                     viewModel = viewModel,
                 )
+            }
         }
     }
 

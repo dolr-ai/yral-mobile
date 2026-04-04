@@ -17,10 +17,13 @@ fun PlaybackLifecycleEffect(coordinator: PlaybackCoordinator) {
             LifecycleEventObserver { _, event ->
                 when (event) {
                     Lifecycle.Event.ON_RESUME -> coordinator.onAppForeground()
+
                     Lifecycle.Event.ON_PAUSE,
                     Lifecycle.Event.ON_STOP,
                     -> coordinator.onAppBackground()
+
                     Lifecycle.Event.ON_DESTROY -> coordinator.release()
+
                     else -> Unit
                 }
             }

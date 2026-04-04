@@ -83,9 +83,11 @@ class HashtagInputState(
                         newList.add(index + 1, second)
                     }
                 }
+
                 second.isNotEmpty() -> {
                     newList[index] = second
                 }
+
                 else -> {
                     newList.removeAt(index)
                 }
@@ -126,7 +128,10 @@ class HashtagInputState(
 
             newValue.isEmpty() -> {
                 when {
-                    inputText.isEmpty() -> handleBackspaceOnEmpty(index)
+                    inputText.isEmpty() -> {
+                        handleBackspaceOnEmpty(index)
+                    }
+
                     inputText.isNotEmpty() -> {
                         updateHashtagAtIndex(index, "")
                         exitEditMode()
@@ -149,10 +154,12 @@ class HashtagInputState(
                 inputText = hashtags[lastIndex]
                 editingIndex = lastIndex
             }
+
             // Handle space or enter - create new hashtag
             newValue.endsWith(' ') || newValue.endsWith('\n') -> {
                 createHashtag(newValue.trim())
             }
+
             // Regular text input
             else -> {
                 inputText = newValue

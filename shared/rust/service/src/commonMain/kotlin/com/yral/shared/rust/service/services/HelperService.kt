@@ -156,15 +156,21 @@ internal fun validateDeviceRegistrationInputs(
     token: String,
 ): Result<Unit, DeviceRegistrationError> =
     when {
-        identityData.isEmpty() ->
+        identityData.isEmpty() -> {
             Err(
                 DeviceRegistrationError.InvalidIdentityData("Identity data cannot be empty"),
             )
-        token.isBlank() ->
+        }
+
+        token.isBlank() -> {
             Err(
                 DeviceRegistrationError.InvalidToken("Token cannot be blank"),
             )
-        else -> Ok(Unit)
+        }
+
+        else -> {
+            Ok(Unit)
+        }
     }
 
 sealed class MetadataUpdateError : Exception() {
@@ -191,17 +197,25 @@ internal fun validateMetadataInputs(
     userName: String,
 ): Result<Unit, MetadataUpdateError> =
     when {
-        identityData.isEmpty() ->
+        identityData.isEmpty() -> {
             Err(
                 MetadataUpdateError.InvalidIdentityData("Identity data cannot be empty"),
             )
-        userCanisterId.isBlank() ->
+        }
+
+        userCanisterId.isBlank() -> {
             Err(
                 MetadataUpdateError.InvalidCanisterId("Canister id cannot be blank"),
             )
-        userName.isBlank() ->
+        }
+
+        userName.isBlank() -> {
             Err(
                 MetadataUpdateError.InvalidUsername("Username cannot be blank"),
             )
-        else -> Ok(Unit)
+        }
+
+        else -> {
+            Ok(Unit)
+        }
     }

@@ -60,20 +60,26 @@ fun linearGradientBrush(
                         in 0f..gamma, in (2 * PI - gamma)..2 * PI -> {
                             x / cos(alpha)
                         }
+
                         // ray from centre cuts the top edge of the rectangle
                         in gamma..(PI - gamma).toFloat() -> {
                             y / sin(alpha)
                         }
+
                         // ray from centre cuts the left edge of the rectangle
                         in (PI - gamma)..(PI + gamma) -> {
                             x / -cos(alpha)
                         }
+
                         // ray from centre cuts the bottom edge of the rectangle
                         in (PI + gamma)..(2 * PI - gamma) -> {
                             y / -sin(alpha)
                         }
+
                         // default case (which shouldn't really happen)
-                        else -> hypot(x, y)
+                        else -> {
+                            hypot(x, y)
+                        }
                     }
 
                 val centerOffsetX = cos(alpha) * gradientLength / 2
@@ -88,6 +94,7 @@ fun linearGradientBrush(
                 )
             }
         }
+
         GradientLengthMode.Diagonal -> {
             val dx = cos(alpha)
             val dy = sin(alpha)

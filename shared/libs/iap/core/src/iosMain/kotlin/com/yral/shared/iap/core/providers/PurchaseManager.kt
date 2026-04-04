@@ -79,12 +79,27 @@ internal class PurchaseManager(
     ) {
         val state = transaction.transactionState
         when (state.value) {
-            TRANSACTION_STATE_PURCHASING -> return
-            TRANSACTION_STATE_PURCHASED -> handlePurchasedTransaction(transaction, productId)
-            TRANSACTION_STATE_FAILED -> handleFailedTransaction(transaction, productId)
-            TRANSACTION_STATE_RESTORED -> handleRestoredTransaction(transaction, productId)
-            TRANSACTION_STATE_DEFERRED -> handleDeferredTransaction(transaction, productId)
-            else ->
+            TRANSACTION_STATE_PURCHASING -> {
+                return
+            }
+
+            TRANSACTION_STATE_PURCHASED -> {
+                handlePurchasedTransaction(transaction, productId)
+            }
+
+            TRANSACTION_STATE_FAILED -> {
+                handleFailedTransaction(transaction, productId)
+            }
+
+            TRANSACTION_STATE_RESTORED -> {
+                handleRestoredTransaction(transaction, productId)
+            }
+
+            TRANSACTION_STATE_DEFERRED -> {
+                handleDeferredTransaction(transaction, productId)
+            }
+
+            else -> {
                 handleFailedTransaction(
                     transaction,
                     productId,
@@ -93,6 +108,7 @@ internal class PurchaseManager(
                         Exception("Unknown transaction state: $state"),
                     ),
                 )
+            }
         }
     }
 
@@ -148,18 +164,27 @@ internal class PurchaseManager(
             customError
                 ?: transaction.error?.let {
                     when (it.code.toLong()) {
-                        SK_ERROR_PAYMENT_CANCELLED -> IAPError.PurchaseCancelled(productId)
-                        SK_ERROR_PAYMENT_NOT_ALLOWED ->
+                        SK_ERROR_PAYMENT_CANCELLED -> {
+                            IAPError.PurchaseCancelled(productId)
+                        }
+
+                        SK_ERROR_PAYMENT_NOT_ALLOWED -> {
                             IAPError.PurchaseFailed(
                                 productId,
                                 Exception("Payment not allowed: ${it.localizedDescription}"),
                             )
-                        SK_ERROR_STORE_PRODUCT_NOT_AVAILABLE -> IAPError.ProductNotFound(productId)
-                        else ->
+                        }
+
+                        SK_ERROR_STORE_PRODUCT_NOT_AVAILABLE -> {
+                            IAPError.ProductNotFound(productId)
+                        }
+
+                        else -> {
                             IAPError.PurchaseFailed(
                                 productId,
                                 Exception("Transaction failed: ${it.localizedDescription}"),
                             )
+                        }
                     }
                 } ?: IAPError.PurchaseFailed(productId, Exception("Transaction failed"))
         pendingPurchasesLock.withLock {

@@ -8,17 +8,27 @@ import platform.Foundation.NSURLErrorDomain
 
 internal actual fun Throwable.isPlatformDnsResolutionFailure(): Boolean =
     when (this) {
-        is DNSLookupException -> true
-        is DarwinHttpRequestException ->
+        is DNSLookupException -> {
+            true
+        }
+
+        is DarwinHttpRequestException -> {
             origin.domain == NSURLErrorDomain &&
                 (origin.code == NSURLErrorCannotFindHost || origin.code == NSURLErrorDNSLookupFailed)
-        else -> false
+        }
+
+        else -> {
+            false
+        }
     }
 
 internal actual fun Throwable.toDnsLookupException(hostname: String): DNSLookupException =
     when (this) {
-        is DNSLookupException -> this
-        is DarwinHttpRequestException ->
+        is DNSLookupException -> {
+            this
+        }
+
+        is DarwinHttpRequestException -> {
             DNSLookupException(
                 hostname = hostname,
                 lookupSource =
@@ -29,12 +39,15 @@ internal actual fun Throwable.toDnsLookupException(hostname: String): DNSLookupE
                     },
                 cause = this,
             )
-        else ->
+        }
+
+        else -> {
             DNSLookupException(
                 hostname = hostname,
                 lookupSource = "darwin_request",
                 cause = this,
             )
+        }
     }
 
 internal actual fun platformReportsDnsLookupFailure(): Boolean = false

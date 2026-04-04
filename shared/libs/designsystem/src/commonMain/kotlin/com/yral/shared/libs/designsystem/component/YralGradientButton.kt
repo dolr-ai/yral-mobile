@@ -141,26 +141,29 @@ private fun getButtonTextBackground(
     buttonState: YralButtonState,
 ): DrawableResource =
     when (buttonType) {
-        YralButtonType.Pink ->
+        YralButtonType.Pink -> {
             when (buttonState) {
                 YralButtonState.Enabled -> Res.drawable.white_background
                 YralButtonState.Disabled -> Res.drawable.white_background_disabled
                 YralButtonState.Loading -> Res.drawable.white_background
             }
+        }
 
-        YralButtonType.White ->
+        YralButtonType.White -> {
             when (buttonState) {
                 YralButtonState.Enabled -> Res.drawable.pink_gradient_background
                 YralButtonState.Disabled -> Res.drawable.pink_gradient_background_disabled
                 YralButtonState.Loading -> Res.drawable.pink_gradient_background
             }
+        }
 
-        YralButtonType.Transparent ->
+        YralButtonType.Transparent -> {
             when (buttonState) {
                 YralButtonState.Enabled -> Res.drawable.pink_gradient_background
                 YralButtonState.Disabled -> Res.drawable.pink_gradient_background_disabled
                 YralButtonState.Loading -> Res.drawable.pink_gradient_background
             }
+        }
     }
 
 private fun getButtonBackground(
@@ -168,26 +171,29 @@ private fun getButtonBackground(
     buttonState: YralButtonState,
 ): DrawableResource =
     when (buttonType) {
-        YralButtonType.Pink ->
+        YralButtonType.Pink -> {
             when (buttonState) {
                 YralButtonState.Enabled -> Res.drawable.pink_gradient_background
                 YralButtonState.Disabled -> Res.drawable.pink_gradient_background_disabled
                 YralButtonState.Loading -> Res.drawable.pink_gradient_background
             }
+        }
 
-        YralButtonType.White ->
+        YralButtonType.White -> {
             when (buttonState) {
                 YralButtonState.Enabled -> Res.drawable.white_background
                 YralButtonState.Disabled -> Res.drawable.white_background_disabled
                 YralButtonState.Loading -> Res.drawable.white_background
             }
+        }
 
-        YralButtonType.Transparent ->
+        YralButtonType.Transparent -> {
             when (buttonState) {
                 YralButtonState.Enabled -> Res.drawable.transparent_background
                 YralButtonState.Disabled -> Res.drawable.transparent_background
                 YralButtonState.Loading -> Res.drawable.transparent_background
             }
+        }
     }
 
 @Suppress("UnusedPrivateMember")

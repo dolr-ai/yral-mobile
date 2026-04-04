@@ -138,26 +138,29 @@ class AndroidFileDownloader(
     ): String {
         val (collection, mimeType, relativePath) =
             when (fileType) {
-                FileType.VIDEO ->
+                FileType.VIDEO -> {
                     Triple(
                         MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
                         "video/mp4",
                         Environment.DIRECTORY_MOVIES + "/YRAL",
                     )
+                }
 
-                FileType.IMAGE ->
+                FileType.IMAGE -> {
                     Triple(
                         MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                         "image/*",
                         Environment.DIRECTORY_PICTURES + "/YRAL",
                     )
+                }
 
-                else ->
+                else -> {
                     Triple(
                         MediaStore.Downloads.EXTERNAL_CONTENT_URI,
                         "application/octet-stream",
                         Environment.DIRECTORY_DOWNLOADS + "/YRAL",
                     )
+                }
             }
 
         val contentValues =

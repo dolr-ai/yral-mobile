@@ -2,7 +2,6 @@ package com.yral.shared.features.uploadvideo.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.michaelbull.result.fold
 import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.featureflag.AppFeatureFlags
@@ -66,9 +65,9 @@ class AiVideoGenViewModel internal constructor(
     val state: StateFlow<ViewState> = _state.asStateFlow()
 
     private val aiVideoGenEventChannel = Channel<AiVideoGenEvent>(Channel.BUFFERED)
-    val aiVideoGenEvents = aiVideoGenEventChannel.receiveAsFlow()
+    val aiVideoGenEvents: receiveAsFlow = aiVideoGenEventChannel.receiveAsFlow()
 
-    val sessionObserver =
+    val sessionObserver: observeSessionStateWithProperty =
         sessionManager.observeSessionStateWithProperty { state, properties ->
             val canisterId =
                 when (state) {
@@ -116,7 +115,9 @@ class AiVideoGenViewModel internal constructor(
                 _state.update { it.copy(currentCanister = canisterId) }
             }
 
-            else -> logger.d { "Same canister" }
+            else -> {
+                logger.d { "Same canister" }
+            }
         }
         when (_state.value.uiState) {
             is UiState.Initial -> {
@@ -137,7 +138,9 @@ class AiVideoGenViewModel internal constructor(
                 }
             }
 
-            else -> Unit
+            else -> {
+                Unit
+            }
         }
     }
 
@@ -500,6 +503,7 @@ class AiVideoGenViewModel internal constructor(
             val message: String,
             val endFlow: Boolean = false,
         ) : BottomSheetType()
+
         data object BackConfirmation : BottomSheetType()
     }
 
@@ -521,6 +525,7 @@ class AiVideoGenViewModel internal constructor(
             val description: String,
             val entryPoint: SubscriptionEntryPoint = SubscriptionEntryPoint.AI_VIDEO,
         ) : AiVideoGenEvent()
+
         data object RefreshProDetails : AiVideoGenEvent()
         data object ShowGeneratedToast : AiVideoGenEvent()
         data object NavigateToHome : AiVideoGenEvent()

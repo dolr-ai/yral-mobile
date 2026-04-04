@@ -108,18 +108,21 @@ fun ChatHomeScreen(
         }
         Box(modifier = Modifier.fillMaxSize()) {
             when (activeChild) {
-                is Child.Discover ->
+                is Child.Discover -> {
                     ChatWallScreen(
                         component = activeChild.component,
                         viewModel = chatWallViewModel,
                         modifier = Modifier.fillMaxSize(),
                     )
-                is Child.Inbox ->
+                }
+
+                is Child.Inbox -> {
                     InboxScreen(
                         component = activeChild.component,
                         viewModel = inboxViewModel,
                         modifier = Modifier.fillMaxSize(),
                     )
+                }
             }
         }
     }

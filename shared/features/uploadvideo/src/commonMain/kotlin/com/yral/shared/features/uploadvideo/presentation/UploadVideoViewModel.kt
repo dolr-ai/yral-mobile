@@ -138,7 +138,10 @@ class UploadVideoViewModel internal constructor(
                         result.fold(
                             success = { uploadState ->
                                 when (uploadState) {
-                                    is UploadState.Uploaded -> UiState.Success(endpoint)
+                                    is UploadState.Uploaded -> {
+                                        UiState.Success(endpoint)
+                                    }
+
                                     is UploadState.InProgress -> {
                                         val progress =
                                             if (uploadState.totalBytes != null) {
@@ -477,19 +480,32 @@ class UploadVideoViewModel internal constructor(
         val uploadUiState: UiState<Any>
             get() =
                 when (updateMetadataUiState) {
-                    is UiState.InProgress ->
+                    is UiState.InProgress -> {
                         when (fileUploadUiState) {
-                            is UiState.InProgress -> fileUploadUiState.normalize(PROGRESS_WEIGHT_UPLOAD)
-                            is UiState.Failure -> fileUploadUiState
-                            UiState.Initial -> updateMetadataUiState
-                            is UiState.Success<*> ->
+                            is UiState.InProgress -> {
+                                fileUploadUiState.normalize(PROGRESS_WEIGHT_UPLOAD)
+                            }
+
+                            is UiState.Failure -> {
+                                fileUploadUiState
+                            }
+
+                            UiState.Initial -> {
+                                updateMetadataUiState
+                            }
+
+                            is UiState.Success<*> -> {
                                 updateMetadataUiState.normalize(
                                     PROGRESS_WEIGHT_METADATA,
                                     PROGRESS_WEIGHT_UPLOAD,
                                 )
+                            }
                         }
+                    }
 
-                    else -> updateMetadataUiState
+                    else -> {
+                        updateMetadataUiState
+                    }
                 }
 
         private fun UiState.InProgress.normalize(

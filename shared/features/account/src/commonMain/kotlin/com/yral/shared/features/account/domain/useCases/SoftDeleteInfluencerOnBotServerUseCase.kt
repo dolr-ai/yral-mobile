@@ -29,12 +29,14 @@ class SoftDeleteInfluencerOnBotServerUseCase(
                     Logger.w(SOFT_DELETE_LOG_TAG) { "bot-server soft delete skipped: principal missing" }
                     Ok(Unit)
                 }
+
                 idToken.isBlank() -> {
                     Logger.w(SOFT_DELETE_LOG_TAG) {
                         "bot-server soft delete skipped: id token missing principal=$parameter"
                     }
                     Ok(Unit)
                 }
+
                 else -> {
                     Logger.d(SOFT_DELETE_LOG_TAG) {
                         "calling bot-server soft delete influencerId=$parameter chatBaseUrl=$chatBaseUrl"

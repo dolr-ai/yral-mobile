@@ -34,14 +34,21 @@ class AuthDataSourceImplTest {
                     onRequest = { host ->
                         hosts += host
                         when (host) {
-                            PRIMARY_HOST ->
+                            PRIMARY_HOST -> {
                                 throw DNSLookupException(
                                     hostname = host,
                                     lookupSource = "test_dns",
                                     cause = RuntimeException("primary dns failed"),
                                 )
-                            FALLBACK_HOST -> tokenResponseJson("fallback-id-token")
-                            else -> error("Unexpected host: $host")
+                            }
+
+                            FALLBACK_HOST -> {
+                                tokenResponseJson("fallback-id-token")
+                            }
+
+                            else -> {
+                                error("Unexpected host: $host")
+                            }
                         }
                     },
                 )

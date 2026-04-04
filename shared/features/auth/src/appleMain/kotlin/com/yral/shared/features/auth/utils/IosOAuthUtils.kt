@@ -142,6 +142,7 @@ class IosOAuthUtils(
                             errorDescription = "OAuth callback missing required parameters",
                         )
                 }
+
                 error != null -> {
                     if (error.domain == ASWebAuthenticationSessionErrorDomain &&
                         error.code == ASWebAuthenticationSessionErrorCodeCanceledLogin
@@ -154,6 +155,7 @@ class IosOAuthUtils(
                         )
                     }
                 }
+
                 else -> {
                     OAuthResult.Error(
                         error = "unknown_error",
@@ -271,9 +273,11 @@ class IosOAuthUtilsHelper(
             !error.isNullOrBlank() -> {
                 OAuthResult.Error(error = error, errorDescription = errorDescription)
             }
+
             !code.isNullOrBlank() && !state.isNullOrBlank() -> {
                 OAuthResult.Success(code = code, state = state)
             }
+
             else -> {
                 OAuthResult.Error(error = "unknown_error", errorDescription = "Missing required parameters")
             }

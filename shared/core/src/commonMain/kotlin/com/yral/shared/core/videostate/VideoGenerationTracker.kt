@@ -117,8 +117,14 @@ object VideoGenerationTracker {
     fun elapsedMillisForProgress(progress: Float): Long {
         val clampedProgress = progress.coerceIn(0f, ANIMATION_MAX_PROGRESS)
         return when {
-            clampedProgress <= 0f -> 0L
-            clampedProgress >= ANIMATION_MAX_PROGRESS -> ANIMATION_DURATION_MILLIS
+            clampedProgress <= 0f -> {
+                0L
+            }
+
+            clampedProgress >= ANIMATION_MAX_PROGRESS -> {
+                ANIMATION_DURATION_MILLIS
+            }
+
             else -> {
                 var low = 0f
                 var high = 1f
