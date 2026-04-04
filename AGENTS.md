@@ -14,7 +14,6 @@ Key directories:
 
 ## Non-Negotiables
 
-- Every code change must include or update tests.
 - A task is not complete until relevant tests pass and `./gradlew detekt` passes.
 - Use `YralLogger` for logging. Do not add `println`.
 - Add new dependencies through `libs.versions.toml`, not hardcoded versions.
