@@ -65,9 +65,9 @@ class AiVideoGenViewModel internal constructor(
     val state: StateFlow<ViewState> = _state.asStateFlow()
 
     private val aiVideoGenEventChannel = Channel<AiVideoGenEvent>(Channel.BUFFERED)
-    val aiVideoGenEvents: receiveAsFlow = aiVideoGenEventChannel.receiveAsFlow()
+    val aiVideoGenEvents = aiVideoGenEventChannel.receiveAsFlow()
 
-    val sessionObserver: observeSessionStateWithProperty =
+    val sessionObserver =
         sessionManager.observeSessionStateWithProperty { state, properties ->
             val canisterId =
                 when (state) {
