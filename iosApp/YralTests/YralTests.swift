@@ -139,7 +139,7 @@ struct YralTests {
     let workflowPaths = [
       ".github/workflows/swift-lint-build-test.yml",
       ".github/workflows/deploy-staging-app-to-apple-app-store-on-merge-to-main.yml",
-      ".github/workflows/ios-prod-distribution.yml"
+      ".github/workflows/deploy-prod-app-to-ios-app-store-on-release.yml"
     ]
 
     for path in workflowPaths {
@@ -155,7 +155,7 @@ struct YralTests {
 
     let distributionWorkflowPaths = [
       ".github/workflows/deploy-staging-app-to-apple-app-store-on-merge-to-main.yml",
-      ".github/workflows/ios-prod-distribution.yml"
+      ".github/workflows/deploy-prod-app-to-ios-app-store-on-release.yml"
     ]
 
     for path in distributionWorkflowPaths {
