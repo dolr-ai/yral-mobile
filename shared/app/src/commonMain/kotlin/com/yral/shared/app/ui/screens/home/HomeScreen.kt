@@ -6,10 +6,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -49,6 +47,8 @@ import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.SignupPageName
+import com.yral.shared.app.ui.ChatUnreadBadge
+import com.yral.shared.app.ui.chatUnreadBadgeText
 import com.yral.shared.app.ui.screens.feed.FeedScaffoldScreen
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent.SlotChild
@@ -67,7 +67,6 @@ import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.auth.ui.LoginMode
 import com.yral.shared.features.auth.ui.LoginScreenType
 import com.yral.shared.features.auth.ui.rememberLoginInfo
-import com.yral.shared.features.chat.domain.models.formatChatUnreadBadgeCount
 import com.yral.shared.features.chat.ui.ChatScreen
 import com.yral.shared.features.chat.viewmodel.ChatWallViewModel
 import com.yral.shared.features.chat.viewmodel.InboxViewModel
@@ -157,6 +156,7 @@ internal fun HomeScreen(
                 Modifier
                     .padding(innerPadding)
                     .background(MaterialTheme.colorScheme.primaryContainer),
+            chatUnreadCount = chatUnreadCount,
             inboxViewModel = inboxViewModel,
             sessionState = sessionState,
             updateProfileVideosCount = updateProfileVideosCount,
@@ -186,6 +186,7 @@ private fun SlotContent(component: HomeComponent) {
 private fun HomeScreenContent(
     component: HomeComponent,
     modifier: Modifier,
+    chatUnreadCount: Int,
     inboxViewModel: InboxViewModel,
     sessionState: SessionState,
     updateProfileVideosCount: (count: Int) -> Unit,
@@ -213,6 +214,7 @@ private fun HomeScreenContent(
                 FeedScaffoldScreen(
                     component = child.component,
                     feedViewModel = feedViewModel,
+                    chatUnreadCount = chatUnreadCount,
                     onInboxClick = component::onChatInboxClick,
                 )
 
@@ -465,7 +467,7 @@ private fun NewTaggedColumn(
         NavBarIconWithBadge(
             icon = icon,
             title = tab.title,
-            badgeText = formatChatUnreadBadgeCount(badgeCount),
+            badgeText = chatUnreadBadgeText(badgeCount),
         )
     }
 }
@@ -484,36 +486,11 @@ private fun NavBarIconWithBadge(
             tint = Color.White,
         )
         if (badgeText != null) {
-            ChatTabBadge(
+            ChatUnreadBadge(
                 text = badgeText,
                 modifier = Modifier.align(Alignment.TopEnd),
             )
         }
-    }
-}
-
-@Composable
-private fun ChatTabBadge(
-    text: String,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier =
-            modifier
-                .offset(x = 12.dp, y = (-4).dp)
-                .defaultMinSize(minWidth = 18.dp, minHeight = 18.dp)
-                .background(
-                    color = YralColors.Pink300,
-                    shape = RoundedCornerShape(100.dp),
-                ).padding(horizontal = 5.dp, vertical = 1.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = text,
-            style = LocalAppTopography.current.smSemiBold,
-            color = Color.White,
-            textAlign = TextAlign.Center,
-        )
     }
 }
 

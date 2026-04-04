@@ -115,6 +115,9 @@ internal class ComponentFactory(
             openConversationParams = config.params,
             onBack = rootComponent::onBackClicked,
             openProfile = rootComponent::openProfile,
+            switchToMainProfile = { onComplete ->
+                rootComponent.rootViewModel.switchToMainAccount(onComplete)
+            },
         )
 
     fun createWallet(componentContext: ComponentContext): WalletComponent =

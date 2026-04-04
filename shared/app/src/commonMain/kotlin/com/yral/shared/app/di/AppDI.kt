@@ -117,9 +117,7 @@ internal val loggerModule =
 
 internal val featureUrlsModule =
     module {
-        single<String>(CHAT_SERVER_BASE_URL) {
-            if (get(IS_DEBUG)) AppConfigurations.CHAT_BASE_URL_DEBUG else AppConfigurations.CHAT_BASE_URL
-        }
+        single<String>(CHAT_SERVER_BASE_URL) { AppConfigurations.CHAT_BASE_URL }
         single<String>(INFLUENCER_FEED_SERVER_BASE_URL) { AppConfigurations.INFLUENCER_FEED_BASE_URL }
     }
 
