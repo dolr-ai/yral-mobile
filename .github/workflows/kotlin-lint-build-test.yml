@@ -65,10 +65,10 @@ jobs:
           runCmd: |
             set -e
             echo "=== Running ktlint ==="
-            ./gradlew ktlintCheck --console=plain || true
+            ./gradlew ktlintCheck --console=plain
 
             echo "=== Running detekt ==="
-            ./gradlew detekt reportMerge --continue --console=plain || true
+            ./gradlew detekt reportMerge --continue --console=plain
 
             echo "=== Running tests ==="
             ./gradlew test --console=plain
