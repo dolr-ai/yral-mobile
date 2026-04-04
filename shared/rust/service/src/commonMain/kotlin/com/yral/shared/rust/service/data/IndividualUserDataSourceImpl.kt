@@ -101,19 +101,19 @@ internal class IndividualUserDataSourceImpl(
             .icrc1BalanceOf(Account(owner = principalId, subaccount = null))
 
     internal companion object {
-        private const val HETZNER_PREFIX =
-            "https://hel1.your-objectstorage.com/yral-sfw"
+        private const val MEDIA_CDN_PREFIX =
+            "https://cdn-yral-sfw.yral.com"
         private const val THUMBNAIL_SUFFIX = "_thumbnail.png"
 
         fun thumbnailUrl(
             videoUid: String,
             publisherUserId: String,
-        ) = "$HETZNER_PREFIX/$publisherUserId/$videoUid$THUMBNAIL_SUFFIX"
+        ) = "$MEDIA_CDN_PREFIX/$publisherUserId/$videoUid$THUMBNAIL_SUFFIX"
 
         fun videoUrl(
             videoUid: String,
             publisherUserId: String,
-        ) = "$HETZNER_PREFIX/$publisherUserId/$videoUid.mp4"
+        ) = "$MEDIA_CDN_PREFIX/$publisherUserId/$videoUid.mp4"
     }
 }
 

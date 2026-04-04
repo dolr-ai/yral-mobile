@@ -8,10 +8,12 @@ import com.yral.shared.features.chat.data.models.ConversationsResponseDto
 import com.yral.shared.features.chat.data.models.CreateConversationRequestDto
 import com.yral.shared.features.chat.data.models.DeleteConversationResponseDto
 import com.yral.shared.features.chat.data.models.InfluencerDto
+import com.yral.shared.features.chat.data.models.InfluencerFeedResponseDto
 import com.yral.shared.features.chat.data.models.InfluencersResponseDto
 import com.yral.shared.features.chat.data.models.SendMessageRequestDto
 import com.yral.shared.features.chat.data.models.SendMessageResponseDto
 import com.yral.shared.features.chat.data.models.UploadResponseDto
+import com.yral.shared.features.chat.data.models.toInfluencersResponseDto
 import com.yral.shared.http.httpGet
 import com.yral.shared.http.httpPost
 import com.yral.shared.preferences.PrefKeys
@@ -38,6 +40,7 @@ class ChatRemoteDataSource(
     private val json: Json,
     private val preferences: Preferences,
     private val chatBaseUrl: String,
+    private val influencerFeedBaseUrl: String,
 ) : ChatDataSource {
     override suspend fun listInfluencers(
         limit: Int,
@@ -61,21 +64,18 @@ class ChatRemoteDataSource(
     override suspend fun listTrendingInfluencers(
         limit: Int,
         offset: Int,
-    ): InfluencersResponseDto {
-        val idToken = getIdToken()
-        return httpGet(
+    ): InfluencersResponseDto =
+        httpGet<InfluencerFeedResponseDto>(
             httpClient = httpClient,
             json = json,
         ) {
             url {
-                host = chatBaseUrl
-                path(TRENDING_INFLUENCERS_PATH)
+                host = influencerFeedBaseUrl
+                path(INFLUENCER_FEED_PATH)
                 parameters.append("limit", limit.toString())
                 parameters.append("offset", offset.toString())
             }
-            headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
-        }
-    }
+        }.toInfluencersResponseDto()
 
     override suspend fun getInfluencer(id: String): InfluencerDto {
         val idToken = getIdToken()
@@ -249,7 +249,7 @@ class ChatRemoteDataSource(
 
     private companion object {
         private const val INFLUENCERS_PATH = "api/v1/influencers"
-        private const val TRENDING_INFLUENCERS_PATH = "api/v1/influencers/trending"
+        private const val INFLUENCER_FEED_PATH = "api/v1/influencer-feed"
         private const val CONVERSATIONS_PATH = "api/v1/chat/conversations"
         private const val CONVERSATIONS_LIST_PATH = "api/v2/chat/conversations"
         private const val MESSAGES_PATH = "messages"

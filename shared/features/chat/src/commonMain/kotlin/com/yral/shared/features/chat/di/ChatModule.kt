@@ -1,6 +1,7 @@
 package com.yral.shared.features.chat.di
 
 import com.yral.shared.core.di.CHAT_SERVER_BASE_URL
+import com.yral.shared.core.di.INFLUENCER_FEED_SERVER_BASE_URL
 import com.yral.shared.features.chat.analytics.ChatTelemetry
 import com.yral.shared.features.chat.data.ChatAccessBillingDataSource
 import com.yral.shared.features.chat.data.ChatAccessBillingRemoteDataSource
@@ -36,6 +37,7 @@ val chatModule =
                 json = get(),
                 preferences = get(),
                 chatBaseUrl = get(CHAT_SERVER_BASE_URL),
+                influencerFeedBaseUrl = get(INFLUENCER_FEED_SERVER_BASE_URL),
             )
         }
         factory<ChatAccessBillingDataSource> {
