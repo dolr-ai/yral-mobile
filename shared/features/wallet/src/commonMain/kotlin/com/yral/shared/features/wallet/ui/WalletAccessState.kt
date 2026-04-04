@@ -25,15 +25,21 @@ internal fun resolveWalletAccessState(
     isBotAccount: Boolean,
 ): WalletAccessState =
     when {
-        isSocialSignedIn && hasBots && isBotAccount -> WalletAccessState.Unlocked
-        isSocialSignedIn && hasBots ->
+        isSocialSignedIn && hasBots && isBotAccount -> {
+            WalletAccessState.Unlocked
+        }
+
+        isSocialSignedIn && hasBots -> {
             WalletAccessState.Locked(
                 subtitle = WalletLockedSubtitle.SwitchProfile,
                 cta = WalletLockedCta.SwitchProfile,
             )
-        else ->
+        }
+
+        else -> {
             WalletAccessState.Locked(
                 subtitle = WalletLockedSubtitle.Default,
                 cta = WalletLockedCta.CreateInfluencer,
             )
+        }
     }

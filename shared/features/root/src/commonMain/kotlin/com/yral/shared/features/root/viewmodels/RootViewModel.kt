@@ -897,9 +897,18 @@ class RootViewModel(
                 .onSuccess { purchaseResult ->
                     withContext(appDispatchers.main) {
                         when (purchaseResult) {
-                            is PurchaseResult.NoPurchase -> openSubscription(null)
-                            is PurchaseResult.PurchaseMatches -> openSubscription(purchaseResult.purchaseTime)
-                            is PurchaseResult.AccountMismatch -> showSubscriptionAccountMismatchSheet()
+                            is PurchaseResult.NoPurchase -> {
+                                openSubscription(null)
+                            }
+
+                            is PurchaseResult.PurchaseMatches -> {
+                                openSubscription(purchaseResult.purchaseTime)
+                            }
+
+                            is PurchaseResult.AccountMismatch -> {
+                                showSubscriptionAccountMismatchSheet()
+                            }
+
                             is PurchaseResult.UnaccountedPurchase -> {
                                 Logger.d("SubscriptionX") { "Unaccounted purchase" }
                                 onError?.invoke()
@@ -1006,11 +1015,17 @@ class RootViewModel(
             val rawStrings: List<String> =
                 botArray.jsonArray.mapNotNull { element ->
                     when {
-                        element is kotlinx.serialization.json.JsonPrimitive && element.isString ->
+                        element is kotlinx.serialization.json.JsonPrimitive && element.isString -> {
                             element.content
-                        element is kotlinx.serialization.json.JsonPrimitive && element.isString.not() ->
+                        }
+
+                        element is kotlinx.serialization.json.JsonPrimitive && element.isString.not() -> {
                             element.content
-                        else -> element.toString()
+                        }
+
+                        else -> {
+                            element.toString()
+                        }
                     }
                 }
 

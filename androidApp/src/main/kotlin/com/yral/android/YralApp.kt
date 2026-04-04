@@ -147,6 +147,7 @@ class YralApp : Application() {
                 Branch.enableTestMode()
                 Branch.getAutoInstance(this, BuildConfig.BRANCH_KEY_TEST)
             }
+
             "prod" -> {
                 Branch.disableTestMode()
                 Branch.getAutoInstance(this, BuildConfig.BRANCH_KEY)

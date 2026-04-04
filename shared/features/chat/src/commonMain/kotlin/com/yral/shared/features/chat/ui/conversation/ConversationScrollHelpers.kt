@@ -170,16 +170,22 @@ private data class ScrollTarget(
 ) {
     private fun messageContentAndMedia(): Pair<String, List<String>> =
         when (message) {
-            is ConversationMessageItem.Remote ->
+            is ConversationMessageItem.Remote -> {
                 message.message.content.orEmpty() to message.message.mediaUrls
-            is ConversationMessageItem.Local ->
+            }
+
+            is ConversationMessageItem.Local -> {
                 message.message.content.orEmpty() to message.message.mediaUrls
+            }
         }
 
     val scrollOffset: Int
         get() =
             when {
-                isWaiting || scrollToLastLine -> additionalOffset
+                isWaiting || scrollToLastLine -> {
+                    additionalOffset
+                }
+
                 visibleLines > 0 -> {
                     val (content, mediaUrls) = messageContentAndMedia()
                     val messageHeight =
@@ -187,6 +193,7 @@ private data class ScrollTarget(
                     val visibleHeight = (visibleLines * lineHeightPx).toInt()
                     (messageHeight - visibleHeight).coerceAtLeast(0) + additionalOffset
                 }
+
                 else -> {
                     val (content, mediaUrls) = messageContentAndMedia()
                     val messageHeight =

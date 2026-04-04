@@ -24,16 +24,22 @@ internal class UploadVideoUseCase(
             .uploadVideo(parameters.uploadUrl, parameters.filePath)
             .map { uploadStatus ->
                 when (uploadStatus) {
-                    is UploadStatus.Error -> Err(uploadStatus.exception)
-                    is UploadStatus.InProgress ->
+                    is UploadStatus.Error -> {
+                        Err(uploadStatus.exception)
+                    }
+
+                    is UploadStatus.InProgress -> {
                         Ok(
                             UploadState.InProgress(
                                 uploadStatus.bytesSent,
                                 uploadStatus.totalBytes,
                             ),
                         )
+                    }
 
-                    UploadStatus.Success -> Ok(UploadState.Uploaded)
+                    UploadStatus.Success -> {
+                        Ok(UploadState.Uploaded)
+                    }
                 }
             }
 

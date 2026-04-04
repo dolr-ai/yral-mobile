@@ -33,7 +33,10 @@ fun rememberAlertsPermissionController(viewModel: AccountsViewModel): AlertsPerm
         val toggle: suspend (Boolean) -> Boolean = { enabled ->
             if (enabled) {
                 when (permissionsController.getPermissionState(Permission.REMOTE_NOTIFICATION)) {
-                    PermissionState.Granted -> registerNotificationToken(viewModel)
+                    PermissionState.Granted -> {
+                        registerNotificationToken(viewModel)
+                    }
+
                     PermissionState.Denied,
                     PermissionState.NotDetermined,
                     PermissionState.NotGranted,
@@ -60,6 +63,7 @@ fun rememberAlertsPermissionController(viewModel: AccountsViewModel): AlertsPerm
                             false
                         }
                     }
+
                     PermissionState.DeniedAlways -> {
                         permissionsController.openAppSettings()
                         false

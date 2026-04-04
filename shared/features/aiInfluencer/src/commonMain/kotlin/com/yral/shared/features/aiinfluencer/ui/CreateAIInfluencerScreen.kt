@@ -197,7 +197,7 @@ internal fun CreateAIInfluencerScreen(
         }
 
         when (state.step) {
-            is AiInfluencerStep.DescriptionEntry ->
+            is AiInfluencerStep.DescriptionEntry -> {
                 PromptEntryScreen(
                     state = state,
                     onBack = onBack,
@@ -210,30 +210,34 @@ internal fun CreateAIInfluencerScreen(
                         }
                     },
                 )
+            }
 
-            is AiInfluencerStep.LoadingPrompt ->
+            is AiInfluencerStep.LoadingPrompt -> {
                 LoadingScreen(
                     title = stringResource(Res.string.ai_influencer_loading_prompt_title),
                     subtitle = stringResource(Res.string.ai_influencer_loading_prompt_subtitle),
                     gifPath = "drawable/create_influencer_magic.gif",
                 )
+            }
 
-            is AiInfluencerStep.PersonaReview ->
+            is AiInfluencerStep.PersonaReview -> {
                 PersonaReviewScreen(
                     state = state,
                     onBack = handleBack,
                     onTextChange = viewModel::onPersonaChanged,
                     onNext = viewModel::submitPersona,
                 )
+            }
 
-            is AiInfluencerStep.LoadingMetadata ->
+            is AiInfluencerStep.LoadingMetadata -> {
                 LoadingScreen(
                     title = stringResource(Res.string.ai_influencer_loading_metadata_title),
                     subtitle = stringResource(Res.string.ai_influencer_loading_metadata_subtitle),
                     gifPath = "drawable/create_influencer_puzzle.gif",
                 )
+            }
 
-            is AiInfluencerStep.ProfileDetails ->
+            is AiInfluencerStep.ProfileDetails -> {
                 ProfileDetailsScreen(
                     state = state,
                     onBack = handleBack,
@@ -242,6 +246,7 @@ internal fun CreateAIInfluencerScreen(
                     onEditImage = viewModel::openImagePicker,
                     onCreateProfile = onCreateProfile,
                 )
+            }
         }
 
         if (state.isImagePickerVisible) {

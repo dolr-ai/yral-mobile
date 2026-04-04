@@ -115,10 +115,12 @@ class InAppUpdateManager(
                 markUpdateChecked()
                 onStateChanged(UpdateState.Idle)
             }
+
             Activity.RESULT_CANCELED -> {
                 Logger.w(TAG) { "Immediate update was canceled by user. App exit is required." }
                 onStateChanged(UpdateState.ImmediateUpdateCancelled)
             }
+
             else -> {
                 Logger.e(TAG) { "Immediate update failed with result code: $resultCode" }
                 onStateChanged(UpdateState.Failed("Update failed"))
@@ -149,11 +151,13 @@ class InAppUpdateManager(
                 onStateChanged(UpdateState.ImmediateRequired)
                 startImmediateUpdate(appUpdateInfo)
             }
+
             UpdateType.FLEXIBLE -> {
                 Logger.d(TAG) { "Flexible update available" }
                 onStateChanged(UpdateState.FlexibleAvailable)
                 startFlexibleUpdate(appUpdateInfo)
             }
+
             null -> {
                 Logger.d(TAG) { "Update available but not triggered based on policy" }
                 // Update timestamp since no action is needed
@@ -172,12 +176,16 @@ class InAppUpdateManager(
         return when {
             // Priority 4 or 5 = Immediate update
             priority >= PRIORITY_IMMEDIATE -> UpdateType.IMMEDIATE
+
             // 30+ days old = Immediate update
             stalenessDays >= STALENESS_DAYS_IMMEDIATE -> UpdateType.IMMEDIATE
+
             // Priority 2 or 3 = Flexible update
             priority >= PRIORITY_FLEXIBLE -> UpdateType.FLEXIBLE
+
             // 7+ days old = Flexible update
             stalenessDays >= STALENESS_DAYS_FLEXIBLE -> UpdateType.FLEXIBLE
+
             // Otherwise, no update
             else -> null
         }
@@ -278,22 +286,26 @@ class InAppUpdateManager(
                 Logger.d(TAG) { "Flexible update downloading: $progress%" }
                 onStateChanged(UpdateState.FlexibleDownloading(progress))
             }
+
             InstallStatus.DOWNLOADED -> {
                 Logger.d(TAG) { "Flexible update downloaded, ready to install" }
                 onStateChanged(UpdateState.FlexibleDownloaded)
                 // Unregister listener as we no longer need download updates
                 appUpdateManager.unregisterListener(installStateUpdatedListener)
             }
+
             InstallStatus.FAILED -> {
                 Logger.e(TAG) { "Flexible update download failed" }
                 onStateChanged(UpdateState.Failed("Download failed"))
                 appUpdateManager.unregisterListener(installStateUpdatedListener)
             }
+
             InstallStatus.CANCELED -> {
                 Logger.w(TAG) { "Flexible update download canceled" }
                 onStateChanged(UpdateState.Idle)
                 appUpdateManager.unregisterListener(installStateUpdatedListener)
             }
+
             else -> {
                 Logger.d(TAG) { "Install status: ${installState.installStatus()}" }
             }

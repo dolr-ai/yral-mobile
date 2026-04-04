@@ -171,11 +171,12 @@ private fun SlotContent(component: HomeComponent) {
     val slot by component.slot.subscribeAsState()
     slot.child?.instance?.also { slotChild ->
         when (slotChild) {
-            is SlotChild.VideoViewsRewardsBottomSheet ->
+            is SlotChild.VideoViewsRewardsBottomSheet -> {
                 VideoViewsRewardsBottomSheet(
                     component = slotChild.component,
                     data = slotChild.data,
                 )
+            }
         }
     }
 }
@@ -210,25 +211,28 @@ private fun HomeScreenContent(
         modifier = modifier,
     ) {
         when (val child = it.instance) {
-            is HomeComponent.Child.Feed ->
+            is HomeComponent.Child.Feed -> {
                 FeedScaffoldScreen(
                     component = child.component,
                     feedViewModel = feedViewModel,
                     chatUnreadCount = chatUnreadCount,
                     onInboxClick = component::onChatInboxClick,
                 )
+            }
 
-            is HomeComponent.Child.UploadVideo ->
+            is HomeComponent.Child.UploadVideo -> {
                 UploadVideoRootScreen(
                     component = child.component,
                 )
+            }
 
-            is HomeComponent.Child.Account ->
+            is HomeComponent.Child.Account -> {
                 AccountScreen(
                     component = child.component,
                     viewModel = accountViewModel,
                     onAlertsToggleRequest = alertsPermissionController.toggle,
                 )
+            }
 
             is HomeComponent.Child.Wallet -> {
                 val homeState by component.homeViewModel.state.collectAsStateWithLifecycle()
@@ -254,7 +258,7 @@ private fun HomeScreenContent(
                 )
             }
 
-            is HomeComponent.Child.Profile ->
+            is HomeComponent.Child.Profile -> {
                 profileVideos?.let {
                     ProfileScreen(
                         component = child.component,
@@ -264,13 +268,15 @@ private fun HomeScreenContent(
                         onAlertsToggleRequest = alertsPermissionController.toggle,
                     )
                 }
+            }
 
-            is HomeComponent.Child.Chat ->
+            is HomeComponent.Child.Chat -> {
                 ChatScreen(
                     component = child.component,
                     chatWallViewModel = chatWallViewModel,
                     inboxViewModel = inboxViewModel,
                 )
+            }
         }
         LoginIfRequired(
             currentChild = it.instance,
@@ -543,7 +549,7 @@ private fun SessionState.getCanisterData(): CanisterData =
     when (this) {
         SessionState.Initial,
         SessionState.Loading,
-        ->
+        -> {
             CanisterData(
                 canisterId = "",
                 userPrincipalId = "",
@@ -551,7 +557,9 @@ private fun SessionState.getCanisterData(): CanisterData =
                 username = "",
                 isCreatedFromServiceCanister = true,
             )
-        is SessionState.SignedIn ->
+        }
+
+        is SessionState.SignedIn -> {
             CanisterData(
                 canisterId = session.canisterId ?: "",
                 userPrincipalId = session.userPrincipal ?: "",
@@ -559,6 +567,7 @@ private fun SessionState.getCanisterData(): CanisterData =
                 username = session.username,
                 isCreatedFromServiceCanister = session.isCreatedFromServiceCanister,
             )
+        }
     }
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
@@ -586,6 +595,7 @@ private fun LoginIfRequired(
                     dismissSheet,
                 ) {}
             }
+
             is HomeComponent.Child.UploadVideo -> {
                 val pageName = homeState.pageName ?: SignupPageName.UPLOAD_VIDEO
                 val loginBottomSheetType =
@@ -601,6 +611,7 @@ private fun LoginIfRequired(
                     dismissSheet,
                 ) {}
             }
+
             is HomeComponent.Child.Profile -> {
                 loginState.requestLogin(
                     homeState.pageName ?: SignupPageName.MENU,
@@ -614,6 +625,7 @@ private fun LoginIfRequired(
                     {},
                 )
             }
+
             else -> {
                 loginState.clearLogin()
             }

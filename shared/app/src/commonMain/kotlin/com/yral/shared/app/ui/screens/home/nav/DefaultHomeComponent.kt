@@ -120,44 +120,62 @@ internal class DefaultHomeComponent(
 
     override fun onNavigationRequest(appRoute: AppRoute) {
         when (appRoute) {
-            is PostDetailsRoute ->
+            is PostDetailsRoute -> {
                 navigation
                     .replaceAll(Config.Feed) {
                         (stack.value.active.instance as? Child.Feed)?.component?.openPostDetails(
                             appRoute,
                         )
                     }.also { Logger.d("LinkSharing") { "Link details received $appRoute" } }
+            }
 
-            is Wallet -> onWalletTabClick()
-            is Profile -> onProfileTabClick()
-            is AddVideo -> onUploadVideoTabClick()
-            is GenerateAIVideo ->
+            is Wallet -> {
+                onWalletTabClick()
+            }
+
+            is Profile -> {
+                onProfileTabClick()
+            }
+
+            is AddVideo -> {
+                onUploadVideoTabClick()
+            }
+
+            is GenerateAIVideo -> {
                 navigation.replaceKeepingFeed(Config.UploadVideo) {
                     (stack.value.active.instance as? Child.UploadVideo)?.component?.handleNavigation(
                         appRoute,
                     )
                 }
-            is Chat -> onChatTabClick()
+            }
+
+            is Chat -> {
+                onChatTabClick()
+            }
 
             is RewardsReceived -> {
                 when (appRoute.rewardOn) {
-                    RewardOn.VIDEO_VIEWS ->
+                    RewardOn.VIDEO_VIEWS -> {
                         showSlot(
                             SlotConfig.VideoViewsRewardsBottomSheet(
                                 appRoute,
                             ),
                         )
+                    }
                 }
             }
 
-            is VideoUploadSuccessful ->
+            is VideoUploadSuccessful -> {
                 navigation.replaceKeepingFeed(Config.Profile) {
                     (stack.value.active.instance as? Child.Profile)?.component?.onNavigationRequest(
                         appRoute,
                     )
                 }
+            }
 
-            else -> Unit
+            else -> {
+                Unit
+            }
         }
     }
 
@@ -295,11 +313,12 @@ internal class DefaultHomeComponent(
         componentContext: ComponentContext,
     ): SlotChild =
         when (config) {
-            is SlotConfig.VideoViewsRewardsBottomSheet ->
+            is SlotConfig.VideoViewsRewardsBottomSheet -> {
                 SlotChild.VideoViewsRewardsBottomSheet(
                     component = btcRewardsComponent(componentContext),
                     data = config.data,
                 )
+            }
         }
 
     private fun btcRewardsComponent(componentContext: ComponentContext): VideoViewRewardsComponent =

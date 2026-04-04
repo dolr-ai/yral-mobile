@@ -69,14 +69,18 @@ internal class DefaultChatHomeComponent(
         componentContext: ComponentContext,
     ): Child =
         when (config) {
-            Config.Discover -> Child.Discover(chatWallComponent(componentContext))
-            Config.Inbox ->
+            Config.Discover -> {
+                Child.Discover(chatWallComponent(componentContext))
+            }
+
+            Config.Inbox -> {
                 Child.Inbox(
                     InboxComponent(
                         componentContext = componentContext,
                         openConversation = openConversation,
                     ),
                 )
+            }
         }
 
     private fun chatWallComponent(componentContext: ComponentContext): ChatWallComponent =

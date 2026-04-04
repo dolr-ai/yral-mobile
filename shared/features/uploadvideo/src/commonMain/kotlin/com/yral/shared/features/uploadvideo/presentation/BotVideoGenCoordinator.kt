@@ -142,6 +142,7 @@ internal class BotVideoGenCoordinator(
                                 is PollAndUploadAiVideoUseCase.PollAndUploadResult.InProgress -> {
                                     logger.d { "bot_video_gen: polling in progress for $botPrincipal" }
                                 }
+
                                 is PollAndUploadAiVideoUseCase.PollAndUploadResult.Success -> {
                                     logger.d {
                                         "bot_video_gen: upload success for $botPrincipal " +

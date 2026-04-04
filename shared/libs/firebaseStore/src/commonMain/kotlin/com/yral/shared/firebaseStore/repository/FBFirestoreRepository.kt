@@ -226,30 +226,35 @@ internal class FBFirestoreRepository(
         for (filter in options.filters) {
             resultQuery =
                 when (filter) {
-                    is QueryOptions.Filter.Equals ->
+                    is QueryOptions.Filter.Equals -> {
                         resultQuery.where {
                             filter.field equalTo filter.value
                         }
+                    }
 
-                    is QueryOptions.Filter.GreaterThan ->
+                    is QueryOptions.Filter.GreaterThan -> {
                         resultQuery.where {
                             filter.field greaterThan filter.value
                         }
+                    }
 
-                    is QueryOptions.Filter.LessThan ->
+                    is QueryOptions.Filter.LessThan -> {
                         resultQuery.where {
                             filter.field lessThan filter.value
                         }
+                    }
 
-                    is QueryOptions.Filter.Contains ->
+                    is QueryOptions.Filter.Contains -> {
                         resultQuery.where {
                             filter.field contains filter.value
                         }
+                    }
 
-                    is QueryOptions.Filter.In ->
+                    is QueryOptions.Filter.In -> {
                         resultQuery.where {
                             filter.field inArray filter.values
                         }
+                    }
                 }
         }
 
@@ -257,11 +262,13 @@ internal class FBFirestoreRepository(
         options.orderBy?.let { orderBy ->
             resultQuery =
                 when (orderBy.direction) {
-                    QueryOptions.OrderBy.Direction.ASCENDING ->
+                    QueryOptions.OrderBy.Direction.ASCENDING -> {
                         resultQuery.orderBy(orderBy.field)
+                    }
 
-                    QueryOptions.OrderBy.Direction.DESCENDING ->
+                    QueryOptions.OrderBy.Direction.DESCENDING -> {
                         resultQuery.orderBy(orderBy.field, Direction.DESCENDING)
+                    }
                 }
         }
 

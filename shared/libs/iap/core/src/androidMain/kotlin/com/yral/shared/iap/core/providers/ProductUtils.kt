@@ -46,9 +46,15 @@ internal fun billingPeriodToDurationMillis(billingPeriod: String?): Long? {
     val duration: Duration =
         when (unit) {
             "D" -> amount.days
+
             "W" -> (amount * 7).days
-            "M" -> (amount * 30).days // approximate month
-            "Y" -> (amount * 365).days // approximate year
+
+            "M" -> (amount * 30).days
+
+            // approximate month
+            "Y" -> (amount * 365).days
+
+            // approximate year
             else -> Duration.ZERO
         }
 

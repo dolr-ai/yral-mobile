@@ -89,6 +89,7 @@ class MetaInstallReferrerAttribution {
                     logger.e(e) { "Could not parse JSON from referrer data" }
                 }.getOrNull()
             }
+
             trimmed.contains("utm_content=") -> {
                 runCatching {
                     val uri = (if (trimmed.contains("://")) trimmed else "https://dummy/?$trimmed").toUri()
@@ -97,7 +98,10 @@ class MetaInstallReferrerAttribution {
                     logger.e(e) { "Could not parse query string from referrer data: ${e.message}" }
                 }.getOrNull()
             }
-            else -> null
+
+            else -> {
+                null
+            }
         }
     }
 

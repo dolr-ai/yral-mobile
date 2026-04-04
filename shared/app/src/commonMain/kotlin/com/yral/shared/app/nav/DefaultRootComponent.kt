@@ -162,27 +162,48 @@ class DefaultRootComponent(
         context: ComponentContext,
     ): RootComponent.Child =
         when (config) {
-            is Config.Splash -> RootComponent.Child.Splash(componentFactory.createSplash(context))
-            is Config.Home -> RootComponent.Child.Home(componentFactory.createHome(context))
-            is Config.EditProfile -> RootComponent.Child.EditProfile(componentFactory.createEditProfile(context))
-            is Config.CreateInfluencer ->
+            is Config.Splash -> {
+                RootComponent.Child.Splash(componentFactory.createSplash(context))
+            }
+
+            is Config.Home -> {
+                RootComponent.Child.Home(componentFactory.createHome(context))
+            }
+
+            is Config.EditProfile -> {
+                RootComponent.Child.EditProfile(componentFactory.createEditProfile(context))
+            }
+
+            is Config.CreateInfluencer -> {
                 RootComponent.Child.CreateInfluencer(
                     componentFactory.createCreateInfluencer(context, config),
                 )
-            is Config.UserProfile -> RootComponent.Child.UserProfile(componentFactory.createProfile(context, config))
-            is Config.Conversation ->
+            }
+
+            is Config.UserProfile -> {
+                RootComponent.Child.UserProfile(componentFactory.createProfile(context, config))
+            }
+
+            is Config.Conversation -> {
                 RootComponent.Child.Conversation(
                     componentFactory.createConversation(context, config),
                 )
-            is Config.Wallet -> RootComponent.Child.Wallet(componentFactory.createWallet(context))
-            is Config.Subscription ->
+            }
+
+            is Config.Wallet -> {
+                RootComponent.Child.Wallet(componentFactory.createWallet(context))
+            }
+
+            is Config.Subscription -> {
                 RootComponent.Child.Subscription(
                     componentFactory.createSubscription(
                         componentContext = context,
                         config = config,
                     ),
                 )
-            is Config.CountrySelector ->
+            }
+
+            is Config.CountrySelector -> {
                 RootComponent.Child.CountrySelector(
                     componentFactory.createCountrySelector(
                         componentContext = context,
@@ -201,7 +222,9 @@ class DefaultRootComponent(
                         },
                     ),
                 )
-            is Config.OtpVerification ->
+            }
+
+            is Config.OtpVerification -> {
                 RootComponent.Child.OtpVerification(
                     componentFactory.createOtpVerification(
                         componentContext = context,
@@ -214,10 +237,13 @@ class DefaultRootComponent(
                         },
                     ),
                 )
-            is Config.MandatoryLogin ->
+            }
+
+            is Config.MandatoryLogin -> {
                 RootComponent.Child.MandatoryLogin(
                     componentFactory.createMandatoryLogin(context),
                 )
+            }
         }
 
     private fun createSlotChild(
@@ -225,7 +251,7 @@ class DefaultRootComponent(
         context: ComponentContext,
     ): RootComponent.SlotChild =
         when (config) {
-            is SlotConfig.AlertsRequestBottomSheet ->
+            is SlotConfig.AlertsRequestBottomSheet -> {
                 RootComponent.SlotChild.AlertsRequestBottomSheet(
                     component =
                         AlertsRequestComponent(
@@ -234,18 +260,24 @@ class DefaultRootComponent(
                             onDismissed = slotNavigation::dismiss,
                         ),
                 )
+            }
+
             is SlotConfig.LoginBottomSheet -> {
                 RootComponent.SlotChild.LoginBottomSheet()
             }
+
             is SlotConfig.SubscriptionAccountMismatchSheet -> {
                 RootComponent.SlotChild.SubscriptionAccountMismatchSheet()
             }
+
             is SlotConfig.SubscriptionNudge -> {
                 RootComponent.SlotChild.SubscriptionNudge()
             }
+
             is SlotConfig.MandatoryUpdate -> {
                 RootComponent.SlotChild.MandatoryUpdate()
             }
+
             is SlotConfig.AccountSwitcher -> {
                 RootComponent.SlotChild.AccountSwitcher()
             }
@@ -307,12 +339,16 @@ class DefaultRootComponent(
     // ==================== Route Handling (inline) ====================
     private fun handleAppRoute(appRoute: AppRoute) {
         when (appRoute) {
-            is UserProfileRoute -> handleUserProfileRoute(appRoute)
-            else ->
+            is UserProfileRoute -> {
+                handleUserProfileRoute(appRoute)
+            }
+
+            else -> {
                 homeComponent?.onNavigationRequest(appRoute) ?: run {
                     pendingNavRoute = appRoute
                     navigation.replaceAll(Config.Home)
                 }
+            }
         }
     }
 
@@ -353,10 +389,17 @@ class DefaultRootComponent(
             val existingIndex =
                 stack.indexOfLast { config ->
                     when {
-                        config is Config.Conversation && params.conversationId != null ->
+                        config is Config.Conversation && params.conversationId != null -> {
                             config.params.conversationId == params.conversationId
-                        config is Config.Conversation -> config.params.influencerId == params.influencerId
-                        else -> false
+                        }
+
+                        config is Config.Conversation -> {
+                            config.params.influencerId == params.influencerId
+                        }
+
+                        else -> {
+                            false
+                        }
                     }
                 }
             if (existingIndex != -1) {
@@ -433,6 +476,7 @@ class DefaultRootComponent(
                     )
                 }
             }
+
             is LoginScreenType.BottomSheet -> {
                 { /* Rendered via slot */ }
             }

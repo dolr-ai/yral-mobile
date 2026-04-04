@@ -22,9 +22,6 @@
 	},
 	// Minimum host RAM required for Android builds (Gradle daemon needs ~10 GB with -Xmx8192M).
 	// Increase Docker Desktop memory (Settings → Resources) if builds OOM.
-	"hostRequirements": {
-		"memory": "16gb"
-	},
 	// The .git file in this repo is a gitdir pointer:
 	//   gitdir: ../../.git/modules/apps/yral-mobile
 	// Inside the container (workspace at /workspaces/yral-mobile) that path
@@ -42,7 +39,15 @@
 		"GIT_WORK_TREE": "/workspaces/yral-mobile"
 	},
 	// Run post-create setup script
-	"postCreateCommand": "bash .devcontainer/postCreate.sh"
+	"postCreateCommand": "bash .devcontainer/postCreate.sh",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"mhutchie.git-graph",
+				"esafirm.kotlin-formatter"
+			]
+		}
+	}
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 	// Configure tool-specific properties.

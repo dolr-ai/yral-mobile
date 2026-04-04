@@ -121,8 +121,10 @@ class AuthRepositoryImpl(
                 loginHint = json.parseToJsonElement(loginHint),
             )
         return when (val response = dataSource.phoneAuthLogin(phoneNumber, authClientQuery)) {
-            is PhoneAuthLoginResponseDto.Success ->
+            is PhoneAuthLoginResponseDto.Success -> {
                 PhoneAuthLoginResponse(codeChallenge = codeChallenge)
+            }
+
             is PhoneAuthLoginResponseDto.Error -> {
                 throw YralAuthException("${response.error} - ${response.errorDescription}")
             }

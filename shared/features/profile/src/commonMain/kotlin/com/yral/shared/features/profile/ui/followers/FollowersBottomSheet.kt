@@ -175,8 +175,13 @@ private fun FollowersBottomSheetContent(
             verticalArrangement = Arrangement.spacedBy(FollowersSheetUi.ListItemSpacing),
         ) {
             when (pagingItems.loadState.refresh) {
-                is LoadState.Loading -> item { FollowersLoadingState() }
-                is LoadState.Error -> item { FollowersErrorState(onRetry = { pagingItems.retry() }) }
+                is LoadState.Loading -> {
+                    item { FollowersLoadingState() }
+                }
+
+                is LoadState.Error -> {
+                    item { FollowersErrorState(onRetry = { pagingItems.retry() }) }
+                }
 
                 is LoadState.NotLoading -> {
                     if (pagingItems.itemCount == 0) {

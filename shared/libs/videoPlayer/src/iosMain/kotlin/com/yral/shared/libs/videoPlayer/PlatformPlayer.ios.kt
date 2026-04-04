@@ -190,12 +190,17 @@ actual class PlatformPlayer {
         if (trimmed.isEmpty()) return null
         return when {
             trimmed.startsWith("http", ignoreCase = true) ||
-                trimmed.startsWith("file://", ignoreCase = true) -> NSURL(string = trimmed)
+                trimmed.startsWith("file://", ignoreCase = true) -> {
+                NSURL(string = trimmed)
+            }
 
-            NSFileManager.defaultManager.fileExistsAtPath(path = trimmed) ->
+            NSFileManager.defaultManager.fileExistsAtPath(path = trimmed) -> {
                 NSURL.fileURLWithPath(trimmed)
+            }
 
-            else -> NSURL(string = trimmed)
+            else -> {
+                NSURL(string = trimmed)
+            }
         }
     }
 

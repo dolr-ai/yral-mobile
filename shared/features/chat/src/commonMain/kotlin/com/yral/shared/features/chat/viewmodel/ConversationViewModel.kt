@@ -234,7 +234,7 @@ class ConversationViewModel(
         val createdAt = Instant.fromEpochMilliseconds(now).toString()
         val list =
             when {
-                accessActivatedMessage != null ->
+                accessActivatedMessage != null -> {
                     listOf(
                         createSystemSentMessage(
                             now,
@@ -244,7 +244,9 @@ class ConversationViewModel(
                             accessActivatedMessage,
                         ),
                     )
-                subscriptionCardMessage != null ->
+                }
+
+                subscriptionCardMessage != null -> {
                     listOf(
                         createSystemSentMessage(
                             now,
@@ -254,7 +256,11 @@ class ConversationViewModel(
                             subscriptionCardMessage,
                         ),
                     )
-                else -> emptyList()
+                }
+
+                else -> {
+                    emptyList()
+                }
             }
         systemOverlayMessagesFlow.value = list
     }
@@ -346,10 +352,12 @@ class ConversationViewModel(
                     Logger.d("SubscriptionX") { "Found legacy tara_subscription, migrating..." }
                     retryGrantAccess(botId, legacyPurchase, ProductId.TARA_SUBSCRIPTION.productId)
                 }
+
                 unconsumedDailyChat != null && unconsumedDailyChat.purchaseToken != null -> {
                     Logger.d("SubscriptionX") { "Found unconsumed daily_chat, retrying grant..." }
                     retryGrantAccess(botId, unconsumedDailyChat, ProductId.DAILY_CHAT.productId)
                 }
+
                 else -> {
                     _viewState.update { it.copy(isChatAccessLoading = false) }
                     fetchInfluencerSubscriptionProducts()
@@ -408,6 +416,7 @@ class ConversationViewModel(
                 }
                 fetchInfluencerSubscriptionProducts()
             }
+
             is GrantError.ServerError -> {
                 // 5xx: Transient failure. Keep unconsumed for retry on next launch.
                 Logger.w("SubscriptionX") { "Grant server error (${error.httpStatus}). Keeping purchase for retry." }
@@ -416,6 +425,7 @@ class ConversationViewModel(
                     expiresAtMs = purchaseTime?.let { it + FALLBACK_ACCESS_DURATION_MS },
                 )
             }
+
             else -> {
                 // Network error or unknown. Keep unconsumed for retry.
                 Logger.w("SubscriptionX") { "Grant failed (network/unknown). Keeping purchase for retry." }
@@ -565,14 +575,20 @@ class ConversationViewModel(
             _viewState.update { it.copy(isInfluencerSubscriptionPurchaseInProgress = false) }
             botId?.let { chatTelemetry.subscriptionFailed(it, error.message ?: "unknown") }
             when (error) {
-                is IAPError.PurchaseCancelled -> return@onFailure
+                is IAPError.PurchaseCancelled -> {
+                    return@onFailure
+                }
+
                 else -> {
                     val message =
                         when (error) {
-                            is IAPError.PurchasePending ->
+                            is IAPError.PurchasePending -> {
                                 getString(Res.string.influencer_subscription_purchase_pending)
-                            else ->
+                            }
+
+                            else -> {
                                 getString(Res.string.influencer_subscription_purchase_failed)
+                            }
                         }
                     influencerSubscriptionToastChannel.trySend(
                         InfluencerSubscriptionToastEvent(ToastStatus.Error, message),
@@ -648,9 +664,15 @@ class ConversationViewModel(
         val existingInfluencer = _viewState.value.influencer
         val resolvedInfluencer =
             when {
-                influencer == null -> existingInfluencer
-                existingInfluencer == null -> influencer
-                else ->
+                influencer == null -> {
+                    existingInfluencer
+                }
+
+                existingInfluencer == null -> {
+                    influencer
+                }
+
+                else -> {
                     influencer.copy(
                         category = influencer.category.ifBlank { existingInfluencer.category },
                         displayName =
@@ -664,6 +686,7 @@ class ConversationViewModel(
                                 .suggestedMessages
                                 .ifEmpty { existingInfluencer.suggestedMessages },
                     )
+                }
             }
 
         val sentMessages =
@@ -1006,13 +1029,20 @@ class ConversationViewModel(
             val updatedPending =
                 state.pending.mapNotNull { msg ->
                     when (msg.localId) {
-                        assistantLocalId -> null
-                        userLocalId ->
+                        assistantLocalId -> {
+                            null
+                        }
+
+                        userLocalId -> {
                             msg.copy(
                                 status = LocalMessageStatus.FAILED,
                                 errorMessage = error.message,
                             )
-                        else -> msg
+                        }
+
+                        else -> {
+                            msg
+                        }
                     }
                 }
             state.copy(pending = updatedPending)

@@ -534,9 +534,11 @@ private fun SlotContent(component: RootComponent) {
             is RootComponent.SlotChild.AlertsRequestBottomSheet -> {
                 AlertsRequestBottomSheet(component = slotChild.component)
             }
+
             is RootComponent.SlotChild.LoginBottomSheet -> {
                 LoginBottomSheetSlotContent(rootComponent = component)
             }
+
             is RootComponent.SlotChild.SubscriptionAccountMismatchSheet -> {
                 val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
                 SubscriptionAccountMismatchSheet(
@@ -549,6 +551,7 @@ private fun SlotContent(component: RootComponent) {
                     },
                 )
             }
+
             is RootComponent.SlotChild.SubscriptionNudge -> {
                 val coordinator = component.getSubscriptionCoordinator()
                 val nudgeContent = coordinator.subscriptionNudgeContent
@@ -569,9 +572,11 @@ private fun SlotContent(component: RootComponent) {
                     }
                 }
             }
+
             is RootComponent.SlotChild.MandatoryUpdate -> {
                 MandatoryUpdateScreen()
             }
+
             is RootComponent.SlotChild.AccountSwitcher -> {
                 AccountSwitcherSlotContent(component = component)
             }

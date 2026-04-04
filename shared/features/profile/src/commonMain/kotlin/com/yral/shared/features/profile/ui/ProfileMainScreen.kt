@@ -376,8 +376,14 @@ fun ProfileMainScreen(
         enabled = backHandlerEnabled,
         onBack = {
             when (state.videoView) {
-                is VideoViewState.ViewingDraft -> viewModel.closeDraftVideo()
-                is VideoViewState.ViewingReels -> viewModel.closeVideoReel()
+                is VideoViewState.ViewingDraft -> {
+                    viewModel.closeDraftVideo()
+                }
+
+                is VideoViewState.ViewingReels -> {
+                    viewModel.closeVideoReel()
+                }
+
                 else -> {}
             }
         },
@@ -583,12 +589,16 @@ fun ProfileMainScreen(
             )
         }
 
-        DeleteConfirmationState.None, is DeleteConfirmationState.InProgress -> Unit
+        DeleteConfirmationState.None, is DeleteConfirmationState.InProgress -> {
+            Unit
+        }
     }
 
     val followersSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     when (val bottomSheet = state.bottomSheet) {
-        ProfileBottomSheet.None -> Unit
+        ProfileBottomSheet.None -> {
+            Unit
+        }
 
         is ProfileBottomSheet.VideoView -> {
             val videoId = bottomSheet.videoId
@@ -622,7 +632,9 @@ fun ProfileMainScreen(
                     )
                 }
 
-                else -> Unit
+                else -> {
+                    Unit
+                }
             }
         }
 
@@ -635,6 +647,7 @@ fun ProfileMainScreen(
                             FollowersSheetTab.Followers -> {
                                 followers.loadState.refresh is LoadState.NotLoading && followers.itemCount >= 0
                             }
+
                             FollowersSheetTab.Following -> {
                                 following.loadState.refresh is LoadState.NotLoading && following.itemCount >= 0
                             }

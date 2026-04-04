@@ -25,11 +25,13 @@ internal fun UploadVideoRootScreen(component: UploadVideoRootComponent) {
             is UploadVideoRootComponent.Child.FlowSelection -> {
                 FlowSelectionScreen(component = instance.component)
             }
+
             is UploadVideoRootComponent.Child.AiVideoGen -> {
                 AiVideoGenScreen(
                     component = instance.component,
                 )
             }
+
             is UploadVideoRootComponent.Child.FileUpload -> {
                 UploadVideoScreen(
                     component = instance.component,

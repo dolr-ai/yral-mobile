@@ -441,10 +441,22 @@ private fun phoneLoginButtonState(
     phoneValidationError: String?,
 ): YralButtonState =
     when {
-        phoneAuthState is UiState.InProgress -> YralButtonState.Loading
-        phoneNumber.trim().isEmpty() -> YralButtonState.Disabled
-        selectedCountry == null -> YralButtonState.Disabled
-        phoneValidationError != null -> YralButtonState.Disabled
+        phoneAuthState is UiState.InProgress -> {
+            YralButtonState.Loading
+        }
+
+        phoneNumber.trim().isEmpty() -> {
+            YralButtonState.Disabled
+        }
+
+        selectedCountry == null -> {
+            YralButtonState.Disabled
+        }
+
+        phoneValidationError != null -> {
+            YralButtonState.Disabled
+        }
+
         else -> {
             val numberLength = phoneNumber.length
             val minLength = selectedCountry.minLength

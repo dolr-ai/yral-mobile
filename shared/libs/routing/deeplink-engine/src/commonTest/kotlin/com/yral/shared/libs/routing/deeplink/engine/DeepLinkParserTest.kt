@@ -132,7 +132,9 @@ class DeepLinkParserTest {
                 assertEquals("books", result.category)
             }
 
-            else -> throw AssertionError("Expected TestProductRoute, got: $result (${result::class.simpleName})")
+            else -> {
+                throw AssertionError("Expected TestProductRoute, got: $result (${result::class.simpleName})")
+            }
         }
     }
 

@@ -244,10 +244,17 @@ internal class IosVideoPickerCoordinator(
             }
 
             when (processingResult) {
-                is ProcessingResult.Success -> onVideoSelected(processingResult.filePath)
-                is ProcessingResult.ValidationFailure ->
+                is ProcessingResult.Success -> {
+                    onVideoSelected(processingResult.filePath)
+                }
+
+                is ProcessingResult.ValidationFailure -> {
                     onError(VideoPickerError.Validation(processingResult.error))
-                ProcessingResult.Failure -> onError(VideoPickerError.ProcessingFailed)
+                }
+
+                ProcessingResult.Failure -> {
+                    onError(VideoPickerError.ProcessingFailed)
+                }
             }
 
             onProcessingStateChange(false)

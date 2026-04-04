@@ -102,8 +102,14 @@ class AndroidOAuthUtilsHelper(
         val botsRaw = claims[KEY_AI_ACCOUNT_DELEGATED_IDENTITIES]
         val botDelegatedIdentities =
             when (botsRaw) {
-                is List<*> -> botsRaw
-                is Collection<*> -> botsRaw.toList()
+                is List<*> -> {
+                    botsRaw
+                }
+
+                is Collection<*> -> {
+                    botsRaw.toList()
+                }
+
                 else -> {
                     runCatching {
                         val tree: JsonElement = gson.toJsonTree(botsRaw)
@@ -151,9 +157,11 @@ class AndroidOAuthUtilsHelper(
                     !error.isNullOrBlank() -> {
                         OAuthResult.Error(error = error, errorDescription = errorDescription)
                     }
+
                     !code.isNullOrBlank() && !state.isNullOrBlank() -> {
                         OAuthResult.Success(code = code, state = state)
                     }
+
                     else -> {
                         OAuthResult.Error(error = "unknown_error", errorDescription = "Missing required parameters")
                     }

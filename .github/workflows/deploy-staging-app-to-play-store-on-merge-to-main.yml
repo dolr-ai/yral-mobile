@@ -58,7 +58,14 @@ jobs:
             exit 1
           fi
           NEW=$((CURRENT + 1))
-          VERSION=$(./.github/helperscripts/resolve_next_android_flavor_version.sh staging ./androidApp/build.gradle.kts)
+
+          CURRENT_VERSION=$(sed -nE "s/^[[:space:]]*versionName = \"([^\"]+)\" \/\/ ci:staging-version-name$/\1/p" ./androidApp/build.gradle.kts | head -n 1)
+          if ! [[ "$CURRENT_VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            echo "Error: could not read staging versionName semver from build.gradle.kts, got: '$CURRENT_VERSION'" >&2
+            exit 1
+          fi
+          IFS=. read -r MAJOR MINOR PATCH <<<"$CURRENT_VERSION"
+          VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
 
           echo "staging versionCode: $CURRENT -> $NEW"
           echo "staging versionName -> $VERSION"

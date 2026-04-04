@@ -26,7 +26,7 @@ class EventToMapConverter(
             .filterKeys { it != "type_ext" }
             .mapValues { (_, value) ->
                 when (value) {
-                    is JsonPrimitive ->
+                    is JsonPrimitive -> {
                         when {
                             value.isString -> value.content
                             value.booleanOrNull != null -> value.boolean
@@ -35,7 +35,11 @@ class EventToMapConverter(
                             value.doubleOrNull != null -> value.double
                             else -> value.content
                         }
-                    else -> value.toString()
+                    }
+
+                    else -> {
+                        value.toString()
+                    }
                 }
             }.filterValues { it != "null" }
             .mapValues { it.value as Any }

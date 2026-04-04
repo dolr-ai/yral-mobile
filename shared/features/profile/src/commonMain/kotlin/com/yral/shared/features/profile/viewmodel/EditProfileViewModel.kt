@@ -214,15 +214,16 @@ class EditProfileViewModel(
             val sanitized = sanitizeInput(it.usernameInput)
             val shouldKeepFocused = it.usernameErrorMessage != null
             when {
-                shouldKeepFocused ->
+                shouldKeepFocused -> {
                     it.copy(
                         isUsernameFocused = true,
                         initialUsername = currentInitial,
                         isUsernameValid = false,
                         shouldFocusUsername = false,
                     )
+                }
 
-                isFocused ->
+                isFocused -> {
                     it.copy(
                         isUsernameFocused = true,
                         initialUsername = currentInitial,
@@ -234,13 +235,15 @@ class EditProfileViewModel(
                             },
                         shouldFocusUsername = false,
                     )
+                }
 
-                else ->
+                else -> {
                     it.copy(
                         isUsernameFocused = false,
                         initialUsername = sanitizedSessionUsername(),
                         shouldFocusUsername = false,
                     )
+                }
             }
         }
     }

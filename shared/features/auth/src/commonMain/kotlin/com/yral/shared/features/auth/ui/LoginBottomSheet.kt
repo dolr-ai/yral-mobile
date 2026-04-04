@@ -126,28 +126,35 @@ private fun getHeaderText(
             val fullText = stringResource(Res.string.login_to_get_25_tokens, initialBalanceReward)
             getAnnotatedHeaderForLogin(fullText)
         }
+
         LoginBottomSheetType.UPLOAD_AI_VIDEO -> {
             val fullText = stringResource(Res.string.upload_ai_videos_earn_bitcoin)
             val maskedText = fullText.substringAfter(".")
             getAnnotatedHeaderForLogin(fullText, maskedText)
         }
+
         LoginBottomSheetType.CREATE_AI_VIDEO -> {
             val fullText = stringResource(Res.string.create_ai_videos_earn_bitcoin)
             val maskedText = fullText.substringAfter(".")
             getAnnotatedHeaderForLogin(fullText, maskedText)
         }
+
         LoginBottomSheetType.CREATE_INFLUENCER -> {
             getAnnotatedHeaderForLogin(
                 stringResource(Res.string.create_ai_influencer_title),
                 baseColor = YralColors.Yellow200,
             )
         }
+
         is LoginBottomSheetType.CONVERSATION -> {
             val name = type.influencerName
             val fullText = stringResource(Res.string.login_to_chat_with_influencer, name)
             getAnnotatedHeaderForLogin(fullText)
         }
-        else -> getAnnotatedHeaderForLogin(stringResource(Res.string.continue_to_sign_up_for_free))
+
+        else -> {
+            getAnnotatedHeaderForLogin(stringResource(Res.string.continue_to_sign_up_for_free))
+        }
     }
 
 @Composable
@@ -178,7 +185,7 @@ private fun TopIconContent(type: LoginBottomSheetType) {
             .width(topIconSize?.width ?: DEFAULT_TOP_CONTENT_WIDTH)
             .height(topIconSize?.height ?: DEFAULT_TOP_CONTENT_HEIGHT)
     when (type) {
-        is LoginBottomSheetType.CONVERSATION ->
+        is LoginBottomSheetType.CONVERSATION -> {
             type.influencerAvatarUrl
                 .takeIf { it.isNotBlank() }
                 ?.let { avatarUrl ->
@@ -187,6 +194,8 @@ private fun TopIconContent(type: LoginBottomSheetType) {
                         modifier = topIconModifier,
                     )
                 }
+        }
+
         else -> {
             val topIcon = getTopIcon(type)
             topIcon?.let {

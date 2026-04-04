@@ -778,7 +778,9 @@ class FeedViewModel(
 
         val currentFeedDetails = currentState.feedDetails[currentState.currentPageOfFeed]
         when (currentTime) {
-            in ANALYTICS_VIDEO_STARTED_RANGE -> feedTelemetry.trackVideoStarted(currentFeedDetails)
+            in ANALYTICS_VIDEO_STARTED_RANGE -> {
+                feedTelemetry.trackVideoStarted(currentFeedDetails)
+            }
 
             in ANALYTICS_VIDEO_VIEWED_RANGE -> {
                 feedTelemetry.trackVideoViewed(currentFeedDetails)

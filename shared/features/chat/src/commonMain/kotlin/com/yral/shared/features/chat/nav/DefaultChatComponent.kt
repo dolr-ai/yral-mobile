@@ -66,21 +66,32 @@ internal class DefaultChatComponent(
             routes =
                 stack.value.items.map { item ->
                     when (val configuration = item.configuration) {
-                        is Config.Home -> Snapshot.Route.Home
-                        is Config.Conversation ->
+                        is Config.Home -> {
+                            Snapshot.Route.Home
+                        }
+
+                        is Config.Conversation -> {
                             Snapshot.Route.Conversation(
                                 params = configuration.params,
                             )
-                        else -> Snapshot.Route.Home
+                        }
+
+                        else -> {
+                            Snapshot.Route.Home
+                        }
                     }
                 },
         )
 
     private fun Snapshot.Route.toConfig(): Config =
         when (this) {
-            Snapshot.Route.Home -> Config.Home
-            is Snapshot.Route.Conversation ->
+            Snapshot.Route.Home -> {
+                Config.Home
+            }
+
+            is Snapshot.Route.Conversation -> {
                 Config.Conversation(params = params)
+            }
         }
 
     private fun child(

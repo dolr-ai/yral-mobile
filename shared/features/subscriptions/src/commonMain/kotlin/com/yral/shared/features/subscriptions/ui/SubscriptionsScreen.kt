@@ -82,6 +82,7 @@ fun SubscriptionsScreen(
                 }
             }
         }
+
         is UiState.Success -> {
             when (state.data) {
                 is SubscriptionScreenType.UnPurchased -> {
@@ -97,6 +98,7 @@ fun SubscriptionsScreen(
                         onOpenLink = onOpenLink,
                     )
                 }
+
                 is SubscriptionScreenType.Purchased -> {
                     val purchaseTimeMs = component.purchaseTimeMs
                     val billingPeriodMillis = viewState.billingPeriodMillis
@@ -121,6 +123,7 @@ fun SubscriptionsScreen(
                         onOpenLink = onOpenLink,
                     )
                 }
+
                 is SubscriptionScreenType.Success -> {
                     SubscriptionPaymentSuccessScreen(
                         modifier = modifier,
@@ -139,6 +142,7 @@ fun SubscriptionsScreen(
                         },
                     )
                 }
+
                 is SubscriptionScreenType.Failure -> {
                     SubscriptionPaymentFailureScreen(
                         modifier = modifier,
@@ -151,6 +155,7 @@ fun SubscriptionsScreen(
                 }
             }
         }
+
         is UiState.Failure -> {
             SubscriptionPaymentFailureScreen(
                 modifier = modifier,

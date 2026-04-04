@@ -45,10 +45,14 @@ class GrantChatAccessUseCase(
                     expiresAtMs = data?.expiresAt?.let { parseIso8601ToEpochMs(it) },
                 )
             }
-            httpStatus in HTTP_CLIENT_ERROR_RANGE ->
+
+            httpStatus in HTTP_CLIENT_ERROR_RANGE -> {
                 throw GrantError.ClientError(response.error ?: response.msg ?: "Unknown client error")
-            else ->
+            }
+
+            else -> {
                 throw GrantError.ServerError(httpStatus)
+            }
         }
     }
 

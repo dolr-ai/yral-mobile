@@ -42,7 +42,10 @@ class AndroidVersionConfigurationTest {
         var depth = 0
         for (index in openBrace until length) {
             when (this[index]) {
-                '{' -> depth++
+                '{' -> {
+                    depth++
+                }
+
                 '}' -> {
                     depth--
                     if (depth == 0) {

@@ -12,17 +12,27 @@ fun getPlayerLifecycleObserver(
 ): LifecycleEventObserver =
     LifecycleEventObserver { _, event ->
         when (event) {
-            Lifecycle.Event.ON_RESUME ->
+            Lifecycle.Event.ON_RESUME -> {
                 handleOnResume(
                     player = player,
                     isPause = isPause,
                     wasAppInBackground = wasAppInBackground,
                     setWasAppInBackground = setWasAppInBackground,
                 )
+            }
 
-            Lifecycle.Event.ON_PAUSE -> handleOnPause(player, setWasAppInBackground)
-            Lifecycle.Event.ON_STOP -> handleOnStop(player, setWasAppInBackground)
-            Lifecycle.Event.ON_DESTROY -> handleOnDestroy(player)
+            Lifecycle.Event.ON_PAUSE -> {
+                handleOnPause(player, setWasAppInBackground)
+            }
+
+            Lifecycle.Event.ON_STOP -> {
+                handleOnStop(player, setWasAppInBackground)
+            }
+
+            Lifecycle.Event.ON_DESTROY -> {
+                handleOnDestroy(player)
+            }
+
             else -> { }
         }
     }
