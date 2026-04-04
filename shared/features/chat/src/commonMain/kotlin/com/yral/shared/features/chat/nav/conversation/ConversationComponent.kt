@@ -12,6 +12,7 @@ abstract class ConversationComponent {
     abstract val openConversationParams: OpenConversationParams
     abstract val openProfile: (userCanisterData: CanisterData) -> Unit
     abstract fun onBack()
+    abstract fun switchToMainProfile(onComplete: (Boolean) -> Unit = {})
 
     companion object Companion {
         operator fun invoke(
@@ -21,6 +22,7 @@ abstract class ConversationComponent {
             openConversationParams: OpenConversationParams,
             onBack: () -> Unit,
             openProfile: (userCanisterData: CanisterData) -> Unit,
+            switchToMainProfile: (onComplete: (Boolean) -> Unit) -> Unit = {},
         ): ConversationComponent =
             DefaultConversationComponent(
                 componentContext = componentContext,
@@ -29,6 +31,7 @@ abstract class ConversationComponent {
                 openConversationParams = openConversationParams,
                 onBack = onBack,
                 openProfile = openProfile,
+                onSwitchToMainProfile = switchToMainProfile,
             )
     }
 }

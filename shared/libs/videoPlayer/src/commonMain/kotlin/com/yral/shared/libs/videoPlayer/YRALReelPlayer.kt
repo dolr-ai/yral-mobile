@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
-import coil3.compose.AsyncImage
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.EdgeScrollDetectConnection
@@ -77,14 +76,16 @@ fun YRALReelPlayer(
     }
 
     val yralLogger: YralLogger = koinInject()
+    val mediaLoadCrashlyticsReporter = rememberMediaLoadCrashlyticsReporter()
     val baseReporter =
         rememberPlaybackEventReporter(
             didVideoEnd = didVideoEnd,
             recordTime = recordTime,
         )
     val reporter =
-        remember(baseReporter) {
+        remember(baseReporter, mediaItems, mediaLoadCrashlyticsReporter) {
             FirebasePerfPlaybackReporter(baseReporter)
+                .withCrashlytics(mediaLoadCrashlyticsReporter) { index -> mediaItems.getOrNull(index) }
                 .withLogging(yralLogger = yralLogger, enabled = false)
         }
     val coordinator =
@@ -135,8 +136,10 @@ fun YRALReelPlayer(
                 surfaceType = scrollingFeedSurfaceType(),
                 shutter = {
                     if (reel != null) {
-                        AsyncImage(
-                            model = reel.thumbnailUrl,
+                        MediaThumbnailImage(
+                            thumbnailUrl = reel.thumbnailUrl,
+                            mediaId = reel.videoId,
+                            index = page,
                             contentDescription = "Thumbnail",
                             contentScale = ContentScale.Fit,
                             modifier = Modifier.fillMaxSize().background(Color.Black),

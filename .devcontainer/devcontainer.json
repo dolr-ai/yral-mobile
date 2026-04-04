@@ -10,8 +10,10 @@
 			"version": "3.14"
 		},
 		"ghcr.io/devcontainers/features/github-cli:1": {},
-		"ghcr.io/devcontainers/features/java:1": {
-			"version": "21"
+		// TODO: switch back to "ghcr.io/devcontainers/features/java:1" once
+		// sdkman/sdkman-cli#1534 is fixed (SDKMAN installer broken as of 2026-04-04).
+		"ghcr.io/roul/devcontainer-features/mise-java:1": {
+			"version": "17"
 		},
 		"ghcr.io/NordcomInc/devcontainer-features/android-sdk:1": {
 			"platform": "35",

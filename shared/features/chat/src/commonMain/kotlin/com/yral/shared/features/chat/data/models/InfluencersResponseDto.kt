@@ -13,4 +13,6 @@ data class InfluencersResponseDto(
     val limit: Int,
     @SerialName("offset")
     val offset: Int,
+    @SerialName("has_more")
+    val hasMore: Boolean? = null,
 )
