@@ -9,6 +9,8 @@ Pod::Spec.new do |spec|
     spec.vendored_frameworks      = 'build/cocoapods/framework/app.framework'
     spec.libraries                = 'c++'
                 
+                
+                
     if !Dir.exist?('build/cocoapods/framework/app.framework') || Dir.empty?('build/cocoapods/framework/app.framework')
         raise "
 
