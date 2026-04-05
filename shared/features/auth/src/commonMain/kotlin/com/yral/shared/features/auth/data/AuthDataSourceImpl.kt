@@ -7,6 +7,7 @@ import com.yral.shared.core.AppConfigurations.OAUTH_BASE_URL
 import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
+import com.yral.shared.data.removedFirebaseCloudFunctionsException
 import com.yral.shared.features.auth.data.models.AuthClientQuery
 import com.yral.shared.features.auth.data.models.CreateAiAccountRequestDto
 import com.yral.shared.features.auth.data.models.CreateAiAccountResponseDto
@@ -23,8 +24,6 @@ import com.yral.shared.features.auth.data.models.SignedDelegationDto
 import com.yral.shared.features.auth.data.models.TokenResponseDto
 import com.yral.shared.features.auth.data.models.VerifyRequestDto
 import com.yral.shared.features.auth.di.AuthEnv
-import com.yral.shared.firebaseStore.cloudFunctionUrl
-import com.yral.shared.firebaseStore.firebaseAppCheckToken
 import com.yral.shared.http.HTTPEventListener
 import com.yral.shared.http.httpDelete
 import com.yral.shared.http.httpPost
@@ -43,7 +42,6 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
-import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.path
@@ -153,29 +151,7 @@ class AuthDataSourceImpl(
     override suspend fun exchangePrincipalId(
         idToken: String,
         principalId: String,
-    ): ExchangePrincipalResponseDto =
-        httpPost(
-            httpClient = client,
-            json = json,
-        ) {
-            url {
-                host = cloudFunctionUrl()
-                path(EXCHANGE_PRINCIPAL_PATH)
-            }
-            val appCheckToken = firebaseAppCheckToken()
-            headers {
-                append(HttpHeaders.Authorization, "Bearer $idToken")
-                append(HEADER_X_FIREBASE_APPCHECK, appCheckToken)
-            }
-            setBody(
-                mapOf(
-                    "data" to
-                        mapOf(
-                            "principal_id" to principalId,
-                        ),
-                ),
-            )
-        }
+    ): ExchangePrincipalResponseDto = throw removedFirebaseCloudFunctionsException("exchangePrincipalId")
 
     override suspend fun deleteAccount(): String {
         val identityWire = preferences.getBytes(PrefKeys.IDENTITY.name)
@@ -397,8 +373,6 @@ class AuthDataSourceImpl(
         private const val GRANT_TYPE_CLIENT_CREDS = "client_credentials"
         private const val GRANT_TYPE_REFRESH_TOKEN = "refresh_token"
         private const val UPDATE_SESSION_AS_REGISTERED = "/v2/update_session_as_registered"
-        private const val EXCHANGE_PRINCIPAL_PATH = "exchange_principal_id"
-        private const val HEADER_X_FIREBASE_APPCHECK = "X-Firebase-AppCheck"
         private const val DELETE_ACCOUNT = "api/v1/user"
         private const val PATH_PHONE_AUTH_LOGIN = "api/phone_auth_login"
         private const val PATH_VERIFY_PHONE_AUTH = "api/verify_phone_auth"

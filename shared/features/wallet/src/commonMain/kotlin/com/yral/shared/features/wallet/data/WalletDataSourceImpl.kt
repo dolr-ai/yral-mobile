@@ -3,26 +3,16 @@ package com.yral.shared.features.wallet.data
 import com.yral.shared.core.AppConfigurations.BILLING_BASE_URL
 import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
 import com.yral.shared.core.AppConfigurations.PUMP_DUMP_BASE_URL
-import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.data.removedFirebaseCloudFunctionsException
 import com.yral.shared.features.wallet.data.models.BillingBalanceResponseDto
 import com.yral.shared.features.wallet.data.models.BillingTransactionsResponseDto
 import com.yral.shared.features.wallet.data.models.BtcPriceResponseDto
 import com.yral.shared.features.wallet.data.models.BtcRewardConfigResponseDto
 import com.yral.shared.features.wallet.data.models.DolrPriceResponseDto
 import com.yral.shared.features.wallet.data.models.GetBalanceResponseDto
-import com.yral.shared.firebaseStore.cloudFunctionUrl
-import com.yral.shared.firebaseStore.firebaseAppCheckToken
 import com.yral.shared.http.httpGet
 import com.yral.shared.rust.service.domain.IndividualUserRepository
 import io.ktor.client.HttpClient
-import io.ktor.client.plugins.expectSuccess
-import io.ktor.client.request.get
-import io.ktor.client.request.headers
-import io.ktor.client.request.parameter
-import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.bodyAsText
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
 import io.ktor.http.path
 import kotlinx.serialization.json.Json
 
@@ -31,32 +21,10 @@ class WalletDataSourceImpl(
     private val json: Json,
     private val individualUserRepository: IndividualUserRepository,
 ) : WalletDataSource {
-    @Suppress("SwallowedException", "TooGenericExceptionCaught")
     override suspend fun getBtcConversionRate(
         idToken: String,
         countryCode: String,
-    ): BtcPriceResponseDto {
-        val response: HttpResponse =
-            httpClient.get {
-                expectSuccess = false
-                url {
-                    host = cloudFunctionUrl()
-                    path(BTC_VALUE_BY_COUNTRY_PATH)
-                    parameter("country_code", countryCode)
-                }
-                val appCheckToken = firebaseAppCheckToken()
-                headers {
-                    append(HttpHeaders.Authorization, "Bearer $idToken")
-                    append(HEADER_X_FIREBASE_APPCHECK, appCheckToken)
-                }
-            }
-        val apiResponseString = response.bodyAsText()
-        if (response.status == HttpStatusCode.OK) {
-            return json.decodeFromString(apiResponseString)
-        } else {
-            throw YralException(apiResponseString)
-        }
-    }
+    ): BtcPriceResponseDto = throw removedFirebaseCloudFunctionsException("getBtcConversionRate")
 
     override suspend fun getUserBtcBalance(
         canisterId: String,
@@ -136,8 +104,6 @@ class WalletDataSourceImpl(
 
     companion object {
         private const val GET_BALANCE_PATH = "v2/balance"
-        private const val BTC_VALUE_BY_COUNTRY_PATH = "btc_value_by_country"
-        private const val HEADER_X_FIREBASE_APPCHECK = "X-Firebase-AppCheck"
         private const val BTC_REWARD_CONFIG_PATH = "api/v1/rewards/config_v2"
         private const val COINGECKO_API_HOST = "api.coingecko.com"
         private const val COINGECKO_PRICE_PATH = "api/v3/simple/price"

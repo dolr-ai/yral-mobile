@@ -14,6 +14,7 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
+            implementation(projects.shared.testSupport)
         }
         commonMain.dependencies {
             implementation(projects.shared.core)
@@ -25,7 +26,6 @@ kotlin {
             implementation(projects.shared.libs.arch)
             implementation(projects.shared.libs.coroutinesX)
             implementation(projects.shared.libs.http)
-            implementation(projects.shared.libs.firebaseStore)
             implementation(projects.shared.data)
             implementation(projects.shared.rust.service)
             implementation(projects.shared.libs.routing.routesApi)

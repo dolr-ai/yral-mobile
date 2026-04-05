@@ -25,8 +25,6 @@ import com.yral.shared.features.root.di.rootModule
 import com.yral.shared.features.subscriptions.di.subscriptionsModule
 import com.yral.shared.features.uploadvideo.di.uploadVideoModule
 import com.yral.shared.features.wallet.di.walletModule
-import com.yral.shared.firebaseAuth.di.firebaseAuthModule
-import com.yral.shared.firebaseStore.di.firestoreModule
 import com.yral.shared.http.HTTPEventListener
 import com.yral.shared.http.di.networkModule
 import com.yral.shared.iap.core.di.iapCoreModule
@@ -68,8 +66,6 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             networkModule,
             fileDownloaderModule,
             rustModule,
-            firebaseAuthModule,
-            firestoreModule,
             dispatchersModule,
             archModule,
             featureFlagModule,

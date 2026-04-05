@@ -276,7 +276,7 @@ class RootViewModel(
             coroutineScope.launch {
                 try {
                     authClient.fetchBalance(session)
-                    authClient.authorizeFirebase(session)
+                    authClient.authorizeFirebase()
                 } catch (e: YralFBAuthException) {
                     // Do not update error in state since no error message required
                     Logger.e("Firebase Auth error - $e")
@@ -707,7 +707,7 @@ class RootViewModel(
                     authClient.fetchBalance(session)
                 } else {
                     authClient.initialize()
-                    authClient.authorizeFirebase(session)
+                    authClient.authorizeFirebase()
                     authClient.fetchBalance(session)
                 }
                 updateAccountDialogForSwitchedProfile(

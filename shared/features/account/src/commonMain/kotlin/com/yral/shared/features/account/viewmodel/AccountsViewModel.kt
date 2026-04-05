@@ -19,14 +19,12 @@ import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.domain.useCases.DeleteAccountUseCase
 import com.yral.shared.features.auth.domain.useCases.DeregisterNotificationTokenUseCase
 import com.yral.shared.features.auth.domain.useCases.RegisterNotificationTokenUseCase
-import com.yral.shared.firebaseStore.getDownloadUrl
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import com.yral.shared.preferences.stores.AccountDirectoryStore
 import com.yral.shared.preferences.stores.AccountSessionPreferences
 import com.yral.shared.preferences.stores.BotIdentitiesStore
-import dev.gitlive.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,7 +43,6 @@ class AccountsViewModel internal constructor(
     private val softDeleteInfluencerOnBotServerUseCase: SoftDeleteInfluencerOnBotServerUseCase,
     val accountsTelemetry: AccountsTelemetry,
     private val flagManager: FeatureFlagManager,
-    private val firebaseStorage: FirebaseStorage,
     private val preferences: Preferences,
     private val accountSessionPreferences: AccountSessionPreferences,
     private val accountDirectoryStore: AccountDirectoryStore,
@@ -76,13 +73,6 @@ class AccountsViewModel internal constructor(
     val state: StateFlow<AccountsState> = _state.asStateFlow()
 
     init {
-        coroutineScope.launch {
-            _state.value.accountLinks.supportIcon?.let { supportIcon ->
-                getDownloadUrl(supportIcon, firebaseStorage)
-                    .takeIf { url -> url.isNotEmpty() }
-                    ?.let { iconUrl -> _state.update { it.copy(supportIcon = iconUrl) } }
-            }
-        }
         coroutineScope.launch {
             val isEnabled = preferences.getBoolean(PrefKeys.NOTIFICATION_ALERTS_ENABLED.name) ?: false
             _state.update { it.copy(alertsEnabled = isEnabled) }
@@ -203,7 +193,6 @@ class AccountsViewModel internal constructor(
                     type = AccountHelpLinkType.TALK_TO_TEAM,
                     link = accountLinks.support.trim(),
                     linkText = accountLinks.supportText,
-                    linkRemoteIcon = _state.value.supportIcon,
                     openInExternalBrowser = true,
                     menuCtaType = MenuCtaType.TALK_TO_THE_TEAM,
                 ),
@@ -349,7 +338,6 @@ data class AccountHelpLink(
     val type: AccountHelpLinkType,
     val link: String,
     val linkText: String? = null,
-    val linkRemoteIcon: String? = null,
     val openInExternalBrowser: Boolean,
     val menuCtaType: MenuCtaType,
 )
@@ -369,7 +357,6 @@ data class AccountsState(
     val accountInfo: AccountInfo?,
     val bottomSheetType: AccountBottomSheet = AccountBottomSheet.None,
     val accountLinks: AccountLinksDto,
-    val supportIcon: String? = null,
     val isWalletEnabled: Boolean = false,
     val isSubscriptionEnabled: Boolean = false,
     val isYralProAvailable: Boolean = false,

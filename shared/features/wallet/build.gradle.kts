@@ -24,8 +24,6 @@ kotlin {
             implementation(projects.shared.libs.arch)
             implementation(projects.shared.libs.coroutinesX)
             implementation(projects.shared.libs.analytics)
-            implementation(projects.shared.libs.firebaseStore)
-            implementation(projects.shared.libs.firebaseAuth)
             implementation(projects.shared.libs.designsystem)
             implementation(projects.shared.libs.routing.routesApi)
             implementation(projects.shared.libs.featureFlag)
