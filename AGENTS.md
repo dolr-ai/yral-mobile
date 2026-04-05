@@ -98,6 +98,8 @@ When a KMM module needs a native iOS pod for Kotlin interop, declare it via `pod
 
 The exception: if a pod is also imported directly in Swift code inside `iosApp/`, it **must** remain in the Podfile. KMM `pod()` only generates Kotlin cinterop bindings and does not add the framework to Xcode's build path for Swift.
 
+A second exception: even if a pod is **not** imported in Swift, it must still be in the Podfile if DYLD needs to resolve it as a dynamic framework at runtime (e.g. `FirebasePerformance`, `FirebaseStorage`). KMM `pod()` declarations do not place the built `.framework` into the simulator products directory used at test time.
+
 ## Working Pattern
 
 When adding or changing a feature:

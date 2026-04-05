@@ -20,9 +20,6 @@ configureCocoapods {
     pod("FirebaseAppCheck") {
         version = "11.14.0"
     }
-    pod("FirebaseStorage") {
-        version = "11.14.0"
-    }
 }
 
 kotlin {
@@ -34,7 +31,6 @@ kotlin {
             api(libs.kotlinx.coroutines.core)
             api(libs.kotlinResult.core)
             api(libs.kotlinResult.coroutines)
-            api(libs.gitlive.firebase.storage)
             implementation(libs.ktor.serialization.kotlinx.json)
 
             api(libs.touchlab.logger)
