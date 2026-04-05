@@ -1,7 +1,5 @@
 # AGENTS.md
 
-Guidance for Codex and other coding agents working in this repository.
-
 ## Project Snapshot
 
 YRAL Mobile is a Kotlin Multiplatform app with thin Android and iOS wrappers and most product code in `/shared`. UI is Compose Multiplatform. Blockchain and canister work goes through Rust FFI.
@@ -93,6 +91,12 @@ features/yourfeature/
 - Rust-backed services are exposed through wrappers in `/shared/rust/service/`.
 - Default to prebuilt Rust binaries.
 - Only switch to local Rust builds when the task actually requires Rust changes.
+
+### CocoaPods and KMM Modules
+
+When a KMM module needs a native iOS pod for Kotlin interop, declare it via `pod("PodName")` in that module's `build.gradle.kts` using `configureCocoapods { }`. Do **not** also add it to `iosApp/Podfile` — that causes a linker error (`symbol multiply defined`) because the framework ends up linked from two paths.
+
+The exception: if a pod is also imported directly in Swift code inside `iosApp/`, it **must** remain in the Podfile. KMM `pod()` only generates Kotlin cinterop bindings and does not add the framework to Xcode's build path for Swift.
 
 ## Working Pattern
 

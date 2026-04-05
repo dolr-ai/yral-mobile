@@ -57,17 +57,17 @@
             },
             "problemMatcher": []
         },
-        // {
-        //     "label": "iOS: Pin CocoaPods bin",
-        //     "type": "shell",
-        //     "command": "printf 'kotlin.apple.cocoapods.bin=%s\\n' \"$(which pod)\" >> local.properties",
-        //     "presentation": {
-        //         "reveal": "always",
-        //         "panel": "shared",
-        //         "group": "ios-checks"
-        //     },
-        //     "problemMatcher": []
-        // },
+        {
+            "label": "iOS: Pin CocoaPods bin",
+            "type": "shell",
+            "command": "grep -q 'kotlin.apple.cocoapods.bin' local.properties || printf 'kotlin.apple.cocoapods.bin=%s\\n' \"$(which pod)\" >> local.properties",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "group": "ios-checks"
+            },
+            "problemMatcher": []
+        },
         {
             "label": "iOS: Build KMM framework",
             "type": "shell",
@@ -128,7 +128,7 @@
         {
             "label": "iOS Checks",
             "dependsOn": [
-                // "iOS: Pin CocoaPods bin",
+                "iOS: Pin CocoaPods bin",
                 "iOS: Build KMM framework",
                 "iOS: pod install",
                 "iOS: SwiftLint",
