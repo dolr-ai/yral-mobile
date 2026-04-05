@@ -72,6 +72,7 @@ subprojects {
     apply(plugin = "io.gitlab.arturbosch.detekt")
 
     ktlint {
+        version.set("1.8.0")
         val ktlintFiles = project.findProperty("ktlintFiles") as? String
         if (ktlintFiles != null) {
             filter {

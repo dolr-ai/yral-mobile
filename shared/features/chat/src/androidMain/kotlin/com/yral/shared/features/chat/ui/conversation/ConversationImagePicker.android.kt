@@ -139,6 +139,7 @@ actual fun rememberChatImageCapture(onImagePicked: (FilePathChatAttachment) -> U
                     PermissionState.Granted -> {
                         startCapture()
                     }
+
                     PermissionState.Denied,
                     PermissionState.NotDetermined,
                     PermissionState.NotGranted,
@@ -161,6 +162,7 @@ actual fun rememberChatImageCapture(onImagePicked: (FilePathChatAttachment) -> U
                             }
                         }
                     }
+
                     PermissionState.DeniedAlways -> {
                         permissionsController.openAppSettings()
                     }

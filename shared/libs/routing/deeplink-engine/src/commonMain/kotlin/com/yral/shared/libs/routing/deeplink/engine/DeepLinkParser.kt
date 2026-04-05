@@ -17,9 +17,7 @@ import kotlinx.serialization.properties.Properties
 class DeepLinkParser(
     private val routingTable: RoutingTable,
 ) {
-    /**
-     * Type constraint helper to ensure route definitions are valid.
-     */
+    // Type constraint helper to ensure route definitions are valid.
     init {
         require(routingTable.all.isNotEmpty()) { "Routing table cannot be empty" }
         // Verify all route IDs are unique

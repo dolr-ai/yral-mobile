@@ -307,8 +307,14 @@ fun FeedScreen(
                         component.showAlertsOnDialog(AlertsRequestType.FOLLOW_BACK)
                     }
                 }
-                is FeedEvents.UnfollowedSuccessfully -> Unit
-                is FeedEvents.Failed -> ToastManager.showError(type = ToastType.Small(message = event.message))
+
+                is FeedEvents.UnfollowedSuccessfully -> {
+                    Unit
+                }
+
+                is FeedEvents.Failed -> {
+                    ToastManager.showError(type = ToastType.Small(message = event.message))
+                }
             }
         }
     }

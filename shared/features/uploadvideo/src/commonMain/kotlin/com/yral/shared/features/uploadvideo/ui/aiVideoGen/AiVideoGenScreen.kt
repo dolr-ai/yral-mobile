@@ -113,9 +113,11 @@ fun AiVideoGenScreen(
                             ),
                     )
                 }
+
                 is AiVideoGenViewModel.AiVideoGenEvent.RefreshProDetails -> {
                     component.subscriptionCoordinator.refreshCreditBalances()
                 }
+
                 is AiVideoGenViewModel.AiVideoGenEvent.ShowGeneratedToast -> {
                     ToastManager.showSuccess(
                         type =
@@ -124,6 +126,7 @@ fun AiVideoGenScreen(
                             ),
                     )
                 }
+
                 is AiVideoGenViewModel.AiVideoGenEvent.NavigateToHome -> {
                     viewModel.cleanup()
                     component.goToHome()
@@ -169,6 +172,7 @@ fun AiVideoGenScreen(
                     )
                 }
             }
+
             is UiState.Success<*> -> {
                 Column(modifier = Modifier.padding(top = 20.dp)) {
                     GenerationSuccessScreen(
@@ -180,7 +184,10 @@ fun AiVideoGenScreen(
                     )
                 }
             }
-            is UiState.Failure -> Unit // No op since failure is shown in a bottomSheet
+
+            is UiState.Failure -> {
+                Unit
+            } // No op since failure is shown in a bottomSheet
         }
     }
     AiVideoGenScreenPrompts(component, viewState, viewModel)
@@ -205,6 +212,7 @@ private fun AiVideoGenScreenPrompts(
                 setSelectedProvider = { viewModel.selectProvider(it) },
             )
         }
+
         is BottomSheetType.Error -> {
             val handleSheetAction: (action: () -> Unit) -> Unit = { action ->
                 viewModel.setBottomSheetType(BottomSheetType.None)
@@ -230,6 +238,7 @@ private fun AiVideoGenScreenPrompts(
                 },
             )
         }
+
         is BottomSheetType.BackConfirmation -> {
             YralConfirmationMessage(
                 title = stringResource(Res.string.you_will_loose_ai_credits),
@@ -244,7 +253,10 @@ private fun AiVideoGenScreenPrompts(
                 },
             )
         }
-        is BottomSheetType.None -> Unit
+
+        is BottomSheetType.None -> {
+            Unit
+        }
     }
 }
 

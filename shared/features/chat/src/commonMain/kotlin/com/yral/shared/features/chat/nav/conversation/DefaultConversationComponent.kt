@@ -14,10 +14,15 @@ internal class DefaultConversationComponent(
     override val openConversationParams: OpenConversationParams,
     private val onBack: () -> Unit,
     override val openProfile: (userCanisterData: CanisterData) -> Unit,
+    private val onSwitchToMainProfile: (onComplete: (Boolean) -> Unit) -> Unit,
 ) : ConversationComponent(),
     ComponentContext by componentContext,
     KoinComponent {
     override fun onBack() {
         onBack.invoke()
+    }
+
+    override fun switchToMainProfile(onComplete: (Boolean) -> Unit) {
+        onSwitchToMainProfile.invoke(onComplete)
     }
 }

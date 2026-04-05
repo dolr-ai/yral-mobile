@@ -14,7 +14,10 @@ internal class DefaultUploadVideoComponent(
     KoinComponent {
     override fun processEvent(value: UploadVideoViewModel.Event) {
         when (value) {
-            UploadVideoViewModel.Event.GoToHome -> goToHome()
+            UploadVideoViewModel.Event.GoToHome -> {
+                goToHome()
+            }
+
             else -> {}
         }
     }

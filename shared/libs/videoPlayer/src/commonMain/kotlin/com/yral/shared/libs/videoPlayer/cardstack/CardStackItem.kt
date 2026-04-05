@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
+import com.yral.shared.libs.videoPlayer.MediaThumbnailImage
 import com.yral.shared.libs.videoPlayer.model.PlayerData
 import com.yral.shared.libs.videoplayback.PlaybackCoordinator
 import com.yral.shared.libs.videoplayback.ui.VideoSurfaceSlot
@@ -62,8 +62,10 @@ internal fun ReelCardContent(
             surfaceType = VideoSurfaceType.TextureView,
             shutter = {
                 if (!suppressShutter) {
-                    AsyncImage(
-                        model = playerData.thumbnailUrl,
+                    MediaThumbnailImage(
+                        thumbnailUrl = playerData.thumbnailUrl,
+                        mediaId = playerData.videoId,
+                        index = mediaIndex,
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,
@@ -73,8 +75,10 @@ internal fun ReelCardContent(
         )
 
         if (showPlaceholderOverlay) {
-            AsyncImage(
-                model = playerData.thumbnailUrl,
+            MediaThumbnailImage(
+                thumbnailUrl = playerData.thumbnailUrl,
+                mediaId = playerData.videoId,
+                index = mediaIndex,
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,

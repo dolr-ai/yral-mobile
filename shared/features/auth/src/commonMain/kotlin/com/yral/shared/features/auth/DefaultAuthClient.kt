@@ -453,12 +453,15 @@ class DefaultAuthClient(
                 authenticate(result.code, currentUserPrincipal)
                 return
             }
+
             is OAuthResult.Error -> {
                 error = result.errorDescription?.let { "${result.error}: $it" } ?: result.error
             }
+
             is OAuthResult.Cancelled -> {
                 error = "OAuth authentication was cancelled by user"
             }
+
             is OAuthResult.TimedOut -> {
                 error = "OAuth authentication timed out - please try again"
             }
@@ -657,6 +660,7 @@ class DefaultAuthClient(
                             authTelemetry.authFailed(SocialProvider.PHONE)
                             throw YralAuthException("Phone auth verification failed - ${response.errorMessage}")
                         }
+
                         is PhoneAuthVerifyResponse.Success -> {
                             authTelemetry.otpValidationResult(
                                 status = OtpValidationStatus.SUCCESS,

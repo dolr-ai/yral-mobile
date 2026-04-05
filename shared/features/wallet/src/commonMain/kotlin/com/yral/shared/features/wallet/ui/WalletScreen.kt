@@ -68,11 +68,12 @@ import yral_mobile.shared.features.wallet.generated.resources.step_3_desc
 import yral_mobile.shared.features.wallet.generated.resources.step_3_title
 import yral_mobile.shared.features.wallet.generated.resources.step_4_desc
 import yral_mobile.shared.features.wallet.generated.resources.step_4_title
+import yral_mobile.shared.features.wallet.generated.resources.switch_profile
 import yral_mobile.shared.features.wallet.generated.resources.total_earnings_inr
 import yral_mobile.shared.features.wallet.generated.resources.transaction_history
 import yral_mobile.shared.features.wallet.generated.resources.wallet_locked
 import yral_mobile.shared.features.wallet.generated.resources.wallet_locked_description
-import yral_mobile.shared.features.wallet.generated.resources.wallet_locked_switch_account
+import yral_mobile.shared.features.wallet.generated.resources.wallet_locked_switch_profile_description
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
@@ -88,6 +89,12 @@ fun WalletScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.onScreenViewed() }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val accessState =
+        resolveWalletAccessState(
+            isSocialSignedIn = state.isSocialSignedIn,
+            hasBots = state.hasBots,
+            isBotAccount = state.isBotAccount,
+        )
 
     if (state.showTransactionHistory) {
         TransactionHistoryScreen(
@@ -95,26 +102,49 @@ fun WalletScreen(
             onBack = { viewModel.toggleTransactionHistory(false) },
             onOpenProfile = component.onOpenProfile,
         )
-    } else if (state.isSocialSignedIn && state.hasBots && state.isBotAccount) {
-        WalletUnlockedContent(
-            component = component,
-            state = state,
-            viewModel = viewModel,
-            modifier = modifier,
-        )
-    } else if (state.isSocialSignedIn && state.hasBots) {
-        WalletLockedContent(
-            component = component,
-            onCreateInfluencerClick = null,
-            modifier = modifier,
-            descriptionOverride = stringResource(Res.string.wallet_locked_switch_account),
-        )
     } else {
-        WalletLockedContent(
-            component = component,
-            onCreateInfluencerClick = onCreateInfluencerClick,
-            modifier = modifier,
-        )
+        when (accessState) {
+            WalletAccessState.Unlocked -> {
+                WalletUnlockedContent(
+                    component = component,
+                    state = state,
+                    viewModel = viewModel,
+                    modifier = modifier,
+                )
+            }
+
+            is WalletAccessState.Locked -> {
+                WalletLockedContent(
+                    component = component,
+                    ctaText =
+                        when (accessState.cta) {
+                            WalletLockedCta.CreateInfluencer -> {
+                                stringResource(Res.string.create_influencer)
+                            }
+
+                            WalletLockedCta.SwitchProfile -> {
+                                stringResource(Res.string.switch_profile)
+                            }
+                        },
+                    onCtaClick =
+                        when (accessState.cta) {
+                            WalletLockedCta.CreateInfluencer -> onCreateInfluencerClick
+                            WalletLockedCta.SwitchProfile -> component.onSwitchProfile
+                        },
+                    modifier = modifier,
+                    descriptionOverride =
+                        when (accessState.subtitle) {
+                            WalletLockedSubtitle.Default -> {
+                                null
+                            }
+
+                            WalletLockedSubtitle.SwitchProfile -> {
+                                stringResource(Res.string.wallet_locked_switch_profile_description)
+                            }
+                        },
+                )
+            }
+        }
     }
 
     if (state.howToEarnVisible) {
@@ -158,7 +188,8 @@ private fun WalletHeader(component: WalletComponent) {
 @Composable
 private fun WalletLockedContent(
     component: WalletComponent,
-    onCreateInfluencerClick: (() -> Unit)?,
+    ctaText: String?,
+    onCtaClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
     descriptionOverride: String? = null,
 ) {
@@ -188,11 +219,11 @@ private fun WalletLockedContent(
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 32.dp),
         )
-        if (onCreateInfluencerClick != null) {
+        if (ctaText != null && onCtaClick != null) {
             Spacer(modifier = Modifier.height(24.dp))
             YralGradientButton(
-                text = stringResource(Res.string.create_influencer),
-                onClick = onCreateInfluencerClick,
+                text = ctaText,
+                onClick = onCtaClick,
                 modifier = Modifier.padding(horizontal = 32.dp),
             )
         }

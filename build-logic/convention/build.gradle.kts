@@ -49,6 +49,7 @@ dependencies {
     compileOnly(libs.detekt.gradlePlugin)
     implementation(libs.truth)
     lintChecks(libs.androidx.lint.gradle)
+    testImplementation(libs.junit4)
 }
 
 tasks {

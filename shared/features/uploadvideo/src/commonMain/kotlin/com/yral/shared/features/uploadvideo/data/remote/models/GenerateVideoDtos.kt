@@ -118,13 +118,15 @@ internal object VideoGenErrorDtoSerializer : KSerializer<VideoGenErrorDto> {
             decoder as? JsonDecoder
                 ?: throw SerializationException("Only JSON decoding is supported")
         return when (val element = jsonDecoder.decodeJsonElement()) {
-            is JsonPrimitive ->
+            is JsonPrimitive -> {
                 when (element.content) {
                     "AuthError" -> VideoGenErrorDto.AuthError
                     "InsufficientBalance" -> VideoGenErrorDto.InsufficientBalance
                     "InvalidSignature" -> VideoGenErrorDto.InvalidSignature
                     else -> throw SerializationException("Unknown unit variant: ${element.content}")
                 }
+            }
+
             is JsonObject -> {
                 val key =
                     element.keys.firstOrNull()
@@ -140,7 +142,10 @@ internal object VideoGenErrorDtoSerializer : KSerializer<VideoGenErrorDto> {
                     else -> throw SerializationException("Unknown tuple variant: $key")
                 }
             }
-            else -> throw SerializationException("Unexpected JSON element type for VideoGenError")
+
+            else -> {
+                throw SerializationException("Unexpected JSON element type for VideoGenError")
+            }
         }
     }
 
@@ -174,7 +179,7 @@ internal fun GenerateVideoParams.toRequestDto(delegatedIdentityWire: KotlinDeleg
 
 private fun ImageData.toJsonElement(): JsonElement =
     when (this) {
-        is ImageData.Base64 ->
+        is ImageData.Base64 -> {
             buildJsonObject {
                 put("type", "Base64")
                 put(
@@ -185,6 +190,7 @@ private fun ImageData.toJsonElement(): JsonElement =
                     },
                 )
             }
+        }
     }
 
 internal suspend fun HttpResponse.parseGenerateVideoResponse(json: Json): GenerateVideoResult {

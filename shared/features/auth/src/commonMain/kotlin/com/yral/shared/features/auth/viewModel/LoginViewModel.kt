@@ -186,7 +186,10 @@ class LoginViewModel(
             val country = currentState.selectedCountry ?: return@launch
             val number = currentState.phoneNumber
             when {
-                number.isBlank() -> _state.update { it.copy(phoneValidationError = null) }
+                number.isBlank() -> {
+                    _state.update { it.copy(phoneValidationError = null) }
+                }
+
                 else -> {
                     val isValid = phoneValidator.isValid(number, country.code)
                     if (isValid) {

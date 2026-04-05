@@ -13,6 +13,7 @@ import com.yral.shared.features.chat.ui.conversation.ChatConversationScreen
 import com.yral.shared.features.chat.ui.home.ChatHomeScreen
 import com.yral.shared.features.chat.viewmodel.ChatWallViewModel
 import com.yral.shared.features.chat.viewmodel.ConversationViewModel
+import com.yral.shared.features.chat.viewmodel.InboxViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -20,6 +21,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun ChatScreen(
     component: ChatComponent,
     chatWallViewModel: ChatWallViewModel = koinViewModel(),
+    inboxViewModel: InboxViewModel = koinViewModel(),
     conversationViewModel: ConversationViewModel = koinViewModel(),
     modifier: Modifier = Modifier,
     conversationModifier: Modifier = Modifier,
@@ -31,18 +33,22 @@ fun ChatScreen(
             modifier = Modifier.fillMaxSize(),
         ) { child ->
             when (val instance = child.instance) {
-                is ChatComponent.Child.Home ->
+                is ChatComponent.Child.Home -> {
                     ChatHomeScreen(
                         component = instance.component,
                         chatWallViewModel = chatWallViewModel,
+                        inboxViewModel = inboxViewModel,
                         modifier = Modifier.fillMaxSize(),
                     )
-                is ChatComponent.Child.Conversation ->
+                }
+
+                is ChatComponent.Child.Conversation -> {
                     ChatConversationScreen(
                         component = instance.component,
                         viewModel = conversationViewModel,
                         modifier = conversationModifier.fillMaxSize(),
                     )
+                }
             }
         }
     }

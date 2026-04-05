@@ -9,13 +9,17 @@ internal actual fun Throwable.isPlatformDnsResolutionFailure(): Boolean =
 
 internal actual fun Throwable.toDnsLookupException(hostname: String): DNSLookupException =
     when (this) {
-        is DNSLookupException -> this
-        else ->
+        is DNSLookupException -> {
+            this
+        }
+
+        else -> {
             DNSLookupException(
                 hostname = hostname,
                 lookupSource = "unknown_host",
                 cause = this,
             )
+        }
     }
 
 internal actual fun platformReportsDnsLookupFailure(): Boolean = true

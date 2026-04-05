@@ -7,6 +7,7 @@ import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.chat.nav.inbox.InboxComponent
 import com.yral.shared.features.chat.nav.wall.ChatWallComponent
+import kotlinx.serialization.Serializable
 
 abstract class ChatHomeComponent {
     abstract val stack: Value<ChildStack<*, Child>>
@@ -14,6 +15,13 @@ abstract class ChatHomeComponent {
     abstract fun onDiscoverTabClick()
     abstract fun onInboxTabClick()
     abstract fun openCreateInfluencer()
+
+    @Serializable
+    enum class InitialTab {
+        DISCOVER,
+        INBOX,
+    }
+
     sealed class Child {
         class Discover(
             val component: ChatWallComponent,
@@ -29,11 +37,13 @@ abstract class ChatHomeComponent {
             componentContext: ComponentContext,
             openConversation: (OpenConversationParams) -> Unit,
             openCreateInfluencer: (source: BotCreationSource) -> Unit,
+            initialTab: InitialTab = InitialTab.DISCOVER,
         ): ChatHomeComponent =
             DefaultChatHomeComponent(
                 componentContext = componentContext,
                 openConversation = openConversation,
                 openCreateInfluencer = openCreateInfluencer,
+                initialTab = initialTab,
             )
     }
 }

@@ -305,11 +305,17 @@ fun SessionState.getKey(): String =
 
 fun SessionState.hasSameUserPrincipal(other: SessionState): Boolean =
     when {
-        this::class != other::class -> false
+        this::class != other::class -> {
+            false
+        }
+
         this is SessionState.SignedIn && other is SessionState.SignedIn -> {
             this.session.userPrincipal == other.session.userPrincipal
         }
-        else -> true
+
+        else -> {
+            true
+        }
     }
 
 enum class SessionKey {

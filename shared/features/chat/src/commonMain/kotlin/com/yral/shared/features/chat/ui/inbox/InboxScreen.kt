@@ -64,7 +64,7 @@ fun InboxScreen(
 
     Box(modifier = modifier.fillMaxSize()) {
         when (pagingItems.loadState.refresh) {
-            is LoadState.Loading ->
+            is LoadState.Loading -> {
                 if (pagingItems.itemCount == 0) {
                     InboxLoadingState()
                 } else {
@@ -74,12 +74,17 @@ fun InboxScreen(
                         component = component,
                         onRefresh = {
                             isManualRefresh = true
-                            pagingItems.refresh()
+                            viewModel.refreshConversations()
                         },
                     )
                 }
-            is LoadState.Error -> InboxErrorState()
-            is LoadState.NotLoading ->
+            }
+
+            is LoadState.Error -> {
+                InboxErrorState()
+            }
+
+            is LoadState.NotLoading -> {
                 if (pagingItems.itemCount == 0) {
                     InboxEmptyState()
                 } else {
@@ -89,10 +94,11 @@ fun InboxScreen(
                         component = component,
                         onRefresh = {
                             isManualRefresh = true
-                            pagingItems.refresh()
+                            viewModel.refreshConversations()
                         },
                     )
                 }
+            }
         }
     }
 }

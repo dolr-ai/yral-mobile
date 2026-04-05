@@ -35,7 +35,10 @@ fun rememberStoragePermissionController(): StoragePermissionController {
             } else {
                 // Permission is required, proceed with normal permission flow
                 when (permissionsController.getPermissionState(Permission.WRITE_STORAGE)) {
-                    PermissionState.Granted -> true
+                    PermissionState.Granted -> {
+                        true
+                    }
+
                     PermissionState.Denied,
                     PermissionState.NotDetermined,
                     PermissionState.NotGranted,
@@ -56,6 +59,7 @@ fun rememberStoragePermissionController(): StoragePermissionController {
                             false
                         }
                     }
+
                     PermissionState.DeniedAlways -> {
                         permissionsController.openAppSettings()
                         false

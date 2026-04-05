@@ -223,6 +223,7 @@ fun AccountInfoView(
                     )
                 }
             }
+
             showEditProfile -> {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -242,6 +243,7 @@ fun AccountInfoView(
                     }
                 }
             }
+
             showFollow -> {
                 Row(
                     modifier = Modifier.fillMaxWidth(),

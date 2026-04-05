@@ -53,6 +53,7 @@ class InstallReferrerAttribution(
                                         logger.i { "Play InstallReferrer received: $referrer" }
                                         resumeOnce(referrer)
                                     }
+
                                     else -> {
                                         logger.i { "Play InstallReferrer not available, code=$responseCode" }
                                         resumeOnce(null)

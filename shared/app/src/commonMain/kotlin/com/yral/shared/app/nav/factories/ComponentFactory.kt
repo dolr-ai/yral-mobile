@@ -115,6 +115,9 @@ internal class ComponentFactory(
             openConversationParams = config.params,
             onBack = rootComponent::onBackClicked,
             openProfile = rootComponent::openProfile,
+            switchToMainProfile = { onComplete ->
+                rootComponent.rootViewModel.switchToMainAccount(onComplete)
+            },
         )
 
     fun createWallet(componentContext: ComponentContext): WalletComponent =
@@ -124,6 +127,7 @@ internal class ComponentFactory(
             showBackIcon = true,
             onBack = rootComponent::onBackClicked,
             onCreateInfluencer = { rootComponent.openCreateInfluencer(BotCreationSource.WALLET) },
+            onSwitchProfile = { rootComponent.rootViewModel.showAccountSwitcher() },
             onOpenProfile = rootComponent::openProfile,
         )
 

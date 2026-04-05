@@ -109,13 +109,17 @@ private fun rememberImageRequest(
 ): ImageRequest =
     remember(imageUrl, enableCrossfade) {
         when (imageUrl) {
-            is ImageRequest -> imageUrl
-            else ->
+            is ImageRequest -> {
+                imageUrl
+            }
+
+            else -> {
                 ImageRequest
                     .Builder(context)
                     .data(imageUrl)
                     .crossfade(enableCrossfade)
                     .build()
+            }
         }
     }
 

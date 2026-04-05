@@ -156,12 +156,25 @@ internal class PurchaseManager(
         isSuspended: Boolean?,
     ): SubscriptionStatus =
         when {
-            isSuspended == true -> SubscriptionStatus.PAUSED
-            expirationDate != null && expirationDate <= Clock.System.now().toEpochMilliseconds() ->
+            isSuspended == true -> {
+                SubscriptionStatus.PAUSED
+            }
+
+            expirationDate != null && expirationDate <= Clock.System.now().toEpochMilliseconds() -> {
                 SubscriptionStatus.EXPIRED
-            isAutoRenewing == null && expirationDate == null -> SubscriptionStatus.UNKNOWN
-            isAutoRenewing == false -> SubscriptionStatus.CANCELLED
-            else -> SubscriptionStatus.ACTIVE
+            }
+
+            isAutoRenewing == null && expirationDate == null -> {
+                SubscriptionStatus.UNKNOWN
+            }
+
+            isAutoRenewing == false -> {
+                SubscriptionStatus.CANCELLED
+            }
+
+            else -> {
+                SubscriptionStatus.ACTIVE
+            }
         }
 
     suspend fun consumePurchase(purchaseToken: String): Result<Unit> {

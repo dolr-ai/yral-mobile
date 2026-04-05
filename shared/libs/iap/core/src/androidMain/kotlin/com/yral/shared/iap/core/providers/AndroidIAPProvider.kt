@@ -97,6 +97,7 @@ internal class AndroidIAPProvider(
                             )
                     productDetailsParamsBuilder.setOfferToken(effectiveOffer.offerToken)
                 }
+
                 ProductType.ONE_TIME -> {
                     val oneTimeOffers = productDetails.oneTimePurchaseOfferDetailsList
                     val (_, promoOffer) = resolveBaseAndPromo(oneTimeOffers) { it.offerId }
@@ -279,6 +280,7 @@ internal class AndroidIAPProvider(
                 BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE,
                 BillingClient.BillingResponseCode.ERROR,
                 -> IAPError.BillingUnavailable(Exception(billingResult.debugMessage))
+
                 else -> IAPError.UnknownError(Exception(billingResult.debugMessage))
             }
 

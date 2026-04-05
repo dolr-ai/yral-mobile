@@ -75,7 +75,10 @@ internal class DefaultProfileComponent(
                     Logger.d("DefaultProfileComponent") { "handleNavigation: channelResult: $channelResult" }
                 }
             }
-            else -> Unit
+
+            else -> {
+                Unit
+            }
         }
     }
 

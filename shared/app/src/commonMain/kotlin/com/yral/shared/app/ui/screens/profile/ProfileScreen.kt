@@ -52,12 +52,13 @@ internal fun ProfileScreen(
                 )
             }
 
-            is ProfileComponent.Child.EditProfile ->
+            is ProfileComponent.Child.EditProfile -> {
                 EditProfileScreen(
                     component = instance.component,
                     viewModel = koinViewModel<EditProfileViewModel>(),
                     modifier = Modifier.fillMaxSize(),
                 )
+            }
         }
     }
 }

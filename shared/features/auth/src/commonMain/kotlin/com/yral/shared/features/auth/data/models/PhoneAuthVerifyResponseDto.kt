@@ -21,11 +21,12 @@ sealed class PhoneAuthVerifyResponseDto {
 
 fun PhoneAuthVerifyResponseDto.toPhoneAuthVerifyResponse(): PhoneAuthVerifyResponse =
     when (this) {
-        is PhoneAuthVerifyResponseDto.Success ->
+        is PhoneAuthVerifyResponseDto.Success -> {
             PhoneAuthVerifyResponse.Success(
                 idTokenCode = idTokenCode,
                 redirectUri = redirectUri,
             )
+        }
 
         is PhoneAuthVerifyResponseDto.Error -> {
             PhoneAuthVerifyResponse.Error(

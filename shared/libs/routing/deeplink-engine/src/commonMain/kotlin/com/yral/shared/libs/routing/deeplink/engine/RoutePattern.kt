@@ -58,7 +58,10 @@ class RoutePattern(
                         builtSegments.add(value)
                     }
                 }
-                is PathToken.Static -> builtSegments.add(token.value)
+
+                is PathToken.Static -> {
+                    builtSegments.add(token.value)
+                }
             }
         }
 

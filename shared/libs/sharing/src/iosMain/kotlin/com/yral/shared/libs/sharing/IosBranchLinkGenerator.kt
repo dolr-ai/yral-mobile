@@ -48,11 +48,15 @@ class IosBranchLinkGenerator : LinkGenerator {
                                 cont.resumeWithException(IllegalStateException(message))
                             }
 
-                            !url.isNullOrBlank() -> cont.resume(url)
-                            else ->
+                            !url.isNullOrBlank() -> {
+                                cont.resume(url)
+                            }
+
+                            else -> {
                                 cont.resumeWithException(
                                     IllegalStateException("Branch returned null/blank URL"),
                                 )
+                            }
                         }
                     },
                 )

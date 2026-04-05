@@ -99,6 +99,7 @@ class ProfileTelemetry(
                     featureName = Features.PROFILE.getFeatureName(),
                     pageName = CategoryName.PROFILE,
                     videoId = feedDetails.videoID,
+                    isDraft = feedDetails.isDraft,
                 ),
         )
     }
@@ -114,6 +115,7 @@ class ProfileTelemetry(
                     pageName = CategoryName.PROFILE,
                     videoId = feedDetails.videoID,
                     ctaType = catType,
+                    isDraft = feedDetails.isDraft,
                 ),
         )
     }

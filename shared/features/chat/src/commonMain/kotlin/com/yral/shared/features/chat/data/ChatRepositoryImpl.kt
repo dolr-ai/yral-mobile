@@ -13,10 +13,32 @@ import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.domain.models.SendMessageResult
+import com.yral.shared.features.chat.domain.models.totalUnreadConversationBadgeCount
 
 class ChatRepositoryImpl(
     private val dataSource: ChatDataSource,
 ) : ChatRepository {
+    override suspend fun getUnreadConversationCount(principal: String): Int {
+        var offset = 0
+        var unreadCount = 0
+        var hasMore = true
+
+        while (hasMore) {
+            val response =
+                dataSource.listConversations(
+                    limit = UNREAD_COUNT_PAGE_SIZE,
+                    offset = offset,
+                    principal = principal,
+                )
+            val conversations = response.conversations.map { it.toDomain() }
+            unreadCount += conversations.totalUnreadConversationBadgeCount()
+            offset += response.conversations.size
+            hasMore = offset < response.total && response.conversations.isNotEmpty()
+        }
+
+        return unreadCount
+    }
+
     override suspend fun getInfluencersPage(
         limit: Int,
         offset: Int,
@@ -118,5 +140,9 @@ class ChatRepositoryImpl(
 
     override suspend fun markConversationAsRead(conversationId: String) {
         dataSource.markConversationAsRead(conversationId)
+    }
+
+    private companion object {
+        private const val UNREAD_COUNT_PAGE_SIZE = 100
     }
 }

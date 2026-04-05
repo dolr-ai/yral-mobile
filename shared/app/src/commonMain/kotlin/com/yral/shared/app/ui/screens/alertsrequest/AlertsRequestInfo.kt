@@ -30,25 +30,30 @@ data class AlertsRequestInfo(
 @Composable
 fun getAlertRequestInfo(type: AlertsRequestType): AlertsRequestInfo =
     when (type) {
-        AlertsRequestType.FOLLOW_BACK ->
+        AlertsRequestType.FOLLOW_BACK -> {
             AlertsRequestInfo(
                 icon = painterResource(Res.drawable.nudge_follow),
                 title = stringResource(Res.string.follow_back_nudge),
                 subTitle = stringResource(Res.string.enable_follow_back_nudge_msg),
                 buttonText = stringResource(Res.string.turn_on_alerts),
             )
-        AlertsRequestType.VIDEO ->
+        }
+
+        AlertsRequestType.VIDEO -> {
             AlertsRequestInfo(
                 icon = painterResource(Res.drawable.nudge_video),
                 title = stringResource(Res.string.video_nudge),
                 subTitle = stringResource(Res.string.enable_video_nudge_msg),
                 buttonText = stringResource(Res.string.turn_on_alerts),
             )
-        AlertsRequestType.DEFAULT ->
+        }
+
+        AlertsRequestType.DEFAULT -> {
             AlertsRequestInfo(
                 icon = painterResource(Res.drawable.nudge_default),
                 title = stringResource(Res.string.a_little_nudge),
                 subTitle = stringResource(Res.string.enable_notification_message),
                 buttonText = stringResource(Res.string.turn_on_alerts),
             )
+        }
     }

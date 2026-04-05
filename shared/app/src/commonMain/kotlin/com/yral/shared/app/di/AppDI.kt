@@ -10,6 +10,7 @@ import com.yral.shared.app.config.AppUseCaseFailureListener
 import com.yral.shared.app.config.NBRFailureListener
 import com.yral.shared.core.AppConfigurations
 import com.yral.shared.core.di.CHAT_SERVER_BASE_URL
+import com.yral.shared.core.di.INFLUENCER_FEED_SERVER_BASE_URL
 import com.yral.shared.core.di.coreModule
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.crashlytics.di.crashlyticsModule
@@ -112,9 +113,8 @@ internal val loggerModule =
 
 internal val featureUrlsModule =
     module {
-        single<String>(CHAT_SERVER_BASE_URL) {
-            if (get(IS_DEBUG)) AppConfigurations.CHAT_BASE_URL_DEBUG else AppConfigurations.CHAT_BASE_URL
-        }
+        single<String>(CHAT_SERVER_BASE_URL) { AppConfigurations.CHAT_BASE_URL }
+        single<String>(INFLUENCER_FEED_SERVER_BASE_URL) { AppConfigurations.INFLUENCER_FEED_BASE_URL }
     }
 
 internal val dispatchersModule = module { single { AppDispatchers() } }

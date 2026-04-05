@@ -67,12 +67,18 @@ actual class PhoneValidator {
             if (cleanNumber.isEmpty()) return phoneNumber
 
             return when (format) {
-                PhoneNumberFormat.E164 -> formatE164(cleanNumber, regionCode)
+                PhoneNumberFormat.E164 -> {
+                    formatE164(cleanNumber, regionCode)
+                }
+
                 PhoneNumberFormat.INTERNATIONAL -> {
                     val e164 = format(phoneNumber, regionCode, PhoneNumberFormat.E164)
                     formatInternational(e164)
                 }
-                PhoneNumberFormat.NATIONAL -> formatNational(cleanNumber, regionCode)
+
+                PhoneNumberFormat.NATIONAL -> {
+                    formatNational(cleanNumber, regionCode)
+                }
             }
         } catch (e: Exception) {
             return phoneNumber
@@ -281,15 +287,23 @@ actual class PhoneValidator {
 
         // Apply formatting based on national number length
         return when {
-            nationalNumber.isEmpty() -> "+$countryCode"
-            nationalNumber.length <= 3 -> "+$countryCode $nationalNumber"
+            nationalNumber.isEmpty() -> {
+                "+$countryCode"
+            }
+
+            nationalNumber.length <= 3 -> {
+                "+$countryCode $nationalNumber"
+            }
+
             nationalNumber.length <= 6 -> {
                 "+$countryCode ${nationalNumber.take(3)} ${nationalNumber.substring(3)}"
             }
+
             nationalNumber.length <= 10 -> {
                 "+$countryCode ${nationalNumber.take(3)} " +
                     "${nationalNumber.substring(3, 6)} ${nationalNumber.substring(6)}"
             }
+
             else -> {
                 "+$countryCode ${nationalNumber.take(3)} " +
                     "${nationalNumber.substring(3, 6)} ${nationalNumber.substring(6, 9)} ${nationalNumber.substring(9)}"

@@ -697,21 +697,39 @@ private class AndroidPlaybackCoordinator(
             val absDistance = abs(distance)
             if (!policy.usePreparedNextPlayer) {
                 return when {
-                    distance == 0 -> DefaultPreloadManager.PreloadStatus.PRELOAD_STATUS_NOT_PRELOADED
-                    distance > 0 && absDistance <= policy.diskPrefetchNext ->
+                    distance == 0 -> {
+                        DefaultPreloadManager.PreloadStatus.PRELOAD_STATUS_NOT_PRELOADED
+                    }
+
+                    distance > 0 && absDistance <= policy.diskPrefetchNext -> {
                         DefaultPreloadManager.PreloadStatus.specifiedRangeCached(5_000L)
-                    else -> DefaultPreloadManager.PreloadStatus.PRELOAD_STATUS_NOT_PRELOADED
+                    }
+
+                    else -> {
+                        DefaultPreloadManager.PreloadStatus.PRELOAD_STATUS_NOT_PRELOADED
+                    }
                 }
             }
             return when {
-                distance == 0 -> DefaultPreloadManager.PreloadStatus.PRELOAD_STATUS_NOT_PRELOADED
-                distance < 0 && absDistance <= policy.preparedPrev ->
+                distance == 0 -> {
+                    DefaultPreloadManager.PreloadStatus.PRELOAD_STATUS_NOT_PRELOADED
+                }
+
+                distance < 0 && absDistance <= policy.preparedPrev -> {
                     DefaultPreloadManager.PreloadStatus.specifiedRangeLoaded(1_000L)
-                distance > 0 && absDistance <= policy.preparedNext ->
+                }
+
+                distance > 0 && absDistance <= policy.preparedNext -> {
                     DefaultPreloadManager.PreloadStatus.specifiedRangeLoaded(1_000L)
-                distance > 0 && absDistance <= policy.diskPrefetchNext ->
+                }
+
+                distance > 0 && absDistance <= policy.diskPrefetchNext -> {
                     DefaultPreloadManager.PreloadStatus.specifiedRangeCached(5_000L)
-                else -> DefaultPreloadManager.PreloadStatus.PRELOAD_STATUS_NOT_PRELOADED
+                }
+
+                else -> {
+                    DefaultPreloadManager.PreloadStatus.PRELOAD_STATUS_NOT_PRELOADED
+                }
             }
         }
     }

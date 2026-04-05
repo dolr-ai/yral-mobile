@@ -120,7 +120,10 @@ fun ProfileReelPlayer(
                     onViewsClick = { onViewsClick(currentVideo) },
                 )
                 when (val reportSheetState = reportSheetState) {
-                    ReportSheetState.Closed -> Unit
+                    ReportSheetState.Closed -> {
+                        Unit
+                    }
+
                     is ReportSheetState.Open -> {
                         ReportVideoSheet(
                             onDismissRequest = { dismissReportSheet(currentVideo) },

@@ -1,5 +1,4 @@
 import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
-import java.util.Locale
 
 plugins {
     alias(libs.plugins.yral.android.application)
@@ -14,8 +13,6 @@ android {
     namespace = "com.yral.android"
     defaultConfig {
         applicationId = "com.yral.android"
-        versionCode = 1585
-        versionName = "2.8.1"
         ndkVersion = "29.0.14206865"
         buildConfigField(
             type = "String",
@@ -77,14 +74,15 @@ android {
     productFlavors {
         create("staging") {
             dimension = "version"
-            versionCode = 1596 // ci:staging-version-code
+            versionCode = 1601 // ci:staging-version-code
+            versionName = "2.8.5" // ci:staging-version-name
             signingConfig = signingConfigs.getByName("staging")
         }
         create("prod") {
             applicationId = "com.yral.android.app"
             dimension = "version"
-            versionCode = 81 // ci:prod-version-code
-            versionName = "2.8.1" // ci:prod-version-name
+            versionCode = 83 // ci:prod-version-code
+            versionName = "2.8.4" // ci:prod-version-name
             signingConfig = signingConfigs.getByName("release")
         }
     }
@@ -171,18 +169,12 @@ dependencies {
 }
 
 afterEvaluate {
-    android.buildTypes.forEach { buildType ->
-        if (buildType.name.equals("release", ignoreCase = true)) {
-            tasks
-                .named(
-                    "bundle${
-                        buildType.name.replaceFirstChar {
-                            if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-                        }
-                    }",
-                ).configure {
-                    dependsOn("uploadCrashlyticsSymbolFileRelease")
-                }
+    listOf(
+        "StagingRelease" to "uploadCrashlyticsSymbolFileStagingRelease",
+        "ProdRelease" to "uploadCrashlyticsSymbolFileProdRelease",
+    ).forEach { (bundleVariant, symbolUploadTask) ->
+        tasks.named("bundle$bundleVariant").configure {
+            dependsOn(symbolUploadTask)
         }
     }
 }

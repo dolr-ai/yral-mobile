@@ -47,6 +47,8 @@ import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.SignupPageName
+import com.yral.shared.app.ui.ChatUnreadBadge
+import com.yral.shared.app.ui.chatUnreadBadgeText
 import com.yral.shared.app.ui.screens.feed.FeedScaffoldScreen
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent.SlotChild
@@ -67,6 +69,7 @@ import com.yral.shared.features.auth.ui.LoginScreenType
 import com.yral.shared.features.auth.ui.rememberLoginInfo
 import com.yral.shared.features.chat.ui.ChatScreen
 import com.yral.shared.features.chat.viewmodel.ChatWallViewModel
+import com.yral.shared.features.chat.viewmodel.InboxViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.profile.viewmodel.ProfileViewModel
 import com.yral.shared.features.wallet.ui.WalletScreen
@@ -107,6 +110,10 @@ internal fun HomeScreen(
     sessionState: SessionState,
     isPendingLogin: Boolean,
 ) {
+    val sessionKey = sessionState.getKey()
+    val inboxViewModel = koinViewModel<InboxViewModel>(key = "inbox-$sessionKey")
+    val chatUnreadCount by inboxViewModel.unreadConversationCount.collectAsStateWithLifecycle()
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.primaryContainer,
         modifier = Modifier.fillMaxSize(),
@@ -134,6 +141,7 @@ internal fun HomeScreen(
             }
             HomeNavigationBar(
                 currentTab = currentTab,
+                chatUnreadCount = chatUnreadCount,
                 updateCurrentTab = updateCurrentTab,
                 bottomNavigationClicked = bottomNavigationAnalytics,
             )
@@ -148,6 +156,8 @@ internal fun HomeScreen(
                 Modifier
                     .padding(innerPadding)
                     .background(MaterialTheme.colorScheme.primaryContainer),
+            chatUnreadCount = chatUnreadCount,
+            inboxViewModel = inboxViewModel,
             sessionState = sessionState,
             updateProfileVideosCount = updateProfileVideosCount,
         )
@@ -161,11 +171,12 @@ private fun SlotContent(component: HomeComponent) {
     val slot by component.slot.subscribeAsState()
     slot.child?.instance?.also { slotChild ->
         when (slotChild) {
-            is SlotChild.VideoViewsRewardsBottomSheet ->
+            is SlotChild.VideoViewsRewardsBottomSheet -> {
                 VideoViewsRewardsBottomSheet(
                     component = slotChild.component,
                     data = slotChild.data,
                 )
+            }
         }
     }
 }
@@ -176,6 +187,8 @@ private fun SlotContent(component: HomeComponent) {
 private fun HomeScreenContent(
     component: HomeComponent,
     modifier: Modifier,
+    chatUnreadCount: Int,
+    inboxViewModel: InboxViewModel,
     sessionState: SessionState,
     updateProfileVideosCount: (count: Int) -> Unit,
 ) {
@@ -198,23 +211,28 @@ private fun HomeScreenContent(
         modifier = modifier,
     ) {
         when (val child = it.instance) {
-            is HomeComponent.Child.Feed ->
+            is HomeComponent.Child.Feed -> {
                 FeedScaffoldScreen(
                     component = child.component,
                     feedViewModel = feedViewModel,
+                    chatUnreadCount = chatUnreadCount,
+                    onInboxClick = component::onChatInboxClick,
                 )
+            }
 
-            is HomeComponent.Child.UploadVideo ->
+            is HomeComponent.Child.UploadVideo -> {
                 UploadVideoRootScreen(
                     component = child.component,
                 )
+            }
 
-            is HomeComponent.Child.Account ->
+            is HomeComponent.Child.Account -> {
                 AccountScreen(
                     component = child.component,
                     viewModel = accountViewModel,
                     onAlertsToggleRequest = alertsPermissionController.toggle,
                 )
+            }
 
             is HomeComponent.Child.Wallet -> {
                 val homeState by component.homeViewModel.state.collectAsStateWithLifecycle()
@@ -240,7 +258,7 @@ private fun HomeScreenContent(
                 )
             }
 
-            is HomeComponent.Child.Profile ->
+            is HomeComponent.Child.Profile -> {
                 profileVideos?.let {
                     ProfileScreen(
                         component = child.component,
@@ -250,12 +268,15 @@ private fun HomeScreenContent(
                         onAlertsToggleRequest = alertsPermissionController.toggle,
                     )
                 }
+            }
 
-            is HomeComponent.Child.Chat ->
+            is HomeComponent.Child.Chat -> {
                 ChatScreen(
                     component = child.component,
                     chatWallViewModel = chatWallViewModel,
+                    inboxViewModel = inboxViewModel,
                 )
+            }
         }
         LoginIfRequired(
             currentChild = it.instance,
@@ -328,6 +349,7 @@ private fun getVisibleTabs(): List<HomeTab> {
 @Composable
 private fun HomeNavigationBar(
     currentTab: HomeTab,
+    chatUnreadCount: Int,
     updateCurrentTab: (tab: HomeTab) -> Unit,
     bottomNavigationClicked: (categoryName: CategoryName) -> Unit,
 ) {
@@ -354,6 +376,7 @@ private fun HomeNavigationBar(
                     NavBarIcon(
                         isSelected = currentTab == tab,
                         tab = tab,
+                        badgeCount = if (tab == HomeTab.CHAT) chatUnreadCount else 0,
                     )
                 },
                 colors =
@@ -377,6 +400,7 @@ private fun HomeNavigationBar(
 private fun NavBarIcon(
     isSelected: Boolean,
     tab: HomeTab,
+    badgeCount: Int,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -401,6 +425,7 @@ private fun NavBarIcon(
         NewTaggedColumn(
             tab = tab,
             isSelected = isSelected,
+            badgeCount = badgeCount,
         )
     }
 }
@@ -409,6 +434,7 @@ private fun NavBarIcon(
 private fun NewTaggedColumn(
     tab: HomeTab,
     isSelected: Boolean,
+    badgeCount: Int,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -444,12 +470,33 @@ private fun NewTaggedColumn(
             } else {
                 tab.unSelectedIcon
             }
+        NavBarIconWithBadge(
+            icon = icon,
+            title = tab.title,
+            badgeText = chatUnreadBadgeText(badgeCount),
+        )
+    }
+}
+
+@Composable
+private fun NavBarIconWithBadge(
+    icon: DrawableResource,
+    title: String,
+    badgeText: String?,
+) {
+    Box {
         Icon(
             modifier = Modifier.size(32.dp),
             painter = painterResource(icon),
-            contentDescription = tab.title,
+            contentDescription = title,
             tint = Color.White,
         )
+        if (badgeText != null) {
+            ChatUnreadBadge(
+                text = badgeText,
+                modifier = Modifier.align(Alignment.TopEnd),
+            )
+        }
     }
 }
 
@@ -502,7 +549,7 @@ private fun SessionState.getCanisterData(): CanisterData =
     when (this) {
         SessionState.Initial,
         SessionState.Loading,
-        ->
+        -> {
             CanisterData(
                 canisterId = "",
                 userPrincipalId = "",
@@ -510,7 +557,9 @@ private fun SessionState.getCanisterData(): CanisterData =
                 username = "",
                 isCreatedFromServiceCanister = true,
             )
-        is SessionState.SignedIn ->
+        }
+
+        is SessionState.SignedIn -> {
             CanisterData(
                 canisterId = session.canisterId ?: "",
                 userPrincipalId = session.userPrincipal ?: "",
@@ -518,6 +567,7 @@ private fun SessionState.getCanisterData(): CanisterData =
                 username = session.username,
                 isCreatedFromServiceCanister = session.isCreatedFromServiceCanister,
             )
+        }
     }
 
 @Suppress("LongMethod", "CyclomaticComplexMethod")
@@ -545,6 +595,7 @@ private fun LoginIfRequired(
                     dismissSheet,
                 ) {}
             }
+
             is HomeComponent.Child.UploadVideo -> {
                 val pageName = homeState.pageName ?: SignupPageName.UPLOAD_VIDEO
                 val loginBottomSheetType =
@@ -560,6 +611,7 @@ private fun LoginIfRequired(
                     dismissSheet,
                 ) {}
             }
+
             is HomeComponent.Child.Profile -> {
                 loginState.requestLogin(
                     homeState.pageName ?: SignupPageName.MENU,
@@ -573,6 +625,7 @@ private fun LoginIfRequired(
                     {},
                 )
             }
+
             else -> {
                 loginState.clearLogin()
             }

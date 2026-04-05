@@ -376,8 +376,14 @@ fun ProfileMainScreen(
         enabled = backHandlerEnabled,
         onBack = {
             when (state.videoView) {
-                is VideoViewState.ViewingDraft -> viewModel.closeDraftVideo()
-                is VideoViewState.ViewingReels -> viewModel.closeVideoReel()
+                is VideoViewState.ViewingDraft -> {
+                    viewModel.closeDraftVideo()
+                }
+
+                is VideoViewState.ViewingReels -> {
+                    viewModel.closeVideoReel()
+                }
+
                 else -> {}
             }
         },
@@ -583,12 +589,16 @@ fun ProfileMainScreen(
             )
         }
 
-        DeleteConfirmationState.None, is DeleteConfirmationState.InProgress -> Unit
+        DeleteConfirmationState.None, is DeleteConfirmationState.InProgress -> {
+            Unit
+        }
     }
 
     val followersSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     when (val bottomSheet = state.bottomSheet) {
-        ProfileBottomSheet.None -> Unit
+        ProfileBottomSheet.None -> {
+            Unit
+        }
 
         is ProfileBottomSheet.VideoView -> {
             val videoId = bottomSheet.videoId
@@ -622,7 +632,9 @@ fun ProfileMainScreen(
                     )
                 }
 
-                else -> Unit
+                else -> {
+                    Unit
+                }
             }
         }
 
@@ -635,6 +647,7 @@ fun ProfileMainScreen(
                             FollowersSheetTab.Followers -> {
                                 followers.loadState.refresh is LoadState.NotLoading && followers.itemCount >= 0
                             }
+
                             FollowersSheetTab.Following -> {
                                 following.loadState.refresh is LoadState.NotLoading && following.itemCount >= 0
                             }
@@ -1026,6 +1039,13 @@ private fun SuccessContent(
     onManualRefreshTriggered: (Boolean) -> Unit,
     onTabSelected: (ProfileTab) -> Unit,
 ) {
+    val generatingState by VideoGenerationTracker.state.collectAsState()
+    val pendingGenerationCount =
+        if (isOwnProfile && selectedTab == ProfileTab.Drafts) {
+            generatingState.pendingGenerations.size
+        } else {
+            0
+        }
     Column(
         modifier =
             Modifier
@@ -1048,6 +1068,10 @@ private fun SuccessContent(
 
         val activeVideos = if (selectedTab == ProfileTab.Drafts) draftVideos else profileVideos
         val isRefreshing = activeVideos.loadState.refresh is LoadState.Loading
+        val showDraftsEmptyState =
+            draftVideos.itemCount == 0 &&
+                draftVideos.loadState.refresh is LoadState.NotLoading &&
+                pendingGenerationCount == 0
 
         PullToRefreshBox(
             isRefreshing = isRefreshing,
@@ -1074,40 +1098,40 @@ private fun SuccessContent(
                 }
             },
         ) {
-            if (activeVideos.itemCount == 0 && activeVideos.loadState.refresh is LoadState.NotLoading) {
-                if (selectedTab == ProfileTab.Drafts) {
+            if (selectedTab == ProfileTab.Drafts) {
+                if (showDraftsEmptyState) {
                     DraftsEmptyStateContent(
                         offset = offset,
                         uploadVideo = uploadVideo,
                     )
                 } else {
-                    EmptyStateContent(
-                        offset = offset,
-                        isOwnProfile = isOwnProfile,
-                        uploadVideo = uploadVideo,
-                    )
-                }
-            } else {
-                if (selectedTab == ProfileTab.Drafts) {
                     DraftVideoGridContent(
                         draftVideos = draftVideos,
                         offset = offset,
                         isOwnProfile = isOwnProfile,
-                        openDraftVideo = openDraftVideo,
-                    )
-                } else {
-                    VideoGridContent(
-                        gridState = gridState,
-                        profileVideos = profileVideos,
-                        offset = offset,
-                        isOwnProfile = isOwnProfile,
                         deletingVideoId = deletingVideoId,
-                        openVideoReel = openVideoReel,
+                        openDraftVideo = openDraftVideo,
                         onDeleteVideo = onDeleteVideo,
-                        onDownloadVideo = onDownloadVideo,
-                        onViewsClick = onViewsClick,
                     )
                 }
+            } else if (activeVideos.itemCount == 0 && activeVideos.loadState.refresh is LoadState.NotLoading) {
+                EmptyStateContent(
+                    offset = offset,
+                    isOwnProfile = isOwnProfile,
+                    uploadVideo = uploadVideo,
+                )
+            } else {
+                VideoGridContent(
+                    gridState = gridState,
+                    profileVideos = profileVideos,
+                    offset = offset,
+                    isOwnProfile = isOwnProfile,
+                    deletingVideoId = deletingVideoId,
+                    openVideoReel = openVideoReel,
+                    onDeleteVideo = onDeleteVideo,
+                    onDownloadVideo = onDownloadVideo,
+                    onViewsClick = onViewsClick,
+                )
             }
         }
     }
@@ -1306,7 +1330,9 @@ private fun DraftVideoGridContent(
     draftVideos: LazyPagingItems<FeedDetails>,
     offset: Float,
     isOwnProfile: Boolean,
+    deletingVideoId: String,
     openDraftVideo: (FeedDetails) -> Unit,
+    onDeleteVideo: (FeedDetails) -> Unit,
 ) {
     val generatingState by VideoGenerationTracker.state.collectAsState()
     val pendingGenerations = if (isOwnProfile) generatingState.pendingGenerations else emptyList()
@@ -1347,10 +1373,10 @@ private fun DraftVideoGridContent(
                 VideoGridItem(
                     video = video,
                     isOwnProfile = true,
-                    isDeleting = false,
+                    isDeleting = deletingVideoId == video.videoID,
                     isDraft = true,
                     openVideoReel = { openDraftVideo(video) },
-                    onDeleteClick = {},
+                    onDeleteClick = { onDeleteVideo(video) },
                     onDownloadClick = {},
                     onViewsClick = {},
                 )
@@ -1614,7 +1640,7 @@ private fun VideoGridItem(
             isDeleting = isDeleting,
         )
         DraftOverlay(
-            isDraft = isDraft,
+            isDraft = isDraft && !isDeleting,
         )
     }
 }
@@ -1831,14 +1857,22 @@ private fun BoxScope.VideoGridItemActions(
     val menuItems =
         remember(isDraft, downloadText, deleteText, onDownloadVideo, onDeleteVideo) {
             buildList {
-                add(
-                    YralContextMenuItem(
-                        text = downloadText,
-                        icon = DesignRes.drawable.ic_download,
-                        onClick = onDownloadVideo,
-                    ),
-                )
-                if (!isDraft) {
+                if (isDraft) {
+                    add(
+                        YralContextMenuItem(
+                            text = deleteText,
+                            icon = DesignRes.drawable.delete,
+                            onClick = onDeleteVideo,
+                        ),
+                    )
+                } else {
+                    add(
+                        YralContextMenuItem(
+                            text = downloadText,
+                            icon = DesignRes.drawable.ic_download,
+                            onClick = onDownloadVideo,
+                        ),
+                    )
                     add(
                         YralContextMenuItem(
                             text = deleteText,

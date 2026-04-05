@@ -16,17 +16,28 @@ class VideoGenerationTrackerTest {
     @Test
     fun `start and stop generation update tracker state`() {
         VideoGenerationTracker.startGenerating()
-        val pendingGenerationId = VideoGenerationTracker.state.value.pendingGenerations.single().id
+        val pendingGenerationId =
+            VideoGenerationTracker.state.value.pendingGenerations
+                .single()
+                .id
         VideoGenerationTracker.updateProgress(pendingGenerationId = pendingGenerationId, progress = 1.5f)
 
         assertTrue(VideoGenerationTracker.state.value.isGenerating)
         assertEquals(1, VideoGenerationTracker.state.value.pendingGenerations.size)
-        assertEquals(1f, VideoGenerationTracker.state.value.pendingGenerations.single().progress)
+        assertEquals(
+            1f,
+            VideoGenerationTracker.state.value.pendingGenerations
+                .single()
+                .progress,
+        )
 
         VideoGenerationTracker.stopGenerating()
 
         assertFalse(VideoGenerationTracker.state.value.isGenerating)
-        assertTrue(VideoGenerationTracker.state.value.pendingGenerations.isEmpty())
+        assertTrue(
+            VideoGenerationTracker.state.value.pendingGenerations
+                .isEmpty(),
+        )
     }
 
     @Test
@@ -34,17 +45,29 @@ class VideoGenerationTrackerTest {
         VideoGenerationTracker.startGenerating()
         VideoGenerationTracker.startGenerating()
 
-        val oldestPendingGenerationId = VideoGenerationTracker.state.value.pendingGenerations.first().id
-        val remainingPendingGenerationId = VideoGenerationTracker.state.value.pendingGenerations.last().id
+        val oldestPendingGenerationId =
+            VideoGenerationTracker.state.value.pendingGenerations
+                .first()
+                .id
+        val remainingPendingGenerationId =
+            VideoGenerationTracker.state.value.pendingGenerations
+                .last()
+                .id
 
         VideoGenerationTracker.onDraftCreated()
 
         assertTrue(VideoGenerationTracker.state.value.isGenerating)
         assertEquals(1, VideoGenerationTracker.state.value.pendingGenerations.size)
         assertFalse(
-            VideoGenerationTracker.state.value.pendingGenerations.any { it.id == oldestPendingGenerationId },
+            VideoGenerationTracker.state.value.pendingGenerations
+                .any { it.id == oldestPendingGenerationId },
         )
-        assertEquals(remainingPendingGenerationId, VideoGenerationTracker.state.value.pendingGenerations.single().id)
+        assertEquals(
+            remainingPendingGenerationId,
+            VideoGenerationTracker.state.value.pendingGenerations
+                .single()
+                .id,
+        )
     }
 
     @Test
@@ -52,17 +75,29 @@ class VideoGenerationTrackerTest {
         VideoGenerationTracker.startGenerating()
         VideoGenerationTracker.startGenerating()
 
-        val oldestPendingGenerationId = VideoGenerationTracker.state.value.pendingGenerations.first().id
-        val newestPendingGenerationId = VideoGenerationTracker.state.value.pendingGenerations.last().id
+        val oldestPendingGenerationId =
+            VideoGenerationTracker.state.value.pendingGenerations
+                .first()
+                .id
+        val newestPendingGenerationId =
+            VideoGenerationTracker.state.value.pendingGenerations
+                .last()
+                .id
 
         VideoGenerationTracker.stopGenerating()
 
         assertTrue(VideoGenerationTracker.state.value.isGenerating)
         assertEquals(1, VideoGenerationTracker.state.value.pendingGenerations.size)
         assertFalse(
-            VideoGenerationTracker.state.value.pendingGenerations.any { it.id == newestPendingGenerationId },
+            VideoGenerationTracker.state.value.pendingGenerations
+                .any { it.id == newestPendingGenerationId },
         )
-        assertEquals(oldestPendingGenerationId, VideoGenerationTracker.state.value.pendingGenerations.single().id)
+        assertEquals(
+            oldestPendingGenerationId,
+            VideoGenerationTracker.state.value.pendingGenerations
+                .single()
+                .id,
+        )
     }
 
     @Test
@@ -94,7 +129,10 @@ class VideoGenerationTrackerTest {
         VideoGenerationTracker.clearPendingGenerations()
 
         assertFalse(VideoGenerationTracker.state.value.isGenerating)
-        assertTrue(VideoGenerationTracker.state.value.pendingGenerations.isEmpty())
+        assertTrue(
+            VideoGenerationTracker.state.value.pendingGenerations
+                .isEmpty(),
+        )
     }
 
     @Test
@@ -151,16 +189,30 @@ class VideoGenerationTrackerTest {
     fun `update progress only updates matching pending generation`() {
         VideoGenerationTracker.startGenerating()
         VideoGenerationTracker.startGenerating()
-        val firstPendingGeneration = VideoGenerationTracker.state.value.pendingGenerations.first()
-        val secondPendingGeneration = VideoGenerationTracker.state.value.pendingGenerations.last()
+        val firstPendingGeneration =
+            VideoGenerationTracker.state.value.pendingGenerations
+                .first()
+        val secondPendingGeneration =
+            VideoGenerationTracker.state.value.pendingGenerations
+                .last()
 
         VideoGenerationTracker.updateProgress(
             pendingGenerationId = firstPendingGeneration.id,
             progress = 0.4f,
         )
 
-        assertEquals(0.4f, VideoGenerationTracker.state.value.pendingGenerations.first().progress)
-        assertEquals(secondPendingGeneration.progress, VideoGenerationTracker.state.value.pendingGenerations.last().progress)
+        assertEquals(
+            0.4f,
+            VideoGenerationTracker.state.value.pendingGenerations
+                .first()
+                .progress,
+        )
+        assertEquals(
+            secondPendingGeneration.progress,
+            VideoGenerationTracker.state.value.pendingGenerations
+                .last()
+                .progress,
+        )
     }
 
     @Test

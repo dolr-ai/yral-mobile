@@ -11,6 +11,7 @@ import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.chat.nav.home.ChatHomeComponent
+import com.yral.shared.features.chat.nav.home.ChatHomeComponent.InitialTab
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.serialization.Serializable
@@ -24,6 +25,7 @@ internal class DefaultChatComponent(
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
     private val openConversation: (OpenConversationParams) -> Unit,
     private val openCreateInfluencer: (source: BotCreationSource) -> Unit,
+    private val initialTab: InitialTab = InitialTab.DISCOVER,
 ) : ChatComponent(),
     ComponentContext by componentContext,
     KoinComponent {
@@ -64,21 +66,32 @@ internal class DefaultChatComponent(
             routes =
                 stack.value.items.map { item ->
                     when (val configuration = item.configuration) {
-                        is Config.Home -> Snapshot.Route.Home
-                        is Config.Conversation ->
+                        is Config.Home -> {
+                            Snapshot.Route.Home
+                        }
+
+                        is Config.Conversation -> {
                             Snapshot.Route.Conversation(
                                 params = configuration.params,
                             )
-                        else -> Snapshot.Route.Home
+                        }
+
+                        else -> {
+                            Snapshot.Route.Home
+                        }
                     }
                 },
         )
 
     private fun Snapshot.Route.toConfig(): Config =
         when (this) {
-            Snapshot.Route.Home -> Config.Home
-            is Snapshot.Route.Conversation ->
+            Snapshot.Route.Home -> {
+                Config.Home
+            }
+
+            is Snapshot.Route.Conversation -> {
                 Config.Conversation(params = params)
+            }
         }
 
     private fun child(
@@ -95,6 +108,7 @@ internal class DefaultChatComponent(
             componentContext = componentContext,
             openConversation = openConversation,
             openCreateInfluencer = openCreateInfluencer,
+            initialTab = initialTab,
         )
 
     private fun conversationComponent(

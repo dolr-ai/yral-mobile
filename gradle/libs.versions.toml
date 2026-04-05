@@ -69,6 +69,7 @@ compottie = "2.0.1"
 robolectric = "4.15.1"
 multiplatform-markdown-renderer = "0.38.0"
 libphonenumber = "8.13.48"
+junit4 = "4.13.2"
 
 [libraries]
 
@@ -169,6 +170,7 @@ koin-compose = { group = "io.insert-koin", name = "koin-compose" }
 koin-compose-viewmodel = { group = "io.insert-koin", name = "koin-compose-viewmodel" }
 
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+junit4 = { group = "junit", name = "junit", version.ref = "junit4" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 
 kotlinResult-core = { group = "com.michael-bull.kotlin-result", name = "kotlin-result", version.ref = "kotlinResult" }

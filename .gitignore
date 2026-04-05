@@ -89,7 +89,6 @@ output-metadata.json
 misc.xml
 deploymentTargetDropDown.xml
 render.experimental.xml
-/.vscode/
 /*.sublime-workspace
 
 # Keystore files

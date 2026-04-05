@@ -249,6 +249,7 @@ private fun BoxScope.ArrowIndicator(
                 )
             }
         }
+
         ArrowAlignment.TOP_END -> {
             Box(
                 modifier =

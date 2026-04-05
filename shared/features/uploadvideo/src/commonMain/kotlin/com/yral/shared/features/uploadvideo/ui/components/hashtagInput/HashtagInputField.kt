@@ -102,6 +102,7 @@ fun ChipInputField(
                                 onDone()
                                 true
                             }
+
                             Key.Backspace -> {
                                 if (value.isEmpty()) {
                                     onValueChange(value)
@@ -110,7 +111,10 @@ fun ChipInputField(
                                     false
                                 }
                             }
-                            else -> false
+
+                            else -> {
+                                false
+                            }
                         }
                     }.onFocusChanged { focusState ->
                         isFocused = focusState.isFocused

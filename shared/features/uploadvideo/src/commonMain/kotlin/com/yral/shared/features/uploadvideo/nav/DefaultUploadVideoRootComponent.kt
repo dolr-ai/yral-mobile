@@ -119,7 +119,10 @@ internal class DefaultUploadVideoRootComponent(
 
     override fun handleNavigation(appRoute: AppRoute) {
         when (appRoute) {
-            is GenerateAIVideo -> navigation.pushToFront(Config.AiVideoGen)
+            is GenerateAIVideo -> {
+                navigation.pushToFront(Config.AiVideoGen)
+            }
+
             else -> {}
         }
     }

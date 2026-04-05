@@ -6,9 +6,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -23,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.yral.shared.core.session.SessionManager
+import com.yral.shared.features.chat.domain.models.formatChatUnreadBadgeCount
 import com.yral.shared.features.chat.nav.home.ChatHomeComponent
 import com.yral.shared.features.chat.nav.home.ChatHomeComponent.Child
 import com.yral.shared.features.chat.ui.inbox.InboxScreen
@@ -53,6 +56,10 @@ private object ChatTabUi {
     val INDICATOR_RADIUS = 10.dp
     val TAB_VERTICAL_PADDING = 12.dp
     val TAB_ICON_SPACING = 6.dp
+    val BADGE_MIN_SIZE = 18.dp
+    val BADGE_HORIZONTAL_PADDING = 5.dp
+    val BADGE_VERTICAL_PADDING = 1.dp
+    val BADGE_Y_OFFSET = (-5).dp
 }
 
 @OptIn(ExperimentalResourceApi::class)
@@ -70,6 +77,7 @@ fun ChatHomeScreen(
     val isBotAccount = sessionManager.isBotAccount == true
 
     val wallState by chatWallViewModel.state.collectAsStateWithLifecycle()
+    val unreadConversationCount by inboxViewModel.unreadConversationCount.collectAsStateWithLifecycle()
     val showCreateBotCta by
         sessionManager
             .shouldShowCreateBotCtaFlow(wallState.maxBotCountForCta)
@@ -93,24 +101,28 @@ fun ChatHomeScreen(
             )
             ChatTabRow(
                 isDiscoverSelected = isDiscoverSelected,
+                inboxUnreadCount = unreadConversationCount,
                 onDiscoverClick = component::onDiscoverTabClick,
                 onInboxClick = component::onInboxTabClick,
             )
         }
         Box(modifier = Modifier.fillMaxSize()) {
             when (activeChild) {
-                is Child.Discover ->
+                is Child.Discover -> {
                     ChatWallScreen(
                         component = activeChild.component,
                         viewModel = chatWallViewModel,
                         modifier = Modifier.fillMaxSize(),
                     )
-                is Child.Inbox ->
+                }
+
+                is Child.Inbox -> {
                     InboxScreen(
                         component = activeChild.component,
                         viewModel = inboxViewModel,
                         modifier = Modifier.fillMaxSize(),
                     )
+                }
             }
         }
     }
@@ -174,6 +186,7 @@ private fun ChatHomeHeader(
 @Composable
 private fun ChatTabRow(
     isDiscoverSelected: Boolean,
+    inboxUnreadCount: Int,
     onDiscoverClick: () -> Unit,
     onInboxClick: () -> Unit,
 ) {
@@ -191,6 +204,7 @@ private fun ChatTabRow(
                 iconRes = Res.drawable.ic_tab_inbox,
                 label = stringResource(Res.string.tab_inbox),
                 isSelected = !isDiscoverSelected,
+                badgeText = formatChatUnreadBadgeCount(inboxUnreadCount),
                 onClick = onInboxClick,
             )
         }
@@ -226,6 +240,7 @@ private fun ChatTabItem(
     iconRes: DrawableResource,
     label: String,
     isSelected: Boolean,
+    badgeText: String? = null,
     onClick: () -> Unit,
 ) {
     val contentColor =
@@ -254,6 +269,40 @@ private fun ChatTabItem(
                 style = LocalAppTopography.current.baseMedium,
                 color = contentColor,
             )
+            if (badgeText != null) {
+                ChatTabBadge(
+                    text = badgeText,
+                    modifier = Modifier.offset(y = ChatTabUi.BADGE_Y_OFFSET),
+                )
+            }
         }
+    }
+}
+
+@Composable
+private fun ChatTabBadge(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier =
+            modifier
+                .defaultMinSize(
+                    minWidth = ChatTabUi.BADGE_MIN_SIZE,
+                    minHeight = ChatTabUi.BADGE_MIN_SIZE,
+                ).background(
+                    color = YralColors.Pink300,
+                    shape = RoundedCornerShape(100.dp),
+                ).padding(
+                    horizontal = ChatTabUi.BADGE_HORIZONTAL_PADDING,
+                    vertical = ChatTabUi.BADGE_VERTICAL_PADDING,
+                ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = text,
+            style = LocalAppTopography.current.smSemiBold,
+            color = Color.White,
+        )
     }
 }

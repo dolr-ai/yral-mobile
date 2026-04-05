@@ -59,6 +59,8 @@ fun LoginScreenContent(
             )
         }
 
-        else -> Unit
+        else -> {
+            Unit
+        }
     }
 }

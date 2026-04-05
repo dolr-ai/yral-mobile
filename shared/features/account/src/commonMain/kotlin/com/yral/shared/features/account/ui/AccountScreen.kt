@@ -349,7 +349,9 @@ private fun SheetContent(
             )
         }
 
-        is AccountBottomSheet.None -> Unit
+        is AccountBottomSheet.None -> {
+            Unit
+        }
     }
 }
 
@@ -636,17 +638,33 @@ private fun AccountHelpLink.getSocialIcon() =
 @Composable
 private fun AccountHelpLink.getText(isBotAccount: Boolean) =
     when (type) {
-        AccountHelpLinkType.TALK_TO_TEAM -> linkText ?: stringResource(Res.string.talk_to_the_team)
-        AccountHelpLinkType.TERMS_OF_SERVICE -> stringResource(DesignRes.string.terms_of_service)
-        AccountHelpLinkType.PRIVACY_POLICY -> stringResource(Res.string.privacy_policy)
-        AccountHelpLinkType.LOGOUT -> stringResource(Res.string.logout)
-        AccountHelpLinkType.DELETE_ACCOUNT ->
+        AccountHelpLinkType.TALK_TO_TEAM -> {
+            linkText ?: stringResource(Res.string.talk_to_the_team)
+        }
+
+        AccountHelpLinkType.TERMS_OF_SERVICE -> {
+            stringResource(DesignRes.string.terms_of_service)
+        }
+
+        AccountHelpLinkType.PRIVACY_POLICY -> {
+            stringResource(Res.string.privacy_policy)
+        }
+
+        AccountHelpLinkType.LOGOUT -> {
+            stringResource(Res.string.logout)
+        }
+
+        AccountHelpLinkType.DELETE_ACCOUNT -> {
             if (isBotAccount) {
                 stringResource(Res.string.delete_ai_influencer)
             } else {
                 stringResource(Res.string.delete_account)
             }
-        else -> null
+        }
+
+        else -> {
+            null
+        }
     }
 
 @Composable
