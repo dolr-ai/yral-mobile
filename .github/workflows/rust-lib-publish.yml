@@ -42,10 +42,10 @@ jobs:
           cat ./shared/rust/rust-agent/build.gradle.kts | grep version 
 
       - name: Clean project
-        run: ./gradlew clean
+        run: ./gradlew -PisLocalRust=true clean
 
       - name: Publish to Github packages
-        run: ./gradlew shared:rust:rust-agent:publish
+        run: ./gradlew -PisLocalRust=true shared:rust:rust-agent:publish
         env:
           GITHUB_USERNAME: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
