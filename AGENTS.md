@@ -1,5 +1,18 @@
 # AGENTS.md
 
+## How to Keep This File Current
+
+This is a **living document** — it reflects the current state of conventions in this repo, not a changelog. Update it whenever you:
+
+- Establish a new architectural pattern or module convention
+- Discover an existing pattern that was undocumented
+- Remove or replace a pattern that is no longer valid
+- Learn a non-obvious rule from debugging (e.g. CocoaPods/DYLD behaviour)
+
+Do **not** append changelog entries or "as of date X" notes. Rewrite the relevant section to reflect the current truth.
+
+---
+
 ## Project Snapshot
 
 YRAL Mobile is a Kotlin Multiplatform app with thin Android and iOS wrappers and most product code in `/shared`. UI is Compose Multiplatform. Blockchain and canister work goes through Rust FFI.

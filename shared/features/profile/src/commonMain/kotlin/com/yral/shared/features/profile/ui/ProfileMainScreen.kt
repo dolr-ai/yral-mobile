@@ -38,7 +38,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.pullToRefreshIndicator
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -1082,16 +1081,7 @@ private fun SuccessContent(
             state = pullRefreshState,
             indicator = {
                 Box(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .pullToRefreshIndicator(
-                                state = pullRefreshState,
-                                isRefreshing = isRefreshing,
-                                containerColor = Color.Transparent,
-                                threshold = PULL_TO_REFRESH_INDICATOR_THRESHOLD.dp,
-                                elevation = 0.dp,
-                            ),
+                    modifier = Modifier.align(Alignment.TopCenter),
                     contentAlignment = Alignment.Center,
                 ) {
                     YralLoader(PULL_TO_REFRESH_INDICATOR_SIZE.dp)

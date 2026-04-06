@@ -252,7 +252,7 @@ SPEC CHECKSUMS:
   GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
   GTMSessionFetcher: fc75fc972958dceedee61cb662ae1da7a83a91cf
-  iosSharedUmbrella: 59926ba5941e622aab8a78d5eacd14a1517806f0
+  iosSharedUmbrella: d26d3c807b077510a88b0b4be1804a4d76861fef
   Mixpanel: 9337782610693ef36b8f6ab531493201825f1dd6
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
