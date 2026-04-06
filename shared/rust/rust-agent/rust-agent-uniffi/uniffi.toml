@@ -1,1 +1,4 @@
 package_name = "com.yral.shared.uniffi.generated"
+
+[bindings.kotlin]
+omit_checksums = true
