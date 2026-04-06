@@ -197,3 +197,41 @@ Both `VideoListenerImpl` and `PrefetchVideoListenerImpl` guard calls behind the 
 | `BUFFERING_COUNT` | `buffering_count` | Number of times ExoPlayer fired *buffering* during playback |
 
 Feel free to extend the enum as your feature requires.
+
+---
+
+# Build System Mental Model
+
+### Rust → Gradle/KMM → Swift/iOS analogy
+
+This project uses three build systems across its stack. The table below maps each concept to its equivalent in Rust (a familiar reference point) and in the iOS layer.
+
+| Concept | Rust | Gradle/KMM | Swift/iOS (this repo) |
+|---|---|---|---|
+| Workspace membership | `[workspace]` members in root `Cargo.toml` | [settings.gradle.kts](settings.gradle.kts) | [iosApp.xcodeproj](iosApp/iosApp.xcodeproj) — targets listed in Xcode project |
+| Centralized dependency versions | `[workspace.dependencies]` | [gradle/libs.versions.toml](gradle/libs.versions.toml) | `FIREBASE_VERSION = '...'` variable in [iosApp/Podfile](iosApp/Podfile) — manual, no real equivalent |
+| Per-module build config | Each crate's `Cargo.toml` | Each module's `build.gradle.kts` | Each Xcode **target** (Yral, Yral-Staging, YralTests) |
+| Shared/global build config | Root `Cargo.toml` `[profile.*]` | Root [build.gradle.kts](build.gradle.kts) — applies ktlint, detekt, shared repos to all subprojects |  `Podfile` `def add_common_pods` block |
+| Lock file | `Cargo.lock` | Gradle build cache / lock files | `Podfile.lock` |
+| Package registry | crates.io | Maven Central + Google Maven | CocoaPods CDN (`source` line in Podfile) |
+| Build command | `cargo build` | `./gradlew build` | `xcodebuild` / Xcode IDE |
+
+### Key insight: `libs.versions.toml` is `[workspace.dependencies]`
+
+`libs.versions.toml` is **not** the workspace declaration — that's `settings.gradle.kts`. It is specifically the centralized version-pinning layer, equivalent to `[workspace.dependencies]` in a Rust workspace.
+
+A child module consuming a version looks like:
+
+```kotlin
+// any module's build.gradle.kts
+implementation(libs.koin.core)   // version resolved from libs.versions.toml
+```
+
+```toml
+# any crate's Cargo.toml
+koin = { workspace = true }      # version resolved from [workspace.dependencies]
+```
+
+### iOS has no true version catalog
+
+Unlike Gradle's `libs.versions.toml`, CocoaPods has no workspace-wide version catalog. The `FIREBASE_VERSION` Ruby variable in the Podfile is a local convention — versions for KMM-side Firebase dependencies are pinned separately in `libs.versions.toml`, so they must be kept in sync manually.
