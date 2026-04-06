@@ -3,6 +3,7 @@ package com.yral.android.installReferrer.processors
 import com.yral.android.installReferrer.AttributionManager
 import com.yral.android.installReferrer.AttributionProcessor
 import com.yral.android.installReferrer.isEmpty
+import com.yral.shared.preferences.stores.GCLID_PARAM
 import com.yral.shared.preferences.stores.UTM_CAMPAIGN_PARAM
 import com.yral.shared.preferences.stores.UTM_CONTENT_PARAM
 import com.yral.shared.preferences.stores.UTM_MEDIUM_PARAM
@@ -71,6 +72,7 @@ class BranchAttributionProcessor : AttributionProcessor {
             val utmCampaign = controlParams[UTM_CAMPAIGN_PARAM]
             val utmTerm = controlParams[UTM_TERM_PARAM]
             val utmContent = controlParams[UTM_CONTENT_PARAM]
+            val gclid = controlParams[GCLID_PARAM]
 
             val utmParams =
                 UtmParams(
@@ -79,6 +81,7 @@ class BranchAttributionProcessor : AttributionProcessor {
                     campaign = utmCampaign,
                     term = utmTerm,
                     content = utmContent,
+                    gclid = gclid,
                 )
 
             val result =

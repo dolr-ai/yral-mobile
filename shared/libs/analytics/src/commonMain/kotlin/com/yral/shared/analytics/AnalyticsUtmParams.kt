@@ -6,12 +6,14 @@ data class AnalyticsUtmParams(
     val campaign: String? = null,
     val term: String? = null,
     val content: String? = null,
+    val gclid: String? = null,
 ) {
     companion object {
         private const val UTM_SOURCE_PARAM: String = "utm_source"
         private const val UTM_MEDIUM_PARAM: String = "utm_medium"
         private const val UTM_CAMPAIGN_PARAM: String = "utm_campaign"
         private const val UTM_TERM_PARAM: String = "utm_term"
+        private const val GCLID_PARAM: String = "gclid"
         // private const val UTM_CONTENT_PARAM: String = "utm_content"
     }
 
@@ -21,6 +23,7 @@ data class AnalyticsUtmParams(
         medium?.let { utmParamsMap[UTM_MEDIUM_PARAM] = it }
         campaign?.let { utmParamsMap[UTM_CAMPAIGN_PARAM] = it }
         term?.let { utmParamsMap[UTM_TERM_PARAM] = it }
+        gclid?.let { utmParamsMap[GCLID_PARAM] = it }
         // content?.let { utmParamsMap[UTM_CONTENT_PARAM] = it }
         return utmParamsMap.toMap()
     }

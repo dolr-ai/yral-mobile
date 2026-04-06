@@ -8,6 +8,7 @@ const val UTM_MEDIUM_PARAM: String = "utm_medium"
 const val UTM_CAMPAIGN_PARAM: String = "utm_campaign"
 const val UTM_TERM_PARAM: String = "utm_term"
 const val UTM_CONTENT_PARAM: String = "utm_content"
+const val GCLID_PARAM: String = "gclid"
 const val RAW_REFERRER: String = "raw_referrer"
 
 private const val INSTALL_REFERRER_COMPLETED_KEY = "install_referrer_completed"
@@ -18,6 +19,7 @@ data class UtmParams(
     val campaign: String? = null,
     val term: String? = null,
     val content: String? = null,
+    val gclid: String? = null,
     val raw: String? = null,
 )
 
@@ -37,6 +39,7 @@ class UtmAttributionStore(
         campaign: String? = null,
         term: String? = null,
         content: String? = null,
+        gclid: String? = null,
         raw: String? = null,
     ) {
         saveIfEmpty(UTM_SOURCE_PARAM, source)
@@ -44,6 +47,7 @@ class UtmAttributionStore(
         saveIfEmpty(UTM_CAMPAIGN_PARAM, campaign)
         saveIfEmpty(UTM_TERM_PARAM, term)
         saveIfEmpty(UTM_CONTENT_PARAM, content)
+        saveIfEmpty(GCLID_PARAM, gclid)
         saveIfEmpty(RAW_REFERRER, raw)
         markInstallReferrerCompleted()
     }
@@ -67,6 +71,7 @@ class UtmAttributionStore(
                 campaign = preferences.getString(UTM_CAMPAIGN_PARAM)?.takeIf { it.isNotBlank() },
                 term = preferences.getString(UTM_TERM_PARAM)?.takeIf { it.isNotBlank() },
                 content = preferences.getString(UTM_CONTENT_PARAM)?.takeIf { it.isNotBlank() },
+                gclid = preferences.getString(GCLID_PARAM)?.takeIf { it.isNotBlank() },
             ).also { utmParams = it }
         } else {
             null

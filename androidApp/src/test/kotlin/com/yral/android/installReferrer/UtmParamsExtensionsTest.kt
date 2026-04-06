@@ -70,4 +70,16 @@ class UtmParamsExtensionsTest {
         val params = UtmParams()
         assertFalse(params.isNotEmpty(), "Should be empty when all fields are null")
     }
+
+    @Test
+    fun `test isEmpty returns false when only gclid is set`() {
+        val params = UtmParams(gclid = "abc123")
+        assertFalse(params.isEmpty(), "Should not be empty when gclid is present")
+    }
+
+    @Test
+    fun `test isNotEmpty returns true when gclid is set`() {
+        val params = UtmParams(gclid = "Cj0KCQ")
+        assertTrue(params.isNotEmpty(), "Should be not empty when gclid is present")
+    }
 }

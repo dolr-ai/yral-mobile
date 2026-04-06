@@ -164,6 +164,8 @@ class AttributionManager(
                 campaign = utmParams.campaign,
                 term = utmParams.term,
                 content = utmParams.content,
+                gclid = utmParams.gclid,
+                raw = utmParams.raw,
             )
             analyticsManager.trackEvent(
                 ReferralReceivedEventData(
@@ -172,6 +174,7 @@ class AttributionManager(
                     campaign = utmParams.campaign,
                     term = utmParams.term,
                     content = utmParams.content,
+                    gclid = utmParams.gclid,
                 ),
             )
             analyticsManager.flush()
