@@ -26,6 +26,7 @@ import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.yral.shared.features.subscriptions.ui.components.BoltIcon
 import com.yral.shared.features.subscriptions.ui.components.SubscriptionBenefitRow
@@ -37,7 +38,6 @@ import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import yral_mobile.shared.features.subscriptions.generated.resources.Res
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_benefit_ai
 import yral_mobile.shared.features.subscriptions.generated.resources.subscription_active_benefit_chat

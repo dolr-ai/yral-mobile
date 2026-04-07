@@ -56,8 +56,6 @@ kotlin {
             implementation(libs.coil.compose)
             implementation(libs.coil.ktor3)
 
-            implementation(compose.components.resources)
-
             implementation(libs.decompose.decompose)
             implementation(libs.decompose.extensions.compose)
 

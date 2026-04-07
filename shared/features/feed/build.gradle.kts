@@ -35,7 +35,6 @@ kotlin {
             implementation(projects.shared.libs.designsystem)
             implementation(projects.shared.features.reportVideo)
             implementation(projects.shared.libs.videoPlayer)
-            implementation(compose.components.resources)
         }
     }
 }

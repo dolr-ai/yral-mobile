@@ -31,7 +31,6 @@ kotlin {
             implementation(projects.shared.libs.videoPlayer)
             implementation(projects.shared.libs.featureFlag)
             implementation(projects.shared.features.subscriptions)
-            implementation(compose.components.resources)
             implementation(libs.compose.ui.backhandler)
             implementation(libs.coil.compose)
             implementation(libs.kotlinx.datetime)

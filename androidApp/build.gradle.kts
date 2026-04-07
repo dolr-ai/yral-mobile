@@ -160,7 +160,7 @@ dependencies {
     implementation(projects.shared.libs.designsystem)
     implementation(projects.shared.features.reportVideo)
     implementation(projects.shared.features.aiInfluencer)
-    implementation(compose.components.resources)
+    implementation(libs.compose.components.resources)
     implementation(projects.shared.features.subscriptions)
 
     testImplementation(libs.kotlin.test)

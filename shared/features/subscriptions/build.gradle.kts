@@ -15,7 +15,6 @@ kotlin {
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.koin.compose.viewmodel)
-            implementation(compose.components.resources)
 
             implementation(projects.shared.core)
             implementation(projects.shared.data)

@@ -28,7 +28,6 @@ kotlin {
             implementation(projects.shared.libs.routing.routesApi)
             implementation(projects.shared.libs.featureFlag)
             implementation(projects.shared.rust.service)
-            implementation(compose.components.resources)
         }
     }
 }

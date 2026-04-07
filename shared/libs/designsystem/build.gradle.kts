@@ -12,7 +12,6 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(compose.components.resources)
                 implementation(projects.shared.libs.koin)
                 api(projects.shared.libs.crashlytics)
                 api(projects.shared.libs.formatters)
