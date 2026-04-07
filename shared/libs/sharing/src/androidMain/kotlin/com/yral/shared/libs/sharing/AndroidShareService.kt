@@ -22,9 +22,11 @@ class AndroidShareService(
     ) {
         val file = downloadImage(imageUrl)
         withContext(appDispatchers.main) {
-            file?.let {
-                val chooser = shareIntent(it, text)
+            if (file != null) {
+                val chooser = shareIntent(file, text)
                 context.startActivity(chooser)
+            } else {
+                shareText(text)
             }
         }
     }
