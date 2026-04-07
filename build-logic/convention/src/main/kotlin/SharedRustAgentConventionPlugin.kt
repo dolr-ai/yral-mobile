@@ -27,7 +27,7 @@ class SharedRustAgentConventionPlugin : Plugin<Project> {
     }
 
     companion object {
-        private const val YRAL_RUST_VERSION = "3.6.2"
+        private const val YRAL_RUST_VERSION = "3.7"
         private const val YRAL_RUST_DEPENDENCY = "com.yral.shared:rust-agent"
     }
 }
