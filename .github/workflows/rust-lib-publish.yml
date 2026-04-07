@@ -45,7 +45,7 @@ jobs:
         run: ./gradlew -PisLocalRust=true clean
 
       - name: Publish to Github packages
-        run: ./gradlew -PisLocalRust=true shared:rust:rust-agent:publish
+        run: ./gradlew -PisLocalRust=true shared:rust:rust-agent:publish --no-configuration-cache
         env:
           GITHUB_USERNAME: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
