@@ -43,7 +43,9 @@ jobs:
         env:
           GITHUB_USERNAME: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew :iosSharedUmbrella:podInstall --stacktrace
+        run: |
+          ./gradlew :iosSharedUmbrella:podInstall --stacktrace
+          ./gradlew :iosSharedUmbrella:linkPodDebugFrameworkIosSimulatorArm64
 
       - name: pod install
         working-directory: iosApp
@@ -73,6 +75,7 @@ jobs:
         env:
           GITHUB_USERNAME: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED: 'YES'
         run: |
           set -o pipefail
           xcodebuild test \
