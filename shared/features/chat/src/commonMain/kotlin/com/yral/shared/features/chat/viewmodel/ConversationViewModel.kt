@@ -133,6 +133,7 @@ class ConversationViewModel(
         get() = _viewState.value.conversationId
     private val loadedMessageIds = MutableStateFlow<Set<String>>(emptySet())
     private val initialOffset = MutableStateFlow<Int?>(null)
+    private val historyRefreshTrigger = MutableStateFlow(0)
 
     private val pagingConfig =
         PagingConfig(
@@ -142,10 +143,16 @@ class ConversationViewModel(
             enablePlaceholders = false,
         )
 
+    fun refreshHistory() {
+        historyRefreshTrigger.update { it + 1 }
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     private val pagedHistory: Flow<PagingData<ChatMessage>> =
-        _viewState
-            .map { it.conversationId to it.paginatedHistoryAvailable }
+        combine(
+            _viewState.map { it.conversationId to it.paginatedHistoryAvailable },
+            historyRefreshTrigger,
+        ) { (convId, hasMoreMessages), refreshCount -> Triple(convId, hasMoreMessages, refreshCount) }
             .distinctUntilChanged()
             .flatMapLatest { (convId, hasMoreMessages) ->
                 if (convId.isNullOrBlank() || !hasMoreMessages) {
@@ -846,6 +853,7 @@ class ConversationViewModel(
         systemOverlayMessagesFlow.value = emptyList()
         loadedMessageIds.value = emptySet()
         initialOffset.value = null
+        historyRefreshTrigger.value = 0
     }
 
     private fun createConversation(influencerId: String) {

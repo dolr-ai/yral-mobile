@@ -143,6 +143,8 @@ fun ChatConversationScreen(
         }
     }
 
+    LaunchedEffect(Unit) { viewModel.refreshHistory() }
+
     LaunchedEffect(Unit) {
         viewModel.influencerSubscriptionToastFlow.collect { event ->
             when (event.status) {
