@@ -1,12 +1,12 @@
 package com.yral.shared.libs.sharing
 
+import co.touchlab.kermit.Logger
 import cocoapods.BranchSDK.BranchLinkProperties
 import cocoapods.BranchSDK.BranchUniversalObject
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.Foundation.setValue
 import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 
 @OptIn(ExperimentalForeignApi::class)
 class IosBranchLinkGenerator : LinkGenerator {
@@ -43,19 +43,19 @@ class IosBranchLinkGenerator : LinkGenerator {
                         if (!cont.isActive) return@getShortUrlWithLinkProperties
 
                         when {
-                            error != null -> {
-                                val message = error.localizedDescription
-                                cont.resumeWithException(IllegalStateException(message))
-                            }
-
                             !url.isNullOrBlank() -> {
                                 cont.resume(url)
                             }
 
+                            error != null -> {
+                                val msg = error.localizedDescription
+                                Logger.w("BranchLinkGenerator") { "Branch error, using internalUrl: $msg" }
+                                cont.resume(input.internalUrl)
+                            }
+
                             else -> {
-                                cont.resumeWithException(
-                                    IllegalStateException("Branch returned null/blank URL"),
-                                )
+                                Logger.w("BranchLinkGenerator") { "Branch returned blank URL, using internalUrl" }
+                                cont.resume(input.internalUrl)
                             }
                         }
                     },
@@ -63,7 +63,8 @@ class IosBranchLinkGenerator : LinkGenerator {
             } catch (
                 @Suppress("TooGenericExceptionCaught") t: Throwable,
             ) {
-                cont.resumeWithException(t)
+                Logger.w("BranchLinkGenerator") { "Unexpected error, using internalUrl: ${t.message}" }
+                cont.resume(input.internalUrl)
             }
         }
 }

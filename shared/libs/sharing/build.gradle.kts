@@ -13,6 +13,7 @@ kotlin {
             dependencies {
                 implementation(projects.shared.libs.coroutinesX)
                 implementation(projects.shared.libs.branch)
+                implementation(libs.touchlab.logger)
             }
         }
         androidMain.dependencies {
