@@ -18,5 +18,13 @@ kotlin {
         androidMain.dependencies {
             api(libs.coil.core)
         }
+        val androidUnitTest by getting {
+            dependencies {
+                implementation(libs.kotlin.test)
+                implementation(libs.kotlinx.coroutines.test)
+                implementation(libs.robolectric)
+                implementation(libs.mockk)
+            }
+        }
     }
 }
