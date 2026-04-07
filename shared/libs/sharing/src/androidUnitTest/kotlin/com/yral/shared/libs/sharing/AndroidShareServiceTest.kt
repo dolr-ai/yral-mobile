@@ -50,7 +50,7 @@ class AndroidShareServiceTest {
     }
 
     @Test
-    fun `shareImageWithText falls back to text-only share when image is not in cache`() =
+    fun shareImageWithTextFallsBackToTextOnlyShareWhenImageIsNotInCache() =
         runBlocking {
             every { imageLoader.diskCache } returns null
 
@@ -68,7 +68,7 @@ class AndroidShareServiceTest {
         }
 
     @Test
-    fun `shareImageWithText shares image when found in disk cache`() =
+    fun shareImageWithTextSharesImageWhenFoundInDiskCache() =
         runBlocking {
             mockkStatic(FileProvider::class)
             try {
@@ -104,7 +104,7 @@ class AndroidShareServiceTest {
         }
 
     @Test
-    fun `shareText sends text-only ACTION_SEND intent`() =
+    fun shareTextSendsTextOnlyActionSendIntent() =
         runBlocking {
             service.shareText("Hello from YRAL!")
 
