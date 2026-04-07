@@ -30,6 +30,10 @@ Key directories:
 - Add new dependencies through `libs.versions.toml`, not hardcoded versions.
 - Prefer existing architecture and module boundaries over convenience edits.
 
+## Dependency Version Policy
+
+When upgrading dependencies, always target the **latest stable release** — not alpha, beta, RC, or dev preview versions. The goal is to stay current enough to avoid known security vulnerabilities while avoiding unstable or breaking-change-prone releases. Never proactively upgrade to pre-release versions unless explicitly asked.
+
 ## Commands
 
 ```bash
