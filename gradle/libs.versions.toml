@@ -5,7 +5,7 @@ android-tools = "31.10.1"
 compileSDK = "35"
 minSDK = "24"
 targetSDK = "35"
-kotlin = "2.3.20"
+kotlin = "2.2.21"
 compose = "1.9.0"
 compose-compiler = "1.5.4"
 compose-material3 = "1.3.2"
@@ -22,7 +22,7 @@ androidx-test-core = "1.6.1"
 chucker = "4.2.0"
 coil = "3.2.0"
 composeHotReload = "1.0.0-alpha11"
-composeMultiplatform = "1.10.3"
+composeMultiplatform = "1.9.0"
 decompose = "3.3.0"
 desugar-jdk-libs = "2.1.5"
 detekt = "1.23.8"
@@ -42,7 +42,7 @@ kotlinxCoroutines = "1.10.2"
 kotlinx-datetime = "0.7.1"
 kotlinx-io = "0.8.2"
 kotlinxSerialization = "1.9.0"
-ksp = "2.3.6"
+ksp = "2.2.21-2.0.5"
 ktor = "3.3.0"
 media3Exoplayer = "1.9.0"
 mixpanel = "8.2.0"
@@ -116,8 +116,6 @@ compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview"
 compose-foundation = { module = "androidx.compose.foundation:foundation", version.ref = "compose" }
 compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "compose-material3" }
 compose-ui-backhandler = { module = "org.jetbrains.compose.ui:ui-backhandler", version.ref = "composeMultiplatform" }
-compose-material-icons-core = { module = "org.jetbrains.compose.material:material-icons-core", version = "1.7.3" }
-
 compottie = { module = "io.github.alexzhirkevich:compottie", version.ref = "compottie" }
 compottie-lite = { module = "io.github.alexzhirkevich:compottie-lite", version.ref = "compottie" }
 compottie-dot = { module = "io.github.alexzhirkevich:compottie-dot", version.ref = "compottie" }
