@@ -6,15 +6,12 @@ FIREBASE_VERSION = '11.14.0'
 
 def add_common_pods
   pod 'FirebaseCore', FIREBASE_VERSION
-  # Note: FirebaseAppCheck and FirebasePerformance must remain here:
-  # - FirebaseAppCheck is imported directly in Swift code.
-  # - Both are dynamic frameworks that DYLD must resolve at runtime on the simulator;
-  #   KMM pod() declarations alone do not place the .framework into the simulator products dir.
+  # Note: FirebasePerformance must remain here even though it is declared via KMM pod():
+  # it is a dynamic framework that DYLD must resolve at runtime on the simulator;
+  # KMM pod() declarations alone do not place the .framework into the simulator products dir.
   pod 'FirebaseAnalytics', FIREBASE_VERSION
   pod 'FirebaseCrashlytics', FIREBASE_VERSION
   pod 'FirebasePerformance', FIREBASE_VERSION
-  pod 'FirebaseAppCheck', FIREBASE_VERSION
-  pod 'FirebaseAuth', FIREBASE_VERSION
   pod 'FirebaseMessaging', FIREBASE_VERSION
   pod 'Mixpanel', '5.0.8'
   pod 'FBSDKCoreKit', '18.0.0'

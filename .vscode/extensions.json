@@ -1,5 +1,6 @@
 {
     "recommendations": [
-        "esafirm.kotlin-formatter"
+        "esafirm.kotlin-formatter",
+        "swiftlang.swift-vscode"
     ]
 }

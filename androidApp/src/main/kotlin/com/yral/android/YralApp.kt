@@ -8,17 +8,11 @@ import co.touchlab.kermit.Logger
 import com.facebook.FacebookSdk
 import com.facebook.LoggingBehavior
 import com.google.firebase.Firebase
-import com.google.firebase.FirebaseApp
-import com.google.firebase.appcheck.appCheck
-import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
-import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.initialize
 import com.yral.android.installReferrer.AttributionManager
 import com.yral.android.installReferrer.processors.BranchAttributionProcessor
 import com.yral.android.installReferrer.processors.MetaAttributionProcessor
 import com.yral.android.installReferrer.processors.PlayInstallReferrerProcessor
-import com.yral.featureflag.AppFeatureFlags
-import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.di.IS_DEBUG
 import com.yral.shared.analytics.providers.mixpanel.MixpanelAnalyticsProvider
 import com.yral.shared.app.di.initKoin
@@ -102,28 +96,6 @@ class YralApp : Application() {
 
     private fun setupFirebase() {
         koinInstance.get<FirebaseCrashlytics>().setCrashlyticsCollectionEnabled(!BuildConfig.DEBUG)
-
-        val firebaseApp = FirebaseApp.getInstance()
-        val flagManager = koinInstance.get<FeatureFlagManager>()
-        val enableAppCheck = flagManager.isEnabled(AppFeatureFlags.Android.EnableAppCheck)
-        if (enableAppCheck) {
-            Firebase
-                .appCheck(firebaseApp)
-                .installAppCheckProviderFactory {
-                    if (BuildConfig.DEBUG) {
-                        DebugAppCheckProviderFactory
-                            .getInstance()
-                            .create(firebaseApp)
-                    } else {
-                        PlayIntegrityAppCheckProviderFactory
-                            .getInstance()
-                            .create(firebaseApp)
-                    }
-                }
-            Logger.d("YralApp") { "Installed appcheck" }
-        } else {
-            Logger.d("YralApp") { "Skipping appcheck since it is disabled" }
-        }
     }
 
     private fun setupFacebook() {

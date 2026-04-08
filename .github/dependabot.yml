@@ -11,17 +11,7 @@ updates:
       interval: "weekly"
 
   - package-ecosystem: "cargo"
-    directory: "/rust-agent"
-    schedule:
-      interval: "weekly"
-
-  - package-ecosystem: "cargo"
     directory: "/shared/rust/rust-agent/rust-agent-uniffi"
-    schedule:
-      interval: "weekly"
-
-  - package-ecosystem: "pip"
-    directory: "/functions"
     schedule:
       interval: "weekly"
 
