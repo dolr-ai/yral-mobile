@@ -63,7 +63,6 @@ kotlin {
             implementation(libs.moko.permissions.compose)
             implementation(libs.moko.permissions.notifications)
             implementation(libs.compose.ui.backhandler)
-            implementation(libs.compose.material.icons.core)
 
             implementation(libs.androidx.paging.compose)
         }
