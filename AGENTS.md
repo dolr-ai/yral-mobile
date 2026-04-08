@@ -144,19 +144,18 @@ Test expectations:
 
 ### Firebase Products
 
-The project uses only the **free-tier Firebase products** listed below. Firestore, Firebase Auth, Firebase Storage, and Firebase Cloud Functions have been removed.
+The project uses only the **free-tier Firebase products** listed below. Firestore, Firebase Auth, Firebase Storage, Firebase App Check, and Firebase Cloud Functions have been removed.
 
 | Product | Purpose |
 |---|---|
 | Crashlytics | Crash reporting via `CrashlyticsManager` |
 | Analytics | Event tracking via feature `Telemetry` classes |
 | Performance Monitoring | Network/trace spans in HTTP and video-player layers |
-| App Check | Play Integrity (Android) / DeviceCheck (iOS) app attestation |
 | Cloud Messaging (FCM) | Push notification token registration and deregistration |
 | In-App Messaging | Android in-app campaign delivery (automatic SDK, no custom code) |
 | Remote Config | Feature flags and forced-update logic via `FirebaseRemoteConfigProvider` |
 
-Do **not** reintroduce Firestore, Firebase Auth, Firebase Storage, or Firebase Cloud Functions.
+Do **not** reintroduce Firestore, Firebase Auth, Firebase Storage, Firebase App Check, or Firebase Cloud Functions.
 
 ### Session and App Services
 

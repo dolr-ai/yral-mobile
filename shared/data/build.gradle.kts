@@ -16,10 +16,6 @@ configureCocoapods {
     ios.deploymentTarget = "15.6"
 
     noPodspec()
-
-    pod("FirebaseAppCheck") {
-        version = "11.14.0"
-    }
 }
 
 kotlin {
@@ -51,10 +47,4 @@ kotlin {
             implementation(libs.mockk)
         }
     }
-}
-
-dependencies {
-    add("androidMainImplementation", platform(libs.firebase.bom))
-    add("androidMainImplementation", libs.firebase.appcheck.playintegrity)
-    debugImplementation(libs.firebase.appcheck.debug)
 }

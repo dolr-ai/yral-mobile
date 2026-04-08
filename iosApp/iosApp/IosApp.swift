@@ -1,6 +1,5 @@
 import SwiftUI
 import FirebaseCore
-import FirebaseAppCheck
 import FirebaseMessaging
 import FBSDKCoreKit
 import BranchSDK
@@ -73,12 +72,6 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     ) { [weak self] _ in
       self?.migrateKeychainIfNeeded()
     }
-
-#if DEBUG
-    AppCheck.setAppCheckProviderFactory(AppCheckDebugProviderFactory())
-#else
-    AppCheck.setAppCheckProviderFactory(YralAppCheckProviderFactory())
-#endif
 
     FirebaseApp.configure()
     _ = root

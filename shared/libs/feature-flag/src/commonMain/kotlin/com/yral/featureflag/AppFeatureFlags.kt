@@ -34,13 +34,6 @@ object AppFeatureFlags {
 
     object Android :
         FlagGroup(keyPrefix = "app_android", defaultAudience = FlagAudience.INTERNAL_QA) {
-        val EnableAppCheck: FeatureFlag<Boolean> =
-            boolean(
-                keySuffix = "enableAppCheck",
-                name = "Enable Firebase App Check",
-                description = "Toggle Firebase App Check usage on Android.",
-                defaultValue = false,
-            )
         val InAppUpdate: FeatureFlag<IAPConfig> =
             json(
                 keySuffix = "inAppUpdate",

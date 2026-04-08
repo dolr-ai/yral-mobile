@@ -15,8 +15,7 @@
 		63997C25DF21E5569B7BCFF5 /* Pods_Yral_Staging.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D57B68D9945A635CA2480172 /* Pods_Yral_Staging.framework */; };
 		A88CCB832E95C483001D43D7 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A88CCB822E95C480001D43D7 /* RootView.swift */; };
 		A88CCB842E95C483001D43D7 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A88CCB822E95C480001D43D7 /* RootView.swift */; };
-		AC04D3022E059EA50055C4AA /* AppCheckProviderFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC04D3012E059E990055C4AA /* AppCheckProviderFactory.swift */; };
-		AC04D3032E059EA50055C4AA /* AppCheckProviderFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC04D3012E059E990055C4AA /* AppCheckProviderFactory.swift */; };
+
 		AC12B9D22D3809B7004E9EA9 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC12B9D12D3809B7004E9EA9 /* GoogleService-Info.plist */; };
 		AC4714EA2D38120800A64E29 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC4714E92D38120800A64E29 /* GoogleService-Info.plist */; };
 		AC638BF52D2309C000481E94 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC638BF42D2309BA00481E94 /* KeychainHelper.swift */; };
@@ -77,7 +76,7 @@
 		9DFDD3B88450E7A2700854D2 /* Pods-YralTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YralTests.release.xcconfig"; path = "Target Support Files/Pods-YralTests/Pods-YralTests.release.xcconfig"; sourceTree = "<group>"; };
 		A88CCB822E95C480001D43D7 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		AC04D3002E059E3A0055C4AA /* Yral.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Yral.entitlements; sourceTree = "<group>"; };
-		AC04D3012E059E990055C4AA /* AppCheckProviderFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCheckProviderFactory.swift; sourceTree = "<group>"; };
+
 		AC12B9D12D3809B7004E9EA9 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		AC42D4682E0D8EF7009C2D92 /* YralRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = YralRelease.entitlements; sourceTree = "<group>"; };
 		AC4714E92D38120800A64E29 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
@@ -226,7 +225,6 @@
 			isa = PBXGroup;
 			children = (
 				100540D32E9E6122004F8588 /* UsernameGenerator */,
-				AC04D3012E059E990055C4AA /* AppCheckProviderFactory.swift */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -599,7 +597,6 @@
 				2152FB042600AC8F00CF470E /* IosApp.swift in Sources */,
 				2152FB062600AC8F00CF470E /* NotificationHandler.swift in Sources */,
 				A88CCB842E95C483001D43D7 /* RootView.swift in Sources */,
-				AC04D3022E059EA50055C4AA /* AppCheckProviderFactory.swift in Sources */,
 				AC638BF62D2309C000481E94 /* KeychainHelper.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -618,7 +615,6 @@
 				ACD941872CFF575C0038FCB6 /* IosApp.swift in Sources */,
 				ACD941882CFF575C0038FCB6 /* NotificationHandler.swift in Sources */,
 				A88CCB832E95C483001D43D7 /* RootView.swift in Sources */,
-				AC04D3032E059EA50055C4AA /* AppCheckProviderFactory.swift in Sources */,
 				AC638BF52D2309C000481E94 /* KeychainHelper.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
