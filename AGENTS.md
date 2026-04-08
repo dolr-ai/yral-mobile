@@ -25,7 +25,6 @@ Key directories:
 
 ## Non-Negotiables
 
-- A task is not complete until relevant tests pass and `./gradlew detekt` passes.
 - Use `YralLogger` for logging. Do not add `println`.
 - Add new dependencies through `libs.versions.toml`, not hardcoded versions.
 - Prefer existing architecture and module boundaries over convenience edits.
@@ -142,6 +141,22 @@ Test expectations:
 - Important Gradle flag: `isLocalRust=false` unless actively developing Rust.
 
 ## Repo-Specific Notes
+
+### Firebase Products
+
+The project uses only the **free-tier Firebase products** listed below. Firestore, Firebase Auth, Firebase Storage, and Firebase Cloud Functions have been removed.
+
+| Product | Purpose |
+|---|---|
+| Crashlytics | Crash reporting via `CrashlyticsManager` |
+| Analytics | Event tracking via feature `Telemetry` classes |
+| Performance Monitoring | Network/trace spans in HTTP and video-player layers |
+| App Check | Play Integrity (Android) / DeviceCheck (iOS) app attestation |
+| Cloud Messaging (FCM) | Push notification token registration and deregistration |
+| In-App Messaging | Android in-app campaign delivery (automatic SDK, no custom code) |
+| Remote Config | Feature flags and forced-update logic via `FirebaseRemoteConfigProvider` |
+
+Do **not** reintroduce Firestore, Firebase Auth, Firebase Storage, or Firebase Cloud Functions.
 
 ### Session and App Services
 
