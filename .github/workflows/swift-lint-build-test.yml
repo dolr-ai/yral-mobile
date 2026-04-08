@@ -43,7 +43,18 @@ jobs:
         env:
           GITHUB_USERNAME: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew :iosSharedUmbrella:podInstall --stacktrace
+        run: |
+          ./gradlew :iosSharedUmbrella:podInstall --stacktrace
+          # Pre-link the iOS simulator framework so all Kotlin Native .klib files
+          # are compiled and cached in ~/.gradle before xcodebuild runs.
+          # Without this, the "Build iosSharedUmbrella" script phase (declared in
+          # iosSharedUmbrella.podspec) has no output declarations and therefore
+          # re-invokes Gradle's syncFramework on every xcodebuild call, causing a
+          # full Kotlin Native recompilation inside the test step. That fills the
+          # CI runner disk and produces:
+          #   libtool: can't write to output file (Input/output error)
+          #   Failed to build cache for material-icons-extended.klib
+          ./gradlew :iosSharedUmbrella:linkPodDebugFrameworkIosSimulatorArm64
 
       - name: pod install
         working-directory: iosApp
@@ -73,6 +84,15 @@ jobs:
         env:
           GITHUB_USERNAME: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # NOTE: do NOT set OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED=YES here.
+          # The "Build iosSharedUmbrella" script phase in the podspec must run
+          # syncFramework so it copies the pre-built framework into Xcode's
+          # CONFIGURATION_BUILD_DIR. Without that copy, Swift types from
+          # iosSharedUmbrella (AppRoute, VideoUploadSuccessful, etc.) are invisible
+          # to the test target and compilation fails with "cannot find type in scope".
+          # Because linkPodDebugFrameworkIosSimulatorArm64 already ran above,
+          # all Gradle link tasks are UP-TO-DATE and syncFramework only does the
+          # copy — no disk-exhausting Kotlin Native recompilation occurs.
         run: |
           set -o pipefail
           xcodebuild test \

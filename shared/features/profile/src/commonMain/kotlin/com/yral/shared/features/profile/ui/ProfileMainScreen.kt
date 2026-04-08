@@ -1080,11 +1080,13 @@ private fun SuccessContent(
             },
             state = pullRefreshState,
             indicator = {
-                Box(
-                    modifier = Modifier.align(Alignment.TopCenter),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    YralLoader(PULL_TO_REFRESH_INDICATOR_SIZE.dp)
+                if (isRefreshing || pullRefreshState.distanceFraction > 0f) {
+                    Box(
+                        modifier = Modifier.align(Alignment.TopCenter),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        YralLoader(PULL_TO_REFRESH_INDICATOR_SIZE.dp)
+                    }
                 }
             },
         ) {

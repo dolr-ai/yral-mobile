@@ -1,12 +1,12 @@
 package com.yral.shared.libs.sharing
 
 import android.content.Context
+import co.touchlab.kermit.Logger
 import io.branch.indexing.BranchUniversalObject
 import io.branch.referral.util.ContentMetadata
 import io.branch.referral.util.LinkProperties
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 
 class AndroidBranchLinkGenerator(
     private val context: Context,
@@ -37,21 +37,27 @@ class AndroidBranchLinkGenerator(
                         .addControlParameter("\$deeplink_path", input.internalUrl.substringAfter("://"))
 
                 buo.generateShortUrl(context, linkProps) { url, error ->
-                    if (error != null) {
-                        // Fail with the error so caller can handle gracefully
-                        cont.resumeWithException(IllegalStateException(error.message))
-                    } else if (!url.isNullOrBlank()) {
-                        cont.resume(url)
-                    } else {
-                        // Fallback to internal URL if Branch returned null/blank
-                        cont.resumeWithException(IllegalStateException("Branch returned null/blank URL"))
+                    when {
+                        !url.isNullOrBlank() -> {
+                            cont.resume(url)
+                        }
+
+                        error != null -> {
+                            Logger.w("BranchLinkGenerator") { "Branch error, using internalUrl: ${error.message}" }
+                            cont.resume(input.internalUrl)
+                        }
+
+                        else -> {
+                            Logger.w("BranchLinkGenerator") { "Branch returned blank URL, using internalUrl" }
+                            cont.resume(input.internalUrl)
+                        }
                     }
                 }
             } catch (
                 @Suppress("TooGenericExceptionCaught") t: Throwable,
             ) {
-                // On any unexpected exception, fallback to internal URL
-                cont.resumeWithException(t)
+                Logger.w("BranchLinkGenerator") { "Unexpected error, using internalUrl: ${t.message}" }
+                cont.resume(input.internalUrl)
             }
         }
 

@@ -61,8 +61,8 @@ internal fun Project.configureKMPCompose(composeDependencies: ComposePlugin.Depe
         "commonMainImplementation"(composeDependencies.foundation)
         "commonMainImplementation"(composeDependencies.material3)
         "commonMainImplementation"(composeDependencies.ui)
-        "commonMainImplementation"(composeDependencies.components.resources)
-        "commonMainImplementation"(composeDependencies.components.uiToolingPreview)
+        "commonMainImplementation"(libs.findLibrary("compose-components-resources").get())
+        "commonMainImplementation"(libs.findLibrary("cmp-ui-tooling-preview").get())
     }
 
     configureComposeCompiler()

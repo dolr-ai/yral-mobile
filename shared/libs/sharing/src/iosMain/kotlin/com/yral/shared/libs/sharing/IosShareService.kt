@@ -1,5 +1,6 @@
 package com.yral.shared.libs.sharing
 
+import co.touchlab.kermit.Logger
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import kotlinx.coroutines.withContext
 import platform.UIKit.UIActivityViewController
@@ -24,6 +25,7 @@ class IosShareService(
         withContext(appDispatchers.main) {
             val rootController = findRootViewController()
             if (rootController == null) {
+                Logger.w("IosShareService") { "Cannot present share sheet: no root view controller found" }
                 return@withContext
             }
 

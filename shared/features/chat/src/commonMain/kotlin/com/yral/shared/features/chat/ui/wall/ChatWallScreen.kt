@@ -285,11 +285,13 @@ private fun ChatWallContentWithPullToRefresh(
         onRefresh = { influencers.refresh() },
         state = pullRefreshState,
         indicator = {
-            Box(
-                modifier = Modifier.align(Alignment.TopCenter),
-                contentAlignment = Alignment.Center,
-            ) {
-                YralLoader(size = ChatWallScreenConstants.PULL_TO_REFRESH_INDICATOR_SIZE.dp)
+            if (isRefreshing || pullRefreshState.distanceFraction > 0f) {
+                Box(
+                    modifier = Modifier.align(Alignment.TopCenter),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    YralLoader(size = ChatWallScreenConstants.PULL_TO_REFRESH_INDICATOR_SIZE.dp)
+                }
             }
         },
     ) {

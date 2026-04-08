@@ -37,8 +37,6 @@ kotlin {
             implementation(projects.shared.libs.phoneValidation)
 
             implementation(libs.gitlive.firebase.messaging)
-
-            implementation(compose.components.resources)
         }
     }
 }

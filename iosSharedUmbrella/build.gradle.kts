@@ -42,7 +42,7 @@ kotlin {
             api(projects.shared.libs.crashlytics)
             api(projects.shared.libs.featureFlag)
             api(projects.shared.libs.routing.routesApi)
-            implementation(compose.components.resources)
+            implementation(libs.compose.components.resources)
         }
     }
 }

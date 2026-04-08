@@ -138,11 +138,13 @@ private fun InboxContentWithPullToRefresh(
         onRefresh = onRefresh,
         state = pullRefreshState,
         indicator = {
-            Box(
-                modifier = Modifier.align(Alignment.TopCenter),
-                contentAlignment = Alignment.Center,
-            ) {
-                YralLoader(INBOX_PULL_TO_REFRESH_INDICATOR_SIZE.dp)
+            if (isRefreshing || pullRefreshState.distanceFraction > 0f) {
+                Box(
+                    modifier = Modifier.align(Alignment.TopCenter),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    YralLoader(INBOX_PULL_TO_REFRESH_INDICATOR_SIZE.dp)
+                }
             }
         },
     ) {
