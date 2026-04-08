@@ -9,6 +9,12 @@ permissions:
   contents: read
   pull-requests: read
 
+# Serialize staging/TestFlight deployments so only one non-production iOS
+# release can publish to App Store Connect at a time.
+concurrency:
+  group: app-store-deploy-staging
+  cancel-in-progress: false
+
 jobs:
   build-testflight-staging:
     runs-on: macos-latest

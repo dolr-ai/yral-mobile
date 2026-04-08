@@ -8,6 +8,12 @@ on:
 permissions:
   contents: write
 
+# Serialize production App Store/TestFlight deployments so only one iOS prod
+# release can publish to App Store Connect at a time.
+concurrency:
+  group: app-store-deploy-production
+  cancel-in-progress: false
+
 jobs:
   build-release-branch:
     if: contains(github.event.release.tag_name, 'iOS')

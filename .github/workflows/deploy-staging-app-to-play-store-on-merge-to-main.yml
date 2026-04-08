@@ -10,12 +10,12 @@ permissions:
   contents: write
   pull-requests: read
 
-# Serialize all Play Store deployments so two concurrent runs cannot read the
-# same versionCode from build.gradle.kts and produce a duplicate.
+# Serialize yral-alpha Play Store deployments so two concurrent runs cannot
+# read the same versionCode from build.gradle.kts and produce a duplicate.
 # cancel-in-progress: false ensures the in-flight run completes before the
 # queued run starts (rather than aborting it).
 concurrency:
-  group: play-store-deploy-internal
+  group: play-store-deploy-staging
   cancel-in-progress: false
 
 jobs:
