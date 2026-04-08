@@ -45,6 +45,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ./gradlew :iosSharedUmbrella:podInstall --stacktrace
+          # Pre-link the iOS simulator framework so all Kotlin Native .klib files
+          # are compiled and cached in ~/.gradle before xcodebuild runs.
+          # Without this, the "Build iosSharedUmbrella" script phase (declared in
+          # iosSharedUmbrella.podspec) has no output declarations and therefore
+          # re-invokes Gradle's syncFramework on every xcodebuild call, causing a
+          # full Kotlin Native recompilation inside the test step. That fills the
+          # CI runner disk and produces:
+          #   libtool: can't write to output file (Input/output error)
+          #   Failed to build cache for material-icons-extended.klib
           ./gradlew :iosSharedUmbrella:linkPodDebugFrameworkIosSimulatorArm64
 
       - name: pod install
@@ -75,6 +84,11 @@ jobs:
         env:
           GITHUB_USERNAME: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Tells the "Build iosSharedUmbrella" script phase (from iosSharedUmbrella.podspec)
+          # to skip re-invoking Gradle and use the already-linked framework from the
+          # "Build KMM framework" step above. Without this flag, the podspec script would run
+          # syncFramework again inside xcodebuild, re-compiling all Kotlin Native code and
+          # exhausting the CI runner disk.
           OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED: 'YES'
         run: |
           set -o pipefail
