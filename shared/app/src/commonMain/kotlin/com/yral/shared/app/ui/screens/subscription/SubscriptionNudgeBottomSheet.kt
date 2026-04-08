@@ -17,7 +17,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.yral.shared.features.subscriptions.analytics.SubscriptionTelemetry
 import com.yral.shared.features.subscriptions.nav.SubscriptionNudgeContent
@@ -30,6 +29,7 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 import yral_mobile.shared.app.generated.resources.Res
 import yral_mobile.shared.app.generated.resources.subscription_nudge_cta

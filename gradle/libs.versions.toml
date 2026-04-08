@@ -118,7 +118,7 @@ compose-material3 = { module = "androidx.compose.material3:material3", version.r
 compose-ui-backhandler = { module = "org.jetbrains.compose.ui:ui-backhandler", version.ref = "composeMultiplatform" }
 compose-material-icons-core = { module = "org.jetbrains.compose.material:material-icons-core", version = "1.7.3" }
 compose-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "composeMultiplatform" }
-cmp-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "composeMultiplatform" }
+cmp-ui-tooling-preview = { module = "org.jetbrains.compose.components:components-ui-tooling-preview", version.ref = "composeMultiplatform" }
 
 compottie = { module = "io.github.alexzhirkevich:compottie", version.ref = "compottie" }
 compottie-lite = { module = "io.github.alexzhirkevich:compottie-lite", version.ref = "compottie" }

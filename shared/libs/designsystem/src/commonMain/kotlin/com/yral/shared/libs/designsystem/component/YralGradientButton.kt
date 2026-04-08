@@ -21,9 +21,6 @@ import androidx.compose.ui.draw.paint
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.yral.shared.libs.designsystem.component.lottie.LottieRes
@@ -33,6 +30,9 @@ import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.designsystem.theme.appTypoGraphy
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.jetbrains.compose.ui.tooling.preview.PreviewParameter
+import org.jetbrains.compose.ui.tooling.preview.PreviewParameterProvider
 import yral_mobile.shared.libs.designsystem.generated.resources.Res
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_thunder
 import yral_mobile.shared.libs.designsystem.generated.resources.pink_gradient_background
