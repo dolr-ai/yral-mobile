@@ -174,6 +174,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
             campaign: params["utm_campaign"] as? String,
             term: params["utm_term"] as? String,
             content: params["utm_content"] as? String,
+            gclid: params["gclid"] as? String,
             raw: params["raw_referrer"] as? String
           )
       } catch {

@@ -378,6 +378,7 @@ class RootViewModel(
             campaign = campaign,
             term = term,
             content = content,
+            gclid = gclid,
         )
 
     private fun refreshAccountDirectoryInBackground() {

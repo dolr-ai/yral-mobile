@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.core.net.toUri
 import com.android.installreferrer.api.InstallReferrerClient
 import com.android.installreferrer.api.InstallReferrerStateListener
+import com.yral.shared.preferences.stores.GCLID_PARAM
 import com.yral.shared.preferences.stores.UTM_CAMPAIGN_PARAM
 import com.yral.shared.preferences.stores.UTM_CONTENT_PARAM
 import com.yral.shared.preferences.stores.UTM_MEDIUM_PARAM
@@ -87,6 +88,7 @@ class InstallReferrerAttribution(
         val utmCampaign: String? = uri.getQueryParameter(UTM_CAMPAIGN_PARAM)
         val utmTerm: String? = uri.getQueryParameter(UTM_TERM_PARAM)
         val utmContent: String? = uri.getQueryParameter(UTM_CONTENT_PARAM)
+        val gclid: String? = uri.getQueryParameter(GCLID_PARAM)?.takeIf { it.isNotBlank() }
 
         if (utmSource.isNullOrBlank() || utmSource.isNullOrNotSet()) {
             utmSource =
@@ -104,6 +106,7 @@ class InstallReferrerAttribution(
             campaign = utmCampaign,
             term = utmTerm,
             content = utmContent,
+            gclid = gclid,
         )
     }
 
