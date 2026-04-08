@@ -84,12 +84,15 @@ jobs:
         env:
           GITHUB_USERNAME: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Tells the "Build iosSharedUmbrella" script phase (from iosSharedUmbrella.podspec)
-          # to skip re-invoking Gradle and use the already-linked framework from the
-          # "Build KMM framework" step above. Without this flag, the podspec script would run
-          # syncFramework again inside xcodebuild, re-compiling all Kotlin Native code and
-          # exhausting the CI runner disk.
-          OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED: 'YES'
+          # NOTE: do NOT set OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED=YES here.
+          # The "Build iosSharedUmbrella" script phase in the podspec must run
+          # syncFramework so it copies the pre-built framework into Xcode's
+          # CONFIGURATION_BUILD_DIR. Without that copy, Swift types from
+          # iosSharedUmbrella (AppRoute, VideoUploadSuccessful, etc.) are invisible
+          # to the test target and compilation fails with "cannot find type in scope".
+          # Because linkPodDebugFrameworkIosSimulatorArm64 already ran above,
+          # all Gradle link tasks are UP-TO-DATE and syncFramework only does the
+          # copy — no disk-exhausting Kotlin Native recompilation occurs.
         run: |
           set -o pipefail
           xcodebuild test \
