@@ -114,7 +114,7 @@ When a KMM module needs a native iOS pod for Kotlin interop, declare it via `pod
 
 The exception: if a pod is also imported directly in Swift code inside `iosApp/`, it **must** remain in the Podfile. KMM `pod()` only generates Kotlin cinterop bindings and does not add the framework to Xcode's build path for Swift.
 
-A second exception: even if a pod is **not** imported in Swift, it must still be in the Podfile if DYLD needs to resolve it as a dynamic framework at runtime (e.g. `FirebasePerformance`, `FirebaseStorage`). KMM `pod()` declarations do not place the built `.framework` into the simulator products directory used at test time.
+A second exception: even if a pod is **not** imported in Swift, it must still be in the Podfile if DYLD needs to resolve it as a dynamic framework at runtime (e.g. `FirebasePerformance`). KMM `pod()` declarations do not place the built `.framework` into the simulator products directory used at test time.
 
 ## Working Pattern
 
@@ -162,14 +162,3 @@ Do **not** reintroduce Firestore, Firebase Auth, Firebase Storage, Firebase App 
 - Session state is managed through `SessionManager`.
 - For crash reporting, use `CrashlyticsManager.recordException(...)`.
 - For analytics, prefer the feature telemetry classes instead of ad hoc logging.
-
-### Tournament Creation
-
-When asked to create tournaments, use the Firebase Cloud Functions rather than writing Firestore documents manually. Those functions handle registration, video fetching, scheduling status changes, and settlement.
-
-Defaults unless specified otherwise:
-- Entry cost: 5 YRAL
-- Duration: about 10 minutes
-- Status flow: scheduled -> live -> ended -> settled
-
-Use staging endpoints by default unless the user explicitly asks for production.
