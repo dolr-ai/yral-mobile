@@ -10,7 +10,6 @@ def add_common_pods
   # it is a dynamic framework that DYLD must resolve at runtime on the simulator;
   # KMM pod() declarations alone do not place the .framework into the simulator products dir.
   pod 'FirebaseAnalytics', FIREBASE_VERSION
-  pod 'FirebaseCrashlytics', FIREBASE_VERSION
   pod 'FirebasePerformance', FIREBASE_VERSION
   pod 'FirebaseMessaging', FIREBASE_VERSION
   pod 'Mixpanel', '5.0.8'
