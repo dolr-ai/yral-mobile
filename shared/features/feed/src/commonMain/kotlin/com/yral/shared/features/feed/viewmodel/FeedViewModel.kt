@@ -20,6 +20,7 @@ import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.data.domain.models.Post
+import com.yral.shared.data.domain.useCases.FetchDailyStreakUseCase
 import com.yral.shared.data.domain.useCases.GetVideoViewsUseCase
 import com.yral.shared.features.feed.analytics.FeedTelemetry
 import com.yral.shared.features.feed.domain.useCases.CheckVideoVoteUseCase
@@ -172,6 +173,26 @@ class FeedViewModel(
         }
         // Track onboarding steps only once when they're first shown
         viewModelScope.launch { trackOnboardingShown() }
+        fetchDailyStreak()
+    }
+
+    private fun fetchDailyStreak() {
+        val userPrincipal = sessionManager.userPrincipal ?: return
+        coroutineScope.launch {
+            requiredUseCases
+                .fetchDailyStreakUseCase
+                .invoke(FetchDailyStreakUseCase.Params(userPrincipal = userPrincipal))
+                .onSuccess { streak ->
+                    _state.update {
+                        it.copy(
+                            streakCount = streak.streakCount,
+                            streakExpiresAtEpochMs = streak.streakExpiresAtEpochMs,
+                        )
+                    }
+                }.onFailure { error ->
+                    Logger.e("FeedViewModel") { "Failed to fetch daily streak: ${error.message}" }
+                }
+        }
     }
 
     private fun initAvailableFeeds() {
@@ -1128,6 +1149,7 @@ class FeedViewModel(
         val loadCachedFeedDetailsUseCase: LoadCachedFeedDetailsUseCase,
         val saveFeedDetailsCacheUseCase: SaveFeedDetailsCacheUseCase,
         val getGlobalCacheFeedUseCase: GetGlobalCacheFeedUseCase,
+        val fetchDailyStreakUseCase: FetchDailyStreakUseCase,
     )
 }
 
@@ -1151,6 +1173,8 @@ data class FeedState(
     val currentOnboardingStep: OnboardingStep? = null,
     val isMandatoryLogin: Boolean = false,
     val isCardLayoutEnabled: Boolean = true,
+    val streakCount: Long? = null,
+    val streakExpiresAtEpochMs: Long? = null,
 )
 
 data class VideoData(

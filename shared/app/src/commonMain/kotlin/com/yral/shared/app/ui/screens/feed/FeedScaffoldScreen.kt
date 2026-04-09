@@ -17,6 +17,7 @@ import com.yral.shared.app.ui.chatUnreadBadgeText
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.feed.ui.FeedActionsRight
 import com.yral.shared.features.feed.ui.FeedScreen
+import com.yral.shared.features.feed.ui.FeedStreakChip
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import org.jetbrains.compose.resources.painterResource
 import yral_mobile.shared.app.generated.resources.Res
@@ -40,10 +41,13 @@ fun FeedScaffoldScreen(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .padding(top = 16.dp, end = 16.dp),
-                contentAlignment = Alignment.TopEnd,
+                        .padding(top = 16.dp, start = 16.dp, end = 16.dp),
             ) {
-                Box {
+                FeedStreakChip(
+                    streakCount = feedState.streakCount,
+                    modifier = Modifier.align(Alignment.TopStart),
+                )
+                Box(modifier = Modifier.align(Alignment.TopEnd)) {
                     Image(
                         painter = painterResource(Res.drawable.inbox),
                         contentDescription = "Inbox",
