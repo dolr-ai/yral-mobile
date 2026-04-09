@@ -265,7 +265,7 @@ class AuthDataSourceImpl(
         ingressExpiryNanos: Int,
         delegations: List<SignedDelegationPayload>?,
     ): CreateAiAccountResponseDto =
-        authPost<CreateAiAccountResponseDto> {
+        authPost<CreateAiAccountResponseDto> { host ->
             val payload =
                 CreateAiAccountRequestDto(
                     userPrincipal = userPrincipal,
