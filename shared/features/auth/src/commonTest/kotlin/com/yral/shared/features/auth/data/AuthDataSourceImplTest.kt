@@ -8,16 +8,21 @@ import com.yral.shared.testsupport.preferences.FakePreferences
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.defaultRequest
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
 import io.ktor.http.headersOf
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class AuthDataSourceImplTest {
@@ -84,6 +89,53 @@ class AuthDataSourceImplTest {
             assertFalse(resolver.isFallbackActive())
         }
 
+    @Test
+    fun createAiAccount_retriesOnFallbackAndUsesResolvedHost() =
+        runTest {
+            val hosts = mutableListOf<String>()
+            val resolver = SessionAuthHostResolver(CrashlyticsManager())
+            val dataSource =
+                createDataSource(
+                    resolver = resolver,
+                    onRequest = { host ->
+                        hosts += host
+                        when (host) {
+                            PRIMARY_HOST -> {
+                                throw DNSLookupException(
+                                    hostname = host,
+                                    lookupSource = "test_dns",
+                                    cause = RuntimeException("primary dns failed"),
+                                )
+                            }
+
+                            FALLBACK_HOST -> {
+                                createAiAccountResponseJson()
+                            }
+
+                            else -> {
+                                error("Unexpected host: $host")
+                            }
+                        }
+                    },
+                )
+
+            val response =
+                dataSource.createAiAccount(
+                    userPrincipal = "fg3u2-hyjkt-itbo5-fgmut-vzibq-z623z-npczw-drwra-frlmf-dr2bz-2qe",
+                    signature = byteArrayOf(1, 2, 3),
+                    publicKey = byteArrayOf(4, 5, 6),
+                    signedMessage = byteArrayOf(),
+                    ingressExpirySecs = 1775740307,
+                    ingressExpiryNanos = 111476128,
+                    delegations = null,
+                )
+
+            assertEquals(listOf(PRIMARY_HOST, FALLBACK_HOST), hosts)
+            assertTrue(resolver.isFallbackActive())
+            assertEquals(listOf(1, 2, 3), response.delegatedIdentity.fromKey)
+            assertNotNull(response.delegatedIdentity.toSecret)
+        }
+
     private fun createDataSource(
         resolver: SessionAuthHostResolver = SessionAuthHostResolver(CrashlyticsManager()),
         eventListener: HTTPEventListener = NoOpHttpEventListener(),
@@ -99,7 +151,15 @@ class AuthDataSourceImplTest {
                 )
             }
         return AuthDataSourceImpl(
-            client = HttpClient(engine),
+            client =
+                HttpClient(engine) {
+                    install(ContentNegotiation) {
+                        json(json)
+                    }
+                    defaultRequest {
+                        contentType(ContentType.Application.Json)
+                    }
+                },
             json = json,
             preferences = FakePreferences(),
             authEnv = authEnv(),
@@ -122,6 +182,32 @@ class AuthDataSourceImplTest {
           "expires_in": 3600,
           "refresh_token": "refresh-token",
           "token_type": "Bearer"
+        }
+        """.trimIndent()
+
+    private fun createAiAccountResponseJson(): String =
+        """
+        {
+          "delegated_identity": {
+            "from_key": [1, 2, 3],
+            "to_secret": {
+              "kty": "EC",
+              "crv": "secp256k1",
+              "x": "x-value",
+              "y": "y-value",
+              "d": "d-value"
+            },
+            "delegation_chain": [
+              {
+                "signature": [7, 8, 9],
+                "delegation": {
+                  "pubkey": [10, 11, 12],
+                  "expiration": 1776344742052174366,
+                  "targets": null
+                }
+              }
+            ]
+          }
         }
         """.trimIndent()
 
