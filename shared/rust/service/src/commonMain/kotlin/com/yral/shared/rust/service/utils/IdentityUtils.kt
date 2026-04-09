@@ -49,7 +49,7 @@ suspend fun authenticateWithNetwork(data: ByteArray): CanisterData =
                 userPrincipalId = wrapper.getUserPrincipal(),
                 profilePic = wrapper.getProfilePic(),
                 username = wrapper.getUsername(),
-                isCreatedFromServiceCanister = wrapper.isCreatedFromServiceCanister(),
+                isCreatedFromServiceCanister = true,
             )
         } catch (exception: FfiException) {
             throw YralFfiException(exception)

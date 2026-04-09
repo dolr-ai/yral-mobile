@@ -567,7 +567,7 @@ class DefaultAuthClient(
                         userPrincipal = userPrincipal!!,
                         profilePic = profilePic!!,
                         username = resolveUsername(username, userPrincipal),
-                        isCreatedFromServiceCanister = isCreatedFromServiceCanister ?: false,
+                        isCreatedFromServiceCanister = isCreatedFromServiceCanister ?: true,
                         isBotAccount = resolvedIsBotAccount,
                     )
                 } else {

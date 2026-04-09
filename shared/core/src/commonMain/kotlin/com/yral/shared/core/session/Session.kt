@@ -7,7 +7,7 @@ data class Session(
     val profilePic: String? = null,
     val username: String? = null,
     val bio: String? = null,
-    val isCreatedFromServiceCanister: Boolean = false,
+    val isCreatedFromServiceCanister: Boolean = true,
     val isBotAccount: Boolean = false,
 )
 
