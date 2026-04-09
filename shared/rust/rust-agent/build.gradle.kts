@@ -29,7 +29,7 @@ plugins {
 }
 
 group = "com.yral.shared"
-version = "1.0"
+version = "4.1.0"
 
 kotlin {
     androidTarget {
