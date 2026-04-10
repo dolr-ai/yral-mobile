@@ -18,9 +18,7 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.videostate.VideoGenerationTracker
 import com.yral.shared.crashlytics.core.CrashlyticsManager
-import com.yral.shared.data.domain.CommonApis
 import com.yral.shared.data.domain.models.FeedDetails
-import com.yral.shared.data.domain.models.VideoViews
 import com.yral.shared.data.domain.useCases.GetVideoViewsUseCase
 import com.yral.shared.features.chat.analytics.ChatTelemetry
 import com.yral.shared.features.chat.data.ChatAccessBillingDataSource
@@ -76,6 +74,7 @@ import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCa
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserUseCase
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.testsupport.analytics.RecordingAnalyticsProvider
+import com.yral.shared.testsupport.commonapis.FakeCommonApis
 import com.yral.shared.testsupport.metadata.FakeFollowersMetadataDataSource
 import com.yral.shared.testsupport.usecase.NoOpUseCaseFailureListener
 import kotlinx.coroutines.Dispatchers
@@ -557,15 +556,6 @@ private class FakeProfileRepository : ProfileRepository {
     }
     override suspend fun uploadProfileImage(imageBase64: String): String = ""
     override suspend fun followNotification(request: FollowNotification) {}
-}
-
-private class FakeCommonApis : CommonApis {
-    override suspend fun getVideoViewsCount(videoId: List<String>): List<VideoViews> = emptyList()
-    override suspend fun softDeleteInfluencer(
-        principal: String,
-        idToken: String,
-        chatBaseUrl: String,
-    ): Result<Unit> = Result.success(Unit)
 }
 
 private class FakeReportVideoRepository : IReportVideoRepository {

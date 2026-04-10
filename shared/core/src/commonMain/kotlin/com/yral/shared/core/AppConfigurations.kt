@@ -15,6 +15,7 @@ object AppConfigurations {
     const val ANALYTICS_BASE_URL = "analytics.yral.com"
     const val CHAT_BASE_URL = "chat.yral.com"
     const val BILLING_BASE_URL = "billing.yral.com"
+    const val DAILY_STREAK_BASE_URL = "daily-streaks.naitik.yral.com"
     const val SNOWPLOW_COLLECTOR_URL = "snowplow-collector.yral.com"
     const val FIREBASE_APP_NAME = "yral"
     const val FIREBASE_COULD_URL = "cloudfunctions.net"

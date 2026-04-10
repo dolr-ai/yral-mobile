@@ -1,5 +1,6 @@
 package com.yral.shared.data.domain
 
+import com.yral.shared.data.domain.models.DailyStreak
 import com.yral.shared.data.domain.models.VideoViews
 
 interface CommonApis {
@@ -10,4 +11,9 @@ interface CommonApis {
         idToken: String,
         chatBaseUrl: String,
     ): Result<Unit>
+
+    suspend fun fetchDailyStreak(
+        userPrincipal: String,
+        idToken: String,
+    ): DailyStreak
 }

@@ -16,6 +16,7 @@ kotlin {
             implementation(projects.shared.libs.arch)
             implementation(projects.shared.libs.preferences)
             implementation(projects.shared.rust.service)
+            implementation(projects.shared.data)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
