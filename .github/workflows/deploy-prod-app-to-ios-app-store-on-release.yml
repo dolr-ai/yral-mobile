@@ -114,6 +114,40 @@ jobs:
             -Dorg.gradle.project.compose.ios.resources.platform=iphoneos
             -Dorg.gradle.project.compose.ios.resources.archs=arm64
 
+      - name: Upload Crashlytics dSYMs
+        shell: zsh {0}
+        run: |
+          UPLOAD_SYMBOLS_SCRIPT="iosApp/Pods/FirebaseCrashlytics/upload-symbols"
+          GOOGLE_SERVICE_INFO_PLIST="iosApp/Prod/GoogleService-Info.plist"
+
+          if [[ ! -f "$UPLOAD_SYMBOLS_SCRIPT" ]]; then
+            echo "Crashlytics upload-symbols script not found at $UPLOAD_SYMBOLS_SCRIPT" >&2
+            exit 1
+          fi
+
+          if [[ ! -f "$GOOGLE_SERVICE_INFO_PLIST" ]]; then
+            echo "GoogleService-Info.plist not found at $GOOGLE_SERVICE_INFO_PLIST" >&2
+            exit 1
+          fi
+
+          setopt null_glob
+          archive_candidates=("$HOME"/Library/Developer/Xcode/Archives/**/*.xcarchive(N))
+          if (( ${#archive_candidates[@]} == 0 )); then
+            echo "No Xcode archive found after TestFlight build" >&2
+            exit 1
+          fi
+
+          ARCHIVE_PATH=$(ls -td "${archive_candidates[@]}" | head -n 1)
+          DSYMS_DIR="$ARCHIVE_PATH/dSYMs"
+
+          if [[ ! -d "$DSYMS_DIR" ]]; then
+            echo "dSYMs directory not found at $DSYMS_DIR" >&2
+            exit 1
+          fi
+
+          echo "Uploading Crashlytics dSYMs from $DSYMS_DIR"
+          bash "$UPLOAD_SYMBOLS_SCRIPT" -gsp "$GOOGLE_SERVICE_INFO_PLIST" -p ios "$DSYMS_DIR"
+
       - name: Commit version changes to main
         run: |
           git config user.name "github-actions[bot]"
