@@ -89,6 +89,10 @@ interface RootComponent {
 
     fun dismissAccountSwitcherSlot()
 
+    fun showDailyStreakCelebration(streakCount: Long)
+
+    fun dismissDailyStreakCelebration()
+
     // Defines all possible child components
     sealed class Child {
         class Splash(
@@ -140,5 +144,9 @@ interface RootComponent {
         class MandatoryUpdate : SlotChild()
 
         class AccountSwitcher : SlotChild()
+
+        class DailyStreak(
+            val streakCount: Long,
+        ) : SlotChild()
     }
 }

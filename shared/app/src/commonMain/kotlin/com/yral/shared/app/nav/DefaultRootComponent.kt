@@ -71,6 +71,7 @@ class DefaultRootComponent(
 
     // ==================== State ====================
     private var pendingNavRoute: AppRoute? = null
+    private var pendingDailyStreakCount: Long? = null
     private val _updateState = MutableValue<UpdateState>(UpdateState.Idle)
     override val updateState: Value<UpdateState> = _updateState
     private var onCompleteUpdateCallback: (() -> Unit)? = null
@@ -130,7 +131,9 @@ class DefaultRootComponent(
             serializer = SlotConfig.serializer(),
             handleBackButton = true,
             childFactory = ::createSlotChild,
-        )
+        ).also { slotValue ->
+            slotValue.subscribe(::onSlotChanged)
+        }
 
     override val stack: Value<ChildStack<*, RootComponent.Child>> =
         childStack(
@@ -152,6 +155,15 @@ class DefaultRootComponent(
                 pendingNavRoute = null
                 handleAppRoute(route)
             }
+        }
+        if (currentChild is RootComponent.Child.Home) {
+            rootViewModel.onHomeReached()
+        }
+    }
+
+    private fun onSlotChanged(slotState: ChildSlot<*, RootComponent.SlotChild>) {
+        if (slotState.child == null) {
+            showPendingDailyStreakIfPossible()
         }
     }
 
@@ -280,6 +292,10 @@ class DefaultRootComponent(
 
             is SlotConfig.AccountSwitcher -> {
                 RootComponent.SlotChild.AccountSwitcher()
+            }
+
+            is SlotConfig.DailyStreak -> {
+                RootComponent.SlotChild.DailyStreak(streakCount = config.streakCount)
             }
         }
 
@@ -592,6 +608,32 @@ class DefaultRootComponent(
     override fun dismissAccountSwitcherSlot() {
         if (slot.value.child?.instance is RootComponent.SlotChild.AccountSwitcher) {
             slotNavigation.dismiss()
+        }
+    }
+
+    override fun showDailyStreakCelebration(streakCount: Long) {
+        if (slot.value.child == null) {
+            slotNavigation.activate(SlotConfig.DailyStreak(streakCount))
+            return
+        }
+        pendingDailyStreakCount = streakCount
+    }
+
+    override fun dismissDailyStreakCelebration() {
+        dismissDailyStreakSlotIfActive()
+    }
+
+    private fun dismissDailyStreakSlotIfActive() {
+        if (slot.value.child?.instance is RootComponent.SlotChild.DailyStreak) {
+            slotNavigation.dismiss()
+        }
+    }
+
+    private fun showPendingDailyStreakIfPossible() {
+        val streakCount = pendingDailyStreakCount ?: return
+        if (slot.value.child == null) {
+            pendingDailyStreakCount = null
+            slotNavigation.activate(SlotConfig.DailyStreak(streakCount))
         }
     }
 }

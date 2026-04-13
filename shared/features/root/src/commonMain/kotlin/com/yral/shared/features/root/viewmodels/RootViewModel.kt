@@ -21,10 +21,13 @@ import com.yral.shared.core.session.hasSameUserPrincipal
 import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
+import com.yral.shared.data.domain.useCases.FetchDailyStreakUseCase
 import com.yral.shared.features.auth.AuthClientFactory
 import com.yral.shared.features.auth.YralAuthException
 import com.yral.shared.features.auth.YralFBAuthException
 import com.yral.shared.features.root.analytics.RootTelemetry
+import com.yral.shared.features.root.domain.DailyStreakLaunchEvaluator
+import com.yral.shared.features.root.domain.DailyStreakLaunchResult
 import com.yral.shared.features.subscriptions.domain.FetchProductsUseCase
 import com.yral.shared.features.subscriptions.domain.QueryPurchaseUseCase
 import com.yral.shared.iap.PurchaseResult
@@ -52,11 +55,13 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -95,6 +100,8 @@ class RootViewModel(
     private val accountDirectoryStore: AccountDirectoryStore,
     private val botIdentitiesStore: BotIdentitiesStore,
     private val utmAttributionStore: UtmAttributionStore,
+    private val fetchDailyStreakUseCase: FetchDailyStreakUseCase,
+    private val dailyStreakLaunchEvaluator: DailyStreakLaunchEvaluator,
     private val fetchProductsUseCase: FetchProductsUseCase,
     private val queryPurchaseUseCase: QueryPurchaseUseCase,
     private val getUserProfileDetailsV7UseCase: GetUserProfileDetailsV7UseCase,
@@ -102,6 +109,8 @@ class RootViewModel(
     private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.disk)
     private val json = Json { ignoreUnknownKeys = true }
     private var hasAttemptedAutoSwitch = false
+    private val checkedDailyStreakPrincipals = mutableSetOf<String>()
+    private val rootEventChannel = Channel<RootEvent>(Channel.BUFFERED)
 
     private val authClient =
         authClientFactory
@@ -130,6 +139,7 @@ class RootViewModel(
 
     private val _state = MutableStateFlow(RootState())
     val state: StateFlow<RootState> = _state.asStateFlow()
+    val rootEvents = rootEventChannel.receiveAsFlow()
 
     private val analyticsUser =
         sessionManager.observeSessionStateWithProperty { state, properties ->
@@ -231,6 +241,39 @@ class RootViewModel(
                     crashlyticsManager.recordException(e, ExceptionType.AUTH)
                 }
             }
+    }
+
+    fun onHomeReached() {
+        val userPrincipal = sessionManager.userPrincipal ?: return
+        if (!checkedDailyStreakPrincipals.add(userPrincipal)) return
+
+        coroutineScope.launch {
+            fetchDailyStreakUseCase
+                .invoke(FetchDailyStreakUseCase.Params(userPrincipal = userPrincipal))
+                .onSuccess { streak ->
+                    when (
+                        val result =
+                            dailyStreakLaunchEvaluator.evaluate(
+                                principal = userPrincipal,
+                                remoteStreakCount = streak.streakCount,
+                            )
+                    ) {
+                        is DailyStreakLaunchResult.NoChange -> {
+                            Unit
+                        }
+
+                        is DailyStreakLaunchResult.ShowCelebration -> {
+                            rootEventChannel.send(
+                                RootEvent.ShowDailyStreakCelebration(streakCount = result.streakCount),
+                            )
+                        }
+                    }
+                }.onFailure { error ->
+                    Logger.w("RootViewModel") {
+                        "Failed to fetch daily streak on home entry: ${error.message}"
+                    }
+                }
+        }
     }
 
     private suspend fun checkLoginAndInitialize(isSessionPrincipalSame: Boolean) {
@@ -1000,7 +1043,7 @@ class RootViewModel(
         val payloadElement =
             payloadJson?.let {
                 runCatching<JsonElement> {
-                    Json { ignoreUnknownKeys = true }.parseToJsonElement(it)
+                    json.parseToJsonElement(it)
                 }.getOrNull()
             }
         val botArray = payloadElement?.jsonObject?.get("ext_ai_account_delegated_identities")
@@ -1076,6 +1119,12 @@ data class RootState(
     val showAccountDialog: Boolean = false,
     val isAccountSwitchInProgress: Boolean = false,
 )
+
+sealed interface RootEvent {
+    data class ShowDailyStreakCelebration(
+        val streakCount: Long,
+    ) : RootEvent
+}
 
 data class AccountDialogInfo(
     val mainAccount: AccountUi?,

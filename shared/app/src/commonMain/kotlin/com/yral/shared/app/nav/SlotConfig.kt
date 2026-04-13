@@ -24,4 +24,9 @@ internal sealed interface SlotConfig {
 
     @Serializable
     data object AccountSwitcher : SlotConfig
+
+    @Serializable
+    data class DailyStreak(
+        val streakCount: Long,
+    ) : SlotConfig
 }
