@@ -25,7 +25,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -39,8 +41,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
+import com.yral.shared.libs.designsystem.theme.GradientAngleConvention
+import com.yral.shared.libs.designsystem.theme.GradientLengthMode
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import com.yral.shared.libs.designsystem.theme.angledGradientBackground
 import com.yral.shared.libs.designsystem.theme.kumbhSansFontFamily
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -55,14 +60,21 @@ import yral_mobile.shared.libs.designsystem.generated.resources.golden_gradient
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_lightning_bolt_gold
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
-private val ScreenGradientTop = Color(0xFF2A1022)
-private val ScreenGradientMid = Color(0xFF15111E)
+private val ScreenGradientTop = Color(0xFF342735)
+private val ScreenGradientMid = Color(0xFF1B1623)
 private val ScreenGradientBottom = Color(0xFF050507)
-private val GlowColor = Color(0xFFF8A8B8)
+private val BackgroundRayBright = Color(0xFFF2B1AC)
+private val BackgroundRaySoft = Color(0xFFA47987)
+private val BackgroundSideShadow = Color(0xFF241A31)
 private val BadgeFillStart = Color(0xFFFFE07A)
 private val BadgeFillEnd = Color(0xFFFF8A2A)
-private val BottomSection = Color(0xFF020202)
+private val BadgeInnerFill = Color(0xFFD9308B)
+private val ContentHorizontalPadding = 18.dp
+private val TopContentSpacer = 96.dp
+private val HeroCountSpacing = 18.dp
+private val CountCopySpacing = 72.dp
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun DailyStreakCelebrationScreen(
     streakCount: Long,
@@ -70,6 +82,34 @@ fun DailyStreakCelebrationScreen(
 ) {
     BackHandler(onBack = onDismiss)
 
+    Box(
+        modifier =
+            Modifier
+                .fillMaxSize(),
+    ) {
+        BackgroundImage()
+        CloseButton(onDismiss = onDismiss)
+
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = ContentHorizontalPadding),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Spacer(modifier = Modifier.height(TopContentSpacer))
+            StreakHero()
+            Spacer(modifier = Modifier.height(HeroCountSpacing))
+            StreakCount(streakCount = streakCount)
+            Spacer(modifier = Modifier.height(CountCopySpacing))
+            BottomContent(onDismiss = onDismiss)
+        }
+    }
+}
+
+@Suppress("LongMethod")
+@Composable
+private fun BackgroundImage() {
     Box(
         modifier =
             Modifier
@@ -81,38 +121,90 @@ fun DailyStreakCelebrationScreen(
                         ),
                 ),
     ) {
-        BackgroundGlow()
-        CloseButton(onDismiss = onDismiss)
-
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Spacer(modifier = Modifier.height(88.dp))
-            StreakHero()
-            Spacer(modifier = Modifier.height(24.dp))
-            StreakCount(streakCount = streakCount)
-            Spacer(modifier = Modifier.weight(1f))
-            BottomContent(onDismiss = onDismiss)
-        }
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .angledGradientBackground(
+                        colorStops =
+                            arrayOf(
+                                0.00f to BackgroundRayBright.copy(alpha = 0.90f),
+                                0.16f to BackgroundRaySoft.copy(alpha = 0.72f),
+                                0.40f to Color.Transparent,
+                            ),
+                        degrees = 108f,
+                        angleConvention = GradientAngleConvention.CssDegrees,
+                        lengthMode = GradientLengthMode.Diagonal,
+                    ),
+        )
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .angledGradientBackground(
+                        colorStops =
+                            arrayOf(
+                                0.00f to Color.Transparent,
+                                0.08f to BackgroundRayBright.copy(alpha = 0.92f),
+                                0.22f to BackgroundRaySoft.copy(alpha = 0.70f),
+                                0.44f to Color.Transparent,
+                            ),
+                        degrees = 90f,
+                        angleConvention = GradientAngleConvention.CssDegrees,
+                        lengthMode = GradientLengthMode.Diagonal,
+                    ),
+        )
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .angledGradientBackground(
+                        colorStops =
+                            arrayOf(
+                                0.00f to BackgroundRayBright.copy(alpha = 0.88f),
+                                0.14f to BackgroundRaySoft.copy(alpha = 0.68f),
+                                0.38f to Color.Transparent,
+                            ),
+                        degrees = 72f,
+                        angleConvention = GradientAngleConvention.CssDegrees,
+                        lengthMode = GradientLengthMode.Diagonal,
+                    ),
+        )
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush =
+                            Brush.horizontalGradient(
+                                colorStops =
+                                    arrayOf(
+                                        0.00f to BackgroundSideShadow.copy(alpha = 0.62f),
+                                        0.20f to Color.Transparent,
+                                        0.80f to Color.Transparent,
+                                        1.00f to BackgroundSideShadow.copy(alpha = 0.58f),
+                                    ),
+                            ),
+                    ),
+        )
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush =
+                            Brush.verticalGradient(
+                                colorStops =
+                                    arrayOf(
+                                        0.00f to Color.Transparent,
+                                        0.62f to Color.Transparent,
+                                        0.84f to ScreenGradientBottom.copy(alpha = 0.92f),
+                                        1.00f to ScreenGradientBottom,
+                                    ),
+                            ),
+                    ),
+        )
     }
-}
-
-@Composable
-private fun BackgroundGlow() {
-    Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .height(320.dp)
-                .background(
-                    brush =
-                        Brush.radialGradient(
-                            colors = listOf(GlowColor.copy(alpha = 0.85f), Color.Transparent),
-                            radius = 900f,
-                        ),
-                ),
-    )
 }
 
 @Composable
@@ -122,7 +214,7 @@ private fun CloseButton(onDismiss: () -> Unit) {
             Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
-                .padding(top = 16.dp, end = 20.dp),
+                .padding(top = 14.dp, end = 18.dp),
         contentAlignment = Alignment.TopEnd,
     ) {
         Icon(
@@ -140,7 +232,7 @@ private fun CloseButton(onDismiss: () -> Unit) {
 @Composable
 private fun StreakHero() {
     Box(
-        modifier = Modifier.size(180.dp),
+        modifier = Modifier.size(170.dp),
         contentAlignment = Alignment.Center,
     ) {
         Image(
@@ -148,8 +240,8 @@ private fun StreakHero() {
             contentDescription = null,
             modifier =
                 Modifier
-                    .size(156.dp)
-                    .shadow(36.dp, CircleShape, ambientColor = YralColors.Pink200, spotColor = YralColors.Pink200),
+                    .size(148.dp)
+                    .shadow(22.dp, CircleShape, ambientColor = YralColors.Pink200, spotColor = YralColors.Pink200),
             contentScale = ContentScale.Fit,
         )
 
@@ -157,7 +249,7 @@ private fun StreakHero() {
             modifier =
                 Modifier
                     .align(Alignment.BottomStart)
-                    .padding(start = 34.dp, bottom = 12.dp),
+                    .padding(start = 30.dp, bottom = 10.dp),
         )
     }
 }
@@ -185,7 +277,7 @@ private fun Badge(modifier: Modifier = Modifier) {
                     Modifier
                         .fillMaxSize()
                         .clip(CircleShape)
-                        .background(Color(0xFFD9308B)),
+                        .background(BadgeInnerFill),
                 contentAlignment = Alignment.Center,
             ) {
                 Image(
@@ -238,23 +330,20 @@ private fun StreakCount(streakCount: Long) {
 @Composable
 private fun BottomContent(onDismiss: () -> Unit) {
     Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(BottomSection)
-                .padding(horizontal = 20.dp, vertical = 28.dp)
-                .navigationBarsPadding(),
+        modifier = Modifier.fillMaxWidth().navigationBarsPadding(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = stringResource(Res.string.daily_streak_started_title),
+            modifier = Modifier.padding(horizontal = 12.dp),
             style = LocalAppTopography.current.xlBold,
             color = YralColors.NeutralTextPrimary,
             textAlign = TextAlign.Center,
         )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(10.dp))
         Text(
             text = stringResource(Res.string.daily_streak_subtitle),
+            modifier = Modifier.padding(horizontal = 12.dp),
             style = LocalAppTopography.current.mdRegular,
             color = YralColors.NeutralTextSecondary,
             textAlign = TextAlign.Center,
