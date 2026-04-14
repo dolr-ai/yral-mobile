@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   build-testflight-staging:
     runs-on: macos-latest
@@ -12,6 +16,65 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
+
+      - name: Resolve TestFlight release notes
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const maxLength = 4000
+            const stripHtmlComments = (text) =>
+              (text || "").replace(/<!--[\s\S]*?-->/g, "").trim()
+
+            let title = ""
+            let body = ""
+            let source = `commit ${context.sha}`
+
+            try {
+              const { data: pullRequests } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                commit_sha: context.sha
+              })
+
+              const mergedPullRequest =
+                pullRequests
+                  .filter((pullRequest) => pullRequest.merged_at)
+                  .sort((left, right) => new Date(right.merged_at) - new Date(left.merged_at))[0] ||
+                pullRequests[0]
+
+              if (mergedPullRequest) {
+                title = stripHtmlComments(mergedPullRequest.title)
+                body = stripHtmlComments(mergedPullRequest.body)
+                source = `PR #${mergedPullRequest.number}`
+              }
+            } catch (error) {
+              core.warning(`Failed to resolve PR release notes: ${error.message}`)
+            }
+
+            if (!title) {
+              title = stripHtmlComments(context.payload.head_commit?.message) || "Staging build"
+            }
+
+            let notes = title
+            if (body) {
+              notes = `${title}\n\n${body}`
+            }
+
+            notes = notes
+              .replace(/\r\n/g, "\n")
+              .split("\n")
+              .map((line) => line.trimEnd())
+              .join("\n")
+              .replace(/\n{3,}/g, "\n\n")
+              .trim()
+
+            if (notes.length > maxLength) {
+              notes = `${notes.slice(0, maxLength - 1).trimEnd()}…`
+            }
+
+            core.info(`Using TestFlight release notes from ${source}`)
+            core.exportVariable("TESTFLIGHT_STAGING_WHATS_NEW", notes)
 
       - name: Set up Xcode
         uses: maxim-lobanov/setup-xcode@v1
@@ -78,6 +141,7 @@ jobs:
           APP_STORE_CONNECT_ISSUER_ID: ${{ vars.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_KEY_ID: ${{ vars.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
+          TESTFLIGHT_STAGING_GROUP_NAME: Yral-Staging open testing
           GITHUB_USERNAME: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GRADLE_OPTS: >-
