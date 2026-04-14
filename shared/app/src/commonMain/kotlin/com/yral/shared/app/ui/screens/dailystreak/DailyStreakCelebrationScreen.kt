@@ -2,7 +2,6 @@
 
 package com.yral.shared.app.ui.screens.dailystreak
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -70,8 +69,6 @@ fun DailyStreakCelebrationScreen(
     streakCount: Long,
     onDismiss: () -> Unit,
 ) {
-    BackHandler(onBack = onDismiss)
-
     BoxWithConstraints(
         modifier =
             Modifier
