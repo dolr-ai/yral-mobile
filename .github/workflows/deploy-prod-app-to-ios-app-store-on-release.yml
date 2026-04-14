@@ -33,7 +33,7 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Checkout main branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: main
           ssh-key: ${{ secrets.DEPLOY_KEY_SSH_PRIVATE_KEY }}
