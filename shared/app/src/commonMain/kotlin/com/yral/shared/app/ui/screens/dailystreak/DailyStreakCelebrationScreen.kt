@@ -6,75 +6,65 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
 import com.yral.shared.libs.designsystem.component.YralGradientButton
-import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
-import com.yral.shared.libs.designsystem.theme.GradientAngleConvention
-import com.yral.shared.libs.designsystem.theme.GradientLengthMode
+import com.yral.shared.libs.designsystem.component.getSVGImageModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
-import com.yral.shared.libs.designsystem.theme.angledGradientBackground
 import com.yral.shared.libs.designsystem.theme.kumbhSansFontFamily
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import yral_mobile.shared.app.generated.resources.Res
 import yral_mobile.shared.app.generated.resources.daily_streak_action
+import yral_mobile.shared.app.generated.resources.daily_streak_badge
+import yral_mobile.shared.app.generated.resources.daily_streak_close_image
 import yral_mobile.shared.app.generated.resources.daily_streak_label
+import yral_mobile.shared.app.generated.resources.daily_streak_noise_texture
 import yral_mobile.shared.app.generated.resources.daily_streak_started_title
 import yral_mobile.shared.app.generated.resources.daily_streak_subtitle
-import yral_mobile.shared.libs.designsystem.generated.resources.fire
-import yral_mobile.shared.libs.designsystem.generated.resources.golden_gradient
-import yral_mobile.shared.libs.designsystem.generated.resources.ic_lightning_bolt_gold
-import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
+import kotlin.math.min
 
-private val ScreenGradientTop = Color(0xFF342735)
-private val ScreenGradientMid = Color(0xFF1B1623)
-private val ScreenGradientBottom = Color(0xFF050507)
-private val BackgroundRayBright = Color(0xFFF2B1AC)
-private val BackgroundRaySoft = Color(0xFFA47987)
-private val BackgroundSideShadow = Color(0xFF241A31)
-private val BadgeFillStart = Color(0xFFFFE07A)
-private val BadgeFillEnd = Color(0xFFFF8A2A)
-private val BadgeInnerFill = Color(0xFFD9308B)
-private val ContentHorizontalPadding = 18.dp
-private val TopContentSpacer = 96.dp
-private val HeroCountSpacing = 18.dp
-private val CountCopySpacing = 72.dp
+private const val REFERENCE_FRAME_WIDTH = 390f
+private const val REFERENCE_FRAME_HEIGHT = 852f
+private const val CLOSE_TOP = 67f
+private const val CLOSE_END = 20f
+private const val HERO_TOP = 148f
+private const val HERO_WIDTH = 126.87955f
+private const val HERO_HEIGHT = 142f
+private const val FLAME_WIDTH = 119.75895f
+private const val BADGE_WIDTH = 58f
+private const val BADGE_HEIGHT = 59f
+private const val COUNT_TOP = 317f
+private const val COUNT_WIDTH = 163f
+private const val CONTENT_TOP = 467f
+private const val CONTENT_WIDTH = 350f
+private const val BUTTON_HEIGHT = 42f
+private const val FLAME_ASSET_PATH = "drawable/daily_streak_flame.svg"
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun DailyStreakCelebrationScreen(
     streakCount: Long,
@@ -82,284 +72,186 @@ fun DailyStreakCelebrationScreen(
 ) {
     BackHandler(onBack = onDismiss)
 
-    Box(
-        modifier =
-            Modifier
-                .fillMaxSize(),
-    ) {
-        BackgroundImage()
-        CloseButton(onDismiss = onDismiss)
-
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = ContentHorizontalPadding),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Spacer(modifier = Modifier.height(TopContentSpacer))
-            StreakHero()
-            Spacer(modifier = Modifier.height(HeroCountSpacing))
-            StreakCount(streakCount = streakCount)
-            Spacer(modifier = Modifier.height(CountCopySpacing))
-            BottomContent(onDismiss = onDismiss)
-        }
-    }
-}
-
-@Suppress("LongMethod")
-@Composable
-private fun BackgroundImage() {
-    Box(
+    BoxWithConstraints(
         modifier =
             Modifier
                 .fillMaxSize()
-                .background(
-                    brush =
-                        Brush.verticalGradient(
-                            colors = listOf(ScreenGradientTop, ScreenGradientMid, ScreenGradientBottom),
-                        ),
-                ),
+                .background(YralColors.Neutral950),
     ) {
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .angledGradientBackground(
-                        colorStops =
-                            arrayOf(
-                                0.00f to BackgroundRayBright.copy(alpha = 0.90f),
-                                0.16f to BackgroundRaySoft.copy(alpha = 0.72f),
-                                0.40f to Color.Transparent,
-                            ),
-                        degrees = 108f,
-                        angleConvention = GradientAngleConvention.CssDegrees,
-                        lengthMode = GradientLengthMode.Diagonal,
-                    ),
-        )
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .angledGradientBackground(
-                        colorStops =
-                            arrayOf(
-                                0.00f to Color.Transparent,
-                                0.08f to BackgroundRayBright.copy(alpha = 0.92f),
-                                0.22f to BackgroundRaySoft.copy(alpha = 0.70f),
-                                0.44f to Color.Transparent,
-                            ),
-                        degrees = 90f,
-                        angleConvention = GradientAngleConvention.CssDegrees,
-                        lengthMode = GradientLengthMode.Diagonal,
-                    ),
-        )
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .angledGradientBackground(
-                        colorStops =
-                            arrayOf(
-                                0.00f to BackgroundRayBright.copy(alpha = 0.88f),
-                                0.14f to BackgroundRaySoft.copy(alpha = 0.68f),
-                                0.38f to Color.Transparent,
-                            ),
-                        degrees = 72f,
-                        angleConvention = GradientAngleConvention.CssDegrees,
-                        lengthMode = GradientLengthMode.Diagonal,
-                    ),
-        )
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush =
-                            Brush.horizontalGradient(
-                                colorStops =
-                                    arrayOf(
-                                        0.00f to BackgroundSideShadow.copy(alpha = 0.62f),
-                                        0.20f to Color.Transparent,
-                                        0.80f to Color.Transparent,
-                                        1.00f to BackgroundSideShadow.copy(alpha = 0.58f),
-                                    ),
-                            ),
-                    ),
-        )
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush =
-                            Brush.verticalGradient(
-                                colorStops =
-                                    arrayOf(
-                                        0.00f to Color.Transparent,
-                                        0.62f to Color.Transparent,
-                                        0.84f to ScreenGradientBottom.copy(alpha = 0.92f),
-                                        1.00f to ScreenGradientBottom,
-                                    ),
-                            ),
-                    ),
-        )
-    }
-}
+        val frameScale = min(maxWidth.value / REFERENCE_FRAME_WIDTH, maxHeight.value / REFERENCE_FRAME_HEIGHT)
 
-@Composable
-private fun CloseButton(onDismiss: () -> Unit) {
-    Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(top = 14.dp, end = 18.dp),
-        contentAlignment = Alignment.TopEnd,
-    ) {
-        Icon(
-            imageVector = Icons.Rounded.Close,
-            contentDescription = null,
-            tint = YralColors.NeutralTextPrimary.copy(alpha = 0.92f),
-            modifier =
-                Modifier
-                    .size(24.dp)
-                    .clickable(onClick = onDismiss),
-        )
-    }
-}
-
-@Composable
-private fun StreakHero() {
-    Box(
-        modifier = Modifier.size(170.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Image(
-            painter = painterResource(DesignRes.drawable.fire),
-            contentDescription = null,
-            modifier =
-                Modifier
-                    .size(148.dp)
-                    .shadow(22.dp, CircleShape, ambientColor = YralColors.Pink200, spotColor = YralColors.Pink200),
-            contentScale = ContentScale.Fit,
-        )
-
-        Badge(
-            modifier =
-                Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(start = 30.dp, bottom = 10.dp),
-        )
-    }
-}
-
-@Composable
-private fun Badge(modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier.size(52.dp),
-        shape = CircleShape,
-        color = Color.Transparent,
-        shadowElevation = 14.dp,
-    ) {
         Box(
             modifier =
                 Modifier
-                    .fillMaxSize()
-                    .clip(CircleShape)
-                    .background(
-                        brush = Brush.linearGradient(colors = listOf(BadgeFillStart, BadgeFillEnd)),
-                    ).padding(4.dp),
-            contentAlignment = Alignment.Center,
+                    .align(Alignment.TopCenter)
+                    .width(scaledDp(REFERENCE_FRAME_WIDTH, frameScale))
+                    .height(scaledDp(REFERENCE_FRAME_HEIGHT, frameScale)),
         ) {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .clip(CircleShape)
-                        .background(BadgeInnerFill),
-                contentAlignment = Alignment.Center,
-            ) {
-                Image(
-                    painter = painterResource(DesignRes.drawable.ic_lightning_bolt_gold),
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
+            BackgroundImage()
+            CloseButton(
+                frameScale = frameScale,
+                onDismiss = onDismiss,
+            )
+            StreakHero(frameScale = frameScale)
+            StreakCount(
+                frameScale = frameScale,
+                streakCount = streakCount,
+            )
+            BottomContent(frameScale = frameScale, onDismiss = onDismiss)
         }
     }
 }
 
 @Composable
-private fun StreakCount(streakCount: Long) {
-    val countStyle =
-        TextStyle(
-            fontFamily = kumbhSansFontFamily(),
-            fontWeight = FontWeight.Bold,
-            fontSize = 26.sp,
-            lineHeight = 30.sp,
-            textAlign = TextAlign.Center,
-            shadow = Shadow(color = YralColors.YellowGlowShadow, blurRadius = 18f),
+private fun BackgroundImage() {
+    Image(
+        painter = painterResource(Res.drawable.daily_streak_noise_texture),
+        contentDescription = null,
+        contentScale = ContentScale.FillBounds,
+        modifier = Modifier.fillMaxSize(),
+    )
+}
+
+@Composable
+private fun BoxScope.CloseButton(
+    frameScale: Float,
+    onDismiss: () -> Unit,
+) {
+    Image(
+        painter = painterResource(Res.drawable.daily_streak_close_image),
+        contentDescription = null,
+        modifier =
+            Modifier
+                .align(Alignment.TopEnd)
+                .absoluteOffset(
+                    x = -scaledDp(CLOSE_END, frameScale),
+                    y = scaledDp(CLOSE_TOP, frameScale),
+                ).size(scaledDp(24f, frameScale))
+                .clickable(onClick = onDismiss),
+    )
+}
+
+@Composable
+private fun BoxScope.StreakHero(frameScale: Float) {
+    Box(
+        modifier =
+            Modifier
+                .align(Alignment.TopCenter)
+                .absoluteOffset(y = scaledDp(HERO_TOP, frameScale))
+                .width(scaledDp(HERO_WIDTH, frameScale))
+                .height(scaledDp(HERO_HEIGHT, frameScale)),
+    ) {
+        AsyncImage(
+            model = getSVGImageModel(Res.getUri(FLAME_ASSET_PATH)),
+            contentDescription = null,
+            contentScale = ContentScale.FillBounds,
+            modifier =
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .width(scaledDp(FLAME_WIDTH, frameScale))
+                    .height(scaledDp(HERO_HEIGHT, frameScale)),
         )
 
-    val labelStyle =
-        TextStyle(
-            fontFamily = kumbhSansFontFamily(),
-            fontWeight = FontWeight.Bold,
-            fontSize = 24.sp,
-            lineHeight = 28.sp,
-            textAlign = TextAlign.Center,
-            shadow = Shadow(color = YralColors.YellowGlowShadow, blurRadius = 18f),
-        )
-
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        YralMaskedVectorTextV2(
-            text = streakCount.toString(),
-            drawableRes = DesignRes.drawable.golden_gradient,
-            textStyle = countStyle,
-        )
-        Spacer(modifier = Modifier.height(2.dp))
-        YralMaskedVectorTextV2(
-            text = stringResource(Res.string.daily_streak_label),
-            drawableRes = DesignRes.drawable.golden_gradient,
-            textStyle = labelStyle,
+        Image(
+            painter = painterResource(Res.drawable.daily_streak_badge),
+            contentDescription = null,
+            modifier =
+                Modifier
+                    .align(Alignment.BottomStart)
+                    .width(scaledDp(BADGE_WIDTH, frameScale))
+                    .height(scaledDp(BADGE_HEIGHT, frameScale)),
         )
     }
 }
 
 @Composable
-private fun BottomContent(onDismiss: () -> Unit) {
+private fun BoxScope.StreakCount(
+    frameScale: Float,
+    streakCount: Long,
+) {
+    Text(
+        text = "$streakCount\n${stringResource(Res.string.daily_streak_label)}",
+        modifier =
+            Modifier
+                .align(Alignment.TopCenter)
+                .absoluteOffset(y = scaledDp(COUNT_TOP, frameScale))
+                .width(scaledDp(COUNT_WIDTH, frameScale)),
+        style = streakCountTextStyle(frameScale),
+        color = YralColors.Yellow200,
+        textAlign = TextAlign.Center,
+    )
+}
+
+@Composable
+private fun BoxScope.BottomContent(
+    frameScale: Float,
+    onDismiss: () -> Unit,
+) {
     Column(
-        modifier = Modifier.fillMaxWidth().navigationBarsPadding(),
+        modifier =
+            Modifier
+                .align(Alignment.TopCenter)
+                .absoluteOffset(y = scaledDp(CONTENT_TOP, frameScale))
+                .width(scaledDp(CONTENT_WIDTH, frameScale)),
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(scaledDp(20f, frameScale)),
     ) {
         Text(
             text = stringResource(Res.string.daily_streak_started_title),
-            modifier = Modifier.padding(horizontal = 12.dp),
-            style = LocalAppTopography.current.xlBold,
+            modifier = Modifier.width(scaledDp(CONTENT_WIDTH, frameScale)),
+            style =
+                LocalAppTopography.current.xlBold.copy(
+                    textAlign = TextAlign.Center,
+                ),
             color = YralColors.NeutralTextPrimary,
-            textAlign = TextAlign.Center,
         )
-        Spacer(modifier = Modifier.height(10.dp))
         Text(
             text = stringResource(Res.string.daily_streak_subtitle),
-            modifier = Modifier.padding(horizontal = 12.dp),
-            style = LocalAppTopography.current.mdRegular,
-            color = YralColors.NeutralTextSecondary,
-            textAlign = TextAlign.Center,
+            modifier = Modifier.width(scaledDp(CONTENT_WIDTH, frameScale)),
+            style =
+                LocalAppTopography.current.mdRegular.copy(
+                    textAlign = TextAlign.Center,
+                ),
+            color = YralColors.Neutral300,
         )
-        Spacer(modifier = Modifier.height(24.dp))
         YralGradientButton(
             text = stringResource(Res.string.daily_streak_action),
-            buttonHeight = 42.dp,
+            textStyle =
+                LocalAppTopography.current.mdBold.copy(
+                    textAlign = TextAlign.Center,
+                ),
+            buttonHeight = scaledDp(BUTTON_HEIGHT, frameScale),
             modifier =
                 Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp)),
+                    .width(scaledDp(CONTENT_WIDTH, frameScale))
+                    .clip(
+                        shape = RoundedCornerShape(scaledDp(8f, frameScale)),
+                    ),
             onClick = onDismiss,
         )
     }
 }
+
+@Composable
+private fun streakCountTextStyle(frameScale: Float): TextStyle =
+    TextStyle(
+        fontFamily = kumbhSansFontFamily(),
+        fontWeight = FontWeight.Bold,
+        fontSize = scaledSp(32f, frameScale),
+        lineHeight = scaledSp(44.8f, frameScale),
+        letterSpacing = scaledSp(-0.64f, frameScale),
+        textAlign = TextAlign.Center,
+    )
+
+private fun scaledDp(
+    value: Float,
+    scale: Float,
+): Dp = value.dp * scale
+
+private fun scaledSp(
+    value: Float,
+    scale: Float,
+) = value.sp * scale
 
 @Suppress("UnusedPrivateMember")
 @Preview
