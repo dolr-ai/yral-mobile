@@ -16,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.ContentScale
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.EdgeScrollDetectConnection
@@ -135,16 +134,9 @@ fun YRALReelPlayer(
                 modifier = Modifier.fillMaxSize(),
                 surfaceType = scrollingFeedSurfaceType(),
                 shutter = {
-                    if (reel != null) {
-                        MediaThumbnailImage(
-                            thumbnailUrl = reel.thumbnailUrl,
-                            mediaId = reel.videoId,
-                            index = page,
-                            contentDescription = "Thumbnail",
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier.fillMaxSize().background(Color.Black),
-                        )
-                    }
+                    Box(
+                        modifier = Modifier.fillMaxSize().background(Color.Black),
+                    )
                 },
                 overlay = { overlayContent(page) { autoScrollToNext = true } },
             )
