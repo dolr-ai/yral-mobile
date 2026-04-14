@@ -12,6 +12,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(projects.shared.core)
+            implementation(projects.shared.data)
             implementation(projects.shared.libs.koin)
             implementation(projects.shared.features.auth)
             implementation(projects.shared.libs.crashlytics)
@@ -28,9 +29,10 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel)
         }
         commonTest.dependencies {
-            implementation(kotlin("test"))
+            implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
             implementation(libs.turbine)
+            implementation(projects.shared.testSupport)
         }
     }
 }

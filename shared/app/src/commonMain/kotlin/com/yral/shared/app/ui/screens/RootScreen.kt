@@ -53,6 +53,7 @@ import com.yral.shared.app.nav.RootComponent.Child
 import com.yral.shared.app.ui.components.MandatoryUpdateScreen
 import com.yral.shared.app.ui.components.UpdateNotificationHost
 import com.yral.shared.app.ui.screens.alertsrequest.AlertsRequestBottomSheet
+import com.yral.shared.app.ui.screens.dailystreak.DailyStreakCelebrationScreen
 import com.yral.shared.app.ui.screens.home.HomeScreen
 import com.yral.shared.app.ui.screens.login.LoginBottomSheetSlotContent
 import com.yral.shared.app.ui.screens.login.LoginScreenContent
@@ -72,6 +73,7 @@ import com.yral.shared.features.root.viewmodels.AccountDialogInfo
 import com.yral.shared.features.root.viewmodels.AccountUi
 import com.yral.shared.features.root.viewmodels.NavigationTarget
 import com.yral.shared.features.root.viewmodels.RootError
+import com.yral.shared.features.root.viewmodels.RootEvent
 import com.yral.shared.features.subscriptions.ui.SubscriptionsScreen
 import com.yral.shared.features.wallet.ui.WalletScreen
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
@@ -83,6 +85,7 @@ import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.component.toast.ToastHost
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import kotlinx.coroutines.flow.collect
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -111,6 +114,16 @@ fun RootScreen(rootComponent: RootComponent) {
             rootComponent.showAccountSwitcherSlot()
         } else {
             rootComponent.dismissAccountSwitcherSlot()
+        }
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.rootEvents.collect { event ->
+            when (event) {
+                is RootEvent.ShowDailyStreakCelebration -> {
+                    rootComponent.showDailyStreakCelebration(event.streakCount)
+                }
+            }
         }
     }
 
@@ -579,6 +592,13 @@ private fun SlotContent(component: RootComponent) {
 
             is RootComponent.SlotChild.AccountSwitcher -> {
                 AccountSwitcherSlotContent(component = component)
+            }
+
+            is RootComponent.SlotChild.DailyStreak -> {
+                DailyStreakCelebrationScreen(
+                    streakCount = slotChild.streakCount,
+                    onDismiss = component::dismissDailyStreakCelebration,
+                )
             }
         }
     }

@@ -180,7 +180,7 @@ jobs:
           fi
 
           echo "Uploading Crashlytics dSYMs from $DSYMS_DIR"
-          bash "$UPLOAD_SYMBOLS_SCRIPT" -gsp "$GOOGLE_SERVICE_INFO_PLIST" -p ios "$DSYMS_DIR"
+          "$UPLOAD_SYMBOLS_SCRIPT" -gsp "$GOOGLE_SERVICE_INFO_PLIST" -p ios "$DSYMS_DIR"
 
       - name: Upload gym build log
         if: failure()

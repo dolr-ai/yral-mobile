@@ -10,6 +10,7 @@ import com.yral.shared.preferences.stores.AccountDirectoryStore
 import com.yral.shared.preferences.stores.AccountSessionPreferences
 import com.yral.shared.preferences.stores.AffiliateAttributionStore
 import com.yral.shared.preferences.stores.BotIdentitiesStore
+import com.yral.shared.preferences.stores.DailyStreakLaunchStore
 import com.yral.shared.preferences.stores.UtmAttributionStore
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.singleOf
@@ -49,6 +50,7 @@ val preferencesModule =
         single { AccountDirectoryStore(get()) }
         single { AccountSessionPreferences(get()) }
         single { BotIdentitiesStore(get()) }
+        single { DailyStreakLaunchStore(get()) }
         single { AffiliateAttributionStore(get()) }
         single { UtmAttributionStore(get(named("UtmPreferences"))) }
     }
