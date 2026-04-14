@@ -38,21 +38,26 @@ platform :ios do
   ####################################################
   desc "Build & upload Yral-Staging to TestFlight"
   lane :build_staging_testflight do
-      api_key = app_store_connect_api_key(
-        key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
-        issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
-        key_content: Base64.decode64(ENV["APP_STORE_CONNECT_API_KEY_BASE64"])
-      )
-      current_build = app_store_build_number(
-        api_key: api_key,
-        app_identifier: "com.yral.iosApp.staging", 
-        live: false
-      )
-      increment_build_number(
-        xcodeproj: "iosApp/iosApp.xcodeproj",
-        build_number: current_build + 1
-      )
-      gym(
+    api_key = app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+      key_content: Base64.decode64(ENV["APP_STORE_CONNECT_API_KEY_BASE64"])
+    )
+    current_build = app_store_build_number(
+      api_key: api_key,
+      app_identifier: "com.yral.iosApp.staging",
+      live: false
+    )
+    increment_build_number(
+      xcodeproj: "iosApp/iosApp.xcodeproj",
+      build_number: current_build + 1
+    )
+
+    testflight_group_name = ENV["TESTFLIGHT_STAGING_GROUP_NAME"]&.strip
+    testflight_whats_new = ENV["TESTFLIGHT_STAGING_WHATS_NEW"]&.strip
+    UI.user_error!("TESTFLIGHT_STAGING_GROUP_NAME is required") if testflight_group_name.to_s.empty?
+
+    gym(
       workspace: "iosApp/iosApp.xcworkspace",
       scheme: "iosAppStaging",
       clean: true,
@@ -65,15 +70,17 @@ platform :ios do
       },
       xcargs: "-allowProvisioningUpdates COMPILER_INDEX_STORE_ENABLE=NO SWIFT_STRICT_CONCURRENCY=minimal ENABLE_USER_SCRIPT_SANDBOXING=NO"
     )
-    pilot(
+
+    pilot_options = {
       skip_waiting_for_build_processing: false,
+      distribute_external: true,
+      groups: [testflight_group_name],
       uses_non_exempt_encryption: false,
-      api_key: app_store_connect_api_key(
-        key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
-        issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
-        key_content: Base64.decode64(ENV["APP_STORE_CONNECT_API_KEY_BASE64"])
-      )
-    )
+      api_key: api_key
+    }
+    pilot_options[:changelog] = testflight_whats_new unless testflight_whats_new.to_s.empty?
+
+    pilot(**pilot_options)
   end
 
   ####################################################
