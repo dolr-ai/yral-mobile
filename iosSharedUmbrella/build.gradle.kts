@@ -21,7 +21,6 @@ configureCocoapods {
         isStatic = true
         export(projects.shared.core)
         export(projects.shared.libs.analytics)
-        export(projects.shared.libs.crashlytics)
         export(projects.shared.app)
         export(projects.shared.libs.featureFlag)
         export(projects.shared.libs.routing.routesApi)
@@ -39,7 +38,6 @@ kotlin {
             api(projects.shared.core)
             api(projects.shared.app)
             api(projects.shared.libs.analytics)
-            api(projects.shared.libs.crashlytics)
             api(projects.shared.libs.featureFlag)
             api(projects.shared.libs.routing.routesApi)
             implementation(libs.compose.components.resources)

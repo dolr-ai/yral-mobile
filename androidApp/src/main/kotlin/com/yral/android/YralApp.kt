@@ -8,6 +8,7 @@ import co.touchlab.kermit.Logger
 import com.facebook.FacebookSdk
 import com.facebook.LoggingBehavior
 import com.google.firebase.Firebase
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.initialize
 import com.yral.android.installReferrer.AttributionManager
 import com.yral.android.installReferrer.processors.BranchAttributionProcessor
@@ -18,7 +19,6 @@ import com.yral.shared.analytics.providers.mixpanel.MixpanelAnalyticsProvider
 import com.yral.shared.app.di.initKoin
 import com.yral.shared.features.uploadvideo.utils.di.videoWidgetModule
 import com.yral.shared.koin.koinInstance
-import dev.gitlive.firebase.crashlytics.FirebaseCrashlytics
 import io.branch.referral.Branch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -95,7 +95,7 @@ class YralApp : Application() {
     }
 
     private fun setupFirebase() {
-        koinInstance.get<FirebaseCrashlytics>().setCrashlyticsCollectionEnabled(!BuildConfig.DEBUG)
+        FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(!BuildConfig.DEBUG)
     }
 
     private fun setupFacebook() {
