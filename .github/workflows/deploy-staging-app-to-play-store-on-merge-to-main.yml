@@ -25,6 +25,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          ref: main
           ssh-key: ${{ secrets.DEPLOY_KEY_SSH_PRIVATE_KEY }}
 
       - name: Set up JDK
@@ -149,4 +150,5 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add ./androidApp/build.gradle.kts
           git commit -m "[skip ci] chore: bump staging version to $NEW_VERSION_NAME (versionCode $NEW_VERSION_CODE)"
+          git pull --rebase origin main
           git push origin main

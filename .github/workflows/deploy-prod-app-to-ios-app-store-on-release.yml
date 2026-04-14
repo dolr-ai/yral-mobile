@@ -162,6 +162,7 @@ jobs:
           git add iosApp/Prod/Info.plist
           git add iosApp/Staging/Info-Staging.plist
           git commit -m "[skip ci] chore: bump iOS prod version to ${{ steps.version.outputs.version }}"
+          git pull --rebase origin main
           git push origin main
 
       - name: Upload gym build log
