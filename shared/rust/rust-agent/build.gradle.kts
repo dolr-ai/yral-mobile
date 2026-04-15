@@ -73,3 +73,10 @@ uniffi {
     // Generate the bindings using library mode.
     generateFromLibrary()
 }
+
+tasks
+    .matching {
+        it.name.startsWith("runKtlintCheckOver") && it.name.endsWith("MainSourceSet")
+    }.configureEach {
+        dependsOn(tasks.named("buildBindings"))
+    }
