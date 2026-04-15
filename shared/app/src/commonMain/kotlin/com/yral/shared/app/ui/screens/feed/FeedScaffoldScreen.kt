@@ -29,6 +29,7 @@ fun FeedScaffoldScreen(
     feedViewModel: FeedViewModel,
     chatUnreadCount: Int,
     onInboxClick: () -> Unit,
+    onDailyStreakClick: (Long) -> Unit,
 ) {
     val feedState by feedViewModel.state.collectAsStateWithLifecycle()
     val badgeText = chatUnreadBadgeText(chatUnreadCount)
@@ -46,6 +47,10 @@ fun FeedScaffoldScreen(
                 FeedStreakChip(
                     streakCount = feedState.streakCount,
                     modifier = Modifier.align(Alignment.TopStart),
+                    onClick =
+                        feedState.streakCount?.let { streakCount ->
+                            { onDailyStreakClick(streakCount) }
+                        },
                 )
                 Box(modifier = Modifier.align(Alignment.TopEnd)) {
                     Image(

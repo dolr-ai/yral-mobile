@@ -44,7 +44,7 @@
     <string name="subscription_nudge_cta">Subscribe Now</string>
     <string name="daily_streak_label">Day Streak</string>
     <string name="daily_streak_started_title">You’ve Started a Streak!</string>
-    <string name="daily_streak_subtitle">Come back every day and vote least 5 times to keep your streak alive.</string>
+    <string name="daily_streak_subtitle">Check in everday to keep your streak alive!</string>
     <string name="daily_streak_action">Explore App</string>
 
     <string name="ai_influence_profile">AI Influencer Profile</string>

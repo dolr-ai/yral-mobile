@@ -164,6 +164,7 @@ fun RootScreen(rootComponent: RootComponent) {
                             bottomNavigationAnalytics = { viewModel.bottomNavigationClicked(it) },
                             updateProfileVideosCount = { viewModel.updateProfileVideosCount(it) },
                             isPendingLogin = viewModel.isPendingLogin(),
+                            onDailyStreakClick = rootComponent::showDailyStreakCelebration,
                         )
                     }
 

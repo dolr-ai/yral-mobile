@@ -2,6 +2,7 @@ package com.yral.shared.features.feed.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
@@ -41,6 +42,7 @@ private const val STREAK_CHIP_CORNER_RADIUS = 50
 fun FeedStreakChip(
     streakCount: Long?,
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
 ) {
     Row(
         modifier =
@@ -52,7 +54,13 @@ fun FeedStreakChip(
                             colors = listOf(StreakChipGradientCenter, StreakChipGradientEdge),
                         ),
                     shape = RoundedCornerShape(STREAK_CHIP_CORNER_RADIUS),
-                ).padding(
+                ).let { currentModifier ->
+                    if (onClick != null) {
+                        currentModifier.clickable(onClick = onClick)
+                    } else {
+                        currentModifier
+                    }
+                }.padding(
                     vertical = StreakChipVerticalPadding,
                     horizontal = StreakChipHorizontalPadding,
                 ),

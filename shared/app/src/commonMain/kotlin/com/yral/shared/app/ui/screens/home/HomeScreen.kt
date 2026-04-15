@@ -109,6 +109,7 @@ internal fun HomeScreen(
     bottomNavigationAnalytics: (categoryName: CategoryName) -> Unit,
     sessionState: SessionState,
     isPendingLogin: Boolean,
+    onDailyStreakClick: (Long) -> Unit,
 ) {
     val sessionKey = sessionState.getKey()
     val inboxViewModel = koinViewModel<InboxViewModel>(key = "inbox-$sessionKey")
@@ -160,6 +161,7 @@ internal fun HomeScreen(
             inboxViewModel = inboxViewModel,
             sessionState = sessionState,
             updateProfileVideosCount = updateProfileVideosCount,
+            onDailyStreakClick = onDailyStreakClick,
         )
         SlotContent(component)
     }
@@ -191,6 +193,7 @@ private fun HomeScreenContent(
     inboxViewModel: InboxViewModel,
     sessionState: SessionState,
     updateProfileVideosCount: (count: Int) -> Unit,
+    onDailyStreakClick: (Long) -> Unit,
 ) {
     val sessionKey = sessionState.getKey()
     val canisterData = sessionState.getCanisterData()
@@ -217,6 +220,7 @@ private fun HomeScreenContent(
                     feedViewModel = feedViewModel,
                     chatUnreadCount = chatUnreadCount,
                     onInboxClick = component::onChatInboxClick,
+                    onDailyStreakClick = onDailyStreakClick,
                 )
             }
 
