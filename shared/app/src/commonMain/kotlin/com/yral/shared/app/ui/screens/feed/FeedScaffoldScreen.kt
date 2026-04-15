@@ -7,11 +7,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yral.shared.app.ui.ChatUnreadBadge
 import com.yral.shared.app.ui.chatUnreadBadgeText
 import com.yral.shared.features.feed.nav.FeedComponent
@@ -31,13 +29,13 @@ fun FeedScaffoldScreen(
     onInboxClick: () -> Unit,
     onDailyStreakClick: (Long) -> Unit,
 ) {
-    val feedState by feedViewModel.state.collectAsStateWithLifecycle()
     val badgeText = chatUnreadBadgeText(chatUnreadCount)
 
     FeedScreen(
         component = component,
         viewModel = feedViewModel,
-        topOverlay = { _ ->
+        topOverlay = { _, state ->
+            val streakCount = state.streakCount
             Box(
                 modifier =
                     Modifier
@@ -45,11 +43,11 @@ fun FeedScaffoldScreen(
                         .padding(top = 16.dp, start = 16.dp, end = 16.dp),
             ) {
                 FeedStreakChip(
-                    streakCount = feedState.streakCount,
+                    streakCount = streakCount,
                     modifier = Modifier.align(Alignment.TopStart),
                     onClick =
-                        feedState.streakCount?.let { streakCount ->
-                            { onDailyStreakClick(streakCount) }
+                        streakCount?.let { activeStreakCount ->
+                            { onDailyStreakClick(activeStreakCount) }
                         },
                 )
                 Box(modifier = Modifier.align(Alignment.TopEnd)) {
@@ -71,16 +69,15 @@ fun FeedScaffoldScreen(
             }
         },
         bottomOverlay = { _, _ -> },
-        actionsRight = { pageNo ->
+        actionsRight = { pageNo, state ->
             FeedActionsRight(
                 pageNo = pageNo,
-                state = feedState,
+                state = state,
                 feedViewModel = feedViewModel,
                 openProfile = component::openProfile,
             )
         },
         onPageChanged = { _, _ -> },
         onEdgeScrollAttempt = { },
-        limitReelCount = feedState.feedDetails.size,
     )
 }

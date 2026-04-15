@@ -34,6 +34,7 @@ import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.auth.ui.rememberLoginInfo
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.feed.viewmodel.FeedEvents
+import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.FOLLOW_NUDGE_PAGE
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.SIGN_UP_PAGE
@@ -78,12 +79,11 @@ fun FeedScreen(
     component: FeedComponent,
     modifier: Modifier = Modifier,
     viewModel: FeedViewModel = koinViewModel(),
-    topOverlay: @Composable (pageNo: Int) -> Unit,
-    actionsRight: @Composable ColumnScope.(pageNo: Int) -> Unit,
+    topOverlay: @Composable (pageNo: Int, state: FeedState) -> Unit,
+    actionsRight: @Composable ColumnScope.(pageNo: Int, state: FeedState) -> Unit,
     bottomOverlay: @Composable (pageNo: Int, scrollToNext: () -> Unit) -> Unit,
     onPageChanged: (pageNo: Int, currentPage: Int) -> Unit,
     onEdgeScrollAttempt: (pageNo: Int) -> Unit,
-    limitReelCount: Int,
     onSwipeVote: ((direction: SwipeDirection, pageIndex: Int, isSwipe: Boolean) -> Unit)? = null,
 ) {
     val state by viewModel.state.collectAsState()
@@ -172,7 +172,7 @@ fun FeedScreen(
                 YRALReelPlayerCardStack(
                     modifier = Modifier.weight(1f),
                     reels = reels,
-                    maxReelsInPager = limitReelCount,
+                    maxReelsInPager = state.feedDetails.size,
                     initialPage = state.currentPageOfFeed,
                     onPageLoaded = { page ->
                         // call onPageChanged before changing page in FeedViewModel
@@ -197,9 +197,9 @@ fun FeedScreen(
                         pageNo = pageNo,
                         currentOnboardingStep = state.currentOnboardingStep,
                         isLoggedIn = state.isLoggedIn,
-                        topOverlay = { topOverlay(pageNo) },
+                        topOverlay = { topOverlay(pageNo, state) },
                         bottomOverlay = { bottomOverlay(pageNo, scrollToNext) },
-                        actionsRight = { actionsRight(pageNo) },
+                        actionsRight = { actionsRight(pageNo, state) },
                         requestLoginFactory = component.requestLoginFactory,
                     )
                 }
@@ -207,7 +207,7 @@ fun FeedScreen(
                 YRALReelPlayer(
                     modifier = Modifier.weight(1f),
                     reels = reels,
-                    maxReelsInPager = limitReelCount,
+                    maxReelsInPager = state.feedDetails.size,
                     initialPage = state.currentPageOfFeed,
                     onPageLoaded = { page ->
                         onPageChanged(page, state.currentPageOfFeed)
@@ -228,9 +228,9 @@ fun FeedScreen(
                         pageNo = pageNo,
                         currentOnboardingStep = state.currentOnboardingStep,
                         isLoggedIn = state.isLoggedIn,
-                        topOverlay = { topOverlay(pageNo) },
+                        topOverlay = { topOverlay(pageNo, state) },
                         bottomOverlay = { bottomOverlay(pageNo, scrollToNext) },
-                        actionsRight = { actionsRight(pageNo) },
+                        actionsRight = { actionsRight(pageNo, state) },
                         requestLoginFactory = component.requestLoginFactory,
                     )
                 }
