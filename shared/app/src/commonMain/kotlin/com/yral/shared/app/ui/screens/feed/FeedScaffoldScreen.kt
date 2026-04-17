@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -17,6 +20,8 @@ import com.yral.shared.features.feed.ui.FeedActionsRight
 import com.yral.shared.features.feed.ui.FeedScreen
 import com.yral.shared.features.feed.ui.FeedStreakChip
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import org.jetbrains.compose.resources.painterResource
 import yral_mobile.shared.app.generated.resources.Res
 import yral_mobile.shared.app.generated.resources.inbox
@@ -34,8 +39,13 @@ fun FeedScaffoldScreen(
     FeedScreen(
         component = component,
         viewModel = feedViewModel,
-        topOverlay = { _, state ->
-            val streakCount = state.streakCount
+        topOverlay = { _ ->
+            // Collect only streakCount — independent recomposition scope that
+            // only recomposes when streakCount changes, not on every scroll.
+            val streakCount by remember {
+                feedViewModel.state.map { it.streakCount }.distinctUntilChanged()
+            }.collectAsState(feedViewModel.state.value.streakCount)
+
             Box(
                 modifier =
                     Modifier
@@ -69,10 +79,9 @@ fun FeedScaffoldScreen(
             }
         },
         bottomOverlay = { _, _ -> },
-        actionsRight = { pageNo, state ->
+        actionsRight = { pageNo ->
             FeedActionsRight(
                 pageNo = pageNo,
-                state = state,
                 feedViewModel = feedViewModel,
                 openProfile = component::openProfile,
             )

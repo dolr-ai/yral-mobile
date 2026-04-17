@@ -18,6 +18,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,7 +35,6 @@ import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.auth.ui.rememberLoginInfo
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.feed.viewmodel.FeedEvents
-import com.yral.shared.features.feed.viewmodel.FeedState
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.FOLLOW_NUDGE_PAGE
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.SIGN_UP_PAGE
@@ -79,14 +79,20 @@ fun FeedScreen(
     component: FeedComponent,
     modifier: Modifier = Modifier,
     viewModel: FeedViewModel = koinViewModel(),
-    topOverlay: @Composable (pageNo: Int, state: FeedState) -> Unit,
-    actionsRight: @Composable ColumnScope.(pageNo: Int, state: FeedState) -> Unit,
+    topOverlay: @Composable (pageNo: Int) -> Unit,
+    actionsRight: @Composable ColumnScope.(pageNo: Int) -> Unit,
     bottomOverlay: @Composable (pageNo: Int, scrollToNext: () -> Unit) -> Unit,
     onPageChanged: (pageNo: Int, currentPage: Int) -> Unit,
     onEdgeScrollAttempt: (pageNo: Int) -> Unit,
     onSwipeVote: ((direction: SwipeDirection, pageIndex: Int, isSwipe: Boolean) -> Unit)? = null,
 ) {
     val state by viewModel.state.collectAsState()
+
+    // Stable State<> references for VerticalPager content — their identity never changes,
+    // only .value updates. Reading .value inside the pager content tracks at page scope,
+    // so page recomposition is skipped when unrelated state fields change (e.g. currentPageOfFeed).
+    val onboardingStepState = rememberUpdatedState(state.currentOnboardingStep)
+    val isLoggedInState = rememberUpdatedState(state.isLoggedIn)
 
     LaunchedEffect(Unit) { viewModel.pushScreenView() }
 
@@ -190,16 +196,16 @@ fun FeedScreen(
                     },
                     onSwipeVote = onSwipeVote,
                     shouldSuppressSwipeFeedback = { pageIndex ->
-                        !state.isLoggedIn && pageIndex != 0 && (pageIndex % SIGN_UP_PAGE) == 0
+                        !isLoggedInState.value && pageIndex != 0 && (pageIndex % SIGN_UP_PAGE) == 0
                     },
                 ) { pageNo, scrollToNext ->
                     FeedOverlay(
                         pageNo = pageNo,
-                        currentOnboardingStep = state.currentOnboardingStep,
-                        isLoggedIn = state.isLoggedIn,
-                        topOverlay = { topOverlay(pageNo, state) },
+                        currentOnboardingStep = onboardingStepState.value,
+                        isLoggedIn = isLoggedInState.value,
+                        topOverlay = { topOverlay(pageNo) },
                         bottomOverlay = { bottomOverlay(pageNo, scrollToNext) },
-                        actionsRight = { actionsRight(pageNo, state) },
+                        actionsRight = { actionsRight(pageNo) },
                         requestLoginFactory = component.requestLoginFactory,
                     )
                 }
@@ -226,11 +232,11 @@ fun FeedScreen(
                 ) { pageNo, scrollToNext ->
                     FeedOverlay(
                         pageNo = pageNo,
-                        currentOnboardingStep = state.currentOnboardingStep,
-                        isLoggedIn = state.isLoggedIn,
-                        topOverlay = { topOverlay(pageNo, state) },
+                        currentOnboardingStep = onboardingStepState.value,
+                        isLoggedIn = isLoggedInState.value,
+                        topOverlay = { topOverlay(pageNo) },
                         bottomOverlay = { bottomOverlay(pageNo, scrollToNext) },
-                        actionsRight = { actionsRight(pageNo, state) },
+                        actionsRight = { actionsRight(pageNo) },
                         requestLoginFactory = component.requestLoginFactory,
                     )
                 }
