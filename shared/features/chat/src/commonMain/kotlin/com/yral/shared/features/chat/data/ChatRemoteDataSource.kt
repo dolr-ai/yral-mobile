@@ -1,7 +1,9 @@
 package com.yral.shared.features.chat.data
 
+import co.touchlab.kermit.Logger
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.features.chat.attachments.ChatAttachment
+import com.yral.shared.features.chat.attachments.FilePathChatAttachment
 import com.yral.shared.features.chat.data.models.ConversationDto
 import com.yral.shared.features.chat.data.models.ConversationMessagesResponseDto
 import com.yral.shared.features.chat.data.models.ConversationsResponseDto
@@ -14,13 +16,15 @@ import com.yral.shared.features.chat.data.models.SendMessageRequestDto
 import com.yral.shared.features.chat.data.models.SendMessageResponseDto
 import com.yral.shared.features.chat.data.models.UploadResponseDto
 import com.yral.shared.features.chat.data.models.toInfluencersResponseDto
+import com.yral.shared.http.UPLOAD_FILE_TIME_OUT
 import com.yral.shared.http.httpGet
 import com.yral.shared.http.httpPost
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.expectSuccess
+import io.ktor.client.plugins.timeout
 import io.ktor.client.request.delete
-import io.ktor.client.request.forms.InputProvider
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.headers
@@ -31,6 +35,7 @@ import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.URLBuilder
 import io.ktor.http.appendPathSegments
+import io.ktor.http.isSuccess
 import io.ktor.http.path
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
@@ -197,12 +202,17 @@ class ChatRemoteDataSource(
         type: String,
     ): UploadResponseDto {
         val idToken = getIdToken()
+        val attachmentBytes = attachment.readUploadBytes()
         val url =
             URLBuilder("https://$chatBaseUrl")
                 .apply {
                     appendPathSegments(UPLOAD_PATH.split('/'))
                 }.build()
                 .toString()
+        logger.d {
+            "Uploading chat attachment file=${attachment.fileName} " +
+                "size=${attachmentBytes.size} contentType=${attachment.contentType} type=$type"
+        }
         val response =
             httpClient.submitFormWithBinaryData(
                 url = url,
@@ -211,10 +221,7 @@ class ChatRemoteDataSource(
                         append("type", type)
                         append(
                             key = "file",
-                            value =
-                                InputProvider(size = attachment.size) {
-                                    attachment.openSource()
-                                },
+                            value = attachmentBytes,
                             headers =
                                 Headers.build {
                                     append(HttpHeaders.ContentType, attachment.contentType)
@@ -223,13 +230,37 @@ class ChatRemoteDataSource(
                         )
                     },
             ) {
+                expectSuccess = false
+                timeout {
+                    connectTimeoutMillis = UPLOAD_FILE_TIME_OUT
+                    requestTimeoutMillis = UPLOAD_FILE_TIME_OUT
+                    socketTimeoutMillis = UPLOAD_FILE_TIME_OUT
+                }
                 headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
             }
+        val responseBody = runCatching { response.bodyAsText() }.getOrDefault("")
+        logger.d {
+            "Chat attachment upload completed status=${response.status.value} file=${attachment.fileName}"
+        }
+        if (!response.status.isSuccess()) {
+            logger.e {
+                "Chat attachment upload failed status=${response.status.value} file=${attachment.fileName}"
+            }
+            throw YralException("Chat attachment upload failed (${response.status.value}): $responseBody")
+        }
         val deserializer = json.serializersModule.serializer<UploadResponseDto>()
-        return json.decodeFromString(
-            deserializer = deserializer,
-            string = response.bodyAsText(),
-        )
+        return runCatching {
+            json.decodeFromString(
+                deserializer = deserializer,
+                string = responseBody,
+            )
+        }.getOrElse { error ->
+            logger.e(error) {
+                "Failed to decode chat attachment upload response status=${response.status.value} " +
+                    "file=${attachment.fileName}"
+            }
+            throw YralException("Chat attachment upload decode failed", error)
+        }
     }
 
     override suspend fun markConversationAsRead(conversationId: String) {
@@ -247,7 +278,14 @@ class ChatRemoteDataSource(
         preferences.getString(PrefKeys.ID_TOKEN.name)
             ?: throw YralException("Authorisation not found")
 
+    private fun ChatAttachment.readUploadBytes(): ByteArray =
+        when (this) {
+            is FilePathChatAttachment -> readChatAttachmentBytes(filePath)
+            else -> throw YralException("Chat attachment upload requires file-backed attachment")
+        }
+
     private companion object {
+        private val logger = Logger.withTag("ChatRemoteDataSource")
         private const val INFLUENCERS_PATH = "api/v1/influencers"
         private const val INFLUENCER_FEED_PATH = "api/v1/influencer-feed"
         private const val CONVERSATIONS_PATH = "api/v1/chat/conversations"
