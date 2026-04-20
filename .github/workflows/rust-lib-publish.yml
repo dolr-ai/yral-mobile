@@ -60,7 +60,7 @@ jobs:
           grep '^version' shared/rust/rust-agent/build.gradle.kts
 
       - name: Set up JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v5
         id: setup-jdk
         with:
           java-version: 21
