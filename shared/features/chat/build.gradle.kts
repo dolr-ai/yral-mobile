@@ -55,5 +55,10 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
             implementation(libs.turbine)
         }
+        val androidUnitTest by getting {
+            dependencies {
+                implementation(libs.robolectric)
+            }
+        }
     }
 }
