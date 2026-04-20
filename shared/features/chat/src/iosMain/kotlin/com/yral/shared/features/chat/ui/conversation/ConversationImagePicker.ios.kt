@@ -7,13 +7,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import co.touchlab.kermit.Logger
+import com.yral.shared.features.chat.attachments.ChatImageAttachmentMetadata
+import com.yral.shared.features.chat.attachments.ChatPickedImageFormat
 import com.yral.shared.features.chat.attachments.FilePathChatAttachment
+import com.yral.shared.features.chat.attachments.buildPickedChatImageMetadata
 import com.yral.shared.features.chat.attachments.persistUrlToChatCache
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.useContents
+import platform.CoreGraphics.CGRectMake
+import platform.CoreGraphics.CGSizeMake
 import platform.Foundation.NSTemporaryDirectory
 import platform.Foundation.NSURL
 import platform.Foundation.writeToURL
 import platform.UIKit.UIApplication
+import platform.UIKit.UIGraphicsBeginImageContextWithOptions
+import platform.UIKit.UIGraphicsEndImageContext
+import platform.UIKit.UIGraphicsGetImageFromCurrentImageContext
 import platform.UIKit.UIImage
 import platform.UIKit.UIImageJPEGRepresentation
 import platform.UIKit.UIImagePNGRepresentation
@@ -124,9 +133,13 @@ private class IosChatImagePickerCoordinator(
         picker.dismissViewControllerAnimated(true) {
             if (image != null) {
                 runCatching {
-                    val imageUrl = imageToTempUrl(image)
-                    if (imageUrl != null) {
-                        persistUrlToChatCache(url = imageUrl)
+                    val tempImage = imageToTempFile(image)
+                    if (tempImage != null) {
+                        persistUrlToChatCache(
+                            url = tempImage.url,
+                            contentTypeOverride = tempImage.metadata.contentType,
+                            fileNameOverride = tempImage.metadata.fileName,
+                        )
                     } else {
                         error("Failed to create temp URL for image")
                     }
@@ -150,26 +163,31 @@ private class IosChatImagePickerCoordinator(
 
     @Suppress("ReturnCount")
     @OptIn(ExperimentalForeignApi::class, ExperimentalTime::class)
-    private fun imageToTempUrl(image: UIImage): NSURL? {
-        val jpegData = UIImageJPEGRepresentation(image, 1.0)
-        val (imageData, extension) =
+    private fun imageToTempFile(image: UIImage): PickedChatImageTempFile? {
+        val timestampMs = Clock.System.now().toEpochMilliseconds()
+        val preparedImage = image.downscaledForChatUpload()
+        val jpegData = preparedImage.encodedAsChatJpeg()
+        val (imageData, metadata) =
             if (jpegData != null) {
-                jpegData to "jpg"
+                jpegData to buildPickedChatImageMetadata(timestampMs, ChatPickedImageFormat.JPEG)
             } else {
-                UIImagePNGRepresentation(image) to "png"
+                UIImagePNGRepresentation(preparedImage) to
+                    buildPickedChatImageMetadata(timestampMs, ChatPickedImageFormat.PNG)
             }
 
         if (imageData == null) {
             chatImagePickerLogger.e { "Failed to convert image to data" }
             return null
         }
+        chatImagePickerLogger.d {
+            "Prepared chat image upload bytes=${imageData.length.toLong()} format=${metadata.contentType}"
+        }
 
         val tempDir = NSTemporaryDirectory()
-        val fileName = "chat_image_${Clock.System.now().toEpochMilliseconds()}.$extension"
-        val tempUrl = NSURL.fileURLWithPath("$tempDir$fileName")
+        val tempUrl = NSURL.fileURLWithPath("$tempDir${metadata.fileName}")
 
         if (imageData.writeToURL(tempUrl, atomically = true)) {
-            return tempUrl
+            return PickedChatImageTempFile(url = tempUrl, metadata = metadata)
         } else {
             chatImagePickerLogger.e { "Failed to write image data to temp URL" }
             return null
@@ -212,3 +230,64 @@ private class IosChatImagePickerCoordinator(
         return null
     }
 }
+
+private data class PickedChatImageTempFile(
+    val url: NSURL,
+    val metadata: ChatImageAttachmentMetadata,
+)
+
+@OptIn(ExperimentalForeignApi::class)
+private fun UIImage.downscaledForChatUpload(): UIImage {
+    val imageSize =
+        size.useContents {
+            width to height
+        }
+    val currentWidth = imageSize.first
+    val currentHeight = imageSize.second
+    val longestEdge = maxOf(currentWidth, currentHeight)
+    if (longestEdge <= CHAT_IMAGE_MAX_DIMENSION_PX) {
+        return this
+    }
+
+    val scaleRatio = CHAT_IMAGE_MAX_DIMENSION_PX / longestEdge
+    val targetWidth = currentWidth * scaleRatio
+    val targetHeight = currentHeight * scaleRatio
+
+    UIGraphicsBeginImageContextWithOptions(
+        size = CGSizeMake(width = targetWidth, height = targetHeight),
+        opaque = false,
+        scale = 1.0,
+    )
+    drawInRect(
+        CGRectMake(
+            x = 0.0,
+            y = 0.0,
+            width = targetWidth,
+            height = targetHeight,
+        ),
+    )
+    val resizedImage = UIGraphicsGetImageFromCurrentImageContext()
+    UIGraphicsEndImageContext()
+    return resizedImage ?: this
+}
+
+private fun UIImage.encodedAsChatJpeg() =
+    CHAT_IMAGE_JPEG_QUALITIES
+        .firstNotNullOfOrNull { quality ->
+            UIImageJPEGRepresentation(this, quality)
+                ?.takeIf { data -> data.length.toLong() <= CHAT_IMAGE_MAX_UPLOAD_BYTES }
+        } ?: UIImageJPEGRepresentation(this, CHAT_IMAGE_JPEG_QUALITIES.last())
+
+private const val CHAT_IMAGE_MAX_DIMENSION_PX = 1600.0
+private const val CHAT_IMAGE_MAX_UPLOAD_BYTES = 2L * 1024L * 1024L
+private const val CHAT_IMAGE_JPEG_QUALITY_HIGH = 0.85
+private const val CHAT_IMAGE_JPEG_QUALITY_MEDIUM = 0.75
+private const val CHAT_IMAGE_JPEG_QUALITY_LOW = 0.65
+private const val CHAT_IMAGE_JPEG_QUALITY_MIN = 0.55
+private val CHAT_IMAGE_JPEG_QUALITIES =
+    listOf(
+        CHAT_IMAGE_JPEG_QUALITY_HIGH,
+        CHAT_IMAGE_JPEG_QUALITY_MEDIUM,
+        CHAT_IMAGE_JPEG_QUALITY_LOW,
+        CHAT_IMAGE_JPEG_QUALITY_MIN,
+    )

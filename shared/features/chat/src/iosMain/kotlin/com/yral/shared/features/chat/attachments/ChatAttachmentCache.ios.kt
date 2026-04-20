@@ -44,7 +44,7 @@ fun persistUrlToChatCache(
     val data = requireNotNull(NSData.dataWithContentsOfURL(url)) { "Unable to read data from URL: $url" }
     require(data.writeToURL(destUrl, atomically = true)) { "Unable to write data to cache: $destUrl" }
 
-    val contentType = contentTypeOverride ?: DEFAULT_CONTENT_TYPE
+    val contentType = inferChatAttachmentContentType(fileName, contentTypeOverride)
     val destPath = requireNotNull(destUrl.path) { "Destination path is null: $destUrl" }
     return FilePathChatAttachment(
         filePath = destPath,
@@ -60,5 +60,4 @@ private fun currentTimeMs(): Long =
         .toLong() * SECONDS_TO_MILLIS_FACTOR
 
 private const val CHAT_ATTACHMENTS_DIR = "chat_attachments"
-private const val DEFAULT_CONTENT_TYPE = "application/octet-stream"
 private const val SECONDS_TO_MILLIS_FACTOR = 1000L

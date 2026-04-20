@@ -33,6 +33,7 @@ import com.mikepenz.markdown.model.DefaultMarkdownColors
 import com.mikepenz.markdown.model.DefaultMarkdownTypography
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralLoadingDots
+import com.yral.shared.libs.designsystem.component.getLocalImageModel
 import com.yral.shared.libs.designsystem.theme.AppTopography
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
@@ -263,8 +264,9 @@ private fun MessageImages(mediaUrls: List<String>) {
 
     // If you ever need better perf, switch to LazyRow/Column or a grid.
     mediaUrls.forEach { imageUrl ->
+        val localFilePath = localChatImageFilePathOrNull(imageUrl)
         YralAsyncImage(
-            imageUrl = imageUrl,
+            imageUrl = localFilePath?.let { getLocalImageModel(it) } ?: imageUrl,
             modifier =
                 Modifier
                     .fillMaxWidth()
@@ -275,3 +277,13 @@ private fun MessageImages(mediaUrls: List<String>) {
         )
     }
 }
+
+internal fun localChatImageFilePathOrNull(imageUrl: String): String? =
+    when {
+        imageUrl.startsWith(FILE_URL_PREFIX) -> imageUrl.removePrefix(FILE_URL_PREFIX).takeIf { it.isNotBlank() }
+        imageUrl.startsWith(ABSOLUTE_PATH_PREFIX) -> imageUrl
+        else -> null
+    }
+
+private const val FILE_URL_PREFIX = "file://"
+private const val ABSOLUTE_PATH_PREFIX = "/"
