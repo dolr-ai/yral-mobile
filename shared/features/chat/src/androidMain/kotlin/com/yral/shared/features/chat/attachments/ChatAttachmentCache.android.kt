@@ -23,7 +23,16 @@ fun persistUriToChatCache(
     val cacheDir = File(context.cacheDir, CHAT_ATTACHMENTS_DIR).apply { mkdirs() }
 
     val contentType = contentTypeOverride ?: context.contentResolver.getType(uri) ?: DEFAULT_CONTENT_TYPE
-    val displayName = fileNameOverride ?: queryDisplayName(context, uri)
+    val displayName = fileNameOverride ?: queryDisplayName(context, uri) ?: uri.lastPathSegment
+
+    if (shouldProcessAsChatImage(contentType, displayName)) {
+        return AndroidChatImagePreprocessor.persistProcessedImageToCache(
+            context = context,
+            uri = uri,
+            cacheDir = cacheDir,
+        )
+    }
+
     val extension = guessExtension(displayName, contentType)
 
     val safeBaseName =
@@ -80,3 +89,18 @@ private fun guessExtension(
 
 private const val CHAT_ATTACHMENTS_DIR = "chat_attachments"
 private const val DEFAULT_CONTENT_TYPE = "application/octet-stream"
+
+private fun shouldProcessAsChatImage(
+    contentType: String,
+    displayName: String?,
+): Boolean {
+    if (contentType.startsWith(IMAGE_CONTENT_TYPE_PREFIX)) {
+        return true
+    }
+
+    val extension = displayName?.substringAfterLast('.', missingDelimiterValue = "")?.lowercase()
+    return extension in CHAT_IMAGE_FILE_EXTENSIONS
+}
+
+private const val IMAGE_CONTENT_TYPE_PREFIX = "image/"
+private val CHAT_IMAGE_FILE_EXTENSIONS = setOf("jpg", "jpeg", "png", "webp", "heic", "heif")
