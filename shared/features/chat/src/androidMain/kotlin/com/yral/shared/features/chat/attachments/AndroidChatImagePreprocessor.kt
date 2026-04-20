@@ -246,12 +246,15 @@ private fun buildOrientationTransformation(orientation: Int): OrientationTransfo
 private fun orientationToRotationDegrees(orientation: Int): Float? =
     when (orientation) {
         ExifInterface.ORIENTATION_ROTATE_180 -> ROTATION_180_DEGREES
+
         ExifInterface.ORIENTATION_TRANSPOSE,
         ExifInterface.ORIENTATION_ROTATE_90,
         -> ROTATION_90_DEGREES
+
         ExifInterface.ORIENTATION_TRANSVERSE,
         ExifInterface.ORIENTATION_ROTATE_270,
         -> ROTATION_270_DEGREES
+
         else -> null
     }
 
@@ -261,6 +264,7 @@ private fun orientationToHorizontalScale(orientation: Int): Float =
         ExifInterface.ORIENTATION_TRANSPOSE,
         ExifInterface.ORIENTATION_TRANSVERSE,
         -> FLIP_HORIZONTAL
+
         else -> FLIP_HORIZONTAL_DEFAULT
     }
 
