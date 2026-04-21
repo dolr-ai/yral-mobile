@@ -56,9 +56,11 @@ fun Project.isAppleBuildEnabled(): Boolean {
  *  - The Rust toolchain + Cargo are installed on the host, AND
  *  - The Android NDK is available (set via `ndkVersion` in the module's `android {}` block).
  *
- * The flag is opt-in: set `isLocalRust=true` in gradle.properties (or pass `-PisLocalRust=true`
- * on the CLI). It defaults to false so that developers who have not set up the Rust/NDK toolchain
- * transparently fall back to the pre-built Maven artifact.
+ * In this repository, `gradle.properties` sets `isLocalRust=true` by default so local Cargo builds
+ * are the standard path in CI and local development.
+ *
+ * If the property is unset, this helper still defaults to false and transparently falls back to the
+ * pre-built Maven artifact.
  *
  * On macOS with iOS targets enabled, the full Cargo cross-compilation (Android + iOS) runs.
  * On Windows/Linux with iOS targets disabled, only the Android NDK Cargo build runs.

@@ -26,13 +26,18 @@ jobs:
           java-version: 21
           distribution: 'temurin'
 
-      - name: Cache Gradle packages
-        uses: actions/cache@v3
+      - name: Restore Gradle and Rust caches
+        uses: actions/cache/restore@v4
         with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.rustup
+          key: ${{ runner.os }}-tooling-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/Cargo.lock', 'rust-toolchain.toml') }}
           restore-keys: |
-            ${{ runner.os }}-gradle-
+            ${{ runner.os }}-tooling-
 
       - name: Install Android SDK
         uses: android-actions/setup-android@v3

@@ -35,13 +35,19 @@ jobs:
           java-version: 21
           distribution: 'temurin'
 
-      - name: Cache Gradle packages
-        uses: actions/cache@v3
+      - name: Restore Gradle and Rust caches
+        id: restore-tooling-cache
+        uses: actions/cache/restore@v4
         with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.rustup
+          key: ${{ runner.os }}-tooling-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/Cargo.lock', 'rust-toolchain.toml') }}
           restore-keys: |
-            ${{ runner.os }}-gradle-
+            ${{ runner.os }}-tooling-
 
       - name: Install android SDK
         uses: android-actions/setup-android@v3
@@ -133,3 +139,15 @@ jobs:
           git commit -m "[skip ci] chore: bump staging version to $NEW_VERSION_NAME (versionCode $NEW_VERSION_CODE)"
           git pull --rebase origin main
           git push origin main
+
+      - name: Save Gradle and Rust caches
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.rustup
+          key: ${{ steps.restore-tooling-cache.outputs.cache-primary-key }}

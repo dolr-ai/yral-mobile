@@ -142,7 +142,7 @@ Test expectations:
 - JDK 17+ is required.
 - Xcode and CocoaPods are required for iOS work.
 - Some dependencies come from GitHub Packages. If resolution fails, check `GITHUB_USERNAME` and `GITHUB_TOKEN`.
-- Important Gradle flag: `isLocalRust=false` unless actively developing Rust.
+- Important Gradle flag: `isLocalRust=true` for this repository's local-Rust-first build policy.
 
 ## Repo-Specific Notes
 
