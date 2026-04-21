@@ -416,7 +416,7 @@ Important flags in `gradle.properties`:
 org.gradle.jvmargs=-Xmx8192M  # High memory for KMM builds
 org.gradle.caching=true        # Build cache enabled
 org.gradle.configuration-cache=true  # Configuration cache
-isLocalRust=false             # Use local Rust vs. pre-built
+isLocalRust=true              # Build Rust locally via Cargo + NDK
 ```
 
 ### Version Catalog
@@ -451,9 +451,9 @@ If detekt fails with false positives, consider:
 ### Rust Build Issues
 
 If Rust FFI issues occur:
-1. Ensure `isLocalRust=false` unless actively developing Rust code
-2. Pre-built binaries are in GitHub Packages
-3. Check Rust agent is on correct version
+1. Ensure `isLocalRust=true`
+2. Verify Rust toolchain + Cargo are installed and available on PATH
+3. Verify Android NDK 29.0.14206865 is installed
 
 ### iOS Build Issues
 

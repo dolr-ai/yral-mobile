@@ -93,10 +93,25 @@ jobs:
           ruby-version: '3.0'
 
       - name: Set up Java (for Gradle)
+        id: setup-jdk
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
+
+      - name: Restore Gradle and Rust caches
+        id: restore-tooling-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.rustup
+          key: ${{ runner.os }}-tooling-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/Cargo.lock', 'rust-toolchain.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-tooling-
 
       - name: Install CocoaPods
         run: |
@@ -187,6 +202,18 @@ jobs:
 
           echo "Uploading Crashlytics dSYMs from $DSYMS_DIR"
           "$UPLOAD_SYMBOLS_SCRIPT" -gsp "$GOOGLE_SERVICE_INFO_PLIST" -p ios "$DSYMS_DIR"
+
+      - name: Save Gradle and Rust caches
+        if: ${{ success() && github.ref == 'refs/heads/main' && steps.restore-tooling-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.rustup
+          key: ${{ steps.restore-tooling-cache.outputs.cache-primary-key }}
 
       - name: Upload gym build log
         if: failure()

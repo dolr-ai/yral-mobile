@@ -1,8 +1,12 @@
-use crate::sns_swap::{Principals};
 use candid::{CandidType, Deserialize, Nat, Principal};
 use serde_bytes::ByteBuf;
 use uniffi::{Enum, Record};
 use crate::uni_ffi_helpers::KeyValuePair;
+
+#[derive(CandidType, Deserialize, Record)]
+pub struct Principals {
+    pub principals: Vec<Principal>,
+}
 
 pub type BlockIndex = Nat;
 pub type Timestamp = u64;

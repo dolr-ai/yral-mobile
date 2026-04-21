@@ -9,75 +9,66 @@ concurrency:
 
 permissions:
   contents: read
-  packages: write    # pull/push cached devcontainer image from ghcr.io
   security-events: write  # upload detekt SARIF report
 
 jobs:
   android-checks:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # devcontainer.json bind-mounts ~/.ssh/agent.sock from the host so
-      # developers can forward their SSH agent into the container. In CI
-      # there is no SSH agent socket, so create a placeholder file to
-      # prevent Docker from failing on the missing bind-mount source.
-      - name: Create SSH agent socket placeholder
-        run: mkdir -p ~/.ssh && touch ~/.ssh/agent.sock
-
-      # devcontainer.json bind-mounts ~/.config/gh so the gh CLI config is
-      # available inside the container. GitHub-hosted runners don't pre-create
-      # this directory, so Docker refuses to start with a "bind source path
-      # does not exist" error. Create an empty directory as a placeholder.
-      - name: Create gh config placeholder
-        run: mkdir -p ~/.config/gh
-
-      # devcontainer.json bind-mounts the repository's git submodule data
-      # directory (../../.git/modules/apps/yral-mobile relative to the workspace).
-      # On a GitHub Actions runner the path doesn't exist, so create an empty
-      # directory placeholder to satisfy the Docker bind-mount requirement.
-      - name: Create git submodule data placeholder
-        run: mkdir -p "${{ github.workspace }}/../../.git/modules/apps/yral-mobile"
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+      - name: Set up JDK
+        id: setup-jdk
+        uses: actions/setup-java@v3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          java-version: 21
+          distribution: 'temurin'
 
-      - name: Run lint and tests inside dev container
-        uses: devcontainers/ci@v0.3
+      - name: Restore Gradle and Rust caches
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.rustup
+          key: ${{ runner.os }}-tooling-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/Cargo.lock', 'rust-toolchain.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-tooling-
+
+      - name: Install Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android NDK
+        run: |
+          echo "y" | sdkmanager --install "ndk;29.0.14206865" --channel=0
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/29.0.14206865" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/29.0.14206865" >> "$GITHUB_ENV"
+
+      - name: Run ktlint
         env:
-          # Required for GitHub Packages dependency resolution (see CLAUDE.md)
           GITHUB_USERNAME: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          # Cache the built devcontainer image in ghcr.io.
-          # It is pushed only when running on the default branch so that PRs
-          # always get a warm cache without needing write access on forks.
-          imageName: ghcr.io/${{ github.repository_owner }}/yral-mobile-devcontainer
-          cacheFrom: ghcr.io/${{ github.repository_owner }}/yral-mobile-devcontainer
-          push: filter
-          refFilterForPush: refs/heads/main
-          runCmd: |
-            set -e
-            echo "=== Running ktlint ==="
-            ./gradlew ktlintCheck --console=plain
+          JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
+        run: ./gradlew ktlintCheck --console=plain
 
-            echo "=== Running detekt ==="
-            ./gradlew detekt reportMerge --continue --console=plain
+      - name: Run detekt
+        env:
+          GITHUB_USERNAME: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
+        run: ./gradlew detekt reportMerge --continue --console=plain
 
-            echo "=== Running tests ==="
-            ./gradlew test --console=plain
-          env: |
-            GITHUB_USERNAME
-            GITHUB_TOKEN
+      - name: Run tests
+        env:
+          GITHUB_USERNAME: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
+        run: ./gradlew test --console=plain
 
-      # The detekt SARIF file is written to the workspace by the container step
-      # above and is readable from the runner because they share the same directory.
       - name: Upload detekt SARIF report
         if: always()
         uses: github/codeql-action/upload-sarif@v4

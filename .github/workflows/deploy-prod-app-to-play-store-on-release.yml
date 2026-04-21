@@ -18,7 +18,7 @@ concurrency:
 jobs:
   deploy-prod:
     if: contains(github.event.release.tag_name, 'Android')
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - name: Extract version from release tag
         id: version
@@ -45,13 +45,18 @@ jobs:
           java-version: 21
           distribution: 'temurin'
 
-      - name: Cache Gradle packages
-        uses: actions/cache@v3
+      - name: Restore Gradle and Rust caches
+        uses: actions/cache/restore@v4
         with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.rustup
+          key: ${{ runner.os }}-tooling-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/Cargo.lock', 'rust-toolchain.toml') }}
           restore-keys: |
-            ${{ runner.os }}-gradle-
+            ${{ runner.os }}-tooling-
 
       - name: Install android SDK
         uses: android-actions/setup-android@v3
@@ -64,7 +69,7 @@ jobs:
 
       - name: Resolve and increment prod versionCode
         run: |
-          CURRENT=$(grep -oP 'versionCode = \K[0-9]+(?= // ci:prod-version-code)' ./androidApp/build.gradle.kts)
+          CURRENT=$(sed -nE 's/^[[:space:]]*versionCode = ([0-9]+) \/\/ ci:prod-version-code$/\1/p' ./androidApp/build.gradle.kts)
           if ! [[ "$CURRENT" =~ ^[0-9]+$ ]]; then
             echo "Error: could not read prod versionCode from build.gradle.kts, got: '$CURRENT'" >&2
             exit 1
@@ -76,8 +81,8 @@ jobs:
       - name: Update version in build.gradle.kts
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          sed -i "s/versionCode = [0-9]\+ \/\/ ci:prod-version-code/versionCode = $NEW_VERSION_CODE \/\/ ci:prod-version-code/" ./androidApp/build.gradle.kts
-          sed -i "s/versionName = \"[^\"]*\" \/\/ ci:prod-version-name/versionName = \"$VERSION\" \/\/ ci:prod-version-name/" ./androidApp/build.gradle.kts
+          sed -i '' "s/versionCode = [0-9]\\+ \/\/ ci:prod-version-code/versionCode = $NEW_VERSION_CODE \/\/ ci:prod-version-code/" ./androidApp/build.gradle.kts
+          sed -i '' "s/versionName = \"[^\"]*\" \/\/ ci:prod-version-name/versionName = \"$VERSION\" \/\/ ci:prod-version-name/" ./androidApp/build.gradle.kts
           echo "Updated build.gradle.kts:"
           grep -E 'ci:prod-version' ./androidApp/build.gradle.kts
 
@@ -85,7 +90,8 @@ jobs:
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_CONTENTS_BASE_64 }}
         run: |
-          echo "$KEYSTORE_BASE64" | base64 -d > ./androidApp/my-release-key.keystore
+          echo "$KEYSTORE_BASE64" | base64 --decode > ./androidApp/my-release-key.keystore || \
+          echo "$KEYSTORE_BASE64" | base64 -D > ./androidApp/my-release-key.keystore
 
       - name: Setup environment variables
         run: |

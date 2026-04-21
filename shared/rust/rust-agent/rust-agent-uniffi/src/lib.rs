@@ -1,11 +1,5 @@
 pub mod individual_user_template;
-pub mod sns_swap;
-pub mod sns_root;
 pub mod sns_ledger;
-pub mod sns_index;
-pub mod sns_governance;
-pub mod post_cache;
-pub mod platform_orchestrator;
 pub mod rate_limits;
 pub mod user_post_service;
 pub mod user_info_service;

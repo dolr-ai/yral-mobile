@@ -29,6 +29,10 @@ Key directories:
 - Add new dependencies through `libs.versions.toml`, not hardcoded versions.
 - Prefer existing architecture and module boundaries over convenience edits.
 
+## Terminal Output & Visibility
+
+**Show all terminal output — do NOT hide or truncate with `tail`, `head`, `grep`, pipes, or similar filtering tools.** Full output visibility allows you to see errors, warnings, and status messages while you work. Run commands directly and let the full output stream to the terminal so we can follow along together. This is especially important during builds, tests, and debugging.
+
 ## Dependency Version Policy
 
 When upgrading dependencies, always target the **latest stable release** — not alpha, beta, RC, or dev preview versions. The goal is to stay current enough to avoid known security vulnerabilities while avoiding unstable or breaking-change-prone releases. Never proactively upgrade to pre-release versions unless explicitly asked.
@@ -138,7 +142,7 @@ Test expectations:
 - JDK 17+ is required.
 - Xcode and CocoaPods are required for iOS work.
 - Some dependencies come from GitHub Packages. If resolution fails, check `GITHUB_USERNAME` and `GITHUB_TOKEN`.
-- Important Gradle flag: `isLocalRust=false` unless actively developing Rust.
+- Important Gradle flag: `isLocalRust=true` for this repository's local-Rust-first build policy.
 
 ## Repo-Specific Notes
 
