@@ -43,13 +43,6 @@ check(JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
 
 val isMacOs: Boolean = System.getProperty("os.name").orEmpty().startsWith("Mac", ignoreCase = true)
 
-val isLocalRust: Boolean =
-    providers
-        .gradleProperty("isLocalRust")
-        .map { it.toBoolean() }
-        .orElse(false)
-        .get()
-
 val isAppleBuild: Boolean =
     providers
         .gradleProperty("isAppleBuild")
@@ -61,9 +54,7 @@ include(":androidApp")
 include(":shared:core")
 include(":shared:data")
 include(":shared:test-support")
-if (isLocalRust) {
-    include(":shared:rust:rust-agent")
-}
+include(":shared:rust:rust-agent")
 include(":shared:rust:service")
 include(":shared:libs:preferences")
 include(":shared:libs:http")

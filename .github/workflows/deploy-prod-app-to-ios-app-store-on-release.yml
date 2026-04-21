@@ -73,9 +73,6 @@ jobs:
           printf 'kotlin.apple.cocoapods.bin=%s\n' "$(which pod)" > local.properties
 
       - name: Run KMM podInstall
-        env:
-          GITHUB_USERNAME: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Runs the Gradle task that Android Studio launches on sync.
           ./gradlew :iosSharedUmbrella:podInstall --stacktrace
@@ -114,8 +111,6 @@ jobs:
           APP_STORE_CONNECT_ISSUER_ID: ${{ vars.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_KEY_ID: ${{ vars.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
-          GITHUB_USERNAME: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GRADLE_OPTS: >-
             -Dorg.gradle.project.compose.ios.resources.platform=iphoneos
             -Dorg.gradle.project.compose.ios.resources.archs=arm64

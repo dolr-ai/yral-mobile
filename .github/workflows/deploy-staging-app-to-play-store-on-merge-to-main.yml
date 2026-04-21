@@ -103,15 +103,11 @@ jobs:
       - name: Build APK
         run: ./gradlew androidApp:bundleStagingRelease
         env:
-          GITHUB_USERNAME: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
 
       - name: Upload Crashlytics mapping file
         run: ./gradlew androidApp:uploadCrashlyticsMappingFileStagingRelease
         env:
-          GITHUB_USERNAME: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
 
       - name: Authenticate to Google Cloud

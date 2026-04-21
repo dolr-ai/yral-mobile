@@ -50,22 +50,16 @@ jobs:
 
       - name: Run ktlint
         env:
-          GITHUB_USERNAME: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
         run: ./gradlew ktlintCheck --console=plain
 
       - name: Run detekt
         env:
-          GITHUB_USERNAME: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
         run: ./gradlew detekt reportMerge --continue --console=plain
 
       - name: Run tests
         env:
-          GITHUB_USERNAME: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
         run: ./gradlew test --console=plain
 

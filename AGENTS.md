@@ -58,8 +58,7 @@ open iosApp/iosApp.xcworkspace
 cd iosApp && pod install
 ./gradlew :iosSharedUmbrella:assembleXCFramework
 
-# Rust (only when explicitly working on local Rust)
-# Set isLocalRust=true in gradle.properties first
+# Rust
 cd rust-agent && cargo build
 ```
 
@@ -109,8 +108,7 @@ features/yourfeature/
 ### Rust Integration
 
 - Rust-backed services are exposed through wrappers in `/shared/rust/service/`.
-- Default to prebuilt Rust binaries.
-- Only switch to local Rust builds when the task actually requires Rust changes.
+- Rust is always built from local source in this repository.
 
 ### CocoaPods and KMM Modules
 
@@ -141,8 +139,7 @@ Test expectations:
 
 - JDK 17+ is required.
 - Xcode and CocoaPods are required for iOS work.
-- Some dependencies come from GitHub Packages. If resolution fails, check `GITHUB_USERNAME` and `GITHUB_TOKEN`.
-- Important Gradle flag: `isLocalRust=true` for this repository's local-Rust-first build policy.
+- Rust toolchain and Android NDK 29.0.14206865 are required for local Rust builds.
 
 ## Repo-Specific Notes
 

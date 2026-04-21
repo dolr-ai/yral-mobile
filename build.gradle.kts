@@ -1,22 +1,3 @@
-/**
- * Reads a key from the project-root .env file, falling back to the real environment variable.
- * .env format: KEY=value  (lines starting with # are ignored, quotes are stripped)
- */
-fun envValue(key: String): String? {
-    System.getenv(key)?.let { return it }
-    val envFile = rootProject.file(".env")
-    if (envFile.exists()) {
-        envFile.readLines().forEach { line ->
-            val trimmed = line.trim()
-            if (!trimmed.startsWith("#") && "=" in trimmed) {
-                val (k, v) = trimmed.split("=", limit = 2)
-                if (k.trim() == key) return v.trim().removeSurrounding("\"").removeSurrounding("'")
-            }
-        }
-    }
-    return null
-}
-
 plugins {
     // this is necessary to avoid the plugins to be loaded multiple times
     // in each subproject's classloader
@@ -53,14 +34,6 @@ allprojects {
         google()
         mavenCentral()
         // mavenLocal()
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/dolr-ai/yral-mobile")
-            credentials {
-                username = envValue("GITHUB_USERNAME")
-                password = envValue("GITHUB_TOKEN")
-            }
-        }
         maven {
             url = uri("https://oss.sonatype.org/content/repositories/snapshots/")
         }

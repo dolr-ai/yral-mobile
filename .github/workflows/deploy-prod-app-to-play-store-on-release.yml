@@ -107,15 +107,11 @@ jobs:
       - name: Build AAB with Gradle
         run: ./gradlew androidApp:bundleProdRelease
         env:
-          GITHUB_USERNAME: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
 
       - name: Upload Crashlytics mapping file
         run: ./gradlew androidApp:uploadCrashlyticsMappingFileProdRelease
         env:
-          GITHUB_USERNAME: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
 
       - name: Authenticate to Google Cloud

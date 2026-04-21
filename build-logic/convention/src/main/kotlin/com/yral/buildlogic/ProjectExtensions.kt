@@ -42,32 +42,3 @@ fun Project.isAppleBuildEnabled(): Boolean {
         .orElse(isMacOs)
         .get()
 }
-
-/**
- * Returns true when the local Rust source (`:shared:rust:rust-agent`) should be used
- * instead of the pre-built Maven artifact.
- *
- * The gobley-cargo plugin only compiles Cargo for the Kotlin targets that are registered in the
- * `kotlin {}` block. Because [isAppleBuildEnabled] already gates iOS targets, on a non-Apple build
- * gobley-cargo will only see `androidTarget()` and will only invoke the Android NDK toolchain —
- * no macOS or Apple toolchain is required.
- *
- * Therefore local Rust is allowed on **any** OS as long as:
- *  - The Rust toolchain + Cargo are installed on the host, AND
- *  - The Android NDK is available (set via `ndkVersion` in the module's `android {}` block).
- *
- * In this repository, `gradle.properties` sets `isLocalRust=true` by default so local Cargo builds
- * are the standard path in CI and local development.
- *
- * If the property is unset, this helper still defaults to false and transparently falls back to the
- * pre-built Maven artifact.
- *
- * On macOS with iOS targets enabled, the full Cargo cross-compilation (Android + iOS) runs.
- * On Windows/Linux with iOS targets disabled, only the Android NDK Cargo build runs.
- */
-fun Project.isLocalRustEnabled(): Boolean =
-    providers
-        .gradleProperty("isLocalRust")
-        .map { it.toBoolean() }
-        .orElse(false)
-        .get()
