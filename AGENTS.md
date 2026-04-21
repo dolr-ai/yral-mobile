@@ -139,7 +139,7 @@ Test expectations:
 
 - JDK 17+ is required.
 - Xcode and CocoaPods are required for iOS work.
-- Rust toolchain and Android NDK 29.0.14206865 are required for local Rust builds.
+- Rust toolchain and Android NDK 29.0.14206865 are required for Rust builds.
 
 ## Repo-Specific Notes
 
