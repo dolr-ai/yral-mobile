@@ -18,6 +18,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -83,10 +84,15 @@ fun FeedScreen(
     bottomOverlay: @Composable (pageNo: Int, scrollToNext: () -> Unit) -> Unit,
     onPageChanged: (pageNo: Int, currentPage: Int) -> Unit,
     onEdgeScrollAttempt: (pageNo: Int) -> Unit,
-    limitReelCount: Int,
     onSwipeVote: ((direction: SwipeDirection, pageIndex: Int, isSwipe: Boolean) -> Unit)? = null,
 ) {
     val state by viewModel.state.collectAsState()
+
+    // Stable State<> references for VerticalPager content — their identity never changes,
+    // only .value updates. Reading .value inside the pager content tracks at page scope,
+    // so page recomposition is skipped when unrelated state fields change (e.g. currentPageOfFeed).
+    val onboardingStepState = rememberUpdatedState(state.currentOnboardingStep)
+    val isLoggedInState = rememberUpdatedState(state.isLoggedIn)
 
     LaunchedEffect(Unit) { viewModel.pushScreenView() }
 
@@ -172,7 +178,7 @@ fun FeedScreen(
                 YRALReelPlayerCardStack(
                     modifier = Modifier.weight(1f),
                     reels = reels,
-                    maxReelsInPager = limitReelCount,
+                    maxReelsInPager = state.feedDetails.size,
                     initialPage = state.currentPageOfFeed,
                     onPageLoaded = { page ->
                         // call onPageChanged before changing page in FeedViewModel
@@ -190,13 +196,13 @@ fun FeedScreen(
                     },
                     onSwipeVote = onSwipeVote,
                     shouldSuppressSwipeFeedback = { pageIndex ->
-                        !state.isLoggedIn && pageIndex != 0 && (pageIndex % SIGN_UP_PAGE) == 0
+                        !isLoggedInState.value && pageIndex != 0 && (pageIndex % SIGN_UP_PAGE) == 0
                     },
                 ) { pageNo, scrollToNext ->
                     FeedOverlay(
                         pageNo = pageNo,
-                        currentOnboardingStep = state.currentOnboardingStep,
-                        isLoggedIn = state.isLoggedIn,
+                        currentOnboardingStep = onboardingStepState.value,
+                        isLoggedIn = isLoggedInState.value,
                         topOverlay = { topOverlay(pageNo) },
                         bottomOverlay = { bottomOverlay(pageNo, scrollToNext) },
                         actionsRight = { actionsRight(pageNo) },
@@ -207,7 +213,7 @@ fun FeedScreen(
                 YRALReelPlayer(
                     modifier = Modifier.weight(1f),
                     reels = reels,
-                    maxReelsInPager = limitReelCount,
+                    maxReelsInPager = state.feedDetails.size,
                     initialPage = state.currentPageOfFeed,
                     onPageLoaded = { page ->
                         onPageChanged(page, state.currentPageOfFeed)
@@ -226,8 +232,8 @@ fun FeedScreen(
                 ) { pageNo, scrollToNext ->
                     FeedOverlay(
                         pageNo = pageNo,
-                        currentOnboardingStep = state.currentOnboardingStep,
-                        isLoggedIn = state.isLoggedIn,
+                        currentOnboardingStep = onboardingStepState.value,
+                        isLoggedIn = isLoggedInState.value,
                         topOverlay = { topOverlay(pageNo) },
                         bottomOverlay = { bottomOverlay(pageNo, scrollToNext) },
                         actionsRight = { actionsRight(pageNo) },

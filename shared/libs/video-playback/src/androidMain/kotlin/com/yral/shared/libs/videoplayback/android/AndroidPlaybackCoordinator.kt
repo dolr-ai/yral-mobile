@@ -30,14 +30,19 @@ import com.yral.shared.libs.videoplayback.PlaybackProgressTicker
 import com.yral.shared.libs.videoplayback.PreloadEventScheduler
 import com.yral.shared.libs.videoplayback.PreloadPolicy
 import com.yral.shared.libs.videoplayback.PreparedSlotScheduler
+import com.yral.shared.libs.videoplayback.SlotActivationMode
 import com.yral.shared.libs.videoplayback.VideoSurfaceHandle
 import com.yral.shared.libs.videoplayback.cacheKey
 import com.yral.shared.libs.videoplayback.planFeedAlignment
+import com.yral.shared.libs.videoplayback.selectSlotActivationDecision
 import com.yral.shared.libs.videoplayback.ui.AndroidVideoSurfaceHandle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.io.File
 import kotlin.math.abs
 import kotlin.time.Clock
@@ -50,6 +55,7 @@ fun createAndroidPlaybackCoordinator(
 ): PlaybackCoordinator = AndroidPlaybackCoordinator(context, deps)
 
 @OptIn(UnstableApi::class)
+@Suppress("TooManyFunctions")
 private class AndroidPlaybackCoordinator(
     context: Context,
     private val deps: CoordinatorDeps,
@@ -93,8 +99,10 @@ private class AndroidPlaybackCoordinator(
 
     private val playerA = createPlayer(preloadManagerBuilder)
     private val playerB = if (policy.usePreparedNextPlayer) createPlayer(preloadManagerBuilder) else null
-    private var activeSlot = PlayerSlot(playerA)
-    private var preparedSlot: PlayerSlot? = playerB?.let { PlayerSlot(it) }
+    private val slotA = PlayerSlot(playerA)
+    private val slotB = playerB?.let { PlayerSlot(it) }
+    private var activeSlot = slotA
+    private var preparedSlot: PlayerSlot? = slotB
 
     private val surfaces = mutableMapOf<Int, VideoSurfaceHandle>()
     private var feed: List<MediaDescriptor> = emptyList()
@@ -109,6 +117,8 @@ private class AndroidPlaybackCoordinator(
 
     private val playStartMsById = mutableMapOf<String, Long>()
     private var firstFramePendingIndex: Int? = null
+    private var pendingPreparedScheduleIndex: Int? = null
+    private var pendingPreparedScheduleJob: Job? = null
     private var rebuffering = false
     private var stalling = false
     private var stallStartMs: Long = 0
@@ -129,88 +139,8 @@ private class AndroidPlaybackCoordinator(
                 checkFullyBuffered(progress)
             },
         )
-
-    private val listener =
-        object : Player.Listener {
-            @Suppress("ReturnCount")
-            override fun onMediaItemTransition(
-                mediaItem: MediaItem?,
-                reason: Int,
-            ) {
-                if (reason != Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT) return
-                val index = mediaItem?.mediaId?.let { mediaIndexById[it] } ?: activeSlot.index ?: return
-                val item = feed.getOrNull(index) ?: return
-                reporter.playbackEnded(item.id, index)
-            }
-
-            override fun onPlaybackStateChanged(playbackState: Int) {
-                val index = activeSlot.index ?: return
-                val item = feed.getOrNull(index) ?: return
-
-                if (playbackState == Player.STATE_BUFFERING && activeSlot.player.playWhenReady) {
-                    if (!rebuffering) {
-                        rebuffering = true
-                        reporter.rebufferStart(item.id, index, "buffering")
-                    }
-                }
-
-                if (playbackState == Player.STATE_READY && rebuffering) {
-                    rebuffering = false
-                    reporter.rebufferEnd(item.id, index, "buffering")
-                }
-
-                if (playbackState == Player.STATE_ENDED) {
-                    reporter.playbackEnded(item.id, index)
-                }
-            }
-
-            override fun onPlayerError(error: PlaybackException) {
-                val index = activeSlot.index ?: return
-                val item = feed.getOrNull(index) ?: return
-                reporter.playbackError(
-                    id = item.id,
-                    index = index,
-                    category = error.errorCodeName,
-                    code = error.errorCode,
-                    message = error.message,
-                )
-            }
-
-            @Suppress("ReturnCount")
-            override fun onIsPlayingChanged(isPlaying: Boolean) {
-                val index = activeSlot.index ?: return
-                val item = feed.getOrNull(index) ?: return
-                val player = activeSlot.player
-                val isNonBufferStall =
-                    player.playWhenReady &&
-                        player.playbackState != Player.STATE_BUFFERING &&
-                        !rebuffering
-                if (!isPlaying && isNonBufferStall) {
-                    if (!stalling) {
-                        stalling = true
-                        stallStartMs = nowMs()
-                        reporter.stallStart(item.id, index, "playback_suppressed")
-                    }
-                } else if (isPlaying && stalling) {
-                    val elapsed = nowMs() - stallStartMs
-                    stalling = false
-                    stallStartMs = 0
-                    reporter.stallEnd(item.id, index, elapsed)
-                }
-            }
-
-            @Suppress("ReturnCount")
-            override fun onRenderedFirstFrame() {
-                val index = activeSlot.index ?: return
-                val item = feed.getOrNull(index) ?: return
-                if (firstFramePendingIndex != index) return
-                firstFramePendingIndex = null
-                val start = playStartMsById[item.id] ?: return
-                val elapsed = nowMs() - start
-                reporter.firstFrameRendered(item.id, index)
-                reporter.timeToFirstFrame(item.id, index, elapsed)
-            }
-        }
+    private val playerAListener = createSlotListener(slotA)
+    private val playerBListener = slotB?.let(::createSlotListener)
 
     private val preloadListener =
         object : PreloadManagerListener {
@@ -231,8 +161,10 @@ private class AndroidPlaybackCoordinator(
         }
 
     init {
-        playerA.addListener(listener)
-        playerB?.addListener(listener)
+        playerA.addListener(playerAListener)
+        playerB?.let { player ->
+            playerBListener?.let(player::addListener)
+        }
         preloadManager.addListener(preloadListener)
         progressTicker.start()
     }
@@ -248,8 +180,8 @@ private class AndroidPlaybackCoordinator(
                 previousIds = previousIds,
                 currentIds = currentIds,
                 activeIndex = activeIndex,
-                activeSlotIndex = activeSlot.index,
-                preparedSlotIndex = preparedSlot?.index,
+                activeSlotIndex = activeSlot.mediaIndex,
+                preparedSlotIndex = preparedSlot?.mediaIndex,
             )
         preloadScheduler.reset("feed_update") { feed.getOrNull(it)?.id }
         preparedScheduler.reset("feed_update") { feed.getOrNull(it)?.id }
@@ -287,11 +219,14 @@ private class AndroidPlaybackCoordinator(
         mediaItems = newMediaItems
         mediaIndexById = newMediaIndexById
 
-        alignment.invalidatePreparedIndex?.let { stalePreparedIndex ->
+        alignment.invalidatePreparedIndex?.let { _ ->
             preparedSlot?.let { slot ->
                 slot.player.playWhenReady = false
-                detachSurface(stalePreparedIndex, slot.player)
-                slot.index = null
+                detachSurface(slot)
+                slot.mediaIndex = null
+                slot.isReady = false
+                slot.hasRenderedFirstFrame = false
+                slot.warmOnFirstFrame = false
             }
         }
 
@@ -303,10 +238,23 @@ private class AndroidPlaybackCoordinator(
             stallStartMs = 0
             fullyBufferedReported = false
             firstFramePendingIndex = null
+            pendingPreparedScheduleIndex = null
+            pendingPreparedScheduleJob?.cancel()
+            pendingPreparedScheduleJob = null
             activeSlot.player.playWhenReady = false
             preparedSlot?.player?.playWhenReady = false
-            activeSlot.index = null
-            preparedSlot?.index = null
+            detachSurface(activeSlot)
+            activeSlot.mediaIndex = null
+            activeSlot.isReady = false
+            activeSlot.hasRenderedFirstFrame = false
+            activeSlot.warmOnFirstFrame = false
+            preparedSlot?.let { slot ->
+                detachSurface(slot)
+                slot.isReady = false
+                slot.hasRenderedFirstFrame = false
+                slot.warmOnFirstFrame = false
+                slot.mediaIndex = null
+            }
             return
         }
 
@@ -339,7 +287,7 @@ private class AndroidPlaybackCoordinator(
     override fun setActiveIndex(index: Int) {
         if (released) return
         if (index !in feed.indices) return
-        if (index == activeIndex && activeSlot.index == index) return
+        if (index == activeIndex && activeSlot.mediaIndex == index) return
 
         if (rebuffering) {
             feed.getOrNull(activeIndex)?.let { item ->
@@ -356,6 +304,8 @@ private class AndroidPlaybackCoordinator(
             stallStartMs = 0
         }
         fullyBufferedReported = false
+        pendingPreparedScheduleJob?.cancel()
+        pendingPreparedScheduleJob = null
         activeIndex = index
         predictedIndex = index
         preloadStatusControl.currentPlayingIndex = index
@@ -367,20 +317,36 @@ private class AndroidPlaybackCoordinator(
 
         val item = feed[index]
         reporter.feedItemImpression(item.id, index)
-        reporter.playStartRequest(item.id, index, "activeIndex")
+        val activationDecision =
+            selectSlotActivationDecision(
+                requestedIndex = index,
+                preparedIndex = preparedSlot?.mediaIndex,
+                preparedReady = preparedSlot?.isHot == true,
+            )
+        reporter.playStartRequest(item.id, index, activationDecision.playStartReason)
         playStartMsById[item.id] = nowMs()
         firstFramePendingIndex = index
+        pendingPreparedScheduleIndex = index
 
-        if (preparedSlot?.index == index) {
-            swapSlots()
-        } else {
-            prepareSlot(activeSlot, index, playWhenReady = true)
+        when (activationDecision.mode) {
+            SlotActivationMode.SwapPrepared -> {
+                swapSlots()
+            }
+
+            SlotActivationMode.PrepareActive -> {
+                preparedSlot?.takeIf { it.mediaIndex == index }?.let { prepared ->
+                    stopPreparedWarmup(prepared)
+                    detachSurface(prepared)
+                }
+                prepareSlot(activeSlot, index, playWhenReady = true)
+            }
         }
 
         attachIfBound(activeSlot)
         activeSlot.player.playWhenReady = true
-
-        schedulePreparedSlot(index)
+        if (maybeReportPendingFirstFrame(activeSlot)) {
+            maybeSchedulePreparedSlot(index)
+        }
     }
 
     @Suppress("ReturnCount")
@@ -403,10 +369,13 @@ private class AndroidPlaybackCoordinator(
     ) {
         if (released) return
         surfaces[index] = surface
-        if (activeSlot.index == index) {
+        if (activeSlot.mediaIndex == index) {
             attachIfBound(activeSlot)
-        } else if (preparedSlot?.index == index) {
-            preparedSlot?.let { attachIfBound(it) }
+        } else if (preparedSlot?.mediaIndex == index) {
+            preparedSlot?.let {
+                attachIfBound(it)
+                warmPreparedSlot(it)
+            }
         }
     }
 
@@ -419,22 +388,24 @@ private class AndroidPlaybackCoordinator(
         if (handle?.id != surfaceId) return
         surfaces.remove(index)
         if (handle is AndroidVideoSurfaceHandle) {
-            if (activeSlot.index == index && handle.playerState.value == activeSlot.player) {
+            if (activeSlot.boundSurfaceIndex == index && handle.playerState.value == activeSlot.player) {
                 handle.playerState.value = null
+                activeSlot.boundSurfaceIndex = null
             }
             val prepared = preparedSlot
             if (prepared != null &&
-                prepared.index == index &&
+                prepared.boundSurfaceIndex == index &&
                 handle.playerState.value == prepared.player
             ) {
                 handle.playerState.value = null
+                prepared.boundSurfaceIndex = null
             }
         }
     }
 
     override fun onAppForeground() {
         if (released) return
-        if (activeSlot.index in feed.indices) {
+        if (activeSlot.mediaIndex in feed.indices) {
             activeSlot.player.playWhenReady = true
         }
     }
@@ -442,7 +413,7 @@ private class AndroidPlaybackCoordinator(
     override fun onAppBackground() {
         if (released) return
         activeSlot.player.playWhenReady = false
-        preparedSlot?.player?.playWhenReady = false
+        preparedSlot?.let(::stopPreparedWarmup)
     }
 
     override fun release() {
@@ -453,6 +424,8 @@ private class AndroidPlaybackCoordinator(
         progressTicker.stop()
         scope.cancel()
         preloadManager.removeListener(preloadListener)
+        pendingPreparedScheduleJob?.cancel()
+        pendingPreparedScheduleJob = null
 
         // Release preload manager FIRST. Its release() internally uses
         // releasePreloadMediaSource() (safe: atomically nullifies +
@@ -469,11 +442,131 @@ private class AndroidPlaybackCoordinator(
         playerB?.release()
     }
 
+    private fun createSlotListener(slot: PlayerSlot): Player.Listener =
+        object : Player.Listener {
+            @Suppress("ReturnCount")
+            override fun onMediaItemTransition(
+                mediaItem: MediaItem?,
+                reason: Int,
+            ) {
+                if (slot !== activeSlot) return
+                if (reason != Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT) return
+                val index = mediaItem?.mediaId?.let { mediaIndexById[it] } ?: slot.mediaIndex ?: return
+                val item = feed.getOrNull(index) ?: return
+                reporter.playbackEnded(item.id, index)
+            }
+
+            @Suppress("ReturnCount")
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                slot.isReady = playbackState == Player.STATE_READY
+
+                val index = slot.mediaIndex ?: return
+                val item = feed.getOrNull(index) ?: return
+
+                if (slot === preparedSlot) {
+                    if (playbackState == Player.STATE_READY) {
+                        preparedScheduler.markReady(
+                            index = index,
+                            nowMs = nowMs(),
+                            idAt = { feed.getOrNull(it)?.id },
+                        )
+                    }
+                    return
+                }
+
+                if (slot !== activeSlot) return
+
+                if (playbackState == Player.STATE_BUFFERING && slot.player.playWhenReady) {
+                    if (!rebuffering) {
+                        rebuffering = true
+                        reporter.rebufferStart(item.id, index, "buffering")
+                    }
+                }
+
+                if (playbackState == Player.STATE_READY && rebuffering) {
+                    rebuffering = false
+                    reporter.rebufferEnd(item.id, index, "buffering")
+                }
+
+                if (playbackState == Player.STATE_ENDED) {
+                    reporter.playbackEnded(item.id, index)
+                }
+            }
+
+            @Suppress("ReturnCount")
+            override fun onPlayerError(error: PlaybackException) {
+                slot.isReady = false
+                slot.hasRenderedFirstFrame = false
+                slot.warmOnFirstFrame = false
+
+                val index = slot.mediaIndex ?: return
+                if (slot === preparedSlot) {
+                    preparedScheduler.markError(index, { feed.getOrNull(it)?.id }, "error")
+                    return
+                }
+
+                if (slot !== activeSlot) return
+
+                val item = feed.getOrNull(index) ?: return
+                reporter.playbackError(
+                    id = item.id,
+                    index = index,
+                    category = error.errorCodeName,
+                    code = error.errorCode,
+                    message = error.message,
+                )
+            }
+
+            @Suppress("ReturnCount")
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                if (slot !== activeSlot) return
+
+                val index = slot.mediaIndex ?: return
+                val item = feed.getOrNull(index) ?: return
+                val player = slot.player
+                val isNonBufferStall =
+                    player.playWhenReady &&
+                        player.playbackState != Player.STATE_BUFFERING &&
+                        !rebuffering
+                if (!isPlaying && isNonBufferStall) {
+                    if (!stalling) {
+                        stalling = true
+                        stallStartMs = nowMs()
+                        reporter.stallStart(item.id, index, "playback_suppressed")
+                    }
+                } else if (isPlaying && stalling) {
+                    val elapsed = nowMs() - stallStartMs
+                    stalling = false
+                    stallStartMs = 0
+                    reporter.stallEnd(item.id, index, elapsed)
+                }
+            }
+
+            @Suppress("ReturnCount")
+            override fun onRenderedFirstFrame() {
+                slot.hasRenderedFirstFrame = true
+                if (slot === preparedSlot) {
+                    if (slot.warmOnFirstFrame) {
+                        stopPreparedWarmup(slot)
+                    }
+                    return
+                }
+                if (slot !== activeSlot) return
+                val index = slot.mediaIndex ?: return
+                if (maybeReportPendingFirstFrame(slot)) {
+                    maybeSchedulePreparedSlot(index)
+                }
+            }
+        }
+
     private fun schedulePreparedSlot(activeIndex: Int) {
         val prepared = preparedSlot ?: return
         preparedScheduler.schedule(activeIndex, feed.size, { feed.getOrNull(it)?.id }) { nextIndex ->
-            if (prepared.index != nextIndex) {
+            if (prepared.mediaIndex != nextIndex) {
                 prepareSlot(prepared, nextIndex, playWhenReady = false)
+                attachIfBound(prepared)
+                warmPreparedSlot(prepared)
+                preparedScheduler.setStartTime(nowMs())
             }
         }
     }
@@ -493,7 +586,7 @@ private class AndroidPlaybackCoordinator(
 
     @Suppress("ReturnCount")
     private fun activeProgress(): PlaybackProgress? {
-        val index = activeSlot.index ?: return null
+        val index = activeSlot.mediaIndex ?: return null
         val item = feed.getOrNull(index) ?: return null
         val player = activeSlot.player
         if (!player.isPlaying) return null
@@ -512,8 +605,14 @@ private class AndroidPlaybackCoordinator(
         val prepared = preparedSlot ?: return
         val previousActive = activeSlot
         previousActive.player.playWhenReady = false
+        previousActive.player.volume = PREPARED_PLAYER_VOLUME
+        previousActive.isReady = false
+        previousActive.hasRenderedFirstFrame = false
+        previousActive.warmOnFirstFrame = false
         activeSlot = prepared
         preparedSlot = previousActive
+        activeSlot.player.volume = ACTIVE_PLAYER_VOLUME
+        activeSlot.warmOnFirstFrame = false
         preparedScheduler.clearOnSwap()
     }
 
@@ -523,11 +622,11 @@ private class AndroidPlaybackCoordinator(
         playWhenReady: Boolean,
     ) {
         val mediaItem = mediaItems.getOrNull(index) ?: return
-        val previousIndex = slot.index
-        if (previousIndex != null && previousIndex != index) {
-            detachSurface(previousIndex, slot.player)
-        }
-        slot.index = index
+        slot.mediaIndex = index
+        slot.isReady = false
+        slot.hasRenderedFirstFrame = false
+        slot.warmOnFirstFrame = false
+        slot.player.volume = if (playWhenReady) ACTIVE_PLAYER_VOLUME else PREPARED_PLAYER_VOLUME
         val mediaSource = preloadManager.getMediaSource(mediaItem)
         if (mediaSource != null) {
             slot.player.setMediaSource(mediaSource)
@@ -539,24 +638,77 @@ private class AndroidPlaybackCoordinator(
         slot.player.playWhenReady = playWhenReady
     }
 
-    private fun attachIfBound(slot: PlayerSlot) {
-        val index = slot.index ?: return
-        val handle = surfaces[index]
-        if (handle is AndroidVideoSurfaceHandle) {
-            if (handle.playerState.value != slot.player) {
-                handle.playerState.value = slot.player
-            }
-        }
+    @Suppress("ReturnCount")
+    private fun warmPreparedSlot(slot: PlayerSlot) {
+        if (slot !== preparedSlot) return
+        val mediaIndex = slot.mediaIndex ?: return
+        if (slot.boundSurfaceIndex != mediaIndex) return
+        if (slot.hasRenderedFirstFrame || slot.warmOnFirstFrame) return
+
+        slot.warmOnFirstFrame = true
+        slot.player.volume = PREPARED_PLAYER_VOLUME
+        slot.player.playWhenReady = true
     }
 
-    private fun detachSurface(
-        index: Int,
-        player: Player,
-    ) {
+    private fun stopPreparedWarmup(slot: PlayerSlot) {
+        slot.warmOnFirstFrame = false
+        slot.player.playWhenReady = false
+        slot.player.volume = PREPARED_PLAYER_VOLUME
+    }
+
+    @Suppress("ReturnCount")
+    private fun maybeReportPendingFirstFrame(slot: PlayerSlot): Boolean {
+        if (!slot.hasRenderedFirstFrame) return false
+
+        val index = slot.mediaIndex ?: return false
+        val item = feed.getOrNull(index) ?: return false
+        if (firstFramePendingIndex != index) return false
+
+        firstFramePendingIndex = null
+        val start = playStartMsById[item.id] ?: return false
+        val elapsed = nowMs() - start
+        reporter.firstFrameRendered(item.id, index)
+        reporter.timeToFirstFrame(item.id, index, elapsed)
+        return true
+    }
+
+    private fun maybeSchedulePreparedSlot(index: Int) {
+        if (pendingPreparedScheduleIndex != index) return
+        pendingPreparedScheduleJob?.cancel()
+        pendingPreparedScheduleJob =
+            scope.launch {
+                delay(PREPARED_SLOT_SCHEDULE_DELAY_MS)
+                if (pendingPreparedScheduleIndex != index) return@launch
+                pendingPreparedScheduleIndex = null
+                pendingPreparedScheduleJob = null
+                schedulePreparedSlot(index)
+            }
+    }
+
+    private fun attachIfBound(slot: PlayerSlot) {
+        val targetIndex = slot.mediaIndex ?: return
+        val targetHandle = surfaces[targetIndex] as? AndroidVideoSurfaceHandle ?: return
+        val previousSurfaceIndex = slot.boundSurfaceIndex
+        if (targetHandle.playerState.value != slot.player) {
+            targetHandle.playerState.value = slot.player
+        }
+        if (previousSurfaceIndex != null && previousSurfaceIndex != targetIndex) {
+            val previousHandle = surfaces[previousSurfaceIndex] as? AndroidVideoSurfaceHandle
+            val previousPlayerState = previousHandle?.playerState
+            if (previousPlayerState?.value == slot.player) {
+                previousPlayerState.value = null
+            }
+        }
+        slot.boundSurfaceIndex = targetIndex
+    }
+
+    private fun detachSurface(slot: PlayerSlot) {
+        val index = slot.boundSurfaceIndex ?: return
         val handle = surfaces[index] as? AndroidVideoSurfaceHandle ?: return
-        if (handle.playerState.value == player) {
+        if (handle.playerState.value == slot.player) {
             handle.playerState.value = null
         }
+        slot.boundSurfaceIndex = null
     }
 
     private fun buildMediaItem(descriptor: MediaDescriptor): MediaItem {
@@ -668,6 +820,9 @@ private class AndroidPlaybackCoordinator(
     }
 
     private companion object {
+        private const val PREPARED_SLOT_SCHEDULE_DELAY_MS = 150L
+        private const val ACTIVE_PLAYER_VOLUME = 1F
+        private const val PREPARED_PLAYER_VOLUME = 0F
         private const val MIN_BUFFER_MS = 5_000
         private const val MAX_BUFFER_MS = 20_000
         private const val BUFFER_FOR_PLAYBACK_MS = 500
@@ -678,8 +833,15 @@ private class AndroidPlaybackCoordinator(
 
     private data class PlayerSlot(
         val player: ExoPlayer,
-        var index: Int? = null,
-    )
+        var mediaIndex: Int? = null,
+        var boundSurfaceIndex: Int? = null,
+        var isReady: Boolean = false,
+        var hasRenderedFirstFrame: Boolean = false,
+        var warmOnFirstFrame: Boolean = false,
+    ) {
+        val isHot: Boolean
+            get() = isReady && hasRenderedFirstFrame
+    }
 
     private class DefaultTargetPreloadStatusControl(
         private val policy: PreloadPolicy,
