@@ -16,21 +16,24 @@ internal fun selectSlotActivationDecision(
     preparedReady: Boolean,
 ): SlotActivationDecision =
     when {
-        preparedIndex == requestedIndex && preparedReady ->
+        preparedIndex == requestedIndex && preparedReady -> {
             SlotActivationDecision(
                 mode = SlotActivationMode.SwapPrepared,
                 playStartReason = "prepared_swap",
             )
+        }
 
-        preparedIndex == requestedIndex ->
+        preparedIndex == requestedIndex -> {
             SlotActivationDecision(
                 mode = SlotActivationMode.PrepareActive,
                 playStartReason = "prepared_not_ready",
             )
+        }
 
-        else ->
+        else -> {
             SlotActivationDecision(
                 mode = SlotActivationMode.PrepareActive,
                 playStartReason = "active_prepare",
             )
+        }
     }
