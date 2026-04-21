@@ -50,11 +50,12 @@ jobs:
         with:
           path: |
             ~/.gradle/caches
+            ~/.gradle/configuration-cache
             ~/.gradle/wrapper
             ~/.cargo/registry
             ~/.cargo/git
             ~/.rustup
-          key: ${{ runner.os }}-tooling-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/Cargo.lock', 'rust-toolchain.toml') }}
+          key: ${{ runner.os }}-tooling-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle.properties', '**/Cargo.lock', 'rust-toolchain.toml') }}
           restore-keys: |
             ${{ runner.os }}-tooling-
 
