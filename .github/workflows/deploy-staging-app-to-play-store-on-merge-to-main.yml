@@ -141,7 +141,7 @@ jobs:
           git push origin main
 
       - name: Save Gradle and Rust caches
-        if: ${{ github.ref == 'refs/heads/main' }}
+        if: ${{ success() && github.ref == 'refs/heads/main' && steps.restore-tooling-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v4
         with:
           path: |
