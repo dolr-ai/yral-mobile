@@ -14,3 +14,5 @@ user_post_service
 
 Can you help me figure out this entire situation?
 - Remove the isLocalRust flag and all related code paths and documentation since we have standardized on local Rust builds in this repository completely
+
+Verify if the sonatype repository is still being used for any dependencies and if not, remove it from the build files.
