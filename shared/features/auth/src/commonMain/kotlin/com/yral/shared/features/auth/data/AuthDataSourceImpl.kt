@@ -178,7 +178,7 @@ class AuthDataSourceImpl(
         identityWire?.let { identity ->
             Logger.d("AuthDataSource") { "registerForNotifications: token $token" }
             HelperService
-                .registerDevice(identity, token)
+                .registerDevice(identity, token, authEnv.notificationEnvironment)
                 .onFailure { error ->
                     Logger.e("AuthDataSource") { "Failed to register device: ${error.message}" }
                     throw YralException("Failed to register device: ${error.message}")
@@ -190,7 +190,7 @@ class AuthDataSourceImpl(
         val identityWire = preferences.getBytes(PrefKeys.IDENTITY.name)
         identityWire?.let { identity ->
             HelperService
-                .unregisterDevice(identity, token)
+                .unregisterDevice(identity, token, authEnv.notificationEnvironment)
                 .onFailure { error ->
                     Logger.e("AuthDataSource") { "Failed to unregister device: ${error.message}" }
                     throw YralException("Failed to unregister device: ${error.message}")

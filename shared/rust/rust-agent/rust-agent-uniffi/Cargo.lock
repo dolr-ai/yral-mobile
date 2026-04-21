@@ -5681,8 +5681,8 @@ dependencies = [
  "web-time",
  "yral-canisters-client",
  "yral-identity",
- "yral-metadata-client",
- "yral-metadata-types",
+ "yral-metadata-client 0.1.0 (git+https://github.com/yral-dapp/yral-metadata?branch=master)",
+ "yral-metadata-types 0.1.0 (git+https://github.com/yral-dapp/yral-metadata?branch=master)",
  "yral-pump-n-dump-common",
  "yral-types",
  "yral-username-gen",
@@ -5712,13 +5712,40 @@ dependencies = [
  "reqwest",
  "thiserror 1.0.69",
  "yral-identity",
- "yral-metadata-types",
+ "yral-metadata-types 0.1.0 (git+https://github.com/yral-dapp/yral-metadata?branch=master)",
+]
+
+[[package]]
+name = "yral-metadata-client"
+version = "0.1.0"
+source = "git+https://github.com/yral-dapp/yral-metadata?rev=41f41f674414c67a887de2304e3f692d6dbabbb7#41f41f674414c67a887de2304e3f692d6dbabbb7"
+dependencies = [
+ "ic-agent",
+ "reqwest",
+ "thiserror 1.0.69",
+ "yral-identity",
+ "yral-metadata-types 0.1.0 (git+https://github.com/yral-dapp/yral-metadata?rev=41f41f674414c67a887de2304e3f692d6dbabbb7)",
 ]
 
 [[package]]
 name = "yral-metadata-types"
 version = "0.1.0"
 source = "git+https://github.com/yral-dapp/yral-metadata?branch=master#2e346e9a8e84203a32cae24ad0bc6a477a30e3bf"
+dependencies = [
+ "candid",
+ "chrono",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "utoipa",
+ "utoipa-swagger-ui",
+ "yral-identity",
+]
+
+[[package]]
+name = "yral-metadata-types"
+version = "0.1.0"
+source = "git+https://github.com/yral-dapp/yral-metadata?rev=41f41f674414c67a887de2304e3f692d6dbabbb7#41f41f674414c67a887de2304e3f692d6dbabbb7"
 dependencies = [
  "candid",
  "chrono",
@@ -5751,8 +5778,8 @@ dependencies = [
  "yral-canisters-client",
  "yral-canisters-common",
  "yral-identity",
- "yral-metadata-client",
- "yral-metadata-types",
+ "yral-metadata-client 0.1.0 (git+https://github.com/yral-dapp/yral-metadata?rev=41f41f674414c67a887de2304e3f692d6dbabbb7)",
+ "yral-metadata-types 0.1.0 (git+https://github.com/yral-dapp/yral-metadata?rev=41f41f674414c67a887de2304e3f692d6dbabbb7)",
  "yral-types",
  "yral-username-gen",
 ]

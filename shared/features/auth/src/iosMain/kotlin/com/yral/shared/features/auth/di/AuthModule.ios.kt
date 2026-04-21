@@ -11,5 +11,10 @@ internal actual fun Scope.createAuthEnv(): AuthEnv {
     return AuthEnv(
         clientId = "e1a6a7fb-8a1d-42dc-87b4-13ff94ecbe34",
         redirectUri = AuthEnv.RedirectUri(scheme = scheme),
+        notificationEnvironment =
+            notificationEnvironmentForAppId(
+                NSBundle.mainBundle.bundleIdentifier
+                    ?: error("Bundle identifier missing for notification environment"),
+            ),
     )
 }
