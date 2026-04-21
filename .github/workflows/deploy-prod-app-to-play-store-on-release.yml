@@ -50,11 +50,12 @@ jobs:
         with:
           path: |
             ~/.gradle/caches
+            ~/.gradle/configuration-cache
             ~/.gradle/wrapper
             ~/.cargo/registry
             ~/.cargo/git
             ~/.rustup
-          key: ${{ runner.os }}-tooling-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/Cargo.lock', 'rust-toolchain.toml') }}
+          key: ${{ runner.os }}-tooling-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle.properties', '**/Cargo.lock', 'rust-toolchain.toml') }}
           restore-keys: |
             ${{ runner.os }}-tooling-
 
@@ -107,15 +108,11 @@ jobs:
       - name: Build AAB with Gradle
         run: ./gradlew androidApp:bundleProdRelease
         env:
-          GITHUB_USERNAME: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
 
       - name: Upload Crashlytics mapping file
         run: ./gradlew androidApp:uploadCrashlyticsMappingFileProdRelease
         env:
-          GITHUB_USERNAME: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
 
       - name: Authenticate to Google Cloud

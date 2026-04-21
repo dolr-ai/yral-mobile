@@ -29,8 +29,8 @@ jobs:
       - name: Set up Java (for Gradle)
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: "temurin"
+          java-version: "17"
 
       - name: Install SwiftLint, CocoaPods, and xcbeautify
         run: brew install swiftlint cocoapods xcbeautify
@@ -40,9 +40,6 @@ jobs:
           printf 'kotlin.apple.cocoapods.bin=%s\n' "$(which pod)" > local.properties
 
       - name: Build KMM framework
-        env:
-          GITHUB_USERNAME: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ./gradlew :iosSharedUmbrella:podInstall --stacktrace
           # Pre-link the iOS simulator framework so all Kotlin Native .klib files
@@ -81,18 +78,15 @@ jobs:
 
       - name: Build and run tests
         working-directory: iosApp
-        env:
-          GITHUB_USERNAME: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # NOTE: do NOT set OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED=YES here.
-          # The "Build iosSharedUmbrella" script phase in the podspec must run
-          # syncFramework so it copies the pre-built framework into Xcode's
-          # CONFIGURATION_BUILD_DIR. Without that copy, Swift types from
-          # iosSharedUmbrella (AppRoute, VideoUploadSuccessful, etc.) are invisible
-          # to the test target and compilation fails with "cannot find type in scope".
-          # Because linkPodDebugFrameworkIosSimulatorArm64 already ran above,
-          # all Gradle link tasks are UP-TO-DATE and syncFramework only does the
-          # copy — no disk-exhausting Kotlin Native recompilation occurs.
+        # NOTE: do NOT set OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED=YES here.
+        # The "Build iosSharedUmbrella" script phase in the podspec must run
+        # syncFramework so it copies the pre-built framework into Xcode's
+        # CONFIGURATION_BUILD_DIR. Without that copy, Swift types from
+        # iosSharedUmbrella (AppRoute, VideoUploadSuccessful, etc.) are invisible
+        # to the test target and compilation fails with "cannot find type in scope".
+        # Because linkPodDebugFrameworkIosSimulatorArm64 already ran above,
+        # all Gradle link tasks are UP-TO-DATE and syncFramework only does the
+        # copy — no disk-exhausting Kotlin Native recompilation occurs.
         run: |
           set -o pipefail
           xcodebuild test \

@@ -31,11 +31,12 @@ jobs:
         with:
           path: |
             ~/.gradle/caches
+            ~/.gradle/configuration-cache
             ~/.gradle/wrapper
             ~/.cargo/registry
             ~/.cargo/git
             ~/.rustup
-          key: ${{ runner.os }}-tooling-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/Cargo.lock', 'rust-toolchain.toml') }}
+          key: ${{ runner.os }}-tooling-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle.properties', '**/Cargo.lock', 'rust-toolchain.toml') }}
           restore-keys: |
             ${{ runner.os }}-tooling-
 
@@ -50,22 +51,16 @@ jobs:
 
       - name: Run ktlint
         env:
-          GITHUB_USERNAME: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
         run: ./gradlew ktlintCheck --console=plain
 
       - name: Run detekt
         env:
-          GITHUB_USERNAME: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
         run: ./gradlew detekt reportMerge --continue --console=plain
 
       - name: Run tests
         env:
-          GITHUB_USERNAME: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
         run: ./gradlew test --console=plain
 

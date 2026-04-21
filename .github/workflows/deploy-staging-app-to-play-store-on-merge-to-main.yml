@@ -41,11 +41,12 @@ jobs:
         with:
           path: |
             ~/.gradle/caches
+            ~/.gradle/configuration-cache
             ~/.gradle/wrapper
             ~/.cargo/registry
             ~/.cargo/git
             ~/.rustup
-          key: ${{ runner.os }}-tooling-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/Cargo.lock', 'rust-toolchain.toml') }}
+          key: ${{ runner.os }}-tooling-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle.properties', '**/Cargo.lock', 'rust-toolchain.toml') }}
           restore-keys: |
             ${{ runner.os }}-tooling-
 
@@ -77,7 +78,7 @@ jobs:
 
           echo "staging versionCode: $CURRENT -> $NEW"
           echo "staging versionName -> $VERSION"
-          sed -i '' "s/versionCode = [0-9]\\+ \/\/ ci:staging-version-code/versionCode = $NEW \/\/ ci:staging-version-code/" ./androidApp/build.gradle.kts
+          sed -i '' -E "s/versionCode = [0-9]+ \/\/ ci:staging-version-code/versionCode = $NEW \/\/ ci:staging-version-code/" ./androidApp/build.gradle.kts
           sed -i '' "s/versionName = \"[^\"]*\" \/\/ ci:staging-version-name/versionName = \"$VERSION\" \/\/ ci:staging-version-name/" ./androidApp/build.gradle.kts
           echo "NEW_VERSION_CODE=$NEW" >> $GITHUB_ENV
           echo "NEW_VERSION_NAME=$VERSION" >> $GITHUB_ENV
@@ -103,15 +104,11 @@ jobs:
       - name: Build APK
         run: ./gradlew androidApp:bundleStagingRelease
         env:
-          GITHUB_USERNAME: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
 
       - name: Upload Crashlytics mapping file
         run: ./gradlew androidApp:uploadCrashlyticsMappingFileStagingRelease
         env:
-          GITHUB_USERNAME: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JAVA_HOME: ${{ steps.setup-jdk.outputs.java-home }}
 
       - name: Authenticate to Google Cloud
@@ -146,6 +143,7 @@ jobs:
         with:
           path: |
             ~/.gradle/caches
+            ~/.gradle/configuration-cache
             ~/.gradle/wrapper
             ~/.cargo/registry
             ~/.cargo/git

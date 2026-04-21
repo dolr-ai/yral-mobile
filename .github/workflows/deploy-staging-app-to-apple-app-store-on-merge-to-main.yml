@@ -105,11 +105,12 @@ jobs:
         with:
           path: |
             ~/.gradle/caches
+            ~/.gradle/configuration-cache
             ~/.gradle/wrapper
             ~/.cargo/registry
             ~/.cargo/git
             ~/.rustup
-          key: ${{ runner.os }}-tooling-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/Cargo.lock', 'rust-toolchain.toml') }}
+          key: ${{ runner.os }}-tooling-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle.properties', '**/Cargo.lock', 'rust-toolchain.toml') }}
           restore-keys: |
             ${{ runner.os }}-tooling-
 
@@ -122,9 +123,6 @@ jobs:
           printf 'kotlin.apple.cocoapods.bin=%s\n' "$(which pod)" > local.properties
 
       - name: Run KMM podInstall
-        env:
-          GITHUB_USERNAME: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Runs the Gradle task that Android Studio launches on sync.
           ./gradlew :iosSharedUmbrella:podInstall --stacktrace
@@ -163,8 +161,6 @@ jobs:
           APP_STORE_CONNECT_KEY_ID: ${{ vars.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
           TESTFLIGHT_STAGING_GROUP_NAME: Yral-Staging open testing
-          GITHUB_USERNAME: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GRADLE_OPTS: >-
             -Dorg.gradle.project.compose.ios.resources.platform=iphoneos
             -Dorg.gradle.project.compose.ios.resources.archs=arm64
@@ -209,6 +205,7 @@ jobs:
         with:
           path: |
             ~/.gradle/caches
+            ~/.gradle/configuration-cache
             ~/.gradle/wrapper
             ~/.cargo/registry
             ~/.cargo/git
