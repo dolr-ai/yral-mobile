@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -111,11 +112,13 @@ internal fun ReelSwipeableCardStack(
             }
     }
 
+    val currentOnPageLoaded by rememberUpdatedState(onPageLoaded)
+
     LaunchedEffect(swipeState, visibleReels) {
         snapshotFlow { swipeState.currentIndex }
             .distinctUntilChanged()
             .collect { page ->
-                onPageLoaded(page)
+                currentOnPageLoaded(page)
             }
     }
 
@@ -292,14 +295,18 @@ private fun rememberPlaybackEventReporter(
     didVideoEnd: () -> Unit,
     recordTime: (Int, Int) -> Unit,
     onFirstFrameRendered: (Int) -> Unit,
-): PlaybackEventReporter =
-    remember(didVideoEnd, recordTime, onFirstFrameRendered) {
+): PlaybackEventReporter {
+    val currentDidVideoEnd by rememberUpdatedState(didVideoEnd)
+    val currentRecordTime by rememberUpdatedState(recordTime)
+    val currentOnFirstFrameRendered by rememberUpdatedState(onFirstFrameRendered)
+
+    return remember {
         object : PlaybackEventReporter {
             override fun playbackEnded(
                 id: String,
                 index: Int,
             ) {
-                didVideoEnd()
+                currentDidVideoEnd()
             }
 
             override fun playbackProgress(
@@ -309,7 +316,7 @@ private fun rememberPlaybackEventReporter(
                 durationMs: Long,
             ) {
                 if (positionMs >= 0 && durationMs > 0) {
-                    recordTime(positionMs.toInt(), durationMs.toInt())
+                    currentRecordTime(positionMs.toInt(), durationMs.toInt())
                 }
             }
 
@@ -328,7 +335,7 @@ private fun rememberPlaybackEventReporter(
                 id: String,
                 index: Int,
             ) {
-                onFirstFrameRendered(index)
+                currentOnFirstFrameRendered(index)
             }
 
             override fun timeToFirstFrame(
@@ -413,3 +420,4 @@ private fun rememberPlaybackEventReporter(
             ) = Unit
         }
     }
+}

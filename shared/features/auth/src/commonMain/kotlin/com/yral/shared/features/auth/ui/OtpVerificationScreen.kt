@@ -23,7 +23,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.yral.shared.core.utils.formatRemainingDuration
 import com.yral.shared.features.auth.analytics.AuthTelemetry
 import com.yral.shared.features.auth.nav.otpverification.OtpVerificationComponent
 import com.yral.shared.features.auth.ui.components.OtpInput
@@ -49,7 +48,6 @@ import yral_mobile.shared.features.auth.generated.resources.resend_otp_in
 import yral_mobile.shared.features.auth.generated.resources.verify
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.pink_gradient_background
-import kotlin.time.Duration.Companion.seconds
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Suppress("LongMethod")
@@ -196,7 +194,7 @@ private fun ResendOtpText(
                     text =
                         stringResource(
                             Res.string.resend_otp_in,
-                            formatRemainingDuration(timerSeconds.seconds),
+                            formatRemainingSeconds(timerSeconds),
                         ),
                     style = LocalAppTopography.current.baseRegular,
                     color = YralColors.Neutral600,
@@ -224,6 +222,20 @@ private fun ResendOtpText(
                 )
             }
         }
+    }
+}
+
+@Suppress("MagicNumber")
+private fun formatRemainingSeconds(seconds: Int): String {
+    val totalSeconds = seconds.coerceAtLeast(0)
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val remainingSeconds = totalSeconds % 60
+    fun Int.twoDigits(): String = toString().padStart(2, '0')
+
+    return when {
+        hours > 0 -> "${hours.twoDigits()}:${minutes.twoDigits()}:${remainingSeconds.twoDigits()}"
+        else -> "${minutes.twoDigits()}:${remainingSeconds.twoDigits()}"
     }
 }
 
