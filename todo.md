@@ -13,3 +13,4 @@ user_info_service
 user_post_service
 
 Can you help me figure out this entire situation?
+- Remove the isLocalRust flag and all related code paths and documentation since we have standardized on local Rust builds in this repository completely
