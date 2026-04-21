@@ -1,0 +1,3 @@
+[submodule "git-submodules/yral-backend-canister"]
+	path = git-submodules/yral-backend-canister
+	url = https://github.com/dolr-ai/yral-backend-canister.git
