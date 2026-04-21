@@ -117,19 +117,23 @@ class DefaultAuthClient(
         if (shouldRefresh) {
             val refreshToken = preferences.getString(PrefKeys.REFRESH_TOKEN.name)
             when {
-                refreshToken.isNullOrBlank() ->
+                refreshToken.isNullOrBlank() -> {
                     trackAndLogoutForTokenExpiry(
                         cause = AuthSessionCause.REFRESH_TOKEN_MISSING,
                         flow = AuthSessionFlow.TOKEN_VALIDATION,
                     )
+                }
 
-                !isTokenValid(refreshToken, now) ->
+                !isTokenValid(refreshToken, now) -> {
                     trackAndLogoutForTokenExpiry(
                         cause = AuthSessionCause.REFRESH_TOKEN_EXPIRED_OR_INVALID,
                         flow = AuthSessionFlow.TOKEN_VALIDATION,
                     )
+                }
 
-                else -> refreshBotColdStartTokens(refreshToken)
+                else -> {
+                    refreshBotColdStartTokens(refreshToken)
+                }
             }
         }
     }
