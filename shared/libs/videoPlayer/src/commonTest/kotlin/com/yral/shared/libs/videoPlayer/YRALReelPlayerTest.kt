@@ -6,7 +6,7 @@ import kotlin.test.assertEquals
 
 class YRALReelPlayerTest {
     @Test
-    fun scrollingFeedUsesSurfaceViewSurface() {
-        assertEquals(VideoSurfaceType.SurfaceView, scrollingFeedSurfaceType())
+    fun scrollingFeedUsesTextureViewSurface() {
+        assertEquals(VideoSurfaceType.TextureView, scrollingFeedSurfaceType())
     }
 }

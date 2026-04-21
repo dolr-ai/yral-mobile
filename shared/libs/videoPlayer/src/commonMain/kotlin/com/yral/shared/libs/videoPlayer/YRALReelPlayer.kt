@@ -147,9 +147,7 @@ fun YRALReelPlayer(
     }
 }
 
-// Standard vertical feed pages do not need per-card transforms, so SurfaceView is cheaper
-// than TextureView during fling/scroll on Android and reduces frame pressure.
-internal fun scrollingFeedSurfaceType(): VideoSurfaceType = VideoSurfaceType.SurfaceView
+internal fun scrollingFeedSurfaceType(): VideoSurfaceType = VideoSurfaceType.TextureView
 
 @Composable
 private fun rememberPlaybackEventReporter(
