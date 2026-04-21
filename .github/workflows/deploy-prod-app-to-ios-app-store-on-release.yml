@@ -59,10 +59,25 @@ jobs:
           ruby-version: '3.0'
 
       - name: Set up Java (for Gradle)
+        id: setup-jdk
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
+
+      - name: Restore Gradle and Rust caches
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/configuration-cache
+            ~/.gradle/wrapper
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.rustup
+          key: ${{ runner.os }}-tooling-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle.properties', '**/Cargo.lock', 'rust-toolchain.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-tooling-
 
       - name: Install CocoaPods
         run: |
@@ -167,3 +182,16 @@ jobs:
           name: gym-build-log
           path: ~/Library/Logs/gym/
           retention-days: 5
+
+      - name: Save Gradle and Rust caches
+        if: success()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/configuration-cache
+            ~/.gradle/wrapper
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.rustup
+          key: ${{ runner.os }}-tooling-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle.properties', '**/Cargo.lock', 'rust-toolchain.toml') }}

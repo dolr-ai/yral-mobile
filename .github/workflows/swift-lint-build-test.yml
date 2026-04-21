@@ -32,6 +32,20 @@ jobs:
           distribution: "temurin"
           java-version: "17"
 
+      - name: Restore Gradle and Rust caches
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/configuration-cache
+            ~/.gradle/wrapper
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.rustup
+          key: ${{ runner.os }}-tooling-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle.properties', '**/Cargo.lock', 'rust-toolchain.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-tooling-
+
       - name: Install SwiftLint, CocoaPods, and xcbeautify
         run: brew install swiftlint cocoapods xcbeautify
 
