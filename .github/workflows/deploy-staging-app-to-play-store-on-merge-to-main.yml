@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   build-app:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -29,6 +29,7 @@ jobs:
           ssh-key: ${{ secrets.DEPLOY_KEY_SSH_PRIVATE_KEY }}
 
       - name: Set up JDK
+        id: setup-jdk
         uses: actions/setup-java@v3
         with:
           java-version: 21
@@ -53,7 +54,7 @@ jobs:
 
       - name: Resolve version metadata
         run: |
-          CURRENT=$(grep -oP 'versionCode = \K[0-9]+(?= // ci:staging-version-code)' ./androidApp/build.gradle.kts)
+          CURRENT=$(sed -nE 's/^[[:space:]]*versionCode = ([0-9]+) \/\/ ci:staging-version-code$/\1/p' ./androidApp/build.gradle.kts)
           if ! [[ "$CURRENT" =~ ^[0-9]+$ ]]; then
             echo "Error: could not read staging versionCode from build.gradle.kts, got: '$CURRENT'" >&2
             exit 1
@@ -70,8 +71,8 @@ jobs:
 
           echo "staging versionCode: $CURRENT -> $NEW"
           echo "staging versionName -> $VERSION"
-          sed -i "s/versionCode = [0-9]\+ \/\/ ci:staging-version-code/versionCode = $NEW \/\/ ci:staging-version-code/" ./androidApp/build.gradle.kts
-          sed -i "s/versionName = \"[^\"]*\" \/\/ ci:staging-version-name/versionName = \"$VERSION\" \/\/ ci:staging-version-name/" ./androidApp/build.gradle.kts
+          sed -i '' "s/versionCode = [0-9]\\+ \/\/ ci:staging-version-code/versionCode = $NEW \/\/ ci:staging-version-code/" ./androidApp/build.gradle.kts
+          sed -i '' "s/versionName = \"[^\"]*\" \/\/ ci:staging-version-name/versionName = \"$VERSION\" \/\/ ci:staging-version-name/" ./androidApp/build.gradle.kts
           echo "NEW_VERSION_CODE=$NEW" >> $GITHUB_ENV
           echo "NEW_VERSION_NAME=$VERSION" >> $GITHUB_ENV
 
@@ -79,7 +80,8 @@ jobs:
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_ALPHA_KEYSTORE_CONTENTS_BASE_64 }}
         run: |
-          echo "$KEYSTORE_BASE64" | base64 -d > ./androidApp/my-alpha-release-key.keystore
+          echo "$KEYSTORE_BASE64" | base64 --decode > ./androidApp/my-alpha-release-key.keystore || \
+          echo "$KEYSTORE_BASE64" | base64 -D > ./androidApp/my-alpha-release-key.keystore
 
       - name: Setup environment variables
         run: |
@@ -88,26 +90,6 @@ jobs:
           echo "YRAL_BRANCH_KEY_TEST=${{ secrets.YRAL_BRANCH_KEY_TEST }}" >> $GITHUB_ENV
           echo "YRAL_BRANCH_KEY=${{ secrets.YRAL_BRANCH_KEY }}" >> $GITHUB_ENV
           echo "YRAL_META_INSTALL_REFERRER_DECRYPTION_KEY=${{ secrets.YRAL_META_INSTALL_REFERRER_DECRYPTION_KEY }}" >> $GITHUB_ENV
-
-      - name: Determine update priority from PR labels
-        id: update-priority
-        run: |
-          PRIORITY="0"
-          LABELS="${{ join(github.event.pull_request.labels.*.name, ' ') }}"
-          echo "PR labels: $LABELS"
-
-          if echo "$LABELS" | grep -q "update-immediate"; then
-            PRIORITY="4"
-            echo "Found 'update-immediate' label, setting priority to 4"
-          elif echo "$LABELS" | grep -q "update-flexible"; then
-            PRIORITY="2"
-            echo "Found 'update-flexible' label, setting priority to 2"
-          else
-            echo "No relevant update label found, using default priority 0"
-          fi
-
-          echo "update_priority=$PRIORITY" >> $GITHUB_OUTPUT
-          echo "Set update priority to: $PRIORITY"
 
       - name: Clean project
         run: ./gradlew clean
@@ -142,7 +124,6 @@ jobs:
           releaseFiles: androidApp/build/outputs/bundle/stagingRelease/androidApp-staging-release.aab
           track: production
           status: completed
-          inAppUpdatePriority: ${{ steps.update-priority.outputs.update_priority }}
 
       - name: Commit updated staging version metadata to main
         run: |
