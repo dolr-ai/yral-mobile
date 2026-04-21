@@ -83,7 +83,6 @@ import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_shar
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.profile_share_default_name
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
@@ -210,7 +209,7 @@ class ConversationViewModel(
         }.distinctUntilChanged()
             .stateIn(
                 viewModelScope,
-                SharingStarted.WhileSubscribed(5.seconds.inWholeMilliseconds),
+                SharingStarted.WhileSubscribed(MESSAGES_STOP_TIMEOUT_MS),
                 emptyList(),
             )
 
@@ -1183,6 +1182,7 @@ class ConversationViewModel(
     companion object {
         private const val PAGE_SIZE = 10
         private const val PREFETCH_DISTANCE = 5
+        private const val MESSAGES_STOP_TIMEOUT_MS = 5_000L
         private const val FALLBACK_ACCESS_DURATION_MS = 24L * 60 * 60 * 1000
     }
 }

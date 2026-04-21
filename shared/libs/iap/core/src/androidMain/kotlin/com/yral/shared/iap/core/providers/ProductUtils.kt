@@ -1,8 +1,5 @@
 package com.yral.shared.iap.core.providers
 
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.days
-
 internal fun <T> resolveBaseAndPromo(
     offers: List<T>?,
     offerIdSelector: (T) -> String?,
@@ -43,21 +40,16 @@ internal fun billingPeriodToDurationMillis(billingPeriod: String?): Long? {
     val amount = match.groupValues[1].toIntOrNull() ?: return null
     val unit = match.groupValues[2]
 
-    val duration: Duration =
+    val multiplier =
         when (unit) {
-            "D" -> amount.days
-
-            "W" -> (amount * 7).days
-
-            "M" -> (amount * 30).days
-
-            // approximate month
-            "Y" -> (amount * 365).days
-
-            // approximate year
-            else -> Duration.ZERO
+            "D" -> MILLIS_PER_DAY
+            "W" -> MILLIS_PER_DAY * 7L
+            "M" -> MILLIS_PER_DAY * 30L
+            "Y" -> MILLIS_PER_DAY * 365L
+            else -> return null
         }
 
-    if (duration == Duration.ZERO) return null
-    return duration.inWholeMilliseconds
+    return amount.toLong() * multiplier
 }
+
+private const val MILLIS_PER_DAY = 24L * 60L * 60L * 1_000L

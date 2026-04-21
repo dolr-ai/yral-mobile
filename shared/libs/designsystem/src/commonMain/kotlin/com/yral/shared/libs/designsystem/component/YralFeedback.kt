@@ -10,8 +10,6 @@ import com.yral.shared.crashlytics.core.CrashlyticsManager
 import kotlinx.coroutines.delay
 import org.koin.compose.koinInject
 import yral_mobile.shared.libs.designsystem.generated.resources.Res
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TimeSource
 
 @Composable
@@ -36,6 +34,7 @@ internal expect fun SoundFeedback(
 )
 
 private const val HAPTIC_FEEDBACK_DELAY_MS = 30L
+private const val LONG_PRESS_HAPTIC_DURATION_MS = 500L
 
 @Suppress("TooGenericExceptionCaught")
 @Composable
@@ -47,9 +46,9 @@ private fun HapticFeeback(
     LaunchedEffect(Unit) {
         Logger.d("SoundAndHaptics") { "Playing $hapticFeedbackType" }
         try {
-            val hapticDuration = hapticFeedbackType.extendedHapticDuration()
+            val hapticDurationMs = hapticFeedbackType.extendedHapticDurationMs()
             val startTime = TimeSource.Monotonic.markNow()
-            while (startTime.elapsedNow() < hapticDuration) {
+            while (startTime.elapsedNow().inWholeMilliseconds < hapticDurationMs) {
                 haptic.performHapticFeedback(hapticFeedbackType)
                 delay(HAPTIC_FEEDBACK_DELAY_MS)
             }
@@ -60,10 +59,10 @@ private fun HapticFeeback(
 }
 
 @Suppress("MagicNumber")
-private fun HapticFeedbackType.extendedHapticDuration(): Duration =
+private fun HapticFeedbackType.extendedHapticDurationMs(): Long =
     when (this) {
-        HapticFeedbackType.LongPress -> 500.milliseconds
-        else -> HAPTIC_FEEDBACK_DELAY_MS.milliseconds // only 1 loop
+        HapticFeedbackType.LongPress -> LONG_PRESS_HAPTIC_DURATION_MS
+        else -> HAPTIC_FEEDBACK_DELAY_MS // only 1 loop
     }
 
 fun popPressedSoundUri(): String = Res.getUri("files/audio/pop_pressed.mp3")

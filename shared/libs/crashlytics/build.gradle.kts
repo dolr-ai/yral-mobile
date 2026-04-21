@@ -32,7 +32,8 @@ kotlin {
             implementation(libs.touchlab.logger)
         }
         androidMain.dependencies {
-            api(libs.gitlive.firebase.kotlin.crashlytics)
+            implementation(project.dependencies.platform(libs.firebase.bom))
+            api(libs.firebase.crashlytics)
         }
     }
 }

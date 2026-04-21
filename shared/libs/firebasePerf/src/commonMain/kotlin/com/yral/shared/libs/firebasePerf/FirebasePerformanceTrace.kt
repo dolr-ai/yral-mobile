@@ -1,49 +1,27 @@
 package com.yral.shared.libs.firebasePerf
 
-import dev.gitlive.firebase.Firebase
-import dev.gitlive.firebase.perf.metrics.Trace
-import dev.gitlive.firebase.perf.performance
-
 /**
- * Android Firebase Performance implementation
- * This provides Firebase Performance monitoring capabilities for Android platform
+ * Firebase Performance trace backed by the platform Firebase SDK.
  */
-open class FirebasePerformanceTrace(
+expect open class FirebasePerformanceTrace(
     traceName: String,
 ) : PerformanceTrace {
-    private val trace: Trace = Firebase.performance.newTrace(traceName)
+    override fun start()
 
-    override fun start() {
-        trace.start()
-    }
-
-    override fun stop() {
-        trace.stop()
-    }
+    override fun stop()
 
     override fun incrementMetric(
         metricName: String,
         incrementBy: Long,
-    ) {
-        trace.incrementMetric(metricName, incrementBy)
-    }
+    )
 
     override fun putAttribute(
         attribute: String,
         value: String,
-    ) {
-        trace.setAttribute(attribute, value)
-    }
+    )
 
     override fun putMetric(
         metricName: String,
         value: Long,
-    ) {
-        trace.putMetric(metricName, value)
-    }
+    )
 }
-
-expect fun Trace.setAttribute(
-    attribute: String,
-    value: String,
-)

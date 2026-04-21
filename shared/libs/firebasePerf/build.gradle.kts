@@ -28,7 +28,10 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(projects.shared.core)
-            implementation(libs.gitlive.firebase.kotlin.perf)
+        }
+        androidMain.dependencies {
+            implementation(project.dependencies.platform(libs.firebase.bom))
+            implementation(libs.firebase.performance)
         }
     }
 }

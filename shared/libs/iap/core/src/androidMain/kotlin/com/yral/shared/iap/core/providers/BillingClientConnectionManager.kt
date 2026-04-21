@@ -13,9 +13,8 @@ import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
-private val CONNECTION_TIMEOUT: Duration = 30.seconds
+private val CONNECTION_TIMEOUT: Duration = Duration.parse("30s")
 
 internal class BillingClientConnectionManager(
     context: Context,

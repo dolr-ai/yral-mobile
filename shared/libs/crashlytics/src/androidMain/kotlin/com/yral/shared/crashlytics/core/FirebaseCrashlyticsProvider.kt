@@ -1,6 +1,6 @@
 package com.yral.shared.crashlytics.core
 
-import dev.gitlive.firebase.crashlytics.FirebaseCrashlytics
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 
 internal class FirebaseCrashlyticsProvider(
     private val crashlytics: FirebaseCrashlytics,
