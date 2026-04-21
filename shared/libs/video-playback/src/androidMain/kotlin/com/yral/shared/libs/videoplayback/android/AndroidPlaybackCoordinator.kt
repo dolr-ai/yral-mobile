@@ -329,7 +329,10 @@ private class AndroidPlaybackCoordinator(
         pendingPreparedScheduleIndex = index
 
         when (activationDecision.mode) {
-            SlotActivationMode.SwapPrepared -> swapSlots()
+            SlotActivationMode.SwapPrepared -> {
+                swapSlots()
+            }
+
             SlotActivationMode.PrepareActive -> {
                 preparedSlot?.takeIf { it.mediaIndex == index }?.let { prepared ->
                     stopPreparedWarmup(prepared)
