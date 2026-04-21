@@ -72,6 +72,9 @@ class DefaultAuthClient(
     private val scope: CoroutineScope,
     private val authTelemetry: AuthTelemetry,
     private val initRustFactories: (identity: ByteArray) -> Unit,
+    private val deregisterNotificationToken: suspend () -> Unit = {
+        requiredUseCases.deregisterNotificationTokenUseCase()
+    },
 ) : AuthClient {
     private var currentState: String? = null
     private var currentProvider: SocialProvider? = null
@@ -89,8 +92,7 @@ class DefaultAuthClient(
         if (lastActivePrincipal != null && lastActivePrincipal != mainPrincipal) {
             getCachedSession()?.takeIf { it.userPrincipal == lastActivePrincipal }?.let { cached ->
                 setSession(cached)
-                // Refresh tokens to keep bot delegations alive without switching away from bot session
-                refreshTokensSilently()
+                refreshBotColdStartTokensIfNeeded()
                 return
             }
         }
@@ -107,8 +109,37 @@ class DefaultAuthClient(
         } ?: obtainAnonymousIdentity()
     }
 
-    private suspend fun refreshTokensSilently() {
-        val refreshToken = preferences.getString(PrefKeys.REFRESH_TOKEN.name) ?: return
+    @OptIn(ExperimentalTime::class)
+    private suspend fun refreshBotColdStartTokensIfNeeded() {
+        val now = Clock.System.now().epochSeconds
+        val idToken = preferences.getString(PrefKeys.ID_TOKEN.name)
+        val shouldRefresh = idToken?.let { !isTokenValid(it, now) } ?: true
+        if (shouldRefresh) {
+            val refreshToken = preferences.getString(PrefKeys.REFRESH_TOKEN.name)
+            when {
+                refreshToken.isNullOrBlank() ->
+                    trackAndLogoutForTokenExpiry(
+                        cause = AuthSessionCause.REFRESH_TOKEN_MISSING,
+                        flow = AuthSessionFlow.TOKEN_VALIDATION,
+                    )
+
+                !isTokenValid(refreshToken, now) ->
+                    trackAndLogoutForTokenExpiry(
+                        cause = AuthSessionCause.REFRESH_TOKEN_EXPIRED_OR_INVALID,
+                        flow = AuthSessionFlow.TOKEN_VALIDATION,
+                    )
+
+                else -> refreshBotColdStartTokens(refreshToken)
+            }
+        }
+    }
+
+    private fun isTokenValid(
+        token: String,
+        now: Long,
+    ): Boolean = runCatching { oAuthUtilsHelper.parseOAuthToken(token).isValid(now) }.getOrDefault(false)
+
+    private suspend fun refreshBotColdStartTokens(refreshToken: String) {
         requiredUseCases.refreshTokenUseCase
             .invoke(refreshToken)
             .onSuccess { tokenResponse ->
@@ -120,7 +151,11 @@ class DefaultAuthClient(
                 )
                 getCachedSession()?.let { updateYralSession(it) }
             }.onFailure {
-                Logger.e("DefaultAuthClient") { "Silent token refresh failed: ${it.message}" }
+                Logger.e("DefaultAuthClient") { "Bot cold-start token refresh failed: ${it.message}" }
+                trackAndLogoutForTokenExpiry(
+                    cause = AuthSessionCause.REFRESH_ACCESS_TOKEN_FAILED,
+                    flow = AuthSessionFlow.TOKEN_REFRESH,
+                )
             }
     }
 
@@ -277,7 +312,7 @@ class DefaultAuthClient(
         ).forEach { key ->
             preferences.remove(key)
         }
-        requiredUseCases.deregisterNotificationTokenUseCase()
+        deregisterNotificationToken()
         // clear cached canister data after parsing token
         resetCachedCanisterData()
         // reset analytics manage: flush events and reset user properties
