@@ -9,6 +9,14 @@ plugins {
 
 applyCocoapodsIfApple()
 
+val firebaseIosSdkVersion =
+    libs
+        .versions
+        .firebase
+        .ios
+        .sdk
+        .get()
+
 configureCocoapods {
     version = "1.0"
     summary = "Analytics module with Firebase, Mixpanel and OneSignal"
@@ -27,7 +35,7 @@ configureCocoapods {
         extraOpts += listOf("-compiler-option", "-fmodules")
     }
     pod("FirebaseAnalytics") {
-        version = "11.14.0"
+        version = firebaseIosSdkVersion
     }
 }
 

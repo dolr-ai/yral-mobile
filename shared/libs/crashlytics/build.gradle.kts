@@ -9,6 +9,14 @@ plugins {
 
 applyCocoapodsIfApple()
 
+val firebaseIosSdkVersion =
+    libs
+        .versions
+        .firebase
+        .ios
+        .sdk
+        .get()
+
 configureCocoapods {
     version = "1.0"
     summary = "Shared Crashlytics"
@@ -18,7 +26,7 @@ configureCocoapods {
     noPodspec()
 
     pod("FirebaseCrashlytics") {
-        version = "11.14.0"
+        version = firebaseIosSdkVersion
     }
 }
 

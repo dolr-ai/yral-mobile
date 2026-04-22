@@ -12,12 +12,19 @@ internal actual suspend fun getNotificationToken(): String =
     suspendCancellableCoroutine { continuation ->
         FIRMessaging.messaging().tokenWithCompletion { token, error ->
             when {
-                error != null ->
+                error != null -> {
                     continuation.resumeWithException(
                         error.asException("Firebase Messaging token fetch failed"),
                     )
-                token != null -> continuation.resume(token)
-                else -> continuation.resumeWithException(IllegalStateException("Firebase Messaging returned no token"))
+                }
+
+                token != null -> {
+                    continuation.resume(token)
+                }
+
+                else -> {
+                    continuation.resumeWithException(IllegalStateException("Firebase Messaging returned no token"))
+                }
             }
         }
     }

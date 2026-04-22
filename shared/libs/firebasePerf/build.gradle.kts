@@ -8,6 +8,14 @@ plugins {
 
 applyCocoapodsIfApple()
 
+val firebaseIosSdkVersion =
+    libs
+        .versions
+        .firebase
+        .ios
+        .sdk
+        .get()
+
 configureCocoapods {
     version = "1.0"
     summary = "Firebase Perf"
@@ -17,7 +25,7 @@ configureCocoapods {
     noPodspec()
 
     pod("FirebasePerformance") {
-        version = "11.14.0"
+        version = firebaseIosSdkVersion
     }
 }
 

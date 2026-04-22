@@ -9,6 +9,14 @@ plugins {
 
 applyCocoapodsIfApple()
 
+val firebaseIosSdkVersion =
+    libs
+        .versions
+        .firebase
+        .ios
+        .sdk
+        .get()
+
 configureCocoapods {
     version = "1.0"
     summary = "Feature flag providers"
@@ -18,7 +26,7 @@ configureCocoapods {
     noPodspec()
 
     pod("FirebaseRemoteConfig") {
-        version = "11.14.0"
+        version = firebaseIosSdkVersion
     }
 }
 
