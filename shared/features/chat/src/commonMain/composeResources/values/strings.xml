@@ -32,10 +32,6 @@
     <string name="message_optional">Message (optional)</string>
     <string name="close">Close</string>
 
-    <!-- Subscription nudge (chat threshold) -->
-    <string name="subscription_nudge_chat_title">Subscribe to YRAL Pro to continue chatting with %1$s.</string>
-    <string name="subscription_nudge_chat_description">Go Pro to unlock unlimited chat with %1$s plus %2$d YRAL Credits.</string>
-
     <!-- Influencer subscription card (replaces ChatInputArea when at threshold) -->
     <string name="influencer_subscription_limited_time_offer">Limited Time Offer</string>
     <string name="influencer_subscription_plan_title">1 Day Plan</string>
