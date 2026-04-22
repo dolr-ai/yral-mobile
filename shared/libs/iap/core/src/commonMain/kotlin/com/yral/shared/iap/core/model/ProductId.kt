@@ -12,19 +12,13 @@ enum class ProductId(
 
     @SerialName("daily_chat")
     DAILY_CHAT("daily_chat"),
-
-    @Deprecated("Legacy subscription, use DAILY_CHAT instead")
-    @SerialName("tara_subscription")
-    TARA_SUBSCRIPTION("tara_subscription"),
     ;
 
-    @Suppress("DEPRECATION")
     val productType: ProductType
         get() =
             when (this) {
                 YRAL_PRO -> ProductType.SUBS
                 DAILY_CHAT -> ProductType.ONE_TIME
-                TARA_SUBSCRIPTION -> ProductType.SUBS
             }
 
     companion object {

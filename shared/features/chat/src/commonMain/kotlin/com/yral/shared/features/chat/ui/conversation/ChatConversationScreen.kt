@@ -35,7 +35,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import co.touchlab.kermit.Logger
 import com.yral.shared.analytics.events.SignupPageName
-import com.yral.shared.analytics.events.SubscriptionEntryPoint
 import com.yral.shared.core.session.ProDetails
 import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.auth.ui.LoginMode
@@ -49,9 +48,7 @@ import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.chat.ui.components.ChatErrorBottomSheet
 import com.yral.shared.features.chat.viewmodel.ConversationMessageItem
 import com.yral.shared.features.chat.viewmodel.ConversationViewModel
-import com.yral.shared.features.subscriptions.nav.SubscriptionNudgeContent
 import com.yral.shared.iap.utils.getPurchaseContext
-import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastStatus
@@ -69,8 +66,6 @@ import yral_mobile.shared.features.chat.generated.resources.Res
 import yral_mobile.shared.features.chat.generated.resources.access_activated_overlay_message
 import yral_mobile.shared.features.chat.generated.resources.chat_background_inverted
 import yral_mobile.shared.features.chat.generated.resources.subscription_card_overlay_message
-import yral_mobile.shared.features.chat.generated.resources.subscription_nudge_chat_description
-import yral_mobile.shared.features.chat.generated.resources.subscription_nudge_chat_title
 import yral_mobile.shared.features.chat.generated.resources.switch_profile
 import yral_mobile.shared.features.chat.generated.resources.switch_profile_failed
 import yral_mobile.shared.features.chat.generated.resources.switch_to_human_profile_to_chat
@@ -265,21 +260,12 @@ fun ChatConversationScreen(
         }
         result
     }
-    val shouldShowSubscriptionNudge by derivedStateOf {
-        viewState.isSocialSignedIn &&
-            viewState.isSubscriptionEnabled &&
-            !hasChatAccess &&
-            atSubscriptionThreshold &&
-            !viewState.isInfluencerSubscriptionAvailableToPurchase &&
-            viewState.isYralProAvailableToPurchase
-    }
     val shouldBlockChatNoProduct by derivedStateOf {
         viewState.isSocialSignedIn &&
             viewState.isSubscriptionEnabled &&
             !hasChatAccess &&
             atSubscriptionThreshold &&
-            !viewState.isInfluencerSubscriptionAvailableToPurchase &&
-            !viewState.isYralProAvailableToPurchase
+            !viewState.isInfluencerSubscriptionAvailableToPurchase
     }
 
     val subscriptionCardOverlayMessage =
@@ -332,37 +318,6 @@ fun ChatConversationScreen(
             }
         }
 
-    val subscriptionNudgeTitle =
-        stringResource(
-            Res.string.subscription_nudge_chat_title,
-            viewState.influencer?.displayName ?: "",
-        )
-    val subscriptionNudgeDescription =
-        stringResource(
-            Res.string.subscription_nudge_chat_description,
-            viewState.influencer?.displayName ?: "",
-            proDetails.totalCredits,
-        )
-    val subscriptionNudgeContent =
-        remember(subscriptionNudgeTitle, subscriptionNudgeDescription, viewState.influencer) {
-            SubscriptionNudgeContent(
-                title = subscriptionNudgeTitle,
-                description = subscriptionNudgeDescription,
-                topContent = {
-                    viewState.influencer?.avatarUrl?.let { avatarUrl ->
-                        YralAsyncImage(
-                            imageUrl = avatarUrl,
-                            modifier =
-                                Modifier
-                                    .padding(0.dp)
-                                    .width(120.dp)
-                                    .height(120.dp),
-                        )
-                    }
-                },
-                entryPoint = SubscriptionEntryPoint.AI_CHATBOT,
-            )
-        }
     val switchProfileMessage = stringResource(Res.string.switch_to_human_profile_to_chat)
     val switchProfileButtonText = stringResource(Res.string.switch_profile)
     val switchProfileFailedMessage = stringResource(Res.string.switch_profile_failed)
@@ -391,11 +346,6 @@ fun ChatConversationScreen(
 
                 shouldShowInfluencerSubscriptionCard -> {
                     purchaseContext?.let { viewModel.launchInfluencerSubscriptionPurchase(it) }
-                    true
-                }
-
-                shouldShowSubscriptionNudge -> {
-                    component.subscriptionCoordinator.showSubscriptionNudge(content = subscriptionNudgeContent)
                     true
                 }
 
