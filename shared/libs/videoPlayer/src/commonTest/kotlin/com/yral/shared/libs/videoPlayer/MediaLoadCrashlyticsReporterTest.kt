@@ -63,6 +63,41 @@ class MediaLoadCrashlyticsReporterTest {
     }
 
     @Test
+    fun withCrashlytics_recordsAfterReleaseErrorsAndDelegates() {
+        val provider = RecordingCrashlyticsProvider()
+        val mediaLoadReporter = MediaLoadCrashlyticsReporter(CrashlyticsManager(listOf(provider)))
+        val delegate = RecordingPlaybackEventReporter()
+
+        delegate
+            .withCrashlytics(mediaLoadReporter) {
+                MediaDescriptor(
+                    id = "video-id",
+                    uri = "https://cdn-yral-sfw.yral.com/user/video-id.mp4",
+                )
+            }.playbackErrorAfterRelease(
+                id = "video-id",
+                index = 2,
+                category = "ERROR_CODE_TIMEOUT",
+                code = 1003,
+                firstFramePending = true,
+                message = "Unexpected runtime error",
+            )
+
+        assertEquals(
+            listOf("video-id|2|ERROR_CODE_TIMEOUT|1003|true|Unexpected runtime error"),
+            delegate.playbackErrorsAfterRelease,
+        )
+        val exception = provider.recordedExceptions.single()
+        assertTrue(exception.message.orEmpty().contains("type=video"))
+        assertTrue(exception.message.orEmpty().contains("source=playback_after_release"))
+        assertTrue(exception.message.orEmpty().contains("url=https://cdn-yral-sfw.yral.com/user/video-id.mp4"))
+        assertTrue(exception.message.orEmpty().contains("category=ERROR_CODE_TIMEOUT"))
+        assertTrue(exception.message.orEmpty().contains("code=1003"))
+        assertTrue(exception.message.orEmpty().contains("first_frame_pending=true"))
+        assertTrue(exception.message.orEmpty().contains("message=Unexpected runtime error"))
+    }
+
+    @Test
     fun withCrashlytics_onlyRecordsPrefetchFailuresForErrorReason() {
         val provider = RecordingCrashlyticsProvider()
         val mediaLoadReporter = MediaLoadCrashlyticsReporter(CrashlyticsManager(listOf(provider)))
@@ -80,17 +115,21 @@ class MediaLoadCrashlyticsReporterTest {
             index = 1,
             reason = "window_shift",
         )
+        val cause = IllegalStateException("Prefetch timed out")
         reporter.preloadCanceled(
             id = "video-id",
             index = 1,
             reason = "error",
+            throwable = cause,
         )
 
         assertEquals(2, delegate.preloadCanceledReasons.size)
         assertEquals(1, provider.recordedExceptions.size)
         val exception = provider.recordedExceptions.single()
+        assertSame(cause, exception.cause)
         assertTrue(exception.message.orEmpty().contains("source=prefetch"))
         assertTrue(exception.message.orEmpty().contains("category=error"))
+        assertTrue(exception.message.orEmpty().contains("message=Prefetch timed out"))
     }
 
     private class RecordingCrashlyticsProvider : CrashlyticsProvider {
@@ -115,6 +154,7 @@ class MediaLoadCrashlyticsReporterTest {
 
     private class RecordingPlaybackEventReporter : PlaybackEventReporter by NoopPlaybackEventReporter {
         val playbackErrors = mutableListOf<String>()
+        val playbackErrorsAfterRelease = mutableListOf<String>()
         val preloadCanceledReasons = mutableListOf<String>()
 
         override fun playbackError(
@@ -127,12 +167,24 @@ class MediaLoadCrashlyticsReporterTest {
             playbackErrors += "$id|$index|$category|$code|$message"
         }
 
+        override fun playbackErrorAfterRelease(
+            id: String,
+            index: Int,
+            category: String,
+            code: Any,
+            firstFramePending: Boolean,
+            message: String?,
+        ) {
+            playbackErrorsAfterRelease += "$id|$index|$category|$code|$firstFramePending|$message"
+        }
+
         override fun preloadCanceled(
             id: String,
             index: Int,
             reason: String,
+            throwable: Throwable?,
         ) {
-            preloadCanceledReasons += "$id|$index|$reason"
+            preloadCanceledReasons += "$id|$index|$reason|${throwable?.message}"
         }
     }
 }

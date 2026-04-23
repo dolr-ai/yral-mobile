@@ -17,6 +17,7 @@ private const val MEDIA_TYPE_VIDEO = "video"
 private const val MEDIA_TYPE_THUMBNAIL = "thumbnail"
 private const val MEDIA_SOURCE_IMAGE_LOAD = "image_load"
 private const val MEDIA_SOURCE_PLAYBACK = "playback"
+private const val MEDIA_SOURCE_PLAYBACK_AFTER_RELEASE = "playback_after_release"
 private const val MEDIA_SOURCE_PREFETCH = "prefetch"
 private const val MEDIA_PRELOAD_ERROR_REASON = "error"
 
@@ -62,6 +63,30 @@ internal class MediaLoadCrashlyticsReporter(
         )
     }
 
+    fun reportVideoPlaybackAfterReleaseFailure(
+        videoUrl: String,
+        mediaId: String? = null,
+        index: Int? = null,
+        category: String? = null,
+        code: Any? = null,
+        firstFramePending: Boolean,
+        message: String? = null,
+        throwable: Throwable? = null,
+    ) {
+        reportFailure(
+            mediaType = MEDIA_TYPE_VIDEO,
+            source = MEDIA_SOURCE_PLAYBACK_AFTER_RELEASE,
+            mediaId = mediaId,
+            index = index,
+            url = videoUrl,
+            category = category,
+            code = code,
+            firstFramePending = firstFramePending,
+            message = message.takeIfNotBlank() ?: throwable.messageOrNull(),
+            throwable = throwable,
+        )
+    }
+
     fun reportVideoPrefetchFailure(
         videoUrl: String,
         mediaId: String? = null,
@@ -89,6 +114,7 @@ internal class MediaLoadCrashlyticsReporter(
         url: String?,
         category: String? = null,
         code: Any? = null,
+        firstFramePending: Boolean? = null,
         message: String? = null,
         throwable: Throwable? = null,
     ) {
@@ -101,6 +127,7 @@ internal class MediaLoadCrashlyticsReporter(
                 url = url,
                 category = category,
                 code = code,
+                firstFramePending = firstFramePending,
                 message = message,
                 throwable = throwable,
             ),
@@ -132,12 +159,34 @@ internal class CrashlyticsPlaybackEventReporter(
         )
     }
 
+    override fun playbackErrorAfterRelease(
+        id: String,
+        index: Int,
+        category: String,
+        code: Any,
+        firstFramePending: Boolean,
+        message: String?,
+    ) {
+        delegate.playbackErrorAfterRelease(id, index, category, code, firstFramePending, message)
+        val descriptor = descriptorAtIndex(index)
+        mediaLoadCrashlyticsReporter.reportVideoPlaybackAfterReleaseFailure(
+            videoUrl = descriptor?.uri.orEmpty(),
+            mediaId = id,
+            index = index,
+            category = category,
+            code = code,
+            firstFramePending = firstFramePending,
+            message = message,
+        )
+    }
+
     override fun preloadCanceled(
         id: String,
         index: Int,
         reason: String,
+        throwable: Throwable?,
     ) {
-        delegate.preloadCanceled(id, index, reason)
+        delegate.preloadCanceled(id, index, reason, throwable)
         if (reason != MEDIA_PRELOAD_ERROR_REASON) return
         val descriptor = descriptorAtIndex(index)
         mediaLoadCrashlyticsReporter.reportVideoPrefetchFailure(
@@ -145,6 +194,7 @@ internal class CrashlyticsPlaybackEventReporter(
             mediaId = id,
             index = index,
             reason = reason,
+            throwable = throwable,
         )
     }
 }
@@ -204,6 +254,7 @@ internal fun mediaLoadException(
     url: String? = null,
     category: String? = null,
     code: Any? = null,
+    firstFramePending: Boolean? = null,
     message: String? = null,
     throwable: Throwable? = null,
 ): YralException {
@@ -217,6 +268,7 @@ internal fun mediaLoadException(
             url.takeIfNotBlank()?.let { add("url=$it") }
             category.takeIfNotBlank()?.let { add("category=$it") }
             code?.let { add("code=$it") }
+            firstFramePending?.let { add("first_frame_pending=$it") }
             message.takeIfNotBlank()?.let { add("message=$it") }
         }.joinToString(separator = " ")
 

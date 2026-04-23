@@ -49,6 +49,14 @@ interface PlaybackEventReporter {
         code: Any,
         message: String? = null,
     )
+    fun playbackErrorAfterRelease(
+        id: String,
+        index: Int,
+        category: String,
+        code: Any,
+        firstFramePending: Boolean,
+        message: String? = null,
+    ) = Unit
     fun playbackEnded(
         id: String,
         index: Int,
@@ -70,6 +78,7 @@ interface PlaybackEventReporter {
         id: String,
         index: Int,
         reason: String,
+        throwable: Throwable? = null,
     )
     fun cacheHit(
         id: String,
@@ -204,6 +213,19 @@ class LoggingPlaybackEventReporter(
         lastProgressSecondByItem.remove(PlaybackKey(id, index))
     }
 
+    override fun playbackErrorAfterRelease(
+        id: String,
+        index: Int,
+        category: String,
+        code: Any,
+        firstFramePending: Boolean,
+        message: String?,
+    ) {
+        logger.d("playbackErrorAfterRelease $id $index $category $code $firstFramePending $message")
+        delegate.playbackErrorAfterRelease(id, index, category, code, firstFramePending, message)
+        lastProgressSecondByItem.remove(PlaybackKey(id, index))
+    }
+
     override fun playbackEnded(
         id: String,
         index: Int,
@@ -238,9 +260,10 @@ class LoggingPlaybackEventReporter(
         id: String,
         index: Int,
         reason: String,
+        throwable: Throwable?,
     ) {
-        logger.d("preloadCanceled $id $index $reason")
-        delegate.preloadCanceled(id, index, reason)
+        logger.d("preloadCanceled $id $index $reason ${throwable?.message}")
+        delegate.preloadCanceled(id, index, reason, throwable)
     }
 
     override fun cacheHit(
@@ -341,6 +364,14 @@ object NoopPlaybackEventReporter : PlaybackEventReporter {
         code: Any,
         message: String?,
     ) = Unit
+    override fun playbackErrorAfterRelease(
+        id: String,
+        index: Int,
+        category: String,
+        code: Any,
+        firstFramePending: Boolean,
+        message: String?,
+    ) = Unit
     override fun playbackEnded(
         id: String,
         index: Int,
@@ -362,6 +393,7 @@ object NoopPlaybackEventReporter : PlaybackEventReporter {
         id: String,
         index: Int,
         reason: String,
+        throwable: Throwable?,
     ) = Unit
     override fun cacheHit(
         id: String,

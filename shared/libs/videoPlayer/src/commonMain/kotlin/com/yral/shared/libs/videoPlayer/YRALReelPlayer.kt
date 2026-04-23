@@ -239,6 +239,7 @@ private fun rememberPlaybackEventReporter(
                 id: String,
                 index: Int,
                 reason: String,
+                throwable: Throwable?,
             ) = Unit
             override fun cacheHit(
                 id: String,
