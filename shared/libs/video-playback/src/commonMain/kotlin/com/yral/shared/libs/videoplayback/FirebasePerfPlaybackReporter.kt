@@ -130,6 +130,15 @@ class FirebasePerfPlaybackReporter(
         message: String?,
     ) = delegate.playbackError(id, index, category, code, message)
 
+    override fun playbackErrorAfterRelease(
+        id: String,
+        index: Int,
+        category: String,
+        code: Any,
+        firstFramePending: Boolean,
+        message: String?,
+    ) = delegate.playbackErrorAfterRelease(id, index, category, code, firstFramePending, message)
+
     override fun playbackEnded(
         id: String,
         index: Int,
@@ -154,7 +163,8 @@ class FirebasePerfPlaybackReporter(
         id: String,
         index: Int,
         reason: String,
-    ) = delegate.preloadCanceled(id, index, reason)
+        throwable: Throwable?,
+    ) = delegate.preloadCanceled(id, index, reason, throwable)
 
     override fun cacheHit(
         id: String,
