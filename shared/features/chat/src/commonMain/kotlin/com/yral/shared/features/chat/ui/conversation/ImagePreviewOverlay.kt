@@ -26,11 +26,9 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
-import com.yral.shared.features.chat.attachments.FilePathChatAttachment
 import com.yral.shared.features.chat.domain.models.ChatMessageType
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
-import com.yral.shared.libs.designsystem.component.getLocalImageModel
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -42,15 +40,16 @@ import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 @Suppress("LongMethod")
 @Composable
-fun ImagePreviewOverlay(
-    imageAttachment: FilePathChatAttachment,
-    onSend: (SendMessageDraft) -> Unit,
+internal fun ImagePreviewOverlay(
+    previewSource: ChatImagePreviewSource,
+    onSend: ((SendMessageDraft) -> Unit)? = null,
     onDismiss: () -> Unit,
     hasWaitingAssistant: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     var input by remember { mutableStateOf("") }
     val keyboardController = LocalSoftwareKeyboardController.current
+    val draftAttachment = (previewSource as? ChatImagePreviewSource.Draft)?.imageAttachment
 
     Box(
         modifier =
@@ -60,41 +59,47 @@ fun ImagePreviewOverlay(
                 .clickable {},
     ) {
         YralAsyncImage(
-            imageUrl = getLocalImageModel(imageAttachment.filePath),
+            imageUrl =
+                when (previewSource) {
+                    is ChatImagePreviewSource.Draft -> rememberChatImageModel(previewSource.imageAttachment.filePath)
+                    is ChatImagePreviewSource.Message -> rememberChatImageModel(previewSource.imageUrl)
+                },
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Fit,
             shape = RectangleShape,
         )
-        Column(modifier = Modifier.align(BottomCenter)) {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-            ) {
-                ChatInputArea(
-                    input = input,
-                    onInputChange = { input = it },
-                    onSendClick = {
-                        keyboardController?.hide()
-                        val text = input.trim()
-                        input = ""
-                        try {
-                            onSend(
-                                SendMessageDraft(
-                                    messageType = ChatMessageType.IMAGE,
-                                    content = text.takeIf { it.isNotBlank() },
-                                    mediaAttachments = listOf(imageAttachment),
-                                ),
-                            )
-                        } finally {
-                            onDismiss()
-                        }
-                    },
-                    showAttachmentMenu = false,
-                    hasWaitingAssistant = hasWaitingAssistant,
-                    placeholder = stringResource(Res.string.message_optional),
-                )
+        if (draftAttachment != null && onSend != null) {
+            Column(modifier = Modifier.align(BottomCenter)) {
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                ) {
+                    ChatInputArea(
+                        input = input,
+                        onInputChange = { input = it },
+                        onSendClick = {
+                            keyboardController?.hide()
+                            val text = input.trim()
+                            input = ""
+                            try {
+                                onSend(
+                                    SendMessageDraft(
+                                        messageType = ChatMessageType.IMAGE,
+                                        content = text.takeIf { it.isNotBlank() },
+                                        mediaAttachments = listOf(draftAttachment),
+                                    ),
+                                )
+                            } finally {
+                                onDismiss()
+                            }
+                        },
+                        showAttachmentMenu = false,
+                        hasWaitingAssistant = hasWaitingAssistant,
+                        placeholder = stringResource(Res.string.message_optional),
+                    )
+                }
             }
         }
         CloseButton(onDismiss)

@@ -25,6 +25,7 @@ internal fun MessagesList(
     overlayItems: List<ConversationMessageItem>,
     historyPagingItems: LazyPagingItems<ConversationMessageItem>,
     isBotAccount: Boolean = false,
+    onImageClick: (imageUrl: String) -> Unit,
     onRetry: (localId: String) -> Unit,
 ) {
     val overlayMessageIds = overlayMessageIdSet(overlayItems)
@@ -39,7 +40,12 @@ internal fun MessagesList(
         items(
             items = overlayItems,
         ) { item ->
-            MessageRow(item = item, isBotAccount = isBotAccount, onRetry = onRetry)
+            MessageRow(
+                item = item,
+                isBotAccount = isBotAccount,
+                onImageClick = onImageClick,
+                onRetry = onRetry,
+            )
         }
 
         items(
@@ -47,7 +53,12 @@ internal fun MessagesList(
         ) { idx ->
             val item = historyPagingItems[idx] ?: return@items
             if (isDuplicateOfOverlay(item, overlayMessageIds)) return@items
-            MessageRow(item = item, isBotAccount = isBotAccount, onRetry = onRetry)
+            MessageRow(
+                item = item,
+                isBotAccount = isBotAccount,
+                onImageClick = onImageClick,
+                onRetry = onRetry,
+            )
         }
     }
 }
@@ -56,6 +67,7 @@ internal fun MessagesList(
 private fun MessageRow(
     item: ConversationMessageItem,
     isBotAccount: Boolean,
+    onImageClick: (imageUrl: String) -> Unit,
     onRetry: (localId: String) -> Unit,
 ) {
     val screenWidth = LocalWindowInfo.current.containerSize.width
@@ -80,6 +92,7 @@ private fun MessageRow(
                     content = item.message.content,
                     mediaUrls = item.message.mediaUrls,
                     maxWidth = maxWidth,
+                    onImageClick = onImageClick,
                 )
             }
 
@@ -89,6 +102,7 @@ private fun MessageRow(
                     content = if (item.message.isPlaceholder) "…" else item.message.content,
                     mediaUrls = item.message.mediaUrls,
                     maxWidth = maxWidth,
+                    onImageClick = onImageClick,
                     isFailed = item.message.status == LocalMessageStatus.FAILED,
                     isWaiting = item.isWaitingAssistant(),
                     onRetry =

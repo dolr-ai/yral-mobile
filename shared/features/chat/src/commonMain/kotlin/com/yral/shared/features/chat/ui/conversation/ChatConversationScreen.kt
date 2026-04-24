@@ -40,7 +40,6 @@ import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.auth.ui.LoginMode
 import com.yral.shared.features.auth.ui.LoginScreenType
 import com.yral.shared.features.auth.ui.rememberLoginInfo
-import com.yral.shared.features.chat.attachments.FilePathChatAttachment
 import com.yral.shared.features.chat.domain.models.ChatMessageType
 import com.yral.shared.features.chat.domain.models.ConversationMessageRole
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
@@ -178,7 +177,7 @@ fun ChatConversationScreen(
     val historyPagingItems = viewModel.history.collectAsLazyPagingItems()
 
     var input by remember { mutableStateOf("") }
-    var selectedImage by remember { mutableStateOf<FilePathChatAttachment?>(null) }
+    var activeImagePreview by remember { mutableStateOf<ChatImagePreviewSource?>(null) }
     var isSwitchingProfile by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val screenWidth = LocalWindowInfo.current.containerSize.width
@@ -186,11 +185,11 @@ fun ChatConversationScreen(
 
     val imagePickerLauncher =
         rememberChatImagePicker(
-            onImagePicked = { attachment -> selectedImage = attachment },
+            onImagePicked = { attachment -> activeImagePreview = ChatImagePreviewSource.Draft(attachment) },
         )
     val imageCaptureLauncher =
         rememberChatImageCapture(
-            onImagePicked = { attachment -> selectedImage = attachment },
+            onImagePicked = { attachment -> activeImagePreview = ChatImagePreviewSource.Draft(attachment) },
         )
 
     var readyForAutoScroll by remember { mutableStateOf(false) }
@@ -460,6 +459,9 @@ fun ChatConversationScreen(
                             overlayItems = overlayItems,
                             historyPagingItems = historyPagingItems,
                             isBotAccount = viewState.isBotAccount,
+                            onImageClick = { imageUrl ->
+                                activeImagePreview = ChatImagePreviewSource.Message(imageUrl)
+                            },
                             onRetry = { localId -> viewModel.retry(localId) },
                         )
 
@@ -569,15 +571,15 @@ fun ChatConversationScreen(
         }
 
         // Image preview overlay (fullscreen, on top of everything including message list)
-        selectedImage?.let { imageAttachment ->
+        activeImagePreview?.let { previewSource ->
             ImagePreviewOverlay(
-                imageAttachment = imageAttachment,
+                previewSource = previewSource,
                 onSend = { draft ->
                     sendMessageIfAllowed(draft) {
-                        selectedImage = null
+                        activeImagePreview = null
                     }
                 },
-                onDismiss = { selectedImage = null },
+                onDismiss = { activeImagePreview = null },
                 hasWaitingAssistant = hasWaitingAssistant,
                 modifier = Modifier.fillMaxSize(),
             )

@@ -8,30 +8,38 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.BottomEnd
 import androidx.compose.ui.Alignment.Companion.BottomStart
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
 import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.model.DefaultMarkdownColors
 import com.mikepenz.markdown.model.DefaultMarkdownTypography
-import com.yral.shared.libs.designsystem.component.YralAsyncImage
+import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.YralLoadingDots
 import com.yral.shared.libs.designsystem.component.getLocalImageModel
 import com.yral.shared.libs.designsystem.theme.AppTopography
@@ -52,6 +60,7 @@ internal fun MessageContent(
     content: String?,
     mediaUrls: List<String>,
     maxWidth: Dp,
+    onImageClick: ((String) -> Unit)? = null,
     isFailed: Boolean = false,
     isWaiting: Boolean = false,
     onRetry: (() -> Unit)? = null,
@@ -61,6 +70,7 @@ internal fun MessageContent(
         mediaUrls = mediaUrls,
         isUser = isUser,
         maxWidth = maxWidth,
+        onImageClick = onImageClick,
         isFailed = isFailed,
         isWaiting = isWaiting,
         onRetry = onRetry,
@@ -73,6 +83,7 @@ internal fun MessageBubble(
     mediaUrls: List<String>,
     isUser: Boolean,
     maxWidth: Dp,
+    onImageClick: ((String) -> Unit)?,
     isFailed: Boolean,
     isWaiting: Boolean,
     onRetry: (() -> Unit)?,
@@ -89,10 +100,13 @@ internal fun MessageBubble(
         if (isWaiting && !isUser) {
             WaitingBubble()
         } else {
+            val messageImageClickHandler = if (onRetry == null) onImageClick else null
             RegularBubble(
                 content = content,
                 mediaUrls = mediaUrls,
                 isUser = isUser,
+                onImageClick = messageImageClickHandler,
+                maxWidth = maxWidth,
                 isFailed = isFailed,
             )
         }
@@ -113,6 +127,8 @@ private fun RegularBubble(
     content: String?,
     mediaUrls: List<String>,
     isUser: Boolean,
+    onImageClick: ((String) -> Unit)?,
+    maxWidth: Dp,
     isFailed: Boolean,
 ) {
     val onlyMedia = content.isNullOrBlank()
@@ -146,7 +162,11 @@ private fun RegularBubble(
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
             )
         }
-        MessageImages(mediaUrls)
+        MessageImages(
+            mediaUrls = mediaUrls,
+            onImageClick = onImageClick,
+            maxWidth = maxWidth,
+        )
     }
 }
 
@@ -201,7 +221,12 @@ private fun MessageInBubble(
     isOnlyMedia: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    val backgroundColor = if (isUser) YralColors.Pink300 else YralColors.Neutral900
+    val backgroundColor =
+        when {
+            isOnlyMedia -> Color.Transparent
+            isUser -> YralColors.Pink300
+            else -> YralColors.Neutral900
+        }
     val bubbleTipRes = if (isUser) DesignRes.drawable.ic_bubble_tip_pink else DesignRes.drawable.ic_bubble_tip_black
     val bubbleTipAlignment = if (isUser) BottomEnd else BottomStart
     val bubblePadding: PaddingValues =
@@ -259,23 +284,86 @@ private fun MessageInBubble(
 }
 
 @Composable
-private fun MessageImages(mediaUrls: List<String>) {
+private fun MessageImages(
+    mediaUrls: List<String>,
+    onImageClick: ((String) -> Unit)?,
+    maxWidth: Dp,
+) {
     if (mediaUrls.isEmpty()) return
 
     // If you ever need better perf, switch to LazyRow/Column or a grid.
     mediaUrls.forEach { imageUrl ->
-        val localFilePath = localChatImageFilePathOrNull(imageUrl)
-        YralAsyncImage(
-            imageUrl = localFilePath?.let { getLocalImageModel(it) } ?: imageUrl,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(4.dp)
-                    .height(CHAT_MEDIA_IMAGE_SIZE),
-            contentScale = ContentScale.Crop,
-            shape = RoundedCornerShape(6.dp),
+        ChatMessageImage(
+            imageUrl = imageUrl,
+            onImageClick = onImageClick,
+            maxWidth = maxWidth,
         )
     }
+}
+
+@Composable
+private fun ChatMessageImage(
+    imageUrl: String,
+    onImageClick: ((String) -> Unit)?,
+    maxWidth: Dp,
+) {
+    val density = LocalDensity.current
+    val imageModel = rememberChatImageModel(imageUrl)
+    var imageAspectRatio by remember(imageUrl) { mutableStateOf(CHAT_MEDIA_DEFAULT_ASPECT_RATIO) }
+    var isLoading by remember(imageUrl) { mutableStateOf(true) }
+    val imageContainerSize =
+        with(density) {
+            resolveChatMediaContainerSize(
+                maxWidthPx = maxWidth.toPx(),
+                imageAspectRatio = imageAspectRatio,
+                minHeightPx = CHAT_MEDIA_MIN_HEIGHT.toPx(),
+                maxHeightPx = CHAT_MEDIA_MAX_HEIGHT.toPx(),
+            )
+        }
+    val imageModifier =
+        with(density) {
+            Modifier
+                .width(imageContainerSize.widthPx.toDp())
+                .height(imageContainerSize.heightPx.toDp())
+        }.clip(RoundedCornerShape(6.dp))
+            .let { baseModifier ->
+                if (onImageClick != null) {
+                    baseModifier.clickable { onImageClick(imageUrl) }
+                } else {
+                    baseModifier
+                }
+            }
+
+    Box(
+        modifier = imageModifier,
+        contentAlignment = Alignment.Center,
+    ) {
+        AsyncImage(
+            model = imageModel,
+            contentDescription = "image",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Fit,
+            onState = { state ->
+                isLoading = state !is AsyncImagePainter.State.Success && state !is AsyncImagePainter.State.Error
+                if (state is AsyncImagePainter.State.Success) {
+                    resolveChatMediaAspectRatio(
+                        imageWidthPx = state.painter.intrinsicSize.width,
+                        imageHeightPx = state.painter.intrinsicSize.height,
+                    )?.let { imageAspectRatio = it }
+                }
+            },
+        )
+
+        if (isLoading) {
+            YralLoader()
+        }
+    }
+}
+
+@Composable
+internal fun rememberChatImageModel(imageUrl: String): Any {
+    val localFilePath = localChatImageFilePathOrNull(imageUrl)
+    return localFilePath?.let { getLocalImageModel(it) } ?: imageUrl
 }
 
 internal fun localChatImageFilePathOrNull(imageUrl: String): String? =
