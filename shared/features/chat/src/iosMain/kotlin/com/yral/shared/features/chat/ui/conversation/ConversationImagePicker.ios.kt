@@ -278,7 +278,7 @@ private fun UIImage.encodedAsChatJpeg() =
                 ?.takeIf { data -> data.length.toLong() <= CHAT_IMAGE_MAX_UPLOAD_BYTES }
         } ?: UIImageJPEGRepresentation(this, CHAT_IMAGE_JPEG_QUALITIES.last())
 
-private const val CHAT_IMAGE_MAX_DIMENSION_PX = 1600.0
+private const val CHAT_IMAGE_MAX_DIMENSION_PX = 1920.0
 private const val CHAT_IMAGE_MAX_UPLOAD_BYTES = 2L * 1024L * 1024L
 private const val CHAT_IMAGE_JPEG_QUALITY_HIGH = 0.85
 private const val CHAT_IMAGE_JPEG_QUALITY_MEDIUM = 0.75
