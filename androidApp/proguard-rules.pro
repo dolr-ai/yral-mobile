@@ -17,5 +17,8 @@
 -keep class com.google.android.gms.ads.identifier.** { *; }
 
 # Keep shared error type names readable in Crashlytics headers.
+-keepnames class com.yral.** extends java.lang.Throwable
+-keepnames class io.ktor.** extends java.lang.Throwable
+-keepnames class kotlinx.coroutines.** extends java.lang.Throwable
 -keepnames class com.yral.shared.core.exceptions.**
 -keepnames class com.yral.shared.http.exception.**

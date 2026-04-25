@@ -28,7 +28,6 @@ import com.yral.shared.features.auth.YralFBAuthException
 import com.yral.shared.features.root.analytics.RootTelemetry
 import com.yral.shared.features.root.domain.DailyStreakLaunchEvaluator
 import com.yral.shared.features.root.domain.DailyStreakLaunchResult
-import com.yral.shared.features.subscriptions.domain.FetchProductsUseCase
 import com.yral.shared.features.subscriptions.domain.QueryPurchaseUseCase
 import com.yral.shared.iap.PurchaseResult
 import com.yral.shared.iap.core.model.ProductId
@@ -102,7 +101,6 @@ class RootViewModel(
     private val utmAttributionStore: UtmAttributionStore,
     private val fetchDailyStreakUseCase: FetchDailyStreakUseCase,
     private val dailyStreakLaunchEvaluator: DailyStreakLaunchEvaluator,
-    private val fetchProductsUseCase: FetchProductsUseCase,
     private val queryPurchaseUseCase: QueryPurchaseUseCase,
     private val getUserProfileDetailsV7UseCase: GetUserProfileDetailsV7UseCase,
 ) : ViewModel() {
@@ -211,9 +209,6 @@ class RootViewModel(
                 rootTelemetry.onFirstAppLaunch(now)
                 preferences.putString(PrefKeys.FIRST_APP_OPEN_DATE_TIME.name, now.toString())
             }
-        }
-        coroutineScope.launch {
-            fetchYralProAvailability()
         }
     }
 
@@ -329,17 +324,6 @@ class RootViewModel(
                     Logger.e("Fetch Balance error - $e")
                     crashlyticsManager.recordException(e, ExceptionType.AUTH)
                 }
-            }
-    }
-
-    private suspend fun fetchYralProAvailability() {
-        fetchProductsUseCase(listOf(ProductId.YRAL_PRO))
-            .onSuccess { products ->
-                val isAvailable = products.any { it.id == ProductId.YRAL_PRO.productId }
-                sessionManager.updateYralProAvailability(isAvailable)
-                Logger.d("SubscriptionX") { "YRAL Pro available: $isAvailable" }
-            }.onFailure { error ->
-                Logger.e("SubscriptionX", error) { "Failed to fetch IAP products for availability check" }
             }
     }
 

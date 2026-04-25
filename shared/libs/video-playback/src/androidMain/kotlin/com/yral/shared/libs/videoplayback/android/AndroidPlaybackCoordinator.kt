@@ -165,15 +165,33 @@ private class AndroidPlaybackCoordinator(
             }
 
             override fun onPlayerError(error: PlaybackException) {
-                val index = activeSlot.index ?: return
-                val item = feed.getOrNull(index) ?: return
-                reporter.playbackError(
-                    id = item.id,
-                    index = index,
-                    category = error.errorCodeName,
-                    code = error.errorCode,
-                    message = error.message,
-                )
+                val index = activeSlot.index
+                val item = index?.let { feed.getOrNull(it) }
+                if (index != null && item != null) {
+                    val isFirstFramePending = firstFramePendingIndex == index
+                    when {
+                        !released || error.isDecoderInitFailure() -> {
+                            reporter.playbackError(
+                                id = item.id,
+                                index = index,
+                                category = error.errorCodeName,
+                                code = error.errorCode,
+                                message = error.message,
+                            )
+                        }
+
+                        error.isTimeout() && isFirstFramePending -> {
+                            reporter.playbackErrorAfterRelease(
+                                id = item.id,
+                                index = index,
+                                category = error.errorCodeName,
+                                code = error.errorCode,
+                                firstFramePending = true,
+                                message = error.message,
+                            )
+                        }
+                    }
+                }
             }
 
             @Suppress("ReturnCount")
@@ -226,7 +244,7 @@ private class AndroidPlaybackCoordinator(
                 val mediaItem = exception.mediaItem
                 val index = mediaIndexById[mediaItem.mediaId] ?: return
                 val descriptor = feed.getOrNull(index) ?: return
-                reporter.preloadCanceled(descriptor.id, index, "error")
+                reporter.preloadCanceled(descriptor.id, index, "error", exception)
             }
         }
 
@@ -734,3 +752,8 @@ private class AndroidPlaybackCoordinator(
         }
     }
 }
+
+@Suppress("MaxLineLength")
+private fun PlaybackException.isDecoderInitFailure(): Boolean = errorCode == PlaybackException.ERROR_CODE_DECODER_INIT_FAILED
+
+private fun PlaybackException.isTimeout(): Boolean = errorCode == PlaybackException.ERROR_CODE_TIMEOUT

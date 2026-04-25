@@ -201,7 +201,7 @@ internal object AndroidChatImagePreprocessor {
         }
 }
 
-internal const val CHAT_IMAGE_MAX_DIMENSION_PX = 1600
+internal const val CHAT_IMAGE_MAX_DIMENSION_PX = 1920
 internal const val CHAT_IMAGE_MAX_UPLOAD_BYTES = 2L * 1024L * 1024L
 internal val CHAT_IMAGE_JPEG_QUALITIES =
     listOf(

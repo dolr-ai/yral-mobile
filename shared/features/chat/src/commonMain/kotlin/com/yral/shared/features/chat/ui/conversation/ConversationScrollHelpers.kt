@@ -218,7 +218,15 @@ internal fun estimateMessageHeight(
     val charsPerLine = (availableWidth / charWidth).toInt().coerceAtLeast(1)
     val estimatedLines = (content.length / charsPerLine.toFloat()).toInt() + 1
 
-    val mediaHeight = with(density) { CHAT_MEDIA_IMAGE_SIZE.toPx() + 8.dp.toPx() }
+    val mediaHeight =
+        with(density) {
+            resolveChatMediaContainerHeight(
+                containerWidthPx = screenWidth * MESSAGE_MAX_WIDTH_RATIO,
+                imageAspectRatio = null,
+                minHeightPx = CHAT_MEDIA_MIN_HEIGHT.toPx(),
+                maxHeightPx = CHAT_MEDIA_MAX_HEIGHT.toPx(),
+            ) + 8.dp.toPx()
+        }
 
     val estimatedHeight = ((estimatedLines * lineHeightPx) + (mediaUrls.size * mediaHeight) + verticalPadding).toInt()
     return estimatedHeight.coerceAtLeast(with(density) { 36.dp.toPx() }.toInt())

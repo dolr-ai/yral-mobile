@@ -10,6 +10,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -66,11 +67,13 @@ fun YRALReelPlayer(
             initialPage = initialPage.coerceAtMost(pageCount - 1),
         )
 
+    val currentOnPageLoaded by rememberUpdatedState(onPageLoaded)
+
     LaunchedEffect(pagerState, visibleReels) {
         snapshotFlow { pagerState.currentPage }
             .distinctUntilChanged()
             .collect { page ->
-                onPageLoaded(page)
+                currentOnPageLoaded(page)
             }
     }
 
@@ -150,14 +153,19 @@ internal fun scrollingFeedSurfaceType(): VideoSurfaceType = VideoSurfaceType.Tex
 private fun rememberPlaybackEventReporter(
     didVideoEnd: () -> Unit,
     recordTime: (Int, Int) -> Unit,
-): PlaybackEventReporter =
-    remember(didVideoEnd, recordTime) {
+): PlaybackEventReporter {
+    // Stable references that always call the latest callback without changing identity.
+    // This prevents the reporter (and downstream coordinator) from being recreated.
+    val currentDidVideoEnd by rememberUpdatedState(didVideoEnd)
+    val currentRecordTime by rememberUpdatedState(recordTime)
+
+    return remember {
         object : PlaybackEventReporter {
             override fun playbackEnded(
                 id: String,
                 index: Int,
             ) {
-                didVideoEnd()
+                currentDidVideoEnd()
             }
 
             override fun playbackProgress(
@@ -167,7 +175,7 @@ private fun rememberPlaybackEventReporter(
                 durationMs: Long,
             ) {
                 if (positionMs >= 0 && durationMs > 0) {
-                    recordTime(positionMs.toInt(), durationMs.toInt())
+                    currentRecordTime(positionMs.toInt(), durationMs.toInt())
                 }
             }
 
@@ -231,6 +239,7 @@ private fun rememberPlaybackEventReporter(
                 id: String,
                 index: Int,
                 reason: String,
+                throwable: Throwable?,
             ) = Unit
             override fun cacheHit(
                 id: String,
@@ -257,3 +266,4 @@ private fun rememberPlaybackEventReporter(
             ) = Unit
         }
     }
+}

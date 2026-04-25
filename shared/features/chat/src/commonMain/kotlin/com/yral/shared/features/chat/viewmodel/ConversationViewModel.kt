@@ -322,7 +322,7 @@ class ConversationViewModel(
                             )
                         }
                     } else {
-                        migrateLegacyTaraSubscription(influencerId)
+                        retryUnconsumedDailyChatAccess(influencerId)
                     }
                 }.onFailure { error ->
                     Logger.e("SubscriptionX", error) { "checkChatAccess failed" }
@@ -332,46 +332,26 @@ class ConversationViewModel(
         }
     }
 
-    @Suppress("DEPRECATION", "LongMethod", "CyclomaticComplexMethod")
-    private suspend fun migrateLegacyTaraSubscription(botId: String) {
+    private suspend fun retryUnconsumedDailyChatAccess(botId: String) {
         runSuspendCatching {
             iapManager.restorePurchases()
         }.onSuccess { restoreResult ->
             val purchases = restoreResult.getOrNull()?.purchases.orEmpty()
-
-            // Check for legacy tara_subscription (active subscription)
-            val legacyPurchase =
-                purchases.firstOrNull { purchase ->
-                    purchase.productId == ProductId.TARA_SUBSCRIPTION &&
-                        purchase.state == PurchaseState.PURCHASED &&
-                        purchase.isActiveSubscription()
-                }
-
-            // Check for unconsumed daily_chat (failed grant from previous session)
             val unconsumedDailyChat =
                 purchases.firstOrNull { purchase ->
                     purchase.productId == ProductId.DAILY_CHAT &&
                         purchase.state == PurchaseState.PURCHASED
                 }
 
-            when {
-                legacyPurchase != null && legacyPurchase.purchaseToken != null -> {
-                    Logger.d("SubscriptionX") { "Found legacy tara_subscription, migrating..." }
-                    retryGrantAccess(botId, legacyPurchase, ProductId.TARA_SUBSCRIPTION.productId)
-                }
-
-                unconsumedDailyChat != null && unconsumedDailyChat.purchaseToken != null -> {
-                    Logger.d("SubscriptionX") { "Found unconsumed daily_chat, retrying grant..." }
-                    retryGrantAccess(botId, unconsumedDailyChat, ProductId.DAILY_CHAT.productId)
-                }
-
-                else -> {
-                    _viewState.update { it.copy(isChatAccessLoading = false) }
-                    fetchInfluencerSubscriptionProducts()
-                }
+            if (unconsumedDailyChat?.purchaseToken != null) {
+                Logger.d("SubscriptionX") { "Found unconsumed daily_chat, retrying grant..." }
+                retryGrantAccess(botId, unconsumedDailyChat, ProductId.DAILY_CHAT.productId)
+            } else {
+                _viewState.update { it.copy(isChatAccessLoading = false) }
+                fetchInfluencerSubscriptionProducts()
             }
         }.onFailure {
-            Logger.e("SubscriptionX", it) { "Legacy migration restore failed" }
+            Logger.e("SubscriptionX", it) { "Daily Chat restore failed" }
             _viewState.update { it.copy(isChatAccessLoading = false) }
             fetchInfluencerSubscriptionProducts()
         }
@@ -444,15 +424,7 @@ class ConversationViewModel(
         }
     }
 
-    @Suppress("DEPRECATION")
     private fun fetchInfluencerSubscriptionProducts() {
-        // Diagnostic: check if tara_subscription also returns empty on this app
-        viewModelScope.launch {
-            Logger.d("SubscriptionX") { "DEBUG: Also querying tara_subscription to diagnose billing" }
-            fetchProductsUseCase(listOf(ProductId.TARA_SUBSCRIPTION))
-                .onSuccess { Logger.d("SubscriptionX") { "DEBUG: tara_subscription returned: $it" } }
-                .onFailure { Logger.e("SubscriptionX", it) { "DEBUG: tara_subscription failed" } }
-        }
         viewModelScope.launch {
             fetchProductsUseCase(listOf(ProductId.DAILY_CHAT))
                 .onSuccess { products ->
@@ -464,7 +436,6 @@ class ConversationViewModel(
                     _viewState.update {
                         it.copy(
                             isInfluencerSubscriptionAvailableToPurchase = influencerAvailable,
-                            isYralProAvailableToPurchase = sessionManager.isYralProAvailable ?: false,
                             influencerSubscriptionFormattedPrice = influencerOfferPrice,
                         )
                     }
@@ -472,7 +443,6 @@ class ConversationViewModel(
                     _viewState.update {
                         it.copy(
                             isInfluencerSubscriptionAvailableToPurchase = false,
-                            isYralProAvailableToPurchase = sessionManager.isYralProAvailable ?: false,
                             influencerSubscriptionFormattedPrice = null,
                         )
                     }
@@ -843,7 +813,6 @@ class ConversationViewModel(
                 isSubscriptionEnabled = current.isSubscriptionEnabled,
                 isInfluencerSubscriptionPurchasedAndVerified = false,
                 isInfluencerSubscriptionAvailableToPurchase = current.isInfluencerSubscriptionAvailableToPurchase,
-                isYralProAvailableToPurchase = current.isYralProAvailableToPurchase,
                 isInfluencerSubscriptionPurchaseInProgress = false,
                 influencerSubscriptionFormattedPrice = current.influencerSubscriptionFormattedPrice,
                 totalHistoryMessageCount = 0,
@@ -1241,7 +1210,6 @@ data class ConversationViewState(
     val isSubscriptionEnabled: Boolean,
     val isInfluencerSubscriptionPurchasedAndVerified: Boolean = false,
     val isInfluencerSubscriptionAvailableToPurchase: Boolean = false,
-    val isYralProAvailableToPurchase: Boolean = false,
     val isInfluencerSubscriptionPurchaseInProgress: Boolean = false,
     val influencerSubscriptionFormattedPrice: String? = null,
     val totalHistoryMessageCount: Int = 0,

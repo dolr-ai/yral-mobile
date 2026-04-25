@@ -53,6 +53,7 @@ import com.yral.shared.app.ui.screens.feed.FeedScaffoldScreen
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent
 import com.yral.shared.app.ui.screens.home.nav.HomeComponent.SlotChild
 import com.yral.shared.app.ui.screens.home.nav.getWalletConfig
+import com.yral.shared.app.ui.screens.profile.LockedProfileStackScreen
 import com.yral.shared.app.ui.screens.profile.ProfileScreen
 import com.yral.shared.app.ui.screens.uploadVideo.UploadVideoRootScreen
 import com.yral.shared.core.session.SessionKey
@@ -204,7 +205,13 @@ private fun HomeScreenContent(
         }
     val accountViewModel = koinViewModel<AccountsViewModel>(key = "account-$sessionKey")
     val chatWallViewModel = koinViewModel<ChatWallViewModel>(key = "chatWall-$sessionKey")
-    val profileVideos = getProfileVideos(profileViewModel, sessionKey, updateProfileVideosCount)
+    val homeState by component.homeViewModel.state.collectAsStateWithLifecycle()
+    val profileVideos =
+        if (homeState.isSocialSignedIn) {
+            getProfileVideos(profileViewModel, sessionKey, updateProfileVideosCount)
+        } else {
+            null
+        }
 
     val alertsPermissionController = rememberAlertsPermissionController(accountViewModel)
     NotificationPermissionObserver(alertsPermissionController, accountViewModel)
@@ -239,7 +246,6 @@ private fun HomeScreenContent(
             }
 
             is HomeComponent.Child.Wallet -> {
-                val homeState by component.homeViewModel.state.collectAsStateWithLifecycle()
                 val walletLoginState =
                     rememberLoginInfo(requestLoginFactory = component.requestLoginFactory)
                 WalletScreen(
@@ -263,13 +269,28 @@ private fun HomeScreenContent(
             }
 
             is HomeComponent.Child.Profile -> {
-                profileVideos?.let {
-                    ProfileScreen(
+                if (homeState.isSocialSignedIn) {
+                    profileVideos?.let {
+                        ProfileScreen(
+                            component = child.component,
+                            profileViewModel = profileViewModel,
+                            accountsViewModel = accountViewModel,
+                            profileVideos = profileVideos,
+                            onAlertsToggleRequest = alertsPermissionController.toggle,
+                        )
+                    }
+                } else {
+                    LockedProfileStackScreen(
                         component = child.component,
-                        profileViewModel = profileViewModel,
+                        modifier = Modifier.fillMaxSize(),
                         accountsViewModel = accountViewModel,
-                        profileVideos = profileVideos,
                         onAlertsToggleRequest = alertsPermissionController.toggle,
+                        onLoginClick = {
+                            component.homeViewModel.showSignupPrompt(
+                                show = true,
+                                pageName = SignupPageName.PROFILE,
+                            )
+                        },
                     )
                 }
             }
