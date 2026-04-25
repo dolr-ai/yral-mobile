@@ -26,6 +26,9 @@ configureCocoapods {
         version = "18.0.0"
         extraOpts += listOf("-compiler-option", "-fmodules")
     }
+    pod("SnowplowTracker") {
+        version = "~> 6.1"
+    }
 }
 
 kotlin {
