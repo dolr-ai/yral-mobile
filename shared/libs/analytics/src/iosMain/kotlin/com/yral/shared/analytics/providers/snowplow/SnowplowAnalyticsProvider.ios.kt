@@ -21,40 +21,44 @@ actual class SnowplowAnalyticsProvider actual constructor(
 ) : AnalyticsProvider {
     override val name: String = "snowplow"
 
-    private val tracker = SPSnowplow.createTrackerWithNamespace(
-        "yral-mobile",
-        network = SPNetworkConfiguration(
-            "https://${AppConfigurations.SNOWPLOW_COLLECTOR_URL}",
-            method = SPHttpMethodPost,
-        ),
-        configurations = listOf(
-            SPTrackerConfiguration().apply {
-                setAppId("yral-mobile")
-                setDevicePlatform(SPDevicePlatformMobile)
-                setBase64Encoding(false)
-                setLogLevel(SPLogLevelOff)
-                setSessionContext(true)
-                setPlatformContext(true)
-                setApplicationContext(true)
-                setLifecycleAutotracking(true)
-                setScreenViewAutotracking(true)
-                setScreenEngagementAutotracking(true)
-                setInstallAutotracking(true)
-                setExceptionAutotracking(true)
-                setDiagnosticAutotracking(false)
-            },
-        ),
-    )
+    private val tracker =
+        SPSnowplow.createTrackerWithNamespace(
+            "yral-mobile",
+            network =
+                SPNetworkConfiguration(
+                    "https://${AppConfigurations.SNOWPLOW_COLLECTOR_URL}",
+                    method = SPHttpMethodPost,
+                ),
+            configurations =
+                listOf(
+                    SPTrackerConfiguration().apply {
+                        setAppId("yral-mobile")
+                        setDevicePlatform(SPDevicePlatformMobile)
+                        setBase64Encoding(false)
+                        setLogLevel(SPLogLevelOff)
+                        setSessionContext(true)
+                        setPlatformContext(true)
+                        setApplicationContext(true)
+                        setLifecycleAutotracking(true)
+                        setScreenViewAutotracking(true)
+                        setScreenEngagementAutotracking(true)
+                        setInstallAutotracking(true)
+                        setExceptionAutotracking(true)
+                        setDiagnosticAutotracking(false)
+                    },
+                ),
+        )
 
     override fun shouldTrackEvent(event: EventData): Boolean = eventFilter(event)
 
     override fun trackEvent(event: EventData) {
         val properties = mapConverter.toMap(event)
         val propertyJson = buildPropertyJson(properties)
-        val snowplowEvent = SPStructured(
-            category = event.featureName,
-            action = event.event,
-        ).property(propertyJson)
+        val snowplowEvent =
+            SPStructured(
+                category = event.featureName,
+                action = event.event,
+            ).property(propertyJson)
         tracker?.track(snowplowEvent)
     }
 
