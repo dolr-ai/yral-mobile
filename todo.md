@@ -15,3 +15,4 @@ user_post_service
 Can you help me figure out this entire situation?
 
 Verify if the sonatype repository is still being used for any dependencies and if not, remove it from the build files.
+- Remove Roboelectric and corresponding tests from the codebase. We will either test logic via unit tests or test end to end flows via our e2e test pipeline
