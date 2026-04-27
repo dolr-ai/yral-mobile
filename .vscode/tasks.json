@@ -2,144 +2,38 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Android: ktlint",
+            "label": "Run All Checks",
             "type": "shell",
-            "command": "./gradlew ktlintCheck --console=plain",
-            "options": {
-                "envFile": "${workspaceFolder}/.env"
-            },
-            "presentation": {
-                "reveal": "always",
-                "panel": "shared",
-                "group": "android-checks"
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "Android: detekt",
-            "type": "shell",
-            "command": "./gradlew detekt reportMerge --continue --console=plain",
-            "options": {
-                "envFile": "${workspaceFolder}/.env"
-            },
-            "presentation": {
-                "reveal": "always",
-                "panel": "shared",
-                "group": "android-checks"
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "Android: tests",
-            "type": "shell",
-            "command": "./gradlew test --console=plain",
-            "options": {
-                "envFile": "${workspaceFolder}/.env"
-            },
-            "presentation": {
-                "reveal": "always",
-                "panel": "shared",
-                "group": "android-checks"
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "Android Checks",
-            "dependsOn": [
-                "Android: ktlint",
-                "Android: detekt",
-                "Android: tests"
-            ],
-            "dependsOrder": "sequence",
+            "command": "bash checks.sh",
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "problemMatcher": []
-        },
-        {
-            "label": "iOS: Pin CocoaPods bin",
-            "type": "shell",
-            "command": "grep -q 'kotlin.apple.cocoapods.bin' local.properties || printf 'kotlin.apple.cocoapods.bin=%s\\n' \"$(which pod)\" >> local.properties",
             "presentation": {
                 "reveal": "always",
-                "panel": "shared",
-                "group": "ios-checks"
+                "panel": "shared"
             },
             "problemMatcher": []
         },
         {
-            "label": "iOS: Build KMM framework",
+            "label": "Kafka: port-forward",
             "type": "shell",
-            "command": "./gradlew :iosSharedUmbrella:podInstall --stacktrace",
-            "options": {
-                "envFile": "${workspaceFolder}/.env"
-            },
-            "presentation": {
-                "reveal": "always",
-                "panel": "shared",
-                "group": "ios-checks"
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "iOS: pod install",
-            "type": "shell",
-            "command": "pod install",
-            "options": {
-                "cwd": "${workspaceFolder}/iosApp"
+            "command": "bash checks.sh kafka_port_forward",
+            "isBackground": true,
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "."
+                },
+                "background": {
+                    "activeOnStart": false,
+                    "beginsPattern": "Forwarding from",
+                    "endsPattern": "never-match-sentinel"
+                }
             },
             "presentation": {
                 "reveal": "always",
-                "panel": "shared",
-                "group": "ios-checks"
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "iOS: SwiftLint",
-            "type": "shell",
-            "command": "swiftlint",
-            "options": {
-                "cwd": "${workspaceFolder}/iosApp"
-            },
-            "presentation": {
-                "reveal": "always",
-                "panel": "shared",
-                "group": "ios-checks"
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "iOS: xcodebuild test",
-            "type": "shell",
-            "command": "SIM_NAME=$(xcrun simctl list devices available | grep -m 1 'iPhone' | sed 's/^[[:space:]]*//' | sed 's/ (.*//' ) && set -o pipefail && xcodebuild test -workspace iosApp.xcworkspace -scheme iosApp -destination \"platform=iOS Simulator,name=$SIM_NAME\" -configuration Debug -test-timeouts-enabled YES -maximum-test-execution-time-allowance 120 CODE_SIGNING_ALLOWED=NO ENABLE_USER_SCRIPT_SANDBOXING=NO | xcbeautify",
-            "options": {
-                "cwd": "${workspaceFolder}/iosApp",
-                "envFile": "${workspaceFolder}/.env"
-            },
-            "presentation": {
-                "reveal": "always",
-                "panel": "shared",
-                "group": "ios-checks"
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "iOS Checks",
-            "dependsOn": [
-                "iOS: Pin CocoaPods bin",
-                "iOS: Build KMM framework",
-                "iOS: pod install",
-                "iOS: SwiftLint",
-                "iOS: xcodebuild test"
-            ],
-            "dependsOrder": "sequence",
-            "group": {
-                "kind": "test",
-                "isDefault": false
-            },
-            "problemMatcher": []
+                "panel": "dedicated"
+            }
         }
     ]
 }

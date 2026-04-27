@@ -1,0 +1,14 @@
+appId: ${APP_ID}
+---
+- launchApp
+- waitForAnimationToEnd
+- assertVisible:
+    id: "video_feed_pager"
+- waitForAnimationToEnd
+- swipe:
+    direction: UP
+- waitForAnimationToEnd
+- swipe:
+    direction: UP
+- waitForAnimationToEnd
+- takeScreenshot: feed-scroll-result
