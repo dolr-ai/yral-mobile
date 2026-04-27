@@ -2140,6 +2140,9 @@ enum class MenuCtaType {
     @SerialName("log_out")
     LOG_OUT,
 
+    @SerialName("settings")
+    SETTINGS,
+
     @SerialName("delete_account")
     DELETE_ACCOUNT,
 
