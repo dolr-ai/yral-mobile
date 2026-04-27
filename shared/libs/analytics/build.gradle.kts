@@ -9,6 +9,14 @@ plugins {
 
 applyCocoapodsIfApple()
 
+val firebaseIosSdkVersion =
+    libs
+        .versions
+        .firebase
+        .ios
+        .sdk
+        .get()
+
 configureCocoapods {
     version = "1.0"
     summary = "Analytics module with Firebase, Mixpanel and OneSignal"
@@ -26,6 +34,9 @@ configureCocoapods {
         version = "18.0.0"
         extraOpts += listOf("-compiler-option", "-fmodules")
     }
+    pod("FirebaseAnalytics") {
+        version = firebaseIosSdkVersion
+    }
 }
 
 kotlin {
@@ -39,7 +50,6 @@ kotlin {
             implementation(projects.shared.core)
             implementation(projects.shared.libs.koin)
             implementation(projects.shared.libs.crashlytics)
-            api(libs.gitlive.firebase.kotlin.anlaytics)
             implementation(projects.shared.libs.preferences)
             implementation(projects.shared.rust.service)
             implementation(projects.shared.libs.arch)
@@ -47,6 +57,8 @@ kotlin {
             implementation(projects.shared.libs.branch)
         }
         androidMain.dependencies {
+            implementation(project.dependencies.platform(libs.firebase.bom))
+            implementation(libs.firebase.analytics)
             implementation(libs.facebook.sdk.android.core)
             implementation(libs.mixpanel.android)
             implementation(libs.mixpanel.session.replay.android)

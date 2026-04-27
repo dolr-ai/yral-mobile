@@ -66,7 +66,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(FlowPreview::class)
 @Suppress("TooManyFunctions", "LongParameterList", "LargeClass")
@@ -97,6 +96,8 @@ class FeedViewModel(
         private const val SUFFICIENT_NEW_REQUIRED = 10
         const val SIGN_UP_PAGE = 9
         private const val PAGER_STATE_REFRESH_BUFFER_MS = 100L
+        private const val FEED_CACHE_SAVE_DEBOUNCE_MS = 1_000L
+        private const val ONBOARDING_STEP_DISMISS_DELAY_MS = 500L
         const val FOLLOW_NUDGE_PAGE = 5
     }
 
@@ -168,7 +169,7 @@ class FeedViewModel(
             _state
                 .distinctUntilChanged { old, new ->
                     old.feedDetails == new.feedDetails && old.maxPageReached == new.maxPageReached
-                }.debounce(1000.milliseconds) // Debounce to avoid too frequent saves
+                }.debounce(FEED_CACHE_SAVE_DEBOUNCE_MS)
                 .collect { saveCacheToPreferences() }
         }
         // Track onboarding steps only once when they're first shown
@@ -1086,7 +1087,7 @@ class FeedViewModel(
         dismissOnboardingJob?.cancel()
         dismissOnboardingJob =
             viewModelScope.launch {
-                delay(500.milliseconds)
+                delay(ONBOARDING_STEP_DISMISS_DELAY_MS)
                 val currentStep = _state.value.currentOnboardingStep
                 val nextStep =
                     when (currentStep) {

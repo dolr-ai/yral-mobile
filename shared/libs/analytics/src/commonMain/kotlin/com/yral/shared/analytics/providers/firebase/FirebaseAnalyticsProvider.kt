@@ -4,13 +4,13 @@ import com.yral.shared.analytics.AnalyticsProvider
 import com.yral.shared.analytics.EventToMapConverter
 import com.yral.shared.analytics.User
 import com.yral.shared.analytics.events.EventData
-import dev.gitlive.firebase.analytics.FirebaseAnalytics
 
 class FirebaseAnalyticsProvider(
-    private val firebaseAnalytics: FirebaseAnalytics,
     private val eventFilter: (EventData) -> Boolean = { true },
     private val mapConverter: EventToMapConverter,
 ) : AnalyticsProvider {
+    private val firebaseAnalytics: FirebaseAnalyticsPlatform = createFirebaseAnalyticsPlatform()
+
     override val name: String = "firebase"
 
     override fun shouldTrackEvent(event: EventData): Boolean = eventFilter(event)
@@ -95,3 +95,21 @@ class FirebaseAnalyticsProvider(
         private val validityCheckRegex = Regex("^[a-z]+[a-z0-9_]*\$")
     }
 }
+
+internal interface FirebaseAnalyticsPlatform {
+    fun logEvent(
+        name: String,
+        parameters: Map<String, Any>,
+    )
+
+    fun setUserId(userId: String)
+
+    fun setUserProperty(
+        key: String,
+        value: String,
+    )
+
+    fun resetAnalyticsData()
+}
+
+internal expect fun createFirebaseAnalyticsPlatform(): FirebaseAnalyticsPlatform

@@ -24,10 +24,9 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
 import com.yral.shared.iap.core.model.Purchase as IAPPurchase
 
-private val PURCHASE_TIMEOUT: Duration = 5.minutes
+private val PURCHASE_TIMEOUT: Duration = Duration.parse("5m")
 
 internal class AndroidIAPProvider(
     context: Context,

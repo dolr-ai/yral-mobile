@@ -1,8 +1,9 @@
 package com.yral.featureflag
 
 import com.yral.featureflag.core.FlagGroup
+import com.yral.featureflag.core.FlagResult
+import com.yral.featureflag.core.MutableFeatureFlagProvider
 import com.yral.featureflag.providers.FirebaseRemoteConfigProvider
-import com.yral.shared.testsupport.featureflag.FakeMutableFeatureFlagProvider
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -85,5 +86,25 @@ class FeatureFlagManagerTest {
         assertEquals(2, applied)
         assertEquals("hello", mgr2.get(flagA))
         assertEquals(42, mgr2.get(flagB))
+    }
+}
+
+private class FakeMutableFeatureFlagProvider(
+    override val id: String,
+    override val name: String,
+    private val values: MutableMap<String, String> = mutableMapOf(),
+    override val isRemote: Boolean = false,
+) : MutableFeatureFlagProvider {
+    override fun getRaw(key: String): FlagResult<String> = values[key]?.let { FlagResult.Sourced(it) } ?: FlagResult.NotSet
+
+    override fun setRaw(
+        key: String,
+        value: String,
+    ) {
+        values[key] = value
+    }
+
+    override fun clear(key: String) {
+        values.remove(key)
     }
 }

@@ -9,6 +9,14 @@ plugins {
 
 applyCocoapodsIfApple()
 
+val firebaseIosSdkVersion =
+    libs
+        .versions
+        .firebase
+        .ios
+        .sdk
+        .get()
+
 configureCocoapods {
     version = "1.0"
     summary = "Shared Crashlytics"
@@ -18,7 +26,7 @@ configureCocoapods {
     noPodspec()
 
     pod("FirebaseCrashlytics") {
-        version = "11.14.0"
+        version = firebaseIosSdkVersion
     }
 }
 
@@ -32,7 +40,8 @@ kotlin {
             implementation(libs.touchlab.logger)
         }
         androidMain.dependencies {
-            api(libs.gitlive.firebase.kotlin.crashlytics)
+            implementation(project.dependencies.platform(libs.firebase.bom))
+            api(libs.firebase.crashlytics)
         }
     }
 }

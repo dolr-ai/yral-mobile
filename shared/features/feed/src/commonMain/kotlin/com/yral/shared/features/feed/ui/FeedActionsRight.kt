@@ -54,8 +54,9 @@ import yral_mobile.shared.libs.designsystem.generated.resources.ic_views
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_share_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.pink_gradient_background
-import kotlin.time.Duration.Companion.seconds
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
+
+private const val FEED_TYPE_SELECTOR_COLLAPSE_DELAY_MS = 3_000L
 
 @Suppress("LongMethod")
 @Composable
@@ -205,7 +206,7 @@ private fun FeedToggle(
     var isExpanded by remember { mutableStateOf(false) }
     LaunchedEffect(isExpanded) {
         if (isExpanded) {
-            delay(3.seconds)
+            delay(FEED_TYPE_SELECTOR_COLLAPSE_DELAY_MS)
             isExpanded = false
         }
     }
