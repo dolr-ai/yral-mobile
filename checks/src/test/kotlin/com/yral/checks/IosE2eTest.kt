@@ -1,0 +1,62 @@
+package com.yral.checks
+
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Order
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.EnabledOnOs
+import org.junit.jupiter.api.condition.OS
+import java.io.File
+
+@Order(3)
+@EnabledOnOs(OS.MAC)
+class IosE2eTest {
+    @BeforeEach
+    fun requireLiveDevice() {
+        val booted = runCatching {
+            captureOutput("xcrun", "simctl", "list", "devices").contains("(Booted)")
+        }.getOrDefault(false)
+        assertTrue(booted, "iOS E2E requires a booted simulator")
+    }
+
+    @Test
+    fun `feed scroll delivers events to snowplow-raw`() {
+        val testStartMs = System.currentTimeMillis()
+
+        runMaestroFlow()
+
+        println("Waiting 15s for collector → snowplow-raw delivery...")
+        Thread.sleep(15_000)
+
+        val count = countSnowplowEvents(testStartMs, platformMarker = "iOS")
+        assertTrue(count > 0) { "No snowplow-raw events for iOS since $testStartMs" }
+        println("PASS: $count event(s) for iOS")
+    }
+
+    private fun runMaestroFlow() {
+        val exit = ProcessBuilder(
+            "maestro", "test",
+            "-e", "APP_ID=$appId",
+            "maestro/flows/feed-scroll.yaml",
+        ).directory(repoRoot).inheritIO().start().waitFor()
+        assertEquals(0, exit) { "Maestro flow failed with exit code $exit" }
+    }
+
+    companion object {
+        private const val appId = "com.yral.iosApp.staging"
+
+        @BeforeAll
+        @JvmStatic
+        fun installApp() {
+            val udid = Checks.firstIphoneSimulatorUdid()
+            exec("xcrun", "simctl", "boot", udid) // ignore error if already booted
+            execOrFail("xcrun", "simctl", "bootstatus", udid, "-b")
+            execOrFail(
+                "xcrun", "simctl", "install", "booted",
+                File(repoRoot, "build/DerivedData/Build/Products/Debug-iphonesimulator/iosApp.app").absolutePath,
+            )
+        }
+    }
+}

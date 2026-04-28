@@ -2,21 +2,24 @@ package com.yral.checks
 
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestMethodOrder
+import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.condition.EnabledOnOs
 import org.junit.jupiter.api.condition.OS
 import java.io.File
 
 @Order(1)
+@TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class Checks {
     private val iosAppDir = File(repoRoot, "iosApp")
 
-    @Test
+    @Test @Order(1)
     @EnabledOnOs(OS.MAC)
     fun `ios lint`() {
         execOrFail("swiftlint", dir = iosAppDir)
     }
 
-    @Test
+    @Test @Order(2)
     @EnabledOnOs(OS.MAC)
     fun `ios setup`() {
         val localProps = File(repoRoot, "local.properties")
@@ -27,7 +30,7 @@ class Checks {
         execOrFail("pod", "install", dir = iosAppDir)
     }
 
-    @Test
+    @Test @Order(3)
     @EnabledOnOs(OS.MAC)
     fun `ios unit tests`() {
         execOrFail(
@@ -44,7 +47,7 @@ class Checks {
         )
     }
 
-    @Test
+    @Test @Order(4)
     @EnabledOnOs(OS.MAC)
     fun `ios build simulator app`() {
         execOrFail(
@@ -58,6 +61,34 @@ class Checks {
             "ENABLE_USER_SCRIPT_SANDBOXING=NO",
             dir = iosAppDir,
         )
+    }
+
+    @Test @Order(5)
+    fun `android start emulator`() {
+        if (captureOutput("adb", "devices").lines().count { it.contains("\tdevice") } > 0) {
+            println("Android device already available — skipping emulator start.")
+            return
+        }
+        val avd = captureOutput("emulator", "-list-avds").trim().lines()
+            .firstOrNull { it.isNotBlank() }
+        checkNotNull(avd) { "No AVDs found — create one in Android Studio first." }
+
+        println("Starting emulator: $avd")
+        ProcessBuilder("emulator", "-avd", avd, "-no-audio", "-no-snapshot", "-no-boot-anim")
+            .directory(repoRoot)
+            .start() // background process; emulator outlives this test method
+
+        execOrFail("adb", "wait-for-device")
+
+        val deadline = System.currentTimeMillis() + 5 * 60_000L
+        while (System.currentTimeMillis() < deadline) {
+            if (captureOutput("adb", "shell", "getprop", "sys.boot_completed").trim() == "1") {
+                println("Emulator ready.")
+                return
+            }
+            Thread.sleep(2_000)
+        }
+        error("Emulator did not finish booting within 5 minutes")
     }
 
     companion object {
