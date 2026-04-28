@@ -4,6 +4,7 @@ import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class VideoGenerationTrackerTest {
@@ -104,11 +105,20 @@ class VideoGenerationTrackerTest {
     fun `draft selection request can be consumed`() {
         VideoGenerationTracker.requestDraftsTab()
 
-        assertTrue(VideoGenerationTracker.selectDraftsTab.value)
+        assertEquals(null, VideoGenerationTracker.selectDraftsTab.value?.targetPrincipal)
+        assertFalse(VideoGenerationTracker.selectDraftsTab.value?.refreshDrafts == true)
 
         VideoGenerationTracker.consumeDraftsTabRequest()
 
-        assertFalse(VideoGenerationTracker.selectDraftsTab.value)
+        assertNull(VideoGenerationTracker.selectDraftsTab.value)
+    }
+
+    @Test
+    fun `draft selection request can target a principal`() {
+        VideoGenerationTracker.requestDraftsTab(targetPrincipal = "bot-principal")
+
+        assertEquals("bot-principal", VideoGenerationTracker.selectDraftsTab.value?.targetPrincipal)
+        assertFalse(VideoGenerationTracker.selectDraftsTab.value?.refreshDrafts == true)
     }
 
     @Test
@@ -118,7 +128,8 @@ class VideoGenerationTrackerTest {
         VideoGenerationTracker.onDraftCreatedAndRequestDraftsTab()
 
         assertFalse(VideoGenerationTracker.state.value.isGenerating)
-        assertTrue(VideoGenerationTracker.selectDraftsTab.value)
+        assertEquals(null, VideoGenerationTracker.selectDraftsTab.value?.targetPrincipal)
+        assertTrue(VideoGenerationTracker.selectDraftsTab.value?.refreshDrafts == true)
     }
 
     @Test

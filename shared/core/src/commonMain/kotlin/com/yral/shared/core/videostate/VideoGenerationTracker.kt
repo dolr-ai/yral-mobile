@@ -24,24 +24,29 @@ object VideoGenerationTracker {
             get() = pendingGenerations.isNotEmpty()
     }
 
+    data class DraftsTabRequest(
+        val targetPrincipal: String? = null,
+        val refreshDrafts: Boolean = false,
+    )
+
     private val _state = MutableStateFlow(State())
     val state: StateFlow<State> = _state.asStateFlow()
 
-    private val _selectDraftsTab = MutableStateFlow(false)
-    val selectDraftsTab: StateFlow<Boolean> = _selectDraftsTab.asStateFlow()
+    private val _selectDraftsTab = MutableStateFlow<DraftsTabRequest?>(null)
+    val selectDraftsTab: StateFlow<DraftsTabRequest?> = _selectDraftsTab.asStateFlow()
     private var nextPendingGenerationId = 0L
 
-    fun requestDraftsTab() {
-        _selectDraftsTab.value = true
+    fun requestDraftsTab(targetPrincipal: String? = null) {
+        _selectDraftsTab.value = DraftsTabRequest(targetPrincipal = targetPrincipal)
     }
 
     fun onDraftCreatedAndRequestDraftsTab() {
         onDraftCreated()
-        requestDraftsTab()
+        _selectDraftsTab.value = DraftsTabRequest(refreshDrafts = true)
     }
 
     fun consumeDraftsTabRequest() {
-        _selectDraftsTab.value = false
+        _selectDraftsTab.value = null
     }
 
     fun startGenerating() {

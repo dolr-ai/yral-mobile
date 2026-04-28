@@ -16,6 +16,7 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.utils.generateUsernameFromPrincipal
 import com.yral.shared.core.utils.resolveUsername
+import com.yral.shared.core.videostate.VideoGenerationTracker
 import com.yral.shared.features.aiinfluencer.analytics.AiInfluencerTelemetry
 import com.yral.shared.features.aiinfluencer.domain.models.CreatedInfluencer
 import com.yral.shared.features.aiinfluencer.domain.models.GeneratedInfluencerMetadata
@@ -645,6 +646,7 @@ class AiInfluencerViewModel(
                     profilePicUrl = uploadedAvatarUrl,
                     displayUsername = if (usernameUpdated) usernameForCreateApi else null,
                 )
+                VideoGenerationTracker.requestDraftsTab(targetPrincipal = botPrincipal)
 
                 val starterPrompt = createdInfluencer.starterVideoPrompt
                 if (!starterPrompt.isNullOrBlank()) {
