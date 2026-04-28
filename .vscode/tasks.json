@@ -4,7 +4,10 @@
         {
             "label": "Run All Checks",
             "type": "shell",
-            "command": "bash checks.sh",
+            "command": "./gradlew allChecks",
+            "options": {
+                "cwd": "${workspaceFolder}/apps/yral-mobile"
+            },
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -14,26 +17,6 @@
                 "panel": "shared"
             },
             "problemMatcher": []
-        },
-        {
-            "label": "Kafka: port-forward",
-            "type": "shell",
-            "command": "bash checks.sh kafka_port_forward",
-            "isBackground": true,
-            "problemMatcher": {
-                "pattern": {
-                    "regexp": "."
-                },
-                "background": {
-                    "activeOnStart": false,
-                    "beginsPattern": "Forwarding from",
-                    "endsPattern": "never-match-sentinel"
-                }
-            },
-            "presentation": {
-                "reveal": "always",
-                "panel": "dedicated"
-            }
         }
     ]
 }

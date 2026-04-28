@@ -59,7 +59,10 @@ jobs:
           echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/29.0.14206865" >> $GITHUB_ENV
 
       - name: Install tools
-        run: bash checks.sh install_tools
+        run: |
+          brew install swiftlint cocoapods xcbeautify
+          brew tap mobile-dev-inc/tap
+          brew install mobile-dev-inc/tap/maestro
 
       - name: Configure kubectl
         run: |
@@ -68,64 +71,28 @@ jobs:
 
       - name: Fetch Kafka password
         run: |
-          PASS=$(kubectl get secret kafka-console -n kafka \
+          PASS=$(kubectl get secret ci-e2e-reader -n kafka \
             -o jsonpath='{.data.password}' | base64 -d)
           echo "::add-mask::$PASS"
           echo "KAFKA_PASSWORD=$PASS" >> $GITHUB_ENV
 
       # ══════════════════════════════════════════════════════════════════════
-      # LINT
+      # ALL CHECKS  (lint · unit tests · iOS xcodebuild · Android APK build)
       # ══════════════════════════════════════════════════════════════════════
 
-      - name: Android ktlint
-        run: bash checks.sh android_ktlint
-
-      - name: Android detekt
-        run: bash checks.sh android_detekt
+      - name: Run all checks
+        working-directory: apps/yral-mobile
+        run: ./gradlew allChecks
 
       - name: Upload detekt SARIF
         if: always()
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: build/reports/detekt/merge.sarif
-
-      - name: iOS SwiftLint
-        run: bash checks.sh ios_lint
-
-      # ══════════════════════════════════════════════════════════════════════
-      # SETUP iOS
-      # ══════════════════════════════════════════════════════════════════════
-
-      - name: Pin CocoaPods bin
-        run: bash checks.sh ios_pin_cocoapods
-
-      - name: Build KMM framework
-        run: bash checks.sh ios_build_kmm
-
-      - name: Pod install
-        run: bash checks.sh ios_pod_install
-
-      # ══════════════════════════════════════════════════════════════════════
-      # UNIT TESTS
-      # ══════════════════════════════════════════════════════════════════════
-
-      - name: Android unit tests
-        run: bash checks.sh android_unit_tests
-
-      - name: iOS xcodebuild tests
-        run: bash checks.sh ios_unit_tests
+          sarif_file: apps/yral-mobile/build/reports/detekt/merge.sarif
 
       # ══════════════════════════════════════════════════════════════════════
       # E2E TESTS
       # ══════════════════════════════════════════════════════════════════════
-
-      - name: Port-forward Kafka bootstrap
-        run: |
-          bash checks.sh kafka_port_forward &
-          sleep 3
-
-      - name: Build Android staging debug APK
-        run: bash checks.sh android_build_apk
 
       - name: Android E2E — feed scroll + Kafka assert
         uses: reactivecircus/android-emulator-runner@v2
@@ -133,14 +100,18 @@ jobs:
           api-level: 34
           arch: x86_64
           script: |
-            adb install -r androidApp/build/outputs/apk/staging/debug/androidApp-staging-debug.apk
-            bash checks.sh android_e2e
-
-      - name: Build iOS staging app for simulator
-        run: bash checks.sh ios_build_simulator
-
-      - name: Boot simulator and install iOS staging app
-        run: bash checks.sh ios_boot_install_simulator
+            cd apps/yral-mobile
+            E2E_PLATFORM=android \
+            E2E_APP_ID=com.yral.android \
+            KAFKA_BOOTSTRAP=kafka.yral.com:9092 \
+            KAFKA_PASSWORD=$KAFKA_PASSWORD \
+            ./gradlew :checks:test
 
       - name: iOS E2E — feed scroll + Kafka assert
-        run: bash checks.sh ios_e2e
+        working-directory: apps/yral-mobile
+        run: |
+          E2E_PLATFORM=ios \
+          E2E_APP_ID=com.yral.iosApp.staging \
+          KAFKA_BOOTSTRAP=kafka.yral.com:9092 \
+          KAFKA_PASSWORD=$KAFKA_PASSWORD \
+          ./gradlew :checks:test

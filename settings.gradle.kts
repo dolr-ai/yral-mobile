@@ -94,4 +94,4 @@ include(":shared:features:chat")
 include(":shared:features:subscriptions")
 include(":shared:features:aiInfluencer")
 
-include(":maestro:e2e-assert")
+include(":checks")
