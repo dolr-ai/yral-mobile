@@ -126,11 +126,12 @@ tasks.register("allChecks") {
 }
 
 // Wire lint and unit-test tasks from every non-checks subproject into allChecks.
-// Uses lazy matching so tasks added by plugins after this block are still captured.
+// configureEach (not all) avoids forcing eager realization of every lazy task,
+// which would trigger Crashlytics plugin task-creation failures in androidApp.
 subprojects {
-    tasks.matching { it.name in setOf("ktlintCheck", "detekt", "test", "testDebugUnitTest") }.all {
+    tasks.matching { it.name in setOf("ktlintCheck", "detekt", "test", "testDebugUnitTest") }.configureEach {
         if (project.path != ":checks") {
-            rootProject.tasks.named("allChecks").configure { dependsOn(this@all) }
+            rootProject.tasks.named("allChecks").configure { dependsOn(this@configureEach) }
         }
     }
 }

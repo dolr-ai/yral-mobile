@@ -6,7 +6,7 @@
             "type": "shell",
             "command": "./gradlew allChecks",
             "options": {
-                "cwd": "${workspaceFolder}/apps/yral-mobile"
+                "cwd": "${workspaceFolder}"
             },
             "group": {
                 "kind": "build",

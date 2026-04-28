@@ -14,10 +14,8 @@ tasks.test {
     inputs.property("e2ePlatform", System.getenv("E2E_PLATFORM") ?: "")
     inputs.property("e2eAppId", System.getenv("E2E_APP_ID") ?: "")
 
-    // When invoked via allChecks, run after all upstream tasks complete
-    rootProject.subprojects.filter { it.path != ":checks" }.forEach { proj ->
-        mustRunAfter(proj.tasks.matching { it.name in setOf("ktlintCheck", "detekt", "test", "testDebugUnitTest") })
-    }
+    // The APK and iOS framework must exist before our JUnit tests run them.
+    // Lint and unit-test ordering relative to :checks:test is handled by allChecks.dependsOn.
     mustRunAfter(":androidApp:assembleStagingDebug")
     rootProject.findProject(":iosSharedUmbrella")?.let {
         mustRunAfter(":iosSharedUmbrella:podInstall")
