@@ -23,7 +23,7 @@ class Checks {
     @EnabledOnOs(OS.MAC)
     fun `ios setup`() {
         val localProps = File(repoRoot, "local.properties")
-        if (!localProps.readText().contains("kotlin.apple.cocoapods.bin")) {
+        if (!localProps.exists() || !localProps.readText().contains("kotlin.apple.cocoapods.bin")) {
             val podPath = captureOutput("which", "pod").trim()
             localProps.appendText("\nkotlin.apple.cocoapods.bin=$podPath\n")
         }
@@ -53,7 +53,7 @@ class Checks {
         execOrFail(
             "xcodebuild", "build",
             "-workspace", "iosApp.xcworkspace",
-            "-scheme", "iosApp",
+            "-scheme", "iosAppStaging",
             "-configuration", "Debug",
             "-destination", "platform=iOS Simulator,name=${firstIphoneSimulatorName()}",
             "-derivedDataPath", File(repoRoot, "build/DerivedData").absolutePath,

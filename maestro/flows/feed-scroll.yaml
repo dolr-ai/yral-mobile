@@ -8,4 +8,7 @@ appId: ${APP_ID}
 - swipe:
     direction: UP
 - waitForAnimationToEnd
+- swipe:
+    direction: UP
+- waitForAnimationToEnd
 - takeScreenshot: maestro/build/feed-scroll-result

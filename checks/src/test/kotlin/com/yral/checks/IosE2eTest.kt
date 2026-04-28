@@ -55,7 +55,7 @@ class IosE2eTest {
             execOrFail("xcrun", "simctl", "bootstatus", udid, "-b")
             execOrFail(
                 "xcrun", "simctl", "install", "booted",
-                File(repoRoot, "build/DerivedData/Build/Products/Debug-iphonesimulator/iosApp.app").absolutePath,
+                File(repoRoot, "build/DerivedData/Build/Products/Debug-iphonesimulator/Yral-Staging.app").absolutePath,
             )
         }
     }

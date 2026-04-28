@@ -89,6 +89,7 @@ jobs:
         with:
           api-level: 34
           arch: x86_64
+          disk-size: 12G
           script: |
             cd apps/yral-mobile
             KAFKA_BOOTSTRAP=kafka.yral.com:9092 \
