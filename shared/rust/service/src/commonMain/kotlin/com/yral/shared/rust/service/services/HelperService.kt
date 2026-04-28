@@ -17,17 +17,18 @@ object HelperService {
     suspend fun registerDevice(
         identityData: ByteArray,
         token: String,
+        environment: String,
     ): Result<Unit, DeviceRegistrationError> =
         try {
             // Validate inputs
-            validateDeviceRegistrationInputs(identityData, token).getOrThrow()
+            validateDeviceRegistrationInputs(identityData, token, environment).getOrThrow()
 
             logger.d { "Registering device with token: $token" }
 
             traceApiCall(koinInstance.get(), "registerDevice") {
                 // Call the uniffi generated function
                 com.yral.shared.uniffi.generated
-                    .registerDevice(identityData, token)
+                    .registerDevice(identityData, token, environment)
             }
 
             Ok(Unit)
@@ -44,17 +45,18 @@ object HelperService {
     suspend fun unregisterDevice(
         identityData: ByteArray,
         token: String,
+        environment: String,
     ): Result<Unit, DeviceRegistrationError> =
         try {
             // Validate inputs
-            validateDeviceRegistrationInputs(identityData, token).getOrThrow()
+            validateDeviceRegistrationInputs(identityData, token, environment).getOrThrow()
 
             logger.d { "Unregistering device with token: $token" }
 
             traceApiCall(koinInstance.get(), "unregisterDevice") {
                 // Call the uniffi generated function
                 com.yral.shared.uniffi.generated
-                    .unregisterDevice(identityData, token)
+                    .unregisterDevice(identityData, token, environment)
             }
 
             Ok(Unit)
@@ -146,6 +148,9 @@ sealed class DeviceRegistrationError : Exception() {
     data class InvalidToken(
         override val message: String,
     ) : DeviceRegistrationError()
+    data class InvalidEnvironment(
+        override val message: String,
+    ) : DeviceRegistrationError()
     data class UnknownError(
         override val message: String,
     ) : DeviceRegistrationError()
@@ -154,6 +159,7 @@ sealed class DeviceRegistrationError : Exception() {
 internal fun validateDeviceRegistrationInputs(
     identityData: ByteArray,
     token: String,
+    environment: String,
 ): Result<Unit, DeviceRegistrationError> =
     when {
         identityData.isEmpty() -> {
@@ -168,10 +174,20 @@ internal fun validateDeviceRegistrationInputs(
             )
         }
 
+        environment !in SUPPORTED_NOTIFICATION_ENVIRONMENTS -> {
+            Err(
+                DeviceRegistrationError.InvalidEnvironment(
+                    "Environment must be one of $SUPPORTED_NOTIFICATION_ENVIRONMENTS",
+                ),
+            )
+        }
+
         else -> {
             Ok(Unit)
         }
     }
+
+private val SUPPORTED_NOTIFICATION_ENVIRONMENTS = setOf("staging", "production")
 
 sealed class MetadataUpdateError : Exception() {
     data class InvalidIdentityData(
