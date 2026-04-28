@@ -70,6 +70,21 @@ internal class PollAndUploadAiVideoUseCase(
                                             model = parameters.modelName,
                                             prompt = parameters.prompt,
                                         )
+                                        // When uploadHandling = "ServerDraft" the server already
+                                        // created the draft during generation — calling the legacy
+                                        // /api/upload_ai_video_from_url endpoint after the fact
+                                        // returns 405 since PR #932. Skip the client-side upload.
+                                        if (parameters.uploadHandling == SERVER_DRAFT) {
+                                            emit(
+                                                Ok(
+                                                    PollAndUploadResult.Success(
+                                                        videoUrl = videoStatus.v1,
+                                                        videoId = null,
+                                                    ),
+                                                ),
+                                            )
+                                            return@withTimeout
+                                        }
                                         uploadVideoTelemetry.uploadInitiated(VideoCreationType.AI_VIDEO)
                                         // Upload the video when generation is complete
                                         uploadAiVideoFromUrlUseCase
@@ -226,6 +241,10 @@ internal class PollAndUploadAiVideoUseCase(
         val description: String = "",
         val isNsfw: Boolean = false,
         val enableHotOrNot: Boolean = false,
+        // When non-null, matches the server-side upload mode requested at
+        // generation time. "ServerDraft" means the server creates the draft —
+        // skip the client-side upload step. Defaults to legacy client upload.
+        val uploadHandling: String? = null,
     )
 
     sealed class PollAndUploadResult {
@@ -249,6 +268,9 @@ internal class PollAndUploadAiVideoUseCase(
 
     companion object {
         private const val DEFAULT_MAX_POLLING_MS = 5 * 60 * 1000L // 5 minutes
+
+        // Mirrors AiVideoGenViewModel.SERVER_DRAFT.
+        private const val SERVER_DRAFT = "ServerDraft"
     }
 }
 

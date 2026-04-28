@@ -134,6 +134,9 @@ internal class BotVideoGenCoordinator(
                             description = "",
                             isNsfw = false,
                             enableHotOrNot = false,
+                            // Tell the polling use-case to skip the legacy
+                            // client-side upload — server already created the draft.
+                            uploadHandling = SERVER_DRAFT,
                         ),
                 ).collect { result ->
                     result
@@ -243,6 +246,11 @@ internal class BotVideoGenCoordinator(
         image = imageData,
         tokenType = TokenType.FREE,
         userId = botPrincipal,
+        // Server-side draft creation, matching AiVideoGenViewModel's manual flow.
+        // Without this the legacy POST yral.com/api/upload_ai_video_from_url is
+        // attempted after generation completes — that endpoint returns 405 since
+        // the drafts migration (PR #932), causing welcome-video upload to fail.
+        uploadHandling = SERVER_DRAFT,
     )
 
     private suspend fun handleGenerateSuccess(
@@ -320,5 +328,9 @@ internal class BotVideoGenCoordinator(
 
     private companion object {
         private const val PREFERRED_ASPECT_RATIO = "9:16"
+
+        // Mirrors AiVideoGenViewModel.SERVER_DRAFT — both flows now use the
+        // server-handles-upload-and-draft pipeline introduced in PR #932.
+        private const val SERVER_DRAFT = "ServerDraft"
     }
 }
