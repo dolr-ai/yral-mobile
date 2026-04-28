@@ -389,6 +389,54 @@ class ProfileViewModelTest {
             assertEquals(ProfileTab.Drafts, vm.state.value.selectedTab)
         }
 
+    @Test
+    fun `VideoGenerationTracker targeted selectDraftsTab waits for matching profile`() =
+        runBlocking {
+            signInUser(principal = "bot-principal")
+            val vm = createViewModel(principal = TEST_PRINCIPAL)
+
+            VideoGenerationTracker.requestDraftsTab(targetPrincipal = "bot-principal")
+            delay(50)
+
+            assertEquals(ProfileTab.Published, vm.state.value.selectedTab)
+            assertEquals("bot-principal", VideoGenerationTracker.selectDraftsTab.value?.targetPrincipal)
+        }
+
+    @Test
+    fun `VideoGenerationTracker targeted selectDraftsTab switches matching profile to Drafts tab`() =
+        runBlocking {
+            signInUser(principal = "bot-principal")
+            val vm = createViewModel(principal = "bot-principal")
+
+            VideoGenerationTracker.requestDraftsTab(targetPrincipal = "bot-principal")
+
+            withTimeout(TIMEOUT_MS) {
+                vm.state.first { it.selectedTab == ProfileTab.Drafts }
+            }
+            assertEquals(ProfileTab.Drafts, vm.state.value.selectedTab)
+        }
+
+    @Test
+    fun `draft created notification switches to Drafts tab and refreshes drafts`() =
+        runBlocking {
+            signInUser()
+            val vm = createViewModel()
+
+            VideoGenerationTracker.startGenerating()
+            VideoGenerationTracker.onDraftCreatedAndRequestDraftsTab()
+
+            withTimeout(TIMEOUT_MS) {
+                vm.state.first { it.selectedTab == ProfileTab.Drafts }
+            }
+            val event = withTimeout(TIMEOUT_MS) { vm.profileEvents.first() }
+            assertEquals(ProfileTab.Drafts, vm.state.value.selectedTab)
+            assertIs<ProfileEvents.RefreshDrafts>(event)
+            assertTrue(
+                VideoGenerationTracker.state.value.pendingGenerations
+                    .isEmpty(),
+            )
+        }
+
     // endregion
 
     // region delete draft

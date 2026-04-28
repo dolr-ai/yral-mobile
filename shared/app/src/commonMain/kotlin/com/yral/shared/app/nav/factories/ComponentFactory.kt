@@ -79,6 +79,7 @@ internal class ComponentFactory(
                 rootComponent.onBackClicked()
                 rootComponent.onNavigationRequest(Profile)
                 ToastManager.showSuccess(type = ToastType.Small(successMessage))
+                showAlertsOnDialog(AlertsRequestType.VIDEO)
             },
         )
 

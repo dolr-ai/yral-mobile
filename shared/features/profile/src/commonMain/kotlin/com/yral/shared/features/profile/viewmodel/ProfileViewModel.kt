@@ -296,12 +296,17 @@ class ProfileViewModel(
         }
         refreshShareCopy()
         val isOwnProfile = canisterData.userPrincipalId == sessionManager.userPrincipal
-        if (isOwnProfile) {
-            viewModelScope.launch {
-                VideoGenerationTracker.selectDraftsTab.collect { shouldSelect ->
-                    if (shouldSelect) {
-                        VideoGenerationTracker.consumeDraftsTabRequest()
-                        _state.update { it.copy(selectedTab = ProfileTab.Drafts) }
+        viewModelScope.launch {
+            VideoGenerationTracker.selectDraftsTab.collect { request ->
+                val isCurrentOwnProfile = canisterData.userPrincipalId == sessionManager.userPrincipal
+                val isTargetProfile =
+                    request?.targetPrincipal == null ||
+                        request.targetPrincipal == canisterData.userPrincipalId
+                if (request != null && isCurrentOwnProfile && isTargetProfile) {
+                    VideoGenerationTracker.consumeDraftsTabRequest()
+                    _state.update { it.copy(selectedTab = ProfileTab.Drafts) }
+                    if (request.refreshDrafts) {
+                        profileEventsChannel.trySend(ProfileEvents.RefreshDrafts)
                     }
                 }
             }
