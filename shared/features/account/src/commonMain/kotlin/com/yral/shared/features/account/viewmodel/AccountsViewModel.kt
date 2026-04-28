@@ -212,18 +212,18 @@ class AccountsViewModel internal constructor(
         if (_state.value.isLoggedIn) {
             links.add(
                 AccountHelpLink(
-                    type = AccountHelpLinkType.LOGOUT,
-                    link = LOGOUT_URI,
-                    openInExternalBrowser = true,
-                    menuCtaType = MenuCtaType.LOG_OUT,
-                ),
-            )
-            links.add(
-                AccountHelpLink(
                     type = AccountHelpLinkType.SETTINGS,
                     link = SETTINGS_URI,
                     openInExternalBrowser = true,
                     menuCtaType = MenuCtaType.SETTINGS,
+                ),
+            )
+            links.add(
+                AccountHelpLink(
+                    type = AccountHelpLinkType.LOGOUT,
+                    link = LOGOUT_URI,
+                    openInExternalBrowser = true,
+                    menuCtaType = MenuCtaType.LOG_OUT,
                 ),
             )
         }
