@@ -2,9 +2,37 @@ package com.yral.shared.features.chat.ui.conversation
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class ConversationMessageBubbleTest {
+    @Test
+    fun `ascii chat content renders as markdown`() {
+        assertTrue("**hello** [docs](https://yral.com)".shouldRenderAsMarkdown())
+    }
+
+    @Test
+    fun `emoji chat content falls back to plain text`() {
+        assertFalse("hello \uD83D\uDE00".shouldRenderAsMarkdown())
+    }
+
+    @Test
+    fun `accented chat content falls back to plain text`() {
+        assertFalse("cafe\u0301".shouldRenderAsMarkdown())
+        assertFalse("café".shouldRenderAsMarkdown())
+    }
+
+    @Test
+    fun `non latin chat content falls back to plain text`() {
+        assertFalse("नमस्ते".shouldRenderAsMarkdown())
+    }
+
+    @Test
+    fun `malformed surrogate chat content falls back to plain text`() {
+        assertFalse("broken \uD83D".shouldRenderAsMarkdown())
+    }
+
     @Test
     fun `local chat image file path returns bare local path`() {
         val localPath = "/var/mobile/Containers/Data/Application/chat_image_1.jpg"
