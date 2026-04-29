@@ -65,10 +65,18 @@ class Checks {
 
     @Test @Order(5)
     fun `android start emulator`() {
-        if (captureOutput("adb", "devices").lines().count { it.contains("\tdevice") } > 0) {
-            println("Android device already available — skipping emulator start.")
-            return
+        // xcodebuild (iOS unit tests) can restart the adb daemon, temporarily disconnecting
+        // any emulator the CI runner already started. Reconnect and give it time to come back
+        // before deciding whether we need to start our own.
+        exec("adb", "reconnect")
+        repeat(5) {
+            if (captureOutput("adb", "devices").lines().count { it.contains("\tdevice") } > 0) {
+                println("Android device already available — skipping emulator start.")
+                return
+            }
+            Thread.sleep(3_000)
         }
+
         val avd = captureOutput("emulator", "-list-avds").trim().lines()
             .firstOrNull { it.isNotBlank() }
         checkNotNull(avd) { "No AVDs found — create one in Android Studio first." }
