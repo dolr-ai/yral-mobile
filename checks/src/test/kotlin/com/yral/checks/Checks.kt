@@ -7,6 +7,7 @@ import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.condition.EnabledOnOs
 import org.junit.jupiter.api.condition.OS
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 @Order(1)
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
@@ -65,16 +66,18 @@ class Checks {
 
     @Test @Order(5)
     fun `android start emulator`() {
-        // xcodebuild (iOS unit tests) can restart the adb daemon, temporarily disconnecting
-        // any emulator the CI runner already started. Reconnect and give it time to come back
-        // before deciding whether we need to start our own.
+        // xcodebuild (iOS unit tests) can restart the adb daemon, leaving the CI runner's
+        // emulator as offline. `adb wait-for-device` handles offline→online transitions and
+        // doesn't pin to any specific serial. Give it 30s; if nothing appears, start our own.
         exec("adb", "reconnect")
-        repeat(5) {
-            if (captureOutput("adb", "devices").lines().count { it.contains("\tdevice") } > 0) {
-                println("Android device already available — skipping emulator start.")
-                return
-            }
-            Thread.sleep(3_000)
+        val alreadyRunning = ProcessBuilder("adb", "wait-for-device")
+            .directory(repoRoot)
+            .inheritIO()
+            .start()
+            .waitFor(30, java.util.concurrent.TimeUnit.SECONDS)
+        if (alreadyRunning && captureOutput("adb", "devices").lines().count { it.contains("\tdevice") } > 0) {
+            println("Android device already available — skipping emulator start.")
+            return
         }
 
         val avd = captureOutput("emulator", "-list-avds").trim().lines()

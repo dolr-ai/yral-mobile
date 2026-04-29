@@ -89,7 +89,7 @@ jobs:
         with:
           api-level: 35          # highest confirmed stable level; update here when upgrading
           target: google_apis    # required for Firebase / Google Play Services
-          arch: x86_64
+          arch: arm64-v8a        # macos-latest runners are Apple Silicon; action default (x86_64) fails on aarch64 hosts
           disk-size: 12G
           script: |
             KAFKA_BOOTSTRAP=kafka.yral.com:9092 \
