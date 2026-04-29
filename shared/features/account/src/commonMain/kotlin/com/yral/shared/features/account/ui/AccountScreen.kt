@@ -54,6 +54,7 @@ import com.yral.shared.features.account.ui.AccountScreenConstants.SOCIAL_MEDIA_L
 import com.yral.shared.features.account.viewmodel.AccountBottomSheet
 import com.yral.shared.features.account.viewmodel.AccountHelpLink
 import com.yral.shared.features.account.viewmodel.AccountHelpLinkType
+import com.yral.shared.features.account.viewmodel.AccountPage
 import com.yral.shared.features.account.viewmodel.AccountsState
 import com.yral.shared.features.account.viewmodel.AccountsViewModel
 import com.yral.shared.features.account.viewmodel.AccountsViewModel.Companion.LOGOUT_URI
@@ -94,6 +95,7 @@ import yral_mobile.shared.features.account.generated.resources.privacy_policy
 import yral_mobile.shared.features.account.generated.resources.pro_credits_count
 import yral_mobile.shared.features.account.generated.resources.pro_exclamation
 import yral_mobile.shared.features.account.generated.resources.pro_subscription_benefits
+import yral_mobile.shared.features.account.generated.resources.settings
 import yral_mobile.shared.features.account.generated.resources.sms
 import yral_mobile.shared.features.account.generated.resources.talk_to_the_team
 import yral_mobile.shared.features.account.generated.resources.telegram
@@ -144,19 +146,48 @@ fun AccountScreen(
                 }
             }
         }
+    val isSettingsPage = state.currentPage == AccountPage.Settings
     Column(modifier = modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
-                AccountsTitle(state.isWalletEnabled) { component.onBack() }
-                AccountScreenContent(
-                    state = state,
-                    viewModel = viewModel,
-                    subscriptionCoordinator = component.subscriptionCoordinator,
-                    alertsEnabled = state.alertsEnabled,
-                    onAlertsToggle = handleAlertsToggle,
-                    onBack = { component.onBack() },
-                    promptLogin = { component.promptLogin(SignupPageName.MENU) },
+                AccountsTitle(
+                    title =
+                        stringResource(
+                            if (isSettingsPage) {
+                                Res.string.settings
+                            } else {
+                                Res.string.accounts
+                            },
+                        ),
+                    isBackVisible = state.isWalletEnabled || isSettingsPage,
+                    onBack = {
+                        if (isSettingsPage) {
+                            viewModel.onSettingsBack()
+                        } else {
+                            component.onBack()
+                        }
+                    },
                 )
+                when (state.currentPage) {
+                    AccountPage.Main -> {
+                        AccountScreenContent(
+                            state = state,
+                            viewModel = viewModel,
+                            subscriptionCoordinator = component.subscriptionCoordinator,
+                            alertsEnabled = state.alertsEnabled,
+                            onAlertsToggle = handleAlertsToggle,
+                            onBack = { component.onBack() },
+                            promptLogin = { component.promptLogin(SignupPageName.MENU) },
+                        )
+                    }
+
+                    AccountPage.Settings -> {
+                        AccountSettingsContent(
+                            state = state,
+                            viewModel = viewModel,
+                        )
+                    }
+                }
                 SheetContent(
                     bottomSheetState = bottomSheetState,
                     bottomSheetType = state.bottomSheetType,
@@ -185,6 +216,33 @@ fun AccountScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun AccountSettingsContent(
+    state: AccountsState,
+    viewModel: AccountsViewModel,
+) {
+    val settingsLinks = remember { viewModel.getSettingsLinks() }
+
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(top = 8.dp)
+                .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        SettingsLinks(
+            links = settingsLinks,
+            isBotAccount = state.isBotAccount,
+            onLinkClicked = {
+                viewModel.accountsTelemetry.onMenuClicked(it.menuCtaType)
+                viewModel.handleHelpLink(it)
+            },
+        )
     }
 }
 
@@ -383,6 +441,7 @@ private fun ErrorMessageSheet(
 
 @Composable
 private fun AccountsTitle(
+    title: String,
     isBackVisible: Boolean,
     onBack: () -> Unit,
 ) {
@@ -405,7 +464,7 @@ private fun AccountsTitle(
             )
         }
         Text(
-            text = stringResource(Res.string.accounts),
+            text = title,
             style = LocalAppTopography.current.xlBold,
             color = YralColors.NeutralTextPrimary,
             textAlign = TextAlign.Center,
@@ -424,6 +483,39 @@ private fun Divider() {
                 .padding(horizontal = 16.dp),
         color = YralColors.Divider,
     )
+}
+
+@Composable
+private fun SettingsLinks(
+    links: List<AccountHelpLink>,
+    isBotAccount: Boolean,
+    onLinkClicked: (link: AccountHelpLink) -> Unit,
+) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = 16.dp,
+                    top = 0.dp,
+                    end = 16.dp,
+                    bottom = YralDimens.paddingLg,
+                ),
+        horizontalAlignment = Alignment.End,
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.Top),
+            horizontalAlignment = Alignment.End,
+        ) {
+            links.forEach {
+                HelpLinkItem(
+                    item = it,
+                    isBotAccount = isBotAccount,
+                    onLinkClicked = onLinkClicked,
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -613,6 +705,7 @@ private fun AccountHelpLink.getIcon() =
         AccountHelpLinkType.TERMS_OF_SERVICE -> Res.drawable.document
         AccountHelpLinkType.PRIVACY_POLICY -> Res.drawable.lock
         AccountHelpLinkType.LOGOUT -> Res.drawable.logout
+        AccountHelpLinkType.SETTINGS -> Res.drawable.settings
         AccountHelpLinkType.DELETE_ACCOUNT -> DesignRes.drawable.delete
         else -> null
     }
@@ -642,6 +735,10 @@ private fun AccountHelpLink.getText(isBotAccount: Boolean) =
 
         AccountHelpLinkType.LOGOUT -> {
             stringResource(Res.string.logout)
+        }
+
+        AccountHelpLinkType.SETTINGS -> {
+            stringResource(Res.string.settings)
         }
 
         AccountHelpLinkType.DELETE_ACCOUNT -> {

@@ -16,6 +16,7 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.utils.generateUsernameFromPrincipal
 import com.yral.shared.core.utils.resolveUsername
+import com.yral.shared.core.videostate.VideoGenerationTracker
 import com.yral.shared.features.aiinfluencer.analytics.AiInfluencerTelemetry
 import com.yral.shared.features.aiinfluencer.domain.models.CreatedInfluencer
 import com.yral.shared.features.aiinfluencer.domain.models.GeneratedInfluencerMetadata
@@ -65,7 +66,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
-import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalEncodingApi::class)
 @Suppress("LongParameterList", "TooManyFunctions", "LargeClass")
@@ -494,6 +494,7 @@ class AiInfluencerViewModel(
         const val PROMPT_CHAR_LIMIT = 200
         private const val DEFAULT_ERROR_MESSAGE = "Something went wrong. Please try again."
         private const val BOT_CREATE_MESSAGE = "yral_auth_v2_create_ai_account"
+        private const val TELEMETRY_FLUSH_DELAY_MS = 500L
 
         private const val MIN_USERNAME_LENGTH = 3
         const val MAX_USERNAME_LENGTH = 15
@@ -635,7 +636,7 @@ class AiInfluencerViewModel(
                     botId = botPrincipal,
                     entryPoint = entryPoint,
                 )
-                delay(0.5.seconds)
+                delay(TELEMETRY_FLUSH_DELAY_MS)
                 telemetry.flush()
                 setActiveBotSession(
                     botPrincipal = botPrincipal,
@@ -645,6 +646,7 @@ class AiInfluencerViewModel(
                     profilePicUrl = uploadedAvatarUrl,
                     displayUsername = if (usernameUpdated) usernameForCreateApi else null,
                 )
+                VideoGenerationTracker.requestDraftsTab(targetPrincipal = botPrincipal)
 
                 val starterPrompt = createdInfluencer.starterVideoPrompt
                 if (!starterPrompt.isNullOrBlank()) {

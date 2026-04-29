@@ -17,9 +17,6 @@ import com.yral.shared.analytics.providers.snowplow.SnowplowAnalyticsProvider
 import com.yral.shared.analytics.providers.yral.AnalyticsApiService
 import com.yral.shared.analytics.providers.yral.CoreService
 import com.yral.shared.koin.koinInstance
-import dev.gitlive.firebase.Firebase
-import dev.gitlive.firebase.analytics.analytics
-import dev.gitlive.firebase.app
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
@@ -36,10 +33,8 @@ val analyticsModule =
                 eventFilter = { it.shouldSendViaCore(isDebug) },
             )
         }
-        factory { Firebase.analytics(Firebase.app) }
         single {
             FirebaseAnalyticsProvider(
-                firebaseAnalytics = get(),
                 eventFilter = { !it.shouldSendToYralBE() },
                 mapConverter = get(),
             )

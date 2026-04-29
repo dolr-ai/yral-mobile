@@ -30,7 +30,6 @@ kotlin {
             implementation(libs.moko.permissions)
             implementation(libs.moko.permissions.compose)
             implementation(libs.moko.permissions.notifications)
-            implementation(libs.gitlive.firebase.messaging)
         }
     }
 }

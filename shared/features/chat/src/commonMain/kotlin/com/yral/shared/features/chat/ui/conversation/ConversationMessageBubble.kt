@@ -144,23 +144,21 @@ private fun RegularBubble(
         isOnlyMedia = onlyMedia,
     ) {
         if (!content.isNullOrBlank()) {
-            // The intellij-markdown parser crashes with StringIndexOutOfBoundsException when
-            // content contains supplementary Unicode chars (emoji/surrogate pairs) that cause
-            // AST node offsets to exceed the actual string length. Strip them before rendering.
-            val safeContent =
-                remember(content) {
-                    if (content.any { it.isHighSurrogate() }) {
-                        content.filter { !it.isHighSurrogate() && !it.isLowSurrogate() }
-                    } else {
-                        content
-                    }
-                }
-            Markdown(
-                content = safeContent,
-                colors = markdownColors,
-                typography = markdownTypography,
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-            )
+            if (content.shouldRenderAsMarkdown()) {
+                Markdown(
+                    content = content,
+                    colors = markdownColors,
+                    typography = markdownTypography,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                )
+            } else {
+                Text(
+                    text = content,
+                    style = appTypography.baseRegular,
+                    color = textColor,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                )
+            }
         }
         MessageImages(
             mediaUrls = mediaUrls,
@@ -373,5 +371,8 @@ internal fun localChatImageFilePathOrNull(imageUrl: String): String? =
         else -> null
     }
 
+internal fun String.shouldRenderAsMarkdown(): Boolean = all { it.code <= ASCII_MAX_CODE }
+
 private const val FILE_URL_PREFIX = "file://"
 private const val ABSOLUTE_PATH_PREFIX = "/"
+private const val ASCII_MAX_CODE = 0x7F

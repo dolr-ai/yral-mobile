@@ -1,9 +1,34 @@
+import com.yral.buildlogic.applyCocoapodsIfApple
+import com.yral.buildlogic.configureCocoapods
 import com.yral.buildlogic.configureIosTargets
 plugins {
     alias(libs.plugins.yral.shared.feature)
     alias(libs.plugins.yral.android.feature)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.yral.shared.library.compose)
+}
+
+applyCocoapodsIfApple()
+
+val firebaseIosSdkVersion =
+    libs
+        .versions
+        .firebase
+        .ios
+        .sdk
+        .get()
+
+configureCocoapods {
+    version = "1.0"
+    summary = "Authentication feature"
+    homepage = "https://github.com/dolr-ai/yral-mobile"
+    ios.deploymentTarget = "15.6"
+
+    noPodspec()
+
+    pod("FirebaseMessaging") {
+        version = firebaseIosSdkVersion
+    }
 }
 
 kotlin {
@@ -18,6 +43,8 @@ kotlin {
             implementation(projects.shared.testSupport)
         }
         androidMain.dependencies {
+            implementation(project.dependencies.platform(libs.firebase.bom))
+            implementation(libs.firebase.messaging)
             implementation(libs.nimbus.jose.jwt)
             implementation(libs.androidx.browser)
         }
@@ -36,8 +63,6 @@ kotlin {
             implementation(projects.shared.libs.designsystem)
             implementation(projects.shared.libs.featureFlag)
             implementation(projects.shared.libs.phoneValidation)
-
-            implementation(libs.gitlive.firebase.messaging)
         }
     }
 }

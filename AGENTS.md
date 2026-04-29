@@ -177,6 +177,8 @@ The project uses only the **free-tier Firebase products** listed below. Firestor
 
 Do **not** reintroduce Firestore, Firebase Auth, Firebase Storage, Firebase App Check, or Firebase Cloud Functions.
 
+Shared Firebase integrations use direct platform SDK adapters (`com.google.firebase` on Android and CocoaPods Firebase APIs on iOS). Do not add GitLive Firebase dependencies.
+
 ### Session and App Services
 
 - Session state is managed through `SessionManager`.

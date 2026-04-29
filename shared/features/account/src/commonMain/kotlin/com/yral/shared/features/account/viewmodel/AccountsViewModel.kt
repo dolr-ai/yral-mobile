@@ -212,23 +212,33 @@ class AccountsViewModel internal constructor(
         if (_state.value.isLoggedIn) {
             links.add(
                 AccountHelpLink(
+                    type = AccountHelpLinkType.SETTINGS,
+                    link = SETTINGS_URI,
+                    openInExternalBrowser = true,
+                    menuCtaType = MenuCtaType.SETTINGS,
+                ),
+            )
+            links.add(
+                AccountHelpLink(
                     type = AccountHelpLinkType.LOGOUT,
                     link = LOGOUT_URI,
                     openInExternalBrowser = true,
                     menuCtaType = MenuCtaType.LOG_OUT,
                 ),
             )
-            links.add(
-                AccountHelpLink(
-                    type = AccountHelpLinkType.DELETE_ACCOUNT,
-                    link = DELETE_ACCOUNT_URI,
-                    openInExternalBrowser = true,
-                    menuCtaType = MenuCtaType.DELETE_ACCOUNT,
-                ),
-            )
         }
         return links
     }
+
+    fun getSettingsLinks(): List<AccountHelpLink> =
+        listOf(
+            AccountHelpLink(
+                type = AccountHelpLinkType.DELETE_ACCOUNT,
+                link = DELETE_ACCOUNT_URI,
+                openInExternalBrowser = true,
+                menuCtaType = MenuCtaType.DELETE_ACCOUNT,
+            ),
+        )
 
     private suspend fun removeDeletedBotFromLocalCaches(deletedPrincipal: String) {
         Logger.d(BOT_DELETE_LOG_TAG) { "cache cleanup: start deletedPrincipal=$deletedPrincipal" }
@@ -292,6 +302,10 @@ class AccountsViewModel internal constructor(
                 logout()
             }
 
+            SETTINGS_URI -> {
+                _state.update { it.copy(currentPage = AccountPage.Settings) }
+            }
+
             DELETE_ACCOUNT_URI -> {
                 setBottomSheetType(AccountBottomSheet.DeleteAccount)
             }
@@ -313,6 +327,10 @@ class AccountsViewModel internal constructor(
         _state.update { it.copy(alertsEnabled = isEnabled) }
     }
 
+    fun onSettingsBack() {
+        _state.update { it.copy(currentPage = AccountPage.Main) }
+    }
+
     suspend fun registerAlerts(): Boolean =
         runCatching {
             registerNotificationTokenUseCase()
@@ -330,6 +348,7 @@ class AccountsViewModel internal constructor(
     companion object {
         const val BOT_DELETE_LOG_TAG = "BotDeleteFlow"
         const val LOGOUT_URI = "yral://logout"
+        const val SETTINGS_URI = "yral://settings"
         const val DELETE_ACCOUNT_URI = "yral://deleteAccount"
     }
 }
@@ -350,7 +369,13 @@ enum class AccountHelpLinkType {
     DISCORD,
     TWITTER,
     LOGOUT,
+    SETTINGS,
     DELETE_ACCOUNT,
+}
+
+enum class AccountPage {
+    Main,
+    Settings,
 }
 
 data class AccountsState(
@@ -364,6 +389,7 @@ data class AccountsState(
     val alertsEnabled: Boolean = false,
     val isBotAccount: Boolean = false,
     val isDeletingAccount: Boolean = false,
+    val currentPage: AccountPage = AccountPage.Main,
 )
 
 sealed interface AccountBottomSheet {

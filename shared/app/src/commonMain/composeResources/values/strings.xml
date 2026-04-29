@@ -5,9 +5,9 @@
     <string name="flexible_downloaded_message">A new version is ready to install</string>
     <string name="flexible_downloaded_cta">RESTART</string>
 
-    <string name="mandatory_update_title">Alert! </string>
-    <string name="mandatory_update_title_highlight">Play the Latest Games.</string>
-    <string name="mandatory_update_message">We have enabled some interesting games. Update now to get access.</string>
+    <string name="mandatory_update_title">Alert! We no longer support this version.</string>
+    <string name="mandatory_update_title_highlight"></string>
+    <string name="mandatory_update_message">Click on the button below and update to the latest version and enjoy scrolling!</string>
     <string name="mandatory_update_cta">Update YRAL</string>
 
     <!-- Alerts Request -->

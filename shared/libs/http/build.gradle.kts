@@ -15,6 +15,9 @@ kotlin {
             implementation(project.dependencies.platform(libs.okhttp.bom))
             implementation(libs.okhttp.dns)
         }
+        androidUnitTest.dependencies {
+            implementation(libs.kotlin.test)
+        }
         commonMain.dependencies {
             api(libs.ktor.client.core)
             api(libs.ktor.client.logging)

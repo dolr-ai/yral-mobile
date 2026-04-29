@@ -2,7 +2,12 @@ source 'https://cdn.cocoapods.org'
 platform :ios, '15.6'
 use_frameworks!
 
-FIREBASE_VERSION = '11.14.0'
+versions_toml_path = File.expand_path('../gradle/libs.versions.toml', __dir__)
+versions_toml = File.read(versions_toml_path)
+firebase_ios_sdk_match = versions_toml.match(/^firebase-ios-sdk\s*=\s*"([^"]+)"/)
+raise "firebase-ios-sdk version not found in #{versions_toml_path}" unless firebase_ios_sdk_match
+
+FIREBASE_VERSION = firebase_ios_sdk_match[1]
 
 def add_common_pods
   pod 'FirebaseCore', FIREBASE_VERSION
