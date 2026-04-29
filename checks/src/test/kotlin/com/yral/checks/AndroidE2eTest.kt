@@ -2,6 +2,7 @@ package com.yral.checks
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Order
@@ -55,11 +56,20 @@ class AndroidE2eTest {
     companion object {
         private const val appId = "com.yral.android"
 
+        @AfterAll
+        @JvmStatic
+        fun shutdownEmulator() {
+            exec("adb", "emu", "kill")
+        }
+
         @BeforeAll
         @JvmStatic
         fun installApk() {
+            // Clean install: uninstall first to wipe any retained app state, then fresh install.
+            // adb install -r keeps user data; uninstall+install guarantees a clean slate.
+            exec("adb", "uninstall", appId) // ignore failure — app may not be installed yet
             execOrFail(
-                "adb", "install", "-r",
+                "adb", "install",
                 "androidApp/build/outputs/apk/staging/debug/androidApp-staging-debug.apk",
             )
             // Warm-up: launch via explicit component so the app enters the recent-tasks list.

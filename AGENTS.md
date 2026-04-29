@@ -40,27 +40,46 @@ When upgrading dependencies, always target the **latest stable release** — not
 ## Commands
 
 ```bash
-# Build
+# ── CI-equivalent full check suite (local = CI — nothing skipped) ──
+./gradlew allChecks      # lint + unit tests + iOS xcodebuild + Android/iOS e2e (Maestro + Kafka)
+                         # Also the default VSCode build task (Cmd+Shift+B)
+
+# ── Build ───────────────────────────────────────────────────────────
 ./gradlew :androidApp:assembleDebug
 ./gradlew build
 
-# Tests
+# ── Unit tests ──────────────────────────────────────────────────────
 ./gradlew test                                        # all unit tests (root)
-./gradlew :shared:features:<module>:allTests             # per-module (KMP, includes commonTest)
+./gradlew :shared:features:<module>:allTests          # per-module (KMP, includes commonTest)
 
-# Code quality
+# ── Code quality ────────────────────────────────────────────────────
 ./gradlew ktlintCheck
 ./gradlew ktlintFormat
 ./gradlew detekt
 
-# iOS
+# ── iOS ─────────────────────────────────────────────────────────────
 open iosApp/iosApp.xcworkspace
 cd iosApp && pod install
 ./gradlew :iosSharedUmbrella:assembleXCFramework
 
-# Rust
+# ── Rust ────────────────────────────────────────────────────────────
 cd rust-agent && cargo build
 ```
+
+## Checks Module (`checks/`)
+
+All CI checks live as ordered JUnit5 test classes in `checks/src/test/kotlin/com/yral/checks/`. There is no bash orchestration — every step is Kotlin code running through the standard Gradle test runner.
+
+**Philosophy: local = CI.** `./gradlew allChecks` (the default VSCode build task) runs the exact same sequence that CI runs. If it passes locally it will pass on CI, and vice versa. There is no separate "local" or "CI" mode.
+
+**Execution order** (enforced by `@Order`):
+1. `Checks` — iOS lint (SwiftLint), iOS setup (CocoaPods), iOS unit tests (xcodebuild), iOS simulator app build, Android emulator start
+2. `AndroidE2eTest` — installs APK, runs Maestro feed-scroll flow, asserts Snowplow events in Kafka
+3. `IosE2eTest` — installs staging app to simulator, runs Maestro feed-scroll flow, asserts Snowplow events in Kafka
+
+**When adding a new check**, add it as a test method in `Checks.kt` (with `@Order`) or as a new test class (with `@Order` on the class). Do not add logic to bash scripts, `checks.yml`, or the VSCode task.
+
+**Local prerequisites**: Android emulator (API 35, Google APIs, 12 GB disk) and iOS simulator (iPhone, any recent iOS) must be available. The `android start emulator` test starts the emulator automatically if one isn't running; the iOS simulator is booted by `IosE2eTest.@BeforeAll`. KUBECONFIG is auto-discovered from `ci-e2e-reader.kubeconfig` in the repo root if not set in the environment.
 
 ## Architecture Rules
 

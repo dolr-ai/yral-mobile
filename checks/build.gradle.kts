@@ -11,9 +11,8 @@ tasks.test {
     maxHeapSize = "4g"
     systemProperty("junit.jupiter.execution.timeout.default", "15m")
     systemProperty("junit.jupiter.testclass.order.default", "org.junit.jupiter.api.ClassOrderer\$OrderAnnotation")
-    // Gradle up-to-date check re-runs the task when E2E_PLATFORM changes
-    inputs.property("e2ePlatform", System.getenv("E2E_PLATFORM") ?: "")
-    inputs.property("e2eAppId", System.getenv("E2E_APP_ID") ?: "")
+    // Always re-run: tests hit live devices and infrastructure, so caching is meaningless.
+    outputs.upToDateWhen { false }
 
     // The test JVM gets a minimal PATH from Gradle. Augment it with Android SDK
     // tools so that adb and emulator are available regardless of how Gradle is launched.

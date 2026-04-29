@@ -2,6 +2,7 @@ package com.yral.checks
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Order
@@ -50,12 +51,21 @@ class IosE2eTest {
     companion object {
         private const val appId = "com.yral.iosApp.staging"
 
+        @AfterAll
+        @JvmStatic
+        fun shutdownSimulator() {
+            exec("xcrun", "simctl", "shutdown", "booted")
+        }
+
         @BeforeAll
         @JvmStatic
         fun installApp() {
             val udid = Checks.firstIphoneSimulatorUdid()
             exec("xcrun", "simctl", "boot", udid) // ignore error if already booted
             execOrFail("xcrun", "simctl", "bootstatus", udid, "-b")
+            exec("open", "-a", "Simulator") // bring the Simulator window up so it's visible locally
+            // Clean install: uninstall first to wipe retained app state, then fresh install.
+            exec("xcrun", "simctl", "uninstall", "booted", appId) // ignore failure if not installed
             execOrFail(
                 "xcrun", "simctl", "install", "booted",
                 File(repoRoot, "build/DerivedData/Build/Products/Debug-iphonesimulator/Yral-Staging.app").absolutePath,
