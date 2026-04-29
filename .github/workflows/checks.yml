@@ -87,7 +87,8 @@ jobs:
       - name: Run all checks
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 34
+          api-level: 35          # highest confirmed stable level; update here when upgrading
+          target: google_apis    # required for Firebase / Google Play Services
           arch: x86_64
           disk-size: 12G
           script: |

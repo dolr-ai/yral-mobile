@@ -9,7 +9,7 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
     maxHeapSize = "4g"
-    systemProperty("junit.jupiter.execution.timeout.default", "10m")
+    systemProperty("junit.jupiter.execution.timeout.default", "15m")
     systemProperty("junit.jupiter.testclass.order.default", "org.junit.jupiter.api.ClassOrderer\$OrderAnnotation")
     // Gradle up-to-date check re-runs the task when E2E_PLATFORM changes
     inputs.property("e2ePlatform", System.getenv("E2E_PLATFORM") ?: "")

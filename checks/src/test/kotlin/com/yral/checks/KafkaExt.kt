@@ -25,7 +25,7 @@ fun countSnowplowEvents(since: Long, platformMarker: String): Int {
     }
 
     var found = 0
-    val deadline = System.currentTimeMillis() + 30_000
+    val deadline = System.currentTimeMillis() + 5 * 60_000  // 5 min: collector→Kafka pipeline latency
     while (System.currentTimeMillis() < deadline) {
         // snowplow-raw is Thrift-encoded binary; "yral-mobile" and "Android"/"iOS"
         // are embedded as readable UTF-8 substrings within the payload

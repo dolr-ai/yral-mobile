@@ -30,14 +30,17 @@ class IosE2eTest {
         println("Waiting 15s for collector → snowplow-raw delivery...")
         Thread.sleep(15_000)
 
-        val count = countSnowplowEvents(testStartMs, platformMarker = "iOS")
+        val count = countSnowplowEvents(testStartMs, platformMarker = "ios-")
         assertTrue(count > 0) { "No snowplow-raw events for iOS since $testStartMs" }
         println("PASS: $count event(s) for iOS")
     }
 
     private fun runMaestroFlow() {
+        exec("pkill", "-f", "maestro") // stop any lingering Maestro daemon from a previous run
+        Thread.sleep(1_000)
         val exit = ProcessBuilder(
             "maestro", "test",
+            "--device", Checks.firstIphoneSimulatorUdid(),
             "-e", "APP_ID=$appId",
             "maestro/flows/feed-scroll.yaml",
         ).directory(repoRoot).inheritIO().start().waitFor()

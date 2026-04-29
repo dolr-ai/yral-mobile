@@ -83,7 +83,17 @@ class Checks {
         val deadline = System.currentTimeMillis() + 5 * 60_000L
         while (System.currentTimeMillis() < deadline) {
             if (captureOutput("adb", "shell", "getprop", "sys.boot_completed").trim() == "1") {
-                println("Emulator ready.")
+                // sys.boot_completed is set before the package manager is fully ready.
+                // Wait until `pm list packages` succeeds to avoid install failures on cold boots.
+                val pmDeadline = System.currentTimeMillis() + 60_000L
+                while (System.currentTimeMillis() < pmDeadline) {
+                    if (exec("adb", "shell", "pm", "list", "packages", "android") == 0) {
+                        println("Emulator ready.")
+                        return
+                    }
+                    Thread.sleep(2_000)
+                }
+                println("Emulator ready (PM check timed out, proceeding anyway).")
                 return
             }
             Thread.sleep(2_000)
