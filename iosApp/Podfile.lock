@@ -151,6 +151,7 @@ PODS:
   - PromisesObjC (2.4.0)
   - PromisesSwift (2.4.0):
     - PromisesObjC (= 2.4.0)
+  - SnowplowTracker (6.2.3)
 
 DEPENDENCIES:
   - FBSDKCoreKit (= 18.0.0)
@@ -161,6 +162,7 @@ DEPENDENCIES:
   - FirebasePerformance (= 11.14.0)
   - iosSharedUmbrella (from `../iosSharedUmbrella`)
   - Mixpanel (= 5.0.8)
+  - SnowplowTracker (~> 6.1)
 
 SPEC REPOS:
   trunk:
@@ -188,6 +190,7 @@ SPEC REPOS:
     - nanopb
     - PromisesObjC
     - PromisesSwift
+    - SnowplowTracker
 
 EXTERNAL SOURCES:
   iosSharedUmbrella:
@@ -219,7 +222,8 @@ SPEC CHECKSUMS:
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   PromisesSwift: 9d77319bbe72ebf6d872900551f7eeba9bce2851
+  SnowplowTracker: a7f1fe639b225d8a43a77cd11db3ecfc33a3f80b
 
-PODFILE CHECKSUM: dd442f3b5a6983a600aca829f2116239ff030ac1
+PODFILE CHECKSUM: 5825097d594d861905ffc788f6b1bf2c59f657eb
 
 COCOAPODS: 1.16.2

@@ -1,4 +1,3 @@
-
 import com.diffplug.gradle.spotless.SpotlessExtension
 import com.yral.buildlogic.libs
 import io.gitlab.arturbosch.detekt.Detekt

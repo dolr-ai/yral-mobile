@@ -8,6 +8,7 @@ import com.yral.shared.analytics.adTracking.IosAdvertisingIdProvider
 import com.yral.shared.analytics.di.IS_DEBUG
 import com.yral.shared.analytics.di.MIXPANEL_TOKEN
 import com.yral.shared.analytics.di.ONESIGNAL_APP_ID
+import com.yral.shared.analytics.di.SNOWPLOW_APP_ID
 import com.yral.shared.features.auth.utils.IosOAuthUtils
 import com.yral.shared.features.auth.utils.IosOAuthUtilsHelper
 import com.yral.shared.features.auth.utils.OAuthUtils
@@ -34,6 +35,9 @@ actual val platformModule =
         }
         single<Boolean>(IS_DEBUG) {
             NSBundle.mainBundle.bundleIdentifier != "com.yral.iosApp"
+        }
+        single<String>(SNOWPLOW_APP_ID) {
+            if (NSBundle.mainBundle.bundleIdentifier == "com.yral.iosApp") "yral-mobile" else "yral-mobile-staging"
         }
         singleOf(::IosOAuthUtils) bind OAuthUtils::class
         factoryOf(::IosOAuthUtilsHelper) bind OAuthUtilsHelper::class

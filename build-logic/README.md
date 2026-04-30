@@ -32,30 +32,57 @@ setup.
 Current list of convention plugins:
 
 **Android Application Plugins:**
-- [`yral.android.application`](convention/src/main/kotlin/AndroidApplicationConventionPlugin.kt): Configures common Android application options and Kotlin settings
-- [`yral.android.application.compose`](convention/src/main/kotlin/AndroidApplicationComposeConventionPlugin.kt): Configures Jetpack Compose options for Android applications
-- [`yral.android.application.firebase`](convention/src/main/kotlin/AndroidApplicationFirebaseConventionPlugin.kt): Configures Firebase services (Analytics, Performance, Crashlytics) for Android applications
-- [`yral.android.application.flavors`](convention/src/main/kotlin/AndroidApplicationFlavorsConventionPlugin.kt): Configures build flavors for Android applications
+
+- [`yral.android.application`](convention/src/main/kotlin/AndroidApplicationConventionPlugin.kt):
+  Configures common Android application options and Kotlin settings
+- [
+  `yral.android.application.compose`](convention/src/main/kotlin/AndroidApplicationComposeConventionPlugin.kt):
+  Configures Jetpack Compose options for Android applications
+- [
+  `yral.android.application.firebase`](convention/src/main/kotlin/AndroidApplicationFirebaseConventionPlugin.kt):
+  Configures Firebase services (Analytics, Performance, Crashlytics) for Android applications
+- [
+  `yral.android.application.flavors`](convention/src/main/kotlin/AndroidApplicationFlavorsConventionPlugin.kt):
+  Configures build flavors for Android applications
 
 **Android Library Plugins:**
-- [`yral.android.library`](convention/src/main/kotlin/AndroidLibraryConventionPlugin.kt): Configures common Android library options and Kotlin settings
-- [`yral.android.library.compose`](convention/src/main/kotlin/AndroidLibraryComposeConventionPlugin.kt): Configures Jetpack Compose options for Android libraries
-- [`yral.android.feature`](convention/src/main/kotlin/AndroidFeatureConventionPlugin.kt): Configures Android feature modules with common dependencies and serialization
+
+- [`yral.android.library`](convention/src/main/kotlin/AndroidLibraryConventionPlugin.kt): Configures
+  common Android library options and Kotlin settings
+- [
+  `yral.android.library.compose`](convention/src/main/kotlin/AndroidLibraryComposeConventionPlugin.kt):
+  Configures Jetpack Compose options for Android libraries
+- [`yral.android.feature`](convention/src/main/kotlin/AndroidFeatureConventionPlugin.kt): Configures
+  Android feature modules with common dependencies and serialization
 
 **Android Testing & Quality Plugins:**
-- [`yral.android.test`](convention/src/main/kotlin/AndroidTestConventionPlugin.kt): Configures Android testing options and dependencies
-- [`yral.android.lint`](convention/src/main/kotlin/AndroidLintConventionPlugin.kt): Configures Android Lint with XML/SARIF reporting and dependency checking
+
+- [`yral.android.test`](convention/src/main/kotlin/AndroidTestConventionPlugin.kt): Configures
+  Android testing options and dependencies
+- [`yral.android.lint`](convention/src/main/kotlin/AndroidLintConventionPlugin.kt): Configures
+  Android Lint with XML/SARIF reporting and dependency checking
 
 **Kotlin Multiplatform Plugins:**
-- [`yral.shared.library`](convention/src/main/kotlin/SharedLibraryConventionPlugin.kt): Configures Kotlin Multiplatform shared libraries with common dependencies
-- [`yral.shared.library.compose`](convention/src/main/kotlin/SharedLibraryComposeConventionPlugin.kt): Configures Compose Multiplatform for shared libraries
-- [`yral.shared.feature`](convention/src/main/kotlin/SharedFeatureConventionPlugin.kt): Configures shared feature modules with common dependencies and serialization
+
+- [`yral.shared.library`](convention/src/main/kotlin/SharedLibraryConventionPlugin.kt): Configures
+  Kotlin Multiplatform shared libraries with common dependencies
+- [
+  `yral.shared.library.compose`](convention/src/main/kotlin/SharedLibraryComposeConventionPlugin.kt):
+  Configures Compose Multiplatform for shared libraries
+- [`yral.shared.feature`](convention/src/main/kotlin/SharedFeatureConventionPlugin.kt): Configures
+  shared feature modules with common dependencies and serialization
 
 **JVM Library Plugin:**
-- [`yral.jvm.library`](convention/src/main/kotlin/JvmLibraryConventionPlugin.kt): Configures JVM libraries with Kotlin and testing setup
+
+- [`yral.jvm.library`](convention/src/main/kotlin/JvmLibraryConventionPlugin.kt): Configures JVM
+  libraries with Kotlin and testing setup
 
 **Code Quality Plugin:**
-- [`yral.style.enforcer`](convention/src/main/kotlin/StyleEnforcerConventionPlugin.kt): Configures code style enforcement (includes Spotless and Detekt setup)
+
+- [`yral.style.enforcer`](convention/src/main/kotlin/StyleEnforcerConventionPlugin.kt): Configures
+  code style enforcement (includes Spotless and Detekt setup)
 
 **Rust Library Plugin:**
-- [`yral.shared.rust.lib`](convention/src/main/kotlin/SharedRustLibraryConventionPlugin.kt): Configures rust dependency based on build type
+
+- [`yral.shared.rust.lib`](convention/src/main/kotlin/SharedRustLibraryConventionPlugin.kt):
+  Configures rust dependency based on build type

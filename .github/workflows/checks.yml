@@ -1,0 +1,93 @@
+name: Checks
+
+on:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write # detekt SARIF
+
+jobs:
+  all-checks:
+    runs-on: macos-latest
+
+    steps:
+      # ══════════════════════════════════════════════════════════════════════
+      # SETUP  (CI-only — not needed locally)
+      # ══════════════════════════════════════════════════════════════════════
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v3
+        id: setup-jdk
+        with:
+          java-version: "21"
+          distribution: temurin
+
+      - name: Export JAVA_HOME
+        run: echo "JAVA_HOME=${{ steps.setup-jdk.outputs.java-home }}" >> $GITHUB_ENV
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Restore Gradle and Rust caches
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/configuration-cache
+            ~/.gradle/wrapper
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.rustup
+          key: ${{ runner.os }}-tooling-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle.properties', '**/Cargo.lock', 'rust-toolchain.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-tooling-
+
+      - name: Install Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android NDK
+        run: |
+          echo "y" | sdkmanager --install "ndk;29.0.14206865" --channel=0
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/29.0.14206865" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/29.0.14206865" >> $GITHUB_ENV
+
+      - name: Install tools
+        run: |
+          brew install swiftlint cocoapods xcbeautify
+          brew tap mobile-dev-inc/tap
+          brew install mobile-dev-inc/tap/maestro
+
+      - name: Configure kubectl
+        run: |
+          echo "${{ secrets.KUBECONFIG_FOR_E2E_TESTS_BASE64 }}" | base64 -d > ci-e2e-reader.kubeconfig
+          echo "KUBECONFIG=$GITHUB_WORKSPACE/ci-e2e-reader.kubeconfig" >> $GITHUB_ENV
+
+      - name: Fetch Kafka password
+        run: |
+          PASS=$(kubectl get secret ci-e2e-reader -n kafka \
+            -o jsonpath='{.data.password}' | base64 -d)
+          echo "::add-mask::$PASS"
+          echo "KAFKA_PASSWORD=$PASS" >> $GITHUB_ENV
+
+      # ══════════════════════════════════════════════════════════════════════
+      # ALL CHECKS  (lint · unit tests · iOS xcodebuild · Android APK build)
+      # Maestro e2e tests are excluded (@Tag("e2e")) — they require a physical
+      # Android emulator which GitHub's standard macOS runners don't support.
+      # Run `./gradlew :checks:e2eTest` locally to execute the Maestro flows.
+      # ══════════════════════════════════════════════════════════════════════
+
+      - name: Run all checks
+        run: ./gradlew allChecks
+
+      - name: Upload detekt SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: build/reports/detekt/merge.sarif

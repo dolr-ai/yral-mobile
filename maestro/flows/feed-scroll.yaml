@@ -1,0 +1,23 @@
+appId: ${APP_ID}
+---
+- launchApp
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: "share video"
+    timeout: 30000
+- swipe:
+    start: 50%, 80%
+    end: 50%, 20%
+    duration: 300
+- waitForAnimationToEnd
+- swipe:
+    start: 50%, 80%
+    end: 50%, 20%
+    duration: 300
+- waitForAnimationToEnd
+- swipe:
+    start: 50%, 80%
+    end: 50%, 20%
+    duration: 300
+- waitForAnimationToEnd

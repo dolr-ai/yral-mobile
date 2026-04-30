@@ -62,6 +62,7 @@ val analyticsModule =
             SnowplowAnalyticsProvider(
                 eventFilter = { true },
                 mapConverter = get(),
+                appId = get(SNOWPLOW_APP_ID),
             )
         }
         single {
