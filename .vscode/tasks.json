@@ -2,7 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Run All Checks",
+            "label": "All Checks",
             "type": "shell",
             "command": "./gradlew allChecks",
             "options": {
@@ -12,6 +12,30 @@
                 "kind": "build",
                 "isDefault": true
             },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "E2E Tests",
+            "type": "shell",
+            "command": "./gradlew :checks:e2eTest",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Full Suite",
+            "dependsOn": ["All Checks", "E2E Tests"],
+            "dependsOrder": "sequence",
+            "group": "build",
             "presentation": {
                 "reveal": "always",
                 "panel": "shared"

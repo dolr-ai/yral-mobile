@@ -77,24 +77,14 @@ jobs:
           echo "KAFKA_PASSWORD=$PASS" >> $GITHUB_ENV
 
       # ══════════════════════════════════════════════════════════════════════
-      # ALL CHECKS
-      # The emulator runner creates the AVD and starts it before the script
-      # runs. Checks.androidStartEmulator() detects it already running and
-      # skips the start step. Everything else — lint, unit tests, iOS
-      # xcodebuild, and both Android + iOS e2e — runs in a single invocation.
+      # ALL CHECKS  (lint · unit tests · iOS xcodebuild · Android APK build)
+      # Maestro e2e tests are excluded (@Tag("e2e")) — they require a physical
+      # Android emulator which GitHub's standard macOS runners don't support.
+      # Run `./gradlew :checks:e2eTest` locally to execute the Maestro flows.
       # ══════════════════════════════════════════════════════════════════════
 
       - name: Run all checks
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 35          # highest confirmed stable level; update here when upgrading
-          target: google_apis    # required for Firebase / Google Play Services
-          arch: arm64-v8a        # macos-latest runners are Apple Silicon; action default (x86_64) fails on aarch64 hosts
-          disk-size: 12G
-          script: |
-            KAFKA_BOOTSTRAP=kafka.yral.com:9092 \
-            KAFKA_PASSWORD=$KAFKA_PASSWORD \
-            ./gradlew allChecks
+        run: ./gradlew allChecks
 
       - name: Upload detekt SARIF
         if: always()

@@ -7,7 +7,6 @@ import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.condition.EnabledOnOs
 import org.junit.jupiter.api.condition.OS
 import java.io.File
-import java.util.concurrent.TimeUnit
 
 @Order(1)
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
@@ -62,54 +61,6 @@ class Checks {
             "ENABLE_USER_SCRIPT_SANDBOXING=NO",
             dir = iosAppDir,
         )
-    }
-
-    @Test @Order(5)
-    fun `android start emulator`() {
-        // xcodebuild (iOS unit tests) can restart the adb daemon, leaving the CI runner's
-        // emulator as offline. `adb wait-for-device` handles offline→online transitions and
-        // doesn't pin to any specific serial. Give it 30s; if nothing appears, start our own.
-        exec("adb", "reconnect")
-        val alreadyRunning = ProcessBuilder("adb", "wait-for-device")
-            .directory(repoRoot)
-            .inheritIO()
-            .start()
-            .waitFor(30, java.util.concurrent.TimeUnit.SECONDS)
-        if (alreadyRunning && captureOutput("adb", "devices").lines().count { it.contains("\tdevice") } > 0) {
-            println("Android device already available — skipping emulator start.")
-            return
-        }
-
-        val avd = captureOutput("emulator", "-list-avds").trim().lines()
-            .firstOrNull { it.isNotBlank() }
-        checkNotNull(avd) { "No AVDs found — create one in Android Studio first." }
-
-        println("Starting emulator: $avd")
-        ProcessBuilder("emulator", "-avd", avd, "-no-audio", "-no-snapshot", "-no-boot-anim")
-            .directory(repoRoot)
-            .start() // background process; emulator outlives this test method
-
-        execOrFail("adb", "wait-for-device")
-
-        val deadline = System.currentTimeMillis() + 5 * 60_000L
-        while (System.currentTimeMillis() < deadline) {
-            if (captureOutput("adb", "shell", "getprop", "sys.boot_completed").trim() == "1") {
-                // sys.boot_completed is set before the package manager is fully ready.
-                // Wait until `pm list packages` succeeds to avoid install failures on cold boots.
-                val pmDeadline = System.currentTimeMillis() + 60_000L
-                while (System.currentTimeMillis() < pmDeadline) {
-                    if (exec("adb", "shell", "pm", "list", "packages", "android") == 0) {
-                        println("Emulator ready.")
-                        return
-                    }
-                    Thread.sleep(2_000)
-                }
-                println("Emulator ready (PM check timed out, proceeding anyway).")
-                return
-            }
-            Thread.sleep(2_000)
-        }
-        error("Emulator did not finish booting within 5 minutes")
     }
 
     companion object {
