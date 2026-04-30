@@ -15,6 +15,7 @@ import com.yral.android.installReferrer.processors.BranchAttributionProcessor
 import com.yral.android.installReferrer.processors.MetaAttributionProcessor
 import com.yral.android.installReferrer.processors.PlayInstallReferrerProcessor
 import com.yral.shared.analytics.di.IS_DEBUG
+import com.yral.shared.analytics.di.SNOWPLOW_APP_ID
 import com.yral.shared.analytics.providers.mixpanel.MixpanelAnalyticsProvider
 import com.yral.shared.app.di.initKoin
 import com.yral.shared.features.uploadvideo.utils.di.videoWidgetModule
@@ -44,6 +45,9 @@ class YralApp : Application() {
                 module {
                     val pkg = this@YralApp.packageName
                     single<Boolean>(IS_DEBUG) { pkg != "com.yral.android.app" }
+                    single<String>(SNOWPLOW_APP_ID) {
+                        if (pkg == "com.yral.android.app") "yral-mobile" else "yral-mobile-staging"
+                    }
                     single {
                         NotificationHandler(
                             notificationConfigByType =

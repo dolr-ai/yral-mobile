@@ -7,4 +7,5 @@ import com.yral.shared.analytics.events.EventData
 expect class SnowplowAnalyticsProvider(
     eventFilter: (EventData) -> Boolean = { true },
     mapConverter: EventToMapConverter,
+    appId: String,
 ) : AnalyticsProvider

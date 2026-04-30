@@ -31,7 +31,7 @@ fun countSnowplowEvents(since: Long, platformMarker: String): Int {
         // are embedded as readable UTF-8 substrings within the payload
         for (record in consumer.poll(Duration.ofSeconds(1))) {
             val payload = String(record.value(), Charsets.UTF_8)
-            if (payload.contains("yral-mobile") && payload.contains(platformMarker)) found++
+            if (payload.contains("yral-mobile-staging") && payload.contains(platformMarker)) found++
         }
         if (found > 0) break
     }

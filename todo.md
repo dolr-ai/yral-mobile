@@ -10,8 +10,4 @@ Can you help me do this?
 Verify if the sonatype repository is still being used for any dependencies and if not, remove it from the build files.
 - Remove Roboelectric and corresponding tests from the codebase. We will either test logic via unit tests or test end to end flows via our e2e test pipeline
 
-- AndroidE2eTest: Maestro ran successfully but Kafka found 0 events
-
-Not really. The app crashed. Can you confirm that the maestro test ran successfully on Android? I saw visually that it only scrolled to the 2nd video on android
-
 - How are we asserting whether the events from a particular Maestro test run is what is being asserted in the Kafka test? Is there some specific ID we are asserting against?

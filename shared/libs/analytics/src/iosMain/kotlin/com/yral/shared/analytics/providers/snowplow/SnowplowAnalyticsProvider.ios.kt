@@ -18,6 +18,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 actual class SnowplowAnalyticsProvider actual constructor(
     private val eventFilter: (EventData) -> Boolean,
     private val mapConverter: EventToMapConverter,
+    private val appId: String,
 ) : AnalyticsProvider {
     override val name: String = "snowplow"
 
@@ -32,7 +33,7 @@ actual class SnowplowAnalyticsProvider actual constructor(
             configurations =
                 listOf(
                     SPTrackerConfiguration().apply {
-                        setAppId("yral-mobile")
+                        setAppId(appId)
                         setDevicePlatform(SPDevicePlatformMobile)
                         setBase64Encoding(false)
                         setLogLevel(SPLogLevelOff)
