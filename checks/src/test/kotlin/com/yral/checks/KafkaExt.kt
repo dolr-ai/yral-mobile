@@ -12,7 +12,7 @@ val kafkaPassword: String by lazy {
     System.getenv("KAFKA_PASSWORD") ?: fetchPasswordFromKubectl()
 }
 
-fun countSnowplowEvents(since: Long, platformMarker: String): Int {
+fun countSnowplowEvents(since: Long, platformMarker: String, eventMarker: String? = null, minCount: Int = 1): Int {
     val consumer = KafkaConsumer<ByteArray, ByteArray>(kafkaConsumerProps())
     val partitions = consumer
         .partitionsFor("snowplow-raw")
@@ -31,9 +31,10 @@ fun countSnowplowEvents(since: Long, platformMarker: String): Int {
         // are embedded as readable UTF-8 substrings within the payload
         for (record in consumer.poll(Duration.ofSeconds(1))) {
             val payload = String(record.value(), Charsets.UTF_8)
-            if (payload.contains("yral-mobile-staging") && payload.contains(platformMarker)) found++
+            if (payload.contains("yral-mobile-staging") && payload.contains(platformMarker) &&
+                (eventMarker == null || payload.contains(eventMarker))) found++
         }
-        if (found > 0) break
+        if (found >= minCount) break
     }
     consumer.close()
     return found

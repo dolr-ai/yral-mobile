@@ -32,7 +32,10 @@ class AndroidE2eTest {
 
         val count = countSnowplowEvents(testStartMs, platformMarker = "andr-")
         assertTrue(count > 0) { "No snowplow-raw events for Android since $testStartMs" }
-        println("PASS: $count event(s) for Android")
+
+        val videoCount = countSnowplowEvents(testStartMs, platformMarker = "andr-", eventMarker = "video_viewed", minCount = 2)
+        assertTrue(videoCount >= 2) { "Expected ≥2 video_viewed events for Android, got $videoCount" }
+        println("PASS: $count total event(s), $videoCount video_viewed for Android")
     }
 
     private fun runMaestroFlow() {
