@@ -105,7 +105,7 @@ class AndroidE2eTest {
             checkNotNull(avd) { "No AVDs found — create one in Android Studio first." }
 
             println("Starting emulator: $avd")
-            ProcessBuilder("emulator", "-avd", avd, "-no-audio", "-no-snapshot", "-no-boot-anim")
+            ProcessBuilder("emulator", "-avd", avd, "-no-snapshot", "-no-boot-anim")
                 .directory(repoRoot)
                 .start() // background process; emulator outlives this @BeforeAll
 
