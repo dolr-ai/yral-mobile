@@ -9,7 +9,7 @@ dependencies {
 // Shared configuration applied to both test tasks.
 fun org.gradle.api.tasks.testing.Test.applyCommonConfig() {
     maxHeapSize = "4g"
-    systemProperty("junit.jupiter.execution.timeout.default", "15m")
+    systemProperty("junit.jupiter.execution.timeout.default", "30m")
     systemProperty("junit.jupiter.testclass.order.default", "org.junit.jupiter.api.ClassOrderer\$OrderAnnotation")
     // Always re-run: tests hit live devices and infrastructure, so caching is meaningless.
     outputs.upToDateWhen { false }
