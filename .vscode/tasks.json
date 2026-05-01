@@ -2,7 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "All Checks",
+            "label": "CI Checks",
             "type": "shell",
             "command": "./gradlew allChecks",
             "options": {
@@ -33,7 +33,10 @@
         },
         {
             "label": "Full Suite",
-            "dependsOn": ["All Checks", "E2E Tests"],
+            "dependsOn": [
+                "CI Checks",
+                "E2E Tests"
+            ],
             "dependsOrder": "sequence",
             "group": "build",
             "presentation": {
