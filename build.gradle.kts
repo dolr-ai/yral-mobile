@@ -117,7 +117,6 @@ tasks.register("allChecks") {
     group = "verification"
     description = "Runs all CI checks: lint, unit tests, Android build, iOS checks, e2e (E2E_PLATFORM gates e2e)"
     dependsOn(":androidApp:assembleStagingDebug")
-    dependsOn(reportMerge)
     findProject(":iosSharedUmbrella")?.let {
         dependsOn(":iosSharedUmbrella:podInstall")
         dependsOn(":iosSharedUmbrella:linkPodDebugFrameworkIosSimulatorArm64")
