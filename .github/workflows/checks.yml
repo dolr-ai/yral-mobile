@@ -83,6 +83,9 @@ jobs:
       # Run `./gradlew :checks:e2eTest` locally to execute the Maestro flows.
       # ══════════════════════════════════════════════════════════════════════
 
+      - name: Run detekt
+        run: ./gradlew detekt --continue
+
       - name: Run all checks
         run: ./gradlew allChecks
 
