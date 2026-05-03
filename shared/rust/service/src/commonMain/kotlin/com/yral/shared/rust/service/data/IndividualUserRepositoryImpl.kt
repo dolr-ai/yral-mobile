@@ -74,20 +74,6 @@ internal class IndividualUserRepositoryImpl(
                 .toPosts(canisterId)
         }
 
-    override suspend fun fetchFeedDetailsWithCreatorInfo(post: Post): FeedDetails? =
-        traceApiCall(performanceTracer, "fetchFeedDetailsWithCreatorInfo") {
-            dataSource
-                .fetchFeedDetailsWithCreatorInfo(post.toDTO())
-                ?.toFeedDetails()
-        }
-
-    override suspend fun fetchPostDetailsWithNsfwInfo(post: Post): FeedDetails? =
-        traceApiCall(performanceTracer, "fetchPostDetailsWithNsfwInfo") {
-            dataSource
-                .fetchPostDetailsWithNsfwInfo(post.toDTO())
-                ?.toFeedDetails()
-        }
-
     override suspend fun getUserBitcoinBalance(
         canisterId: String,
         principalId: String,

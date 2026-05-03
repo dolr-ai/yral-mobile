@@ -294,13 +294,6 @@ pub async fn authenticate_with_network(auth_data: Vec<u8>) -> std::result::Resul
     }).await.map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
 }
 
-pub fn extract_time_as_double(result: Result11) -> Option<u64> {
-    match result {
-        Result11::Ok(system_time) => Some(system_time.secs_since_epoch),
-        Result11::Err(_) => None,
-    }
-}
-
 pub fn principal_to_string(principal: &Principal) -> String {
     principal.to_string()
 }
