@@ -1,0 +1,12 @@
+# Copy to .envrc, then run: direnv allow
+#
+# direnv executes this file and exports the variables into any shell opened
+# in this directory, including VSCode integrated terminals.
+#
+# Prerequisite: install direnv (https://direnv.net) and hook it into your shell:
+#   echo 'eval "$(direnv hook zsh)"' >> ~/.zshrc   # or bash
+#
+# The kubeconfig file is gitignored. Obtain it from a team member or generate
+# it via kubernetes/infrastructure/ci-e2e-reader/rbac.yaml.
+
+export KUBECONFIG=$(PWD)/ci-e2e-reader.kubeconfig

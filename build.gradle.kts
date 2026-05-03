@@ -110,3 +110,27 @@ subprojects {
         }
     }
 }
+
+// Aggregate CI check task. Runs lint, unit tests, Android APK build, optional iOS KMM build,
+// then :checks:test (iOS xcodebuild + e2e gated on E2E_PLATFORM env var).
+tasks.register("allChecks") {
+    group = "verification"
+    description = "Runs all CI checks: lint, unit tests, Android build, iOS checks, e2e (E2E_PLATFORM gates e2e)"
+    dependsOn(":androidApp:assembleStagingDebug")
+    findProject(":iosSharedUmbrella")?.let {
+        dependsOn(":iosSharedUmbrella:podInstall")
+        dependsOn(":iosSharedUmbrella:linkPodDebugFrameworkIosSimulatorArm64")
+    }
+    dependsOn(":checks:test")
+}
+
+// Wire lint and unit-test tasks from every non-checks subproject into allChecks.
+// configureEach (not all) avoids forcing eager realization of every lazy task,
+// which would trigger Crashlytics plugin task-creation failures in androidApp.
+subprojects {
+    tasks.matching { it.name in setOf("ktlintCheck", "detekt", "test", "testDebugUnitTest") }.configureEach {
+        if (project.path != ":checks") {
+            rootProject.tasks.named("allChecks").configure { dependsOn(this@configureEach) }
+        }
+    }
+}

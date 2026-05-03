@@ -39,7 +39,7 @@ object FeedFeatureFlags {
                 keySuffix = "enabled",
                 name = "Enable Card Layout",
                 description = "Use Tinder-style swipeable card stack instead of vertical scroll",
-                defaultValue = true,
+                defaultValue = false,
             )
     }
 }

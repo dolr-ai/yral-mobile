@@ -93,3 +93,5 @@ include(":shared:features:reportVideo")
 include(":shared:features:chat")
 include(":shared:features:subscriptions")
 include(":shared:features:aiInfluencer")
+
+include(":checks")

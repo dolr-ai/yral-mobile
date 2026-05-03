@@ -20,6 +20,7 @@ def add_common_pods
   pod 'FirebaseMessaging', FIREBASE_VERSION
   pod 'Mixpanel', '5.0.8'
   pod 'FBSDKCoreKit', '18.0.0'
+  pod 'SnowplowTracker', '~> 6.1'
 end
 
 target 'Yral' do

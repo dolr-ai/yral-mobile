@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.testTag
 import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.EdgeScrollDetectConnection
@@ -121,7 +122,7 @@ fun YRALReelPlayer(
     }
 
     VerticalPager(
-        modifier = modifier.fillMaxSize().nestedScroll(edgeDetectConnection),
+        modifier = modifier.fillMaxSize().nestedScroll(edgeDetectConnection).testTag("video_feed_pager"),
         state = pagerState,
         beyondViewportPageCount = 1,
         key = { page -> visibleReels.getOrNull(page)?.videoId ?: page },

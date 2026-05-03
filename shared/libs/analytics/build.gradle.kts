@@ -37,6 +37,9 @@ configureCocoapods {
     pod("FirebaseAnalytics") {
         version = firebaseIosSdkVersion
     }
+    pod("SnowplowTracker") {
+        version = "~> 6.1"
+    }
 }
 
 kotlin {

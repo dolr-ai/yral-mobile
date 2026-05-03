@@ -20,6 +20,7 @@ import org.koin.core.component.inject
 actual class SnowplowAnalyticsProvider actual constructor(
     private val eventFilter: (EventData) -> Boolean,
     private val mapConverter: EventToMapConverter,
+    private val appId: String,
 ) : AnalyticsProvider,
     KoinComponent {
     private val context: Context by inject()
@@ -33,7 +34,7 @@ actual class SnowplowAnalyticsProvider actual constructor(
                 "https://${AppConfigurations.SNOWPLOW_COLLECTOR_URL}",
                 HttpMethod.POST,
             ),
-            TrackerConfiguration("yral-mobile")
+            TrackerConfiguration(appId)
                 .devicePlatform(DevicePlatform.Mobile)
                 .base64encoding(false)
                 .logLevel(LogLevel.OFF)
