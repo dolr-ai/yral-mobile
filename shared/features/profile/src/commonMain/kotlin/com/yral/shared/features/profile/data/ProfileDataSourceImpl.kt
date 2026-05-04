@@ -31,7 +31,6 @@ class ProfileDataSourceImpl(
     override suspend fun getProfileVideos(
         canisterId: String,
         userPrincipal: String,
-        isFromServiceCanister: Boolean,
         startIndex: ULong,
         pageSize: ULong,
     ): ProfileVideosPageResult {
@@ -41,7 +40,6 @@ class ProfileDataSourceImpl(
                 principalId = userPrincipal,
                 startIndex = startIndex,
                 pageSize = pageSize,
-                shouldFetchFromServiceCanisters = isFromServiceCanister,
             )
         return when (result) {
             is Posts.Ok -> {

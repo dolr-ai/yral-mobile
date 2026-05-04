@@ -22,7 +22,6 @@ import com.yral.shared.rust.service.domain.usecases.GetUsersProfileDetailsUseCas
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserUseCase
 import com.yral.shared.rust.service.domain.usecases.UpdateProfileDetailsUseCase
 import com.yral.shared.rust.service.services.ICPLedgerServiceFactory
-import com.yral.shared.rust.service.services.IndividualUserServiceFactory
 import com.yral.shared.rust.service.services.LogForwardingService
 import com.yral.shared.rust.service.services.RateLimitServiceFactory
 import com.yral.shared.rust.service.services.SnsLedgerServiceFactory
@@ -50,7 +49,6 @@ val rustModule: Module =
         factoryOf(::UserInfoRepositoryImpl) { bind<UserInfoRepository>() }
 
         // Service Factories
-        single { IndividualUserServiceFactory() }
         single { RateLimitServiceFactory() }
         single { UserPostServiceFactory() }
         single { UserInfoServiceFactory() }

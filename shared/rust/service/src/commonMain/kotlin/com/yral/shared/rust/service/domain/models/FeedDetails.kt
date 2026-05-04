@@ -9,43 +9,9 @@ import com.yral.shared.rust.service.data.IndividualUserDataSourceImpl.Companion.
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import com.yral.shared.rust.service.utils.propicFromPrincipal
-import com.yral.shared.uniffi.generated.PostDetailsForFrontend
 import com.yral.shared.uniffi.generated.PostDetailsWithUserInfo
-import com.yral.shared.uniffi.generated.PostStatus
 import com.yral.shared.uniffi.generated.UpsPostDetailsForFrontend
 import com.yral.shared.uniffi.generated.UpsPostStatus
-
-internal fun PostDetailsForFrontend.toFeedDetails(
-    postId: String,
-    canisterId: String,
-    nsfwProbability: Double?,
-): FeedDetails {
-    if (status == PostStatus.BANNED_DUE_TO_USER_REPORTING ||
-        status == PostStatus.BANNED_FOR_EXPLICITNESS
-    ) {
-        throw YralException("Post is banned $postId")
-    }
-    val profileImageUrl = propicFromPrincipal(createdByUserPrincipalId)
-    return FeedDetails(
-        postID = postId,
-        videoID = videoUid,
-        canisterID = canisterId,
-        principalID = createdByUserPrincipalId,
-        url = videoUrl(videoUid, createdByUserPrincipalId),
-        hashtags = hashtags,
-        thumbnail = thumbnailUrl(videoUid, createdByUserPrincipalId),
-        viewCount = totalViewCount,
-        displayName = createdByDisplayName ?: "",
-        postDescription = description,
-        profileImageURL = profileImageUrl,
-        likeCount = likeCount,
-        isLiked = likedByMe,
-        nsfwProbability = nsfwProbability,
-        isFollowing = false,
-        isFromServiceCanister = false,
-        userName = null,
-    )
-}
 
 internal fun UpsPostDetailsForFrontend.toFeedDetails(
     postId: String,

@@ -10,7 +10,6 @@ import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.rust.service.domain.IndividualUserRepository
 import com.yral.shared.rust.service.domain.UserInfoRepository
 import com.yral.shared.rust.service.domain.models.SubscriptionPlan
-import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
@@ -25,10 +24,9 @@ class FetchFeedDetailsWithCreatorInfoUseCase(
 
     override suspend fun execute(parameter: Post): FeedDetails =
         coroutineScope {
-            val isFromServiceCanister = getUserInfoServiceCanister() == parameter.canisterID
             val detailsDeferred =
                 async {
-                    individualUserRepository.fetchFeedDetails(parameter, isFromServiceCanister)
+                    individualUserRepository.fetchFeedDetails(parameter)
                 }
             val profileDeferred =
                 async {

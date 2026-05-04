@@ -1,7 +1,8 @@
 use std::str::FromStr;
+use std::sync::Arc;
 
-use crate::individual_user_template::*;
 use crate::uni_ffi_helpers::*;
+use crate::RUNTIME;
 use candid::de;
 use candid::Nat;
 use candid::{self, ser, CandidType, Decode, Deserialize, Encode, Principal};
@@ -294,57 +295,12 @@ pub async fn authenticate_with_network(auth_data: Vec<u8>) -> std::result::Resul
     }).await.map_err(|e| FFIError::AgentError(format!("{:?}", e)))?
 }
 
-pub fn extract_time_as_double(result: Result11) -> Option<u64> {
-    match result {
-        Result11::Ok(system_time) => Some(system_time.secs_since_epoch),
-        Result11::Err(_) => None,
-    }
-}
-
 pub fn principal_to_string(principal: &Principal) -> String {
     principal.to_string()
 }
 
 pub fn get_principal(text: String) -> std::result::Result<Principal, PrincipalError> {
     Principal::from_text(text)
-}
-
-impl Result12 {
-    pub fn is_ok(&self) -> bool {
-        matches!(self, Result12::Ok(_))
-    }
-
-    pub fn is_err(&self) -> bool {
-        matches!(self, Result12::Err(_))
-    }
-
-    pub fn ok_value(self) -> Option<Vec<PostDetailsForFrontend>> {
-        match self {
-            Result12::Ok(val) => Some(val),
-            Result12::Err(_) => None,
-        }
-    }
-
-    pub fn err_value(self) -> Option<GetPostsOfUserProfileError> {
-        match self {
-            Result12::Ok(_) => None,
-            Result12::Err(err) => Some(err),
-        }
-    }
-}
-
-impl GetPostsOfUserProfileError {
-    pub fn is_reached_end_of_items_list(&self) -> bool {
-        matches!(self, GetPostsOfUserProfileError::ReachedEndOfItemsList)
-    }
-
-    pub fn is_invalid_bounds_passed(&self) -> bool {
-        matches!(self, GetPostsOfUserProfileError::InvalidBoundsPassed)
-    }
-
-    pub fn is_exceeded_max_number_of_items_allowed_in_one_request(&self) -> bool {
-        matches!(self, GetPostsOfUserProfileError::ExceededMaxNumberOfItemsAllowedInOneRequest)
-    }
 }
 
 #[uniffi::export]

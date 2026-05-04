@@ -12,12 +12,11 @@ class ProfileRepositoryImpl(
     override suspend fun getProfileVideos(
         canisterId: String,
         userPrincipal: String,
-        isFromServiceCanister: Boolean,
         startIndex: ULong,
         pageSize: ULong,
     ): ProfileVideosPageResult =
         dataSource
-            .getProfileVideos(canisterId, userPrincipal, isFromServiceCanister, startIndex, pageSize)
+            .getProfileVideos(canisterId, userPrincipal, startIndex, pageSize)
 
     override suspend fun getDraftVideos(
         canisterId: String,

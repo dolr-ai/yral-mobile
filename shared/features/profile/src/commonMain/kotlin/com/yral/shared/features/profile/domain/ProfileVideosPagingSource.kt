@@ -10,7 +10,6 @@ import com.yral.shared.features.profile.domain.repository.ProfileRepository
 class ProfileVideosPagingSource(
     private val canisterId: String,
     private val userPrincipal: String,
-    private val isFromServiceCanister: Boolean,
     private val profileRepository: ProfileRepository,
     private val commonApis: CommonApis,
 ) : PagingSource<ULong, FeedDetails>() {
@@ -24,7 +23,6 @@ class ProfileVideosPagingSource(
                     .getProfileVideos(
                         canisterId = canisterId,
                         userPrincipal = userPrincipal,
-                        isFromServiceCanister = isFromServiceCanister,
                         startIndex = startIndex,
                         pageSize = pageSize,
                     )
