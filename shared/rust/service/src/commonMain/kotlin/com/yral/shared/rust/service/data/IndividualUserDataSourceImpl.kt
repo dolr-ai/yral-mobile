@@ -4,40 +4,22 @@ import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.data.data.models.PostDTO
 import com.yral.shared.rust.service.services.ICPLedgerServiceFactory
-import com.yral.shared.rust.service.services.IndividualUserServiceFactory
 import com.yral.shared.rust.service.services.SnsLedgerServiceFactory
 import com.yral.shared.rust.service.services.UserPostServiceFactory
 import com.yral.shared.uniffi.generated.Account
-import com.yral.shared.uniffi.generated.PostDetailsForFrontend
-import com.yral.shared.uniffi.generated.Result12
 import com.yral.shared.uniffi.generated.UpsPostDetailsForFrontend
 import com.yral.shared.uniffi.generated.UpsResult3
 
 internal class IndividualUserDataSourceImpl(
-    private val individualUserServiceFactory: IndividualUserServiceFactory,
     private val userPostServiceFactory: UserPostServiceFactory,
     private val snsLedgerServiceFactory: SnsLedgerServiceFactory,
     private val icpLedgerServiceFactory: ICPLedgerServiceFactory,
     private val sessionManager: SessionManager,
 ) : IndividualUserDataSource {
-    override suspend fun fetchFeedDetails(post: PostDTO): PostDetailsForFrontend =
-        individualUserServiceFactory
-            .service(principal = post.canisterID)
-            .getIndividualPostDetailsById(post.postID.toULong())
-
     override suspend fun fetchSCFeedDetails(post: PostDTO): UpsPostDetailsForFrontend =
         userPostServiceFactory
             .service(principal = post.canisterID)
             .getIndividualPostDetailsById(post.postID)
-
-    override suspend fun getPostsOfThisUserProfileWithPaginationCursor(
-        canisterId: String,
-        startIndex: ULong,
-        pageSize: ULong,
-    ): Result12 =
-        individualUserServiceFactory
-            .service(canisterId)
-            .getPostsOfThisUserProfileWithPaginationCursor(startIndex, pageSize)
 
     override suspend fun getSCPostsOfThisUserProfileWithPaginationCursor(
         principalId: String,

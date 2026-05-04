@@ -8,7 +8,6 @@ interface ProfileDataSource {
     suspend fun getProfileVideos(
         canisterId: String,
         userPrincipal: String,
-        isFromServiceCanister: Boolean,
         startIndex: ULong,
         pageSize: ULong,
     ): ProfileVideosPageResult

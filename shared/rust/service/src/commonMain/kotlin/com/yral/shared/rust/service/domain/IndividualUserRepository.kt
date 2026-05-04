@@ -5,16 +5,12 @@ import com.yral.shared.data.domain.models.Post
 import com.yral.shared.rust.service.domain.models.Posts
 
 interface IndividualUserRepository {
-    suspend fun fetchFeedDetails(
-        post: Post,
-        shouldFetchFromServiceCanisters: Boolean,
-    ): FeedDetails
+    suspend fun fetchFeedDetails(post: Post): FeedDetails
     suspend fun getPostsOfThisUserProfileWithPaginationCursor(
         canisterId: String,
         principalId: String,
         startIndex: ULong,
         pageSize: ULong,
-        shouldFetchFromServiceCanisters: Boolean,
     ): Posts
     suspend fun getDraftPostsWithPagination(
         canisterId: String,

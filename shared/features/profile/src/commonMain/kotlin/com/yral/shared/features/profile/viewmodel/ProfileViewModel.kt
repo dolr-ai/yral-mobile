@@ -174,7 +174,6 @@ class ProfileViewModel(
                         commonApis = commonApis,
                         canisterId = canisterData.canisterId,
                         userPrincipal = canisterData.userPrincipalId,
-                        isFromServiceCanister = canisterData.isCreatedFromServiceCanister,
                     )
                 },
             ).flow.cachedIn(viewModelScope)
