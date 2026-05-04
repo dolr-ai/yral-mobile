@@ -60,7 +60,7 @@ jobs:
             ${{ runner.os }}-tooling-
 
       - name: Install android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
 
       - name: Install android NDK
         run: |
