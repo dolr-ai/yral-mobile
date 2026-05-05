@@ -42,7 +42,7 @@ internal fun FeedDetailsForCache.toFeedDetails(): FeedDetails =
         principalID = principalID,
         url = url,
         hashtags = hashtags,
-        thumbnail = thumbnail,
+        thumbnail = thumbnail.withHyphenThumbnailSuffix(),
         viewCount = viewCount,
         displayName = displayName,
         postDescription = postDescription,
@@ -63,7 +63,7 @@ internal fun FeedDetails.toFeedDetailsForCache(): FeedDetailsForCache =
         principalID = principalID,
         url = url,
         hashtags = hashtags,
-        thumbnail = thumbnail,
+        thumbnail = thumbnail.withHyphenThumbnailSuffix(),
         viewCount = viewCount,
         displayName = displayName,
         postDescription = postDescription,
@@ -75,3 +75,14 @@ internal fun FeedDetails.toFeedDetailsForCache(): FeedDetailsForCache =
         isFromServiceCanister = isFromServiceCanister,
         userName = userName,
     )
+
+private const val MEDIA_CDN_PREFIX = "https://cdn-yral-sfw.yral.com/"
+private const val OLD_THUMBNAIL_SUFFIX = "_thumbnail.png"
+private const val NEW_THUMBNAIL_SUFFIX = "-thumbnail.png"
+
+internal fun String.withHyphenThumbnailSuffix(): String =
+    if (startsWith(MEDIA_CDN_PREFIX) && endsWith(OLD_THUMBNAIL_SUFFIX)) {
+        removeSuffix(OLD_THUMBNAIL_SUFFIX) + NEW_THUMBNAIL_SUFFIX
+    } else {
+        this
+    }
