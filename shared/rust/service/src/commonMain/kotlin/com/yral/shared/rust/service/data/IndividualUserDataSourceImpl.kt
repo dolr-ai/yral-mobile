@@ -61,7 +61,7 @@ internal class IndividualUserDataSourceImpl(
     internal companion object {
         private const val MEDIA_CDN_PREFIX =
             "https://cdn-yral-sfw.yral.com"
-        private const val THUMBNAIL_SUFFIX = "_thumbnail.png"
+        private const val THUMBNAIL_SUFFIX = "-thumbnail.png"
 
         fun thumbnailUrl(
             videoUid: String,

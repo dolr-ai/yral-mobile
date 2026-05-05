@@ -19,7 +19,7 @@ class MediaLoadCrashlyticsReporterTest {
         val cause = IllegalStateException("Forbidden")
 
         reporter.reportThumbnailLoadFailure(
-            thumbnailUrl = "https://cdn-yral-sfw.yral.com/user/video_thumbnail.png",
+            thumbnailUrl = "https://cdn-yral-sfw.yral.com/user/video-thumbnail.png",
             mediaId = "video-id",
             index = 3,
             throwable = cause,
