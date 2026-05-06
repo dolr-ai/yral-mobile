@@ -335,6 +335,7 @@ fn yral_auth_login_hint(data: &[u8]) -> std::result::Result<String, FFIError> {
 pub async fn register_device(
     data: Vec<u8>,
     token: String,
+    environment: String,
 ) -> std::result::Result<(), FFIError> {
     RUNTIME.spawn(async move {
         let identity = delegated_identity_from_bytes(&data)
@@ -343,7 +344,7 @@ pub async fn register_device(
         let registration_token = DeviceRegistrationToken { token };
         let res  = 
             client
-                .register_device(&identity, registration_token)
+                .register_device(&identity, registration_token, environment)
                 .await
                 .map_err(|e| FFIError::AgentError(format!("Api Error: {:?}", e)))?;    
         Ok(res)
@@ -354,6 +355,7 @@ pub async fn register_device(
 pub async fn unregister_device(
     data: Vec<u8>,
     token: String,
+    environment: String,
 ) -> std::result::Result<(), FFIError> {
     RUNTIME.spawn(async move {
         let identity = delegated_identity_from_bytes(&data)
@@ -362,7 +364,7 @@ pub async fn unregister_device(
         let registration_token = DeviceRegistrationToken { token };
         let res  = 
             client
-                .unregister_device(&identity, registration_token)
+                .unregister_device(&identity, registration_token, environment)
                 .await
                 .map_err(|e| FFIError::AgentError(format!("Api Error: {:?}", e)))?;    
         Ok(res)

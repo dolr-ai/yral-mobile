@@ -24,6 +24,7 @@ class AuthRepositoryImplTest {
         AuthEnv(
             clientId = "test-client-id",
             redirectUri = AuthEnv.RedirectUri(scheme = "yral"),
+            notificationEnvironment = "staging",
         )
 
     @Test

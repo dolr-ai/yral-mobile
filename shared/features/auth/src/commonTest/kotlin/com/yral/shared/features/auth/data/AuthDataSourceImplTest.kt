@@ -2,6 +2,7 @@ package com.yral.shared.features.auth.data
 
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.di.AuthEnv
+import com.yral.shared.features.auth.di.notificationEnvironmentForAppId
 import com.yral.shared.http.HTTPEventListener
 import com.yral.shared.http.exception.DNSLookupException
 import com.yral.shared.testsupport.preferences.FakePreferences
@@ -136,6 +137,21 @@ class AuthDataSourceImplTest {
             assertNotNull(response.delegatedIdentity.toSecret)
         }
 
+    @Test
+    fun notificationEnvironmentForAppId_mapsKnownApps() {
+        assertEquals("staging", notificationEnvironmentForAppId("com.yral.android"))
+        assertEquals("staging", notificationEnvironmentForAppId("com.yral.iosApp.staging"))
+        assertEquals("production", notificationEnvironmentForAppId("com.yral.android.app"))
+        assertEquals("production", notificationEnvironmentForAppId("com.yral.iosApp"))
+    }
+
+    @Test
+    fun notificationEnvironmentForAppId_rejectsUnknownApps() {
+        assertFailsWith<IllegalStateException> {
+            notificationEnvironmentForAppId("com.yral.unknown")
+        }
+    }
+
     private fun createDataSource(
         resolver: SessionAuthHostResolver = SessionAuthHostResolver(CrashlyticsManager()),
         eventListener: HTTPEventListener = NoOpHttpEventListener(),
@@ -172,6 +188,7 @@ class AuthDataSourceImplTest {
         AuthEnv(
             clientId = "test-client",
             redirectUri = AuthEnv.RedirectUri(scheme = "yral"),
+            notificationEnvironment = "staging",
         )
 
     private fun tokenResponseJson(idToken: String): String =

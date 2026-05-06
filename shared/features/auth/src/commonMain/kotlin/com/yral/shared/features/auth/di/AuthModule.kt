@@ -60,6 +60,7 @@ internal expect fun Scope.createAuthEnv(): AuthEnv
 data class AuthEnv(
     val clientId: String,
     val redirectUri: RedirectUri,
+    val notificationEnvironment: String,
 ) {
     data class RedirectUri(
         val scheme: String,
@@ -72,4 +73,16 @@ data class AuthEnv(
             const val REDIRECT_URI_PATH = "/callback"
         }
     }
+
+    companion object {
+        const val NOTIFICATION_ENVIRONMENT_STAGING = "staging"
+        const val NOTIFICATION_ENVIRONMENT_PRODUCTION = "production"
+    }
 }
+
+internal fun notificationEnvironmentForAppId(appId: String): String =
+    when (appId) {
+        "com.yral.android", "com.yral.iosApp.staging" -> AuthEnv.NOTIFICATION_ENVIRONMENT_STAGING
+        "com.yral.android.app", "com.yral.iosApp" -> AuthEnv.NOTIFICATION_ENVIRONMENT_PRODUCTION
+        else -> error("Unsupported app id for notification environment: $appId")
+    }
