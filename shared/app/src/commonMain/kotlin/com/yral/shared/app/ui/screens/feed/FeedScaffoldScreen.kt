@@ -17,6 +17,7 @@ import com.yral.shared.app.ui.ChatUnreadBadge
 import com.yral.shared.app.ui.chatUnreadBadgeText
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.feed.ui.FeedActionsRight
+import com.yral.shared.features.feed.ui.FeedInfluencerActions
 import com.yral.shared.features.feed.ui.FeedScreen
 import com.yral.shared.features.feed.ui.FeedStreakChip
 import com.yral.shared.features.feed.viewmodel.FeedViewModel
@@ -78,7 +79,14 @@ fun FeedScaffoldScreen(
                 }
             }
         },
-        bottomOverlay = { _, _ -> },
+        bottomOverlay = { pageNo, scrollToNext ->
+            FeedInfluencerActions(
+                pageNo = pageNo,
+                feedViewModel = feedViewModel,
+                openConversation = component::openConversation,
+                scrollToNext = scrollToNext,
+            )
+        },
         actionsRight = { pageNo ->
             FeedActionsRight(
                 pageNo = pageNo,
