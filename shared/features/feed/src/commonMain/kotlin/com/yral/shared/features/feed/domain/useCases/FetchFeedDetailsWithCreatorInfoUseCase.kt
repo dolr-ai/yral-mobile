@@ -44,17 +44,26 @@ class FetchFeedDetailsWithCreatorInfoUseCase(
                 profile
                     ?.profilePictureUrl
                     ?.takeIf { it.isNotBlank() }
+                    ?: parameter.profileImageUrl?.takeIf { it.isNotBlank() }
                     ?: details.profileImageURL
             val isFollowing =
                 profile
                     ?.userFollowsCaller
+                    ?: parameter.isFollowing
                     ?: details.isFollowing
 
             details.copy(
                 profileImageURL = profileImageUrl,
                 isFollowing = isFollowing,
-                isProUser = profile?.subscriptionPlan is SubscriptionPlan.Pro,
-                isAiInfluencer = profile?.isAiInfluencer,
+                userName = details.userName ?: parameter.username,
+                displayName = details.displayName.ifBlank { parameter.username ?: "" },
+                isProUser =
+                    if (profile != null) {
+                        profile.subscriptionPlan is SubscriptionPlan.Pro
+                    } else {
+                        parameter.isProUser == true
+                    },
+                isAiInfluencer = profile?.isAiInfluencer ?: parameter.fromAiInfluencer,
             )
         }
 }

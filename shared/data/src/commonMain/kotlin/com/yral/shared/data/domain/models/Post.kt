@@ -10,6 +10,11 @@ data class Post(
     val nsfwProbability: Double?,
     val numViewsLoggedIn: ULong?,
     val numViewsAll: ULong?,
+    val fromAiInfluencer: Boolean? = null,
+    val isFollowing: Boolean? = null,
+    val username: String? = null,
+    val isProUser: Boolean? = null,
+    val profileImageUrl: String? = null,
 )
 
 fun Post.toDTO(): PostDTO =
@@ -19,4 +24,11 @@ fun Post.toDTO(): PostDTO =
         postID = postID,
         videoID = videoID,
         nsfwProbability = nsfwProbability,
+        numViewsLoggedIn = numViewsLoggedIn,
+        numViewsAll = numViewsAll,
+        fromAiInfluencer = fromAiInfluencer,
+        isFollowing = isFollowing,
+        username = username,
+        isProUser = isProUser,
+        profileImageUrl = profileImageUrl,
     )

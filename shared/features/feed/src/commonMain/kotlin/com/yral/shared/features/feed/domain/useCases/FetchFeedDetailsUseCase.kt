@@ -15,6 +15,5 @@ class FetchFeedDetailsUseCase(
 ) : SuspendUseCase<Post, FeedDetails>(appDispatchers.network, useCaseFailureListener) {
     override val exceptionType: String = ExceptionType.FEED.name
 
-    override suspend fun execute(parameter: Post): FeedDetails =
-        individualUserRepository.fetchFeedDetails(parameter)
+    override suspend fun execute(parameter: Post): FeedDetails = individualUserRepository.fetchFeedDetails(parameter)
 }
