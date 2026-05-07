@@ -49,9 +49,9 @@ class AuthRepositoryImpl(
                         append("provider", provider.value)
                         append("client_id", authEnv.clientId)
                         append("response_type", "code")
-                        append("response_mode", "query")
+                        append("response_mode", provider.responseMode())
                         append("redirect_uri", authEnv.redirectUri.uriString)
-                        append("scope", "openid")
+                        append("scope", provider.authScope())
                         append("code_challenge", codeChallenge)
                         append("code_challenge_method", "S256")
                         append("login_hint", authLoginHintProvider.build(identity))
@@ -169,4 +169,16 @@ class AuthRepositoryImpl(
             .encodeToString(response.delegatedIdentity)
             .toByteArray()
     }
+
+    private fun SocialProvider.responseMode(): String =
+        when (this) {
+            SocialProvider.APPLE -> "form_post"
+            else -> "query"
+        }
+
+    private fun SocialProvider.authScope(): String =
+        when (this) {
+            SocialProvider.APPLE -> "name email"
+            else -> "openid"
+        }
 }
