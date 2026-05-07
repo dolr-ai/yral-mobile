@@ -2,6 +2,7 @@ package com.yral.shared.features.feed.nav
 
 import com.arkivanov.decompose.ComponentContext
 import com.yral.shared.data.AlertsRequestType
+import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
@@ -16,12 +17,14 @@ interface FeedComponent {
     val openWallet: () -> Unit
     fun openPostDetails(postDetailsRoute: PostDetailsRoute)
     fun openProfile(userCanisterData: CanisterData)
+    fun openConversation(params: OpenConversationParams)
 
     companion object Companion {
         operator fun invoke(
             componentContext: ComponentContext,
             requestLoginFactory: RequestLoginFactory,
             openProfile: (userCanisterData: CanisterData) -> Unit,
+            openConversation: (OpenConversationParams) -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
             promptLogin: (pendingRoute: AppRoute) -> Unit,
             openWallet: () -> Unit,
@@ -31,6 +34,7 @@ interface FeedComponent {
                 requestLoginFactory,
                 showAlertsOnDialog,
                 openProfile,
+                openConversation,
                 promptLogin,
                 openWallet,
             )

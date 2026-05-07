@@ -19,14 +19,22 @@ fun PostResponseDTO.toPostResponse(): PostResponse =
     PostResponse(
         posts =
             posts.map {
-                Post(
-                    canisterID = it.canisterID,
-                    publisherUserId = it.publisherUserId,
-                    postID = it.postID,
-                    videoID = it.videoID,
-                    nsfwProbability = it.nsfwProbability,
-                    numViewsAll = it.numViewsAll,
-                    numViewsLoggedIn = it.numViewsLoggedIn,
-                )
+                it.toPost()
             },
+    )
+
+fun PostDTO.toPost(): Post =
+    Post(
+        canisterID = canisterID,
+        publisherUserId = publisherUserId,
+        postID = postID,
+        videoID = videoID,
+        nsfwProbability = nsfwProbability,
+        numViewsAll = numViewsAll,
+        numViewsLoggedIn = numViewsLoggedIn,
+        fromAiInfluencer = fromAiInfluencer,
+        isFollowing = isFollowing,
+        username = username,
+        isProUser = isProUser,
+        profileImageUrl = profileImageUrl,
     )
