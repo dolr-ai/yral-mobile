@@ -40,6 +40,30 @@ class AuthRepositoryImplTest {
             assertEquals("auth.yral.com", fallbackUrl.host)
         }
 
+    @Test
+    fun getOAuthUrl_usesAppleEmailScopeAndFormPostModeForApple() =
+        runTest {
+            val repository = createRepository(SessionAuthHostResolver(CrashlyticsManager()))
+
+            val url = repository.getOAuthUrl(SocialProvider.APPLE, byteArrayOf(1)).first
+
+            assertEquals("apple", url.parameters["provider"])
+            assertEquals("name email", url.parameters["scope"])
+            assertEquals("form_post", url.parameters["response_mode"])
+        }
+
+    @Test
+    fun getOAuthUrl_keepsOpenIdQueryModeForGoogle() =
+        runTest {
+            val repository = createRepository(SessionAuthHostResolver(CrashlyticsManager()))
+
+            val url = repository.getOAuthUrl(SocialProvider.GOOGLE, byteArrayOf(1)).first
+
+            assertEquals("google", url.parameters["provider"])
+            assertEquals("openid", url.parameters["scope"])
+            assertEquals("query", url.parameters["response_mode"])
+        }
+
     private fun createRepository(resolver: SessionAuthHostResolver) =
         AuthRepositoryImpl(
             dataSource = FakeAuthDataSource(),
