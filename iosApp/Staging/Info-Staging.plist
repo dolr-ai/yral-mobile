@@ -40,7 +40,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>11</string>
+	<string>12</string>
 	<key>FIREBASE_CLOUD_BASE_URL</key>
 	<string>https://us-central1-yral-staging.cloudfunctions.net/</string>
 	<key>FacebookAppID</key>
