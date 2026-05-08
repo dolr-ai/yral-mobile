@@ -17,6 +17,13 @@ class FeedInfluencerActionsTest {
     }
 
     @Test
+    fun shouldShowInfluencerFeedActionsOnlyForCurrentPage() {
+        assertTrue(shouldShowInfluencerFeedActionsForPage(pageNo = 2, currentPage = 2))
+        assertFalse(shouldShowInfluencerFeedActionsForPage(pageNo = 1, currentPage = 2))
+        assertFalse(shouldShowInfluencerFeedActionsForPage(pageNo = 3, currentPage = 2))
+    }
+
+    @Test
     fun toOpenConversationParamsMapsFeedDetails() {
         val params =
             feedDetails(

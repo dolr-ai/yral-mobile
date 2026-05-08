@@ -63,7 +63,16 @@ class FetchFeedDetailsWithCreatorInfoUseCase(
                     } else {
                         parameter.isProUser == true
                     },
-                isAiInfluencer = profile?.isAiInfluencer ?: parameter.fromAiInfluencer,
+                isAiInfluencer =
+                    resolveAiInfluencerFlag(
+                        feedMetadataFlag = parameter.fromAiInfluencer,
+                        profileFlag = profile?.isAiInfluencer,
+                    ),
             )
         }
 }
+
+internal fun resolveAiInfluencerFlag(
+    feedMetadataFlag: Boolean?,
+    profileFlag: Boolean?,
+): Boolean? = feedMetadataFlag ?: profileFlag

@@ -34,33 +34,44 @@ fun FeedInfluencerActions(
     scrollToNext: () -> Unit,
 ) {
     val state by feedViewModel.state.collectAsState()
-    val feedDetails = state.feedDetails.getOrNull(pageNo) ?: return
-    if (!feedDetails.shouldShowInfluencerFeedActions()) return
+    val feedDetails =
+        if (shouldShowInfluencerFeedActionsForPage(pageNo, state.currentPageOfFeed)) {
+            state.feedDetails.getOrNull(pageNo)
+        } else {
+            null
+        }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Row(
-            modifier =
-                Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 40.dp),
-            horizontalArrangement = Arrangement.spacedBy(20.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            InfluencerActionButton(
-                contentDescription = "Skip influencer video",
-                image = Res.drawable.influencer_skip_action,
-                onClick = scrollToNext,
-            )
-            InfluencerActionButton(
-                contentDescription = "Chat with influencer",
-                image = Res.drawable.influencer_chat_action,
-                onClick = { openConversation(feedDetails.toOpenConversationParams()) },
-            )
+    if (feedDetails?.shouldShowInfluencerFeedActions() == true) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Row(
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 40.dp),
+                horizontalArrangement = Arrangement.spacedBy(80.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                InfluencerActionButton(
+                    contentDescription = "Skip influencer video",
+                    image = Res.drawable.influencer_skip_action,
+                    onClick = scrollToNext,
+                )
+                InfluencerActionButton(
+                    contentDescription = "Chat with influencer",
+                    image = Res.drawable.influencer_chat_action,
+                    onClick = { openConversation(feedDetails.toOpenConversationParams()) },
+                )
+            }
         }
     }
 }
 
 internal fun FeedDetails.shouldShowInfluencerFeedActions(): Boolean = isAiInfluencer == true
+
+internal fun shouldShowInfluencerFeedActionsForPage(
+    pageNo: Int,
+    currentPage: Int,
+): Boolean = pageNo == currentPage
 
 internal fun FeedDetails.toOpenConversationParams(): OpenConversationParams =
     OpenConversationParams(
