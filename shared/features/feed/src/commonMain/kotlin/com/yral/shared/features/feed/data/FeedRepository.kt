@@ -25,9 +25,4 @@ class FeedRepository(
         feedRemoteDataSource
             .fetchAIFeeds(feedRequest.toDto())
             .toPostResponse()
-
-    override suspend fun getInitialCachedFeeds(feedRequest: FeedRequest): PostResponse =
-        feedRemoteDataSource
-            .getInitialCachedFeeds(feedRequest.toDTO())
-            .toPostResponse()
 }

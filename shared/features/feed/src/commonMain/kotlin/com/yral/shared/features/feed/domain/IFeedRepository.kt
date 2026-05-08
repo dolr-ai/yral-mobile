@@ -8,5 +8,4 @@ interface IFeedRepository {
     suspend fun getInitialFeeds(feedRequest: FeedRequest): PostResponse
     suspend fun fetchMoreFeeds(feedRequest: FeedRequest): PostResponse
     suspend fun fetchAIFeeds(feedRequest: AIFeedRequest): PostResponse
-    suspend fun getInitialCachedFeeds(feedRequest: FeedRequest): PostResponse
 }

@@ -28,7 +28,6 @@ import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsWithCreatorInfoUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetAIFeedUseCase
-import com.yral.shared.features.feed.domain.useCases.GetGlobalCacheFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.LoadCachedFeedDetailsUseCase
 import com.yral.shared.features.feed.domain.useCases.SaveFeedDetailsCacheUseCase
@@ -247,40 +246,6 @@ class FeedViewModel(
         }
     }
 
-    private fun initialRemoteCachedFeedData() {
-        coroutineScope.launch {
-            sessionManager.userPrincipal?.let {
-                setLoadingMore(true)
-                requiredUseCases
-                    .getGlobalCacheFeedUseCase(Unit)
-                    .onSuccess { result ->
-                        val posts = result.posts
-                        Logger.d("FeedPagination") { "posts in initialFeed ${posts.size}" }
-                        if (posts.isEmpty()) {
-                            crashlyticsManager.recordException(
-                                YralException("Initial global cache feed empty"),
-                                ExceptionType.FEED,
-                            )
-                            setLoadingMore(false)
-                            loadMoreFeed()
-                        } else {
-                            val notVotedCount = filterVotedAndFetchDetails(posts)
-                            Logger.d("FeedPagination") { "notVotedCount in initialFeed $notVotedCount" }
-                            if (notVotedCount < SUFFICIENT_NEW_REQUIRED) {
-                                setLoadingMore(false)
-                                loadMoreFeed()
-                            } else {
-                                setLoadingMore(false)
-                            }
-                        }
-                    }.onFailure {
-                        setLoadingMore(false)
-                        loadMoreFeed()
-                    }
-            }
-        }
-    }
-
     private fun loadCachedFeedDetails() {
         coroutineScope.launch {
             sessionManager.userPrincipal?.let { userPrincipal ->
@@ -311,7 +276,7 @@ class FeedViewModel(
 
     private fun initializeFeed() {
         when (_state.value.feedType) {
-            FeedType.AI -> initialRemoteCachedFeedData()
+            FeedType.AI -> fetchAIFeed(currentBatchSize = FEEDS_PAGE_SIZE_AI_FEED, totalNotVotedCount = 0)
             else -> initialFeedData()
         }
     }
@@ -1149,7 +1114,6 @@ class FeedViewModel(
         val videoViewsUseCase: GetVideoViewsUseCase,
         val loadCachedFeedDetailsUseCase: LoadCachedFeedDetailsUseCase,
         val saveFeedDetailsCacheUseCase: SaveFeedDetailsCacheUseCase,
-        val getGlobalCacheFeedUseCase: GetGlobalCacheFeedUseCase,
         val fetchDailyStreakUseCase: FetchDailyStreakUseCase,
     )
 }
