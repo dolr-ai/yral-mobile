@@ -11,3 +11,9 @@ Verify if the sonatype repository is still being used for any dependencies and i
 - Remove Roboelectric and corresponding tests from the codebase. We will either test logic via unit tests or test end to end flows via our e2e test pipeline
 
 - for the e2e tests that we are running with maestro and then checking on kafka, we added a filter to only fetch the events sent from yral-staging. But that's not enough as we could have interference with multiple devs testing and polluting the test data. We should also include the principal ID of the user in the filter to ensure that we are only fetching events from our tests and not from other devs testing at the same time. Can you help me with this?
+- Use version catalogs with bundles where applicable
+- Use build cache and configuration cache
+```java
+org.gradle.caching=true
+org.gradle.configuration-cache=true
+```
