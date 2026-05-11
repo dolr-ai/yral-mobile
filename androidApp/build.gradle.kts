@@ -82,7 +82,7 @@ android {
             applicationId = "com.yral.android.app"
             dimension = "version"
             versionCode = 91 // ci:prod-version-code
-            versionName = "2.8.10" // ci:prod-version-name
+            versionName = "2.8.11" // ci:prod-version-name
             signingConfig = signingConfigs.getByName("release")
         }
     }
