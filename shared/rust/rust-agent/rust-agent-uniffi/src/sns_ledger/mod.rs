@@ -8,7 +8,6 @@ use std::sync::Arc;
 use uniffi::{Record, Enum};
 use crate::uni_ffi_helpers::*;
 use crate::commons::*;
-use crate::individual_user_template;
 use crate::RUNTIME;
 
 type Result<T> = std::result::Result<T, FFIError>;

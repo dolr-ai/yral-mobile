@@ -3,7 +3,7 @@ use ic_agent::Agent;
 use std::sync::Arc;
 use uniffi::Record;
 use uniffi::Enum;
-use crate::individual_user_template::individual_user_template_helper::*;
+use crate::helpers::*;
 use crate::uni_ffi_helpers::*;
 use crate::RUNTIME;
 use crate::commons::SystemTime;

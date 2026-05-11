@@ -3,7 +3,7 @@ use ic_agent::Agent;
 use std::sync::Arc;
 use uniffi::{Enum, Record};
 
-use crate::individual_user_template::individual_user_template_helper::delegated_identity_from_bytes;
+use crate::helpers::delegated_identity_from_bytes;
 use crate::uni_ffi_helpers::FFIError;
 use crate::RUNTIME;
 
