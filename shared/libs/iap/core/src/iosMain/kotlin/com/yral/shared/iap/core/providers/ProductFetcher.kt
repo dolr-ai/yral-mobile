@@ -13,6 +13,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.Foundation.NSError
 import platform.Foundation.NSLocaleCurrencyCode
 import platform.Foundation.NSLock
+import platform.Foundation.NSLog
 import platform.Foundation.NSNumberFormatter
 import platform.Foundation.NSNumberFormatterCurrencyStyle
 import platform.Foundation.NSSet
@@ -41,13 +42,14 @@ internal class ProductFetcher {
 
     companion object {
         private const val TAG = "SubscriptionX"
+        private const val LOG_PREFIX = "YRALIAP"
         private const val PRICE_TO_MICROS_FACTOR = 1_000_000L
     }
 
     suspend fun fetchProducts(productIds: List<ProductId>): Result<List<Product>> =
         suspendCancellableCoroutine { continuation ->
             val productIdStrings = productIds.map { it.productId }
-            logger.i { "Fetching iOS products: $productIdStrings" }
+            logProductFetch("Fetching iOS products: $productIdStrings")
             val productIdentifiers = NSSet.setWithArray(productIdStrings)
             val request = SKProductsRequest(productIdentifiers = productIdentifiers)
 
@@ -109,9 +111,9 @@ internal class ProductFetcher {
                             productCache.putAll(tmpProductCache)
                         }
 
-                        logger.i {
-                            "Fetched iOS products: valid=${productList.map { it.id }}, invalid=$invalidProductIds"
-                        }
+                        logProductFetch(
+                            "Fetched iOS products: valid=${productList.map { it.id }}, invalid=$invalidProductIds",
+                        )
                         continuation.resume(Result.success(productList))
                     }
 
@@ -120,7 +122,7 @@ internal class ProductFetcher {
                         didFailWithError: NSError,
                     ) {
                         request.cancel()
-                        logger.e { "Failed to fetch iOS products: ${didFailWithError.localizedDescription}" }
+                        logProductFetch("Failed to fetch iOS products: ${didFailWithError.localizedDescription}")
                         continuation.resume(
                             Result.failure(
                                 IAPError.NetworkError(
@@ -138,6 +140,12 @@ internal class ProductFetcher {
                 request.cancel()
             }
         }
+
+    private fun logProductFetch(message: String) {
+        val prefixedMessage = "$LOG_PREFIX $message"
+        logger.i { prefixedMessage }
+        NSLog(prefixedMessage)
+    }
 
     suspend fun getOrFetchSKProduct(productId: ProductId): SKProduct? {
         val productIdString = productId.productId
