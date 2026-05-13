@@ -1,6 +1,9 @@
 package com.yral.shared.iap.core.providers
 
 import co.touchlab.kermit.Logger
+import co.touchlab.kermit.Severity
+import co.touchlab.kermit.StaticConfig
+import co.touchlab.kermit.platformLogWriter
 import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.Product
 import com.yral.shared.iap.core.model.ProductId
@@ -26,6 +29,15 @@ import kotlin.math.roundToLong
 internal class ProductFetcher {
     private val productCache = mutableMapOf<String, SKProduct>()
     private val productCacheLock = NSLock()
+    private val logger =
+        Logger(
+            tag = TAG,
+            config =
+                StaticConfig(
+                    minSeverity = Severity.Info,
+                    logWriterList = listOf(platformLogWriter()),
+                ),
+        )
 
     companion object {
         private const val TAG = "SubscriptionX"
@@ -35,7 +47,7 @@ internal class ProductFetcher {
     suspend fun fetchProducts(productIds: List<ProductId>): Result<List<Product>> =
         suspendCancellableCoroutine { continuation ->
             val productIdStrings = productIds.map { it.productId }
-            Logger.d(TAG) { "Fetching iOS products: $productIdStrings" }
+            logger.i { "Fetching iOS products: $productIdStrings" }
             val productIdentifiers = NSSet.setWithArray(productIdStrings)
             val request = SKProductsRequest(productIdentifiers = productIdentifiers)
 
@@ -97,7 +109,7 @@ internal class ProductFetcher {
                             productCache.putAll(tmpProductCache)
                         }
 
-                        Logger.d(TAG) {
+                        logger.i {
                             "Fetched iOS products: valid=${productList.map { it.id }}, invalid=$invalidProductIds"
                         }
                         continuation.resume(Result.success(productList))
@@ -108,7 +120,7 @@ internal class ProductFetcher {
                         didFailWithError: NSError,
                     ) {
                         request.cancel()
-                        Logger.e(TAG) { "Failed to fetch iOS products: ${didFailWithError.localizedDescription}" }
+                        logger.e { "Failed to fetch iOS products: ${didFailWithError.localizedDescription}" }
                         continuation.resume(
                             Result.failure(
                                 IAPError.NetworkError(
