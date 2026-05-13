@@ -75,7 +75,7 @@ internal class IOSIAPProvider : IAPProvider {
             val skProduct =
                 productFetcher.getOrFetchSKProduct(productId)
                     ?: return Result.failure(IAPError.ProductNotFound(productIdString))
-            val deferred = purchaseManager.initiatePurchase(skProduct, productIdString)
+            val deferred = purchaseManager.initiatePurchase(skProduct, productIdString, obfuscatedAccountId)
             try {
                 withTimeout(PURCHASE_TIMEOUT) {
                     deferred.await()

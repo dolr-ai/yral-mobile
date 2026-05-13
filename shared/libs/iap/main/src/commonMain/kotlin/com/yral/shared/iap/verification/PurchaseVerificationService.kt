@@ -1,7 +1,6 @@
 package com.yral.shared.iap.verification
 
 import co.touchlab.kermit.Logger
-import com.yral.shared.core.AppConfigurations
 import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.Purchase
 import com.yral.shared.iap.core.util.handleIAPOperation
@@ -38,6 +37,7 @@ internal data class ErrorResponse(
 internal class PurchaseVerificationService(
     private val httpClient: HttpClient,
     private val json: Json,
+    private val billingBaseUrl: String,
 ) {
     companion object {
         private const val TAG = "SubscriptionXM"
@@ -67,7 +67,7 @@ internal class PurchaseVerificationService(
                 httpClient.post {
                     expectSuccess = false
                     url {
-                        host = AppConfigurations.BILLING_BASE_URL
+                        host = billingBaseUrl
                         path(getVerifierEndPoint())
                     }
                     setBody(request)
