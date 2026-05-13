@@ -74,8 +74,8 @@ android {
     productFlavors {
         create("staging") {
             dimension = "version"
-            versionCode = 1643 // ci:staging-version-code
-            versionName = "2.8.46" // ci:staging-version-name
+            versionCode = 1644 // ci:staging-version-code
+            versionName = "2.8.47" // ci:staging-version-name
             signingConfig = signingConfigs.getByName("staging")
         }
         create("prod") {
