@@ -19,6 +19,7 @@ import com.yral.shared.features.uploadvideo.domain.GetProvidersUseCase
 import com.yral.shared.features.uploadvideo.domain.UploadRepository
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoResult
+import com.yral.shared.features.uploadvideo.domain.models.InProgressDraft
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.features.uploadvideo.domain.models.ProviderCost
 import com.yral.shared.features.uploadvideo.domain.models.UploadAiVideoFromUrlRequest
@@ -102,6 +103,13 @@ class AiVideoGenViewModelTest {
             preferences = fakePreferences,
             uploadVideoTelemetry = uploadVideoTelemetry,
             subscriptionTelemetry = SubscriptionTelemetry(AnalyticsManager()),
+            videoDraftPollingManager =
+                VideoDraftPollingManager(
+                    repository = fakeUploadRepository,
+                    sessionManager = sessionManager,
+                    appDispatchers = appDispatchers,
+                    logger = YralLogger(),
+                ),
             logger = YralLogger(),
             flagManager = FeatureFlagManager(providersInPriority = emptyList(), localProviderId = "test"),
         )
@@ -407,6 +415,8 @@ internal class FakeUploadRepository : UploadRepository {
         if (generateVideoShouldThrow) throw RuntimeException("Network error")
         return generateVideoResult ?: throw IllegalStateException("No result configured")
     }
+
+    override suspend fun getInProgressDrafts(userId: String): List<InProgressDraft> = emptyList()
 
     override suspend fun uploadAiVideoFromUrl(request: UploadAiVideoFromUrlRequest): String = "video-id"
 

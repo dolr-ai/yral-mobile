@@ -21,6 +21,7 @@ internal class BotVideoGenCoordinator(
     private val generateVideoUseCase: GenerateVideoUseCase,
     private val getProvidersUseCase: GetProvidersUseCase,
     private val crashlyticsManager: CrashlyticsManager,
+    private val videoDraftPollingManager: VideoDraftPollingManager,
     appDispatchers: AppDispatchers,
 ) : BotVideoGenManager {
     private val logger = Logger.withTag("VideoGenRequest")
@@ -48,6 +49,7 @@ internal class BotVideoGenCoordinator(
                     return@onSuccess
                 }
                 VideoGenerationTracker.startGenerating()
+                videoDraftPollingManager.onGenerationSubmitted(botPrincipal)
                 logger.d {
                     "bot_video_gen: server draft generation submitted for $botPrincipal " +
                         "requestKey=${result.requestKey}"

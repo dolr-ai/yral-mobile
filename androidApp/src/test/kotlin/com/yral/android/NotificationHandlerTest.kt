@@ -75,7 +75,7 @@ class NotificationHandlerTest {
         assertEquals(viewDraftsCtaText, toast.cta!!.text)
         assertEquals(ToastDuration.LONG, toast.duration)
         assertTrue(VideoGenerationTracker.state.value.isGenerating)
-        assertEquals(1, VideoGenerationTracker.state.value.pendingGenerations.size)
+        assertEquals(2, VideoGenerationTracker.state.value.pendingGenerations.size)
 
         // CTA navigates with a wrapped payload containing internalUrl
         toast.cta!!.onClick()

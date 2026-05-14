@@ -6,6 +6,8 @@ import com.yral.shared.features.uploadvideo.data.remote.models.FileUploadStatus
 import com.yral.shared.features.uploadvideo.data.remote.models.GenerateVideoRequestDto
 import com.yral.shared.features.uploadvideo.data.remote.models.GetUploadUrlRequestDto
 import com.yral.shared.features.uploadvideo.data.remote.models.GetUploadUrlResponseDTO
+import com.yral.shared.features.uploadvideo.data.remote.models.InProgressDraftsRequestDto
+import com.yral.shared.features.uploadvideo.data.remote.models.InProgressDraftsResponseDto
 import com.yral.shared.features.uploadvideo.data.remote.models.MarkPostAsPublishedRequestDto
 import com.yral.shared.features.uploadvideo.data.remote.models.ProvidersResponseDto
 import com.yral.shared.features.uploadvideo.data.remote.models.UpdateMetaDataRequestDto
@@ -162,6 +164,16 @@ internal class UploadVideoRemoteDataSource(
             setBody(dto)
         }
 
+    suspend fun getInProgressDrafts(dto: InProgressDraftsRequestDto): InProgressDraftsResponseDto =
+        httpPost(client, json) {
+            url {
+                host = AppConfigurations.STORAGE_INTERFACE_BASE_URL
+                path(GET_IN_PROGRESS_DRAFTS_PATH)
+            }
+            contentType(ContentType.Application.Json)
+            setBody(dto)
+        }
+
     suspend fun markPostAsPublished(dto: MarkPostAsPublishedRequestDto) {
         httpPostWithStringResponse(client) {
             url {
@@ -182,5 +194,6 @@ internal class UploadVideoRemoteDataSource(
         private const val GET_PROVIDERS_PATH = "/api/v2/videogen/providers"
         private const val GET_ALL_PROVIDERS_PATH = "/api/v2/videogen/providers-all" // Use for internal builds
         private const val GENERATE_WITH_IDENTITY_V2_PATH = "/api/v2/videogen/generate"
+        private const val GET_IN_PROGRESS_DRAFTS_PATH = "/api/v2/videogen/drafts/in-progress"
     }
 }

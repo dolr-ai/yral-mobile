@@ -51,6 +51,7 @@ class AiVideoGenViewModel internal constructor(
     private val preferences: Preferences,
     private val uploadVideoTelemetry: UploadVideoTelemetry,
     private val subscriptionTelemetry: SubscriptionTelemetry,
+    private val videoDraftPollingManager: VideoDraftPollingManager,
     logger: YralLogger,
     flagManager: FeatureFlagManager,
 ) : ViewModel() {
@@ -341,6 +342,7 @@ class AiVideoGenViewModel internal constructor(
                                 reason = null,
                                 reasonType = null,
                             )
+                            videoDraftPollingManager.onGenerationSubmitted(userId)
                             _state.update {
                                 it.copy(
                                     uiState = UiState.Initial,

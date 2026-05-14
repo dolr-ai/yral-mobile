@@ -100,7 +100,6 @@ enum NotificationHandler {
     }
 
     if notificationType(from: userInfo) == Constants.draftCreatedType {
-      VideoGenerationTracker.shared.onDraftCreatedAndRequestDraftsTab()
       ForegroundNotificationToastBridgeKt.showForegroundNotificationSuccessToastWithAction(
         title: title,
         body: body,
@@ -123,10 +122,7 @@ enum NotificationHandler {
     ),
     Constants.draftCreatedType: Config(
       fallbackInternalUrl: profileUrl,
-      fallbackRoute: { defaultParseUrl(AppRouteKt.profilePath()) },
-      onResolve: {
-        VideoGenerationTracker.shared.onDraftCreatedAndRequestDraftsTab()
-      }
+      fallbackRoute: { defaultParseUrl(AppRouteKt.profilePath()) }
     ),
     Constants.rewardEarnedType: Config(
       navigateDirectlyInForeground: true

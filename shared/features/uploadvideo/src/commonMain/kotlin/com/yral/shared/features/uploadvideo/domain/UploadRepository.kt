@@ -2,6 +2,7 @@ package com.yral.shared.features.uploadvideo.domain
 
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoResult
+import com.yral.shared.features.uploadvideo.domain.models.InProgressDraft
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.features.uploadvideo.domain.models.UploadAiVideoFromUrlRequest
 import com.yral.shared.features.uploadvideo.domain.models.UploadEndpoint
@@ -18,6 +19,7 @@ interface UploadRepository {
     suspend fun updateMetadata(uploadFileRequest: UploadFileRequest)
     suspend fun fetchProviders(): List<Provider>
     suspend fun generateVideo(params: GenerateVideoParams): GenerateVideoResult
+    suspend fun getInProgressDrafts(userId: String): List<InProgressDraft>
     suspend fun uploadAiVideoFromUrl(request: UploadAiVideoFromUrlRequest): String
     suspend fun markPostAsPublished(postId: String)
 }
