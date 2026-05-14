@@ -82,8 +82,13 @@ jobs:
       - name: Update version in build.gradle.kts
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          sed -i '' "s/versionCode = [0-9]\\+ \/\/ ci:prod-version-code/versionCode = $NEW_VERSION_CODE \/\/ ci:prod-version-code/" ./androidApp/build.gradle.kts
+          sed -i '' -E "s/versionCode = [0-9]+ \/\/ ci:prod-version-code/versionCode = $NEW_VERSION_CODE \/\/ ci:prod-version-code/" ./androidApp/build.gradle.kts
           sed -i '' "s/versionName = \"[^\"]*\" \/\/ ci:prod-version-name/versionName = \"$VERSION\" \/\/ ci:prod-version-name/" ./androidApp/build.gradle.kts
+          UPDATED_VERSION_CODE=$(sed -nE 's/^[[:space:]]*versionCode = ([0-9]+) \/\/ ci:prod-version-code$/\1/p' ./androidApp/build.gradle.kts)
+          if [[ "$UPDATED_VERSION_CODE" != "$NEW_VERSION_CODE" ]]; then
+            echo "Error: prod versionCode update failed, expected '$NEW_VERSION_CODE' but found '$UPDATED_VERSION_CODE'" >&2
+            exit 1
+          fi
           echo "Updated build.gradle.kts:"
           grep -E 'ci:prod-version' ./androidApp/build.gradle.kts
 
