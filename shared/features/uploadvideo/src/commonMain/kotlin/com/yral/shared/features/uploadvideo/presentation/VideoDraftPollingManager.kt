@@ -36,6 +36,12 @@ class VideoDraftPollingManager(
         startPolling(userId = userId, waitBeforeFirstPoll = false)
     }
 
+    fun onDraftCreatedNotification() {
+        val userId = sessionManager.userPrincipal ?: return
+        activeUserId = userId
+        startPolling(userId = userId, waitBeforeFirstPoll = false)
+    }
+
     fun onAppBackgrounded() {
         pollingJob?.cancel()
         pollingJob = null
@@ -52,7 +58,7 @@ class VideoDraftPollingManager(
                     delay(POLL_INTERVAL_MS)
                 }
                 while (currentCoroutineContext().isActive) {
-                    val items = pollOnce(userId)
+                    val items = syncInProgressDrafts(userId)
                     if (items == null) {
                         delay(POLL_INTERVAL_MS)
                     } else if (items.isEmpty()) {
@@ -68,11 +74,14 @@ class VideoDraftPollingManager(
             }
     }
 
-    private suspend fun pollOnce(userId: String): List<InProgressDraft>? =
+    internal suspend fun syncInProgressDrafts(userId: String): List<InProgressDraft>? =
         try {
+            val previousPendingCount = VideoGenerationTracker.state.value.pendingGenerations.size
             val items = repository.getInProgressDrafts(userId)
             VideoGenerationTracker.setPendingGenerationCount(items.size)
-            VideoGenerationTracker.requestDraftsRefresh()
+            if (items.size < previousPendingCount) {
+                VideoGenerationTracker.requestDraftsRefresh()
+            }
             logger.d { "in_progress_drafts userId=$userId count=${items.size}" }
             items
         } catch (

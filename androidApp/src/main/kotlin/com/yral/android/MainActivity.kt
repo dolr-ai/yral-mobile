@@ -29,6 +29,7 @@ import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.features.auth.utils.OAuthResult
 import com.yral.shared.features.auth.utils.OAuthUtils
 import com.yral.shared.features.auth.utils.OAuthUtilsHelper
+import com.yral.shared.features.uploadvideo.presentation.VideoDraftPollingManager
 import com.yral.shared.koin.koinInstance
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.appTypoGraphy
@@ -62,6 +63,7 @@ class MainActivity : ComponentActivity() {
     private val settings: Settings by inject()
     private val routingService: RoutingService by inject()
     private val affiliateAttributionStore: AffiliateAttributionStore by inject()
+    private val videoDraftPollingManager: VideoDraftPollingManager by inject()
     private val attributionManager: AttributionManager by lazy {
         (application as YralApp).getAttributionManager()
     }
@@ -231,6 +233,9 @@ class MainActivity : ComponentActivity() {
             val jsonObject = Json.decodeFromString(JsonObject.serializer(), payload)
             val type = jsonObject["type"]?.jsonPrimitive?.content
             val internalUrl = jsonObject["internalUrl"]?.jsonPrimitive?.content
+            if (type == DRAFT_CREATED_TYPE) {
+                videoDraftPollingManager.onDraftCreatedNotification()
+            }
             internalUrl?.let { routingService.parseUrl(it) }
                 ?: if (type == DRAFT_CREATED_TYPE) Profile else null
         } catch (

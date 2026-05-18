@@ -37,6 +37,7 @@ internal fun notificationConfigByType(viewDraftsCtaText: String): Map<String, No
  */
 class NotificationHandler(
     private val notificationConfigByType: Map<String, NotificationConfig>,
+    private val onDraftCreatedNotification: () -> Unit = {},
 ) {
     fun handle(
         title: String?,
@@ -112,6 +113,7 @@ class NotificationHandler(
         config: NotificationConfig?,
         onNavigate: (String) -> Unit,
     ) {
+        onDraftCreatedNotification()
         val toastType = buildToastType(title, body) ?: return
         val ctaText = config?.ctaText ?: return
         ToastManager.showSuccess(

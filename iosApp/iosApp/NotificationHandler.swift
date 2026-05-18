@@ -5,18 +5,15 @@ enum NotificationHandler {
   struct Config {
     let fallbackInternalUrl: (() -> String?)?
     let fallbackRoute: (() -> AppRoute)?
-    let onResolve: (() -> Void)?
     let navigateDirectlyInForeground: Bool
 
     init(
       fallbackInternalUrl: (() -> String?)? = nil,
       fallbackRoute: (() -> AppRoute)? = nil,
-      onResolve: (() -> Void)? = nil,
       navigateDirectlyInForeground: Bool = false
     ) {
       self.fallbackInternalUrl = fallbackInternalUrl
       self.fallbackRoute = fallbackRoute
-      self.onResolve = onResolve
       self.navigateDirectlyInForeground = navigateDirectlyInForeground
     }
   }
@@ -35,10 +32,15 @@ enum NotificationHandler {
 
   static func notificationRoute(
     from userInfo: [AnyHashable: Any],
+    onDraftCreatedNotification: () -> Void = triggerDraftPolling,
     parseUrl: (String) -> AppRoute = defaultParseUrl
   ) -> AppRoute? {
     guard let payload = notificationPayload(from: userInfo) else { return nil }
-    return notificationRoute(from: payload, parseUrl: parseUrl)
+    return notificationRoute(
+      from: payload,
+      parseUrl: parseUrl,
+      onDraftCreatedNotification: onDraftCreatedNotification
+    )
   }
 
   static func foregroundRoute(
@@ -47,7 +49,11 @@ enum NotificationHandler {
   ) -> AppRoute? {
     guard let payload = notificationPayload(from: userInfo) else { return nil }
     guard config(for: payload)?.navigateDirectlyInForeground == true else { return nil }
-    return notificationRoute(from: payload, parseUrl: parseUrl)
+    return notificationRoute(
+      from: payload,
+      parseUrl: parseUrl,
+      onDraftCreatedNotification: {}
+    )
   }
 
   static func notificationType(from userInfo: [AnyHashable: Any]) -> String? {
@@ -92,6 +98,7 @@ enum NotificationHandler {
     userInfo: [AnyHashable: Any],
     title: String?,
     body: String?,
+    onDraftCreatedNotification: @escaping () -> Void = triggerDraftPolling,
     navigate: @escaping (AppRoute?) -> Void
   ) {
     if let route = foregroundRoute(from: userInfo) {
@@ -100,6 +107,7 @@ enum NotificationHandler {
     }
 
     if notificationType(from: userInfo) == Constants.draftCreatedType {
+      onDraftCreatedNotification()
       ForegroundNotificationToastBridgeKt.showForegroundNotificationSuccessToastWithAction(
         title: title,
         body: body,
@@ -133,12 +141,22 @@ enum NotificationHandler {
     AppDIHelper().getRoutingService().parseUrl(url: url)
   }
 
+  private static func triggerDraftPolling() {
+    NotificationCenter.default.post(
+      name: Notification.Name("YralDraftCreatedNotification"),
+      object: nil
+    )
+  }
+
   private static func notificationRoute(
     from payload: [String: Any],
-    parseUrl: (String) -> AppRoute
+    parseUrl: (String) -> AppRoute,
+    onDraftCreatedNotification: () -> Void
   ) -> AppRoute? {
     let config = config(for: payload)
-    config?.onResolve?()
+    if payload[Constants.typeString] as? String == Constants.draftCreatedType {
+      onDraftCreatedNotification()
+    }
 
     if let internalURL = payload[Constants.internalURL] as? String {
       return parseUrl(internalURL)

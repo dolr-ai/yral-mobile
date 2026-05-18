@@ -22,15 +22,18 @@ class NotificationHandlerTest {
     private val viewDraftsCtaText = "View Drafts"
     private lateinit var handler: NotificationHandler
     private var lastNavigatedPayload: String? = null
+    private var draftCreatedNotificationCount = 0
 
     @BeforeTest
     fun setup() {
         ToastManager.clear()
         lastNavigatedPayload = null
+        draftCreatedNotificationCount = 0
         VideoGenerationTracker.clearPendingGenerations()
         handler =
             NotificationHandler(
                 notificationConfigByType = notificationConfigByType(viewDraftsCtaText),
+                onDraftCreatedNotification = { draftCreatedNotificationCount++ },
             )
     }
 
@@ -76,6 +79,7 @@ class NotificationHandlerTest {
         assertEquals(ToastDuration.LONG, toast.duration)
         assertTrue(VideoGenerationTracker.state.value.isGenerating)
         assertEquals(2, VideoGenerationTracker.state.value.pendingGenerations.size)
+        assertEquals(1, draftCreatedNotificationCount)
 
         // CTA navigates with a wrapped payload containing internalUrl
         toast.cta!!.onClick()

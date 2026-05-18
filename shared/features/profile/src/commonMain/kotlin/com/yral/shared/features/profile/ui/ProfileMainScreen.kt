@@ -1328,10 +1328,6 @@ private fun DraftVideoGridContent(
 ) {
     val generatingState by VideoGenerationTracker.state.collectAsState()
     val pendingGenerations = if (isOwnProfile) generatingState.pendingGenerations else emptyList()
-    RefreshDraftVideosOnPendingGenerationChange(
-        draftVideos = draftVideos,
-        pendingGenerations = pendingGenerations,
-    )
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -1381,23 +1377,6 @@ private fun DraftVideoGridContent(
                 onRetry = { draftVideos.retry() },
             )
         }
-    }
-}
-
-@Composable
-private fun RefreshDraftVideosOnPendingGenerationChange(
-    draftVideos: LazyPagingItems<FeedDetails>,
-    pendingGenerations: List<VideoGenerationTracker.PendingGeneration>,
-) {
-    val pendingGenerationIds = remember(pendingGenerations) { pendingGenerations.map { it.id } }
-    var previousPendingGenerationIds by remember { mutableStateOf<List<Long>?>(null) }
-
-    LaunchedEffect(pendingGenerationIds) {
-        val previousIds = previousPendingGenerationIds
-        if (previousIds != pendingGenerationIds && (previousIds != null || pendingGenerationIds.isNotEmpty())) {
-            draftVideos.refresh()
-        }
-        previousPendingGenerationIds = pendingGenerationIds
     }
 }
 

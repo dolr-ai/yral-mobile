@@ -111,6 +111,7 @@ fun RootScreen(rootComponent: RootComponent) {
             videoDraftPollingManager.onAppBackgrounded()
         }
     }
+    ObserveDraftCreatedNotifications(videoDraftPollingManager)
     LaunchedEffect(state.navigationTarget) {
         when (state.navigationTarget) {
             is NavigationTarget.Splash -> rootComponent.navigateToSplash()
