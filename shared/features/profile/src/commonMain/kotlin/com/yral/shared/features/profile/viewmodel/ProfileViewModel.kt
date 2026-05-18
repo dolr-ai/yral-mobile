@@ -310,6 +310,14 @@ class ProfileViewModel(
                 }
             }
         }
+        viewModelScope.launch {
+            VideoGenerationTracker.refreshDrafts.collect {
+                val isCurrentOwnProfile = canisterData.userPrincipalId == sessionManager.userPrincipal
+                if (isCurrentOwnProfile) {
+                    profileEventsChannel.trySend(ProfileEvents.RefreshDrafts)
+                }
+            }
+        }
         if (!isOwnProfile) {
             _state.update {
                 it.copy(

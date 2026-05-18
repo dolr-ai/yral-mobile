@@ -18,6 +18,7 @@ import com.yral.shared.analytics.di.IS_DEBUG
 import com.yral.shared.analytics.di.SNOWPLOW_APP_ID
 import com.yral.shared.analytics.providers.mixpanel.MixpanelAnalyticsProvider
 import com.yral.shared.app.di.initKoin
+import com.yral.shared.features.uploadvideo.presentation.VideoDraftPollingManager
 import com.yral.shared.features.uploadvideo.utils.di.videoWidgetModule
 import com.yral.shared.koin.koinInstance
 import io.branch.referral.Branch
@@ -54,6 +55,9 @@ class YralApp : Application() {
                                 notificationConfigByType(
                                     this@YralApp.getString(R.string.view_drafts),
                                 ),
+                            onDraftCreatedNotification = {
+                                get<VideoDraftPollingManager>().onDraftCreatedNotification()
+                            },
                         )
                     }
                 },

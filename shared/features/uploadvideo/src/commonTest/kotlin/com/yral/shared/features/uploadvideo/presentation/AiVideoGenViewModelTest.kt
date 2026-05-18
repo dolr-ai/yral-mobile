@@ -19,6 +19,7 @@ import com.yral.shared.features.uploadvideo.domain.GetProvidersUseCase
 import com.yral.shared.features.uploadvideo.domain.UploadRepository
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoResult
+import com.yral.shared.features.uploadvideo.domain.models.InProgressDraft
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.features.uploadvideo.domain.models.ProviderCost
 import com.yral.shared.features.uploadvideo.domain.models.UploadAiVideoFromUrlRequest
@@ -38,10 +39,12 @@ import com.yral.shared.testsupport.usecase.NoOpUseCaseFailureListener
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -102,6 +105,13 @@ class AiVideoGenViewModelTest {
             preferences = fakePreferences,
             uploadVideoTelemetry = uploadVideoTelemetry,
             subscriptionTelemetry = SubscriptionTelemetry(AnalyticsManager()),
+            videoDraftPollingManager =
+                VideoDraftPollingManager(
+                    repository = fakeUploadRepository,
+                    sessionManager = sessionManager,
+                    appDispatchers = appDispatchers,
+                    logger = YralLogger(),
+                ),
             logger = YralLogger(),
             flagManager = FeatureFlagManager(providersInPriority = emptyList(), localProviderId = "test"),
         )
@@ -148,6 +158,86 @@ class AiVideoGenViewModelTest {
         }
 
     // endregion
+
+    @Test
+    fun `in progress draft sync does not request drafts refresh when count is unchanged`() =
+        runTest {
+            VideoGenerationTracker.startGenerating()
+            fakeUploadRepository.inProgressDrafts = listOf(inProgressDraft("op-1"))
+            var refreshCount = 0
+            val refreshJob =
+                backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                    VideoGenerationTracker.refreshDrafts.collect {
+                        refreshCount++
+                    }
+                }
+            val manager =
+                VideoDraftPollingManager(
+                    repository = fakeUploadRepository,
+                    sessionManager = sessionManager,
+                    appDispatchers = AppDispatchers(),
+                    logger = YralLogger(),
+                )
+
+            manager.syncInProgressDrafts("test-principal")
+
+            assertEquals(1, VideoGenerationTracker.state.value.pendingGenerations.size)
+            assertEquals(0, refreshCount)
+            refreshJob.cancel()
+        }
+
+    @Test
+    fun `in progress draft sync does not request drafts refresh when pending count increases`() =
+        runTest {
+            fakeUploadRepository.inProgressDrafts = listOf(inProgressDraft("op-1"))
+            var refreshCount = 0
+            val refreshJob =
+                backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                    VideoGenerationTracker.refreshDrafts.collect {
+                        refreshCount++
+                    }
+                }
+            val manager =
+                VideoDraftPollingManager(
+                    repository = fakeUploadRepository,
+                    sessionManager = sessionManager,
+                    appDispatchers = AppDispatchers(),
+                    logger = YralLogger(),
+                )
+
+            manager.syncInProgressDrafts("test-principal")
+
+            assertEquals(1, VideoGenerationTracker.state.value.pendingGenerations.size)
+            assertEquals(0, refreshCount)
+            refreshJob.cancel()
+        }
+
+    @Test
+    fun `in progress draft sync requests drafts refresh when pending count decreases`() =
+        runTest {
+            VideoGenerationTracker.startGenerating()
+            fakeUploadRepository.inProgressDrafts = emptyList()
+            var refreshCount = 0
+            val refreshJob =
+                backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                    VideoGenerationTracker.refreshDrafts.collect {
+                        refreshCount++
+                    }
+                }
+            val manager =
+                VideoDraftPollingManager(
+                    repository = fakeUploadRepository,
+                    sessionManager = sessionManager,
+                    appDispatchers = AppDispatchers(),
+                    logger = YralLogger(),
+                )
+
+            manager.syncInProgressDrafts("test-principal")
+
+            assertFalse(VideoGenerationTracker.state.value.isGenerating)
+            assertEquals(1, refreshCount)
+            refreshJob.cancel()
+        }
 
     // region 2: successful generation resets uiState to Initial
 
@@ -381,6 +471,17 @@ class AiVideoGenViewModelTest {
                 requestKey = null,
                 providerError = "Content policy violation",
             )
+
+        private fun inProgressDraft(operationId: String) =
+            InProgressDraft(
+                createdAt = "2026-05-18T00:00:00Z",
+                modelId = "model-1",
+                operationId = operationId,
+                prompt = "prompt",
+                provider = "provider",
+                status = "in_progress",
+                thumbnailUrl = null,
+            )
     }
 }
 
@@ -390,6 +491,7 @@ internal class FakeUploadRepository : UploadRepository {
     var generateVideoResult: GenerateVideoResult? = null
     var generateVideoShouldThrow = false
     var generateVideoSuspend = false
+    var inProgressDrafts: List<InProgressDraft> = emptyList()
 
     override suspend fun fetchUploadUrl(): UploadEndpoint = throw NotImplementedError()
 
@@ -407,6 +509,8 @@ internal class FakeUploadRepository : UploadRepository {
         if (generateVideoShouldThrow) throw RuntimeException("Network error")
         return generateVideoResult ?: throw IllegalStateException("No result configured")
     }
+
+    override suspend fun getInProgressDrafts(userId: String): List<InProgressDraft> = inProgressDrafts
 
     override suspend fun uploadAiVideoFromUrl(request: UploadAiVideoFromUrlRequest): String = "video-id"
 

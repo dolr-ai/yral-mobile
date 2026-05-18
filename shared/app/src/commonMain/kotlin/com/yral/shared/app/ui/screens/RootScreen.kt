@@ -41,6 +41,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.fade
@@ -75,6 +76,7 @@ import com.yral.shared.features.root.viewmodels.NavigationTarget
 import com.yral.shared.features.root.viewmodels.RootError
 import com.yral.shared.features.root.viewmodels.RootEvent
 import com.yral.shared.features.subscriptions.ui.SubscriptionsScreen
+import com.yral.shared.features.uploadvideo.presentation.VideoDraftPollingManager
 import com.yral.shared.features.wallet.ui.WalletScreen
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
@@ -87,6 +89,7 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import kotlinx.coroutines.flow.collect
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import yral_mobile.shared.app.generated.resources.Res
@@ -100,7 +103,15 @@ import yral_mobile.shared.app.generated.resources.error_timeout_title
 @Composable
 fun RootScreen(rootComponent: RootComponent) {
     val viewModel = rootComponent.rootViewModel
+    val videoDraftPollingManager: VideoDraftPollingManager = koinInject()
     val state by viewModel.state.collectAsState()
+    LifecycleResumeEffect(videoDraftPollingManager, state.sessionState) {
+        videoDraftPollingManager.onAppForegrounded()
+        onPauseOrDispose {
+            videoDraftPollingManager.onAppBackgrounded()
+        }
+    }
+    ObserveDraftCreatedNotifications(videoDraftPollingManager)
     LaunchedEffect(state.navigationTarget) {
         when (state.navigationTarget) {
             is NavigationTarget.Splash -> rootComponent.navigateToSplash()

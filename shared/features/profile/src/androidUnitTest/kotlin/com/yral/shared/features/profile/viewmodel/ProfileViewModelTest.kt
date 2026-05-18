@@ -47,6 +47,7 @@ import com.yral.shared.features.uploadvideo.domain.PublishDraftVideoUseCase
 import com.yral.shared.features.uploadvideo.domain.UploadRepository
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoResult
+import com.yral.shared.features.uploadvideo.domain.models.InProgressDraft
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.features.uploadvideo.domain.models.UploadAiVideoFromUrlRequest
 import com.yral.shared.features.uploadvideo.domain.models.UploadEndpoint
@@ -417,23 +418,20 @@ class ProfileViewModelTest {
         }
 
     @Test
-    fun `draft created notification switches to Drafts tab and refreshes drafts`() =
+    fun `draft refresh signal refreshes drafts without switching tabs`() =
         runBlocking {
             signInUser()
             val vm = createViewModel()
 
             VideoGenerationTracker.startGenerating()
-            VideoGenerationTracker.onDraftCreatedAndRequestDraftsTab()
+            VideoGenerationTracker.requestDraftsRefresh()
 
-            withTimeout(TIMEOUT_MS) {
-                vm.state.first { it.selectedTab == ProfileTab.Drafts }
-            }
             val event = withTimeout(TIMEOUT_MS) { vm.profileEvents.first() }
-            assertEquals(ProfileTab.Drafts, vm.state.value.selectedTab)
+            assertEquals(ProfileTab.Published, vm.state.value.selectedTab)
             assertIs<ProfileEvents.RefreshDrafts>(event)
             assertTrue(
                 VideoGenerationTracker.state.value.pendingGenerations
-                    .isEmpty(),
+                    .isNotEmpty(),
             )
         }
 
@@ -564,6 +562,7 @@ private class FakeUploadRepository : UploadRepository {
     override suspend fun updateMetadata(uploadFileRequest: UploadFileRequest) = throw NotImplementedError()
     override suspend fun fetchProviders(): List<Provider> = throw NotImplementedError()
     override suspend fun generateVideo(params: GenerateVideoParams): GenerateVideoResult = throw NotImplementedError()
+    override suspend fun getInProgressDrafts(userId: String): List<InProgressDraft> = emptyList()
     override suspend fun uploadAiVideoFromUrl(request: UploadAiVideoFromUrlRequest): String = throw NotImplementedError()
     override suspend fun markPostAsPublished(postId: String) {
         if (markPostAsPublishedShouldThrow) throw YralException("Publish failed")
@@ -577,7 +576,6 @@ private class FakeProfileRepository : ProfileRepository {
     override suspend fun getProfileVideos(
         canisterId: String,
         userPrincipal: String,
-        isFromServiceCanister: Boolean,
         startIndex: ULong,
         pageSize: ULong,
     ): ProfileVideosPageResult =
