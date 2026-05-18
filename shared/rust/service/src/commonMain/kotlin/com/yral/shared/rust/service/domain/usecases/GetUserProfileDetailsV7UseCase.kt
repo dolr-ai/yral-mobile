@@ -1,5 +1,6 @@
 package com.yral.shared.rust.service.domain.usecases
 
+import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.libs.arch.domain.SuspendUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
@@ -14,6 +15,8 @@ class GetUserProfileDetailsV7UseCase(
         appDispatchers.network,
         useCaseFailureListener,
     ) {
+    override val exceptionType: String = ExceptionType.RUST.name
+
     override suspend fun execute(parameter: GetUserProfileDetailsV7Params): UserProfileDetails =
         userInfoRepository.getUserProfileDetailsV7(
             principal = parameter.principal,
