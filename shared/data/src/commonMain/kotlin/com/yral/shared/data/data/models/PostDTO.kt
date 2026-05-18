@@ -19,4 +19,14 @@ data class PostDTO(
     val numViewsLoggedIn: ULong? = null,
     @SerialName("num_views_all")
     val numViewsAll: ULong? = null,
+    @SerialName("from_ai_influencer")
+    val fromAiInfluencer: Boolean? = null,
+    @SerialName("is_following")
+    val isFollowing: Boolean? = null,
+    @SerialName("username")
+    val username: String? = null,
+    @SerialName("is_pro_user")
+    val isProUser: Boolean? = null,
+    @SerialName("profile_image_url")
+    val profileImageUrl: String? = null,
 )

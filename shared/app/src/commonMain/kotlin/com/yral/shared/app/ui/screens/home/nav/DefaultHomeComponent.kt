@@ -238,6 +238,7 @@ internal class DefaultHomeComponent(
             componentContext = componentContext,
             requestLoginFactory = requestLoginFactory,
             openProfile = openProfile,
+            openConversation = openConversation,
             showAlertsOnDialog = showAlertsOnDialog,
             promptLogin = {
                 PendingAppRouteStore.store(it)

@@ -10,7 +10,6 @@ import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsWithCreatorInfoUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetAIFeedUseCase
-import com.yral.shared.features.feed.domain.useCases.GetGlobalCacheFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.LoadCachedFeedDetailsUseCase
 import com.yral.shared.features.feed.domain.useCases.SaveFeedDetailsCacheUseCase
@@ -25,7 +24,6 @@ import org.koin.dsl.module
 val feedModule =
     module {
         factoryOf(::GetInitialFeedUseCase)
-        factoryOf(::GetGlobalCacheFeedUseCase)
         factoryOf(::FetchMoreFeedUseCase)
         factoryOf(::FetchFeedDetailsUseCase)
         factoryOf(::FetchFeedDetailsWithCreatorInfoUseCase)

@@ -12,6 +12,9 @@ enum class RecommendationType {
     MIXED,
     POPULARITY,
     FRESHNESS,
+    FOLLOWING,
+    UGC,
+    FALLBACK,
 }
 
 fun AIFeedRequest.toDto(): AIFeedRequestDto =

@@ -3,6 +3,7 @@ package com.yral.shared.features.feed.nav
 import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.ComponentContext
 import com.yral.shared.data.AlertsRequestType
+import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.libs.routing.routes.api.PostDetailsRoute
@@ -17,6 +18,7 @@ internal class DefaultFeedComponent(
     override val requestLoginFactory: RequestLoginFactory,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
+    private val openConversation: (OpenConversationParams) -> Unit,
     override val promptLogin: (pendingRoute: AppRoute) -> Unit,
     override val openWallet: () -> Unit,
 ) : FeedComponent,
@@ -32,5 +34,9 @@ internal class DefaultFeedComponent(
 
     override fun openProfile(userCanisterData: CanisterData) {
         openProfile.invoke(userCanisterData)
+    }
+
+    override fun openConversation(params: OpenConversationParams) {
+        openConversation.invoke(params)
     }
 }
