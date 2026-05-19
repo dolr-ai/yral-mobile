@@ -12,6 +12,15 @@ data class GrantChatAccessRequestDto(
 )
 
 @Serializable
+data class GrantAppleChatAccessRequestDto(
+    @SerialName("transaction_id") val transactionId: String,
+    @SerialName("product_id") val productId: String,
+    @SerialName("bot_id") val botId: String,
+)
+
+internal expect fun GrantChatAccessRequestDto.toPlatformGrantRequestBody(): Any
+
+@Serializable
 data class ChatAccessApiResponse(
     val success: Boolean,
     val msg: String? = null,
