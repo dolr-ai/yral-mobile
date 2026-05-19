@@ -96,7 +96,7 @@ private fun ProviderSelectionRow(
             contentScale = ContentScale.None,
             modifier = Modifier.size(24.dp),
         )
-        provider.modelIcon?.let { url ->
+        provider.modelIcon?.takeIf { it.isNotBlank() }?.let { url ->
             YralAsyncImage(
                 imageUrl = getSVGImageModel(url),
                 modifier = Modifier.size(36.dp),
