@@ -124,10 +124,8 @@ class ProfileDataSourceImpl(
         val delegatedIdentityWire = json.decodeFromString<KotlinDelegatedIdentityWire>(identityWireJson)
 
         val deleteRequest =
-            DeleteVideoRequestBody(
+            request.toDeleteVideoRequestBody(
                 principal = userPrincipal,
-                postId = request.feedDetails.postID,
-                videoId = request.feedDetails.videoID,
                 delegatedIdentityWire = delegatedIdentityWire,
             )
 
@@ -180,3 +178,13 @@ class ProfileDataSourceImpl(
         private const val FOLLOW_NOTIFICATION = "/api/v1/user/follow-notification"
     }
 }
+
+internal fun DeleteVideoRequest.toDeleteVideoRequestBody(
+    principal: String,
+    delegatedIdentityWire: KotlinDelegatedIdentityWire,
+) = DeleteVideoRequestBody(
+    principal = principal,
+    postId = feedDetails.postID,
+    videoId = feedDetails.videoID,
+    delegatedIdentityWire = delegatedIdentityWire,
+)

@@ -100,7 +100,7 @@ private fun BoxScope.YralAsyncImageContent(
         model = imageUrl,
         contentDescription = "image",
         onState = {
-            onLoadingStateChange(it !is AsyncImagePainter.State.Success)
+            onLoadingStateChange(it is AsyncImagePainter.State.Loading)
             if (it is AsyncImagePainter.State.Error) {
                 onError()
             }
@@ -145,7 +145,7 @@ fun YralShimmerImage(
             model = targetUrl,
             contentDescription = "image",
             onState = { state ->
-                isLoading = state !is AsyncImagePainter.State.Success
+                isLoading = state is AsyncImagePainter.State.Loading
                 if (state is AsyncImagePainter.State.Error) {
                     onError()
                 }

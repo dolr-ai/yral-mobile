@@ -416,7 +416,7 @@ private fun ProviderRow(
                 .clickable { onClick() }
                 .padding(horizontal = 12.dp, vertical = 10.dp),
     ) {
-        provider.modelIcon?.let { url ->
+        provider.modelIcon?.takeIf { it.isNotBlank() }?.let { url ->
             YralAsyncImage(
                 imageUrl = getSVGImageModel(url),
                 modifier = Modifier.size(30.dp),

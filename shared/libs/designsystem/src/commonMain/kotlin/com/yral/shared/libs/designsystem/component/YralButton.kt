@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -48,7 +49,7 @@ fun YralButton(
     buttonHeight: Dp = 45.dp,
     onClick: () -> Unit,
 ) {
-    Row(
+    Box(
         modifier =
             modifier
                 .height(buttonHeight)
@@ -65,16 +66,8 @@ fun YralButton(
                     shape = RoundedCornerShape(size = 8.dp),
                 ).padding(paddingValues)
                 .clickable { onClick() },
-        horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
-        verticalAlignment = Alignment.CenterVertically,
+        contentAlignment = Alignment.Center,
     ) {
-        icon?.let {
-            Image(
-                painter = painterResource(icon),
-                contentDescription = "image description",
-                contentScale = ContentScale.None,
-            )
-        }
         val defaultStyle =
             LocalAppTopography
                 .current
@@ -83,14 +76,32 @@ fun YralButton(
                     color = YralColors.NeutralBlack,
                     textAlign = TextAlign.Center,
                 )
-        if (text.isNotEmpty()) {
-            Text(
-                text = text,
-                style =
-                    textStyle?.let {
-                        defaultStyle.plus(it)
-                    } ?: defaultStyle,
-            )
+        AnimatedVisibility(
+            visible = buttonState != YralButtonState.Loading,
+            enter = fadeIn(),
+            exit = fadeOut(),
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                icon?.let {
+                    Image(
+                        painter = painterResource(icon),
+                        contentDescription = "image description",
+                        contentScale = ContentScale.None,
+                    )
+                }
+                if (text.isNotEmpty()) {
+                    Text(
+                        text = text,
+                        style =
+                            textStyle?.let {
+                                defaultStyle.plus(it)
+                            } ?: defaultStyle,
+                    )
+                }
+            }
         }
         ButtonLoader(buttonState, loader)
     }

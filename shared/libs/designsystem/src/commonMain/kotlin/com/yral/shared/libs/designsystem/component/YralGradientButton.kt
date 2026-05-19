@@ -53,7 +53,7 @@ fun YralGradientButton(
     iconRes: DrawableResource? = null,
     onClick: () -> Unit,
 ) {
-    Row(
+    Box(
         modifier =
             modifier
                 .fillMaxWidth()
@@ -66,8 +66,7 @@ fun YralGradientButton(
                         onClick()
                     }
                 },
-        horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
-        verticalAlignment = Alignment.CenterVertically,
+        contentAlignment = Alignment.Center,
     ) {
         if (text.isNotEmpty()) {
             AnimatedVisibility(

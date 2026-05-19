@@ -49,7 +49,7 @@ internal fun UploadFileRequest.toUpdateMetaDataRequestDto(
     meta = emptyMap(),
     postDetails =
         PostDetailsDto(
-            id = videoUid,
+            id = postId,
             title = caption,
             description = caption,
             creatorPrincipal = creatorPrincipal,

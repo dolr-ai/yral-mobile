@@ -1243,7 +1243,7 @@ class ProfileViewModel(
         viewModelScope.launch {
             _state.update { it.copy(publishDraftUiState = UiState.InProgress()) }
             publishDraftVideoUseCase(
-                PublishDraftVideoUseCase.Param(postId = feedDetails.videoID),
+                PublishDraftVideoUseCase.Param(postId = feedDetails.postID),
             ).onSuccess {
                 profileTelemetry.onVideoPublished(
                     videoId = feedDetails.videoID,
@@ -1257,9 +1257,9 @@ class ProfileViewModel(
                                 (feedDetails.videoID to feedDetails.copy(isDraft = false)),
                     )
                 }
-                closeDraftVideo()
                 _state.update {
                     it.copy(
+                        videoView = VideoViewState.None,
                         publishDraftUiState = UiState.Initial,
                         selectedTab = ProfileTab.Published,
                     )
