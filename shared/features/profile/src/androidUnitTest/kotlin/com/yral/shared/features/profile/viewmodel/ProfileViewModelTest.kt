@@ -336,6 +336,22 @@ class ProfileViewModelTest {
             assertEquals(null, event.reason)
         }
 
+    @Test
+    fun `publishDraft sends post id to publish use case`() =
+        runBlocking {
+            signInUser()
+            val vm = createViewModel()
+
+            vm.publishDraft(TEST_FEED_DETAILS)
+
+            withTimeout(TIMEOUT_MS) {
+                vm.state.first {
+                    it.publishDraftUiState == UiState.Initial && it.selectedTab == ProfileTab.Published
+                }
+            }
+            assertEquals(listOf(TEST_FEED_DETAILS.postID), fakeUploadRepository.publishedPostIds)
+        }
+
     // endregion
 
     // region publishDraft failure
@@ -553,6 +569,7 @@ class ProfileViewModelTest {
 
 private class FakeUploadRepository : UploadRepository {
     var markPostAsPublishedShouldThrow = false
+    val publishedPostIds = mutableListOf<String>()
 
     override suspend fun fetchUploadUrl(): UploadEndpoint = throw NotImplementedError()
     override fun uploadVideo(
@@ -565,6 +582,7 @@ private class FakeUploadRepository : UploadRepository {
     override suspend fun getInProgressDrafts(userId: String): List<InProgressDraft> = emptyList()
     override suspend fun uploadAiVideoFromUrl(request: UploadAiVideoFromUrlRequest): String = throw NotImplementedError()
     override suspend fun markPostAsPublished(postId: String) {
+        publishedPostIds += postId
         if (markPostAsPublishedShouldThrow) throw YralException("Publish failed")
     }
 }
