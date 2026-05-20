@@ -44,6 +44,7 @@ internal fun FeedDetailsForCache.toFeedDetails(): FeedDetails =
         hashtags = hashtags,
         thumbnail = thumbnail.withHyphenThumbnailSuffix(),
         viewCount = viewCount,
+        bulkViewCount = viewCount,
         displayName = displayName,
         postDescription = postDescription,
         profileImageURL = profileImageURL,

@@ -21,7 +21,6 @@ import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.data.domain.models.Post
 import com.yral.shared.data.domain.useCases.FetchDailyStreakUseCase
-import com.yral.shared.data.domain.useCases.GetVideoViewsUseCase
 import com.yral.shared.features.feed.analytics.FeedTelemetry
 import com.yral.shared.features.feed.domain.useCases.CheckVideoVoteUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsUseCase
@@ -452,29 +451,13 @@ class FeedViewModel(
                 .onSuccess { detail ->
                     Logger.d("LinkSharing") { "Details Received $detail" }
                     detail?.let {
-                        Logger.d("LinkSharing") { "Fetching views for ${detail.videoID} current: ${detail.viewCount}" }
-                        requiredUseCases
-                            .videoViewsUseCase(
-                                parameter = GetVideoViewsUseCase.Params(listOf(detail.videoID)),
-                            ).onSuccess { views ->
-                                feedTelemetry.onDeeplink(detail.videoID)
-                                views.firstOrNull()?.allViews?.let { allViews ->
-                                    Logger.d("LinkSharing") { "View count : $allViews" }
-                                    _state.update { currentState ->
-                                        addDeeplinkData(
-                                            currentState = currentState,
-                                            details = detail.copy(viewCount = allViews, bulkViewCount = allViews),
-                                        )
-                                    }
-                                } ?: run {
-                                    Logger.d("LinkSharing") { "Failed to fetch view count" }
-                                    _state.update { currentState -> addDeeplinkData(currentState, detail) }
-                                }
-                            }.onFailure {
-                                Logger.d("LinkSharing") { "Failed to fetch view count" }
-                                feedTelemetry.onDeeplink(detail.videoID)
-                                _state.update { currentState -> addDeeplinkData(currentState, detail) }
-                            }
+                        feedTelemetry.onDeeplink(detail.videoID)
+                        _state.update { currentState ->
+                            addDeeplinkData(
+                                currentState = currentState,
+                                details = detail.copy(bulkViewCount = detail.viewCount),
+                            )
+                        }
                     } ?: run {
                         val exceptionMessage = "Detail is null for $postId in deeplink"
                         crashlyticsManager.recordException(
@@ -567,7 +550,9 @@ class FeedViewModel(
                                     "in feed details ${detail?.viewCount}"
                             }
                             val updatedDetail =
-                                post.numViewsAll?.let { views -> detail?.copy(viewCount = views) } ?: detail
+                                post.numViewsAll?.let { views ->
+                                    detail?.copy(viewCount = views, bulkViewCount = views)
+                                } ?: detail
                             updatedDetail to
                                 if (checkVotes) {
                                     detail?.let { isAlreadyVoted(it) }
@@ -713,41 +698,6 @@ class FeedViewModel(
             feedTelemetry.trackVideoImpression(
                 feedDetails = currentState.feedDetails[currentState.currentPageOfFeed],
             )
-            refreshVideoViewCount(currentState.feedDetails[currentState.currentPageOfFeed])
-        }
-    }
-
-    private fun refreshVideoViewCount(detail: FeedDetails) {
-        viewModelScope.launch {
-            requiredUseCases
-                .videoViewsUseCase(
-                    parameter = GetVideoViewsUseCase.Params(listOf(detail.videoID)),
-                ).onSuccess { views ->
-                    views.firstOrNull()?.allViews?.let { allViews ->
-                        Logger.d("ViewCount") { "View count : $allViews" }
-                        _state.update { currentState ->
-                            val list = currentState.feedDetails
-                            val index = list.indexOfFirst { it.videoID == detail.videoID }
-                            if (index == -1) {
-                                currentState
-                            } else {
-                                val existingDetail = list[index]
-                                if (existingDetail.bulkViewCount == allViews) {
-                                    currentState
-                                } else {
-                                    currentState.copy(
-                                        feedDetails =
-                                            list.update(index) {
-                                                it.copy(viewCount = allViews, bulkViewCount = allViews)
-                                            },
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }.onFailure {
-                    Logger.d("ViewCount") { "Failed to fetch view count" }
-                }
         }
     }
 
@@ -1111,7 +1061,6 @@ class FeedViewModel(
         val checkVideoVoteUseCase: CheckVideoVoteUseCase,
         val getAIFeedUseCase: GetAIFeedUseCase,
         val followUserUseCase: FollowUserUseCase,
-        val videoViewsUseCase: GetVideoViewsUseCase,
         val loadCachedFeedDetailsUseCase: LoadCachedFeedDetailsUseCase,
         val saveFeedDetailsCacheUseCase: SaveFeedDetailsCacheUseCase,
         val fetchDailyStreakUseCase: FetchDailyStreakUseCase,

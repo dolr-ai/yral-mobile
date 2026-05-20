@@ -33,6 +33,7 @@ internal fun UpsPostDetailsForFrontend.toFeedDetails(
         hashtags = hashtags,
         thumbnail = thumbnailUrl(videoUid, createdByUserPrincipalId),
         viewCount = totalViewCount,
+        bulkViewCount = totalViewCount,
         displayName = "",
         postDescription = description,
         profileImageURL = profileImageUrl,
@@ -56,6 +57,7 @@ internal fun PostDetailsWithUserInfo.toFeedDetails(): FeedDetails =
         hashtags = hashtags,
         thumbnail = thumbnailUrl(uid, posterPrincipal),
         viewCount = views,
+        bulkViewCount = views,
         displayName = displayName ?: username ?: "",
         postDescription = description,
         profileImageURL = propicUrl,
@@ -94,6 +96,7 @@ fun Post.toPartialFeedDetails(
         hashtags = emptyList(),
         thumbnail = thumbnailUrl(videoID, publisherUserId),
         viewCount = numViewsAll ?: 0u,
+        bulkViewCount = numViewsAll,
         displayName = username ?: "",
         postDescription = "",
         profileImageURL =

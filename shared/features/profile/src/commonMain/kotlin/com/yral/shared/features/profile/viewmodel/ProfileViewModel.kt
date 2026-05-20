@@ -31,7 +31,6 @@ import com.yral.shared.core.utils.getAccountInfo
 import com.yral.shared.core.videostate.VideoGenerationTracker
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
-import com.yral.shared.data.domain.CommonApis
 import com.yral.shared.data.domain.models.ConversationInfluencerSource
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.data.domain.models.VideoViews
@@ -106,7 +105,6 @@ class ProfileViewModel(
     private val canisterData: CanisterData,
     private val sessionManager: SessionManager,
     private val profileRepository: ProfileRepository,
-    private val commonApis: CommonApis,
     private val deleteVideoUseCase: DeleteVideoUseCase,
     private val reportVideoUseCase: ReportVideoUseCase,
     private val followUserUseCase: FollowUserUseCase,
@@ -171,7 +169,6 @@ class ProfileViewModel(
                 pagingSourceFactory = {
                     ProfileVideosPagingSource(
                         profileRepository = profileRepository,
-                        commonApis = commonApis,
                         canisterId = canisterData.canisterId,
                         userPrincipal = canisterData.userPrincipalId,
                     )
@@ -1128,29 +1125,23 @@ class ProfileViewModel(
         }
     }
 
-    @Suppress("LongMethod")
     @OptIn(ExperimentalTime::class)
     fun showVideoViews(video: FeedDetails) {
         if (!_state.value.isOwnProfile) return
         viewModelScope.launch {
             val shouldRefresh =
                 when (val currentViews = _state.value.viewsData[video.videoID]) {
-                    is UiState.InProgress -> {
-                        return@launch
-                    }
-
-                    is UiState.Success -> {
-                        val now = Clock.System.now()
-                        now - currentViews.data.lastFetched > VIEWS_REFRESH_THRESHOLD
-                    }
-
-                    else -> {
-                        true
-                    }
+                    is UiState.InProgress -> return@launch
+                    is UiState.Success -> Clock.System.now() - currentViews.data.lastFetched > VIEWS_REFRESH_THRESHOLD
+                    else -> true
                 }
             _state.update {
                 it.copy(
-                    bottomSheet = ProfileBottomSheet.VideoView(videoId = video.videoID),
+                    bottomSheet =
+                        ProfileBottomSheet.VideoView(
+                            videoId = video.videoID,
+                            totalViews = video.bulkViewCount ?: video.viewCount,
+                        ),
                     viewsData =
                         if (shouldRefresh) {
                             it.viewsData
@@ -1166,7 +1157,7 @@ class ProfileViewModel(
                 .invoke(parameter = GetVideoViewsUseCase.Params(videoId = listOf(video.videoID)))
                 .onSuccess { views ->
                     val viewData = views.firstOrNull { view -> view.videoId == video.videoID }
-                    Logger.d("VideoViews") { "Got video views $viewData" }
+                    Logger.d("VideoViews") { "Got engaged video views $viewData" }
                     viewData?.let {
                         _state.update {
                             it.copy(
@@ -1176,27 +1167,14 @@ class ProfileViewModel(
                                     },
                             )
                         }
-                        pagingState.update { current ->
-                            current.copy(
-                                updatedDetails =
-                                    current.updatedDetails +
-                                        (
-                                            video.videoID to
-                                                video.copy(
-                                                    viewCount = viewData.allViews,
-                                                    bulkViewCount = viewData.allViews,
-                                                )
-                                        ),
-                            )
-                        }
                     }
-                }.onFailure { e ->
-                    Logger.e("VideoViews") { "Failed to get video views $e" }
+                }.onFailure { error ->
+                    Logger.e("VideoViews", error) { "Failed to get engaged video views" }
                     _state.update {
                         it.copy(
                             viewsData =
                                 it.viewsData.toMutableMap().apply {
-                                    this[video.videoID] = UiState.Failure(e)
+                                    this[video.videoID] = UiState.Failure(error)
                                 },
                         )
                     }
@@ -1331,6 +1309,7 @@ sealed interface ProfileBottomSheet {
     data object None : ProfileBottomSheet
     data class VideoView(
         val videoId: String,
+        val totalViews: ULong,
     ) : ProfileBottomSheet
     data class FollowDetails(
         val tab: FollowersSheetTab,
