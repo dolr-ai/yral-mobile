@@ -216,12 +216,6 @@ private fun AiVideoGenScreenPrompts(
         is BottomSheetType.Error -> {
             val dismissSheet = {
                 viewModel.setBottomSheetType(BottomSheetType.None)
-                if (sheetType.endFlow) {
-                    viewModel.cleanup()
-                    component.onBack()
-                } else {
-                    viewModel.resetUi()
-                }
             }
             val tryAgain = {
                 viewModel.setBottomSheetType(BottomSheetType.None)
