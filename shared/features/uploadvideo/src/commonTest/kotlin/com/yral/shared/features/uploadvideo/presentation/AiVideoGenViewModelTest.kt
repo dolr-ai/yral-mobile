@@ -10,6 +10,9 @@ import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.videostate.VideoGenerationTracker
+import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.crashlytics.core.CrashlyticsProvider
+import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.subscriptions.analytics.SubscriptionTelemetry
 import com.yral.shared.features.uploadvideo.analytics.UploadVideoTelemetry
 import com.yral.shared.features.uploadvideo.domain.GenerateVideoUseCase
@@ -64,6 +67,7 @@ class AiVideoGenViewModelTest {
     private lateinit var fakeUploadRepository: FakeUploadRepository
     private lateinit var fakeRateLimitRepository: FakeRateLimitRepository
     private lateinit var fakePreferences: FakePreferences
+    private lateinit var fakeCrashlyticsProvider: FakeCrashlyticsProvider
 
     @BeforeTest
     fun setup() {
@@ -72,6 +76,7 @@ class AiVideoGenViewModelTest {
         fakeUploadRepository = FakeUploadRepository()
         fakeRateLimitRepository = FakeRateLimitRepository()
         fakePreferences = FakePreferences()
+        fakeCrashlyticsProvider = FakeCrashlyticsProvider()
         VideoGenerationTracker.clearPendingGenerations()
         VideoGenerationTracker.consumeDraftsTabRequest()
     }
@@ -112,6 +117,7 @@ class AiVideoGenViewModelTest {
                     appDispatchers = appDispatchers,
                     logger = YralLogger(),
                 ),
+            crashlyticsManager = CrashlyticsManager(listOf(fakeCrashlyticsProvider)),
             logger = YralLogger(),
             flagManager = FeatureFlagManager(providersInPriority = emptyList(), localProviderId = "test"),
         )
@@ -346,6 +352,42 @@ class AiVideoGenViewModelTest {
             assertFalse(VideoGenerationTracker.state.value.isGenerating)
         }
 
+    @Test
+    fun `provider error is recorded to Crashlytics as AI video exception`() =
+        runTest {
+            signInUser()
+            fakeUploadRepository.generateVideoResult = PROVIDER_ERROR_RESULT
+            val viewModel = createViewModel()
+            setupProviderAndPrompt(viewModel)
+
+            viewModel.generateAiVideo()
+            viewModel.state.first { it.bottomSheetType is AiVideoGenViewModel.BottomSheetType.Error }
+
+            assertEquals(listOf(ExceptionType.AI_VIDEO), fakeCrashlyticsProvider.recordedTypes)
+        }
+
+    @Test
+    fun `tryAgain after provider error retries with same prompt and provider`() =
+        runTest {
+            signInUser()
+            fakeUploadRepository.generateVideoResults += PROVIDER_ERROR_RESULT
+            fakeUploadRepository.generateVideoResults += SUCCESS_RESULT
+            val viewModel = createViewModel()
+            setupProviderAndPrompt(viewModel)
+
+            viewModel.generateAiVideo()
+            viewModel.state.first { it.bottomSheetType is AiVideoGenViewModel.BottomSheetType.Error }
+
+            viewModel.tryAgain()
+            viewModel.state.first { it.uiState == UiState.Initial }
+
+            assertEquals(2, fakeUploadRepository.generateVideoParams.size)
+            assertEquals(TEST_PROVIDER.id, fakeUploadRepository.generateVideoParams[0].providerId)
+            assertEquals(TEST_PROVIDER.id, fakeUploadRepository.generateVideoParams[1].providerId)
+            assertEquals("A beautiful sunset over the ocean", fakeUploadRepository.generateVideoParams[0].prompt)
+            assertEquals("A beautiful sunset over the ocean", fakeUploadRepository.generateVideoParams[1].prompt)
+        }
+
     // endregion
 
     // region 6: API failure handling
@@ -489,6 +531,8 @@ class AiVideoGenViewModelTest {
 
 internal class FakeUploadRepository : UploadRepository {
     var generateVideoResult: GenerateVideoResult? = null
+    val generateVideoResults = mutableListOf<GenerateVideoResult>()
+    val generateVideoParams = mutableListOf<GenerateVideoParams>()
     var generateVideoShouldThrow = false
     var generateVideoSuspend = false
     var inProgressDrafts: List<InProgressDraft> = emptyList()
@@ -505,8 +549,10 @@ internal class FakeUploadRepository : UploadRepository {
     override suspend fun fetchProviders(): List<Provider> = emptyList()
 
     override suspend fun generateVideo(params: GenerateVideoParams): GenerateVideoResult {
+        generateVideoParams += params
         if (generateVideoSuspend) kotlinx.coroutines.awaitCancellation()
         if (generateVideoShouldThrow) throw RuntimeException("Network error")
+        if (generateVideoResults.isNotEmpty()) return generateVideoResults.removeAt(0)
         return generateVideoResult ?: throw IllegalStateException("No result configured")
     }
 
@@ -532,6 +578,24 @@ internal class FakeRateLimitRepository : RateLimitRepository {
         userPrincipal: String,
         property: String,
     ): PropertyRateLimitConfig? = null
+}
+
+internal class FakeCrashlyticsProvider : CrashlyticsProvider {
+    override val name: String = "fake"
+    val recordedTypes = mutableListOf<ExceptionType>()
+
+    override fun recordException(exception: Exception) = Unit
+
+    override fun recordException(
+        exception: Exception,
+        type: ExceptionType,
+    ) {
+        recordedTypes += type
+    }
+
+    override fun logMessage(message: String) = Unit
+
+    override fun setUserId(id: String) = Unit
 }
 
 // endregion
