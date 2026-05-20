@@ -177,7 +177,6 @@ import yral_mobile.shared.libs.designsystem.generated.resources.arrow
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.cancel
 import yral_mobile.shared.libs.designsystem.generated.resources.delete
-import yral_mobile.shared.libs.designsystem.generated.resources.error_data_not_loaded
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_dots_vertical
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_download
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_share
@@ -189,12 +188,10 @@ import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_s
 import yral_mobile.shared.libs.designsystem.generated.resources.my_profile
 import yral_mobile.shared.libs.designsystem.generated.resources.my_profiles
 import yral_mobile.shared.libs.designsystem.generated.resources.oops
-import yral_mobile.shared.libs.designsystem.generated.resources.refresh
 import yral_mobile.shared.libs.designsystem.generated.resources.share_profile
 import yral_mobile.shared.libs.designsystem.generated.resources.something_went_wrong
 import yral_mobile.shared.libs.designsystem.generated.resources.started_following
 import yral_mobile.shared.libs.designsystem.generated.resources.try_again
-import yral_mobile.shared.libs.designsystem.generated.resources.video_insights
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 internal const val GRID_ITEM_ASPECT_RATIO = 0.75f
@@ -602,39 +599,14 @@ fun ProfileMainScreen(
         is ProfileBottomSheet.VideoView -> {
             val videoId = bottomSheet.videoId
             val video = profileVideos.itemSnapshotList.firstOrNull { it?.videoID == videoId }
-            when (val views = state.viewsData[videoId]) {
-                is UiState.Failure -> {
-                    YralErrorMessage(
-                        title = stringResource(DesignRes.string.video_insights),
-                        error = stringResource(DesignRes.string.error_data_not_loaded),
-                        cta = stringResource(DesignRes.string.refresh),
-                        onDismiss = { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
-                        onClick = { video?.let { viewModel.showVideoViews(video) } },
-                        sheetState = bottomSheetState,
-                        showErrorIcon = true,
-                        showDragHandle = true,
-                    )
-                }
-
-                UiState.Initial,
-                is UiState.InProgress,
-                is UiState.Success,
-                -> {
-                    val totalViews = (views as? UiState.Success)?.data?.allViews
-                    val totalEngagedViews = (views as? UiState.Success)?.data?.loggedInViews
-                    VideoViewsSheet(
-                        sheetState = bottomSheetState,
-                        onDismissRequest = { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
-                        thumbnailUrl = video?.thumbnail ?: "",
-                        totalViews = totalViews,
-                        totalEngagedViews = totalEngagedViews,
-                    )
-                }
-
-                else -> {
-                    Unit
-                }
-            }
+            val engagedViews = (state.viewsData[videoId] as? UiState.Success)?.data?.loggedInViews
+            VideoViewsSheet(
+                sheetState = bottomSheetState,
+                onDismissRequest = { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
+                thumbnailUrl = video?.thumbnail ?: "",
+                totalViews = bottomSheet.totalViews,
+                totalEngagedViews = engagedViews,
+            )
         }
 
         is ProfileBottomSheet.FollowDetails -> {

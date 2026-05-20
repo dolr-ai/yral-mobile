@@ -136,6 +136,7 @@ class AIPostResponseDTOTest {
         assertEquals("creator", details.userName)
         assertEquals("https://example.com/profile.png", details.profileImageURL)
         assertEquals(42uL, details.viewCount)
+        assertEquals(42uL, details.bulkViewCount)
         assertTrue(details.isFollowing)
         assertTrue(details.isProUser)
         assertTrue(details.isAiInfluencer == true)

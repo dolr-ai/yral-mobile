@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalCoroutinesApi::class)
+@file:OptIn(ExperimentalCoroutinesApi::class, ExperimentalTime::class)
 @file:Suppress("IllegalIdentifier")
 
 package com.yral.shared.features.profile.viewmodel
@@ -18,7 +18,10 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.videostate.VideoGenerationTracker
 import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.data.domain.CommonApis
+import com.yral.shared.data.domain.models.DailyStreak
 import com.yral.shared.data.domain.models.FeedDetails
+import com.yral.shared.data.domain.models.VideoViews
 import com.yral.shared.data.domain.useCases.GetVideoViewsUseCase
 import com.yral.shared.features.chat.analytics.ChatTelemetry
 import com.yral.shared.features.chat.data.ChatAccessBillingDataSource
@@ -75,7 +78,6 @@ import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCa
 import com.yral.shared.rust.service.domain.usecases.UnfollowUserUseCase
 import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.testsupport.analytics.RecordingAnalyticsProvider
-import com.yral.shared.testsupport.commonapis.FakeCommonApis
 import com.yral.shared.testsupport.metadata.FakeFollowersMetadataDataSource
 import com.yral.shared.testsupport.usecase.NoOpUseCaseFailureListener
 import kotlinx.coroutines.Dispatchers
@@ -99,6 +101,8 @@ import org.robolectric.RuntimeEnvironment
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 @RunWith(RobolectricTestRunner::class)
 class ProfileViewModelTest {
@@ -106,6 +110,7 @@ class ProfileViewModelTest {
     private lateinit var fakeUploadRepository: FakeUploadRepository
     private lateinit var fakeProfileRepository: FakeProfileRepository
     private lateinit var fakeAnalyticsProvider: RecordingAnalyticsProvider
+    private lateinit var fakeCommonApis: FakeCommonApis
     private var viewModel: ProfileViewModel? = null
 
     companion object {
@@ -155,6 +160,7 @@ class ProfileViewModelTest {
         fakeUploadRepository = FakeUploadRepository()
         fakeProfileRepository = FakeProfileRepository()
         fakeAnalyticsProvider = RecordingAnalyticsProvider()
+        fakeCommonApis = FakeCommonApis()
         VideoGenerationTracker.clearPendingGenerations()
         VideoGenerationTracker.consumeDraftsTabRequest()
     }
@@ -191,7 +197,6 @@ class ProfileViewModelTest {
                 ),
             sessionManager = sessionManager,
             profileRepository = fakeProfileRepository,
-            commonApis = FakeCommonApis(),
             deleteVideoUseCase =
                 DeleteVideoUseCase(
                     fakeProfileRepository,
@@ -228,7 +233,7 @@ class ProfileViewModelTest {
                 ),
             getVideoViewsUseCase =
                 GetVideoViewsUseCase(
-                    FakeCommonApis(),
+                    fakeCommonApis,
                     appDispatchers,
                     failureListener,
                 ),
@@ -386,6 +391,81 @@ class ProfileViewModelTest {
             assertEquals(TEST_FEED_DETAILS.videoID, event.videoId)
             assertEquals(false, event.isSuccess)
             assertEquals(true, event.reason?.contains("Publish failed"))
+        }
+
+    // endregion
+
+    // region video views
+
+    @Test
+    fun `showVideoViews uses existing total view count and fetches engaged views`() =
+        runBlocking {
+            signInUser()
+            val vm = createViewModel()
+            val feedDetails =
+                TEST_FEED_DETAILS.copy(
+                    viewCount = 123u,
+                    bulkViewCount = 456u,
+                )
+            fakeCommonApis.videoViews =
+                listOf(
+                    VideoViews(
+                        videoId = feedDetails.videoID,
+                        allViews = 999u,
+                        loggedInViews = 42u,
+                        lastFetched = Clock.System.now(),
+                    ),
+                )
+
+            vm.showVideoViews(feedDetails)
+
+            withTimeout(TIMEOUT_MS) {
+                vm.state.first { state ->
+                    (state.viewsData[feedDetails.videoID] as? UiState.Success)?.data?.loggedInViews == 42uL
+                }
+            }
+            assertEquals(
+                ProfileBottomSheet.VideoView(
+                    videoId = feedDetails.videoID,
+                    totalViews = 456u,
+                ),
+                vm.state.value.bottomSheet,
+            )
+            assertEquals(listOf(listOf(feedDetails.videoID)), fakeCommonApis.requestedVideoIds)
+        }
+
+    @Test
+    fun `showVideoViews falls back to viewCount when bulkViewCount is absent`() =
+        runBlocking {
+            signInUser()
+            val vm = createViewModel()
+            val feedDetails =
+                TEST_FEED_DETAILS.copy(
+                    viewCount = 123u,
+                    bulkViewCount = null,
+                )
+            fakeCommonApis.videoViews =
+                listOf(
+                    VideoViews(
+                        videoId = feedDetails.videoID,
+                        allViews = 999u,
+                        loggedInViews = 42u,
+                        lastFetched = Clock.System.now(),
+                    ),
+                )
+
+            vm.showVideoViews(feedDetails)
+
+            withTimeout(TIMEOUT_MS) {
+                vm.state.first { state -> state.viewsData[feedDetails.videoID] is UiState.Success }
+            }
+            assertEquals(
+                ProfileBottomSheet.VideoView(
+                    videoId = feedDetails.videoID,
+                    totalViews = 123u,
+                ),
+                vm.state.value.bottomSheet,
+            )
         }
 
     // endregion
@@ -566,6 +646,27 @@ class ProfileViewModelTest {
 }
 
 // region Fake implementations
+
+private class FakeCommonApis : CommonApis {
+    val requestedVideoIds = mutableListOf<List<String>>()
+    var videoViews: List<VideoViews> = emptyList()
+
+    override suspend fun getVideoViewsCount(videoId: List<String>): List<VideoViews> {
+        requestedVideoIds += videoId
+        return videoViews
+    }
+
+    override suspend fun softDeleteInfluencer(
+        principal: String,
+        idToken: String,
+        chatBaseUrl: String,
+    ): Result<Unit> = Result.success(Unit)
+
+    override suspend fun fetchDailyStreak(
+        userPrincipal: String,
+        idToken: String,
+    ): DailyStreak = throw NotImplementedError()
+}
 
 private class FakeUploadRepository : UploadRepository {
     var markPostAsPublishedShouldThrow = false

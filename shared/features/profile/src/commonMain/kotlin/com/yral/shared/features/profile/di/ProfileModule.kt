@@ -33,7 +33,6 @@ val profileModule =
                 canisterData = parameters.get<CanisterData>(),
                 sessionManager = get(),
                 profileRepository = get(),
-                commonApis = get(),
                 deleteVideoUseCase = get(),
                 reportVideoUseCase = get(),
                 followUserUseCase = get(),

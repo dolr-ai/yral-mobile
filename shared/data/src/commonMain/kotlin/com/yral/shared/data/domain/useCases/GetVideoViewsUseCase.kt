@@ -11,9 +11,10 @@ class GetVideoViewsUseCase(
     appDispatchers: AppDispatchers,
     failureListener: UseCaseFailureListener,
 ) : SuspendUseCase<GetVideoViewsUseCase.Params, List<VideoViews>>(appDispatchers.network, failureListener) {
-    override suspend fun execute(parameter: Params) =
-        commonApis
-            .getVideoViewsCount(videoId = parameter.videoId)
+    override suspend fun execute(parameter: Params): List<VideoViews> =
+        commonApis.getVideoViewsCount(
+            videoId = parameter.videoId,
+        )
 
     data class Params(
         val videoId: List<String>,
