@@ -23,9 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.yral.shared.features.uploadvideo.domain.models.Provider
-import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
-import com.yral.shared.libs.designsystem.component.getSVGImageModel
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
@@ -96,12 +94,10 @@ private fun ProviderSelectionRow(
             contentScale = ContentScale.None,
             modifier = Modifier.size(24.dp),
         )
-        provider.modelIcon?.takeIf { it.isNotBlank() }?.let { url ->
-            YralAsyncImage(
-                imageUrl = getSVGImageModel(url),
-                modifier = Modifier.size(36.dp),
-            )
-        }
+        ProviderIcon(
+            provider = provider,
+            modifier = Modifier.size(36.dp),
+        )
         Column(
             verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.Top),
             horizontalAlignment = Alignment.Start,
