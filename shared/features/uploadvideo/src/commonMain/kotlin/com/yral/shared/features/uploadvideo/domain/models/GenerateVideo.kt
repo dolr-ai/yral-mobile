@@ -36,4 +36,14 @@ data class GenerateVideoResult(
     val provider: String?,
     val requestKey: VideoGenRequestKey?,
     val providerError: String?,
+    val errorType: GenerateVideoErrorType? = null,
 )
+
+enum class GenerateVideoErrorType {
+    INVALID_INPUT,
+    AUTHENTICATION_FAILED,
+    INSUFFICIENT_BALANCE,
+    RATE_LIMIT_EXCEEDED,
+    PROVIDER_ERROR,
+    SERVICE_UNAVAILABLE,
+}

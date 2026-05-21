@@ -24,6 +24,7 @@ import com.yral.shared.features.uploadvideo.domain.GenerateVideoUseCase
 import com.yral.shared.features.uploadvideo.domain.GetFreeCreditsStatusUseCase
 import com.yral.shared.features.uploadvideo.domain.GetPropertyRateLimitConfigUseCase
 import com.yral.shared.features.uploadvideo.domain.GetProvidersUseCase
+import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoErrorType
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.libs.arch.presentation.UiState
@@ -333,7 +334,15 @@ class AiVideoGenViewModel internal constructor(
                                     reason = error,
                                 )
                                 _state.update {
-                                    it.copy(bottomSheetType = BottomSheetType.Error(error, true))
+                                    it.copy(
+                                        uiState = UiState.Initial,
+                                        bottomSheetType =
+                                            BottomSheetType.Error(
+                                                title = result.errorType,
+                                                message = error,
+                                                endFlow = true,
+                                            ),
+                                    )
                                 }
                                 return@onSuccess
                             }
@@ -373,7 +382,10 @@ class AiVideoGenViewModel internal constructor(
                                 reason = error.message ?: "",
                             )
                             _state.update {
-                                it.copy(bottomSheetType = BottomSheetType.Error("", true))
+                                it.copy(
+                                    uiState = UiState.Initial,
+                                    bottomSheetType = BottomSheetType.Error(message = "", endFlow = true),
+                                )
                             }
                         }
                 }
@@ -506,11 +518,10 @@ class AiVideoGenViewModel internal constructor(
         data object None : BottomSheetType()
         data object ModelSelection : BottomSheetType()
         data class Error(
+            val title: GenerateVideoErrorType? = null,
             val message: String,
             val endFlow: Boolean = false,
         ) : BottomSheetType()
-
-        data object BackConfirmation : BottomSheetType()
     }
 
     internal data class RequiredUseCases(

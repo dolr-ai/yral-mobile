@@ -38,15 +38,17 @@
     <string name="credits">Credits Used</string>
     <string name="credits_required">Credits Required</string>
     <string name="low_balance">Low Balance :</string>
-    <string name="you_will_loose_ai_credits">You will loose AI Credits</string>
-    <string name="you_will_loose_credits_desc">Leaving now will use up today’s AI credit. You can return tomorrow for a fresh credit.</string>
-    <string name="yes_take_me_back">Yes, Take me back</string>
-    <string name="stay_here">Stay Here</string>
     <string name="generate_video">Generate Video</string>
     <string name="play_games">Play Games</string>
     <string name="to_earn_token">to earn %1$s!</string>
 
     <string name="toast_ai_video_generating">Sit tight! Your AI video is being created.</string>
+    <string name="ai_video_invalid_input">Invalid input</string>
+    <string name="ai_video_authentication_failed">Authentication failed</string>
+    <string name="ai_video_insufficient_balance">Insufficient balance</string>
+    <string name="ai_video_rate_limit_exceeded">Rate limit exceeded</string>
+    <string name="ai_video_provider_error">Provider error</string>
+    <string name="ai_video_service_unavailable">Service unavailable</string>
 
     <string name="ai_video_subscription_nudge_title">You’ve used your free AI video!</string>
     <string name="ai_video_subscription_nudge_description">Why use tokens? Go Pro. Get %1$d YRAL Credits to create AI videos, unlimited chats &amp; free tournaments access.</string>

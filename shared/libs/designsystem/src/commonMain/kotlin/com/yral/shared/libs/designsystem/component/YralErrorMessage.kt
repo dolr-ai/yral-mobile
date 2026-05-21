@@ -28,7 +28,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.ic_error
 fun YralErrorMessage(
     title: String,
     error: String,
-    showDragHandle: Boolean = false,
+    showDragHandle: Boolean = true,
     showErrorIcon: Boolean = false,
     sheetState: SheetState,
     cta: String,
@@ -38,7 +38,12 @@ fun YralErrorMessage(
     YralBottomSheet(
         onDismissRequest = onDismiss,
         bottomSheetState = sheetState,
-        dragHandle = { if (showDragHandle) DragHandle(color = YralColors.Neutral500) else null },
+        dragHandle =
+            if (showDragHandle) {
+                { DragHandle(color = YralColors.Neutral500) }
+            } else {
+                null
+            },
     ) {
         Column(
             modifier =

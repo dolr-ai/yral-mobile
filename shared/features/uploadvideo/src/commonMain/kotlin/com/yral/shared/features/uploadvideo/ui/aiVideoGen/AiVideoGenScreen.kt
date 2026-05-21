@@ -42,13 +42,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.touchlab.kermit.Logger
 import com.yral.shared.features.subscriptions.nav.SubscriptionNudgeContent
 import com.yral.shared.features.subscriptions.ui.components.BoltIcon
+import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoErrorType
 import com.yral.shared.features.uploadvideo.nav.aiVideoGen.AiVideoGenComponent
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel
 import com.yral.shared.features.uploadvideo.presentation.AiVideoGenViewModel.BottomSheetType
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralButtonState
-import com.yral.shared.libs.designsystem.component.YralConfirmationMessage
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralMaskedVectorTextV2
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
@@ -62,17 +62,19 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.features.uploadvideo.generated.resources.Res
+import yral_mobile.shared.features.uploadvideo.generated.resources.ai_video_authentication_failed
+import yral_mobile.shared.features.uploadvideo.generated.resources.ai_video_insufficient_balance
+import yral_mobile.shared.features.uploadvideo.generated.resources.ai_video_invalid_input
+import yral_mobile.shared.features.uploadvideo.generated.resources.ai_video_provider_error
+import yral_mobile.shared.features.uploadvideo.generated.resources.ai_video_rate_limit_exceeded
+import yral_mobile.shared.features.uploadvideo.generated.resources.ai_video_service_unavailable
 import yral_mobile.shared.features.uploadvideo.generated.resources.create_ai_video
 import yral_mobile.shared.features.uploadvideo.generated.resources.generate_video
 import yral_mobile.shared.features.uploadvideo.generated.resources.play_games
-import yral_mobile.shared.features.uploadvideo.generated.resources.stay_here
 import yral_mobile.shared.features.uploadvideo.generated.resources.to_earn_token
 import yral_mobile.shared.features.uploadvideo.generated.resources.toast_ai_video_generating
 import yral_mobile.shared.features.uploadvideo.generated.resources.upload_completed_message
 import yral_mobile.shared.features.uploadvideo.generated.resources.upload_successful
-import yral_mobile.shared.features.uploadvideo.generated.resources.yes_take_me_back
-import yral_mobile.shared.features.uploadvideo.generated.resources.you_will_loose_ai_credits
-import yral_mobile.shared.features.uploadvideo.generated.resources.you_will_loose_credits_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.coins
 import yral_mobile.shared.libs.designsystem.generated.resources.done
@@ -137,10 +139,10 @@ fun AiVideoGenScreen(
     BackHandler(
         enabled = viewState.uiState is UiState.Success || viewState.uiState is UiState.InProgress,
         onBack = {
+            viewModel.cleanup()
             if (viewState.uiState is UiState.InProgress) {
-                viewModel.setBottomSheetType(BottomSheetType.BackConfirmation)
+                component.onBack()
             } else {
-                viewModel.cleanup()
                 component.goToHome()
             }
         },
@@ -149,12 +151,8 @@ fun AiVideoGenScreen(
         when (viewState.uiState) {
             UiState.Initial, is UiState.InProgress -> {
                 Header {
-                    if (viewState.uiState is UiState.InProgress) {
-                        viewModel.setBottomSheetType(BottomSheetType.BackConfirmation)
-                    } else {
-                        viewModel.cleanup()
-                        component.onBack()
-                    }
+                    viewModel.cleanup()
+                    component.onBack()
                 }
                 val focusManager = LocalFocusManager.current
                 Column(
@@ -226,25 +224,11 @@ private fun AiVideoGenScreenPrompts(
                 }
             }
             GenerationErrorPrompt(
+                title = sheetType.title,
                 message = sheetType.message,
                 bottomSheetState = bottomSheetState,
                 dismissSheet = dismissSheet,
                 tryAgain = tryAgain,
-            )
-        }
-
-        is BottomSheetType.BackConfirmation -> {
-            YralConfirmationMessage(
-                title = stringResource(Res.string.you_will_loose_ai_credits),
-                subTitle = stringResource(Res.string.you_will_loose_credits_desc),
-                sheetState = bottomSheetState,
-                cancel = stringResource(Res.string.yes_take_me_back),
-                done = stringResource(Res.string.stay_here),
-                onDone = { viewModel.setBottomSheetType(BottomSheetType.None) },
-                onCancel = {
-                    viewModel.cleanup()
-                    component.onBack()
-                },
             )
         }
 
@@ -350,6 +334,7 @@ private fun PlayGameText(goToHome: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GenerationErrorPrompt(
+    title: GenerateVideoErrorType?,
     message: String,
     bottomSheetState: SheetState,
     dismissSheet: () -> Unit,
@@ -358,7 +343,6 @@ private fun GenerationErrorPrompt(
     YralBottomSheet(
         onDismissRequest = dismissSheet,
         bottomSheetState = bottomSheetState,
-        dragHandle = null,
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(46.dp, Alignment.Top),
@@ -368,7 +352,7 @@ private fun GenerationErrorPrompt(
                     .padding(start = 16.dp, top = 36.dp, end = 16.dp, bottom = 36.dp),
         ) {
             Text(
-                text = stringResource(DesignRes.string.something_went_wrong),
+                text = title.toTitle(),
                 style = LocalAppTopography.current.lgBold,
                 color = Color.White,
             )
@@ -397,6 +381,18 @@ private fun GenerationErrorPrompt(
         }
     }
 }
+
+@Composable
+private fun GenerateVideoErrorType?.toTitle(): String =
+    when (this) {
+        GenerateVideoErrorType.INVALID_INPUT -> stringResource(Res.string.ai_video_invalid_input)
+        GenerateVideoErrorType.AUTHENTICATION_FAILED -> stringResource(Res.string.ai_video_authentication_failed)
+        GenerateVideoErrorType.INSUFFICIENT_BALANCE -> stringResource(Res.string.ai_video_insufficient_balance)
+        GenerateVideoErrorType.RATE_LIMIT_EXCEEDED -> stringResource(Res.string.ai_video_rate_limit_exceeded)
+        GenerateVideoErrorType.PROVIDER_ERROR -> stringResource(Res.string.ai_video_provider_error)
+        GenerateVideoErrorType.SERVICE_UNAVAILABLE -> stringResource(Res.string.ai_video_service_unavailable)
+        null -> stringResource(DesignRes.string.something_went_wrong)
+    }
 
 @Composable
 private fun GenerationSuccessScreen(
