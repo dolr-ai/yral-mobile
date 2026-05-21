@@ -56,7 +56,6 @@ fun MandatoryUpdateScreen() {
     YralBottomSheet(
         onDismissRequest = { },
         bottomSheetState = bottomSheetState,
-        dragHandle = null,
         shouldDismissOnBackPress = false,
     ) {
         MandatoryUpdateContent()

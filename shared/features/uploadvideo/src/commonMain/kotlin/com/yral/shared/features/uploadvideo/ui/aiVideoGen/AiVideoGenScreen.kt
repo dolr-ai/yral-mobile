@@ -358,7 +358,6 @@ private fun GenerationErrorPrompt(
     YralBottomSheet(
         onDismissRequest = dismissSheet,
         bottomSheetState = bottomSheetState,
-        dragHandle = null,
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(46.dp, Alignment.Top),
