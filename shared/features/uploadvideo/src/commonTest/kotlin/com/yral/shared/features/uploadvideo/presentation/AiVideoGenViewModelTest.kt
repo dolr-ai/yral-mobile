@@ -336,6 +336,7 @@ class AiVideoGenViewModelTest {
             assertIs<AiVideoGenViewModel.BottomSheetType.Error>(bottomSheet)
             assertEquals("Content policy violation", bottomSheet.message)
             assertTrue(bottomSheet.endFlow)
+            assertEquals(UiState.Initial, state.uiState)
         }
 
     @Test
@@ -407,6 +408,7 @@ class AiVideoGenViewModelTest {
             val bottomSheet = state.bottomSheetType
             assertIs<AiVideoGenViewModel.BottomSheetType.Error>(bottomSheet)
             assertTrue(bottomSheet.endFlow)
+            assertEquals(UiState.Initial, state.uiState)
         }
 
     @Test
@@ -425,29 +427,7 @@ class AiVideoGenViewModelTest {
 
     // endregion
 
-    // region 7: back during InProgress shows BackConfirmation
-
-    @Test
-    fun `setBottomSheetType to BackConfirmation during InProgress`() =
-        runTest {
-            signInUser()
-            fakeUploadRepository.generateVideoSuspend = true
-            val viewModel = createViewModel()
-            setupProviderAndPrompt(viewModel)
-
-            viewModel.generateAiVideo()
-            assertIs<UiState.InProgress>(viewModel.state.value.uiState)
-
-            viewModel.setBottomSheetType(AiVideoGenViewModel.BottomSheetType.BackConfirmation)
-
-            assertIs<AiVideoGenViewModel.BottomSheetType.BackConfirmation>(
-                viewModel.state.value.bottomSheetType,
-            )
-        }
-
-    // endregion
-
-    // region 8: no userPrincipal / no provider skips generation
+    // region 7: no userPrincipal / no provider skips generation
 
     @Test
     fun `generateAiVideo does nothing when user is not signed in`() =

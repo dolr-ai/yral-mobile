@@ -333,7 +333,10 @@ class AiVideoGenViewModel internal constructor(
                                     reason = error,
                                 )
                                 _state.update {
-                                    it.copy(bottomSheetType = BottomSheetType.Error(error, true))
+                                    it.copy(
+                                        uiState = UiState.Initial,
+                                        bottomSheetType = BottomSheetType.Error(error, true),
+                                    )
                                 }
                                 return@onSuccess
                             }
@@ -373,7 +376,10 @@ class AiVideoGenViewModel internal constructor(
                                 reason = error.message ?: "",
                             )
                             _state.update {
-                                it.copy(bottomSheetType = BottomSheetType.Error("", true))
+                                it.copy(
+                                    uiState = UiState.Initial,
+                                    bottomSheetType = BottomSheetType.Error("", true),
+                                )
                             }
                         }
                 }
@@ -509,8 +515,6 @@ class AiVideoGenViewModel internal constructor(
             val message: String,
             val endFlow: Boolean = false,
         ) : BottomSheetType()
-
-        data object BackConfirmation : BottomSheetType()
     }
 
     internal data class RequiredUseCases(
