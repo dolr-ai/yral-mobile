@@ -71,7 +71,7 @@ multiplatform-markdown-renderer = "0.38.0"
 libphonenumber = "8.13.48"
 junit4 = "4.13.2"
 junit-jupiter = "5.10.3"
-kafka-clients = "3.7.0"
+kafka-clients = "3.9.2"
 slf4j = "2.0.13"
 
 [libraries]
