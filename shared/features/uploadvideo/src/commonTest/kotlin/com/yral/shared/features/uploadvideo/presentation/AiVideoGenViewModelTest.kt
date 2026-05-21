@@ -20,6 +20,7 @@ import com.yral.shared.features.uploadvideo.domain.GetFreeCreditsStatusUseCase
 import com.yral.shared.features.uploadvideo.domain.GetPropertyRateLimitConfigUseCase
 import com.yral.shared.features.uploadvideo.domain.GetProvidersUseCase
 import com.yral.shared.features.uploadvideo.domain.UploadRepository
+import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoErrorType
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoResult
 import com.yral.shared.features.uploadvideo.domain.models.InProgressDraft
@@ -334,6 +335,7 @@ class AiVideoGenViewModelTest {
 
             val bottomSheet = state.bottomSheetType
             assertIs<AiVideoGenViewModel.BottomSheetType.Error>(bottomSheet)
+            assertEquals(GenerateVideoErrorType.PROVIDER_ERROR, bottomSheet.title)
             assertEquals("Content policy violation", bottomSheet.message)
             assertTrue(bottomSheet.endFlow)
             assertEquals(UiState.Initial, state.uiState)
@@ -492,6 +494,7 @@ class AiVideoGenViewModelTest {
                 provider = "test-provider",
                 requestKey = null,
                 providerError = "Content policy violation",
+                errorType = GenerateVideoErrorType.PROVIDER_ERROR,
             )
 
         private fun inProgressDraft(operationId: String) =

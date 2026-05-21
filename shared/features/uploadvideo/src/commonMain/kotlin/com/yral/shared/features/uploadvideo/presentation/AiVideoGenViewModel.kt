@@ -24,6 +24,7 @@ import com.yral.shared.features.uploadvideo.domain.GenerateVideoUseCase
 import com.yral.shared.features.uploadvideo.domain.GetFreeCreditsStatusUseCase
 import com.yral.shared.features.uploadvideo.domain.GetPropertyRateLimitConfigUseCase
 import com.yral.shared.features.uploadvideo.domain.GetProvidersUseCase
+import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoErrorType
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.libs.arch.presentation.UiState
@@ -335,7 +336,12 @@ class AiVideoGenViewModel internal constructor(
                                 _state.update {
                                     it.copy(
                                         uiState = UiState.Initial,
-                                        bottomSheetType = BottomSheetType.Error(error, true),
+                                        bottomSheetType =
+                                            BottomSheetType.Error(
+                                                title = result.errorType,
+                                                message = error,
+                                                endFlow = true,
+                                            ),
                                     )
                                 }
                                 return@onSuccess
@@ -378,7 +384,7 @@ class AiVideoGenViewModel internal constructor(
                             _state.update {
                                 it.copy(
                                     uiState = UiState.Initial,
-                                    bottomSheetType = BottomSheetType.Error("", true),
+                                    bottomSheetType = BottomSheetType.Error(message = "", endFlow = true),
                                 )
                             }
                         }
@@ -512,6 +518,7 @@ class AiVideoGenViewModel internal constructor(
         data object None : BottomSheetType()
         data object ModelSelection : BottomSheetType()
         data class Error(
+            val title: GenerateVideoErrorType? = null,
             val message: String,
             val endFlow: Boolean = false,
         ) : BottomSheetType()
