@@ -25,29 +25,6 @@ pub enum CanisterStatusType {
     Running,
 }
 #[derive(CandidType, Deserialize, Enum)]
-pub enum KnownPrincipalType {
-    CanisterIdUserIndex,
-    CanisterIdPlatformOrchestrator,
-    CanisterIdConfiguration,
-    CanisterIdHotOrNotSubnetOrchestrator,
-    CanisterIdProjectMemberIndex,
-    CanisterIdTopicCacheIndex,
-    CanisterIdRootCanister,
-    CanisterIdDataBackup,
-    CanisterIdSnsWasm,
-    CanisterIdPostCache,
-    #[serde(rename = "CanisterIdSNSController")]
-    CanisterIdSnsController,
-    CanisterIdSnsGovernance,
-    UserIdGlobalSuperAdmin,
-}
-#[derive(CandidType, Deserialize, Record)]
-pub struct KnownPrincipalTypePrincipalPair {
-    pub known_principal_type: KnownPrincipalType,
-    pub principal: Principal,
-}
-
-#[derive(CandidType, Deserialize, Enum)]
 pub enum PostStatus {
     BannedForExplicitness,
     BannedDueToUserReporting,

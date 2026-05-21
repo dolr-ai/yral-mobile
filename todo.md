@@ -17,3 +17,9 @@ Verify if the sonatype repository is still being used for any dependencies and i
 org.gradle.caching=true
 org.gradle.configuration-cache=true
 ```
+- Parallelize the build by enabling parallel execution in gradle properties
+```
+./gradlew --parallel // if on gradle 8.11 or later, this is default
+org.gradle.configuration-cache.parallel=true
+```
+- Remove all references to yral-common from mobile codebase
