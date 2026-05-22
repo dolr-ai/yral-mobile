@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,6 +38,8 @@ import androidx.compose.ui.unit.sp
 import com.yral.shared.features.auth.nav.countryselector.CountrySelectorComponent
 import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.libs.designsystem.component.YralShimmerImage
+import com.yral.shared.libs.designsystem.component.rememberTextFieldValueState
+import com.yral.shared.libs.designsystem.component.withNativeTextInput
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.phonevalidation.countries.Country
@@ -141,6 +144,7 @@ private fun SearchBar(
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val textFieldValueState = rememberTextFieldValueState(query)
     Box(
         modifier =
             modifier
@@ -156,12 +160,16 @@ private fun SearchBar(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             BasicTextField(
-                value = query,
-                onValueChange = onQueryChange,
+                value = textFieldValueState.value,
+                onValueChange = {
+                    textFieldValueState.value = it
+                    onQueryChange(it.text)
+                },
                 textStyle = LocalAppTopography.current.baseMedium.copy(color = YralColors.NeutralTextPrimary),
+                keyboardOptions = KeyboardOptions.Default.withNativeTextInput(),
                 cursorBrush = SolidColor(YralColors.Pink300),
                 decorationBox = { innerTextField ->
-                    if (query.isEmpty()) {
+                    if (textFieldValueState.value.text.isEmpty()) {
                         Text(
                             text = stringResource(Res.string.search_by_country_name),
                             style = LocalAppTopography.current.baseMedium,
