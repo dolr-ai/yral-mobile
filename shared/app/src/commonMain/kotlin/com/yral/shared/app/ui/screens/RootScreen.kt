@@ -3,9 +3,12 @@ package com.yral.shared.app.ui.screens
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,12 +23,9 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.BottomSheetDefaults.DragHandle
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -38,8 +38,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChangeIgnoreConsumed
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -105,6 +112,7 @@ fun RootScreen(rootComponent: RootComponent) {
     val viewModel = rootComponent.rootViewModel
     val videoDraftPollingManager: VideoDraftPollingManager = koinInject()
     val state by viewModel.state.collectAsState()
+    val focusManager = LocalFocusManager.current
     LifecycleResumeEffect(videoDraftPollingManager, state.sessionState) {
         videoDraftPollingManager.onAppForegrounded()
         onPauseOrDispose {
@@ -140,7 +148,10 @@ fun RootScreen(rootComponent: RootComponent) {
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.primaryContainer,
-        modifier = Modifier.fillMaxSize(),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .clearFocusOnUnconsumedTap(focusManager),
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             Children(
@@ -315,6 +326,38 @@ fun RootScreen(rootComponent: RootComponent) {
     }
 }
 
+private fun Modifier.clearFocusOnUnconsumedTap(focusManager: FocusManager): Modifier =
+    pointerInput(focusManager) {
+        awaitEachGesture {
+            val down =
+                awaitFirstDown(
+                    requireUnconsumed = false,
+                    pass = PointerEventPass.Final,
+                )
+            var moved = false
+            var upConsumed = true
+            var trackingPointer = true
+            while (trackingPointer) {
+                val event = awaitPointerEvent(pass = PointerEventPass.Final)
+                val change = event.changes.firstOrNull { it.id == down.id }
+                if (change == null) {
+                    trackingPointer = false
+                } else {
+                    if (change.positionChangeIgnoreConsumed() != Offset.Zero) {
+                        moved = true
+                    }
+                    if (!change.pressed) {
+                        upConsumed = change.isConsumed
+                        trackingPointer = false
+                    }
+                }
+            }
+            if (!moved && !down.isConsumed && !upConsumed) {
+                focusManager.clearFocus()
+            }
+        }
+    }
+
 @Composable
 private fun AccountSwitchSheet(
     info: AccountDialogInfo,
@@ -434,12 +477,23 @@ private fun ActiveAccountIndicator() {
                 .background(YralColors.Pink300),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            imageVector = Icons.Filled.Check,
-            contentDescription = "Selected",
-            tint = Color.White,
-            modifier = Modifier.size(18.dp),
-        )
+        Canvas(modifier = Modifier.size(18.dp)) {
+            val strokeWidth = ACTIVE_ACCOUNT_CHECK_STROKE_WIDTH_DP.dp.toPx()
+            drawLine(
+                color = Color.White,
+                start = Offset(size.width * ACTIVE_ACCOUNT_CHECK_START_X, size.height * ACTIVE_ACCOUNT_CHECK_START_Y),
+                end = Offset(size.width * ACTIVE_ACCOUNT_CHECK_MID_X, size.height * ACTIVE_ACCOUNT_CHECK_MID_Y),
+                strokeWidth = strokeWidth,
+                cap = StrokeCap.Round,
+            )
+            drawLine(
+                color = Color.White,
+                start = Offset(size.width * ACTIVE_ACCOUNT_CHECK_MID_X, size.height * ACTIVE_ACCOUNT_CHECK_MID_Y),
+                end = Offset(size.width * ACTIVE_ACCOUNT_CHECK_END_X, size.height * ACTIVE_ACCOUNT_CHECK_END_Y),
+                strokeWidth = strokeWidth,
+                cap = StrokeCap.Round,
+            )
+        }
     }
 }
 
@@ -453,6 +507,14 @@ private fun accountRowShape(
         isLast -> RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp)
         else -> RoundedCornerShape(0.dp)
     }
+
+private const val ACTIVE_ACCOUNT_CHECK_START_X = 0.22f
+private const val ACTIVE_ACCOUNT_CHECK_START_Y = 0.52f
+private const val ACTIVE_ACCOUNT_CHECK_MID_X = 0.43f
+private const val ACTIVE_ACCOUNT_CHECK_MID_Y = 0.72f
+private const val ACTIVE_ACCOUNT_CHECK_END_X = 0.78f
+private const val ACTIVE_ACCOUNT_CHECK_END_Y = 0.30f
+private const val ACTIVE_ACCOUNT_CHECK_STROKE_WIDTH_DP = 2.5f
 
 @Composable
 private fun BlockingLoader() {

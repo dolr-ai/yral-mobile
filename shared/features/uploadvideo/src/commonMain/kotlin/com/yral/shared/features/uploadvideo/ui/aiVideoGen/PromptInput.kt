@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -24,6 +25,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.yral.shared.libs.designsystem.component.limitTextLength
+import com.yral.shared.libs.designsystem.component.rememberTextFieldValueState
+import com.yral.shared.libs.designsystem.component.withNativeTextInput
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.stringResource
@@ -51,7 +55,9 @@ fun PromptInput(
         )
         var isFocused by remember { mutableStateOf(false) }
         val maxChars = AiVideoGenScreenConstants.PROMPT_MAX_CHAR
-        val showCounter = isFocused || text.isNotEmpty()
+        val textFieldValueState = rememberTextFieldValueState(text)
+        val inputText = textFieldValueState.value.text
+        val showCounter = isFocused || inputText.isNotEmpty()
         Column(
             modifier =
                 Modifier
@@ -69,8 +75,12 @@ fun PromptInput(
                     Modifier
                         .fillMaxWidth()
                         .onFocusChanged { isFocused = it.isFocused },
-                value = text,
-                onValueChange = { newValue -> onValueChange(newValue.take(maxChars)) },
+                value = textFieldValueState.value,
+                onValueChange = { newValue ->
+                    val limitedValue = newValue.limitTextLength(maxChars)
+                    textFieldValueState.value = limitedValue
+                    onValueChange(limitedValue.text)
+                },
                 colors =
                     TextFieldDefaults.colors().copy(
                         focusedTextColor = YralColors.Neutral300,
@@ -84,6 +94,7 @@ fun PromptInput(
                         disabledIndicatorColor = Color.Transparent,
                     ),
                 textStyle = LocalAppTopography.current.baseRegular,
+                keyboardOptions = KeyboardOptions.Default.withNativeTextInput(),
                 placeholder = {
                     Text(
                         text = stringResource(Res.string.enter_prompt_here),
@@ -96,7 +107,7 @@ fun PromptInput(
             )
             if (showCounter) {
                 Text(
-                    text = "${text.length}/$maxChars",
+                    text = "${inputText.length}/$maxChars",
                     style = LocalAppTopography.current.regRegular,
                     color = YralColors.Neutral600,
                     textAlign = TextAlign.End,

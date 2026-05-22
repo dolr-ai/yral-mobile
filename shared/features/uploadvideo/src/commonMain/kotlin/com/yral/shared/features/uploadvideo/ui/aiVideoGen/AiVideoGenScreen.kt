@@ -29,7 +29,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -154,12 +153,10 @@ fun AiVideoGenScreen(
                     viewModel.cleanup()
                     component.onBack()
                 }
-                val focusManager = LocalFocusManager.current
                 Column(
                     modifier =
                         Modifier
-                            .verticalScroll(rememberScrollState())
-                            .clickable { focusManager.clearFocus(true) },
+                            .verticalScroll(rememberScrollState()),
                 ) {
                     PromptScreen(
                         viewState = viewState,

@@ -38,6 +38,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import com.yral.shared.libs.designsystem.component.withNativeTextInput
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 
@@ -85,7 +86,7 @@ fun ChipInputField(
                 KeyboardOptions(
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.None,
-                ),
+                ).withNativeTextInput(),
             keyboardActions =
                 KeyboardActions(
                     onAny = {
