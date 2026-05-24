@@ -23,3 +23,10 @@ org.gradle.configuration-cache=true
 org.gradle.configuration-cache.parallel=true
 ```
 - Remove all references to yral-common from mobile codebase
+- lint and static analysis
+```
+./gradlew lintKotlin
+./gradlew detekt
+```
+- code coverage, look into `kotlinx-kover` for this
+- for dependency management, it's better to use renovate than dependabot.
