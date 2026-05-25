@@ -201,6 +201,7 @@ class AiVideoGenViewModelTest {
             manager.syncInProgressDrafts("test-principal")
 
             assertEquals(1, VideoGenerationTracker.state.value.pendingGenerations.size)
+            assertFalse(VideoGenerationTracker.state.value.isDraftRefreshPending)
             assertEquals(0, refreshCount)
             refreshJob.cancel()
         }
@@ -227,6 +228,7 @@ class AiVideoGenViewModelTest {
             manager.syncInProgressDrafts("test-principal")
 
             assertEquals(1, VideoGenerationTracker.state.value.pendingGenerations.size)
+            assertFalse(VideoGenerationTracker.state.value.isDraftRefreshPending)
             assertEquals(0, refreshCount)
             refreshJob.cancel()
         }
@@ -254,6 +256,7 @@ class AiVideoGenViewModelTest {
             manager.syncInProgressDrafts("test-principal")
 
             assertFalse(VideoGenerationTracker.state.value.isGenerating)
+            assertTrue(VideoGenerationTracker.state.value.isDraftRefreshPending)
             assertEquals(1, refreshCount)
             refreshJob.cancel()
         }
