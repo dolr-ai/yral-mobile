@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.material3.BottomSheetDefaults.DragHandle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalBottomSheetProperties
@@ -31,7 +30,7 @@ fun YralBottomSheet(
     onDismissRequest: () -> Unit,
     bottomSheetState: SheetState,
     shouldDismissOnBackPress: Boolean = true,
-    dragHandle: @Composable (() -> Unit)? = { DragHandle(color = YralColors.Neutral500) },
+    dragHandle: @Composable (() -> Unit)? = { YralDragHandle() },
     containerColor: Color = YralColors.Neutral900,
     content: @Composable ColumnScope.() -> Unit,
 ) {

@@ -418,11 +418,6 @@ class AiVideoGenViewModel internal constructor(
         _state.update { it.copy(prompt = text) }
     }
 
-    fun selectProvider(provider: Provider) {
-        _state.update { it.copy(selectedProvider = provider) }
-        uploadVideoTelemetry.videoGenerationModelSelected(provider.name)
-    }
-
     fun setBottomSheetType(type: BottomSheetType) {
         _state.update { it.copy(bottomSheetType = type) }
     }
@@ -432,6 +427,7 @@ class AiVideoGenViewModel internal constructor(
             prompt
                 .trim()
                 .isNotEmpty() &&
+                selectedProvider != null &&
                 usedCredits != null &&
                 (isCreditsAvailable() || !isBalanceLow())
         }
@@ -516,7 +512,6 @@ class AiVideoGenViewModel internal constructor(
 
     sealed class BottomSheetType {
         data object None : BottomSheetType()
-        data object ModelSelection : BottomSheetType()
         data class Error(
             val title: GenerateVideoErrorType? = null,
             val message: String,

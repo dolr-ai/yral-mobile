@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.BottomSheetDefaults.DragHandle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
@@ -34,7 +33,7 @@ fun YralConfirmationMessage(
     YralBottomSheet(
         onDismissRequest = if (isDoneDismiss) onDone else onCancel,
         bottomSheetState = sheetState,
-        dragHandle = { DragHandle(color = YralColors.Neutral500) },
+        dragHandle = { YralDragHandle() },
     ) {
         Column(
             modifier =
