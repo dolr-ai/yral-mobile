@@ -30,3 +30,14 @@ org.gradle.configuration-cache.parallel=true
 ```
 - code coverage, look into `kotlinx-kover` for this
 - for dependency management, it's better to use renovate than dependabot.
+- code shrinking, r8
+```
+android {
+    buildTypes {
+        release {
+            minifyEnabled true
+        }
+    }
+}
+```
+- Look at `@Keep` if the above messes with crashlytics
