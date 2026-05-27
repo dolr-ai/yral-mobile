@@ -63,6 +63,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.features.chat.generated.resources.Res
 import yral_mobile.shared.features.chat.generated.resources.access_activated_overlay_message
+import yral_mobile.shared.features.chat.generated.resources.ai_influencer_read_only_chat
 import yral_mobile.shared.features.chat.generated.resources.chat_background_inverted
 import yral_mobile.shared.features.chat.generated.resources.subscription_card_overlay_message
 import yral_mobile.shared.features.chat.generated.resources.switch_profile
@@ -318,11 +319,13 @@ fun ChatConversationScreen(
         }
 
     val switchProfileMessage = stringResource(Res.string.switch_to_human_profile_to_chat)
+    val aiInfluencerReadOnlyMessage = stringResource(Res.string.ai_influencer_read_only_chat)
     val switchProfileButtonText = stringResource(Res.string.switch_profile)
     val switchProfileFailedMessage = stringResource(Res.string.switch_profile_failed)
     val bottomAreaState by derivedStateOf {
         resolveConversationBottomAreaState(
             isBotAccount = viewState.isBotAccount,
+            isHumanParticipantConversation = component.openConversationParams.userId != null,
             shouldShowInfluencerSubscriptionCard = shouldShowInfluencerSubscriptionCard,
             shouldBlockChatNoProduct = shouldBlockChatNoProduct,
         )
@@ -402,12 +405,11 @@ fun ChatConversationScreen(
                 onBackClick = { component.onBack() },
                 onProfileClick = { influencer ->
                     val userPrincipal =
-                        if (viewState.isBotAccount) {
-                            component.openConversationParams.userId
-                        } else {
-                            influencer.id
-                        }
-                    if (userPrincipal == null) return@ChatHeader
+                        resolveConversationProfilePrincipal(
+                            isBotAccount = viewState.isBotAccount,
+                            humanParticipantUserId = component.openConversationParams.userId,
+                            influencerId = influencer.id,
+                        )
                     val canisterData =
                         CanisterData(
                             canisterId = getUserInfoServiceCanister(),
@@ -520,6 +522,16 @@ fun ChatConversationScreen(
                                             }
                                         }
                                     },
+                                )
+                            }
+
+                            ConversationBottomAreaState.BotAccountReadOnly -> {
+                                BotAccountConversationPrompt(
+                                    message = aiInfluencerReadOnlyMessage,
+                                    buttonText = null,
+                                    avatarUrl = null,
+                                    isSwitching = false,
+                                    onSwitchClick = null,
                                 )
                             }
 
