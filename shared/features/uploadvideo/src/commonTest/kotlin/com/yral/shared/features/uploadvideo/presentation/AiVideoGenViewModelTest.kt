@@ -164,6 +164,46 @@ class AiVideoGenViewModelTest {
         }
 
     @Test
+    fun `button is enabled when prompt provider and credits are available`() {
+        val state =
+            AiVideoGenViewModel.ViewState(
+                selectedProvider = TEST_PROVIDER,
+                usedCredits = 0,
+                totalCredits = 1,
+                prompt = "A cinematic sunset",
+                isSubscriptionEnabled = false,
+            )
+
+        assertTrue(state.shouldEnableButton())
+    }
+
+    @Test
+    fun `button is enabled when prompt and provider are available before credits load`() {
+        val state =
+            AiVideoGenViewModel.ViewState(
+                selectedProvider = TEST_PROVIDER,
+                prompt = "A cinematic sunset",
+                isSubscriptionEnabled = false,
+            )
+
+        assertTrue(state.shouldEnableButton())
+    }
+
+    @Test
+    fun `button is disabled when prompt is blank`() {
+        val state =
+            AiVideoGenViewModel.ViewState(
+                selectedProvider = TEST_PROVIDER,
+                usedCredits = 0,
+                totalCredits = 1,
+                prompt = " ",
+                isSubscriptionEnabled = false,
+            )
+
+        assertFalse(state.shouldEnableButton())
+    }
+
+    @Test
     fun `generateAiVideo starts VideoGenerationTracker`() =
         runTest {
             signInUser()

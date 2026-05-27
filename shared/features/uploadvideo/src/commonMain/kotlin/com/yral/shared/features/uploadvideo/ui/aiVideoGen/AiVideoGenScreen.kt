@@ -22,7 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -232,14 +231,10 @@ private fun PromptScreen(
     promptLogin: () -> Unit,
 ) {
     val buttonState =
-        remember(viewState.usedCredits, viewState.prompt, viewState.uiState) {
-            if (viewState.uiState is UiState.InProgress) {
-                YralButtonState.Loading
-            } else if (viewModel.shouldEnableButton()) {
-                YralButtonState.Enabled
-            } else {
-                YralButtonState.Disabled
-            }
+        when {
+            viewState.uiState is UiState.InProgress -> YralButtonState.Loading
+            viewState.shouldEnableButton() -> YralButtonState.Enabled
+            else -> YralButtonState.Disabled
         }
     Column(
         modifier =
