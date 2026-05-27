@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -57,7 +58,10 @@ import com.yral.shared.libs.designsystem.component.YralGifImage
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.clearGifResources
+import com.yral.shared.libs.designsystem.component.limitTextLength
 import com.yral.shared.libs.designsystem.component.preloadGifResources
+import com.yral.shared.libs.designsystem.component.rememberTextFieldValueState
+import com.yral.shared.libs.designsystem.component.withNativeTextInput
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
@@ -268,6 +272,8 @@ private fun PromptEntryScreen(
         } else {
             YralButtonState.Disabled
         }
+    val descriptionValueState = rememberTextFieldValueState(step.description)
+    val descriptionText = descriptionValueState.value.text
 
     Column(
         modifier =
@@ -302,15 +308,19 @@ private fun PromptEntryScreen(
                     color = YralColors.Neutral200,
                 )
                 Text(
-                    text = "${step.description.length}/$PROMPT_CHAR_LIMIT",
+                    text = "${descriptionText.length}/$PROMPT_CHAR_LIMIT",
                     style = LocalAppTopography.current.baseRegular,
                     color = YralColors.Neutral500,
                 )
             }
             Spacer(modifier = Modifier.height(10.dp))
             TextField(
-                value = step.description,
-                onValueChange = onDescriptionChange,
+                value = descriptionValueState.value,
+                onValueChange = {
+                    val limitedValue = it.limitTextLength(PROMPT_CHAR_LIMIT)
+                    descriptionValueState.value = limitedValue
+                    onDescriptionChange(limitedValue.text)
+                },
                 modifier =
                     Modifier
                         .fillMaxWidth()
@@ -335,6 +345,7 @@ private fun PromptEntryScreen(
                         unfocusedTextColor = YralColors.Grey50,
                     ),
                 textStyle = LocalAppTopography.current.baseRegular,
+                keyboardOptions = KeyboardOptions.Default.withNativeTextInput(),
             )
             ErrorText(state.errorMessage)
             Spacer(modifier = Modifier.height(16.dp))
@@ -363,6 +374,7 @@ private fun PersonaReviewScreen(
         } else {
             YralButtonState.Disabled
         }
+    val editedInstructionsValueState = rememberTextFieldValueState(step.editedInstructions)
 
     Column(
         modifier =
@@ -390,8 +402,12 @@ private fun PersonaReviewScreen(
             )
             Spacer(modifier = Modifier.height(20.dp))
             TextField(
-                value = step.editedInstructions,
-                onValueChange = onTextChange,
+                value = editedInstructionsValueState.value,
+                onValueChange = {
+                    val limitedValue = it.limitTextLength(PROMPT_CHAR_LIMIT)
+                    editedInstructionsValueState.value = limitedValue
+                    onTextChange(limitedValue.text)
+                },
                 modifier =
                     Modifier
                         .fillMaxWidth()
@@ -416,6 +432,7 @@ private fun PersonaReviewScreen(
                         unfocusedTextColor = YralColors.Grey50,
                     ),
                 textStyle = LocalAppTopography.current.baseRegular,
+                keyboardOptions = KeyboardOptions.Default.withNativeTextInput(),
             )
             ErrorText(state.errorMessage)
         }
@@ -726,6 +743,7 @@ private fun ProfileTextField(
     maxLength: Int,
     minLines: Int = 1,
 ) {
+    val textFieldValueState = rememberTextFieldValueState(value)
     Column(
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -736,8 +754,12 @@ private fun ProfileTextField(
             modifier = Modifier.padding(bottom = 8.dp),
         )
         TextField(
-            value = value,
-            onValueChange = { value -> onValueChange(value.take(maxLength)) },
+            value = textFieldValueState.value,
+            onValueChange = { value ->
+                val limitedValue = value.limitTextLength(maxLength)
+                textFieldValueState.value = limitedValue
+                onValueChange(limitedValue.text)
+            },
             modifier =
                 Modifier
                     .fillMaxWidth()
@@ -754,6 +776,7 @@ private fun ProfileTextField(
                     unfocusedTextColor = YralColors.Grey50,
                 ),
             textStyle = LocalAppTopography.current.baseMedium,
+            keyboardOptions = KeyboardOptions.Default.withNativeTextInput(),
             minLines = minLines,
         )
     }

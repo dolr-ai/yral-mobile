@@ -29,7 +29,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -154,17 +153,14 @@ fun AiVideoGenScreen(
                     viewModel.cleanup()
                     component.onBack()
                 }
-                val focusManager = LocalFocusManager.current
                 Column(
                     modifier =
                         Modifier
-                            .verticalScroll(rememberScrollState())
-                            .clickable { focusManager.clearFocus(true) },
+                            .verticalScroll(rememberScrollState()),
                 ) {
                     PromptScreen(
                         viewState = viewState,
                         viewModel = viewModel,
-                        showProvidersSheet = { viewModel.setBottomSheetType(BottomSheetType.ModelSelection) },
                         goToHome = { component.goToHome() },
                         promptLogin = { component.promptLogin() },
                     )
@@ -201,16 +197,6 @@ private fun AiVideoGenScreenPrompts(
 ) {
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     when (val sheetType = viewState.bottomSheetType) {
-        is BottomSheetType.ModelSelection -> {
-            ModelSelection(
-                bottomSheetState = bottomSheetState,
-                providers = viewState.providers,
-                selectedProvider = viewState.selectedProvider,
-                dismissSheet = { viewModel.setBottomSheetType(BottomSheetType.None) },
-                setSelectedProvider = { viewModel.selectProvider(it) },
-            )
-        }
-
         is BottomSheetType.Error -> {
             val dismissSheet = {
                 viewModel.setBottomSheetType(BottomSheetType.None)
@@ -242,7 +228,6 @@ private fun AiVideoGenScreenPrompts(
 private fun PromptScreen(
     viewState: AiVideoGenViewModel.ViewState,
     viewModel: AiVideoGenViewModel,
-    showProvidersSheet: () -> Unit,
     goToHome: () -> Unit,
     promptLogin: () -> Unit,
 ) {
@@ -270,13 +255,7 @@ private fun PromptScreen(
                 onValueChange = { viewModel.updatePromptText(it) },
                 onHeightChange = {},
             )
-            viewState.selectedProvider?.let { provider ->
-                ModelDetails(
-                    provider = provider,
-                    viewState = viewState,
-                    onClick = showProvidersSheet,
-                )
-            }
+            CreditsDetails(viewState = viewState)
             YralGradientButton(
                 text = stringResource(Res.string.generate_video),
                 buttonState = buttonState,

@@ -78,6 +78,9 @@ class VideoDraftPollingManager(
         try {
             val previousPendingCount = VideoGenerationTracker.state.value.pendingGenerations.size
             val items = repository.getInProgressDrafts(userId)
+            if (items.size < previousPendingCount) {
+                VideoGenerationTracker.markDraftRefreshPending()
+            }
             VideoGenerationTracker.setPendingGenerationCount(items.size)
             if (items.size < previousPendingCount) {
                 VideoGenerationTracker.requestDraftsRefresh()

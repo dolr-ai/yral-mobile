@@ -5,10 +5,10 @@ android-tools = "31.10.1"
 compileSDK = "35"
 minSDK = "24"
 targetSDK = "35"
-kotlin = "2.2.21"
-compose = "1.9.0"
+kotlin = "2.3.21"
+compose = "1.11.1"
 compose-compiler = "1.5.4"
-compose-material3 = "1.3.2"
+compose-material3 = "1.4.0"
 androidx-activityCompose = "1.10.1"
 androidx-browser = "1.8.0"
 androidx-datastore = "1.1.7"
@@ -20,9 +20,9 @@ androidx-testExt = "1.2.1"
 androidx-test-runner = "1.6.2"
 androidx-test-core = "1.6.1"
 chucker = "4.2.0"
-coil = "3.2.0"
+coil = "3.4.0"
 composeHotReload = "1.0.0-alpha11"
-composeMultiplatform = "1.9.0"
+composeMultiplatform = "1.11.0"
 decompose = "3.3.0"
 desugar-jdk-libs = "2.1.5"
 detekt = "1.23.8"
@@ -42,7 +42,7 @@ kotlinxCoroutines = "1.10.2"
 kotlinx-datetime = "0.7.1"
 kotlinx-io = "0.8.2"
 kotlinxSerialization = "1.9.0"
-ksp = "2.2.21-2.0.5"
+ksp = "2.3.8"
 ktor = "3.3.0"
 media3Exoplayer = "1.9.0"
 mixpanel = "8.2.0"
@@ -119,7 +119,7 @@ compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview"
 compose-foundation = { module = "androidx.compose.foundation:foundation", version.ref = "compose" }
 compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "compose-material3" }
 compose-ui-backhandler = { module = "org.jetbrains.compose.ui:ui-backhandler", version.ref = "composeMultiplatform" }
-compose-material-icons-core = { module = "org.jetbrains.compose.material:material-icons-core", version = "1.7.3" }
+compose-material-icons-core = { module = "org.jetbrains.compose.material:material-icons-core", version.ref = "composeMultiplatform" }
 compose-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "composeMultiplatform" }
 cmp-ui-tooling-preview = { module = "org.jetbrains.compose.components:components-ui-tooling-preview", version.ref = "composeMultiplatform" }
 

@@ -18,6 +18,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.yral.shared.libs.designsystem.component.filterDigits
+import com.yral.shared.libs.designsystem.component.rememberTextFieldValueState
+import com.yral.shared.libs.designsystem.component.withNativeTextInput
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.phonevalidation.countries.Country
@@ -33,6 +36,7 @@ fun PhoneInputField(
     isError: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
+    val textFieldValueState = rememberTextFieldValueState(phoneNumber)
     Box(
         modifier =
             modifier
@@ -60,25 +64,18 @@ fun PhoneInputField(
 
             // Phone number input
             BasicTextField(
-                value = phoneNumber,
+                value = textFieldValueState.value,
                 onValueChange = { value ->
-                    // Only allow digits
-                    val filtered = value.filter { it.isDigit() }
-                    // Enforce max length based on selected country
                     val maxLength = selectedCountry?.maxLength ?: 15
-                    val limited =
-                        if (filtered.length > maxLength) {
-                            filtered.take(maxLength)
-                        } else {
-                            filtered
-                        }
-                    onPhoneNumberChange(limited)
+                    val filteredValue = value.filterDigits(maxLength)
+                    textFieldValueState.value = filteredValue
+                    onPhoneNumberChange(filteredValue.text)
                 },
                 textStyle = LocalAppTopography.current.baseSemiBold.copy(color = YralColors.NeutralTextPrimary),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number).withNativeTextInput(),
                 cursorBrush = SolidColor(YralColors.Pink300),
                 decorationBox = { innerTextField ->
-                    if (phoneNumber.isEmpty()) {
+                    if (textFieldValueState.value.text.isEmpty()) {
                         Text(
                             text = stringResource(Res.string.enter_mobile_number),
                             style = LocalAppTopography.current.baseSemiBold,

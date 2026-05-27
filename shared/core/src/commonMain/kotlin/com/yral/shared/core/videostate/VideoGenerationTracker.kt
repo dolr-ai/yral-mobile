@@ -22,6 +22,7 @@ object VideoGenerationTracker {
 
     data class State(
         val pendingGenerations: List<PendingGeneration> = emptyList(),
+        val isDraftRefreshPending: Boolean = false,
     ) {
         val isGenerating: Boolean
             get() = pendingGenerations.isNotEmpty()
@@ -46,12 +47,21 @@ object VideoGenerationTracker {
     }
 
     fun onDraftCreatedAndRequestDraftsTab() {
+        markDraftRefreshPending()
         onDraftCreated()
         _selectDraftsTab.value = DraftsTabRequest(refreshDrafts = true)
     }
 
     fun requestDraftsRefresh() {
         _refreshDrafts.tryEmit(Unit)
+    }
+
+    fun markDraftRefreshPending() {
+        _state.update { it.copy(isDraftRefreshPending = true) }
+    }
+
+    fun completeDraftRefresh() {
+        _state.update { it.copy(isDraftRefreshPending = false) }
     }
 
     fun consumeDraftsTabRequest() {
@@ -118,7 +128,7 @@ object VideoGenerationTracker {
                 }
 
                 normalizedCount == 0 -> {
-                    State()
+                    state.copy(pendingGenerations = emptyList())
                 }
 
                 normalizedCount < state.pendingGenerations.size -> {

@@ -130,8 +130,9 @@ class AiVideoGenViewModelTest {
         )
     }
 
-    private fun setupProviderAndPrompt(viewModel: AiVideoGenViewModel) {
-        viewModel.selectProvider(TEST_PROVIDER)
+    private suspend fun setupProviderAndPrompt(viewModel: AiVideoGenViewModel) {
+        viewModel.refresh("test-canister")
+        viewModel.state.first { it.selectedProvider != null }
         viewModel.updatePromptText("A beautiful sunset over the ocean")
     }
 
@@ -149,6 +150,17 @@ class AiVideoGenViewModelTest {
 
             val state = viewModel.state.value
             assertIs<UiState.InProgress>(state.uiState)
+        }
+
+    @Test
+    fun `refresh auto-selects ltx provider returned by providers api`() =
+        runTest {
+            val viewModel = createViewModel()
+
+            viewModel.refresh("test-canister")
+            val state = viewModel.state.first { it.selectedProvider != null }
+
+            assertEquals("ltx", state.selectedProvider?.id)
         }
 
     @Test
@@ -189,6 +201,7 @@ class AiVideoGenViewModelTest {
             manager.syncInProgressDrafts("test-principal")
 
             assertEquals(1, VideoGenerationTracker.state.value.pendingGenerations.size)
+            assertFalse(VideoGenerationTracker.state.value.isDraftRefreshPending)
             assertEquals(0, refreshCount)
             refreshJob.cancel()
         }
@@ -215,6 +228,7 @@ class AiVideoGenViewModelTest {
             manager.syncInProgressDrafts("test-principal")
 
             assertEquals(1, VideoGenerationTracker.state.value.pendingGenerations.size)
+            assertFalse(VideoGenerationTracker.state.value.isDraftRefreshPending)
             assertEquals(0, refreshCount)
             refreshJob.cancel()
         }
@@ -242,6 +256,7 @@ class AiVideoGenViewModelTest {
             manager.syncInProgressDrafts("test-principal")
 
             assertFalse(VideoGenerationTracker.state.value.isGenerating)
+            assertTrue(VideoGenerationTracker.state.value.isDraftRefreshPending)
             assertEquals(1, refreshCount)
             refreshJob.cancel()
         }
@@ -458,11 +473,11 @@ class AiVideoGenViewModelTest {
     // endregion
 
     companion object {
-        private val TEST_PROVIDER =
+        val TEST_PROVIDER =
             Provider(
-                id = "test-provider-id",
-                name = "Test Provider",
-                description = "A test provider",
+                id = "ltx",
+                name = "LTX",
+                description = "LTX video generation",
                 cost = ProviderCost(usdCents = null, dolr = null, sats = 100),
                 supportsImage = false,
                 supportsNegativePrompt = false,
@@ -513,6 +528,7 @@ class AiVideoGenViewModelTest {
 // region fakes
 
 internal class FakeUploadRepository : UploadRepository {
+    var providers: List<Provider> = listOf(AiVideoGenViewModelTest.TEST_PROVIDER)
     var generateVideoResult: GenerateVideoResult? = null
     val generateVideoResults = mutableListOf<GenerateVideoResult>()
     val generateVideoParams = mutableListOf<GenerateVideoParams>()
@@ -529,7 +545,7 @@ internal class FakeUploadRepository : UploadRepository {
 
     override suspend fun updateMetadata(uploadFileRequest: UploadFileRequest) {}
 
-    override suspend fun fetchProviders(): List<Provider> = emptyList()
+    override suspend fun fetchProviders(): List<Provider> = providers
 
     override suspend fun generateVideo(params: GenerateVideoParams): GenerateVideoResult {
         generateVideoParams += params

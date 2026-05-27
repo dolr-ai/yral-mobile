@@ -11,5 +11,5 @@ import com.yral.shared.libs.designsystem.theme.YralColors
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun YralDragHandle() {
-    DragHandle(modifier = Modifier.offset(y = -10.dp), height = 2.dp, width = 32.dp, color = YralColors.Neutral500)
+    DragHandle(modifier = Modifier.offset(y = -10.dp), height = 5.dp, width = 36.dp, color = YralColors.Neutral500)
 }
