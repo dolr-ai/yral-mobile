@@ -32,6 +32,11 @@
     <string name="credits_used_use_token">%1$d of %2$d credits used. You can create videos with %3$s.</string>
     <string name="prompt">Prompt</string>
     <string name="enter_prompt_here">Enter the Prompt here…</string>
+    <string name="text_to_video">Text To Video</string>
+    <string name="image_to_video">Image To Video</string>
+    <string name="add_image">Add Image</string>
+    <string name="upload_an_image_to_guide_your_ai_video_style">Upload an image to guide your AI video style</string>
+    <string name="selected_model_does_not_support_image_input">Selected model does not support image input.</string>
     <string name="generating_video">Generating Video…</string>
     <string name="this_may_take_few_minutes">This may take few minutes</string>
     <string name="upload_successful">Upload Successful</string>
