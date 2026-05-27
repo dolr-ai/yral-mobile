@@ -83,6 +83,7 @@ class AiVideoGenViewModel internal constructor(
         }
 
     init {
+        loadProviders()
         viewModelScope.launch {
             sessionManager
                 .observeSessionPropertyWithDefault(
@@ -127,7 +128,9 @@ class AiVideoGenViewModel internal constructor(
         when (_state.value.uiState) {
             is UiState.Initial -> {
                 _state.value.currentCanister?.let {
-                    loadProviders()
+                    if (_state.value.providers.isEmpty()) {
+                        loadProviders()
+                    }
                     getFreeCreditsStatus()
                 }
             }
@@ -422,15 +425,7 @@ class AiVideoGenViewModel internal constructor(
         _state.update { it.copy(bottomSheetType = type) }
     }
 
-    fun shouldEnableButton(): Boolean =
-        with(_state.value) {
-            prompt
-                .trim()
-                .isNotEmpty() &&
-                selectedProvider != null &&
-                usedCredits != null &&
-                (isCreditsAvailable() || !isBalanceLow())
-        }
+    fun shouldEnableButton(): Boolean = _state.value.shouldEnableButton()
 
     fun cleanup() {
         _state.update { current ->
@@ -508,6 +503,13 @@ class AiVideoGenViewModel internal constructor(
         fun isBalanceLow() = (selectedProvider?.cost?.sats ?: 0) > (currentBalance ?: -1)
 
         fun isCreditsAvailable() = usedCredits == null || totalCredits == null || usedCredits < totalCredits
+
+        fun shouldEnableButton(): Boolean =
+            prompt
+                .trim()
+                .isNotEmpty() &&
+                selectedProvider != null &&
+                (isCreditsAvailable() || !isBalanceLow())
     }
 
     sealed class BottomSheetType {
