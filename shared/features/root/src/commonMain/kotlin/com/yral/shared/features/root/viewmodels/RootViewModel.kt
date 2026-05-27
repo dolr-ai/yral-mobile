@@ -429,7 +429,9 @@ class RootViewModel(
         val activePrincipal = sessionManager.userPrincipal
         val mainPrincipal =
             accountSessionPreferences.getMainPrincipal()
-                ?: preferences.getString(PrefKeys.USER_PRINCIPAL.name)
+                ?: preferences
+                    .getString(PrefKeys.USER_PRINCIPAL.name)
+                    ?.takeIf { sessionManager.isBotAccount != true }
         val mainIdentity =
             accountSessionPreferences.getMainIdentity()
                 ?: preferences
@@ -607,7 +609,7 @@ class RootViewModel(
         mainIdentity: ByteArray?,
         botEntries: List<BotIdentityEntry>,
     ): Pair<AccountUi?, List<AccountUi>> {
-        val mainFallbackUsername = sessionManager.username
+        val mainFallbackUsername: String? = null
         return coroutineScope {
             val mainDeferred =
                 async {
@@ -751,19 +753,16 @@ class RootViewModel(
         val activePrincipal = sessionManager.userPrincipal
         val mainPrincipal =
             accountSessionPreferences.getMainPrincipal()
-                ?: preferences.getString(PrefKeys.USER_PRINCIPAL.name)
+                ?: preferences
+                    .getString(PrefKeys.USER_PRINCIPAL.name)
+                    ?.takeIf { sessionManager.isBotAccount != true }
                 ?: return null
         val botEntries =
             botIdentitiesStore
                 .get()
                 .filter { it.principal != mainPrincipal }
 
-        val mainUsername =
-            if (activePrincipal == mainPrincipal) {
-                resolveUsername(sessionManager.username, mainPrincipal)
-            } else {
-                mainPrincipal
-            } ?: mainPrincipal
+        val mainUsername = mainPrincipal
         val mainAvatar =
             if (activePrincipal == mainPrincipal) {
                 sessionManager.profilePic ?: propicFromPrincipal(mainPrincipal)
@@ -860,6 +859,10 @@ class RootViewModel(
                 }
 
                 val canisterData = authenticateWithNetwork(identityBytes)
+                requireAuthenticatedPrincipalMatches(
+                    authenticatedPrincipal = canisterData.userPrincipalId,
+                    requestedPrincipal = principal,
+                )
                 val resolvedUsername =
                     resolveUsername(canisterData.username ?: botUsername, principal)
                 HelperService.initServiceFactories(identityBytes)
@@ -883,7 +886,7 @@ class RootViewModel(
                     sessionManager.updateFirebaseLoginState(false)
                     authClient.fetchBalance(session)
                 } else {
-                    authClient.initialize()
+                    authClient.refreshTokens()
                     authClient.authorizeFirebase()
                     authClient.fetchBalance(session)
                 }
@@ -891,7 +894,7 @@ class RootViewModel(
                     principal = principal,
                     isBot = isBot,
                     username = resolvedUsername ?: principal,
-                    avatarUrl = canisterData.profilePic ?: propicFromPrincipal(principal),
+                    avatarUrl = canisterData.profilePic,
                 )
                 switched = true
                 Logger.d("BotDeleteFlow") {
@@ -907,6 +910,17 @@ class RootViewModel(
                 _state.update { current -> current.copy(isAccountSwitchInProgress = false) }
                 coroutineScope.launch(appDispatchers.main) { onComplete(switched) }
             }
+        }
+    }
+
+    private fun requireAuthenticatedPrincipalMatches(
+        authenticatedPrincipal: String,
+        requestedPrincipal: String,
+    ) {
+        if (authenticatedPrincipal != requestedPrincipal) {
+            throw YralException(
+                "Authenticated principal $authenticatedPrincipal does not match requested $requestedPrincipal",
+            )
         }
     }
 
@@ -926,11 +940,13 @@ class RootViewModel(
 
     fun switchToMainAccount(onComplete: (Boolean) -> Unit = {}) {
         coroutineScope.launch {
-            val mainPrincipal =
-                accountSessionPreferences.getMainPrincipal()
-                    ?: preferences.getString(PrefKeys.USER_PRINCIPAL.name)
-            if (mainPrincipal == null) {
-                Logger.w("BotDeleteFlow") { "switchToMainAccount skipped: main principal missing" }
+            val mainPrincipal = accountSessionPreferences.getMainPrincipal()
+            val mainIdentity = accountSessionPreferences.getMainIdentity()
+            if (mainPrincipal == null || mainIdentity == null) {
+                Logger.w("BotDeleteFlow") {
+                    "switchToMainAccount skipped: main session missing principal=${mainPrincipal != null} " +
+                        "identity=${mainIdentity != null}"
+                }
                 onComplete(false)
                 return@launch
             }
@@ -1020,8 +1036,16 @@ class RootViewModel(
             session.isCreatedFromServiceCanister,
         )
         if (!session.isBotAccount) {
-            accountSessionPreferences.setMainIdentity(identity)
-            accountSessionPreferences.setMainPrincipal(session.userPrincipal)
+            val storedMainPrincipal = accountSessionPreferences.getMainPrincipal()
+            if (session.userPrincipal != null && session.userPrincipal == storedMainPrincipal) {
+                accountSessionPreferences.setMainIdentity(identity)
+                accountSessionPreferences.setMainPrincipal(session.userPrincipal)
+            } else {
+                Logger.w("BotDeleteFlow") {
+                    "cacheSession skipped main identity write for principal=${session.userPrincipal} " +
+                        "storedMainPrincipal=$storedMainPrincipal"
+                }
+            }
         }
     }
 
@@ -1035,9 +1059,7 @@ class RootViewModel(
                 currentPrincipal != null &&
                 targetPrincipal != currentPrincipal
             ) {
-                val mainPrincipal =
-                    accountSessionPreferences.getMainPrincipal()
-                        ?: preferences.getString(PrefKeys.USER_PRINCIPAL.name)
+                val mainPrincipal = accountSessionPreferences.getMainPrincipal()
 
                 val shouldSwitchToMain = targetPrincipal == mainPrincipal
                 val shouldSwitchToBot =
