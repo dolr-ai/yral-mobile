@@ -275,11 +275,11 @@ class DefaultAuthClient(
         sessionManager.updateBotCount(count)
     }
 
-    override suspend fun refreshTokensAfterBotDeletion() {
+    override suspend fun refreshTokens() {
         val refreshToken = preferences.getString(PrefKeys.REFRESH_TOKEN.name)
         if (refreshToken.isNullOrBlank()) {
             Logger.w("BotIdentitySource") {
-                "refreshTokensAfterBotDeletion skipped: refresh token missing"
+                "refreshTokens skipped: refresh token missing"
             }
             return
         }
@@ -293,9 +293,7 @@ class DefaultAuthClient(
                     persistBotIdentities = true,
                 )
             }.onFailure { error ->
-                Logger.e("BotIdentitySource") {
-                    "refreshTokensAfterBotDeletion failed: ${error.message}"
-                }
+                Logger.e("BotIdentitySource") { "refreshTokens failed: ${error.message}" }
             }
     }
 
