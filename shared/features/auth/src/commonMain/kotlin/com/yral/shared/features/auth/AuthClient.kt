@@ -18,5 +18,8 @@ interface AuthClient {
         phoneNumber: String,
         code: String,
     )
-    suspend fun refreshTokensAfterBotDeletion()
+    suspend fun refreshTokens()
+    suspend fun refreshTokensAfterBotDeletion() {
+        refreshTokens()
+    }
 }

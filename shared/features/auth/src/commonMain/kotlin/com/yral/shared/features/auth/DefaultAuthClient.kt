@@ -46,6 +46,7 @@ import com.yral.shared.rust.service.utils.CanisterData
 import com.yral.shared.rust.service.utils.YralFfiException
 import com.yral.shared.rust.service.utils.authenticateWithNetwork
 import com.yral.shared.rust.service.utils.getSessionFromIdentity
+import com.yral.shared.rust.service.utils.propicFromPrincipal
 import io.ktor.util.decodeBase64Bytes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -275,11 +276,11 @@ class DefaultAuthClient(
         sessionManager.updateBotCount(count)
     }
 
-    override suspend fun refreshTokensAfterBotDeletion() {
+    override suspend fun refreshTokens() {
         val refreshToken = preferences.getString(PrefKeys.REFRESH_TOKEN.name)
         if (refreshToken.isNullOrBlank()) {
             Logger.w("BotIdentitySource") {
-                "refreshTokensAfterBotDeletion skipped: refresh token missing"
+                "refreshTokens skipped: refresh token missing"
             }
             return
         }
@@ -293,9 +294,7 @@ class DefaultAuthClient(
                     persistBotIdentities = true,
                 )
             }.onFailure { error ->
-                Logger.e("BotIdentitySource") {
-                    "refreshTokensAfterBotDeletion failed: ${error.message}"
-                }
+                Logger.e("BotIdentitySource") { "refreshTokens failed: ${error.message}" }
             }
     }
 
@@ -354,6 +353,25 @@ class DefaultAuthClient(
 
     private suspend fun handleExtractIdentityResponse(data: ByteArray) {
         try {
+            val storedMainPrincipal = accountSessionPreferences.getMainPrincipal()
+            val lastActivePrincipal = accountSessionPreferences.getLastActivePrincipal()
+            val identityPrincipal = getSessionFromIdentity(data).userPrincipalId
+            if (
+                storedMainPrincipal != null &&
+                lastActivePrincipal == storedMainPrincipal &&
+                identityPrincipal != storedMainPrincipal
+            ) {
+                Logger.w("DefaultAuthClient") {
+                    "Ignoring token identity for non-main principal=$identityPrincipal storedMain=$storedMainPrincipal"
+                }
+                getCachedSession()
+                    ?.takeIf { it.userPrincipal == storedMainPrincipal }
+                    ?.let { cachedMain ->
+                        setSession(cachedMain)
+                        sessionManager.updateFirebaseLoginState(true)
+                    }
+                return
+            }
             var cachedSession = getCachedSession()
             if (cachedSession == null) {
                 // Use getSessionFromIdentity to get principal without network call
@@ -591,8 +609,8 @@ class DefaultAuthClient(
         val identity = if (usePreferred) preferredIdentity else mainIdentity ?: preferredIdentity
         val canisterId = preferences.getString(PrefKeys.CANISTER_ID.name)
         val userPrincipal = if (usePreferred) preferredPrincipal else mainPrincipal ?: preferredPrincipal
-        val profilePic = preferences.getString(PrefKeys.PROFILE_PIC.name)
-        val username = preferences.getString(PrefKeys.USERNAME.name)
+        val profilePic = getCachedProfilePic(userPrincipal, preferredPrincipal)
+        val username = getCachedUsername(userPrincipal, preferredPrincipal)
         val isCreatedFromServiceCanister = preferences.getBoolean(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name)
         val resolvedIsBotAccount =
             mainPrincipal?.let { main -> userPrincipal != null && userPrincipal != main } ?: false
@@ -615,6 +633,35 @@ class DefaultAuthClient(
             }
     }
 
+    private suspend fun getCachedProfilePic(
+        userPrincipal: String?,
+        preferredPrincipal: String?,
+    ): String? =
+        getPrincipalScopedCachedString(
+            key = PrefKeys.PROFILE_PIC,
+            userPrincipal = userPrincipal,
+            preferredPrincipal = preferredPrincipal,
+        ) ?: userPrincipal?.let { propicFromPrincipal(it) }
+
+    private suspend fun getCachedUsername(
+        userPrincipal: String?,
+        preferredPrincipal: String?,
+    ): String? =
+        getPrincipalScopedCachedString(
+            key = PrefKeys.USERNAME,
+            userPrincipal = userPrincipal,
+            preferredPrincipal = preferredPrincipal,
+        )
+
+    private suspend fun getPrincipalScopedCachedString(
+        key: PrefKeys,
+        userPrincipal: String?,
+        preferredPrincipal: String?,
+    ): String? =
+        preferences
+            .getString(key.name)
+            ?.takeIf { preferredPrincipal == userPrincipal }
+
     private suspend fun cacheSession(
         identity: ByteArray,
         canisterWrapper: CanisterData,
@@ -634,9 +681,16 @@ class DefaultAuthClient(
             preferences.putBoolean(PrefKeys.IS_CREATED_FROM_SERVICE_CANISTER.name, isCreatedFromServiceCanister)
             // Always persist a main identity when the session is not a bot account
             if (!isBotAccount) {
-                accountSessionPreferences.setMainIdentity(identity)
-                accountSessionPreferences.setMainPrincipal(userPrincipalId)
-                accountSessionPreferences.setLastActivePrincipal(userPrincipalId)
+                val storedMainPrincipal = accountSessionPreferences.getMainPrincipal()
+                if (storedMainPrincipal == null || storedMainPrincipal == userPrincipalId) {
+                    accountSessionPreferences.setMainIdentity(identity)
+                    accountSessionPreferences.setMainPrincipal(userPrincipalId)
+                    accountSessionPreferences.setLastActivePrincipal(userPrincipalId)
+                } else {
+                    Logger.w("DefaultAuthClient") {
+                        "Skipped main identity overwrite for principal=$userPrincipalId storedMain=$storedMainPrincipal"
+                    }
+                }
             }
         }
     }
