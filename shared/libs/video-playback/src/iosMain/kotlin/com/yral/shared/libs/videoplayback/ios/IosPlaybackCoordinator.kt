@@ -1,6 +1,8 @@
 package com.yral.shared.libs.videoplayback.ios
 
 import com.yral.shared.libs.videoplayback.CoordinatorDeps
+import com.yral.shared.libs.videoplayback.FirstFrameStartupAction
+import com.yral.shared.libs.videoplayback.FirstFrameStartupWatchdog
 import com.yral.shared.libs.videoplayback.MediaDescriptor
 import com.yral.shared.libs.videoplayback.PlaybackCoordinator
 import com.yral.shared.libs.videoplayback.PlaybackProgress
@@ -74,6 +76,8 @@ private class IosPlaybackCoordinator(
 
     private val playStartMsById = mutableMapOf<String, Long>()
     private var firstFramePendingIndex: Int? = null
+    private val firstFrameStartupWatchdog = FirstFrameStartupWatchdog()
+    private var startupStallStartMs: Long? = null
 
     private var rebuffering = false
     private var rebufferStartMs: Long? = null
@@ -138,6 +142,8 @@ private class IosPlaybackCoordinator(
             rebuffering = false
             rebufferStartMs = null
             firstFramePendingIndex = null
+            firstFrameStartupWatchdog.clear()
+            startupStallStartMs = null
             activeSlot.player.pause()
             preparedSlot?.player?.pause()
             activeSlot.index = null
@@ -163,6 +169,7 @@ private class IosPlaybackCoordinator(
         if (index !in feed.indices) return
         if (index == activeIndex && activeSlot.index == index) return
 
+        endStartupStall(activeIndex)
         activeIndex = index
         predictedIndex = index
         rebuffering = false
@@ -173,6 +180,7 @@ private class IosPlaybackCoordinator(
         reporter.playStartRequest(item.id, index, "activeIndex")
         playStartMsById[item.id] = nowMs()
         firstFramePendingIndex = index
+        firstFrameStartupWatchdog.start(index, nowMs())
 
         if (preparedSlot?.index == index) {
             swapSlots()
@@ -254,6 +262,8 @@ private class IosPlaybackCoordinator(
         cancelPrefetch(reason = "release")
         cache.close()
         preparedScheduler.reset("release") { feed.getOrNull(it)?.id }
+        firstFrameStartupWatchdog.clear()
+        startupStallStartMs = null
         progressTicker.stop()
         scope.cancel()
     }
@@ -423,6 +433,7 @@ private class IosPlaybackCoordinator(
                     activeSlot.player.replaceCurrentItemWithPlayerItem(replacement)
                     activeSlot.player.playImmediatelyAtRate(1.0F)
                     firstFramePendingIndex = index
+                    firstFrameStartupWatchdog.start(index, nowMs())
                     playStartMsById[item.id] = nowMs()
                 }
             }
@@ -469,11 +480,15 @@ private class IosPlaybackCoordinator(
             val seconds = CMTimeGetSeconds(activeSlot.player.currentTime())
             if (seconds > 0.01) {
                 firstFramePendingIndex = null
+                firstFrameStartupWatchdog.clear(index)
+                endStartupStall(index)
                 val start = playStartMsById[item.id] ?: nowMs()
                 reporter.firstFrameRendered(item.id, index)
                 reporter.timeToFirstFrame(item.id, index, nowMs() - start)
             }
         }
+
+        recoverFirstFrameStartupIfNeeded(index, item)
 
         val prepared = preparedSlot
         if (prepared != null) {
@@ -496,6 +511,68 @@ private class IosPlaybackCoordinator(
                 preparedScheduler.markError(preparedIndex, { feed.getOrNull(it)?.id }, "error")
             }
         }
+    }
+
+    private fun recoverFirstFrameStartupIfNeeded(
+        index: Int,
+        item: MediaDescriptor,
+    ) {
+        val action =
+            firstFrameStartupWatchdog.evaluate(
+                index = index,
+                nowMs = nowMs(),
+                firstFramePending = firstFramePendingIndex == index,
+            )
+        when (action) {
+            FirstFrameStartupAction.None -> Unit
+            FirstFrameStartupAction.Resume -> {
+                startStartupStall(index, item, "first_frame_resume")
+                activeSlot.player.playImmediatelyAtRate(1.0F)
+            }
+            FirstFrameStartupAction.Rebuild -> {
+                startStartupStall(index, item, "first_frame_rebuild")
+                val replacement = buildPlayerItem(item, index)
+                replacement.preferredForwardBufferDuration = 1.0
+                activeSlot.player.replaceCurrentItemWithPlayerItem(replacement)
+                attachIfBound(activeSlot)
+                activeSlot.player.playImmediatelyAtRate(1.0F)
+                firstFramePendingIndex = index
+                playStartMsById[item.id] = nowMs()
+            }
+            FirstFrameStartupAction.GiveUp -> {
+                firstFramePendingIndex = null
+                firstFrameStartupWatchdog.clear(index)
+                endStartupStall(index)
+                reporter.playbackError(
+                    id = item.id,
+                    index = index,
+                    category = "startup_timeout",
+                    code = "ios",
+                    message = "First frame did not render after playback recovery",
+                )
+            }
+        }
+    }
+
+    private fun startStartupStall(
+        index: Int,
+        item: MediaDescriptor,
+        reason: String,
+    ) {
+        if (startupStallStartMs != null) return
+        startupStallStartMs = nowMs()
+        reporter.stallStart(item.id, index, reason)
+    }
+
+    private fun endStartupStall(index: Int) {
+        val start = startupStallStartMs ?: return
+        val item =
+            feed.getOrNull(index) ?: run {
+                startupStallStartMs = null
+                return
+            }
+        startupStallStartMs = null
+        reporter.stallEnd(item.id, index, nowMs() - start)
     }
 
     private data class PlayerSlot(
