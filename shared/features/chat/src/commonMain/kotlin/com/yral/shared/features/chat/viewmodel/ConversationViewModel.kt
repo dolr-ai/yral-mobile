@@ -822,6 +822,7 @@ class ConversationViewModel(
                 loginPromptMessageThreshold = current.loginPromptMessageThreshold,
                 subscriptionMandatoryThreshold = current.subscriptionMandatoryThreshold,
                 isSubscriptionEnabled = current.isSubscriptionEnabled,
+                isChatAsHumanCreatorEnabled = current.isChatAsHumanCreatorEnabled,
                 isInfluencerSubscriptionPurchasedAndVerified = false,
                 isInfluencerSubscriptionAvailableToPurchase = current.isInfluencerSubscriptionAvailableToPurchase,
                 isInfluencerSubscriptionPurchaseInProgress = false,
