@@ -524,7 +524,8 @@ fun ChatConversationScreen(
                             ConversationBottomAreaState.BotAccountPrompt -> {
                                 if (viewState.isChatAsHumanCreatorEnabled) {
                                     val creatorDisplayName =
-                                        viewState.influencer?.displayName
+                                        viewState.influencer
+                                            ?.displayName
                                             ?.takeIf { it.isNotBlank() }
                                             ?: viewState.influencer?.name.orEmpty()
                                     CreatorTakeoverBar(

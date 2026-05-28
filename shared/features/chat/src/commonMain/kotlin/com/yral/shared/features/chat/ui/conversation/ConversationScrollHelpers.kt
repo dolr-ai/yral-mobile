@@ -166,7 +166,9 @@ private fun newestVisibleItemTimeMs(
     historyPagingItems: LazyPagingItems<ConversationMessageItem>,
 ): Long? {
     overlayItems.firstOrNull()?.scrollTimestampMs()?.let { return it }
-    return historyPagingItems.itemSnapshotList.items.firstOrNull()?.scrollTimestampMs()
+    return historyPagingItems.itemSnapshotList.items
+        .firstOrNull()
+        ?.scrollTimestampMs()
 }
 
 @OptIn(ExperimentalTime::class)

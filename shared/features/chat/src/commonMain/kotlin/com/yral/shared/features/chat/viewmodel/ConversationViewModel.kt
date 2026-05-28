@@ -78,7 +78,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.seconds
 import org.jetbrains.compose.resources.getString
 import yral_mobile.shared.features.chat.generated.resources.Res
 import yral_mobile.shared.features.chat.generated.resources.influencer_subscription_purchase_failed
@@ -90,6 +89,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_shar
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.profile_share_default_name
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
@@ -1178,10 +1178,13 @@ class ConversationViewModel(
     private var takeoverCountdownJob: Job? = null
 
     fun startHumanCreatorTakeover() {
-        if (!_viewState.value.isChatAsHumanCreatorEnabled) return
-        if (!_viewState.value.isBotAccount) return
-        val convId = _viewState.value.conversationId ?: return
-        if (_viewState.value.isHumanCreatorTakeoverActive || _viewState.value.isHumanCreatorTakeoverStarting) return
+        val state = _viewState.value
+        val convId = state.conversationId
+        val featureUnavailable = !state.isChatAsHumanCreatorEnabled || !state.isBotAccount
+        val takeoverUnavailable = state.isHumanCreatorTakeoverActive || state.isHumanCreatorTakeoverStarting
+        if (featureUnavailable || convId == null || takeoverUnavailable) {
+            return
+        }
         _viewState.update { it.copy(isHumanCreatorTakeoverStarting = true) }
         viewModelScope.launch {
             startHumanCreatorTakeoverUseCase(convId)
@@ -1231,11 +1234,14 @@ class ConversationViewModel(
 
     @OptIn(ExperimentalTime::class)
     fun sendAsHumanCreator(content: String) {
-        val convId = _viewState.value.conversationId ?: return
+        val state = _viewState.value
+        val convId = state.conversationId
         val trimmed = content.trim()
-        if (trimmed.isEmpty()) return
-        if (!_viewState.value.isHumanCreatorTakeoverActive) return
-        if (_viewState.value.isHumanCreatorMessageSending) return
+        val messageUnavailable = convId == null || trimmed.isEmpty()
+        val takeoverUnavailable = !state.isHumanCreatorTakeoverActive || state.isHumanCreatorMessageSending
+        if (messageUnavailable || takeoverUnavailable) {
+            return
+        }
         _viewState.update { it.copy(isHumanCreatorMessageSending = true) }
         viewModelScope.launch {
             sendHumanCreatorMessageUseCase(
@@ -1246,7 +1252,9 @@ class ConversationViewModel(
                 // (flicker), and gave the auto-scroll a second target to animate to
                 // (more flicker). Just add the real message to the overlay after the
                 // POST returns. ~200-500ms latency, button greys during the wait.
-                val insertedAtMs = parseTimestampToEpochMs(message.createdAt) ?: Clock.System.now().toEpochMilliseconds()
+                val insertedAtMs =
+                    parseTimestampToEpochMs(message.createdAt)
+                        ?: Clock.System.now().toEpochMilliseconds()
                 _overlay.update { state ->
                     state.copy(sent = state.sent + SentMessage(insertedAtMs = insertedAtMs, message = message))
                 }
@@ -1261,9 +1269,9 @@ class ConversationViewModel(
     }
 
     fun refreshHumanCreatorTakeoverStatus() {
-        if (!_viewState.value.isChatAsHumanCreatorEnabled) return
-        if (!_viewState.value.isBotAccount) return
-        val convId = _viewState.value.conversationId ?: return
+        val state = _viewState.value
+        val convId = state.conversationId
+        if (!state.isChatAsHumanCreatorEnabled || !state.isBotAccount || convId == null) return
         viewModelScope.launch {
             getHumanCreatorTakeoverStatusUseCase(convId)
                 .onSuccess { status ->
@@ -1331,7 +1339,10 @@ class ConversationViewModel(
             )
         }.onSuccess { result ->
             val loadedIds = loadedMessageIds.value
-            val sentIds = _overlay.value.sent.map { it.message.id }.toSet()
+            val sentIds =
+                _overlay.value.sent
+                    .map { it.message.id }
+                    .toSet()
             val newSentMessages =
                 result.messages
                     .filterNot { msg -> msg.id in loadedIds || msg.id in sentIds }
@@ -1415,6 +1426,7 @@ class ConversationViewModel(
         private const val MESSAGES_STOP_TIMEOUT_MS = 5_000L
         private const val FALLBACK_ACCESS_DURATION_MS = 24L * 60 * 60 * 1000
         private val TAKEOVER_MESSAGES_POLL_INTERVAL = 3.seconds
+
         // Status poll runs every Nth iteration of message poll: 3s × 2 ≈ 6s ≈ ~5s spec.
         private const val TAKEOVER_STATUS_POLL_EVERY_N = 2
         private const val TAKEOVER_POLL_PAGE_SIZE = 20

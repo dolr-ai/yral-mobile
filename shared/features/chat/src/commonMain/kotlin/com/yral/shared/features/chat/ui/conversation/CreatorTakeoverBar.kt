@@ -33,6 +33,7 @@ import yral_mobile.shared.features.chat.generated.resources.takeover_toggle_inac
 
 private const val URGENT_THRESHOLD_SECONDS = 30
 private const val SECONDS_PER_MINUTE = 60
+private const val TIMER_SECOND_DIGITS = 2
 
 @Composable
 internal fun CreatorTakeoverBar(
@@ -116,6 +117,6 @@ private fun formatRemainingMmSs(totalSeconds: Int): String {
     val safe = totalSeconds.coerceAtLeast(0)
     val minutes = safe / SECONDS_PER_MINUTE
     val seconds = safe % SECONDS_PER_MINUTE
-    val secondsStr = if (seconds < 10) "0$seconds" else "$seconds"
+    val secondsStr = seconds.toString().padStart(TIMER_SECOND_DIGITS, '0')
     return "$minutes:$secondsStr"
 }

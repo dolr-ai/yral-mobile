@@ -1,14 +1,20 @@
 package com.yral.shared.features.chat.data
 
 import com.yral.shared.features.chat.attachments.ChatAttachment
+import com.yral.shared.features.chat.data.models.ChatMessageDto
 import com.yral.shared.features.chat.data.models.ConversationDto
 import com.yral.shared.features.chat.data.models.ConversationInfluencerDto
+import com.yral.shared.features.chat.data.models.ConversationMessagesResponseDto
 import com.yral.shared.features.chat.data.models.ConversationsResponseDto
 import com.yral.shared.features.chat.data.models.DeleteConversationResponseDto
+import com.yral.shared.features.chat.data.models.HumanCreatorTakeoverStatusDto
 import com.yral.shared.features.chat.data.models.InfluencerDto
 import com.yral.shared.features.chat.data.models.InfluencersResponseDto
+import com.yral.shared.features.chat.data.models.ReleaseHumanCreatorTakeoverResponseDto
+import com.yral.shared.features.chat.data.models.SendHumanCreatorMessageRequestDto
 import com.yral.shared.features.chat.data.models.SendMessageRequestDto
 import com.yral.shared.features.chat.data.models.SendMessageResponseDto
+import com.yral.shared.features.chat.data.models.StartHumanCreatorTakeoverResponseDto
 import com.yral.shared.features.chat.data.models.UploadResponseDto
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -142,5 +148,23 @@ class ChatRepositoryImplUnreadCountTest {
         ): UploadResponseDto = error("unused")
 
         override suspend fun markConversationAsRead(conversationId: String) = error("unused")
+
+        override suspend fun startHumanCreatorTakeover(conversationId: String): StartHumanCreatorTakeoverResponseDto = error("unused")
+
+        override suspend fun releaseHumanCreatorTakeover(conversationId: String): ReleaseHumanCreatorTakeoverResponseDto = error("unused")
+
+        override suspend fun sendHumanCreatorMessage(
+            conversationId: String,
+            request: SendHumanCreatorMessageRequestDto,
+        ): ChatMessageDto = error("unused")
+
+        override suspend fun getHumanCreatorTakeoverStatus(conversationId: String): HumanCreatorTakeoverStatusDto = error("unused")
+
+        override suspend fun listCreatorConversationMessages(
+            conversationId: String,
+            limit: Int,
+            offset: Int,
+            order: String,
+        ): ConversationMessagesResponseDto = error("unused")
     }
 }
