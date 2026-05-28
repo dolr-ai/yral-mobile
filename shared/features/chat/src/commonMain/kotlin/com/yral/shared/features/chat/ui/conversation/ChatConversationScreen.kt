@@ -238,6 +238,7 @@ fun ChatConversationScreen(
         screenWidth = screenWidth,
         density = density,
         overlayItems = overlayItems,
+        historyPagingItems = historyPagingItems,
         scrollToLastLine = true,
         lineHeightPx = messageLineHeightPx,
     )

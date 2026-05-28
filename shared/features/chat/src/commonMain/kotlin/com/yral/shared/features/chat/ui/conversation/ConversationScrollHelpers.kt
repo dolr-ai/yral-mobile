@@ -78,6 +78,7 @@ internal fun AutoScrollToAssistantMessage(
     screenWidth: Int,
     density: Density,
     overlayItems: List<ConversationMessageItem>,
+    historyPagingItems: LazyPagingItems<ConversationMessageItem>,
     scrollToLastLine: Boolean = false,
     visibleLines: Int = 0,
     lineHeightPx: Float = 0f,
@@ -138,6 +139,16 @@ internal fun AutoScrollToAssistantMessage(
         val target = scrollTarget ?: return@LaunchedEffect
         if (!readyForAutoScroll && !target.isWaiting) return@LaunchedEffect
         val targetTimeMs = target.message.scrollTimestampMs() ?: return@LaunchedEffect
+        // Primary guard: if the rendered list has an item NEWER than this target,
+        // don't scroll. This catches the case where the user types after an active
+        // takeover (their last action was a send that got no AI reply, so the
+        // newest item is a USER message but findLatestAssistantIndex still returns
+        // an older ASSISTANT). Auto-scrolling to that ASSISTANT would push the
+        // newer USER message off-screen behind the input box.
+        val newestVisibleTimeMs = newestVisibleItemTimeMs(overlayItems, historyPagingItems)
+        if (newestVisibleTimeMs != null && targetTimeMs < newestVisibleTimeMs) return@LaunchedEffect
+        // Secondary guard: don't re-scroll to a target we've already animated to,
+        // and never scroll backward to an older target than the previous one.
         val prev = lastScrolledTimeMs
         if (prev != null && targetTimeMs <= prev) return@LaunchedEffect
         lastScrolledTimeMs = targetTimeMs
@@ -148,6 +159,14 @@ internal fun AutoScrollToAssistantMessage(
             )
         }
     }
+}
+
+private fun newestVisibleItemTimeMs(
+    overlayItems: List<ConversationMessageItem>,
+    historyPagingItems: LazyPagingItems<ConversationMessageItem>,
+): Long? {
+    overlayItems.firstOrNull()?.scrollTimestampMs()?.let { return it }
+    return historyPagingItems.itemSnapshotList.items.firstOrNull()?.scrollTimestampMs()
 }
 
 @OptIn(ExperimentalTime::class)
