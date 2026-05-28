@@ -25,6 +25,12 @@
     <string name="switch_profile">Switch Profile</string>
     <string name="switch_profile_failed">Unable to switch profile. Please try again.</string>
 
+    <!-- Chat as Human (creator takeover) -->
+    <string name="takeover_toggle_inactive">Take over as %1$s</string>
+    <string name="takeover_toggle_active">Release control</string>
+    <string name="takeover_timer_label">%1$s</string>
+    <string name="takeover_input_placeholder">Reply as %1$s…</string>
+
     <!-- Message Bubble -->
     <string name="message_failed_tap_to_resend">Message Failed. Tap to resend</string>
 

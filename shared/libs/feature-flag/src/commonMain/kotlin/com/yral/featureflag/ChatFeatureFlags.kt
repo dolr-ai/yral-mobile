@@ -42,5 +42,14 @@ object ChatFeatureFlags {
                 description = "Maximum number of bot usernames to show before '+N More'",
                 defaultValue = 2,
             )
+        val ChatAsHumanCreatorEnabled: FeatureFlag<Boolean> =
+            boolean(
+                keySuffix = "chatAsHumanCreatorEnabled",
+                name = "Chat as Human Creator (takeover)",
+                description = "When ON, exposes the Take Over toggle inside a creator's inbox conversation view " +
+                    "and renders user-side join/leave system banners. When OFF, the creator sees the legacy " +
+                    "'switch to your human profile' prompt and system banners are not rendered.",
+                defaultValue = false,
+            )
     }
 }

@@ -37,10 +37,14 @@ import com.yral.shared.features.chat.domain.models.SendMessageResult
 import com.yral.shared.features.chat.domain.usecases.CheckChatAccessUseCase
 import com.yral.shared.features.chat.domain.usecases.CreateConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.DeleteConversationUseCase
+import com.yral.shared.features.chat.domain.usecases.GetHumanCreatorTakeoverStatusUseCase
 import com.yral.shared.features.chat.domain.usecases.GrantChatAccessParams
 import com.yral.shared.features.chat.domain.usecases.GrantChatAccessUseCase
 import com.yral.shared.features.chat.domain.usecases.MarkConversationAsReadUseCase
+import com.yral.shared.features.chat.domain.usecases.ReleaseHumanCreatorTakeoverUseCase
+import com.yral.shared.features.chat.domain.usecases.SendHumanCreatorMessageUseCase
 import com.yral.shared.features.chat.domain.usecases.SendMessageUseCase
+import com.yral.shared.features.chat.domain.usecases.StartHumanCreatorTakeoverUseCase
 import com.yral.shared.features.subscriptions.domain.FetchProductsUseCase
 import com.yral.shared.iap.IAPManager
 import com.yral.shared.iap.core.IAPError
@@ -58,7 +62,9 @@ import com.yral.shared.libs.sharing.ShareService
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import com.yral.shared.rust.service.utils.propicFromPrincipal
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -72,6 +78,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.seconds
 import org.jetbrains.compose.resources.getString
 import yral_mobile.shared.features.chat.generated.resources.Res
 import yral_mobile.shared.features.chat.generated.resources.influencer_subscription_purchase_failed
@@ -108,6 +115,10 @@ class ConversationViewModel(
     private val checkChatAccessUseCase: CheckChatAccessUseCase,
     private val grantChatAccessUseCase: GrantChatAccessUseCase,
     private val chatUnreadRefreshSignal: ChatUnreadRefreshSignal,
+    private val startHumanCreatorTakeoverUseCase: StartHumanCreatorTakeoverUseCase,
+    private val releaseHumanCreatorTakeoverUseCase: ReleaseHumanCreatorTakeoverUseCase,
+    private val sendHumanCreatorMessageUseCase: SendHumanCreatorMessageUseCase,
+    private val getHumanCreatorTakeoverStatusUseCase: GetHumanCreatorTakeoverStatusUseCase,
 ) : ViewModel() {
     /**
      * Message ordering:
@@ -121,6 +132,7 @@ class ConversationViewModel(
                 loginPromptMessageThreshold = flagManager.get(ChatFeatureFlags.Chat.LoginPromptMessageThreshold),
                 subscriptionMandatoryThreshold = flagManager.get(ChatFeatureFlags.Chat.SubscriptionMandatoryThreshold),
                 isSubscriptionEnabled = flagManager.isEnabled(AppFeatureFlags.Common.EnableSubscription),
+                isChatAsHumanCreatorEnabled = flagManager.get(ChatFeatureFlags.Chat.ChatAsHumanCreatorEnabled),
             ),
         )
     val viewState: StateFlow<ConversationViewState> = _viewState.asStateFlow()
@@ -822,6 +834,8 @@ class ConversationViewModel(
         loadedMessageIds.value = emptySet()
         initialOffset.value = null
         historyRefreshTrigger.value = 0
+        stopTakeoverPolling()
+        stopCountdownTicker()
     }
 
     private fun createConversation(influencerId: String) {
@@ -1157,6 +1171,221 @@ class ConversationViewModel(
         }
     }
 
+    // ── Human Creator Takeover (Chat as Human) ──────────────────────────────
+    // Polling-based. No WebSocket dependency. See PLAN-CHAT-AS-HUMAN.md.
+    private var takeoverPollingJob: Job? = null
+    private var takeoverCountdownJob: Job? = null
+
+    fun startHumanCreatorTakeover() {
+        if (!_viewState.value.isChatAsHumanCreatorEnabled) return
+        if (!_viewState.value.isBotAccount) return
+        val convId = _viewState.value.conversationId ?: return
+        if (_viewState.value.isHumanCreatorTakeoverActive || _viewState.value.isHumanCreatorTakeoverStarting) return
+        _viewState.update { it.copy(isHumanCreatorTakeoverStarting = true) }
+        viewModelScope.launch {
+            startHumanCreatorTakeoverUseCase(convId)
+                .onSuccess { status ->
+                    applyTakeoverStatus(status.active, status.remainingSeconds)
+                    _viewState.update { it.copy(isHumanCreatorTakeoverStarting = false) }
+                    if (status.active) {
+                        // Pull the "X has joined the chat" banner into the overlay
+                        // immediately. Otherwise it doesn't show until the first poll
+                        // tick ~3s later, and the creator can start typing before the
+                        // banner appears — confusing UX.
+                        pollLatestMessagesIntoOverlay(convId)
+                        startTakeoverPolling(convId)
+                    }
+                }.onFailure { error ->
+                    Logger.w(ConversationViewModel::class.simpleName!!, error) {
+                        "Failed to start human creator takeover: $convId"
+                    }
+                    _viewState.update { it.copy(isHumanCreatorTakeoverStarting = false) }
+                }
+        }
+    }
+
+    fun releaseHumanCreatorTakeover() {
+        val convId = _viewState.value.conversationId ?: return
+        if (!_viewState.value.isHumanCreatorTakeoverActive) return
+        _viewState.update { it.copy(isHumanCreatorTakeoverEnding = true) }
+        stopTakeoverPolling()
+        viewModelScope.launch {
+            releaseHumanCreatorTakeoverUseCase(convId)
+                .onSuccess {
+                    applyTakeoverStatus(active = false, remainingSeconds = 0)
+                    _viewState.update { it.copy(isHumanCreatorTakeoverEnding = false) }
+                    // Pull the "X has left the chat" system banner into the overlay
+                    // without flickering the whole LazyColumn.
+                    pollLatestMessagesIntoOverlay(convId)
+                }.onFailure { error ->
+                    Logger.w(ConversationViewModel::class.simpleName!!, error) {
+                        "Failed to release human creator takeover: $convId"
+                    }
+                    // Local intent is to release — flip OFF anyway. Server will auto-release after 2 min.
+                    applyTakeoverStatus(active = false, remainingSeconds = 0)
+                    _viewState.update { it.copy(isHumanCreatorTakeoverEnding = false) }
+                }
+        }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    fun sendAsHumanCreator(content: String) {
+        val convId = _viewState.value.conversationId ?: return
+        val trimmed = content.trim()
+        if (trimmed.isEmpty()) return
+        if (!_viewState.value.isHumanCreatorTakeoverActive) return
+        if (_viewState.value.isHumanCreatorMessageSending) return
+        _viewState.update { it.copy(isHumanCreatorMessageSending = true) }
+        viewModelScope.launch {
+            sendHumanCreatorMessageUseCase(
+                SendHumanCreatorMessageUseCase.Params(conversationId = convId, content = trimmed),
+            ).onSuccess { message ->
+                // No optimistic UI here. Optimistic pending → sent caused a Local→Remote
+                // swap that compose's items() rendered as a subtree teardown+rebuild
+                // (flicker), and gave the auto-scroll a second target to animate to
+                // (more flicker). Just add the real message to the overlay after the
+                // POST returns. ~200-500ms latency, button greys during the wait.
+                val insertedAtMs = parseTimestampToEpochMs(message.createdAt) ?: Clock.System.now().toEpochMilliseconds()
+                _overlay.update { state ->
+                    state.copy(sent = state.sent + SentMessage(insertedAtMs = insertedAtMs, message = message))
+                }
+                _viewState.update { it.copy(isHumanCreatorMessageSending = false) }
+            }.onFailure { error ->
+                Logger.w(ConversationViewModel::class.simpleName!!, error) {
+                    "Failed to send human creator message: $convId"
+                }
+                _viewState.update { it.copy(isHumanCreatorMessageSending = false) }
+            }
+        }
+    }
+
+    fun refreshHumanCreatorTakeoverStatus() {
+        if (!_viewState.value.isChatAsHumanCreatorEnabled) return
+        if (!_viewState.value.isBotAccount) return
+        val convId = _viewState.value.conversationId ?: return
+        viewModelScope.launch {
+            getHumanCreatorTakeoverStatusUseCase(convId)
+                .onSuccess { status ->
+                    applyTakeoverStatus(status.active, status.remainingSeconds)
+                    if (status.active && takeoverPollingJob?.isActive != true) {
+                        startTakeoverPolling(convId)
+                    } else if (!status.active) {
+                        stopTakeoverPolling()
+                    }
+                }.onFailure { error ->
+                    Logger.w(ConversationViewModel::class.simpleName!!, error) {
+                        "Failed to fetch takeover status: $convId"
+                    }
+                }
+        }
+    }
+
+    private fun applyTakeoverStatus(
+        active: Boolean,
+        remainingSeconds: Int,
+    ) {
+        _viewState.update {
+            it.copy(
+                isHumanCreatorTakeoverActive = active,
+                humanCreatorTakeoverRemainingSeconds = if (active) remainingSeconds.coerceAtLeast(0) else 0,
+            )
+        }
+        if (active) startCountdownTicker() else stopCountdownTicker()
+    }
+
+    private fun startTakeoverPolling(conversationId: String) {
+        stopTakeoverPolling()
+        takeoverPollingJob =
+            viewModelScope.launch {
+                var iter = 0
+                while (true) {
+                    delay(TAKEOVER_MESSAGES_POLL_INTERVAL)
+                    iter += 1
+                    // Every 3s: fetch latest messages and merge new ones into the
+                    // overlay. DO NOT call refreshHistory() — that resets the paging
+                    // source, wipes loadedMessageIds, and rebuilds the entire LazyColumn
+                    // every tick. That's what caused the flickering chat screen.
+                    if (!_viewState.value.isHumanCreatorMessageSending) {
+                        pollLatestMessagesIntoOverlay(conversationId)
+                    }
+                    // Every 5s (~every other iteration of 3s, but use modulo on time):
+                    if (iter % TAKEOVER_STATUS_POLL_EVERY_N == 0) {
+                        getHumanCreatorTakeoverStatusUseCase(conversationId)
+                            .onSuccess { status ->
+                                applyTakeoverStatus(status.active, status.remainingSeconds)
+                                if (!status.active) return@launch
+                            }
+                    }
+                }
+            }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private suspend fun pollLatestMessagesIntoOverlay(conversationId: String) {
+        runSuspendCatching {
+            chatRepository.getCreatorConversationMessagesPage(
+                conversationId = conversationId,
+                limit = TAKEOVER_POLL_PAGE_SIZE,
+                offset = 0,
+            )
+        }.onSuccess { result ->
+            val loadedIds = loadedMessageIds.value
+            val sentIds = _overlay.value.sent.map { it.message.id }.toSet()
+            val newSentMessages =
+                result.messages
+                    .filterNot { msg -> msg.id in loadedIds || msg.id in sentIds }
+                    .mapNotNull { msg ->
+                        val insertedAtMs = parseTimestampToEpochMs(msg.createdAt) ?: return@mapNotNull null
+                        SentMessage(insertedAtMs = insertedAtMs, message = msg)
+                    }
+            if (newSentMessages.isNotEmpty()) {
+                _overlay.update { it.copy(sent = it.sent + newSentMessages) }
+            }
+        }.onFailure { error ->
+            Logger.w(ConversationViewModel::class.simpleName!!, error) {
+                "pollLatestMessagesIntoOverlay failed: $conversationId"
+            }
+        }
+    }
+
+    private fun stopTakeoverPolling() {
+        takeoverPollingJob?.cancel()
+        takeoverPollingJob = null
+    }
+
+    private fun startCountdownTicker() {
+        if (takeoverCountdownJob?.isActive == true) return
+        takeoverCountdownJob =
+            viewModelScope.launch {
+                while (true) {
+                    delay(1.seconds)
+                    val current = _viewState.value
+                    if (!current.isHumanCreatorTakeoverActive) return@launch
+                    val next = (current.humanCreatorTakeoverRemainingSeconds - 1).coerceAtLeast(0)
+                    _viewState.update { it.copy(humanCreatorTakeoverRemainingSeconds = next) }
+                    if (next == 0) {
+                        // Local countdown expired. Don't wait for the server-side sweep —
+                        // proactively release so the UI flips off instantly AND the backend
+                        // writes the "left" system message before any other path can.
+                        releaseHumanCreatorTakeover()
+                        return@launch
+                    }
+                }
+            }
+    }
+
+    private fun stopCountdownTicker() {
+        takeoverCountdownJob?.cancel()
+        takeoverCountdownJob = null
+    }
+
+    override fun onCleared() {
+        stopTakeoverPolling()
+        stopCountdownTicker()
+        super.onCleared()
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
     private fun consumePurchaseInBackground(purchaseToken: String) {
         viewModelScope.launch {
             iapManager
@@ -1184,6 +1413,10 @@ class ConversationViewModel(
         private const val PREFETCH_DISTANCE = 5
         private const val MESSAGES_STOP_TIMEOUT_MS = 5_000L
         private const val FALLBACK_ACCESS_DURATION_MS = 24L * 60 * 60 * 1000
+        private val TAKEOVER_MESSAGES_POLL_INTERVAL = 3.seconds
+        // Status poll runs every Nth iteration of message poll: 3s × 2 ≈ 6s ≈ ~5s spec.
+        private const val TAKEOVER_STATUS_POLL_EVERY_N = 2
+        private const val TAKEOVER_POLL_PAGE_SIZE = 20
     }
 }
 
@@ -1215,6 +1448,12 @@ data class ConversationViewState(
     val totalHistoryMessageCount: Int = 0,
     val chatAccessExpiresAtMs: Long? = null,
     val isChatAccessLoading: Boolean = false,
+    val isChatAsHumanCreatorEnabled: Boolean = false,
+    val isHumanCreatorTakeoverActive: Boolean = false,
+    val isHumanCreatorTakeoverStarting: Boolean = false,
+    val isHumanCreatorTakeoverEnding: Boolean = false,
+    val isHumanCreatorMessageSending: Boolean = false,
+    val humanCreatorTakeoverRemainingSeconds: Int = 0,
 )
 
 sealed class ConversationMessageItem {

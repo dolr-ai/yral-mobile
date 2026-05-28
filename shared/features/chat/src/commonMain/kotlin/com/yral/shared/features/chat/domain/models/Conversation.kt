@@ -39,6 +39,7 @@ enum class ConversationMessageRole(
 ) {
     USER("user"),
     ASSISTANT("assistant"),
+    SYSTEM("system"),
     ;
 
     companion object {
@@ -46,6 +47,7 @@ enum class ConversationMessageRole(
             when (value.trim().lowercase()) {
                 USER.apiValue -> USER
                 ASSISTANT.apiValue -> ASSISTANT
+                SYSTEM.apiValue -> SYSTEM
                 else -> USER
             }
     }

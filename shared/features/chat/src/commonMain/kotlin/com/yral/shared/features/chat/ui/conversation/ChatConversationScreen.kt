@@ -139,6 +139,12 @@ fun ChatConversationScreen(
 
     LaunchedEffect(Unit) { viewModel.refreshHistory() }
 
+    LaunchedEffect(viewState.isBotAccount, viewState.conversationId) {
+        if (viewState.isBotAccount && viewState.conversationId != null) {
+            viewModel.refreshHumanCreatorTakeoverStatus()
+        }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.influencerSubscriptionToastFlow.collect { event ->
             when (event.status) {
@@ -459,6 +465,7 @@ fun ChatConversationScreen(
                             overlayItems = overlayItems,
                             historyPagingItems = historyPagingItems,
                             isBotAccount = viewState.isBotAccount,
+                            renderSystemBanners = viewState.isChatAsHumanCreatorEnabled,
                             onImageClick = { imageUrl ->
                                 activeImagePreview = ChatImagePreviewSource.Message(imageUrl)
                             },
@@ -503,24 +510,42 @@ fun ChatConversationScreen(
 
                         when (bottomAreaState) {
                             ConversationBottomAreaState.BotAccountPrompt -> {
-                                BotAccountConversationPrompt(
-                                    message = switchProfileMessage,
-                                    buttonText = switchProfileButtonText,
-                                    avatarUrl = viewState.influencer?.avatarUrl,
-                                    isSwitching = isSwitchingProfile,
-                                    onSwitchClick = {
-                                        if (isSwitchingProfile) return@BotAccountConversationPrompt
-                                        isSwitchingProfile = true
-                                        component.switchToMainProfile { switched ->
-                                            isSwitchingProfile = false
-                                            if (!switched) {
-                                                ToastManager.showError(
-                                                    type = ToastType.Small(message = switchProfileFailedMessage),
-                                                )
+                                if (viewState.isChatAsHumanCreatorEnabled) {
+                                    val creatorDisplayName =
+                                        viewState.influencer?.displayName
+                                            ?.takeIf { it.isNotBlank() }
+                                            ?: viewState.influencer?.name.orEmpty()
+                                    CreatorTakeoverBar(
+                                        isActive = viewState.isHumanCreatorTakeoverActive,
+                                        isStarting = viewState.isHumanCreatorTakeoverStarting,
+                                        isEnding = viewState.isHumanCreatorTakeoverEnding,
+                                        isMessageSending = viewState.isHumanCreatorMessageSending,
+                                        remainingSeconds = viewState.humanCreatorTakeoverRemainingSeconds,
+                                        creatorDisplayName = creatorDisplayName,
+                                        onToggleOn = { viewModel.startHumanCreatorTakeover() },
+                                        onToggleOff = { viewModel.releaseHumanCreatorTakeover() },
+                                        onSend = { text -> viewModel.sendAsHumanCreator(text) },
+                                    )
+                                } else {
+                                    BotAccountConversationPrompt(
+                                        message = switchProfileMessage,
+                                        buttonText = switchProfileButtonText,
+                                        avatarUrl = viewState.influencer?.avatarUrl,
+                                        isSwitching = isSwitchingProfile,
+                                        onSwitchClick = {
+                                            if (isSwitchingProfile) return@BotAccountConversationPrompt
+                                            isSwitchingProfile = true
+                                            component.switchToMainProfile { switched ->
+                                                isSwitchingProfile = false
+                                                if (!switched) {
+                                                    ToastManager.showError(
+                                                        type = ToastType.Small(message = switchProfileFailedMessage),
+                                                    )
+                                                }
                                             }
-                                        }
-                                    },
-                                )
+                                        },
+                                    )
+                                }
                             }
 
                             ConversationBottomAreaState.InfluencerSubscription -> {
