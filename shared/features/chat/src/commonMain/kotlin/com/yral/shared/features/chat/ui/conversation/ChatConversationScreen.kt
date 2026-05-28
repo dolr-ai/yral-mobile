@@ -189,6 +189,17 @@ fun ChatConversationScreen(
     val screenWidth = LocalWindowInfo.current.containerSize.width
     val density = LocalDensity.current
 
+    // When the user re-enters a conversation, snap the list back to the
+    // newest message (index 0 in reverseLayout). Without this, Compose's
+    // rememberLazyListState() retains the position from the previous visit,
+    // which during an active takeover can land deep in old content and
+    // visually hide the newest messages behind the input box.
+    LaunchedEffect(viewState.conversationId) {
+        if (viewState.conversationId != null) {
+            runCatching { listState.scrollToItem(0) }
+        }
+    }
+
     val imagePickerLauncher =
         rememberChatImagePicker(
             onImagePicked = { attachment -> activeImagePreview = ChatImagePreviewSource.Draft(attachment) },
