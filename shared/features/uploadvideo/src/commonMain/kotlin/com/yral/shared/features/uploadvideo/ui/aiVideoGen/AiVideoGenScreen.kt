@@ -317,16 +317,16 @@ private fun GenerationModeTabs(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         GenerationModeTab(
-            mode = AiVideoGenerationMode.TEXT_TO_VIDEO,
+            mode = AiVideoGenerationMode.IMAGE_TO_VIDEO,
             selectedMode = selectedMode,
-            text = stringResource(Res.string.text_to_video),
+            text = stringResource(Res.string.image_to_video),
             onModeSelected = onModeSelected,
             modifier = Modifier.weight(1f),
         )
         GenerationModeTab(
-            mode = AiVideoGenerationMode.IMAGE_TO_VIDEO,
+            mode = AiVideoGenerationMode.TEXT_TO_VIDEO,
             selectedMode = selectedMode,
-            text = stringResource(Res.string.image_to_video),
+            text = stringResource(Res.string.text_to_video),
             onModeSelected = onModeSelected,
             modifier = Modifier.weight(1f),
         )
