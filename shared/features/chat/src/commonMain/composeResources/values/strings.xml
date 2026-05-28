@@ -22,6 +22,7 @@
     <string name="photo_library">Photo Library</string>
     <string name="send">Send</string>
     <string name="switch_to_human_profile_to_chat">Switch to your human profile to chat with this influencer.</string>
+    <string name="ai_influencer_read_only_chat">Chats are read-only in AI influencer view mode</string>
     <string name="switch_profile">Switch Profile</string>
     <string name="switch_profile_failed">Unable to switch profile. Please try again.</string>
 
