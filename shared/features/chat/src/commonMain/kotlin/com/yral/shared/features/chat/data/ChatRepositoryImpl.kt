@@ -16,10 +16,13 @@ import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.domain.models.SendMessageResult
+import com.yral.shared.features.chat.domain.models.StreamEvent
 import com.yral.shared.features.chat.domain.models.totalUnreadConversationBadgeCount
+import kotlinx.coroutines.flow.Flow
 
 class ChatRepositoryImpl(
     private val dataSource: ChatDataSource,
+    private val streamingDataSource: ChatStreamingDataSource,
 ) : ChatRepository {
     override suspend fun getUnreadConversationCount(principal: String): Int {
         var offset = 0
@@ -140,6 +143,22 @@ class ChatRepositoryImpl(
             )
         return response.toDomain(conversationIdFallback = conversationId)
     }
+
+    override fun streamMessage(
+        conversationId: String,
+        draft: SendMessageDraft,
+    ): Flow<StreamEvent> =
+        streamingDataSource.streamMessage(
+            conversationId = conversationId,
+            request =
+                SendMessageRequestDto(
+                    content = draft.content,
+                    messageType = draft.messageType.apiValue,
+                    mediaUrls = null,
+                    audioUrl = null,
+                    audioDurationSeconds = null,
+                ),
+        )
 
     override suspend fun markConversationAsRead(conversationId: String) {
         dataSource.markConversationAsRead(conversationId)
