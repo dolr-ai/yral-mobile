@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
+import com.yral.shared.features.chat.domain.models.AssistantErrorPresentation
 import com.yral.shared.features.chat.domain.models.ConversationMessageRole
 import com.yral.shared.features.chat.viewmodel.ConversationMessageItem
 import com.yral.shared.features.chat.viewmodel.LocalMessageStatus
@@ -27,6 +28,8 @@ internal fun MessagesList(
     isBotAccount: Boolean = false,
     renderSystemBanners: Boolean = false,
     streamMarkdownLockedRemoteIds: Map<String, Boolean> = emptyMap(),
+    assistantError: AssistantErrorPresentation? = null,
+    onAssistantErrorRetry: () -> Unit = {},
     onImageClick: (imageUrl: String) -> Unit,
     onRetry: (localId: String) -> Unit,
 ) {
@@ -39,6 +42,21 @@ internal fun MessagesList(
         reverseLayout = true,
         contentPadding = PaddingValues(vertical = 8.dp),
     ) {
+        // Phase 6: the error bubble belongs in the assistant slot just below the
+        // user's most recent message. With `reverseLayout = true`, items at the
+        // start of this lambda render at the visual bottom — placing the error
+        // item BEFORE the overlay items gives it the bottom-most slot so it sits
+        // directly beneath the streaming Local that was just dropped on Failed.
+        if (assistantError != null) {
+            item(key = "assistant-error-${assistantError.error.rawCode}") {
+                AssistantErrorBubble(
+                    error = assistantError.error,
+                    onRetry = if (assistantError.retryDraft != null) onAssistantErrorRetry else null,
+                    modifier = Modifier.padding(vertical = MESSAGE_VERTICAL_PADDING_DP),
+                )
+            }
+        }
+
         items(
             items = overlayItems,
         ) { item ->

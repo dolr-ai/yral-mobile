@@ -17,6 +17,19 @@ data class AssistantError(
     val retryable: Boolean,
 )
 
+/**
+ * UI-facing pairing of an [AssistantError] with the draft that produced it.
+ * Held by the ViewModel so the retry affordance has the draft on hand
+ * without re-deriving it from the user's overlay state.
+ *
+ * `retryDraft` is null when retry isn't applicable (e.g. error happened on
+ * a session-resume re-render, not from a draft we still own).
+ */
+data class AssistantErrorPresentation(
+    val error: AssistantError,
+    val retryDraft: SendMessageDraft?,
+)
+
 enum class AssistantErrorCode {
     BLOCKED_CONTENT,
     TRANSIENT,

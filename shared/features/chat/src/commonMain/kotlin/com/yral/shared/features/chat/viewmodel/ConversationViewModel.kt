@@ -27,6 +27,7 @@ import com.yral.shared.features.chat.data.ConversationContentCache
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.ConversationMessagesPagingSource
 import com.yral.shared.features.chat.domain.EmptyMessagesPagingSource
+import com.yral.shared.features.chat.domain.models.AssistantErrorPresentation
 import com.yral.shared.features.chat.domain.models.ChatError
 import com.yral.shared.features.chat.domain.models.ChatMessage
 import com.yral.shared.features.chat.domain.models.ChatMessageType
@@ -221,6 +222,14 @@ class ConversationViewModel(
     private val _streamMarkdownLockedRemoteIds = MutableStateFlow<Map<String, Boolean>>(emptyMap())
     val streamMarkdownLockedRemoteIds: StateFlow<Map<String, Boolean>> =
         _streamMarkdownLockedRemoteIds.asStateFlow()
+
+    // Phase 6: the latest assistant-side error for the current conversation, paired
+    // with the draft that produced it so the AssistantErrorBubble's retry tap can
+    // re-run the stream without scraping state out of the overlay. Cleared on the
+    // first successful token of a retry, on a fresh send, and on conversation
+    // switch — at most one error visible at a time.
+    private val _assistantError = MutableStateFlow<AssistantErrorPresentation?>(null)
+    val assistantError: StateFlow<AssistantErrorPresentation?> = _assistantError.asStateFlow()
 
     private val systemOverlayMessagesFlow = MutableStateFlow<List<SentMessage>>(emptyList())
 
@@ -734,6 +743,9 @@ class ConversationViewModel(
                     }
                 }
             _overlay.value = OverlayState(sent = hydratedSent)
+            // Phase 6: errors are scoped to the conversation that produced them.
+            // Crossing the conversation boundary clears any in-flight error bubble.
+            _assistantError.value = null
         }
 
         // Merge incoming influencer with any existing data to preserve category from the wall
@@ -1146,6 +1158,11 @@ class ConversationViewModel(
     fun sendMessage(draft: SendMessageDraft) {
         val convId = conversationId ?: return
 
+        // Phase 6: a fresh send supersedes any error from the previous send.
+        // Clear before any new state lands so the user sees their new message
+        // and the streaming placeholder, not a stale error bubble.
+        _assistantError.value = null
+
         val now = Clock.System.now().toEpochMilliseconds()
         val localUserId = "local-user-$now"
         val localAssistantId = "local-assistant-$now"
@@ -1201,6 +1218,41 @@ class ConversationViewModel(
                 }
             }
         }
+    }
+
+    /**
+     * Phase 6: re-run the last failed stream using the cached retry draft.
+     * The user's preceding USER Local is still in `_overlay.pending` (the
+     * Failed handler only dropped the streaming placeholder), so we don't
+     * create a duplicate user bubble — we just append a fresh streaming
+     * placeholder and restart the SSE collect. The error bubble clears on
+     * the first token of the new stream (Phase 6 Token handler).
+     *
+     * No-ops when there is no retryable error queued, when the carry-over
+     * draft is absent, or when the active conversation id has changed.
+     */
+    @OptIn(ExperimentalTime::class)
+    fun retryFailedAssistantReply() {
+        val presentation = _assistantError.value ?: return
+        val draft = presentation.retryDraft ?: return
+        val convId = conversationId ?: return
+        val userLocalId =
+            _overlay.value.pending
+                .lastOrNull { it.role == ConversationMessageRole.USER }
+                ?.localId
+                ?: return
+
+        val now = Clock.System.now().toEpochMilliseconds()
+        val streamingPlaceholder = createStreamingAssistantPlaceholder(now)
+        _overlay.update { state ->
+            state.copy(pending = state.pending + streamingPlaceholder)
+        }
+        startStreamingAssistantReply(
+            conversationId = convId,
+            draft = draft,
+            streamingLocalId = streamingPlaceholder.localId,
+            userLocalId = userLocalId,
+        )
     }
 
     /**
@@ -1331,6 +1383,12 @@ class ConversationViewModel(
                         when (event) {
                             is StreamEvent.Token -> {
                                 Logger.i("SSE") { "token len=${event.text.length} text=${event.text}" }
+                                // Phase 6: first token of a retry attempt clears any stale error
+                                // bubble so the UI doesn't show "Try again" next to a stream that
+                                // is now succeeding.
+                                if (_assistantError.value != null) {
+                                    _assistantError.value = null
+                                }
                                 pendingTokenText.append(event.text)
                                 flushJob?.cancel()
                                 flushJob =
@@ -1411,14 +1469,20 @@ class ConversationViewModel(
                                         "message=${assistantError.message} " +
                                         "retryable=${assistantError.retryable} conv=$conversationId"
                                 }
-                                // Phase 6 wires the AssistantErrorBubble + retry affordance.
-                                // Phase 3 just drops the streaming placeholder so the user isn't
-                                // left looking at a stuck "" buffer.
                                 _overlay.update { state ->
                                     state.copy(
                                         pending = state.pending.filterNot { it.localId == streamingLocalId },
                                     )
                                 }
+                                // Phase 6: surface the error in the assistant slot. Retain the
+                                // draft alongside it so a retry tap restarts the stream without
+                                // having to re-derive the draft from the (still-present) USER
+                                // Local in overlay.
+                                _assistantError.value =
+                                    AssistantErrorPresentation(
+                                        error = assistantError,
+                                        retryDraft = if (assistantError.retryable) draft else null,
+                                    )
                             }
                         }
                     }

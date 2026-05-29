@@ -183,6 +183,7 @@ fun ChatConversationScreen(
     val overlayItems by viewModel.overlay.collectAsState()
     val historyPagingItems = viewModel.history.collectAsLazyPagingItems()
     val streamMarkdownLockedRemoteIds by viewModel.streamMarkdownLockedRemoteIds.collectAsState()
+    val assistantError by viewModel.assistantError.collectAsState()
 
     // Phase 5b: push the LazyPagingItems snapshot into the VM whenever it settles.
     // The VM combines this with `_overlay.sent` and debounces 500ms before writing
@@ -493,6 +494,8 @@ fun ChatConversationScreen(
                             isBotAccount = viewState.isBotAccount,
                             renderSystemBanners = viewState.isChatAsHumanCreatorEnabled,
                             streamMarkdownLockedRemoteIds = streamMarkdownLockedRemoteIds,
+                            assistantError = assistantError,
+                            onAssistantErrorRetry = { viewModel.retryFailedAssistantReply() },
                             onImageClick = { imageUrl ->
                                 activeImagePreview = ChatImagePreviewSource.Message(imageUrl)
                             },
