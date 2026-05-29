@@ -189,6 +189,7 @@ fun ChatConversationScreen(
     val historyPagingItems = viewModel.history.collectAsLazyPagingItems()
     val streamMarkdownLockedRemoteIds by viewModel.streamMarkdownLockedRemoteIds.collectAsState()
     val assistantError by viewModel.assistantError.collectAsState()
+    val isReplyInProgress by viewModel.isReplyInProgress.collectAsState()
 
     // Phase 5b: push the LazyPagingItems snapshot into the VM whenever it settles.
     // The VM combines this with `_overlay.sent` and debounces 500ms before writing
@@ -262,8 +263,16 @@ fun ChatConversationScreen(
         lineHeightPx = messageLineHeightPx,
     )
 
-    // Check if there's a waiting assistant message in overlay
-    val hasWaitingAssistant by derivedStateOf { overlayItems.any { it.isWaitingAssistant() } }
+    // Check if there's a waiting assistant message in overlay.
+    // Phase 7-final: also returns true while a streaming SSE reply or a legacy
+    // sendMessageUseCase is in flight. ChatInputArea uses this flag to disable
+    // the send + media buttons during AI replies (matches production chat-ai).
+    // Streaming Locals have streamingBuffer != null and `isWaitingAssistant()`
+    // returns false for them — they wouldn't trip this check on their own —
+    // so the VM-side isReplyInProgress flow covers the SSE path.
+    val hasWaitingAssistant by derivedStateOf {
+        overlayItems.any { it.isWaitingAssistant() } || isReplyInProgress
+    }
 
     val overlaySentCount by derivedStateOf { overlayItems.count { it is ConversationMessageItem.Remote } }
     val totalMessageCount by derivedStateOf { viewState.totalHistoryMessageCount + overlaySentCount }

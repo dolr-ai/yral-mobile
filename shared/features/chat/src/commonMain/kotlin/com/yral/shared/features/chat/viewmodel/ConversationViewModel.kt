@@ -235,6 +235,19 @@ class ConversationViewModel(
     private val _assistantError = MutableStateFlow<AssistantErrorPresentation?>(null)
     val assistantError: StateFlow<AssistantErrorPresentation?> = _assistantError.asStateFlow()
 
+    // Phase 7-final: send button is disabled while an AI reply is in flight,
+    // matching production chat-ai behavior (so users don't experience a UX
+    // change at cutover). Covers both the SSE path (active stream) and the
+    // legacy non-streaming path (sendMessageUseCase in flight). Implemented as
+    // a reference count rather than a Boolean so a Done that immediately
+    // drains a queued send keeps the count > 0 across the transition and the
+    // button doesn't flicker enabled-then-disabled.
+    private val _activeReplyCount = MutableStateFlow(0)
+    val isReplyInProgress: StateFlow<Boolean> =
+        _activeReplyCount
+            .map { it > 0 }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     // Phase 7: single-stream invariant. At most one SSE collect is in flight per
     // conversation. New sends that arrive while a stream is active are buffered
     // in [pendingStreamingQueue] and drained when the active stream terminates
@@ -1271,16 +1284,24 @@ class ConversationViewModel(
         } else {
             val assistantPlaceholder = createAssistantPlaceholder(now)
             _overlay.update { it.copy(pending = it.pending + userLocal + assistantPlaceholder) }
+            // Phase 7-final: synchronous increment so the send button greys on
+            // the SAME frame the legacy send is dispatched, matching production
+            // chat-ai behavior.
+            _activeReplyCount.update { it + 1 }
             viewModelScope.launch {
-                sendMessageUseCase(
-                    SendMessageUseCase.Params(
-                        conversationId = convId,
-                        draft = draft,
-                    ),
-                ).onSuccess { result ->
-                    handleSendSuccess(result, localUserId, localAssistantId, now)
-                }.onFailure { error ->
-                    handleSendFailure(error, localUserId, localAssistantId)
+                try {
+                    sendMessageUseCase(
+                        SendMessageUseCase.Params(
+                            conversationId = convId,
+                            draft = draft,
+                        ),
+                    ).onSuccess { result ->
+                        handleSendSuccess(result, localUserId, localAssistantId, now)
+                    }.onFailure { error ->
+                        handleSendFailure(error, localUserId, localAssistantId)
+                    }
+                } finally {
+                    _activeReplyCount.update { it - 1 }
                 }
             }
         }
@@ -1426,8 +1447,12 @@ class ConversationViewModel(
         draft: SendMessageDraft,
         streamingLocalId: String,
         userLocalId: String,
-    ): Job =
-        viewModelScope.launch {
+    ): Job {
+        // Synchronous increment so the send button greys on the SAME frame the
+        // stream is scheduled — no enabled-tap window between sendMessage's
+        // return and the launch body actually starting to execute.
+        _activeReplyCount.update { it + 1 }
+        return viewModelScope.launch {
             // Phase 7 idle watchdog. `lastActivityMs` is updated on every event
             // received from the SSE collect; the watchdog wakes after a calibrated
             // wait and trips if the gap since the last event has reached
@@ -1647,10 +1672,17 @@ class ConversationViewModel(
                     activeStreamJob = null
                 }
                 // Drain regardless of how the stream ended. If a queued send is
-                // waiting, it starts now; otherwise no-op.
+                // waiting, it starts now; otherwise no-op. drainStreamingQueue
+                // may itself call startStreamingAssistantReply which increments
+                // _activeReplyCount before this stream's decrement runs — that
+                // ordering keeps the count > 0 across the transition so the
+                // send button doesn't flicker enabled between back-to-back
+                // queued replies.
                 drainStreamingQueue()
+                _activeReplyCount.update { it - 1 }
             }
         }
+    }
 
     private fun handleSseIdleTimeoutAsTransient(
         streamingLocalId: String,
