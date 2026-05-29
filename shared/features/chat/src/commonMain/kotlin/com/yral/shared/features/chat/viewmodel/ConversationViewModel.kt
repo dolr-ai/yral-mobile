@@ -23,6 +23,7 @@ import com.yral.shared.features.chat.analytics.ChatTelemetry
 import com.yral.shared.features.chat.attachments.ChatAttachment
 import com.yral.shared.features.chat.attachments.FilePathChatAttachment
 import com.yral.shared.features.chat.domain.ChatErrorMapper
+import com.yral.shared.features.chat.data.ConversationContentCache
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.ConversationMessagesPagingSource
 import com.yral.shared.features.chat.domain.EmptyMessagesPagingSource
@@ -34,6 +35,7 @@ import com.yral.shared.features.chat.domain.models.ConversationMessageRole
 import com.yral.shared.features.chat.domain.models.GrantError
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.domain.models.SendMessageResult
+import com.yral.shared.features.chat.domain.models.StreamEvent
 import com.yral.shared.features.chat.domain.usecases.CheckChatAccessUseCase
 import com.yral.shared.features.chat.domain.usecases.CreateConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.DeleteConversationUseCase
@@ -45,6 +47,7 @@ import com.yral.shared.features.chat.domain.usecases.ReleaseHumanCreatorTakeover
 import com.yral.shared.features.chat.domain.usecases.SendHumanCreatorMessageUseCase
 import com.yral.shared.features.chat.domain.usecases.SendMessageUseCase
 import com.yral.shared.features.chat.domain.usecases.StartHumanCreatorTakeoverUseCase
+import com.yral.shared.features.chat.ui.conversation.shouldRenderAsMarkdown
 import com.yral.shared.features.subscriptions.domain.FetchProductsUseCase
 import com.yral.shared.iap.IAPManager
 import com.yral.shared.iap.core.IAPError
@@ -62,9 +65,12 @@ import com.yral.shared.libs.sharing.ShareService
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import com.yral.shared.rust.service.utils.propicFromPrincipal
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -119,6 +125,7 @@ class ConversationViewModel(
     private val releaseHumanCreatorTakeoverUseCase: ReleaseHumanCreatorTakeoverUseCase,
     private val sendHumanCreatorMessageUseCase: SendHumanCreatorMessageUseCase,
     private val getHumanCreatorTakeoverStatusUseCase: GetHumanCreatorTakeoverStatusUseCase,
+    private val conversationContentCache: ConversationContentCache,
 ) : ViewModel() {
     /**
      * Message ordering:
@@ -133,6 +140,7 @@ class ConversationViewModel(
                 subscriptionMandatoryThreshold = flagManager.get(ChatFeatureFlags.Chat.SubscriptionMandatoryThreshold),
                 isSubscriptionEnabled = flagManager.isEnabled(AppFeatureFlags.Common.EnableSubscription),
                 isChatAsHumanCreatorEnabled = flagManager.get(ChatFeatureFlags.Chat.ChatAsHumanCreatorEnabled),
+                isSseStreamingEnabled = flagManager.get(ChatFeatureFlags.Chat.SseStreamingEnabled),
             ),
         )
     val viewState: StateFlow<ConversationViewState> = _viewState.asStateFlow()
@@ -195,6 +203,7 @@ class ConversationViewModel(
             pagingData.map { message ->
                 val currentIds = loadedMessageIds.value
                 if (message.id !in currentIds) {
+                    Logger.i("SSE") { "paging-loadedIds += ${message.id} (size=${currentIds.size + 1})" }
                     loadedMessageIds.update { it + message.id }
                 }
                 ConversationMessageItem.Remote(message) as ConversationMessageItem
@@ -202,6 +211,17 @@ class ConversationViewModel(
         }
 
     private val _overlay = MutableStateFlow(OverlayState())
+
+    // Phase 5b: server message id → Markdown-locked Boolean. Populated on SSE `done`
+    // from the streaming Local's useMarkdownLocked. The screen consumes this to
+    // override the per-Remote `shouldRenderAsMarkdown` decision, so the Markdown/Text
+    // path stays identical across the Local→Remote swap. ViewModel-scoped only; on
+    // re-entry the map is empty and the default decision kicks in (which is
+    // identical for stable content).
+    private val _streamMarkdownLockedRemoteIds = MutableStateFlow<Map<String, Boolean>>(emptyMap())
+    val streamMarkdownLockedRemoteIds: StateFlow<Map<String, Boolean>> =
+        _streamMarkdownLockedRemoteIds.asStateFlow()
+
     private val systemOverlayMessagesFlow = MutableStateFlow<List<SentMessage>>(emptyList())
 
     val overlay: StateFlow<List<ConversationMessageItem>> =
@@ -225,6 +245,12 @@ class ConversationViewModel(
                 emptyList(),
             )
 
+    // Phase 5b: paging snapshot pushed in from the screen via `recordHistorySnapshot`.
+    // Combined with `_overlay.sent` to compose the cache write payload. Kept as
+    // ChatMessage list (not ConversationMessageItem) because the cache stores raw
+    // domain messages.
+    private val lastHistorySnapshot = MutableStateFlow<List<ChatMessage>>(emptyList())
+
     init {
         viewModelScope.launch {
             sessionManager
@@ -236,6 +262,56 @@ class ConversationViewModel(
                     _viewState.update { it.copy(isSocialSignedIn = isSocialSignIn) }
                 }
         }
+        // Phase 5b: debounced cache writer. Snapshots (conversationId, overlay.sent + history)
+        // and writes to the ConversationContentCache whenever the visible message set
+        // settles. The 500ms debounce coalesces token-by-token overlay churn into one
+        // cache write per stable state.
+        viewModelScope.launch {
+            combine(
+                _viewState.map { it.conversationId.orEmpty() }.distinctUntilChanged(),
+                _overlay.map { it.sent.map { sent -> sent.message } },
+                lastHistorySnapshot,
+            ) { convId, sentMsgs, historyMsgs ->
+                CacheSnapshot(convId, sentMsgs, historyMsgs)
+            }
+                .debounce(CACHE_WRITE_DEBOUNCE_MS)
+                .collect { snap ->
+                    if (snap.conversationId.isBlank()) return@collect
+                    val merged = mergeForCache(snap.sentMessages, snap.historyMessages)
+                    if (merged.isNotEmpty()) {
+                        conversationContentCache.write(snap.conversationId, merged)
+                    }
+                }
+        }
+    }
+
+    /** Phase 5b: screen pushes the LazyPagingItems snapshot here so the cache writer can include it. */
+    fun recordHistorySnapshot(messages: List<ChatMessage>) {
+        lastHistorySnapshot.value = messages
+    }
+
+    private data class CacheSnapshot(
+        val conversationId: String,
+        val sentMessages: List<ChatMessage>,
+        val historyMessages: List<ChatMessage>,
+    )
+
+    /**
+     * Dedup `sent` + `history` by message id (sent wins because it's the most recently
+     * confirmed source). Return ordered by `createdAt` ascending so the cache stores a
+     * chronological list — the reader passes them through `parseTimestampToEpochMs`
+     * to re-derive the SentMessage insertion order on hydration.
+     */
+    @OptIn(ExperimentalTime::class)
+    private fun mergeForCache(
+        sent: List<ChatMessage>,
+        history: List<ChatMessage>,
+    ): List<ChatMessage> {
+        if (sent.isEmpty() && history.isEmpty()) return emptyList()
+        val byId = LinkedHashMap<String, ChatMessage>(sent.size + history.size)
+        history.forEach { byId[it.id] = it }
+        sent.forEach { byId[it.id] = it }
+        return byId.values.sortedBy { parseTimestampToEpochMs(it.createdAt) ?: 0L }
     }
 
     @OptIn(ExperimentalTime::class)
@@ -645,7 +721,19 @@ class ConversationViewModel(
         val previousConversationId = _viewState.value.conversationId
 
         if (previousConversationId != id) {
-            _overlay.value = OverlayState()
+            // Phase 5b: stale-while-revalidate. Hydrate `_overlay.sent` from the
+            // in-memory cache BEFORE the paging refresh fires, so the LazyColumn
+            // shows the prior chat instantly instead of blanking for ~500ms while
+            // page 0 fetches. Once paging completes, `loadedMessageIds` dedup
+            // silently swaps the cached overlay copies for the paged ones.
+            val cached = conversationContentCache.read(id)
+            val hydratedSent =
+                cached.mapNotNull { msg ->
+                    parseTimestampToEpochMs(msg.createdAt)?.let { ts ->
+                        SentMessage(insertedAtMs = ts, message = msg)
+                    }
+                }
+            _overlay.value = OverlayState(sent = hydratedSent)
         }
 
         // Merge incoming influencer with any existing data to preserve category from the wall
@@ -823,6 +911,7 @@ class ConversationViewModel(
                 subscriptionMandatoryThreshold = current.subscriptionMandatoryThreshold,
                 isSubscriptionEnabled = current.isSubscriptionEnabled,
                 isChatAsHumanCreatorEnabled = current.isChatAsHumanCreatorEnabled,
+                isSseStreamingEnabled = current.isSseStreamingEnabled,
                 isInfluencerSubscriptionPurchasedAndVerified = false,
                 isInfluencerSubscriptionAvailableToPurchase = current.isInfluencerSubscriptionAvailableToPurchase,
                 isInfluencerSubscriptionPurchaseInProgress = false,
@@ -961,6 +1050,19 @@ class ConversationViewModel(
             draftForRetry = null,
         )
 
+    private fun createStreamingAssistantPlaceholder(timestampMs: Long): LocalMessage =
+        LocalMessage(
+            localId = "local-streaming-assistant-$timestampMs",
+            role = ConversationMessageRole.ASSISTANT,
+            content = null,
+            messageType = ChatMessageType.TEXT,
+            createdAtMs = timestampMs + 1,
+            status = LocalMessageStatus.SENDING,
+            isPlaceholder = false,
+            draftForRetry = null,
+            streamingBuffer = "",
+        )
+
     private fun buildSentMessages(
         userMessage: ChatMessage,
         assistantMessage: ChatMessage?,
@@ -1062,9 +1164,6 @@ class ConversationViewModel(
                 isPlaceholder = false,
                 draftForRetry = draft,
             )
-        val assistantPlaceholder = createAssistantPlaceholder(now)
-
-        _overlay.update { it.copy(pending = it.pending + userLocal + assistantPlaceholder) }
 
         _viewState.value.influencer?.let { influencer ->
             chatTelemetry.userMessageSent(
@@ -1077,16 +1176,257 @@ class ConversationViewModel(
             )
         }
 
+        if (shouldStream(draft)) {
+            val streamingPlaceholder = createStreamingAssistantPlaceholder(now)
+            _overlay.update { it.copy(pending = it.pending + userLocal + streamingPlaceholder) }
+            startStreamingAssistantReply(
+                conversationId = convId,
+                draft = draft,
+                streamingLocalId = streamingPlaceholder.localId,
+                userLocalId = localUserId,
+            )
+        } else {
+            val assistantPlaceholder = createAssistantPlaceholder(now)
+            _overlay.update { it.copy(pending = it.pending + userLocal + assistantPlaceholder) }
+            viewModelScope.launch {
+                sendMessageUseCase(
+                    SendMessageUseCase.Params(
+                        conversationId = convId,
+                        draft = draft,
+                    ),
+                ).onSuccess { result ->
+                    handleSendSuccess(result, localUserId, localAssistantId, now)
+                }.onFailure { error ->
+                    handleSendFailure(error, localUserId, localAssistantId)
+                }
+            }
+        }
+    }
+
+    /**
+     * Phase 2.7 streaming routing decision. Conservative carve-outs:
+     *  - Feature flag must be ON.
+     *  - Text-only drafts (no media or audio attachments).
+     *  - No active Chat-as-Human takeover (the backend's chat.py early-exit
+     *    suppresses the AI reply during takeover).
+     *  Phase 9 will add the consecutive-failure circuit breaker and the
+     *  is_nsfw conversation carve-out once that field is exposed on the
+     *  conversation DTO.
+     */
+    private fun shouldStream(draft: SendMessageDraft): Boolean {
+        val s = _viewState.value
+        return s.isSseStreamingEnabled &&
+            draft.messageType == ChatMessageType.TEXT &&
+            draft.mediaAttachments.isEmpty() &&
+            draft.audioAttachment == null &&
+            !s.isHumanCreatorTakeoverActive
+    }
+
+    /** See the call site comment in startStreamingAssistantReply.Done for the rationale. */
+    @OptIn(ExperimentalTime::class)
+    private fun reconcileUserMessageAfterStream(
+        conversationId: String,
+        userLocalId: String,
+    ) {
         viewModelScope.launch {
-            sendMessageUseCase(
-                SendMessageUseCase.Params(
-                    conversationId = convId,
-                    draft = draft,
-                ),
-            ).onSuccess { result ->
-                handleSendSuccess(result, localUserId, localAssistantId, now)
+            runSuspendCatching {
+                chatRepository.getConversationMessagesPage(
+                    conversationId = conversationId,
+                    limit = USER_RECONCILE_FETCH_LIMIT,
+                    offset = 0,
+                )
+            }.onSuccess { result ->
+                val userMessage =
+                    result.messages.firstOrNull { it.role == ConversationMessageRole.USER }
+                        ?: run {
+                            Logger.w("SSE") { "reconcile: no USER message in latest page; dropping local-only" }
+                            // Even if the server fetch missed it (weird race), drop the optimistic
+                            // Local so it doesn't accumulate. Paging will hydrate the real one
+                            // on the next refresh / re-entry.
+                            _overlay.update { state ->
+                                state.copy(pending = state.pending.filterNot { it.localId == userLocalId })
+                            }
+                            return@onSuccess
+                        }
+                val userInsertedAtMs = parseTimestampToEpochMs(userMessage.createdAt)
+                Logger.i("SSE") {
+                    "reconcile: claiming USER Local $userLocalId → server id=${userMessage.id} " +
+                        "insertedAtMs=$userInsertedAtMs"
+                }
+                _overlay.update { state ->
+                    val newPending = state.pending.filterNot { it.localId == userLocalId }
+                    val newSent =
+                        if (userInsertedAtMs != null) {
+                            state.sent + SentMessage(insertedAtMs = userInsertedAtMs, message = userMessage)
+                        } else {
+                            state.sent
+                        }
+                    state.copy(pending = newPending, sent = newSent)
+                }
             }.onFailure { error ->
-                handleSendFailure(error, localUserId, localAssistantId)
+                Logger.w(ConversationViewModel::class.simpleName!!, error) {
+                    "reconcile fetch failed conv=$conversationId; leaving USER Local in place for next session"
+                }
+            }
+        }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private fun startStreamingAssistantReply(
+        conversationId: String,
+        draft: SendMessageDraft,
+        streamingLocalId: String,
+        userLocalId: String,
+    ) {
+        viewModelScope.launch {
+            runSuspendCatching {
+                // Phase 5c: token coalescing. Tokens are appended to `pendingTokenText`
+                // and applied to `_overlay` once per ~250ms quiet window (or immediately
+                // on Done/Failed). This reduces the streaming Local's `streamingBuffer`
+                // updates to 1-3 per reply, which is the verified mitigation for the
+                // Markdown library's per-batch re-parse cost (Phase 5b probe confirmed
+                // re-parse is the root cause of per-batch flicker).
+                //
+                // Invariants:
+                //   - Single-flusher: a previous flushJob is cancelled before scheduling
+                //     a new one; Done/Failed cancelAndJoin to guarantee no in-flight
+                //     flush races the Local→Remote swap.
+                //   - applyPendingTokens is the ONLY writer that grows the streaming
+                //     buffer — the path lock is computed here on the first non-empty
+                //     batch and pinned for the rest of the stream.
+                val pendingTokenText = StringBuilder()
+                var flushJob: Job? = null
+
+                suspend fun applyPendingTokens() {
+                    val text = pendingTokenText.toString()
+                    pendingTokenText.clear()
+                    if (text.isEmpty()) return
+                    _overlay.update { state ->
+                        state.copy(
+                            pending =
+                                state.pending.map { msg ->
+                                    if (msg.localId == streamingLocalId) {
+                                        val newBuffer = (msg.streamingBuffer.orEmpty()) + text
+                                        val lock =
+                                            msg.useMarkdownLocked ?: if (newBuffer.isNotEmpty()) {
+                                                newBuffer.shouldRenderAsMarkdown()
+                                            } else {
+                                                null
+                                            }
+                                        msg.copy(
+                                            streamingBuffer = newBuffer,
+                                            useMarkdownLocked = lock,
+                                        )
+                                    } else {
+                                        msg
+                                    }
+                                },
+                        )
+                    }
+                }
+
+                chatRepository
+                    .streamMessage(conversationId = conversationId, draft = draft)
+                    .collect { event ->
+                        when (event) {
+                            is StreamEvent.Token -> {
+                                Logger.i("SSE") { "token len=${event.text.length} text=${event.text}" }
+                                pendingTokenText.append(event.text)
+                                flushJob?.cancel()
+                                flushJob =
+                                    launch {
+                                        delay(TOKEN_COALESCE_WINDOW_MS)
+                                        applyPendingTokens()
+                                    }
+                            }
+
+                            is StreamEvent.Done -> {
+                                flushJob?.cancelAndJoin()
+                                applyPendingTokens()
+                                Logger.i("SSE") {
+                                    "done id=${event.assistantMessage.id} blocked=${event.blocked} " +
+                                        "createdAt=${event.assistantMessage.createdAt}"
+                                }
+                                val msg = event.assistantMessage
+                                val insertedAtMs = parseTimestampToEpochMs(msg.createdAt)
+                                Logger.i("SSE") { "done parsedInsertedAtMs=$insertedAtMs (null means parse failed)" }
+                                // Phase 5b: persist the streaming Local's path lock onto the server
+                                // message id so the Remote replacement renders identically.
+                                // Default to `false` (Text) if the stream never produced a non-empty
+                                // chunk to evaluate against — e.g. error-only streams.
+                                val capturedLock =
+                                    _overlay.value.pending
+                                        .firstOrNull { it.localId == streamingLocalId }
+                                        ?.useMarkdownLocked
+                                        ?: false
+                                _streamMarkdownLockedRemoteIds.update { it + (msg.id to capturedLock) }
+                                Logger.i("SSE") { "done markdownLock for id=${msg.id} = $capturedLock" }
+                                _overlay.update { state ->
+                                    val newPending = state.pending.filterNot { it.localId == streamingLocalId }
+                                    val newSent =
+                                        if (insertedAtMs != null) {
+                                            state.sent + SentMessage(insertedAtMs = insertedAtMs, message = msg)
+                                        } else {
+                                            state.sent
+                                        }
+                                    Logger.i("SSE") {
+                                        "done overlay update: pending ${state.pending.size}→${newPending.size} " +
+                                            "sent ${state.sent.size}→${newSent.size} " +
+                                            "loadedIds size=${loadedMessageIds.value.size} " +
+                                            "msg.id in loadedIds=${msg.id in loadedMessageIds.value}"
+                                    }
+                                    state.copy(pending = newPending, sent = newSent)
+                                }
+                                // NOTE: do NOT pre-add msg.id to loadedMessageIds here. The combine
+                                // block's `filteredSent = state.sent.filterNot { id in loadedIds }`
+                                // would immediately hide the Remote we just inserted, since loadedIds
+                                // is the "already paged in" set. The natural paging cycle adds the
+                                // id once paging hydrates the message; that's when dedup kicks in.
+
+                                // Reconcile the optimistic USER Local: the SSE `done` event only
+                                // carries the assistant message (per docs/SSE-PROTOCOL.md), so the
+                                // user's optimistic Local has no server-truth twin to swap with.
+                                // Without this fetch, the USER Local accumulates in `_overlay.pending`
+                                // across every send within a session — observed live in the Phase 3
+                                // diagnostic log (pending 2→1, then 3→2, then 6→5, etc.).
+                                // We fetch the latest 2 messages, find the user-role one, swap our
+                                // pending Local for a server-truth Remote, and let loadedMessageIds
+                                // dedup handle the overlay→paging handoff naturally.
+                                reconcileUserMessageAfterStream(
+                                    conversationId = conversationId,
+                                    userLocalId = userLocalId,
+                                )
+                            }
+
+                            is StreamEvent.Failed -> {
+                                // Phase 5c: cancel any pending coalesce flush before dropping
+                                // the streaming Local so we don't race with applyPendingTokens
+                                // re-adding text after we've removed the placeholder.
+                                flushJob?.cancelAndJoin()
+                                pendingTokenText.clear()
+                                Logger.w(ConversationViewModel::class.simpleName!!) {
+                                    "Streaming failed: code=${event.code} message=${event.message} " +
+                                        "retryable=${event.retryable} conv=$conversationId"
+                                }
+                                // Phase 6 wires the AssistantErrorBubble + retry affordance.
+                                // Phase 3 just drops the streaming placeholder so the user isn't
+                                // left looking at a stuck "" buffer.
+                                _overlay.update { state ->
+                                    state.copy(
+                                        pending = state.pending.filterNot { it.localId == streamingLocalId },
+                                    )
+                                }
+                            }
+                        }
+                    }
+            }.onFailure { error ->
+                Logger.w(ConversationViewModel::class.simpleName!!, error) {
+                    "Streaming connection failed conv=$conversationId"
+                }
+                // Phase 1/3 known-issue: no fallback to legacy endpoint yet. Phase 9 carve-outs.
+                _overlay.update { state ->
+                    state.copy(pending = state.pending.filterNot { it.localId == streamingLocalId })
+                }
             }
         }
     }
@@ -1425,6 +1765,9 @@ class ConversationViewModel(
         private const val PREFETCH_DISTANCE = 5
         private const val MESSAGES_STOP_TIMEOUT_MS = 5_000L
         private const val FALLBACK_ACCESS_DURATION_MS = 24L * 60 * 60 * 1000
+        private const val USER_RECONCILE_FETCH_LIMIT = 2
+        private const val CACHE_WRITE_DEBOUNCE_MS = 500L
+        private const val TOKEN_COALESCE_WINDOW_MS = 250L
         private val TAKEOVER_MESSAGES_POLL_INTERVAL = 3.seconds
 
         // Status poll runs every Nth iteration of message poll: 3s × 2 ≈ 6s ≈ ~5s spec.
@@ -1462,6 +1805,7 @@ data class ConversationViewState(
     val chatAccessExpiresAtMs: Long? = null,
     val isChatAccessLoading: Boolean = false,
     val isChatAsHumanCreatorEnabled: Boolean = false,
+    val isSseStreamingEnabled: Boolean = false,
     val isHumanCreatorTakeoverActive: Boolean = false,
     val isHumanCreatorTakeoverStarting: Boolean = false,
     val isHumanCreatorTakeoverEnding: Boolean = false,
@@ -1498,4 +1842,15 @@ data class LocalMessage(
     val isPlaceholder: Boolean,
     val errorMessage: String? = null,
     val draftForRetry: SendMessageDraft?,
+    // Phase 2.7 streaming. When non-null, the bubble renders this growing content
+    // and suppresses the waiting wave indicator. Replaced by the server-truth Remote
+    // message on `done` per docs/SSE-PROTOCOL.md.
+    val streamingBuffer: String? = null,
+    // Phase 5b path lock. Computed once on the first non-empty streaming chunk based
+    // on `shouldRenderAsMarkdown(firstChunk)` (ASCII check). null = not yet decided,
+    // true = Markdown-rendered throughout, false = Text-rendered throughout. The lock
+    // is persisted into a VM-scoped map keyed by the server `assistant_message.id` at
+    // `done` so the Remote replacement renders with the same path — no Text↔Markdown
+    // subtree swap.
+    val useMarkdownLocked: Boolean? = null,
 )

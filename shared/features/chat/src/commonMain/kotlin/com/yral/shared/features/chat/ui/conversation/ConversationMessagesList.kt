@@ -26,6 +26,7 @@ internal fun MessagesList(
     historyPagingItems: LazyPagingItems<ConversationMessageItem>,
     isBotAccount: Boolean = false,
     renderSystemBanners: Boolean = false,
+    streamMarkdownLockedRemoteIds: Map<String, Boolean> = emptyMap(),
     onImageClick: (imageUrl: String) -> Unit,
     onRetry: (localId: String) -> Unit,
 ) {
@@ -45,6 +46,7 @@ internal fun MessagesList(
             MessageRow(
                 item = item,
                 isBotAccount = isBotAccount,
+                streamMarkdownLockedRemoteIds = streamMarkdownLockedRemoteIds,
                 onImageClick = onImageClick,
                 onRetry = onRetry,
             )
@@ -59,6 +61,7 @@ internal fun MessagesList(
             MessageRow(
                 item = item,
                 isBotAccount = isBotAccount,
+                streamMarkdownLockedRemoteIds = streamMarkdownLockedRemoteIds,
                 onImageClick = onImageClick,
                 onRetry = onRetry,
             )
@@ -72,10 +75,12 @@ private fun ConversationMessageItem.isSystemMessage(): Boolean =
         is ConversationMessageItem.Local -> message.role == ConversationMessageRole.SYSTEM
     }
 
+
 @Composable
 private fun MessageRow(
     item: ConversationMessageItem,
     isBotAccount: Boolean,
+    streamMarkdownLockedRemoteIds: Map<String, Boolean>,
     onImageClick: (imageUrl: String) -> Unit,
     onRetry: (localId: String) -> Unit,
 ) {
@@ -98,38 +103,78 @@ private fun MessageRow(
     // ASSISTANT messages come from the human customer (shown on right).
     val isUser = if (isBotAccount) !roleIsUser else roleIsUser
 
+    // Extract render params from either Remote or Local OUTSIDE the Box so the
+    // MessageContent call below has a single slot-table entry. The Local→Remote
+    // transition on SSE `done` (streaming placeholder swapped for the server
+    // assistant message) lands at the same screen position; without a unified
+    // slot, Compose tears down the Local subtree and creates a fresh Remote one
+    // every time, producing a one-frame flicker.
+    //
+    // Cursor note: `renderContent` here is cursor-free (just the streamingBuffer
+    // or the message content). Inside RegularBubble the cursor "▌" IS appended to
+    // form the string passed to the renderer — so the renderer DOES see the
+    // cursor on every token. What stays stable across streaming → done is the
+    // cursor-free `content` value that the path decision (`shouldRenderAsMarkdown`)
+    // and the path-lock (`markdownLockedOverride`) are computed against.
+    val renderContent: String?
+    val renderMediaUrls: List<String>
+    val renderIsFailed: Boolean
+    val renderIsWaiting: Boolean
+    val renderIsStreaming: Boolean
+    val renderMarkdownLockedOverride: Boolean?
+    val renderOnRetry: (() -> Unit)?
+    when (item) {
+        is ConversationMessageItem.Remote -> {
+            renderContent = item.message.content
+            renderMediaUrls = item.message.mediaUrls
+            renderIsFailed = false
+            renderIsWaiting = false
+            renderIsStreaming = false
+            // Phase 5b: look up the persisted lock for this server message id. Present
+            // only for messages that arrived via streaming this VM session; absent for
+            // history-paged messages, which fall back to the default Markdown decision.
+            renderMarkdownLockedOverride = streamMarkdownLockedRemoteIds[item.message.id]
+            renderOnRetry = null
+        }
+
+        is ConversationMessageItem.Local -> {
+            val streamingBuffer = item.message.streamingBuffer
+            renderContent =
+                when {
+                    streamingBuffer != null -> streamingBuffer
+                    item.message.isPlaceholder -> "…"
+                    else -> item.message.content
+                }
+            renderMediaUrls = item.message.mediaUrls
+            renderIsFailed = item.message.status == LocalMessageStatus.FAILED
+            renderIsWaiting = item.isWaitingAssistant()
+            renderIsStreaming = streamingBuffer != null
+            // Phase 5b: streaming Local carries its own per-stream path lock.
+            renderMarkdownLockedOverride = item.message.useMarkdownLocked
+            renderOnRetry =
+                if (item.message.status == LocalMessageStatus.FAILED && !item.message.isPlaceholder) {
+                    { onRetry(item.message.localId) }
+                } else {
+                    null
+                }
+        }
+    }
+
     Box(
         modifier = Modifier.fillMaxWidth().padding(vertical = MESSAGE_VERTICAL_PADDING_DP),
         contentAlignment = if (isUser) Alignment.TopEnd else Alignment.TopStart,
     ) {
-        when (item) {
-            is ConversationMessageItem.Remote -> {
-                MessageContent(
-                    isUser = isUser,
-                    content = item.message.content,
-                    mediaUrls = item.message.mediaUrls,
-                    maxWidth = maxWidth,
-                    onImageClick = onImageClick,
-                )
-            }
-
-            is ConversationMessageItem.Local -> {
-                MessageContent(
-                    isUser = isUser,
-                    content = if (item.message.isPlaceholder) "…" else item.message.content,
-                    mediaUrls = item.message.mediaUrls,
-                    maxWidth = maxWidth,
-                    onImageClick = onImageClick,
-                    isFailed = item.message.status == LocalMessageStatus.FAILED,
-                    isWaiting = item.isWaitingAssistant(),
-                    onRetry =
-                        if (item.message.status == LocalMessageStatus.FAILED && !item.message.isPlaceholder) {
-                            { onRetry(item.message.localId) }
-                        } else {
-                            null
-                        },
-                )
-            }
-        }
+        MessageContent(
+            isUser = isUser,
+            content = renderContent,
+            mediaUrls = renderMediaUrls,
+            maxWidth = maxWidth,
+            onImageClick = onImageClick,
+            isFailed = renderIsFailed,
+            isWaiting = renderIsWaiting,
+            isStreaming = renderIsStreaming,
+            markdownLockedOverride = renderMarkdownLockedOverride,
+            onRetry = renderOnRetry,
+        )
     }
 }

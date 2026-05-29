@@ -63,6 +63,8 @@ internal fun MessageContent(
     onImageClick: ((String) -> Unit)? = null,
     isFailed: Boolean = false,
     isWaiting: Boolean = false,
+    isStreaming: Boolean = false,
+    markdownLockedOverride: Boolean? = null,
     onRetry: (() -> Unit)? = null,
 ) {
     MessageBubble(
@@ -73,6 +75,8 @@ internal fun MessageContent(
         onImageClick = onImageClick,
         isFailed = isFailed,
         isWaiting = isWaiting,
+        isStreaming = isStreaming,
+        markdownLockedOverride = markdownLockedOverride,
         onRetry = onRetry,
     )
 }
@@ -86,6 +90,8 @@ internal fun MessageBubble(
     onImageClick: ((String) -> Unit)?,
     isFailed: Boolean,
     isWaiting: Boolean,
+    isStreaming: Boolean,
+    markdownLockedOverride: Boolean?,
     onRetry: (() -> Unit)?,
 ) {
     val baseModifier = Modifier.widthIn(max = maxWidth)
@@ -108,6 +114,8 @@ internal fun MessageBubble(
                 onImageClick = messageImageClickHandler,
                 maxWidth = maxWidth,
                 isFailed = isFailed,
+                isStreaming = isStreaming,
+                markdownLockedOverride = markdownLockedOverride,
             )
         }
     }
@@ -130,35 +138,63 @@ private fun RegularBubble(
     onImageClick: ((String) -> Unit)?,
     maxWidth: Dp,
     isFailed: Boolean,
+    isStreaming: Boolean = false,
+    markdownLockedOverride: Boolean? = null,
 ) {
-    val onlyMedia = content.isNullOrBlank()
+    // Phase 5c rendering contract (do not regress):
+    //   1. Path lock — `markdownLockedOverride` pins Markdown vs Text for the full
+    //      lifetime of a streamed message. Streaming uses the locked path and the
+    //      post-`done` Remote uses the same path. No mid-stream or done-time swap.
+    //   2. Cursor isolation — the streaming cursor "▌" is rendered as a SEPARATE
+    //      composable sibling below, NOT appended to the content string. The string
+    //      passed to Markdown(...) is the cursor-free buffer so per-batch re-parses
+    //      grow only by the new token text, not by a moving trailing character.
+    //   3. Coalescing — the VM batches tokens that arrive within ~250ms before
+    //      pushing them to the streaming buffer, so this composable's content
+    //      changes ~1-3 times per reply instead of once per network token.
+    val displayContent = content.orEmpty()
+    val onlyMedia = content.isNullOrBlank() && !isStreaming
     val appTypography = LocalAppTopography.current
     val textColor = YralColors.NeutralTextPrimary
 
     val markdownColors = markDownColors(textColor)
     val markdownTypography = markdownTypography(appTypography)
 
+    val useMarkdown = when {
+        markdownLockedOverride != null -> markdownLockedOverride
+        !content.isNullOrBlank() && content.shouldRenderAsMarkdown() -> true
+        else -> false
+    }
+
     MessageInBubble(
         isUser = isUser,
         isFailed = isFailed,
         isOnlyMedia = onlyMedia,
     ) {
-        if (!content.isNullOrBlank()) {
-            if (content.shouldRenderAsMarkdown()) {
+        if (displayContent.isNotBlank()) {
+            if (useMarkdown) {
                 Markdown(
-                    content = content,
+                    content = displayContent,
                     colors = markdownColors,
                     typography = markdownTypography,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
                 )
             } else {
                 Text(
-                    text = content,
+                    text = displayContent,
                     style = appTypography.baseRegular,
                     color = textColor,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
                 )
             }
+        }
+        if (isStreaming) {
+            Text(
+                text = STREAMING_CURSOR,
+                style = appTypography.baseRegular,
+                color = textColor,
+                modifier = Modifier.padding(horizontal = 8.dp),
+            )
         }
         MessageImages(
             mediaUrls = mediaUrls,
@@ -167,6 +203,8 @@ private fun RegularBubble(
         )
     }
 }
+
+private const val STREAMING_CURSOR = "▌"
 
 @Composable
 private fun markdownTypography(appTypography: AppTopography): DefaultMarkdownTypography =

@@ -8,6 +8,8 @@ import com.yral.shared.features.chat.data.ChatAccessBillingRemoteDataSource
 import com.yral.shared.features.chat.data.ChatDataSource
 import com.yral.shared.features.chat.data.ChatRemoteDataSource
 import com.yral.shared.features.chat.data.ChatRepositoryImpl
+import com.yral.shared.features.chat.data.ChatStreamingDataSource
+import com.yral.shared.features.chat.data.ConversationContentCache
 import com.yral.shared.features.chat.domain.ChatErrorMapper
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.usecases.CheckChatAccessUseCase
@@ -45,6 +47,14 @@ val chatModule =
                 influencerFeedBaseUrl = get(INFLUENCER_FEED_SERVER_BASE_URL),
             )
         }
+        factory {
+            ChatStreamingDataSource(
+                httpClient = get(),
+                json = get(),
+                preferences = get(),
+                chatBaseUrl = get(CHAT_SERVER_BASE_URL),
+            )
+        }
         factory<ChatAccessBillingDataSource> {
             ChatAccessBillingRemoteDataSource(
                 httpClient = get(),
@@ -66,6 +76,10 @@ val chatModule =
         factoryOf(::ChatTelemetry)
         singleOf(::ChatErrorMapper)
         singleOf(::ChatUnreadRefreshSignal)
+        // Explicit `single { }` (not `singleOf(::…)`) because the constructor has
+        // primitive defaults (Int). `singleOf` would try to resolve Int from the
+        // Koin graph and crash with NoDefinitionFoundException.
+        single { ConversationContentCache() }
         viewModelOf(::ChatWallViewModel)
         viewModel {
             ConversationViewModel(
@@ -92,6 +106,7 @@ val chatModule =
                 releaseHumanCreatorTakeoverUseCase = get(),
                 sendHumanCreatorMessageUseCase = get(),
                 getHumanCreatorTakeoverStatusUseCase = get(),
+                conversationContentCache = get(),
             )
         }
         viewModelOf(::InboxViewModel)

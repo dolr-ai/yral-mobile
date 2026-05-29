@@ -182,6 +182,18 @@ fun ChatConversationScreen(
 
     val overlayItems by viewModel.overlay.collectAsState()
     val historyPagingItems = viewModel.history.collectAsLazyPagingItems()
+    val streamMarkdownLockedRemoteIds by viewModel.streamMarkdownLockedRemoteIds.collectAsState()
+
+    // Phase 5b: push the LazyPagingItems snapshot into the VM whenever it settles.
+    // The VM combines this with `_overlay.sent` and debounces 500ms before writing
+    // to ConversationContentCache. On re-entry the cache hydrates `_overlay.sent`
+    // instantly so the user never sees a blank chat window during paging refetch.
+    LaunchedEffect(historyPagingItems.itemSnapshotList) {
+        val snapshot =
+            historyPagingItems.itemSnapshotList.items
+                .mapNotNull { (it as? ConversationMessageItem.Remote)?.message }
+        viewModel.recordHistorySnapshot(snapshot)
+    }
 
     var input by remember { mutableStateOf("") }
     var activeImagePreview by remember { mutableStateOf<ChatImagePreviewSource?>(null) }
@@ -480,6 +492,7 @@ fun ChatConversationScreen(
                             historyPagingItems = historyPagingItems,
                             isBotAccount = viewState.isBotAccount,
                             renderSystemBanners = viewState.isChatAsHumanCreatorEnabled,
+                            streamMarkdownLockedRemoteIds = streamMarkdownLockedRemoteIds,
                             onImageClick = { imageUrl ->
                                 activeImagePreview = ChatImagePreviewSource.Message(imageUrl)
                             },
