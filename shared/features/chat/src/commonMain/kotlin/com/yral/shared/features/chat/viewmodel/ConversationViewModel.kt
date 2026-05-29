@@ -27,6 +27,8 @@ import com.yral.shared.features.chat.data.ConversationContentCache
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.ConversationMessagesPagingSource
 import com.yral.shared.features.chat.domain.EmptyMessagesPagingSource
+import com.yral.shared.features.chat.domain.models.AssistantError
+import com.yral.shared.features.chat.domain.models.AssistantErrorCode
 import com.yral.shared.features.chat.domain.models.AssistantErrorPresentation
 import com.yral.shared.features.chat.domain.models.ChatError
 import com.yral.shared.features.chat.domain.models.ChatMessage
@@ -68,9 +70,11 @@ import com.yral.shared.rust.service.utils.propicFromPrincipal
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -230,6 +234,21 @@ class ConversationViewModel(
     // switch — at most one error visible at a time.
     private val _assistantError = MutableStateFlow<AssistantErrorPresentation?>(null)
     val assistantError: StateFlow<AssistantErrorPresentation?> = _assistantError.asStateFlow()
+
+    // Phase 7: single-stream invariant. At most one SSE collect is in flight per
+    // conversation. New sends that arrive while a stream is active are buffered
+    // in [pendingStreamingQueue] and drained when the active stream terminates
+    // (Done, Failed, idle timeout, or cancellation). The user's USER Local is
+    // still added to overlay immediately so they see their message instantly
+    // — only the assistant placeholder + SSE collect waits its turn.
+    private var activeStreamJob: Job? = null
+    private val pendingStreamingQueue: ArrayDeque<QueuedStreamingSend> = ArrayDeque()
+
+    private data class QueuedStreamingSend(
+        val draft: SendMessageDraft,
+        val userLocalId: String,
+        val timestampMs: Long,
+    )
 
     private val systemOverlayMessagesFlow = MutableStateFlow<List<SentMessage>>(emptyList())
 
@@ -938,6 +957,14 @@ class ConversationViewModel(
         historyRefreshTrigger.value = 0
         stopTakeoverPolling()
         stopCountdownTicker()
+        // Phase 7: tear down any in-flight stream and drop queued sends. The
+        // stream's finally block sees the cancellation as structured-concurrency,
+        // NOT the idle-timeout sentinel, so it won't synthesize a TRANSIENT error
+        // on top of a conversation switch.
+        activeStreamJob?.cancel()
+        activeStreamJob = null
+        pendingStreamingQueue.clear()
+        _assistantError.value = null
     }
 
     private fun createConversation(influencerId: String) {
@@ -1194,14 +1221,18 @@ class ConversationViewModel(
         }
 
         if (shouldStream(draft)) {
-            val streamingPlaceholder = createStreamingAssistantPlaceholder(now)
-            _overlay.update { it.copy(pending = it.pending + userLocal + streamingPlaceholder) }
-            startStreamingAssistantReply(
-                conversationId = convId,
-                draft = draft,
-                streamingLocalId = streamingPlaceholder.localId,
-                userLocalId = localUserId,
+            // Phase 7: add the USER Local immediately so the user sees their message
+            // even when a prior stream is still in flight. The assistant placeholder
+            // + SSE collect is enqueued and drained when the active stream completes.
+            _overlay.update { it.copy(pending = it.pending + userLocal) }
+            pendingStreamingQueue.addLast(
+                QueuedStreamingSend(
+                    draft = draft,
+                    userLocalId = localUserId,
+                    timestampMs = now,
+                ),
             )
+            drainStreamingQueue()
         } else {
             val assistantPlaceholder = createAssistantPlaceholder(now)
             _overlay.update { it.copy(pending = it.pending + userLocal + assistantPlaceholder) }
@@ -1235,24 +1266,25 @@ class ConversationViewModel(
     fun retryFailedAssistantReply() {
         val presentation = _assistantError.value ?: return
         val draft = presentation.retryDraft ?: return
-        val convId = conversationId ?: return
+        conversationId ?: return
         val userLocalId =
             _overlay.value.pending
                 .lastOrNull { it.role == ConversationMessageRole.USER }
                 ?.localId
                 ?: return
 
+        // Phase 7: route the retry through the same single-stream queue. If
+        // somehow another stream is mid-flight (e.g. user typed quickly), this
+        // waits its turn instead of racing.
         val now = Clock.System.now().toEpochMilliseconds()
-        val streamingPlaceholder = createStreamingAssistantPlaceholder(now)
-        _overlay.update { state ->
-            state.copy(pending = state.pending + streamingPlaceholder)
-        }
-        startStreamingAssistantReply(
-            conversationId = convId,
-            draft = draft,
-            streamingLocalId = streamingPlaceholder.localId,
-            userLocalId = userLocalId,
+        pendingStreamingQueue.addLast(
+            QueuedStreamingSend(
+                draft = draft,
+                userLocalId = userLocalId,
+                timestampMs = now,
+            ),
         )
+        drainStreamingQueue()
     }
 
     /**
@@ -1272,6 +1304,35 @@ class ConversationViewModel(
             draft.mediaAttachments.isEmpty() &&
             draft.audioAttachment == null &&
             !s.isHumanCreatorTakeoverActive
+    }
+
+    /**
+     * Phase 7: process the next queued streaming send if no stream is currently
+     * in flight. No-ops while [activeStreamJob] is alive — the active stream's
+     * `finally` block calls this again on completion so the queue drains FIFO.
+     *
+     * Drops queued items whose conversation is no longer the active one (e.g.
+     * user navigated away) — partial replies are intentionally not promoted
+     * across conversations.
+     */
+    private fun drainStreamingQueue() {
+        if (activeStreamJob?.isActive == true) return
+        val next = pendingStreamingQueue.removeFirstOrNull() ?: return
+        val convId = conversationId
+        if (convId == null) {
+            // Conversation switched while items were queued. Discard the rest.
+            pendingStreamingQueue.clear()
+            return
+        }
+        val streamingPlaceholder = createStreamingAssistantPlaceholder(next.timestampMs)
+        _overlay.update { it.copy(pending = it.pending + streamingPlaceholder) }
+        activeStreamJob =
+            startStreamingAssistantReply(
+                conversationId = convId,
+                draft = next.draft,
+                streamingLocalId = streamingPlaceholder.localId,
+                userLocalId = next.userLocalId,
+            )
     }
 
     /** See the call site comment in startStreamingAssistantReply.Done for the rationale. */
@@ -1329,10 +1390,33 @@ class ConversationViewModel(
         draft: SendMessageDraft,
         streamingLocalId: String,
         userLocalId: String,
-    ) {
+    ): Job =
         viewModelScope.launch {
-            runSuspendCatching {
-                // Phase 5c: token coalescing. Tokens are appended to `pendingTokenText`
+            // Phase 7 idle watchdog. `lastActivityMs` is updated on every event
+            // received from the SSE collect; the watchdog wakes after a calibrated
+            // wait and trips if the gap since the last event has reached
+            // SSE_IDLE_TIMEOUT_MS. Tripping sets `idleTimedOut = true` and cancels
+            // this launch via the SSE_IDLE_CANCEL_MESSAGE sentinel, so the finally
+            // block can distinguish watchdog cancellation from navigation/reset.
+            var lastActivityMs = Clock.System.now().toEpochMilliseconds()
+            var idleTimedOut = false
+            val watchdogJob =
+                launch {
+                    while (isActive) {
+                        val sinceLastEventMs = Clock.System.now().toEpochMilliseconds() - lastActivityMs
+                        val waitMs = (SSE_IDLE_TIMEOUT_MS - sinceLastEventMs).coerceAtLeast(500L)
+                        delay(waitMs)
+                        if (Clock.System.now().toEpochMilliseconds() - lastActivityMs >= SSE_IDLE_TIMEOUT_MS) {
+                            idleTimedOut = true
+                            this@launch.cancel(SSE_IDLE_CANCEL_MESSAGE)
+                            return@launch
+                        }
+                    }
+                }
+
+            try {
+                runSuspendCatching {
+                    // Phase 5c: token coalescing. Tokens are appended to `pendingTokenText`
                 // and applied to `_overlay` once per ~250ms quiet window (or immediately
                 // on Done/Failed). This reduces the streaming Local's `streamingBuffer`
                 // updates to 1-3 per reply, which is the verified mitigation for the
@@ -1380,6 +1464,10 @@ class ConversationViewModel(
                 chatRepository
                     .streamMessage(conversationId = conversationId, draft = draft)
                     .collect { event ->
+                        // Phase 7: any event resets the idle watchdog. Done/Failed
+                        // events still keep this updated so the watchdog doesn't
+                        // race the terminal handler.
+                        lastActivityMs = Clock.System.now().toEpochMilliseconds()
                         when (event) {
                             is StreamEvent.Token -> {
                                 Logger.i("SSE") { "token len=${event.text.length} text=${event.text}" }
@@ -1495,7 +1583,50 @@ class ConversationViewModel(
                     state.copy(pending = state.pending.filterNot { it.localId == streamingLocalId })
                 }
             }
+            } finally {
+                watchdogJob.cancel()
+                if (idleTimedOut && _assistantError.value == null) {
+                    // Phase 7: synthesize a TRANSIENT AssistantError so the user gets
+                    // the same retryable UI as a real backend error event. Only fires
+                    // when no error was already set by the Failed handler.
+                    handleSseIdleTimeoutAsTransient(
+                        streamingLocalId = streamingLocalId,
+                        draft = draft,
+                        conversationId = conversationId,
+                    )
+                }
+                if (activeStreamJob === coroutineContext[Job]) {
+                    activeStreamJob = null
+                }
+                // Drain regardless of how the stream ended. If a queued send is
+                // waiting, it starts now; otherwise no-op.
+                drainStreamingQueue()
+            }
         }
+
+    private fun handleSseIdleTimeoutAsTransient(
+        streamingLocalId: String,
+        draft: SendMessageDraft,
+        conversationId: String,
+    ) {
+        Logger.w(ConversationViewModel::class.simpleName!!) {
+            "SSE stream idle for ${SSE_IDLE_TIMEOUT_MS}ms — synthesizing TRANSIENT " +
+                "conv=$conversationId"
+        }
+        _overlay.update { state ->
+            state.copy(pending = state.pending.filterNot { it.localId == streamingLocalId })
+        }
+        _assistantError.value =
+            AssistantErrorPresentation(
+                error =
+                    AssistantError(
+                        code = AssistantErrorCode.TRANSIENT,
+                        rawCode = "TRANSIENT",
+                        message = "Connection timed out. Try again.",
+                        retryable = true,
+                    ),
+                retryDraft = draft,
+            )
     }
 
     @OptIn(ExperimentalTime::class)
@@ -1835,6 +1966,16 @@ class ConversationViewModel(
         private const val USER_RECONCILE_FETCH_LIMIT = 2
         private const val CACHE_WRITE_DEBOUNCE_MS = 500L
         private const val TOKEN_COALESCE_WINDOW_MS = 250L
+        // Phase 7 idle watchdog. 30s of no token/done/error events on a live SSE
+        // collect → treat as TRANSIENT failure (per SSE-IMPLEMENTATION-PLAN §2.3:
+        // "if the stream closes without `done` or `error`, treat as `TRANSIENT`").
+        private const val SSE_IDLE_TIMEOUT_MS = 30_000L
+        // Sentinel cancellation message — the parent launch in
+        // startStreamingAssistantReply distinguishes "watchdog tripped" from
+        // structured-concurrency cancellation (navigation, resetState) by reading
+        // this off the CancellationException, so navigation-away does NOT raise
+        // a spurious error bubble.
+        private const val SSE_IDLE_CANCEL_MESSAGE = "SSE idle timeout"
         private val TAKEOVER_MESSAGES_POLL_INTERVAL = 3.seconds
 
         // Status poll runs every Nth iteration of message poll: 3s × 2 ≈ 6s ≈ ~5s spec.
