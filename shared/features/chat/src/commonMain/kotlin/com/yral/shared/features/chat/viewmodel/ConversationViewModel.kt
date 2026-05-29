@@ -1232,18 +1232,42 @@ class ConversationViewModel(
         }
 
         if (shouldStream(draft)) {
-            // Phase 7: add the USER Local immediately so the user sees their message
-            // even when a prior stream is still in flight. The assistant placeholder
-            // + SSE collect is enqueued and drained when the active stream completes.
-            _overlay.update { it.copy(pending = it.pending + userLocal) }
-            pendingStreamingQueue.addLast(
-                QueuedStreamingSend(
-                    draft = draft,
-                    userLocalId = localUserId,
-                    timestampMs = now,
-                ),
-            )
-            drainStreamingQueue()
+            // Phase 7 (revised): when there is NO active stream we add the user
+            // Local AND the streaming placeholder in a single _overlay.update so
+            // Compose never composes an intermediate state where only the user
+            // bubble exists. That intermediate state was producing a one-frame
+            // "big pink box" — the LazyColumn measure pass briefly let the
+            // unconstrained user bubble take its max width before settling to
+            // content-shaped width on the next pass (Soma repro, sporadic).
+            //
+            // When a stream IS in flight we still enqueue and let
+            // drainStreamingQueue add the placeholder later — the user's bubble
+            // appears immediately, and the assistant placeholder lands when the
+            // prior stream terminates. That sustained "user bubble visible
+            // without streaming below it" state is a queued send, not a
+            // measure-pass flash, so it doesn't reproduce the regression.
+            if (activeStreamJob?.isActive == true) {
+                _overlay.update { it.copy(pending = it.pending + userLocal) }
+                pendingStreamingQueue.addLast(
+                    QueuedStreamingSend(
+                        draft = draft,
+                        userLocalId = localUserId,
+                        timestampMs = now,
+                    ),
+                )
+            } else {
+                val streamingPlaceholder = createStreamingAssistantPlaceholder(now)
+                _overlay.update {
+                    it.copy(pending = it.pending + userLocal + streamingPlaceholder)
+                }
+                activeStreamJob =
+                    startStreamingAssistantReply(
+                        conversationId = convId,
+                        draft = draft,
+                        streamingLocalId = streamingPlaceholder.localId,
+                        userLocalId = localUserId,
+                    )
+            }
         } else {
             val assistantPlaceholder = createAssistantPlaceholder(now)
             _overlay.update { it.copy(pending = it.pending + userLocal + assistantPlaceholder) }
