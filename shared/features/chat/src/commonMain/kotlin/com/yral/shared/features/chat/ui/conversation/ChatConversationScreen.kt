@@ -138,8 +138,13 @@ fun ChatConversationScreen(
         }
     }
 
-    LaunchedEffect(Unit) { viewModel.refreshHistory() }
-
+    // The screen-side LaunchedEffect(Unit) { viewModel.refreshHistory() } used
+    // to live here. It was redundant — the VM-side pagedHistory rebuild on
+    // conversationId change (ConversationViewModel.kt: pagedHistory's combine
+    // on conversationId) is the canonical refresh trigger and fires once on
+    // setConversationId. Both triggers firing was producing the "entire chat
+    // flickered 2 times" repro on Soma re-entry, where the bigger history
+    // (~30 items) made the double swap visible.
     LaunchedEffect(viewState.isBotAccount, viewState.conversationId) {
         if (viewState.isBotAccount && viewState.conversationId != null) {
             viewModel.refreshHumanCreatorTakeoverStatus()
