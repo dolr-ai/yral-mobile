@@ -1404,9 +1404,12 @@ class ConversationViewModel(
                                 // re-adding text after we've removed the placeholder.
                                 flushJob?.cancelAndJoin()
                                 pendingTokenText.clear()
+                                val assistantError = event.error
                                 Logger.w(ConversationViewModel::class.simpleName!!) {
-                                    "Streaming failed: code=${event.code} message=${event.message} " +
-                                        "retryable=${event.retryable} conv=$conversationId"
+                                    "Streaming failed: code=${assistantError.code} " +
+                                        "rawCode=${assistantError.rawCode} " +
+                                        "message=${assistantError.message} " +
+                                        "retryable=${assistantError.retryable} conv=$conversationId"
                                 }
                                 // Phase 6 wires the AssistantErrorBubble + retry affordance.
                                 // Phase 3 just drops the streaming placeholder so the user isn't

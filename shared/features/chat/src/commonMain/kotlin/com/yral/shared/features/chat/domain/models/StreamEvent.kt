@@ -11,11 +11,10 @@ sealed class StreamEvent {
         val blocked: Boolean,
     ) : StreamEvent()
 
-    // Phase 3 leaves this minimal. Phase 6 wires the inline AssistantErrorBubble
-    // off this same type so the streaming and non-streaming paths share rendering.
+    // Phase 4 makes this typed. Phase 6 wires the inline AssistantErrorBubble
+    // off this same [AssistantError] so the streaming and non-streaming paths
+    // share rendering.
     data class Failed(
-        val code: String,
-        val message: String,
-        val retryable: Boolean,
+        val error: AssistantError,
     ) : StreamEvent()
 }

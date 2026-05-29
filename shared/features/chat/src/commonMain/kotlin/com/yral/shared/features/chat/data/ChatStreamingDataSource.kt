@@ -2,6 +2,7 @@ package com.yral.shared.features.chat.data
 
 import co.touchlab.kermit.Logger
 import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.features.chat.data.models.AssistantErrorDto
 import com.yral.shared.features.chat.data.models.SendMessageRequestDto
 import com.yral.shared.features.chat.data.models.StreamDonePayloadDto
 import com.yral.shared.features.chat.data.models.StreamTokenPayloadDto
@@ -92,17 +93,8 @@ class ChatStreamingDataSource(
                         }
 
                         EVENT_ERROR -> {
-                            // Phase 6 will replace this with a typed AssistantErrorDto decode.
-                            // For Phase 3 we keep parsing minimal — just surface code/message/retryable
-                            // so the routing layer can reason about retries.
-                            val payload = json.decodeFromString(LegacyErrorPayloadDto.serializer(), data)
-                            emit(
-                                StreamEvent.Failed(
-                                    code = payload.code,
-                                    message = payload.message,
-                                    retryable = payload.retryable,
-                                ),
-                            )
+                            val payload = json.decodeFromString(AssistantErrorDto.serializer(), data)
+                            emit(StreamEvent.Failed(error = payload.toDomain()))
                         }
 
                         else -> {
@@ -112,13 +104,6 @@ class ChatStreamingDataSource(
                 }
             }
         }
-
-    @kotlinx.serialization.Serializable
-    private data class LegacyErrorPayloadDto(
-        val code: String,
-        val message: String,
-        val retryable: Boolean,
-    )
 
     private companion object {
         private val logger = Logger.withTag("ChatStreamingDataSource")
