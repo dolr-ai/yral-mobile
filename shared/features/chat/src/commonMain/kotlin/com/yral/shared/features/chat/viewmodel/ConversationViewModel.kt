@@ -244,6 +244,15 @@ class ConversationViewModel(
     private var activeStreamJob: Job? = null
     private val pendingStreamingQueue: ArrayDeque<QueuedStreamingSend> = ArrayDeque()
 
+    // Phase 9 circuit breaker. Incremented on each terminal stream failure
+    // (Failed event, idle timeout, or onFailure of the SSE collect itself).
+    // Reset to 0 on Done. When the counter reaches CIRCUIT_BREAKER_THRESHOLD,
+    // `shouldStream` returns false for the rest of the session so subsequent
+    // sends silently take the non-streaming legacy path. There is no UI
+    // exposure of this — it's a defense-in-depth fallback for sustained
+    // backend SSE flakiness during the rollout.
+    private var consecutiveStreamFailures: Int = 0
+
     private data class QueuedStreamingSend(
         val draft: SendMessageDraft,
         val userLocalId: String,
@@ -965,6 +974,8 @@ class ConversationViewModel(
         activeStreamJob = null
         pendingStreamingQueue.clear()
         _assistantError.value = null
+        // Phase 9: each conversation gets a fresh circuit-breaker budget.
+        consecutiveStreamFailures = 0
     }
 
     private fun createConversation(influencerId: String) {
@@ -1303,7 +1314,8 @@ class ConversationViewModel(
             draft.messageType == ChatMessageType.TEXT &&
             draft.mediaAttachments.isEmpty() &&
             draft.audioAttachment == null &&
-            !s.isHumanCreatorTakeoverActive
+            !s.isHumanCreatorTakeoverActive &&
+            consecutiveStreamFailures < STREAM_FAILURE_CIRCUIT_BREAKER
     }
 
     /**
@@ -1489,6 +1501,9 @@ class ConversationViewModel(
                             is StreamEvent.Done -> {
                                 flushJob?.cancelAndJoin()
                                 applyPendingTokens()
+                                // Phase 9: a successful Done clears the circuit-breaker. The
+                                // session can keep using SSE for subsequent sends.
+                                consecutiveStreamFailures = 0
                                 Logger.i("SSE") {
                                     "done id=${event.assistantMessage.id} blocked=${event.blocked} " +
                                         "createdAt=${event.assistantMessage.createdAt}"
@@ -1550,6 +1565,9 @@ class ConversationViewModel(
                                 // re-adding text after we've removed the placeholder.
                                 flushJob?.cancelAndJoin()
                                 pendingTokenText.clear()
+                                // Phase 9: a backend-emitted Failed event counts toward the
+                                // circuit breaker, same as a connection-level failure.
+                                consecutiveStreamFailures += 1
                                 val assistantError = event.error
                                 Logger.w(ConversationViewModel::class.simpleName!!) {
                                     "Streaming failed: code=${assistantError.code} " +
@@ -1578,7 +1596,13 @@ class ConversationViewModel(
                 Logger.w(ConversationViewModel::class.simpleName!!, error) {
                     "Streaming connection failed conv=$conversationId"
                 }
-                // Phase 1/3 known-issue: no fallback to legacy endpoint yet. Phase 9 carve-outs.
+                // Phase 9: a connection-level failure (e.g. backend 404 because the
+                // streaming endpoint isn't deployed yet, transport-level reset)
+                // counts toward the circuit breaker so we silently fall back to the
+                // non-streaming legacy endpoint after STREAM_FAILURE_CIRCUIT_BREAKER
+                // consecutive failures. No user-visible error here — the next send
+                // routes via legacySend.
+                consecutiveStreamFailures += 1
                 _overlay.update { state ->
                     state.copy(pending = state.pending.filterNot { it.localId == streamingLocalId })
                 }
@@ -1613,6 +1637,9 @@ class ConversationViewModel(
             "SSE stream idle for ${SSE_IDLE_TIMEOUT_MS}ms — synthesizing TRANSIENT " +
                 "conv=$conversationId"
         }
+        // Phase 9: an idle timeout is functionally a connection failure for the
+        // circuit-breaker accounting.
+        consecutiveStreamFailures += 1
         _overlay.update { state ->
             state.copy(pending = state.pending.filterNot { it.localId == streamingLocalId })
         }
@@ -1976,6 +2003,11 @@ class ConversationViewModel(
         // this off the CancellationException, so navigation-away does NOT raise
         // a spurious error bubble.
         private const val SSE_IDLE_CANCEL_MESSAGE = "SSE idle timeout"
+        // Phase 9 circuit breaker threshold. Three consecutive SSE failures
+        // (Failed event / idle timeout / connection error) silently force the
+        // rest of the session onto the non-streaming legacy endpoint. Resets to
+        // 0 on any successful Done.
+        private const val STREAM_FAILURE_CIRCUIT_BREAKER = 3
         private val TAKEOVER_MESSAGES_POLL_INTERVAL = 3.seconds
 
         // Status poll runs every Nth iteration of message poll: 3s × 2 ≈ 6s ≈ ~5s spec.
