@@ -214,34 +214,6 @@ fun ChatConversationScreen(
         }
     }
 
-    // Phase 8: streaming-aware sticky-bottom. As tokens grow the streaming Local's
-    // buffer, the LazyColumn re-lays out; with reverseLayout=true a user already
-    // at the bottom stays anchored to the latest content. The explicit
-    // scrollToItem(0) is a safety net for the edge case where a fresh paging
-    // refresh shifts the item indices mid-stream.
-    //
-    // No "↓ new message" pill in this commit — when the user scrolls up away
-    // from the bottom we intentionally do NOT auto-scroll (matches existing
-    // assistant-message auto-scroll semantics, no surprise jumps).
-    val streamingBufferLength by remember(overlayItems) {
-        derivedStateOf {
-            overlayItems
-                .asSequence()
-                .filterIsInstance<ConversationMessageItem.Local>()
-                .mapNotNull { it.message.streamingBuffer?.length }
-                .firstOrNull()
-                ?: 0
-        }
-    }
-    val isNearBottom by remember {
-        derivedStateOf { listState.firstVisibleItemIndex <= 1 }
-    }
-    LaunchedEffect(streamingBufferLength) {
-        if (streamingBufferLength > 0 && isNearBottom) {
-            runCatching { listState.scrollToItem(0) }
-        }
-    }
-
     val imagePickerLauncher =
         rememberChatImagePicker(
             onImagePicked = { attachment -> activeImagePreview = ChatImagePreviewSource.Draft(attachment) },
