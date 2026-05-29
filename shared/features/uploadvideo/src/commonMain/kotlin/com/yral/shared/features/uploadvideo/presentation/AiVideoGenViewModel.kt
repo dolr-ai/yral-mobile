@@ -522,7 +522,7 @@ class AiVideoGenViewModel internal constructor(
         val totalCredits: Int? = null,
         val freeCreditsWindow: Int? = null,
         val prompt: String = "",
-        val generationMode: AiVideoGenerationMode = AiVideoGenerationMode.TEXT_TO_VIDEO,
+        val generationMode: AiVideoGenerationMode = AiVideoGenerationMode.IMAGE_TO_VIDEO,
         val selectedImageBytes: ByteArray? = null,
         val selectedImageMimeType: String? = null,
         val uiState: UiState<String> = UiState.Initial,
