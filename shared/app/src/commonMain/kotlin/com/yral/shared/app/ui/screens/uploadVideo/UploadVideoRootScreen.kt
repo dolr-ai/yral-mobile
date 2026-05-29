@@ -9,7 +9,6 @@ import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.slide
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.yral.shared.features.uploadvideo.nav.UploadVideoRootComponent
-import com.yral.shared.features.uploadvideo.ui.FlowSelectionScreen
 import com.yral.shared.features.uploadvideo.ui.aiVideoGen.AiVideoGenScreen
 import com.yral.shared.features.uploadvideo.ui.fileUpload.UploadVideoScreen
 
@@ -22,10 +21,6 @@ internal fun UploadVideoRootScreen(component: UploadVideoRootComponent) {
         animation = stackAnimation(slide()),
     ) { child ->
         when (val instance = child.instance) {
-            is UploadVideoRootComponent.Child.FlowSelection -> {
-                FlowSelectionScreen(component = instance.component)
-            }
-
             is UploadVideoRootComponent.Child.AiVideoGen -> {
                 AiVideoGenScreen(
                     component = instance.component,
