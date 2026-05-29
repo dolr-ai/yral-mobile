@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## Read first
+
+Before any code analysis in this repo, read [`MOBILE-EXPERT-LESSONS.md`](./MOBILE-EXPERT-LESSONS.md). It holds the hard-won build-system, flavor, and tooling rules that have already cost multi-hour debugging arcs. The lessons are append-only and load-bearing — applying them up front prevents repeating the same expensive mistakes.
+
 ## How to Keep This File Current
 
 This is a **living document** — it reflects the current state of conventions in this repo, not a changelog. Update it whenever you:
