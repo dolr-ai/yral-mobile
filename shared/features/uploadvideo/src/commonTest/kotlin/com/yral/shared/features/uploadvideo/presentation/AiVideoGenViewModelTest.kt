@@ -136,6 +136,7 @@ class AiVideoGenViewModelTest {
     private suspend fun setupProviderAndPrompt(viewModel: AiVideoGenViewModel) {
         viewModel.refresh("test-canister")
         viewModel.state.first { it.selectedProvider != null }
+        viewModel.updateGenerationMode(AiVideoGenerationMode.TEXT_TO_VIDEO)
         viewModel.updatePromptText("A beautiful sunset over the ocean")
     }
 
@@ -179,6 +180,7 @@ class AiVideoGenViewModelTest {
                 usedCredits = 0,
                 totalCredits = 1,
                 prompt = "A cinematic sunset",
+                generationMode = AiVideoGenerationMode.TEXT_TO_VIDEO,
                 isSubscriptionEnabled = false,
             )
 
@@ -191,6 +193,7 @@ class AiVideoGenViewModelTest {
             AiVideoGenViewModel.ViewState(
                 selectedProvider = TEST_PROVIDER,
                 prompt = "A cinematic sunset",
+                generationMode = AiVideoGenerationMode.TEXT_TO_VIDEO,
                 isSubscriptionEnabled = false,
             )
 
@@ -205,11 +208,20 @@ class AiVideoGenViewModelTest {
                 usedCredits = 0,
                 totalCredits = 1,
                 prompt = " ",
+                generationMode = AiVideoGenerationMode.TEXT_TO_VIDEO,
                 isSubscriptionEnabled = false,
             )
 
         assertFalse(state.shouldEnableButton())
     }
+
+    @Test
+    fun `image to video is selected by default`() =
+        runTest {
+            val viewModel = createViewModel()
+
+            assertEquals(AiVideoGenerationMode.IMAGE_TO_VIDEO, viewModel.state.value.generationMode)
+        }
 
     @Test
     fun `generateAiVideo starts VideoGenerationTracker`() =

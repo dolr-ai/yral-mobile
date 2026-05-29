@@ -81,7 +81,9 @@ private fun PlayPauseControl(
         modifier =
             Modifier.Companion
                 .fillMaxSize()
-                .clickable { isPlayPauseVisible = !isPlayPauseVisible },
+                .clickable {
+                    isPlayPauseVisible = !isPlayPauseVisible
+                },
         contentAlignment = Alignment.Companion.Center,
     ) {
         if (!isLoading && isPlayPauseVisible) {
