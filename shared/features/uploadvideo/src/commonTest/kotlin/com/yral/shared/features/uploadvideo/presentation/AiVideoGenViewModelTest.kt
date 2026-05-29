@@ -136,6 +136,7 @@ class AiVideoGenViewModelTest {
     private suspend fun setupProviderAndPrompt(viewModel: AiVideoGenViewModel) {
         viewModel.refresh("test-canister")
         viewModel.state.first { it.selectedProvider != null }
+        viewModel.updateGenerationMode(AiVideoGenerationMode.TEXT_TO_VIDEO)
         viewModel.updatePromptText("A beautiful sunset over the ocean")
     }
 
@@ -169,6 +170,14 @@ class AiVideoGenViewModelTest {
             val state = viewModel.state.first { it.selectedProvider != null }
 
             assertEquals("ltx", state.selectedProvider?.id)
+        }
+
+    @Test
+    fun `image to video is selected by default`() =
+        runTest {
+            val viewModel = createViewModel()
+
+            assertEquals(AiVideoGenerationMode.IMAGE_TO_VIDEO, viewModel.state.value.generationMode)
         }
 
     @Test

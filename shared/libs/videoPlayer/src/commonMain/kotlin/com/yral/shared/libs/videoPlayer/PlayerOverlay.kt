@@ -82,11 +82,7 @@ private fun PlayPauseControl(
             Modifier.Companion
                 .fillMaxSize()
                 .clickable {
-                    if (!isLoading && isPlayPauseVisible) {
-                        togglePlayPause()
-                    } else {
-                        isPlayPauseVisible = true
-                    }
+                    isPlayPauseVisible = !isPlayPauseVisible
                 },
         contentAlignment = Alignment.Companion.Center,
     ) {
@@ -100,7 +96,8 @@ private fun PlayPauseControl(
                 modifier =
                     Modifier.Companion
                         .size(48.dp)
-                        .clip(CircleShape),
+                        .clip(CircleShape)
+                        .clickable { togglePlayPause() },
             )
         }
     }
