@@ -12,6 +12,7 @@ import com.yral.shared.features.chat.domain.models.ConversationMessagesPageResul
 import com.yral.shared.features.chat.domain.models.ConversationUser
 import com.yral.shared.features.chat.domain.models.ConversationsPageResult
 import com.yral.shared.features.chat.domain.models.DeleteConversationResult
+import com.yral.shared.features.chat.domain.models.HumanCreatorTakeoverStatus
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencerStatus
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
@@ -202,4 +203,20 @@ fun SendMessageResponseDto.toDomain(conversationIdFallback: String): SendMessage
     SendMessageResult(
         userMessage = userMessage.toDomain(conversationIdFallback),
         assistantMessage = assistantMessage?.toDomain(conversationIdFallback),
+    )
+
+fun HumanCreatorTakeoverStatusDto.toDomain(): HumanCreatorTakeoverStatus =
+    HumanCreatorTakeoverStatus(
+        active = active,
+        startedAt = startedAt,
+        userLastMessageAt = userLastMessageAt,
+        remainingSeconds = remainingSeconds,
+    )
+
+fun StartHumanCreatorTakeoverResponseDto.toDomain(): HumanCreatorTakeoverStatus =
+    HumanCreatorTakeoverStatus(
+        active = status.equals("active", ignoreCase = true),
+        startedAt = startedAt,
+        userLastMessageAt = userLastMessageAt,
+        remainingSeconds = remainingSeconds,
     )

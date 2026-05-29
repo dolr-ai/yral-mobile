@@ -25,6 +25,7 @@ internal fun MessagesList(
     overlayItems: List<ConversationMessageItem>,
     historyPagingItems: LazyPagingItems<ConversationMessageItem>,
     isBotAccount: Boolean = false,
+    renderSystemBanners: Boolean = false,
     onImageClick: (imageUrl: String) -> Unit,
     onRetry: (localId: String) -> Unit,
 ) {
@@ -40,6 +41,7 @@ internal fun MessagesList(
         items(
             items = overlayItems,
         ) { item ->
+            if (item.isSystemMessage() && !renderSystemBanners) return@items
             MessageRow(
                 item = item,
                 isBotAccount = isBotAccount,
@@ -53,6 +55,7 @@ internal fun MessagesList(
         ) { idx ->
             val item = historyPagingItems[idx] ?: return@items
             if (isDuplicateOfOverlay(item, overlayMessageIds)) return@items
+            if (item.isSystemMessage() && !renderSystemBanners) return@items
             MessageRow(
                 item = item,
                 isBotAccount = isBotAccount,
@@ -63,6 +66,12 @@ internal fun MessagesList(
     }
 }
 
+private fun ConversationMessageItem.isSystemMessage(): Boolean =
+    when (this) {
+        is ConversationMessageItem.Remote -> message.role == ConversationMessageRole.SYSTEM
+        is ConversationMessageItem.Local -> message.role == ConversationMessageRole.SYSTEM
+    }
+
 @Composable
 private fun MessageRow(
     item: ConversationMessageItem,
@@ -72,11 +81,19 @@ private fun MessageRow(
 ) {
     val screenWidth = LocalWindowInfo.current.containerSize.width
     val maxWidth = with(LocalDensity.current) { (screenWidth * MESSAGE_MAX_WIDTH_RATIO).toDp() }
-    val roleIsUser =
+    val role =
         when (item) {
-            is ConversationMessageItem.Remote -> item.message.role == ConversationMessageRole.USER
-            is ConversationMessageItem.Local -> item.message.role == ConversationMessageRole.USER
+            is ConversationMessageItem.Remote -> item.message.role
+            is ConversationMessageItem.Local -> item.message.role
         }
+    if (role == ConversationMessageRole.SYSTEM && item is ConversationMessageItem.Remote) {
+        SystemBannerMessage(
+            text = item.message.content.orEmpty(),
+            modifier = Modifier.fillMaxWidth().padding(vertical = MESSAGE_VERTICAL_PADDING_DP),
+        )
+        return
+    }
+    val roleIsUser = role == ConversationMessageRole.USER
     // For bot accounts, roles are flipped: USER messages come from the AI (shown on left),
     // ASSISTANT messages come from the human customer (shown on right).
     val isUser = if (isBotAccount) !roleIsUser else roleIsUser

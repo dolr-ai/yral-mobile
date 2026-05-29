@@ -4,16 +4,21 @@ import co.touchlab.kermit.Logger
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.features.chat.attachments.ChatAttachment
 import com.yral.shared.features.chat.attachments.FilePathChatAttachment
+import com.yral.shared.features.chat.data.models.ChatMessageDto
 import com.yral.shared.features.chat.data.models.ConversationDto
 import com.yral.shared.features.chat.data.models.ConversationMessagesResponseDto
 import com.yral.shared.features.chat.data.models.ConversationsResponseDto
 import com.yral.shared.features.chat.data.models.CreateConversationRequestDto
 import com.yral.shared.features.chat.data.models.DeleteConversationResponseDto
+import com.yral.shared.features.chat.data.models.HumanCreatorTakeoverStatusDto
 import com.yral.shared.features.chat.data.models.InfluencerDto
 import com.yral.shared.features.chat.data.models.InfluencerFeedResponseDto
 import com.yral.shared.features.chat.data.models.InfluencersResponseDto
+import com.yral.shared.features.chat.data.models.ReleaseHumanCreatorTakeoverResponseDto
+import com.yral.shared.features.chat.data.models.SendHumanCreatorMessageRequestDto
 import com.yral.shared.features.chat.data.models.SendMessageRequestDto
 import com.yral.shared.features.chat.data.models.SendMessageResponseDto
+import com.yral.shared.features.chat.data.models.StartHumanCreatorTakeoverResponseDto
 import com.yral.shared.features.chat.data.models.UploadResponseDto
 import com.yral.shared.features.chat.data.models.toInfluencersResponseDto
 import com.yral.shared.http.UPLOAD_FILE_TIME_OUT
@@ -274,6 +279,88 @@ class ChatRemoteDataSource(
         }
     }
 
+    override suspend fun startHumanCreatorTakeover(conversationId: String): StartHumanCreatorTakeoverResponseDto {
+        val idToken = getIdToken()
+        return httpPost(
+            httpClient = httpClient,
+            json = json,
+        ) {
+            url {
+                host = chatBaseUrl
+                path(CREATOR_CONVERSATIONS_PATH, conversationId, TAKEOVER_PATH)
+            }
+            headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
+        }
+    }
+
+    override suspend fun releaseHumanCreatorTakeover(conversationId: String): ReleaseHumanCreatorTakeoverResponseDto {
+        val idToken = getIdToken()
+        return httpPost(
+            httpClient = httpClient,
+            json = json,
+        ) {
+            url {
+                host = chatBaseUrl
+                path(CREATOR_CONVERSATIONS_PATH, conversationId, RELEASE_PATH)
+            }
+            headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
+        }
+    }
+
+    override suspend fun sendHumanCreatorMessage(
+        conversationId: String,
+        request: SendHumanCreatorMessageRequestDto,
+    ): ChatMessageDto {
+        val idToken = getIdToken()
+        return httpPost(
+            httpClient = httpClient,
+            json = json,
+        ) {
+            url {
+                host = chatBaseUrl
+                path(CREATOR_CONVERSATIONS_PATH, conversationId, CREATOR_MESSAGES_PATH)
+            }
+            headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
+            setBody(request)
+        }
+    }
+
+    override suspend fun getHumanCreatorTakeoverStatus(conversationId: String): HumanCreatorTakeoverStatusDto {
+        val idToken = getIdToken()
+        return httpGet(
+            httpClient = httpClient,
+            json = json,
+        ) {
+            url {
+                host = chatBaseUrl
+                path(CREATOR_CONVERSATIONS_PATH, conversationId, TAKEOVER_STATUS_PATH)
+            }
+            headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
+        }
+    }
+
+    override suspend fun listCreatorConversationMessages(
+        conversationId: String,
+        limit: Int,
+        offset: Int,
+        order: String,
+    ): ConversationMessagesResponseDto {
+        val idToken = getIdToken()
+        return httpGet(
+            httpClient = httpClient,
+            json = json,
+        ) {
+            url {
+                host = chatBaseUrl
+                path(CREATOR_CONVERSATIONS_PATH, conversationId, MESSAGES_PATH)
+                parameters.append("limit", limit.toString())
+                parameters.append("offset", offset.toString())
+                parameters.append("order", order)
+            }
+            headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
+        }
+    }
+
     private suspend fun getIdToken() =
         preferences.getString(PrefKeys.ID_TOKEN.name)
             ?: throw YralException("Authorisation not found")
@@ -293,5 +380,10 @@ class ChatRemoteDataSource(
         private const val MESSAGES_PATH = "messages"
         private const val READ_PATH = "read"
         private const val UPLOAD_PATH = "api/v1/media/upload"
+        private const val CREATOR_CONVERSATIONS_PATH = "api/v1/creator/conversations"
+        private const val TAKEOVER_PATH = "human-creator-takeover"
+        private const val RELEASE_PATH = "human-creator-release"
+        private const val CREATOR_MESSAGES_PATH = "human-creator-messages"
+        private const val TAKEOVER_STATUS_PATH = "human-creator-takeover-status"
     }
 }
