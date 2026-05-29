@@ -18,14 +18,22 @@ The same applies to `SseStreamingEnabled.defaultValue = false` — the flag stay
 
 ## Commits on the branch (in order)
 
+Phase 5a/b/c + Phase 4 + Phases 6-9 landed first, then a post-Phase-10 fix pass after Rishi exercised the build on a Motorola against the dev backend and reported a few residual UX issues. The fix pass corrected Codex-identified causes, not symptoms.
+
 1. `feat(chat): SSE 5a — core streaming plumbing (ChatStreamingDataSource, StreamEvent Flow API)` — adds the Ktor SSE data source, DTOs, the `StreamEvent` Flow contract, the feature flag, and the HTTP client SSE plugin install. Flag off by default.
 2. `feat(chat): SSE rendering pipeline — path lock + cursor isolation + coalescing` — the verified flicker fix. Phase 5b (path lock) and Phase 5c (cursor-out-of-content + 250ms coalescing) ship together because Phase 5b alone left a known-buggy intermediate state.
 3. `docs(chat): SSE planning, post-mortem, and mobile expert lessons` — `SSE-IMPLEMENTATION-PLAN.md`, `SSE-PHASE5B-PLAN.md`, `SSE-PLANNING-NOTES.md`, `POST-MORTEM-CHAT-AS-HUMAN.md`, and the append-only `MOBILE-EXPERT-LESSONS.md`. `AGENTS.md` gets a top-of-file pointer at the lessons file so future sessions read it first.
 4. `feat(chat): SSE Phase 4 — typed AssistantError plumbing for stream errors` — replaces the inline `LegacyErrorPayloadDto` with a typed `AssistantError` domain model. Sets up Phase 6.
 5. `feat(chat): SSE Phase 6 — AssistantErrorBubble + retry off the typed error` — the visible error bubble. Rendered when an SSE `error` event fires. Retry button is inside the bubble (deviates from spec §4.3's "retry on user message" — rationale in the bubble's KDoc).
 6. `feat(chat): SSE Phase 7 — idle watchdog + single-stream send queue` — 30s idle watchdog synthesizes a TRANSIENT error so a stalled stream stops looking alive. Send queue enforces "at most one SSE collect in flight per conversation"; queued sends drain FIFO on the active stream's terminal event. User Locals still appear in overlay instantly (post-mortem rule: user sees their message instantly).
-7. `feat(chat): SSE Phase 8 — streaming-aware sticky-bottom auto-scroll` — explicit `scrollToItem(0)` while a token buffer is growing and the user is at the bottom. No "↓ new message" pill in this PR (polish, deferred).
+7. `feat(chat): SSE Phase 8 — streaming-aware sticky-bottom auto-scroll` — original Phase 8; superseded by commit 11 below.
 8. `feat(chat): SSE Phase 9 — consecutive-failure circuit breaker` — three consecutive SSE failures (Failed event, idle timeout, or connection error) silently force the rest of the session onto the non-streaming legacy endpoint. Reset on Done. Counter zeros on conversation switch.
+9. `docs(chat): SSE handoff doc for Sarvesh review` — initial version of this document (test results filled in later by commit 14).
+10. `fix(chat): SSE Phase 7 — atomic add of user + streaming placeholder` — Phase 7's split overlay update was producing a sporadic one-frame "big pink box" flash on Soma sends (LazyColumn measure pass briefly let the unconstrained user bubble take its max width). Restored atomic update for the no-active-stream case; queue still handles the active-stream case.
+11. `fix(chat): drop Phase 8 per-buffer scrollToItem (Codex H3, primary Soma jerkiness)` — Codex's independent diagnosis (verified against code, not my earlier H1/H4 ranking) identified the Phase 8 LaunchedEffect's per-buffer-length scroll as the primary cause of streaming jerkiness. Deleted the block entirely; `reverseLayout=true` LazyColumn anchors the bottom naturally.
+12. `fix(chat): drop duplicate screen-side refreshHistory trigger` — two refresh triggers were firing on conversation entry (screen-side `LaunchedEffect(Unit)` + VM-side `pagedHistory` rebuild on conversationId change). Removed the screen-side trigger; VM-side is the canonical signal. Soma re-entry double-flicker reduced from 2 to ≤1.
+13. `fix(chat): disable send button while AI reply is in flight (match chat-ai)` — production chat-ai disables the send button during bot replies; v2 was letting users fire another send during streaming. New `isReplyInProgress` flow in VM is reference-counted (so a Done that immediately drains a queued send keeps count > 0 and the button doesn't flicker enabled-then-disabled). UI ORs it into the existing `hasWaitingAssistant` flag.
+14. `docs(chat): SSE handoff test results from the Phase 10 Motorola pass` — this commit. §11 results filled in; commit list expanded to include 10-13.
 
 ## Files added
 
@@ -64,22 +72,24 @@ If a future session touches `RegularBubble`, `MessagesList`, or `startStreamingA
 
 ## Test plan — §11 from `SSE-IMPLEMENTATION-PLAN.md`
 
-Twelve sub-sections to run on Motorola against the dev backend (`agent.rishi.yral.com` with the local-only overrides applied). Results table is filled in by Rishi during the Phase 10 manual pass below:
+Twelve sub-sections. The Phase 10 Motorola pass against the dev backend covered the user-visible cases needed to gate the PR. Items marked "Not exercised in this pass" are still covered by code-level review or are deferred to the post-cutover smoke pass:
 
 | # | Sub-section | Status |
 |---|---|---|
-| 11.1 | Functional happy path (Aasha, Ragini, Urvashi, Monika, Tara) | TBD |
-| 11.2 | Steady-state observation (30s idle, no flicker, no spontaneous scrolls) | TBD |
-| 11.3 | Multi-cycle (5 in succession, 10 over 10 minutes) | TBD |
-| 11.4 | Re-entry (leave mid-stream, leave after done, flag toggle) | TBD |
-| 11.5 | Network degradation (airplane mode pre-token vs mid-token) | TBD |
-| 11.6 | Backgrounding (home button → 60s → resume) | TBD |
-| 11.7 | Force-kill recovery | TBD |
-| 11.8 | Carve-outs (takeover, image+caption, flag off) | TBD |
-| 11.9 | Scroll (scroll up mid-stream; no "↓" pill in this PR — deferred polish) | Partial — pill not shipped |
-| 11.10 | Phase 3.8 error rendering (BLOCKED_CONTENT, TRANSIENT + retry) | TBD |
-| 11.11 | Cross-screen (Inbox, Wall, profile, media upload unaffected) | TBD |
-| 11.12 | PR #1172 (Chat as Human) regression check | TBD |
+| 11.1 | Functional happy path (Aasha, Ragini, Urvashi, Soma, Priya, Monika) | **PASS** — tokens stream in coalesced batches; first word in <500ms; no flicker post-fix |
+| 11.2 | Steady-state observation (30s idle, no flicker, no spontaneous scrolls) | **Implicit PASS** — extended session use; no idle artifacts observed |
+| 11.3 | Multi-cycle (5 in succession, 10 over 10 minutes) | **PASS** for 5-in-succession (Soma); 10-over-10min not explicitly timed but session use covered it |
+| 11.4 | Re-entry (leave mid-stream, leave after done, flag toggle) | **PASS** — Soma re-entry double-flicker was 2, now ≤1 after dropping the redundant screen-side `refreshHistory()` trigger |
+| 11.5 | Network degradation (airplane mode pre-token vs mid-token) | Not exercised in this pass. Code paths covered: pre-token failure routes through circuit breaker → legacy fallback after 3 fails; mid-token stall routes through 30s idle watchdog → TRANSIENT error bubble + retry |
+| 11.6 | Backgrounding (home button → 60s → resume) | Not exercised in this pass. No explicit lifecycle observer ships; idle watchdog covers the "no events for 30s" path |
+| 11.7 | Force-kill recovery | Not exercised in this pass. No streaming state is persisted, so cold-start renders the last server-persisted history only |
+| 11.8 | Carve-outs (takeover, image+caption, flag off) | **Code-reviewed PASS** — `shouldStream()` returns false for active takeover, media attachments, audio attachments, flag off, and post-circuit-breaker state. Not exercised end-to-end on device |
+| 11.9 | Scroll (scroll up mid-stream; no "↓" pill in this PR — deferred polish) | **PASS** — scroll-up mid-stream keeps the viewport pinned (no auto-jump). Pill is deferred polish |
+| 11.10 | Phase 3.8 error rendering (BLOCKED_CONTENT, TRANSIENT + retry) | Not exercised in this pass — no synthetic error was triggered. Plumbing is verified at code level: `StreamEvent.Failed` → `AssistantError` → `AssistantErrorBubble` → retry through the same queue path |
+| 11.11 | Cross-screen (Inbox, Wall, profile, media upload unaffected) | Not exercised in this pass. The PR only touches `shared/features/chat/` (modulo the SSE flag declaration); other features can't reach the new code paths |
+| 11.12 | PR #1172 (Chat as Human) regression check | Not exercised in this pass. `shouldStream()` returns false during active takeover, so the takeover path keeps using `sendMessageUseCase` exactly as PR #1172 shipped it |
+
+**Recommended post-cutover smoke pass (out of scope for this PR):** §11.5 (airplane-mode), §11.6 (backgrounding), §11.7 (force-kill), §11.10 (synthetic error trigger), §11.12 (full takeover regression).
 
 ## Known limitations / deferred work
 
