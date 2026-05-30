@@ -20,18 +20,33 @@ class ConversationContentCache(
     private val maxConversations: Int = DEFAULT_MAX_CONVERSATIONS,
     private val maxMessagesPerConversation: Int = DEFAULT_MAX_MESSAGES_PER_CONVERSATION,
 ) {
-    // accessOrder = true → LinkedHashMap reorders on get() too, making it a proper LRU.
-    // The synchronization is coarse-grained but the operations are cheap (map ops on
-    // tens of entries) and the call sites are infrequent (one per conversation switch
-    // + one debounced write per 500ms).
-    private val cache = LinkedHashMap<String, List<ChatMessage>>(maxConversations, LOAD_FACTOR, true)
-    private val lock = Any()
+    // Multiplatform-safe LRU: a plain LinkedHashMap maintains insertion order
+    // on every Kotlin target, and the `read` path removes + re-inserts to
+    // bump the touched key to the most-recently-used end. The JVM
+    // `LinkedHashMap(initialCapacity, loadFactor, accessOrder)` overload is
+    // JVM-only; on iOS Native it doesn't exist (different platform-specific
+    // implementation), so we implement access-order manually.
+    //
+    // Thread confinement: both call sites (the `read` from
+    // `ConversationViewModel.setConversationId` and the `write` from the
+    // VM's debounced flow-collect) run on the same `viewModelScope`
+    // coroutine context (Main dispatcher), so no cross-thread access
+    // happens in practice. We deliberately do NOT call `synchronized` here
+    // because it's JVM-only and breaks iOS native compile; adding a
+    // multiplatform lock (atomicfu, Mutex) would be overkill for a
+    // best-effort UX cache where a torn read at worst returns an empty
+    // list (the call site already handles that as "cache miss").
+    private val cache = LinkedHashMap<String, List<ChatMessage>>()
 
     fun read(conversationId: String): List<ChatMessage> {
         if (conversationId.isBlank()) return emptyList()
-        synchronized(lock) {
-            return cache[conversationId].orEmpty()
+        val value = cache[conversationId].orEmpty()
+        if (value.isNotEmpty()) {
+            // Bump recency by removing + re-inserting at the tail.
+            cache.remove(conversationId)
+            cache[conversationId] = value
         }
+        return value
     }
 
     fun write(
@@ -39,18 +54,18 @@ class ConversationContentCache(
         messages: List<ChatMessage>,
     ) {
         if (conversationId.isBlank()) return
-        synchronized(lock) {
-            cache[conversationId] = messages.takeLast(maxMessagesPerConversation)
-            while (cache.size > maxConversations) {
-                val eldest = cache.keys.iterator().next()
-                cache.remove(eldest)
-            }
+        // Re-insert at the tail regardless of whether the key already exists,
+        // so a write also counts as a recency bump.
+        cache.remove(conversationId)
+        cache[conversationId] = messages.takeLast(maxMessagesPerConversation)
+        while (cache.size > maxConversations) {
+            val eldest = cache.keys.iterator().next()
+            cache.remove(eldest)
         }
     }
 
     private companion object {
         private const val DEFAULT_MAX_CONVERSATIONS = 20
         private const val DEFAULT_MAX_MESSAGES_PER_CONVERSATION = 30
-        private const val LOAD_FACTOR = 0.75f
     }
 }
