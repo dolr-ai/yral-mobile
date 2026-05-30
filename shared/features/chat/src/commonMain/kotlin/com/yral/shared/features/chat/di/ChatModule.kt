@@ -91,6 +91,7 @@ val chatModule =
                 chatRepository = get(),
                 useCaseFailureListener = get(),
                 sendMessageUseCase = get(),
+                sendHumanMessageUseCase = get(),
                 createConversationUseCase = get(),
                 deleteConversationUseCase = get(),
                 markConversationAsReadUseCase = get(),

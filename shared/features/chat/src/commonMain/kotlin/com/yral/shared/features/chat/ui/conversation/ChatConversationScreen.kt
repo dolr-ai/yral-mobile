@@ -118,6 +118,7 @@ fun ChatConversationScreen(
                 displayName = params.displayName,
                 userName = params.username,
                 avatarUrl = params.avatarUrl,
+                participantPrincipalId = params.participantPrincipalId,
             )
         } else {
             viewModel.initializeForChatWall(
@@ -294,7 +295,8 @@ fun ChatConversationScreen(
                 viewState.isSubscriptionEnabled &&
                 !hasChatAccess &&
                 atSubscriptionThreshold &&
-                viewState.isInfluencerSubscriptionAvailableToPurchase
+                viewState.isInfluencerSubscriptionAvailableToPurchase &&
+                !viewState.isHumanChat
         Logger.d("SubDebug") {
             "shouldShow=$result | waiting=$hasWaitingAssistant | signed=${viewState.isSocialSignedIn}" +
                 " | subEnabled=${viewState.isSubscriptionEnabled} | access=$hasChatAccess" +
@@ -310,7 +312,8 @@ fun ChatConversationScreen(
             viewState.isSubscriptionEnabled &&
             !hasChatAccess &&
             atSubscriptionThreshold &&
-            !viewState.isInfluencerSubscriptionAvailableToPurchase
+            !viewState.isInfluencerSubscriptionAvailableToPurchase &&
+            !viewState.isHumanChat
     }
 
     val subscriptionCardOverlayMessage =
@@ -479,6 +482,7 @@ fun ChatConversationScreen(
                 onSubscribeClick = {
                     purchaseContext?.let { viewModel.launchInfluencerSubscriptionPurchase(it) }
                 },
+                isHumanChat = viewState.isHumanChat,
             )
 
             Column(

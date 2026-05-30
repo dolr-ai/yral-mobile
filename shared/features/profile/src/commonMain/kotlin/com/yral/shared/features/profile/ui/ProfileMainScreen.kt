@@ -303,14 +303,20 @@ fun ProfileMainScreen(
                 is ProfileEvents.HumanConversationCreated -> {
                     // H2H: empty `influencerId` is the convention for human
                     // conversations until OpenConversationParams gets a
-                    // proper conversationKind discriminator. The chat
-                    // screen + VM derive H2H mode from the loaded
-                    // Conversation.conversationType ("human_chat"); this
-                    // record only carries the routing hints.
+                    // proper conversationKind discriminator. Passing
+                    // `userId = event.participantPrincipalId` is what makes
+                    // ChatConversationScreen's LaunchedEffect take the
+                    // initializeFromInbox branch (which uses the existing
+                    // conversationId) instead of initializeForChatWall
+                    // (which would POST a new AI conversation with the
+                    // empty influencerId — the "Having a little trouble
+                    // loading" repro). The chat-screen VM further reads
+                    // viewState.isHumanChat to gate AI affordances.
                     component.openConversation(
                         OpenConversationParams(
                             influencerId = "",
                             conversationId = event.conversationId,
+                            userId = event.participantPrincipalId,
                             participantPrincipalId = event.participantPrincipalId,
                             displayName = event.displayName,
                             username = event.username,

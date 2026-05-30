@@ -113,6 +113,7 @@ class ConversationViewModel(
     private val chatRepository: ChatRepository,
     private val useCaseFailureListener: UseCaseFailureListener,
     private val sendMessageUseCase: SendMessageUseCase,
+    private val sendHumanMessageUseCase: com.yral.shared.features.chat.domain.usecases.SendHumanMessageUseCase,
     private val createConversationUseCase: CreateConversationUseCase,
     private val deleteConversationUseCase: DeleteConversationUseCase,
     private val markConversationAsReadUseCase: MarkConversationAsReadUseCase,
@@ -883,9 +884,20 @@ class ConversationViewModel(
         displayName: String? = null,
         userName: String? = null,
         avatarUrl: String? = null,
+        // H2H: the other-user's principal_id when this conversation came
+        // from the profile-screen Send Message tap. Null for AI chats.
+        // When non-null we also skip the IAP/access-check cascade since
+        // H2H has no subscription product.
+        participantPrincipalId: String? = null,
     ) {
         val isBotAccount = sessionManager.isBotAccount == true
-        _viewState.update { it.copy(influencerSource = influencerSource, isBotAccount = isBotAccount) }
+        _viewState.update {
+            it.copy(
+                influencerSource = influencerSource,
+                isBotAccount = isBotAccount,
+                participantPrincipalId = participantPrincipalId,
+            )
+        }
         val currentConversationId = _viewState.value.conversationId
         if (currentConversationId == conversationId) return
         if (_viewState.value.conversationId != null && _viewState.value.conversationId != conversationId) {
@@ -904,7 +916,14 @@ class ConversationViewModel(
             recentMessages = emptyList(),
             messageCount = PAGE_SIZE + 1,
         )
-        updateInfluencerSubscriptionProductState(influencerId)
+        // N1 gate: single call-site for the entire IAP cascade
+        // (checkChatAccessUseCase → retryUnconsumedDailyChatAccess →
+        // fetchInfluencerSubscriptionProducts). All four fallback entry
+        // points reach back through updateInfluencerSubscriptionProductState
+        // so this one skip covers them all.
+        if (participantPrincipalId == null) {
+            updateInfluencerSubscriptionProductState(influencerId)
+        }
     }
 
     fun initializeForChatWall(
@@ -1264,7 +1283,23 @@ class ConversationViewModel(
             )
         }
 
-        if (shouldStream(draft)) {
+        if (_viewState.value.isHumanChat) {
+            _overlay.update { it.copy(pending = it.pending + userLocal) }
+            viewModelScope.launch {
+                sendHumanMessageUseCase(
+                    com.yral.shared.features.chat.domain.usecases
+                        .SendHumanMessageUseCase
+                        .Params(
+                            conversationId = convId,
+                            draft = draft,
+                        ),
+                ).onSuccess { result ->
+                    handleSendSuccess(result, localUserId, localAssistantId, now)
+                }.onFailure { error ->
+                    handleSendFailure(error, localUserId, localAssistantId)
+                }
+            }
+        } else if (shouldStream(draft)) {
             // Phase 7 (revised): when there is NO active stream we add the user
             // Local AND the streaming placeholder in a single _overlay.update so
             // Compose never composes an intermediate state where only the user
@@ -2200,7 +2235,15 @@ data class ConversationViewState(
     val isHumanCreatorTakeoverEnding: Boolean = false,
     val isHumanCreatorMessageSending: Boolean = false,
     val humanCreatorTakeoverRemainingSeconds: Int = 0,
-)
+    // H2H: present when this conversation is human-to-human (set by
+    // initializeFromInbox when the navigation params carry the other
+    // user's principal_id). [isHumanChat] is the derived single-source-of-
+    // truth gate that all H2H-vs-AI branches in this module read from.
+    val participantPrincipalId: String? = null,
+) {
+    val isHumanChat: Boolean
+        get() = participantPrincipalId != null
+}
 
 sealed class ConversationMessageItem {
     data class Remote(
