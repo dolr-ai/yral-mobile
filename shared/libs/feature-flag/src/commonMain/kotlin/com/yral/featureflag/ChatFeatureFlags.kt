@@ -64,5 +64,16 @@ object ChatFeatureFlags {
                 // until backend cutover + GA.
                 defaultValue = false,
             )
+        val H2hChatEnabled: FeatureFlag<Boolean> =
+            boolean(
+                keySuffix = "h2hChatEnabled",
+                name = "Human-to-Human chat",
+                description = "When ON, exposes the Send Message button on other-user profile screens and " +
+                    "lets users open 1:1 H2H conversations via POST /api/v1/chat/human/conversations. When " +
+                    "OFF, the button is hidden and any H2H conversations already in the user's inbox are " +
+                    "filtered out at render time so the feature is fully dormant. PR keeps defaultValue = " +
+                    "false until backend cutover + GA.",
+                defaultValue = false,
+            )
     }
 }
