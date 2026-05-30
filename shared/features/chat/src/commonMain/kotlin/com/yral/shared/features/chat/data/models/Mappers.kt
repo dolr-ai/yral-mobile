@@ -176,6 +176,7 @@ fun ChatMessageDto.toDomain(conversationIdFallback: String? = null): ChatMessage
         audioDurationSeconds = audioDurationSeconds,
         tokenCount = tokenCount,
         createdAt = createdAt,
+        senderId = senderId,
     )
 }
 
