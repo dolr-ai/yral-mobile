@@ -300,6 +300,26 @@ fun ProfileMainScreen(
                     )
                 }
 
+                is ProfileEvents.HumanConversationCreated -> {
+                    // H2H: empty `influencerId` is the convention for human
+                    // conversations until OpenConversationParams gets a
+                    // proper conversationKind discriminator. The chat
+                    // screen + VM derive H2H mode from the loaded
+                    // Conversation.conversationType ("human_chat"); this
+                    // record only carries the routing hints.
+                    component.openConversation(
+                        OpenConversationParams(
+                            influencerId = "",
+                            conversationId = event.conversationId,
+                            participantPrincipalId = event.participantPrincipalId,
+                            displayName = event.displayName,
+                            username = event.username,
+                            avatarUrl = event.avatarUrl,
+                            influencerSource = ConversationInfluencerSource.PROFILE,
+                        ),
+                    )
+                }
+
                 is ProfileEvents.SubscribeInfluencerDetailsFetched -> {
                     component.openConversation(
                         OpenConversationParams(
@@ -793,6 +813,16 @@ private fun MainContent(
                 onTalkToMeClicked = viewModel::fetchInfluencerDetails,
                 showSubscribe = false,
                 onSubscribeClicked = {},
+                // H2H: button shown only on another user's NON-AI profile
+                // when the H2hChatEnabled flag is on. Own-profile, AI
+                // influencer profiles, and logged-out users never see it.
+                showSendMessage =
+                    !state.isOwnProfile &&
+                        state.isLoggedIn &&
+                        state.isH2hChatEnabled &&
+                        !state.isAiInfluencer,
+                isSendMessageInProgress = state.isCreatingHumanConversation,
+                onSendMessageClicked = { viewModel.onSendMessageClicked() },
                 isProUser = state.isProUser,
                 showCreateInfluencerCta = state.isOwnProfile && state.isLoggedIn && showCreateBotCta,
                 onCreateInfluencerClick = onCreateInfluencerClick,
