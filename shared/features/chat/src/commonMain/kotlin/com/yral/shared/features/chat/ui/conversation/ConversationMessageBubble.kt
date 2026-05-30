@@ -160,11 +160,12 @@ private fun RegularBubble(
     val markdownColors = markDownColors(textColor)
     val markdownTypography = markdownTypography(appTypography)
 
-    val useMarkdown = when {
-        markdownLockedOverride != null -> markdownLockedOverride
-        !content.isNullOrBlank() && content.shouldRenderAsMarkdown() -> true
-        else -> false
-    }
+    val useMarkdown =
+        when {
+            markdownLockedOverride != null -> markdownLockedOverride
+            !content.isNullOrBlank() && content.shouldRenderAsMarkdown() -> true
+            else -> false
+        }
 
     MessageInBubble(
         isUser = isUser,

@@ -93,8 +93,13 @@ private fun ConversationMessageItem.isSystemMessage(): Boolean =
         is ConversationMessageItem.Local -> message.role == ConversationMessageRole.SYSTEM
     }
 
-
+// Renders the same slot for Remote vs Local items + the role-flip branch
+// for bot accounts + the system-banner short-circuit. Unifying the
+// Remote/Local render-param extraction in this function is precisely what
+// eliminates the Local→Remote one-frame flicker at SSE `done` (see the
+// inline comment block).
 @Composable
+@Suppress("CyclomaticComplexMethod")
 private fun MessageRow(
     item: ConversationMessageItem,
     isBotAccount: Boolean,

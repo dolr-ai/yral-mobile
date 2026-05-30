@@ -51,8 +51,7 @@ internal fun AssistantErrorBubble(
                     .background(
                         color = YralColors.Neutral900.copy(alpha = BACKGROUND_ALPHA),
                         shape = RoundedCornerShape(16.dp),
-                    )
-                    .padding(PaddingValues(horizontal = 12.dp, vertical = 10.dp)),
+                    ).padding(PaddingValues(horizontal = 12.dp, vertical = 10.dp)),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Row(
@@ -78,6 +77,7 @@ internal fun AssistantErrorBubble(
                         color = textColor.copy(alpha = HINT_ALPHA),
                     )
                 }
+
                 error.retryable && onRetry != null -> {
                     Text(
                         text = RETRY_LABEL,
