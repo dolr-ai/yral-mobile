@@ -30,6 +30,26 @@ interface ChatRepository {
 
     suspend fun createConversation(influencerId: String): Conversation
 
+    /**
+     * H2H: idempotent create-or-fetch of a 1:1 conversation between the
+     * authenticated user and [participantId]. If a conversation between
+     * the pair already exists, the existing one is returned (backend
+     * checks both orderings of user_id / participant_b_id). Both 200
+     * and 201 responses are treated as success.
+     */
+    suspend fun createHumanConversation(participantId: String): Conversation
+
+    /**
+     * H2H: post a message to a human conversation. Same domain return
+     * type as [sendMessage] for the AI path so the call sites that
+     * compose the optimistic-Local → server-truth-Remote swap can share
+     * the result shape.
+     */
+    suspend fun sendHumanMessage(
+        conversationId: String,
+        draft: SendMessageDraft,
+    ): SendMessageResult
+
     suspend fun getConversationsPage(
         limit: Int,
         offset: Int,

@@ -9,6 +9,7 @@ import com.yral.shared.features.chat.data.models.ConversationDto
 import com.yral.shared.features.chat.data.models.ConversationMessagesResponseDto
 import com.yral.shared.features.chat.data.models.ConversationsResponseDto
 import com.yral.shared.features.chat.data.models.CreateConversationRequestDto
+import com.yral.shared.features.chat.data.models.CreateHumanConversationRequestDto
 import com.yral.shared.features.chat.data.models.DeleteConversationResponseDto
 import com.yral.shared.features.chat.data.models.HumanCreatorTakeoverStatusDto
 import com.yral.shared.features.chat.data.models.InfluencerDto
@@ -117,6 +118,43 @@ class ChatRemoteDataSource(
                 ),
             )
             headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
+        }
+    }
+
+    override suspend fun createHumanConversation(participantId: String): ConversationDto {
+        val idToken = getIdToken()
+        return httpPost(
+            httpClient = httpClient,
+            json = json,
+        ) {
+            url {
+                host = chatBaseUrl
+                path(HUMAN_CONVERSATIONS_PATH)
+            }
+            setBody(
+                CreateHumanConversationRequestDto(
+                    participantId = participantId,
+                ),
+            )
+            headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
+        }
+    }
+
+    override suspend fun sendHumanMessage(
+        conversationId: String,
+        request: SendMessageRequestDto,
+    ): SendMessageResponseDto {
+        val idToken = getIdToken()
+        return httpPost(
+            httpClient = httpClient,
+            json = json,
+        ) {
+            url {
+                host = chatBaseUrl
+                path(HUMAN_CONVERSATIONS_PATH, conversationId, MESSAGES_PATH)
+            }
+            headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
+            setBody(request)
         }
     }
 
@@ -376,6 +414,7 @@ class ChatRemoteDataSource(
         private const val INFLUENCERS_PATH = "api/v1/influencers"
         private const val INFLUENCER_FEED_PATH = "api/v1/influencer-feed"
         private const val CONVERSATIONS_PATH = "api/v1/chat/conversations"
+        private const val HUMAN_CONVERSATIONS_PATH = "api/v1/chat/human/conversations"
         private const val CONVERSATIONS_LIST_PATH = "api/v2/chat/conversations"
         private const val MESSAGES_PATH = "messages"
         private const val READ_PATH = "read"

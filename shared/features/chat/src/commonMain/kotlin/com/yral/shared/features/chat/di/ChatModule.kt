@@ -14,6 +14,7 @@ import com.yral.shared.features.chat.domain.ChatErrorMapper
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.usecases.CheckChatAccessUseCase
 import com.yral.shared.features.chat.domain.usecases.CreateConversationUseCase
+import com.yral.shared.features.chat.domain.usecases.CreateHumanConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.DeleteConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.GetHumanCreatorTakeoverStatusUseCase
 import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
@@ -21,6 +22,7 @@ import com.yral.shared.features.chat.domain.usecases.GrantChatAccessUseCase
 import com.yral.shared.features.chat.domain.usecases.MarkConversationAsReadUseCase
 import com.yral.shared.features.chat.domain.usecases.ReleaseHumanCreatorTakeoverUseCase
 import com.yral.shared.features.chat.domain.usecases.SendHumanCreatorMessageUseCase
+import com.yral.shared.features.chat.domain.usecases.SendHumanMessageUseCase
 import com.yral.shared.features.chat.domain.usecases.SendMessageUseCase
 import com.yral.shared.features.chat.domain.usecases.StartHumanCreatorTakeoverUseCase
 import com.yral.shared.features.chat.viewmodel.ChatUnreadRefreshSignal
@@ -65,10 +67,12 @@ val chatModule =
         factoryOf(::CheckChatAccessUseCase)
         factoryOf(::GrantChatAccessUseCase)
         factoryOf(::CreateConversationUseCase)
+        factoryOf(::CreateHumanConversationUseCase)
         factoryOf(::DeleteConversationUseCase)
         factoryOf(::GetInfluencerUseCase)
         factoryOf(::MarkConversationAsReadUseCase)
         factoryOf(::SendMessageUseCase)
+        factoryOf(::SendHumanMessageUseCase)
         factoryOf(::StartHumanCreatorTakeoverUseCase)
         factoryOf(::ReleaseHumanCreatorTakeoverUseCase)
         factoryOf(::SendHumanCreatorMessageUseCase)
