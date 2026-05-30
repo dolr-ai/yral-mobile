@@ -46,13 +46,13 @@ fun ConversationListItem(
 ) {
     val avatarUrl =
         conversation.conversationUser?.profilePictureUrl?.takeIf { it.isNotBlank() }
-            ?: conversation.influencer.avatarUrl
+            ?: conversation.influencer?.avatarUrl.orEmpty()
     val displayName =
         conversation.conversationUser?.let { user ->
             user.username?.takeIf { it.isNotBlank() }
                 ?: resolveUsername("", user.principalId)
                 ?: ""
-        } ?: conversation.influencer.displayName.ifBlank { conversation.influencer.name }
+        } ?: conversation.influencer?.let { it.displayName.ifBlank { it.name } }.orEmpty()
     Row(
         modifier =
             modifier

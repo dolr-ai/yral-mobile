@@ -80,31 +80,39 @@ fun InfluencersResponseDto.toDomainActiveOnly(): InfluencersPageResult {
     )
 }
 
-fun ConversationDto.toDomain(): Conversation =
-    Conversation(
+fun ConversationDto.toDomain(): Conversation {
+    val resolvedInfluencer: ConversationInfluencer? =
+        influencer?.let {
+            ConversationInfluencer(
+                id = it.id,
+                name = it.name,
+                displayName = it.displayName,
+                avatarUrl =
+                    it.avatarUrl
+                        .takeIf { url -> url.isNotEmpty() }
+                        ?: propicFromPrincipal(it.id),
+                category = it.category.orEmpty(),
+                suggestedMessages = it.suggestedMessages.orEmpty(),
+            )
+        } ?: influencerId?.let { influencerId ->
+            ConversationInfluencer(
+                id = influencerId,
+                name = "",
+                displayName = "",
+                avatarUrl = "",
+            )
+        }
+    // H2H conversations legitimately carry no influencer. AI / takeover
+    // conversations must — keep the original invariant in place for them
+    // so a backend bug that drops the influencer doesn't silently
+    // degrade the AI chat experience.
+    if (resolvedInfluencer == null && conversationType != HUMAN_CHAT_TYPE) {
+        throw YralException("Conversation requires a valid influencer")
+    }
+    return Conversation(
         id = id,
         userId = userId,
-        influencer =
-            influencer?.let {
-                ConversationInfluencer(
-                    id = it.id,
-                    name = it.name,
-                    displayName = it.displayName,
-                    avatarUrl =
-                        it.avatarUrl
-                            .takeIf { url -> url.isNotEmpty() }
-                            ?: propicFromPrincipal(it.id),
-                    category = it.category.orEmpty(),
-                    suggestedMessages = it.suggestedMessages.orEmpty(),
-                )
-            } ?: influencerId?.let { influencerId ->
-                ConversationInfluencer(
-                    id = influencerId,
-                    name = "",
-                    displayName = "",
-                    avatarUrl = "",
-                )
-            } ?: throw YralException("Conversation requires a valid influencer"),
+        influencer = resolvedInfluencer,
         conversationUser =
             user?.let {
                 ConversationUser(
@@ -132,7 +140,11 @@ fun ConversationDto.toDomain(): Conversation =
             },
         recentMessages = recentMessages?.map { it.toDomain(conversationIdFallback = id) } ?: emptyList(),
         unreadCount = unreadCount,
+        conversationType = conversationType,
     )
+}
+
+private const val HUMAN_CHAT_TYPE = "human_chat"
 
 fun ConversationsResponseDto.toDomain(): ConversationsPageResult {
     val rawCount = conversations.size
