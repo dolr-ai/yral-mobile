@@ -14,7 +14,6 @@ object AppConfigurations {
     const val PUMP_DUMP_BASE_URL = "yral-hot-or-not.go-bazzinga.workers.dev"
     const val UPLOAD_BASE_URL = "upload.yral.com"
     const val ANALYTICS_BASE_URL = "analytics.yral.com"
-    // LOCAL-ONLY OVERRIDE for SSE testing: revert to "chat-ai.rishi.yral.com" before any commit.
     const val CHAT_BASE_URL = "chat-ai.rishi.yral.com"
     const val BILLING_BASE_URL = "billing.yral.com"
     const val DAILY_STREAK_BASE_URL = "daily-streaks.naitik.yral.com"

@@ -98,7 +98,7 @@ class ChatStreamingDataSource(
                         }
 
                         else -> {
-                            logger.d { "Unknown SSE event: name=$name data=$data" }
+                            logger.d { "Unknown SSE event: name=$name dataLength=${data.length}" }
                         }
                     }
                 }

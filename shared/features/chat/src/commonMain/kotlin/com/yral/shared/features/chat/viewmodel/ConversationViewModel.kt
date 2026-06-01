@@ -91,6 +91,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
 import yral_mobile.shared.features.chat.generated.resources.Res
+import yral_mobile.shared.features.chat.generated.resources.assistant_error_connection_timed_out
 import yral_mobile.shared.features.chat.generated.resources.influencer_subscription_purchase_failed
 import yral_mobile.shared.features.chat.generated.resources.influencer_subscription_purchase_pending
 import yral_mobile.shared.features.chat.generated.resources.influencer_subscription_purchase_unavailable
@@ -105,6 +106,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
+@OptIn(FlowPreview::class)
 @Suppress("LongParameterList", "TooManyFunctions", "LargeClass")
 class ConversationViewModel(
     flagManager: FeatureFlagManager,
@@ -1204,6 +1206,25 @@ class ConversationViewModel(
         }
     }
 
+    private suspend fun sendMessageLegacy(
+        conversationId: String,
+        draft: SendMessageDraft,
+        userLocalId: String,
+        assistantLocalId: String,
+        sentAtMs: Long,
+    ) {
+        sendMessageUseCase(
+            SendMessageUseCase.Params(
+                conversationId = conversationId,
+                draft = draft,
+            ),
+        ).onSuccess { result ->
+            handleSendSuccess(result, userLocalId, assistantLocalId, sentAtMs)
+        }.onFailure { error ->
+            handleSendFailure(error, userLocalId, assistantLocalId)
+        }
+    }
+
     @OptIn(ExperimentalTime::class)
     fun sendMessage(draft: SendMessageDraft) {
         val convId = conversationId ?: return
@@ -1289,16 +1310,13 @@ class ConversationViewModel(
             activeReplyCount.update { it + 1 }
             viewModelScope.launch {
                 try {
-                    sendMessageUseCase(
-                        SendMessageUseCase.Params(
-                            conversationId = convId,
-                            draft = draft,
-                        ),
-                    ).onSuccess { result ->
-                        handleSendSuccess(result, localUserId, localAssistantId, now)
-                    }.onFailure { error ->
-                        handleSendFailure(error, localUserId, localAssistantId)
-                    }
+                    sendMessageLegacy(
+                        conversationId = convId,
+                        draft = draft,
+                        userLocalId = localUserId,
+                        assistantLocalId = localAssistantId,
+                        sentAtMs = now,
+                    )
                 } finally {
                     activeReplyCount.update { it - 1 }
                 }
@@ -1450,6 +1468,24 @@ class ConversationViewModel(
         }
     }
 
+    private fun freezeStreamingAssistantPartial(streamingLocalId: String) {
+        _overlay.update { state ->
+            state.copy(
+                pending =
+                    state.pending.map { msg ->
+                        if (msg.localId == streamingLocalId) {
+                            msg.copy(
+                                content = msg.streamingBuffer,
+                                streamingBuffer = null,
+                            )
+                        } else {
+                            msg
+                        }
+                    },
+            )
+        }
+    }
+
     @OptIn(ExperimentalTime::class)
     @Suppress(
         // SSE Token/Done/Failed branches + Phase 5c coalescer + Phase 7
@@ -1479,6 +1515,7 @@ class ConversationViewModel(
             // block can distinguish watchdog cancellation from navigation/reset.
             var lastActivityMs = Clock.System.now().toEpochMilliseconds()
             var idleTimedOut = false
+            val streamJob = coroutineContext[Job]
             val watchdogJob =
                 launch {
                     while (isActive) {
@@ -1487,13 +1524,46 @@ class ConversationViewModel(
                         delay(waitMs)
                         if (Clock.System.now().toEpochMilliseconds() - lastActivityMs >= SSE_IDLE_TIMEOUT_MS) {
                             idleTimedOut = true
-                            this@launch.cancel(SSE_IDLE_CANCEL_MESSAGE)
+                            streamJob?.cancel(SSE_IDLE_CANCEL_MESSAGE)
                             return@launch
                         }
                     }
                 }
 
             try {
+                val pendingTokenText = StringBuilder()
+                var flushJob: Job? = null
+                var hasRenderedToken = false
+
+                suspend fun applyPendingTokens() {
+                    val text = pendingTokenText.toString()
+                    pendingTokenText.clear()
+                    if (text.isEmpty()) return
+                    _overlay.update { state ->
+                        state.copy(
+                            pending =
+                                state.pending.map { msg ->
+                                    if (msg.localId == streamingLocalId) {
+                                        val newBuffer = (msg.streamingBuffer.orEmpty()) + text
+                                        val lock =
+                                            msg.useMarkdownLocked ?: if (newBuffer.isNotEmpty()) {
+                                                newBuffer.shouldRenderAsMarkdown()
+                                            } else {
+                                                null
+                                            }
+                                        hasRenderedToken = true
+                                        msg.copy(
+                                            streamingBuffer = newBuffer,
+                                            useMarkdownLocked = lock,
+                                        )
+                                    } else {
+                                        msg
+                                    }
+                                },
+                        )
+                    }
+                }
+
                 runSuspendCatching {
                     // Phase 5c: token coalescing. Tokens are appended to `pendingTokenText`
                     // and applied to `_overlay` once per ~250ms quiet window (or immediately
@@ -1509,37 +1579,6 @@ class ConversationViewModel(
                     //   - applyPendingTokens is the ONLY writer that grows the streaming
                     //     buffer — the path lock is computed here on the first non-empty
                     //     batch and pinned for the rest of the stream.
-                    val pendingTokenText = StringBuilder()
-                    var flushJob: Job? = null
-
-                    suspend fun applyPendingTokens() {
-                        val text = pendingTokenText.toString()
-                        pendingTokenText.clear()
-                        if (text.isEmpty()) return
-                        _overlay.update { state ->
-                            state.copy(
-                                pending =
-                                    state.pending.map { msg ->
-                                        if (msg.localId == streamingLocalId) {
-                                            val newBuffer = (msg.streamingBuffer.orEmpty()) + text
-                                            val lock =
-                                                msg.useMarkdownLocked ?: if (newBuffer.isNotEmpty()) {
-                                                    newBuffer.shouldRenderAsMarkdown()
-                                                } else {
-                                                    null
-                                                }
-                                            msg.copy(
-                                                streamingBuffer = newBuffer,
-                                                useMarkdownLocked = lock,
-                                            )
-                                        } else {
-                                            msg
-                                        }
-                                    },
-                            )
-                        }
-                    }
-
                     chatRepository
                         .streamMessage(conversationId = conversationId, draft = draft)
                         .collect { event ->
@@ -1549,7 +1588,7 @@ class ConversationViewModel(
                             lastActivityMs = Clock.System.now().toEpochMilliseconds()
                             when (event) {
                                 is StreamEvent.Token -> {
-                                    Logger.i("SSE") { "token len=${event.text.length} text=${event.text}" }
+                                    Logger.i("SSE") { "token len=${event.text.length}" }
                                     // Phase 6: first token of a retry attempt clears any stale error
                                     // bubble so the UI doesn't show "Try again" next to a stream that
                                     // is now succeeding.
@@ -1644,10 +1683,14 @@ class ConversationViewModel(
                                             "message=${assistantError.message} " +
                                             "retryable=${assistantError.retryable} conv=$conversationId"
                                     }
-                                    _overlay.update { state ->
-                                        state.copy(
-                                            pending = state.pending.filterNot { it.localId == streamingLocalId },
-                                        )
+                                    if (hasRenderedToken) {
+                                        freezeStreamingAssistantPartial(streamingLocalId)
+                                    } else {
+                                        _overlay.update { state ->
+                                            state.copy(
+                                                pending = state.pending.filterNot { it.localId == streamingLocalId },
+                                            )
+                                        }
                                     }
                                     // Phase 6: surface the error in the assistant slot. Retain the
                                     // draft alongside it so a retry tap restarts the stream without
@@ -1662,18 +1705,39 @@ class ConversationViewModel(
                             }
                         }
                 }.onFailure { error ->
+                    if (idleTimedOut) return@onFailure
                     Logger.w(ConversationViewModel::class.simpleName!!, error) {
                         "Streaming connection failed conv=$conversationId"
                     }
-                    // Phase 9: a connection-level failure (e.g. backend 404 because the
-                    // streaming endpoint isn't deployed yet, transport-level reset)
-                    // counts toward the circuit breaker so we silently fall back to the
-                    // non-streaming legacy endpoint after STREAM_FAILURE_CIRCUIT_BREAKER
-                    // consecutive failures. No user-visible error here — the next send
-                    // routes via legacySend.
+                    flushJob?.cancelAndJoin()
                     consecutiveStreamFailures += 1
-                    _overlay.update { state ->
-                        state.copy(pending = state.pending.filterNot { it.localId == streamingLocalId })
+                    if (hasRenderedToken) {
+                        freezeStreamingAssistantPartial(streamingLocalId)
+                        _assistantError.value =
+                            AssistantErrorPresentation(
+                                error =
+                                    AssistantError(
+                                        code = AssistantErrorCode.TRANSIENT,
+                                        rawCode = "TRANSIENT",
+                                        message = getString(Res.string.assistant_error_connection_timed_out),
+                                        retryable = true,
+                                    ),
+                                retryDraft = draft,
+                            )
+                    } else {
+                        pendingTokenText.clear()
+                        // If the stream fails before anything is visible (404 during rollout,
+                        // connection refused, TLS reset), complete the SAME optimistic send via
+                        // the legacy endpoint. This is the "silent fallback" path promised by
+                        // the handoff docs, and it prevents the USER Local from staying stuck
+                        // in SENDING just because SSE is unavailable.
+                        sendMessageLegacy(
+                            conversationId = conversationId,
+                            draft = draft,
+                            userLocalId = userLocalId,
+                            assistantLocalId = streamingLocalId,
+                            sentAtMs = Clock.System.now().toEpochMilliseconds(),
+                        )
                     }
                 }
             } finally {
@@ -1704,7 +1768,7 @@ class ConversationViewModel(
         }
     }
 
-    private fun handleSseIdleTimeoutAsTransient(
+    private suspend fun handleSseIdleTimeoutAsTransient(
         streamingLocalId: String,
         draft: SendMessageDraft,
         conversationId: String,
@@ -1725,7 +1789,7 @@ class ConversationViewModel(
                     AssistantError(
                         code = AssistantErrorCode.TRANSIENT,
                         rawCode = "TRANSIENT",
-                        message = "Connection timed out. Try again.",
+                        message = getString(Res.string.assistant_error_connection_timed_out),
                         retryable = true,
                     ),
                 retryDraft = draft,

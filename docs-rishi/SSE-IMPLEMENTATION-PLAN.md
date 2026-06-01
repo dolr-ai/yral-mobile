@@ -2,7 +2,7 @@
 
 **Status:** DRAFT for Rishi's approval — DO NOT IMPLEMENT YET.
 **Date:** 2026-05-29
-**Reference docs:** `~/Claude Projects/yral-rishi-agent/docs/SSE-PROTOCOL.md` (real wire spec), `~/Claude Projects/yral-mobile/POST-MORTEM-CHAT-AS-HUMAN.md` (what NOT to repeat), `~/Claude Projects/yral-mobile/SSE-PLANNING-NOTES.md` (architecture sketch from pre-spec).
+**Reference docs:** `~/Claude Projects/yral-rishi-agent/docs/SSE-PROTOCOL.md` (real wire spec), `POST-MORTEM-CHAT-AS-HUMAN.md` (what NOT to repeat), `SSE-PLANNING-NOTES.md` (architecture sketch from pre-spec).
 
 This plan is written to a real, deployed backend contract. Every design decision is tagged with the post-mortem lesson it addresses.
 

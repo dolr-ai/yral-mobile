@@ -20,6 +20,10 @@ import com.yral.shared.features.chat.domain.models.AssistantError
 import com.yral.shared.features.chat.domain.models.AssistantErrorCode
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import org.jetbrains.compose.resources.stringResource
+import yral_mobile.shared.features.chat.generated.resources.Res
+import yral_mobile.shared.features.chat.generated.resources.assistant_error_rephrase_hint
+import yral_mobile.shared.features.chat.generated.resources.assistant_error_retry
 
 /**
  * Inline error bubble rendered in the assistant's slot when an SSE `error`
@@ -72,7 +76,7 @@ internal fun AssistantErrorBubble(
             when {
                 error.code == AssistantErrorCode.BLOCKED_CONTENT -> {
                     Text(
-                        text = REPHRASE_HINT,
+                        text = stringResource(Res.string.assistant_error_rephrase_hint),
                         style = typography.smRegular,
                         color = textColor.copy(alpha = HINT_ALPHA),
                     )
@@ -80,7 +84,7 @@ internal fun AssistantErrorBubble(
 
                 error.retryable && onRetry != null -> {
                     Text(
-                        text = RETRY_LABEL,
+                        text = stringResource(Res.string.assistant_error_retry),
                         style = typography.smSemiBold,
                         color = YralColors.BlueTextPrimary,
                         modifier = Modifier.clickable { onRetry() },
@@ -92,8 +96,6 @@ internal fun AssistantErrorBubble(
 }
 
 private const val WARNING_ICON = "⚠"
-private const val REPHRASE_HINT = "Try rephrasing your message"
-private const val RETRY_LABEL = "↻ Try again"
 private const val TEXT_ALPHA = 0.85f
 private const val BACKGROUND_ALPHA = 0.5f
 private const val HINT_ALPHA = 0.7f

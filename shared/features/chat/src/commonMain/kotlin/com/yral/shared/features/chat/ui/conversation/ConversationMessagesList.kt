@@ -134,11 +134,8 @@ private fun MessageRow(
     // every time, producing a one-frame flicker.
     //
     // Cursor note: `renderContent` here is cursor-free (just the streamingBuffer
-    // or the message content). Inside RegularBubble the cursor "▌" IS appended to
-    // form the string passed to the renderer — so the renderer DOES see the
-    // cursor on every token. What stays stable across streaming → done is the
-    // cursor-free `content` value that the path decision (`shouldRenderAsMarkdown`)
-    // and the path-lock (`markdownLockedOverride`) are computed against.
+    // or the message content). RegularBubble renders the cursor as a sibling
+    // composable, so the Markdown/Text renderer never sees the moving cursor.
     val renderContent: String?
     val renderMediaUrls: List<String>
     val renderIsFailed: Boolean

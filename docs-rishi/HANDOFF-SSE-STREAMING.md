@@ -22,7 +22,7 @@ Phase 5a/b/c + Phase 4 + Phases 6-9 landed first, then a post-Phase-10 fix pass 
 
 1. `feat(chat): SSE 5a — core streaming plumbing (ChatStreamingDataSource, StreamEvent Flow API)` — adds the Ktor SSE data source, DTOs, the `StreamEvent` Flow contract, the feature flag, and the HTTP client SSE plugin install. Flag off by default.
 2. `feat(chat): SSE rendering pipeline — path lock + cursor isolation + coalescing` — the verified flicker fix. Phase 5b (path lock) and Phase 5c (cursor-out-of-content + 250ms coalescing) ship together because Phase 5b alone left a known-buggy intermediate state.
-3. `docs(chat): SSE planning, post-mortem, and mobile expert lessons` — `SSE-IMPLEMENTATION-PLAN.md`, `SSE-PHASE5B-PLAN.md`, `SSE-PLANNING-NOTES.md`, `POST-MORTEM-CHAT-AS-HUMAN.md`, and the append-only `MOBILE-EXPERT-LESSONS.md`. `AGENTS.md` gets a top-of-file pointer at the lessons file so future sessions read it first.
+3. `docs(chat): SSE planning, post-mortem, and mobile expert lessons` — `SSE-IMPLEMENTATION-PLAN.md`, `SSE-PHASE5B-PLAN.md`, `SSE-PLANNING-NOTES.md`, `POST-MORTEM-CHAT-AS-HUMAN.md`, and the append-only `MOBILE-EXPERT-LESSONS.md`.
 4. `feat(chat): SSE Phase 4 — typed AssistantError plumbing for stream errors` — replaces the inline `LegacyErrorPayloadDto` with a typed `AssistantError` domain model. Sets up Phase 6.
 5. `feat(chat): SSE Phase 6 — AssistantErrorBubble + retry off the typed error` — the visible error bubble. Rendered when an SSE `error` event fires. Retry button is inside the bubble (deviates from spec §4.3's "retry on user message" — rationale in the bubble's KDoc).
 6. `feat(chat): SSE Phase 7 — idle watchdog + single-stream send queue` — 30s idle watchdog synthesizes a TRANSIENT error so a stalled stream stops looking alive. Send queue enforces "at most one SSE collect in flight per conversation"; queued sends drain FIFO on the active stream's terminal event. User Locals still appear in overlay instantly (post-mortem rule: user sees their message instantly).
@@ -68,7 +68,7 @@ If a future session touches `RegularBubble`, `MessagesList`, or `startStreamingA
 
 ## Hard-won lessons file
 
-`MOBILE-EXPERT-LESSONS.md` is append-only and committed at the repo root. It captures P1-P5 from the flicker-debugging arc (multi-flavor install hazard, Gradle build cache, macOS `strings` tooling, claims-vs-code drift, premature theorizing). `AGENTS.md` points at it from the top. Read it before any mobile work.
+`MOBILE-EXPERT-LESSONS.md` is append-only and stored with the rest of these Rishi/SSE handoff docs. It captures P1-P5 from the flicker-debugging arc (multi-flavor install hazard, Gradle build cache, macOS `strings` tooling, claims-vs-code drift, premature theorizing).
 
 ## Test plan — §11 from `SSE-IMPLEMENTATION-PLAN.md`
 
