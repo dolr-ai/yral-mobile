@@ -2011,17 +2011,21 @@ private fun DraftVideoDetailScreen(
             loop = true,
             modifier = Modifier.fillMaxSize(),
         )
-        Icon(
-            painter = painterResource(DesignRes.drawable.arrow_left),
-            contentDescription = "back",
-            tint = Color.White,
+        Box(
             modifier =
                 Modifier
-                    .padding(16.dp)
-                    .size(24.dp)
+                    .size(96.dp)
                     .align(Alignment.TopStart)
                     .clickable { onBack() },
-        )
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(DesignRes.drawable.arrow_left),
+                contentDescription = "back",
+                tint = Color.White,
+                modifier = Modifier.size(24.dp),
+            )
+        }
         YralGradientButton(
             text = stringResource(Res.string.publish_button),
             onClick = onPublish,

@@ -5,7 +5,7 @@
     <string name="create_with_ai">Create with AI</string>
     <string name="add_video_from_device">Add a video from your device.</string>
     <string name="upload_completed">Upload Completed</string>
-    <string name="upload_completed_message">We're processing your video. It'll be in 'Your Videos' under My Profile soon. Happy scrolling!</string>
+    <string name="upload_completed_message">We're processing your video. It'll be in 'My Videos' under My Profile soon. Happy scrolling!</string>
     <string name="upload_video_error">We couldn’t upload your video due to some reasons. Try uploading it again.</string>
     <string name="go_to_home">Go to Home</string>
     <string name="uploading_message">Uploading may take a moment. Feel free to explore more videos on the home page while you wait!</string>

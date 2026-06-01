@@ -201,31 +201,38 @@ private fun Header(
     userName: String?,
     onBack: () -> Unit,
 ) {
-    Row(
+    Box(
         modifier =
             modifier
                 .fillMaxWidth()
                 .paint(
                     painter = painterResource(DesignRes.drawable.shadow),
                     contentScale = ContentScale.FillBounds,
-                ).padding(horizontal = 12.dp, vertical = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.Top,
+                ),
     ) {
-        Image(
-            modifier = Modifier.size(24.dp).clickable { onBack() },
-            painter = painterResource(DesignRes.drawable.arrow_left),
-            contentDescription = "back",
-        )
-        Text(
-            text =
-                if (isOwnProfile) {
-                    stringResource(DesignRes.string.your_videos)
-                } else {
-                    userName ?: ""
-                },
-            style = LocalAppTopography.current.xlBold,
-            color = Color.White,
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.Top,
+        ) {
+            Image(
+                modifier = Modifier.size(24.dp),
+                painter = painterResource(DesignRes.drawable.arrow_left),
+                contentDescription = "back",
+            )
+            Text(
+                text =
+                    if (isOwnProfile) {
+                        stringResource(DesignRes.string.your_videos)
+                    } else {
+                        userName ?: ""
+                    },
+                style = LocalAppTopography.current.xlBold,
+                color = Color.White,
+            )
+        }
+        Box(
+            modifier = Modifier.padding(start = 0.dp, top = 0.dp).size(96.dp).clickable { onBack() },
         )
     }
 }
