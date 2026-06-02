@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -27,6 +28,7 @@ import androidx.compose.ui.draw.paint
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
 import com.yral.shared.analytics.events.SignupPageName
@@ -43,7 +45,6 @@ import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.FOLLOW_NU
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.SIGN_UP_PAGE
 import com.yral.shared.features.feed.viewmodel.OnboardingStep
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
-import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastType
 import com.yral.shared.libs.designsystem.component.toast.showError
@@ -162,7 +163,7 @@ fun FeedScreen(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
         ) {
-            YralLoader(size = 48.dp)
+            FeedLoadingIndicator(size = 48.dp)
         }
         return
     }
@@ -251,7 +252,7 @@ fun FeedScreen(
                             .padding(vertical = 8.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    YralLoader(size = 20.dp)
+                    FeedLoadingIndicator(size = 20.dp)
                 }
             }
         } else {
@@ -259,7 +260,7 @@ fun FeedScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center,
             ) {
-                YralLoader()
+                FeedLoadingIndicator()
             }
         }
     }
@@ -494,6 +495,15 @@ private fun ScrollChevronIndicator(modifier: Modifier = Modifier) {
 }
 
 @Composable
+private fun FeedLoadingIndicator(size: Dp = 40.dp) {
+    CircularProgressIndicator(
+        modifier = Modifier.size(size),
+        color = YralColors.NeutralIconsActive,
+        strokeWidth = FEED_LOADING_STROKE_WIDTH,
+    )
+}
+
+@Composable
 internal expect fun KeepScreenOnEffect(keepScreenOn: Boolean)
 
 private const val CHEVRON_STROKE_WIDTH_RATIO = 0.08f
@@ -503,3 +513,4 @@ private const val CHEVRON_FIRST_TOP_Y_RATIO = 0.24f
 private const val CHEVRON_FIRST_BOTTOM_Y_RATIO = 0.44f
 private const val CHEVRON_SECOND_TOP_Y_RATIO = 0.50f
 private const val CHEVRON_SECOND_BOTTOM_Y_RATIO = 0.70f
+private val FEED_LOADING_STROKE_WIDTH = 2.dp

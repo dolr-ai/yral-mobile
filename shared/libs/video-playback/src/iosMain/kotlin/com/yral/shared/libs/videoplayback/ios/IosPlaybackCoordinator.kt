@@ -76,6 +76,7 @@ private class IosPlaybackCoordinator(
     private var activeIndex: Int = -1
     private var predictedIndex: Int = -1
     private var userInteracting: Boolean = false
+    private var pendingDiskPrefetchCenterIndex: Int? = null
 
     private val playStartMsById = mutableMapOf<String, Long>()
     private var firstFramePendingIndex: Int? = null
@@ -150,7 +151,10 @@ private class IosPlaybackCoordinator(
             activeSlot.player.pause()
             preparedSlot?.player?.pause()
             activeSlot.index = null
+            activeSlot.source = null
             preparedSlot?.index = null
+            preparedSlot?.source = null
+            pendingDiskPrefetchCenterIndex = null
             return
         }
 
@@ -170,7 +174,10 @@ private class IosPlaybackCoordinator(
 
     override fun setActiveIndex(index: Int) {
         if (index !in feed.indices) return
-        if (index == activeIndex && activeSlot.index == index) return
+        if (index == activeIndex && activeSlot.index == index) {
+            enforceSingleActivePlayback()
+            return
+        }
 
         endStartupStall(activeIndex)
         activeIndex = index
@@ -193,6 +200,7 @@ private class IosPlaybackCoordinator(
 
         attachIfBound(activeSlot)
         activeSlot.player.playImmediatelyAtRate(1.0F)
+        enforceSingleActivePlayback()
 
         schedulePreparedSlot(index)
         scheduleDiskPrefetch(index)
@@ -209,7 +217,16 @@ private class IosPlaybackCoordinator(
     }
 
     override fun setUserInteracting(isInteracting: Boolean) {
+        if (userInteracting == isInteracting) return
         userInteracting = isInteracting
+        if (isInteracting) {
+            cancelPrefetch(reason = "interaction")
+        } else {
+            pendingDiskPrefetchCenterIndex?.let { centerIndex ->
+                pendingDiskPrefetchCenterIndex = null
+                scheduleDiskPrefetch(centerIndex)
+            }
+        }
     }
 
     override fun bindSurface(
@@ -222,6 +239,7 @@ private class IosPlaybackCoordinator(
         } else if (preparedSlot?.index == index) {
             preparedSlot?.let { attachIfBound(it) }
         }
+        enforceSingleActivePlayback()
     }
 
     override fun unbindSurface(
@@ -250,6 +268,7 @@ private class IosPlaybackCoordinator(
     override fun onAppForeground() {
         if (activeSlot.index in feed.indices) {
             activeSlot.player.playImmediatelyAtRate(1.0F)
+            enforceSingleActivePlayback()
         }
     }
 
@@ -257,6 +276,7 @@ private class IosPlaybackCoordinator(
         activeSlot.player.pause()
         preparedSlot?.player?.pause()
         cancelPrefetch(reason = "background")
+        pendingDiskPrefetchCenterIndex = null
     }
 
     override fun release() {
@@ -267,6 +287,7 @@ private class IosPlaybackCoordinator(
         activeSlot.player.pause()
         preparedSlot?.player?.pause()
         cancelPrefetch(reason = "release")
+        pendingDiskPrefetchCenterIndex = null
         cache.close()
         preparedScheduler.reset("release") { feed.getOrNull(it)?.id }
         firstFrameStartupWatchdog.clear()
@@ -281,20 +302,33 @@ private class IosPlaybackCoordinator(
             if (prepared.index != nextIndex) {
                 prepareSlot(prepared, nextIndex, shouldPlay = false)
             }
+            prepared.player.pause()
             preparedScheduler.setStartTime(nowMs())
+            enforceSingleActivePlayback()
         }
     }
 
     private fun swapSlots() {
         val prepared = preparedSlot ?: return
         val previousActive = activeSlot
+        val previousActiveIndex = previousActive.index
+        previousActive.player.pause()
+        if (previousActiveIndex != null) {
+            detachSurface(previousActiveIndex, previousActive.player)
+        }
         activeSlot = prepared
         preparedSlot = previousActive
+        previousActive.index = null
+        previousActive.source = null
         preparedScheduler.clearOnSwap()
     }
 
     @Suppress("LoopWithTooManyJumpStatements")
     private fun scheduleDiskPrefetch(centerIndex: Int) {
+        if (userInteracting) {
+            pendingDiskPrefetchCenterIndex = centerIndex
+            return
+        }
         val result = preloadScheduler.update(centerIndex, feed.size) { feed.getOrNull(it)?.id }
         for (index in result.toCancel) {
             feed.getOrNull(index)?.let { item ->
@@ -302,9 +336,12 @@ private class IosPlaybackCoordinator(
             }
         }
 
+        var startedPrefetchCount = 0
         for (index in result.toStart) {
             if (index !in result.window.disk) continue
+            if (startedPrefetchCount >= MAX_SCROLL_SETTLED_PREFETCH_STARTS) continue
             val item = feed.getOrNull(index) ?: continue
+            startedPrefetchCount++
             cache.prefetch(
                 descriptor = item,
                 onComplete = { bytes, fromCache ->
@@ -320,6 +357,7 @@ private class IosPlaybackCoordinator(
     private fun cancelPrefetch(reason: String) {
         preloadScheduler.reset(reason) { feed.getOrNull(it)?.id }
         cache.cancelAll()
+        pendingDiskPrefetchCenterIndex = null
     }
 
     private fun prepareSlot(
@@ -343,6 +381,7 @@ private class IosPlaybackCoordinator(
         } else {
             slot.player.pause()
         }
+        enforceSingleActivePlayback()
     }
 
     private fun attachIfBound(slot: PlayerSlot) {
@@ -364,6 +403,34 @@ private class IosPlaybackCoordinator(
         if (handle.controller.player == player) {
             handle.controller.player = null
             handle.playerState.value = null
+        }
+    }
+
+    private fun enforceSingleActivePlayback() {
+        if (activeSlot.index != activeIndex) {
+            activeSlot.player.pause()
+        }
+        val prepared = preparedSlot
+        if (prepared != null) {
+            prepared.player.pause()
+            val preparedIndex = prepared.index
+            if (preparedIndex != null && preparedIndex == activeIndex) {
+                detachSurface(preparedIndex, prepared.player)
+            }
+        }
+        detachStaleSurfacePlayers()
+    }
+
+    private fun detachStaleSurfacePlayers() {
+        surfaces.forEach { (index, surface) ->
+            val handle = surface as? IosVideoSurfaceHandle ?: return@forEach
+            val player = handle.controller.player ?: return@forEach
+            val isValidActiveSurface = index == activeIndex && activeSlot.index == index && player == activeSlot.player
+            val isValidPreparedSurface = preparedSlot?.let { it.index == index && player == it.player } == true
+            if (!isValidActiveSurface && !isValidPreparedSurface) {
+                handle.controller.player = null
+                handle.playerState.value = null
+            }
         }
     }
 
@@ -470,6 +537,7 @@ private class IosPlaybackCoordinator(
                     activeSlot.source = replacementBuild.source
                     activeSlot.player.replaceCurrentItemWithPlayerItem(replacement)
                     activeSlot.player.playImmediatelyAtRate(1.0F)
+                    enforceSingleActivePlayback()
                     firstFramePendingIndex = index
                     firstFrameStartupWatchdog.start(index, nowMs())
                     playStartMsById[item.id] = nowMs()
@@ -563,11 +631,16 @@ private class IosPlaybackCoordinator(
                 firstFramePending = firstFramePendingIndex == index,
             )
         when (action) {
-            FirstFrameStartupAction.None -> Unit
+            FirstFrameStartupAction.None -> {
+                Unit
+            }
+
             FirstFrameStartupAction.Resume -> {
                 startStartupStall(index, item, "first_frame_resume")
                 activeSlot.player.playImmediatelyAtRate(1.0F)
+                enforceSingleActivePlayback()
             }
+
             FirstFrameStartupAction.Rebuild -> {
                 startStartupStall(index, item, "first_frame_rebuild")
                 val replacementBuild = buildPlayerItem(item, index)
@@ -577,9 +650,11 @@ private class IosPlaybackCoordinator(
                 activeSlot.player.replaceCurrentItemWithPlayerItem(replacement)
                 attachIfBound(activeSlot)
                 activeSlot.player.playImmediatelyAtRate(1.0F)
+                enforceSingleActivePlayback()
                 firstFramePendingIndex = index
                 playStartMsById[item.id] = nowMs()
             }
+
             FirstFrameStartupAction.GiveUp -> {
                 firstFramePendingIndex = null
                 firstFrameStartupWatchdog.clear(index)
@@ -741,5 +816,6 @@ private class IosPlaybackCoordinator(
 
     private companion object {
         private const val IOS_PLAYBACK_CODE = "ios"
+        private const val MAX_SCROLL_SETTLED_PREFETCH_STARTS = 1
     }
 }

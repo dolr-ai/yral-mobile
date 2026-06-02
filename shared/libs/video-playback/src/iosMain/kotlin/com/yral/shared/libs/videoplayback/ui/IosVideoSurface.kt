@@ -106,13 +106,11 @@ actual fun VideoSurface(
                 }
             },
             onReset = { view ->
-                view.controller.player = null
-                playerState.value = null
+                clearPlayer(view, playerState)
                 handle = null
             },
             onRelease = { view ->
-                view.controller.player = null
-                playerState.value = null
+                clearPlayer(view, playerState)
                 handle = null
             },
         )
@@ -152,7 +150,7 @@ actual fun VideoSurface(
         updateShutter()
         val observer =
             player?.addPeriodicTimeObserverForInterval(
-                interval = CMTimeMakeWithSeconds(0.05, 600),
+                interval = CMTimeMakeWithSeconds(SHUTTER_OBSERVER_INTERVAL_SECONDS, PREFERRED_TIME_SCALE),
                 queue = null,
             ) {
                 updateShutter()
@@ -165,8 +163,23 @@ actual fun VideoSurface(
     }
 }
 
+private fun clearPlayer(
+    view: PlayerViewContainer,
+    playerState: MutableState<AVPlayer?>,
+) {
+    if (view.controller.player != null) {
+        view.controller.player = null
+    }
+    if (playerState.value != null) {
+        playerState.value = null
+    }
+}
+
 private fun videoGravityFor(contentScale: ContentScale): String? =
     when (contentScale) {
         ContentScale.Crop -> AVLayerVideoGravityResizeAspectFill
         else -> AVLayerVideoGravityResizeAspect
     }
+
+private const val SHUTTER_OBSERVER_INTERVAL_SECONDS = 0.2
+private const val PREFERRED_TIME_SCALE = 600
