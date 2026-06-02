@@ -50,6 +50,7 @@ fun createAndroidPlaybackCoordinator(
 ): PlaybackCoordinator = AndroidPlaybackCoordinator(context, deps)
 
 @OptIn(UnstableApi::class)
+@Suppress("TooManyFunctions")
 private class AndroidPlaybackCoordinator(
     context: Context,
     private val deps: CoordinatorDeps,
@@ -414,6 +415,8 @@ private class AndroidPlaybackCoordinator(
         preloadManager.invalidate()
         preloadScheduler.update(predictedIndex, feed.size) { feed.getOrNull(it)?.id }
     }
+
+    override fun setUserInteracting(isInteracting: Boolean) = Unit
 
     override fun bindSurface(
         index: Int,

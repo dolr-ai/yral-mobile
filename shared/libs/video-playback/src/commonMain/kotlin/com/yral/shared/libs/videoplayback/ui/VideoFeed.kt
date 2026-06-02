@@ -133,6 +133,14 @@ fun VideoPagerEffects(
                 }
             }
     }
+
+    LaunchedEffect(pagerState, coordinator) {
+        snapshotFlow { pagerState.isScrollInProgress }
+            .distinctUntilChanged()
+            .collectLatest { isInteracting ->
+                coordinator.setUserInteracting(isInteracting)
+            }
+    }
 }
 
 fun predictedIndexFromOffset(

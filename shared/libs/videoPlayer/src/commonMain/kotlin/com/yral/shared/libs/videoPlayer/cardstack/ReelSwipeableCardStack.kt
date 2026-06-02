@@ -101,6 +101,18 @@ internal fun ReelSwipeableCardStack(
         )
     VideoFeedSync(items = mediaItems, coordinator = coordinator)
 
+    LaunchedEffect(swipeState, coordinator) {
+        snapshotFlow {
+            swipeState.isTouching ||
+                swipeState.isDragging ||
+                swipeState.isAnimating ||
+                swipeState.currentIndex != swipeState.settledIndex
+        }.distinctUntilChanged()
+            .collect { isInteracting ->
+                coordinator.setUserInteracting(isInteracting)
+            }
+    }
+
     LaunchedEffect(swipeState, mediaItems.size, coordinator) {
         snapshotFlow { swipeState.currentIndex }
             .distinctUntilChanged()

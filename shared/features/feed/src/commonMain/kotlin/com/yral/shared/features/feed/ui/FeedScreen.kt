@@ -1,5 +1,6 @@
 package com.yral.shared.features.feed.ui
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
@@ -41,8 +44,6 @@ import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.SIGN_UP_P
 import com.yral.shared.features.feed.viewmodel.OnboardingStep
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
 import com.yral.shared.libs.designsystem.component.YralLoader
-import com.yral.shared.libs.designsystem.component.lottie.LottieRes
-import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastType
 import com.yral.shared.libs.designsystem.component.toast.showError
@@ -447,12 +448,58 @@ private fun LoginBottomContent() {
             style = LocalAppTopography.current.mdBold,
             color = YralColors.NeutralIconsActive,
         )
-        YralLottieAnimation(
-            modifier = Modifier.size(36.dp),
-            LottieRes.SIGNUP_SCROLL,
+        ScrollChevronIndicator(modifier = Modifier.size(36.dp))
+    }
+}
+
+@Composable
+private fun ScrollChevronIndicator(modifier: Modifier = Modifier) {
+    val color = YralColors.NeutralIconsActive
+
+    Canvas(modifier = modifier) {
+        val strokeWidth = size.minDimension * CHEVRON_STROKE_WIDTH_RATIO
+        val centerX = size.width / 2f
+        val leftX = size.width * CHEVRON_LEFT_X_RATIO
+        val rightX = size.width * CHEVRON_RIGHT_X_RATIO
+
+        fun drawChevron(
+            topY: Float,
+            bottomY: Float,
+        ) {
+            drawLine(
+                color = color,
+                start = Offset(leftX, topY),
+                end = Offset(centerX, bottomY),
+                strokeWidth = strokeWidth,
+                cap = StrokeCap.Round,
+            )
+            drawLine(
+                color = color,
+                start = Offset(rightX, topY),
+                end = Offset(centerX, bottomY),
+                strokeWidth = strokeWidth,
+                cap = StrokeCap.Round,
+            )
+        }
+
+        drawChevron(
+            topY = size.height * CHEVRON_FIRST_TOP_Y_RATIO,
+            bottomY = size.height * CHEVRON_FIRST_BOTTOM_Y_RATIO,
+        )
+        drawChevron(
+            topY = size.height * CHEVRON_SECOND_TOP_Y_RATIO,
+            bottomY = size.height * CHEVRON_SECOND_BOTTOM_Y_RATIO,
         )
     }
 }
 
 @Composable
 internal expect fun KeepScreenOnEffect(keepScreenOn: Boolean)
+
+private const val CHEVRON_STROKE_WIDTH_RATIO = 0.08f
+private const val CHEVRON_LEFT_X_RATIO = 0.28f
+private const val CHEVRON_RIGHT_X_RATIO = 0.72f
+private const val CHEVRON_FIRST_TOP_Y_RATIO = 0.24f
+private const val CHEVRON_FIRST_BOTTOM_Y_RATIO = 0.44f
+private const val CHEVRON_SECOND_TOP_Y_RATIO = 0.50f
+private const val CHEVRON_SECOND_BOTTOM_Y_RATIO = 0.70f

@@ -8,6 +8,7 @@ import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.libs.videoplayback.MediaDescriptor
 import com.yral.shared.libs.videoplayback.PlaybackEventReporter
 import org.koin.compose.koinInject
@@ -131,6 +132,7 @@ internal class MediaLoadCrashlyticsReporter(
                 message = message,
                 throwable = throwable,
             ),
+            ExceptionType.VIDEO,
         )
     }
 }

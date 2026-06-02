@@ -36,6 +36,8 @@ import platform.AVFoundation.pause
 import platform.AVFoundation.playImmediatelyAtRate
 import platform.AVFoundation.preferredForwardBufferDuration
 import platform.AVFoundation.prerollAtRate
+import platform.AVFoundation.rate
+import platform.AVFoundation.reasonForWaitingToPlay
 import platform.AVFoundation.replaceCurrentItemWithPlayerItem
 import platform.AVFoundation.timeControlStatus
 import platform.CoreMedia.CMTimeGetSeconds
@@ -51,7 +53,7 @@ import kotlin.time.ExperimentalTime
 @Suppress("MaxLineLength")
 fun createIosPlaybackCoordinator(deps: CoordinatorDeps = CoordinatorDeps()): PlaybackCoordinator = IosPlaybackCoordinator(deps)
 
-@Suppress("TooManyFunctions")
+@Suppress("TooManyFunctions", "LargeClass")
 private class IosPlaybackCoordinator(
     private val deps: CoordinatorDeps,
 ) : PlaybackCoordinator {
@@ -73,6 +75,7 @@ private class IosPlaybackCoordinator(
     private var feed: List<MediaDescriptor> = emptyList()
     private var activeIndex: Int = -1
     private var predictedIndex: Int = -1
+    private var userInteracting: Boolean = false
 
     private val playStartMsById = mutableMapOf<String, Long>()
     private var firstFramePendingIndex: Int? = null
@@ -205,6 +208,10 @@ private class IosPlaybackCoordinator(
         scheduleDiskPrefetch(predictedIndex)
     }
 
+    override fun setUserInteracting(isInteracting: Boolean) {
+        userInteracting = isInteracting
+    }
+
     override fun bindSurface(
         index: Int,
         surface: VideoSurfaceHandle,
@@ -321,13 +328,15 @@ private class IosPlaybackCoordinator(
         shouldPlay: Boolean,
     ) {
         val descriptor = feed[index]
-        val item = buildPlayerItem(descriptor, index)
+        val itemBuild = buildPlayerItem(descriptor, index)
+        val item = itemBuild.item
         item.preferredForwardBufferDuration = 1.0
         val previousIndex = slot.index
         if (previousIndex != null && previousIndex != index) {
             detachSurface(previousIndex, slot.player)
         }
         slot.index = index
+        slot.source = itemBuild.source
         slot.player.replaceCurrentItemWithPlayerItem(item)
         if (shouldPlay) {
             slot.player.playImmediatelyAtRate(1.0F)
@@ -361,14 +370,38 @@ private class IosPlaybackCoordinator(
     private fun buildPlayerItem(
         descriptor: MediaDescriptor,
         index: Int,
-    ): AVPlayerItem {
+    ): PlayerItemBuildResult {
         val cachedUrl = cache.cachedFileUrl(descriptor)
         val url =
             cachedUrl ?: NSURL.URLWithString(descriptor.uri) ?: run {
                 val message = "Invalid media URL for id=${descriptor.id}, uri=${descriptor.uri}"
                 reporter.playbackError(descriptor.id, index, "invalid_url", "ios", message)
-                return AVPlayerItem()
+                return PlayerItemBuildResult(
+                    item = AVPlayerItem(),
+                    source =
+                        PlaybackSourceDiagnostics(
+                            mediaId = descriptor.id,
+                            index = index,
+                            uri = descriptor.uri,
+                            source = "invalid",
+                            urlScheme = "invalid",
+                            headersPresent = descriptor.headers.isNotEmpty(),
+                            headerNames = descriptor.headers.keys.sorted(),
+                            builtAtMs = nowMs(),
+                        ),
+                )
             }
+        val source =
+            PlaybackSourceDiagnostics(
+                mediaId = descriptor.id,
+                index = index,
+                uri = descriptor.uri,
+                source = if (cachedUrl != null) "cache" else "remote",
+                urlScheme = url.scheme ?: "unknown",
+                headersPresent = cachedUrl == null && descriptor.headers.isNotEmpty(),
+                headerNames = if (cachedUrl == null) descriptor.headers.keys.sorted() else emptyList(),
+                builtAtMs = nowMs(),
+            )
         val options: Map<Any?, *>? =
             if (cachedUrl == null && descriptor.headers.isNotEmpty()) {
                 mapOf("AVURLAssetHTTPHeaderFieldsKey" to descriptor.headers)
@@ -381,7 +414,10 @@ private class IosPlaybackCoordinator(
         } else {
             reporter.cacheMiss(descriptor.id, 0)
         }
-        return AVPlayerItem(asset = asset)
+        return PlayerItemBuildResult(
+            item = AVPlayerItem(asset = asset),
+            source = source,
+        )
     }
 
     private fun registerObservers() {
@@ -428,8 +464,10 @@ private class IosPlaybackCoordinator(
                     val index = activeSlot.index ?: return@addObserverForName
                     val item = feed.getOrNull(index) ?: return@addObserverForName
                     reporter.playbackEnded(item.id, index)
-                    val replacement = buildPlayerItem(item, index)
+                    val replacementBuild = buildPlayerItem(item, index)
+                    val replacement = replacementBuild.item
                     replacement.preferredForwardBufferDuration = 1.0
+                    activeSlot.source = replacementBuild.source
                     activeSlot.player.replaceCurrentItemWithPlayerItem(replacement)
                     activeSlot.player.playImmediatelyAtRate(1.0F)
                     firstFramePendingIndex = index
@@ -517,6 +555,7 @@ private class IosPlaybackCoordinator(
         index: Int,
         item: MediaDescriptor,
     ) {
+        if (!canRecoverStartup(index)) return
         val action =
             firstFrameStartupWatchdog.evaluate(
                 index = index,
@@ -531,8 +570,10 @@ private class IosPlaybackCoordinator(
             }
             FirstFrameStartupAction.Rebuild -> {
                 startStartupStall(index, item, "first_frame_rebuild")
-                val replacement = buildPlayerItem(item, index)
+                val replacementBuild = buildPlayerItem(item, index)
+                val replacement = replacementBuild.item
                 replacement.preferredForwardBufferDuration = 1.0
+                activeSlot.source = replacementBuild.source
                 activeSlot.player.replaceCurrentItemWithPlayerItem(replacement)
                 attachIfBound(activeSlot)
                 activeSlot.player.playImmediatelyAtRate(1.0F)
@@ -547,11 +588,77 @@ private class IosPlaybackCoordinator(
                     id = item.id,
                     index = index,
                     category = "startup_timeout",
-                    code = "ios",
-                    message = "First frame did not render after playback recovery",
+                    code = IOS_PLAYBACK_CODE,
+                    message = startupDiagnosticMessage(index, item, "startup_timeout"),
                 )
             }
         }
+    }
+
+    private fun canRecoverStartup(index: Int): Boolean =
+        !userInteracting &&
+            activeIndex == index &&
+            activeSlot.index == index &&
+            firstFramePendingIndex == index &&
+            surfaceHasActivePlayer(index)
+
+    private fun surfaceHasActivePlayer(index: Int): Boolean {
+        val surface = surfaces[index] as? IosVideoSurfaceHandle ?: return false
+        return surface.controller.player == activeSlot.player
+    }
+
+    @Suppress("CyclomaticComplexMethod")
+    @OptIn(ExperimentalForeignApi::class)
+    private fun startupDiagnosticMessage(
+        index: Int,
+        item: MediaDescriptor,
+        action: String,
+    ): String {
+        val player = activeSlot.player
+        val playerItem = player.currentItem
+        val source = activeSlot.source
+        val currentSeconds = CMTimeGetSeconds(player.currentTime()).finiteOrNull()
+        val durationSeconds =
+            playerItem
+                ?.duration
+                ?.let { CMTimeGetSeconds(it) }
+                ?.finiteOrNull()
+        val itemError = playerItem?.error
+        val surface = surfaces[index] as? IosVideoSurfaceHandle
+        val surfaceBound = surface != null
+        val surfaceHasActivePlayer = surface?.controller?.player == player
+        val playStartMs = playStartMsById[item.id]
+        val elapsedMs = playStartMs?.let { nowMs() - it }
+        val sourceAgeMs = source?.builtAtMs?.let { nowMs() - it }
+
+        return buildList {
+            add("action=$action")
+            add("platform=ios")
+            add("media_id=${item.id}")
+            add("index=$index")
+            add("active_index=$activeIndex")
+            add("slot_index=${activeSlot.index}")
+            elapsedMs?.let { add("elapsed_ms=$it") }
+            add("first_frame_pending=${firstFramePendingIndex == index}")
+            add("player_time_control_status=${player.timeControlStatus}")
+            add("player_rate=${player.rate}")
+            currentSeconds?.let { add("player_current_seconds=$it") }
+            add("player_reason_for_waiting=${player.reasonForWaitingToPlay ?: "none"}")
+            add("item_status=${playerItem?.status ?: "none"}")
+            durationSeconds?.let { add("item_duration_seconds=$it") }
+            itemError?.code?.let { add("item_error_code=$it") }
+            itemError?.localizedDescription?.let { add("item_error_message=${it.compactForDiagnostics()}") }
+            add("surface_bound=$surfaceBound")
+            add("surface_has_active_player=$surfaceHasActivePlayer")
+            add("source=${source?.source ?: "unknown"}")
+            add("source_url_scheme=${source?.urlScheme ?: "unknown"}")
+            add("source_headers_present=${source?.headersPresent ?: false}")
+            source?.headerNames?.takeIf { it.isNotEmpty() }?.let {
+                add("source_header_names=${it.joinToString(",").compactForDiagnostics()}")
+            }
+            sourceAgeMs?.let { add("source_age_ms=$it") }
+            add("uri=${item.uri.compactForDiagnostics()}")
+        }.joinToString(separator = " ")
     }
 
     private fun startStartupStall(
@@ -578,6 +685,23 @@ private class IosPlaybackCoordinator(
     private data class PlayerSlot(
         val player: AVPlayer,
         var index: Int? = null,
+        var source: PlaybackSourceDiagnostics? = null,
+    )
+
+    private data class PlayerItemBuildResult(
+        val item: AVPlayerItem,
+        val source: PlaybackSourceDiagnostics,
+    )
+
+    private data class PlaybackSourceDiagnostics(
+        val mediaId: String,
+        val index: Int,
+        val uri: String,
+        val source: String,
+        val urlScheme: String,
+        val headersPresent: Boolean,
+        val headerNames: List<String>,
+        val builtAtMs: Long,
     )
 
     @Suppress("ReturnCount", "MagicNumber")
@@ -604,5 +728,18 @@ private class IosPlaybackCoordinator(
             positionMs = positionMs,
             durationMs = durationMs,
         )
+    }
+
+    private fun Double.finiteOrNull(): Double? =
+        if (isFinite()) {
+            this
+        } else {
+            null
+        }
+
+    private fun String.compactForDiagnostics(): String = replace(Regex("\\s+"), "_")
+
+    private companion object {
+        private const val IOS_PLAYBACK_CODE = "ios"
     }
 }
