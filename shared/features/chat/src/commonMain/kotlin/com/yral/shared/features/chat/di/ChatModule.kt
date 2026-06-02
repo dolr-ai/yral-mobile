@@ -1,5 +1,6 @@
 package com.yral.shared.features.chat.di
 
+import com.yral.shared.core.di.BILLING_SERVER_BASE_URL
 import com.yral.shared.core.di.CHAT_SERVER_BASE_URL
 import com.yral.shared.core.di.INFLUENCER_FEED_SERVER_BASE_URL
 import com.yral.shared.features.chat.analytics.ChatTelemetry
@@ -59,6 +60,7 @@ val chatModule =
             ChatAccessBillingRemoteDataSource(
                 httpClient = get(),
                 json = get<Json>(),
+                billingBaseUrl = get(BILLING_SERVER_BASE_URL),
                 packageName = getAppPackageName(),
             )
         }

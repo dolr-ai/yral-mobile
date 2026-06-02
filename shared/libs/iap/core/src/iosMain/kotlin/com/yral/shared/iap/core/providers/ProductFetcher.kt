@@ -1,5 +1,9 @@
 package com.yral.shared.iap.core.providers
 
+import co.touchlab.kermit.Logger
+import co.touchlab.kermit.Severity
+import co.touchlab.kermit.StaticConfig
+import co.touchlab.kermit.platformLogWriter
 import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.Product
 import com.yral.shared.iap.core.model.ProductId
@@ -9,6 +13,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.Foundation.NSError
 import platform.Foundation.NSLocaleCurrencyCode
 import platform.Foundation.NSLock
+import platform.Foundation.NSLog
 import platform.Foundation.NSNumberFormatter
 import platform.Foundation.NSNumberFormatterCurrencyStyle
 import platform.Foundation.NSSet
@@ -25,14 +30,26 @@ import kotlin.math.roundToLong
 internal class ProductFetcher {
     private val productCache = mutableMapOf<String, SKProduct>()
     private val productCacheLock = NSLock()
+    private val logger =
+        Logger(
+            tag = TAG,
+            config =
+                StaticConfig(
+                    minSeverity = Severity.Info,
+                    logWriterList = listOf(platformLogWriter()),
+                ),
+        )
 
     companion object {
+        private const val TAG = "SubscriptionX"
+        private const val LOG_PREFIX = "YRALIAP"
         private const val PRICE_TO_MICROS_FACTOR = 1_000_000L
     }
 
     suspend fun fetchProducts(productIds: List<ProductId>): Result<List<Product>> =
         suspendCancellableCoroutine { continuation ->
             val productIdStrings = productIds.map { it.productId }
+            logProductFetch("Fetching iOS products: $productIdStrings")
             val productIdentifiers = NSSet.setWithArray(productIdStrings)
             val request = SKProductsRequest(productIdentifiers = productIdentifiers)
 
@@ -45,6 +62,8 @@ internal class ProductFetcher {
                         val products = didReceiveResponse.products
                         val productList = mutableListOf<Product>()
                         val tmpProductCache = mutableMapOf<String, SKProduct>()
+                        val invalidProductIds =
+                            didReceiveResponse.invalidProductIdentifiers.mapNotNull { it as? String }
 
                         for (i in 0 until products.size) {
                             val skProduct = products[i] as? SKProduct
@@ -92,6 +111,9 @@ internal class ProductFetcher {
                             productCache.putAll(tmpProductCache)
                         }
 
+                        logProductFetch(
+                            "Fetched iOS products: valid=${productList.map { it.id }}, invalid=$invalidProductIds",
+                        )
                         continuation.resume(Result.success(productList))
                     }
 
@@ -100,6 +122,7 @@ internal class ProductFetcher {
                         didFailWithError: NSError,
                     ) {
                         request.cancel()
+                        logProductFetch("Failed to fetch iOS products: ${didFailWithError.localizedDescription}")
                         continuation.resume(
                             Result.failure(
                                 IAPError.NetworkError(
@@ -117,6 +140,12 @@ internal class ProductFetcher {
                 request.cancel()
             }
         }
+
+    private fun logProductFetch(message: String) {
+        val prefixedMessage = "$LOG_PREFIX $message"
+        logger.i { prefixedMessage }
+        NSLog(prefixedMessage)
+    }
 
     suspend fun getOrFetchSKProduct(productId: ProductId): SKProduct? {
         val productIdString = productId.productId

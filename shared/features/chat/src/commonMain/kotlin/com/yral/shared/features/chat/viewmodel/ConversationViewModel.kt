@@ -564,6 +564,11 @@ class ConversationViewModel(
 
     private fun fetchInfluencerSubscriptionProducts() {
         viewModelScope.launch {
+            crashlyticsManager.logMessage(
+                "YRALIAP chat fetchProducts start ids=[${ProductId.DAILY_CHAT.productId}] " +
+                    "subEnabled=${_viewState.value.isSubscriptionEnabled} " +
+                    "hasAccess=${_viewState.value.isInfluencerSubscriptionPurchasedAndVerified}",
+            )
             fetchProductsUseCase(listOf(ProductId.DAILY_CHAT))
                 .onSuccess { products ->
                     val influencerAvailable = ProductId.DAILY_CHAT.productId in products.map { it.id }.toSet()
@@ -577,7 +582,14 @@ class ConversationViewModel(
                             influencerSubscriptionFormattedPrice = influencerOfferPrice,
                         )
                     }
+                    crashlyticsManager.logMessage(
+                        "YRALIAP chat fetchProducts success valid=${products.map { it.id }} " +
+                            "dailyChatAvailable=$influencerAvailable price=$influencerOfferPrice",
+                    )
                 }.onFailure {
+                    crashlyticsManager.logMessage(
+                        "YRALIAP chat fetchProducts failure error=${it::class.simpleName} message=${it.message}",
+                    )
                     _viewState.update {
                         it.copy(
                             isInfluencerSubscriptionAvailableToPurchase = false,
