@@ -35,8 +35,10 @@ import yral_mobile.shared.features.chat.generated.resources.camera
 import yral_mobile.shared.features.chat.generated.resources.message_placeholder
 import yral_mobile.shared.features.chat.generated.resources.photo_library
 import yral_mobile.shared.features.chat.generated.resources.send
+import yral_mobile.shared.features.chat.generated.resources.voice_message
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_camera
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_gallery
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_microphone
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_plus_circle
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_send
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_send_disabled
@@ -52,6 +54,7 @@ internal fun ChatInputArea(
     onSendClick: () -> Unit,
     onCameraClick: (() -> Unit)? = null,
     onGalleryClick: (() -> Unit)? = null,
+    onMicClick: (() -> Unit)? = null,
     showAttachmentMenu: Boolean = true,
     placeholder: String? = null,
     hasWaitingAssistant: Boolean = false,
@@ -108,6 +111,7 @@ internal fun ChatInputArea(
             showAttachmentMenu,
             onCameraClick,
             onGalleryClick,
+            onMicClick,
             hasWaitingAssistant,
         )
     }
@@ -120,6 +124,7 @@ private fun InputActions(
     showAttachmentMenu: Boolean,
     onCameraClick: (() -> Unit)?,
     onGalleryClick: (() -> Unit)?,
+    onMicClick: (() -> Unit)?,
     hasWaitingAssistant: Boolean,
 ) {
     Row(
@@ -132,28 +137,33 @@ private fun InputActions(
                 enabled = input.isNotBlank() && !hasWaitingAssistant,
                 onSendClick = onSendClick,
             )
-        } else if (showAttachmentMenu && onCameraClick != null && onGalleryClick != null) {
-            // Show attachment menu only if enabled and callbacks are provided
-            YralContextMenu(
-                items =
-                    listOf(
-                        YralContextMenuItem(
-                            text = stringResource(Res.string.camera),
-                            icon = DesignRes.drawable.ic_camera,
-                            onClick = onCameraClick,
+        } else if (showAttachmentMenu) {
+            if (onCameraClick != null && onGalleryClick != null) {
+                // Show attachment menu (camera/gallery) when both callbacks provided
+                YralContextMenu(
+                    items =
+                        listOf(
+                            YralContextMenuItem(
+                                text = stringResource(Res.string.camera),
+                                icon = DesignRes.drawable.ic_camera,
+                                onClick = onCameraClick,
+                            ),
+                            YralContextMenuItem(
+                                text = stringResource(Res.string.photo_library),
+                                icon = DesignRes.drawable.ic_gallery,
+                                onClick = onGalleryClick,
+                            ),
                         ),
-                        YralContextMenuItem(
-                            text = stringResource(Res.string.photo_library),
-                            icon = DesignRes.drawable.ic_gallery,
-                            onClick = onGalleryClick,
-                        ),
-                    ),
-                triggerIcon = DesignRes.drawable.ic_plus_circle,
-                triggerSize = 24.dp,
-                menuIconSize = 20.dp,
-                menuPadding = PaddingValues(bottom = 16.dp),
-            )
-        } else if (!showAttachmentMenu) {
+                    triggerIcon = DesignRes.drawable.ic_plus_circle,
+                    triggerSize = 24.dp,
+                    menuIconSize = 20.dp,
+                    menuPadding = PaddingValues(bottom = 16.dp),
+                )
+            }
+            if (onMicClick != null) {
+                MicButton(onClick = onMicClick)
+            }
+        } else {
             // Always show send button when attachment menu is disabled (for image preview)
             SendButton(
                 enabled = !hasWaitingAssistant,
@@ -161,6 +171,18 @@ private fun InputActions(
             )
         }
     }
+}
+
+@Composable
+private fun MicButton(onClick: () -> Unit) {
+    Image(
+        painter = painterResource(DesignRes.drawable.ic_microphone),
+        contentDescription = stringResource(Res.string.voice_message),
+        modifier = Modifier
+            .size(24.dp)
+            .clickable(onClick = onClick),
+        contentScale = ContentScale.None,
+    )
 }
 
 @Composable

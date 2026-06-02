@@ -20,6 +20,8 @@
     <string name="message_placeholder">Message...</string>
     <string name="camera">Camera</string>
     <string name="photo_library">Photo Library</string>
+    <string name="voice_message">Voice message</string>
+    <string name="voice_message_permission_denied">Microphone access needed to record voice messages. Enable it in app settings.</string>
     <string name="send">Send</string>
     <string name="switch_to_human_profile_to_chat">Switch to your human profile to chat with this influencer.</string>
     <string name="ai_influencer_read_only_chat">Chats are read-only in AI influencer view mode</string>
