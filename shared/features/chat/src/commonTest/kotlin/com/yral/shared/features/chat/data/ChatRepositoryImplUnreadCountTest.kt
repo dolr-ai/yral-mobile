@@ -16,7 +16,10 @@ import com.yral.shared.features.chat.data.models.SendMessageRequestDto
 import com.yral.shared.features.chat.data.models.SendMessageResponseDto
 import com.yral.shared.features.chat.data.models.StartHumanCreatorTakeoverResponseDto
 import com.yral.shared.features.chat.data.models.UploadResponseDto
+import com.yral.shared.preferences.Preferences
+import io.ktor.client.HttpClient
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -55,7 +58,11 @@ class ChatRepositoryImplUnreadCountTest {
                         ),
                 )
 
-            val repository = ChatRepositoryImpl(dataSource = dataSource)
+            val repository =
+                ChatRepositoryImpl(
+                    dataSource = dataSource,
+                    streamingDataSource = createUnusedStreamingDataSource(),
+                )
 
             val unreadCount = repository.getUnreadConversationCount(principal = "principal-1")
 
@@ -99,6 +106,69 @@ class ChatRepositoryImplUnreadCountTest {
             unreadCount = unreadCount,
         )
 
+    private fun createUnusedStreamingDataSource(): ChatStreamingDataSource =
+        ChatStreamingDataSource(
+            httpClient = HttpClient(),
+            json = Json,
+            preferences = DummyPreferences,
+            chatBaseUrl = "example.com",
+        )
+
+    private object DummyPreferences : Preferences {
+        override suspend fun putBoolean(
+            key: String,
+            boolean: Boolean,
+        ) = error("unused")
+
+        override suspend fun getBoolean(key: String): Boolean? = error("unused")
+
+        override suspend fun putString(
+            key: String,
+            value: String,
+        ) = error("unused")
+
+        override suspend fun getString(key: String): String? = error("unused")
+
+        override suspend fun putInt(
+            key: String,
+            int: Int,
+        ) = error("unused")
+
+        override suspend fun getInt(key: String): Int? = error("unused")
+
+        override suspend fun putLong(
+            key: String,
+            long: Long,
+        ) = error("unused")
+
+        override suspend fun getLong(key: String): Long? = error("unused")
+
+        override suspend fun putFloat(
+            key: String,
+            float: Float,
+        ) = error("unused")
+
+        override suspend fun getFloat(key: String): Float? = error("unused")
+
+        override suspend fun putDouble(
+            key: String,
+            double: Double,
+        ) = error("unused")
+
+        override suspend fun getDouble(key: String): Double? = error("unused")
+
+        override suspend fun putBytes(
+            key: String,
+            bytes: ByteArray,
+        ) = error("unused")
+
+        override suspend fun getBytes(key: String): ByteArray? = error("unused")
+
+        override suspend fun remove(key: String) = error("unused")
+
+        override suspend fun clearAll() = error("unused")
+    }
+
     private class FakeChatDataSource(
         private val pages: List<ConversationsResponseDto>,
     ) : ChatDataSource {
@@ -128,6 +198,8 @@ class ChatRepositoryImplUnreadCountTest {
 
         override suspend fun createConversation(influencerId: String): ConversationDto = error("unused")
 
+        override suspend fun createHumanConversation(participantId: String): ConversationDto = error("unused")
+
         override suspend fun deleteConversation(conversationId: String): DeleteConversationResponseDto = error("unused")
 
         override suspend fun listConversationMessages(
@@ -138,6 +210,11 @@ class ChatRepositoryImplUnreadCountTest {
         ) = error("unused")
 
         override suspend fun sendMessageJson(
+            conversationId: String,
+            request: SendMessageRequestDto,
+        ): SendMessageResponseDto = error("unused")
+
+        override suspend fun sendHumanMessage(
             conversationId: String,
             request: SendMessageRequestDto,
         ): SendMessageResponseDto = error("unused")

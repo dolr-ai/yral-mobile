@@ -118,11 +118,7 @@ private fun MessageRow(
 ) {
     val screenWidth = LocalWindowInfo.current.containerSize.width
     val maxWidth = with(LocalDensity.current) { (screenWidth * MESSAGE_MAX_WIDTH_RATIO).toDp() }
-    val role =
-        when (item) {
-            is ConversationMessageItem.Remote -> item.message.role
-            is ConversationMessageItem.Local -> item.message.role
-        }
+    val role = item.role()
     if (role == ConversationMessageRole.SYSTEM && item is ConversationMessageItem.Remote) {
         SystemBannerMessage(
             text = item.message.content.orEmpty(),
@@ -130,7 +126,6 @@ private fun MessageRow(
         )
         return
     }
-    val roleIsUser = role == ConversationMessageRole.USER
     // Bubble-side discriminator:
     //   - Bot account (creator takeover): roles flipped — USER msgs come from
     //     the AI (left), ASSISTANT msgs come from the human creator (right).
@@ -140,12 +135,11 @@ private fun MessageRow(
     //     roleIsUser (which is true for role='user' as expected).
     //   - AI: role-based — works because USER vs ASSISTANT are distinct.
     val isUser =
-        when {
-            isBotAccount -> !roleIsUser
-            isHumanChat && item is ConversationMessageItem.Remote && currentUserPrincipalId != null ->
-                item.message.isFromCurrentUser(currentUserPrincipalId)
-            else -> roleIsUser
-        }
+        item.isCurrentUserMessage(
+            isBotAccount = isBotAccount,
+            isHumanChat = isHumanChat,
+            currentUserPrincipalId = currentUserPrincipalId,
+        )
 
     // Extract render params from either Remote or Local OUTSIDE the Box so the
     // MessageContent call below has a single slot-table entry. The Local→Remote
@@ -218,4 +212,37 @@ private fun MessageRow(
             onRetry = renderOnRetry,
         )
     }
+}
+
+private fun ConversationMessageItem.role(): ConversationMessageRole =
+    when (this) {
+        is ConversationMessageItem.Remote -> {
+            message.role
+        }
+
+        is ConversationMessageItem.Local -> {
+            message.role
+        }
+    }
+
+private fun ConversationMessageItem.isCurrentUserMessage(
+    isBotAccount: Boolean,
+    isHumanChat: Boolean,
+    currentUserPrincipalId: String?,
+): Boolean {
+    val roleIsUser =
+        when (this) {
+            is ConversationMessageItem.Remote -> {
+                if (isHumanChat && currentUserPrincipalId != null) {
+                    message.isFromCurrentUser(currentUserPrincipalId)
+                } else {
+                    message.role == ConversationMessageRole.USER
+                }
+            }
+
+            is ConversationMessageItem.Local -> {
+                message.role == ConversationMessageRole.USER
+            }
+        }
+    return if (isBotAccount) !roleIsUser else roleIsUser
 }

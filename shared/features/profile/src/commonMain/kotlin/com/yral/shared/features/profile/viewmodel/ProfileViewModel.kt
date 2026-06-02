@@ -37,6 +37,8 @@ import com.yral.shared.data.domain.models.VideoViews
 import com.yral.shared.data.domain.useCases.GetVideoViewsUseCase
 import com.yral.shared.features.chat.analytics.ChatTelemetry
 import com.yral.shared.features.chat.domain.models.Influencer
+import com.yral.shared.features.chat.domain.usecases.CheckChatAccessUseCase
+import com.yral.shared.features.chat.domain.usecases.CreateHumanConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
 import com.yral.shared.features.profile.analytics.ProfileTelemetry
 import com.yral.shared.features.profile.domain.DeleteVideoUseCase
@@ -123,8 +125,8 @@ class ProfileViewModel(
     private val getInfluencerUseCase: GetInfluencerUseCase,
     private val fileDownloader: FileDownloader,
     private val followersMetadataDataSource: FollowersMetadataDataSource,
-    private val checkChatAccessUseCase: com.yral.shared.features.chat.domain.usecases.CheckChatAccessUseCase,
-    private val createHumanConversationUseCase: com.yral.shared.features.chat.domain.usecases.CreateHumanConversationUseCase,
+    private val checkChatAccessUseCase: CheckChatAccessUseCase,
+    private val createHumanConversationUseCase: CreateHumanConversationUseCase,
     private val publishDraftVideoUseCase: PublishDraftVideoUseCase,
 ) : ViewModel() {
     companion object {
@@ -1408,6 +1410,7 @@ sealed class ProfileEvents {
         val message: String,
     ) : ProfileEvents()
     data object RefreshDrafts : ProfileEvents()
+
     /**
      * H2H: a `Send Message` tap successfully created (or fetched the
      * existing) human conversation. The screen observes this and routes

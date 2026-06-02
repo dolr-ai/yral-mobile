@@ -48,6 +48,7 @@ import com.yral.shared.features.chat.domain.usecases.GrantChatAccessUseCase
 import com.yral.shared.features.chat.domain.usecases.MarkConversationAsReadUseCase
 import com.yral.shared.features.chat.domain.usecases.ReleaseHumanCreatorTakeoverUseCase
 import com.yral.shared.features.chat.domain.usecases.SendHumanCreatorMessageUseCase
+import com.yral.shared.features.chat.domain.usecases.SendHumanMessageUseCase
 import com.yral.shared.features.chat.domain.usecases.SendMessageUseCase
 import com.yral.shared.features.chat.domain.usecases.StartHumanCreatorTakeoverUseCase
 import com.yral.shared.features.chat.ui.conversation.shouldRenderAsMarkdown
@@ -113,7 +114,7 @@ class ConversationViewModel(
     private val chatRepository: ChatRepository,
     private val useCaseFailureListener: UseCaseFailureListener,
     private val sendMessageUseCase: SendMessageUseCase,
-    private val sendHumanMessageUseCase: com.yral.shared.features.chat.domain.usecases.SendHumanMessageUseCase,
+    private val sendHumanMessageUseCase: SendHumanMessageUseCase,
     private val createConversationUseCase: CreateConversationUseCase,
     private val deleteConversationUseCase: DeleteConversationUseCase,
     private val markConversationAsReadUseCase: MarkConversationAsReadUseCase,
@@ -1264,13 +1265,59 @@ class ConversationViewModel(
         }
     }
 
+    private fun sendHumanChatMessage(
+        conversationId: String,
+        draft: SendMessageDraft,
+        userLocal: LocalMessage,
+        userLocalId: String,
+        assistantLocalId: String,
+        sentAtMs: Long,
+    ) {
+        _overlay.update { it.copy(pending = it.pending + userLocal) }
+        viewModelScope.launch {
+            sendHumanMessageUseCase(
+                SendHumanMessageUseCase.Params(
+                    conversationId = conversationId,
+                    draft = draft,
+                ),
+            ).onSuccess { result ->
+                handleSendSuccess(result, userLocalId, assistantLocalId, sentAtMs)
+            }.onFailure { error ->
+                handleSendFailure(error, userLocalId, assistantLocalId)
+            }
+        }
+    }
+
+    private fun sendLegacyMessageWithPlaceholder(
+        conversationId: String,
+        draft: SendMessageDraft,
+        userLocal: LocalMessage,
+        userLocalId: String,
+        assistantLocalId: String,
+        timestampMs: Long,
+    ) {
+        val assistantPlaceholder = createAssistantPlaceholder(timestampMs)
+        _overlay.update { it.copy(pending = it.pending + userLocal + assistantPlaceholder) }
+        activeReplyCount.update { it + 1 }
+        viewModelScope.launch {
+            try {
+                sendMessageLegacy(
+                    conversationId = conversationId,
+                    draft = draft,
+                    userLocalId = userLocalId,
+                    assistantLocalId = assistantLocalId,
+                    sentAtMs = timestampMs,
+                )
+            } finally {
+                activeReplyCount.update { it - 1 }
+            }
+        }
+    }
+
     @OptIn(ExperimentalTime::class)
     fun sendMessage(draft: SendMessageDraft) {
         val convId = conversationId ?: return
 
-        // Phase 6: a fresh send supersedes any error from the previous send.
-        // Clear before any new state lands so the user sees their new message
-        // and the streaming placeholder, not a stale error bubble.
         _assistantError.value = null
 
         val now = Clock.System.now().toEpochMilliseconds()
@@ -1304,21 +1351,14 @@ class ConversationViewModel(
         }
 
         if (_viewState.value.isHumanChat) {
-            _overlay.update { it.copy(pending = it.pending + userLocal) }
-            viewModelScope.launch {
-                sendHumanMessageUseCase(
-                    com.yral.shared.features.chat.domain.usecases
-                        .SendHumanMessageUseCase
-                        .Params(
-                            conversationId = convId,
-                            draft = draft,
-                        ),
-                ).onSuccess { result ->
-                    handleSendSuccess(result, localUserId, localAssistantId, now)
-                }.onFailure { error ->
-                    handleSendFailure(error, localUserId, localAssistantId)
-                }
-            }
+            sendHumanChatMessage(
+                conversationId = convId,
+                draft = draft,
+                userLocal = userLocal,
+                userLocalId = localUserId,
+                assistantLocalId = localAssistantId,
+                sentAtMs = now,
+            )
         } else if (shouldStream(draft)) {
             // Phase 7 (revised): when there is NO active stream we add the user
             // Local AND the streaming placeholder in a single _overlay.update so
@@ -1357,25 +1397,14 @@ class ConversationViewModel(
                     )
             }
         } else {
-            val assistantPlaceholder = createAssistantPlaceholder(now)
-            _overlay.update { it.copy(pending = it.pending + userLocal + assistantPlaceholder) }
-            // Phase 7-final: synchronous increment so the send button greys on
-            // the SAME frame the legacy send is dispatched, matching production
-            // chat-ai behavior.
-            activeReplyCount.update { it + 1 }
-            viewModelScope.launch {
-                try {
-                    sendMessageLegacy(
-                        conversationId = convId,
-                        draft = draft,
-                        userLocalId = localUserId,
-                        assistantLocalId = localAssistantId,
-                        sentAtMs = now,
-                    )
-                } finally {
-                    activeReplyCount.update { it - 1 }
-                }
-            }
+            sendLegacyMessageWithPlaceholder(
+                conversationId = convId,
+                draft = draft,
+                userLocal = userLocal,
+                userLocalId = localUserId,
+                assistantLocalId = localAssistantId,
+                timestampMs = now,
+            )
         }
     }
 

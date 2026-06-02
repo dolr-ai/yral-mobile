@@ -12,6 +12,7 @@ import com.yral.shared.features.chat.domain.models.ConversationMessagesPageResul
 import com.yral.shared.features.chat.domain.models.ConversationUser
 import com.yral.shared.features.chat.domain.models.ConversationsPageResult
 import com.yral.shared.features.chat.domain.models.DeleteConversationResult
+import com.yral.shared.features.chat.domain.models.HUMAN_CHAT_CONVERSATION_TYPE
 import com.yral.shared.features.chat.domain.models.HumanCreatorTakeoverStatus
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencerStatus
@@ -106,7 +107,7 @@ fun ConversationDto.toDomain(): Conversation {
     // conversations must — keep the original invariant in place for them
     // so a backend bug that drops the influencer doesn't silently
     // degrade the AI chat experience.
-    if (resolvedInfluencer == null && conversationType != HUMAN_CHAT_TYPE) {
+    if (resolvedInfluencer == null && conversationType != HUMAN_CHAT_CONVERSATION_TYPE) {
         throw YralException("Conversation requires a valid influencer")
     }
     return Conversation(
@@ -143,8 +144,6 @@ fun ConversationDto.toDomain(): Conversation {
         conversationType = conversationType,
     )
 }
-
-private const val HUMAN_CHAT_TYPE = "human_chat"
 
 fun ConversationsResponseDto.toDomain(): ConversationsPageResult {
     val rawCount = conversations.size

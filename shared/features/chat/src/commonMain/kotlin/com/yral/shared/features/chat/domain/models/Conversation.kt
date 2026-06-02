@@ -22,6 +22,11 @@ data class Conversation(
     val conversationType: String? = null,
 )
 
+const val HUMAN_CHAT_CONVERSATION_TYPE = "human_chat"
+
+val Conversation.isHumanChat: Boolean
+    get() = conversationType == HUMAN_CHAT_CONVERSATION_TYPE || conversationUser != null
+
 data class ConversationUser(
     val principalId: String,
     val username: String?,

@@ -105,6 +105,7 @@ fun ChatConversationScreen(
         params.influencerId,
         params.conversationId,
         params.userId,
+        params.participantPrincipalId,
         viewState.isSocialSignedIn,
     ) {
         val conversationId = params.conversationId
