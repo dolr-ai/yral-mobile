@@ -70,3 +70,27 @@ The root cause was visible only by reading the SQL inside the repository functio
 4. **Don't trust Explore agent summaries about data flow.** The agent's job is to map call sites; the agent does NOT verify that the data those call sites carry matches what the call site implies. "Backend query is not hardcoded to AI" was a summary derived from the *call signature*, not the SQL. If a summary makes a claim about data behavior (what rows come back, what fields populate), verify by reading the implementation — never inherit the claim.
 
 **Bug-trail context, 2026-05-30:** Day-9 of the H2H build. I shipped 7 commits across two sessions that wired the H2H create endpoint, the send endpoint, the typed sender_id propagation, and a chat-screen functional flow. End-to-end H2H send worked. Rishi tested by messaging `abledearcorgi` — message sent, conversation created in the database, sender on the receiving end gets a WebSocket push. But the conversation never appeared in Rishi's inbox. My H2H-IMPLEMENTATION-PLAN.md §4.1 had stated "the existing combined inbox `GET /conversations` already surfaces H2H conversations once we add `conversation_type` parsing" with a note "Confirm with backend whether the combined endpoint is canonical." I never confirmed. The SQL in `conversation_repo.list_by_user` did an `INNER JOIN ai_influencers`, which excluded every H2H row. Caught only when Rishi tested the inbox visibility I had originally written down as test case §H3 and never executed.
+
+---
+
+## P7 — Permissive deserialization defaults are load-bearing during backend evolution
+
+**The catch:** when backend PR #228 added an `is_online` field to the AI `influencer` block in the unified inbox response, mobile shipped without any DTO change for that field. The new field did not crash anything because `JsonHelper.kt` configures the Json instance with `ignoreUnknownKeys = true` and `isLenient = true`. Mobile silently dropped the new field, the inbox rendered as before, and nobody noticed until I did the post-deploy code-read pass and explicitly accounted for it.
+
+This is good behavior, not luck — but it depends on a single Json-instance config line at the boundary, and the *value* of that line is invisible to every layer above it. The DTO doesn't know it's missing a field. The mapper doesn't know. The composable doesn't know. The compiler can't help. The only signal that this safety net exists is the absence of the bug.
+
+**The lesson:** permissive deserialization defaults are load-bearing infrastructure during periods when the backend is evolving. If the team ever tightens these defaults — to catch typos, enforce schema strictness, or surface unexpected fields — that change is not a routine config tweak. It is equivalent to a coordinated backend-frontend release: every DTO must be audited against the *current* backend response shape, on the *current* deployed branch, before the strict config can ship without breaking the inbox.
+
+**Concrete properties of the safety net we currently rely on:**
+
+1. `Json { isLenient = true; ignoreUnknownKeys = true }` at `shared/libs/http/src/commonMain/kotlin/com/yral/shared/http/JsonHelper.kt:6-8`. This is the single point where unknown-key tolerance is configured.
+2. Every DTO consumed by this `Json` instance inherits that tolerance. Removing the config line silently flips every DTO from forward-compatible to strict.
+3. Backend ships new fields routinely (`is_online` is one of several this quarter). Each one is a silent "test" of the tolerance.
+
+**Defense if you ever touch JsonHelper.kt:**
+
+1. **Don't remove `ignoreUnknownKeys = true` without a coordinated audit.** Open every `@Serializable data class` consumed by this Json instance. For each, fetch the current backend response on the staging/dev branch and diff field-by-field. Add fields the backend now sends but the DTO doesn't model.
+2. **If you want stricter behavior on a specific DTO, prefer field-level annotations (`@Required`, default values, sealed type validation) over flipping the global config.** Global strict-mode breaks every DTO at once; field-level enforcement breaks only the contract you're tightening.
+3. **Treat unknown-key warnings, if you add a custom serializer that surfaces them, as a forward-compat signal not a bug — log them, don't throw.** The backend is allowed to ship new fields; mobile catches up at the next DTO update window.
+
+**Bug-trail context, 2026-05-30:** while doing the code-read pass for the post-PR-#228 inbox retest, I noticed that `ConversationInfluencerDto` does not model `is_online` even though the backend now sends it. The reason the AI rows still parse is `JsonHelper.kt:8`'s `ignoreUnknownKeys = true`. The lesson was visible only because I explicitly went looking for "what does the new field do to my parser?" — a question that comes from P4/P6 discipline, not from the type system or the test suite.
