@@ -22,11 +22,21 @@
     <string name="photo_library">Photo Library</string>
     <string name="send">Send</string>
     <string name="switch_to_human_profile_to_chat">Switch to your human profile to chat with this influencer.</string>
+    <string name="ai_influencer_read_only_chat">Chats are read-only in AI influencer view mode</string>
     <string name="switch_profile">Switch Profile</string>
     <string name="switch_profile_failed">Unable to switch profile. Please try again.</string>
 
+    <!-- Chat as Human (creator takeover) -->
+    <string name="takeover_toggle_inactive">Take over as %1$s</string>
+    <string name="takeover_toggle_active">Release control</string>
+    <string name="takeover_timer_label">%1$s</string>
+    <string name="takeover_input_placeholder">Reply as %1$s…</string>
+
     <!-- Message Bubble -->
     <string name="message_failed_tap_to_resend">Message Failed. Tap to resend</string>
+    <string name="assistant_error_rephrase_hint">Try rephrasing your message</string>
+    <string name="assistant_error_retry">Try again</string>
+    <string name="assistant_error_connection_timed_out">Connection timed out. Try again.</string>
 
     <!-- Image Preview Overlay -->
     <string name="message_optional">Message (optional)</string>

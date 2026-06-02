@@ -7,7 +7,6 @@ import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.features.uploadvideo.nav.aiVideoGen.AiVideoGenComponent
 import com.yral.shared.features.uploadvideo.nav.fileUpload.UploadVideoComponent
-import com.yral.shared.features.uploadvideo.nav.flowSelection.FlowSelectionComponent
 import com.yral.shared.libs.arch.nav.HomeChildSnapshotProvider
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import kotlinx.serialization.Serializable
@@ -22,9 +21,6 @@ abstract class UploadVideoRootComponent : HomeChildSnapshotProvider {
     abstract fun handleNavigation(appRoute: AppRoute)
 
     sealed class Child {
-        class FlowSelection(
-            val component: FlowSelectionComponent,
-        ) : Child()
         class AiVideoGen(
             val component: AiVideoGenComponent,
         ) : Child()

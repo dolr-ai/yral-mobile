@@ -30,7 +30,7 @@ fun YralBottomSheet(
     onDismissRequest: () -> Unit,
     bottomSheetState: SheetState,
     shouldDismissOnBackPress: Boolean = true,
-    dragHandle: @Composable (() -> Unit)? = null,
+    dragHandle: @Composable (() -> Unit)? = { YralDragHandle() },
     containerColor: Color = YralColors.Neutral900,
     content: @Composable ColumnScope.() -> Unit,
 ) {

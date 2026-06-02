@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.BottomSheetDefaults.DragHandle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
@@ -21,6 +20,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
+import com.yral.shared.libs.designsystem.component.YralDragHandle
 import com.yral.shared.libs.designsystem.component.YralInfoView
 import com.yral.shared.libs.designsystem.component.YralShimmerView
 import com.yral.shared.libs.designsystem.component.formatAbbreviation
@@ -45,7 +45,7 @@ fun VideoViewsSheet(
     YralBottomSheet(
         bottomSheetState = sheetState,
         onDismissRequest = onDismissRequest,
-        dragHandle = { DragHandle(color = YralColors.Neutral500) },
+        dragHandle = { YralDragHandle() },
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(28.dp, Alignment.CenterVertically),

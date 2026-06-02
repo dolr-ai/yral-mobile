@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalCoroutinesApi::class)
+@file:OptIn(ExperimentalCoroutinesApi::class, ExperimentalEncodingApi::class)
 
 package com.yral.shared.features.uploadvideo.presentation
 
@@ -20,8 +20,10 @@ import com.yral.shared.features.uploadvideo.domain.GetFreeCreditsStatusUseCase
 import com.yral.shared.features.uploadvideo.domain.GetPropertyRateLimitConfigUseCase
 import com.yral.shared.features.uploadvideo.domain.GetProvidersUseCase
 import com.yral.shared.features.uploadvideo.domain.UploadRepository
+import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoErrorType
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoResult
+import com.yral.shared.features.uploadvideo.domain.models.ImageData
 import com.yral.shared.features.uploadvideo.domain.models.InProgressDraft
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.features.uploadvideo.domain.models.ProviderCost
@@ -52,6 +54,8 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -129,9 +133,16 @@ class AiVideoGenViewModelTest {
         )
     }
 
-    private fun setupProviderAndPrompt(viewModel: AiVideoGenViewModel) {
-        viewModel.selectProvider(TEST_PROVIDER)
+    private suspend fun setupProviderAndPrompt(viewModel: AiVideoGenViewModel) {
+        viewModel.refresh("test-canister")
+        viewModel.state.first { it.selectedProvider != null }
+        viewModel.updateGenerationMode(AiVideoGenerationMode.TEXT_TO_VIDEO)
         viewModel.updatePromptText("A beautiful sunset over the ocean")
+    }
+
+    private suspend fun setupImageProviderAndPrompt(viewModel: AiVideoGenViewModel) {
+        setupProviderAndPrompt(viewModel)
+        viewModel.updateGenerationMode(AiVideoGenerationMode.IMAGE_TO_VIDEO)
     }
 
     // region 1: generateAiVideo sets UiState to InProgress
@@ -148,6 +159,68 @@ class AiVideoGenViewModelTest {
 
             val state = viewModel.state.value
             assertIs<UiState.InProgress>(state.uiState)
+        }
+
+    @Test
+    fun `refresh auto-selects ltx provider returned by providers api`() =
+        runTest {
+            val viewModel = createViewModel()
+
+            viewModel.refresh("test-canister")
+            val state = viewModel.state.first { it.selectedProvider != null }
+
+            assertEquals("ltx", state.selectedProvider?.id)
+        }
+
+    @Test
+    fun `button is enabled when prompt provider and credits are available`() {
+        val state =
+            AiVideoGenViewModel.ViewState(
+                selectedProvider = TEST_PROVIDER,
+                usedCredits = 0,
+                totalCredits = 1,
+                prompt = "A cinematic sunset",
+                generationMode = AiVideoGenerationMode.TEXT_TO_VIDEO,
+                isSubscriptionEnabled = false,
+            )
+
+        assertTrue(state.shouldEnableButton())
+    }
+
+    @Test
+    fun `button is enabled when prompt and provider are available before credits load`() {
+        val state =
+            AiVideoGenViewModel.ViewState(
+                selectedProvider = TEST_PROVIDER,
+                prompt = "A cinematic sunset",
+                generationMode = AiVideoGenerationMode.TEXT_TO_VIDEO,
+                isSubscriptionEnabled = false,
+            )
+
+        assertTrue(state.shouldEnableButton())
+    }
+
+    @Test
+    fun `button is disabled when prompt is blank`() {
+        val state =
+            AiVideoGenViewModel.ViewState(
+                selectedProvider = TEST_PROVIDER,
+                usedCredits = 0,
+                totalCredits = 1,
+                prompt = " ",
+                generationMode = AiVideoGenerationMode.TEXT_TO_VIDEO,
+                isSubscriptionEnabled = false,
+            )
+
+        assertFalse(state.shouldEnableButton())
+    }
+
+    @Test
+    fun `image to video is selected by default`() =
+        runTest {
+            val viewModel = createViewModel()
+
+            assertEquals(AiVideoGenerationMode.IMAGE_TO_VIDEO, viewModel.state.value.generationMode)
         }
 
     @Test
@@ -188,6 +261,7 @@ class AiVideoGenViewModelTest {
             manager.syncInProgressDrafts("test-principal")
 
             assertEquals(1, VideoGenerationTracker.state.value.pendingGenerations.size)
+            assertFalse(VideoGenerationTracker.state.value.isDraftRefreshPending)
             assertEquals(0, refreshCount)
             refreshJob.cancel()
         }
@@ -214,6 +288,7 @@ class AiVideoGenViewModelTest {
             manager.syncInProgressDrafts("test-principal")
 
             assertEquals(1, VideoGenerationTracker.state.value.pendingGenerations.size)
+            assertFalse(VideoGenerationTracker.state.value.isDraftRefreshPending)
             assertEquals(0, refreshCount)
             refreshJob.cancel()
         }
@@ -241,6 +316,7 @@ class AiVideoGenViewModelTest {
             manager.syncInProgressDrafts("test-principal")
 
             assertFalse(VideoGenerationTracker.state.value.isGenerating)
+            assertTrue(VideoGenerationTracker.state.value.isDraftRefreshPending)
             assertEquals(1, refreshCount)
             refreshJob.cancel()
         }
@@ -334,8 +410,10 @@ class AiVideoGenViewModelTest {
 
             val bottomSheet = state.bottomSheetType
             assertIs<AiVideoGenViewModel.BottomSheetType.Error>(bottomSheet)
+            assertEquals(GenerateVideoErrorType.PROVIDER_ERROR, bottomSheet.title)
             assertEquals("Content policy violation", bottomSheet.message)
             assertTrue(bottomSheet.endFlow)
+            assertEquals(UiState.Initial, state.uiState)
         }
 
     @Test
@@ -390,6 +468,98 @@ class AiVideoGenViewModelTest {
 
     // endregion
 
+    @Test
+    fun `text mode generation sends no image`() =
+        runTest {
+            signInUser()
+            fakeUploadRepository.generateVideoResult = SUCCESS_RESULT
+            val viewModel = createViewModel()
+            setupProviderAndPrompt(viewModel)
+
+            viewModel.generateAiVideo()
+            viewModel.state.first { it.uiState == UiState.Initial }
+
+            assertNull(fakeUploadRepository.generateVideoParams.single().image)
+        }
+
+    @Test
+    fun `image mode generation sends selected image data`() =
+        runTest {
+            signInUser()
+            fakeUploadRepository.generateVideoResult = SUCCESS_RESULT
+            fakeUploadRepository.providers = listOf(IMAGE_PROVIDER)
+            val viewModel = createViewModel()
+            setupImageProviderAndPrompt(viewModel)
+            val imageBytes = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 0x00)
+
+            viewModel.updateSelectedImage(imageBytes)
+            viewModel.generateAiVideo()
+            viewModel.state.first { it.uiState == UiState.Initial }
+
+            val image = fakeUploadRepository.generateVideoParams.single().image
+            assertIs<ImageData.Base64>(image)
+            assertEquals(Base64.Default.encode(imageBytes), image.image.data)
+            assertEquals("image/jpeg", image.image.mimeType)
+        }
+
+    @Test
+    fun `image mode does not generate without selected image`() =
+        runTest {
+            signInUser()
+            fakeUploadRepository.generateVideoResult = SUCCESS_RESULT
+            fakeUploadRepository.providers = listOf(IMAGE_PROVIDER)
+            val viewModel = createViewModel()
+            setupImageProviderAndPrompt(viewModel)
+
+            viewModel.generateAiVideo()
+
+            assertTrue(fakeUploadRepository.generateVideoParams.isEmpty())
+            assertEquals(UiState.Initial, viewModel.state.value.uiState)
+        }
+
+    @Test
+    fun `image mode does not generate when selected provider does not support images`() =
+        runTest {
+            signInUser()
+            fakeUploadRepository.generateVideoResult = SUCCESS_RESULT
+            val viewModel = createViewModel()
+            setupProviderAndPrompt(viewModel)
+            viewModel.updateGenerationMode(AiVideoGenerationMode.IMAGE_TO_VIDEO)
+            viewModel.updateSelectedImage(byteArrayOf(0x01, 0x02))
+
+            viewModel.generateAiVideo()
+
+            assertTrue(fakeUploadRepository.generateVideoParams.isEmpty())
+            assertEquals(UiState.Initial, viewModel.state.value.uiState)
+        }
+
+    @Test
+    fun `tryAgain after provider error retries image mode with same image`() =
+        runTest {
+            signInUser()
+            fakeUploadRepository.generateVideoResults += PROVIDER_ERROR_RESULT
+            fakeUploadRepository.generateVideoResults += SUCCESS_RESULT
+            fakeUploadRepository.providers = listOf(IMAGE_PROVIDER)
+            val viewModel = createViewModel()
+            setupImageProviderAndPrompt(viewModel)
+            val imageBytes = byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47)
+            viewModel.updateSelectedImage(imageBytes)
+
+            viewModel.generateAiVideo()
+            viewModel.state.first { it.bottomSheetType is AiVideoGenViewModel.BottomSheetType.Error }
+
+            viewModel.tryAgain()
+            viewModel.state.first { it.uiState == UiState.Initial }
+
+            assertEquals(2, fakeUploadRepository.generateVideoParams.size)
+            fakeUploadRepository.generateVideoParams.forEach { params ->
+                val image = params.image
+                assertIs<ImageData.Base64>(image)
+                assertEquals(Base64.Default.encode(imageBytes), image.image.data)
+                assertEquals("image/png", image.image.mimeType)
+            }
+        }
+
     // region 6: API failure handling
 
     @Test
@@ -407,6 +577,7 @@ class AiVideoGenViewModelTest {
             val bottomSheet = state.bottomSheetType
             assertIs<AiVideoGenViewModel.BottomSheetType.Error>(bottomSheet)
             assertTrue(bottomSheet.endFlow)
+            assertEquals(UiState.Initial, state.uiState)
         }
 
     @Test
@@ -425,29 +596,7 @@ class AiVideoGenViewModelTest {
 
     // endregion
 
-    // region 7: back during InProgress shows BackConfirmation
-
-    @Test
-    fun `setBottomSheetType to BackConfirmation during InProgress`() =
-        runTest {
-            signInUser()
-            fakeUploadRepository.generateVideoSuspend = true
-            val viewModel = createViewModel()
-            setupProviderAndPrompt(viewModel)
-
-            viewModel.generateAiVideo()
-            assertIs<UiState.InProgress>(viewModel.state.value.uiState)
-
-            viewModel.setBottomSheetType(AiVideoGenViewModel.BottomSheetType.BackConfirmation)
-
-            assertIs<AiVideoGenViewModel.BottomSheetType.BackConfirmation>(
-                viewModel.state.value.bottomSheetType,
-            )
-        }
-
-    // endregion
-
-    // region 8: no userPrincipal / no provider skips generation
+    // region 7: no userPrincipal / no provider skips generation
 
     @Test
     fun `generateAiVideo does nothing when user is not signed in`() =
@@ -465,6 +614,7 @@ class AiVideoGenViewModelTest {
     fun `generateAiVideo does nothing when no provider selected`() =
         runTest {
             signInUser()
+            fakeUploadRepository.providers = emptyList()
             val viewModel = createViewModel()
             viewModel.updatePromptText("Test prompt")
 
@@ -476,11 +626,11 @@ class AiVideoGenViewModelTest {
     // endregion
 
     companion object {
-        private val TEST_PROVIDER =
+        val TEST_PROVIDER =
             Provider(
-                id = "test-provider-id",
-                name = "Test Provider",
-                description = "A test provider",
+                id = "ltx",
+                name = "LTX",
+                description = "LTX video generation",
                 cost = ProviderCost(usdCents = null, dolr = null, sats = 100),
                 supportsImage = false,
                 supportsNegativePrompt = false,
@@ -498,6 +648,8 @@ class AiVideoGenViewModelTest {
                 extraInfo = null,
             )
 
+        val IMAGE_PROVIDER = TEST_PROVIDER.copy(supportsImage = true)
+
         private val SUCCESS_RESULT =
             GenerateVideoResult(
                 operationId = "op-1",
@@ -512,6 +664,7 @@ class AiVideoGenViewModelTest {
                 provider = "test-provider",
                 requestKey = null,
                 providerError = "Content policy violation",
+                errorType = GenerateVideoErrorType.PROVIDER_ERROR,
             )
 
         private fun inProgressDraft(operationId: String) =
@@ -530,6 +683,7 @@ class AiVideoGenViewModelTest {
 // region fakes
 
 internal class FakeUploadRepository : UploadRepository {
+    var providers: List<Provider> = listOf(AiVideoGenViewModelTest.TEST_PROVIDER)
     var generateVideoResult: GenerateVideoResult? = null
     val generateVideoResults = mutableListOf<GenerateVideoResult>()
     val generateVideoParams = mutableListOf<GenerateVideoParams>()
@@ -546,7 +700,7 @@ internal class FakeUploadRepository : UploadRepository {
 
     override suspend fun updateMetadata(uploadFileRequest: UploadFileRequest) {}
 
-    override suspend fun fetchProviders(): List<Provider> = emptyList()
+    override suspend fun fetchProviders(): List<Provider> = providers
 
     override suspend fun generateVideo(params: GenerateVideoParams): GenerateVideoResult {
         generateVideoParams += params

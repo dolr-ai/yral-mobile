@@ -46,10 +46,10 @@ private val BOT_ACCOUNT_PROMPT_AVATAR_RING_END = Color(0xFFFF4DA3)
 @Composable
 internal fun BotAccountConversationPrompt(
     message: String,
-    buttonText: String,
+    buttonText: String?,
     avatarUrl: String?,
     isSwitching: Boolean,
-    onSwitchClick: () -> Unit,
+    onSwitchClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     Box(
@@ -93,20 +93,22 @@ internal fun BotAccountConversationPrompt(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            if (buttonText != null && onSwitchClick != null) {
+                Spacer(modifier = Modifier.height(4.dp))
 
-            YralGradientButton(
-                text = buttonText,
-                onClick = onSwitchClick,
-                modifier = Modifier.fillMaxWidth(),
-                buttonState =
-                    if (isSwitching) {
-                        YralButtonState.Loading
-                    } else {
-                        YralButtonState.Enabled
-                    },
-                buttonHeight = BOT_ACCOUNT_PROMPT_BUTTON_HEIGHT,
-            )
+                YralGradientButton(
+                    text = buttonText,
+                    onClick = onSwitchClick,
+                    modifier = Modifier.fillMaxWidth(),
+                    buttonState =
+                        if (isSwitching) {
+                            YralButtonState.Loading
+                        } else {
+                            YralButtonState.Enabled
+                        },
+                    buttonHeight = BOT_ACCOUNT_PROMPT_BUTTON_HEIGHT,
+                )
+            }
         }
     }
 }

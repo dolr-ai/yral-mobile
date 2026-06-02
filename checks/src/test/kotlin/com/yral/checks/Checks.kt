@@ -1,9 +1,9 @@
 package com.yral.checks
 
+import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
-import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.condition.EnabledOnOs
 import org.junit.jupiter.api.condition.OS
 import java.io.File
@@ -13,13 +13,15 @@ import java.io.File
 class Checks {
     private val iosAppDir = File(repoRoot, "iosApp")
 
-    @Test @Order(1)
+    @Test
+    @Order(1)
     @EnabledOnOs(OS.MAC)
     fun `ios lint`() {
         execOrFail("swiftlint", dir = iosAppDir)
     }
 
-    @Test @Order(2)
+    @Test
+    @Order(2)
     @EnabledOnOs(OS.MAC)
     fun `ios setup`() {
         val localProps = File(repoRoot, "local.properties")
@@ -30,33 +32,50 @@ class Checks {
         execOrFail("pod", "install", dir = iosAppDir)
     }
 
-    @Test @Order(3)
+    @Test
+    @Order(3)
     @EnabledOnOs(OS.MAC)
     fun `ios unit tests`() {
-        execOrFail(
-            "xcodebuild", "test",
-            "-workspace", "iosApp.xcworkspace",
-            "-scheme", "iosApp",
-            "-destination", "platform=iOS Simulator,name=${firstIphoneSimulatorName()}",
-            "-configuration", "Debug",
-            "-test-timeouts-enabled", "YES",
-            "-maximum-test-execution-time-allowance", "120",
+        execOrFailCaptured(
+            "ios-unit-tests",
+            "xcodebuild",
+            "test",
+            "-workspace",
+            "iosApp.xcworkspace",
+            "-scheme",
+            "iosApp",
+            "-destination",
+            "platform=iOS Simulator,name=${firstIphoneSimulatorName()}",
+            "-configuration",
+            "Debug",
+            "-test-timeouts-enabled",
+            "YES",
+            "-maximum-test-execution-time-allowance",
+            "120",
             "CODE_SIGNING_ALLOWED=NO",
             "ENABLE_USER_SCRIPT_SANDBOXING=NO",
             dir = iosAppDir,
         )
     }
 
-    @Test @Order(4)
+    @Test
+    @Order(4)
     @EnabledOnOs(OS.MAC)
     fun `ios build simulator app`() {
-        execOrFail(
-            "xcodebuild", "build",
-            "-workspace", "iosApp.xcworkspace",
-            "-scheme", "iosAppStaging",
-            "-configuration", "Debug",
-            "-destination", "platform=iOS Simulator,name=${firstIphoneSimulatorName()}",
-            "-derivedDataPath", File(repoRoot, "build/DerivedData").absolutePath,
+        execOrFailCaptured(
+            "ios-simulator-build",
+            "xcodebuild",
+            "build",
+            "-workspace",
+            "iosApp.xcworkspace",
+            "-scheme",
+            "iosAppStaging",
+            "-configuration",
+            "Debug",
+            "-destination",
+            "platform=iOS Simulator,name=${firstIphoneSimulatorName()}",
+            "-derivedDataPath",
+            File(repoRoot, "build/DerivedData").absolutePath,
             "CODE_SIGNING_ALLOWED=NO",
             "ENABLE_USER_SCRIPT_SANDBOXING=NO",
             dir = iosAppDir,
@@ -82,15 +101,22 @@ class Checks {
                 }
                 if (!pastIosRuntime) continue
                 when {
-                    line.trim() == "{" -> currentBlock.clear()
+                    line.trim() == "{" -> {
+                        currentBlock.clear()
+                    }
+
                     line.trim().startsWith("}") -> {
                         if (currentBlock.any { it.contains("\"iPhone") }) {
-                            currentBlock.firstOrNull { it.contains("\"udid\"") }
+                            currentBlock
+                                .firstOrNull { it.contains("\"udid\"") }
                                 ?.let { udidRe.find(it)?.groupValues?.get(1) }
                                 ?.let { return it }
                         }
                     }
-                    else -> currentBlock.add(line)
+
+                    else -> {
+                        currentBlock.add(line)
+                    }
                 }
             }
             error("No iPhone simulator found")

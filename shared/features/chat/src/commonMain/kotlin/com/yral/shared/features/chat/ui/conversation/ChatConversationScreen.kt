@@ -63,6 +63,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.features.chat.generated.resources.Res
 import yral_mobile.shared.features.chat.generated.resources.access_activated_overlay_message
+import yral_mobile.shared.features.chat.generated.resources.ai_influencer_read_only_chat
 import yral_mobile.shared.features.chat.generated.resources.chat_background_inverted
 import yral_mobile.shared.features.chat.generated.resources.subscription_card_overlay_message
 import yral_mobile.shared.features.chat.generated.resources.switch_profile
@@ -137,7 +138,18 @@ fun ChatConversationScreen(
         }
     }
 
-    LaunchedEffect(Unit) { viewModel.refreshHistory() }
+    // The screen-side LaunchedEffect(Unit) { viewModel.refreshHistory() } used
+    // to live here. It was redundant — the VM-side pagedHistory rebuild on
+    // conversationId change (ConversationViewModel.kt: pagedHistory's combine
+    // on conversationId) is the canonical refresh trigger and fires once on
+    // setConversationId. Both triggers firing was producing the "entire chat
+    // flickered 2 times" repro on Soma re-entry, where the bigger history
+    // (~30 items) made the double swap visible.
+    LaunchedEffect(viewState.isBotAccount, viewState.conversationId) {
+        if (viewState.isBotAccount && viewState.conversationId != null) {
+            viewModel.refreshHumanCreatorTakeoverStatus()
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.influencerSubscriptionToastFlow.collect { event ->
@@ -175,6 +187,20 @@ fun ChatConversationScreen(
 
     val overlayItems by viewModel.overlay.collectAsState()
     val historyPagingItems = viewModel.history.collectAsLazyPagingItems()
+    val streamMarkdownLockedRemoteIds by viewModel.streamMarkdownLockedRemoteIds.collectAsState()
+    val assistantError by viewModel.assistantError.collectAsState()
+    val isReplyInProgress by viewModel.isReplyInProgress.collectAsState()
+
+    // Phase 5b: push the LazyPagingItems snapshot into the VM whenever it settles.
+    // The VM combines this with `_overlay.sent` and debounces 500ms before writing
+    // to ConversationContentCache. On re-entry the cache hydrates `_overlay.sent`
+    // instantly so the user never sees a blank chat window during paging refetch.
+    LaunchedEffect(historyPagingItems.itemSnapshotList) {
+        val snapshot =
+            historyPagingItems.itemSnapshotList.items
+                .mapNotNull { (it as? ConversationMessageItem.Remote)?.message }
+        viewModel.recordHistorySnapshot(snapshot)
+    }
 
     var input by remember { mutableStateOf("") }
     var activeImagePreview by remember { mutableStateOf<ChatImagePreviewSource?>(null) }
@@ -182,6 +208,17 @@ fun ChatConversationScreen(
     val listState = rememberLazyListState()
     val screenWidth = LocalWindowInfo.current.containerSize.width
     val density = LocalDensity.current
+
+    // When the user re-enters a conversation, snap the list back to the
+    // newest message (index 0 in reverseLayout). Without this, Compose's
+    // rememberLazyListState() retains the position from the previous visit,
+    // which during an active takeover can land deep in old content and
+    // visually hide the newest messages behind the input box.
+    LaunchedEffect(viewState.conversationId) {
+        if (viewState.conversationId != null) {
+            runCatching { listState.scrollToItem(0) }
+        }
+    }
 
     val imagePickerLauncher =
         rememberChatImagePicker(
@@ -221,12 +258,21 @@ fun ChatConversationScreen(
         screenWidth = screenWidth,
         density = density,
         overlayItems = overlayItems,
+        historyPagingItems = historyPagingItems,
         scrollToLastLine = true,
         lineHeightPx = messageLineHeightPx,
     )
 
-    // Check if there's a waiting assistant message in overlay
-    val hasWaitingAssistant by derivedStateOf { overlayItems.any { it.isWaitingAssistant() } }
+    // Check if there's a waiting assistant message in overlay.
+    // Phase 7-final: also returns true while a streaming SSE reply or a legacy
+    // sendMessageUseCase is in flight. ChatInputArea uses this flag to disable
+    // the send + media buttons during AI replies (matches production chat-ai).
+    // Streaming Locals have streamingBuffer != null and `isWaitingAssistant()`
+    // returns false for them — they wouldn't trip this check on their own —
+    // so the VM-side isReplyInProgress flow covers the SSE path.
+    val hasWaitingAssistant by derivedStateOf {
+        overlayItems.any { it.isWaitingAssistant() } || isReplyInProgress
+    }
 
     val overlaySentCount by derivedStateOf { overlayItems.count { it is ConversationMessageItem.Remote } }
     val totalMessageCount by derivedStateOf { viewState.totalHistoryMessageCount + overlaySentCount }
@@ -318,11 +364,13 @@ fun ChatConversationScreen(
         }
 
     val switchProfileMessage = stringResource(Res.string.switch_to_human_profile_to_chat)
+    val aiInfluencerReadOnlyMessage = stringResource(Res.string.ai_influencer_read_only_chat)
     val switchProfileButtonText = stringResource(Res.string.switch_profile)
     val switchProfileFailedMessage = stringResource(Res.string.switch_profile_failed)
     val bottomAreaState by derivedStateOf {
         resolveConversationBottomAreaState(
             isBotAccount = viewState.isBotAccount,
+            isHumanParticipantConversation = component.openConversationParams.userId != null,
             shouldShowInfluencerSubscriptionCard = shouldShowInfluencerSubscriptionCard,
             shouldBlockChatNoProduct = shouldBlockChatNoProduct,
         )
@@ -402,12 +450,11 @@ fun ChatConversationScreen(
                 onBackClick = { component.onBack() },
                 onProfileClick = { influencer ->
                     val userPrincipal =
-                        if (viewState.isBotAccount) {
-                            component.openConversationParams.userId
-                        } else {
-                            influencer.id
-                        }
-                    if (userPrincipal == null) return@ChatHeader
+                        resolveConversationProfilePrincipal(
+                            isBotAccount = viewState.isBotAccount,
+                            humanParticipantUserId = component.openConversationParams.userId,
+                            influencerId = influencer.id,
+                        )
                     val canisterData =
                         CanisterData(
                             canisterId = getUserInfoServiceCanister(),
@@ -459,6 +506,10 @@ fun ChatConversationScreen(
                             overlayItems = overlayItems,
                             historyPagingItems = historyPagingItems,
                             isBotAccount = viewState.isBotAccount,
+                            renderSystemBanners = viewState.isChatAsHumanCreatorEnabled,
+                            streamMarkdownLockedRemoteIds = streamMarkdownLockedRemoteIds,
+                            assistantError = assistantError,
+                            onAssistantErrorRetry = { viewModel.retryFailedAssistantReply() },
                             onImageClick = { imageUrl ->
                                 activeImagePreview = ChatImagePreviewSource.Message(imageUrl)
                             },
@@ -503,23 +554,52 @@ fun ChatConversationScreen(
 
                         when (bottomAreaState) {
                             ConversationBottomAreaState.BotAccountPrompt -> {
-                                BotAccountConversationPrompt(
-                                    message = switchProfileMessage,
-                                    buttonText = switchProfileButtonText,
-                                    avatarUrl = viewState.influencer?.avatarUrl,
-                                    isSwitching = isSwitchingProfile,
-                                    onSwitchClick = {
-                                        if (isSwitchingProfile) return@BotAccountConversationPrompt
-                                        isSwitchingProfile = true
-                                        component.switchToMainProfile { switched ->
-                                            isSwitchingProfile = false
-                                            if (!switched) {
-                                                ToastManager.showError(
-                                                    type = ToastType.Small(message = switchProfileFailedMessage),
-                                                )
+                                if (viewState.isChatAsHumanCreatorEnabled) {
+                                    val creatorDisplayName =
+                                        viewState.influencer
+                                            ?.displayName
+                                            ?.takeIf { it.isNotBlank() }
+                                            ?: viewState.influencer?.name.orEmpty()
+                                    CreatorTakeoverBar(
+                                        isActive = viewState.isHumanCreatorTakeoverActive,
+                                        isStarting = viewState.isHumanCreatorTakeoverStarting,
+                                        isEnding = viewState.isHumanCreatorTakeoverEnding,
+                                        isMessageSending = viewState.isHumanCreatorMessageSending,
+                                        remainingSeconds = viewState.humanCreatorTakeoverRemainingSeconds,
+                                        creatorDisplayName = creatorDisplayName,
+                                        onToggleOn = { viewModel.startHumanCreatorTakeover() },
+                                        onToggleOff = { viewModel.releaseHumanCreatorTakeover() },
+                                        onSend = { text -> viewModel.sendAsHumanCreator(text) },
+                                    )
+                                } else {
+                                    BotAccountConversationPrompt(
+                                        message = switchProfileMessage,
+                                        buttonText = switchProfileButtonText,
+                                        avatarUrl = viewState.influencer?.avatarUrl,
+                                        isSwitching = isSwitchingProfile,
+                                        onSwitchClick = {
+                                            if (isSwitchingProfile) return@BotAccountConversationPrompt
+                                            isSwitchingProfile = true
+                                            component.switchToMainProfile { switched ->
+                                                isSwitchingProfile = false
+                                                if (!switched) {
+                                                    ToastManager.showError(
+                                                        type = ToastType.Small(message = switchProfileFailedMessage),
+                                                    )
+                                                }
                                             }
-                                        }
-                                    },
+                                        },
+                                    )
+                                }
+                            }
+
+                            ConversationBottomAreaState.BotAccountReadOnly -> {
+                                BotAccountConversationPrompt(
+                                    message = aiInfluencerReadOnlyMessage,
+                                    buttonText = null,
+                                    avatarUrl = null,
+                                    isSwitching = false,
+                                    onSwitchClick = null,
                                 )
                             }
 

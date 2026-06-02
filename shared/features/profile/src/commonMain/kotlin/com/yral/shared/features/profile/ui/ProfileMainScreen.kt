@@ -235,6 +235,8 @@ fun ProfileMainScreen(
     val followers = viewModel.followers.collectAsLazyPagingItems()
     val following = viewModel.following.collectAsLazyPagingItems()
     val draftVideos = viewModel.draftVideos.collectAsLazyPagingItems()
+    val generatingState by VideoGenerationTracker.state.collectAsState()
+    var hasObservedGeneratedDraftRefreshLoading by remember { mutableStateOf(false) }
 
     val loginState = rememberLoginInfo(requestLoginFactory = component.requestLoginFactory)
 
@@ -363,6 +365,36 @@ fun ProfileMainScreen(
                             profileVideos[index]?.videoID == pendingVideoId
                         }
                     viewModel.openVideoReel(videoIndex.coerceAtLeast(0))
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(
+        generatingState.isDraftRefreshPending,
+        draftVideos.loadState.refresh,
+        draftVideos.itemCount,
+    ) {
+        if (!generatingState.isDraftRefreshPending) {
+            hasObservedGeneratedDraftRefreshLoading = false
+            return@LaunchedEffect
+        }
+        when (draftVideos.loadState.refresh) {
+            is LoadState.Loading -> {
+                hasObservedGeneratedDraftRefreshLoading = true
+            }
+
+            is LoadState.NotLoading -> {
+                if (hasObservedGeneratedDraftRefreshLoading || draftVideos.itemCount > 0) {
+                    hasObservedGeneratedDraftRefreshLoading = false
+                    VideoGenerationTracker.completeDraftRefresh()
+                }
+            }
+
+            is LoadState.Error -> {
+                if (hasObservedGeneratedDraftRefreshLoading) {
+                    hasObservedGeneratedDraftRefreshLoading = false
+                    VideoGenerationTracker.completeDraftRefresh()
                 }
             }
         }
@@ -1017,6 +1049,10 @@ private fun SuccessContent(
         } else {
             0
         }
+    val isGeneratedDraftRefreshPending =
+        isOwnProfile &&
+            selectedTab == ProfileTab.Drafts &&
+            generatingState.isDraftRefreshPending
     Column(
         modifier =
             Modifier
@@ -1039,10 +1075,20 @@ private fun SuccessContent(
 
         val activeVideos = if (selectedTab == ProfileTab.Drafts) draftVideos else profileVideos
         val isRefreshing = activeVideos.loadState.refresh is LoadState.Loading
+        val showDraftsLoadingState =
+            shouldShowDraftsLoadingState(
+                itemCount = draftVideos.itemCount,
+                pendingGenerationCount = pendingGenerationCount,
+                refreshLoadState = draftVideos.loadState.refresh,
+                isGeneratedDraftRefreshPending = isGeneratedDraftRefreshPending,
+            )
         val showDraftsEmptyState =
-            draftVideos.itemCount == 0 &&
-                draftVideos.loadState.refresh is LoadState.NotLoading &&
-                pendingGenerationCount == 0
+            shouldShowDraftsEmptyState(
+                itemCount = draftVideos.itemCount,
+                pendingGenerationCount = pendingGenerationCount,
+                refreshLoadState = draftVideos.loadState.refresh,
+                isGeneratedDraftRefreshPending = isGeneratedDraftRefreshPending,
+            )
 
         PullToRefreshBox(
             isRefreshing = isRefreshing,
@@ -1063,7 +1109,9 @@ private fun SuccessContent(
             },
         ) {
             if (selectedTab == ProfileTab.Drafts) {
-                if (showDraftsEmptyState) {
+                if (showDraftsLoadingState) {
+                    LoadingContent()
+                } else if (showDraftsEmptyState) {
                     DraftsEmptyStateContent(
                         offset = offset,
                         uploadVideo = uploadVideo,
@@ -1100,6 +1148,27 @@ private fun SuccessContent(
         }
     }
 }
+
+private fun shouldShowDraftsLoadingState(
+    itemCount: Int,
+    pendingGenerationCount: Int,
+    refreshLoadState: LoadState,
+    isGeneratedDraftRefreshPending: Boolean,
+): Boolean =
+    itemCount == 0 &&
+        pendingGenerationCount == 0 &&
+        (refreshLoadState is LoadState.Loading || isGeneratedDraftRefreshPending)
+
+private fun shouldShowDraftsEmptyState(
+    itemCount: Int,
+    pendingGenerationCount: Int,
+    refreshLoadState: LoadState,
+    isGeneratedDraftRefreshPending: Boolean,
+): Boolean =
+    itemCount == 0 &&
+        refreshLoadState is LoadState.NotLoading &&
+        pendingGenerationCount == 0 &&
+        !isGeneratedDraftRefreshPending
 
 @Composable
 private fun EmptyStateContent(
@@ -1942,17 +2011,21 @@ private fun DraftVideoDetailScreen(
             loop = true,
             modifier = Modifier.fillMaxSize(),
         )
-        Icon(
-            painter = painterResource(DesignRes.drawable.arrow_left),
-            contentDescription = "back",
-            tint = Color.White,
+        Box(
             modifier =
                 Modifier
-                    .padding(16.dp)
-                    .size(24.dp)
+                    .size(96.dp)
                     .align(Alignment.TopStart)
                     .clickable { onBack() },
-        )
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(DesignRes.drawable.arrow_left),
+                contentDescription = "back",
+                tint = Color.White,
+                modifier = Modifier.size(24.dp),
+            )
+        }
         YralGradientButton(
             text = stringResource(Res.string.publish_button),
             onClick = onPublish,

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -22,6 +23,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.yral.shared.libs.designsystem.component.YralContextMenu
 import com.yral.shared.libs.designsystem.component.YralContextMenuItem
+import com.yral.shared.libs.designsystem.component.limitTextLength
+import com.yral.shared.libs.designsystem.component.rememberTextFieldValueState
+import com.yral.shared.libs.designsystem.component.withNativeTextInput
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
@@ -54,6 +58,8 @@ internal fun ChatInputArea(
 ) {
     val defaultPlaceholder = stringResource(Res.string.message_placeholder)
     val finalPlaceholder = placeholder ?: defaultPlaceholder
+    val textFieldValueState = rememberTextFieldValueState(input)
+    val inputText = textFieldValueState.value.text
     // Input field
     Row(
         modifier =
@@ -72,18 +78,19 @@ internal fun ChatInputArea(
     ) {
         BasicTextField(
             modifier = Modifier.weight(1f),
-            value = input,
-            onValueChange = { newValue: String ->
-                if (newValue.length <= MAX_CHARACTER_LIMIT) {
-                    onInputChange(newValue)
-                }
+            value = textFieldValueState.value,
+            onValueChange = { newValue ->
+                val limitedValue = newValue.limitTextLength(MAX_CHARACTER_LIMIT)
+                textFieldValueState.value = limitedValue
+                onInputChange(limitedValue.text)
             },
             textStyle = LocalAppTopography.current.baseRegular.copy(color = YralColors.NeutralTextPrimary),
+            keyboardOptions = KeyboardOptions.Default.withNativeTextInput(),
             cursorBrush = SolidColor(YralColors.Pink300),
             maxLines = MAX_LINES,
             decorationBox = { innerTextField ->
                 Box(modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)) {
-                    if (input.isEmpty()) {
+                    if (inputText.isEmpty()) {
                         Text(
                             text = finalPlaceholder,
                             color = YralColors.NeutralTextTertiary,
@@ -96,7 +103,7 @@ internal fun ChatInputArea(
         )
 
         InputActions(
-            input,
+            inputText,
             onSendClick,
             showAttachmentMenu,
             onCameraClick,

@@ -128,18 +128,32 @@ class VideoGenerationTrackerTest {
         VideoGenerationTracker.onDraftCreatedAndRequestDraftsTab()
 
         assertFalse(VideoGenerationTracker.state.value.isGenerating)
+        assertTrue(VideoGenerationTracker.state.value.isDraftRefreshPending)
         assertEquals(null, VideoGenerationTracker.selectDraftsTab.value?.targetPrincipal)
         assertTrue(VideoGenerationTracker.selectDraftsTab.value?.refreshDrafts == true)
+    }
+
+    @Test
+    fun `draft refresh pending can be completed`() {
+        VideoGenerationTracker.markDraftRefreshPending()
+
+        assertTrue(VideoGenerationTracker.state.value.isDraftRefreshPending)
+
+        VideoGenerationTracker.completeDraftRefresh()
+
+        assertFalse(VideoGenerationTracker.state.value.isDraftRefreshPending)
     }
 
     @Test
     fun `clear pending generations removes all pending items`() {
         VideoGenerationTracker.startGenerating()
         VideoGenerationTracker.startGenerating()
+        VideoGenerationTracker.markDraftRefreshPending()
 
         VideoGenerationTracker.clearPendingGenerations()
 
         assertFalse(VideoGenerationTracker.state.value.isGenerating)
+        assertFalse(VideoGenerationTracker.state.value.isDraftRefreshPending)
         assertTrue(
             VideoGenerationTracker.state.value.pendingGenerations
                 .isEmpty(),

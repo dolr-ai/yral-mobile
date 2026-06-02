@@ -11,6 +11,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -71,9 +72,10 @@ private fun PlayPauseControl(
     togglePlayPause: () -> Unit,
 ) {
     var isPlayPauseVisible by remember { mutableStateOf(true) }
-    LaunchedEffect(isPlayPauseVisible) {
-        delay(PLAY_PAUSE_BUTTON_TIMEOUT)
+    var hideRequest by remember { mutableIntStateOf(0) }
+    LaunchedEffect(hideRequest, isPlayPauseVisible) {
         if (isPlayPauseVisible) {
+            delay(PLAY_PAUSE_BUTTON_TIMEOUT)
             isPlayPauseVisible = false
         }
     }
@@ -81,7 +83,11 @@ private fun PlayPauseControl(
         modifier =
             Modifier.Companion
                 .fillMaxSize()
-                .clickable { isPlayPauseVisible = !isPlayPauseVisible },
+                .clickable {
+                    togglePlayPause()
+                    isPlayPauseVisible = true
+                    hideRequest += 1
+                },
         contentAlignment = Alignment.Companion.Center,
     ) {
         if (!isLoading && isPlayPauseVisible) {
@@ -94,8 +100,7 @@ private fun PlayPauseControl(
                 modifier =
                     Modifier.Companion
                         .size(48.dp)
-                        .clip(CircleShape)
-                        .clickable { togglePlayPause() },
+                        .clip(CircleShape),
             )
         }
     }

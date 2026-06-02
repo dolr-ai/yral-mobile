@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
@@ -38,6 +39,8 @@ import androidx.compose.ui.unit.dp
 import com.yral.shared.libs.designsystem.component.YralBottomSheet
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralGradientButton
+import com.yral.shared.libs.designsystem.component.rememberTextFieldValueState
+import com.yral.shared.libs.designsystem.component.withNativeTextInput
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.reportVideo.domain.models.ReportVideoData
@@ -223,6 +226,7 @@ private fun ReasonDetailsInput(
     onValueChange: (text: String) -> Unit,
     onHeightChange: (height: Int) -> Unit,
 ) {
+    val textFieldValueState = rememberTextFieldValueState(text)
     Column(
         modifier =
             Modifier.onGloballyPositioned {
@@ -242,8 +246,11 @@ private fun ReasonDetailsInput(
                 Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp)),
-            value = text,
-            onValueChange = onValueChange,
+            value = textFieldValueState.value,
+            onValueChange = {
+                textFieldValueState.value = it
+                onValueChange(it.text)
+            },
             colors =
                 TextFieldDefaults.colors().copy(
                     focusedTextColor = YralColors.Neutral300,
@@ -257,6 +264,7 @@ private fun ReasonDetailsInput(
                     disabledIndicatorColor = Color.Transparent,
                 ),
             textStyle = LocalAppTopography.current.baseRegular,
+            keyboardOptions = KeyboardOptions.Default.withNativeTextInput(),
             placeholder = {
                 Text(
                     text = stringResource(Res.string.add_details),

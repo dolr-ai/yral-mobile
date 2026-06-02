@@ -1,22 +1,28 @@
 package com.yral.shared.features.chat.data
 
+import com.yral.shared.features.chat.data.models.SendHumanCreatorMessageRequestDto
 import com.yral.shared.features.chat.data.models.SendMessageRequestDto
 import com.yral.shared.features.chat.data.models.toDomain
 import com.yral.shared.features.chat.data.models.toDomainActiveOnly
 import com.yral.shared.features.chat.domain.ChatRepository
+import com.yral.shared.features.chat.domain.models.ChatMessage
 import com.yral.shared.features.chat.domain.models.ChatMessageType
 import com.yral.shared.features.chat.domain.models.Conversation
 import com.yral.shared.features.chat.domain.models.ConversationMessagesPageResult
 import com.yral.shared.features.chat.domain.models.ConversationsPageResult
 import com.yral.shared.features.chat.domain.models.DeleteConversationResult
+import com.yral.shared.features.chat.domain.models.HumanCreatorTakeoverStatus
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.domain.models.SendMessageResult
+import com.yral.shared.features.chat.domain.models.StreamEvent
 import com.yral.shared.features.chat.domain.models.totalUnreadConversationBadgeCount
+import kotlinx.coroutines.flow.Flow
 
 class ChatRepositoryImpl(
     private val dataSource: ChatDataSource,
+    private val streamingDataSource: ChatStreamingDataSource,
 ) : ChatRepository {
     override suspend fun getUnreadConversationCount(principal: String): Int {
         var offset = 0
@@ -138,9 +144,62 @@ class ChatRepositoryImpl(
         return response.toDomain(conversationIdFallback = conversationId)
     }
 
+    override fun streamMessage(
+        conversationId: String,
+        draft: SendMessageDraft,
+    ): Flow<StreamEvent> =
+        streamingDataSource.streamMessage(
+            conversationId = conversationId,
+            request =
+                SendMessageRequestDto(
+                    content = draft.content,
+                    messageType = draft.messageType.apiValue,
+                    mediaUrls = null,
+                    audioUrl = null,
+                    audioDurationSeconds = null,
+                ),
+        )
+
     override suspend fun markConversationAsRead(conversationId: String) {
         dataSource.markConversationAsRead(conversationId)
     }
+
+    override suspend fun startHumanCreatorTakeover(conversationId: String): HumanCreatorTakeoverStatus =
+        dataSource
+            .startHumanCreatorTakeover(conversationId)
+            .toDomain()
+
+    override suspend fun releaseHumanCreatorTakeover(conversationId: String) {
+        dataSource.releaseHumanCreatorTakeover(conversationId)
+    }
+
+    override suspend fun sendHumanCreatorMessage(
+        conversationId: String,
+        content: String,
+    ): ChatMessage =
+        dataSource
+            .sendHumanCreatorMessage(
+                conversationId = conversationId,
+                request = SendHumanCreatorMessageRequestDto(content = content),
+            ).toDomain(conversationIdFallback = conversationId)
+
+    override suspend fun getHumanCreatorTakeoverStatus(conversationId: String): HumanCreatorTakeoverStatus =
+        dataSource
+            .getHumanCreatorTakeoverStatus(conversationId)
+            .toDomain()
+
+    override suspend fun getCreatorConversationMessagesPage(
+        conversationId: String,
+        limit: Int,
+        offset: Int,
+    ): ConversationMessagesPageResult =
+        dataSource
+            .listCreatorConversationMessages(
+                conversationId = conversationId,
+                limit = limit,
+                offset = offset,
+                order = "desc",
+            ).toDomain()
 
     private companion object {
         private const val UNREAD_COUNT_PAGE_SIZE = 100
