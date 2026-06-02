@@ -419,7 +419,10 @@ class DefaultRootComponent(
                     }
                 }
             if (existingIndex != -1) {
-                stack.take(existingIndex + 1)
+                // H2H repro: matching a stale frame by conversationId was
+                // dropping new params like participantPrincipalId. Replace
+                // the matched frame so the chat screen re-initializes.
+                stack.take(existingIndex) + Config.Conversation(params = params)
             } else {
                 stack + Config.Conversation(params = params)
             }

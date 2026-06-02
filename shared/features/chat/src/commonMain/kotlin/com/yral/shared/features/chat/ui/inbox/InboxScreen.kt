@@ -156,15 +156,13 @@ private fun InboxContentWithPullToRefresh(
                     OpenConversationParams(
                         // H2H conversations have no influencer; we pass empty
                         // placeholders here so OpenConversationParams' existing
-                        // non-null fields parse. The chat-screen + VM
-                        // disambiguate H2H vs AI via Conversation.conversationType
-                        // once loaded. A proper `participantPrincipalId` field
-                        // on OpenConversationParams lands with the profile-button
-                        // commit (plan §6.2).
+                        // non-null fields parse. participantPrincipalId is the
+                        // canonical H2H discriminator the chat screen reads.
                         influencerId = conversation.influencer?.id.orEmpty(),
                         influencerCategory = conversation.influencer?.category.orEmpty(),
                         conversationId = conversation.id,
                         userId = conversation.userId,
+                        participantPrincipalId = conversation.conversationUser?.principalId,
                         username = conversation.conversationUser?.username,
                         displayName =
                             conversation.conversationUser?.let { user ->

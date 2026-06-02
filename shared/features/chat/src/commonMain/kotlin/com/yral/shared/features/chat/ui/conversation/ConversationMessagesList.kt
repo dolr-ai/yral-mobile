@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import com.yral.shared.features.chat.domain.models.AssistantErrorPresentation
 import com.yral.shared.features.chat.domain.models.ConversationMessageRole
+import com.yral.shared.features.chat.domain.models.isFromCurrentUser
 import com.yral.shared.features.chat.viewmodel.ConversationMessageItem
 import com.yral.shared.features.chat.viewmodel.LocalMessageStatus
 
@@ -26,6 +27,8 @@ internal fun MessagesList(
     overlayItems: List<ConversationMessageItem>,
     historyPagingItems: LazyPagingItems<ConversationMessageItem>,
     isBotAccount: Boolean = false,
+    isHumanChat: Boolean = false,
+    currentUserPrincipalId: String? = null,
     renderSystemBanners: Boolean = false,
     streamMarkdownLockedRemoteIds: Map<String, Boolean> = emptyMap(),
     assistantError: AssistantErrorPresentation? = null,
@@ -65,6 +68,8 @@ internal fun MessagesList(
                 item = item,
                 isBotAccount = isBotAccount,
                 streamMarkdownLockedRemoteIds = streamMarkdownLockedRemoteIds,
+                isHumanChat = isHumanChat,
+                currentUserPrincipalId = currentUserPrincipalId,
                 onImageClick = onImageClick,
                 onRetry = onRetry,
             )
@@ -80,6 +85,8 @@ internal fun MessagesList(
                 item = item,
                 isBotAccount = isBotAccount,
                 streamMarkdownLockedRemoteIds = streamMarkdownLockedRemoteIds,
+                isHumanChat = isHumanChat,
+                currentUserPrincipalId = currentUserPrincipalId,
                 onImageClick = onImageClick,
                 onRetry = onRetry,
             )
@@ -104,6 +111,8 @@ private fun MessageRow(
     item: ConversationMessageItem,
     isBotAccount: Boolean,
     streamMarkdownLockedRemoteIds: Map<String, Boolean>,
+    isHumanChat: Boolean,
+    currentUserPrincipalId: String?,
     onImageClick: (imageUrl: String) -> Unit,
     onRetry: (localId: String) -> Unit,
 ) {
@@ -122,9 +131,21 @@ private fun MessageRow(
         return
     }
     val roleIsUser = role == ConversationMessageRole.USER
-    // For bot accounts, roles are flipped: USER messages come from the AI (shown on left),
-    // ASSISTANT messages come from the human customer (shown on right).
-    val isUser = if (isBotAccount) !roleIsUser else roleIsUser
+    // Bubble-side discriminator:
+    //   - Bot account (creator takeover): roles flipped — USER msgs come from
+    //     the AI (left), ASSISTANT msgs come from the human creator (right).
+    //   - H2H remote message: both peers send role='user' so role collapses
+    //     as a discriminator. Use sender_id == viewer_principal instead.
+    //   - H2H local optimistic add: always the viewer's own send → use
+    //     roleIsUser (which is true for role='user' as expected).
+    //   - AI: role-based — works because USER vs ASSISTANT are distinct.
+    val isUser =
+        when {
+            isBotAccount -> !roleIsUser
+            isHumanChat && item is ConversationMessageItem.Remote && currentUserPrincipalId != null ->
+                item.message.isFromCurrentUser(currentUserPrincipalId)
+            else -> roleIsUser
+        }
 
     // Extract render params from either Remote or Local OUTSIDE the Box so the
     // MessageContent call below has a single slot-table entry. The Local→Remote

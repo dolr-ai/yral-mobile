@@ -510,6 +510,8 @@ fun ChatConversationScreen(
                             overlayItems = overlayItems,
                             historyPagingItems = historyPagingItems,
                             isBotAccount = viewState.isBotAccount,
+                            isHumanChat = viewState.isHumanChat,
+                            currentUserPrincipalId = viewState.currentUserPrincipalId,
                             renderSystemBanners = viewState.isChatAsHumanCreatorEnabled,
                             streamMarkdownLockedRemoteIds = streamMarkdownLockedRemoteIds,
                             assistantError = assistantError,

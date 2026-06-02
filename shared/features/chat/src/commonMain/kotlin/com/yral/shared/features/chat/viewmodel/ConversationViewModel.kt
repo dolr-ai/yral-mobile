@@ -891,15 +891,22 @@ class ConversationViewModel(
         participantPrincipalId: String? = null,
     ) {
         val isBotAccount = sessionManager.isBotAccount == true
+        val viewerPrincipal = sessionManager.userPrincipal
         _viewState.update {
             it.copy(
                 influencerSource = influencerSource,
                 isBotAccount = isBotAccount,
-                participantPrincipalId = participantPrincipalId,
+                currentUserPrincipalId = viewerPrincipal,
             )
         }
         val currentConversationId = _viewState.value.conversationId
-        if (currentConversationId == conversationId) return
+        if (currentConversationId == conversationId) {
+            // Same conversation reopened — participantPrincipalId may need a
+            // refresh (e.g. nav-stack carrying a different value), so update
+            // it without resetting anything else.
+            _viewState.update { it.copy(participantPrincipalId = participantPrincipalId) }
+            return
+        }
         if (_viewState.value.conversationId != null && _viewState.value.conversationId != conversationId) {
             resetState()
         }
@@ -916,6 +923,12 @@ class ConversationViewModel(
             recentMessages = emptyList(),
             messageCount = PAGE_SIZE + 1,
         )
+        // Apply participantPrincipalId AFTER resetState/setConversationId so
+        // resetState's fresh ConversationViewState doesn't blow the H2H
+        // discriminator away. Pre-reset assignment was silently dropped on
+        // every conversation switch, manifesting as Subscribe + 3-dot menu
+        // appearing on H2H chats opened after browsing any other chat first.
+        _viewState.update { it.copy(participantPrincipalId = participantPrincipalId) }
         // N1 gate: single call-site for the entire IAP cascade
         // (checkChatAccessUseCase → retryUnconsumedDailyChatAccess →
         // fetchInfluencerSubscriptionProducts). All four fallback entry
@@ -935,7 +948,14 @@ class ConversationViewModel(
         avatarUrl: String? = null,
     ) {
         val isBotAccount = sessionManager.isBotAccount == true
-        _viewState.update { it.copy(influencerSource = influencerSource, isBotAccount = isBotAccount) }
+        val viewerPrincipal = sessionManager.userPrincipal
+        _viewState.update {
+            it.copy(
+                influencerSource = influencerSource,
+                isBotAccount = isBotAccount,
+                currentUserPrincipalId = viewerPrincipal,
+            )
+        }
         val currentInfluencerId = _viewState.value.influencer?.id
         val currentConversationId = _viewState.value.conversationId
         // same influencer and conversation exists
@@ -2240,6 +2260,11 @@ data class ConversationViewState(
     // user's principal_id). [isHumanChat] is the derived single-source-of-
     // truth gate that all H2H-vs-AI branches in this module read from.
     val participantPrincipalId: String? = null,
+    // H2H: viewer's own principal_id. Plumbed into the message renderer
+    // so bubble side (left vs right) can be decided by sender_id ==
+    // viewer comparison for H2H, where role='user' on both peers and
+    // the role-based discriminator collapses.
+    val currentUserPrincipalId: String? = null,
 ) {
     val isHumanChat: Boolean
         get() = participantPrincipalId != null
