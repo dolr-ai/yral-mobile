@@ -17,3 +17,29 @@ Verify if the sonatype repository is still being used for any dependencies and i
 org.gradle.caching=true
 org.gradle.configuration-cache=true
 ```
+- Parallelize the build by enabling parallel execution in gradle properties
+```
+./gradlew --parallel // if on gradle 8.11 or later, this is default
+org.gradle.configuration-cache.parallel=true
+```
+- Remove all references to yral-common from mobile codebase
+- lint and static analysis
+```
+./gradlew lintKotlin
+./gradlew detekt
+```
+- code coverage, look into `kotlinx-kover` for this
+- for dependency management, it's better to use renovate than dependabot.
+- code shrinking, r8
+```
+android {
+    buildTypes {
+        release {
+            minifyEnabled true
+        }
+    }
+}
+```
+- Look at `@Keep` if the above messes with crashlytics
+- Remove the checks limitation where we are suppressing logs to github and just use the plain jane mechanism of displaying to github actions logs
+- break up ci if still large cache after rust cleanup
