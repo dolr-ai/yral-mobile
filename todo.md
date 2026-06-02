@@ -42,3 +42,4 @@ android {
 ```
 - Look at `@Keep` if the above messes with crashlytics
 - Remove the checks limitation where we are suppressing logs to github and just use the plain jane mechanism of displaying to github actions logs
+- break up ci if still large cache after rust cleanup
