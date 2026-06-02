@@ -10,6 +10,8 @@ import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.domain.models.SendMessageResult
+import com.yral.shared.features.chat.domain.models.StreamEvent
+import kotlinx.coroutines.flow.Flow
 
 interface ChatRepository {
     suspend fun getUnreadConversationCount(principal: String): Int
@@ -47,6 +49,16 @@ interface ChatRepository {
         conversationId: String,
         draft: SendMessageDraft,
     ): SendMessageResult
+
+    /**
+     * Phase 2.7 streaming send. Returns a cold Flow that emits Token/Done/Failed
+     * events. Cancelling the consumer cancels the underlying SSE connection.
+     * Only callable for text-only drafts; other media types must use [sendMessage].
+     */
+    fun streamMessage(
+        conversationId: String,
+        draft: SendMessageDraft,
+    ): Flow<StreamEvent>
 
     suspend fun markConversationAsRead(conversationId: String)
 

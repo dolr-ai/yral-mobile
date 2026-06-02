@@ -138,8 +138,13 @@ fun ChatConversationScreen(
         }
     }
 
-    LaunchedEffect(Unit) { viewModel.refreshHistory() }
-
+    // The screen-side LaunchedEffect(Unit) { viewModel.refreshHistory() } used
+    // to live here. It was redundant — the VM-side pagedHistory rebuild on
+    // conversationId change (ConversationViewModel.kt: pagedHistory's combine
+    // on conversationId) is the canonical refresh trigger and fires once on
+    // setConversationId. Both triggers firing was producing the "entire chat
+    // flickered 2 times" repro on Soma re-entry, where the bigger history
+    // (~30 items) made the double swap visible.
     LaunchedEffect(viewState.isBotAccount, viewState.conversationId) {
         if (viewState.isBotAccount && viewState.conversationId != null) {
             viewModel.refreshHumanCreatorTakeoverStatus()
@@ -182,6 +187,20 @@ fun ChatConversationScreen(
 
     val overlayItems by viewModel.overlay.collectAsState()
     val historyPagingItems = viewModel.history.collectAsLazyPagingItems()
+    val streamMarkdownLockedRemoteIds by viewModel.streamMarkdownLockedRemoteIds.collectAsState()
+    val assistantError by viewModel.assistantError.collectAsState()
+    val isReplyInProgress by viewModel.isReplyInProgress.collectAsState()
+
+    // Phase 5b: push the LazyPagingItems snapshot into the VM whenever it settles.
+    // The VM combines this with `_overlay.sent` and debounces 500ms before writing
+    // to ConversationContentCache. On re-entry the cache hydrates `_overlay.sent`
+    // instantly so the user never sees a blank chat window during paging refetch.
+    LaunchedEffect(historyPagingItems.itemSnapshotList) {
+        val snapshot =
+            historyPagingItems.itemSnapshotList.items
+                .mapNotNull { (it as? ConversationMessageItem.Remote)?.message }
+        viewModel.recordHistorySnapshot(snapshot)
+    }
 
     var input by remember { mutableStateOf("") }
     var activeImagePreview by remember { mutableStateOf<ChatImagePreviewSource?>(null) }
@@ -244,8 +263,16 @@ fun ChatConversationScreen(
         lineHeightPx = messageLineHeightPx,
     )
 
-    // Check if there's a waiting assistant message in overlay
-    val hasWaitingAssistant by derivedStateOf { overlayItems.any { it.isWaitingAssistant() } }
+    // Check if there's a waiting assistant message in overlay.
+    // Phase 7-final: also returns true while a streaming SSE reply or a legacy
+    // sendMessageUseCase is in flight. ChatInputArea uses this flag to disable
+    // the send + media buttons during AI replies (matches production chat-ai).
+    // Streaming Locals have streamingBuffer != null and `isWaitingAssistant()`
+    // returns false for them — they wouldn't trip this check on their own —
+    // so the VM-side isReplyInProgress flow covers the SSE path.
+    val hasWaitingAssistant by derivedStateOf {
+        overlayItems.any { it.isWaitingAssistant() } || isReplyInProgress
+    }
 
     val overlaySentCount by derivedStateOf { overlayItems.count { it is ConversationMessageItem.Remote } }
     val totalMessageCount by derivedStateOf { viewState.totalHistoryMessageCount + overlaySentCount }
@@ -480,6 +507,9 @@ fun ChatConversationScreen(
                             historyPagingItems = historyPagingItems,
                             isBotAccount = viewState.isBotAccount,
                             renderSystemBanners = viewState.isChatAsHumanCreatorEnabled,
+                            streamMarkdownLockedRemoteIds = streamMarkdownLockedRemoteIds,
+                            assistantError = assistantError,
+                            onAssistantErrorRetry = { viewModel.retryFailedAssistantReply() },
                             onImageClick = { imageUrl ->
                                 activeImagePreview = ChatImagePreviewSource.Message(imageUrl)
                             },

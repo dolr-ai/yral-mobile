@@ -51,5 +51,18 @@ object ChatFeatureFlags {
                     "'switch to your human profile' prompt and system banners are not rendered.",
                 defaultValue = false,
             )
+        val SseStreamingEnabled: FeatureFlag<Boolean> =
+            boolean(
+                keySuffix = "sseStreamingEnabled",
+                name = "SSE token streaming",
+                description = "When ON, text-only AI replies stream token-by-token via " +
+                    "POST .../messages/stream (Phase 2.7). When OFF, sends use the existing " +
+                    "POST .../messages endpoint. Carve-outs (media attachments, active takeover, " +
+                    "backend 404) always fall back to non-streaming regardless of this flag.",
+                // LOCAL-ONLY OVERRIDE for SSE testing: flip to `true` for dev only — revert
+                // to `false` before any commit. The PR on origin must keep defaultValue = false
+                // until backend cutover + GA.
+                defaultValue = false,
+            )
     }
 }

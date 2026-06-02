@@ -34,6 +34,9 @@
 
     <!-- Message Bubble -->
     <string name="message_failed_tap_to_resend">Message Failed. Tap to resend</string>
+    <string name="assistant_error_rephrase_hint">Try rephrasing your message</string>
+    <string name="assistant_error_retry">Try again</string>
+    <string name="assistant_error_connection_timed_out">Connection timed out. Try again.</string>
 
     <!-- Image Preview Overlay -->
     <string name="message_optional">Message (optional)</string>

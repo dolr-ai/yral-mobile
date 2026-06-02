@@ -22,10 +22,14 @@ import com.yral.shared.data.domain.models.ConversationInfluencerSource
 import com.yral.shared.features.chat.analytics.ChatTelemetry
 import com.yral.shared.features.chat.attachments.ChatAttachment
 import com.yral.shared.features.chat.attachments.FilePathChatAttachment
+import com.yral.shared.features.chat.data.ConversationContentCache
 import com.yral.shared.features.chat.domain.ChatErrorMapper
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.ConversationMessagesPagingSource
 import com.yral.shared.features.chat.domain.EmptyMessagesPagingSource
+import com.yral.shared.features.chat.domain.models.AssistantError
+import com.yral.shared.features.chat.domain.models.AssistantErrorCode
+import com.yral.shared.features.chat.domain.models.AssistantErrorPresentation
 import com.yral.shared.features.chat.domain.models.ChatError
 import com.yral.shared.features.chat.domain.models.ChatMessage
 import com.yral.shared.features.chat.domain.models.ChatMessageType
@@ -34,6 +38,7 @@ import com.yral.shared.features.chat.domain.models.ConversationMessageRole
 import com.yral.shared.features.chat.domain.models.GrantError
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.domain.models.SendMessageResult
+import com.yral.shared.features.chat.domain.models.StreamEvent
 import com.yral.shared.features.chat.domain.usecases.CheckChatAccessUseCase
 import com.yral.shared.features.chat.domain.usecases.CreateConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.DeleteConversationUseCase
@@ -45,6 +50,7 @@ import com.yral.shared.features.chat.domain.usecases.ReleaseHumanCreatorTakeover
 import com.yral.shared.features.chat.domain.usecases.SendHumanCreatorMessageUseCase
 import com.yral.shared.features.chat.domain.usecases.SendMessageUseCase
 import com.yral.shared.features.chat.domain.usecases.StartHumanCreatorTakeoverUseCase
+import com.yral.shared.features.chat.ui.conversation.shouldRenderAsMarkdown
 import com.yral.shared.features.subscriptions.domain.FetchProductsUseCase
 import com.yral.shared.iap.IAPManager
 import com.yral.shared.iap.core.IAPError
@@ -62,7 +68,10 @@ import com.yral.shared.libs.sharing.ShareService
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import com.yral.shared.rust.service.utils.propicFromPrincipal
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -71,15 +80,18 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
 import yral_mobile.shared.features.chat.generated.resources.Res
+import yral_mobile.shared.features.chat.generated.resources.assistant_error_connection_timed_out
 import yral_mobile.shared.features.chat.generated.resources.influencer_subscription_purchase_failed
 import yral_mobile.shared.features.chat.generated.resources.influencer_subscription_purchase_pending
 import yral_mobile.shared.features.chat.generated.resources.influencer_subscription_purchase_unavailable
@@ -94,6 +106,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
+@OptIn(FlowPreview::class)
 @Suppress("LongParameterList", "TooManyFunctions", "LargeClass")
 class ConversationViewModel(
     flagManager: FeatureFlagManager,
@@ -119,6 +132,7 @@ class ConversationViewModel(
     private val releaseHumanCreatorTakeoverUseCase: ReleaseHumanCreatorTakeoverUseCase,
     private val sendHumanCreatorMessageUseCase: SendHumanCreatorMessageUseCase,
     private val getHumanCreatorTakeoverStatusUseCase: GetHumanCreatorTakeoverStatusUseCase,
+    private val conversationContentCache: ConversationContentCache,
 ) : ViewModel() {
     /**
      * Message ordering:
@@ -133,6 +147,7 @@ class ConversationViewModel(
                 subscriptionMandatoryThreshold = flagManager.get(ChatFeatureFlags.Chat.SubscriptionMandatoryThreshold),
                 isSubscriptionEnabled = flagManager.isEnabled(AppFeatureFlags.Common.EnableSubscription),
                 isChatAsHumanCreatorEnabled = flagManager.get(ChatFeatureFlags.Chat.ChatAsHumanCreatorEnabled),
+                isSseStreamingEnabled = flagManager.get(ChatFeatureFlags.Chat.SseStreamingEnabled),
             ),
         )
     val viewState: StateFlow<ConversationViewState> = _viewState.asStateFlow()
@@ -195,6 +210,7 @@ class ConversationViewModel(
             pagingData.map { message ->
                 val currentIds = loadedMessageIds.value
                 if (message.id !in currentIds) {
+                    Logger.i("SSE") { "paging-loadedIds += ${message.id} (size=${currentIds.size + 1})" }
                     loadedMessageIds.update { it + message.id }
                 }
                 ConversationMessageItem.Remote(message) as ConversationMessageItem
@@ -202,6 +218,62 @@ class ConversationViewModel(
         }
 
     private val _overlay = MutableStateFlow(OverlayState())
+
+    // Phase 5b: server message id → Markdown-locked Boolean. Populated on SSE `done`
+    // from the streaming Local's useMarkdownLocked. The screen consumes this to
+    // override the per-Remote `shouldRenderAsMarkdown` decision, so the Markdown/Text
+    // path stays identical across the Local→Remote swap. ViewModel-scoped only; on
+    // re-entry the map is empty and the default decision kicks in (which is
+    // identical for stable content).
+    private val _streamMarkdownLockedRemoteIds = MutableStateFlow<Map<String, Boolean>>(emptyMap())
+    val streamMarkdownLockedRemoteIds: StateFlow<Map<String, Boolean>> =
+        _streamMarkdownLockedRemoteIds.asStateFlow()
+
+    // Phase 6: the latest assistant-side error for the current conversation, paired
+    // with the draft that produced it so the AssistantErrorBubble's retry tap can
+    // re-run the stream without scraping state out of the overlay. Cleared on the
+    // first successful token of a retry, on a fresh send, and on conversation
+    // switch — at most one error visible at a time.
+    private val _assistantError = MutableStateFlow<AssistantErrorPresentation?>(null)
+    val assistantError: StateFlow<AssistantErrorPresentation?> = _assistantError.asStateFlow()
+
+    // Phase 7-final: send button is disabled while an AI reply is in flight,
+    // matching production chat-ai behavior (so users don't experience a UX
+    // change at cutover). Covers both the SSE path (active stream) and the
+    // legacy non-streaming path (sendMessageUseCase in flight). Implemented as
+    // a reference count rather than a Boolean so a Done that immediately
+    // drains a queued send keeps the count > 0 across the transition and the
+    // button doesn't flicker enabled-then-disabled.
+    private val activeReplyCount = MutableStateFlow(0)
+    val isReplyInProgress: StateFlow<Boolean> =
+        activeReplyCount
+            .map { it > 0 }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    // Phase 7: single-stream invariant. At most one SSE collect is in flight per
+    // conversation. New sends that arrive while a stream is active are buffered
+    // in [pendingStreamingQueue] and drained when the active stream terminates
+    // (Done, Failed, idle timeout, or cancellation). The user's USER Local is
+    // still added to overlay immediately so they see their message instantly
+    // — only the assistant placeholder + SSE collect waits its turn.
+    private var activeStreamJob: Job? = null
+    private val pendingStreamingQueue: ArrayDeque<QueuedStreamingSend> = ArrayDeque()
+
+    // Phase 9 circuit breaker. Incremented on each terminal stream failure
+    // (Failed event, idle timeout, or onFailure of the SSE collect itself).
+    // Reset to 0 on Done. When the counter reaches CIRCUIT_BREAKER_THRESHOLD,
+    // `shouldStream` returns false for the rest of the session so subsequent
+    // sends silently take the non-streaming legacy path. There is no UI
+    // exposure of this — it's a defense-in-depth fallback for sustained
+    // backend SSE flakiness during the rollout.
+    private var consecutiveStreamFailures: Int = 0
+
+    private data class QueuedStreamingSend(
+        val draft: SendMessageDraft,
+        val userLocalId: String,
+        val timestampMs: Long,
+    )
+
     private val systemOverlayMessagesFlow = MutableStateFlow<List<SentMessage>>(emptyList())
 
     val overlay: StateFlow<List<ConversationMessageItem>> =
@@ -225,6 +297,12 @@ class ConversationViewModel(
                 emptyList(),
             )
 
+    // Phase 5b: paging snapshot pushed in from the screen via `recordHistorySnapshot`.
+    // Combined with `_overlay.sent` to compose the cache write payload. Kept as
+    // ChatMessage list (not ConversationMessageItem) because the cache stores raw
+    // domain messages.
+    private val lastHistorySnapshot = MutableStateFlow<List<ChatMessage>>(emptyList())
+
     init {
         viewModelScope.launch {
             sessionManager
@@ -236,6 +314,55 @@ class ConversationViewModel(
                     _viewState.update { it.copy(isSocialSignedIn = isSocialSignIn) }
                 }
         }
+        // Phase 5b: debounced cache writer. Snapshots (conversationId, overlay.sent + history)
+        // and writes to the ConversationContentCache whenever the visible message set
+        // settles. The 500ms debounce coalesces token-by-token overlay churn into one
+        // cache write per stable state.
+        viewModelScope.launch {
+            combine(
+                _viewState.map { it.conversationId.orEmpty() }.distinctUntilChanged(),
+                _overlay.map { it.sent.map { sent -> sent.message } },
+                lastHistorySnapshot,
+            ) { convId, sentMsgs, historyMsgs ->
+                CacheSnapshot(convId, sentMsgs, historyMsgs)
+            }.debounce(CACHE_WRITE_DEBOUNCE_MS)
+                .collect { snap ->
+                    if (snap.conversationId.isBlank()) return@collect
+                    val merged = mergeForCache(snap.sentMessages, snap.historyMessages)
+                    if (merged.isNotEmpty()) {
+                        conversationContentCache.write(snap.conversationId, merged)
+                    }
+                }
+        }
+    }
+
+    /** Phase 5b: screen pushes the LazyPagingItems snapshot here so the cache writer can include it. */
+    fun recordHistorySnapshot(messages: List<ChatMessage>) {
+        lastHistorySnapshot.value = messages
+    }
+
+    private data class CacheSnapshot(
+        val conversationId: String,
+        val sentMessages: List<ChatMessage>,
+        val historyMessages: List<ChatMessage>,
+    )
+
+    /**
+     * Dedup `sent` + `history` by message id (sent wins because it's the most recently
+     * confirmed source). Return ordered by `createdAt` ascending so the cache stores a
+     * chronological list — the reader passes them through `parseTimestampToEpochMs`
+     * to re-derive the SentMessage insertion order on hydration.
+     */
+    @OptIn(ExperimentalTime::class)
+    private fun mergeForCache(
+        sent: List<ChatMessage>,
+        history: List<ChatMessage>,
+    ): List<ChatMessage> {
+        if (sent.isEmpty() && history.isEmpty()) return emptyList()
+        val byId = LinkedHashMap<String, ChatMessage>(sent.size + history.size)
+        history.forEach { byId[it.id] = it }
+        sent.forEach { byId[it.id] = it }
+        return byId.values.sortedBy { parseTimestampToEpochMs(it.createdAt) ?: 0L }
     }
 
     @OptIn(ExperimentalTime::class)
@@ -645,7 +772,22 @@ class ConversationViewModel(
         val previousConversationId = _viewState.value.conversationId
 
         if (previousConversationId != id) {
-            _overlay.value = OverlayState()
+            // Phase 5b: stale-while-revalidate. Hydrate `_overlay.sent` from the
+            // in-memory cache BEFORE the paging refresh fires, so the LazyColumn
+            // shows the prior chat instantly instead of blanking for ~500ms while
+            // page 0 fetches. Once paging completes, `loadedMessageIds` dedup
+            // silently swaps the cached overlay copies for the paged ones.
+            val cached = conversationContentCache.read(id)
+            val hydratedSent =
+                cached.mapNotNull { msg ->
+                    parseTimestampToEpochMs(msg.createdAt)?.let { ts ->
+                        SentMessage(insertedAtMs = ts, message = msg)
+                    }
+                }
+            _overlay.value = OverlayState(sent = hydratedSent)
+            // Phase 6: errors are scoped to the conversation that produced them.
+            // Crossing the conversation boundary clears any in-flight error bubble.
+            _assistantError.value = null
         }
 
         // Merge incoming influencer with any existing data to preserve category from the wall
@@ -823,6 +965,7 @@ class ConversationViewModel(
                 subscriptionMandatoryThreshold = current.subscriptionMandatoryThreshold,
                 isSubscriptionEnabled = current.isSubscriptionEnabled,
                 isChatAsHumanCreatorEnabled = current.isChatAsHumanCreatorEnabled,
+                isSseStreamingEnabled = current.isSseStreamingEnabled,
                 isInfluencerSubscriptionPurchasedAndVerified = false,
                 isInfluencerSubscriptionAvailableToPurchase = current.isInfluencerSubscriptionAvailableToPurchase,
                 isInfluencerSubscriptionPurchaseInProgress = false,
@@ -837,6 +980,16 @@ class ConversationViewModel(
         historyRefreshTrigger.value = 0
         stopTakeoverPolling()
         stopCountdownTicker()
+        // Phase 7: tear down any in-flight stream and drop queued sends. The
+        // stream's finally block sees the cancellation as structured-concurrency,
+        // NOT the idle-timeout sentinel, so it won't synthesize a TRANSIENT error
+        // on top of a conversation switch.
+        activeStreamJob?.cancel()
+        activeStreamJob = null
+        pendingStreamingQueue.clear()
+        _assistantError.value = null
+        // Phase 9: each conversation gets a fresh circuit-breaker budget.
+        consecutiveStreamFailures = 0
     }
 
     private fun createConversation(influencerId: String) {
@@ -961,6 +1114,19 @@ class ConversationViewModel(
             draftForRetry = null,
         )
 
+    private fun createStreamingAssistantPlaceholder(timestampMs: Long): LocalMessage =
+        LocalMessage(
+            localId = "local-streaming-assistant-$timestampMs",
+            role = ConversationMessageRole.ASSISTANT,
+            content = null,
+            messageType = ChatMessageType.TEXT,
+            createdAtMs = timestampMs + 1,
+            status = LocalMessageStatus.SENDING,
+            isPlaceholder = false,
+            draftForRetry = null,
+            streamingBuffer = "",
+        )
+
     private fun buildSentMessages(
         userMessage: ChatMessage,
         assistantMessage: ChatMessage?,
@@ -1040,9 +1206,33 @@ class ConversationViewModel(
         }
     }
 
+    private suspend fun sendMessageLegacy(
+        conversationId: String,
+        draft: SendMessageDraft,
+        userLocalId: String,
+        assistantLocalId: String,
+        sentAtMs: Long,
+    ) {
+        sendMessageUseCase(
+            SendMessageUseCase.Params(
+                conversationId = conversationId,
+                draft = draft,
+            ),
+        ).onSuccess { result ->
+            handleSendSuccess(result, userLocalId, assistantLocalId, sentAtMs)
+        }.onFailure { error ->
+            handleSendFailure(error, userLocalId, assistantLocalId)
+        }
+    }
+
     @OptIn(ExperimentalTime::class)
     fun sendMessage(draft: SendMessageDraft) {
         val convId = conversationId ?: return
+
+        // Phase 6: a fresh send supersedes any error from the previous send.
+        // Clear before any new state lands so the user sees their new message
+        // and the streaming placeholder, not a stale error bubble.
+        _assistantError.value = null
 
         val now = Clock.System.now().toEpochMilliseconds()
         val localUserId = "local-user-$now"
@@ -1062,9 +1252,6 @@ class ConversationViewModel(
                 isPlaceholder = false,
                 draftForRetry = draft,
             )
-        val assistantPlaceholder = createAssistantPlaceholder(now)
-
-        _overlay.update { it.copy(pending = it.pending + userLocal + assistantPlaceholder) }
 
         _viewState.value.influencer?.let { influencer ->
             chatTelemetry.userMessageSent(
@@ -1077,18 +1264,536 @@ class ConversationViewModel(
             )
         }
 
-        viewModelScope.launch {
-            sendMessageUseCase(
-                SendMessageUseCase.Params(
-                    conversationId = convId,
-                    draft = draft,
-                ),
-            ).onSuccess { result ->
-                handleSendSuccess(result, localUserId, localAssistantId, now)
-            }.onFailure { error ->
-                handleSendFailure(error, localUserId, localAssistantId)
+        if (shouldStream(draft)) {
+            // Phase 7 (revised): when there is NO active stream we add the user
+            // Local AND the streaming placeholder in a single _overlay.update so
+            // Compose never composes an intermediate state where only the user
+            // bubble exists. That intermediate state was producing a one-frame
+            // "big pink box" — the LazyColumn measure pass briefly let the
+            // unconstrained user bubble take its max width before settling to
+            // content-shaped width on the next pass (Soma repro, sporadic).
+            //
+            // When a stream IS in flight we still enqueue and let
+            // drainStreamingQueue add the placeholder later — the user's bubble
+            // appears immediately, and the assistant placeholder lands when the
+            // prior stream terminates. That sustained "user bubble visible
+            // without streaming below it" state is a queued send, not a
+            // measure-pass flash, so it doesn't reproduce the regression.
+            if (activeStreamJob?.isActive == true) {
+                _overlay.update { it.copy(pending = it.pending + userLocal) }
+                pendingStreamingQueue.addLast(
+                    QueuedStreamingSend(
+                        draft = draft,
+                        userLocalId = localUserId,
+                        timestampMs = now,
+                    ),
+                )
+            } else {
+                val streamingPlaceholder = createStreamingAssistantPlaceholder(now)
+                _overlay.update {
+                    it.copy(pending = it.pending + userLocal + streamingPlaceholder)
+                }
+                activeStreamJob =
+                    startStreamingAssistantReply(
+                        conversationId = convId,
+                        draft = draft,
+                        streamingLocalId = streamingPlaceholder.localId,
+                        userLocalId = localUserId,
+                    )
+            }
+        } else {
+            val assistantPlaceholder = createAssistantPlaceholder(now)
+            _overlay.update { it.copy(pending = it.pending + userLocal + assistantPlaceholder) }
+            // Phase 7-final: synchronous increment so the send button greys on
+            // the SAME frame the legacy send is dispatched, matching production
+            // chat-ai behavior.
+            activeReplyCount.update { it + 1 }
+            viewModelScope.launch {
+                try {
+                    sendMessageLegacy(
+                        conversationId = convId,
+                        draft = draft,
+                        userLocalId = localUserId,
+                        assistantLocalId = localAssistantId,
+                        sentAtMs = now,
+                    )
+                } finally {
+                    activeReplyCount.update { it - 1 }
+                }
             }
         }
+    }
+
+    /**
+     * Phase 6: re-run the last failed stream using the cached retry draft.
+     * The user's preceding USER Local is still in `_overlay.pending` (the
+     * Failed handler only dropped the streaming placeholder), so we don't
+     * create a duplicate user bubble — we just append a fresh streaming
+     * placeholder and restart the SSE collect. The error bubble clears on
+     * the first token of the new stream (Phase 6 Token handler).
+     *
+     * No-ops when there is no retryable error queued, when the carry-over
+     * draft is absent, or when the active conversation id has changed.
+     */
+    @OptIn(ExperimentalTime::class)
+    // Early-exit guard sequence — each `return` is a no-op precondition check
+    // (no error, no draft, no conversation, no user). Refactoring into a
+    // single condition would be less readable than the guard cascade.
+    @Suppress("ReturnCount")
+    fun retryFailedAssistantReply() {
+        val presentation = _assistantError.value ?: return
+        val draft = presentation.retryDraft ?: return
+        conversationId ?: return
+        val userLocalId =
+            _overlay.value.pending
+                .lastOrNull { it.role == ConversationMessageRole.USER }
+                ?.localId
+                ?: return
+
+        // Phase 7: route the retry through the same single-stream queue. If
+        // somehow another stream is mid-flight (e.g. user typed quickly), this
+        // waits its turn instead of racing.
+        val now = Clock.System.now().toEpochMilliseconds()
+        pendingStreamingQueue.addLast(
+            QueuedStreamingSend(
+                draft = draft,
+                userLocalId = userLocalId,
+                timestampMs = now,
+            ),
+        )
+        drainStreamingQueue()
+    }
+
+    /**
+     * Phase 2.7 streaming routing decision. Conservative carve-outs:
+     *  - Feature flag must be ON.
+     *  - Text-only drafts (no media or audio attachments).
+     *  - No active Chat-as-Human takeover (the backend's chat.py early-exit
+     *    suppresses the AI reply during takeover).
+     *  Phase 9 will add the consecutive-failure circuit breaker and the
+     *  is_nsfw conversation carve-out once that field is exposed on the
+     *  conversation DTO.
+     */
+    private fun shouldStream(draft: SendMessageDraft): Boolean {
+        val s = _viewState.value
+        return s.isSseStreamingEnabled &&
+            draft.messageType == ChatMessageType.TEXT &&
+            draft.mediaAttachments.isEmpty() &&
+            draft.audioAttachment == null &&
+            !s.isHumanCreatorTakeoverActive &&
+            consecutiveStreamFailures < STREAM_FAILURE_CIRCUIT_BREAKER
+    }
+
+    /**
+     * Phase 7: process the next queued streaming send if no stream is currently
+     * in flight. No-ops while [activeStreamJob] is alive — the active stream's
+     * `finally` block calls this again on completion so the queue drains FIFO.
+     *
+     * Drops queued items whose conversation is no longer the active one (e.g.
+     * user navigated away) — partial replies are intentionally not promoted
+     * across conversations.
+     *
+     * Each `return` is a precondition gate (already streaming → wait;
+     * queue empty → no-op; conversation gone → drop). Combining them would
+     * obscure the queue-state state-machine — hence the [Suppress] on
+     * `ReturnCount`.
+     */
+    @Suppress("ReturnCount")
+    private fun drainStreamingQueue() {
+        if (activeStreamJob?.isActive == true) return
+        val next = pendingStreamingQueue.removeFirstOrNull() ?: return
+        val convId = conversationId
+        if (convId == null) {
+            // Conversation switched while items were queued. Discard the rest.
+            pendingStreamingQueue.clear()
+            return
+        }
+        val streamingPlaceholder = createStreamingAssistantPlaceholder(next.timestampMs)
+        _overlay.update { it.copy(pending = it.pending + streamingPlaceholder) }
+        activeStreamJob =
+            startStreamingAssistantReply(
+                conversationId = convId,
+                draft = next.draft,
+                streamingLocalId = streamingPlaceholder.localId,
+                userLocalId = next.userLocalId,
+            )
+    }
+
+    /** See the call site comment in startStreamingAssistantReply.Done for the rationale. */
+    @OptIn(ExperimentalTime::class)
+    private fun reconcileUserMessageAfterStream(
+        conversationId: String,
+        userLocalId: String,
+    ) {
+        viewModelScope.launch {
+            runSuspendCatching {
+                chatRepository.getConversationMessagesPage(
+                    conversationId = conversationId,
+                    limit = USER_RECONCILE_FETCH_LIMIT,
+                    offset = 0,
+                )
+            }.onSuccess { result ->
+                val userMessage =
+                    result.messages.firstOrNull { it.role == ConversationMessageRole.USER }
+                        ?: run {
+                            Logger.w("SSE") { "reconcile: no USER message in latest page; dropping local-only" }
+                            // Even if the server fetch missed it (weird race), drop the optimistic
+                            // Local so it doesn't accumulate. Paging will hydrate the real one
+                            // on the next refresh / re-entry.
+                            _overlay.update { state ->
+                                state.copy(pending = state.pending.filterNot { it.localId == userLocalId })
+                            }
+                            return@onSuccess
+                        }
+                val userInsertedAtMs = parseTimestampToEpochMs(userMessage.createdAt)
+                Logger.i("SSE") {
+                    "reconcile: claiming USER Local $userLocalId → server id=${userMessage.id} " +
+                        "insertedAtMs=$userInsertedAtMs"
+                }
+                _overlay.update { state ->
+                    val newPending = state.pending.filterNot { it.localId == userLocalId }
+                    val newSent =
+                        if (userInsertedAtMs != null) {
+                            state.sent + SentMessage(insertedAtMs = userInsertedAtMs, message = userMessage)
+                        } else {
+                            state.sent
+                        }
+                    state.copy(pending = newPending, sent = newSent)
+                }
+            }.onFailure { error ->
+                Logger.w(ConversationViewModel::class.simpleName!!, error) {
+                    "reconcile fetch failed conv=$conversationId; leaving USER Local in place for next session"
+                }
+            }
+        }
+    }
+
+    private fun freezeStreamingAssistantPartial(streamingLocalId: String) {
+        _overlay.update { state ->
+            state.copy(
+                pending =
+                    state.pending.map { msg ->
+                        if (msg.localId == streamingLocalId) {
+                            msg.copy(
+                                content = msg.streamingBuffer,
+                                streamingBuffer = null,
+                            )
+                        } else {
+                            msg
+                        }
+                    },
+            )
+        }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    @Suppress(
+        // SSE Token/Done/Failed branches + Phase 5c coalescer + Phase 7
+        // watchdog + Phase 9 circuit breaker + retry/queue ordering are
+        // inherently coupled — splitting into helpers would force shared
+        // mutable state (lastActivityMs, idleTimedOut, pendingTokenText,
+        // flushJob) through parameter lists and lose readability.
+        "LongMethod",
+        "CyclomaticComplexMethod",
+    )
+    private fun startStreamingAssistantReply(
+        conversationId: String,
+        draft: SendMessageDraft,
+        streamingLocalId: String,
+        userLocalId: String,
+    ): Job {
+        // Synchronous increment so the send button greys on the SAME frame the
+        // stream is scheduled — no enabled-tap window between sendMessage's
+        // return and the launch body actually starting to execute.
+        activeReplyCount.update { it + 1 }
+        return viewModelScope.launch {
+            // Phase 7 idle watchdog. `lastActivityMs` is updated on every event
+            // received from the SSE collect; the watchdog wakes after a calibrated
+            // wait and trips if the gap since the last event has reached
+            // SSE_IDLE_TIMEOUT_MS. Tripping sets `idleTimedOut = true` and cancels
+            // this launch via the SSE_IDLE_CANCEL_MESSAGE sentinel, so the finally
+            // block can distinguish watchdog cancellation from navigation/reset.
+            var lastActivityMs = Clock.System.now().toEpochMilliseconds()
+            var idleTimedOut = false
+            val streamJob = coroutineContext[Job]
+            val watchdogJob =
+                launch {
+                    while (isActive) {
+                        val sinceLastEventMs = Clock.System.now().toEpochMilliseconds() - lastActivityMs
+                        val waitMs = (SSE_IDLE_TIMEOUT_MS - sinceLastEventMs).coerceAtLeast(SSE_WATCHDOG_MIN_TICK_MS)
+                        delay(waitMs)
+                        if (Clock.System.now().toEpochMilliseconds() - lastActivityMs >= SSE_IDLE_TIMEOUT_MS) {
+                            idleTimedOut = true
+                            streamJob?.cancel(SSE_IDLE_CANCEL_MESSAGE)
+                            return@launch
+                        }
+                    }
+                }
+
+            try {
+                val pendingTokenText = StringBuilder()
+                var flushJob: Job? = null
+                var hasRenderedToken = false
+
+                suspend fun applyPendingTokens() {
+                    val text = pendingTokenText.toString()
+                    pendingTokenText.clear()
+                    if (text.isEmpty()) return
+                    _overlay.update { state ->
+                        state.copy(
+                            pending =
+                                state.pending.map { msg ->
+                                    if (msg.localId == streamingLocalId) {
+                                        val newBuffer = (msg.streamingBuffer.orEmpty()) + text
+                                        val lock =
+                                            msg.useMarkdownLocked ?: if (newBuffer.isNotEmpty()) {
+                                                newBuffer.shouldRenderAsMarkdown()
+                                            } else {
+                                                null
+                                            }
+                                        hasRenderedToken = true
+                                        msg.copy(
+                                            streamingBuffer = newBuffer,
+                                            useMarkdownLocked = lock,
+                                        )
+                                    } else {
+                                        msg
+                                    }
+                                },
+                        )
+                    }
+                }
+
+                runSuspendCatching {
+                    // Phase 5c: token coalescing. Tokens are appended to `pendingTokenText`
+                    // and applied to `_overlay` once per ~250ms quiet window (or immediately
+                    // on Done/Failed). This reduces the streaming Local's `streamingBuffer`
+                    // updates to 1-3 per reply, which is the verified mitigation for the
+                    // Markdown library's per-batch re-parse cost (Phase 5b probe confirmed
+                    // re-parse is the root cause of per-batch flicker).
+                    //
+                    // Invariants:
+                    //   - Single-flusher: a previous flushJob is cancelled before scheduling
+                    //     a new one; Done/Failed cancelAndJoin to guarantee no in-flight
+                    //     flush races the Local→Remote swap.
+                    //   - applyPendingTokens is the ONLY writer that grows the streaming
+                    //     buffer — the path lock is computed here on the first non-empty
+                    //     batch and pinned for the rest of the stream.
+                    chatRepository
+                        .streamMessage(conversationId = conversationId, draft = draft)
+                        .collect { event ->
+                            // Phase 7: any event resets the idle watchdog. Done/Failed
+                            // events still keep this updated so the watchdog doesn't
+                            // race the terminal handler.
+                            lastActivityMs = Clock.System.now().toEpochMilliseconds()
+                            when (event) {
+                                is StreamEvent.Token -> {
+                                    Logger.i("SSE") { "token len=${event.text.length}" }
+                                    // Phase 6: first token of a retry attempt clears any stale error
+                                    // bubble so the UI doesn't show "Try again" next to a stream that
+                                    // is now succeeding.
+                                    if (_assistantError.value != null) {
+                                        _assistantError.value = null
+                                    }
+                                    pendingTokenText.append(event.text)
+                                    flushJob?.cancel()
+                                    flushJob =
+                                        launch {
+                                            delay(TOKEN_COALESCE_WINDOW_MS)
+                                            applyPendingTokens()
+                                        }
+                                }
+
+                                is StreamEvent.Done -> {
+                                    flushJob?.cancelAndJoin()
+                                    applyPendingTokens()
+                                    // Phase 9: a successful Done clears the circuit-breaker. The
+                                    // session can keep using SSE for subsequent sends.
+                                    consecutiveStreamFailures = 0
+                                    Logger.i("SSE") {
+                                        "done id=${event.assistantMessage.id} blocked=${event.blocked} " +
+                                            "createdAt=${event.assistantMessage.createdAt}"
+                                    }
+                                    val msg = event.assistantMessage
+                                    val insertedAtMs = parseTimestampToEpochMs(msg.createdAt)
+                                    Logger.i("SSE") {
+                                        "done parsedInsertedAtMs=$insertedAtMs (null means parse failed)"
+                                    }
+                                    // Phase 5b: persist the streaming Local's path lock onto the server
+                                    // message id so the Remote replacement renders identically.
+                                    // Default to `false` (Text) if the stream never produced a non-empty
+                                    // chunk to evaluate against — e.g. error-only streams.
+                                    val capturedLock =
+                                        _overlay.value.pending
+                                            .firstOrNull { it.localId == streamingLocalId }
+                                            ?.useMarkdownLocked
+                                            ?: false
+                                    _streamMarkdownLockedRemoteIds.update { it + (msg.id to capturedLock) }
+                                    Logger.i("SSE") { "done markdownLock for id=${msg.id} = $capturedLock" }
+                                    _overlay.update { state ->
+                                        val newPending = state.pending.filterNot { it.localId == streamingLocalId }
+                                        val newSent =
+                                            if (insertedAtMs != null) {
+                                                state.sent + SentMessage(insertedAtMs = insertedAtMs, message = msg)
+                                            } else {
+                                                state.sent
+                                            }
+                                        Logger.i("SSE") {
+                                            "done overlay update: pending ${state.pending.size}→${newPending.size} " +
+                                                "sent ${state.sent.size}→${newSent.size} " +
+                                                "loadedIds size=${loadedMessageIds.value.size} " +
+                                                "msg.id in loadedIds=${msg.id in loadedMessageIds.value}"
+                                        }
+                                        state.copy(pending = newPending, sent = newSent)
+                                    }
+                                    // NOTE: do NOT pre-add msg.id to loadedMessageIds here. The combine
+                                    // block's `filteredSent = state.sent.filterNot { id in loadedIds }`
+                                    // would immediately hide the Remote we just inserted, since loadedIds
+                                    // is the "already paged in" set. The natural paging cycle adds the
+                                    // id once paging hydrates the message; that's when dedup kicks in.
+
+                                    // Reconcile the optimistic USER Local: the SSE `done` event only
+                                    // carries the assistant message (per docs/SSE-PROTOCOL.md), so the
+                                    // user's optimistic Local has no server-truth twin to swap with.
+                                    // Without this fetch, the USER Local accumulates in `_overlay.pending`
+                                    // across every send within a session — observed live in the Phase 3
+                                    // diagnostic log (pending 2→1, then 3→2, then 6→5, etc.).
+                                    // We fetch the latest 2 messages, find the user-role one, swap our
+                                    // pending Local for a server-truth Remote, and let loadedMessageIds
+                                    // dedup handle the overlay→paging handoff naturally.
+                                    reconcileUserMessageAfterStream(
+                                        conversationId = conversationId,
+                                        userLocalId = userLocalId,
+                                    )
+                                }
+
+                                is StreamEvent.Failed -> {
+                                    // Phase 5c: cancel any pending coalesce flush before dropping
+                                    // the streaming Local so we don't race with applyPendingTokens
+                                    // re-adding text after we've removed the placeholder.
+                                    flushJob?.cancelAndJoin()
+                                    pendingTokenText.clear()
+                                    // Phase 9: a backend-emitted Failed event counts toward the
+                                    // circuit breaker, same as a connection-level failure.
+                                    consecutiveStreamFailures += 1
+                                    val assistantError = event.error
+                                    Logger.w(ConversationViewModel::class.simpleName!!) {
+                                        "Streaming failed: code=${assistantError.code} " +
+                                            "rawCode=${assistantError.rawCode} " +
+                                            "message=${assistantError.message} " +
+                                            "retryable=${assistantError.retryable} conv=$conversationId"
+                                    }
+                                    if (hasRenderedToken) {
+                                        freezeStreamingAssistantPartial(streamingLocalId)
+                                    } else {
+                                        _overlay.update { state ->
+                                            state.copy(
+                                                pending = state.pending.filterNot { it.localId == streamingLocalId },
+                                            )
+                                        }
+                                    }
+                                    // Phase 6: surface the error in the assistant slot. Retain the
+                                    // draft alongside it so a retry tap restarts the stream without
+                                    // having to re-derive the draft from the (still-present) USER
+                                    // Local in overlay.
+                                    _assistantError.value =
+                                        AssistantErrorPresentation(
+                                            error = assistantError,
+                                            retryDraft = if (assistantError.retryable) draft else null,
+                                        )
+                                }
+                            }
+                        }
+                }.onFailure { error ->
+                    if (idleTimedOut) return@onFailure
+                    Logger.w(ConversationViewModel::class.simpleName!!, error) {
+                        "Streaming connection failed conv=$conversationId"
+                    }
+                    flushJob?.cancelAndJoin()
+                    consecutiveStreamFailures += 1
+                    if (hasRenderedToken) {
+                        freezeStreamingAssistantPartial(streamingLocalId)
+                        _assistantError.value =
+                            AssistantErrorPresentation(
+                                error =
+                                    AssistantError(
+                                        code = AssistantErrorCode.TRANSIENT,
+                                        rawCode = "TRANSIENT",
+                                        message = getString(Res.string.assistant_error_connection_timed_out),
+                                        retryable = true,
+                                    ),
+                                retryDraft = draft,
+                            )
+                    } else {
+                        pendingTokenText.clear()
+                        // If the stream fails before anything is visible (404 during rollout,
+                        // connection refused, TLS reset), complete the SAME optimistic send via
+                        // the legacy endpoint. This is the "silent fallback" path promised by
+                        // the handoff docs, and it prevents the USER Local from staying stuck
+                        // in SENDING just because SSE is unavailable.
+                        sendMessageLegacy(
+                            conversationId = conversationId,
+                            draft = draft,
+                            userLocalId = userLocalId,
+                            assistantLocalId = streamingLocalId,
+                            sentAtMs = Clock.System.now().toEpochMilliseconds(),
+                        )
+                    }
+                }
+            } finally {
+                watchdogJob.cancel()
+                if (idleTimedOut && _assistantError.value == null) {
+                    // Phase 7: synthesize a TRANSIENT AssistantError so the user gets
+                    // the same retryable UI as a real backend error event. Only fires
+                    // when no error was already set by the Failed handler.
+                    handleSseIdleTimeoutAsTransient(
+                        streamingLocalId = streamingLocalId,
+                        draft = draft,
+                        conversationId = conversationId,
+                    )
+                }
+                if (activeStreamJob === coroutineContext[Job]) {
+                    activeStreamJob = null
+                }
+                // Drain regardless of how the stream ended. If a queued send is
+                // waiting, it starts now; otherwise no-op. drainStreamingQueue
+                // may itself call startStreamingAssistantReply which increments
+                // activeReplyCount before this stream's decrement runs — that
+                // ordering keeps the count > 0 across the transition so the
+                // send button doesn't flicker enabled between back-to-back
+                // queued replies.
+                drainStreamingQueue()
+                activeReplyCount.update { it - 1 }
+            }
+        }
+    }
+
+    private suspend fun handleSseIdleTimeoutAsTransient(
+        streamingLocalId: String,
+        draft: SendMessageDraft,
+        conversationId: String,
+    ) {
+        Logger.w(ConversationViewModel::class.simpleName!!) {
+            "SSE stream idle for ${SSE_IDLE_TIMEOUT_MS}ms — synthesizing TRANSIENT " +
+                "conv=$conversationId"
+        }
+        // Phase 9: an idle timeout is functionally a connection failure for the
+        // circuit-breaker accounting.
+        consecutiveStreamFailures += 1
+        _overlay.update { state ->
+            state.copy(pending = state.pending.filterNot { it.localId == streamingLocalId })
+        }
+        _assistantError.value =
+            AssistantErrorPresentation(
+                error =
+                    AssistantError(
+                        code = AssistantErrorCode.TRANSIENT,
+                        rawCode = "TRANSIENT",
+                        message = getString(Res.string.assistant_error_connection_timed_out),
+                        retryable = true,
+                    ),
+                retryDraft = draft,
+            )
     }
 
     @OptIn(ExperimentalTime::class)
@@ -1425,6 +2130,33 @@ class ConversationViewModel(
         private const val PREFETCH_DISTANCE = 5
         private const val MESSAGES_STOP_TIMEOUT_MS = 5_000L
         private const val FALLBACK_ACCESS_DURATION_MS = 24L * 60 * 60 * 1000
+        private const val USER_RECONCILE_FETCH_LIMIT = 2
+        private const val CACHE_WRITE_DEBOUNCE_MS = 500L
+        private const val TOKEN_COALESCE_WINDOW_MS = 250L
+
+        // Phase 7 idle watchdog. 30s of no token/done/error events on a live SSE
+        // collect → treat as TRANSIENT failure (per SSE-IMPLEMENTATION-PLAN §2.3:
+        // "if the stream closes without `done` or `error`, treat as `TRANSIENT`").
+        private const val SSE_IDLE_TIMEOUT_MS = 30_000L
+
+        // Sentinel cancellation message — the parent launch in
+        // startStreamingAssistantReply distinguishes "watchdog tripped" from
+        // structured-concurrency cancellation (navigation, resetState) by reading
+        // this off the CancellationException, so navigation-away does NOT raise
+        // a spurious error bubble.
+        private const val SSE_IDLE_CANCEL_MESSAGE = "SSE idle timeout"
+
+        // Watchdog wakes at this minimum cadence even when the previous tick's
+        // computed sleep would be 0 — prevents a hot-spin in the pathological
+        // case where the deadline has already passed but the parent hasn't
+        // been cancelled yet.
+        private const val SSE_WATCHDOG_MIN_TICK_MS = 500L
+
+        // Phase 9 circuit breaker threshold. Three consecutive SSE failures
+        // (Failed event / idle timeout / connection error) silently force the
+        // rest of the session onto the non-streaming legacy endpoint. Resets to
+        // 0 on any successful Done.
+        private const val STREAM_FAILURE_CIRCUIT_BREAKER = 3
         private val TAKEOVER_MESSAGES_POLL_INTERVAL = 3.seconds
 
         // Status poll runs every Nth iteration of message poll: 3s × 2 ≈ 6s ≈ ~5s spec.
@@ -1462,6 +2194,7 @@ data class ConversationViewState(
     val chatAccessExpiresAtMs: Long? = null,
     val isChatAccessLoading: Boolean = false,
     val isChatAsHumanCreatorEnabled: Boolean = false,
+    val isSseStreamingEnabled: Boolean = false,
     val isHumanCreatorTakeoverActive: Boolean = false,
     val isHumanCreatorTakeoverStarting: Boolean = false,
     val isHumanCreatorTakeoverEnding: Boolean = false,
@@ -1498,4 +2231,15 @@ data class LocalMessage(
     val isPlaceholder: Boolean,
     val errorMessage: String? = null,
     val draftForRetry: SendMessageDraft?,
+    // Phase 2.7 streaming. When non-null, the bubble renders this growing content
+    // and suppresses the waiting wave indicator. Replaced by the server-truth Remote
+    // message on `done` per docs/SSE-PROTOCOL.md.
+    val streamingBuffer: String? = null,
+    // Phase 5b path lock. Computed once on the first non-empty streaming chunk based
+    // on `shouldRenderAsMarkdown(firstChunk)` (ASCII check). null = not yet decided,
+    // true = Markdown-rendered throughout, false = Text-rendered throughout. The lock
+    // is persisted into a VM-scoped map keyed by the server `assistant_message.id` at
+    // `done` so the Remote replacement renders with the same path — no Text↔Markdown
+    // subtree swap.
+    val useMarkdownLocked: Boolean? = null,
 )
