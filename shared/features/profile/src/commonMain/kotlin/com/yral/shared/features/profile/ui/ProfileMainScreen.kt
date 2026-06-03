@@ -300,6 +300,32 @@ fun ProfileMainScreen(
                     )
                 }
 
+                is ProfileEvents.HumanConversationCreated -> {
+                    // H2H: empty `influencerId` is the convention for human
+                    // conversations until OpenConversationParams gets a
+                    // proper conversationKind discriminator. Passing
+                    // `userId = event.participantPrincipalId` is what makes
+                    // ChatConversationScreen's LaunchedEffect take the
+                    // initializeFromInbox branch (which uses the existing
+                    // conversationId) instead of initializeForChatWall
+                    // (which would POST a new AI conversation with the
+                    // empty influencerId — the "Having a little trouble
+                    // loading" repro). The chat-screen VM further reads
+                    // viewState.isHumanChat to gate AI affordances.
+                    component.openConversation(
+                        OpenConversationParams(
+                            influencerId = "",
+                            conversationId = event.conversationId,
+                            userId = event.participantPrincipalId,
+                            participantPrincipalId = event.participantPrincipalId,
+                            displayName = event.displayName,
+                            username = event.username,
+                            avatarUrl = event.avatarUrl,
+                            influencerSource = ConversationInfluencerSource.PROFILE,
+                        ),
+                    )
+                }
+
                 is ProfileEvents.SubscribeInfluencerDetailsFetched -> {
                     component.openConversation(
                         OpenConversationParams(
@@ -793,6 +819,16 @@ private fun MainContent(
                 onTalkToMeClicked = viewModel::fetchInfluencerDetails,
                 showSubscribe = false,
                 onSubscribeClicked = {},
+                // H2H: button shown only on another user's NON-AI profile
+                // when the H2hChatEnabled flag is on. Own-profile, AI
+                // influencer profiles, and logged-out users never see it.
+                showSendMessage =
+                    !state.isOwnProfile &&
+                        state.isLoggedIn &&
+                        state.isH2hChatEnabled &&
+                        !state.isAiInfluencer,
+                isSendMessageInProgress = state.isCreatingHumanConversation,
+                onSendMessageClicked = { viewModel.onSendMessageClicked() },
                 isProUser = state.isProUser,
                 showCreateInfluencerCta = state.isOwnProfile && state.isLoggedIn && showCreateBotCta,
                 onCreateInfluencerClick = onCreateInfluencerClick,

@@ -37,6 +37,8 @@ import com.yral.shared.data.domain.models.VideoViews
 import com.yral.shared.data.domain.useCases.GetVideoViewsUseCase
 import com.yral.shared.features.chat.analytics.ChatTelemetry
 import com.yral.shared.features.chat.domain.models.Influencer
+import com.yral.shared.features.chat.domain.usecases.CheckChatAccessUseCase
+import com.yral.shared.features.chat.domain.usecases.CreateHumanConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
 import com.yral.shared.features.profile.analytics.ProfileTelemetry
 import com.yral.shared.features.profile.domain.DeleteVideoUseCase
@@ -123,7 +125,8 @@ class ProfileViewModel(
     private val getInfluencerUseCase: GetInfluencerUseCase,
     private val fileDownloader: FileDownloader,
     private val followersMetadataDataSource: FollowersMetadataDataSource,
-    private val checkChatAccessUseCase: com.yral.shared.features.chat.domain.usecases.CheckChatAccessUseCase,
+    private val checkChatAccessUseCase: CheckChatAccessUseCase,
+    private val createHumanConversationUseCase: CreateHumanConversationUseCase,
     private val publishDraftVideoUseCase: PublishDraftVideoUseCase,
 ) : ViewModel() {
     companion object {
@@ -140,6 +143,7 @@ class ProfileViewModel(
                 isSubscriptionEnabled = flagManager.isEnabled(AppFeatureFlags.Common.EnableSubscription),
                 maxBotCountForCta = flagManager.get(ChatFeatureFlags.Chat.MaxBotCountForCta),
                 maxVisibleBotUsernames = flagManager.get(ChatFeatureFlags.Chat.MaxVisibleBotUsernames),
+                isH2hChatEnabled = flagManager.get(ChatFeatureFlags.Chat.H2hChatEnabled),
             ),
         )
     val state: StateFlow<ViewState> = _state.asStateFlow()
@@ -633,6 +637,54 @@ class ProfileViewModel(
                     }
             } finally {
                 _state.update { it.copy(isTalkToMeInProgress = false) }
+            }
+        }
+    }
+
+    /**
+     * H2H: tap-handler for the Send Message button on another user's
+     * profile. Creates (or fetches) the 1:1 H2H conversation with the
+     * profile owner and emits [ProfileEvents.HumanConversationCreated]
+     * so the screen can route into the chat screen.
+     *
+     * Guards: own-profile and blank-principal cases no-op. The button
+     * itself is hidden in both states so this is a defensive belt-and-
+     * suspenders check.
+     */
+    fun onSendMessageClicked() {
+        val participantPrincipalId = canisterData.userPrincipalId
+        if (participantPrincipalId.isBlank() || _state.value.isOwnProfile) return
+        val accountInfo = _state.value.accountInfo
+        viewModelScope.launch {
+            _state.update { it.copy(isCreatingHumanConversation = true) }
+            try {
+                createHumanConversationUseCase(
+                    com.yral.shared.features.chat.domain.usecases
+                        .CreateHumanConversationUseCase
+                        .Params(participantPrincipalId = participantPrincipalId),
+                ).onSuccess { conversation ->
+                    profileEventsChannel.trySend(
+                        ProfileEvents.HumanConversationCreated(
+                            conversationId = conversation.id,
+                            participantPrincipalId = participantPrincipalId,
+                            displayName =
+                                accountInfo?.displayName?.takeIf { it.isNotBlank() }
+                                    ?: conversation.conversationUser?.username.orEmpty(),
+                            username = accountInfo?.username ?: conversation.conversationUser?.username,
+                            avatarUrl =
+                                accountInfo?.profilePic?.takeIf { it.isNotBlank() }
+                                    ?: conversation.conversationUser?.profilePictureUrl,
+                        ),
+                    )
+                }.onFailure { error ->
+                    Logger.e("onSendMessageClicked") { "Failed to create H2H conversation: $error" }
+                    val message =
+                        error.message
+                            ?: getString(DesignRes.string.something_went_wrong)
+                    profileEventsChannel.trySend(ProfileEvents.Failed(message))
+                }
+            } finally {
+                _state.update { it.copy(isCreatingHumanConversation = false) }
             }
         }
     }
@@ -1287,6 +1339,8 @@ data class ViewState(
     val isSubscribedToInfluencer: Boolean = false,
     val isInfluencerSubscriptionStateLoading: Boolean = false,
     val isTalkToMeInProgress: Boolean = false,
+    val isH2hChatEnabled: Boolean = false,
+    val isCreatingHumanConversation: Boolean = false,
     val isProUser: Boolean = false,
     val isSubscriptionEnabled: Boolean = false,
     val isYralProAvailable: Boolean = false,
@@ -1356,6 +1410,19 @@ sealed class ProfileEvents {
         val message: String,
     ) : ProfileEvents()
     data object RefreshDrafts : ProfileEvents()
+
+    /**
+     * H2H: a `Send Message` tap successfully created (or fetched the
+     * existing) human conversation. The screen observes this and routes
+     * to the chat screen with all the params it needs.
+     */
+    data class HumanConversationCreated(
+        val conversationId: String,
+        val participantPrincipalId: String,
+        val displayName: String,
+        val username: String?,
+        val avatarUrl: String?,
+    ) : ProfileEvents()
 }
 
 data class PagingState(

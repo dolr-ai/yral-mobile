@@ -71,6 +71,56 @@ class ChatRepositoryImpl(
             .createConversation(influencerId)
             .toDomain()
 
+    override suspend fun createHumanConversation(participantId: String): Conversation =
+        dataSource
+            .createHumanConversation(participantId)
+            .toDomain()
+
+    override suspend fun sendHumanMessage(
+        conversationId: String,
+        draft: SendMessageDraft,
+    ): SendMessageResult {
+        // H2H send shares the attachment-upload + request-shape pipeline
+        // with the AI path. The wire endpoint differs (POST .../human/...)
+        // but the body fields are identical — backend ignores the
+        // streaming-only fields for H2H.
+        val mediaUrls =
+            if (draft.mediaAttachments.isNotEmpty()) {
+                draft.mediaAttachments.map { attachment ->
+                    dataSource
+                        .uploadAttachment(
+                            attachment = attachment,
+                            type = ChatMessageType.IMAGE.apiValue,
+                        ).storageKey
+                }
+            } else {
+                null
+            }
+
+        val audioUrl =
+            draft.audioAttachment?.let { attachment ->
+                dataSource
+                    .uploadAttachment(
+                        attachment = attachment,
+                        type = ChatMessageType.AUDIO.apiValue,
+                    ).storageKey
+            }
+
+        val response =
+            dataSource.sendHumanMessage(
+                conversationId = conversationId,
+                request =
+                    SendMessageRequestDto(
+                        content = draft.content,
+                        messageType = draft.messageType.apiValue,
+                        mediaUrls = mediaUrls,
+                        audioUrl = audioUrl,
+                        audioDurationSeconds = draft.audioDurationSeconds,
+                    ),
+            )
+        return response.toDomain(conversationIdFallback = conversationId)
+    }
+
     override suspend fun getConversationsPage(
         limit: Int,
         offset: Int,

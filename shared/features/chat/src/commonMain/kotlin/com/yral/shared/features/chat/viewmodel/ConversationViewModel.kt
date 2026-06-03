@@ -48,6 +48,7 @@ import com.yral.shared.features.chat.domain.usecases.GrantChatAccessUseCase
 import com.yral.shared.features.chat.domain.usecases.MarkConversationAsReadUseCase
 import com.yral.shared.features.chat.domain.usecases.ReleaseHumanCreatorTakeoverUseCase
 import com.yral.shared.features.chat.domain.usecases.SendHumanCreatorMessageUseCase
+import com.yral.shared.features.chat.domain.usecases.SendHumanMessageUseCase
 import com.yral.shared.features.chat.domain.usecases.SendMessageUseCase
 import com.yral.shared.features.chat.domain.usecases.StartHumanCreatorTakeoverUseCase
 import com.yral.shared.features.chat.ui.conversation.shouldRenderAsMarkdown
@@ -113,6 +114,7 @@ class ConversationViewModel(
     private val chatRepository: ChatRepository,
     private val useCaseFailureListener: UseCaseFailureListener,
     private val sendMessageUseCase: SendMessageUseCase,
+    private val sendHumanMessageUseCase: SendHumanMessageUseCase,
     private val createConversationUseCase: CreateConversationUseCase,
     private val deleteConversationUseCase: DeleteConversationUseCase,
     private val markConversationAsReadUseCase: MarkConversationAsReadUseCase,
@@ -883,11 +885,29 @@ class ConversationViewModel(
         displayName: String? = null,
         userName: String? = null,
         avatarUrl: String? = null,
+        // H2H: the other-user's principal_id when this conversation came
+        // from the profile-screen Send Message tap. Null for AI chats.
+        // When non-null we also skip the IAP/access-check cascade since
+        // H2H has no subscription product.
+        participantPrincipalId: String? = null,
     ) {
         val isBotAccount = sessionManager.isBotAccount == true
-        _viewState.update { it.copy(influencerSource = influencerSource, isBotAccount = isBotAccount) }
+        val viewerPrincipal = sessionManager.userPrincipal
+        _viewState.update {
+            it.copy(
+                influencerSource = influencerSource,
+                isBotAccount = isBotAccount,
+                currentUserPrincipalId = viewerPrincipal,
+            )
+        }
         val currentConversationId = _viewState.value.conversationId
-        if (currentConversationId == conversationId) return
+        if (currentConversationId == conversationId) {
+            // Same conversation reopened — participantPrincipalId may need a
+            // refresh (e.g. nav-stack carrying a different value), so update
+            // it without resetting anything else.
+            _viewState.update { it.copy(participantPrincipalId = participantPrincipalId) }
+            return
+        }
         if (_viewState.value.conversationId != null && _viewState.value.conversationId != conversationId) {
             resetState()
         }
@@ -904,7 +924,20 @@ class ConversationViewModel(
             recentMessages = emptyList(),
             messageCount = PAGE_SIZE + 1,
         )
-        updateInfluencerSubscriptionProductState(influencerId)
+        // Apply participantPrincipalId AFTER resetState/setConversationId so
+        // resetState's fresh ConversationViewState doesn't blow the H2H
+        // discriminator away. Pre-reset assignment was silently dropped on
+        // every conversation switch, manifesting as Subscribe + 3-dot menu
+        // appearing on H2H chats opened after browsing any other chat first.
+        _viewState.update { it.copy(participantPrincipalId = participantPrincipalId) }
+        // N1 gate: single call-site for the entire IAP cascade
+        // (checkChatAccessUseCase → retryUnconsumedDailyChatAccess →
+        // fetchInfluencerSubscriptionProducts). All four fallback entry
+        // points reach back through updateInfluencerSubscriptionProductState
+        // so this one skip covers them all.
+        if (participantPrincipalId == null) {
+            updateInfluencerSubscriptionProductState(influencerId)
+        }
     }
 
     fun initializeForChatWall(
@@ -916,7 +949,14 @@ class ConversationViewModel(
         avatarUrl: String? = null,
     ) {
         val isBotAccount = sessionManager.isBotAccount == true
-        _viewState.update { it.copy(influencerSource = influencerSource, isBotAccount = isBotAccount) }
+        val viewerPrincipal = sessionManager.userPrincipal
+        _viewState.update {
+            it.copy(
+                influencerSource = influencerSource,
+                isBotAccount = isBotAccount,
+                currentUserPrincipalId = viewerPrincipal,
+            )
+        }
         val currentInfluencerId = _viewState.value.influencer?.id
         val currentConversationId = _viewState.value.conversationId
         // same influencer and conversation exists
@@ -1225,13 +1265,59 @@ class ConversationViewModel(
         }
     }
 
+    private fun sendHumanChatMessage(
+        conversationId: String,
+        draft: SendMessageDraft,
+        userLocal: LocalMessage,
+        userLocalId: String,
+        assistantLocalId: String,
+        sentAtMs: Long,
+    ) {
+        _overlay.update { it.copy(pending = it.pending + userLocal) }
+        viewModelScope.launch {
+            sendHumanMessageUseCase(
+                SendHumanMessageUseCase.Params(
+                    conversationId = conversationId,
+                    draft = draft,
+                ),
+            ).onSuccess { result ->
+                handleSendSuccess(result, userLocalId, assistantLocalId, sentAtMs)
+            }.onFailure { error ->
+                handleSendFailure(error, userLocalId, assistantLocalId)
+            }
+        }
+    }
+
+    private fun sendLegacyMessageWithPlaceholder(
+        conversationId: String,
+        draft: SendMessageDraft,
+        userLocal: LocalMessage,
+        userLocalId: String,
+        assistantLocalId: String,
+        timestampMs: Long,
+    ) {
+        val assistantPlaceholder = createAssistantPlaceholder(timestampMs)
+        _overlay.update { it.copy(pending = it.pending + userLocal + assistantPlaceholder) }
+        activeReplyCount.update { it + 1 }
+        viewModelScope.launch {
+            try {
+                sendMessageLegacy(
+                    conversationId = conversationId,
+                    draft = draft,
+                    userLocalId = userLocalId,
+                    assistantLocalId = assistantLocalId,
+                    sentAtMs = timestampMs,
+                )
+            } finally {
+                activeReplyCount.update { it - 1 }
+            }
+        }
+    }
+
     @OptIn(ExperimentalTime::class)
     fun sendMessage(draft: SendMessageDraft) {
         val convId = conversationId ?: return
 
-        // Phase 6: a fresh send supersedes any error from the previous send.
-        // Clear before any new state lands so the user sees their new message
-        // and the streaming placeholder, not a stale error bubble.
         _assistantError.value = null
 
         val now = Clock.System.now().toEpochMilliseconds()
@@ -1264,7 +1350,16 @@ class ConversationViewModel(
             )
         }
 
-        if (shouldStream(draft)) {
+        if (_viewState.value.isHumanChat) {
+            sendHumanChatMessage(
+                conversationId = convId,
+                draft = draft,
+                userLocal = userLocal,
+                userLocalId = localUserId,
+                assistantLocalId = localAssistantId,
+                sentAtMs = now,
+            )
+        } else if (shouldStream(draft)) {
             // Phase 7 (revised): when there is NO active stream we add the user
             // Local AND the streaming placeholder in a single _overlay.update so
             // Compose never composes an intermediate state where only the user
@@ -1302,25 +1397,14 @@ class ConversationViewModel(
                     )
             }
         } else {
-            val assistantPlaceholder = createAssistantPlaceholder(now)
-            _overlay.update { it.copy(pending = it.pending + userLocal + assistantPlaceholder) }
-            // Phase 7-final: synchronous increment so the send button greys on
-            // the SAME frame the legacy send is dispatched, matching production
-            // chat-ai behavior.
-            activeReplyCount.update { it + 1 }
-            viewModelScope.launch {
-                try {
-                    sendMessageLegacy(
-                        conversationId = convId,
-                        draft = draft,
-                        userLocalId = localUserId,
-                        assistantLocalId = localAssistantId,
-                        sentAtMs = now,
-                    )
-                } finally {
-                    activeReplyCount.update { it - 1 }
-                }
-            }
+            sendLegacyMessageWithPlaceholder(
+                conversationId = convId,
+                draft = draft,
+                userLocal = userLocal,
+                userLocalId = localUserId,
+                assistantLocalId = localAssistantId,
+                timestampMs = now,
+            )
         }
     }
 
@@ -2200,7 +2284,20 @@ data class ConversationViewState(
     val isHumanCreatorTakeoverEnding: Boolean = false,
     val isHumanCreatorMessageSending: Boolean = false,
     val humanCreatorTakeoverRemainingSeconds: Int = 0,
-)
+    // H2H: present when this conversation is human-to-human (set by
+    // initializeFromInbox when the navigation params carry the other
+    // user's principal_id). [isHumanChat] is the derived single-source-of-
+    // truth gate that all H2H-vs-AI branches in this module read from.
+    val participantPrincipalId: String? = null,
+    // H2H: viewer's own principal_id. Plumbed into the message renderer
+    // so bubble side (left vs right) can be decided by sender_id ==
+    // viewer comparison for H2H, where role='user' on both peers and
+    // the role-based discriminator collapses.
+    val currentUserPrincipalId: String? = null,
+) {
+    val isHumanChat: Boolean
+        get() = participantPrincipalId != null
+}
 
 sealed class ConversationMessageItem {
     data class Remote(

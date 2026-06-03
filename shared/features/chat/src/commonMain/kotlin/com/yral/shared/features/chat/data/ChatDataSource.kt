@@ -31,6 +31,26 @@ interface ChatDataSource {
 
     suspend fun createConversation(influencerId: String): ConversationDto
 
+    /**
+     * H2H: idempotent create-or-fetch of a 1:1 human conversation with
+     * [participantId]. POST /api/v1/chat/human/conversations.
+     */
+    suspend fun createHumanConversation(participantId: String): ConversationDto
+
+    /**
+     * H2H: post a message to the human conversation [conversationId].
+     * POST /api/v1/chat/human/conversations/{id}/messages.
+     *
+     * Reuses [SendMessageRequestDto] — the backend ignores
+     * `is_streaming` / `is_safety_fallback` for H2H, and the existing
+     * non-null body fields (content, message_type, media_urls, audio_url,
+     * audio_duration_seconds) are identical between AI and H2H sends.
+     */
+    suspend fun sendHumanMessage(
+        conversationId: String,
+        request: SendMessageRequestDto,
+    ): SendMessageResponseDto
+
     suspend fun listConversations(
         limit: Int,
         offset: Int,

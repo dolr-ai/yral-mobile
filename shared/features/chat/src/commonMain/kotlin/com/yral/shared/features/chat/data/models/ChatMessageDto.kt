@@ -25,4 +25,12 @@ data class ChatMessageDto(
     val tokenCount: Int? = null,
     @SerialName("created_at")
     val createdAt: String,
+    // H2H: the principal_id of whichever user inserted the row. The backend
+    // stores every H2H message with role="user", so role alone can't tell us
+    // which side sent it — sender_id is what the mobile client compares
+    // against SessionManager.userPrincipal to render bubble alignment.
+    // Defaults to null so legacy (pre-backend-patch) wire payloads and the
+    // AI path (where role is authoritative) parse without breaking.
+    @SerialName("sender_id")
+    val senderId: String? = null,
 )

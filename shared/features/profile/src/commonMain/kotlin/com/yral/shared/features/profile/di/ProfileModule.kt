@@ -52,6 +52,7 @@ val profileModule =
                 fileDownloader = get(),
                 followersMetadataDataSource = get(),
                 checkChatAccessUseCase = get(),
+                createHumanConversationUseCase = get(),
                 publishDraftVideoUseCase = get(),
             )
         }

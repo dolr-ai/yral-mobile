@@ -14,6 +14,7 @@ internal fun ConversationViewState.headerSubscribeButtonUiState(): ConversationS
             isSocialSignedIn &&
                 isSubscriptionEnabled &&
                 !isBotAccount &&
+                !isHumanChat &&
                 (
                     isChatAccessLoading ||
                         isInfluencerSubscriptionPurchasedAndVerified ||

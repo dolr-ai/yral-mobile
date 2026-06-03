@@ -6,10 +6,14 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import androidx.paging.filter
+import com.yral.featureflag.ChatFeatureFlags
+import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.ConversationsPagingSource
 import com.yral.shared.features.chat.domain.models.Conversation
+import com.yral.shared.features.chat.domain.models.isHumanChat
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -18,6 +22,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -30,9 +35,11 @@ class InboxViewModel(
     private val sessionManager: SessionManager,
     private val useCaseFailureListener: UseCaseFailureListener,
     private val chatUnreadRefreshSignal: ChatUnreadRefreshSignal,
+    flagManager: FeatureFlagManager,
 ) : ViewModel() {
     private val refreshTrigger = MutableStateFlow(0)
     private val mutableUnreadConversationCount = MutableStateFlow(0)
+    private val isH2hChatEnabled = flagManager.get(ChatFeatureFlags.Chat.H2hChatEnabled)
 
     private val pagingConfig =
         PagingConfig(
@@ -68,7 +75,13 @@ class InboxViewModel(
                             principal = principal,
                         )
                     },
-                ).flow
+                ).flow.map { pagingData ->
+                    if (isH2hChatEnabled) {
+                        pagingData
+                    } else {
+                        pagingData.filter { conversation -> !conversation.isHumanChat }
+                    }
+                }
             }.cachedIn(viewModelScope)
 
     fun refreshConversations() {
