@@ -150,6 +150,7 @@ class ConversationViewModel(
                 isSubscriptionEnabled = flagManager.isEnabled(AppFeatureFlags.Common.EnableSubscription),
                 isChatAsHumanCreatorEnabled = flagManager.get(ChatFeatureFlags.Chat.ChatAsHumanCreatorEnabled),
                 isSseStreamingEnabled = flagManager.get(ChatFeatureFlags.Chat.SseStreamingEnabled),
+                isAudioRecordingEnabled = flagManager.get(ChatFeatureFlags.Chat.AudioRecordingEnabled),
             ),
         )
     val viewState: StateFlow<ConversationViewState> = _viewState.asStateFlow()
@@ -1006,6 +1007,7 @@ class ConversationViewModel(
                 isSubscriptionEnabled = current.isSubscriptionEnabled,
                 isChatAsHumanCreatorEnabled = current.isChatAsHumanCreatorEnabled,
                 isSseStreamingEnabled = current.isSseStreamingEnabled,
+                isAudioRecordingEnabled = current.isAudioRecordingEnabled,
                 isInfluencerSubscriptionPurchasedAndVerified = false,
                 isInfluencerSubscriptionAvailableToPurchase = current.isInfluencerSubscriptionAvailableToPurchase,
                 isInfluencerSubscriptionPurchaseInProgress = false,
@@ -2279,6 +2281,7 @@ data class ConversationViewState(
     val isChatAccessLoading: Boolean = false,
     val isChatAsHumanCreatorEnabled: Boolean = false,
     val isSseStreamingEnabled: Boolean = false,
+    val isAudioRecordingEnabled: Boolean = false,
     val isHumanCreatorTakeoverActive: Boolean = false,
     val isHumanCreatorTakeoverStarting: Boolean = false,
     val isHumanCreatorTakeoverEnding: Boolean = false,

@@ -705,7 +705,21 @@ fun ChatConversationScreen(
                                             },
                                             onCameraClick = imageCaptureLauncher,
                                             onGalleryClick = imagePickerLauncher,
-                                            onMicClick = { audioRecorder.start() },
+                                            // Mic button is gated on AudioRecordingEnabled (kill-switch +
+                                            // GA pacing). Passing null hides the icon entirely per
+                                            // ConversationInputArea's ActionsRow logic.
+                                            //
+                                            // Known follow-up (Task #64): once the H2H feature lands on main
+                                            // and this branch rebases, also AND in `!viewState.isHumanChat`
+                                            // here — voice messages are not supported on H2H peer chats
+                                            // because the H2H send route doesn't transcribe; recipient would
+                                            // see an empty bubble with playable audio and no context.
+                                            onMicClick =
+                                                if (viewState.isAudioRecordingEnabled) {
+                                                    { audioRecorder.start() }
+                                                } else {
+                                                    null
+                                                },
                                             hasWaitingAssistant = hasWaitingAssistant,
                                         )
                                     }
