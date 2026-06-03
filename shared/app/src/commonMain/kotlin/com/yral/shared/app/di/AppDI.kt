@@ -19,6 +19,7 @@ import com.yral.shared.features.account.di.accountsModule
 import com.yral.shared.features.aiinfluencer.di.aiInfluencerModule
 import com.yral.shared.features.auth.di.authModule
 import com.yral.shared.features.chat.di.chatModule
+import com.yral.shared.features.coach.di.coachModule
 import com.yral.shared.features.feed.di.feedModule
 import com.yral.shared.features.profile.di.profileModule
 import com.yral.shared.features.root.di.rootModule
@@ -87,6 +88,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             profileModule,
             walletModule,
             chatModule,
+            coachModule,
             subscriptionsModule,
             aiInfluencerModule,
         )

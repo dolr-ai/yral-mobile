@@ -75,6 +75,18 @@ object ChatFeatureFlags {
                     "false until backend cutover + GA.",
                 defaultValue = false,
             )
+        val SoulFileCoachEnabled: FeatureFlag<Boolean> =
+            boolean(
+                keySuffix = "soulFileCoachEnabled",
+                name = "Soul File Coach (Phase 7.5)",
+                description = "When ON, exposes the 'Make your AI Influencer better' button on the creator's " +
+                    "own bot profile. Tap → starts a coach session at POST /api/v1/creator/coach/conversations/{bot_id} " +
+                    "and navigates into a coach chat where the creator iterates on the bot's system instructions. " +
+                    "Coach replies can include a structured proposal which the creator can Apply with one tap " +
+                    "(POST .../apply) to update the bot. When OFF, the button is hidden and the feature is dormant. " +
+                    "PR keeps defaultValue = false until backend cutover + GA.",
+                defaultValue = false,
+            )
         val AudioRecordingEnabled: FeatureFlag<Boolean> =
             boolean(
                 keySuffix = "audioRecordingEnabled",
