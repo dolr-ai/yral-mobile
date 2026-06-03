@@ -91,6 +91,7 @@ include(":shared:libs:iap:core")
 include(":shared:libs:iap:main")
 include(":shared:features:reportVideo")
 include(":shared:features:chat")
+include(":shared:features:coach")
 include(":shared:features:subscriptions")
 include(":shared:features:aiInfluencer")
 

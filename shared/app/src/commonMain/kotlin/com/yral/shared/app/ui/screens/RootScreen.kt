@@ -200,6 +200,13 @@ fun RootScreen(rootComponent: RootComponent) {
                         )
                     }
 
+                    is Child.Coach -> {
+                        HandleSystemBars(show = true)
+                        com.yral.shared.features.coach.ui.CoachScreen(
+                            component = child.component,
+                        )
+                    }
+
                     is Child.UserProfile -> {
                         HandleSystemBars(show = true)
                         val profileViewModel =

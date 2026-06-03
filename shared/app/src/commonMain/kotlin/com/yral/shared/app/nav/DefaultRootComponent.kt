@@ -182,6 +182,10 @@ class DefaultRootComponent(
                 RootComponent.Child.Home(componentFactory.createHome(context))
             }
 
+            is Config.Coach -> {
+                RootComponent.Child.Coach(componentFactory.createCoach(context, config))
+            }
+
             is Config.EditProfile -> {
                 RootComponent.Child.EditProfile(componentFactory.createEditProfile(context))
             }
@@ -394,6 +398,10 @@ class DefaultRootComponent(
     // ==================== Screen Navigation ====================
     override fun openEditProfile() {
         navigation.pushToFront(Config.EditProfile)
+    }
+
+    override fun openCoach(params: com.yral.shared.features.coach.nav.OpenCoachParams) {
+        navigation.pushToFront(Config.Coach(params))
     }
 
     override fun openProfile(userCanisterData: CanisterData) {
