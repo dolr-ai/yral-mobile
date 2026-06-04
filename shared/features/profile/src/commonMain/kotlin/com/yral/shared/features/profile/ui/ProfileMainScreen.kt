@@ -214,6 +214,7 @@ fun ProfileMainScreen(
     profileVideos: LazyPagingItems<FeedDetails>,
 ) {
     val sessionManager: SessionManager = koinInject()
+    val featureFlagManager: com.yral.featureflag.FeatureFlagManager = koinInject()
     // Use nullable to avoid showing CTA flash while loading
     val botCount by
         sessionManager
@@ -586,7 +587,10 @@ fun ProfileMainScreen(
                             )
                         component.openProfile(canisterData)
                     },
-                    showCoachCta = state.isOwnProfile && state.isAiInfluencer,
+                    showCoachCta =
+                        state.isOwnProfile &&
+                            state.isAiInfluencer &&
+                            featureFlagManager.isEnabled(com.yral.featureflag.ChatFeatureFlags.Chat.SoulFileCoachEnabled),
                     onCoachClick = {
                         val info = state.accountInfo ?: return@MainContent
                         component.openCoach(
@@ -822,7 +826,7 @@ private fun MainContent(
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 8.dp),
                 ) {
-                    Text(text = "Make your AI Influencer better")
+                    Text(text = "Make your AI Influencer better (Beta)")
                 }
             }
         }
