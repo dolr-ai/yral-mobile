@@ -601,13 +601,32 @@ fun ChatConversationScreen(
                             }
 
                             ConversationBottomAreaState.BotAccountReadOnly -> {
-                                BotAccountConversationPrompt(
-                                    message = aiInfluencerReadOnlyMessage,
-                                    buttonText = null,
-                                    avatarUrl = null,
-                                    isSwitching = false,
-                                    onSwitchClick = null,
-                                )
+                                if (viewState.isChatAsHumanCreatorEnabled) {
+                                    val creatorDisplayName =
+                                        viewState.influencer
+                                            ?.displayName
+                                            ?.takeIf { it.isNotBlank() }
+                                            ?: viewState.influencer?.name.orEmpty()
+                                    CreatorTakeoverBar(
+                                        isActive = viewState.isHumanCreatorTakeoverActive,
+                                        isStarting = viewState.isHumanCreatorTakeoverStarting,
+                                        isEnding = viewState.isHumanCreatorTakeoverEnding,
+                                        isMessageSending = viewState.isHumanCreatorMessageSending,
+                                        remainingSeconds = viewState.humanCreatorTakeoverRemainingSeconds,
+                                        creatorDisplayName = creatorDisplayName,
+                                        onToggleOn = { viewModel.startHumanCreatorTakeover() },
+                                        onToggleOff = { viewModel.releaseHumanCreatorTakeover() },
+                                        onSend = { text -> viewModel.sendAsHumanCreator(text) },
+                                    )
+                                } else {
+                                    BotAccountConversationPrompt(
+                                        message = aiInfluencerReadOnlyMessage,
+                                        buttonText = null,
+                                        avatarUrl = null,
+                                        isSwitching = false,
+                                        onSwitchClick = null,
+                                    )
+                                }
                             }
 
                             ConversationBottomAreaState.InfluencerSubscription -> {
