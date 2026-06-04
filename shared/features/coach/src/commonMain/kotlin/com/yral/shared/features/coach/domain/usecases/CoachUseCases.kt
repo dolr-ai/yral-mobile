@@ -16,10 +16,16 @@ class CreateCoachSessionUseCase(
     private val repository: CoachRepository,
     appDispatchers: AppDispatchers,
     useCaseFailureListener: UseCaseFailureListener,
-) : SuspendUseCase<String, CoachSession>(appDispatchers.network, useCaseFailureListener) {
+) : SuspendUseCase<CreateCoachSessionUseCase.Params, CoachSession>(appDispatchers.network, useCaseFailureListener) {
     override val exceptionType: String = EXCEPTION_TYPE
 
-    override suspend fun execute(parameter: String): CoachSession = repository.createSession(parameter)
+    override suspend fun execute(parameter: Params): CoachSession =
+        repository.createSession(botId = parameter.botId, fresh = parameter.fresh)
+
+    data class Params(
+        val botId: String,
+        val fresh: Boolean = false,
+    )
 }
 
 class SendCoachMessageUseCase(
@@ -30,9 +36,17 @@ class SendCoachMessageUseCase(
     override val exceptionType: String = EXCEPTION_TYPE
 
     override suspend fun execute(parameter: Params): SendCoachMessageResult =
-        repository.sendMessage(parameter.coachConversationId, parameter.content)
+        repository.sendMessage(
+            coachConversationId = parameter.coachConversationId,
+            content = parameter.content,
+            requestProposal = parameter.requestProposal,
+        )
 
-    data class Params(val coachConversationId: String, val content: String)
+    data class Params(
+        val coachConversationId: String,
+        val content: String,
+        val requestProposal: Boolean = false,
+    )
 }
 
 class ApplyCoachProposalUseCase(

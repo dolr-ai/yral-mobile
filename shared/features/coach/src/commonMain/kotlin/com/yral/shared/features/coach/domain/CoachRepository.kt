@@ -6,11 +6,15 @@ import com.yral.shared.features.coach.domain.models.CoachSession
 import com.yral.shared.features.coach.domain.models.SendCoachMessageResult
 
 interface CoachRepository {
-    suspend fun createSession(botId: String): CoachSession
+    suspend fun createSession(
+        botId: String,
+        fresh: Boolean,
+    ): CoachSession
 
     suspend fun sendMessage(
         coachConversationId: String,
         content: String,
+        requestProposal: Boolean,
     ): SendCoachMessageResult
 
     suspend fun applyProposal(coachConversationId: String): ApplyCoachProposalResult

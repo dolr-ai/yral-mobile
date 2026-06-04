@@ -11,6 +11,7 @@ fun CoachSessionDto.toDomain(): CoachSession =
         id = id,
         botId = botId,
         botName = botName,
+        resumed = resumed,
         createdAt = createdAt,
     )
 
@@ -22,6 +23,7 @@ fun CoachMessageDto.toDomain(): CoachMessage =
         content = content,
         proposedChanges = proposedChanges,
         reasoning = reasoning,
+        suggestions = suggestions,
         applied = applied,
         createdAt = createdAt,
     )
@@ -39,6 +41,7 @@ fun ApplyCoachProposalResponseDto.toDomain(): ApplyCoachProposalResult =
         previousInstructions = previousInstructions,
         newInstructions = newInstructions,
         appliedAt = appliedAt,
+        receiptMessage = receiptMessage?.toDomain(),
     )
 
 fun ListCoachMessagesResponseDto.toDomain(): List<CoachMessage> = messages.map { it.toDomain() }

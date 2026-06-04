@@ -3,6 +3,7 @@ package com.yral.shared.features.coach.data
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.features.coach.data.models.ApplyCoachProposalResponseDto
 import com.yral.shared.features.coach.data.models.CoachSessionDto
+import com.yral.shared.features.coach.data.models.CreateCoachSessionRequestDto
 import com.yral.shared.features.coach.data.models.ListCoachMessagesResponseDto
 import com.yral.shared.features.coach.data.models.SendCoachMessageRequestDto
 import com.yral.shared.features.coach.data.models.SendCoachMessageResponseDto
@@ -23,7 +24,10 @@ class CoachRemoteDataSource(
     private val preferences: Preferences,
     private val chatBaseUrl: String,
 ) : CoachDataSource {
-    override suspend fun createSession(botId: String): CoachSessionDto {
+    override suspend fun createSession(
+        botId: String,
+        request: CreateCoachSessionRequestDto,
+    ): CoachSessionDto {
         val idToken = getIdToken()
         return httpPost(
             httpClient = httpClient,
@@ -34,6 +38,7 @@ class CoachRemoteDataSource(
                 path(COACH_CONVERSATIONS_PATH, botId)
             }
             headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
+            setBody(request)
         }
     }
 

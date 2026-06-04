@@ -4,6 +4,7 @@ data class CoachSession(
     val id: String,
     val botId: String,
     val botName: String?,
+    val resumed: Boolean,
     val createdAt: String,
 )
 
@@ -18,4 +19,5 @@ data class ApplyCoachProposalResult(
     val previousInstructions: String,
     val newInstructions: String,
     val appliedAt: String,
+    val receiptMessage: CoachMessage? = null,
 )

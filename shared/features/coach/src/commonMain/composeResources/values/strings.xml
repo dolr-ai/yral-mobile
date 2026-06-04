@@ -18,4 +18,12 @@
     <string name="coach_apply_failed">Could not apply the update. Try again.</string>
     <string name="coach_session_start_failed">Could not start coach session. Try again.</string>
     <string name="coach_error_dismiss">Dismiss</string>
+    <string name="coach_header_hint">Chat about improvements — nothing changes until you tap Save.</string>
+    <string name="coach_start_over">Start over</string>
+    <string name="coach_start_over_confirm_title">Start a new coach session?</string>
+    <string name="coach_start_over_confirm_body">This conversation will end and a new one will begin. Your earlier turns stay saved on the server but won\'t be shown.</string>
+    <string name="coach_start_over_confirm_cta">Start over</string>
+    <string name="coach_start_over_confirm_cancel">Cancel</string>
+    <string name="coach_save_cta">Save changes to %1$s</string>
+    <string name="coach_save_cta_generic">Save changes</string>
 </resources>

@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -36,8 +37,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.yral.shared.features.coach.domain.models.CoachMessage
@@ -64,15 +65,23 @@ import yral_mobile.shared.features.coach.generated.resources.coach_apply_failed
 import yral_mobile.shared.features.coach.generated.resources.coach_back
 import yral_mobile.shared.features.coach.generated.resources.coach_empty_state_subtitle
 import yral_mobile.shared.features.coach.generated.resources.coach_empty_state_title
+import yral_mobile.shared.features.coach.generated.resources.coach_header_hint
 import yral_mobile.shared.features.coach.generated.resources.coach_input_placeholder
 import yral_mobile.shared.features.coach.generated.resources.coach_loading_session
 import yral_mobile.shared.features.coach.generated.resources.coach_proposal_apply_cta
 import yral_mobile.shared.features.coach.generated.resources.coach_proposal_applied
 import yral_mobile.shared.features.coach.generated.resources.coach_proposal_card_title
+import yral_mobile.shared.features.coach.generated.resources.coach_save_cta
+import yral_mobile.shared.features.coach.generated.resources.coach_save_cta_generic
 import yral_mobile.shared.features.coach.generated.resources.coach_screen_title
 import yral_mobile.shared.features.coach.generated.resources.coach_send
 import yral_mobile.shared.features.coach.generated.resources.coach_send_failed
 import yral_mobile.shared.features.coach.generated.resources.coach_session_start_failed
+import yral_mobile.shared.features.coach.generated.resources.coach_start_over
+import yral_mobile.shared.features.coach.generated.resources.coach_start_over_confirm_body
+import yral_mobile.shared.features.coach.generated.resources.coach_start_over_confirm_cancel
+import yral_mobile.shared.features.coach.generated.resources.coach_start_over_confirm_cta
+import yral_mobile.shared.features.coach.generated.resources.coach_start_over_confirm_title
 import yral_mobile.shared.features.coach.generated.resources.coach_thinking
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_send
@@ -91,7 +100,6 @@ fun CoachScreen(
         viewModel.openForBot(params.botId, params.botName, params.avatarUrl)
     }
 
-    // Surface toasts / inline error banners
     LaunchedEffect(viewState.lastAppliedToastMessage) {
         viewState.lastAppliedToastMessage?.let { msg ->
             ToastManager.showSuccess(type = ToastType.Small(message = msg))
@@ -109,8 +117,12 @@ fun CoachScreen(
         CoachHeader(
             avatarUrl = viewState.avatarUrl,
             botName = viewState.botName,
+            showStartOver = viewState.coachConversationId != null,
             onBack = { component.onBack() },
+            onStartOver = { viewModel.requestStartOverConfirm() },
         )
+
+        CoachHeaderHint()
 
         Box(modifier = Modifier.fillMaxSize().weight(1f)) {
             if (viewState.coachConversationId == null && viewState.isSessionLoading) {
@@ -132,13 +144,23 @@ fun CoachScreen(
                     messages = viewState.pending,
                     isCoachThinking = viewState.isCoachThinking,
                     activeProposalMessageId = viewState.activeProposalMessage?.id,
+                    openingSuggestions = viewState.openingSuggestions,
                     onApplyClick = { viewModel.requestApplyProposal() },
+                    onSuggestionTap = { suggestion -> viewModel.sendMessage(suggestion) },
                 )
             }
         }
 
         viewState.error?.let { err ->
             CoachErrorBanner(error = err, onDismiss = { viewModel.clearError() })
+        }
+
+        if (viewState.canRequestSave) {
+            CoachSaveButton(
+                botName = viewState.botName,
+                enabled = !viewState.isCoachThinking,
+                onSave = { viewModel.requestSaveProposal() },
+            )
         }
 
         CoachInputArea(
@@ -155,13 +177,25 @@ fun CoachScreen(
             onDismiss = { viewModel.dismissApplyConfirm() },
         )
     }
+
+    if (viewState.showStartOverConfirm) {
+        CoachStartOverConfirmDialog(
+            onConfirm = {
+                viewModel.dismissStartOverConfirm()
+                viewModel.startOver()
+            },
+            onDismiss = { viewModel.dismissStartOverConfirm() },
+        )
+    }
 }
 
 @Composable
 private fun CoachHeader(
     avatarUrl: String?,
     botName: String?,
+    showStartOver: Boolean,
     onBack: () -> Unit,
+    onStartOver: () -> Unit,
 ) {
     Row(
         modifier =
@@ -169,41 +203,69 @@ private fun CoachHeader(
                 .fillMaxWidth()
                 .background(YralColors.PrimaryContainer)
                 .padding(horizontal = 16.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.Start,
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Image(
-            painter = painterResource(DesignRes.drawable.arrow_left),
-            contentDescription = stringResource(Res.string.coach_back),
-            modifier =
-                Modifier
-                    .size(28.dp)
-                    .clickable(onClick = onBack),
-        )
-        Spacer(modifier = Modifier.width(12.dp))
-        Box(modifier = Modifier.size(36.dp).background(YralColors.Neutral800, CircleShape)) {
-            YralAsyncImage(
-                imageUrl = avatarUrl.orEmpty(),
-                modifier = Modifier.size(36.dp),
-                shape = CircleShape,
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Image(
+                painter = painterResource(DesignRes.drawable.arrow_left),
+                contentDescription = stringResource(Res.string.coach_back),
+                modifier =
+                    Modifier
+                        .size(28.dp)
+                        .clickable(onClick = onBack),
             )
+            Spacer(modifier = Modifier.width(12.dp))
+            Box(modifier = Modifier.size(36.dp).background(YralColors.Neutral800, CircleShape)) {
+                YralAsyncImage(
+                    imageUrl = avatarUrl.orEmpty(),
+                    modifier = Modifier.size(36.dp),
+                    shape = CircleShape,
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(Res.string.coach_screen_title),
+                    style = LocalAppTopography.current.regRegular,
+                    color = YralColors.NeutralTextSecondary,
+                )
+                Text(
+                    text = botName.orEmpty(),
+                    style = LocalAppTopography.current.baseSemiBold,
+                    color = YralColors.NeutralTextPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
-        Spacer(modifier = Modifier.width(12.dp))
-        Column {
+        if (showStartOver) {
             Text(
-                text = stringResource(Res.string.coach_screen_title),
-                style = LocalAppTopography.current.regRegular,
-                color = YralColors.NeutralTextSecondary,
-            )
-            Text(
-                text = botName.orEmpty(),
-                style = LocalAppTopography.current.baseSemiBold,
-                color = YralColors.NeutralTextPrimary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+                text = stringResource(Res.string.coach_start_over),
+                style = LocalAppTopography.current.smSemiBold,
+                color = YralColors.Pink300,
+                modifier = Modifier.clickable(onClick = onStartOver).padding(8.dp),
             )
         }
     }
+}
+
+@Composable
+private fun CoachHeaderHint() {
+    Text(
+        text = stringResource(Res.string.coach_header_hint),
+        style = LocalAppTopography.current.smRegular,
+        color = YralColors.NeutralTextSecondary,
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(YralColors.Neutral900)
+                .padding(horizontal = 16.dp, vertical = 6.dp),
+        textAlign = TextAlign.Center,
+    )
 }
 
 @Composable
@@ -232,11 +294,14 @@ private fun CoachMessagesList(
     messages: List<CoachMessage>,
     isCoachThinking: Boolean,
     activeProposalMessageId: String?,
+    openingSuggestions: List<String>,
     onApplyClick: () -> Unit,
+    onSuggestionTap: (String) -> Unit,
 ) {
     val listState = rememberLazyListState()
-    LaunchedEffect(messages.size) {
-        if (messages.isNotEmpty()) listState.animateScrollToItem(messages.size - 1)
+    val rowCount = messages.size + if (openingSuggestions.isNotEmpty()) 1 else 0
+    LaunchedEffect(rowCount) {
+        if (rowCount > 0) listState.animateScrollToItem(rowCount - 1)
     }
     LazyColumn(
         state = listState,
@@ -253,6 +318,45 @@ private fun CoachMessagesList(
                 onApplyClick = onApplyClick,
                 isCoachThinkingPlaceholder = isCoachThinking && msg.role == CoachMessageRole.COACH && msg.content.isEmpty(),
             )
+        }
+        if (openingSuggestions.isNotEmpty()) {
+            item(key = "opening-suggestions") {
+                CoachSuggestionChipsRow(
+                    suggestions = openingSuggestions,
+                    onTap = onSuggestionTap,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CoachSuggestionChipsRow(
+    suggestions: List<String>,
+    onTap: (String) -> Unit,
+) {
+    LazyRow(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+        contentPadding = PaddingValues(horizontal = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        items(items = suggestions, key = { it }) { chipText ->
+            Box(
+                modifier =
+                    Modifier
+                        .border(
+                            width = 1.dp,
+                            color = YralColors.Pink300,
+                            shape = RoundedCornerShape(20.dp),
+                        ).clickable { onTap(chipText) }
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
+            ) {
+                Text(
+                    text = chipText,
+                    style = LocalAppTopography.current.smSemiBold,
+                    color = YralColors.Pink300,
+                )
+            }
         }
     }
 }
@@ -370,6 +474,38 @@ private fun CoachProposalCard(
 }
 
 @Composable
+private fun CoachSaveButton(
+    botName: String?,
+    enabled: Boolean,
+    onSave: () -> Unit,
+) {
+    val label =
+        if (!botName.isNullOrBlank()) {
+            stringResource(Res.string.coach_save_cta, botName)
+        } else {
+            stringResource(Res.string.coach_save_cta_generic)
+        }
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 4.dp)
+                .background(
+                    color = if (enabled) YralColors.Pink300 else YralColors.Neutral700,
+                    shape = RoundedCornerShape(24.dp),
+                ).clickable(enabled = enabled, onClick = onSave)
+                .padding(vertical = 12.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            style = LocalAppTopography.current.baseSemiBold,
+            color = YralColors.Neutral0,
+        )
+    }
+}
+
+@Composable
 private fun CoachInputArea(
     onSend: (String) -> Unit,
     enabled: Boolean,
@@ -447,6 +583,28 @@ private fun CoachApplyConfirmDialog(
         dismissButton = {
             TextButton(onClick = onDismiss, enabled = !isApplying) {
                 Text(stringResource(Res.string.coach_apply_confirm_cancel))
+            }
+        },
+    )
+}
+
+@Composable
+private fun CoachStartOverConfirmDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.coach_start_over_confirm_title)) },
+        text = { Text(stringResource(Res.string.coach_start_over_confirm_body)) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(stringResource(Res.string.coach_start_over_confirm_cta))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(Res.string.coach_start_over_confirm_cancel))
             }
         },
     )
