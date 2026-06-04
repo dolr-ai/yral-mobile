@@ -48,6 +48,13 @@ class CoachViewModel(
                 botId = botId,
                 botName = botName,
                 avatarUrl = avatarUrl,
+                coachConversationId = null,
+                pending = emptyList(),
+                pendingCoachPlaceholderId = null,
+                isCoachThinking = false,
+                isApplying = false,
+                showApplyConfirm = false,
+                lastAppliedToastMessage = null,
                 isSessionLoading = true,
                 error = null,
             )
