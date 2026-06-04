@@ -128,6 +128,7 @@ class ProfileViewModel(
     private val checkChatAccessUseCase: CheckChatAccessUseCase,
     private val createHumanConversationUseCase: CreateHumanConversationUseCase,
     private val publishDraftVideoUseCase: PublishDraftVideoUseCase,
+    private val getVideoIdeasUseCase: com.yral.shared.features.profile.videoideas.domain.usecases.GetVideoIdeasUseCase,
 ) : ViewModel() {
     companion object {
         private const val POSTS_PER_PAGE = 20
@@ -1260,6 +1261,48 @@ class ProfileViewModel(
 
     fun selectTab(tab: ProfileTab) {
         _state.update { it.copy(selectedTab = tab) }
+        if (tab == ProfileTab.Ideas) {
+            loadVideoIdeasIfNeeded()
+        }
+    }
+
+    /**
+     * Phase 22.3c — pull the bot's daily 5 video ideas the first time the
+     * Ideas tab is opened. Backend cold-starts a batch on demand for a
+     * bot that has none for today; subsequent taps within the session
+     * are cached locally so we don't refire on every tab switch.
+     */
+    private fun loadVideoIdeasIfNeeded() {
+        val current = _state.value
+        if (current.videoIdeas != null || current.isLoadingVideoIdeas) return
+        val botId = current.accountInfo?.userPrincipal ?: canisterData.userPrincipalId
+        if (botId.isBlank()) return
+        _state.update { it.copy(isLoadingVideoIdeas = true, videoIdeasError = null) }
+        viewModelScope.launch {
+            getVideoIdeasUseCase(botId)
+                .onSuccess { ideas ->
+                    _state.update {
+                        it.copy(
+                            videoIdeas = ideas,
+                            isLoadingVideoIdeas = false,
+                            videoIdeasError = null,
+                        )
+                    }
+                }.onFailure { error ->
+                    Logger.e(ProfileViewModel::class.simpleName!!, error) { "Failed to load video ideas" }
+                    _state.update {
+                        it.copy(
+                            isLoadingVideoIdeas = false,
+                            videoIdeasError = error.message ?: "Could not load ideas",
+                        )
+                    }
+                }
+        }
+    }
+
+    fun retryLoadVideoIdeas() {
+        _state.update { it.copy(videoIdeas = null, videoIdeasError = null) }
+        loadVideoIdeasIfNeeded()
     }
 
     fun openDraftVideo(feedDetails: FeedDetails) {
@@ -1354,11 +1397,18 @@ data class ViewState(
     val botUsernameToCanisterData: Map<String, String> = emptyMap(),
     val publishDraftUiState: UiState<Unit> = UiState.Initial,
     val selectedTab: ProfileTab = ProfileTab.Published,
+    // Phase 22.3c — Video Ideas tab. `videoIdeas == null` means "not yet
+    // fetched"; an empty list means the server returned no ideas (e.g.
+    // bot has no archetype/data and cold-start fell through).
+    val videoIdeas: List<com.yral.shared.features.profile.videoideas.domain.models.VideoIdea>? = null,
+    val isLoadingVideoIdeas: Boolean = false,
+    val videoIdeasError: String? = null,
 )
 
 enum class ProfileTab {
     Published,
     Drafts,
+    Ideas,
 }
 
 sealed interface ProfileBottomSheet {

@@ -153,8 +153,19 @@ import yral_mobile.shared.features.profile.generated.resources.drafts_empty_titl
 import yral_mobile.shared.features.profile.generated.resources.error_loading_more_videos
 import yral_mobile.shared.features.profile.generated.resources.error_loading_videos
 import yral_mobile.shared.features.profile.generated.resources.failed_to_delete_video
+import androidx.compose.foundation.lazy.items
+import androidx.compose.ui.text.style.TextOverflow
 import yral_mobile.shared.features.profile.generated.resources.ic_drafts_selected
 import yral_mobile.shared.features.profile.generated.resources.ic_drafts_unselected
+import yral_mobile.shared.features.profile.generated.resources.ic_ideas_selected
+import yral_mobile.shared.features.profile.generated.resources.ic_ideas_unselected
+import yral_mobile.shared.features.profile.generated.resources.ideas_create_cta
+import yral_mobile.shared.features.profile.generated.resources.ideas_created_chip
+import yral_mobile.shared.features.profile.generated.resources.ideas_empty
+import yral_mobile.shared.features.profile.generated.resources.ideas_error
+import yral_mobile.shared.features.profile.generated.resources.ideas_header
+import yral_mobile.shared.features.profile.generated.resources.ideas_loading
+import yral_mobile.shared.features.profile.generated.resources.ideas_lock_hint
 import yral_mobile.shared.features.profile.generated.resources.ic_published_selected
 import yral_mobile.shared.features.profile.generated.resources.ic_published_unselected
 import yral_mobile.shared.features.profile.generated.resources.make_ai_influencer_better
@@ -888,6 +899,11 @@ private fun MainContent(
                         draftVideos = draftVideos,
                         selectedTab = state.selectedTab,
                         isOwnProfile = state.isOwnProfile,
+                        isAiInfluencer = state.isAiInfluencer,
+                        videoIdeas = state.videoIdeas,
+                        isLoadingVideoIdeas = state.isLoadingVideoIdeas,
+                        videoIdeasError = state.videoIdeasError,
+                        onRetryVideoIdeas = { viewModel.retryLoadVideoIdeas() },
                         deletingVideoId = deletingVideoId,
                         uploadVideo = uploadVideo,
                         openVideoReel = { viewModel.openVideoReel(it) },
@@ -1091,6 +1107,11 @@ private fun SuccessContent(
     draftVideos: LazyPagingItems<FeedDetails>,
     selectedTab: ProfileTab,
     isOwnProfile: Boolean,
+    isAiInfluencer: Boolean,
+    videoIdeas: List<com.yral.shared.features.profile.videoideas.domain.models.VideoIdea>?,
+    isLoadingVideoIdeas: Boolean,
+    videoIdeasError: String?,
+    onRetryVideoIdeas: () -> Unit,
     deletingVideoId: String,
     uploadVideo: () -> Unit,
     openVideoReel: (Int) -> Unit,
@@ -1123,6 +1144,7 @@ private fun SuccessContent(
                 selectedTab = selectedTab,
                 onTabSelected = onTabSelected,
                 hasDrafts = draftVideos.itemCount > 0,
+                showIdeasTab = isAiInfluencer,
             )
         }
 
@@ -1167,7 +1189,16 @@ private fun SuccessContent(
                 }
             },
         ) {
-            if (selectedTab == ProfileTab.Drafts) {
+            if (selectedTab == ProfileTab.Ideas) {
+                IdeasListContent(
+                    ideas = videoIdeas,
+                    isLoading = isLoadingVideoIdeas,
+                    errorMessage = videoIdeasError,
+                    isGenerationInFlight = generatingState.isGenerating,
+                    onRetry = onRetryVideoIdeas,
+                    onCreateClick = { /* wired in 22.3d */ },
+                )
+            } else if (selectedTab == ProfileTab.Drafts) {
                 if (showDraftsLoadingState) {
                     LoadingContent()
                 } else if (showDraftsEmptyState) {
@@ -1289,6 +1320,7 @@ private fun ProfileTabBar(
     selectedTab: ProfileTab,
     onTabSelected: (ProfileTab) -> Unit,
     hasDrafts: Boolean,
+    showIdeasTab: Boolean,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -1308,6 +1340,21 @@ private fun ProfileTabBar(
             onClick = { onTabSelected(ProfileTab.Published) },
             modifier = Modifier.weight(1f),
         )
+        if (showIdeasTab) {
+            ProfileTabItem(
+                icon =
+                    painterResource(
+                        if (selectedTab == ProfileTab.Ideas) {
+                            Res.drawable.ic_ideas_selected
+                        } else {
+                            Res.drawable.ic_ideas_unselected
+                        },
+                    ),
+                isSelected = selectedTab == ProfileTab.Ideas,
+                onClick = { onTabSelected(ProfileTab.Ideas) },
+                modifier = Modifier.weight(1f),
+            )
+        }
         Box(modifier = Modifier.weight(1f)) {
             ProfileTabItem(
                 icon =
@@ -2159,6 +2206,177 @@ private fun BecomeProButtonPreview() {
                     .padding(24.dp),
         ) {
             BecomeProButton(onClick = {})
+        }
+    }
+}
+
+// ─── Phase 22.3c — Video Ideas tab ───────────────────────────────────────
+
+@Composable
+private fun IdeasListContent(
+    ideas: List<com.yral.shared.features.profile.videoideas.domain.models.VideoIdea>?,
+    isLoading: Boolean,
+    errorMessage: String?,
+    isGenerationInFlight: Boolean,
+    onRetry: () -> Unit,
+    onCreateClick: (com.yral.shared.features.profile.videoideas.domain.models.VideoIdea) -> Unit,
+) {
+    androidx.compose.foundation.lazy.LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        item(key = "ideas-header") {
+            Text(
+                text = stringResource(Res.string.ideas_header),
+                style = LocalAppTopography.current.baseSemiBold,
+                color = YralColors.NeutralTextPrimary,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            )
+        }
+        if (isGenerationInFlight) {
+            item(key = "ideas-lock-hint") {
+                Text(
+                    text = stringResource(Res.string.ideas_lock_hint),
+                    style = LocalAppTopography.current.smRegular,
+                    color = YralColors.NeutralTextSecondary,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .background(YralColors.Neutral900, RoundedCornerShape(12.dp))
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                )
+            }
+        }
+        when {
+            isLoading -> {
+                item(key = "ideas-loading") {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.ideas_loading),
+                            style = LocalAppTopography.current.baseRegular,
+                            color = YralColors.NeutralTextSecondary,
+                        )
+                    }
+                }
+            }
+            errorMessage != null -> {
+                item(key = "ideas-error") {
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable(onClick = onRetry)
+                                .padding(vertical = 32.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.ideas_error),
+                            style = LocalAppTopography.current.baseRegular,
+                            color = YralColors.Pink300,
+                        )
+                    }
+                }
+            }
+            ideas != null && ideas.isEmpty() -> {
+                item(key = "ideas-empty") {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.ideas_empty),
+                            style = LocalAppTopography.current.baseRegular,
+                            color = YralColors.NeutralTextSecondary,
+                        )
+                    }
+                }
+            }
+            ideas != null -> {
+                items(items = ideas, key = { it.id }) { idea ->
+                    IdeaRow(
+                        idea = idea,
+                        isCreateLocked = isGenerationInFlight,
+                        onCreateClick = { onCreateClick(idea) },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun IdeaRow(
+    idea: com.yral.shared.features.profile.videoideas.domain.models.VideoIdea,
+    isCreateLocked: Boolean,
+    onCreateClick: () -> Unit,
+) {
+    val isUsed = !idea.isFresh
+    val createEnabled = idea.isFresh && !isCreateLocked
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(YralColors.Neutral900, RoundedCornerShape(12.dp))
+                .padding(12.dp),
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            text = "${idea.rank}",
+            style = LocalAppTopography.current.baseSemiBold,
+            color = YralColors.Pink300,
+            modifier = Modifier.padding(top = 2.dp).width(24.dp),
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = idea.hook,
+                style = LocalAppTopography.current.baseSemiBold,
+                color = YralColors.NeutralTextPrimary,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = idea.ideaText,
+                style = LocalAppTopography.current.regRegular,
+                color = YralColors.NeutralTextSecondary,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        if (isUsed) {
+            Box(
+                modifier =
+                    Modifier
+                        .background(YralColors.Neutral700, RoundedCornerShape(16.dp))
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+            ) {
+                Text(
+                    text = stringResource(Res.string.ideas_created_chip),
+                    style = LocalAppTopography.current.smSemiBold,
+                    color = YralColors.NeutralTextSecondary,
+                )
+            }
+        } else {
+            Box(
+                modifier =
+                    Modifier
+                        .background(
+                            color = if (createEnabled) YralColors.Pink300 else YralColors.Neutral700,
+                            shape = RoundedCornerShape(16.dp),
+                        ).clickable(enabled = createEnabled, onClick = onCreateClick)
+                        .padding(horizontal = 14.dp, vertical = 6.dp),
+            ) {
+                Text(
+                    text = stringResource(Res.string.ideas_create_cta),
+                    style = LocalAppTopography.current.smSemiBold,
+                    color = YralColors.Neutral0,
+                )
+            }
         }
     }
 }
