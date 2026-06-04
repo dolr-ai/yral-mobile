@@ -52,8 +52,6 @@ import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
-import com.yral.shared.libs.videoPlayer.YRALReelPlayerCardStack
-import com.yral.shared.libs.videoPlayer.cardstack.SwipeDirection
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
 import com.yral.shared.reportVideo.domain.models.ReportSheetState
@@ -86,7 +84,6 @@ fun FeedScreen(
     bottomOverlay: @Composable (pageNo: Int, scrollToNext: () -> Unit) -> Unit,
     onPageChanged: (pageNo: Int, currentPage: Int) -> Unit,
     onEdgeScrollAttempt: (pageNo: Int) -> Unit,
-    onSwipeVote: ((direction: SwipeDirection, pageIndex: Int, isSwipe: Boolean) -> Unit)? = null,
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -176,72 +173,35 @@ fun FeedScreen(
     Column(modifier = modifier) {
         if (state.feedDetails.isNotEmpty()) {
             KeepScreenOnEffect(true)
-            if (state.isCardLayoutEnabled) {
-                YRALReelPlayerCardStack(
-                    modifier = Modifier.weight(1f),
-                    reels = reels,
-                    maxReelsInPager = state.feedDetails.size,
-                    initialPage = state.currentPageOfFeed,
-                    onPageLoaded = { page ->
-                        // call onPageChanged before changing page in FeedViewModel
-                        onPageChanged(page, state.currentPageOfFeed)
-                        viewModel.onCurrentPageChange(page)
-                        viewModel.setPostDescriptionExpanded(false)
-                    },
-                    recordTime = { currentTime, totalTime ->
-                        viewModel.recordTime(currentTime, totalTime)
-                    },
-                    didVideoEnd = { viewModel.didCurrentVideoEnd() },
-                    onEdgeScrollAttempt = { page, atFirst, direction ->
-                        // For card stack, any edge swipe attempt should trigger load more
+            YRALReelPlayer(
+                modifier = Modifier.weight(1f),
+                reels = reels,
+                maxReelsInPager = state.feedDetails.size,
+                initialPage = state.currentPageOfFeed,
+                onPageLoaded = { page ->
+                    onPageChanged(page, state.currentPageOfFeed)
+                    viewModel.onCurrentPageChange(page)
+                    viewModel.setPostDescriptionExpanded(false)
+                },
+                recordTime = { currentTime, totalTime ->
+                    viewModel.recordTime(currentTime, totalTime)
+                },
+                didVideoEnd = { viewModel.didCurrentVideoEnd() },
+                onEdgeScrollAttempt = { page, atFirst, direction ->
+                    if (!atFirst && direction == ReelScrollDirection.Up) {
                         onEdgeScrollAttempt(page)
-                    },
-                    onSwipeVote = onSwipeVote,
-                    shouldSuppressSwipeFeedback = { pageIndex ->
-                        !isLoggedInState.value && pageIndex != 0 && (pageIndex % SIGN_UP_PAGE) == 0
-                    },
-                ) { pageNo, scrollToNext ->
-                    FeedOverlay(
-                        pageNo = pageNo,
-                        currentOnboardingStep = onboardingStepState.value,
-                        isLoggedIn = isLoggedInState.value,
-                        topOverlay = { topOverlay(pageNo) },
-                        bottomOverlay = { bottomOverlay(pageNo, scrollToNext) },
-                        actionsRight = { actionsRight(pageNo) },
-                        requestLoginFactory = component.requestLoginFactory,
-                    )
-                }
-            } else {
-                YRALReelPlayer(
-                    modifier = Modifier.weight(1f),
-                    reels = reels,
-                    maxReelsInPager = state.feedDetails.size,
-                    initialPage = state.currentPageOfFeed,
-                    onPageLoaded = { page ->
-                        onPageChanged(page, state.currentPageOfFeed)
-                        viewModel.onCurrentPageChange(page)
-                        viewModel.setPostDescriptionExpanded(false)
-                    },
-                    recordTime = { currentTime, totalTime ->
-                        viewModel.recordTime(currentTime, totalTime)
-                    },
-                    didVideoEnd = { viewModel.didCurrentVideoEnd() },
-                    onEdgeScrollAttempt = { page, atFirst, direction ->
-                        if (!atFirst && direction == ReelScrollDirection.Up) {
-                            onEdgeScrollAttempt(page)
-                        }
-                    },
-                ) { pageNo, scrollToNext ->
-                    FeedOverlay(
-                        pageNo = pageNo,
-                        currentOnboardingStep = onboardingStepState.value,
-                        isLoggedIn = isLoggedInState.value,
-                        topOverlay = { topOverlay(pageNo) },
-                        bottomOverlay = { bottomOverlay(pageNo, scrollToNext) },
-                        actionsRight = { actionsRight(pageNo) },
-                        requestLoginFactory = component.requestLoginFactory,
-                    )
-                }
+                    }
+                },
+            ) { pageNo, scrollToNext ->
+                FeedOverlay(
+                    pageNo = pageNo,
+                    currentOnboardingStep = onboardingStepState.value,
+                    isLoggedIn = isLoggedInState.value,
+                    topOverlay = { topOverlay(pageNo) },
+                    bottomOverlay = { bottomOverlay(pageNo, scrollToNext) },
+                    actionsRight = { actionsRight(pageNo) },
+                    requestLoginFactory = component.requestLoginFactory,
+                )
             }
             // Show loader at the bottom when loading more content AND no new items have been added yet
             if (showLoader) {

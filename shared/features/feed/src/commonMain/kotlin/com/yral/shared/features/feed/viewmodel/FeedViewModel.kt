@@ -99,12 +99,7 @@ class FeedViewModel(
         const val FOLLOW_NUDGE_PAGE = 5
     }
 
-    private val _state =
-        MutableStateFlow(
-            FeedState(
-                isCardLayoutEnabled = flagManager.isEnabled(FeedFeatureFlags.CardLayout.Enabled),
-            ),
-        )
+    private val _state = MutableStateFlow(FeedState())
     val state: StateFlow<FeedState> = _state.asStateFlow()
     private var videoData: VideoData = VideoData()
 
@@ -115,9 +110,6 @@ class FeedViewModel(
     private val trackedOnboardingSteps = mutableSetOf<OnboardingStep>()
 
     init {
-        // Set HON experiment super property for analytics
-        feedTelemetry.setHonExperimentStatus(_state.value.isCardLayoutEnabled)
-
         initAvailableFeeds()
         loadCachedFeedDetails()
         viewModelScope.launch {
@@ -1086,7 +1078,6 @@ data class FeedState(
     val isFollowInProgress: Boolean = false,
     val currentOnboardingStep: OnboardingStep? = null,
     val isMandatoryLogin: Boolean = false,
-    val isCardLayoutEnabled: Boolean = true,
     val streakCount: Long? = null,
     val streakExpiresAtEpochMs: Long? = null,
 )

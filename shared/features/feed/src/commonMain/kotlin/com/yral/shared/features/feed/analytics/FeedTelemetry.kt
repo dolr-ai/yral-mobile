@@ -225,8 +225,4 @@ class FeedTelemetry(
     fun onFeedLoaderShown(durationMs: Long) {
         analyticsManager.trackEvent(FeedLoaderShownEventData(durationMs))
     }
-
-    fun setHonExperimentStatus(isEnabled: Boolean) {
-        analyticsManager.setHonExperimentStatus(isEnabled)
-    }
 }
