@@ -706,16 +706,14 @@ fun ChatConversationScreen(
                                             onCameraClick = imageCaptureLauncher,
                                             onGalleryClick = imagePickerLauncher,
                                             // Mic button is gated on AudioRecordingEnabled (kill-switch +
-                                            // GA pacing). Passing null hides the icon entirely per
+                                            // GA pacing) AND not-an-H2H-chat. Voice messages aren't
+                                            // supported on H2H peer chats — the H2H send route doesn't
+                                            // transcribe, so the recipient would see an empty bubble
+                                            // with playable audio and no context. G6 gate landed in
+                                            // this commit; passing null hides the icon entirely per
                                             // ConversationInputArea's ActionsRow logic.
-                                            //
-                                            // Known follow-up (Task #64): once the H2H feature lands on main
-                                            // and this branch rebases, also AND in `!viewState.isHumanChat`
-                                            // here — voice messages are not supported on H2H peer chats
-                                            // because the H2H send route doesn't transcribe; recipient would
-                                            // see an empty bubble with playable audio and no context.
                                             onMicClick =
-                                                if (viewState.isAudioRecordingEnabled) {
+                                                if (viewState.isAudioRecordingEnabled && !viewState.isHumanChat) {
                                                     { audioRecorder.start() }
                                                 } else {
                                                     null
