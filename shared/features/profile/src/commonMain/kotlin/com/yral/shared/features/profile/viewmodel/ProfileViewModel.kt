@@ -155,6 +155,7 @@ class ProfileViewModel(
                 maxBotCountForCta = flagManager.get(ChatFeatureFlags.Chat.MaxBotCountForCta),
                 maxVisibleBotUsernames = flagManager.get(ChatFeatureFlags.Chat.MaxVisibleBotUsernames),
                 isH2hChatEnabled = flagManager.get(ChatFeatureFlags.Chat.H2hChatEnabled),
+                isVideoIdeasEnabled = flagManager.get(ChatFeatureFlags.Chat.VideoIdeasEnabled),
             ),
         )
     val state: StateFlow<ViewState> = _state.asStateFlow()
@@ -1558,6 +1559,11 @@ data class ViewState(
     val videoIdeas: List<com.yral.shared.features.profile.videoideas.domain.models.VideoIdea>? = null,
     val isLoadingVideoIdeas: Boolean = false,
     val videoIdeasError: String? = null,
+    // Phase 22.3 — feature flag gate. The Video Ideas endpoints live on
+    // agent.rishi.yral.com only; production chat-ai doesn't have them.
+    // Hide the tab entirely when off so pre-cutover users never tap into
+    // a 404 path.
+    val isVideoIdeasEnabled: Boolean = false,
 )
 
 enum class ProfileTab {

@@ -916,6 +916,7 @@ private fun MainContent(
                         selectedTab = state.selectedTab,
                         isOwnProfile = state.isOwnProfile,
                         isAiInfluencer = state.isAiInfluencer,
+                        isVideoIdeasEnabled = state.isVideoIdeasEnabled,
                         videoIdeas = state.videoIdeas,
                         isLoadingVideoIdeas = state.isLoadingVideoIdeas,
                         videoIdeasError = state.videoIdeasError,
@@ -1125,6 +1126,7 @@ private fun SuccessContent(
     selectedTab: ProfileTab,
     isOwnProfile: Boolean,
     isAiInfluencer: Boolean,
+    isVideoIdeasEnabled: Boolean,
     videoIdeas: List<com.yral.shared.features.profile.videoideas.domain.models.VideoIdea>?,
     isLoadingVideoIdeas: Boolean,
     videoIdeasError: String?,
@@ -1162,7 +1164,7 @@ private fun SuccessContent(
                 selectedTab = selectedTab,
                 onTabSelected = onTabSelected,
                 hasDrafts = draftVideos.itemCount > 0,
-                showIdeasTab = isAiInfluencer,
+                showIdeasTab = isAiInfluencer && isVideoIdeasEnabled,
             )
         }
 
