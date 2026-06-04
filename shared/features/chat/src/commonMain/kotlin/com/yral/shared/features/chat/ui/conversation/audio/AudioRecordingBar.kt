@@ -27,6 +27,8 @@ import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 
 private const val MS_PER_SECOND = 1000
+private const val SECONDS_PER_MINUTE = 60
+private const val TWO_DIGIT_THRESHOLD = 10
 
 @Composable
 internal fun AudioRecordingBar(
@@ -36,16 +38,17 @@ internal fun AudioRecordingBar(
     onCancel: () -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                color = YralColors.Neutral900,
-                shape = RoundedCornerShape(30.dp),
-            ).border(
-                width = 1.dp,
-                color = YralColors.Neutral800,
-                shape = RoundedCornerShape(30.dp),
-            ).padding(horizontal = 14.dp, vertical = 10.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(
+                    color = YralColors.Neutral900,
+                    shape = RoundedCornerShape(30.dp),
+                ).border(
+                    width = 1.dp,
+                    color = YralColors.Neutral800,
+                    shape = RoundedCornerShape(30.dp),
+                ).padding(horizontal = 14.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -81,39 +84,49 @@ private fun PulseDot() {
     val alpha by transition.animateFloat(
         initialValue = 0.4f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 600),
-            repeatMode = RepeatMode.Reverse,
-        ),
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(durationMillis = 600),
+                repeatMode = RepeatMode.Reverse,
+            ),
         label = "rec-pulse-alpha",
     )
     Box(
-        modifier = Modifier
-            .size(10.dp)
-            .alpha(alpha)
-            .background(color = YralColors.Pink300, shape = CircleShape),
+        modifier =
+            Modifier
+                .size(10.dp)
+                .alpha(alpha)
+                .background(color = YralColors.Pink300, shape = CircleShape),
     )
 }
 
 @Composable
-private fun StopButton(onStop: () -> Unit, enabled: Boolean) {
+private fun StopButton(
+    onStop: () -> Unit,
+    enabled: Boolean,
+) {
     Box(
-        modifier = Modifier
-            .size(28.dp)
-            .background(color = YralColors.Pink300, shape = CircleShape)
-            .clickable(enabled = enabled, onClick = onStop),
+        modifier =
+            Modifier
+                .size(28.dp)
+                .background(color = YralColors.Pink300, shape = CircleShape)
+                .clickable(enabled = enabled, onClick = onStop),
         contentAlignment = Alignment.Center,
     ) {
         Box(
-            modifier = Modifier
-                .size(10.dp)
-                .background(color = YralColors.Neutral0, shape = RoundedCornerShape(2.dp)),
+            modifier =
+                Modifier
+                    .size(10.dp)
+                    .background(color = YralColors.Neutral0, shape = RoundedCornerShape(2.dp)),
         )
     }
 }
 
 @Composable
-private fun CancelButton(onCancel: () -> Unit, enabled: Boolean) {
+private fun CancelButton(
+    onCancel: () -> Unit,
+    enabled: Boolean,
+) {
     Text(
         text = "Cancel",
         style = LocalAppTopography.current.regRegular,
@@ -124,8 +137,8 @@ private fun CancelButton(onCancel: () -> Unit, enabled: Boolean) {
 
 internal fun formatElapsed(ms: Long): String {
     val totalSec = (ms / MS_PER_SECOND).coerceAtLeast(0)
-    val min = totalSec / 60
-    val sec = totalSec % 60
-    val secStr = if (sec < 10) "0$sec" else sec.toString()
+    val min = totalSec / SECONDS_PER_MINUTE
+    val sec = totalSec % SECONDS_PER_MINUTE
+    val secStr = if (sec < TWO_DIGIT_THRESHOLD) "0$sec" else sec.toString()
     return "$min:$secStr"
 }

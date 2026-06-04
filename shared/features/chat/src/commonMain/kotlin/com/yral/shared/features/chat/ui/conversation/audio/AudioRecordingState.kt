@@ -14,7 +14,9 @@ package com.yral.shared.features.chat.ui.conversation.audio
  */
 sealed class AudioRecordingState {
     object Idle : AudioRecordingState()
-    data class Recording(val elapsedMs: Long) : AudioRecordingState()
+    data class Recording(
+        val elapsedMs: Long,
+    ) : AudioRecordingState()
     object Finalizing : AudioRecordingState()
 }
 
@@ -31,7 +33,15 @@ sealed class AudioRecordingState {
  */
 sealed class AudioPlayerState {
     object Idle : AudioPlayerState()
-    data class Ready(val durationMs: Long) : AudioPlayerState()
-    data class Playing(val positionMs: Long, val durationMs: Long) : AudioPlayerState()
-    data class Paused(val positionMs: Long, val durationMs: Long) : AudioPlayerState()
+    data class Ready(
+        val durationMs: Long,
+    ) : AudioPlayerState()
+    data class Playing(
+        val positionMs: Long,
+        val durationMs: Long,
+    ) : AudioPlayerState()
+    data class Paused(
+        val positionMs: Long,
+        val durationMs: Long,
+    ) : AudioPlayerState()
 }

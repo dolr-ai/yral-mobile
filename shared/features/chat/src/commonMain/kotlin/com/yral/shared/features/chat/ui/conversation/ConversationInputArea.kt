@@ -178,9 +178,10 @@ private fun MicButton(onClick: () -> Unit) {
     Image(
         painter = painterResource(DesignRes.drawable.ic_microphone),
         contentDescription = stringResource(Res.string.voice_message),
-        modifier = Modifier
-            .size(24.dp)
-            .clickable(onClick = onClick),
+        modifier =
+            Modifier
+                .size(24.dp)
+                .clickable(onClick = onClick),
         contentScale = ContentScale.None,
     )
 }

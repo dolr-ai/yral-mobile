@@ -1,3 +1,5 @@
+@file:Suppress("MatchingDeclarationName", "ktlint:standard:filename")
+
 package com.yral.shared.features.chat.ui.conversation.audio
 
 import androidx.compose.runtime.Composable

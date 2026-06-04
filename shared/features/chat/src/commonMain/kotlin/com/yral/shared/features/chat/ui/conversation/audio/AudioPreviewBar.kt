@@ -35,37 +35,40 @@ internal fun AudioPreviewBar(
     hasWaitingAssistant: Boolean,
 ) {
     val player = rememberChatAudioPlayer()
-    val state by player.state.collectAsState()
+    val playerState by player.state.collectAsState()
 
     LaunchedEffect(attachment.filePath) {
         player.load(attachment.filePath)
     }
 
-    val isPlaying = state is AudioPlayerState.Playing
-    val positionMs: Long = when (val s = state) {
-        is AudioPlayerState.Playing -> s.positionMs
-        is AudioPlayerState.Paused -> s.positionMs
-        else -> 0
-    }
-    val durationMs: Long = when (val s = state) {
-        is AudioPlayerState.Ready -> s.durationMs
-        is AudioPlayerState.Playing -> s.durationMs
-        is AudioPlayerState.Paused -> s.durationMs
-        else -> durationSeconds.toLong() * MS_PER_SECOND
-    }
+    val isPlaying = playerState is AudioPlayerState.Playing
+    val positionMs: Long =
+        when (val state = playerState) {
+            is AudioPlayerState.Playing -> state.positionMs
+            is AudioPlayerState.Paused -> state.positionMs
+            else -> 0
+        }
+    val durationMs: Long =
+        when (val state = playerState) {
+            is AudioPlayerState.Ready -> state.durationMs
+            is AudioPlayerState.Playing -> state.durationMs
+            is AudioPlayerState.Paused -> state.durationMs
+            else -> durationSeconds.toLong() * MS_PER_SECOND
+        }
     val remainingMs = (durationMs - positionMs).coerceAtLeast(0)
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                color = YralColors.Neutral900,
-                shape = RoundedCornerShape(30.dp),
-            ).border(
-                width = 1.dp,
-                color = YralColors.Neutral800,
-                shape = RoundedCornerShape(30.dp),
-            ).padding(horizontal = 10.dp, vertical = 8.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(
+                    color = YralColors.Neutral900,
+                    shape = RoundedCornerShape(30.dp),
+                ).border(
+                    width = 1.dp,
+                    color = YralColors.Neutral800,
+                    shape = RoundedCornerShape(30.dp),
+                ).padding(horizontal = 10.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -73,7 +76,12 @@ internal fun AudioPreviewBar(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            DeleteButton(onDelete)
+            DeleteButton(
+                onClick = {
+                    player.stop()
+                    onDelete()
+                },
+            )
             PlayPauseButton(isPlaying = isPlaying, onClick = player::playPause)
             Text(
                 text = formatElapsed(if (isPlaying) positionMs else remainingMs),
@@ -92,12 +100,16 @@ internal fun AudioPreviewBar(
 }
 
 @Composable
-private fun PlayPauseButton(isPlaying: Boolean, onClick: () -> Unit) {
+private fun PlayPauseButton(
+    isPlaying: Boolean,
+    onClick: () -> Unit,
+) {
     Box(
-        modifier = Modifier
-            .size(32.dp)
-            .background(color = YralColors.Pink300, shape = CircleShape)
-            .clickable(onClick = onClick),
+        modifier =
+            Modifier
+                .size(32.dp)
+                .background(color = YralColors.Pink300, shape = CircleShape)
+                .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         if (isPlaying) {
@@ -112,9 +124,10 @@ private fun PlayPauseButton(isPlaying: Boolean, onClick: () -> Unit) {
         } else {
             // Play icon (triangle hint via offset box)
             Box(
-                modifier = Modifier
-                    .size(10.dp)
-                    .background(color = YralColors.Neutral0, shape = RoundedCornerShape(2.dp)),
+                modifier =
+                    Modifier
+                        .size(10.dp)
+                        .background(color = YralColors.Neutral0, shape = RoundedCornerShape(2.dp)),
             )
         }
     }
@@ -123,19 +136,21 @@ private fun PlayPauseButton(isPlaying: Boolean, onClick: () -> Unit) {
 @Composable
 private fun PlayPauseBar() {
     Box(
-        modifier = Modifier
-            .size(width = 3.dp, height = 12.dp)
-            .background(color = YralColors.Neutral0),
+        modifier =
+            Modifier
+                .size(width = 3.dp, height = 12.dp)
+                .background(color = YralColors.Neutral0),
     )
 }
 
 @Composable
 private fun DeleteButton(onClick: () -> Unit) {
     Box(
-        modifier = Modifier
-            .size(32.dp)
-            .background(color = Color.Transparent, shape = CircleShape)
-            .clickable(onClick = onClick),
+        modifier =
+            Modifier
+                .size(32.dp)
+                .background(color = Color.Transparent, shape = CircleShape)
+                .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -147,13 +162,17 @@ private fun DeleteButton(onClick: () -> Unit) {
 }
 
 @Composable
-private fun SendChipButton(enabled: Boolean, onClick: () -> Unit) {
+private fun SendChipButton(
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
     val bg = if (enabled) YralColors.Pink300 else YralColors.Neutral700
     Box(
-        modifier = Modifier
-            .background(color = bg, shape = RoundedCornerShape(20.dp))
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier =
+            Modifier
+                .background(color = bg, shape = RoundedCornerShape(20.dp))
+                .clickable(enabled = enabled, onClick = onClick)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(

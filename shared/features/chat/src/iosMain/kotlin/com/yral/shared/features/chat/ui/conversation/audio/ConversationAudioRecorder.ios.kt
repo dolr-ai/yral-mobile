@@ -6,7 +6,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import co.touchlab.kermit.Logger
 import com.yral.shared.features.chat.attachments.FilePathChatAttachment
+import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.ObjCObjectVar
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.ptr
+import kotlinx.cinterop.value
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -15,7 +21,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import platform.AVFAudio.AVAudioApplication
 import platform.AVFAudio.AVAudioRecorder
 import platform.AVFAudio.AVAudioSession
 import platform.AVFAudio.AVAudioSessionCategoryPlayAndRecord
@@ -24,15 +29,14 @@ import platform.AVFAudio.AVEncoderAudioQualityKey
 import platform.AVFAudio.AVFormatIDKey
 import platform.AVFAudio.AVNumberOfChannelsKey
 import platform.AVFAudio.AVSampleRateKey
+import platform.AVFAudio.setActive
 import platform.CoreAudioTypes.kAudioFormatMPEG4AAC
 import platform.Foundation.NSError
+import platform.Foundation.NSFileManager
 import platform.Foundation.NSNumber
 import platform.Foundation.NSTemporaryDirectory
 import platform.Foundation.NSURL
 import platform.Foundation.NSUUID
-import platform.Foundation.fileURLWithPath
-import platform.Foundation.NSFileManager
-import platform.darwin.NSObject
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -41,7 +45,7 @@ private const val AUDIO_SAMPLE_RATE_HZ = 44_100
 private const val AUDIO_CHANNELS = 1
 private const val RECORDING_TICK_MS = 100L
 private const val MS_PER_SECOND = 1000
-private const val AVAudioQualityHigh = 96   // platform.AVFAudio constant (matches Foundation)
+private const val AV_AUDIO_QUALITY_HIGH = 96
 
 @OptIn(ExperimentalForeignApi::class, ExperimentalTime::class, ExperimentalNativeApi::class)
 @Composable
@@ -50,9 +54,10 @@ actual fun rememberChatAudioRecorder(
     onPermissionDenied: () -> Unit,
 ): AudioRecorderController {
     val scope = rememberCoroutineScope()
-    val controller = remember(scope, onComplete, onPermissionDenied) {
-        IosAudioRecorderController(scope, onComplete, onPermissionDenied)
-    }
+    val controller =
+        remember(scope, onComplete, onPermissionDenied) {
+            IosAudioRecorderController(scope, onComplete, onPermissionDenied)
+        }
     DisposableEffect(controller) {
         onDispose { controller.releaseInternal() }
     }
@@ -76,10 +81,7 @@ private class IosAudioRecorderController(
 
     override fun start() {
         if (_state.value != AudioRecordingState.Idle) return
-        // AVAudioApplication.requestRecordPermissionWithCompletionHandler() is the
-        // modern API (iOS 17+). Fall back via try/catch is unnecessary since
-        // the project minSdk targets a version that has it.
-        AVAudioApplication.requestRecordPermissionWithCompletionHandler { granted ->
+        AVAudioSession.sharedInstance().requestRecordPermission { granted ->
             if (granted) {
                 actuallyStart()
             } else {
@@ -90,49 +92,49 @@ private class IosAudioRecorderController(
 
     private fun actuallyStart() {
         runCatching {
-            val session = AVAudioSession.sharedInstance()
-            session.setCategory(AVAudioSessionCategoryPlayAndRecord, null)
-            session.setActive(true, null)
+            configureRecordingSession()
 
             val fileName = "chat_audio_${NSUUID().UUIDString()}.m4a"
             val path = NSTemporaryDirectory() + fileName
             val url = NSURL.fileURLWithPath(path)
 
-            val settings: Map<Any?, *> = mapOf<Any?, Any?>(
-                AVFormatIDKey to NSNumber(unsignedInt = kAudioFormatMPEG4AAC),
-                AVSampleRateKey to NSNumber(int = AUDIO_SAMPLE_RATE_HZ),
-                AVNumberOfChannelsKey to NSNumber(int = AUDIO_CHANNELS),
-                AVEncoderAudioQualityKey to NSNumber(int = AVAudioQualityHigh),
-            )
+            val settings: Map<Any?, *> =
+                mapOf<Any?, Any?>(
+                    AVFormatIDKey to NSNumber(unsignedInt = kAudioFormatMPEG4AAC),
+                    AVSampleRateKey to NSNumber(int = AUDIO_SAMPLE_RATE_HZ),
+                    AVNumberOfChannelsKey to NSNumber(int = AUDIO_CHANNELS),
+                    AVEncoderAudioQualityKey to NSNumber(int = AV_AUDIO_QUALITY_HIGH),
+                )
 
-            val errPtr: NSObject? = null
-            @Suppress("UNCHECKED_CAST")
-            val r = AVAudioRecorder(url, settings as Map<Any?, *>, null)
-            if (!r.prepareToRecord()) {
+            val audioRecorder = AVAudioRecorder(url, settings, null)
+            if (!audioRecorder.prepareToRecord()) {
                 Logger.e { "AVAudioRecorder prepareToRecord failed" }
+                cleanup()
                 return
             }
-            if (!r.record()) {
+            if (!audioRecorder.record()) {
                 Logger.e { "AVAudioRecorder record() returned false" }
+                cleanup()
                 return
             }
-            recorder = r
+            recorder = audioRecorder
             outputUrl = url
             outputPath = path
             startTimeMs = Clock.System.now().toEpochMilliseconds()
             _state.value = AudioRecordingState.Recording(0)
-            tickerJob = scope.launch {
-                while (isActive) {
-                    delay(RECORDING_TICK_MS)
-                    val elapsed = Clock.System.now().toEpochMilliseconds() - startTimeMs
-                    val current = _state.value
-                    if (current is AudioRecordingState.Recording) {
-                        _state.value = AudioRecordingState.Recording(elapsed)
-                    } else {
-                        return@launch
+            tickerJob =
+                scope.launch {
+                    while (isActive) {
+                        delay(RECORDING_TICK_MS)
+                        val elapsed = Clock.System.now().toEpochMilliseconds() - startTimeMs
+                        val current = _state.value
+                        if (current is AudioRecordingState.Recording) {
+                            _state.value = AudioRecordingState.Recording(elapsed)
+                        } else {
+                            return@launch
+                        }
                     }
                 }
-            }
         }.onFailure { t ->
             Logger.e(t) { "AVAudioRecorder start failed" }
             cleanup()
@@ -141,27 +143,26 @@ private class IosAudioRecorderController(
     }
 
     override fun stop() {
-        val r = recorder ?: return
+        val audioRecorder = recorder ?: return
         val path = outputPath ?: return
         _state.value = AudioRecordingState.Finalizing
         tickerJob?.cancel()
         tickerJob = null
         val durationMs = Clock.System.now().toEpochMilliseconds() - startTimeMs
-        r.stop()
+        audioRecorder.stop()
         recorder = null
 
         // Restore audio session to playback so other apps' audio resumes
-        runCatching {
-            AVAudioSession.sharedInstance().setCategory(AVAudioSessionCategoryPlayback, null)
-        }
+        configurePlaybackSession()
 
         val fileExists = NSFileManager.defaultManager.fileExistsAtPath(path)
         if (fileExists) {
-            val attachment = FilePathChatAttachment(
-                filePath = path,
-                fileName = path.substringAfterLast("/"),
-                contentType = "audio/mp4",
-            )
+            val attachment =
+                FilePathChatAttachment(
+                    filePath = path,
+                    fileName = path.substringAfterLast("/"),
+                    contentType = "audio/mp4",
+                )
             val durationSeconds = (durationMs / MS_PER_SECOND).toInt().coerceAtLeast(1)
             onComplete(attachment, durationSeconds)
         } else {
@@ -209,5 +210,44 @@ private class IosAudioRecorderController(
         }
         outputUrl = null
         outputPath = null
+    }
+
+    @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
+    private fun configureRecordingSession() {
+        memScoped {
+            val session = AVAudioSession.sharedInstance()
+            val errorPtr = alloc<ObjCObjectVar<NSError?>>()
+
+            errorPtr.value = null
+            if (!session.setCategory(AVAudioSessionCategoryPlayAndRecord, error = errorPtr.ptr)) {
+                logAudioSessionFailure("setCategory(playAndRecord)", errorPtr.value)
+            }
+
+            errorPtr.value = null
+            if (!session.setActive(true, error = errorPtr.ptr)) {
+                logAudioSessionFailure("setActive", errorPtr.value)
+            }
+        }
+    }
+
+    @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
+    private fun configurePlaybackSession() {
+        memScoped {
+            val session = AVAudioSession.sharedInstance()
+            val errorPtr = alloc<ObjCObjectVar<NSError?>>()
+
+            errorPtr.value = null
+            if (!session.setCategory(AVAudioSessionCategoryPlayback, error = errorPtr.ptr)) {
+                logAudioSessionFailure("setCategory(playback)", errorPtr.value)
+            }
+        }
+    }
+
+    private fun logAudioSessionFailure(
+        stage: String,
+        error: NSError?,
+    ) {
+        val reason = error?.localizedDescription ?: "unknown error"
+        Logger.w { "AVAudioSession $stage failed: $reason" }
     }
 }

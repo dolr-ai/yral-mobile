@@ -96,43 +96,45 @@ private class AndroidAudioRecorderController(
 
     fun actuallyStart() {
         runCatching {
-            val file = File.createTempFile(
-                "chat_audio_${Clock.System.now().toEpochMilliseconds()}",
-                ".m4a",
-                context.cacheDir,
-            )
+            val file =
+                File.createTempFile(
+                    "chat_audio_${Clock.System.now().toEpochMilliseconds()}",
+                    ".m4a",
+                    context.cacheDir,
+                )
             outputFile = file
 
             @Suppress("DEPRECATION")
-            val r =
+            val mediaRecorder =
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     MediaRecorder(context)
                 } else {
                     MediaRecorder()
                 }
-            r.setAudioSource(MediaRecorder.AudioSource.MIC)
-            r.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            r.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-            r.setAudioSamplingRate(AUDIO_SAMPLE_RATE_HZ)
-            r.setAudioEncodingBitRate(AUDIO_BIT_RATE)
-            r.setOutputFile(file.absolutePath)
-            r.prepare()
-            r.start()
-            recorder = r
+            mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
+            mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            mediaRecorder.setAudioSamplingRate(AUDIO_SAMPLE_RATE_HZ)
+            mediaRecorder.setAudioEncodingBitRate(AUDIO_BIT_RATE)
+            mediaRecorder.setOutputFile(file.absolutePath)
+            mediaRecorder.prepare()
+            mediaRecorder.start()
+            recorder = mediaRecorder
             startTimeMs = Clock.System.now().toEpochMilliseconds()
             _state.value = AudioRecordingState.Recording(0)
-            tickerJob = scope.launch {
-                while (isActive) {
-                    delay(RECORDING_TICK_MS)
-                    val elapsed = Clock.System.now().toEpochMilliseconds() - startTimeMs
-                    val current = _state.value
-                    if (current is AudioRecordingState.Recording) {
-                        _state.value = AudioRecordingState.Recording(elapsed)
-                    } else {
-                        return@launch
+            tickerJob =
+                scope.launch {
+                    while (isActive) {
+                        delay(RECORDING_TICK_MS)
+                        val elapsed = Clock.System.now().toEpochMilliseconds() - startTimeMs
+                        val current = _state.value
+                        if (current is AudioRecordingState.Recording) {
+                            _state.value = AudioRecordingState.Recording(elapsed)
+                        } else {
+                            return@launch
+                        }
                     }
                 }
-            }
         }.onFailure { t ->
             Logger.e(t) { "Audio recorder start failed" }
             cleanup()
@@ -141,7 +143,7 @@ private class AndroidAudioRecorderController(
     }
 
     override fun stop() {
-        val r = recorder ?: return
+        val mediaRecorder = recorder ?: return
         val file = outputFile ?: return
         _state.value = AudioRecordingState.Finalizing
         tickerJob?.cancel()
@@ -149,8 +151,8 @@ private class AndroidAudioRecorderController(
         val durationMs = Clock.System.now().toEpochMilliseconds() - startTimeMs
 
         runCatching {
-            r.stop()
-            r.release()
+            mediaRecorder.stop()
+            mediaRecorder.release()
         }.onFailure { t -> Logger.w(t) { "Audio recorder stop failed (file may be empty)" } }
         recorder = null
 
@@ -178,11 +180,11 @@ private class AndroidAudioRecorderController(
     override fun cancel() {
         tickerJob?.cancel()
         tickerJob = null
-        recorder?.let { r ->
+        recorder?.let { mediaRecorder ->
             runCatching {
-                r.stop()
+                mediaRecorder.stop()
             }.onFailure { /* swallow — stop before writable frame is a known MediaRecorder gotcha */ }
-            runCatching { r.release() }
+            runCatching { mediaRecorder.release() }
         }
         recorder = null
         outputFile?.takeIf { it.exists() }?.delete()

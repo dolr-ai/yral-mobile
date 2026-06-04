@@ -677,6 +677,7 @@ fun ChatConversationScreen(
                                             hasWaitingAssistant = hasWaitingAssistant,
                                         )
                                     }
+
                                     audioState is AudioRecordingState.Recording ||
                                         audioState is AudioRecordingState.Finalizing -> {
                                         val elapsedMs =
@@ -688,6 +689,7 @@ fun ChatConversationScreen(
                                             onCancel = { audioRecorder.cancel() },
                                         )
                                     }
+
                                     else -> {
                                         ChatInputArea(
                                             input = input,

@@ -43,18 +43,18 @@ private class AndroidAudioPlayerController(
         if (loadedFilePath == filePath && player != null) return
         runCatching {
             releaseInternal()
-            val p = MediaPlayer()
-            p.setDataSource(filePath)
-            p.prepare()
-            p.setOnCompletionListener {
+            val mediaPlayer = MediaPlayer()
+            mediaPlayer.setDataSource(filePath)
+            mediaPlayer.prepare()
+            mediaPlayer.setOnCompletionListener {
                 tickerJob?.cancel()
                 tickerJob = null
-                val dur = p.duration.toLong()
-                _state.value = AudioPlayerState.Ready(dur)
+                val durationMs = mediaPlayer.duration.toLong()
+                _state.value = AudioPlayerState.Ready(durationMs)
             }
-            player = p
+            player = mediaPlayer
             loadedFilePath = filePath
-            _state.value = AudioPlayerState.Ready(p.duration.toLong())
+            _state.value = AudioPlayerState.Ready(mediaPlayer.duration.toLong())
         }.onFailure { t ->
             Logger.e(t) { "Audio player load failed for $filePath" }
             _state.value = AudioPlayerState.Idle
@@ -62,25 +62,29 @@ private class AndroidAudioPlayerController(
     }
 
     override fun playPause() {
-        val p = player ?: return
-        when (val s = _state.value) {
+        val mediaPlayer = player ?: return
+        when (val playerState = _state.value) {
             is AudioPlayerState.Ready, is AudioPlayerState.Paused -> {
-                p.start()
-                _state.value = AudioPlayerState.Playing(
-                    positionMs = p.currentPosition.toLong(),
-                    durationMs = p.duration.toLong(),
-                )
+                mediaPlayer.start()
+                _state.value =
+                    AudioPlayerState.Playing(
+                        positionMs = mediaPlayer.currentPosition.toLong(),
+                        durationMs = mediaPlayer.duration.toLong(),
+                    )
                 startTicker()
             }
+
             is AudioPlayerState.Playing -> {
-                p.pause()
+                mediaPlayer.pause()
                 tickerJob?.cancel()
                 tickerJob = null
-                _state.value = AudioPlayerState.Paused(
-                    positionMs = p.currentPosition.toLong(),
-                    durationMs = s.durationMs,
-                )
+                _state.value =
+                    AudioPlayerState.Paused(
+                        positionMs = mediaPlayer.currentPosition.toLong(),
+                        durationMs = playerState.durationMs,
+                    )
             }
+
             AudioPlayerState.Idle -> { /* not loaded yet */ }
         }
     }
@@ -92,17 +96,19 @@ private class AndroidAudioPlayerController(
 
     private fun startTicker() {
         tickerJob?.cancel()
-        tickerJob = scope.launch {
-            while (isActive) {
-                delay(PLAYER_TICK_MS)
-                val p = player ?: return@launch
-                if (!p.isPlaying) return@launch
-                _state.value = AudioPlayerState.Playing(
-                    positionMs = p.currentPosition.toLong(),
-                    durationMs = p.duration.toLong(),
-                )
+        tickerJob =
+            scope.launch {
+                while (isActive) {
+                    delay(PLAYER_TICK_MS)
+                    val mediaPlayer = player ?: return@launch
+                    if (!mediaPlayer.isPlaying) return@launch
+                    _state.value =
+                        AudioPlayerState.Playing(
+                            positionMs = mediaPlayer.currentPosition.toLong(),
+                            durationMs = mediaPlayer.duration.toLong(),
+                        )
+                }
             }
-        }
     }
 
     private fun releaseInternal() {

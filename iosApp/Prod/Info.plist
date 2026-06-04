@@ -60,7 +60,7 @@
 	<key>NSCameraUsageDescription</key>
 	<string>Yral requires camera access to allow you to record and upload videos. Your camera will only be used when you choose to create a new video.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Yral requires microphone access to capture audio while recording videos. Your microphone will only be used during video recording.</string>
+	<string>Yral requires microphone access to capture audio while recording videos and chat voice messages. Your microphone will only be used when you choose to record.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Yral needs permission to save downloaded videos and photos to your photo library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
