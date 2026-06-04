@@ -5,6 +5,7 @@ import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.auth.ui.RequestLoginFactory
+import com.yral.shared.features.coach.nav.OpenCoachParams
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.flow.Flow
@@ -25,6 +26,7 @@ internal class DefaultProfileMainComponent(
     private val openProfile: (CanisterData) -> Unit,
     private val openCreateInfluencer: (source: BotCreationSource) -> Unit,
     private val openConversation: (OpenConversationParams) -> Unit,
+    private val openCoach: (OpenCoachParams) -> Unit,
     private val onBackClicked: () -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
 ) : ProfileMainComponent,
@@ -56,6 +58,10 @@ internal class DefaultProfileMainComponent(
 
     override fun openConversation(params: OpenConversationParams) {
         openConversation.invoke(params)
+    }
+
+    override fun openCoach(params: OpenCoachParams) {
+        openCoach.invoke(params)
     }
 
     override fun onBackClicked() {

@@ -586,6 +586,17 @@ fun ProfileMainScreen(
                             )
                         component.openProfile(canisterData)
                     },
+                    showCoachCta = state.isOwnProfile && state.isAiInfluencer,
+                    onCoachClick = {
+                        val info = state.accountInfo ?: return@MainContent
+                        component.openCoach(
+                            com.yral.shared.features.coach.nav.OpenCoachParams(
+                                botId = info.userPrincipal,
+                                botName = info.displayName,
+                                avatarUrl = info.profilePic,
+                            ),
+                        )
+                    },
                 )
             }
         }
@@ -744,6 +755,8 @@ private fun MainContent(
     showCreateBotCta: Boolean,
     onCreateInfluencerClick: () -> Unit,
     onUsernameClick: (String) -> Unit,
+    showCoachCta: Boolean,
+    onCoachClick: () -> Unit,
 ) {
     val subscribeButtonUiState = state.profileSubscribeButtonUiState()
     Column(modifier = modifier.fillMaxSize()) {
@@ -801,6 +814,17 @@ private fun MainContent(
                 maxVisibleBotUsernames = state.maxVisibleBotUsernames,
                 onUsernameClick = onUsernameClick,
             )
+            if (showCoachCta) {
+                androidx.compose.material3.Button(
+                    onClick = onCoachClick,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                ) {
+                    Text(text = "Make your AI Influencer better")
+                }
+            }
         }
         when (profileVideos.loadState.refresh) {
             is LoadState.Loading -> {
