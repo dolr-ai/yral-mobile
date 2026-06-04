@@ -74,6 +74,10 @@ val profileModule =
                 createHumanConversationUseCase = get(),
                 publishDraftVideoUseCase = get(),
                 getVideoIdeasUseCase = get(),
+                markVideoIdeaUsedUseCase = get(),
+                getVideoProvidersUseCase = get(),
+                generateVideoUseCase = get(),
+                videoDraftPollingManager = get(),
             )
         }
         viewModelOf(::EditProfileViewModel)

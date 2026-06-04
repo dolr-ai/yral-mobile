@@ -798,6 +798,22 @@ private fun MainContent(
 ) {
     val subscribeButtonUiState = state.profileSubscribeButtonUiState()
     val canManageAiInfluencer = state.isOwnProfile && state.isLoggedIn && state.isAiInfluencer
+    // Phase 22.3d — when a Video Idea Create fires the "View in Drafts"
+    // toast CTA (or the Drafts-tab request comes from any other place),
+    // switch to the Drafts tab if the request targets the profile we're
+    // currently rendering. Scoping by accountInfo.userPrincipal avoids
+    // stacked-profile screens fighting over the same flow.
+    val draftsTabRequest by VideoGenerationTracker.selectDraftsTab.collectAsState()
+    LaunchedEffect(draftsTabRequest, state.accountInfo?.userPrincipal) {
+        val request = draftsTabRequest ?: return@LaunchedEffect
+        val currentPrincipal = state.accountInfo?.userPrincipal
+        val matchesThisProfile =
+            request.targetPrincipal == null || request.targetPrincipal == currentPrincipal
+        if (matchesThisProfile && state.isOwnProfile) {
+            viewModel.selectTab(ProfileTab.Drafts)
+            VideoGenerationTracker.consumeDraftsTabRequest()
+        }
+    }
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader(
             isOwnProfile = state.isOwnProfile,
@@ -904,6 +920,7 @@ private fun MainContent(
                         isLoadingVideoIdeas = state.isLoadingVideoIdeas,
                         videoIdeasError = state.videoIdeasError,
                         onRetryVideoIdeas = { viewModel.retryLoadVideoIdeas() },
+                        onCreateIdeaClick = { viewModel.createVideoFromIdea(it) },
                         deletingVideoId = deletingVideoId,
                         uploadVideo = uploadVideo,
                         openVideoReel = { viewModel.openVideoReel(it) },
@@ -1112,6 +1129,7 @@ private fun SuccessContent(
     isLoadingVideoIdeas: Boolean,
     videoIdeasError: String?,
     onRetryVideoIdeas: () -> Unit,
+    onCreateIdeaClick: (com.yral.shared.features.profile.videoideas.domain.models.VideoIdea) -> Unit,
     deletingVideoId: String,
     uploadVideo: () -> Unit,
     openVideoReel: (Int) -> Unit,
@@ -1196,7 +1214,7 @@ private fun SuccessContent(
                     errorMessage = videoIdeasError,
                     isGenerationInFlight = generatingState.isGenerating,
                     onRetry = onRetryVideoIdeas,
-                    onCreateClick = { /* wired in 22.3d */ },
+                    onCreateClick = onCreateIdeaClick,
                 )
             } else if (selectedTab == ProfileTab.Drafts) {
                 if (showDraftsLoadingState) {

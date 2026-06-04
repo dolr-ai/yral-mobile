@@ -129,12 +129,21 @@ class ProfileViewModel(
     private val createHumanConversationUseCase: CreateHumanConversationUseCase,
     private val publishDraftVideoUseCase: PublishDraftVideoUseCase,
     private val getVideoIdeasUseCase: com.yral.shared.features.profile.videoideas.domain.usecases.GetVideoIdeasUseCase,
+    private val markVideoIdeaUsedUseCase: com.yral.shared.features.profile.videoideas.domain.usecases.MarkVideoIdeaUsedUseCase,
+    private val getVideoProvidersUseCase: com.yral.shared.features.uploadvideo.domain.GetProvidersUseCase,
+    private val generateVideoUseCase: com.yral.shared.features.uploadvideo.domain.GenerateVideoUseCase,
+    private val videoDraftPollingManager: com.yral.shared.features.uploadvideo.presentation.VideoDraftPollingManager,
 ) : ViewModel() {
     companion object {
         private const val POSTS_PER_PAGE = 20
         private const val POSTS_PREFETCH_DISTANCE = 5
         private val VIEWS_REFRESH_THRESHOLD = 15.seconds
         private val ANALYTICS_VIDEO_STARTED_RANGE = 0..1000
+        // Phase 22.3d — `ServerDraft` tells the video-gen API to write the
+        // result into the user's Drafts grid instead of attaching it as a
+        // post draft to a specific upload session. Matches the value
+        // AiVideoGenViewModel uses on the standard + flow.
+        private const val SERVER_DRAFT_UPLOAD_HANDLING = "ServerDraft"
     }
 
     private val _state =
@@ -1304,6 +1313,152 @@ class ProfileViewModel(
         _state.update { it.copy(videoIdeas = null, videoIdeasError = null) }
         loadVideoIdeasIfNeeded()
     }
+
+    /**
+     * Phase 22.3d — fire the existing AI video generation pipeline
+     * headlessly from a Video Idea row. Uses the first available
+     * provider (same default as AiVideoGenViewModel) so the creator
+     * doesn't see a prompt screen — the idea text IS the prompt.
+     *
+     * Flow:
+     *   1. Refuse if a generation is already in flight (one-at-a-time
+     *      global lock via VideoGenerationTracker)
+     *   2. Lazy-load providers on first invocation, cache for the session
+     *   3. Optimistically flip the row to USED so the creator sees the
+     *      ✓ chip immediately
+     *   4. VideoGenerationTracker.startGenerating() → existing Drafts
+     *      progress tile + global lock kick in
+     *   5. Fire GenerateVideoUseCase against the existing video-gen API
+     *   6. On success: videoDraftPollingManager.onGenerationSubmitted →
+     *      backend POST .../used to record the Create-tap metric →
+     *      success toast with tappable "View in Drafts" (Option C)
+     *   7. On failure: roll back tracker + idea state, surface a toast,
+     *      Create buttons re-enable for retry
+     */
+    fun createVideoFromIdea(idea: com.yral.shared.features.profile.videoideas.domain.models.VideoIdea) {
+        if (VideoGenerationTracker.state.value.isGenerating) {
+            ToastManager.showToast(
+                type = ToastType.Small(message = "Already creating one video. Wait for it to land in Drafts."),
+                status = ToastStatus.Warning,
+            )
+            return
+        }
+        val userId = sessionManager.userPrincipal
+        if (userId.isNullOrBlank()) {
+            ToastManager.showToast(
+                type = ToastType.Small(message = "Couldn't determine your account."),
+                status = ToastStatus.Error,
+            )
+            return
+        }
+        viewModelScope.launch {
+            val provider = resolveDefaultProvider() ?: run {
+                ToastManager.showToast(
+                    type = ToastType.Small(message = "Couldn't load video providers."),
+                    status = ToastStatus.Error,
+                )
+                return@launch
+            }
+            VideoGenerationTracker.startGenerating()
+            // Optimistic flip — creator sees the ✓ chip + global lock kicks
+            // in for every other idea row before the network round-trip
+            // completes.
+            _state.update { state ->
+                val updated =
+                    state.videoIdeas?.map {
+                        if (it.id == idea.id) {
+                            it.copy(
+                                status = com.yral.shared.features.profile.videoideas.domain.models.VideoIdeaStatus.USED,
+                            )
+                        } else {
+                            it
+                        }
+                    }
+                state.copy(videoIdeas = updated)
+            }
+            val params =
+                com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams(
+                    providerId = provider.id,
+                    prompt = idea.ideaText,
+                    aspectRatio = provider.defaultAspectRatio,
+                    durationSeconds = provider.defaultDuration,
+                    generateAudio = if (provider.supportsAudio == true) true else null,
+                    tokenType = com.yral.shared.features.uploadvideo.data.remote.models.TokenType.FREE,
+                    userId = userId,
+                    uploadHandling = SERVER_DRAFT_UPLOAD_HANDLING,
+                )
+            generateVideoUseCase(
+                com.yral.shared.features.uploadvideo.domain.GenerateVideoUseCase.Param(params = params),
+            ).onSuccess {
+                Logger.i(ProfileViewModel::class.simpleName!!) {
+                    "createVideoFromIdea: generation submitted ideaId=${idea.id} userId=$userId"
+                }
+                videoDraftPollingManager.onGenerationSubmitted(userId)
+                // Best-effort backend metric — failure here doesn't roll back
+                // the UI; the creator already started the gen.
+                viewModelScope.launch {
+                    markVideoIdeaUsedUseCase(
+                        com.yral.shared.features.profile.videoideas.domain.usecases.MarkVideoIdeaUsedUseCase
+                            .Params(influencerId = idea.influencerId, ideaId = idea.id),
+                    ).onFailure { err ->
+                        Logger.w(ProfileViewModel::class.simpleName!!, err) {
+                            "markVideoIdeaUsed backend call failed ideaId=${idea.id}"
+                        }
+                    }
+                }
+                ToastManager.showSuccess(
+                    type = ToastType.Small(message = "Creating video — check Drafts"),
+                    cta =
+                        com.yral.shared.libs.designsystem.component.toast.ToastCTA(
+                            text = "View in Drafts",
+                        ) { VideoGenerationTracker.requestDraftsTab(userId) },
+                )
+            }.onFailure { error ->
+                Logger.e(ProfileViewModel::class.simpleName!!, error) {
+                    "createVideoFromIdea failed ideaId=${idea.id}"
+                }
+                VideoGenerationTracker.stopGenerating()
+                // Roll the optimistic flip back so the row's Create button
+                // re-enables for retry.
+                _state.update { state ->
+                    val rolledBack =
+                        state.videoIdeas?.map {
+                            if (it.id == idea.id) {
+                                it.copy(
+                                    status = com.yral.shared.features.profile.videoideas.domain.models.VideoIdeaStatus.FRESH,
+                                )
+                            } else {
+                                it
+                            }
+                        }
+                    state.copy(videoIdeas = rolledBack)
+                }
+                ToastManager.showToast(
+                    type = ToastType.Small(message = error.message ?: "Couldn't create video. Try again."),
+                    status = ToastStatus.Error,
+                )
+            }
+        }
+    }
+
+    /**
+     * Lazy-load + cache providers. Mirrors AiVideoGenViewModel's
+     * approach of using the first provider returned as the default.
+     */
+    private suspend fun resolveDefaultProvider(): com.yral.shared.features.uploadvideo.domain.models.Provider? {
+        cachedVideoProviders?.let { return it.firstOrNull() }
+        var resolved: List<com.yral.shared.features.uploadvideo.domain.models.Provider>? = null
+        getVideoProvidersUseCase(Unit)
+            .onSuccess { providers ->
+                cachedVideoProviders = providers
+                resolved = providers
+            }.onFailure { err ->
+                Logger.e(ProfileViewModel::class.simpleName!!, err) { "Failed to fetch video providers" }
+            }
+        return resolved?.firstOrNull()
+    }
+
+    private var cachedVideoProviders: List<com.yral.shared.features.uploadvideo.domain.models.Provider>? = null
 
     fun openDraftVideo(feedDetails: FeedDetails) {
         updateVideoViewIfDifferent(VideoViewState.ViewingDraft(feedDetails))
