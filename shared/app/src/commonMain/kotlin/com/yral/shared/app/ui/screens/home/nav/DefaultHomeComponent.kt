@@ -23,6 +23,7 @@ import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.chat.nav.ChatComponent
 import com.yral.shared.features.chat.nav.home.ChatHomeComponent.InitialTab
+import com.yral.shared.features.coach.nav.OpenCoachParams
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.root.viewmodels.HomeViewModel
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
@@ -54,6 +55,7 @@ internal class DefaultHomeComponent(
     private val openEditProfile: () -> Unit,
     private val openProfile: (userCanisterData: CanisterData) -> Unit,
     private val openConversation: (OpenConversationParams) -> Unit,
+    private val openCoach: (OpenCoachParams) -> Unit,
     private val openCreateInfluencer: (source: BotCreationSource) -> Unit,
     private val openWallet: () -> Unit,
     private val openAccountSheet: () -> Unit,
@@ -199,6 +201,10 @@ internal class DefaultHomeComponent(
         openConversation.invoke(params)
     }
 
+    override fun openCoach(params: OpenCoachParams) {
+        openCoach.invoke(params)
+    }
+
     override fun openWallet() {
         openWallet.invoke()
     }
@@ -270,6 +276,7 @@ internal class DefaultHomeComponent(
             openProfile = openProfile,
             openCreateInfluencer = openCreateInfluencer,
             openConversation = openConversation,
+            openCoach = openCoach,
             openAccountSheet = openAccountSheet,
             switchToMainProfile = switchToMainProfile,
             snapshot = childSnapshots[Config.Profile] as? ProfileComponent.Snapshot,

@@ -50,6 +50,7 @@ internal class ComponentFactory(
                 openProfile = rootComponent::openProfile,
                 openCreateInfluencer = rootComponent::openCreateInfluencer,
                 openConversation = rootComponent::openConversation,
+                openCoach = rootComponent::openCoach,
                 openWallet = rootComponent::openWallet,
                 openAccountSheet = { rootComponent.rootViewModel.showAccountSwitcher() },
                 switchToMainProfile = { onComplete ->
@@ -111,6 +112,7 @@ internal class ComponentFactory(
             openProfile = rootComponent::openProfile,
             openCreateInfluencer = rootComponent::openCreateInfluencer,
             openConversation = rootComponent::openConversation,
+            openCoach = rootComponent::openCoach,
             onBackClicked = rootComponent::onBackClicked,
             showAlertsOnDialog = showAlertsOnDialog,
             showBackButton = true,

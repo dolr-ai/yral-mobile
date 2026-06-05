@@ -1,6 +1,6 @@
 package com.yral.shared.features.coach.di
 
-import com.yral.shared.core.di.CHAT_SERVER_BASE_URL
+import com.yral.shared.core.di.COACH_SERVER_BASE_URL
 import com.yral.shared.features.coach.data.CoachDataSource
 import com.yral.shared.features.coach.data.CoachRemoteDataSource
 import com.yral.shared.features.coach.data.CoachRepositoryImpl
@@ -22,7 +22,7 @@ val coachModule =
                 httpClient = get(),
                 json = get(),
                 preferences = get(),
-                chatBaseUrl = get(CHAT_SERVER_BASE_URL),
+                chatBaseUrl = get(COACH_SERVER_BASE_URL),
             )
         }
         factoryOf(::CoachRepositoryImpl) bind CoachRepository::class

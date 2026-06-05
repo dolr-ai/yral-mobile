@@ -15,6 +15,7 @@ import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.auth.ui.RequestLoginFactory
+import com.yral.shared.features.coach.nav.OpenCoachParams
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
@@ -38,6 +39,7 @@ internal class DefaultProfileComponent(
     private val openProfile: (CanisterData) -> Unit,
     private val openCreateInfluencer: (source: BotCreationSource) -> Unit,
     private val openConversation: (OpenConversationParams) -> Unit,
+    private val openCoach: (OpenCoachParams) -> Unit,
     private val openAccountSheet: () -> Unit,
     private val switchToMainProfile: (onComplete: (Boolean) -> Unit) -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
@@ -103,6 +105,10 @@ internal class DefaultProfileComponent(
         openConversation.invoke(params)
     }
 
+    override fun openCoach(params: OpenCoachParams) {
+        openCoach.invoke(params)
+    }
+
     override fun onBackClicked(): Boolean {
         val items = stack.value.items
         return if (items.size > 1) {
@@ -156,6 +162,7 @@ internal class DefaultProfileComponent(
             openProfile = openProfile,
             openCreateInfluencer = openCreateInfluencer,
             openConversation = openConversation,
+            openCoach = openCoach,
             onBackClicked = {},
             showAlertsOnDialog = showAlertsOnDialog,
             showBackButton = false,
