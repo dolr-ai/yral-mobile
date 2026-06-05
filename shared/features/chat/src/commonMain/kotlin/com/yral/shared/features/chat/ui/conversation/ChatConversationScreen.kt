@@ -40,11 +40,16 @@ import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.auth.ui.LoginMode
 import com.yral.shared.features.auth.ui.LoginScreenType
 import com.yral.shared.features.auth.ui.rememberLoginInfo
+import com.yral.shared.features.chat.attachments.FilePathChatAttachment
 import com.yral.shared.features.chat.domain.models.ChatMessageType
 import com.yral.shared.features.chat.domain.models.ConversationMessageRole
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.chat.ui.components.ChatErrorBottomSheet
+import com.yral.shared.features.chat.ui.conversation.audio.AudioPreviewBar
+import com.yral.shared.features.chat.ui.conversation.audio.AudioRecordingBar
+import com.yral.shared.features.chat.ui.conversation.audio.AudioRecordingState
+import com.yral.shared.features.chat.ui.conversation.audio.rememberChatAudioRecorder
 import com.yral.shared.features.chat.viewmodel.ConversationMessageItem
 import com.yral.shared.features.chat.viewmodel.ConversationViewModel
 import com.yral.shared.iap.utils.getPurchaseContext
@@ -207,6 +212,12 @@ fun ChatConversationScreen(
     var input by remember { mutableStateOf("") }
     var activeImagePreview by remember { mutableStateOf<ChatImagePreviewSource?>(null) }
     var isSwitchingProfile by remember { mutableStateOf(false) }
+    // Audio-recording state for the in-chat voice-note flow.
+    //   pendingAudio = (file attachment + duration) is set when the recorder
+    //   finishes a take; the AudioPreviewBar replaces the input until the
+    //   user either taps Send (consumes pendingAudio into a draft) or Delete
+    //   (discards file + clears state, returning to the text input).
+    var pendingAudio by remember { mutableStateOf<Pair<FilePathChatAttachment, Int>?>(null) }
     val listState = rememberLazyListState()
     val screenWidth = LocalWindowInfo.current.containerSize.width
     val density = LocalDensity.current
@@ -632,24 +643,87 @@ fun ChatConversationScreen(
                             }
 
                             ConversationBottomAreaState.ChatInput -> {
-                                ChatInputArea(
-                                    input = input,
-                                    onInputChange = { input = it },
-                                    onSendClick = {
-                                        val text = input.trim()
-                                        sendMessageIfAllowed(
-                                            SendMessageDraft(
-                                                messageType = ChatMessageType.TEXT,
-                                                content = text,
-                                            ),
-                                        ) {
-                                            input = ""
-                                        }
-                                    },
-                                    onCameraClick = imageCaptureLauncher,
-                                    onGalleryClick = imagePickerLauncher,
-                                    hasWaitingAssistant = hasWaitingAssistant,
-                                )
+                                val audioRecorder =
+                                    rememberChatAudioRecorder(
+                                        onComplete = { attachment, durationSeconds ->
+                                            pendingAudio = attachment to durationSeconds
+                                        },
+                                        onPermissionDenied = {
+                                            Logger.w { "Mic permission denied — voice message not recorded" }
+                                        },
+                                    )
+                                val audioState by audioRecorder.state.collectAsState()
+                                when {
+                                    pendingAudio != null -> {
+                                        val (audioAttachment, durationSeconds) = pendingAudio!!
+                                        AudioPreviewBar(
+                                            attachment = audioAttachment,
+                                            durationSeconds = durationSeconds,
+                                            onDelete = {
+                                                audioAttachment.deleteCachedFile()
+                                                pendingAudio = null
+                                            },
+                                            onSend = {
+                                                sendMessageIfAllowed(
+                                                    SendMessageDraft(
+                                                        messageType = ChatMessageType.AUDIO,
+                                                        audioAttachment = audioAttachment,
+                                                        audioDurationSeconds = durationSeconds,
+                                                    ),
+                                                ) {
+                                                    pendingAudio = null
+                                                }
+                                            },
+                                            hasWaitingAssistant = hasWaitingAssistant,
+                                        )
+                                    }
+
+                                    audioState is AudioRecordingState.Recording ||
+                                        audioState is AudioRecordingState.Finalizing -> {
+                                        val elapsedMs =
+                                            (audioState as? AudioRecordingState.Recording)?.elapsedMs ?: 0L
+                                        AudioRecordingBar(
+                                            elapsedMs = elapsedMs,
+                                            isFinalizing = audioState is AudioRecordingState.Finalizing,
+                                            onStop = { audioRecorder.stop() },
+                                            onCancel = { audioRecorder.cancel() },
+                                        )
+                                    }
+
+                                    else -> {
+                                        ChatInputArea(
+                                            input = input,
+                                            onInputChange = { input = it },
+                                            onSendClick = {
+                                                val text = input.trim()
+                                                sendMessageIfAllowed(
+                                                    SendMessageDraft(
+                                                        messageType = ChatMessageType.TEXT,
+                                                        content = text,
+                                                    ),
+                                                ) {
+                                                    input = ""
+                                                }
+                                            },
+                                            onCameraClick = imageCaptureLauncher,
+                                            onGalleryClick = imagePickerLauncher,
+                                            // Mic button is gated on AudioRecordingEnabled (kill-switch +
+                                            // GA pacing) AND not-an-H2H-chat. Voice messages aren't
+                                            // supported on H2H peer chats — the H2H send route doesn't
+                                            // transcribe, so the recipient would see an empty bubble
+                                            // with playable audio and no context. G6 gate landed in
+                                            // this commit; passing null hides the icon entirely per
+                                            // ConversationInputArea's ActionsRow logic.
+                                            onMicClick =
+                                                if (viewState.isAudioRecordingEnabled && !viewState.isHumanChat) {
+                                                    { audioRecorder.start() }
+                                                } else {
+                                                    null
+                                                },
+                                            hasWaitingAssistant = hasWaitingAssistant,
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

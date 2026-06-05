@@ -75,5 +75,17 @@ object ChatFeatureFlags {
                     "false until backend cutover + GA.",
                 defaultValue = false,
             )
+        val AudioRecordingEnabled: FeatureFlag<Boolean> =
+            boolean(
+                keySuffix = "audioRecordingEnabled",
+                name = "In-chat voice-message recording",
+                description = "When ON, exposes the mic button in the chat input action row so users can " +
+                    "record + send voice messages (Phase 1.7b). Recording is .m4a / audio/mp4 written to " +
+                    "platform cache, uploaded via POST /api/v1/media/upload type=audio, sent as a chat " +
+                    "message with audio_url + message_type=audio. Backend transcribes via Gemini and the " +
+                    "AI replies based on the transcription. When OFF, the mic button is hidden and the " +
+                    "feature is fully dormant. PR keeps defaultValue = false until backend cutover + GA.",
+                defaultValue = false,
+            )
     }
 }
