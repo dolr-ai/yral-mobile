@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,6 +24,10 @@ import androidx.compose.ui.unit.dp
 import com.yral.shared.features.chat.attachments.FilePathChatAttachment
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
+import org.jetbrains.compose.resources.painterResource
+import yral_mobile.shared.features.chat.generated.resources.Res
+import yral_mobile.shared.features.chat.generated.resources.ic_audio_pause
+import yral_mobile.shared.features.chat.generated.resources.ic_audio_play
 
 private const val MS_PER_SECOND = 1000
 
@@ -112,35 +117,20 @@ private fun PlayPauseButton(
                 .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        if (isPlaying) {
-            // Pause icon (two vertical bars)
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(3.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                PlayPauseBar()
-                PlayPauseBar()
-            }
-        } else {
-            // Play icon (triangle hint via offset box)
-            Box(
-                modifier =
-                    Modifier
-                        .size(10.dp)
-                        .background(color = YralColors.Neutral0, shape = RoundedCornerShape(2.dp)),
-            )
-        }
+        Icon(
+            painter =
+                painterResource(
+                    if (isPlaying) {
+                        Res.drawable.ic_audio_pause
+                    } else {
+                        Res.drawable.ic_audio_play
+                    },
+                ),
+            contentDescription = if (isPlaying) "Pause recorded audio" else "Play recorded audio",
+            modifier = Modifier.size(20.dp),
+            tint = YralColors.Neutral0,
+        )
     }
-}
-
-@Composable
-private fun PlayPauseBar() {
-    Box(
-        modifier =
-            Modifier
-                .size(width = 3.dp, height = 12.dp)
-                .background(color = YralColors.Neutral0),
-    )
 }
 
 @Composable
