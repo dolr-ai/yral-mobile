@@ -24,11 +24,13 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -65,6 +67,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -90,6 +93,7 @@ import com.yral.shared.features.auth.ui.rememberLoginInfo
 import com.yral.shared.features.coach.nav.OpenCoachParams
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.profile.ui.followers.FollowersBottomSheet
+import com.yral.shared.features.profile.videoideas.domain.models.VideoIdea
 import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
 import com.yral.shared.features.profile.viewmodel.FollowersSheetTab
 import com.yral.shared.features.profile.viewmodel.ProfileBottomSheet
@@ -153,12 +157,12 @@ import yral_mobile.shared.features.profile.generated.resources.drafts_empty_titl
 import yral_mobile.shared.features.profile.generated.resources.error_loading_more_videos
 import yral_mobile.shared.features.profile.generated.resources.error_loading_videos
 import yral_mobile.shared.features.profile.generated.resources.failed_to_delete_video
-import androidx.compose.foundation.lazy.items
-import androidx.compose.ui.text.style.TextOverflow
 import yral_mobile.shared.features.profile.generated.resources.ic_drafts_selected
 import yral_mobile.shared.features.profile.generated.resources.ic_drafts_unselected
 import yral_mobile.shared.features.profile.generated.resources.ic_ideas_selected
 import yral_mobile.shared.features.profile.generated.resources.ic_ideas_unselected
+import yral_mobile.shared.features.profile.generated.resources.ic_published_selected
+import yral_mobile.shared.features.profile.generated.resources.ic_published_unselected
 import yral_mobile.shared.features.profile.generated.resources.ideas_create_cta
 import yral_mobile.shared.features.profile.generated.resources.ideas_created_chip
 import yral_mobile.shared.features.profile.generated.resources.ideas_empty
@@ -166,8 +170,6 @@ import yral_mobile.shared.features.profile.generated.resources.ideas_error
 import yral_mobile.shared.features.profile.generated.resources.ideas_header
 import yral_mobile.shared.features.profile.generated.resources.ideas_loading
 import yral_mobile.shared.features.profile.generated.resources.ideas_lock_hint
-import yral_mobile.shared.features.profile.generated.resources.ic_published_selected
-import yral_mobile.shared.features.profile.generated.resources.ic_published_unselected
 import yral_mobile.shared.features.profile.generated.resources.make_ai_influencer_better
 import yral_mobile.shared.features.profile.generated.resources.pink_heart
 import yral_mobile.shared.features.profile.generated.resources.pro_profile_background
@@ -1116,7 +1118,7 @@ private fun ErrorContent(message: String) {
     }
 }
 
-@Suppress("LongMethod", "LongParameterList")
+@Suppress("CyclomaticComplexMethod", "LongMethod", "LongParameterList")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SuccessContent(
@@ -1127,11 +1129,11 @@ private fun SuccessContent(
     isOwnProfile: Boolean,
     isAiInfluencer: Boolean,
     isVideoIdeasEnabled: Boolean,
-    videoIdeas: List<com.yral.shared.features.profile.videoideas.domain.models.VideoIdea>?,
+    videoIdeas: List<VideoIdea>?,
     isLoadingVideoIdeas: Boolean,
     videoIdeasError: String?,
     onRetryVideoIdeas: () -> Unit,
-    onCreateIdeaClick: (com.yral.shared.features.profile.videoideas.domain.models.VideoIdea) -> Unit,
+    onCreateIdeaClick: (VideoIdea) -> Unit,
     deletingVideoId: String,
     uploadVideo: () -> Unit,
     openVideoReel: (Int) -> Unit,
@@ -2234,12 +2236,12 @@ private fun BecomeProButtonPreview() {
 
 @Composable
 private fun IdeasListContent(
-    ideas: List<com.yral.shared.features.profile.videoideas.domain.models.VideoIdea>?,
+    ideas: List<VideoIdea>?,
     isLoading: Boolean,
     errorMessage: String?,
     isGenerationInFlight: Boolean,
     onRetry: () -> Unit,
-    onCreateClick: (com.yral.shared.features.profile.videoideas.domain.models.VideoIdea) -> Unit,
+    onCreateClick: (VideoIdea) -> Unit,
 ) {
     androidx.compose.foundation.lazy.LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -2268,69 +2270,82 @@ private fun IdeasListContent(
                 )
             }
         }
-        when {
-            isLoading -> {
-                item(key = "ideas-loading") {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.ideas_loading),
-                            style = LocalAppTopography.current.baseRegular,
-                            color = YralColors.NeutralTextSecondary,
-                        )
-                    }
-                }
+        ideasStateItems(
+            ideas = ideas,
+            isLoading = isLoading,
+            errorMessage = errorMessage,
+            isGenerationInFlight = isGenerationInFlight,
+            onRetry = onRetry,
+            onCreateClick = onCreateClick,
+        )
+    }
+}
+
+private fun LazyListScope.ideasStateItems(
+    ideas: List<VideoIdea>?,
+    isLoading: Boolean,
+    errorMessage: String?,
+    isGenerationInFlight: Boolean,
+    onRetry: () -> Unit,
+    onCreateClick: (VideoIdea) -> Unit,
+) {
+    when {
+        isLoading -> {
+            ideaMessageItem("ideas-loading", Res.string.ideas_loading)
+        }
+
+        errorMessage != null -> {
+            ideaMessageItem(
+                key = "ideas-error",
+                text = Res.string.ideas_error,
+                color = YralColors.Pink300,
+                onClick = onRetry,
+            )
+        }
+
+        ideas != null && ideas.isEmpty() -> {
+            ideaMessageItem("ideas-empty", Res.string.ideas_empty)
+        }
+
+        ideas != null -> {
+            items(items = ideas, key = { it.id }) { idea ->
+                IdeaRow(
+                    idea = idea,
+                    isCreateLocked = isGenerationInFlight,
+                    onCreateClick = { onCreateClick(idea) },
+                )
             }
-            errorMessage != null -> {
-                item(key = "ideas-error") {
-                    Box(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .clickable(onClick = onRetry)
-                                .padding(vertical = 32.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.ideas_error),
-                            style = LocalAppTopography.current.baseRegular,
-                            color = YralColors.Pink300,
-                        )
-                    }
-                }
-            }
-            ideas != null && ideas.isEmpty() -> {
-                item(key = "ideas-empty") {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.ideas_empty),
-                            style = LocalAppTopography.current.baseRegular,
-                            color = YralColors.NeutralTextSecondary,
-                        )
-                    }
-                }
-            }
-            ideas != null -> {
-                items(items = ideas, key = { it.id }) { idea ->
-                    IdeaRow(
-                        idea = idea,
-                        isCreateLocked = isGenerationInFlight,
-                        onCreateClick = { onCreateClick(idea) },
-                    )
-                }
-            }
+        }
+    }
+}
+
+private fun LazyListScope.ideaMessageItem(
+    key: String,
+    text: org.jetbrains.compose.resources.StringResource,
+    color: Color = YralColors.NeutralTextSecondary,
+    onClick: (() -> Unit)? = null,
+) {
+    item(key = key) {
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+                    .padding(vertical = 32.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = stringResource(text),
+                style = LocalAppTopography.current.baseRegular,
+                color = color,
+            )
         }
     }
 }
 
 @Composable
 private fun IdeaRow(
-    idea: com.yral.shared.features.profile.videoideas.domain.models.VideoIdea,
+    idea: VideoIdea,
     isCreateLocked: Boolean,
     onCreateClick: () -> Unit,
 ) {

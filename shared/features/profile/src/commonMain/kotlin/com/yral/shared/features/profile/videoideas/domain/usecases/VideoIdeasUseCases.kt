@@ -26,8 +26,8 @@ class MarkVideoIdeaUsedUseCase(
 ) : SuspendUseCase<MarkVideoIdeaUsedUseCase.Params, VideoIdea>(appDispatchers.network, useCaseFailureListener) {
     override val exceptionType: String = EXCEPTION_TYPE
 
-    override suspend fun execute(parameter: Params): VideoIdea =
-        repository.markIdeaUsed(parameter.influencerId, parameter.ideaId)
+    @Suppress("MaxLineLength")
+    override suspend fun execute(parameter: Params): VideoIdea = repository.markIdeaUsed(parameter.influencerId, parameter.ideaId)
 
     data class Params(
         val influencerId: String,
