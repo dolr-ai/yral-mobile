@@ -87,6 +87,7 @@ import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.auth.ui.LoginMode
 import com.yral.shared.features.auth.ui.LoginScreenType
 import com.yral.shared.features.auth.ui.rememberLoginInfo
+import com.yral.shared.features.coach.nav.OpenCoachParams
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.profile.ui.followers.FollowersBottomSheet
 import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
@@ -156,6 +157,7 @@ import yral_mobile.shared.features.profile.generated.resources.ic_drafts_selecte
 import yral_mobile.shared.features.profile.generated.resources.ic_drafts_unselected
 import yral_mobile.shared.features.profile.generated.resources.ic_published_selected
 import yral_mobile.shared.features.profile.generated.resources.ic_published_unselected
+import yral_mobile.shared.features.profile.generated.resources.make_ai_influencer_better
 import yral_mobile.shared.features.profile.generated.resources.pink_heart
 import yral_mobile.shared.features.profile.generated.resources.pro_profile_background
 import yral_mobile.shared.features.profile.generated.resources.profile_empty_other_subtitle
@@ -597,6 +599,17 @@ fun ProfileMainScreen(
                         viewModel.trackCreateInfluencerClicked()
                         component.openCreateInfluencer()
                     },
+                    onOpenCoach = {
+                        state.accountInfo?.let { accountInfo ->
+                            component.openCoach(
+                                OpenCoachParams(
+                                    botId = accountInfo.userPrincipal,
+                                    botName = accountInfo.displayName,
+                                    avatarUrl = accountInfo.profilePic,
+                                ),
+                            )
+                        }
+                    },
                     onUsernameClick = { username ->
                         val principal =
                             state.botUsernameToCanisterData[username]
@@ -769,9 +782,11 @@ private fun MainContent(
     hasBotAccounts: Boolean,
     showCreateBotCta: Boolean,
     onCreateInfluencerClick: () -> Unit,
+    onOpenCoach: () -> Unit,
     onUsernameClick: (String) -> Unit,
 ) {
     val subscribeButtonUiState = state.profileSubscribeButtonUiState()
+    val canManageAiInfluencer = state.isOwnProfile && state.isLoggedIn && state.isAiInfluencer
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader(
             isOwnProfile = state.isOwnProfile,
@@ -837,6 +852,14 @@ private fun MainContent(
                 maxVisibleBotUsernames = state.maxVisibleBotUsernames,
                 onUsernameClick = onUsernameClick,
             )
+        }
+        if (state.isSoulFileCoachEnabled && canManageAiInfluencer) {
+            YralGradientButton(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                text = stringResource(Res.string.make_ai_influencer_better),
+                onClick = onOpenCoach,
+            )
+            Spacer(modifier = Modifier.height(16.dp))
         }
         when (profileVideos.loadState.refresh) {
             is LoadState.Loading -> {

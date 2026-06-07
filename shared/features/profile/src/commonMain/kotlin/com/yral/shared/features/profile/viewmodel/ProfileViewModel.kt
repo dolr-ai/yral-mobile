@@ -141,6 +141,7 @@ class ProfileViewModel(
             ViewState(
                 isWalletEnabled = flagManager.isEnabled(WalletFeatureFlags.Wallet.Enabled),
                 isSubscriptionEnabled = flagManager.isEnabled(AppFeatureFlags.Common.EnableSubscription),
+                isSoulFileCoachEnabled = flagManager.isEnabled(ChatFeatureFlags.Chat.SoulFileCoachEnabled),
                 maxBotCountForCta = flagManager.get(ChatFeatureFlags.Chat.MaxBotCountForCta),
                 maxVisibleBotUsernames = flagManager.get(ChatFeatureFlags.Chat.MaxVisibleBotUsernames),
                 isH2hChatEnabled = flagManager.get(ChatFeatureFlags.Chat.H2hChatEnabled),
@@ -1343,6 +1344,7 @@ data class ViewState(
     val isCreatingHumanConversation: Boolean = false,
     val isProUser: Boolean = false,
     val isSubscriptionEnabled: Boolean = false,
+    val isSoulFileCoachEnabled: Boolean = false,
     val isYralProAvailable: Boolean = false,
     val maxBotCountForCta: Int = 3,
     val maxVisibleBotUsernames: Int = 2,

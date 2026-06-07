@@ -13,6 +13,7 @@ import com.yral.shared.features.auth.nav.mandatorylogin.MandatoryLoginComponent
 import com.yral.shared.features.auth.nav.otpverification.OtpVerificationComponent
 import com.yral.shared.features.auth.ui.LoginCoordinator
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
+import com.yral.shared.features.coach.nav.CoachComponent
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.subscriptions.nav.SubscriptionsComponent
@@ -49,6 +50,7 @@ internal class ComponentFactory(
                 openProfile = rootComponent::openProfile,
                 openCreateInfluencer = rootComponent::openCreateInfluencer,
                 openConversation = rootComponent::openConversation,
+                openCoach = rootComponent::openCoach,
                 openWallet = rootComponent::openWallet,
                 openAccountSheet = { rootComponent.rootViewModel.showAccountSwitcher() },
                 switchToMainProfile = { onComplete ->
@@ -63,6 +65,16 @@ internal class ComponentFactory(
     fun createEditProfile(componentContext: ComponentContext): EditProfileComponent =
         EditProfileComponent.Companion(
             componentContext = componentContext,
+            onBack = rootComponent::onBackClicked,
+        )
+
+    fun createCoach(
+        componentContext: ComponentContext,
+        config: Config.Coach,
+    ): CoachComponent =
+        CoachComponent.Companion(
+            componentContext = componentContext,
+            params = config.params,
             onBack = rootComponent::onBackClicked,
         )
 
@@ -100,6 +112,7 @@ internal class ComponentFactory(
             openProfile = rootComponent::openProfile,
             openCreateInfluencer = rootComponent::openCreateInfluencer,
             openConversation = rootComponent::openConversation,
+            openCoach = rootComponent::openCoach,
             onBackClicked = rootComponent::onBackClicked,
             showAlertsOnDialog = showAlertsOnDialog,
             showBackButton = true,

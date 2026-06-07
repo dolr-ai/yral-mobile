@@ -1,0 +1,29 @@
+<resources>
+    <string name="coach_screen_title">Coach</string>
+    <string name="coach_input_placeholder">Tell your coach what to improve…</string>
+    <string name="coach_empty_state_title">Make %1$s better</string>
+    <string name="coach_empty_state_subtitle">Tell your coach what to change about your AI Influencer\'s personality, tone, or behavior. The coach will suggest updates you can apply with one tap.</string>
+    <string name="coach_thinking">Coach is thinking…</string>
+    <string name="coach_proposal_card_title">Proposed update</string>
+    <string name="coach_proposal_apply_cta">Apply</string>
+    <string name="coach_proposal_applied">Applied</string>
+    <string name="coach_apply_confirm_title">Update %1$s\'s personality?</string>
+    <string name="coach_apply_confirm_body">Your AI Influencer will start replying with these new instructions. The previous version is saved so it can be rolled back later.</string>
+    <string name="coach_apply_confirm_cta">Apply update</string>
+    <string name="coach_apply_confirm_cancel">Cancel</string>
+    <string name="coach_send">Send</string>
+    <string name="coach_back">Back</string>
+    <string name="coach_loading_session">Starting coach session…</string>
+    <string name="coach_send_failed">Coach reply failed. Try sending again.</string>
+    <string name="coach_apply_failed">Could not apply the update. Try again.</string>
+    <string name="coach_session_start_failed">Could not start coach session. Try again.</string>
+    <string name="coach_error_dismiss">Dismiss</string>
+    <string name="coach_header_hint">Chat about improvements — nothing changes until you tap Save.</string>
+    <string name="coach_start_over">Start over</string>
+    <string name="coach_start_over_confirm_title">Start a new coach session?</string>
+    <string name="coach_start_over_confirm_body">This conversation will end and a new one will begin. Your earlier turns stay saved on the server but won\'t be shown.</string>
+    <string name="coach_start_over_confirm_cta">Start over</string>
+    <string name="coach_start_over_confirm_cancel">Cancel</string>
+    <string name="coach_save_cta">Save changes to %1$s</string>
+    <string name="coach_save_cta_generic">Save changes</string>
+</resources>

@@ -15,6 +15,7 @@ import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.chat.nav.ChatComponent
+import com.yral.shared.features.coach.nav.OpenCoachParams
 import com.yral.shared.features.feed.nav.FeedComponent
 import com.yral.shared.features.root.viewmodels.HomeViewModel
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
@@ -42,6 +43,7 @@ abstract class HomeComponent {
     abstract fun onChatInboxClick()
     abstract fun onNavigationRequest(appRoute: AppRoute)
     abstract fun openConversation(params: OpenConversationParams)
+    abstract fun openCoach(params: OpenCoachParams)
     abstract fun openWallet()
     abstract fun openCreateInfluencer(source: BotCreationSource)
 
@@ -82,6 +84,7 @@ abstract class HomeComponent {
             openEditProfile: () -> Unit,
             openProfile: (userCanisterData: CanisterData) -> Unit,
             openConversation: (OpenConversationParams) -> Unit,
+            openCoach: (OpenCoachParams) -> Unit,
             openCreateInfluencer: (source: BotCreationSource) -> Unit,
             openWallet: () -> Unit,
             openAccountSheet: () -> Unit,
@@ -95,6 +98,7 @@ abstract class HomeComponent {
                 openEditProfile,
                 openProfile,
                 openConversation,
+                openCoach,
                 openCreateInfluencer,
                 openWallet,
                 openAccountSheet,

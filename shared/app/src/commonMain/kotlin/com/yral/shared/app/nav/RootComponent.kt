@@ -18,6 +18,8 @@ import com.yral.shared.features.auth.ui.LoginInfo
 import com.yral.shared.features.auth.ui.RequestLoginFactory
 import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
+import com.yral.shared.features.coach.nav.CoachComponent
+import com.yral.shared.features.coach.nav.OpenCoachParams
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.root.viewmodels.RootViewModel
@@ -59,6 +61,8 @@ interface RootComponent {
     fun dismissMandatoryUpdateSlot()
 
     fun openEditProfile()
+
+    fun openCoach(params: OpenCoachParams)
 
     fun openProfile(userCanisterData: CanisterData)
 
@@ -103,6 +107,9 @@ interface RootComponent {
         ) : Child()
         class EditProfile(
             val component: EditProfileComponent,
+        ) : Child()
+        class Coach(
+            val component: CoachComponent,
         ) : Child()
         class UserProfile(
             val component: ProfileMainComponent,
