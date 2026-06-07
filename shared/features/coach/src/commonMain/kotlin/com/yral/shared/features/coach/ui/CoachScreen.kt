@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import com.yral.shared.features.coach.domain.models.CoachMessage
 import com.yral.shared.features.coach.domain.models.CoachMessageRole
 import com.yral.shared.features.coach.nav.CoachComponent
+import com.yral.shared.features.coach.nav.OpenCoachParams
 import com.yral.shared.features.coach.viewmodel.CoachError
 import com.yral.shared.features.coach.viewmodel.CoachViewModel
 import com.yral.shared.libs.designsystem.component.YralAsyncImage
@@ -68,8 +69,8 @@ import yral_mobile.shared.features.coach.generated.resources.coach_empty_state_t
 import yral_mobile.shared.features.coach.generated.resources.coach_header_hint
 import yral_mobile.shared.features.coach.generated.resources.coach_input_placeholder
 import yral_mobile.shared.features.coach.generated.resources.coach_loading_session
-import yral_mobile.shared.features.coach.generated.resources.coach_proposal_apply_cta
 import yral_mobile.shared.features.coach.generated.resources.coach_proposal_applied
+import yral_mobile.shared.features.coach.generated.resources.coach_proposal_apply_cta
 import yral_mobile.shared.features.coach.generated.resources.coach_proposal_card_title
 import yral_mobile.shared.features.coach.generated.resources.coach_save_cta
 import yral_mobile.shared.features.coach.generated.resources.coach_save_cta_generic
@@ -96,16 +97,7 @@ fun CoachScreen(
     val viewState by viewModel.viewState.collectAsState()
     val params = component.openCoachParams
 
-    LaunchedEffect(params.botId) {
-        viewModel.openForBot(params.botId, params.botName, params.avatarUrl)
-    }
-
-    LaunchedEffect(viewState.lastAppliedToastMessage) {
-        viewState.lastAppliedToastMessage?.let { msg ->
-            ToastManager.showSuccess(type = ToastType.Small(message = msg))
-            viewModel.clearAppliedToast()
-        }
-    }
+    CoachScreenEffects(params, viewState.lastAppliedToastMessage, viewModel)
 
     Column(
         modifier =
@@ -186,6 +178,24 @@ fun CoachScreen(
             },
             onDismiss = { viewModel.dismissStartOverConfirm() },
         )
+    }
+}
+
+@Composable
+private fun CoachScreenEffects(
+    params: OpenCoachParams,
+    appliedToastMessage: String?,
+    viewModel: CoachViewModel,
+) {
+    LaunchedEffect(params.botId) {
+        viewModel.openForBot(params.botId, params.botName, params.avatarUrl)
+    }
+
+    LaunchedEffect(appliedToastMessage) {
+        appliedToastMessage?.let { message ->
+            ToastManager.showSuccess(type = ToastType.Small(message = message))
+            viewModel.clearAppliedToast()
+        }
     }
 }
 
@@ -316,7 +326,10 @@ private fun CoachMessagesList(
                 message = msg,
                 showProposalCard = msg.id == activeProposalMessageId,
                 onApplyClick = onApplyClick,
-                isCoachThinkingPlaceholder = isCoachThinking && msg.role == CoachMessageRole.COACH && msg.content.isEmpty(),
+                isCoachThinkingPlaceholder =
+                    isCoachThinking &&
+                        msg.role == CoachMessageRole.COACH &&
+                        msg.content.isEmpty(),
             )
         }
         if (openingSuggestions.isNotEmpty()) {
@@ -611,7 +624,10 @@ private fun CoachStartOverConfirmDialog(
 }
 
 @Composable
-private fun CoachErrorBanner(error: CoachError, onDismiss: () -> Unit) {
+private fun CoachErrorBanner(
+    error: CoachError,
+    onDismiss: () -> Unit,
+) {
     val text =
         when (error) {
             is CoachError.SessionStartFailed -> stringResource(Res.string.coach_session_start_failed)

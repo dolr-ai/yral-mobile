@@ -32,7 +32,10 @@ class SendCoachMessageUseCase(
     private val repository: CoachRepository,
     appDispatchers: AppDispatchers,
     useCaseFailureListener: UseCaseFailureListener,
-) : SuspendUseCase<SendCoachMessageUseCase.Params, SendCoachMessageResult>(appDispatchers.network, useCaseFailureListener) {
+) : SuspendUseCase<SendCoachMessageUseCase.Params, SendCoachMessageResult>(
+        appDispatchers.network,
+        useCaseFailureListener,
+    ) {
     override val exceptionType: String = EXCEPTION_TYPE
 
     override suspend fun execute(parameter: Params): SendCoachMessageResult =

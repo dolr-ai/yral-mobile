@@ -312,7 +312,13 @@ data class CoachViewState(
 sealed class CoachError {
     abstract val message: String
 
-    data class SessionStartFailed(override val message: String) : CoachError()
-    data class SendFailed(override val message: String) : CoachError()
-    data class ApplyFailed(override val message: String) : CoachError()
+    data class SessionStartFailed(
+        override val message: String,
+    ) : CoachError()
+    data class SendFailed(
+        override val message: String,
+    ) : CoachError()
+    data class ApplyFailed(
+        override val message: String,
+    ) : CoachError()
 }
