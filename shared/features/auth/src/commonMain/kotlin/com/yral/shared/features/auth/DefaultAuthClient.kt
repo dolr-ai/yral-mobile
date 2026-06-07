@@ -266,14 +266,16 @@ class DefaultAuthClient(
         }
         if (persistBotIdentities) {
             persistBotIdentitiesFromToken(idToken)
-            updateBotCountFromPrefs()
+            // Intentionally do NOT update sessionManager.botCount from the local
+            // identity cache here. The JWT's `ext_ai_account_delegated_identities`
+            // claim is occasionally stale (deleted bots not pruned), which can
+            // overcount and cause the "Create AI Influencer" CTA to flicker
+            // hidden between the token-merge and the v7-canister reconcile.
+            // The v7-authoritative count lands via RootViewModel's
+            // refreshAccountDirectoryFromCanister → reconciledBots.size; the
+            // token-side merge here only needs to persist identities for the
+            // account switcher.
         }
-    }
-
-    private suspend fun updateBotCountFromPrefs() {
-        val count = botIdentitiesStore.get().size
-        Logger.d("BotIdentitySource") { "updateBotCountFromPrefs source=local_pref count=$count" }
-        sessionManager.updateBotCount(count)
     }
 
     override suspend fun refreshTokens() {
