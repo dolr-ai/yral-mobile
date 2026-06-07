@@ -103,5 +103,19 @@ object ChatFeatureFlags {
                     "feature is fully dormant. PR keeps defaultValue = false until backend cutover + GA.",
                 defaultValue = false,
             )
+        val VideoIdeasEnabled: FeatureFlag<Boolean> =
+            boolean(
+                keySuffix = "videoIdeasEnabled",
+                name = "Daily 5 Video Ideas tab (Phase 22.3)",
+                description = "When ON, exposes the third \"Ideas\" tab (lightbulb icon) on a creator's own " +
+                    "AI-influencer profile so they can see 5 fresh AI-generated video ideas daily and " +
+                    "one-tap Create headlessly into Drafts via the existing video-gen pipeline. The data " +
+                    "calls hit GET/POST /api/v1/influencers/{id}/video-ideas on agent.rishi.yral.com — " +
+                    "endpoints that do not exist on the production chat-ai backend. When OFF, the tab is " +
+                    "hidden entirely and the bot profile shows the legacy 2-tab UX (Published + Drafts); " +
+                    "no calls are made to the missing endpoints. PR keeps defaultValue = false until " +
+                    "backend cutover + GA — same shape as H2H/Audio/SSE/Chat-as-Human/Coach gates.",
+                defaultValue = false,
+            )
     }
 }

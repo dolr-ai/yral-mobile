@@ -13,6 +13,7 @@ import com.yral.shared.analytics.events.VideoDeleteCTA
 import com.yral.shared.analytics.events.VideoDeletedEventData
 import com.yral.shared.analytics.events.VideoPublishedData
 import com.yral.shared.core.exceptions.YralException
+import com.yral.shared.core.logging.YralLogger
 import com.yral.shared.core.session.Session
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
@@ -29,15 +30,19 @@ import com.yral.shared.features.chat.data.models.ChatAccessApiResponse
 import com.yral.shared.features.chat.data.models.GrantChatAccessRequestDto
 import com.yral.shared.features.chat.data.models.GrantResult
 import com.yral.shared.features.chat.domain.ChatRepository
+import com.yral.shared.features.chat.domain.models.ChatMessage
 import com.yral.shared.features.chat.domain.models.Conversation
 import com.yral.shared.features.chat.domain.models.ConversationMessagesPageResult
 import com.yral.shared.features.chat.domain.models.ConversationsPageResult
 import com.yral.shared.features.chat.domain.models.DeleteConversationResult
+import com.yral.shared.features.chat.domain.models.HumanCreatorTakeoverStatus
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.domain.models.SendMessageResult
+import com.yral.shared.features.chat.domain.models.StreamEvent
 import com.yral.shared.features.chat.domain.usecases.CheckChatAccessUseCase
+import com.yral.shared.features.chat.domain.usecases.CreateHumanConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
 import com.yral.shared.features.profile.analytics.ProfileTelemetry
 import com.yral.shared.features.profile.domain.DeleteVideoUseCase
@@ -46,6 +51,13 @@ import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
 import com.yral.shared.features.profile.domain.models.FollowNotification
 import com.yral.shared.features.profile.domain.models.ProfileVideosPageResult
 import com.yral.shared.features.profile.domain.repository.ProfileRepository
+import com.yral.shared.features.profile.videoideas.domain.VideoIdeasRepository
+import com.yral.shared.features.profile.videoideas.domain.models.VideoIdea
+import com.yral.shared.features.profile.videoideas.domain.models.VideoIdeaStatus
+import com.yral.shared.features.profile.videoideas.domain.usecases.GetVideoIdeasUseCase
+import com.yral.shared.features.profile.videoideas.domain.usecases.MarkVideoIdeaUsedUseCase
+import com.yral.shared.features.uploadvideo.domain.GenerateVideoUseCase
+import com.yral.shared.features.uploadvideo.domain.GetProvidersUseCase
 import com.yral.shared.features.uploadvideo.domain.PublishDraftVideoUseCase
 import com.yral.shared.features.uploadvideo.domain.UploadRepository
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
@@ -56,6 +68,7 @@ import com.yral.shared.features.uploadvideo.domain.models.UploadAiVideoFromUrlRe
 import com.yral.shared.features.uploadvideo.domain.models.UploadEndpoint
 import com.yral.shared.features.uploadvideo.domain.models.UploadFileRequest
 import com.yral.shared.features.uploadvideo.domain.models.UploadStatus
+import com.yral.shared.features.uploadvideo.presentation.VideoDraftPollingManager
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.libs.filedownloader.FileDownloader
@@ -99,7 +112,9 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -109,6 +124,7 @@ class ProfileViewModelTest {
     private lateinit var sessionManager: SessionManager
     private lateinit var fakeUploadRepository: FakeUploadRepository
     private lateinit var fakeProfileRepository: FakeProfileRepository
+    private lateinit var fakeVideoIdeasRepository: FakeVideoIdeasRepository
     private lateinit var fakeAnalyticsProvider: RecordingAnalyticsProvider
     private lateinit var fakeCommonApis: FakeCommonApis
     private var viewModel: ProfileViewModel? = null
@@ -117,6 +133,16 @@ class ProfileViewModelTest {
         private const val TEST_PRINCIPAL = "test-principal"
         private const val TEST_CANISTER_ID = "test-canister"
         private const val TIMEOUT_MS = 5000L
+        private val TEST_VIDEO_IDEA =
+            VideoIdea(
+                id = "idea-1",
+                influencerId = TEST_PRINCIPAL,
+                batchDate = "2026-06-07",
+                rank = 1,
+                hook = "Hook",
+                ideaText = "Create this video",
+                status = VideoIdeaStatus.FRESH,
+            )
         private val TEST_FEED_DETAILS =
             FeedDetails(
                 postID = "post-1",
@@ -138,6 +164,32 @@ class ProfileViewModelTest {
                 userName = "testuser",
                 isDraft = true,
             )
+
+        private fun provider(
+            id: String,
+            isAvailable: Boolean = true,
+            defaultAspectRatio: String? = "9:16",
+            defaultDuration: Int? = 5,
+        ) = Provider(
+            id = id,
+            name = id,
+            description = null,
+            cost = null,
+            supportsImage = false,
+            supportsNegativePrompt = false,
+            supportsAudio = false,
+            supportsSeed = false,
+            allowedAspectRatios = listOf("9:16"),
+            allowedResolutions = emptyList(),
+            allowedDurations = listOf(5),
+            defaultAspectRatio = defaultAspectRatio,
+            defaultResolution = null,
+            defaultDuration = defaultDuration,
+            isAvailable = isAvailable,
+            isInternal = false,
+            modelIcon = null,
+            extraInfo = null,
+        )
     }
 
     private fun initComposeResourcesContext() {
@@ -159,6 +211,7 @@ class ProfileViewModelTest {
         sessionManager = SessionManager()
         fakeUploadRepository = FakeUploadRepository()
         fakeProfileRepository = FakeProfileRepository()
+        fakeVideoIdeasRepository = FakeVideoIdeasRepository()
         fakeAnalyticsProvider = RecordingAnalyticsProvider()
         fakeCommonApis = FakeCommonApis()
         VideoGenerationTracker.clearPendingGenerations()
@@ -270,14 +323,131 @@ class ProfileViewModelTest {
                     appDispatchers,
                     failureListener,
                 ),
+            createHumanConversationUseCase =
+                CreateHumanConversationUseCase(
+                    FakeChatRepository(),
+                    appDispatchers,
+                    failureListener,
+                ),
             publishDraftVideoUseCase =
                 PublishDraftVideoUseCase(
                     appDispatchers,
                     failureListener,
                     fakeUploadRepository,
                 ),
+            getVideoIdeasUseCase =
+                GetVideoIdeasUseCase(
+                    fakeVideoIdeasRepository,
+                    appDispatchers,
+                    failureListener,
+                ),
+            markVideoIdeaUsedUseCase =
+                MarkVideoIdeaUsedUseCase(
+                    fakeVideoIdeasRepository,
+                    appDispatchers,
+                    failureListener,
+                ),
+            getVideoProvidersUseCase =
+                GetProvidersUseCase(
+                    appDispatchers,
+                    failureListener,
+                    fakeUploadRepository,
+                ),
+            generateVideoUseCase =
+                GenerateVideoUseCase(
+                    appDispatchers,
+                    failureListener,
+                    fakeUploadRepository,
+                ),
+            videoDraftPollingManager =
+                VideoDraftPollingManager(
+                    repository = fakeUploadRepository,
+                    sessionManager = sessionManager,
+                    appDispatchers = appDispatchers,
+                    logger = YralLogger(),
+                ),
         ).also { viewModel = it }
     }
+
+    @Test
+    fun `selecting Ideas loads once and caches the result`() =
+        runBlocking {
+            signInUser()
+            fakeVideoIdeasRepository.ideas = listOf(TEST_VIDEO_IDEA)
+            val vm = createViewModel()
+
+            vm.selectTab(ProfileTab.Ideas)
+            withTimeout(TIMEOUT_MS) {
+                vm.state.first { it.videoIdeas == listOf(TEST_VIDEO_IDEA) }
+            }
+            vm.selectTab(ProfileTab.Published)
+            vm.selectTab(ProfileTab.Ideas)
+
+            assertEquals(1, fakeVideoIdeasRepository.listIdeasCalls)
+        }
+
+    @Test
+    fun `create idea skips unavailable provider and uses allowed fallbacks`() =
+        runBlocking {
+            signInUser()
+            fakeVideoIdeasRepository.ideas = listOf(TEST_VIDEO_IDEA)
+            fakeUploadRepository.providers =
+                listOf(
+                    provider(id = "unavailable", isAvailable = false),
+                    provider(
+                        id = "usable",
+                        isAvailable = true,
+                        defaultAspectRatio = null,
+                        defaultDuration = null,
+                    ),
+                )
+            val vm = createViewModel()
+            vm.selectTab(ProfileTab.Ideas)
+            withTimeout(TIMEOUT_MS) {
+                vm.state.first { it.videoIdeas != null }
+            }
+
+            vm.createVideoFromIdea(TEST_VIDEO_IDEA)
+            withTimeout(TIMEOUT_MS) {
+                while (fakeUploadRepository.generatedParams == null) delay(10)
+            }
+
+            val params = assertNotNull(fakeUploadRepository.generatedParams)
+            assertEquals("usable", params.providerId)
+            assertEquals("9:16", params.aspectRatio)
+            assertEquals(5, params.durationSeconds)
+        }
+
+    @Test
+    fun `provider error rolls back idea and releases generation lock`() =
+        runBlocking {
+            signInUser()
+            fakeVideoIdeasRepository.ideas = listOf(TEST_VIDEO_IDEA)
+            fakeUploadRepository.providers = listOf(provider(id = "provider"))
+            fakeUploadRepository.generateResult =
+                GenerateVideoResult(
+                    operationId = null,
+                    provider = "provider",
+                    requestKey = null,
+                    providerError = "Provider rejected request",
+                )
+            val vm = createViewModel()
+            vm.selectTab(ProfileTab.Ideas)
+            withTimeout(TIMEOUT_MS) {
+                vm.state.first { it.videoIdeas != null }
+            }
+
+            vm.createVideoFromIdea(TEST_VIDEO_IDEA)
+            withTimeout(TIMEOUT_MS) {
+                vm.state.first { state ->
+                    state.videoIdeas?.singleOrNull()?.status == VideoIdeaStatus.FRESH &&
+                        fakeUploadRepository.generatedParams != null
+                }
+            }
+
+            assertFalse(VideoGenerationTracker.state.value.isGenerating)
+            assertEquals(0, fakeVideoIdeasRepository.markIdeaUsedCalls)
+        }
 
     // region publishDraft success
 
@@ -671,6 +841,15 @@ private class FakeCommonApis : CommonApis {
 private class FakeUploadRepository : UploadRepository {
     var markPostAsPublishedShouldThrow = false
     val publishedPostIds = mutableListOf<String>()
+    var providers: List<Provider> = emptyList()
+    var generateResult =
+        GenerateVideoResult(
+            operationId = "operation-1",
+            provider = "provider",
+            requestKey = null,
+            providerError = null,
+        )
+    var generatedParams: GenerateVideoParams? = null
 
     override suspend fun fetchUploadUrl(): UploadEndpoint = throw NotImplementedError()
     override fun uploadVideo(
@@ -678,13 +857,35 @@ private class FakeUploadRepository : UploadRepository {
         filePath: String,
     ): Flow<UploadStatus> = emptyFlow()
     override suspend fun updateMetadata(uploadFileRequest: UploadFileRequest) = throw NotImplementedError()
-    override suspend fun fetchProviders(): List<Provider> = throw NotImplementedError()
-    override suspend fun generateVideo(params: GenerateVideoParams): GenerateVideoResult = throw NotImplementedError()
+    override suspend fun fetchProviders(): List<Provider> = providers
+    override suspend fun generateVideo(params: GenerateVideoParams): GenerateVideoResult {
+        generatedParams = params
+        return generateResult
+    }
     override suspend fun getInProgressDrafts(userId: String): List<InProgressDraft> = emptyList()
     override suspend fun uploadAiVideoFromUrl(request: UploadAiVideoFromUrlRequest): String = throw NotImplementedError()
     override suspend fun markPostAsPublished(postId: String) {
         publishedPostIds += postId
         if (markPostAsPublishedShouldThrow) throw YralException("Publish failed")
+    }
+}
+
+private class FakeVideoIdeasRepository : VideoIdeasRepository {
+    var ideas: List<VideoIdea> = emptyList()
+    var listIdeasCalls = 0
+    var markIdeaUsedCalls = 0
+
+    override suspend fun listIdeas(influencerId: String): List<VideoIdea> {
+        listIdeasCalls += 1
+        return ideas
+    }
+
+    override suspend fun markIdeaUsed(
+        influencerId: String,
+        ideaId: String,
+    ): VideoIdea {
+        markIdeaUsedCalls += 1
+        return ideas.first { it.id == ideaId }.copy(status = VideoIdeaStatus.USED)
     }
 }
 
@@ -803,6 +1004,11 @@ private class FakeChatRepository : ChatRepository {
     ): InfluencersPageResult = throw NotImplementedError()
     override suspend fun getInfluencer(id: String): Influencer = throw NotImplementedError()
     override suspend fun createConversation(influencerId: String): Conversation = throw NotImplementedError()
+    override suspend fun createHumanConversation(participantId: String): Conversation = throw NotImplementedError()
+    override suspend fun sendHumanMessage(
+        conversationId: String,
+        draft: SendMessageDraft,
+    ): SendMessageResult = throw NotImplementedError()
     override suspend fun getConversationsPage(
         limit: Int,
         offset: Int,
@@ -819,7 +1025,23 @@ private class FakeChatRepository : ChatRepository {
         conversationId: String,
         draft: SendMessageDraft,
     ): SendMessageResult = throw NotImplementedError()
+    override fun streamMessage(
+        conversationId: String,
+        draft: SendMessageDraft,
+    ): Flow<StreamEvent> = emptyFlow()
     override suspend fun markConversationAsRead(conversationId: String) = throw NotImplementedError()
+    override suspend fun startHumanCreatorTakeover(conversationId: String): HumanCreatorTakeoverStatus = throw NotImplementedError()
+    override suspend fun releaseHumanCreatorTakeover(conversationId: String) = throw NotImplementedError()
+    override suspend fun sendHumanCreatorMessage(
+        conversationId: String,
+        content: String,
+    ): ChatMessage = throw NotImplementedError()
+    override suspend fun getHumanCreatorTakeoverStatus(conversationId: String): HumanCreatorTakeoverStatus = throw NotImplementedError()
+    override suspend fun getCreatorConversationMessagesPage(
+        conversationId: String,
+        limit: Int,
+        offset: Int,
+    ): ConversationMessagesPageResult = throw NotImplementedError()
 }
 
 private class FakeChatAccessBillingDataSource : ChatAccessBillingDataSource {
