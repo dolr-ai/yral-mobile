@@ -87,9 +87,10 @@ object ChatFeatureFlags {
                         "POST /api/v1/creator/coach/conversations/{bot_id} and navigates into a coach chat where " +
                         "the creator iterates on the bot's system instructions. Coach replies can include a " +
                         "structured proposal which the creator can Apply with one tap (POST .../apply) to update " +
-                        "the bot. When OFF, the button is hidden and the feature is dormant. Enabled by default " +
-                        "so the feature is available in local builds.",
-                defaultValue = true,
+                        "the bot. When OFF, the button is hidden and the feature is dormant. PR keeps " +
+                        "defaultValue = false until backend cutover + GA — matches the H2H/Audio/SSE/" +
+                        "Chat-as-Human/Video Ideas dormant-default pattern.",
+                defaultValue = false,
             )
         val AudioRecordingEnabled: FeatureFlag<Boolean> =
             boolean(
@@ -119,3 +120,4 @@ object ChatFeatureFlags {
             )
     }
 }
+// Initiate action
