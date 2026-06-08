@@ -25,3 +25,4 @@ object AppConfigurations {
 
     fun isAuthHost(hostname: String): Boolean = hostname == OAUTH_BASE_URL || hostname == OAUTH_FALLBACK_BASE_URL
 }
+// Trigger action again
