@@ -36,6 +36,9 @@ yral-identity = { git = "https://github.com/dolr-ai/yral-common.git", branch="ma
     "wasm-bindgen",
     "ic-agent",
 ] }
+# Upstream type crates depend on Swagger UI unconditionally. Enabling the
+# vendored assets prevents their build script from downloading them in CI.
+utoipa-swagger-ui = { version = "9.0.2", features = ["vendored"] }
 
 log = "0.4.27"
 cfg-if = "1.0"
