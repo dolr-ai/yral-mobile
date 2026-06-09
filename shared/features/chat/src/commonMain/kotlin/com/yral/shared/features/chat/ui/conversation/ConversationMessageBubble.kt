@@ -145,10 +145,10 @@ private fun RegularBubble(
     //   1. Path lock — `markdownLockedOverride` pins Markdown vs Text for the full
     //      lifetime of a streamed message. Streaming uses the locked path and the
     //      post-`done` Remote uses the same path. No mid-stream or done-time swap.
-    //   2. Cursor isolation — the streaming cursor "▌" is rendered as a SEPARATE
-    //      composable sibling below, NOT appended to the content string. The string
-    //      passed to Markdown(...) is the cursor-free buffer so per-batch re-parses
-    //      grow only by the new token text, not by a moving trailing character.
+    //   2. Waiting state — when isStreaming is true but no content has arrived
+    //      yet, show the same YralLoadingDots used by WaitingBubble. Once content
+    //      starts streaming in, NO trailing cursor or indicator is rendered — the
+    //      live token text alone is the signal that the reply is still arriving.
     //   3. Coalescing — the VM batches tokens that arrive within ~250ms before
     //      pushing them to the streaming buffer, so this composable's content
     //      changes ~1-3 times per reply instead of once per network token.
@@ -189,13 +189,10 @@ private fun RegularBubble(
                 )
             }
         }
-        if (isStreaming) {
-            Text(
-                text = STREAMING_CURSOR,
-                style = appTypography.baseRegular,
-                color = textColor,
-                modifier = Modifier.padding(horizontal = 8.dp),
-            )
+        if (isStreaming && displayContent.isBlank()) {
+            Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                YralLoadingDots()
+            }
         }
         MessageImages(
             mediaUrls = mediaUrls,
@@ -204,8 +201,6 @@ private fun RegularBubble(
         )
     }
 }
-
-private const val STREAMING_CURSOR = "▌"
 
 @Composable
 private fun markdownTypography(appTypography: AppTopography): DefaultMarkdownTypography =
