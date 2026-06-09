@@ -18,6 +18,9 @@ class ConversationMessagesPagingSource(
         try {
             val offset = params.key ?: initialOffset ?: 0
             val limit = params.loadSize
+            Logger.i("AudioHistDiag") {
+                "PagingSource.load convId=$conversationId offset=$offset limit=$limit"
+            }
 
             val result =
                 chatRepository.getConversationMessagesPage(
@@ -25,6 +28,13 @@ class ConversationMessagesPagingSource(
                     limit = limit,
                     offset = offset,
                 )
+
+            Logger.i("AudioHistDiag") {
+                "PagingSource.load returned ${result.messages.size} messages " +
+                    "types=${result.messages.joinToString(",") { it.messageType.name }} " +
+                    "ids=${result.messages.joinToString(",") { it.id.take(8) }} " +
+                    "nextOffset=${result.nextOffset}"
+            }
 
             LoadResult.Page(
                 data = result.messages,

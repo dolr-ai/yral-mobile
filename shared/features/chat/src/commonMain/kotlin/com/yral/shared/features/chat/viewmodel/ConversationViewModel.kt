@@ -195,6 +195,10 @@ class ConversationViewModel(
                         initialOffset.value
                             .takeIf { initialOffset.value != null }
                             .also { initialOffset.value = null }
+                    Logger.i("AudioHistDiag") {
+                        "pagedHistory new Pager convId=$convId hasMoreMessages=$hasMoreMessages " +
+                            "offsetUsedForFirstFetch=$offset"
+                    }
                     Pager(
                         config = pagingConfig,
                         pagingSourceFactory = {
@@ -773,6 +777,11 @@ class ConversationViewModel(
         messageCount: Int,
     ) {
         val previousConversationId = _viewState.value.conversationId
+        Logger.i("AudioHistDiag") {
+            "setConversationId enter prevConvId=$previousConversationId newConvId=$id " +
+                "recentMessagesSize=${recentMessages.size} messageCount=$messageCount " +
+                "initialOffsetBefore=${initialOffset.value}"
+        }
 
         if (previousConversationId != id) {
             // Phase 5b: stale-while-revalidate. Hydrate `_overlay.sent` from the
@@ -832,8 +841,23 @@ class ConversationViewModel(
 
         val paginatedHistoryAvailable = messageCount > PAGE_SIZE
 
-        if (recentMessages.isNotEmpty() && paginatedHistoryAvailable) {
-            initialOffset.value = recentMessages.size
+        // Audio-history-fix (2026-06-09): always (re)assign initialOffset on
+        // every setConversationId so a stale value from a previous conversation
+        // visit can't leak through. Without this, an `initializeFromInbox` call
+        // (which always passes recentMessages = emptyList()) leaves
+        // initialOffset.value at whatever the previous conversation set it to,
+        // so the new pager starts its page-0 fetch at a non-zero offset and
+        // silently skips the most-recent messages — exactly what reproduces
+        // the "voice message + AI reply missing after inbox re-entry" symptom.
+        initialOffset.value =
+            if (recentMessages.isNotEmpty() && paginatedHistoryAvailable) {
+                recentMessages.size
+            } else {
+                null
+            }
+        Logger.i("AudioHistDiag") {
+            "setConversationId exit paginatedHistoryAvailable=$paginatedHistoryAvailable " +
+                "initialOffsetAfter=${initialOffset.value} overlaySentSize=${_overlay.value.sent.size}"
         }
 
         _viewState.update {
@@ -1191,6 +1215,12 @@ class ConversationViewModel(
         assistantLocalId: String,
         sentAtMs: Long?,
     ) {
+        Logger.i("AudioHistDiag") {
+            "handleSendSuccess userMsg id=${result.userMessage.id} type=${result.userMessage.messageType} " +
+                "hasAudioUrl=${result.userMessage.audioUrl != null} " +
+                "assistantMsg id=${result.assistantMessage?.id} type=${result.assistantMessage?.messageType} " +
+                "overlaySentBefore=${_overlay.value.sent.size}"
+        }
         val sentMessages = buildSentMessages(result.userMessage, result.assistantMessage)
         _overlay.update { state ->
             val remainingPending =
@@ -1199,6 +1229,10 @@ class ConversationViewModel(
                 pending = remainingPending,
                 sent = state.sent + sentMessages,
             )
+        }
+        Logger.i("AudioHistDiag") {
+            "handleSendSuccess overlaySentAfter=${_overlay.value.sent.size} " +
+                "sentMessagesAdded=${sentMessages.size}"
         }
 
         val convId = conversationId ?: return
