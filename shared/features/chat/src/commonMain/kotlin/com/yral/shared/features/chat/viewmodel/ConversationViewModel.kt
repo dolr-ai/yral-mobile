@@ -280,13 +280,18 @@ class ConversationViewModel(
     private val systemOverlayMessagesFlow = MutableStateFlow<List<SentMessage>>(emptyList())
 
     val overlay: StateFlow<List<ConversationMessageItem>> =
-        combine(_overlay, loadedMessageIds, systemOverlayMessagesFlow) { overlayState, loadedIds, systemMessages ->
-            val filteredSent = overlayState.sent.filterNot { it.message.id in loadedIds }
+        combine(_overlay, loadedMessageIds, systemOverlayMessagesFlow) { overlayState, _, systemMessages ->
+            // VM-level filter intentionally removed: the screen already dedups
+            // overlay vs paged history via `isDuplicateOfOverlay`. Filtering
+            // here pulled the newest sent messages OUT of overlay when the
+            // cache+page sets overlapped, dropping them onto pagedItems —
+            // which render at the visual TOP under reverseLayout=true and
+            // appear "missing" from the bottom of the conversation.
             buildList {
                 overlayState.pending.forEach { pending ->
                     add(pending.createdAtMs to ConversationMessageItem.Local(pending))
                 }
-                filteredSent.forEach { sent ->
+                overlayState.sent.forEach { sent ->
                     add(sent.insertedAtMs to ConversationMessageItem.Remote(sent.message))
                 }
                 systemMessages.forEach { sent ->
@@ -832,9 +837,20 @@ class ConversationViewModel(
 
         val paginatedHistoryAvailable = messageCount > PAGE_SIZE
 
-        if (recentMessages.isNotEmpty() && paginatedHistoryAvailable) {
-            initialOffset.value = recentMessages.size
-        }
+        // Audio-history-fix: always (re)assign initialOffset on every
+        // setConversationId so a stale value from a previous conversation
+        // visit can't leak through. Without this, an `initializeFromInbox`
+        // call (which always passes recentMessages = emptyList()) leaves
+        // initialOffset.value at whatever the previous conversation set it
+        // to, so the new pager starts page 0 at a non-zero offset and
+        // silently skips the most-recent messages — reproducing as
+        // "voice message + AI reply missing after inbox re-entry".
+        initialOffset.value =
+            if (recentMessages.isNotEmpty() && paginatedHistoryAvailable) {
+                recentMessages.size
+            } else {
+                null
+            }
 
         _viewState.update {
             it.copy(
@@ -1732,11 +1748,10 @@ class ConversationViewModel(
                                         }
                                         state.copy(pending = newPending, sent = newSent)
                                     }
-                                    // NOTE: do NOT pre-add msg.id to loadedMessageIds here. The combine
-                                    // block's `filteredSent = state.sent.filterNot { id in loadedIds }`
-                                    // would immediately hide the Remote we just inserted, since loadedIds
-                                    // is the "already paged in" set. The natural paging cycle adds the
-                                    // id once paging hydrates the message; that's when dedup kicks in.
+                                    // NOTE: do NOT pre-add msg.id to loadedMessageIds here. Let the
+                                    // natural paging cycle add the id once paging hydrates the message;
+                                    // dedup against the overlay then happens at the screen layer via
+                                    // `isDuplicateOfOverlay`.
 
                                     // Reconcile the optimistic USER Local: the SSE `done` event only
                                     // carries the assistant message (per docs/SSE-PROTOCOL.md), so the
