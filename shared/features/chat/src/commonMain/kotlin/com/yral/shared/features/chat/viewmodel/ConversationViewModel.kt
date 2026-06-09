@@ -1020,6 +1020,10 @@ class ConversationViewModel(
         loadedMessageIds.value = emptySet()
         initialOffset.value = null
         historyRefreshTrigger.value = 0
+        // Cross-conv leak fix: clear paged-history snapshot so the debounced
+        // cache writer can't compose (new convId, stale prev-conv history)
+        // and poison the new conversation's cache before its own paging arrives.
+        lastHistorySnapshot.value = emptyList()
         stopTakeoverPolling()
         stopCountdownTicker()
         // Phase 7: tear down any in-flight stream and drop queued sends. The
