@@ -186,14 +186,22 @@ private class IosPlaybackCoordinator(
     override fun setActiveIndex(index: Int) {
         if (index !in feed.indices) return
         if (userInteracting) {
-            // currentPage flips at the 50% crossing, mid-drag/mid-fling. Pausing, attaching
-            // AVPlayerViewController players, and replacing player items here blocks the main
-            // thread inside the scroll animation. Defer to flushPendingActivation() on settle;
-            // later emissions (e.g. bounce-back) just overwrite the pending index.
+            // currentPage flips at the 50% crossing, mid-drag/mid-fling. Attaching
+            // AVPlayerViewController players and replacing player items here blocks the main
+            // thread inside the scroll animation, so activation defers to
+            // flushPendingActivation() on settle; later emissions (e.g. bounce-back) just
+            // overwrite the pending index. pause() is cheap, so the outgoing video is
+            // silenced right at the crossing instead of playing on until settle.
+            if (index != activeIndex) {
+                activeSlot.player.pause()
+            }
             pendingActiveIndex = index
             return
         }
         if (index == activeIndex && activeSlot.index == index) {
+            // Re-activating the page we never left (settle after a bounce-back): undo the
+            // gesture-window pause. A no-op for already-playing re-emissions.
+            activeSlot.player.playImmediatelyAtRate(1.0F)
             enforceSingleActivePlayback()
             return
         }
@@ -580,7 +588,13 @@ private class IosPlaybackCoordinator(
                     // replaceCurrentItemWithPlayerItem can block the main thread tearing down
                     // the old one. Same item => the notification filter above keeps matching.
                     activeSlot.player.seekToTime(CMTimeMake(value = 0, timescale = 1))
-                    activeSlot.player.playImmediatelyAtRate(1.0F)
+                    // An end notification can land just after the gesture-window pause that
+                    // silences a video the user is scrolling away from — don't resurrect it.
+                    val departing =
+                        userInteracting && pendingActiveIndex != null && pendingActiveIndex != index
+                    if (!departing) {
+                        activeSlot.player.playImmediatelyAtRate(1.0F)
+                    }
                 }
             }
     }

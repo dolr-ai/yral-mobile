@@ -19,7 +19,6 @@ import platform.AVFoundation.AVLayerVideoGravityResizeAspect
 import platform.AVFoundation.AVLayerVideoGravityResizeAspectFill
 import platform.AVFoundation.AVPlayer
 import platform.AVFoundation.AVPlayerItem
-import platform.AVFoundation.AVPlayerItemStatusReadyToPlay
 import platform.AVFoundation.AVPlayerTimeControlStatusPlaying
 import platform.AVFoundation.addPeriodicTimeObserverForInterval
 import platform.AVFoundation.currentItem
@@ -134,15 +133,13 @@ actual fun VideoSurface(
                     showShutter = true
                 }
                 if (currentPlayer.timeControlStatus == AVPlayerTimeControlStatusPlaying) {
-                    val itemReady =
-                        currentPlayer.currentItem?.status == AVPlayerItemStatusReadyToPlay
-                    if (itemReady) {
+                    // ReadyToPlay fires before the layer composites its first frame after a
+                    // fresh player attach, which used to drop the thumbnail onto a black view.
+                    // Advancing playback time is the only proof frames are rendering (same
+                    // heuristic as the coordinator's first-frame poll).
+                    val seconds = CMTimeGetSeconds(currentPlayer.currentTime())
+                    if (seconds > 0.01) {
                         showShutter = false
-                    } else {
-                        val seconds = CMTimeGetSeconds(currentPlayer.currentTime())
-                        if (seconds > 0.01) {
-                            showShutter = false
-                        }
                     }
                 }
             }
@@ -181,5 +178,5 @@ private fun videoGravityFor(contentScale: ContentScale): String? =
         else -> AVLayerVideoGravityResizeAspect
     }
 
-private const val SHUTTER_OBSERVER_INTERVAL_SECONDS = 0.2
+private const val SHUTTER_OBSERVER_INTERVAL_SECONDS = 0.1
 private const val PREFERRED_TIME_SCALE = 600
