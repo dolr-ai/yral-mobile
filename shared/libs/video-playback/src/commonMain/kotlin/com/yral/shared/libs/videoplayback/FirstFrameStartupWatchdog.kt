@@ -11,9 +11,10 @@ internal data class FirstFrameStartupWatchdogConfig(
     // A gentle re-play nudge fires after this long if no first frame has rendered.
     val resumeTimeoutMs: Long = 1_500,
     // The destructive rebuild (replace item + restart from zero) only fires this long AFTER
-    // the resume nudge. Kept large so a slow-but-progressing video is never reset to zero;
-    // it now triggers ~7.5s after startup, i.e. only for genuinely wedged players.
-    val rebuildTimeoutMs: Long = 6_000,
+    // the resume nudge, i.e. ~4s after startup. With the prefetch cache and stable
+    // coordinator, a healthy video renders its first frame well under 2s, so anything still
+    // blank at 4s is genuinely wedged and retrying sooner beats making the user wait.
+    val rebuildTimeoutMs: Long = 2_500,
     val maxRebuildAttempts: Int = 1,
 )
 

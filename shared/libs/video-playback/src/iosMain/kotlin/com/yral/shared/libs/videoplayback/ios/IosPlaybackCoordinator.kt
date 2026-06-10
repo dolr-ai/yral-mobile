@@ -186,14 +186,28 @@ private class IosPlaybackCoordinator(
     override fun setActiveIndex(index: Int) {
         if (index !in feed.indices) return
         if (userInteracting) {
-            // currentPage flips at the 50% crossing, mid-drag/mid-fling. Attaching
-            // AVPlayerViewController players and replacing player items here blocks the main
-            // thread inside the scroll animation, so activation defers to
-            // flushPendingActivation() on settle; later emissions (e.g. bounce-back) just
-            // overwrite the pending index. pause() is cheap, so the outgoing video is
-            // silenced right at the crossing instead of playing on until settle.
+            // currentPage flips at the 50% crossing, mid-drag/mid-fling. Replacing player
+            // items here blocks the main thread inside the scroll animation, so full
+            // activation defers to flushPendingActivation() on settle. Bare pause()/play()
+            // calls are cheap though: the outgoing video is silenced at the crossing, and
+            // when the target is the already-prepared next video it starts playing right
+            // away (its item is loaded and prerolled; attach happened at the previous
+            // settle via schedulePreparedSlot).
+            val prepared = preparedSlot
             if (index != activeIndex) {
                 activeSlot.player.pause()
+                if (prepared?.index == index && !appInBackground) {
+                    attachIfBound(prepared)
+                    prepared.player.playImmediatelyAtRate(1.0F)
+                } else {
+                    prepared?.player?.pause()
+                }
+            } else {
+                // Rocked back across the 50% line: swap audio back.
+                prepared?.player?.pause()
+                if (!appInBackground) {
+                    activeSlot.player.playImmediatelyAtRate(1.0F)
+                }
             }
             pendingActiveIndex = index
             return
@@ -355,6 +369,10 @@ private class IosPlaybackCoordinator(
                 prepareSlot(prepared, nextIndex, shouldPlay = false)
             }
             prepared.player.pause()
+            // Attach now (settle time) so an early play at the next 50% crossing shows
+            // video immediately — bindSurface ran before this slot was prepared, so nothing
+            // else attaches the prepared player until the swap.
+            attachIfBound(prepared)
             preparedScheduler.setStartTime(nowMs())
             enforceSingleActivePlayback()
         }
@@ -464,8 +482,14 @@ private class IosPlaybackCoordinator(
         }
         val prepared = preparedSlot
         if (prepared != null) {
-            prepared.player.pause()
             val preparedIndex = prepared.index
+            // Mid-gesture this runs from bindSurface as new pages compose; it must not pause
+            // a prepared player that setActiveIndex early-started at the 50% crossing.
+            val earlyPlaying =
+                userInteracting && preparedIndex != null && preparedIndex == pendingActiveIndex
+            if (!earlyPlaying) {
+                prepared.player.pause()
+            }
             if (preparedIndex != null && preparedIndex == activeIndex) {
                 detachSurface(preparedIndex, prepared.player)
             }
@@ -579,6 +603,9 @@ private class IosPlaybackCoordinator(
                 `object` = null,
                 queue = null,
             ) { notification ->
+                if (resumeEarlyPlayingPreparedAtEnd(notification?.`object`)) {
+                    return@addObserverForName
+                }
                 val current = activeSlot.player.currentItem
                 if (notification?.`object` == current) {
                     val index = activeSlot.index ?: return@addObserverForName
@@ -597,6 +624,21 @@ private class IosPlaybackCoordinator(
                     }
                 }
             }
+    }
+
+    // An early-played prepared video (started at the 50% crossing) that reaches its end
+    // before settle would otherwise park at its last frame with no recovery — the
+    // end-notification's active-player match ignores it.
+    @Suppress("ReturnCount")
+    @OptIn(ExperimentalForeignApi::class)
+    private fun resumeEarlyPlayingPreparedAtEnd(endedObject: Any?): Boolean {
+        if (!userInteracting) return false
+        val prepared = preparedSlot ?: return false
+        val earlyPlaying = prepared.index != null && prepared.index == pendingActiveIndex
+        if (!earlyPlaying || endedObject != prepared.player.currentItem) return false
+        prepared.player.seekToTime(CMTimeMake(value = 0, timescale = 1))
+        prepared.player.playImmediatelyAtRate(1.0F)
+        return true
     }
 
     private fun startPolling() {
@@ -662,7 +704,13 @@ private class IosPlaybackCoordinator(
                     idAt = { feed.getOrNull(it)?.id },
                 ) {
                     prepared.player.prerollAtRate(1.0F) { _ ->
-                        if (prepared.index == preparedIndex) {
+                        // A late completion must not pause a player that has since started
+                        // for real: early play at the crossing (pendingActiveIndex) or a
+                        // slot swap that promoted it to active.
+                        if (prepared.index == preparedIndex &&
+                            preparedIndex != pendingActiveIndex &&
+                            preparedIndex != activeIndex
+                        ) {
                             prepared.player.pause()
                         }
                     }
