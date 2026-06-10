@@ -29,6 +29,9 @@ import platform.Foundation.downloadTaskWithRequest
 import platform.Foundation.downloadTaskWithURL
 import platform.Foundation.setValue
 import platform.Foundation.timeIntervalSince1970
+import platform.darwin.DISPATCH_QUEUE_PRIORITY_BACKGROUND
+import platform.darwin.dispatch_async
+import platform.darwin.dispatch_get_global_queue
 
 @OptIn(ExperimentalForeignApi::class)
 internal class IosDownloadCache(
@@ -222,8 +225,14 @@ internal class IosDownloadCache(
 
     private fun touch(url: NSURL) {
         val path = url.path ?: return
-        val attributes: Map<Any?, *> = mapOf(NSFileModificationDate to NSDate())
-        fileManager.setAttributes(attributes, ofItemAtPath = path, error = null)
+        val manager = fileManager
+        // LRU bookkeeping only; the result is not needed to build the player item. cachedFileUrl()
+        // is called on the main thread during scroll, so keep this disk write off it. A slightly
+        // stale mtime is harmless: trimToSize() only runs after downloads complete, not on this path.
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND.toLong(), 0UL)) {
+            val attributes: Map<Any?, *> = mapOf(NSFileModificationDate to NSDate())
+            manager.setAttributes(attributes, ofItemAtPath = path, error = null)
+        }
     }
 
     private data class PendingCallback(

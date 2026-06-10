@@ -39,8 +39,10 @@ import platform.AVFoundation.prerollAtRate
 import platform.AVFoundation.rate
 import platform.AVFoundation.reasonForWaitingToPlay
 import platform.AVFoundation.replaceCurrentItemWithPlayerItem
+import platform.AVFoundation.seekToTime
 import platform.AVFoundation.timeControlStatus
 import platform.CoreMedia.CMTimeGetSeconds
+import platform.CoreMedia.CMTimeMake
 import platform.Foundation.NSNotificationCenter
 import platform.Foundation.NSRunLoop
 import platform.Foundation.NSRunLoopCommonModes
@@ -77,6 +79,8 @@ private class IosPlaybackCoordinator(
     private var predictedIndex: Int = -1
     private var userInteracting: Boolean = false
     private var pendingDiskPrefetchCenterIndex: Int? = null
+    private var pendingActiveIndex: Int? = null
+    private var appInBackground: Boolean = false
 
     private val playStartMsById = mutableMapOf<String, Long>()
     private var firstFramePendingIndex: Int? = null
@@ -155,25 +159,40 @@ private class IosPlaybackCoordinator(
             preparedSlot?.index = null
             preparedSlot?.source = null
             pendingDiskPrefetchCenterIndex = null
+            pendingActiveIndex = null
             return
         }
 
+        // A pager-derived pending activation outlives a feed replacement: the pager will not
+        // re-emit the page it already rests on, so it must win over the alignment's target.
+        pendingActiveIndex = pendingActiveIndex?.takeIf { items.isNotEmpty() }?.coerceIn(0, items.lastIndex)
         alignment.nextActiveIndex?.let { targetIndex ->
             activeIndex = -1
-            setActiveIndex(targetIndex)
+            val target = pendingActiveIndex ?: targetIndex
+            pendingActiveIndex = null
+            setActiveIndex(target)
         }
     }
 
     override fun appendFeed(items: List<MediaDescriptor>) {
         if (items.isEmpty()) return
         feed = feed + items
-        if (activeIndex == -1 && feed.isNotEmpty()) {
+        if (activeIndex == -1 && pendingActiveIndex == null && feed.isNotEmpty()) {
             setActiveIndex(0)
         }
     }
 
+    @Suppress("ReturnCount")
     override fun setActiveIndex(index: Int) {
         if (index !in feed.indices) return
+        if (userInteracting) {
+            // currentPage flips at the 50% crossing, mid-drag/mid-fling. Pausing, attaching
+            // AVPlayerViewController players, and replacing player items here blocks the main
+            // thread inside the scroll animation. Defer to flushPendingActivation() on settle;
+            // later emissions (e.g. bounce-back) just overwrite the pending index.
+            pendingActiveIndex = index
+            return
+        }
         if (index == activeIndex && activeSlot.index == index) {
             enforceSingleActivePlayback()
             return
@@ -219,14 +238,26 @@ private class IosPlaybackCoordinator(
     override fun setUserInteracting(isInteracting: Boolean) {
         if (userInteracting == isInteracting) return
         userInteracting = isInteracting
-        if (isInteracting) {
-            cancelPrefetch(reason = "interaction")
-        } else {
+        // In-flight cache downloads survive touch-down on purpose: cancelling them per gesture
+        // meant the cache never filled during continuous scrolling. New starts stay deferred
+        // while interacting (scheduleDiskPrefetch).
+        if (!isInteracting) {
+            flushPendingActivation()
             pendingDiskPrefetchCenterIndex?.let { centerIndex ->
                 pendingDiskPrefetchCenterIndex = null
                 scheduleDiskPrefetch(centerIndex)
             }
         }
+    }
+
+    private fun flushPendingActivation() {
+        if (appInBackground) return
+        val pending = pendingActiveIndex ?: return
+        pendingActiveIndex = null
+        // The activation schedules prefetch around the settled index; drop any stale predicted
+        // center from mid-gesture scroll hints so it can't shift the window afterwards.
+        pendingDiskPrefetchCenterIndex = null
+        setActiveIndex(pending)
     }
 
     override fun bindSurface(
@@ -266,6 +297,15 @@ private class IosPlaybackCoordinator(
     }
 
     override fun onAppForeground() {
+        appInBackground = false
+        if (!userInteracting) {
+            val pending = pendingActiveIndex
+            if (pending != null && pending != activeIndex) {
+                flushPendingActivation()
+                return
+            }
+            pendingActiveIndex = null
+        }
         if (activeSlot.index in feed.indices) {
             activeSlot.player.playImmediatelyAtRate(1.0F)
             enforceSingleActivePlayback()
@@ -273,6 +313,9 @@ private class IosPlaybackCoordinator(
     }
 
     override fun onAppBackground() {
+        // Keep pendingActiveIndex: a late isScrollInProgress=false emission must not start
+        // playback while backgrounded; onAppForeground flushes it instead.
+        appInBackground = true
         activeSlot.player.pause()
         preparedSlot?.player?.pause()
         cancelPrefetch(reason = "background")
@@ -288,6 +331,7 @@ private class IosPlaybackCoordinator(
         preparedSlot?.player?.pause()
         cancelPrefetch(reason = "release")
         pendingDiskPrefetchCenterIndex = null
+        pendingActiveIndex = null
         cache.close()
         preparedScheduler.reset("release") { feed.getOrNull(it)?.id }
         firstFrameStartupWatchdog.clear()
@@ -487,6 +531,7 @@ private class IosPlaybackCoordinator(
         )
     }
 
+    @OptIn(ExperimentalForeignApi::class)
     private fun registerObservers() {
         val center = NSNotificationCenter.defaultCenter
 
@@ -531,16 +576,11 @@ private class IosPlaybackCoordinator(
                     val index = activeSlot.index ?: return@addObserverForName
                     val item = feed.getOrNull(index) ?: return@addObserverForName
                     reporter.playbackEnded(item.id, index)
-                    val replacementBuild = buildPlayerItem(item, index)
-                    val replacement = replacementBuild.item
-                    replacement.preferredForwardBufferDuration = 1.0
-                    activeSlot.source = replacementBuild.source
-                    activeSlot.player.replaceCurrentItemWithPlayerItem(replacement)
+                    // Loop by seeking back: rebuilding the item re-streams the asset and
+                    // replaceCurrentItemWithPlayerItem can block the main thread tearing down
+                    // the old one. Same item => the notification filter above keeps matching.
+                    activeSlot.player.seekToTime(CMTimeMake(value = 0, timescale = 1))
                     activeSlot.player.playImmediatelyAtRate(1.0F)
-                    enforceSingleActivePlayback()
-                    firstFramePendingIndex = index
-                    firstFrameStartupWatchdog.start(index, nowMs())
-                    playStartMsById[item.id] = nowMs()
                 }
             }
     }
@@ -559,9 +599,10 @@ private class IosPlaybackCoordinator(
         NSRunLoop.mainRunLoop.addTimer(pollTimer!!, NSRunLoopCommonModes)
     }
 
-    @Suppress("CyclomaticComplexMethod", "MagicNumber")
+    @Suppress("CyclomaticComplexMethod", "MagicNumber", "ReturnCount")
     @OptIn(ExperimentalForeignApi::class)
     private fun pollPlaybackState() {
+        if (userInteracting) return
         val index = activeSlot.index ?: return
         val item = feed.getOrNull(index) ?: return
 
@@ -816,6 +857,6 @@ private class IosPlaybackCoordinator(
 
     private companion object {
         private const val IOS_PLAYBACK_CODE = "ios"
-        private const val MAX_SCROLL_SETTLED_PREFETCH_STARTS = 1
+        private const val MAX_SCROLL_SETTLED_PREFETCH_STARTS = 3
     }
 }
