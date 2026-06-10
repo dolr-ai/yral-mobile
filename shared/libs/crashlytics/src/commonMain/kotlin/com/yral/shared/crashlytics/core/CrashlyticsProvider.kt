@@ -14,6 +14,7 @@ interface CrashlyticsProvider {
 
 enum class ExceptionType {
     UNKNOWN,
+    VIDEO,
     RUST,
     AUTH,
     FEED,

@@ -31,6 +31,7 @@ class MediaLoadCrashlyticsReporterTest {
         assertTrue(exception.message.orEmpty().contains("source=image_load"))
         assertTrue(exception.message.orEmpty().contains("media_id=video-id"))
         assertTrue(exception.message.orEmpty().contains("index=3"))
+        assertEquals(listOf(ExceptionType.VIDEO), provider.recordedTypes)
     }
 
     @Test
@@ -60,6 +61,7 @@ class MediaLoadCrashlyticsReporterTest {
         assertTrue(exception.message.orEmpty().contains("url=https://cdn-yral-sfw.yral.com/user/video-id.mp4"))
         assertTrue(exception.message.orEmpty().contains("code=403"))
         assertTrue(exception.message.orEmpty().contains("category=ERROR_CODE_IO_BAD_HTTP_STATUS"))
+        assertEquals(listOf(ExceptionType.VIDEO), provider.recordedTypes)
     }
 
     @Test
@@ -95,6 +97,7 @@ class MediaLoadCrashlyticsReporterTest {
         assertTrue(exception.message.orEmpty().contains("code=1003"))
         assertTrue(exception.message.orEmpty().contains("first_frame_pending=true"))
         assertTrue(exception.message.orEmpty().contains("message=Unexpected runtime error"))
+        assertEquals(listOf(ExceptionType.VIDEO), provider.recordedTypes)
     }
 
     @Test
@@ -130,14 +133,17 @@ class MediaLoadCrashlyticsReporterTest {
         assertTrue(exception.message.orEmpty().contains("source=prefetch"))
         assertTrue(exception.message.orEmpty().contains("category=error"))
         assertTrue(exception.message.orEmpty().contains("message=Prefetch timed out"))
+        assertEquals(listOf(ExceptionType.VIDEO), provider.recordedTypes)
     }
 
     private class RecordingCrashlyticsProvider : CrashlyticsProvider {
         override val name: String = "recording"
         val recordedExceptions = mutableListOf<Exception>()
+        val recordedTypes = mutableListOf<ExceptionType>()
 
         override fun recordException(exception: Exception) {
             recordedExceptions += exception
+            recordedTypes += ExceptionType.UNKNOWN
         }
 
         override fun recordException(
@@ -145,6 +151,7 @@ class MediaLoadCrashlyticsReporterTest {
             type: ExceptionType,
         ) {
             recordedExceptions += exception
+            recordedTypes += type
         }
 
         override fun logMessage(message: String) = Unit

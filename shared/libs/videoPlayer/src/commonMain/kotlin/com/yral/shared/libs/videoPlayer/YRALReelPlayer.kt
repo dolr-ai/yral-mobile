@@ -86,16 +86,19 @@ fun YRALReelPlayer(
             didVideoEnd = didVideoEnd,
             recordTime = recordTime,
         )
+    // Read the latest media items without changing the reporter's identity. The reporter,
+    // deps, and coordinator must stay STABLE across feed appends: a growing mediaItems list
+    // on pagination must not recreate the coordinator (which owns the AVPlayers, the poll
+    // timer, and the download cache). Recreating it mid-scroll restarts/desyncs playback.
+    val currentMediaItems by rememberUpdatedState(mediaItems)
     val reporter =
-        remember(baseReporter, mediaItems, mediaLoadCrashlyticsReporter) {
+        remember(baseReporter, mediaLoadCrashlyticsReporter, yralLogger) {
             FirebasePerfPlaybackReporter(baseReporter)
-                .withCrashlytics(mediaLoadCrashlyticsReporter) { index -> mediaItems.getOrNull(index) }
+                .withCrashlytics(mediaLoadCrashlyticsReporter) { index -> currentMediaItems.getOrNull(index) }
                 .withLogging(yralLogger = yralLogger, enabled = false)
         }
-    val coordinator =
-        rememberPlaybackCoordinatorWithLifecycle(
-            deps = CoordinatorDeps(reporter = reporter),
-        )
+    val deps = remember(reporter) { CoordinatorDeps(reporter = reporter) }
+    val coordinator = rememberPlaybackCoordinatorWithLifecycle(deps = deps)
     VideoFeedSync(items = mediaItems, coordinator = coordinator)
     VideoPagerEffects(
         pagerState = pagerState,
