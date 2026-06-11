@@ -147,10 +147,16 @@ fun CoachScreen(
             CoachErrorBanner(error = err, onDismiss = { viewModel.clearError() })
         }
 
-        if (viewState.canRequestSave) {
+        // Coach pivot 2026-06-11 (Bucket 1 Item 2) — Save is now gated on
+        // the backend-computed `pending_proposal_exists` flag (PR-4),
+        // not on "any creator message exists." Before this, tapping Save
+        // when there was nothing actionable triggered a confusing
+        // LLM round-trip; now the button is hidden until there is
+        // something concrete to save.
+        if (viewState.pendingProposalExists) {
             CoachSaveButton(
                 botName = viewState.botName,
-                enabled = !viewState.isCoachThinking,
+                enabled = !viewState.isCoachThinking && !viewState.isApplying,
                 onSave = { viewModel.requestSaveProposal() },
             )
         }

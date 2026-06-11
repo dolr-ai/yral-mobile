@@ -40,6 +40,11 @@ data class SendCoachMessageRequestDto(
 data class SendCoachMessageResponseDto(
     @SerialName("creator_message") val creatorMessage: CoachMessageDto,
     @SerialName("coach_message") val coachMessage: CoachMessageDto,
+    // PR-4 (2026-06-11) — mobile gates the Save button on this. Backend
+    // computes against post-turn state so a proposal emitted this turn
+    // is reflected immediately. Defaulting to `false` keeps older
+    // backends backward-compatible.
+    @SerialName("pending_proposal_exists") val pendingProposalExists: Boolean = false,
 )
 
 @Serializable
@@ -57,4 +62,8 @@ data class ListCoachMessagesResponseDto(
     @SerialName("coach_conversation_id") val coachConversationId: String,
     @SerialName("messages") val messages: List<CoachMessageDto>,
     @SerialName("total") val total: Int,
+    // PR-4 (2026-06-11) — present on session reload so the Save button
+    // shows the correct state without scanning every message for an
+    // unapplied proposal. Defaults to `false` for older backends.
+    @SerialName("pending_proposal_exists") val pendingProposalExists: Boolean = false,
 )

@@ -3,6 +3,7 @@ package com.yral.shared.features.coach.data.models
 import com.yral.shared.features.coach.domain.models.ApplyCoachProposalResult
 import com.yral.shared.features.coach.domain.models.CoachMessage
 import com.yral.shared.features.coach.domain.models.CoachMessageRole
+import com.yral.shared.features.coach.domain.models.CoachMessagesPage
 import com.yral.shared.features.coach.domain.models.CoachSession
 import com.yral.shared.features.coach.domain.models.SendCoachMessageResult
 
@@ -32,6 +33,7 @@ fun SendCoachMessageResponseDto.toDomain(): SendCoachMessageResult =
     SendCoachMessageResult(
         creatorMessage = creatorMessage.toDomain(),
         coachMessage = coachMessage.toDomain(),
+        pendingProposalExists = pendingProposalExists,
     )
 
 fun ApplyCoachProposalResponseDto.toDomain(): ApplyCoachProposalResult =
@@ -44,4 +46,8 @@ fun ApplyCoachProposalResponseDto.toDomain(): ApplyCoachProposalResult =
         receiptMessage = receiptMessage?.toDomain(),
     )
 
-fun ListCoachMessagesResponseDto.toDomain(): List<CoachMessage> = messages.map { it.toDomain() }
+fun ListCoachMessagesResponseDto.toDomain(): CoachMessagesPage =
+    CoachMessagesPage(
+        messages = messages.map { it.toDomain() },
+        pendingProposalExists = pendingProposalExists,
+    )

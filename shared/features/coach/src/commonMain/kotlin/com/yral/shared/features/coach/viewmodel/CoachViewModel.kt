@@ -74,6 +74,10 @@ class CoachViewModel(
                 showApplyConfirm = false,
                 showStartOverConfirm = false,
                 lastAppliedToastMessage = null,
+                // PR-4 — fresh session has no proposal until the backend
+                // says so; loadHistoryAndFinishLoading will set this from
+                // the list-messages response.
+                pendingProposalExists = false,
                 isSessionLoading = true,
                 error = null,
             )
@@ -107,13 +111,21 @@ class CoachViewModel(
 
     private suspend fun loadHistoryAndFinishLoading(coachConversationId: String) {
         listCoachMessagesUseCase(coachConversationId)
-            .onSuccess { messages ->
+            .onSuccess { page ->
                 _viewState.update {
                     // Guard against late responses after Start over.
                     if (it.coachConversationId != coachConversationId) {
                         it
                     } else {
-                        it.copy(pending = messages, isSessionLoading = false)
+                        it.copy(
+                            pending = page.messages,
+                            // PR-4 (2026-06-11) — session reload drives the
+                            // Save button gate. Without this, returning to
+                            // a conversation that has a pending proposal
+                            // would show no Save button until the next send.
+                            pendingProposalExists = page.pendingProposalExists,
+                            isSessionLoading = false,
+                        )
                     }
                 }
             }.onFailure { error ->
@@ -194,6 +206,10 @@ class CoachViewModel(
                         pending = mapped,
                         pendingCoachPlaceholderId = null,
                         isCoachThinking = false,
+                        // PR-4 (2026-06-11) — backend-computed against
+                        // post-turn state, so a proposal emitted this
+                        // turn flips the Save button on immediately.
+                        pendingProposalExists = result.pendingProposalExists,
                     )
                 }
             }.onFailure { error ->
@@ -232,6 +248,9 @@ class CoachViewModel(
                             pending = updatedPending,
                             isApplying = false,
                             lastAppliedToastMessage = "Updated ${state.botName ?: "your AI Influencer"}'s personality.",
+                            // PR-4 — apply succeeded, no more pending
+                            // proposal until the creator chats more.
+                            pendingProposalExists = false,
                         )
                     }
                 }.onFailure { error ->
@@ -288,6 +307,13 @@ data class CoachViewState(
     val showStartOverConfirm: Boolean = false,
     val isApplying: Boolean = false,
     val lastAppliedToastMessage: String? = null,
+    /**
+     * PR-4 (2026-06-11) — backend-computed flag from message-list and
+     * send-message responses. Drives the Save-button gate: button is
+     * hidden when false so the creator can't tap Save with nothing to
+     * save (which used to trigger a "mystery LLM round-trip").
+     */
+    val pendingProposalExists: Boolean = false,
     val error: CoachError? = null,
 ) {
     val activeProposalMessage: CoachMessage?
@@ -305,8 +331,6 @@ data class CoachViewState(
             return firstCoach?.suggestions.orEmpty()
         }
 
-    val canRequestSave: Boolean
-        get() = pending.any { it.role == CoachMessageRole.CREATOR }
 }
 
 sealed class CoachError {
