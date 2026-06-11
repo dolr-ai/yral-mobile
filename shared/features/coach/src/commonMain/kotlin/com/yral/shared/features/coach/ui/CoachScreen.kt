@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.yral.shared.features.coach.domain.models.CoachMessage
 import com.yral.shared.features.coach.domain.models.CoachMessageRole
+import com.yral.shared.features.coach.domain.models.ProposalStatus
 import com.yral.shared.features.coach.nav.CoachComponent
 import com.yral.shared.features.coach.nav.OpenCoachParams
 import com.yral.shared.features.coach.viewmodel.CoachError
@@ -70,10 +71,12 @@ import yral_mobile.shared.features.coach.generated.resources.coach_header_hint
 import yral_mobile.shared.features.coach.generated.resources.coach_input_placeholder
 import yral_mobile.shared.features.coach.generated.resources.coach_loading_session
 import yral_mobile.shared.features.coach.generated.resources.coach_proposal_applied
+import yral_mobile.shared.features.coach.generated.resources.coach_continue_coaching
+import yral_mobile.shared.features.coach.generated.resources.coach_im_done_for_now
 import yral_mobile.shared.features.coach.generated.resources.coach_proposal_apply_cta
+import yral_mobile.shared.features.coach.generated.resources.coach_proposal_discarded_apply
+import yral_mobile.shared.features.coach.generated.resources.coach_proposal_superseded_subtitle
 import yral_mobile.shared.features.coach.generated.resources.coach_proposal_card_title
-import yral_mobile.shared.features.coach.generated.resources.coach_save_cta
-import yral_mobile.shared.features.coach.generated.resources.coach_save_cta_generic
 import yral_mobile.shared.features.coach.generated.resources.coach_screen_title
 import yral_mobile.shared.features.coach.generated.resources.coach_send
 import yral_mobile.shared.features.coach.generated.resources.coach_send_failed
@@ -136,7 +139,12 @@ fun CoachScreen(
                     messages = viewState.pending,
                     isCoachThinking = viewState.isCoachThinking,
                     activeProposalMessageId = viewState.activeProposalMessage?.id,
+                    activeProposalLockedBySend = viewState.activeProposalLockedBySend,
                     openingSuggestions = viewState.openingSuggestions,
+                    showPostApplyCtaPair = viewState.showPostApplyCtaPair,
+                    onApplyClick = { viewModel.requestApplyProposal() },
+                    onContinueCoaching = { viewModel.dismissPostApplyCtas() },
+                    onImDoneForNow = { component.onBack() },
                     onSuggestionTap = { suggestion -> viewModel.sendMessage(suggestion) },
                 )
             }
@@ -146,26 +154,26 @@ fun CoachScreen(
             CoachErrorBanner(error = err, onDismiss = { viewModel.clearError() })
         }
 
-        // Coach pivot 2026-06-12 (Bucket 1 Items 2 + 3 unified) — Save
-        // IS the apply now. Gated on backend-computed
-        // `pending_proposal_exists` (PR-4) so the button only shows
-        // when there's a concrete proposal to commit, and tapping it
-        // opens the existing apply-confirm dialog → /apply with the
-        // proposal_id of the active card (PR-3). The standalone Apply
-        // button that used to sit on the proposal card was removed in
-        // the same change — two-button confusion gone.
-        if (viewState.pendingProposalExists) {
-            CoachSaveButton(
-                botName = viewState.botName,
-                enabled = !viewState.isCoachThinking && !viewState.isApplying,
-                onSave = { viewModel.requestApplyProposal() },
+        // Per Rishi 2026-06-12 evening — bottom Save button removed
+        // entirely. The single save affordance is the inline Apply
+        // button on the proposal card (rendered by CoachProposalCard).
+        // Two buttons doing the same thing was redundant; the inline
+        // Apply is where the creator's eye lands when reading the
+        // proposal anyway.
+
+        // Per Rishi — post-apply, the CTA pair ("Continue coaching"
+        // / "I'm done for now") is a forced decision moment, so the
+        // input area HIDES until the creator picks. Otherwise the
+        // chat surface shows two competing affordances (CTAs vs.
+        // "just keep typing") and the creator doesn't know which
+        // path is "correct." Tapping Continue brings the input
+        // back; tapping I'm done navigates away.
+        if (!viewState.showPostApplyCtaPair) {
+            CoachInputArea(
+                onSend = { text -> viewModel.sendMessage(text) },
+                enabled = viewState.coachConversationId != null && !viewState.isCoachThinking,
             )
         }
-
-        CoachInputArea(
-            onSend = { text -> viewModel.sendMessage(text) },
-            enabled = viewState.coachConversationId != null && !viewState.isCoachThinking,
-        )
     }
 
     if (viewState.showApplyConfirm) {
@@ -311,11 +319,19 @@ private fun CoachMessagesList(
     messages: List<CoachMessage>,
     isCoachThinking: Boolean,
     activeProposalMessageId: String?,
+    activeProposalLockedBySend: Boolean,
     openingSuggestions: List<String>,
+    showPostApplyCtaPair: Boolean,
+    onApplyClick: () -> Unit,
+    onContinueCoaching: () -> Unit,
+    onImDoneForNow: () -> Unit,
     onSuggestionTap: (String) -> Unit,
 ) {
     val listState = rememberLazyListState()
-    val rowCount = messages.size + if (openingSuggestions.isNotEmpty()) 1 else 0
+    val rowCount =
+        messages.size +
+            (if (openingSuggestions.isNotEmpty()) 1 else 0) +
+            (if (showPostApplyCtaPair) 1 else 0)
     LaunchedEffect(rowCount) {
         if (rowCount > 0) listState.animateScrollToItem(rowCount - 1)
     }
@@ -328,14 +344,37 @@ private fun CoachMessagesList(
             items = messages,
             key = { it.id },
         ) { msg ->
+            // Per Rishi 2026-06-12 evening — when the user has typed
+            // again since this proposal arrived (locked-by-send), the
+            // proposal is treated as stale for UI purposes: card
+            // collapses to its read-only form, no Apply button.
+            val effectiveStatus =
+                if (msg.id == activeProposalMessageId &&
+                    activeProposalLockedBySend &&
+                    msg.status == ProposalStatus.PENDING
+                ) {
+                    ProposalStatus.SUPERSEDED
+                } else {
+                    msg.status
+                }
             CoachMessageBubble(
                 message = msg,
+                effectiveStatus = effectiveStatus,
                 showProposalCard = msg.id == activeProposalMessageId,
+                onApplyClick = onApplyClick,
                 isCoachThinkingPlaceholder =
                     isCoachThinking &&
                         msg.role == CoachMessageRole.COACH &&
                         msg.content.isEmpty(),
             )
+        }
+        if (showPostApplyCtaPair) {
+            item(key = "post-apply-cta-pair") {
+                CoachPostApplyCtaRow(
+                    onContinueCoaching = onContinueCoaching,
+                    onImDoneForNow = onImDoneForNow,
+                )
+            }
         }
         if (openingSuggestions.isNotEmpty()) {
             item(key = "opening-suggestions") {
@@ -382,12 +421,23 @@ private fun CoachSuggestionChipsRow(
 @Composable
 private fun CoachMessageBubble(
     message: CoachMessage,
+    effectiveStatus: ProposalStatus,
     showProposalCard: Boolean,
+    onApplyClick: () -> Unit,
     isCoachThinkingPlaceholder: Boolean,
 ) {
     val isCreator = message.role == CoachMessageRole.CREATOR
     val alignment = if (isCreator) Alignment.TopEnd else Alignment.TopStart
-    val bubbleColor = if (isCreator) YralColors.Pink300 else YralColors.Neutral800
+    // Correction C — receipts render with a pink-bordered, neutral-bg
+    // bubble (slightly distinct from a regular coach reply) so the
+    // creator can visually distinguish "this is what just got saved"
+    // from "this is just chat."
+    val bubbleColor =
+        when {
+            isCreator -> YralColors.Pink300
+            message.isReceipt -> YralColors.Neutral900
+            else -> YralColors.Neutral800
+        }
     Box(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
         contentAlignment = alignment,
@@ -397,7 +447,17 @@ private fun CoachMessageBubble(
                 modifier =
                     Modifier
                         .background(color = bubbleColor, shape = RoundedCornerShape(16.dp))
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                        .then(
+                            if (message.isReceipt) {
+                                Modifier.border(
+                                    width = 1.dp,
+                                    color = YralColors.Pink300,
+                                    shape = RoundedCornerShape(16.dp),
+                                )
+                            } else {
+                                Modifier
+                            },
+                        ).padding(horizontal = 12.dp, vertical = 8.dp),
             ) {
                 if (isCoachThinkingPlaceholder) {
                     Text(
@@ -415,26 +475,35 @@ private fun CoachMessageBubble(
             }
             if (showProposalCard) {
                 Spacer(modifier = Modifier.height(6.dp))
-                CoachProposalCard(reasoning = message.reasoning.orEmpty())
+                CoachProposalCard(
+                    reasoning = message.reasoning.orEmpty(),
+                    status = effectiveStatus,
+                    onApplyClick = onApplyClick,
+                )
             }
         }
     }
 }
 
 /**
- * Coach pivot 2026-06-11 (Bucket 1 Item 1) — render ONLY the plain-English
- * `reasoning` field, never the raw structured `proposedChanges` blob. The
- * structured changes are still on the domain model + used by the apply
- * call; we just don't show the JSON-y payload to the creator anymore.
- * The actual edit surface is moving to the Soul File page (Bucket 2).
+ * Coach pivot Item 1 + Corrections A + B:
+ *  - Renders the plain-English `reasoning` only (never raw
+ *    `proposedChanges`).
+ *  - Inline Apply button restored (rolled back the earlier
+ *    consolidation per Rishi 2026-06-12). Both this Apply and the
+ *    bottom Save button fire the same `/apply` with proposal_id.
+ *  - Apply state branches on PR-3's `status` field. PENDING shows
+ *    an active pink Apply; APPLIED shows a gray "Applied" label;
+ *    SUPERSEDED shows a gray disabled button + "Replaced by newer
+ *    proposal" subtitle. DISCARDED renders the disabled state too
+ *    for forward-compat with future Discard UX.
  */
 @Composable
-private fun CoachProposalCard(reasoning: String) {
-    // Coach pivot 2026-06-12 (Bucket 1 Items 2+3 unified) — card is
-    // now a read-only preview. The Apply action moved to the bottom
-    // Save button so there's a single save affordance. Applied state
-    // is communicated via the receipt message in chat + the Save
-    // button disappearing when pending_proposal_exists flips to false.
+private fun CoachProposalCard(
+    reasoning: String,
+    status: ProposalStatus,
+    onApplyClick: () -> Unit,
+) {
     Column(
         modifier =
             Modifier
@@ -458,40 +527,117 @@ private fun CoachProposalCard(reasoning: String) {
                 color = YralColors.NeutralTextPrimary,
             )
         }
+        // Per Rishi 2026-06-12 evening — Apply button ONLY when status
+        // is PENDING. APPLIED / SUPERSEDED / DISCARDED states drop the
+        // button entirely and replace it with a short subtitle so the
+        // creator's eye doesn't snag on a dead-looking button. Card
+        // stays visible so the creator can still read what was
+        // proposed; the action just isn't available anymore.
+        when (status) {
+            ProposalStatus.PENDING -> {
+                Spacer(modifier = Modifier.height(10.dp))
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .background(
+                                color = YralColors.Pink300,
+                                shape = RoundedCornerShape(20.dp),
+                            ).clickable(onClick = onApplyClick)
+                            .padding(vertical = 10.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = stringResource(Res.string.coach_proposal_apply_cta),
+                        style = LocalAppTopography.current.baseSemiBold,
+                        color = YralColors.Neutral0,
+                    )
+                }
+            }
+            ProposalStatus.APPLIED -> {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = stringResource(Res.string.coach_proposal_applied),
+                    style = LocalAppTopography.current.smSemiBold,
+                    color = YralColors.NeutralTextSecondary,
+                )
+            }
+            ProposalStatus.SUPERSEDED -> {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = stringResource(Res.string.coach_proposal_superseded_subtitle),
+                    style = LocalAppTopography.current.smRegular,
+                    color = YralColors.NeutralTextSecondary,
+                )
+            }
+            ProposalStatus.DISCARDED -> {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = stringResource(Res.string.coach_proposal_discarded_apply),
+                    style = LocalAppTopography.current.smRegular,
+                    color = YralColors.NeutralTextSecondary,
+                )
+            }
+            ProposalStatus.NA -> {
+                // Shouldn't reach for a real proposal card; no
+                // footer rendered. The card just shows title +
+                // reasoning above.
+            }
+        }
     }
 }
 
+/**
+ * Correction C — post-apply CTA pair rendered as a list row below the
+ * latest receipt message. Sits in the LazyColumn so it scrolls
+ * naturally with chat history; only ever visible when
+ * [CoachViewState.showPostApplyCtaPair] is true.
+ */
 @Composable
-private fun CoachSaveButton(
-    botName: String?,
-    enabled: Boolean,
-    onSave: () -> Unit,
+private fun CoachPostApplyCtaRow(
+    onContinueCoaching: () -> Unit,
+    onImDoneForNow: () -> Unit,
 ) {
-    val label =
-        if (!botName.isNullOrBlank()) {
-            stringResource(Res.string.coach_save_cta, botName)
-        } else {
-            stringResource(Res.string.coach_save_cta_generic)
-        }
-    Box(
+    Row(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 4.dp)
-                .background(
-                    color = if (enabled) YralColors.Pink300 else YralColors.Neutral700,
-                    shape = RoundedCornerShape(24.dp),
-                ).clickable(enabled = enabled, onClick = onSave)
-                .padding(vertical = 12.dp),
-        contentAlignment = Alignment.Center,
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Text(
-            text = label,
-            style = LocalAppTopography.current.baseSemiBold,
-            color = YralColors.Neutral0,
-        )
+        Box(
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .background(YralColors.Pink300, RoundedCornerShape(20.dp))
+                    .clickable(onClick = onContinueCoaching)
+                    .padding(vertical = 10.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = stringResource(Res.string.coach_continue_coaching),
+                style = LocalAppTopography.current.baseSemiBold,
+                color = YralColors.Neutral0,
+            )
+        }
+        Box(
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .border(width = 1.dp, color = YralColors.Pink300, shape = RoundedCornerShape(20.dp))
+                    .clickable(onClick = onImDoneForNow)
+                    .padding(vertical = 10.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = stringResource(Res.string.coach_im_done_for_now),
+                style = LocalAppTopography.current.baseSemiBold,
+                color = YralColors.Pink300,
+            )
+        }
     }
 }
+
 
 @Composable
 private fun CoachInputArea(

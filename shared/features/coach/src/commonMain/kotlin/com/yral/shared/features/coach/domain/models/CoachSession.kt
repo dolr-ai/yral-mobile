@@ -32,8 +32,13 @@ data class CoachMessagesPage(
 data class ApplyCoachProposalResult(
     val applied: Boolean,
     val historyId: String,
-    val previousInstructions: String,
-    val newInstructions: String,
-    val appliedAt: String,
+    /**
+     * Personality-edit apply path populates these; override + section
+     * paths leave them null because their apply response shape is
+     * different. Mobile only reads `receiptMessage`.
+     */
+    val previousInstructions: String? = null,
+    val newInstructions: String? = null,
+    val appliedAt: String? = null,
     val receiptMessage: CoachMessage? = null,
 )

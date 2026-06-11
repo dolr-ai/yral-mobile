@@ -26,4 +26,9 @@
     <string name="coach_start_over_confirm_cancel">Cancel</string>
     <string name="coach_save_cta">Save changes to %1$s</string>
     <string name="coach_save_cta_generic">Save changes</string>
+    <string name="coach_proposal_superseded_apply">Replaced</string>
+    <string name="coach_proposal_superseded_subtitle">Replaced by a newer proposal — apply the newest card instead.</string>
+    <string name="coach_proposal_discarded_apply">Discarded</string>
+    <string name="coach_continue_coaching">Continue coaching</string>
+    <string name="coach_im_done_for_now">I\'m done for now</string>
 </resources>
