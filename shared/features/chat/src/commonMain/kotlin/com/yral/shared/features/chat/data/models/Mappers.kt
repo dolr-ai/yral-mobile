@@ -18,6 +18,8 @@ import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencerStatus
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
 import com.yral.shared.features.chat.domain.models.SendMessageResult
+import com.yral.shared.features.chat.domain.models.SoulFile
+import com.yral.shared.features.chat.domain.models.SoulFileSection
 import com.yral.shared.rust.service.utils.propicFromPrincipal
 
 fun InfluencerDto.toDomain(): Influencer =
@@ -231,4 +233,31 @@ fun StartHumanCreatorTakeoverResponseDto.toDomain(): HumanCreatorTakeoverStatus 
         startedAt = startedAt,
         userLastMessageAt = userLastMessageAt,
         remainingSeconds = remainingSeconds,
+    )
+
+// ---------- Coach pivot Bucket 2 — Soul File ----------
+
+fun SoulFileResponseDto.toDomain(): SoulFile =
+    SoulFile(
+        botId = botId,
+        displayName = displayName,
+        sections = sections.map { it.toDomain() },
+        sectionsVersionSha256 = sectionsVersionSha256,
+        fallbackToFlat = fallbackToFlat,
+    )
+
+fun SoulFileSectionDto.toDomain(): SoulFileSection =
+    SoulFileSection(
+        id = id,
+        heading = heading,
+        body = body,
+        editable = editable,
+    )
+
+fun SoulFileSection.toDto(): SoulFileSectionDto =
+    SoulFileSectionDto(
+        id = id,
+        heading = heading,
+        body = body,
+        editable = editable,
     )

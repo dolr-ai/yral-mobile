@@ -2,8 +2,10 @@ package com.yral.shared.features.chat.data
 
 import com.yral.shared.features.chat.data.models.SendHumanCreatorMessageRequestDto
 import com.yral.shared.features.chat.data.models.SendMessageRequestDto
+import com.yral.shared.features.chat.data.models.UpdateSoulFileRequestDto
 import com.yral.shared.features.chat.data.models.toDomain
 import com.yral.shared.features.chat.data.models.toDomainActiveOnly
+import com.yral.shared.features.chat.data.models.toDto
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.models.ChatMessage
 import com.yral.shared.features.chat.domain.models.ChatMessageType
@@ -14,6 +16,8 @@ import com.yral.shared.features.chat.domain.models.DeleteConversationResult
 import com.yral.shared.features.chat.domain.models.HumanCreatorTakeoverStatus
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
+import com.yral.shared.features.chat.domain.models.SoulFile
+import com.yral.shared.features.chat.domain.models.SoulFileSection
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.domain.models.SendMessageResult
 import com.yral.shared.features.chat.domain.models.StreamEvent
@@ -65,6 +69,26 @@ class ChatRepositoryImpl(
         dataSource
             .getInfluencer(id)
             .toDomain()
+
+    override suspend fun getSoulFile(botId: String): SoulFile =
+        dataSource
+            .getSoulFile(botId)
+            .toDomain()
+
+    override suspend fun updateSoulFile(
+        botId: String,
+        sections: List<SoulFileSection>,
+        expectedSectionsVersionSha256: String,
+    ): SoulFile =
+        dataSource
+            .updateSoulFile(
+                botId = botId,
+                body =
+                    UpdateSoulFileRequestDto(
+                        sections = sections.map { it.toDto() },
+                        expectedSectionsVersionSha256 = expectedSectionsVersionSha256,
+                    ),
+            ).toDomain()
 
     override suspend fun createConversation(influencerId: String): Conversation =
         dataSource

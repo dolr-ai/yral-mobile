@@ -188,7 +188,12 @@ private fun CoachScreenEffects(
     viewModel: CoachViewModel,
 ) {
     LaunchedEffect(params.botId) {
-        viewModel.openForBot(params.botId, params.botName, params.avatarUrl)
+        viewModel.openForBot(
+            botId = params.botId,
+            botName = params.botName,
+            avatarUrl = params.avatarUrl,
+            sectionHint = params.sectionHint,
+        )
     }
 
     LaunchedEffect(appliedToastMessage) {

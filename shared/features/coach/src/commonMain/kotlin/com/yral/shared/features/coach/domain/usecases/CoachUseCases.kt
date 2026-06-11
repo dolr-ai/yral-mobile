@@ -20,11 +20,18 @@ class CreateCoachSessionUseCase(
     override val exceptionType: String = EXCEPTION_TYPE
 
     override suspend fun execute(parameter: Params): CoachSession =
-        repository.createSession(botId = parameter.botId, fresh = parameter.fresh)
+        repository.createSession(
+            botId = parameter.botId,
+            fresh = parameter.fresh,
+            sectionHint = parameter.sectionHint,
+        )
 
     data class Params(
         val botId: String,
         val fresh: Boolean = false,
+        // Coach pivot Bucket 2 — populated only when Coach was opened
+        // by tapping a section card on the Soul File page.
+        val sectionHint: String? = null,
     )
 }
 
