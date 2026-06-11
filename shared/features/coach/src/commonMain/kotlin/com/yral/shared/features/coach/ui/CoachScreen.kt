@@ -137,7 +137,6 @@ fun CoachScreen(
                     isCoachThinking = viewState.isCoachThinking,
                     activeProposalMessageId = viewState.activeProposalMessage?.id,
                     openingSuggestions = viewState.openingSuggestions,
-                    onApplyClick = { viewModel.requestApplyProposal() },
                     onSuggestionTap = { suggestion -> viewModel.sendMessage(suggestion) },
                 )
             }
@@ -147,17 +146,19 @@ fun CoachScreen(
             CoachErrorBanner(error = err, onDismiss = { viewModel.clearError() })
         }
 
-        // Coach pivot 2026-06-11 (Bucket 1 Item 2) — Save is now gated on
-        // the backend-computed `pending_proposal_exists` flag (PR-4),
-        // not on "any creator message exists." Before this, tapping Save
-        // when there was nothing actionable triggered a confusing
-        // LLM round-trip; now the button is hidden until there is
-        // something concrete to save.
+        // Coach pivot 2026-06-12 (Bucket 1 Items 2 + 3 unified) — Save
+        // IS the apply now. Gated on backend-computed
+        // `pending_proposal_exists` (PR-4) so the button only shows
+        // when there's a concrete proposal to commit, and tapping it
+        // opens the existing apply-confirm dialog → /apply with the
+        // proposal_id of the active card (PR-3). The standalone Apply
+        // button that used to sit on the proposal card was removed in
+        // the same change — two-button confusion gone.
         if (viewState.pendingProposalExists) {
             CoachSaveButton(
                 botName = viewState.botName,
                 enabled = !viewState.isCoachThinking && !viewState.isApplying,
-                onSave = { viewModel.requestSaveProposal() },
+                onSave = { viewModel.requestApplyProposal() },
             )
         }
 
@@ -311,7 +312,6 @@ private fun CoachMessagesList(
     isCoachThinking: Boolean,
     activeProposalMessageId: String?,
     openingSuggestions: List<String>,
-    onApplyClick: () -> Unit,
     onSuggestionTap: (String) -> Unit,
 ) {
     val listState = rememberLazyListState()
@@ -331,7 +331,6 @@ private fun CoachMessagesList(
             CoachMessageBubble(
                 message = msg,
                 showProposalCard = msg.id == activeProposalMessageId,
-                onApplyClick = onApplyClick,
                 isCoachThinkingPlaceholder =
                     isCoachThinking &&
                         msg.role == CoachMessageRole.COACH &&
@@ -384,7 +383,6 @@ private fun CoachSuggestionChipsRow(
 private fun CoachMessageBubble(
     message: CoachMessage,
     showProposalCard: Boolean,
-    onApplyClick: () -> Unit,
     isCoachThinkingPlaceholder: Boolean,
 ) {
     val isCreator = message.role == CoachMessageRole.CREATOR
@@ -417,11 +415,7 @@ private fun CoachMessageBubble(
             }
             if (showProposalCard) {
                 Spacer(modifier = Modifier.height(6.dp))
-                CoachProposalCard(
-                    reasoning = message.reasoning.orEmpty(),
-                    applied = message.applied,
-                    onApplyClick = onApplyClick,
-                )
+                CoachProposalCard(reasoning = message.reasoning.orEmpty())
             }
         }
     }
@@ -435,11 +429,12 @@ private fun CoachMessageBubble(
  * The actual edit surface is moving to the Soul File page (Bucket 2).
  */
 @Composable
-private fun CoachProposalCard(
-    reasoning: String,
-    applied: Boolean,
-    onApplyClick: () -> Unit,
-) {
+private fun CoachProposalCard(reasoning: String) {
+    // Coach pivot 2026-06-12 (Bucket 1 Items 2+3 unified) — card is
+    // now a read-only preview. The Apply action moved to the bottom
+    // Save button so there's a single save affordance. Applied state
+    // is communicated via the receipt message in chat + the Save
+    // button disappearing when pending_proposal_exists flips to false.
     Column(
         modifier =
             Modifier
@@ -455,35 +450,12 @@ private fun CoachProposalCard(
             style = LocalAppTopography.current.smSemiBold,
             color = YralColors.Pink300,
         )
-        Spacer(modifier = Modifier.height(8.dp))
         if (reasoning.isNotBlank()) {
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = reasoning,
                 style = LocalAppTopography.current.regRegular,
                 color = YralColors.NeutralTextPrimary,
-            )
-        }
-        Spacer(modifier = Modifier.height(10.dp))
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .background(
-                        color = if (applied) YralColors.Neutral700 else YralColors.Pink300,
-                        shape = RoundedCornerShape(20.dp),
-                    ).clickable(enabled = !applied, onClick = onApplyClick)
-                    .padding(vertical = 10.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text =
-                    if (applied) {
-                        stringResource(Res.string.coach_proposal_applied)
-                    } else {
-                        stringResource(Res.string.coach_proposal_apply_cta)
-                    },
-                style = LocalAppTopography.current.baseSemiBold,
-                color = YralColors.Neutral0,
             )
         }
     }

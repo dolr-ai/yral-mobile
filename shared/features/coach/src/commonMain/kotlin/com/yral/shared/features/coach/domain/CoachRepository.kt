@@ -17,7 +17,10 @@ interface CoachRepository {
         requestProposal: Boolean,
     ): SendCoachMessageResult
 
-    suspend fun applyProposal(coachConversationId: String): ApplyCoachProposalResult
+    suspend fun applyProposal(
+        coachConversationId: String,
+        proposalId: String,
+    ): ApplyCoachProposalResult
 
     suspend fun listMessages(coachConversationId: String): CoachMessagesPage
 }

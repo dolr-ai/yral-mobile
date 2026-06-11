@@ -1,5 +1,6 @@
 package com.yral.shared.features.coach.data
 
+import com.yral.shared.features.coach.data.models.ApplyCoachProposalRequestDto
 import com.yral.shared.features.coach.data.models.CreateCoachSessionRequestDto
 import com.yral.shared.features.coach.data.models.SendCoachMessageRequestDto
 import com.yral.shared.features.coach.data.models.toDomain
@@ -37,8 +38,15 @@ class CoachRepositoryImpl(
                     ),
             ).toDomain()
 
-    override suspend fun applyProposal(coachConversationId: String): ApplyCoachProposalResult =
-        dataSource.applyProposal(coachConversationId).toDomain()
+    override suspend fun applyProposal(
+        coachConversationId: String,
+        proposalId: String,
+    ): ApplyCoachProposalResult =
+        dataSource
+            .applyProposal(
+                coachConversationId = coachConversationId,
+                request = ApplyCoachProposalRequestDto(proposalId = proposalId),
+            ).toDomain()
 
     override suspend fun listMessages(coachConversationId: String): CoachMessagesPage =
         dataSource.listMessages(coachConversationId).toDomain()

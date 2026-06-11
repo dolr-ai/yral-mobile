@@ -227,11 +227,28 @@ class CoachViewModel(
     }
 
     fun confirmApplyProposal() {
-        val convId = _viewState.value.coachConversationId ?: return
+        val state = _viewState.value
+        val convId = state.coachConversationId ?: return
+        // PR-3 (#356) — pass the specific proposal id the user is acting
+        // on. Today's UI only ever surfaces the latest unapplied proposal,
+        // so `activeProposalMessage.id` is the natural pick (matches the
+        // visible card). If we later add per-card Apply (e.g. scroll-up
+        // re-apply), this should switch to the tapped card's id instead.
+        // Guard: if there's no pending proposal somehow, bail rather than
+        // send an empty id (backend would 422 us).
+        val proposalId =
+            state.activeProposalMessage?.id ?: run {
+                Logger.e("CoachViewModel") { "confirmApplyProposal: no activeProposalMessage to apply" }
+                return
+            }
         _viewState.update { it.copy(isApplying = true, showApplyConfirm = false, error = null) }
         viewModelScope.launch {
-            applyCoachProposalUseCase(convId)
-                .onSuccess { result ->
+            applyCoachProposalUseCase(
+                ApplyCoachProposalUseCase.Params(
+                    coachConversationId = convId,
+                    proposalId = proposalId,
+                ),
+            ).onSuccess { result ->
                     _viewState.update { state ->
                         // Mark latest proposal as applied (ProposalCard becomes
                         // inert), then append the backend-issued receipt

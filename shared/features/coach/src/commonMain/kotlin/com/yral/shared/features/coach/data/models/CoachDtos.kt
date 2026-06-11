@@ -47,6 +47,26 @@ data class SendCoachMessageResponseDto(
     @SerialName("pending_proposal_exists") val pendingProposalExists: Boolean = false,
 )
 
+/**
+ * Coach pivot Bucket 1 Item 3 (PR-3, migration 035) — `/apply` now
+ * requires the caller to name the specific proposal being applied.
+ * Pre-PR-3 the endpoint implicitly picked "most recent pending,"
+ * which silently applied newer proposals when the creator scrolled
+ * up and tapped Save on an older card. Sending the explicit id from
+ * the card the user actually tapped closes that trust gap.
+ *
+ * Backend responses to know about:
+ *  - 422 — proposal_id missing or blank
+ *  - 404 — id not in this session (likely cross-session mismatch)
+ *  - 409 — proposal exists but its status isn't 'pending' (e.g. it
+ *    was superseded by a newer one or already applied). Body carries
+ *    `current_status`.
+ */
+@Serializable
+data class ApplyCoachProposalRequestDto(
+    @SerialName("proposal_id") val proposalId: String,
+)
+
 @Serializable
 data class ApplyCoachProposalResponseDto(
     @SerialName("applied") val applied: Boolean,

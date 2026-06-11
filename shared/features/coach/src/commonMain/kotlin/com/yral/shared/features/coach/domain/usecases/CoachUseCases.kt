@@ -57,10 +57,27 @@ class ApplyCoachProposalUseCase(
     private val repository: CoachRepository,
     appDispatchers: AppDispatchers,
     useCaseFailureListener: UseCaseFailureListener,
-) : SuspendUseCase<String, ApplyCoachProposalResult>(appDispatchers.network, useCaseFailureListener) {
+) : SuspendUseCase<ApplyCoachProposalUseCase.Params, ApplyCoachProposalResult>(
+        appDispatchers.network,
+        useCaseFailureListener,
+    ) {
     override val exceptionType: String = EXCEPTION_TYPE
 
-    override suspend fun execute(parameter: String): ApplyCoachProposalResult = repository.applyProposal(parameter)
+    override suspend fun execute(parameter: Params): ApplyCoachProposalResult =
+        repository.applyProposal(
+            coachConversationId = parameter.coachConversationId,
+            proposalId = parameter.proposalId,
+        )
+
+    /**
+     * PR-3 (#356) — caller must specify which proposal to apply.
+     * ViewModel passes `activeProposalMessage.id`; the value travels
+     * through to the backend `/apply` body unchanged.
+     */
+    data class Params(
+        val coachConversationId: String,
+        val proposalId: String,
+    )
 }
 
 class ListCoachMessagesUseCase(
