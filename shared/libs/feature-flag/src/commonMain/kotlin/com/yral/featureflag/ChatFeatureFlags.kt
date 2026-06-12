@@ -118,23 +118,6 @@ object ChatFeatureFlags {
                     "backend cutover + GA — same shape as H2H/Audio/SSE/Chat-as-Human/Coach gates.",
                 defaultValue = false,
             )
-        val SoulFileV2Enabled: FeatureFlag<Boolean> =
-            boolean(
-                keySuffix = "soulFileV2Enabled",
-                name = "Soul File V2 — View full prompt page (Coach pivot Bucket 2)",
-                description = "When ON, exposes the 'View full prompt' pill in the Coach chat header " +
-                    "(top app bar). Tap → opens a read-only page that renders the full composed system " +
-                    "prompt the LLM sees at chat time: L1 Global rules, L2 Archetype block, L3 " +
-                    "Personality sections (or flat fallback for legacy bots), L4 User-segment template, " +
-                    "Skills, Applied overrides, and Engagement schedule (inactivity check-in / skill " +
-                    "check-ins / first-turn nudge). Always fetches fresh from GET " +
-                    "/api/v1/influencers/{id}/system-prompt-preview on every screen resume so an " +
-                    "override applied via Coach shows up on next back-stack pop. All edits to the bot " +
-                    "still happen via Coach /apply — this page is purely a transparency window. When " +
-                    "OFF, the pill is hidden and the feature is fully dormant. PR keeps defaultValue = " +
-                    "false until backend cutover + GA — same shape as the other agent-API feature gates.",
-                defaultValue = false,
-            )
     }
 }
 // Initiate action
