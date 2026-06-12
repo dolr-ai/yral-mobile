@@ -15,6 +15,7 @@ import com.yral.shared.features.chat.domain.models.SendMessageResult
 import com.yral.shared.features.chat.domain.models.StreamEvent
 import kotlinx.coroutines.flow.Flow
 
+@Suppress("TooManyFunctions")
 interface ChatRepository {
     suspend fun getUnreadConversationCount(principal: String): Int
 

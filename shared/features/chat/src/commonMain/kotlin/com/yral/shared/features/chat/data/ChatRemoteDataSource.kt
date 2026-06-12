@@ -49,6 +49,7 @@ import io.ktor.http.path
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 
+@Suppress("TooManyFunctions")
 class ChatRemoteDataSource(
     private val httpClient: HttpClient,
     private val json: Json,
