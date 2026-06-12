@@ -14,6 +14,7 @@ import com.yral.shared.features.auth.nav.otpverification.OtpVerificationComponen
 import com.yral.shared.features.auth.ui.LoginCoordinator
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.coach.nav.CoachComponent
+import com.yral.shared.features.coach.nav.SoulFileComponent
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.subscriptions.nav.SubscriptionsComponent
@@ -73,6 +74,17 @@ internal class ComponentFactory(
         config: Config.Coach,
     ): CoachComponent =
         CoachComponent.Companion(
+            componentContext = componentContext,
+            params = config.params,
+            onBack = rootComponent::onBackClicked,
+            openSoulFile = rootComponent::openSoulFile,
+        )
+
+    fun createSoulFile(
+        componentContext: ComponentContext,
+        config: Config.SoulFile,
+    ): SoulFileComponent =
+        SoulFileComponent.Companion(
             componentContext = componentContext,
             params = config.params,
             onBack = rootComponent::onBackClicked,

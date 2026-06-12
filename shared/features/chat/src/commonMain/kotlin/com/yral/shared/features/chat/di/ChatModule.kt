@@ -18,9 +18,8 @@ import com.yral.shared.features.chat.domain.usecases.CreateHumanConversationUseC
 import com.yral.shared.features.chat.domain.usecases.DeleteConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.GetHumanCreatorTakeoverStatusUseCase
 import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
-import com.yral.shared.features.chat.domain.usecases.GetSoulFileUseCase
+import com.yral.shared.features.chat.domain.usecases.GetSystemPromptPreviewUseCase
 import com.yral.shared.features.chat.domain.usecases.GrantChatAccessUseCase
-import com.yral.shared.features.chat.domain.usecases.UpdateSoulFileUseCase
 import com.yral.shared.features.chat.domain.usecases.MarkConversationAsReadUseCase
 import com.yral.shared.features.chat.domain.usecases.ReleaseHumanCreatorTakeoverUseCase
 import com.yral.shared.features.chat.domain.usecases.SendHumanCreatorMessageUseCase
@@ -72,8 +71,7 @@ val chatModule =
         factoryOf(::CreateHumanConversationUseCase)
         factoryOf(::DeleteConversationUseCase)
         factoryOf(::GetInfluencerUseCase)
-        factoryOf(::GetSoulFileUseCase)
-        factoryOf(::UpdateSoulFileUseCase)
+        factoryOf(::GetSystemPromptPreviewUseCase)
         factoryOf(::MarkConversationAsReadUseCase)
         factoryOf(::SendMessageUseCase)
         factoryOf(::SendHumanMessageUseCase)

@@ -15,8 +15,7 @@ import com.yral.shared.features.chat.data.models.HumanCreatorTakeoverStatusDto
 import com.yral.shared.features.chat.data.models.InfluencerDto
 import com.yral.shared.features.chat.data.models.InfluencerFeedResponseDto
 import com.yral.shared.features.chat.data.models.InfluencersResponseDto
-import com.yral.shared.features.chat.data.models.SoulFileResponseDto
-import com.yral.shared.features.chat.data.models.UpdateSoulFileRequestDto
+import com.yral.shared.features.chat.data.models.SystemPromptPreviewResponseDto
 import com.yral.shared.features.chat.data.models.ReleaseHumanCreatorTakeoverResponseDto
 import com.yral.shared.features.chat.data.models.SendHumanCreatorMessageRequestDto
 import com.yral.shared.features.chat.data.models.SendMessageRequestDto
@@ -27,7 +26,6 @@ import com.yral.shared.features.chat.data.models.toInfluencersResponseDto
 import com.yral.shared.http.UPLOAD_FILE_TIME_OUT
 import com.yral.shared.http.httpGet
 import com.yral.shared.http.httpPost
-import com.yral.shared.http.httpPut
 import com.yral.shared.preferences.PrefKeys
 import com.yral.shared.preferences.Preferences
 import io.ktor.client.HttpClient
@@ -106,12 +104,16 @@ class ChatRemoteDataSource(
     }
 
     /**
-     * Coach pivot Bucket 2 — `GET /api/v1/influencers/{botId}/soul-file`.
-     * Owner-gated. Backend returns 403 if the caller isn't the creator
-     * of the bot. Mobile holds [SoulFileResponseDto.sectionsVersionSha256]
-     * and echoes it on the next PUT for optimistic concurrency.
+     * Coach pivot Bucket 2 — `GET /api/v1/influencers/{botId}/system-prompt-preview`.
+     * Owner-gated. Returns the FULL composed system prompt the LLM sees at
+     * chat time (L1–L4 layers + skills + applied overrides) so the creator
+     * can audit it from the read-only "View full prompt" page in Coach.
+     *
+     * Backend ships `Cache-Control: no-store`. Mobile re-fetches on every
+     * page open (the ViewModel calls `load()` on each `openForBot`); we do
+     * not hold this in any local cache.
      */
-    override suspend fun getSoulFile(botId: String): SoulFileResponseDto {
+    override suspend fun getSystemPromptPreview(botId: String): SystemPromptPreviewResponseDto {
         val idToken = getIdToken()
         return httpGet(
             httpClient = httpClient,
@@ -119,34 +121,9 @@ class ChatRemoteDataSource(
         ) {
             url {
                 host = chatBaseUrl
-                path(INFLUENCERS_PATH, botId, SOUL_FILE_SUBPATH)
+                path(INFLUENCERS_PATH, botId, SYSTEM_PROMPT_PREVIEW_SUBPATH)
             }
             headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
-        }
-    }
-
-    /**
-     * Coach pivot Bucket 2 — `PUT /api/v1/influencers/{botId}/soul-file`.
-     * Owner-gated. Pass [UpdateSoulFileRequestDto.expectedSectionsVersionSha256]
-     * = the sha received on the last GET. Backend returns 409 if the
-     * sections changed in the meantime; caller's contract is to re-GET
-     * and surface a "reload?" dialog (auto-merging plain text is lossy).
-     */
-    override suspend fun updateSoulFile(
-        botId: String,
-        body: UpdateSoulFileRequestDto,
-    ): SoulFileResponseDto {
-        val idToken = getIdToken()
-        return httpPut(
-            httpClient = httpClient,
-            json = json,
-        ) {
-            url {
-                host = chatBaseUrl
-                path(INFLUENCERS_PATH, botId, SOUL_FILE_SUBPATH)
-            }
-            headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
-            setBody(body)
         }
     }
 
@@ -461,7 +438,7 @@ class ChatRemoteDataSource(
         private val logger = Logger.withTag("ChatRemoteDataSource")
         private const val INFLUENCERS_PATH = "api/v1/influencers"
         private const val INFLUENCER_FEED_PATH = "api/v1/influencer-feed"
-        private const val SOUL_FILE_SUBPATH = "soul-file"
+        private const val SYSTEM_PROMPT_PREVIEW_SUBPATH = "system-prompt-preview"
         private const val CONVERSATIONS_PATH = "api/v1/chat/conversations"
         private const val HUMAN_CONVERSATIONS_PATH = "api/v1/chat/human/conversations"
         private const val CONVERSATIONS_LIST_PATH = "api/v2/chat/conversations"

@@ -10,6 +10,7 @@ import com.yral.shared.features.coach.domain.usecases.CreateCoachSessionUseCase
 import com.yral.shared.features.coach.domain.usecases.ListCoachMessagesUseCase
 import com.yral.shared.features.coach.domain.usecases.SendCoachMessageUseCase
 import com.yral.shared.features.coach.viewmodel.CoachViewModel
+import com.yral.shared.features.coach.viewmodel.SoulFileViewModel
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.bind
@@ -33,4 +34,5 @@ val coachModule =
         factoryOf(::ListCoachMessagesUseCase)
 
         viewModelOf(::CoachViewModel)
+        viewModelOf(::SoulFileViewModel)
     }

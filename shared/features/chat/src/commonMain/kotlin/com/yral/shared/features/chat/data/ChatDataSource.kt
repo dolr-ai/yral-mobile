@@ -8,8 +8,7 @@ import com.yral.shared.features.chat.data.models.ConversationsResponseDto
 import com.yral.shared.features.chat.data.models.DeleteConversationResponseDto
 import com.yral.shared.features.chat.data.models.HumanCreatorTakeoverStatusDto
 import com.yral.shared.features.chat.data.models.InfluencerDto
-import com.yral.shared.features.chat.data.models.SoulFileResponseDto
-import com.yral.shared.features.chat.data.models.UpdateSoulFileRequestDto
+import com.yral.shared.features.chat.data.models.SystemPromptPreviewResponseDto
 import com.yral.shared.features.chat.data.models.InfluencersResponseDto
 import com.yral.shared.features.chat.data.models.ReleaseHumanCreatorTakeoverResponseDto
 import com.yral.shared.features.chat.data.models.SendHumanCreatorMessageRequestDto
@@ -31,14 +30,9 @@ interface ChatDataSource {
 
     suspend fun getInfluencer(id: String): InfluencerDto
 
-    // ---------- Coach pivot Bucket 2 — Soul File ----------
+    // ---------- Coach pivot Bucket 2 — View full prompt page ----------
 
-    suspend fun getSoulFile(botId: String): SoulFileResponseDto
-
-    suspend fun updateSoulFile(
-        botId: String,
-        body: UpdateSoulFileRequestDto,
-    ): SoulFileResponseDto
+    suspend fun getSystemPromptPreview(botId: String): SystemPromptPreviewResponseDto
 
     suspend fun createConversation(influencerId: String): ConversationDto
 

@@ -23,6 +23,7 @@ kotlin {
             implementation(projects.shared.libs.preferences)
             implementation(projects.shared.libs.arch)
             implementation(projects.shared.libs.designsystem)
+            implementation(projects.shared.features.chat)
 
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.datetime)

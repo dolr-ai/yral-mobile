@@ -8,8 +8,7 @@ import com.yral.shared.features.chat.domain.models.DeleteConversationResult
 import com.yral.shared.features.chat.domain.models.HumanCreatorTakeoverStatus
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
-import com.yral.shared.features.chat.domain.models.SoulFile
-import com.yral.shared.features.chat.domain.models.SoulFileSection
+import com.yral.shared.features.chat.domain.models.SystemPromptPreview
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.domain.models.SendMessageResult
 import com.yral.shared.features.chat.domain.models.StreamEvent
@@ -30,15 +29,9 @@ interface ChatRepository {
 
     suspend fun getInfluencer(id: String): Influencer
 
-    // ---------- Coach pivot Bucket 2 — Soul File ----------
+    // ---------- Coach pivot Bucket 2 — View full prompt page ----------
 
-    suspend fun getSoulFile(botId: String): SoulFile
-
-    suspend fun updateSoulFile(
-        botId: String,
-        sections: List<SoulFileSection>,
-        expectedSectionsVersionSha256: String,
-    ): SoulFile
+    suspend fun getSystemPromptPreview(botId: String): SystemPromptPreview
 
     suspend fun createConversation(influencerId: String): Conversation
 

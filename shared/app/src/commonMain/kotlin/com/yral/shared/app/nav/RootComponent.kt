@@ -20,6 +20,8 @@ import com.yral.shared.features.auth.viewModel.LoginViewModel
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.coach.nav.CoachComponent
 import com.yral.shared.features.coach.nav.OpenCoachParams
+import com.yral.shared.features.coach.nav.OpenSoulFileParams
+import com.yral.shared.features.coach.nav.SoulFileComponent
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.root.viewmodels.RootViewModel
@@ -63,6 +65,8 @@ interface RootComponent {
     fun openEditProfile()
 
     fun openCoach(params: OpenCoachParams)
+
+    fun openSoulFile(params: OpenSoulFileParams)
 
     fun openProfile(userCanisterData: CanisterData)
 
@@ -110,6 +114,9 @@ interface RootComponent {
         ) : Child()
         class Coach(
             val component: CoachComponent,
+        ) : Child()
+        class SoulFile(
+            val component: SoulFileComponent,
         ) : Child()
         class UserProfile(
             val component: ProfileMainComponent,

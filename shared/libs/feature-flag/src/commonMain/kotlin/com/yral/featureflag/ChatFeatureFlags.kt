@@ -121,17 +121,18 @@ object ChatFeatureFlags {
         val SoulFileV2Enabled: FeatureFlag<Boolean> =
             boolean(
                 keySuffix = "soulFileV2Enabled",
-                name = "Soul File V2 sectioned editor (Coach pivot Bucket 2)",
-                description = "When ON, exposes the new sectioned Soul File View/Edit page on a creator's " +
-                    "own AI-influencer profile — replaces the chat-as-editor flow with a readable, " +
-                    "directly-editable section list. Each section can be tapped to edit-in-place (PUT " +
-                    "/api/v1/influencers/{id}/soul-file) or to open Coach focused on that section. Coach " +
-                    "proposes against one section at a time; mobile renders a section badge on each " +
-                    "proposal. Backwards-compat: bots without sections render as a single 'Core " +
-                    "personality' section. Backend has its own COACH_SECTIONED_V2_ENABLED env flag — " +
-                    "mobile flag flips OFF and ON independently so either side can roll back without " +
-                    "the other. PR keeps defaultValue = false until backend cutover + GA — same shape " +
-                    "as the other agent-API feature gates.",
+                name = "Soul File V2 — View full prompt page (Coach pivot Bucket 2)",
+                description = "When ON, exposes the 'View full prompt' pill in the Coach chat header " +
+                    "(top app bar). Tap → opens a read-only page that renders the full composed system " +
+                    "prompt the LLM sees at chat time: L1 Global rules, L2 Archetype block, L3 " +
+                    "Personality sections (or flat fallback for legacy bots), L4 User-segment template, " +
+                    "Skills, Applied overrides, and Engagement schedule (inactivity check-in / skill " +
+                    "check-ins / first-turn nudge). Always fetches fresh from GET " +
+                    "/api/v1/influencers/{id}/system-prompt-preview on every screen resume so an " +
+                    "override applied via Coach shows up on next back-stack pop. All edits to the bot " +
+                    "still happen via Coach /apply — this page is purely a transparency window. When " +
+                    "OFF, the pill is hidden and the feature is fully dormant. PR keeps defaultValue = " +
+                    "false until backend cutover + GA — same shape as the other agent-API feature gates.",
                 defaultValue = false,
             )
     }
