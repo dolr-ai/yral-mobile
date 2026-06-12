@@ -7,6 +7,7 @@ import com.github.michaelbull.result.onFailure
 import com.github.michaelbull.result.onSuccess
 import com.yral.shared.features.coach.domain.models.CoachMessage
 import com.yral.shared.features.coach.domain.models.CoachMessageRole
+import com.yral.shared.features.coach.domain.models.ProposalStatus
 import com.yral.shared.features.coach.domain.usecases.ApplyCoachProposalUseCase
 import com.yral.shared.features.coach.domain.usecases.CreateCoachSessionUseCase
 import com.yral.shared.features.coach.domain.usecases.ListCoachMessagesUseCase
@@ -74,6 +75,13 @@ class CoachViewModel(
                 showApplyConfirm = false,
                 showStartOverConfirm = false,
                 lastAppliedToastMessage = null,
+                // PR-4 — fresh session has no proposal until the backend
+                // says so; loadHistoryAndFinishLoading will set this from
+                // the list-messages response.
+                pendingProposalExists = false,
+                // Correction C — entering a session is a clean slate;
+                // don't carry a prior session's CTA dismissal into this one.
+                postApplyCtasDismissed = false,
                 isSessionLoading = true,
                 error = null,
             )
@@ -107,13 +115,21 @@ class CoachViewModel(
 
     private suspend fun loadHistoryAndFinishLoading(coachConversationId: String) {
         listCoachMessagesUseCase(coachConversationId)
-            .onSuccess { messages ->
+            .onSuccess { page ->
                 _viewState.update {
                     // Guard against late responses after Start over.
                     if (it.coachConversationId != coachConversationId) {
                         it
                     } else {
-                        it.copy(pending = messages, isSessionLoading = false)
+                        it.copy(
+                            pending = page.messages,
+                            // PR-4 (2026-06-11) — session reload drives the
+                            // Save button gate. Without this, returning to
+                            // a conversation that has a pending proposal
+                            // would show no Save button until the next send.
+                            pendingProposalExists = page.pendingProposalExists,
+                            isSessionLoading = false,
+                        )
                     }
                 }
             }.onFailure { error ->
@@ -124,16 +140,6 @@ class CoachViewModel(
 
     fun sendMessage(text: String) {
         sendInternal(content = text, requestProposal = false)
-    }
-
-    /**
-     * "Save changes to {bot}" — sends the accumulated coaching intent and
-     * asks the backend to force a structured proposal (request_proposal=true).
-     * The coach reply will populate proposedChanges, the existing ProposalCard
-     * renders, and the Apply confirm flow takes over unchanged.
-     */
-    fun requestSaveProposal() {
-        sendInternal(content = SAVE_PROMPT_TEXT, requestProposal = true)
     }
 
     private fun sendInternal(
@@ -170,6 +176,11 @@ class CoachViewModel(
                 pending = it.pending + creatorLocal + coachPlaceholder,
                 pendingCoachPlaceholderId = localCoachId,
                 isCoachThinking = true,
+                // Per Rishi — once the creator types again, the
+                // existing proposal's Apply hides. Only a fresh new
+                // proposal in the reply re-opens an Apply somewhere
+                // (on the new card).
+                activeProposalLockedBySend = true,
             )
         }
 
@@ -190,10 +201,23 @@ class CoachViewModel(
                                 else -> msg
                             }
                         }
+                    // Per Rishi — clear the lock ONLY when Coach's
+                    // reply itself is a new proposal. Otherwise the
+                    // older proposal stays locked (no Apply
+                    // re-appears) until the next send-and-propose
+                    // cycle. hasProposal looks at the new message's
+                    // proposed_changes.
+                    val replyIsNewProposal = result.coachMessage.hasProposal
                     state.copy(
                         pending = mapped,
                         pendingCoachPlaceholderId = null,
                         isCoachThinking = false,
+                        // PR-4 (2026-06-11) — backend-computed against
+                        // post-turn state. Stays in sync with backend
+                        // for any UI that wants to know "is something
+                        // pending server-side."
+                        pendingProposalExists = result.pendingProposalExists,
+                        activeProposalLockedBySend = !replyIsNewProposal,
                     )
                 }
             }.onFailure { error ->
@@ -211,27 +235,72 @@ class CoachViewModel(
     }
 
     fun confirmApplyProposal() {
-        val convId = _viewState.value.coachConversationId ?: return
+        val state = _viewState.value
+        val convId = state.coachConversationId ?: return
+        // PR-3 (#356) — pass the specific proposal id the user is acting
+        // on. Today's UI only ever surfaces the latest unapplied proposal,
+        // so `activeProposalMessage.id` is the natural pick (matches the
+        // visible card). If we later add per-card Apply (e.g. scroll-up
+        // re-apply), this should switch to the tapped card's id instead.
+        // Guard: if there's no pending proposal somehow, bail rather than
+        // send an empty id (backend would 422 us).
+        val proposalId =
+            state.activeProposalMessage?.id ?: run {
+                Logger.e("CoachViewModel") { "confirmApplyProposal: no activeProposalMessage to apply" }
+                return
+            }
         _viewState.update { it.copy(isApplying = true, showApplyConfirm = false, error = null) }
         viewModelScope.launch {
-            applyCoachProposalUseCase(convId)
-                .onSuccess { result ->
+            applyCoachProposalUseCase(
+                ApplyCoachProposalUseCase.Params(
+                    coachConversationId = convId,
+                    proposalId = proposalId,
+                ),
+            ).onSuccess { result ->
                     _viewState.update { state ->
                         // Mark latest proposal as applied (ProposalCard becomes
                         // inert), then append the backend-issued receipt
                         // message so the creator sees a "✅ Saved" record
                         // without needing to re-list.
+                        // Mark the proposal we just applied as APPLIED
+                        // status (post-PR-3 the lifecycle is the source
+                        // of truth) and keep the legacy `applied` bool
+                        // synced for any callers still reading it.
+                        // Append the backend-issued receipt as the most
+                        // recent message — flagged `isReceipt=true` so
+                        // the screen renders it distinctly and shows
+                        // the post-apply CTA pair below it.
                         val updatedPending =
                             state.pending
                                 .map { msg ->
-                                    if (msg.hasProposal && !msg.applied) msg.copy(applied = true) else msg
+                                    if (msg.id == proposalId) {
+                                        msg.copy(
+                                            status = ProposalStatus.APPLIED,
+                                            applied = true,
+                                        )
+                                    } else {
+                                        msg
+                                    }
                                 }.let { withApplied ->
-                                    result.receiptMessage?.let { receipt -> withApplied + receipt } ?: withApplied
+                                    result.receiptMessage
+                                        ?.copy(isReceipt = true)
+                                        ?.let { receipt -> withApplied + receipt }
+                                        ?: withApplied
                                 }
                         state.copy(
                             pending = updatedPending,
                             isApplying = false,
                             lastAppliedToastMessage = "Updated ${state.botName ?: "your AI Influencer"}'s personality.",
+                            // PR-4 — apply succeeded, no more pending
+                            // proposal until the creator chats more.
+                            pendingProposalExists = false,
+                            // Correction C — fresh receipt + dismiss
+                            // flag reset, so the CTA pair shows below
+                            // it until the user taps Continue.
+                            postApplyCtasDismissed = false,
+                            // Apply was just done — the lock is moot
+                            // because there's nothing pending anyway.
+                            activeProposalLockedBySend = false,
                         )
                     }
                 }.onFailure { error ->
@@ -270,8 +339,14 @@ class CoachViewModel(
         _viewState.update { it.copy(lastAppliedToastMessage = null) }
     }
 
-    private companion object {
-        const val SAVE_PROMPT_TEXT = "Save these changes."
+    /**
+     * Correction C — creator tapped "Continue coaching" on the
+     * post-apply CTA pair. Just hides the CTAs; the input area stays
+     * usable and the chat stays put. The CTAs only re-appear when a
+     * fresh receipt arrives via [confirmApplyProposal].
+     */
+    fun dismissPostApplyCtas() {
+        _viewState.update { it.copy(postApplyCtasDismissed = true) }
     }
 }
 
@@ -288,10 +363,47 @@ data class CoachViewState(
     val showStartOverConfirm: Boolean = false,
     val isApplying: Boolean = false,
     val lastAppliedToastMessage: String? = null,
+    /**
+     * PR-4 (2026-06-11) — backend-computed flag from message-list and
+     * send-message responses. Drives the Save-button gate: button is
+     * hidden when false so the creator can't tap Save with nothing to
+     * save (which used to trigger a "mystery LLM round-trip").
+     */
+    val pendingProposalExists: Boolean = false,
+    /**
+     * Correction C — transient flag flipped TRUE when the creator taps
+     * "Continue coaching" on the post-apply CTA pair. Reset to FALSE
+     * when a fresh apply happens (so the CTAs come back for the next
+     * apply). Never persisted — re-entering Coach starts as FALSE.
+     */
+    val postApplyCtasDismissed: Boolean = false,
+    /**
+     * Per Rishi 2026-06-12 evening — the moment the creator starts
+     * typing again, the existing proposal's Apply becomes invisible.
+     * It only re-appears if Coach's NEXT reply carries a brand-new
+     * proposal. If Coach replies without a proposal, the older one
+     * stays disabled forever (forcing the creator to ask Coach to
+     * formalize the new idea before they can apply). This is mobile-
+     * local; backend should eventually mirror with supersede-on-send
+     * — flagged to Session 6.
+     */
+    val activeProposalLockedBySend: Boolean = false,
     val error: CoachError? = null,
 ) {
     val activeProposalMessage: CoachMessage?
         get() = pending.lastOrNull { it.hasProposal && !it.applied }
+
+    /**
+     * Correction C — show the "Continue coaching / I'm done for now"
+     * CTA pair below the latest message when the most recent message
+     * is a receipt AND there's nothing new to save AND the creator
+     * hasn't already dismissed the CTAs from this apply.
+     */
+    val showPostApplyCtaPair: Boolean
+        get() =
+            !postApplyCtasDismissed &&
+                !pendingProposalExists &&
+                pending.lastOrNull()?.isReceipt == true
 
     /**
      * Opening suggestion chips — drawn from the first coach message ONLY
@@ -305,8 +417,6 @@ data class CoachViewState(
             return firstCoach?.suggestions.orEmpty()
         }
 
-    val canRequestSave: Boolean
-        get() = pending.any { it.role == CoachMessageRole.CREATOR }
 }
 
 sealed class CoachError {
