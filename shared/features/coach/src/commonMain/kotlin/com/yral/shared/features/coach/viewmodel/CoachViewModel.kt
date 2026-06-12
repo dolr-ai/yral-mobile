@@ -142,16 +142,6 @@ class CoachViewModel(
         sendInternal(content = text, requestProposal = false)
     }
 
-    /**
-     * "Save changes to {bot}" — sends the accumulated coaching intent and
-     * asks the backend to force a structured proposal (request_proposal=true).
-     * The coach reply will populate proposedChanges, the existing ProposalCard
-     * renders, and the Apply confirm flow takes over unchanged.
-     */
-    fun requestSaveProposal() {
-        sendInternal(content = SAVE_PROMPT_TEXT, requestProposal = true)
-    }
-
     private fun sendInternal(
         content: String,
         requestProposal: Boolean,
@@ -357,10 +347,6 @@ class CoachViewModel(
      */
     fun dismissPostApplyCtas() {
         _viewState.update { it.copy(postApplyCtasDismissed = true) }
-    }
-
-    private companion object {
-        const val SAVE_PROMPT_TEXT = "Save these changes."
     }
 }
 

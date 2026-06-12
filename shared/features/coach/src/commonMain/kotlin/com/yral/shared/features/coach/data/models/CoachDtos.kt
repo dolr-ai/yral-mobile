@@ -2,6 +2,7 @@ package com.yral.shared.features.coach.data.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
 @Serializable
 data class CreateCoachSessionRequestDto(
@@ -36,7 +37,7 @@ data class CoachMessageDto(
      * Future PR-B mobile UX (per-bullet "tap to override" entry from
      * the Soul File summary) can read the typed contents separately.
      */
-    @SerialName("proposed_global_rule_override") val proposedGlobalRuleOverride: kotlinx.serialization.json.JsonElement? = null,
+    @SerialName("proposed_global_rule_override") val proposedGlobalRuleOverride: JsonElement? = null,
     @SerialName("reasoning") val reasoning: String? = null,
     @SerialName("suggestions") val suggestions: List<String>? = null,
     @SerialName("applied") val applied: Boolean = false,
