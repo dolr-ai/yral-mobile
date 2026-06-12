@@ -1,5 +1,6 @@
 package com.yral.shared.features.coach.data
 
+import com.yral.shared.features.coach.data.models.ApplyCoachProposalRequestDto
 import com.yral.shared.features.coach.data.models.ApplyCoachProposalResponseDto
 import com.yral.shared.features.coach.data.models.CoachSessionDto
 import com.yral.shared.features.coach.data.models.CreateCoachSessionRequestDto
@@ -18,7 +19,10 @@ interface CoachDataSource {
         request: SendCoachMessageRequestDto,
     ): SendCoachMessageResponseDto
 
-    suspend fun applyProposal(coachConversationId: String): ApplyCoachProposalResponseDto
+    suspend fun applyProposal(
+        coachConversationId: String,
+        request: ApplyCoachProposalRequestDto,
+    ): ApplyCoachProposalResponseDto
 
     suspend fun listMessages(coachConversationId: String): ListCoachMessagesResponseDto
 }

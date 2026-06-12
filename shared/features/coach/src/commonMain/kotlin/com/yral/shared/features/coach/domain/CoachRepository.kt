@@ -1,7 +1,7 @@
 package com.yral.shared.features.coach.domain
 
 import com.yral.shared.features.coach.domain.models.ApplyCoachProposalResult
-import com.yral.shared.features.coach.domain.models.CoachMessage
+import com.yral.shared.features.coach.domain.models.CoachMessagesPage
 import com.yral.shared.features.coach.domain.models.CoachSession
 import com.yral.shared.features.coach.domain.models.SendCoachMessageResult
 
@@ -18,7 +18,10 @@ interface CoachRepository {
         requestProposal: Boolean,
     ): SendCoachMessageResult
 
-    suspend fun applyProposal(coachConversationId: String): ApplyCoachProposalResult
+    suspend fun applyProposal(
+        coachConversationId: String,
+        proposalId: String,
+    ): ApplyCoachProposalResult
 
-    suspend fun listMessages(coachConversationId: String): List<CoachMessage>
+    suspend fun listMessages(coachConversationId: String): CoachMessagesPage
 }

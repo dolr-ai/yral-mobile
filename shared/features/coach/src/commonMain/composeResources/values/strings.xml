@@ -60,4 +60,9 @@
     <string name="soul_file_engagement_per_user_preferred_times_yes">Per-user preferred times: honoured</string>
     <string name="soul_file_engagement_per_user_preferred_times_no">Per-user preferred times: ignored</string>
     <string name="soul_file_engagement_source">Source: %1$s</string>
+    <string name="coach_proposal_superseded_apply">Replaced</string>
+    <string name="coach_proposal_superseded_subtitle">Replaced by a newer proposal — apply the newest card instead.</string>
+    <string name="coach_proposal_discarded_apply">Discarded</string>
+    <string name="coach_continue_coaching">Continue coaching</string>
+    <string name="coach_im_done_for_now">I\'m done for now</string>
 </resources>
