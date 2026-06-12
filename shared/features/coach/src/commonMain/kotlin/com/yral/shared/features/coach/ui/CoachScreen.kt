@@ -412,7 +412,6 @@ private fun CoachMessageBubble(
             if (showProposalCard) {
                 Spacer(modifier = Modifier.height(6.dp))
                 CoachProposalCard(
-                    proposedChanges = message.proposedChanges.orEmpty(),
                     reasoning = message.reasoning.orEmpty(),
                     applied = message.applied,
                     onApplyClick = onApplyClick,
@@ -422,9 +421,15 @@ private fun CoachMessageBubble(
     }
 }
 
+/**
+ * Coach pivot 2026-06-11 (Bucket 1 Item 1) — render ONLY the plain-English
+ * `reasoning` field, never the raw structured `proposedChanges` blob. The
+ * structured changes are still on the domain model + used by the apply
+ * call; we just don't show the JSON-y payload to the creator anymore.
+ * The actual edit surface is moving to the Soul File page (Bucket 2).
+ */
 @Composable
 private fun CoachProposalCard(
-    proposedChanges: String,
     reasoning: String,
     applied: Boolean,
     onApplyClick: () -> Unit,
@@ -449,17 +454,9 @@ private fun CoachProposalCard(
             Text(
                 text = reasoning,
                 style = LocalAppTopography.current.regRegular,
-                color = YralColors.NeutralTextSecondary,
+                color = YralColors.NeutralTextPrimary,
             )
-            Spacer(modifier = Modifier.height(8.dp))
         }
-        Text(
-            text = proposedChanges,
-            style = LocalAppTopography.current.regRegular,
-            color = YralColors.NeutralTextPrimary,
-            maxLines = 8,
-            overflow = TextOverflow.Ellipsis,
-        )
         Spacer(modifier = Modifier.height(10.dp))
         Box(
             modifier =
