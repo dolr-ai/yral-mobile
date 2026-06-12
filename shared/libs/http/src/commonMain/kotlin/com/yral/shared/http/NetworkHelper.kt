@@ -9,7 +9,6 @@ import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
-import io.ktor.client.request.put
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsBytes
 import io.ktor.client.statement.bodyAsText
@@ -45,27 +44,6 @@ suspend inline fun <reified K> httpPost(
 ): K {
     try {
         val response: HttpResponse = httpClient.post(block)
-        val deserializer = json.serializersModule.serializer<K>()
-        val apiResponseString = response.bodyAsText()
-        val apiResponse =
-            json.decodeFromString(
-                deserializer = deserializer,
-                string = apiResponseString,
-            )
-        return apiResponse
-    } catch (e: Exception) {
-        return handleException(e)
-    }
-}
-
-@Suppress("TooGenericExceptionCaught")
-suspend inline fun <reified K> httpPut(
-    httpClient: HttpClient,
-    json: Json,
-    block: HttpRequestBuilder.() -> Unit,
-): K {
-    try {
-        val response: HttpResponse = httpClient.put(block)
         val deserializer = json.serializersModule.serializer<K>()
         val apiResponseString = response.bodyAsText()
         val apiResponse =

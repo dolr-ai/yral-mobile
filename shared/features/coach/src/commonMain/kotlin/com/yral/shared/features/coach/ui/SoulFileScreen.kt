@@ -288,6 +288,7 @@ private data class SoulFileRow(
     val body: @Composable () -> Unit,
 )
 
+@Suppress("LongMethod")
 @Composable
 private fun buildRowList(preview: SystemPromptPreview): List<SoulFileRow> {
     val rows = mutableListOf<SoulFileRow>()
