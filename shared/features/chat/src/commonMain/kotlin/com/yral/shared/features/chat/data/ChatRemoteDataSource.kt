@@ -15,6 +15,7 @@ import com.yral.shared.features.chat.data.models.HumanCreatorTakeoverStatusDto
 import com.yral.shared.features.chat.data.models.InfluencerDto
 import com.yral.shared.features.chat.data.models.InfluencerFeedResponseDto
 import com.yral.shared.features.chat.data.models.InfluencersResponseDto
+import com.yral.shared.features.chat.data.models.SystemPromptPreviewResponseDto
 import com.yral.shared.features.chat.data.models.ReleaseHumanCreatorTakeoverResponseDto
 import com.yral.shared.features.chat.data.models.SendHumanCreatorMessageRequestDto
 import com.yral.shared.features.chat.data.models.SendMessageRequestDto
@@ -46,6 +47,7 @@ import io.ktor.http.path
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 
+@Suppress("TooManyFunctions")
 class ChatRemoteDataSource(
     private val httpClient: HttpClient,
     private val json: Json,
@@ -97,6 +99,30 @@ class ChatRemoteDataSource(
             url {
                 host = chatBaseUrl
                 path(INFLUENCERS_PATH, id)
+            }
+            headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
+        }
+    }
+
+    /**
+     * Coach pivot Bucket 2 — `GET /api/v1/influencers/{botId}/system-prompt-preview`.
+     * Owner-gated. Returns the FULL composed system prompt the LLM sees at
+     * chat time (L1–L4 layers + skills + applied overrides) so the creator
+     * can audit it from the read-only "View full prompt" page in Coach.
+     *
+     * Backend ships `Cache-Control: no-store`. Mobile re-fetches on every
+     * page open (the ViewModel calls `load()` on each `openForBot`); we do
+     * not hold this in any local cache.
+     */
+    override suspend fun getSystemPromptPreview(botId: String): SystemPromptPreviewResponseDto {
+        val idToken = getIdToken()
+        return httpGet(
+            httpClient = httpClient,
+            json = json,
+        ) {
+            url {
+                host = chatBaseUrl
+                path(INFLUENCERS_PATH, botId, SYSTEM_PROMPT_PREVIEW_SUBPATH)
             }
             headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
         }
@@ -413,6 +439,7 @@ class ChatRemoteDataSource(
         private val logger = Logger.withTag("ChatRemoteDataSource")
         private const val INFLUENCERS_PATH = "api/v1/influencers"
         private const val INFLUENCER_FEED_PATH = "api/v1/influencer-feed"
+        private const val SYSTEM_PROMPT_PREVIEW_SUBPATH = "system-prompt-preview"
         private const val CONVERSATIONS_PATH = "api/v1/chat/conversations"
         private const val HUMAN_CONVERSATIONS_PATH = "api/v1/chat/human/conversations"
         private const val CONVERSATIONS_LIST_PATH = "api/v2/chat/conversations"

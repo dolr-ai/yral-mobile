@@ -7,6 +7,15 @@ import kotlinx.serialization.json.JsonElement
 @Serializable
 data class CreateCoachSessionRequestDto(
     @SerialName("fresh") val fresh: Boolean = false,
+    /**
+     * Coach pivot Bucket 2 — when the creator opened Coach by tapping
+     * a specific section card on the Soul File page, mobile passes
+     * the section's stable `id` slug here. Backend uses it to default
+     * Coach's proposals to that section. Optional — omitted when the
+     * creator opens Coach from the generic "Make your AI Influencer
+     * better" button.
+     */
+    @SerialName("section_hint") val sectionHint: String? = null,
 )
 
 @Serializable

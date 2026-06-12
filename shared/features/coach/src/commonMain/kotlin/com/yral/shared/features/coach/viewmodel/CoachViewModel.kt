@@ -40,8 +40,15 @@ class CoachViewModel(
         botId: String,
         botName: String?,
         avatarUrl: String?,
+        sectionHint: String? = null,
     ) {
-        startSession(botId = botId, botName = botName, avatarUrl = avatarUrl, fresh = false)
+        startSession(
+            botId = botId,
+            botName = botName,
+            avatarUrl = avatarUrl,
+            fresh = false,
+            sectionHint = sectionHint,
+        )
     }
 
     /**
@@ -53,7 +60,15 @@ class CoachViewModel(
     fun startOver() {
         val current = _viewState.value
         val botId = current.botId ?: return
-        startSession(botId = botId, botName = current.botName, avatarUrl = current.avatarUrl, fresh = true)
+        // Section hint intentionally NOT carried into start-over — a
+        // brand-new session is creator-initiated, not a section tap.
+        startSession(
+            botId = botId,
+            botName = current.botName,
+            avatarUrl = current.avatarUrl,
+            fresh = true,
+            sectionHint = null,
+        )
     }
 
     private fun startSession(
@@ -61,6 +76,7 @@ class CoachViewModel(
         botName: String?,
         avatarUrl: String?,
         fresh: Boolean,
+        sectionHint: String?,
     ) {
         _viewState.update {
             it.copy(
@@ -88,7 +104,11 @@ class CoachViewModel(
         }
         viewModelScope.launch {
             createCoachSessionUseCase(
-                CreateCoachSessionUseCase.Params(botId = botId, fresh = fresh),
+                CreateCoachSessionUseCase.Params(
+                    botId = botId,
+                    fresh = fresh,
+                    sectionHint = sectionHint,
+                ),
             ).onSuccess { session ->
                 _viewState.update {
                     it.copy(

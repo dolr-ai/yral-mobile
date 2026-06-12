@@ -186,6 +186,10 @@ class DefaultRootComponent(
                 RootComponent.Child.Coach(componentFactory.createCoach(context, config))
             }
 
+            is Config.SoulFile -> {
+                RootComponent.Child.SoulFile(componentFactory.createSoulFile(context, config))
+            }
+
             is Config.EditProfile -> {
                 RootComponent.Child.EditProfile(componentFactory.createEditProfile(context))
             }
@@ -402,6 +406,10 @@ class DefaultRootComponent(
 
     override fun openCoach(params: com.yral.shared.features.coach.nav.OpenCoachParams) {
         navigation.pushToFront(Config.Coach(params))
+    }
+
+    override fun openSoulFile(params: com.yral.shared.features.coach.nav.OpenSoulFileParams) {
+        navigation.pushToFront(Config.SoulFile(params))
     }
 
     override fun openProfile(userCanisterData: CanisterData) {

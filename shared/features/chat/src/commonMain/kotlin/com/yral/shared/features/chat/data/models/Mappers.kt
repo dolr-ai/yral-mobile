@@ -18,6 +18,14 @@ import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencerStatus
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
 import com.yral.shared.features.chat.domain.models.SendMessageResult
+import com.yral.shared.features.chat.domain.models.EnabledSkill
+import com.yral.shared.features.chat.domain.models.EngagementSchedule
+import com.yral.shared.features.chat.domain.models.FirstTurnNudge
+import com.yral.shared.features.chat.domain.models.InactivityProactive
+import com.yral.shared.features.chat.domain.models.SkillCheckins
+import com.yral.shared.features.chat.domain.models.SystemPromptLayers
+import com.yral.shared.features.chat.domain.models.SystemPromptPreview
+import com.yral.shared.features.chat.domain.models.SystemPromptSection
 import com.yral.shared.rust.service.utils.propicFromPrincipal
 
 fun InfluencerDto.toDomain(): Influencer =
@@ -231,4 +239,71 @@ fun StartHumanCreatorTakeoverResponseDto.toDomain(): HumanCreatorTakeoverStatus 
         startedAt = startedAt,
         userLastMessageAt = userLastMessageAt,
         remainingSeconds = remainingSeconds,
+    )
+
+// ---------- Coach pivot Bucket 2 — System prompt preview (read-only) ----------
+
+fun SystemPromptPreviewResponseDto.toDomain(): SystemPromptPreview =
+    SystemPromptPreview(
+        botId = botId,
+        botName = botName,
+        archetype = archetype,
+        asOf = asOf,
+        layers =
+            SystemPromptLayers(
+                l1GlobalRules = layers.l1GlobalRules,
+                l2ArchetypeBlock = layers.l2ArchetypeBlock,
+                l3PersonalitySections =
+                    layers.l3PersonalitySections.map {
+                        SystemPromptSection(id = it.id, heading = it.heading, body = it.body)
+                    },
+                l3FlatFallback = layers.l3FlatFallback,
+                l4UserSegmentTemplate = layers.l4UserSegmentTemplate,
+            ),
+        skillsEnabled =
+            skillsEnabled.map {
+                EnabledSkill(
+                    id = it.id,
+                    name = it.name,
+                    description = it.description,
+                    promptBlock = it.promptBlock,
+                )
+            },
+        appliedOverrides = appliedOverrides,
+        composedPreviewText = composedPreviewText,
+        engagementSchedule =
+            engagementSchedule?.let { schedule ->
+                EngagementSchedule(
+                    inactivityProactive =
+                        schedule.inactivityProactive?.let { ip ->
+                            InactivityProactive(
+                                enabledByDefault = ip.enabledByDefault,
+                                thresholdHours = ip.thresholdHours,
+                                perConversationOverrides = ip.perConversationOverrides,
+                                source = ip.source,
+                                note = ip.note,
+                            )
+                        },
+                    skillCheckins =
+                        schedule.skillCheckins?.let { sc ->
+                            SkillCheckins(
+                                skillSlug = sc.skillSlug,
+                                displayName = sc.displayName,
+                                defaultCadenceHours = sc.defaultCadenceHours,
+                                perUserPreferredTimes = sc.perUserPreferredTimes,
+                                source = sc.source,
+                                note = sc.note,
+                            )
+                        },
+                    firstTurnNudge =
+                        schedule.firstTurnNudge?.let { ftn ->
+                            FirstTurnNudge(
+                                enabled = ftn.enabled,
+                                initialIdleMinutes = ftn.initialIdleMinutes,
+                                source = ftn.source,
+                                note = ftn.note,
+                            )
+                        },
+                )
+            },
     )

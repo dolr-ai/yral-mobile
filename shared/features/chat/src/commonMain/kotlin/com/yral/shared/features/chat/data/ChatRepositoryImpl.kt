@@ -14,6 +14,7 @@ import com.yral.shared.features.chat.domain.models.DeleteConversationResult
 import com.yral.shared.features.chat.domain.models.HumanCreatorTakeoverStatus
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
+import com.yral.shared.features.chat.domain.models.SystemPromptPreview
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.domain.models.SendMessageResult
 import com.yral.shared.features.chat.domain.models.StreamEvent
@@ -64,6 +65,11 @@ class ChatRepositoryImpl(
     override suspend fun getInfluencer(id: String): Influencer =
         dataSource
             .getInfluencer(id)
+            .toDomain()
+
+    override suspend fun getSystemPromptPreview(botId: String): SystemPromptPreview =
+        dataSource
+            .getSystemPromptPreview(botId)
             .toDomain()
 
     override suspend fun createConversation(influencerId: String): Conversation =

@@ -16,11 +16,12 @@ class CoachRepositoryImpl(
     override suspend fun createSession(
         botId: String,
         fresh: Boolean,
+        sectionHint: String?,
     ): CoachSession =
         dataSource
             .createSession(
                 botId = botId,
-                request = CreateCoachSessionRequestDto(fresh = fresh),
+                request = CreateCoachSessionRequestDto(fresh = fresh, sectionHint = sectionHint),
             ).toDomain()
 
     override suspend fun sendMessage(

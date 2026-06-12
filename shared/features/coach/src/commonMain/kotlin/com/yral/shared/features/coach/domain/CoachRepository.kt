@@ -9,6 +9,7 @@ interface CoachRepository {
     suspend fun createSession(
         botId: String,
         fresh: Boolean,
+        sectionHint: String? = null,
     ): CoachSession
 
     suspend fun sendMessage(

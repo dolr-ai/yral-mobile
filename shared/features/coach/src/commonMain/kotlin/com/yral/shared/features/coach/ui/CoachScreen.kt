@@ -87,6 +87,7 @@ import yral_mobile.shared.features.coach.generated.resources.coach_start_over_co
 import yral_mobile.shared.features.coach.generated.resources.coach_start_over_confirm_cta
 import yral_mobile.shared.features.coach.generated.resources.coach_start_over_confirm_title
 import yral_mobile.shared.features.coach.generated.resources.coach_thinking
+import yral_mobile.shared.features.coach.generated.resources.coach_view_full_prompt
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_send
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_send_disabled
@@ -115,6 +116,7 @@ fun CoachScreen(
             showStartOver = viewState.coachConversationId != null,
             onBack = { component.onBack() },
             onStartOver = { viewModel.requestStartOverConfirm() },
+            onViewFullPrompt = { component.openSoulFile() },
         )
 
         CoachHeaderHint()
@@ -203,7 +205,12 @@ private fun CoachScreenEffects(
     viewModel: CoachViewModel,
 ) {
     LaunchedEffect(params.botId) {
-        viewModel.openForBot(params.botId, params.botName, params.avatarUrl)
+        viewModel.openForBot(
+            botId = params.botId,
+            botName = params.botName,
+            avatarUrl = params.avatarUrl,
+            sectionHint = params.sectionHint,
+        )
     }
 
     LaunchedEffect(appliedToastMessage) {
@@ -221,6 +228,7 @@ private fun CoachHeader(
     showStartOver: Boolean,
     onBack: () -> Unit,
     onStartOver: () -> Unit,
+    onViewFullPrompt: () -> Unit,
 ) {
     Row(
         modifier =
@@ -267,13 +275,21 @@ private fun CoachHeader(
                 )
             }
         }
-        if (showStartOver) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = stringResource(Res.string.coach_start_over),
+                text = stringResource(Res.string.coach_view_full_prompt),
                 style = LocalAppTopography.current.smSemiBold,
                 color = YralColors.Pink300,
-                modifier = Modifier.clickable(onClick = onStartOver).padding(8.dp),
+                modifier = Modifier.clickable(onClick = onViewFullPrompt).padding(8.dp),
             )
+            if (showStartOver) {
+                Text(
+                    text = stringResource(Res.string.coach_start_over),
+                    style = LocalAppTopography.current.smSemiBold,
+                    color = YralColors.Pink300,
+                    modifier = Modifier.clickable(onClick = onStartOver).padding(8.dp),
+                )
+            }
         }
     }
 }
