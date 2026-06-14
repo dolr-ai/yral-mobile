@@ -9,7 +9,7 @@ name = "yral_mobile_uniffi"
 
 [dependencies]
 uniffi = { version = "0.28.3", features = [ "cli" ] }
-tokio = { version = "1.28", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.50", features = ["macros", "rt-multi-thread"] }
 ic-agent = "0.41.0"
 lazy_static = "1.4"
 candid = "0.10.10"
