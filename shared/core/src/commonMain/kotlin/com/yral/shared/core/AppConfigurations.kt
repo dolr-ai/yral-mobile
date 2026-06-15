@@ -11,6 +11,7 @@ object AppConfigurations {
     const val INFLUENCER_FEED_BASE_URL = "recsys-influencer-feed.ansuman.yral.com"
     const val OFF_CHAIN_BASE_URL = "offchain.yral.com"
     const val STORAGE_INTERFACE_BASE_URL = "storage-interface.prakash.yral.com"
+    const val VIDEOGEN_BASE_URL = "storage-interface.prakash.yral.com"
     const val PUMP_DUMP_BASE_URL = "yral-hot-or-not.go-bazzinga.workers.dev"
     const val UPLOAD_BASE_URL = "upload.yral.com"
     const val ANALYTICS_BASE_URL = "analytics.yral.com"
