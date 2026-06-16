@@ -131,11 +131,15 @@ internal class UploadVideoRemoteDataSource(
             val response: HttpResponse =
                 client.post {
                     url {
-                        host = AppConfigurations.OFF_CHAIN_BASE_URL
+                        host = AppConfigurations.VIDEOGEN_BASE_URL
                         path(GENERATE_WITH_IDENTITY_V2_PATH)
                     }
                     contentType(ContentType.Application.Json)
                     setBody(dto)
+                    timeout {
+                        requestTimeoutMillis = UPLOAD_FILE_TIME_OUT
+                        socketTimeoutMillis = UPLOAD_FILE_TIME_OUT
+                    }
                 }
             response.parseGenerateVideoResponse(json)
         } catch (e: ClientRequestException) {
@@ -149,7 +153,7 @@ internal class UploadVideoRemoteDataSource(
     suspend fun fetchProviders(): ProvidersResponseDto =
         httpGet(client, json) {
             url {
-                host = AppConfigurations.OFF_CHAIN_BASE_URL
+                host = AppConfigurations.VIDEOGEN_BASE_URL
                 path(GET_PROVIDERS_PATH)
             }
         }
