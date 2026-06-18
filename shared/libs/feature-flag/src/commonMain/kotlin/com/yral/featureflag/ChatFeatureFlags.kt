@@ -118,6 +118,20 @@ object ChatFeatureFlags {
                     "backend cutover + GA — same shape as H2H/Audio/SSE/Chat-as-Human/Coach gates.",
                 defaultValue = false,
             )
+        val DiscoveryFeedV2Enabled: FeatureFlag<Boolean> =
+            boolean(
+                keySuffix = "discoveryFeedV2Enabled",
+                name = "Discovery feed v2 (agent.rishi.yral.com)",
+                description = "When ON, the influencer discovery screen fetches its list from " +
+                    "GET https://agent.rishi.yral.com/api/v2/discovery/influencer-feed (with JWT " +
+                    "when the user is logged in). When OFF, it calls the existing Anshuman recsys " +
+                    "host (https://recsys-influencer-feed.ansuman.yral.com/api/v1/influencer-feed) " +
+                    "exactly as today. The response envelope is byte-compatible with Anshuman's so " +
+                    "no parsing changes. Rollback is a server-side flag flip; the OFF path is " +
+                    "completely unchanged. PR keeps defaultValue = false until backend cutover + GA " +
+                    "— same shape as the other agent-API feature gates.",
+                defaultValue = false,
+            )
     }
 }
 // Initiate action

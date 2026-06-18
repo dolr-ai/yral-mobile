@@ -2,6 +2,7 @@ package com.yral.shared.features.chat.data
 
 import com.yral.shared.features.chat.attachments.ChatAttachment
 import com.yral.shared.features.chat.data.models.ChatMessageDto
+import com.yral.shared.features.chat.data.models.SystemPromptPreviewResponseDto
 import com.yral.shared.features.chat.data.models.ConversationDto
 import com.yral.shared.features.chat.data.models.ConversationInfluencerDto
 import com.yral.shared.features.chat.data.models.ConversationMessagesResponseDto
@@ -195,6 +196,10 @@ class ChatRepositoryImplUnreadCountTest {
         ): InfluencersResponseDto = error("unused")
 
         override suspend fun getInfluencer(id: String): InfluencerDto = error("unused")
+
+        override suspend fun getSystemPromptPreview(
+            botId: String,
+        ): SystemPromptPreviewResponseDto = error("unused")
 
         override suspend fun createConversation(influencerId: String): ConversationDto = error("unused")
 

@@ -1,6 +1,8 @@
 package com.yral.shared.features.chat.data
 
 import co.touchlab.kermit.Logger
+import com.yral.featureflag.ChatFeatureFlags
+import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.features.chat.attachments.ChatAttachment
 import com.yral.shared.features.chat.attachments.FilePathChatAttachment
@@ -54,6 +56,7 @@ class ChatRemoteDataSource(
     private val preferences: Preferences,
     private val chatBaseUrl: String,
     private val influencerFeedBaseUrl: String,
+    private val featureFlagManager: FeatureFlagManager,
 ) : ChatDataSource {
     override suspend fun listInfluencers(
         limit: Int,
@@ -74,21 +77,49 @@ class ChatRemoteDataSource(
         }
     }
 
+    /**
+     * Discovery feed fetch. Flag-gated cutover from Anshuman's recsys host
+     * to the v2 agent host. The response envelope is byte-compatible
+     * (same field names, identical [InfluencerFeedResponseDto] shape),
+     * so only the request URL — and JWT attachment when logged in —
+     * differs. OFF path stays exactly as it was pre-flag for instant
+     * rollback.
+     */
     override suspend fun listTrendingInfluencers(
         limit: Int,
         offset: Int,
-    ): InfluencersResponseDto =
-        httpGet<InfluencerFeedResponseDto>(
-            httpClient = httpClient,
-            json = json,
-        ) {
-            url {
-                host = influencerFeedBaseUrl
-                path(INFLUENCER_FEED_PATH)
-                parameters.append("limit", limit.toString())
-                parameters.append("offset", offset.toString())
-            }
-        }.toInfluencersResponseDto()
+    ): InfluencersResponseDto {
+        val v2Enabled = featureFlagManager.isEnabled(ChatFeatureFlags.Chat.DiscoveryFeedV2Enabled)
+        return if (v2Enabled) {
+            val idToken = getIdTokenOrNull()
+            httpGet<InfluencerFeedResponseDto>(
+                httpClient = httpClient,
+                json = json,
+            ) {
+                url {
+                    host = chatBaseUrl
+                    path(DISCOVERY_FEED_PATH)
+                    parameters.append("limit", limit.toString())
+                    parameters.append("offset", offset.toString())
+                }
+                if (!idToken.isNullOrBlank()) {
+                    headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
+                }
+            }.toInfluencersResponseDto()
+        } else {
+            httpGet<InfluencerFeedResponseDto>(
+                httpClient = httpClient,
+                json = json,
+            ) {
+                url {
+                    host = influencerFeedBaseUrl
+                    path(INFLUENCER_FEED_PATH)
+                    parameters.append("limit", limit.toString())
+                    parameters.append("offset", offset.toString())
+                }
+            }.toInfluencersResponseDto()
+        }
+    }
 
     override suspend fun getInfluencer(id: String): InfluencerDto {
         val idToken = getIdToken()
@@ -429,6 +460,15 @@ class ChatRemoteDataSource(
         preferences.getString(PrefKeys.ID_TOKEN.name)
             ?: throw YralException("Authorisation not found")
 
+    /**
+     * Discovery feed v2 is owner-optional: backend personalises the feed
+     * when a JWT is present and falls back to a generic ranking when it
+     * isn't, so the call site needs to suppress the throw on missing
+     * token rather than treat it as an auth error.
+     */
+    private suspend fun getIdTokenOrNull() =
+        preferences.getString(PrefKeys.ID_TOKEN.name)
+
     private fun ChatAttachment.readUploadBytes(): ByteArray =
         when (this) {
             is FilePathChatAttachment -> readChatAttachmentBytes(filePath)
@@ -439,6 +479,7 @@ class ChatRemoteDataSource(
         private val logger = Logger.withTag("ChatRemoteDataSource")
         private const val INFLUENCERS_PATH = "api/v1/influencers"
         private const val INFLUENCER_FEED_PATH = "api/v1/influencer-feed"
+        private const val DISCOVERY_FEED_PATH = "api/v2/discovery/influencer-feed"
         private const val SYSTEM_PROMPT_PREVIEW_SUBPATH = "system-prompt-preview"
         private const val CONVERSATIONS_PATH = "api/v1/chat/conversations"
         private const val HUMAN_CONVERSATIONS_PATH = "api/v1/chat/human/conversations"

@@ -48,6 +48,7 @@ val chatModule =
                 preferences = get(),
                 chatBaseUrl = get(CHAT_SERVER_BASE_URL),
                 influencerFeedBaseUrl = get(INFLUENCER_FEED_SERVER_BASE_URL),
+                featureFlagManager = get(),
             )
         }
         factory {
