@@ -18,6 +18,7 @@ import com.yral.shared.features.chat.data.models.InfluencerDto
 import com.yral.shared.features.chat.data.models.InfluencerFeedResponseDto
 import com.yral.shared.features.chat.data.models.InfluencersResponseDto
 import com.yral.shared.features.chat.data.models.DiscoverySearchResponseDto
+import com.yral.shared.features.chat.data.models.InboxSearchResponseDto
 import com.yral.shared.features.chat.data.models.SystemPromptPreviewResponseDto
 import com.yral.shared.features.chat.data.models.ReleaseHumanCreatorTakeoverResponseDto
 import com.yral.shared.features.chat.data.models.SendHumanCreatorMessageRequestDto
@@ -141,6 +142,33 @@ class ChatRemoteDataSource(
             url {
                 host = chatBaseUrl
                 path(DISCOVERY_SEARCH_PATH)
+                parameters.append("q", query)
+                parameters.append("limit", limit.toString())
+            }
+            if (!idToken.isNullOrBlank()) {
+                headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
+            }
+        }
+    }
+
+    /**
+     * Inbox conversation search — `GET /api/v2/chat/conversations/search?q=&limit=`.
+     * Owner-scoped (requires JWT — anonymous callers get an empty list
+     * server-side). Mirrors the discovery search wire path but talks to
+     * a different router that only sees the calling user's conversations.
+     */
+    override suspend fun searchInbox(
+        query: String,
+        limit: Int,
+    ): InboxSearchResponseDto {
+        val idToken = getIdTokenOrNull()
+        return httpGet(
+            httpClient = httpClient,
+            json = json,
+        ) {
+            url {
+                host = chatBaseUrl
+                path(INBOX_SEARCH_PATH)
                 parameters.append("q", query)
                 parameters.append("limit", limit.toString())
             }
@@ -510,6 +538,7 @@ class ChatRemoteDataSource(
         private const val INFLUENCER_FEED_PATH = "api/v1/influencer-feed"
         private const val DISCOVERY_FEED_PATH = "api/v2/discovery/influencer-feed"
         private const val DISCOVERY_SEARCH_PATH = "api/v2/discovery/search"
+        private const val INBOX_SEARCH_PATH = "api/v2/chat/conversations/search"
         private const val SYSTEM_PROMPT_PREVIEW_SUBPATH = "system-prompt-preview"
         private const val CONVERSATIONS_PATH = "api/v1/chat/conversations"
         private const val HUMAN_CONVERSATIONS_PATH = "api/v1/chat/human/conversations"

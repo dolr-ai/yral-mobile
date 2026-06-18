@@ -4,7 +4,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
@@ -31,28 +31,33 @@ import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import yral_mobile.shared.features.chat.generated.resources.Res
+import yral_mobile.shared.features.chat.generated.resources.discovery_search_clear_action
 import yral_mobile.shared.features.chat.generated.resources.discovery_search_create_action
-import yral_mobile.shared.features.chat.generated.resources.discovery_search_placeholder
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_plus_circle
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_search
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_x_circle
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 /**
- * Discovery header search bar. Full-width pill, leading search icon,
- * trailing "+" that opens the existing Create Influencer flow. Tapping
- * anywhere on the bar focuses the input. When the [DiscoverySearchEnabled]
- * flag is OFF this composable is never rendered — the caller swaps in
- * the legacy [CreateInfluencerButton] header instead.
+ * Shared chat-home search bar. Renders identically on both Discover and
+ * Inbox tabs (Rishi: ADHD-friendly symmetry). Trailing icon swaps with
+ * the input state: "+" when the field is empty (opens Create) and "✕"
+ * when the field has text (clears the input + dismisses the keyboard).
+ *
+ * Placeholder + the action behind the leading-magnifier-icon submit are
+ * tab-aware — supplied by the caller via [placeholder] / [onQueryChange].
  */
 @Composable
 fun DiscoverySearchBar(
     query: String,
+    placeholder: String,
     onQueryChange: (String) -> Unit,
     onCreateClick: () -> Unit,
+    onClearClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val focusRequester = remember { FocusRequester() }
-    val placeholder = stringResource(Res.string.discovery_search_placeholder)
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     Row(
         modifier =
@@ -98,13 +103,27 @@ fun DiscoverySearchBar(
             }
         }
         Spacer(modifier = Modifier.width(10.dp))
-        Image(
-            painter = painterResource(DesignRes.drawable.ic_plus_circle),
-            contentDescription = stringResource(Res.string.discovery_search_create_action),
-            modifier =
-                Modifier
-                    .size(28.dp)
-                    .clickable(onClick = onCreateClick),
-        )
+        if (query.isEmpty()) {
+            Image(
+                painter = painterResource(DesignRes.drawable.ic_plus_circle),
+                contentDescription = stringResource(Res.string.discovery_search_create_action),
+                modifier =
+                    Modifier
+                        .size(28.dp)
+                        .clickable(onClick = onCreateClick),
+            )
+        } else {
+            Image(
+                painter = painterResource(DesignRes.drawable.ic_x_circle),
+                contentDescription = stringResource(Res.string.discovery_search_clear_action),
+                modifier =
+                    Modifier
+                        .size(24.dp)
+                        .clickable {
+                            onClearClick()
+                            keyboardController?.hide()
+                        },
+            )
+        }
     }
 }

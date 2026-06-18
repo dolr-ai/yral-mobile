@@ -20,7 +20,9 @@ import com.yral.shared.features.chat.domain.usecases.GetHumanCreatorTakeoverStat
 import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
 import com.yral.shared.features.chat.domain.usecases.GetSystemPromptPreviewUseCase
 import com.yral.shared.features.chat.domain.usecases.SearchDiscoveryUseCase
+import com.yral.shared.features.chat.domain.usecases.SearchInboxUseCase
 import com.yral.shared.features.chat.viewmodel.DiscoverySearchViewModel
+import com.yral.shared.features.chat.viewmodel.InboxSearchViewModel
 import com.yral.shared.features.chat.domain.usecases.GrantChatAccessUseCase
 import com.yral.shared.features.chat.domain.usecases.MarkConversationAsReadUseCase
 import com.yral.shared.features.chat.domain.usecases.ReleaseHumanCreatorTakeoverUseCase
@@ -76,6 +78,7 @@ val chatModule =
         factoryOf(::GetInfluencerUseCase)
         factoryOf(::GetSystemPromptPreviewUseCase)
         factoryOf(::SearchDiscoveryUseCase)
+        factoryOf(::SearchInboxUseCase)
         factoryOf(::MarkConversationAsReadUseCase)
         factoryOf(::SendMessageUseCase)
         factoryOf(::SendHumanMessageUseCase)
@@ -92,6 +95,7 @@ val chatModule =
         single { ConversationContentCache() }
         viewModelOf(::ChatWallViewModel)
         viewModelOf(::DiscoverySearchViewModel)
+        viewModelOf(::InboxSearchViewModel)
         viewModel {
             ConversationViewModel(
                 flagManager = get(),

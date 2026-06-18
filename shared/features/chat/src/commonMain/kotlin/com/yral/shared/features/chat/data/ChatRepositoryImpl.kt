@@ -15,6 +15,7 @@ import com.yral.shared.features.chat.domain.models.HumanCreatorTakeoverStatus
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
 import com.yral.shared.features.chat.domain.models.DiscoverySearchResult
+import com.yral.shared.features.chat.domain.models.InboxSearchResult
 import com.yral.shared.features.chat.domain.models.SystemPromptPreview
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.domain.models.SendMessageResult
@@ -76,6 +77,18 @@ class ChatRepositoryImpl(
         if (trimmed.isEmpty()) return emptyList()
         return dataSource
             .searchDiscovery(query = trimmed, limit = limit)
+            .results
+            .map { it.toDomain() }
+    }
+
+    override suspend fun searchInbox(
+        query: String,
+        limit: Int,
+    ): List<InboxSearchResult> {
+        val trimmed = query.trim()
+        if (trimmed.isEmpty()) return emptyList()
+        return dataSource
+            .searchInbox(query = trimmed, limit = limit)
             .results
             .map { it.toDomain() }
     }
