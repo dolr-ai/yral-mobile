@@ -63,6 +63,45 @@ class FirstFrameStartupWatchdogTest {
     }
 
     @Test
+    fun `defers rebuild once while media is buffering`() {
+        val watchdog = FirstFrameStartupWatchdog(config)
+        watchdog.start(index = 2, nowMs = 0)
+        watchdog.evaluate(index = 2, nowMs = 100, firstFramePending = true)
+
+        // Rebuild is due, but data is arriving: hold off one window.
+        assertEquals(
+            FirstFrameStartupAction.None,
+            watchdog.evaluate(index = 2, nowMs = 300, firstFramePending = true, hasBufferedMedia = true),
+        )
+        // Still no first frame a full window later: rebuild even though media is buffered.
+        assertEquals(
+            FirstFrameStartupAction.Rebuild,
+            watchdog.evaluate(index = 2, nowMs = 500, firstFramePending = true, hasBufferedMedia = true),
+        )
+    }
+
+    @Test
+    fun `buffered media does not delay rebuild before its own timeout`() {
+        val watchdog = FirstFrameStartupWatchdog(config)
+        watchdog.start(index = 2, nowMs = 0)
+        watchdog.evaluate(index = 2, nowMs = 100, firstFramePending = true)
+
+        // The deferral only applies when a rebuild is actually due.
+        assertEquals(
+            FirstFrameStartupAction.None,
+            watchdog.evaluate(index = 2, nowMs = 150, firstFramePending = true, hasBufferedMedia = true),
+        )
+        assertEquals(
+            FirstFrameStartupAction.None,
+            watchdog.evaluate(index = 2, nowMs = 300, firstFramePending = true, hasBufferedMedia = true),
+        )
+        assertEquals(
+            FirstFrameStartupAction.Rebuild,
+            watchdog.evaluate(index = 2, nowMs = 500, firstFramePending = true, hasBufferedMedia = false),
+        )
+    }
+
+    @Test
     fun `clear prevents stale action`() {
         val watchdog = FirstFrameStartupWatchdog(config)
         watchdog.start(index = 2, nowMs = 0)
