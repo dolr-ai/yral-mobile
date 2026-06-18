@@ -18,7 +18,9 @@ import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencerStatus
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
 import com.yral.shared.features.chat.domain.models.SendMessageResult
+import com.yral.shared.features.chat.domain.models.DiscoverySearchResult
 import com.yral.shared.features.chat.domain.models.EnabledSkill
+import com.yral.shared.features.chat.domain.models.SearchResultKind
 import com.yral.shared.features.chat.domain.models.EngagementSchedule
 import com.yral.shared.features.chat.domain.models.FirstTurnNudge
 import com.yral.shared.features.chat.domain.models.InactivityProactive
@@ -306,4 +308,17 @@ fun SystemPromptPreviewResponseDto.toDomain(): SystemPromptPreview =
                         },
                 )
             },
+    )
+
+// ---------- Discovery search ----------
+
+fun DiscoverySearchResultDto.toDomain(): DiscoverySearchResult =
+    DiscoverySearchResult(
+        kind = SearchResultKind.fromString(kind),
+        id = id,
+        name = name,
+        displayName = displayName.ifBlank { name },
+        avatarUrl = avatarUrl,
+        category = category?.takeIf { it.isNotBlank() },
+        subtitle = subtitle?.takeIf { it.isNotBlank() },
     )

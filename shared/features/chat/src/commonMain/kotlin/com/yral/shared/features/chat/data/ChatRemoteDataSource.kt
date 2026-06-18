@@ -17,6 +17,7 @@ import com.yral.shared.features.chat.data.models.HumanCreatorTakeoverStatusDto
 import com.yral.shared.features.chat.data.models.InfluencerDto
 import com.yral.shared.features.chat.data.models.InfluencerFeedResponseDto
 import com.yral.shared.features.chat.data.models.InfluencersResponseDto
+import com.yral.shared.features.chat.data.models.DiscoverySearchResponseDto
 import com.yral.shared.features.chat.data.models.SystemPromptPreviewResponseDto
 import com.yral.shared.features.chat.data.models.ReleaseHumanCreatorTakeoverResponseDto
 import com.yral.shared.features.chat.data.models.SendHumanCreatorMessageRequestDto
@@ -118,6 +119,34 @@ class ChatRemoteDataSource(
                     parameters.append("offset", offset.toString())
                 }
             }.toInfluencersResponseDto()
+        }
+    }
+
+    /**
+     * Discovery search — `GET /api/v2/discovery/search?q=&limit=`. Hits
+     * the v2 host with the user's JWT when logged in (server falls back
+     * to non-personalised ranking when absent). The feature flag is
+     * enforced upstream in the repository — this method assumes the
+     * caller already confirmed `DiscoverySearchEnabled` is ON.
+     */
+    override suspend fun searchDiscovery(
+        query: String,
+        limit: Int,
+    ): DiscoverySearchResponseDto {
+        val idToken = getIdTokenOrNull()
+        return httpGet(
+            httpClient = httpClient,
+            json = json,
+        ) {
+            url {
+                host = chatBaseUrl
+                path(DISCOVERY_SEARCH_PATH)
+                parameters.append("q", query)
+                parameters.append("limit", limit.toString())
+            }
+            if (!idToken.isNullOrBlank()) {
+                headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
+            }
         }
     }
 
@@ -480,6 +509,7 @@ class ChatRemoteDataSource(
         private const val INFLUENCERS_PATH = "api/v1/influencers"
         private const val INFLUENCER_FEED_PATH = "api/v1/influencer-feed"
         private const val DISCOVERY_FEED_PATH = "api/v2/discovery/influencer-feed"
+        private const val DISCOVERY_SEARCH_PATH = "api/v2/discovery/search"
         private const val SYSTEM_PROMPT_PREVIEW_SUBPATH = "system-prompt-preview"
         private const val CONVERSATIONS_PATH = "api/v1/chat/conversations"
         private const val HUMAN_CONVERSATIONS_PATH = "api/v1/chat/human/conversations"

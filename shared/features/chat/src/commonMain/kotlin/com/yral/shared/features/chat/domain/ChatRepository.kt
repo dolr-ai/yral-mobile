@@ -8,6 +8,7 @@ import com.yral.shared.features.chat.domain.models.DeleteConversationResult
 import com.yral.shared.features.chat.domain.models.HumanCreatorTakeoverStatus
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
+import com.yral.shared.features.chat.domain.models.DiscoverySearchResult
 import com.yral.shared.features.chat.domain.models.SystemPromptPreview
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.domain.models.SendMessageResult
@@ -28,6 +29,17 @@ interface ChatRepository {
     ): InfluencersPageResult
 
     suspend fun getInfluencer(id: String): Influencer
+
+    /**
+     * Discovery search — fuzzy match across name/category/archetype/
+     * description. Returns at most [limit] influencers, ordered by
+     * trigram similarity + tie-break on message_count. Empty list on
+     * a blank/whitespace-only query.
+     */
+    suspend fun searchDiscovery(
+        query: String,
+        limit: Int,
+    ): List<DiscoverySearchResult>
 
     // ---------- Coach pivot Bucket 2 — View full prompt page ----------
 

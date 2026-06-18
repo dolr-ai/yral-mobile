@@ -14,6 +14,7 @@ import com.yral.shared.features.chat.domain.models.DeleteConversationResult
 import com.yral.shared.features.chat.domain.models.HumanCreatorTakeoverStatus
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
+import com.yral.shared.features.chat.domain.models.DiscoverySearchResult
 import com.yral.shared.features.chat.domain.models.SystemPromptPreview
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.domain.models.SendMessageResult
@@ -66,6 +67,18 @@ class ChatRepositoryImpl(
         dataSource
             .getInfluencer(id)
             .toDomain()
+
+    override suspend fun searchDiscovery(
+        query: String,
+        limit: Int,
+    ): List<DiscoverySearchResult> {
+        val trimmed = query.trim()
+        if (trimmed.isEmpty()) return emptyList()
+        return dataSource
+            .searchDiscovery(query = trimmed, limit = limit)
+            .results
+            .map { it.toDomain() }
+    }
 
     override suspend fun getSystemPromptPreview(botId: String): SystemPromptPreview =
         dataSource

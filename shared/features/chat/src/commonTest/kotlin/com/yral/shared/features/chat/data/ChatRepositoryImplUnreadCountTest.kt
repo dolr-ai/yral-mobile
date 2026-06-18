@@ -2,6 +2,7 @@ package com.yral.shared.features.chat.data
 
 import com.yral.shared.features.chat.attachments.ChatAttachment
 import com.yral.shared.features.chat.data.models.ChatMessageDto
+import com.yral.shared.features.chat.data.models.DiscoverySearchResponseDto
 import com.yral.shared.features.chat.data.models.SystemPromptPreviewResponseDto
 import com.yral.shared.features.chat.data.models.ConversationDto
 import com.yral.shared.features.chat.data.models.ConversationInfluencerDto
@@ -194,6 +195,11 @@ class ChatRepositoryImplUnreadCountTest {
             limit: Int,
             offset: Int,
         ): InfluencersResponseDto = error("unused")
+
+        override suspend fun searchDiscovery(
+            query: String,
+            limit: Int,
+        ): DiscoverySearchResponseDto = error("unused")
 
         override suspend fun getInfluencer(id: String): InfluencerDto = error("unused")
 

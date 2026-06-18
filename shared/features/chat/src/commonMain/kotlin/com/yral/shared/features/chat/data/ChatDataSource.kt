@@ -8,6 +8,7 @@ import com.yral.shared.features.chat.data.models.ConversationsResponseDto
 import com.yral.shared.features.chat.data.models.DeleteConversationResponseDto
 import com.yral.shared.features.chat.data.models.HumanCreatorTakeoverStatusDto
 import com.yral.shared.features.chat.data.models.InfluencerDto
+import com.yral.shared.features.chat.data.models.DiscoverySearchResponseDto
 import com.yral.shared.features.chat.data.models.SystemPromptPreviewResponseDto
 import com.yral.shared.features.chat.data.models.InfluencersResponseDto
 import com.yral.shared.features.chat.data.models.ReleaseHumanCreatorTakeoverResponseDto
@@ -27,6 +28,11 @@ interface ChatDataSource {
         limit: Int,
         offset: Int,
     ): InfluencersResponseDto
+
+    suspend fun searchDiscovery(
+        query: String,
+        limit: Int,
+    ): DiscoverySearchResponseDto
 
     suspend fun getInfluencer(id: String): InfluencerDto
 

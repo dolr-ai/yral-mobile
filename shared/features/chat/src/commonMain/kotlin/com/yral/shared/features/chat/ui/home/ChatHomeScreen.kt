@@ -17,6 +17,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,9 +29,16 @@ import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.chat.domain.models.formatChatUnreadBadgeCount
 import com.yral.shared.features.chat.nav.home.ChatHomeComponent
 import com.yral.shared.features.chat.nav.home.ChatHomeComponent.Child
+import com.yral.featureflag.ChatFeatureFlags
+import com.yral.featureflag.FeatureFlagManager
+import com.yral.shared.data.domain.models.ConversationInfluencerSource
+import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.chat.ui.inbox.InboxScreen
 import com.yral.shared.features.chat.ui.wall.ChatWallScreen
+import com.yral.shared.features.chat.ui.wall.DiscoverySearchBar
+import com.yral.shared.features.chat.ui.wall.DiscoverySearchResults
 import com.yral.shared.features.chat.viewmodel.ChatWallViewModel
+import com.yral.shared.features.chat.viewmodel.DiscoverySearchViewModel
 import com.yral.shared.features.chat.viewmodel.InboxViewModel
 import com.yral.shared.libs.designsystem.component.CreateInfluencerButton
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
@@ -70,6 +78,8 @@ fun ChatHomeScreen(
     sessionManager: SessionManager = koinInject(),
     chatWallViewModel: ChatWallViewModel = koinViewModel(),
     inboxViewModel: InboxViewModel = koinViewModel(),
+    discoverySearchViewModel: DiscoverySearchViewModel = koinViewModel(),
+    featureFlagManager: FeatureFlagManager = koinInject(),
 ) {
     val stack by component.stack.subscribeAsState()
     val activeChild = stack.active.instance
@@ -83,6 +93,13 @@ fun ChatHomeScreen(
             .shouldShowCreateBotCtaFlow(wallState.maxBotCountForCta)
             .collectAsStateWithLifecycle(initialValue = false)
 
+    val searchEnabled =
+        remember(featureFlagManager) {
+            featureFlagManager.isEnabled(ChatFeatureFlags.Chat.DiscoverySearchEnabled)
+        }
+    val searchQuery by discoverySearchViewModel.query.collectAsStateWithLifecycle()
+    val searchState by discoverySearchViewModel.state.collectAsStateWithLifecycle()
+
     Column(
         modifier =
             modifier
@@ -92,13 +109,32 @@ fun ChatHomeScreen(
         if (isBotAccount) {
             InboxTitle()
         } else {
-            ChatHomeHeader(
-                showCreateBotCta = showCreateBotCta,
-                onCreateInfluencerClick = {
-                    chatWallViewModel.trackCreateInfluencerClicked()
-                    component.openCreateInfluencer()
-                },
-            )
+            // Search-bar header replaces the legacy "Chat" title + Create
+            // button row whenever search is enabled and the Discover tab
+            // is active. The "+" icon embedded in the search bar retains
+            // the Create flow at the exact same position. When the flag
+            // is off, or the user is on Inbox, the legacy header renders
+            // unchanged.
+            if (searchEnabled && isDiscoverSelected) {
+                Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
+                    DiscoverySearchBar(
+                        query = searchQuery,
+                        onQueryChange = discoverySearchViewModel::setQuery,
+                        onCreateClick = {
+                            chatWallViewModel.trackCreateInfluencerClicked()
+                            component.openCreateInfluencer()
+                        },
+                    )
+                }
+            } else {
+                ChatHomeHeader(
+                    showCreateBotCta = showCreateBotCta,
+                    onCreateInfluencerClick = {
+                        chatWallViewModel.trackCreateInfluencerClicked()
+                        component.openCreateInfluencer()
+                    },
+                )
+            }
             ChatTabRow(
                 isDiscoverSelected = isDiscoverSelected,
                 inboxUnreadCount = unreadConversationCount,
@@ -109,11 +145,36 @@ fun ChatHomeScreen(
         Box(modifier = Modifier.fillMaxSize()) {
             when (activeChild) {
                 is Child.Discover -> {
-                    ChatWallScreen(
-                        component = activeChild.component,
-                        viewModel = chatWallViewModel,
-                        modifier = Modifier.fillMaxSize(),
-                    )
+                    // While the user is searching, replace the influencer
+                    // grid with the results list. Empty / loading / error
+                    // states all render via DiscoverySearchResults.
+                    if (searchEnabled && searchState.isActive) {
+                        DiscoverySearchResults(
+                            query = searchState.query,
+                            results = searchState.results,
+                            isLoading = searchState.isLoading,
+                            error = searchState.error,
+                            onResultClick = { result ->
+                                activeChild.component.openConversation(
+                                    OpenConversationParams(
+                                        influencerId = result.id,
+                                        influencerCategory = result.category.orEmpty(),
+                                        influencerSource = ConversationInfluencerSource.CARD,
+                                        displayName = result.displayName,
+                                        username = result.name,
+                                        avatarUrl = result.avatarUrl,
+                                    ),
+                                )
+                            },
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    } else {
+                        ChatWallScreen(
+                            component = activeChild.component,
+                            viewModel = chatWallViewModel,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
                 }
 
                 is Child.Inbox -> {

@@ -19,6 +19,8 @@ import com.yral.shared.features.chat.domain.usecases.DeleteConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.GetHumanCreatorTakeoverStatusUseCase
 import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
 import com.yral.shared.features.chat.domain.usecases.GetSystemPromptPreviewUseCase
+import com.yral.shared.features.chat.domain.usecases.SearchDiscoveryUseCase
+import com.yral.shared.features.chat.viewmodel.DiscoverySearchViewModel
 import com.yral.shared.features.chat.domain.usecases.GrantChatAccessUseCase
 import com.yral.shared.features.chat.domain.usecases.MarkConversationAsReadUseCase
 import com.yral.shared.features.chat.domain.usecases.ReleaseHumanCreatorTakeoverUseCase
@@ -73,6 +75,7 @@ val chatModule =
         factoryOf(::DeleteConversationUseCase)
         factoryOf(::GetInfluencerUseCase)
         factoryOf(::GetSystemPromptPreviewUseCase)
+        factoryOf(::SearchDiscoveryUseCase)
         factoryOf(::MarkConversationAsReadUseCase)
         factoryOf(::SendMessageUseCase)
         factoryOf(::SendHumanMessageUseCase)
@@ -88,6 +91,7 @@ val chatModule =
         // Koin graph and crash with NoDefinitionFoundException.
         single { ConversationContentCache() }
         viewModelOf(::ChatWallViewModel)
+        viewModelOf(::DiscoverySearchViewModel)
         viewModel {
             ConversationViewModel(
                 flagManager = get(),
