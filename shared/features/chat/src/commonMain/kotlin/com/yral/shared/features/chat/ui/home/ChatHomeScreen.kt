@@ -39,7 +39,9 @@ import com.yral.shared.features.chat.ui.wall.DiscoverySearchBar
 import com.yral.shared.features.chat.ui.wall.DiscoverySearchResults
 import com.yral.shared.features.chat.ui.wall.InboxSearchResults
 import com.yral.shared.features.chat.viewmodel.ChatWallViewModel
+import com.yral.shared.features.chat.viewmodel.DiscoverySearchState
 import com.yral.shared.features.chat.viewmodel.DiscoverySearchViewModel
+import com.yral.shared.features.chat.viewmodel.InboxSearchState
 import com.yral.shared.features.chat.viewmodel.InboxSearchViewModel
 import com.yral.shared.features.chat.viewmodel.InboxViewModel
 import com.yral.shared.libs.designsystem.component.CreateInfluencerButton
@@ -102,29 +104,8 @@ fun ChatHomeScreen(
         remember(featureFlagManager) {
             featureFlagManager.isEnabled(ChatFeatureFlags.Chat.DiscoverySearchEnabled)
         }
-    // Discover + Inbox search states are independent — each tab has its
-    // own query, results, and LRU cache. The shared search bar shows
-    // whichever tab is active. Tab switch "resets cleanly" because each
-    // VM persists its own query in isolation; switching back restores it.
-    val discoveryQuery by discoverySearchViewModel.query.collectAsStateWithLifecycle()
     val discoveryState by discoverySearchViewModel.state.collectAsStateWithLifecycle()
-    val inboxQuery by inboxSearchViewModel.query.collectAsStateWithLifecycle()
     val inboxState by inboxSearchViewModel.state.collectAsStateWithLifecycle()
-
-    val activeQuery = if (isDiscoverSelected) discoveryQuery else inboxQuery
-    val activePlaceholder =
-        stringResource(
-            if (isDiscoverSelected) Res.string.discovery_search_placeholder
-            else Res.string.inbox_search_placeholder,
-        )
-    val onActiveQueryChange: (String) -> Unit = remember(isDiscoverSelected) {
-        if (isDiscoverSelected) discoverySearchViewModel::setQuery
-        else inboxSearchViewModel::setQuery
-    }
-    val onActiveClear: () -> Unit = remember(isDiscoverSelected) {
-        if (isDiscoverSelected) discoverySearchViewModel::clearQuery
-        else inboxSearchViewModel::clearQuery
-    }
 
     Column(
         modifier =
@@ -132,112 +113,196 @@ fun ChatHomeScreen(
                 .fillMaxSize()
                 .background(Color.Black),
     ) {
-        if (isBotAccount) {
-            InboxTitle()
-        } else {
-            // Symmetric search bar above the tab row — same component
-            // renders on both Discover and Inbox. Placeholder + submit
-            // route to the right VM based on the active tab. When the
-            // flag is OFF, the legacy "Chat / Create Influencer" header
-            // shows exactly as today and neither search endpoint is hit.
-            if (searchEnabled) {
-                Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
-                    DiscoverySearchBar(
-                        query = activeQuery,
-                        placeholder = activePlaceholder,
-                        onQueryChange = onActiveQueryChange,
-                        onCreateClick = {
-                            chatWallViewModel.trackCreateInfluencerClicked()
-                            component.openCreateInfluencer()
-                        },
-                        onClearClick = onActiveClear,
-                    )
-                }
-            } else {
-                ChatHomeHeader(
-                    showCreateBotCta = showCreateBotCta,
-                    onCreateInfluencerClick = {
-                        chatWallViewModel.trackCreateInfluencerClicked()
-                        component.openCreateInfluencer()
-                    },
-                )
-            }
-            ChatTabRow(
-                isDiscoverSelected = isDiscoverSelected,
-                inboxUnreadCount = unreadConversationCount,
-                onDiscoverClick = component::onDiscoverTabClick,
-                onInboxClick = component::onInboxTabClick,
+        ChatHomeHeaderBlock(
+            isBotAccount = isBotAccount,
+            searchEnabled = searchEnabled,
+            isDiscoverSelected = isDiscoverSelected,
+            showCreateBotCta = showCreateBotCta,
+            unreadConversationCount = unreadConversationCount,
+            discoverySearchViewModel = discoverySearchViewModel,
+            inboxSearchViewModel = inboxSearchViewModel,
+            onCreateInfluencerClick = {
+                chatWallViewModel.trackCreateInfluencerClicked()
+                component.openCreateInfluencer()
+            },
+            onDiscoverTabClick = component::onDiscoverTabClick,
+            onInboxTabClick = component::onInboxTabClick,
+        )
+        Box(modifier = Modifier.fillMaxSize()) {
+            ChatHomeContent(
+                activeChild = activeChild,
+                searchEnabled = searchEnabled,
+                discoveryState = discoveryState,
+                inboxState = inboxState,
+                chatWallViewModel = chatWallViewModel,
+                inboxViewModel = inboxViewModel,
             )
         }
-        Box(modifier = Modifier.fillMaxSize()) {
-            when (activeChild) {
-                is Child.Discover -> {
-                    // When the user is searching from Discover, replace
-                    // the influencer grid with the results list. Empty /
-                    // loading / error states all render via
-                    // DiscoverySearchResults.
-                    if (searchEnabled && discoveryState.isActive) {
-                        DiscoverySearchResults(
-                            query = discoveryState.query,
-                            results = discoveryState.results,
-                            isLoading = discoveryState.isLoading,
-                            error = discoveryState.error,
-                            onResultClick = { result ->
-                                activeChild.component.openConversation(
-                                    OpenConversationParams(
-                                        influencerId = result.id,
-                                        influencerCategory = result.category.orEmpty(),
-                                        influencerSource = ConversationInfluencerSource.CARD,
-                                        displayName = result.displayName,
-                                        username = result.name,
-                                        avatarUrl = result.avatarUrl,
-                                    ),
-                                )
-                            },
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    } else {
-                        ChatWallScreen(
-                            component = activeChild.component,
-                            viewModel = chatWallViewModel,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
-                }
+    }
+}
 
-                is Child.Inbox -> {
-                    // Same shape as Discover but for the inbox search VM.
-                    // Tap a result → openConversation with the existing
-                    // conversation_id so we land directly in that chat.
-                    if (searchEnabled && inboxState.isActive) {
-                        InboxSearchResults(
-                            query = inboxState.query,
-                            results = inboxState.results,
-                            isLoading = inboxState.isLoading,
-                            error = inboxState.error,
-                            onResultClick = { result ->
-                                activeChild.component.openConversation(
-                                    OpenConversationParams(
-                                        conversationId = result.conversationId,
-                                        influencerId = result.influencerId,
-                                        influencerCategory = result.category.orEmpty(),
-                                        influencerSource = ConversationInfluencerSource.CARD,
-                                        displayName = result.displayName,
-                                        username = result.name,
-                                        avatarUrl = result.avatarUrl,
-                                    ),
-                                )
-                            },
-                            modifier = Modifier.fillMaxSize(),
+/**
+ * Header swap: bot accounts see only the legacy InboxTitle (no tabs,
+ * no search). Everyone else sees either the symmetric search bar or
+ * the legacy "Chat / Create Influencer" row, gated by [searchEnabled],
+ * with the Discover / Inbox tab row underneath.
+ */
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+private fun ChatHomeHeaderBlock(
+    isBotAccount: Boolean,
+    searchEnabled: Boolean,
+    isDiscoverSelected: Boolean,
+    showCreateBotCta: Boolean,
+    unreadConversationCount: Int,
+    discoverySearchViewModel: DiscoverySearchViewModel,
+    inboxSearchViewModel: InboxSearchViewModel,
+    onCreateInfluencerClick: () -> Unit,
+    onDiscoverTabClick: () -> Unit,
+    onInboxTabClick: () -> Unit,
+) {
+    if (isBotAccount) {
+        InboxTitle()
+        return
+    }
+    if (searchEnabled) {
+        ChatHomeSearchHeader(
+            isDiscoverSelected = isDiscoverSelected,
+            discoverySearchViewModel = discoverySearchViewModel,
+            inboxSearchViewModel = inboxSearchViewModel,
+            onCreateInfluencerClick = onCreateInfluencerClick,
+        )
+    } else {
+        ChatHomeHeader(
+            showCreateBotCta = showCreateBotCta,
+            onCreateInfluencerClick = onCreateInfluencerClick,
+        )
+    }
+    ChatTabRow(
+        isDiscoverSelected = isDiscoverSelected,
+        inboxUnreadCount = unreadConversationCount,
+        onDiscoverClick = onDiscoverTabClick,
+        onInboxClick = onInboxTabClick,
+    )
+}
+
+/**
+ * Symmetric search bar above the tab row. Routes the typed query to
+ * whichever VM matches the active tab; the OTHER tab's VM keeps its
+ * own state so a half-formed query is preserved across a brief tab
+ * detour. Each VM owns its own LRU cache + debounce window.
+ */
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+private fun ChatHomeSearchHeader(
+    isDiscoverSelected: Boolean,
+    discoverySearchViewModel: DiscoverySearchViewModel,
+    inboxSearchViewModel: InboxSearchViewModel,
+    onCreateInfluencerClick: () -> Unit,
+) {
+    val discoveryQuery by discoverySearchViewModel.query.collectAsStateWithLifecycle()
+    val inboxQuery by inboxSearchViewModel.query.collectAsStateWithLifecycle()
+    val activeQuery = if (isDiscoverSelected) discoveryQuery else inboxQuery
+    val activePlaceholder =
+        stringResource(
+            if (isDiscoverSelected) Res.string.discovery_search_placeholder
+            else Res.string.inbox_search_placeholder,
+        )
+    val onActiveQueryChange: (String) -> Unit =
+        remember(isDiscoverSelected) {
+            if (isDiscoverSelected) discoverySearchViewModel::setQuery
+            else inboxSearchViewModel::setQuery
+        }
+    val onActiveClear: () -> Unit =
+        remember(isDiscoverSelected) {
+            if (isDiscoverSelected) discoverySearchViewModel::clearQuery
+            else inboxSearchViewModel::clearQuery
+        }
+    Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
+        DiscoverySearchBar(
+            query = activeQuery,
+            placeholder = activePlaceholder,
+            onQueryChange = onActiveQueryChange,
+            onCreateClick = onCreateInfluencerClick,
+            onClearClick = onActiveClear,
+        )
+    }
+}
+
+/**
+ * Active-child content swap: Discover grid + search overlay vs.
+ * Inbox screen + search overlay. Each branch hands its child
+ * component to the corresponding feature screen and overlays the
+ * search results when the matching VM has an active query.
+ */
+@Composable
+private fun ChatHomeContent(
+    activeChild: Child,
+    searchEnabled: Boolean,
+    discoveryState: DiscoverySearchState,
+    inboxState: InboxSearchState,
+    chatWallViewModel: ChatWallViewModel,
+    inboxViewModel: InboxViewModel,
+) {
+    when (activeChild) {
+        is Child.Discover -> {
+            if (searchEnabled && discoveryState.isActive) {
+                DiscoverySearchResults(
+                    query = discoveryState.query,
+                    results = discoveryState.results,
+                    isLoading = discoveryState.isLoading,
+                    error = discoveryState.error,
+                    onResultClick = { result ->
+                        activeChild.component.openConversation(
+                            OpenConversationParams(
+                                influencerId = result.id,
+                                influencerCategory = result.category.orEmpty(),
+                                influencerSource = ConversationInfluencerSource.CARD,
+                                displayName = result.displayName,
+                                username = result.name,
+                                avatarUrl = result.avatarUrl,
+                            ),
                         )
-                    } else {
-                        InboxScreen(
-                            component = activeChild.component,
-                            viewModel = inboxViewModel,
-                            modifier = Modifier.fillMaxSize(),
+                    },
+                    modifier = Modifier.fillMaxSize(),
+                )
+            } else {
+                ChatWallScreen(
+                    component = activeChild.component,
+                    viewModel = chatWallViewModel,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
+
+        is Child.Inbox -> {
+            if (searchEnabled && inboxState.isActive) {
+                InboxSearchResults(
+                    query = inboxState.query,
+                    results = inboxState.results,
+                    isLoading = inboxState.isLoading,
+                    error = inboxState.error,
+                    onResultClick = { result ->
+                        activeChild.component.openConversation(
+                            OpenConversationParams(
+                                conversationId = result.conversationId,
+                                influencerId = result.influencerId,
+                                influencerCategory = result.category.orEmpty(),
+                                influencerSource = ConversationInfluencerSource.CARD,
+                                displayName = result.displayName,
+                                username = result.name,
+                                avatarUrl = result.avatarUrl,
+                            ),
                         )
-                    }
-                }
+                    },
+                    modifier = Modifier.fillMaxSize(),
+                )
+            } else {
+                InboxScreen(
+                    component = activeChild.component,
+                    viewModel = inboxViewModel,
+                    modifier = Modifier.fillMaxSize(),
+                )
             }
         }
     }

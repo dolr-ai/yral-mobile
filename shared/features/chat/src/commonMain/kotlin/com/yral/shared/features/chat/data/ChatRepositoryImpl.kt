@@ -23,6 +23,7 @@ import com.yral.shared.features.chat.domain.models.StreamEvent
 import com.yral.shared.features.chat.domain.models.totalUnreadConversationBadgeCount
 import kotlinx.coroutines.flow.Flow
 
+@Suppress("TooManyFunctions")
 class ChatRepositoryImpl(
     private val dataSource: ChatDataSource,
     private val streamingDataSource: ChatStreamingDataSource,

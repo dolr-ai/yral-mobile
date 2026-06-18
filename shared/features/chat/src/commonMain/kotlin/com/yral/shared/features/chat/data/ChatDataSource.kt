@@ -19,6 +19,7 @@ import com.yral.shared.features.chat.data.models.SendMessageResponseDto
 import com.yral.shared.features.chat.data.models.StartHumanCreatorTakeoverResponseDto
 import com.yral.shared.features.chat.data.models.UploadResponseDto
 
+@Suppress("TooManyFunctions")
 interface ChatDataSource {
     suspend fun listInfluencers(
         limit: Int,

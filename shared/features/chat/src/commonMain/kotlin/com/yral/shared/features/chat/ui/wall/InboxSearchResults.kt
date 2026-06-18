@@ -160,8 +160,11 @@ private fun CenteredInboxMessage(
 
 /**
  * Cheap human-readable date shortener for the last-message-at column.
- * Renders the ISO8601 date portion (first 10 chars, "YYYY-MM-DD") if
- * present; the inbox endpoint may evolve to ship a pre-formatted
- * relative string, in which case this is a no-op fallback.
+ * Renders the ISO8601 date portion ([ISO_DATE_PREFIX_LENGTH] chars,
+ * "YYYY-MM-DD") if present; the inbox endpoint may evolve to ship a
+ * pre-formatted relative string, in which case this is a no-op fallback.
  */
-private fun String.shortFormForRow(): String = take(10)
+private fun String.shortFormForRow(): String = take(ISO_DATE_PREFIX_LENGTH)
+
+/** Length of the "YYYY-MM-DD" prefix on an ISO-8601 timestamp. */
+private const val ISO_DATE_PREFIX_LENGTH = 10
