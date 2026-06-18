@@ -37,10 +37,13 @@ class DiscoverySearchViewModel(
     private val _query = MutableStateFlow("")
     val query: StateFlow<String> = _query.asStateFlow()
 
-    private val cache = object : LinkedHashMap<String, List<DiscoverySearchResult>>(CACHE_SIZE, LOAD_FACTOR, true) {
-        override fun removeEldestEntry(eldest: Map.Entry<String, List<DiscoverySearchResult>>): Boolean =
-            size > CACHE_SIZE
-    }
+    // Multiplatform-safe LRU. The `(capacity, loadFactor, accessOrder)`
+    // LinkedHashMap constructor + removeEldestEntry override are
+    // java.util-only — Kotlin/Native's LinkedHashMap is final and offers
+    // neither, so we keep a plain insertion-ordered map and bump recency
+    // manually by remove-then-reput on both read and write. Same pattern
+    // as ConversationContentCache in this module.
+    private val cache = LinkedHashMap<String, List<DiscoverySearchResult>>()
 
     val state: StateFlow<DiscoverySearchState> =
         _query
@@ -50,14 +53,14 @@ class DiscoverySearchViewModel(
             .flatMapLatest { trimmed ->
                 when {
                     trimmed.isEmpty() -> flowOf(DiscoverySearchState(query = trimmed))
-                    cache.containsKey(trimmed.cacheKey()) ->
-                        flowOf(
-                            DiscoverySearchState(
-                                query = trimmed,
-                                results = cache[trimmed.cacheKey()].orEmpty(),
-                            ),
-                        )
-                    else -> searchFlow(trimmed)
+                    else -> {
+                        val cached = cacheGet(trimmed.cacheKey())
+                        if (cached != null) {
+                            flowOf(DiscoverySearchState(query = trimmed, results = cached))
+                        } else {
+                            searchFlow(trimmed)
+                        }
+                    }
                 }
             }.stateIn(
                 scope = viewModelScope,
@@ -78,7 +81,7 @@ class DiscoverySearchViewModel(
             emit(DiscoverySearchState(query = query, isLoading = true))
             searchDiscoveryUseCase(SearchDiscoveryUseCase.Params(query = query))
                 .onSuccess { results ->
-                    cache[query.cacheKey()] = results
+                    cachePut(query.cacheKey(), results)
                     emit(DiscoverySearchState(query = query, results = results))
                 }.onFailure { error ->
                     Logger.e(error) { "DiscoverySearch failed query=$query" }
@@ -91,12 +94,32 @@ class DiscoverySearchViewModel(
                 }
         }
 
+    /** LRU read — bumps the touched key to the MRU end on hit. */
+    private fun cacheGet(key: String): List<DiscoverySearchResult>? {
+        val value = cache[key] ?: return null
+        cache.remove(key)
+        cache[key] = value
+        return value
+    }
+
+    /** LRU write — re-puts as MRU and prunes from the head while oversize. */
+    private fun cachePut(
+        key: String,
+        value: List<DiscoverySearchResult>,
+    ) {
+        cache.remove(key)
+        cache[key] = value
+        while (cache.size > CACHE_SIZE) {
+            val eldest = cache.keys.iterator().next()
+            cache.remove(eldest)
+        }
+    }
+
     private fun String.cacheKey(): String = lowercase()
 
     private companion object {
         const val DEBOUNCE_MS = 150L
         const val CACHE_SIZE = 10
-        const val LOAD_FACTOR = 0.75f
         const val STOP_TIMEOUT_MS = 5_000L
     }
 }
