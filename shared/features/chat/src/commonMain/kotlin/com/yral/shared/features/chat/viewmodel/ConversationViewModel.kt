@@ -146,6 +146,7 @@ class ConversationViewModel(
         MutableStateFlow(
             ConversationViewState(
                 loginPromptMessageThreshold = flagManager.get(ChatFeatureFlags.Chat.LoginPromptMessageThreshold),
+                requireAuthBeforeFirstSend = flagManager.isEnabled(ChatFeatureFlags.Chat.RequireAuthBeforeFirstSend),
                 subscriptionMandatoryThreshold = flagManager.get(ChatFeatureFlags.Chat.SubscriptionMandatoryThreshold),
                 isSubscriptionEnabled = flagManager.isEnabled(AppFeatureFlags.Common.EnableSubscription),
                 isChatAsHumanCreatorEnabled = flagManager.get(ChatFeatureFlags.Chat.ChatAsHumanCreatorEnabled),
@@ -1019,6 +1020,7 @@ class ConversationViewModel(
                 isSocialSignedIn = current.isSocialSignedIn,
                 influencerSource = current.influencerSource,
                 loginPromptMessageThreshold = current.loginPromptMessageThreshold,
+                requireAuthBeforeFirstSend = current.requireAuthBeforeFirstSend,
                 subscriptionMandatoryThreshold = current.subscriptionMandatoryThreshold,
                 isSubscriptionEnabled = current.isSubscriptionEnabled,
                 isChatAsHumanCreatorEnabled = current.isChatAsHumanCreatorEnabled,
@@ -2289,6 +2291,7 @@ data class ConversationViewState(
     val isSocialSignedIn: Boolean = false,
     val influencerSource: ConversationInfluencerSource = ConversationInfluencerSource.CARD,
     val loginPromptMessageThreshold: Int,
+    val requireAuthBeforeFirstSend: Boolean = false,
     val subscriptionMandatoryThreshold: Int,
     val isSubscriptionEnabled: Boolean,
     val isInfluencerSubscriptionPurchasedAndVerified: Boolean = false,

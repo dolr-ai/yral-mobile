@@ -132,6 +132,22 @@ object ChatFeatureFlags {
                     "— same shape as the other agent-API feature gates.",
                 defaultValue = false,
             )
+        val RequireAuthBeforeFirstSend: FeatureFlag<Boolean> =
+            boolean(
+                keySuffix = "requireAuthBeforeFirstSend",
+                name = "Require login before first send",
+                description = "When ON, the contextual login sheet is shown the very first time an " +
+                    "anonymous user sends a message in a bot conversation — either by typing + Send " +
+                    "or by tapping a starter chip — instead of waiting for the ~10-message threshold " +
+                    "(LoginPromptMessageThreshold). The sheet uses the existing CONVERSATION-flavoured " +
+                    "copy (bot name + avatar). Cancel returns to the bot profile with the typed draft " +
+                    "preserved in the input. Successful login auto-resumes the captured action so " +
+                    "login feels like a 1-tap unlock. Users already on a real identity " +
+                    "(Google / Apple / WhatsApp OTP) are unaffected. When OFF, the legacy " +
+                    "message-count threshold gate applies exactly as today. PR keeps defaultValue = " +
+                    "false until alpha sign-off + GA — same shape as the other agent-API feature gates.",
+                defaultValue = false,
+            )
         val DiscoverySearchEnabled: FeatureFlag<Boolean> =
             boolean(
                 keySuffix = "discoverySearchEnabled",

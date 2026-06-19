@@ -292,7 +292,13 @@ fun ChatConversationScreen(
 
     val proDetails by component.subscriptionCoordinator.proDetails.collectAsStateWithLifecycle(ProDetails())
     val shouldPromptForLogin by derivedStateOf {
-        !viewState.isSocialSignedIn && totalMessageCount >= viewState.loginPromptMessageThreshold
+        // Two gates collapse here:
+        //  - Legacy: anonymous user past the ~10-message threshold.
+        //  - RequireAuthBeforeFirstSend: anonymous user, gate on every send/chip
+        //    so login lands on the first interaction instead of mid-conversation.
+        val isAnonymous = !viewState.isSocialSignedIn
+        val pastLegacyThreshold = totalMessageCount >= viewState.loginPromptMessageThreshold
+        isAnonymous && (viewState.requireAuthBeforeFirstSend || pastLegacyThreshold)
     }
     val hasChatAccess by derivedStateOf {
         proDetails.isProPurchased || viewState.isInfluencerSubscriptionPurchasedAndVerified
@@ -357,9 +363,14 @@ fun ChatConversationScreen(
             requestLoginFactory = component.requestLoginFactory,
             key = viewState.influencer,
         )
-    val promptLogin: () -> Unit =
+    // Auto-resume on success: the optional [onSuccess] runs after the user
+    // completes a real login. Cancel just dismisses the sheet — the typed
+    // draft / chip intent is never consumed, so the input keeps what was
+    // there. Login-on-first-send (RequireAuthBeforeFirstSend) uses this to
+    // re-fire the captured send so login feels like a 1-tap unlock.
+    val promptLogin: (() -> Unit) -> Unit =
         remember(viewState.influencer) {
-            {
+            { onSuccess ->
                 val influencer = viewState.influencer
                 val influencerName = influencer?.displayName ?: ""
                 val influencerAvatarUrl = influencer?.avatarUrl ?: ""
@@ -372,7 +383,7 @@ fun ChatConversationScreen(
                         ),
                     ),
                     LoginMode.BOTH,
-                    null,
+                    { onSuccess() },
                     null,
                 ) {}
             }
@@ -402,7 +413,15 @@ fun ChatConversationScreen(
                 }
 
                 shouldPromptForLogin -> {
-                    promptLogin()
+                    // Capture the intended send so successful login auto-resumes
+                    // it (chip-tap or typed draft both flow through this gate).
+                    // On cancel the callback never fires and the input stays as
+                    // typed because onBeforeSend (which clears the field) is
+                    // deferred until after the resumed send.
+                    promptLogin {
+                        onBeforeSend()
+                        viewModel.sendMessage(draft)
+                    }
                     true
                 }
 
