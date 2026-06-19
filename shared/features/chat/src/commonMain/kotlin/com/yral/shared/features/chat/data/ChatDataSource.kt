@@ -8,6 +8,8 @@ import com.yral.shared.features.chat.data.models.ConversationsResponseDto
 import com.yral.shared.features.chat.data.models.DeleteConversationResponseDto
 import com.yral.shared.features.chat.data.models.HumanCreatorTakeoverStatusDto
 import com.yral.shared.features.chat.data.models.InfluencerDto
+import com.yral.shared.features.chat.data.models.DiscoverySearchResponseDto
+import com.yral.shared.features.chat.data.models.InboxSearchResponseDto
 import com.yral.shared.features.chat.data.models.SystemPromptPreviewResponseDto
 import com.yral.shared.features.chat.data.models.InfluencersResponseDto
 import com.yral.shared.features.chat.data.models.ReleaseHumanCreatorTakeoverResponseDto
@@ -17,6 +19,7 @@ import com.yral.shared.features.chat.data.models.SendMessageResponseDto
 import com.yral.shared.features.chat.data.models.StartHumanCreatorTakeoverResponseDto
 import com.yral.shared.features.chat.data.models.UploadResponseDto
 
+@Suppress("TooManyFunctions")
 interface ChatDataSource {
     suspend fun listInfluencers(
         limit: Int,
@@ -27,6 +30,16 @@ interface ChatDataSource {
         limit: Int,
         offset: Int,
     ): InfluencersResponseDto
+
+    suspend fun searchDiscovery(
+        query: String,
+        limit: Int,
+    ): DiscoverySearchResponseDto
+
+    suspend fun searchInbox(
+        query: String,
+        limit: Int,
+    ): InboxSearchResponseDto
 
     suspend fun getInfluencer(id: String): InfluencerDto
 

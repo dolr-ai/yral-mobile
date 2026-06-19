@@ -79,4 +79,15 @@
     <string name="error_dismiss_action">Dismiss</string>
 
     <string name="no_conversations_yet">No conversations yet</string>
+
+    <string name="discovery_search_placeholder">Search AI Influencers</string>
+    <string name="inbox_search_placeholder">Search your inbox</string>
+    <string name="discovery_search_create_action">Create AI Influencer</string>
+    <string name="discovery_search_clear_action">Clear search</string>
+    <string name="discovery_search_empty_title">No influencers found for "%1$s"</string>
+    <string name="discovery_search_empty_subtitle">Try a different keyword or category.</string>
+    <string name="discovery_search_failed">Search failed. Try again.</string>
+    <string name="inbox_search_empty_title">No conversations match "%1$s"</string>
+    <string name="inbox_search_empty_subtitle">Try a different bot name or category.</string>
+    <string name="inbox_search_failed">Inbox search failed. Try again.</string>
 </resources>

@@ -118,6 +118,36 @@ object ChatFeatureFlags {
                     "backend cutover + GA — same shape as H2H/Audio/SSE/Chat-as-Human/Coach gates.",
                 defaultValue = false,
             )
+        val DiscoveryFeedV2Enabled: FeatureFlag<Boolean> =
+            boolean(
+                keySuffix = "discoveryFeedV2Enabled",
+                name = "Discovery feed v2 (agent.rishi.yral.com)",
+                description = "When ON, the influencer discovery screen fetches its list from " +
+                    "GET https://agent.rishi.yral.com/api/v2/discovery/influencer-feed (with JWT " +
+                    "when the user is logged in). When OFF, it calls the existing Anshuman recsys " +
+                    "host (https://recsys-influencer-feed.ansuman.yral.com/api/v1/influencer-feed) " +
+                    "exactly as today. The response envelope is byte-compatible with Anshuman's so " +
+                    "no parsing changes. Rollback is a server-side flag flip; the OFF path is " +
+                    "completely unchanged. PR keeps defaultValue = false until backend cutover + GA " +
+                    "— same shape as the other agent-API feature gates.",
+                defaultValue = false,
+            )
+        val DiscoverySearchEnabled: FeatureFlag<Boolean> =
+            boolean(
+                keySuffix = "discoverySearchEnabled",
+                name = "Discovery search bar (agent.rishi.yral.com)",
+                description = "When ON, the Discover header on the chat home screen replaces the " +
+                    "'Create AI Influencer' button with a full-width search bar (with the Create " +
+                    "flow retained as an inline '+' icon at the right edge). Typing fires a " +
+                    "debounced (150 ms) request against GET " +
+                    "https://agent.rishi.yral.com/api/v2/discovery/search?q=&limit= and renders " +
+                    "fuzzy-matched bot results. When OFF, the Create button shows exactly as today " +
+                    "and the search endpoint is never called. Independent of DiscoveryFeedV2Enabled " +
+                    "so search can be rolled back without affecting the feed cutover (and vice " +
+                    "versa). PR keeps defaultValue = false until backend cutover + GA — same shape " +
+                    "as the other agent-API feature gates.",
+                defaultValue = false,
+            )
     }
 }
 // Initiate action

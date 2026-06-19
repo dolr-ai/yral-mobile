@@ -8,12 +8,15 @@ import com.yral.shared.features.chat.domain.models.DeleteConversationResult
 import com.yral.shared.features.chat.domain.models.HumanCreatorTakeoverStatus
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
+import com.yral.shared.features.chat.domain.models.DiscoverySearchResult
+import com.yral.shared.features.chat.domain.models.InboxSearchResult
 import com.yral.shared.features.chat.domain.models.SystemPromptPreview
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.domain.models.SendMessageResult
 import com.yral.shared.features.chat.domain.models.StreamEvent
 import kotlinx.coroutines.flow.Flow
 
+@Suppress("TooManyFunctions")
 interface ChatRepository {
     suspend fun getUnreadConversationCount(principal: String): Int
 
@@ -28,6 +31,27 @@ interface ChatRepository {
     ): InfluencersPageResult
 
     suspend fun getInfluencer(id: String): Influencer
+
+    /**
+     * Discovery search — fuzzy match across name/category/archetype/
+     * description. Returns at most [limit] influencers, ordered by
+     * trigram similarity + tie-break on message_count. Empty list on
+     * a blank/whitespace-only query.
+     */
+    suspend fun searchDiscovery(
+        query: String,
+        limit: Int,
+    ): List<DiscoverySearchResult>
+
+    /**
+     * Inbox conversation search — matches the calling user's existing
+     * conversations by bot fields (name/category/archetype/description).
+     * Empty list on a blank/whitespace-only query.
+     */
+    suspend fun searchInbox(
+        query: String,
+        limit: Int,
+    ): List<InboxSearchResult>
 
     // ---------- Coach pivot Bucket 2 — View full prompt page ----------
 

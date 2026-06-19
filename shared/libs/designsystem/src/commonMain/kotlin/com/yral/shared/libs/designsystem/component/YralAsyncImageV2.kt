@@ -27,6 +27,7 @@ import coil3.compose.AsyncImagePainter
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.yral.shared.libs.designsystem.theme.YralColors
 
 /**
  * Performance-optimized version of YralAsyncImage.
@@ -63,6 +64,7 @@ fun YralAsyncImageV2(
     contentScale: ContentScale = ContentScale.FillBounds,
     shape: Shape = CircleShape,
     onError: () -> Unit = {},
+    shimmerWhileLoading: Boolean = false,
 ) {
     val context = LocalPlatformContext.current
     val imageRequest = rememberImageRequest(imageUrl, enableCrossfade, context)
@@ -97,6 +99,16 @@ fun YralAsyncImageV2(
 
         if (showLoader) {
             LoaderOverlay(isLoading = isLoading, loaderSize = loaderSize)
+        }
+
+        if (shimmerWhileLoading) {
+            AnimatedVisibility(
+                visible = isLoading,
+                enter = fadeIn(),
+                exit = fadeOut(),
+            ) {
+                Box(modifier = Modifier.matchParentSize().shimmer())
+            }
         }
     }
 }
@@ -219,10 +231,11 @@ fun YralGridImage(
     modifier: Modifier = Modifier,
     border: Dp = 0.dp,
     borderColor: Color = Color.Transparent,
-    backgroundColor: Color = Color.Transparent,
+    backgroundColor: Color = YralColors.Neutral700,
     contentScale: ContentScale = ContentScale.Crop,
     shape: Shape = CircleShape,
     onError: () -> Unit = {},
+    shimmerWhileLoading: Boolean = true,
 ) {
     YralAsyncImageV2(
         imageUrl = imageUrl,
@@ -235,5 +248,6 @@ fun YralGridImage(
         contentScale = contentScale,
         shape = shape,
         onError = onError,
+        shimmerWhileLoading = shimmerWhileLoading,
     )
 }

@@ -18,7 +18,10 @@ import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencerStatus
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
 import com.yral.shared.features.chat.domain.models.SendMessageResult
+import com.yral.shared.features.chat.domain.models.DiscoverySearchResult
 import com.yral.shared.features.chat.domain.models.EnabledSkill
+import com.yral.shared.features.chat.domain.models.InboxSearchResult
+import com.yral.shared.features.chat.domain.models.SearchResultKind
 import com.yral.shared.features.chat.domain.models.EngagementSchedule
 import com.yral.shared.features.chat.domain.models.FirstTurnNudge
 import com.yral.shared.features.chat.domain.models.InactivityProactive
@@ -307,3 +310,46 @@ fun SystemPromptPreviewResponseDto.toDomain(): SystemPromptPreview =
                 )
             },
     )
+
+// ---------- Discovery search ----------
+
+fun DiscoverySearchResultDto.toDomain(): DiscoverySearchResult =
+    DiscoverySearchResult(
+        kind = SearchResultKind.fromString(kind),
+        id = id,
+        name = name,
+        displayName = displayName.ifBlank { name },
+        avatarUrl = avatarUrl,
+        category = category?.takeIf { it.isNotBlank() },
+        // Backend backfills archetype classifier asynchronously; until a
+        // bot is classified the subtitle ships as "unknown · <category>".
+        // Strip the leading "unknown · " so we render just the category
+        // (cleaner during the multi-hour backfill window). Same row will
+        // pick up the real archetype once the bot is classified.
+        subtitle =
+            subtitle
+                ?.takeIf { it.isNotBlank() }
+                ?.removePrefix("unknown · ")
+                ?.takeIf { it.isNotBlank() },
+    )
+
+fun InboxSearchResultDto.toDomain(): InboxSearchResult {
+    val safeDisplayName = displayName?.takeIf { it.isNotBlank() } ?: name.orEmpty()
+    return InboxSearchResult(
+        conversationId = conversationId,
+        influencerId = influencerId,
+        name = name.orEmpty(),
+        displayName = safeDisplayName,
+        avatarUrl = avatarUrl.orEmpty(),
+        category = category?.takeIf { it.isNotBlank() },
+        // Mirror the discovery-search subtitle scrub — backend backfills
+        // archetype asynchronously and "unknown · category" is noisier
+        // than just the category on its own.
+        subtitle =
+            subtitle
+                ?.takeIf { it.isNotBlank() }
+                ?.removePrefix("unknown · ")
+                ?.takeIf { it.isNotBlank() },
+        lastMessageAt = lastMessageAt?.takeIf { it.isNotBlank() },
+    )
+}
