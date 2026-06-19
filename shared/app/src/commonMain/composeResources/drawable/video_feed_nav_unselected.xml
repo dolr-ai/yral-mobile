@@ -1,0 +1,20 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="32dp"
+    android:height="32dp"
+    android:viewportWidth="32"
+    android:viewportHeight="32">
+    <!--
+      Unselected variant: outlined rounded rectangle frame + filled
+      play triangle. Stroke + triangle both #FAFAFA, lighter weight
+      to match other unselected nav icons.
+    -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FAFAFA"
+        android:strokeWidth="2"
+        android:strokeLineJoin="round"
+        android:pathData="M9,5 L23,5 A4,4 0 0 1 27,9 L27,23 A4,4 0 0 1 23,27 L9,27 A4,4 0 0 1 5,23 L5,9 A4,4 0 0 1 9,5 Z" />
+    <path
+        android:fillColor="#FAFAFA"
+        android:pathData="M14,11.2 L14,20.8 L21.6,16 Z" />
+</vector>

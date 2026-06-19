@@ -2,6 +2,9 @@ package com.yral.shared.app.ui.screens.home.nav
 
 import co.touchlab.kermit.Logger
 import com.arkivanov.decompose.ComponentContext
+import com.yral.featureflag.AppFeatureFlags
+import com.yral.featureflag.ChatFeatureFlags
+import com.yral.featureflag.FeatureFlagManager
 import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.router.slot.SlotNavigation
 import com.arkivanov.decompose.router.slot.activate
@@ -61,6 +64,7 @@ internal class DefaultHomeComponent(
     private val openAccountSheet: () -> Unit,
     private val switchToMainProfile: (onComplete: (Boolean) -> Unit) -> Unit,
     override val showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
+    private val featureFlagManager: FeatureFlagManager,
 ) : HomeComponent(),
     ComponentContext by componentContext {
     private val navigation = StackNavigation<Config>()
@@ -68,11 +72,24 @@ internal class DefaultHomeComponent(
     private var lastActiveConfig: Config? = null
     private var lastActiveProvider: HomeChildSnapshotProvider? = null
 
+    /**
+     * 21γ.P16 — when the bottom-nav swap flag is ON, the home root lands
+     * on the chat Discover/Inbox child (carrying the search bar from
+     * PR #1197) instead of the video feed. The flag is read once on
+     * construction so a mid-session flip doesn't re-route a user
+     * already navigating the stack.
+     */
+    private val landOnChatInitially: Boolean =
+        featureFlagManager.isEnabled(AppFeatureFlags.Common.BottomNavSwapEnabled) &&
+            featureFlagManager.isEnabled(ChatFeatureFlags.Chat.Enabled)
+
     override val stack: Value<ChildStack<*, Child>> =
         childStack(
             source = navigation,
             serializer = Config.serializer(),
-            initialConfiguration = Config.Feed,
+            initialConfiguration =
+                if (landOnChatInitially) Config.Chat(initialTab = InitialTab.DISCOVER)
+                else Config.Feed,
             handleBackButton = true,
             childFactory = ::child,
         ).also { stackValue ->

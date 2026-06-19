@@ -5,6 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import co.touchlab.kermit.Logger
+import com.yral.featureflag.FeatureFlagManager
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.router.slot.SlotNavigation
@@ -66,6 +67,7 @@ class DefaultRootComponent(
 
     // ==================== Dependencies ====================
     private val sessionManager: SessionManager = koinInstance.get()
+    private val featureFlagManager: FeatureFlagManager = koinInstance.get()
     override val loginViewModel: LoginViewModel = koinInstance.get()
     override val rootViewModel: RootViewModel = koinInstance.get()
 
@@ -121,6 +123,7 @@ class DefaultRootComponent(
             loginCoordinator = this,
             setHomeComponent = { homeComponent = it },
             showAlertsOnDialog = ::showAlertsSlot,
+            featureFlagManager = featureFlagManager,
         )
 
     // ==================== Navigation Stacks ====================

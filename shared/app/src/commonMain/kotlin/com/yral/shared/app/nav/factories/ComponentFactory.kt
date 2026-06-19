@@ -1,6 +1,7 @@
 package com.yral.shared.app.nav.factories
 
 import com.arkivanov.decompose.ComponentContext
+import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.app.nav.Config
 import com.yral.shared.app.nav.RootComponent
@@ -35,6 +36,7 @@ internal class ComponentFactory(
     private val loginCoordinator: LoginCoordinator,
     private val setHomeComponent: (HomeComponent) -> Unit,
     private val showAlertsOnDialog: (AlertsRequestType) -> Unit,
+    private val featureFlagManager: FeatureFlagManager,
 ) {
     fun createSplash(componentContext: ComponentContext): SplashComponent =
         SplashComponent(
@@ -58,6 +60,7 @@ internal class ComponentFactory(
                     rootComponent.rootViewModel.switchToMainAccount(onComplete)
                 },
                 showAlertsOnDialog = showAlertsOnDialog,
+                featureFlagManager = featureFlagManager,
             )
         setHomeComponent(component)
         return component

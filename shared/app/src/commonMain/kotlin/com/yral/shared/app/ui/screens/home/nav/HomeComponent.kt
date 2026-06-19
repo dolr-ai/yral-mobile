@@ -90,6 +90,7 @@ abstract class HomeComponent {
             openAccountSheet: () -> Unit,
             switchToMainProfile: (onComplete: (Boolean) -> Unit) -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
+            featureFlagManager: FeatureFlagManager,
         ): HomeComponent =
             DefaultHomeComponent(
                 componentContext,
@@ -104,6 +105,7 @@ abstract class HomeComponent {
                 openAccountSheet,
                 switchToMainProfile,
                 showAlertsOnDialog,
+                featureFlagManager,
             )
     }
 }
