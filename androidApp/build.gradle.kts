@@ -81,8 +81,8 @@ android {
         create("prod") {
             applicationId = "com.yral.android.app"
             dimension = "version"
-            versionCode = 99 // ci:prod-version-code
-            versionName = "2.9.1" // ci:prod-version-name
+            versionCode = 100 // ci:prod-version-code
+            versionName = "3.4.2" // ci:prod-version-name
             signingConfig = signingConfigs.getByName("release")
         }
     }
