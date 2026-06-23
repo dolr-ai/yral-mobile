@@ -103,9 +103,6 @@ enum class FeatureEvents {
     LEADERBOARD_CALENDAR_CLICKED,
     LEADERBOARD_DAY_SELECTED,
 
-    // Recharge
-    AIRDROP_CLAIMED,
-
     // Share
     VIDEO_SHARE_CLICKED,
     SHARE_APP_OPENED_FROM_LINK,
