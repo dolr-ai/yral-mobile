@@ -55,6 +55,7 @@ internal class AndroidIAPProvider(
         productId: ProductId,
         context: Any?,
         obfuscatedAccountId: String?,
+        appAccountToken: String?,
         acknowledgePurchase: Boolean,
     ): Result<IAPPurchase> {
         return try {

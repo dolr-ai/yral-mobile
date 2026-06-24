@@ -43,8 +43,9 @@ class IAPManager(
     suspend fun purchaseProduct(
         productId: ProductId,
         context: Any? = null,
+        appAccountToken: String? = null,
     ): Result<Purchase> {
-        val result = provider.purchaseProduct(productId, context)
+        val result = provider.purchaseProduct(productId, context, appAccountToken = appAccountToken)
         result.fold(
             onSuccess = { purchase -> notifyListeners { onPurchaseSuccess(purchase) } },
             onFailure = { ex ->

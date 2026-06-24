@@ -52,11 +52,12 @@ class IAPManager(
     suspend fun purchaseProduct(
         productId: ProductId,
         context: PurchaseContext? = null,
+        appAccountToken: String? = null,
         acknowledgePurchase: Boolean = false,
         verifyPurchase: Boolean = true,
     ): Result<Purchase> {
         Logger.d("SubscriptionXM") { "purchaseProduct $productId" }
-        val result = provider.purchaseProduct(productId, context, acknowledgePurchase, verifyPurchase)
+        val result = provider.purchaseProduct(productId, context, appAccountToken, acknowledgePurchase, verifyPurchase)
         Logger.d("SubscriptionXM") { "purchaseProduct $result" }
         notifyListeners {
             if (result.isSuccess) {

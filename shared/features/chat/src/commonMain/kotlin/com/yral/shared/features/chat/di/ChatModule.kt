@@ -1,5 +1,6 @@
 package com.yral.shared.features.chat.di
 
+import com.yral.shared.core.di.BILLING_SERVER_BASE_URL
 import com.yral.shared.core.di.CHAT_SERVER_BASE_URL
 import com.yral.shared.core.di.INFLUENCER_FEED_SERVER_BASE_URL
 import com.yral.shared.features.chat.analytics.ChatTelemetry
@@ -19,13 +20,11 @@ import com.yral.shared.features.chat.domain.usecases.DeleteConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.GetHumanCreatorTakeoverStatusUseCase
 import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
 import com.yral.shared.features.chat.domain.usecases.GetSystemPromptPreviewUseCase
-import com.yral.shared.features.chat.domain.usecases.SearchDiscoveryUseCase
-import com.yral.shared.features.chat.domain.usecases.SearchInboxUseCase
-import com.yral.shared.features.chat.viewmodel.DiscoverySearchViewModel
-import com.yral.shared.features.chat.viewmodel.InboxSearchViewModel
 import com.yral.shared.features.chat.domain.usecases.GrantChatAccessUseCase
 import com.yral.shared.features.chat.domain.usecases.MarkConversationAsReadUseCase
 import com.yral.shared.features.chat.domain.usecases.ReleaseHumanCreatorTakeoverUseCase
+import com.yral.shared.features.chat.domain.usecases.SearchDiscoveryUseCase
+import com.yral.shared.features.chat.domain.usecases.SearchInboxUseCase
 import com.yral.shared.features.chat.domain.usecases.SendHumanCreatorMessageUseCase
 import com.yral.shared.features.chat.domain.usecases.SendHumanMessageUseCase
 import com.yral.shared.features.chat.domain.usecases.SendMessageUseCase
@@ -33,6 +32,8 @@ import com.yral.shared.features.chat.domain.usecases.StartHumanCreatorTakeoverUs
 import com.yral.shared.features.chat.viewmodel.ChatUnreadRefreshSignal
 import com.yral.shared.features.chat.viewmodel.ChatWallViewModel
 import com.yral.shared.features.chat.viewmodel.ConversationViewModel
+import com.yral.shared.features.chat.viewmodel.DiscoverySearchViewModel
+import com.yral.shared.features.chat.viewmodel.InboxSearchViewModel
 import com.yral.shared.features.chat.viewmodel.InboxViewModel
 import kotlinx.serialization.json.Json
 import org.koin.core.module.dsl.factoryOf
@@ -67,6 +68,7 @@ val chatModule =
             ChatAccessBillingRemoteDataSource(
                 httpClient = get(),
                 json = get<Json>(),
+                billingBaseUrl = get(BILLING_SERVER_BASE_URL),
                 packageName = getAppPackageName(),
             )
         }

@@ -20,6 +20,7 @@ interface IAPProvider {
     suspend fun purchaseProduct(
         productId: ProductId,
         context: PurchaseContext? = null,
+        appAccountToken: String? = null,
         acknowledgePurchase: Boolean = false,
         verifyPurchase: Boolean = true,
     ): Result<Purchase>

@@ -1,6 +1,5 @@
 package com.yral.shared.features.wallet.data
 
-import com.yral.shared.core.AppConfigurations.BILLING_BASE_URL
 import com.yral.shared.core.AppConfigurations.OFF_CHAIN_BASE_URL
 import com.yral.shared.core.AppConfigurations.PUMP_DUMP_BASE_URL
 import com.yral.shared.data.removedFirebaseCloudFunctionsException
@@ -13,13 +12,16 @@ import com.yral.shared.features.wallet.data.models.GetBalanceResponseDto
 import com.yral.shared.http.httpGet
 import com.yral.shared.rust.service.domain.IndividualUserRepository
 import io.ktor.client.HttpClient
+import io.ktor.http.URLBuilder
 import io.ktor.http.path
+import io.ktor.http.takeFrom
 import kotlinx.serialization.json.Json
 
 class WalletDataSourceImpl(
     private val httpClient: HttpClient,
     private val json: Json,
     private val individualUserRepository: IndividualUserRepository,
+    private val billingBaseUrl: String,
 ) : WalletDataSource {
     override suspend fun getBtcConversionRate(
         idToken: String,
@@ -84,7 +86,7 @@ class WalletDataSourceImpl(
             json,
         ) {
             url {
-                host = BILLING_BASE_URL
+                applyBillingBaseUrl()
                 path(BILLING_BALANCE_PATH)
                 parameters.append("recipient_id", recipientId)
             }
@@ -96,7 +98,7 @@ class WalletDataSourceImpl(
             json,
         ) {
             url {
-                host = BILLING_BASE_URL
+                applyBillingBaseUrl()
                 path(BILLING_TRANSACTIONS_PATH)
                 parameters.append("recipient_id", recipientId)
             }
@@ -110,5 +112,10 @@ class WalletDataSourceImpl(
         private const val DOLR_COIN_ID = "dolr-ai"
         private const val BILLING_BALANCE_PATH = "transactions/balance"
         private const val BILLING_TRANSACTIONS_PATH = "transactions"
+    }
+
+    private fun URLBuilder.applyBillingBaseUrl() {
+        val normalized = if ("://" in billingBaseUrl) billingBaseUrl else "https://$billingBaseUrl"
+        takeFrom(normalized)
     }
 }

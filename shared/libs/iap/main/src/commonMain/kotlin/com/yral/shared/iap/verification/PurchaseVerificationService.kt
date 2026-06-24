@@ -1,7 +1,6 @@
 package com.yral.shared.iap.verification
 
 import co.touchlab.kermit.Logger
-import com.yral.shared.core.AppConfigurations
 import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.Purchase
 import com.yral.shared.iap.core.util.handleIAPOperation
@@ -12,13 +11,16 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.URLBuilder
 import io.ktor.http.isSuccess
 import io.ktor.http.path
+import io.ktor.http.takeFrom
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 internal expect fun getVerifierEndPoint(): String
+internal expect fun supportsAppleAppAccountToken(): Boolean
 
 @Serializable
 internal data class VerifyPurchaseRequest(
@@ -26,6 +28,24 @@ internal data class VerifyPurchaseRequest(
     @SerialName("package_name") val packageName: String,
     @SerialName("product_id") val productId: String,
     @SerialName("purchase_token") val purchaseToken: String,
+)
+
+@Serializable
+internal data class AppleAppAccountTokenRequest(
+    @SerialName("user_id") val userId: String,
+)
+
+@Serializable
+internal data class AppleAppAccountTokenResponseData(
+    @SerialName("app_account_token") val appAccountToken: String,
+)
+
+@Serializable
+internal data class AppleAppAccountTokenResponse(
+    @SerialName("success") val success: Boolean,
+    @SerialName("msg") val msg: String? = null,
+    @SerialName("error") val error: String? = null,
+    @SerialName("data") val data: AppleAppAccountTokenResponseData? = null,
 )
 
 @Serializable
@@ -38,9 +58,11 @@ internal data class ErrorResponse(
 internal class PurchaseVerificationService(
     private val httpClient: HttpClient,
     private val json: Json,
+    private val billingBaseUrl: String,
 ) {
     companion object {
         private const val TAG = "SubscriptionXM"
+        private const val APPLE_APP_ACCOUNT_TOKEN_ENDPOINT = "apple/app-account-token"
     }
 
     @Suppress("LongMethod", "ThrowsCount")
@@ -67,7 +89,7 @@ internal class PurchaseVerificationService(
                 httpClient.post {
                     expectSuccess = false
                     url {
-                        host = AppConfigurations.BILLING_BASE_URL
+                        applyBillingBaseUrl(billingBaseUrl)
                         path(getVerifierEndPoint())
                     }
                     setBody(request)
@@ -95,4 +117,48 @@ internal class PurchaseVerificationService(
 
             true
         }
+
+    suspend fun getAppleAppAccountToken(userId: String): Result<String> =
+        handleIAPOperation {
+            val response: HttpResponse =
+                httpClient.post {
+                    expectSuccess = false
+                    url {
+                        applyBillingBaseUrl(billingBaseUrl)
+                        path(APPLE_APP_ACCOUNT_TOKEN_ENDPOINT)
+                    }
+                    setBody(AppleAppAccountTokenRequest(userId = userId))
+                }
+
+            val body = response.bodyAsText()
+            if (!response.status.isSuccess()) {
+                val errorMessage =
+                    runCatching {
+                        val errorResponse = json.decodeFromString<ErrorResponse>(body)
+                        errorResponse.error ?: errorResponse.msg ?: "Unknown error (status: ${response.status.value})"
+                    }.getOrElse {
+                        "Apple app account token failed with HTTP status: ${response.status.value}"
+                    }
+                throw IAPError.VerificationFailed(APPLE_APP_ACCOUNT_TOKEN_ENDPOINT, Exception(errorMessage))
+            }
+
+            val parsed = json.decodeFromString<AppleAppAccountTokenResponse>(body)
+            if (!parsed.success) {
+                throw IAPError.VerificationFailed(
+                    APPLE_APP_ACCOUNT_TOKEN_ENDPOINT,
+                    Exception(parsed.error ?: parsed.msg ?: "Apple app account token request failed"),
+                )
+            }
+
+            parsed.data?.appAccountToken
+                ?: throw IAPError.VerificationFailed(
+                    APPLE_APP_ACCOUNT_TOKEN_ENDPOINT,
+                    Exception("Missing app_account_token"),
+                )
+        }
+
+    private fun URLBuilder.applyBillingBaseUrl(baseUrl: String) {
+        val normalized = if ("://" in baseUrl) baseUrl else "https://$baseUrl"
+        takeFrom(normalized)
+    }
 }

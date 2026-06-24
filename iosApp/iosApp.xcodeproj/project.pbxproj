@@ -12,6 +12,8 @@
 		1023003B2E44D4E200E6936E /* BranchSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 1023003A2E44D4E200E6936E /* BranchSDK */; };
 		2152FB042600AC8F00CF470E /* IosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* IosApp.swift */; };
 		2152FB062600AC8F00CF470E /* NotificationHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB052600AC8F00CF470E /* NotificationHandler.swift */; };
+		31D452672EFB1001000A1001 /* StoreKit2Bridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31D452662EFB1001000A1001 /* StoreKit2Bridge.swift */; };
+		31D452682EFB1001000A1001 /* StoreKit2Bridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31D452662EFB1001000A1001 /* StoreKit2Bridge.swift */; };
 		63997C25DF21E5569B7BCFF5 /* Pods_Yral_Staging.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D57B68D9945A635CA2480172 /* Pods_Yral_Staging.framework */; };
 		A88CCB832E95C483001D43D7 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A88CCB822E95C480001D43D7 /* RootView.swift */; };
 		A88CCB842E95C483001D43D7 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A88CCB822E95C480001D43D7 /* RootView.swift */; };
@@ -71,6 +73,7 @@
 		10BA2E822DA64E6A00B6BE97 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		2152FB032600AC8F00CF470E /* IosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IosApp.swift; sourceTree = "<group>"; };
 		2152FB052600AC8F00CF470E /* NotificationHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationHandler.swift; sourceTree = "<group>"; };
+		31D452662EFB1001000A1001 /* StoreKit2Bridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKit2Bridge.swift; sourceTree = "<group>"; };
 		74294ECFE2C99B0DF03151D3 /* Pods-YralTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YralTests.debug.xcconfig"; path = "Target Support Files/Pods-YralTests/Pods-YralTests.debug.xcconfig"; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Yral.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Yral.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9DFDD3B88450E7A2700854D2 /* Pods-YralTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YralTests.release.xcconfig"; path = "Target Support Files/Pods-YralTests/Pods-YralTests.release.xcconfig"; sourceTree = "<group>"; };
@@ -193,6 +196,7 @@
 			children = (
 				A88CCB822E95C480001D43D7 /* RootView.swift */,
 				2152FB032600AC8F00CF470E /* IosApp.swift */,
+				31D452662EFB1001000A1001 /* StoreKit2Bridge.swift */,
 				2152FB052600AC8F00CF470E /* NotificationHandler.swift */,
 				AC99BBBD2D86F3C9008012C2 /* Libs */,
 				AC26CA662D806501006ADA75 /* Utils */,
@@ -596,6 +600,7 @@
 			files = (
 				2152FB042600AC8F00CF470E /* IosApp.swift in Sources */,
 				2152FB062600AC8F00CF470E /* NotificationHandler.swift in Sources */,
+				31D452672EFB1001000A1001 /* StoreKit2Bridge.swift in Sources */,
 				A88CCB842E95C483001D43D7 /* RootView.swift in Sources */,
 				AC638BF62D2309C000481E94 /* KeychainHelper.swift in Sources */,
 			);
@@ -614,6 +619,7 @@
 			files = (
 				ACD941872CFF575C0038FCB6 /* IosApp.swift in Sources */,
 				ACD941882CFF575C0038FCB6 /* NotificationHandler.swift in Sources */,
+				31D452682EFB1001000A1001 /* StoreKit2Bridge.swift in Sources */,
 				A88CCB832E95C483001D43D7 /* RootView.swift in Sources */,
 				AC638BF52D2309C000481E94 /* KeychainHelper.swift in Sources */,
 			);

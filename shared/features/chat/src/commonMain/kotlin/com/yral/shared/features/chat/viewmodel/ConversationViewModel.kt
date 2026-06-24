@@ -23,6 +23,7 @@ import com.yral.shared.features.chat.analytics.ChatTelemetry
 import com.yral.shared.features.chat.attachments.ChatAttachment
 import com.yral.shared.features.chat.attachments.FilePathChatAttachment
 import com.yral.shared.features.chat.data.ConversationContentCache
+import com.yral.shared.features.chat.data.isAppleChatBillingPlatform
 import com.yral.shared.features.chat.domain.ChatErrorMapper
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.ConversationMessagesPagingSource
@@ -517,6 +518,7 @@ class ConversationViewModel(
                 productId = productId,
             ),
         ).onSuccess { grantStatus ->
+            finishApplePurchaseAfterGrant(purchaseToken)
             chatTelemetry.subscriptionSuccess(botId)
             _viewState.update {
                 it.copy(
@@ -679,6 +681,7 @@ class ConversationViewModel(
                     Logger.d("SubscriptionX") {
                         "Grant succeeded: hasAccess=${grantStatus.hasAccess}, expiresAtMs=${grantStatus.expiresAtMs}"
                     }
+                    finishApplePurchaseAfterGrant(purchaseToken)
                     handleInfluencerSubscriptionVerificationResult(
                         isPurchased = true,
                         expiresAtMs = grantStatus.expiresAtMs,
@@ -2215,6 +2218,12 @@ class ConversationViewModel(
             iapManager
                 .consumePurchase(purchaseToken)
                 .onFailure { Logger.e("SubscriptionX", it) { "Failed to consume purchase" } }
+        }
+    }
+
+    private fun finishApplePurchaseAfterGrant(purchaseToken: String) {
+        if (isAppleChatBillingPlatform()) {
+            consumePurchaseInBackground(purchaseToken)
         }
     }
 

@@ -1,5 +1,6 @@
 package com.yral.shared.iap.di
 
+import com.yral.shared.core.di.BILLING_SERVER_BASE_URL
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.iap.IAPManager
 import com.yral.shared.iap.providers.IAPProvider
@@ -14,6 +15,7 @@ val iapModule =
             PurchaseVerificationService(
                 httpClient = get<HttpClient>(),
                 json = get(),
+                billingBaseUrl = get(BILLING_SERVER_BASE_URL),
             )
         }
         single<IAPProvider> {

@@ -11,6 +11,7 @@ import com.yral.shared.iap.core.util.handleIAPResultOperation
 import com.yral.shared.iap.utils.PurchaseContext
 import com.yral.shared.iap.utils.toPlatformContext
 import com.yral.shared.iap.verification.PurchaseVerificationService
+import com.yral.shared.iap.verification.supportsAppleAppAccountToken
 import com.yral.shared.iap.core.model.Purchase as CorePurchase
 import com.yral.shared.iap.core.providers.IAPProvider as CoreIAPProvider
 
@@ -32,16 +33,24 @@ internal class IAPProviderImpl(
     override suspend fun purchaseProduct(
         productId: ProductId,
         context: PurchaseContext?,
+        appAccountToken: String?,
         acknowledgePurchase: Boolean,
         verifyPurchase: Boolean,
     ): Result<CorePurchase> =
         handleIAPResultOperation {
             sessionManager.userPrincipal?.let { userId ->
+                val resolvedAppAccountToken =
+                    appAccountToken ?: if (supportsAppleAppAccountToken() && productId == ProductId.DAILY_CHAT) {
+                        verificationService.getAppleAppAccountToken(userId).getOrThrow()
+                    } else {
+                        null
+                    }
                 coreProvider
                     .purchaseProduct(
                         productId = productId,
                         context = context.toPlatformContext(),
                         obfuscatedAccountId = userId,
+                        appAccountToken = resolvedAppAccountToken,
                         acknowledgePurchase = acknowledgePurchase,
                     ).map { purchase ->
                         if (verifyPurchase) {

@@ -10,6 +10,7 @@ interface IAPProvider {
         productId: ProductId,
         context: Any? = null,
         obfuscatedAccountId: String? = null,
+        appAccountToken: String? = null,
         acknowledgePurchase: Boolean = true,
     ): Result<Purchase>
     suspend fun restorePurchases(acknowledgePurchase: Boolean = true): Result<List<Purchase>>

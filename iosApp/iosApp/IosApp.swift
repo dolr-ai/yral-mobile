@@ -28,7 +28,8 @@ private enum LegacyAuthKeychainKeys {
   static let refreshToken = "yral.refreshToken"
 }
 
-private final class EmptyExternalDependencyProvider: ExternalDependencyProvider {
+private final class AppExternalDependencyProvider: ExternalDependencyProvider {
+  let appleStoreKitBridge: AppleStoreKitBridge? = StoreKit2Bridge()
 }
 
 final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
@@ -213,7 +214,7 @@ struct IosApp: App {
     }
 
     AppDIKt.doInitKoin { coreApplication in
-      coreApplication.installExternalDependencyModule(provider: EmptyExternalDependencyProvider())
+      coreApplication.installExternalDependencyModule(provider: AppExternalDependencyProvider())
     }
   }
 

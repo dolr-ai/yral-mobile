@@ -1,8 +1,8 @@
 package com.yral.shared.features.chat.data
 
 import co.touchlab.kermit.Logger
-import com.yral.shared.core.AppConfigurations
 import com.yral.shared.features.chat.data.models.ChatAccessApiResponse
+import com.yral.shared.features.chat.data.models.GrantAppleChatAccessRequestDto
 import com.yral.shared.features.chat.data.models.GrantChatAccessRequestDto
 import com.yral.shared.features.chat.data.models.GrantResult
 import io.ktor.client.HttpClient
@@ -12,8 +12,12 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.URLBuilder
 import io.ktor.http.path
+import io.ktor.http.takeFrom
 import kotlinx.serialization.json.Json
+
+internal expect fun isAppleChatBillingPlatform(): Boolean
 
 interface ChatAccessBillingDataSource {
     val packageName: String
@@ -27,24 +31,38 @@ interface ChatAccessBillingDataSource {
 class ChatAccessBillingRemoteDataSource(
     private val httpClient: HttpClient,
     private val json: Json,
+    private val billingBaseUrl: String,
     override val packageName: String,
 ) : ChatAccessBillingDataSource {
     companion object {
         private const val TAG = "ChatAccessBilling"
-        private const val GRANT_ENDPOINT = "google/chat-access/grant"
+        private const val GOOGLE_GRANT_ENDPOINT = "google/chat-access/grant"
+        private const val APPLE_GRANT_ENDPOINT = "apple/chat-access/grant"
         private const val CHECK_ENDPOINT = "google/chat-access/check"
     }
 
     override suspend fun grantChatAccess(request: GrantChatAccessRequestDto): GrantResult {
         Logger.d(TAG) { "grantChatAccess request: botId=${request.botId}, productId=${request.productId}" }
+        val isApple = isAppleChatBillingPlatform()
+        val endpoint = if (isApple) APPLE_GRANT_ENDPOINT else GOOGLE_GRANT_ENDPOINT
+        val requestBody =
+            if (isApple) {
+                GrantAppleChatAccessRequestDto(
+                    transactionId = request.purchaseToken,
+                    productId = request.productId,
+                    botId = request.botId,
+                )
+            } else {
+                request
+            }
         val response =
             httpClient.post {
                 expectSuccess = false
                 url {
-                    host = AppConfigurations.BILLING_BASE_URL
-                    path(GRANT_ENDPOINT)
+                    applyBillingBaseUrl(billingBaseUrl)
+                    path(endpoint)
                 }
-                setBody(request)
+                setBody(requestBody)
             }
         val body = response.bodyAsText()
         Logger.d(TAG) { "grantChatAccess status=${response.status}, response: $body" }
@@ -63,7 +81,7 @@ class ChatAccessBillingRemoteDataSource(
             httpClient.get {
                 expectSuccess = false
                 url {
-                    host = AppConfigurations.BILLING_BASE_URL
+                    applyBillingBaseUrl(billingBaseUrl)
                     path(CHECK_ENDPOINT)
                 }
                 parameter("user_id", userId)
@@ -72,5 +90,10 @@ class ChatAccessBillingRemoteDataSource(
         val body = response.bodyAsText()
         Logger.d(TAG) { "checkChatAccess status=${response.status}, response: $body" }
         return json.decodeFromString<ChatAccessApiResponse>(body)
+    }
+
+    private fun URLBuilder.applyBillingBaseUrl(baseUrl: String) {
+        val normalized = if ("://" in baseUrl) baseUrl else "https://$baseUrl"
+        takeFrom(normalized)
     }
 }

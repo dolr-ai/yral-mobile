@@ -1,5 +1,6 @@
 package com.yral.shared.features.wallet.di
 
+import com.yral.shared.core.di.BILLING_SERVER_BASE_URL
 import com.yral.shared.features.wallet.analytics.WalletTelemetry
 import com.yral.shared.features.wallet.data.WalletDataSource
 import com.yral.shared.features.wallet.data.WalletDataSourceImpl
@@ -21,7 +22,14 @@ import org.koin.dsl.module
 
 val walletModule =
     module {
-        factoryOf(::WalletDataSourceImpl).bind<WalletDataSource>()
+        factory<WalletDataSource> {
+            WalletDataSourceImpl(
+                httpClient = get(),
+                json = get(),
+                individualUserRepository = get(),
+                billingBaseUrl = get(BILLING_SERVER_BASE_URL),
+            )
+        }
         factoryOf(::WalletRepositoryImpl).bind<WalletRepository>()
         factoryOf(::WalletTelemetry)
         factoryOf(::GetBtcConversionUseCase)
