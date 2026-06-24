@@ -21,7 +21,7 @@ The Subscription Module (`shared/features/subscription/`) works alongside the IA
 
 ## Subscription Management APIs
 
-**Base URL:** `https://billing.yral.com`  
+**Base URL:** `https://billing.sarvesh.yral.com`
 **Authentication:** `Authorization: Bearer {yral_id_token}` (same token as chat service)
 
 ### 1. Get Subscription Status
