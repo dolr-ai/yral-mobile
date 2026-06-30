@@ -1,5 +1,6 @@
 package com.yral.shared.iap.core.providers
 
+import co.touchlab.kermit.Logger
 import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.Product
 import com.yral.shared.iap.core.model.ProductId
@@ -33,6 +34,7 @@ internal class ProductFetcher {
     suspend fun fetchProducts(productIds: List<ProductId>): Result<List<Product>> =
         suspendCancellableCoroutine { continuation ->
             val productIdStrings = productIds.map { it.productId }
+            Logger.d("SubscriptionX") { "iOS fetching products: $productIdStrings" }
             val productIdentifiers = NSSet.setWithArray(productIdStrings)
             val request = SKProductsRequest(productIdentifiers = productIdentifiers)
 
@@ -43,6 +45,10 @@ internal class ProductFetcher {
                         didReceiveResponse: SKProductsResponse,
                     ) {
                         val products = didReceiveResponse.products
+                        Logger.d("SubscriptionX") {
+                            "iOS StoreKit products response: valid=${products.size}, " +
+                                "invalid=${didReceiveResponse.invalidProductIdentifiers}"
+                        }
                         val productList = mutableListOf<Product>()
                         val tmpProductCache = mutableMapOf<String, SKProduct>()
 
