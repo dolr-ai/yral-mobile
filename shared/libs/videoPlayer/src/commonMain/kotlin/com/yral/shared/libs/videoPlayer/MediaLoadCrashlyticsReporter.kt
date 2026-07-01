@@ -259,27 +259,105 @@ internal fun mediaLoadException(
     firstFramePending: Boolean? = null,
     message: String? = null,
     throwable: Throwable? = null,
-): YralException {
-    val metadata =
-        buildList {
-            add(MEDIA_LOAD_FAILURE_PREFIX)
-            add("type=$mediaType")
-            add("source=$source")
-            mediaId.takeIfNotBlank()?.let { add("media_id=$it") }
-            index?.let { add("index=$it") }
-            url.takeIfNotBlank()?.let { add("url=$it") }
-            category.takeIfNotBlank()?.let { add("category=$it") }
-            code?.let { add("code=$it") }
-            firstFramePending?.let { add("first_frame_pending=$it") }
-            message.takeIfNotBlank()?.let { add("message=$it") }
-        }.joinToString(separator = " ")
-
-    return YralException(
-        message = metadata,
-        cause = throwable,
+): YralException =
+    mediaLoadExceptionForSource(
+        source = source,
+        metadata =
+            mediaLoadFailureMetadata(
+                mediaType = mediaType,
+                source = source,
+                mediaId = mediaId,
+                index = index,
+                url = url,
+                category = category,
+                code = code,
+                firstFramePending = firstFramePending,
+                message = message,
+                throwable = throwable,
+            ),
+        throwable = throwable,
     )
-}
+
+private fun mediaLoadExceptionForSource(
+    source: String,
+    metadata: String,
+    throwable: Throwable?,
+): YralException =
+    when (source) {
+        MEDIA_SOURCE_IMAGE_LOAD -> ThumbnailMediaLoadException(metadata, throwable)
+        MEDIA_SOURCE_PLAYBACK -> VideoPlaybackMediaLoadException(metadata, throwable)
+        MEDIA_SOURCE_PLAYBACK_AFTER_RELEASE -> VideoPlaybackAfterReleaseMediaLoadException(metadata, throwable)
+        MEDIA_SOURCE_PREFETCH -> VideoPrefetchMediaLoadException(metadata, throwable)
+        else -> YralException(metadata, throwable)
+    }
+
+private fun mediaLoadFailureMetadata(
+    mediaType: String,
+    source: String,
+    mediaId: String?,
+    index: Int?,
+    url: String?,
+    category: String?,
+    code: Any?,
+    firstFramePending: Boolean?,
+    message: String?,
+    throwable: Throwable?,
+): String =
+    buildList {
+        add(MEDIA_LOAD_FAILURE_PREFIX)
+        add("type=$mediaType")
+        add("source=$source")
+        addIfNotBlank("media_id", mediaId)
+        index?.let { add("index=$it") }
+        addIfNotBlank("url", url)
+        addIfNotBlank("category", category)
+        code?.let { add("code=$it") }
+        firstFramePending?.let { add("first_frame_pending=$it") }
+        addIfNotBlank("message", message)
+        addRootCauseMetadata(throwable)
+    }.joinToString(separator = " ")
+
+internal class ThumbnailMediaLoadException(
+    message: String,
+    cause: Throwable?,
+) : YralException(message, cause)
+
+internal class VideoPlaybackMediaLoadException(
+    message: String,
+    cause: Throwable?,
+) : YralException(message, cause)
+
+internal class VideoPlaybackAfterReleaseMediaLoadException(
+    message: String,
+    cause: Throwable?,
+) : YralException(message, cause)
+
+internal class VideoPrefetchMediaLoadException(
+    message: String,
+    cause: Throwable?,
+) : YralException(message, cause)
 
 private fun String?.takeIfNotBlank(): String? = this?.takeIf { it.isNotBlank() }
 
 private fun Throwable?.messageOrNull(): String? = this?.message.takeIfNotBlank()
+
+private fun MutableList<String>.addIfNotBlank(
+    key: String,
+    value: String?,
+) {
+    value.takeIfNotBlank()?.let { add("$key=$it") }
+}
+
+private fun MutableList<String>.addRootCauseMetadata(throwable: Throwable?) {
+    throwable.rootCauseOrNull()?.let { cause ->
+        add("cause_type=${cause.mediaLoadCauseType()}")
+        addIfNotBlank("cause_message", cause.message)
+    }
+}
+
+private fun Throwable?.rootCauseOrNull(): Throwable? =
+    this?.let { throwable ->
+        generateSequence(throwable) { it.cause }.last()
+    }
+
+private fun Throwable.mediaLoadCauseType(): String = this::class.simpleName ?: this::class.toString()

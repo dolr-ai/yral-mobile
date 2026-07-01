@@ -26,11 +26,14 @@ class MediaLoadCrashlyticsReporterTest {
         )
 
         val exception = provider.recordedExceptions.single()
+        assertTrue(exception is ThumbnailMediaLoadException)
         assertSame(cause, exception.cause)
         assertTrue(exception.message.orEmpty().contains("type=thumbnail"))
         assertTrue(exception.message.orEmpty().contains("source=image_load"))
         assertTrue(exception.message.orEmpty().contains("media_id=video-id"))
         assertTrue(exception.message.orEmpty().contains("index=3"))
+        assertTrue(exception.message.orEmpty().contains("cause_type=IllegalStateException"))
+        assertTrue(exception.message.orEmpty().contains("cause_message=Forbidden"))
         assertEquals(listOf(ExceptionType.VIDEO), provider.recordedTypes)
     }
 
@@ -56,6 +59,7 @@ class MediaLoadCrashlyticsReporterTest {
 
         assertEquals(1, delegate.playbackErrors.size)
         val exception = provider.recordedExceptions.single()
+        assertTrue(exception is VideoPlaybackMediaLoadException)
         assertTrue(exception.message.orEmpty().contains("type=video"))
         assertTrue(exception.message.orEmpty().contains("source=playback"))
         assertTrue(exception.message.orEmpty().contains("url=https://cdn-yral-sfw.yral.com/user/video-id.mp4"))
@@ -90,6 +94,7 @@ class MediaLoadCrashlyticsReporterTest {
             delegate.playbackErrorsAfterRelease,
         )
         val exception = provider.recordedExceptions.single()
+        assertTrue(exception is VideoPlaybackAfterReleaseMediaLoadException)
         assertTrue(exception.message.orEmpty().contains("type=video"))
         assertTrue(exception.message.orEmpty().contains("source=playback_after_release"))
         assertTrue(exception.message.orEmpty().contains("url=https://cdn-yral-sfw.yral.com/user/video-id.mp4"))
@@ -129,11 +134,34 @@ class MediaLoadCrashlyticsReporterTest {
         assertEquals(2, delegate.preloadCanceledReasons.size)
         assertEquals(1, provider.recordedExceptions.size)
         val exception = provider.recordedExceptions.single()
+        assertTrue(exception is VideoPrefetchMediaLoadException)
         assertSame(cause, exception.cause)
         assertTrue(exception.message.orEmpty().contains("source=prefetch"))
         assertTrue(exception.message.orEmpty().contains("category=error"))
         assertTrue(exception.message.orEmpty().contains("message=Prefetch timed out"))
         assertEquals(listOf(ExceptionType.VIDEO), provider.recordedTypes)
+    }
+
+    @Test
+    fun reportVideoPrefetchFailure_recordsRootCauseMetadata() {
+        val provider = RecordingCrashlyticsProvider()
+        val mediaLoadReporter = MediaLoadCrashlyticsReporter(CrashlyticsManager(listOf(provider)))
+        val rootCause = IllegalArgumentException("Unable to resolve host")
+        val cause = IllegalStateException("Preload failed", rootCause)
+
+        mediaLoadReporter.reportVideoPrefetchFailure(
+            videoUrl = "https://cdn-yral-sfw.yral.com/user/video-id.mp4",
+            mediaId = "video-id",
+            index = 1,
+            reason = "error",
+            throwable = cause,
+        )
+
+        val exception = provider.recordedExceptions.single()
+        assertTrue(exception is VideoPrefetchMediaLoadException)
+        assertSame(cause, exception.cause)
+        assertTrue(exception.message.orEmpty().contains("cause_type=IllegalArgumentException"))
+        assertTrue(exception.message.orEmpty().contains("cause_message=Unable to resolve host"))
     }
 
     private class RecordingCrashlyticsProvider : CrashlyticsProvider {

@@ -33,6 +33,7 @@ import com.yral.shared.libs.videoplayback.PreparedSlotScheduler
 import com.yral.shared.libs.videoplayback.VideoSurfaceHandle
 import com.yral.shared.libs.videoplayback.cacheKey
 import com.yral.shared.libs.videoplayback.planFeedAlignment
+import com.yral.shared.libs.videoplayback.shouldReportPlaybackErrorAfterRelease
 import com.yral.shared.libs.videoplayback.ui.AndroidVideoSurfaceHandle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -181,7 +182,12 @@ private class AndroidPlaybackCoordinator(
                             )
                         }
 
-                        error.isTimeout() && isFirstFramePending -> {
+                        error.isTimeout() &&
+                            shouldReportPlaybackErrorAfterRelease(
+                                playStartMs = playStartMsById[item.id],
+                                nowMs = nowMs(),
+                                firstFramePending = isFirstFramePending,
+                            ) -> {
                             reporter.playbackErrorAfterRelease(
                                 id = item.id,
                                 index = index,
