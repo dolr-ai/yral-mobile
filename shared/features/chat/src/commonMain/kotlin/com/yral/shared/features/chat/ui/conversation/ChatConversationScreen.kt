@@ -550,6 +550,10 @@ fun ChatConversationScreen(
                             onImageClick = { imageUrl ->
                                 activeImagePreview = ChatImagePreviewSource.Message(imageUrl)
                             },
+                            onUnlockImage = { _ ->
+                                // Image-unlock payment flow gets wired here once the
+                                // end-to-end integration lands; UI-only for now.
+                            },
                             onRetry = { localId -> viewModel.retry(localId) },
                         )
 
