@@ -216,7 +216,7 @@ class AuthDataSourceImplTest {
     }
 
     private companion object {
-        const val PRIMARY_HOST = "auth.dolr.ai"
+        const val PRIMARY_HOST = "auth.yral.com"
         const val FALLBACK_HOST = "auth.yral.com"
     }
 }

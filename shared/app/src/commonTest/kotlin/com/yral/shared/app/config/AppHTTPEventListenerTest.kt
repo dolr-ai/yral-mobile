@@ -16,7 +16,7 @@ class AppHTTPEventListenerTest {
 
         listener.logException(
             DNSLookupException(
-                hostname = "auth.dolr.ai",
+                hostname = "auth.yral.com",
                 lookupSource = "test_dns",
                 cause = RuntimeException("dns failed"),
             ),
