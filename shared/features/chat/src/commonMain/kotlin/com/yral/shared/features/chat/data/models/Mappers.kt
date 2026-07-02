@@ -12,19 +12,19 @@ import com.yral.shared.features.chat.domain.models.ConversationMessagesPageResul
 import com.yral.shared.features.chat.domain.models.ConversationUser
 import com.yral.shared.features.chat.domain.models.ConversationsPageResult
 import com.yral.shared.features.chat.domain.models.DeleteConversationResult
+import com.yral.shared.features.chat.domain.models.DiscoverySearchResult
+import com.yral.shared.features.chat.domain.models.EnabledSkill
+import com.yral.shared.features.chat.domain.models.EngagementSchedule
+import com.yral.shared.features.chat.domain.models.FirstTurnNudge
 import com.yral.shared.features.chat.domain.models.HUMAN_CHAT_CONVERSATION_TYPE
 import com.yral.shared.features.chat.domain.models.HumanCreatorTakeoverStatus
+import com.yral.shared.features.chat.domain.models.InactivityProactive
+import com.yral.shared.features.chat.domain.models.InboxSearchResult
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencerStatus
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
-import com.yral.shared.features.chat.domain.models.SendMessageResult
-import com.yral.shared.features.chat.domain.models.DiscoverySearchResult
-import com.yral.shared.features.chat.domain.models.EnabledSkill
-import com.yral.shared.features.chat.domain.models.InboxSearchResult
 import com.yral.shared.features.chat.domain.models.SearchResultKind
-import com.yral.shared.features.chat.domain.models.EngagementSchedule
-import com.yral.shared.features.chat.domain.models.FirstTurnNudge
-import com.yral.shared.features.chat.domain.models.InactivityProactive
+import com.yral.shared.features.chat.domain.models.SendMessageResult
 import com.yral.shared.features.chat.domain.models.SkillCheckins
 import com.yral.shared.features.chat.domain.models.SystemPromptLayers
 import com.yral.shared.features.chat.domain.models.SystemPromptPreview
@@ -199,6 +199,7 @@ fun ChatMessageDto.toDomain(conversationIdFallback: String? = null): ChatMessage
         tokenCount = tokenCount,
         createdAt = createdAt,
         senderId = senderId,
+        isBlur = isBlur ?: false,
     )
 }
 
