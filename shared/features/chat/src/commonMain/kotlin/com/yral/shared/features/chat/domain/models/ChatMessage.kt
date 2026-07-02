@@ -16,6 +16,9 @@ data class ChatMessage(
     // [isFromCurrentUser]'s null-fallback). For AI chats this carries
     // through but isn't load-bearing — role alone is authoritative there.
     val senderId: String? = null,
+    // When true, image attachments are shown blurred behind a pay-to-unlock
+    // overlay until the user purchases access to them.
+    val isBlur: Boolean = false,
 )
 
 /**

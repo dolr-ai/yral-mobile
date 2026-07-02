@@ -33,4 +33,9 @@ data class ChatMessageDto(
     // AI path (where role is authoritative) parse without breaking.
     @SerialName("sender_id")
     val senderId: String? = null,
+    // When true, image attachments on this message must be blurred until the
+    // user pays to unlock them. Nullable so wire payloads that don't send the
+    // field keep deserializing.
+    @SerialName("is_blur")
+    val isBlur: Boolean? = null,
 )

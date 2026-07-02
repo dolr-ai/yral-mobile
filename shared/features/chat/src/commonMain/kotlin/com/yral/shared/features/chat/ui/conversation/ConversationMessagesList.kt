@@ -34,6 +34,7 @@ internal fun MessagesList(
     assistantError: AssistantErrorPresentation? = null,
     onAssistantErrorRetry: () -> Unit = {},
     onImageClick: (imageUrl: String) -> Unit,
+    onUnlockImage: (messageId: String) -> Unit,
     onRetry: (localId: String) -> Unit,
 ) {
     val overlayMessageIds = overlayMessageIdSet(overlayItems)
@@ -71,6 +72,7 @@ internal fun MessagesList(
                 isHumanChat = isHumanChat,
                 currentUserPrincipalId = currentUserPrincipalId,
                 onImageClick = onImageClick,
+                onUnlockImage = onUnlockImage,
                 onRetry = onRetry,
             )
         }
@@ -88,6 +90,7 @@ internal fun MessagesList(
                 isHumanChat = isHumanChat,
                 currentUserPrincipalId = currentUserPrincipalId,
                 onImageClick = onImageClick,
+                onUnlockImage = onUnlockImage,
                 onRetry = onRetry,
             )
         }
@@ -114,6 +117,7 @@ private fun MessageRow(
     isHumanChat: Boolean,
     currentUserPrincipalId: String?,
     onImageClick: (imageUrl: String) -> Unit,
+    onUnlockImage: (messageId: String) -> Unit,
     onRetry: (localId: String) -> Unit,
 ) {
     val screenWidth = LocalWindowInfo.current.containerSize.width
@@ -147,53 +151,12 @@ private fun MessageRow(
     // assistant message) lands at the same screen position; without a unified
     // slot, Compose tears down the Local subtree and creates a fresh Remote one
     // every time, producing a one-frame flicker.
-    //
-    // Cursor note: `renderContent` here is cursor-free (just the streamingBuffer
-    // or the message content). RegularBubble renders the cursor as a sibling
-    // composable, so the Markdown/Text renderer never sees the moving cursor.
-    val renderContent: String?
-    val renderMediaUrls: List<String>
-    val renderIsFailed: Boolean
-    val renderIsWaiting: Boolean
-    val renderIsStreaming: Boolean
-    val renderMarkdownLockedOverride: Boolean?
-    val renderOnRetry: (() -> Unit)?
-    when (item) {
-        is ConversationMessageItem.Remote -> {
-            renderContent = item.message.content
-            renderMediaUrls = item.message.mediaUrls
-            renderIsFailed = false
-            renderIsWaiting = false
-            renderIsStreaming = false
-            // Phase 5b: look up the persisted lock for this server message id. Present
-            // only for messages that arrived via streaming this VM session; absent for
-            // history-paged messages, which fall back to the default Markdown decision.
-            renderMarkdownLockedOverride = streamMarkdownLockedRemoteIds[item.message.id]
-            renderOnRetry = null
-        }
-
-        is ConversationMessageItem.Local -> {
-            val streamingBuffer = item.message.streamingBuffer
-            renderContent =
-                when {
-                    streamingBuffer != null -> streamingBuffer
-                    item.message.isPlaceholder -> "…"
-                    else -> item.message.content
-                }
-            renderMediaUrls = item.message.mediaUrls
-            renderIsFailed = item.message.status == LocalMessageStatus.FAILED
-            renderIsWaiting = item.isWaitingAssistant()
-            renderIsStreaming = streamingBuffer != null
-            // Phase 5b: streaming Local carries its own per-stream path lock.
-            renderMarkdownLockedOverride = item.message.useMarkdownLocked
-            renderOnRetry =
-                if (item.message.status == LocalMessageStatus.FAILED && !item.message.isPlaceholder) {
-                    { onRetry(item.message.localId) }
-                } else {
-                    null
-                }
-        }
-    }
+    val renderParams =
+        item.toRenderParams(
+            streamMarkdownLockedRemoteIds = streamMarkdownLockedRemoteIds,
+            onUnlockImage = onUnlockImage,
+            onRetry = onRetry,
+        )
 
     Box(
         modifier = Modifier.fillMaxWidth().padding(vertical = MESSAGE_VERTICAL_PADDING_DP),
@@ -201,18 +164,85 @@ private fun MessageRow(
     ) {
         MessageContent(
             isUser = isUser,
-            content = renderContent,
-            mediaUrls = renderMediaUrls,
+            content = renderParams.content,
+            mediaUrls = renderParams.mediaUrls,
             maxWidth = maxWidth,
             onImageClick = onImageClick,
-            isFailed = renderIsFailed,
-            isWaiting = renderIsWaiting,
-            isStreaming = renderIsStreaming,
-            markdownLockedOverride = renderMarkdownLockedOverride,
-            onRetry = renderOnRetry,
+            isFailed = renderParams.isFailed,
+            isWaiting = renderParams.isWaiting,
+            isStreaming = renderParams.isStreaming,
+            markdownLockedOverride = renderParams.markdownLockedOverride,
+            onRetry = renderParams.onRetry,
+            isBlurred = renderParams.isBlurred,
+            onUnlockClick = renderParams.onUnlockClick,
         )
     }
 }
+
+private data class MessageRenderParams(
+    val content: String?,
+    val mediaUrls: List<String>,
+    val isFailed: Boolean,
+    val isWaiting: Boolean,
+    val isStreaming: Boolean,
+    val markdownLockedOverride: Boolean?,
+    val onRetry: (() -> Unit)?,
+    val isBlurred: Boolean,
+    val onUnlockClick: (() -> Unit)?,
+)
+
+// Cursor note: `content` here is cursor-free (just the streamingBuffer
+// or the message content). RegularBubble renders the cursor as a sibling
+// composable, so the Markdown/Text renderer never sees the moving cursor.
+private fun ConversationMessageItem.toRenderParams(
+    streamMarkdownLockedRemoteIds: Map<String, Boolean>,
+    onUnlockImage: (messageId: String) -> Unit,
+    onRetry: (localId: String) -> Unit,
+): MessageRenderParams =
+    when (this) {
+        is ConversationMessageItem.Remote ->
+            MessageRenderParams(
+                content = message.content,
+                mediaUrls = message.mediaUrls,
+                isFailed = false,
+                isWaiting = false,
+                isStreaming = false,
+                // Phase 5b: look up the persisted lock for this server message id. Present
+                // only for messages that arrived via streaming this VM session; absent for
+                // history-paged messages, which fall back to the default Markdown decision.
+                markdownLockedOverride = streamMarkdownLockedRemoteIds[message.id],
+                onRetry = null,
+                isBlurred = message.isBlur,
+                onUnlockClick = { onUnlockImage(message.id) },
+            )
+
+        is ConversationMessageItem.Local -> {
+            val streamingBuffer = message.streamingBuffer
+            MessageRenderParams(
+                content =
+                    when {
+                        streamingBuffer != null -> streamingBuffer
+                        message.isPlaceholder -> "…"
+                        else -> message.content
+                    },
+                mediaUrls = message.mediaUrls,
+                isFailed = message.status == LocalMessageStatus.FAILED,
+                isWaiting = isWaitingAssistant(),
+                isStreaming = streamingBuffer != null,
+                // Phase 5b: streaming Local carries its own per-stream path lock.
+                markdownLockedOverride = message.useMarkdownLocked,
+                onRetry =
+                    if (message.status == LocalMessageStatus.FAILED && !message.isPlaceholder) {
+                        { onRetry(message.localId) }
+                    } else {
+                        null
+                    },
+                // Optimistic local sends are always the viewer's own images.
+                isBlurred = false,
+                onUnlockClick = null,
+            )
+        }
+    }
 
 private fun ConversationMessageItem.role(): ConversationMessageRole =
     when (this) {
