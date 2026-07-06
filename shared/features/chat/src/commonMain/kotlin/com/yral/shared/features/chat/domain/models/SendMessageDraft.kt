@@ -8,4 +8,6 @@ data class SendMessageDraft(
     val mediaAttachments: List<ChatAttachment> = emptyList(),
     val audioAttachment: ChatAttachment? = null,
     val audioDurationSeconds: Int? = null,
+    // "Request image" sends: the peer's reply image arrives blurred until paid for.
+    val isBlur: Boolean = false,
 )

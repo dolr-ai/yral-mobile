@@ -70,6 +70,7 @@ import yral_mobile.shared.features.chat.generated.resources.Res
 import yral_mobile.shared.features.chat.generated.resources.access_activated_overlay_message
 import yral_mobile.shared.features.chat.generated.resources.ai_influencer_read_only_chat
 import yral_mobile.shared.features.chat.generated.resources.chat_background_inverted
+import yral_mobile.shared.features.chat.generated.resources.request_image_message
 import yral_mobile.shared.features.chat.generated.resources.subscription_card_overlay_message
 import yral_mobile.shared.features.chat.generated.resources.switch_profile
 import yral_mobile.shared.features.chat.generated.resources.switch_profile_failed
@@ -393,6 +394,7 @@ fun ChatConversationScreen(
     val aiInfluencerReadOnlyMessage = stringResource(Res.string.ai_influencer_read_only_chat)
     val switchProfileButtonText = stringResource(Res.string.switch_profile)
     val switchProfileFailedMessage = stringResource(Res.string.switch_profile_failed)
+    val requestImageMessage = stringResource(Res.string.request_image_message)
     val bottomAreaState by derivedStateOf {
         resolveConversationBottomAreaState(
             isBotAccount = viewState.isBotAccount,
@@ -749,6 +751,25 @@ fun ChatConversationScreen(
                                             },
                                             onCameraClick = imageCaptureLauncher,
                                             onGalleryClick = imagePickerLauncher,
+                                            // Paid image requests are an AI-influencer feature;
+                                            // H2H peers can't fulfil them, so hide the option there.
+                                            onRequestImageClick =
+                                                if (!viewState.isHumanChat) {
+                                                    {
+                                                        sendMessageIfAllowed(
+                                                            SendMessageDraft(
+                                                                messageType = ChatMessageType.TEXT,
+                                                                content = requestImageMessage,
+                                                                isBlur = true,
+                                                            ),
+                                                        )
+                                                    }
+                                                } else {
+                                                    null
+                                                },
+                                            // Cooldown source lands with the end-to-end
+                                            // integration; option stays enabled until then.
+                                            requestImageRemainingSeconds = null,
                                             // Mic button is gated on AudioRecordingEnabled (kill-switch +
                                             // GA pacing) AND not-an-H2H-chat. Voice messages aren't
                                             // supported on H2H peer chats — the H2H send route doesn't

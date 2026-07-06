@@ -34,6 +34,7 @@ import yral_mobile.shared.features.chat.generated.resources.Res
 import yral_mobile.shared.features.chat.generated.resources.camera
 import yral_mobile.shared.features.chat.generated.resources.message_placeholder
 import yral_mobile.shared.features.chat.generated.resources.photo_library
+import yral_mobile.shared.features.chat.generated.resources.request_image
 import yral_mobile.shared.features.chat.generated.resources.send
 import yral_mobile.shared.features.chat.generated.resources.voice_message
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_camera
@@ -42,6 +43,7 @@ import yral_mobile.shared.libs.designsystem.generated.resources.ic_microphone
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_plus_circle
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_send
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_send_disabled
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_thunder
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 private const val MAX_CHARACTER_LIMIT = 4000
@@ -54,6 +56,9 @@ internal fun ChatInputArea(
     onSendClick: () -> Unit,
     onCameraClick: (() -> Unit)? = null,
     onGalleryClick: (() -> Unit)? = null,
+    onRequestImageClick: (() -> Unit)? = null,
+    // Non-null disables the Request Image option and shows this cooldown.
+    requestImageRemainingSeconds: Int? = null,
     onMicClick: (() -> Unit)? = null,
     showAttachmentMenu: Boolean = true,
     placeholder: String? = null,
@@ -111,6 +116,8 @@ internal fun ChatInputArea(
             showAttachmentMenu,
             onCameraClick,
             onGalleryClick,
+            onRequestImageClick,
+            requestImageRemainingSeconds,
             onMicClick,
             hasWaitingAssistant,
         )
@@ -124,6 +131,8 @@ private fun InputActions(
     showAttachmentMenu: Boolean,
     onCameraClick: (() -> Unit)?,
     onGalleryClick: (() -> Unit)?,
+    onRequestImageClick: (() -> Unit)?,
+    requestImageRemainingSeconds: Int?,
     onMicClick: (() -> Unit)?,
     hasWaitingAssistant: Boolean,
 ) {
@@ -142,18 +151,35 @@ private fun InputActions(
                 // Show attachment menu (camera/gallery) when both callbacks provided
                 YralContextMenu(
                     items =
-                        listOf(
-                            YralContextMenuItem(
-                                text = stringResource(Res.string.camera),
-                                icon = DesignRes.drawable.ic_camera,
-                                onClick = onCameraClick,
-                            ),
-                            YralContextMenuItem(
-                                text = stringResource(Res.string.photo_library),
-                                icon = DesignRes.drawable.ic_gallery,
-                                onClick = onGalleryClick,
-                            ),
-                        ),
+                        buildList {
+                            add(
+                                YralContextMenuItem(
+                                    text = stringResource(Res.string.camera),
+                                    icon = DesignRes.drawable.ic_camera,
+                                    onClick = onCameraClick,
+                                ),
+                            )
+                            add(
+                                YralContextMenuItem(
+                                    text = stringResource(Res.string.photo_library),
+                                    icon = DesignRes.drawable.ic_gallery,
+                                    onClick = onGalleryClick,
+                                ),
+                            )
+                            if (onRequestImageClick != null) {
+                                add(
+                                    YralContextMenuItem(
+                                        text = stringResource(Res.string.request_image),
+                                        icon = DesignRes.drawable.ic_thunder,
+                                        onClick = onRequestImageClick,
+                                        enabled = requestImageRemainingSeconds == null,
+                                        trailingText =
+                                            requestImageRemainingSeconds
+                                                ?.let(::formatRemainingMmSs),
+                                    ),
+                                )
+                            }
+                        },
                     triggerIcon = DesignRes.drawable.ic_plus_circle,
                     triggerSize = 24.dp,
                     menuIconSize = 20.dp,

@@ -11,15 +11,15 @@ import com.yral.shared.features.chat.domain.models.Conversation
 import com.yral.shared.features.chat.domain.models.ConversationMessagesPageResult
 import com.yral.shared.features.chat.domain.models.ConversationsPageResult
 import com.yral.shared.features.chat.domain.models.DeleteConversationResult
+import com.yral.shared.features.chat.domain.models.DiscoverySearchResult
 import com.yral.shared.features.chat.domain.models.HumanCreatorTakeoverStatus
+import com.yral.shared.features.chat.domain.models.InboxSearchResult
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
-import com.yral.shared.features.chat.domain.models.DiscoverySearchResult
-import com.yral.shared.features.chat.domain.models.InboxSearchResult
-import com.yral.shared.features.chat.domain.models.SystemPromptPreview
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.domain.models.SendMessageResult
 import com.yral.shared.features.chat.domain.models.StreamEvent
+import com.yral.shared.features.chat.domain.models.SystemPromptPreview
 import com.yral.shared.features.chat.domain.models.totalUnreadConversationBadgeCount
 import kotlinx.coroutines.flow.Flow
 
@@ -149,6 +149,7 @@ class ChatRepositoryImpl(
                         mediaUrls = mediaUrls,
                         audioUrl = audioUrl,
                         audioDurationSeconds = draft.audioDurationSeconds,
+                        isBlur = draft.isBlur.takeIf { it },
                     ),
             )
         return response.toDomain(conversationIdFallback = conversationId)
@@ -222,6 +223,7 @@ class ChatRepositoryImpl(
                         mediaUrls = mediaUrls,
                         audioUrl = audioUrl,
                         audioDurationSeconds = draft.audioDurationSeconds,
+                        isBlur = draft.isBlur.takeIf { it },
                     ),
             )
         return response.toDomain(conversationIdFallback = conversationId)
@@ -240,6 +242,7 @@ class ChatRepositoryImpl(
                     mediaUrls = null,
                     audioUrl = null,
                     audioDurationSeconds = null,
+                    isBlur = draft.isBlur.takeIf { it },
                 ),
         )
 

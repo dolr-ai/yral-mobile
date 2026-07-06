@@ -15,4 +15,8 @@ data class SendMessageRequestDto(
     val audioUrl: String? = null,
     @SerialName("audio_duration_seconds")
     val audioDurationSeconds: Int? = null,
+    // When true, asks the peer for a paid image that arrives blurred until
+    // unlocked. Nullable so it's omitted from the JSON for ordinary sends.
+    @SerialName("is_blur")
+    val isBlur: Boolean? = null,
 )
