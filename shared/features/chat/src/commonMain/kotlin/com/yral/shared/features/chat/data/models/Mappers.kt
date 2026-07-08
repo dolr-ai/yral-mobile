@@ -4,6 +4,7 @@ import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.features.chat.domain.models.ChatMessage
 import com.yral.shared.features.chat.domain.models.ChatMessageType
+import com.yral.shared.features.chat.domain.models.Collage
 import com.yral.shared.features.chat.domain.models.Conversation
 import com.yral.shared.features.chat.domain.models.ConversationInfluencer
 import com.yral.shared.features.chat.domain.models.ConversationLastMessage
@@ -200,8 +201,20 @@ fun ChatMessageDto.toDomain(conversationIdFallback: String? = null): ChatMessage
         createdAt = createdAt,
         senderId = senderId,
         isBlur = isBlur ?: false,
+        collageBotId = collageBotId,
+        collageDate = collageDate,
     )
 }
+
+fun CollageResponseDto.toDomain(): Collage =
+    Collage(
+        botId = collageBotId,
+        date = collageDate,
+        images = images,
+        isBlurred = isBlurred,
+        theme = theme,
+        generatedAt = generatedAt,
+    )
 
 fun ConversationMessagesResponseDto.toDomain(): ConversationMessagesPageResult {
     val rawCount = messages.size

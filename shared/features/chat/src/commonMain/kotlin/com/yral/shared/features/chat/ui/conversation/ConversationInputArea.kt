@@ -48,6 +48,22 @@ import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 private const val MAX_CHARACTER_LIMIT = 4000
 private const val MAX_LINES = 5
+private const val SECONDS_PER_HOUR = 3600
+private const val SECONDS_PER_MINUTE = 60
+private const val TIMER_DIGITS = 2
+
+// The collage-request cooldown counts down to the next 04:00 UTC pre-gen —
+// up to a full day — so include hours; the m:ss formatter alone would
+// render e.g. "1439:59".
+private fun formatRequestImageCooldown(totalSeconds: Int): String {
+    val hours = totalSeconds.coerceAtLeast(0) / SECONDS_PER_HOUR
+    if (hours <= 0) return formatRemainingMmSs(totalSeconds)
+    val minutes = (totalSeconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE
+    val seconds = totalSeconds % SECONDS_PER_MINUTE
+    val minutesStr = minutes.toString().padStart(TIMER_DIGITS, '0')
+    val secondsStr = seconds.toString().padStart(TIMER_DIGITS, '0')
+    return "$hours:$minutesStr:$secondsStr"
+}
 
 @Composable
 internal fun ChatInputArea(
@@ -175,7 +191,7 @@ private fun InputActions(
                                         enabled = requestImageRemainingSeconds == null,
                                         trailingText =
                                             requestImageRemainingSeconds
-                                                ?.let(::formatRemainingMmSs),
+                                                ?.let(::formatRequestImageCooldown),
                                     ),
                                 )
                             }

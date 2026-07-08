@@ -22,17 +22,20 @@ import com.yral.shared.data.domain.models.ConversationInfluencerSource
 import com.yral.shared.features.chat.analytics.ChatTelemetry
 import com.yral.shared.features.chat.attachments.ChatAttachment
 import com.yral.shared.features.chat.attachments.FilePathChatAttachment
+import com.yral.shared.features.chat.data.CollageCache
 import com.yral.shared.features.chat.data.ConversationContentCache
 import com.yral.shared.features.chat.domain.ChatErrorMapper
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.ConversationMessagesPagingSource
 import com.yral.shared.features.chat.domain.EmptyMessagesPagingSource
+import com.yral.shared.features.chat.domain.httpStatusOrNull
 import com.yral.shared.features.chat.domain.models.AssistantError
 import com.yral.shared.features.chat.domain.models.AssistantErrorCode
 import com.yral.shared.features.chat.domain.models.AssistantErrorPresentation
 import com.yral.shared.features.chat.domain.models.ChatError
 import com.yral.shared.features.chat.domain.models.ChatMessage
 import com.yral.shared.features.chat.domain.models.ChatMessageType
+import com.yral.shared.features.chat.domain.models.Collage
 import com.yral.shared.features.chat.domain.models.ConversationInfluencer
 import com.yral.shared.features.chat.domain.models.ConversationMessageRole
 import com.yral.shared.features.chat.domain.models.GrantError
@@ -43,10 +46,12 @@ import com.yral.shared.features.chat.domain.usecases.CheckChatAccessUseCase
 import com.yral.shared.features.chat.domain.usecases.CreateConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.DeleteConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.GetHumanCreatorTakeoverStatusUseCase
+import com.yral.shared.features.chat.domain.usecases.GetInfluencerCollageUseCase
 import com.yral.shared.features.chat.domain.usecases.GrantChatAccessParams
 import com.yral.shared.features.chat.domain.usecases.GrantChatAccessUseCase
 import com.yral.shared.features.chat.domain.usecases.MarkConversationAsReadUseCase
 import com.yral.shared.features.chat.domain.usecases.ReleaseHumanCreatorTakeoverUseCase
+import com.yral.shared.features.chat.domain.usecases.RequestInfluencerImagesUseCase
 import com.yral.shared.features.chat.domain.usecases.SendHumanCreatorMessageUseCase
 import com.yral.shared.features.chat.domain.usecases.SendHumanMessageUseCase
 import com.yral.shared.features.chat.domain.usecases.SendMessageUseCase
@@ -68,6 +73,7 @@ import com.yral.shared.libs.sharing.LinkInput
 import com.yral.shared.libs.sharing.ShareService
 import com.yral.shared.rust.service.utils.getUserInfoServiceCanister
 import com.yral.shared.rust.service.utils.propicFromPrincipal
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
@@ -90,14 +96,18 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.getString
 import yral_mobile.shared.features.chat.generated.resources.Res
 import yral_mobile.shared.features.chat.generated.resources.assistant_error_connection_timed_out
+import yral_mobile.shared.features.chat.generated.resources.collage_quota_used_toast
+import yral_mobile.shared.features.chat.generated.resources.collage_request_failed_toast
 import yral_mobile.shared.features.chat.generated.resources.influencer_subscription_purchase_failed
 import yral_mobile.shared.features.chat.generated.resources.influencer_subscription_purchase_pending
 import yral_mobile.shared.features.chat.generated.resources.influencer_subscription_purchase_unavailable
 import yral_mobile.shared.features.chat.generated.resources.influencer_subscription_unlocked_toast
 import yral_mobile.shared.features.chat.generated.resources.influencer_subscription_verification_pending
+import yral_mobile.shared.features.chat.generated.resources.request_image_message
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share
 import yral_mobile.shared.libs.designsystem.generated.resources.msg_profile_share_desc
 import yral_mobile.shared.libs.designsystem.generated.resources.profile_share_default_name
@@ -135,6 +145,9 @@ class ConversationViewModel(
     private val sendHumanCreatorMessageUseCase: SendHumanCreatorMessageUseCase,
     private val getHumanCreatorTakeoverStatusUseCase: GetHumanCreatorTakeoverStatusUseCase,
     private val conversationContentCache: ConversationContentCache,
+    private val requestInfluencerImagesUseCase: RequestInfluencerImagesUseCase,
+    private val getInfluencerCollageUseCase: GetInfluencerCollageUseCase,
+    private val collageCache: CollageCache,
 ) : ViewModel() {
     /**
      * Message ordering:
@@ -809,6 +822,9 @@ class ConversationViewModel(
             // Phase 6: errors are scoped to the conversation that produced them.
             // Crossing the conversation boundary clears any in-flight error bubble.
             _assistantError.value = null
+            // Collage state (including the request-today cooldown) is per-bot;
+            // a stale cooldown must not disable Request Image for another bot.
+            resetCollageState()
         }
 
         // Merge incoming influencer with any existing data to preserve category from the wall
@@ -1373,6 +1389,8 @@ class ConversationViewModel(
                 status = LocalMessageStatus.SENDING,
                 isPlaceholder = false,
                 draftForRetry = draft,
+                collageBotId = draft.collageBotId,
+                collageDate = draft.collageDate,
             )
 
         _viewState.value.influencer?.let { influencer ->
@@ -1957,6 +1975,313 @@ class ConversationViewModel(
             }
     }
 
+    // ── Collage (Request Images) ─────────────────────────────────────────
+    // Chat messages carry only a (botId, date) reference; bubbles resolve it
+    // here at render time so the URLs always match the CURRENT subscription
+    // state (blurred for non-subscribers, clear after purchase — including
+    // for historical messages, which refetch on the flip).
+
+    private val _collageStates = MutableStateFlow<Map<String, CollageUiState>>(emptyMap())
+    val collageStates: StateFlow<Map<String, CollageUiState>> = _collageStates.asStateFlow()
+
+    private val _requestImageCooldownSeconds = MutableStateFlow<Int?>(null)
+    val requestImageCooldownSeconds: StateFlow<Int?> = _requestImageCooldownSeconds.asStateFlow()
+
+    private val collageFetchJobs = mutableMapOf<String, Job>()
+    private var collageCooldownJob: Job? = null
+    private var collageHasChatAccess = false
+    private var isCollageRequestInFlight = false
+
+    private fun collageKey(
+        botId: String,
+        date: String,
+    ) = "$botId|$date"
+
+    /**
+     * Pushed from the screen — the effective subscription gate (Pro OR
+     * per-influencer access) is composed there, outside this VM. A flip
+     * refetches every collage currently tracked with the new is_subscribed
+     * so blurred and clear bubbles never coexist in one conversation.
+     */
+    fun setHasChatAccess(hasAccess: Boolean) {
+        if (collageHasChatAccess == hasAccess) return
+        collageHasChatAccess = hasAccess
+        if (_collageStates.value.isEmpty()) return
+        collageFetchJobs.values.forEach { it.cancel() }
+        collageFetchJobs.clear()
+        val keys = _collageStates.value.keys.toList()
+        _collageStates.update { state -> state.mapValues { CollageUiState.Loading } }
+        keys.forEach { key ->
+            launchCollageFetch(
+                botId = key.substringBeforeLast('|'),
+                date = key.substringAfterLast('|'),
+            )
+        }
+    }
+
+    /** Render-time resolve of a collage reference; called from the bubble's LaunchedEffect. */
+    @OptIn(ExperimentalTime::class)
+    @Suppress("ReturnCount") // precondition gates: blank ref, already resolved, in flight
+    fun loadCollage(
+        botId: String,
+        date: String,
+    ) {
+        if (botId.isBlank() || date.isBlank()) return
+        // Cooldown sighting: a collage dated today in this conversation means
+        // today's request is already spent — the conversation history is the
+        // server-persisted record, so this survives reinstalls and devices.
+        if (date == currentCollageDateString()) {
+            startCollageCooldown()
+        }
+        val key = collageKey(botId, date)
+        if (_collageStates.value[key] is CollageUiState.Ready) return
+        if (collageFetchJobs[key]?.isActive == true) return
+        val cached = collageCache.read(botId = botId, date = date, isSubscribed = collageHasChatAccess)
+        if (cached != null) {
+            _collageStates.update { it + (key to CollageUiState.Ready(cached)) }
+            return
+        }
+        _collageStates.update { it + (key to CollageUiState.Loading) }
+        launchCollageFetch(botId = botId, date = date)
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private fun launchCollageFetch(
+        botId: String,
+        date: String,
+    ) {
+        val key = collageKey(botId, date)
+        collageFetchJobs[key] =
+            viewModelScope.launch {
+                val isSubscribed = collageHasChatAccess
+                var attempt = 0
+                var terminal = false
+                while (!terminal) {
+                    var retryAfterMs: Long? = null
+                    getInfluencerCollageUseCase(
+                        GetInfluencerCollageUseCase.Params(influencerId = botId, isSubscribed = isSubscribed),
+                    ).onSuccess { collage ->
+                        terminal = true
+                        applyFetchedCollage(key, date, isSubscribed, collage)
+                    }.onFailure { error ->
+                        // 404 on today's reference = collage still generating
+                        // (cold-path race, e.g. another device just POSTed) —
+                        // retry briefly. Anything else degrades to Unavailable;
+                        // a scroll-back re-entry retriggers loadCollage.
+                        val stillGenerating =
+                            error.httpStatusOrNull() == HttpStatusCode.NotFound &&
+                                date == currentCollageDateString()
+                        if (stillGenerating && attempt < COLLAGE_NOT_READY_RETRY_DELAYS_MS.size) {
+                            retryAfterMs = COLLAGE_NOT_READY_RETRY_DELAYS_MS[attempt]
+                        } else {
+                            terminal = true
+                            _collageStates.update { it + (key to CollageUiState.Unavailable) }
+                        }
+                    }
+                    retryAfterMs?.let {
+                        attempt++
+                        delay(it)
+                    }
+                }
+            }
+    }
+
+    private fun applyFetchedCollage(
+        key: String,
+        expectedDate: String,
+        isSubscribed: Boolean,
+        collage: Collage,
+    ) {
+        // GET /collage serves only today's row; a date mismatch means this
+        // reference points at an older collage that can no longer be fetched.
+        if (collage.date != expectedDate) {
+            _collageStates.update { it + (key to CollageUiState.Unavailable) }
+            return
+        }
+        collageCache.write(collage = collage, isSubscribed = isSubscribed)
+        _collageStates.update { it + (key to CollageUiState.Ready(collage)) }
+    }
+
+    /**
+     * "Request Image" tap: POST request-images (consumes today's quota; the
+     * rare cold path takes 45–65 s — shimmer placeholder meanwhile), then
+     * send the (botId, date) reference into the conversation as a collage
+     * message. The message never carries image URLs.
+     */
+    @OptIn(ExperimentalTime::class)
+    @Suppress("ReturnCount") // precondition gates: no conversation, no influencer, H2H, cooldown
+    fun requestCollageImages() {
+        val convId = conversationId ?: return
+        val influencer = _viewState.value.influencer ?: return
+        if (_viewState.value.isHumanChat) return
+        if (isCollageRequestInFlight || _requestImageCooldownSeconds.value != null) return
+        isCollageRequestInFlight = true
+        val now = Clock.System.now().toEpochMilliseconds()
+        val shimmer =
+            LocalMessage(
+                localId = "local-collage-shimmer-$now",
+                role = ConversationMessageRole.ASSISTANT,
+                content = null,
+                messageType = ChatMessageType.COLLAGE,
+                createdAtMs = now,
+                status = LocalMessageStatus.WAITING,
+                isPlaceholder = true,
+                draftForRetry = null,
+            )
+        _overlay.update { it.copy(pending = it.pending + shimmer) }
+        viewModelScope.launch {
+            try {
+                requestInfluencerImagesUseCase(
+                    RequestInfluencerImagesUseCase.Params(
+                        influencerId = influencer.id,
+                        isSubscribed = collageHasChatAccess,
+                    ),
+                ).onSuccess { collage ->
+                    onCollageRequestSucceeded(convId, shimmer.localId, collage)
+                }.onFailure { error ->
+                    onCollageRequestFailed(shimmer.localId, error)
+                }
+            } finally {
+                isCollageRequestInFlight = false
+            }
+        }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private suspend fun onCollageRequestSucceeded(
+        convId: String,
+        shimmerLocalId: String,
+        collage: Collage,
+    ) {
+        collageCache.write(collage = collage, isSubscribed = collageHasChatAccess)
+        // Pre-warm so the bubble renders instantly once the message lands.
+        _collageStates.update {
+            it + (collageKey(collage.botId, collage.date) to CollageUiState.Ready(collage))
+        }
+        startCollageCooldown()
+        val draft =
+            SendMessageDraft(
+                messageType = ChatMessageType.COLLAGE,
+                // Fallback body: old clients degrade unknown types to TEXT
+                // and render this string instead of the grid.
+                content = getString(Res.string.request_image_message),
+                collageBotId = collage.botId,
+                collageDate = collage.date,
+            )
+        val now = Clock.System.now().toEpochMilliseconds()
+        val userLocal =
+            LocalMessage(
+                localId = "local-user-$now",
+                role = ConversationMessageRole.USER,
+                content = draft.content,
+                messageType = ChatMessageType.COLLAGE,
+                createdAtMs = now,
+                status = LocalMessageStatus.SENDING,
+                isPlaceholder = false,
+                draftForRetry = draft,
+                collageBotId = collage.botId,
+                collageDate = collage.date,
+            )
+        _overlay.update { state ->
+            state.copy(pending = state.pending.filterNot { it.localId == shimmerLocalId } + userLocal)
+        }
+        // Direct send — the generic sendMessage() pipeline would add an
+        // assistant waiting placeholder + AI-reply telemetry, both wrong for
+        // a collage share. Send failure marks the Local FAILED with
+        // draftForRetry, so the existing tap-to-resend re-sends the reference
+        // only (the collage itself is already generated; no second POST).
+        sendMessageUseCase(
+            SendMessageUseCase.Params(conversationId = convId, draft = draft),
+        ).onSuccess { result ->
+            handleCollageSendSuccess(result, userLocal.localId)
+        }.onFailure { error ->
+            handleSendFailure(error, userLocal.localId, assistantLocalId = "")
+        }
+    }
+
+    private fun handleCollageSendSuccess(
+        result: SendMessageResult,
+        userLocalId: String,
+    ) {
+        val sentMessages = buildSentMessages(result.userMessage, result.assistantMessage)
+        _overlay.update { state ->
+            state.copy(
+                pending = state.pending.filterNot { it.localId == userLocalId },
+                sent = state.sent + sentMessages,
+            )
+        }
+    }
+
+    private suspend fun onCollageRequestFailed(
+        shimmerLocalId: String,
+        error: Throwable,
+    ) {
+        _overlay.update { state ->
+            state.copy(pending = state.pending.filterNot { it.localId == shimmerLocalId })
+        }
+        if (error.httpStatusOrNull() == HttpStatusCode.TooManyRequests) {
+            // Server says today's quota is already spent (e.g. requested from
+            // another device) — server stays authoritative over the local menu.
+            startCollageCooldown()
+            influencerSubscriptionToastChannel.trySend(
+                InfluencerSubscriptionToastEvent(
+                    ToastStatus.Info,
+                    getString(Res.string.collage_quota_used_toast),
+                ),
+            )
+        } else {
+            influencerSubscriptionToastChannel.trySend(
+                InfluencerSubscriptionToastEvent(
+                    ToastStatus.Error,
+                    getString(Res.string.collage_request_failed_toast),
+                ),
+            )
+        }
+    }
+
+    /** Idempotent: starts the disabled-until-next-04:00-UTC countdown once. */
+    @OptIn(ExperimentalTime::class)
+    private fun startCollageCooldown() {
+        if (collageCooldownJob?.isActive == true) return
+        collageCooldownJob =
+            viewModelScope.launch {
+                while (isActive) {
+                    val nowMs = Clock.System.now().toEpochMilliseconds()
+                    val remainingSeconds = ((nextCollageResetMs(nowMs) - nowMs) / MS_PER_SECOND).toInt()
+                    if (remainingSeconds <= 0) break
+                    _requestImageCooldownSeconds.value = remainingSeconds
+                    delay(1.seconds)
+                }
+                _requestImageCooldownSeconds.value = null
+            }
+    }
+
+    private fun resetCollageState() {
+        collageFetchJobs.values.forEach { it.cancel() }
+        collageFetchJobs.clear()
+        _collageStates.value = emptyMap()
+        collageCooldownJob?.cancel()
+        collageCooldownJob = null
+        _requestImageCooldownSeconds.value = null
+        isCollageRequestInFlight = false
+    }
+
+    // Collage-day arithmetic. The day rolls at the 04:00 UTC nightly pre-gen,
+    // matching the quota window the countdown targets.
+    private fun currentCollageDayIndex(nowMs: Long): Long = (nowMs - COLLAGE_DAY_ROLLOVER_UTC_MS).floorDiv(MS_PER_DAY)
+
+    private fun nextCollageResetMs(nowMs: Long): Long {
+        val nextDayIndex = currentCollageDayIndex(nowMs) + 1
+        return nextDayIndex * MS_PER_DAY + COLLAGE_DAY_ROLLOVER_UTC_MS
+    }
+
+    /** Today's collage_date ("YYYY-MM-DD"), for comparing against message references. */
+    @OptIn(ExperimentalTime::class)
+    private fun currentCollageDateString(): String =
+        LocalDate
+            .fromEpochDays(currentCollageDayIndex(Clock.System.now().toEpochMilliseconds()).toInt())
+            .toString()
+
     private data class OverlayState(
         val pending: List<LocalMessage> = emptyList(),
         val sent: List<SentMessage> = emptyList(),
@@ -2281,6 +2606,16 @@ class ConversationViewModel(
         // Status poll runs every Nth iteration of message poll: 3s × 2 ≈ 6s ≈ ~5s spec.
         private const val TAKEOVER_STATUS_POLL_EVERY_N = 2
         private const val TAKEOVER_POLL_PAGE_SIZE = 20
+
+        // Collage: the 04:00 UTC nightly pre-gen is the collage-day rollover
+        // the request cooldown counts down to.
+        private const val COLLAGE_DAY_ROLLOVER_UTC_MS = 4L * 60 * 60 * 1000
+        private const val MS_PER_DAY = 24L * 60 * 60 * 1000
+        private const val MS_PER_SECOND = 1000L
+
+        // GET /collage 404s while today's collage is still generating
+        // (cold-path race with another device's POST) — brief backoff.
+        private val COLLAGE_NOT_READY_RETRY_DELAYS_MS = listOf(5_000L, 15_000L)
     }
 }
 
@@ -2288,6 +2623,18 @@ data class InfluencerSubscriptionToastEvent(
     val status: ToastStatus,
     val message: String,
 )
+
+/** Render state of one collage reference, keyed by "botId|date" in [ConversationViewModel.collageStates]. */
+sealed class CollageUiState {
+    data object Loading : CollageUiState()
+
+    data class Ready(
+        val collage: Collage,
+    ) : CollageUiState()
+
+    /** Fetch failed terminally — older-than-today reference or exhausted retries. */
+    data object Unavailable : CollageUiState()
+}
 
 data class ConversationViewState(
     val isCreating: Boolean = false,
@@ -2376,4 +2723,8 @@ data class LocalMessage(
     // `done` so the Remote replacement renders with the same path — no Text↔Markdown
     // subtree swap.
     val useMarkdownLocked: Boolean? = null,
+    // COLLAGE reference — the optimistic echo renders through the same
+    // reference→GET path as Remote collage messages; URLs never live here.
+    val collageBotId: String? = null,
+    val collageDate: String? = null,
 )

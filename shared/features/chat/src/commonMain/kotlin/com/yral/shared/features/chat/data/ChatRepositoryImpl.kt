@@ -7,6 +7,7 @@ import com.yral.shared.features.chat.data.models.toDomainActiveOnly
 import com.yral.shared.features.chat.domain.ChatRepository
 import com.yral.shared.features.chat.domain.models.ChatMessage
 import com.yral.shared.features.chat.domain.models.ChatMessageType
+import com.yral.shared.features.chat.domain.models.Collage
 import com.yral.shared.features.chat.domain.models.Conversation
 import com.yral.shared.features.chat.domain.models.ConversationMessagesPageResult
 import com.yral.shared.features.chat.domain.models.ConversationsPageResult
@@ -99,6 +100,22 @@ class ChatRepositoryImpl(
             .getSystemPromptPreview(botId)
             .toDomain()
 
+    override suspend fun requestInfluencerImages(
+        influencerId: String,
+        isSubscribed: Boolean,
+    ): Collage =
+        dataSource
+            .requestInfluencerImages(influencerId = influencerId, isSubscribed = isSubscribed)
+            .toDomain()
+
+    override suspend fun getInfluencerCollage(
+        influencerId: String,
+        isSubscribed: Boolean,
+    ): Collage =
+        dataSource
+            .getInfluencerCollage(influencerId = influencerId, isSubscribed = isSubscribed)
+            .toDomain()
+
     override suspend fun createConversation(influencerId: String): Conversation =
         dataSource
             .createConversation(influencerId)
@@ -149,7 +166,6 @@ class ChatRepositoryImpl(
                         mediaUrls = mediaUrls,
                         audioUrl = audioUrl,
                         audioDurationSeconds = draft.audioDurationSeconds,
-                        isBlur = draft.isBlur.takeIf { it },
                     ),
             )
         return response.toDomain(conversationIdFallback = conversationId)
@@ -223,7 +239,8 @@ class ChatRepositoryImpl(
                         mediaUrls = mediaUrls,
                         audioUrl = audioUrl,
                         audioDurationSeconds = draft.audioDurationSeconds,
-                        isBlur = draft.isBlur.takeIf { it },
+                        collageBotId = draft.collageBotId,
+                        collageDate = draft.collageDate,
                     ),
             )
         return response.toDomain(conversationIdFallback = conversationId)
@@ -242,7 +259,6 @@ class ChatRepositoryImpl(
                     mediaUrls = null,
                     audioUrl = null,
                     audioDurationSeconds = null,
-                    isBlur = draft.isBlur.takeIf { it },
                 ),
         )
 

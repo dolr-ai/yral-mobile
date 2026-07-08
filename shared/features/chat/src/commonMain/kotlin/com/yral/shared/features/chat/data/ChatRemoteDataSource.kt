@@ -7,24 +7,26 @@ import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.features.chat.attachments.ChatAttachment
 import com.yral.shared.features.chat.attachments.FilePathChatAttachment
 import com.yral.shared.features.chat.data.models.ChatMessageDto
+import com.yral.shared.features.chat.data.models.CollageResponseDto
 import com.yral.shared.features.chat.data.models.ConversationDto
 import com.yral.shared.features.chat.data.models.ConversationMessagesResponseDto
 import com.yral.shared.features.chat.data.models.ConversationsResponseDto
 import com.yral.shared.features.chat.data.models.CreateConversationRequestDto
 import com.yral.shared.features.chat.data.models.CreateHumanConversationRequestDto
 import com.yral.shared.features.chat.data.models.DeleteConversationResponseDto
+import com.yral.shared.features.chat.data.models.DiscoverySearchResponseDto
 import com.yral.shared.features.chat.data.models.HumanCreatorTakeoverStatusDto
+import com.yral.shared.features.chat.data.models.InboxSearchResponseDto
 import com.yral.shared.features.chat.data.models.InfluencerDto
 import com.yral.shared.features.chat.data.models.InfluencerFeedResponseDto
 import com.yral.shared.features.chat.data.models.InfluencersResponseDto
-import com.yral.shared.features.chat.data.models.DiscoverySearchResponseDto
-import com.yral.shared.features.chat.data.models.InboxSearchResponseDto
-import com.yral.shared.features.chat.data.models.SystemPromptPreviewResponseDto
 import com.yral.shared.features.chat.data.models.ReleaseHumanCreatorTakeoverResponseDto
+import com.yral.shared.features.chat.data.models.RequestImagesRequestDto
 import com.yral.shared.features.chat.data.models.SendHumanCreatorMessageRequestDto
 import com.yral.shared.features.chat.data.models.SendMessageRequestDto
 import com.yral.shared.features.chat.data.models.SendMessageResponseDto
 import com.yral.shared.features.chat.data.models.StartHumanCreatorTakeoverResponseDto
+import com.yral.shared.features.chat.data.models.SystemPromptPreviewResponseDto
 import com.yral.shared.features.chat.data.models.UploadResponseDto
 import com.yral.shared.features.chat.data.models.toInfluencersResponseDto
 import com.yral.shared.http.UPLOAD_FILE_TIME_OUT
@@ -211,6 +213,48 @@ class ChatRemoteDataSource(
             url {
                 host = chatBaseUrl
                 path(INFLUENCERS_PATH, botId, SYSTEM_PROMPT_PREVIEW_SUBPATH)
+            }
+            headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
+        }
+    }
+
+    override suspend fun requestInfluencerImages(
+        influencerId: String,
+        isSubscribed: Boolean,
+    ): CollageResponseDto {
+        val idToken = getIdToken()
+        return httpPost(
+            httpClient = httpClient,
+            json = json,
+        ) {
+            url {
+                host = chatBaseUrl
+                path(INFLUENCERS_PATH, influencerId, REQUEST_IMAGES_SUBPATH)
+            }
+            setBody(RequestImagesRequestDto(isSubscribed = isSubscribed))
+            // On-demand generation (no pre-gen row yet) takes 45–65 s;
+            // the client-wide 30 s default would abort mid-generation.
+            timeout {
+                requestTimeoutMillis = COLLAGE_REQUEST_TIME_OUT
+                socketTimeoutMillis = COLLAGE_REQUEST_TIME_OUT
+            }
+            headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
+        }
+    }
+
+    override suspend fun getInfluencerCollage(
+        influencerId: String,
+        isSubscribed: Boolean,
+    ): CollageResponseDto {
+        val idToken = getIdToken()
+        return httpGet(
+            httpClient = httpClient,
+            json = json,
+        ) {
+            url {
+                host = chatBaseUrl
+                path(INFLUENCERS_PATH, influencerId, COLLAGE_SUBPATH)
+                parameters.append("is_subscribed", isSubscribed.toString())
             }
             headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
         }
@@ -523,8 +567,7 @@ class ChatRemoteDataSource(
      * isn't, so the call site needs to suppress the throw on missing
      * token rather than treat it as an auth error.
      */
-    private suspend fun getIdTokenOrNull() =
-        preferences.getString(PrefKeys.ID_TOKEN.name)
+    private suspend fun getIdTokenOrNull() = preferences.getString(PrefKeys.ID_TOKEN.name)
 
     private fun ChatAttachment.readUploadBytes(): ByteArray =
         when (this) {
@@ -540,6 +583,9 @@ class ChatRemoteDataSource(
         private const val DISCOVERY_SEARCH_PATH = "api/v2/discovery/search"
         private const val INBOX_SEARCH_PATH = "api/v2/chat/conversations/search"
         private const val SYSTEM_PROMPT_PREVIEW_SUBPATH = "system-prompt-preview"
+        private const val REQUEST_IMAGES_SUBPATH = "request-images"
+        private const val COLLAGE_SUBPATH = "collage"
+        private const val COLLAGE_REQUEST_TIME_OUT = 90_000L
         private const val CONVERSATIONS_PATH = "api/v1/chat/conversations"
         private const val HUMAN_CONVERSATIONS_PATH = "api/v1/chat/human/conversations"
         private const val CONVERSATIONS_LIST_PATH = "api/v2/chat/conversations"

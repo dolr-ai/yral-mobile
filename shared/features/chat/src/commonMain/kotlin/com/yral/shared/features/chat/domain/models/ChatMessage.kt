@@ -19,6 +19,10 @@ data class ChatMessage(
     // When true, image attachments are shown blurred behind a pay-to-unlock
     // overlay until the user purchases access to them.
     val isBlur: Boolean = false,
+    // COLLAGE messages store only this reference (never URLs); the bubble
+    // fetches the image set at render time with the current subscription state.
+    val collageBotId: String? = null,
+    val collageDate: String? = null,
 )
 
 /**

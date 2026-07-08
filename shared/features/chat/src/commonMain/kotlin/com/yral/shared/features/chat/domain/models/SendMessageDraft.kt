@@ -8,6 +8,8 @@ data class SendMessageDraft(
     val mediaAttachments: List<ChatAttachment> = emptyList(),
     val audioAttachment: ChatAttachment? = null,
     val audioDurationSeconds: Int? = null,
-    // "Request image" sends: the peer's reply image arrives blurred until paid for.
-    val isBlur: Boolean = false,
+    // COLLAGE drafts: reference to the influencer photo collage being shared.
+    // The message never carries image URLs (hard backend requirement).
+    val collageBotId: String? = null,
+    val collageDate: String? = null,
 )

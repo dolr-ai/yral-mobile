@@ -38,4 +38,11 @@ data class ChatMessageDto(
     // field keep deserializing.
     @SerialName("is_blur")
     val isBlur: Boolean? = null,
+    // Collage messages carry only this reference — the image URLs are fetched
+    // at render time from GET /influencers/{bot}/collage so blur state always
+    // reflects the CURRENT subscription, never what it was at send time.
+    @SerialName("collage_bot_id")
+    val collageBotId: String? = null,
+    @SerialName("collage_date")
+    val collageDate: String? = null,
 )

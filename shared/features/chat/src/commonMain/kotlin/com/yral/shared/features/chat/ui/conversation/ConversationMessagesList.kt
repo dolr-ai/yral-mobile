@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -12,14 +13,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import com.yral.shared.features.chat.domain.models.AssistantErrorPresentation
+import com.yral.shared.features.chat.domain.models.ChatMessageType
 import com.yral.shared.features.chat.domain.models.ConversationMessageRole
 import com.yral.shared.features.chat.domain.models.isFromCurrentUser
+import com.yral.shared.features.chat.viewmodel.CollageUiState
 import com.yral.shared.features.chat.viewmodel.ConversationMessageItem
 import com.yral.shared.features.chat.viewmodel.LocalMessageStatus
 
+// The list's feature surface (paging + overlay + streaming locks + assistant
+// errors + blur/unlock + collage) is inherently wide; related inputs are
+// already bundled (CollageListConfig, AssistantErrorPresentation).
+@Suppress("LongParameterList")
 @Composable
 internal fun MessagesList(
     modifier: Modifier,
@@ -33,6 +41,7 @@ internal fun MessagesList(
     streamMarkdownLockedRemoteIds: Map<String, Boolean> = emptyMap(),
     assistantError: AssistantErrorPresentation? = null,
     onAssistantErrorRetry: () -> Unit = {},
+    collageConfig: CollageListConfig = CollageListConfig(),
     onImageClick: (imageUrl: String) -> Unit,
     onUnlockImage: (messageId: String) -> Unit,
     onRetry: (localId: String) -> Unit,
@@ -71,6 +80,7 @@ internal fun MessagesList(
                 streamMarkdownLockedRemoteIds = streamMarkdownLockedRemoteIds,
                 isHumanChat = isHumanChat,
                 currentUserPrincipalId = currentUserPrincipalId,
+                collageConfig = collageConfig,
                 onImageClick = onImageClick,
                 onUnlockImage = onUnlockImage,
                 onRetry = onRetry,
@@ -89,6 +99,7 @@ internal fun MessagesList(
                 streamMarkdownLockedRemoteIds = streamMarkdownLockedRemoteIds,
                 isHumanChat = isHumanChat,
                 currentUserPrincipalId = currentUserPrincipalId,
+                collageConfig = collageConfig,
                 onImageClick = onImageClick,
                 onUnlockImage = onUnlockImage,
                 onRetry = onRetry,
@@ -116,6 +127,7 @@ private fun MessageRow(
     streamMarkdownLockedRemoteIds: Map<String, Boolean>,
     isHumanChat: Boolean,
     currentUserPrincipalId: String?,
+    collageConfig: CollageListConfig,
     onImageClick: (imageUrl: String) -> Unit,
     onUnlockImage: (messageId: String) -> Unit,
     onRetry: (localId: String) -> Unit,
@@ -127,6 +139,20 @@ private fun MessageRow(
         SystemBannerMessage(
             text = item.message.content.orEmpty(),
             modifier = Modifier.fillMaxWidth().padding(vertical = MESSAGE_VERTICAL_PADDING_DP),
+        )
+        return
+    }
+
+    // Collage messages render their own bubble: the (botId, date) reference is
+    // resolved at render time (see CollageBubble). Always left-aligned — the
+    // photos are the influencer's, whatever role the send endpoint stored.
+    val collageInfo = item.collageDisplayInfoOrNull()
+    if (collageInfo != null) {
+        CollageMessageRow(
+            info = collageInfo,
+            config = collageConfig,
+            onImageClick = onImageClick,
+            maxWidth = maxWidth,
         )
         return
     }
@@ -177,6 +203,79 @@ private fun MessageRow(
             onUnlockClick = renderParams.onUnlockClick,
         )
     }
+}
+
+/** Collage inputs bundled so the list/row signatures stay within detekt's parameter budget. */
+internal data class CollageListConfig(
+    val states: Map<String, CollageUiState> = emptyMap(),
+    val influencerDisplayName: String = "",
+    val onLoad: (botId: String, date: String) -> Unit = { _, _ -> },
+    val onSubscribeClick: () -> Unit = {},
+)
+
+@Composable
+private fun CollageMessageRow(
+    info: CollageDisplayInfo,
+    config: CollageListConfig,
+    onImageClick: (imageUrl: String) -> Unit,
+    maxWidth: Dp,
+) {
+    Box(
+        modifier = Modifier.fillMaxWidth().padding(vertical = MESSAGE_VERTICAL_PADDING_DP),
+        contentAlignment = Alignment.TopStart,
+    ) {
+        Box(modifier = Modifier.widthIn(max = maxWidth)) {
+            if (info.isGenerating || info.botId == null || info.date == null) {
+                CollageGeneratingBubble(influencerName = config.influencerDisplayName)
+            } else {
+                CollageBubble(
+                    botId = info.botId,
+                    date = info.date,
+                    // Key format mirrors ConversationViewModel.collageKey.
+                    state = config.states["${info.botId}|${info.date}"],
+                    influencerName = config.influencerDisplayName,
+                    onLoad = { config.onLoad(info.botId, info.date) },
+                    onImageClick = onImageClick,
+                    onSubscribeClick = config.onSubscribeClick,
+                    maxWidth = maxWidth,
+                )
+            }
+        }
+    }
+}
+
+private data class CollageDisplayInfo(
+    val isGenerating: Boolean,
+    val botId: String?,
+    val date: String?,
+)
+
+/**
+ * Non-null for COLLAGE messages that should render the collage bubble.
+ * A remote collage message missing its reference fields falls back to the
+ * regular text bubble (its content is the "Requested an image" fallback).
+ */
+private fun ConversationMessageItem.collageDisplayInfoOrNull(): CollageDisplayInfo? {
+    val info =
+        when (this) {
+            is ConversationMessageItem.Remote ->
+                message
+                    .takeIf { it.messageType == ChatMessageType.COLLAGE }
+                    ?.let { CollageDisplayInfo(isGenerating = false, botId = it.collageBotId, date = it.collageDate) }
+
+            is ConversationMessageItem.Local ->
+                message
+                    .takeIf { it.messageType == ChatMessageType.COLLAGE }
+                    ?.let {
+                        CollageDisplayInfo(
+                            isGenerating = it.isPlaceholder,
+                            botId = it.collageBotId,
+                            date = it.collageDate,
+                        )
+                    }
+        } ?: return null
+    val missingReference = !info.isGenerating && (info.botId == null || info.date == null)
+    return if (missingReference) null else info
 }
 
 private data class MessageRenderParams(

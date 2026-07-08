@@ -1,19 +1,20 @@
 package com.yral.shared.features.chat.domain
 
 import com.yral.shared.features.chat.domain.models.ChatMessage
+import com.yral.shared.features.chat.domain.models.Collage
 import com.yral.shared.features.chat.domain.models.Conversation
 import com.yral.shared.features.chat.domain.models.ConversationMessagesPageResult
 import com.yral.shared.features.chat.domain.models.ConversationsPageResult
 import com.yral.shared.features.chat.domain.models.DeleteConversationResult
+import com.yral.shared.features.chat.domain.models.DiscoverySearchResult
 import com.yral.shared.features.chat.domain.models.HumanCreatorTakeoverStatus
+import com.yral.shared.features.chat.domain.models.InboxSearchResult
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
-import com.yral.shared.features.chat.domain.models.DiscoverySearchResult
-import com.yral.shared.features.chat.domain.models.InboxSearchResult
-import com.yral.shared.features.chat.domain.models.SystemPromptPreview
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.domain.models.SendMessageResult
 import com.yral.shared.features.chat.domain.models.StreamEvent
+import com.yral.shared.features.chat.domain.models.SystemPromptPreview
 import kotlinx.coroutines.flow.Flow
 
 @Suppress("TooManyFunctions")
@@ -31,6 +32,26 @@ interface ChatRepository {
     ): InfluencersPageResult
 
     suspend fun getInfluencer(id: String): Influencer
+
+    /**
+     * Requests today's photo collage for [influencerId], consuming the
+     * user's daily quota. Returns the payload directly; the caller sends
+     * only the (botId, date) reference into the conversation.
+     */
+    suspend fun requestInfluencerImages(
+        influencerId: String,
+        isSubscribed: Boolean,
+    ): Collage
+
+    /**
+     * Render-time read of today's collage; [isSubscribed] decides whether
+     * the returned URLs are clear or pre-blurred. Throws with 404 while
+     * today's collage hasn't been generated yet.
+     */
+    suspend fun getInfluencerCollage(
+        influencerId: String,
+        isSubscribed: Boolean,
+    ): Collage
 
     /**
      * Discovery search — fuzzy match across name/category/archetype/

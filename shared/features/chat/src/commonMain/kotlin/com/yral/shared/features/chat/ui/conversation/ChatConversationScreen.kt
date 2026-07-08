@@ -70,7 +70,6 @@ import yral_mobile.shared.features.chat.generated.resources.Res
 import yral_mobile.shared.features.chat.generated.resources.access_activated_overlay_message
 import yral_mobile.shared.features.chat.generated.resources.ai_influencer_read_only_chat
 import yral_mobile.shared.features.chat.generated.resources.chat_background_inverted
-import yral_mobile.shared.features.chat.generated.resources.request_image_message
 import yral_mobile.shared.features.chat.generated.resources.subscription_card_overlay_message
 import yral_mobile.shared.features.chat.generated.resources.switch_profile
 import yral_mobile.shared.features.chat.generated.resources.switch_profile_failed
@@ -304,6 +303,13 @@ fun ChatConversationScreen(
     val hasChatAccess by derivedStateOf {
         proDetails.isProPurchased || viewState.isInfluencerSubscriptionPurchasedAndVerified
     }
+    val collageStates by viewModel.collageStates.collectAsStateWithLifecycle()
+    val requestImageCooldown by viewModel.requestImageCooldownSeconds.collectAsStateWithLifecycle()
+    // Collage bubbles fetch with the CURRENT subscription state; pushing the
+    // composed gate (Pro OR per-influencer access) into the VM makes every
+    // collage refetch on a flip — historical blurred bubbles turn clear the
+    // moment a purchase verifies, and vice versa on lapse.
+    LaunchedEffect(hasChatAccess) { viewModel.setHasChatAccess(hasChatAccess) }
     val atSubscriptionThreshold by derivedStateOf {
         totalMessageCount >= viewState.subscriptionMandatoryThreshold
     }
@@ -394,7 +400,6 @@ fun ChatConversationScreen(
     val aiInfluencerReadOnlyMessage = stringResource(Res.string.ai_influencer_read_only_chat)
     val switchProfileButtonText = stringResource(Res.string.switch_profile)
     val switchProfileFailedMessage = stringResource(Res.string.switch_profile_failed)
-    val requestImageMessage = stringResource(Res.string.request_image_message)
     val bottomAreaState by derivedStateOf {
         resolveConversationBottomAreaState(
             isBotAccount = viewState.isBotAccount,
@@ -404,10 +409,11 @@ fun ChatConversationScreen(
         )
     }
 
-    fun sendMessageIfAllowed(
-        draft: SendMessageDraft,
-        onBeforeSend: () -> Unit = {},
-    ) {
+    // Shared send gates (bot account, login prompt, subscription card,
+    // purchase unavailable). Runs [onAllowed] only when nothing blocks —
+    // used by both draft sends and the quota-consuming collage request,
+    // so the gates always fire BEFORE any server side effect.
+    fun runIfSendAllowed(onAllowed: () -> Unit) {
         val blocked =
             when {
                 viewState.isBotAccount -> {
@@ -415,15 +421,11 @@ fun ChatConversationScreen(
                 }
 
                 shouldPromptForLogin -> {
-                    // Capture the intended send so successful login auto-resumes
-                    // it (chip-tap or typed draft both flow through this gate).
-                    // On cancel the callback never fires and the input stays as
-                    // typed because onBeforeSend (which clears the field) is
-                    // deferred until after the resumed send.
-                    promptLogin {
-                        onBeforeSend()
-                        viewModel.sendMessage(draft)
-                    }
+                    // Capture the intended action so successful login
+                    // auto-resumes it (chip-tap, typed draft, or collage
+                    // request all flow through this gate). On cancel the
+                    // callback never fires, so e.g. the typed input stays.
+                    promptLogin { onAllowed() }
                     true
                 }
 
@@ -442,6 +444,15 @@ fun ChatConversationScreen(
                 }
             }
         if (!blocked) {
+            onAllowed()
+        }
+    }
+
+    fun sendMessageIfAllowed(
+        draft: SendMessageDraft,
+        onBeforeSend: () -> Unit = {},
+    ) {
+        runIfSendAllowed {
             onBeforeSend()
             viewModel.sendMessage(draft)
         }
@@ -549,6 +560,21 @@ fun ChatConversationScreen(
                             streamMarkdownLockedRemoteIds = streamMarkdownLockedRemoteIds,
                             assistantError = assistantError,
                             onAssistantErrorRetry = { viewModel.retryFailedAssistantReply() },
+                            collageConfig =
+                                CollageListConfig(
+                                    states = collageStates,
+                                    influencerDisplayName =
+                                        viewState.influencer
+                                            ?.displayName
+                                            ?.ifBlank { viewState.influencer?.name }
+                                            .orEmpty(),
+                                    onLoad = viewModel::loadCollage,
+                                    onSubscribeClick = {
+                                        purchaseContext?.let {
+                                            viewModel.launchInfluencerSubscriptionPurchase(it)
+                                        }
+                                    },
+                                ),
                             onImageClick = { imageUrl ->
                                 activeImagePreview = ChatImagePreviewSource.Message(imageUrl)
                             },
@@ -751,25 +777,15 @@ fun ChatConversationScreen(
                                             },
                                             onCameraClick = imageCaptureLauncher,
                                             onGalleryClick = imagePickerLauncher,
-                                            // Paid image requests are an AI-influencer feature;
+                                            // Photo collages are an AI-influencer feature;
                                             // H2H peers can't fulfil them, so hide the option there.
                                             onRequestImageClick =
                                                 if (!viewState.isHumanChat) {
-                                                    {
-                                                        sendMessageIfAllowed(
-                                                            SendMessageDraft(
-                                                                messageType = ChatMessageType.TEXT,
-                                                                content = requestImageMessage,
-                                                                isBlur = true,
-                                                            ),
-                                                        )
-                                                    }
+                                                    { runIfSendAllowed { viewModel.requestCollageImages() } }
                                                 } else {
                                                     null
                                                 },
-                                            // Cooldown source lands with the end-to-end
-                                            // integration; option stays enabled until then.
-                                            requestImageRemainingSeconds = null,
+                                            requestImageRemainingSeconds = requestImageCooldown,
                                             // Mic button is gated on AudioRecordingEnabled (kill-switch +
                                             // GA pacing) AND not-an-H2H-chat. Voice messages aren't
                                             // supported on H2H peer chats — the H2H send route doesn't

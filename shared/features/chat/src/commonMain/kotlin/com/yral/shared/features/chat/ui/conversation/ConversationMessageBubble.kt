@@ -267,7 +267,7 @@ private fun markDownColors(textColor: Color): DefaultMarkdownColors =
     }
 
 @Composable
-private fun MessageInBubble(
+internal fun MessageInBubble(
     isUser: Boolean = false,
     isFailed: Boolean = false,
     isOnlyMedia: Boolean = false,

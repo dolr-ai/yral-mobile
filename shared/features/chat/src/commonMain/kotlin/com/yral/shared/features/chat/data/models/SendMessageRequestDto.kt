@@ -15,8 +15,11 @@ data class SendMessageRequestDto(
     val audioUrl: String? = null,
     @SerialName("audio_duration_seconds")
     val audioDurationSeconds: Int? = null,
-    // When true, asks the peer for a paid image that arrives blurred until
-    // unlocked. Nullable so it's omitted from the JSON for ordinary sends.
-    @SerialName("is_blur")
-    val isBlur: Boolean? = null,
+    // Collage sends store only this reference — never image URLs — so the
+    // bubble can refetch with the current subscription state forever after.
+    // Nullable so both are omitted from the JSON for ordinary sends.
+    @SerialName("collage_bot_id")
+    val collageBotId: String? = null,
+    @SerialName("collage_date")
+    val collageDate: String? = null,
 )
