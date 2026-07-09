@@ -26,6 +26,7 @@ internal class FirstFrameStartupWatchdog(
     private var lastActionMs: Long = 0
     private var resumeRequested = false
     private var rebuildAttempts = 0
+    private var bufferDeferralUsed = false
     private var gaveUp = false
 
     fun start(
@@ -37,6 +38,7 @@ internal class FirstFrameStartupWatchdog(
         lastActionMs = 0
         resumeRequested = false
         rebuildAttempts = 0
+        bufferDeferralUsed = false
         gaveUp = false
     }
 
@@ -47,6 +49,7 @@ internal class FirstFrameStartupWatchdog(
         lastActionMs = 0
         resumeRequested = false
         rebuildAttempts = 0
+        bufferDeferralUsed = false
         gaveUp = false
     }
 
@@ -55,6 +58,7 @@ internal class FirstFrameStartupWatchdog(
         index: Int,
         nowMs: Long,
         firstFramePending: Boolean,
+        hasBufferedMedia: Boolean = false,
     ): FirstFrameStartupAction {
         if (!firstFramePending || pendingIndex != index || gaveUp) return FirstFrameStartupAction.None
 
@@ -69,6 +73,14 @@ internal class FirstFrameStartupWatchdog(
         if (nowMs - lastActionMs < config.rebuildTimeoutMs) return FirstFrameStartupAction.None
 
         if (rebuildAttempts < config.maxRebuildAttempts) {
+            // Media is arriving — a destructive rebuild would restart the stream from zero
+            // and make a slow-but-progressing load strictly slower. Give it one extra
+            // rebuild window before tearing it down.
+            if (hasBufferedMedia && !bufferDeferralUsed) {
+                bufferDeferralUsed = true
+                lastActionMs = nowMs
+                return FirstFrameStartupAction.None
+            }
             rebuildAttempts++
             lastActionMs = nowMs
             return FirstFrameStartupAction.Rebuild
