@@ -10,6 +10,7 @@ data class SendMessageDraft(
     val audioDurationSeconds: Int? = null,
     // COLLAGE drafts: reference to the influencer photo collage being shared.
     // The message never carries image URLs (hard backend requirement).
+    val collageId: String? = null,
     val collageBotId: String? = null,
     val collageDate: String? = null,
 )

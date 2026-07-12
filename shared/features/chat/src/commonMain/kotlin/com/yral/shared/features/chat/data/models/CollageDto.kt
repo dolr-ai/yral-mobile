@@ -26,6 +26,10 @@ data class CollageResponseDto(
     val theme: String? = null,
     @SerialName("generated_at")
     val generatedAt: String? = null,
+    // Preferred fetch handle for GET /collage; nullable in case a lagging
+    // backend deploy still omits it (falls back to bot_id + date).
+    @SerialName("collage_id")
+    val collageId: String? = null,
     @SerialName("collage_bot_id")
     val collageBotId: String,
     @SerialName("collage_date")

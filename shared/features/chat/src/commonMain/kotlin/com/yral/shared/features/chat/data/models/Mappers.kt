@@ -201,6 +201,7 @@ fun ChatMessageDto.toDomain(conversationIdFallback: String? = null): ChatMessage
         createdAt = createdAt,
         senderId = senderId,
         isBlur = isBlur ?: false,
+        collageId = collageId,
         collageBotId = collageBotId,
         collageDate = collageDate,
     )
@@ -208,6 +209,7 @@ fun ChatMessageDto.toDomain(conversationIdFallback: String? = null): ChatMessage
 
 fun CollageResponseDto.toDomain(): Collage =
     Collage(
+        id = collageId,
         botId = collageBotId,
         date = collageDate,
         images = images,

@@ -21,6 +21,8 @@ data class ChatMessage(
     val isBlur: Boolean = false,
     // COLLAGE messages store only this reference (never URLs); the bubble
     // fetches the image set at render time with the current subscription state.
+    // collageId is the preferred handle; legacy messages only have bot + date.
+    val collageId: String? = null,
     val collageBotId: String? = null,
     val collageDate: String? = null,
 )

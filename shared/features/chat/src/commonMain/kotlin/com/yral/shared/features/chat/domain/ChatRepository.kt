@@ -44,13 +44,17 @@ interface ChatRepository {
     ): Collage
 
     /**
-     * Render-time read of today's collage; [isSubscribed] decides whether
-     * the returned URLs are clear or pre-blurred. Throws with 404 while
-     * today's collage hasn't been generated yet.
+     * Render-time read of a collage; [isSubscribed] decides whether the
+     * returned URLs are clear or pre-blurred. [collageId] is the preferred
+     * handle (any date); [date] is the fallback for legacy references;
+     * with neither the server serves today. Throws with 404 when the
+     * requested collage doesn't exist.
      */
     suspend fun getInfluencerCollage(
         influencerId: String,
         isSubscribed: Boolean,
+        collageId: String?,
+        date: String?,
     ): Collage
 
     /**

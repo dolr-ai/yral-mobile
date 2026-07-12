@@ -1389,6 +1389,7 @@ class ConversationViewModel(
                 status = LocalMessageStatus.SENDING,
                 isPlaceholder = false,
                 draftForRetry = draft,
+                collageId = draft.collageId,
                 collageBotId = draft.collageBotId,
                 collageDate = draft.collageDate,
             )
@@ -1976,10 +1977,11 @@ class ConversationViewModel(
     }
 
     // ── Collage (Request Images) ─────────────────────────────────────────
-    // Chat messages carry only a (botId, date) reference; bubbles resolve it
-    // here at render time so the URLs always match the CURRENT subscription
-    // state (blurred for non-subscribers, clear after purchase — including
-    // for historical messages, which refetch on the flip).
+    // Chat messages carry only a reference (collageId when present, plus
+    // botId + date); bubbles resolve it here at render time so the URLs
+    // always match the CURRENT subscription state (blurred for
+    // non-subscribers, clear after purchase — including for historical
+    // messages, which refetch on the flip).
 
     private val _collageStates = MutableStateFlow<Map<String, CollageUiState>>(emptyMap())
     val collageStates: StateFlow<Map<String, CollageUiState>> = _collageStates.asStateFlow()
@@ -1988,14 +1990,23 @@ class ConversationViewModel(
     val requestImageCooldownSeconds: StateFlow<Int?> = _requestImageCooldownSeconds.asStateFlow()
 
     private val collageFetchJobs = mutableMapOf<String, Job>()
+
+    // Everything needed to (re)fetch a collage reference. collageId is the
+    // preferred server handle; legacy messages predate it and resolve via
+    // (botId, date). Client-side identity stays (botId, date) — one collage
+    // per bot per day — so both message shapes share one key space.
+    private data class CollageRef(
+        val botId: String,
+        val date: String,
+        val collageId: String?,
+    ) {
+        val key: String get() = "$botId|$date"
+    }
+
+    private val collageRefs = mutableMapOf<String, CollageRef>()
     private var collageCooldownJob: Job? = null
     private var collageHasChatAccess = false
     private var isCollageRequestInFlight = false
-
-    private fun collageKey(
-        botId: String,
-        date: String,
-    ) = "$botId|$date"
 
     /**
      * Pushed from the screen — the effective subscription gate (Pro OR
@@ -2006,17 +2017,11 @@ class ConversationViewModel(
     fun setHasChatAccess(hasAccess: Boolean) {
         if (collageHasChatAccess == hasAccess) return
         collageHasChatAccess = hasAccess
-        if (_collageStates.value.isEmpty()) return
+        if (collageRefs.isEmpty()) return
         collageFetchJobs.values.forEach { it.cancel() }
         collageFetchJobs.clear()
-        val keys = _collageStates.value.keys.toList()
         _collageStates.update { state -> state.mapValues { CollageUiState.Loading } }
-        keys.forEach { key ->
-            launchCollageFetch(
-                botId = key.substringBeforeLast('|'),
-                date = key.substringAfterLast('|'),
-            )
-        }
+        collageRefs.values.toList().forEach { launchCollageFetch(it) }
     }
 
     /** Render-time resolve of a collage reference; called from the bubble's LaunchedEffect. */
@@ -2025,6 +2030,7 @@ class ConversationViewModel(
     fun loadCollage(
         botId: String,
         date: String,
+        collageId: String?,
     ) {
         if (botId.isBlank() || date.isBlank()) return
         // Cooldown sighting: a collage dated today in this conversation means
@@ -2033,24 +2039,28 @@ class ConversationViewModel(
         if (date == currentCollageDateString()) {
             startCollageCooldown()
         }
-        val key = collageKey(botId, date)
-        if (_collageStates.value[key] is CollageUiState.Ready) return
-        if (collageFetchJobs[key]?.isActive == true) return
+        val ref = CollageRef(botId = botId, date = date, collageId = collageId)
+        // Keep the richest ref seen for this key: an id-less sighting (e.g.
+        // the optimistic Local echo racing the Remote row) must not erase a
+        // collageId already recorded for it.
+        val tracked = collageRefs[ref.key]
+        if (tracked == null || (tracked.collageId == null && collageId != null)) {
+            collageRefs[ref.key] = ref
+        }
+        if (_collageStates.value[ref.key] is CollageUiState.Ready) return
+        if (collageFetchJobs[ref.key]?.isActive == true) return
         val cached = collageCache.read(botId = botId, date = date, isSubscribed = collageHasChatAccess)
         if (cached != null) {
-            _collageStates.update { it + (key to CollageUiState.Ready(cached)) }
+            _collageStates.update { it + (ref.key to CollageUiState.Ready(cached)) }
             return
         }
-        _collageStates.update { it + (key to CollageUiState.Loading) }
-        launchCollageFetch(botId = botId, date = date)
+        _collageStates.update { it + (ref.key to CollageUiState.Loading) }
+        launchCollageFetch(collageRefs.getValue(ref.key))
     }
 
     @OptIn(ExperimentalTime::class)
-    private fun launchCollageFetch(
-        botId: String,
-        date: String,
-    ) {
-        val key = collageKey(botId, date)
+    private fun launchCollageFetch(ref: CollageRef) {
+        val key = ref.key
         collageFetchJobs[key] =
             viewModelScope.launch {
                 val isSubscribed = collageHasChatAccess
@@ -2059,18 +2069,27 @@ class ConversationViewModel(
                 while (!terminal) {
                     var retryAfterMs: Long? = null
                     getInfluencerCollageUseCase(
-                        GetInfluencerCollageUseCase.Params(influencerId = botId, isSubscribed = isSubscribed),
+                        GetInfluencerCollageUseCase.Params(
+                            influencerId = ref.botId,
+                            isSubscribed = isSubscribed,
+                            collageId = ref.collageId,
+                            date = ref.date,
+                        ),
                     ).onSuccess { collage ->
                         terminal = true
-                        applyFetchedCollage(key, date, isSubscribed, collage)
+                        collageCache.write(collage = collage, isSubscribed = isSubscribed)
+                        _collageStates.update { it + (key to CollageUiState.Ready(collage)) }
                     }.onFailure { error ->
-                        // 404 on today's reference = collage still generating
-                        // (cold-path race, e.g. another device just POSTed) —
-                        // retry briefly. Anything else degrades to Unavailable;
-                        // a scroll-back re-entry retriggers loadCollage.
+                        // 404 on an id-less reference dated today = collage
+                        // still generating (cold-path race, e.g. another device
+                        // just POSTed) — retry briefly. A reference WITH an id
+                        // means the collage already exists, so its 404 (like
+                        // any other error) degrades to Unavailable; a
+                        // scroll-back re-entry retriggers loadCollage.
                         val stillGenerating =
                             error.httpStatusOrNull() == HttpStatusCode.NotFound &&
-                                date == currentCollageDateString()
+                                ref.collageId == null &&
+                                ref.date == currentCollageDateString()
                         if (stillGenerating && attempt < COLLAGE_NOT_READY_RETRY_DELAYS_MS.size) {
                             retryAfterMs = COLLAGE_NOT_READY_RETRY_DELAYS_MS[attempt]
                         } else {
@@ -2084,22 +2103,6 @@ class ConversationViewModel(
                     }
                 }
             }
-    }
-
-    private fun applyFetchedCollage(
-        key: String,
-        expectedDate: String,
-        isSubscribed: Boolean,
-        collage: Collage,
-    ) {
-        // GET /collage serves only today's row; a date mismatch means this
-        // reference points at an older collage that can no longer be fetched.
-        if (collage.date != expectedDate) {
-            _collageStates.update { it + (key to CollageUiState.Unavailable) }
-            return
-        }
-        collageCache.write(collage = collage, isSubscribed = isSubscribed)
-        _collageStates.update { it + (key to CollageUiState.Ready(collage)) }
     }
 
     /**
@@ -2155,9 +2158,9 @@ class ConversationViewModel(
     ) {
         collageCache.write(collage = collage, isSubscribed = collageHasChatAccess)
         // Pre-warm so the bubble renders instantly once the message lands.
-        _collageStates.update {
-            it + (collageKey(collage.botId, collage.date) to CollageUiState.Ready(collage))
-        }
+        val ref = CollageRef(botId = collage.botId, date = collage.date, collageId = collage.id)
+        collageRefs[ref.key] = ref
+        _collageStates.update { it + (ref.key to CollageUiState.Ready(collage)) }
         startCollageCooldown()
         val draft =
             SendMessageDraft(
@@ -2165,6 +2168,7 @@ class ConversationViewModel(
                 // Fallback body: old clients degrade unknown types to TEXT
                 // and render this string instead of the grid.
                 content = getString(Res.string.request_image_message),
+                collageId = collage.id,
                 collageBotId = collage.botId,
                 collageDate = collage.date,
             )
@@ -2179,6 +2183,7 @@ class ConversationViewModel(
                 status = LocalMessageStatus.SENDING,
                 isPlaceholder = false,
                 draftForRetry = draft,
+                collageId = collage.id,
                 collageBotId = collage.botId,
                 collageDate = collage.date,
             )
@@ -2259,6 +2264,7 @@ class ConversationViewModel(
     private fun resetCollageState() {
         collageFetchJobs.values.forEach { it.cancel() }
         collageFetchJobs.clear()
+        collageRefs.clear()
         _collageStates.value = emptyMap()
         collageCooldownJob?.cancel()
         collageCooldownJob = null
@@ -2725,6 +2731,7 @@ data class LocalMessage(
     val useMarkdownLocked: Boolean? = null,
     // COLLAGE reference — the optimistic echo renders through the same
     // reference→GET path as Remote collage messages; URLs never live here.
+    val collageId: String? = null,
     val collageBotId: String? = null,
     val collageDate: String? = null,
 )

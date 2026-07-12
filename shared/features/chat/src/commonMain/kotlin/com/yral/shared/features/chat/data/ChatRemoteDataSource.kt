@@ -245,6 +245,8 @@ class ChatRemoteDataSource(
     override suspend fun getInfluencerCollage(
         influencerId: String,
         isSubscribed: Boolean,
+        collageId: String?,
+        date: String?,
     ): CollageResponseDto {
         val idToken = getIdToken()
         return httpGet(
@@ -255,6 +257,10 @@ class ChatRemoteDataSource(
                 host = chatBaseUrl
                 path(INFLUENCERS_PATH, influencerId, COLLAGE_SUBPATH)
                 parameters.append("is_subscribed", isSubscribed.toString())
+                // Server precedence: collage_id > date > today. Both are sent
+                // when known so legacy (id-less) references keep resolving.
+                collageId?.let { parameters.append("collage_id", it) }
+                date?.let { parameters.append("date", it) }
             }
             headers { append(HttpHeaders.Authorization, "Bearer $idToken") }
         }

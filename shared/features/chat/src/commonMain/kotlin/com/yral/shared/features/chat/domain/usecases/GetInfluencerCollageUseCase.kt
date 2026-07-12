@@ -18,10 +18,14 @@ class GetInfluencerCollageUseCase(
         chatRepository.getInfluencerCollage(
             influencerId = parameter.influencerId,
             isSubscribed = parameter.isSubscribed,
+            collageId = parameter.collageId,
+            date = parameter.date,
         )
 
     data class Params(
         val influencerId: String,
         val isSubscribed: Boolean,
+        val collageId: String?,
+        val date: String?,
     )
 }

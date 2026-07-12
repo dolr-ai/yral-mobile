@@ -209,7 +209,7 @@ private fun MessageRow(
 internal data class CollageListConfig(
     val states: Map<String, CollageUiState> = emptyMap(),
     val influencerDisplayName: String = "",
-    val onLoad: (botId: String, date: String) -> Unit = { _, _ -> },
+    val onLoad: (botId: String, date: String, collageId: String?) -> Unit = { _, _, _ -> },
     val onSubscribeClick: () -> Unit = {},
 )
 
@@ -234,7 +234,7 @@ private fun CollageMessageRow(
                     // Key format mirrors ConversationViewModel.collageKey.
                     state = config.states["${info.botId}|${info.date}"],
                     influencerName = config.influencerDisplayName,
-                    onLoad = { config.onLoad(info.botId, info.date) },
+                    onLoad = { config.onLoad(info.botId, info.date, info.collageId) },
                     onImageClick = onImageClick,
                     onSubscribeClick = config.onSubscribeClick,
                     maxWidth = maxWidth,
@@ -248,6 +248,8 @@ private data class CollageDisplayInfo(
     val isGenerating: Boolean,
     val botId: String?,
     val date: String?,
+    // Preferred fetch handle; null on legacy messages, which resolve by date.
+    val collageId: String?,
 )
 
 /**
@@ -261,7 +263,14 @@ private fun ConversationMessageItem.collageDisplayInfoOrNull(): CollageDisplayIn
             is ConversationMessageItem.Remote ->
                 message
                     .takeIf { it.messageType == ChatMessageType.COLLAGE }
-                    ?.let { CollageDisplayInfo(isGenerating = false, botId = it.collageBotId, date = it.collageDate) }
+                    ?.let {
+                        CollageDisplayInfo(
+                            isGenerating = false,
+                            botId = it.collageBotId,
+                            date = it.collageDate,
+                            collageId = it.collageId,
+                        )
+                    }
 
             is ConversationMessageItem.Local ->
                 message
@@ -271,6 +280,7 @@ private fun ConversationMessageItem.collageDisplayInfoOrNull(): CollageDisplayIn
                             isGenerating = it.isPlaceholder,
                             botId = it.collageBotId,
                             date = it.collageDate,
+                            collageId = it.collageId,
                         )
                     }
         } ?: return null

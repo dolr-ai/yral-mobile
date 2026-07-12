@@ -55,12 +55,15 @@ interface ChatDataSource {
     ): CollageResponseDto
 
     /**
-     * GET /api/v1/influencers/{id}/collage?is_subscribed= — idempotent
-     * render-time read; 404 while today's collage isn't generated yet.
+     * GET /api/v1/influencers/{id}/collage — idempotent render-time read.
+     * Lookup precedence server-side: collage_id > date > today. 404 when the
+     * requested collage doesn't exist (e.g. today's not generated yet).
      */
     suspend fun getInfluencerCollage(
         influencerId: String,
         isSubscribed: Boolean,
+        collageId: String?,
+        date: String?,
     ): CollageResponseDto
 
     // ---------- Coach pivot Bucket 2 — View full prompt page ----------

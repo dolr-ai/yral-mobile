@@ -111,10 +111,16 @@ class ChatRepositoryImpl(
     override suspend fun getInfluencerCollage(
         influencerId: String,
         isSubscribed: Boolean,
+        collageId: String?,
+        date: String?,
     ): Collage =
         dataSource
-            .getInfluencerCollage(influencerId = influencerId, isSubscribed = isSubscribed)
-            .toDomain()
+            .getInfluencerCollage(
+                influencerId = influencerId,
+                isSubscribed = isSubscribed,
+                collageId = collageId,
+                date = date,
+            ).toDomain()
 
     override suspend fun createConversation(influencerId: String): Conversation =
         dataSource
@@ -239,6 +245,7 @@ class ChatRepositoryImpl(
                         mediaUrls = mediaUrls,
                         audioUrl = audioUrl,
                         audioDurationSeconds = draft.audioDurationSeconds,
+                        collageId = draft.collageId,
                         collageBotId = draft.collageBotId,
                         collageDate = draft.collageDate,
                     ),

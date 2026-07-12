@@ -59,7 +59,8 @@ internal fun CollageGeneratingBubble(influencerName: String) {
 }
 
 /**
- * A collage message. The message itself carries only (botId, date) — this
+ * A collage message. The message itself carries only a reference (collageId
+ * when present, plus botId + date — never image URLs) — this
  * bubble asks the ViewModel to resolve fresh image URLs at render time
  * ([onLoad]), so what's shown always matches the CURRENT subscription state:
  * pre-blurred URLs + subscribe CTA for non-subscribers, clear otherwise.

@@ -41,6 +41,10 @@ data class ChatMessageDto(
     // Collage messages carry only this reference — the image URLs are fetched
     // at render time from GET /influencers/{bot}/collage so blur state always
     // reflects the CURRENT subscription, never what it was at send time.
+    // collage_id is the preferred fetch handle; legacy messages predate it
+    // and resolve via (bot_id, date) instead.
+    @SerialName("collage_id")
+    val collageId: String? = null,
     @SerialName("collage_bot_id")
     val collageBotId: String? = null,
     @SerialName("collage_date")
