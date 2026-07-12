@@ -20,13 +20,25 @@
     <string name="message_placeholder">Message...</string>
     <string name="camera">Camera</string>
     <string name="photo_library">Photo Library</string>
+    <string name="voice_message">Voice message</string>
+    <string name="voice_message_permission_denied">Microphone access needed to record voice messages. Enable it in app settings.</string>
     <string name="send">Send</string>
     <string name="switch_to_human_profile_to_chat">Switch to your human profile to chat with this influencer.</string>
+    <string name="ai_influencer_read_only_chat">Chats are read-only in AI influencer view mode</string>
     <string name="switch_profile">Switch Profile</string>
     <string name="switch_profile_failed">Unable to switch profile. Please try again.</string>
 
+    <!-- Chat as Human (creator takeover) -->
+    <string name="takeover_toggle_inactive">Take over as %1$s</string>
+    <string name="takeover_toggle_active">Release control</string>
+    <string name="takeover_timer_label">%1$s</string>
+    <string name="takeover_input_placeholder">Reply as %1$s…</string>
+
     <!-- Message Bubble -->
     <string name="message_failed_tap_to_resend">Message Failed. Tap to resend</string>
+    <string name="assistant_error_rephrase_hint">Try rephrasing your message</string>
+    <string name="assistant_error_retry">Try again</string>
+    <string name="assistant_error_connection_timed_out">Connection timed out. Try again.</string>
 
     <!-- Image Preview Overlay -->
     <string name="message_optional">Message (optional)</string>
@@ -67,4 +79,15 @@
     <string name="error_dismiss_action">Dismiss</string>
 
     <string name="no_conversations_yet">No conversations yet</string>
+
+    <string name="discovery_search_placeholder">Search AI Influencers</string>
+    <string name="inbox_search_placeholder">Search your inbox</string>
+    <string name="discovery_search_create_action">Create AI Influencer</string>
+    <string name="discovery_search_clear_action">Clear search</string>
+    <string name="discovery_search_empty_title">No influencers found for "%1$s"</string>
+    <string name="discovery_search_empty_subtitle">Try a different keyword or category.</string>
+    <string name="discovery_search_failed">Search failed. Try again.</string>
+    <string name="inbox_search_empty_title">No conversations match "%1$s"</string>
+    <string name="inbox_search_empty_subtitle">Try a different bot name or category.</string>
+    <string name="inbox_search_failed">Inbox search failed. Try again.</string>
 </resources>

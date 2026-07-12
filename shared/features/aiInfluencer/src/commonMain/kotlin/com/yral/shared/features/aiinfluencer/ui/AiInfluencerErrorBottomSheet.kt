@@ -39,7 +39,6 @@ fun AiInfluencerErrorBottomSheet(
         onDismissRequest = onDismiss,
         bottomSheetState = sheetState,
         containerColor = YralColors.Neutral900,
-        dragHandle = null,
     ) {
         Column(
             modifier =

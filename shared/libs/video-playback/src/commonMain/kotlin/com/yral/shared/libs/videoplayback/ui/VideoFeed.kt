@@ -71,9 +71,6 @@ fun VideoFeedSync(
 ) {
     var previousItems by remember { mutableStateOf<List<MediaDescriptor>>(emptyList()) }
     LaunchedEffect(items, coordinator) {
-        if (previousItems.isNotEmpty()) {
-            previousItems = emptyList()
-        }
         val previous = previousItems
         if (previous.isEmpty()) {
             coordinator.setFeed(items)
@@ -134,6 +131,14 @@ fun VideoPagerEffects(
                 if (predicted != null && predicted in 0 until itemsCount) {
                     coordinator.setScrollHint(predictedIndex = predicted, velocity = null)
                 }
+            }
+    }
+
+    LaunchedEffect(pagerState, coordinator) {
+        snapshotFlow { pagerState.isScrollInProgress }
+            .distinctUntilChanged()
+            .collectLatest { isInteracting ->
+                coordinator.setUserInteracting(isInteracting)
             }
     }
 }

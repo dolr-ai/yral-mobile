@@ -2,8 +2,6 @@ package com.yral.shared.features.aiinfluencer.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,15 +16,13 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -62,10 +58,12 @@ import com.yral.shared.libs.designsystem.component.YralGifImage
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralLoader
 import com.yral.shared.libs.designsystem.component.clearGifResources
+import com.yral.shared.libs.designsystem.component.limitTextLength
 import com.yral.shared.libs.designsystem.component.preloadGifResources
+import com.yral.shared.libs.designsystem.component.rememberTextFieldValueState
+import com.yral.shared.libs.designsystem.component.withNativeTextInput
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
-import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -88,13 +86,8 @@ import yral_mobile.shared.features.aiinfluencer.generated.resources.ai_influence
 import yral_mobile.shared.features.aiinfluencer.generated.resources.ai_influencer_prompt_title
 import yral_mobile.shared.features.aiinfluencer.generated.resources.ai_influencer_review_subtitle
 import yral_mobile.shared.features.aiinfluencer.generated.resources.ai_influencer_review_title
-import yral_mobile.shared.features.aiinfluencer.generated.resources.ai_influencer_take_photo
 import yral_mobile.shared.features.aiinfluencer.generated.resources.ai_influencer_title
-import yral_mobile.shared.features.aiinfluencer.generated.resources.ai_influencer_upload_photo
-import yral_mobile.shared.features.aiinfluencer.generated.resources.create_influencer_take_photo
-import yral_mobile.shared.features.aiinfluencer.generated.resources.create_influencer_upload_photo
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
-import yral_mobile.shared.libs.designsystem.generated.resources.edit_profile_icon
 import yral_mobile.shared.libs.designsystem.generated.resources.profile_placeholder
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
@@ -130,8 +123,6 @@ internal fun CreateAIInfluencerScreen(
     onCreateProfile: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val galleryPicker = rememberAiInfluencerImagePicker(viewModel::onAvatarSelected)
-    val photoCapture = rememberAiInfluencerPhotoCapture(viewModel::onAvatarSelected)
     val isSocialSignedIn by
         sessionManager
             .observeSessionPropertyWithDefault(
@@ -243,24 +234,9 @@ internal fun CreateAIInfluencerScreen(
                     onBack = handleBack,
                     onNameChange = viewModel::onProfileNameChanged,
                     onDescriptionChange = viewModel::onProfileDescriptionChanged,
-                    onEditImage = viewModel::openImagePicker,
                     onCreateProfile = onCreateProfile,
                 )
             }
-        }
-
-        if (state.isImagePickerVisible) {
-            ImagePickerSheet(
-                onDismiss = viewModel::dismissImagePicker,
-                onUploadPhoto = {
-                    galleryPicker()
-                    viewModel.dismissImagePicker()
-                },
-                onTakePhoto = {
-                    photoCapture()
-                    viewModel.dismissImagePicker()
-                },
-            )
         }
 
         if (state.isBotCreationLoading) {
@@ -296,6 +272,8 @@ private fun PromptEntryScreen(
         } else {
             YralButtonState.Disabled
         }
+    val descriptionValueState = rememberTextFieldValueState(step.description)
+    val descriptionText = descriptionValueState.value.text
 
     Column(
         modifier =
@@ -330,19 +308,23 @@ private fun PromptEntryScreen(
                     color = YralColors.Neutral200,
                 )
                 Text(
-                    text = "${step.description.length}/$DESCRIPTION_CHAR_LIMIT",
+                    text = "${descriptionText.length}/$PROMPT_CHAR_LIMIT",
                     style = LocalAppTopography.current.baseRegular,
                     color = YralColors.Neutral500,
                 )
             }
             Spacer(modifier = Modifier.height(10.dp))
             TextField(
-                value = step.description,
-                onValueChange = onDescriptionChange,
+                value = descriptionValueState.value,
+                onValueChange = {
+                    val limitedValue = it.limitTextLength(PROMPT_CHAR_LIMIT)
+                    descriptionValueState.value = limitedValue
+                    onDescriptionChange(limitedValue.text)
+                },
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .height(150.dp)
+                        .height(240.dp)
                         .clip(RoundedCornerShape(8.dp)),
                 placeholder = {
                     Text(
@@ -363,19 +345,17 @@ private fun PromptEntryScreen(
                         unfocusedTextColor = YralColors.Grey50,
                     ),
                 textStyle = LocalAppTopography.current.baseRegular,
+                keyboardOptions = KeyboardOptions.Default.withNativeTextInput(),
             )
             ErrorText(state.errorMessage)
+            Spacer(modifier = Modifier.height(16.dp))
+            YralGradientButton(
+                text = stringResource(Res.string.ai_influencer_next),
+                buttonState = buttonState,
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onNext,
+            )
         }
-        Spacer(modifier = Modifier.weight(1f))
-        YralGradientButton(
-            text = stringResource(Res.string.ai_influencer_next),
-            buttonState = buttonState,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, bottom = 28.dp),
-            onClick = onNext,
-        )
     }
 }
 
@@ -394,6 +374,7 @@ private fun PersonaReviewScreen(
         } else {
             YralButtonState.Disabled
         }
+    val editedInstructionsValueState = rememberTextFieldValueState(step.editedInstructions)
 
     Column(
         modifier =
@@ -421,8 +402,12 @@ private fun PersonaReviewScreen(
             )
             Spacer(modifier = Modifier.height(20.dp))
             TextField(
-                value = step.editedInstructions,
-                onValueChange = onTextChange,
+                value = editedInstructionsValueState.value,
+                onValueChange = {
+                    val limitedValue = it.limitTextLength(PROMPT_CHAR_LIMIT)
+                    editedInstructionsValueState.value = limitedValue
+                    onTextChange(limitedValue.text)
+                },
                 modifier =
                     Modifier
                         .fillMaxWidth()
@@ -447,6 +432,7 @@ private fun PersonaReviewScreen(
                         unfocusedTextColor = YralColors.Grey50,
                     ),
                 textStyle = LocalAppTopography.current.baseRegular,
+                keyboardOptions = KeyboardOptions.Default.withNativeTextInput(),
             )
             ErrorText(state.errorMessage)
         }
@@ -470,7 +456,6 @@ private fun ProfileDetailsScreen(
     onBack: () -> Unit,
     onNameChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
-    onEditImage: () -> Unit,
     onCreateProfile: () -> Unit,
 ) {
     val step = state.step as AiInfluencerStep.ProfileDetails
@@ -517,7 +502,7 @@ private fun ProfileDetailsScreen(
             modifier = Modifier.fillMaxWidth(),
             contentAlignment = Alignment.Center,
         ) {
-            AvatarBlock(step = step, onEditImage = onEditImage, size = 150.dp)
+            AvatarBlock(step = step, size = 150.dp)
         }
         Spacer(modifier = Modifier.height(30.dp))
         Text(
@@ -593,7 +578,6 @@ private fun FullScreenLoadingOverlay(text: String) {
 @Suppress("LongMethod")
 private fun AvatarBlock(
     step: AiInfluencerStep.ProfileDetails,
-    onEditImage: () -> Unit,
     size: Dp = 180.dp,
 ) {
     Box(
@@ -634,23 +618,6 @@ private fun AvatarBlock(
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
-            }
-            IconButton(
-                onClick = onEditImage,
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomEnd)
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(Color.White)
-                        .border(width = 2.dp, color = Color.Black, shape = CircleShape),
-            ) {
-                Icon(
-                    painter = painterResource(DesignRes.drawable.edit_profile_icon),
-                    contentDescription = null,
-                    tint = Color.Black,
-                    modifier = Modifier.size(18.dp),
-                )
             }
         }
     }
@@ -776,6 +743,7 @@ private fun ProfileTextField(
     maxLength: Int,
     minLines: Int = 1,
 ) {
+    val textFieldValueState = rememberTextFieldValueState(value)
     Column(
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -786,8 +754,12 @@ private fun ProfileTextField(
             modifier = Modifier.padding(bottom = 8.dp),
         )
         TextField(
-            value = value,
-            onValueChange = { value -> onValueChange(value.take(maxLength)) },
+            value = textFieldValueState.value,
+            onValueChange = { value ->
+                val limitedValue = value.limitTextLength(maxLength)
+                textFieldValueState.value = limitedValue
+                onValueChange(limitedValue.text)
+            },
             modifier =
                 Modifier
                     .fillMaxWidth()
@@ -804,6 +776,7 @@ private fun ProfileTextField(
                     unfocusedTextColor = YralColors.Grey50,
                 ),
             textStyle = LocalAppTopography.current.baseMedium,
+            keyboardOptions = KeyboardOptions.Default.withNativeTextInput(),
             minLines = minLines,
         )
     }
@@ -819,86 +792,3 @@ private fun ErrorText(errorMessage: String?) {
         modifier = Modifier.padding(top = 10.dp),
     )
 }
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ImagePickerSheet(
-    onDismiss: () -> Unit,
-    onUploadPhoto: () -> Unit,
-    onTakePhoto: () -> Unit,
-) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = YralColors.Neutral900,
-        dragHandle = {
-            Box(
-                modifier =
-                    Modifier
-                        .padding(vertical = 12.dp)
-                        .size(width = 54.dp, height = 4.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(YralColors.Neutral700),
-            )
-        },
-    ) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(28.dp),
-        ) {
-            BottomSheetButton(
-                icon = Res.drawable.create_influencer_upload_photo,
-                text = stringResource(Res.string.ai_influencer_upload_photo),
-                onClick = onUploadPhoto,
-            )
-            BottomSheetButton(
-                icon = Res.drawable.create_influencer_take_photo,
-                text = stringResource(Res.string.ai_influencer_take_photo),
-                onClick = onTakePhoto,
-            )
-        }
-    }
-}
-
-@Composable
-private fun BottomSheetButton(
-    icon: DrawableResource,
-    text: String,
-    onClick: () -> Unit,
-    height: Dp = 42.dp,
-) {
-    Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .height(height)
-                .clip(RoundedCornerShape(8.dp))
-                .border(width = 1.dp, color = YralColors.Neutral700, shape = RoundedCornerShape(8.dp))
-                .background(YralColors.Neutral800)
-                .clickable { onClick() }
-                .padding(horizontal = 16.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Image(
-                painter = painterResource(icon),
-                contentDescription = null,
-                modifier = Modifier.size(24.dp),
-            )
-            Text(
-                text = text,
-                style = LocalAppTopography.current.mdSemiBold,
-                color = YralColors.Grey50,
-            )
-        }
-    }
-}
-
-private const val DESCRIPTION_CHAR_LIMIT = 200

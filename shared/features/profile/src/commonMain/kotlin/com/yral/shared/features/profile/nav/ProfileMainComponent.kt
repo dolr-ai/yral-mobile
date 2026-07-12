@@ -5,6 +5,7 @@ import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.auth.ui.RequestLoginFactory
+import com.yral.shared.features.coach.nav.OpenCoachParams
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.coroutines.flow.Flow
@@ -23,6 +24,7 @@ interface ProfileMainComponent {
     fun openProfile(userCanisterData: CanisterData)
     fun openCreateInfluencer()
     fun openConversation(params: OpenConversationParams)
+    fun openCoach(params: OpenCoachParams)
     fun onBackClicked()
     companion object Companion {
         @Suppress("LongParameterList")
@@ -39,6 +41,7 @@ interface ProfileMainComponent {
             openProfile: (CanisterData) -> Unit,
             openCreateInfluencer: (source: BotCreationSource) -> Unit,
             openConversation: (OpenConversationParams) -> Unit,
+            openCoach: (OpenCoachParams) -> Unit,
             onBackClicked: () -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
             showBackButton: Boolean = false,
@@ -56,6 +59,7 @@ interface ProfileMainComponent {
                 openProfile = openProfile,
                 openCreateInfluencer = openCreateInfluencer,
                 openConversation = openConversation,
+                openCoach = openCoach,
                 onBackClicked = onBackClicked,
                 showAlertsOnDialog = showAlertsOnDialog,
                 showBackButton = showBackButton,

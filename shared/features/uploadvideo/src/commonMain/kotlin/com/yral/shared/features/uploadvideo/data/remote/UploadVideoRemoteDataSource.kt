@@ -6,6 +6,8 @@ import com.yral.shared.features.uploadvideo.data.remote.models.FileUploadStatus
 import com.yral.shared.features.uploadvideo.data.remote.models.GenerateVideoRequestDto
 import com.yral.shared.features.uploadvideo.data.remote.models.GetUploadUrlRequestDto
 import com.yral.shared.features.uploadvideo.data.remote.models.GetUploadUrlResponseDTO
+import com.yral.shared.features.uploadvideo.data.remote.models.InProgressDraftsRequestDto
+import com.yral.shared.features.uploadvideo.data.remote.models.InProgressDraftsResponseDto
 import com.yral.shared.features.uploadvideo.data.remote.models.MarkPostAsPublishedRequestDto
 import com.yral.shared.features.uploadvideo.data.remote.models.ProvidersResponseDto
 import com.yral.shared.features.uploadvideo.data.remote.models.UpdateMetaDataRequestDto
@@ -129,11 +131,15 @@ internal class UploadVideoRemoteDataSource(
             val response: HttpResponse =
                 client.post {
                     url {
-                        host = AppConfigurations.OFF_CHAIN_BASE_URL
+                        host = AppConfigurations.VIDEOGEN_BASE_URL
                         path(GENERATE_WITH_IDENTITY_V2_PATH)
                     }
                     contentType(ContentType.Application.Json)
                     setBody(dto)
+                    timeout {
+                        requestTimeoutMillis = UPLOAD_FILE_TIME_OUT
+                        socketTimeoutMillis = UPLOAD_FILE_TIME_OUT
+                    }
                 }
             response.parseGenerateVideoResponse(json)
         } catch (e: ClientRequestException) {
@@ -147,7 +153,7 @@ internal class UploadVideoRemoteDataSource(
     suspend fun fetchProviders(): ProvidersResponseDto =
         httpGet(client, json) {
             url {
-                host = AppConfigurations.OFF_CHAIN_BASE_URL
+                host = AppConfigurations.VIDEOGEN_BASE_URL
                 path(GET_PROVIDERS_PATH)
             }
         }
@@ -157,6 +163,16 @@ internal class UploadVideoRemoteDataSource(
             url {
                 host = AppConfigurations.ANONYMOUS_IDENTITY_BASE_URL
                 path(UPLOAD_AI_VIDEO_FROM_URL_PATH)
+            }
+            contentType(ContentType.Application.Json)
+            setBody(dto)
+        }
+
+    suspend fun getInProgressDrafts(dto: InProgressDraftsRequestDto): InProgressDraftsResponseDto =
+        httpPost(client, json) {
+            url {
+                host = AppConfigurations.STORAGE_INTERFACE_BASE_URL
+                path(GET_IN_PROGRESS_DRAFTS_PATH)
             }
             contentType(ContentType.Application.Json)
             setBody(dto)
@@ -182,5 +198,6 @@ internal class UploadVideoRemoteDataSource(
         private const val GET_PROVIDERS_PATH = "/api/v2/videogen/providers"
         private const val GET_ALL_PROVIDERS_PATH = "/api/v2/videogen/providers-all" // Use for internal builds
         private const val GENERATE_WITH_IDENTITY_V2_PATH = "/api/v2/videogen/generate"
+        private const val GET_IN_PROGRESS_DRAFTS_PATH = "/api/v2/videogen/drafts/in-progress"
     }
 }

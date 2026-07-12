@@ -33,6 +33,7 @@ import com.yral.shared.libs.videoplayback.PreparedSlotScheduler
 import com.yral.shared.libs.videoplayback.VideoSurfaceHandle
 import com.yral.shared.libs.videoplayback.cacheKey
 import com.yral.shared.libs.videoplayback.planFeedAlignment
+import com.yral.shared.libs.videoplayback.shouldReportPlaybackErrorAfterRelease
 import com.yral.shared.libs.videoplayback.ui.AndroidVideoSurfaceHandle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -50,6 +51,7 @@ fun createAndroidPlaybackCoordinator(
 ): PlaybackCoordinator = AndroidPlaybackCoordinator(context, deps)
 
 @OptIn(UnstableApi::class)
+@Suppress("TooManyFunctions")
 private class AndroidPlaybackCoordinator(
     context: Context,
     private val deps: CoordinatorDeps,
@@ -180,7 +182,12 @@ private class AndroidPlaybackCoordinator(
                             )
                         }
 
-                        error.isTimeout() && isFirstFramePending -> {
+                        error.isTimeout() &&
+                            shouldReportPlaybackErrorAfterRelease(
+                                playStartMs = playStartMsById[item.id],
+                                nowMs = nowMs(),
+                                firstFramePending = isFirstFramePending,
+                            ) -> {
                             reporter.playbackErrorAfterRelease(
                                 id = item.id,
                                 index = index,
@@ -414,6 +421,8 @@ private class AndroidPlaybackCoordinator(
         preloadManager.invalidate()
         preloadScheduler.update(predictedIndex, feed.size) { feed.getOrNull(it)?.id }
     }
+
+    override fun setUserInteracting(isInteracting: Boolean) = Unit
 
     override fun bindSurface(
         index: Int,

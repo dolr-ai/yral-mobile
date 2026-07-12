@@ -22,6 +22,7 @@ import com.yral.shared.features.uploadvideo.presentation.BotVideoGenManager
 import com.yral.shared.features.uploadvideo.presentation.FlowSelectionViewModel
 import com.yral.shared.features.uploadvideo.presentation.UploadVideoViewModel
 import com.yral.shared.features.uploadvideo.presentation.UploadVideoViewModel.RequiredUseCases
+import com.yral.shared.features.uploadvideo.presentation.VideoDraftPollingManager
 import com.yral.shared.features.uploadvideo.utils.VideoValidator
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
@@ -55,6 +56,7 @@ val uploadVideoModule =
         factoryOf(::AiRequiredUseCases)
         viewModelOf(::AiVideoGenViewModel)
         singleOf(::BotVideoGenCoordinator) bind BotVideoGenManager::class
+        singleOf(::VideoDraftPollingManager)
 
         // Flow selection
         viewModelOf(::FlowSelectionViewModel)

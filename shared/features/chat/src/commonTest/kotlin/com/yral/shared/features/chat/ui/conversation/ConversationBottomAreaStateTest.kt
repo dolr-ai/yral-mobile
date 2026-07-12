@@ -5,11 +5,25 @@ import kotlin.test.assertEquals
 
 class ConversationBottomAreaStateTest {
     @Test
-    fun `bot account state takes precedence over all other bottom area branches`() {
+    fun `bot account with bot participant shows switch profile prompt`() {
         assertEquals(
             ConversationBottomAreaState.BotAccountPrompt,
             resolveConversationBottomAreaState(
                 isBotAccount = true,
+                isHumanParticipantConversation = false,
+                shouldShowInfluencerSubscriptionCard = true,
+                shouldBlockChatNoProduct = true,
+            ),
+        )
+    }
+
+    @Test
+    fun `bot account with human participant shows read only prompt`() {
+        assertEquals(
+            ConversationBottomAreaState.BotAccountReadOnly,
+            resolveConversationBottomAreaState(
+                isBotAccount = true,
+                isHumanParticipantConversation = true,
                 shouldShowInfluencerSubscriptionCard = true,
                 shouldBlockChatNoProduct = true,
             ),
@@ -22,6 +36,7 @@ class ConversationBottomAreaStateTest {
             ConversationBottomAreaState.InfluencerSubscription,
             resolveConversationBottomAreaState(
                 isBotAccount = false,
+                isHumanParticipantConversation = true,
                 shouldShowInfluencerSubscriptionCard = true,
                 shouldBlockChatNoProduct = false,
             ),
@@ -34,6 +49,7 @@ class ConversationBottomAreaStateTest {
             ConversationBottomAreaState.SubscriptionUnavailable,
             resolveConversationBottomAreaState(
                 isBotAccount = false,
+                isHumanParticipantConversation = true,
                 shouldShowInfluencerSubscriptionCard = false,
                 shouldBlockChatNoProduct = true,
             ),
@@ -46,8 +62,45 @@ class ConversationBottomAreaStateTest {
             ConversationBottomAreaState.ChatInput,
             resolveConversationBottomAreaState(
                 isBotAccount = false,
+                isHumanParticipantConversation = true,
                 shouldShowInfluencerSubscriptionCard = false,
                 shouldBlockChatNoProduct = false,
+            ),
+        )
+    }
+
+    @Test
+    fun `bot account profile target uses human participant when present`() {
+        assertEquals(
+            "human-principal",
+            resolveConversationProfilePrincipal(
+                isBotAccount = true,
+                humanParticipantUserId = "human-principal",
+                influencerId = "bot-principal",
+            ),
+        )
+    }
+
+    @Test
+    fun `bot account profile target uses influencer when human participant is absent`() {
+        assertEquals(
+            "bot-principal",
+            resolveConversationProfilePrincipal(
+                isBotAccount = true,
+                humanParticipantUserId = null,
+                influencerId = "bot-principal",
+            ),
+        )
+    }
+
+    @Test
+    fun `human account profile target uses influencer even when human participant is present`() {
+        assertEquals(
+            "bot-principal",
+            resolveConversationProfilePrincipal(
+                isBotAccount = false,
+                humanParticipantUserId = "human-principal",
+                influencerId = "bot-principal",
             ),
         )
     }

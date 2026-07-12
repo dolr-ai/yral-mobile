@@ -5,6 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import co.touchlab.kermit.Logger
+import com.yral.featureflag.FeatureFlagManager
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.router.slot.SlotNavigation
@@ -66,6 +67,7 @@ class DefaultRootComponent(
 
     // ==================== Dependencies ====================
     private val sessionManager: SessionManager = koinInstance.get()
+    private val featureFlagManager: FeatureFlagManager = koinInstance.get()
     override val loginViewModel: LoginViewModel = koinInstance.get()
     override val rootViewModel: RootViewModel = koinInstance.get()
 
@@ -121,6 +123,7 @@ class DefaultRootComponent(
             loginCoordinator = this,
             setHomeComponent = { homeComponent = it },
             showAlertsOnDialog = ::showAlertsSlot,
+            featureFlagManager = featureFlagManager,
         )
 
     // ==================== Navigation Stacks ====================
@@ -180,6 +183,14 @@ class DefaultRootComponent(
 
             is Config.Home -> {
                 RootComponent.Child.Home(componentFactory.createHome(context))
+            }
+
+            is Config.Coach -> {
+                RootComponent.Child.Coach(componentFactory.createCoach(context, config))
+            }
+
+            is Config.SoulFile -> {
+                RootComponent.Child.SoulFile(componentFactory.createSoulFile(context, config))
             }
 
             is Config.EditProfile -> {
@@ -396,6 +407,14 @@ class DefaultRootComponent(
         navigation.pushToFront(Config.EditProfile)
     }
 
+    override fun openCoach(params: com.yral.shared.features.coach.nav.OpenCoachParams) {
+        navigation.pushToFront(Config.Coach(params))
+    }
+
+    override fun openSoulFile(params: com.yral.shared.features.coach.nav.OpenSoulFileParams) {
+        navigation.pushToFront(Config.SoulFile(params))
+    }
+
     override fun openProfile(userCanisterData: CanisterData) {
         navigation.pushToFront(Config.UserProfile(userCanisterData))
     }
@@ -419,7 +438,10 @@ class DefaultRootComponent(
                     }
                 }
             if (existingIndex != -1) {
-                stack.take(existingIndex + 1)
+                // H2H repro: matching a stale frame by conversationId was
+                // dropping new params like participantPrincipalId. Replace
+                // the matched frame so the chat screen re-initializes.
+                stack.take(existingIndex) + Config.Conversation(params = params)
             } else {
                 stack + Config.Conversation(params = params)
             }

@@ -48,6 +48,7 @@ kotlin {
             implementation(projects.shared.features.profile)
             implementation(projects.shared.features.wallet)
             implementation(projects.shared.features.chat)
+            implementation(projects.shared.features.coach)
             implementation(projects.shared.features.subscriptions)
             implementation(projects.shared.features.aiInfluencer)
 

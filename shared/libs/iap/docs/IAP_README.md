@@ -930,7 +930,7 @@ After a successful in-app purchase (for subscription products):
 
 ### Key APIs
 
-**Base URL:** `https://billing.yral.com`  
+**Base URL:** `https://billing.sarvesh.yral.com`
 **Authentication:** `Authorization: Bearer {yral_id_token}` (same as chat.yral.com)
 
 1. **`POST /google/verify`** - Verify purchase for ALL product types (existing, enhanced)
@@ -1148,4 +1148,3 @@ shared/libs/iap/
 ## License
 
 This module is part of the Yral mobile application.
-

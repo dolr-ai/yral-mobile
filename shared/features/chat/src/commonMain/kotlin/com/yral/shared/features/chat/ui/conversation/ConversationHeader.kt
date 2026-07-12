@@ -60,6 +60,11 @@ internal fun ChatHeader(
     isSubscribed: Boolean = false,
     isSubscribeLoading: Boolean = false,
     onSubscribeClick: () -> Unit = {},
+    // H2H: hides the "Share Profile" and "Clear Chat" context menu items
+    // and the menu trigger itself if both items end up hidden. Share /
+    // delete-and-recreate both bind to influencer machinery that has no
+    // analogue for human-to-human conversations.
+    isHumanChat: Boolean = false,
 ) {
     Box(
         modifier =
@@ -91,6 +96,7 @@ internal fun ChatHeader(
                 isSubscribed = isSubscribed,
                 isSubscribeLoading = isSubscribeLoading,
                 onSubscribeClick = onSubscribeClick,
+                isHumanChat = isHumanChat,
             )
         }
     }
@@ -209,6 +215,7 @@ private fun RightPart(
     isSubscribed: Boolean = false,
     isSubscribeLoading: Boolean = false,
     onSubscribeClick: () -> Unit = {},
+    isHumanChat: Boolean = false,
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -229,14 +236,21 @@ private fun RightPart(
         }
         val menuItems =
             buildList {
-                add(
-                    YralContextMenuItem(
-                        text = stringResource(Res.string.share_profile),
-                        icon = DesignRes.drawable.ic_share,
-                        onClick = onShareProfile,
-                    ),
-                )
-                if (!isBotAccount) {
+                // G5: Share Profile binds to viewModel.shareProfile() which
+                // shares the influencer's profile link. Nonsensical for H2H.
+                if (!isHumanChat) {
+                    add(
+                        YralContextMenuItem(
+                            text = stringResource(Res.string.share_profile),
+                            icon = DesignRes.drawable.ic_share,
+                            onClick = onShareProfile,
+                        ),
+                    )
+                }
+                // G4: Clear Chat calls deleteAndRecreateConversation(influencerId)
+                // which would pass the empty H2H influencerId. Gate alongside
+                // the existing bot-account guard.
+                if (!isBotAccount && !isHumanChat) {
                     add(
                         YralContextMenuItem(
                             text = stringResource(Res.string.clear_chat),
@@ -246,11 +260,15 @@ private fun RightPart(
                     )
                 }
             }
-        YralContextMenu(
-            items = menuItems,
-            triggerIcon = DesignRes.drawable.ic_more,
-            triggerSize = 24.dp,
-            menuIconSize = 20.dp,
-        )
+        // Hide the trigger entirely when no items remain (e.g. H2H).
+        // Otherwise the 3-dot icon would open an empty popup.
+        if (menuItems.isNotEmpty()) {
+            YralContextMenu(
+                items = menuItems,
+                triggerIcon = DesignRes.drawable.ic_more,
+                triggerSize = 24.dp,
+                menuIconSize = 20.dp,
+            )
+        }
     }
 }

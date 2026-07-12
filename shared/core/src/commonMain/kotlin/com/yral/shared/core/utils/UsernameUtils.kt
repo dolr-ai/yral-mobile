@@ -1,7 +1,7 @@
 package com.yral.shared.core.utils
 
-private const val USERNAME_DIGIT_COUNT = 3
 private const val USERNAME_MAX_LENGTH = 15
+private const val USERNAME_GENERATION_ATTEMPTS = 128
 
 internal expect fun sha256(data: ByteArray): ByteArray
 
@@ -20,24 +20,17 @@ fun resolveUsername(
 fun generateUsernameFromPrincipal(principal: String): String {
     val seed = sha256(principal.encodeToByteArray())
     val generator = SeededGenerator(seed)
-    val noun = USERNAME_NOUNS.randomOrDefault(generator, "apple")
-    val adjective = USERNAME_ADJECTIVES.randomOrDefault(generator, "bold")
-
-    val base =
-        StringBuilder(noun.length + adjective.length + USERNAME_DIGIT_COUNT).apply {
-            append(noun)
-            append(adjective)
-            val limit = (USERNAME_MAX_LENGTH - USERNAME_DIGIT_COUNT).coerceAtLeast(0)
-            if (length > limit) {
-                setLength(limit)
-            }
+    repeat(USERNAME_GENERATION_ATTEMPTS) {
+        val firstModifier = USERNAME_MODIFIERS.randomOrDefault(generator, "cute")
+        val secondModifier = USERNAME_MODIFIERS.randomDistinctOrDefault(generator, firstModifier, "kind")
+        val noun = USERNAME_NOUNS.randomOrDefault(generator, "panda")
+        val username = firstModifier + secondModifier + noun
+        if (username.length <= USERNAME_MAX_LENGTH) {
+            return username
         }
-
-    repeat(USERNAME_DIGIT_COUNT) {
-        base.append(generator.nextInt(10))
     }
 
-    return base.toString()
+    return DEFAULT_SAFE_USERNAME
 }
 
 @Suppress("MagicNumber")
@@ -54,6 +47,8 @@ private class SeededGenerator(
 
     private fun nextChunk(): Long {
         if (index + 8 > state.size) {
+            val nextState = sha256(state)
+            nextState.copyInto(state)
             index = 0
         }
         var value = 0L
@@ -80,3 +75,23 @@ private fun List<String>.randomOrDefault(
     } else {
         this[generator.nextInt(size)]
     }
+
+private fun List<String>.randomDistinctOrDefault(
+    generator: SeededGenerator,
+    excluded: String,
+    fallback: String,
+): String {
+    val excludedIndex = indexOf(excluded)
+    return when {
+        isEmpty() -> fallback
+        size == 1 -> first()
+        excludedIndex == -1 -> randomOrDefault(generator, fallback)
+        else -> {
+            val randomIndex = generator.nextInt(size - 1)
+            val adjustedIndex = if (randomIndex >= excludedIndex) randomIndex + 1 else randomIndex
+            this[adjustedIndex]
+        }
+    }
+}
+
+private const val DEFAULT_SAFE_USERNAME = "cutekindpanda"

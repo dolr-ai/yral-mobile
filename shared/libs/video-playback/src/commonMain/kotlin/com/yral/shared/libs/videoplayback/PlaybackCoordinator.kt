@@ -11,6 +11,8 @@ interface PlaybackCoordinator {
         velocity: Float? = null,
     )
 
+    fun setUserInteracting(isInteracting: Boolean)
+
     fun bindSurface(
         index: Int,
         surface: VideoSurfaceHandle,

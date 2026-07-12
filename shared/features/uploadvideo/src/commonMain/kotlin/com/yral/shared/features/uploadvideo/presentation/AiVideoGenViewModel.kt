@@ -15,6 +15,8 @@ import com.yral.shared.core.session.ProDetails
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.core.session.SessionState
 import com.yral.shared.core.videostate.VideoGenerationTracker
+import com.yral.shared.crashlytics.core.CrashlyticsManager
+import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.features.subscriptions.analytics.SubscriptionTelemetry
 import com.yral.shared.features.uploadvideo.analytics.UploadVideoTelemetry
 import com.yral.shared.features.uploadvideo.data.remote.models.TokenType
@@ -22,7 +24,10 @@ import com.yral.shared.features.uploadvideo.domain.GenerateVideoUseCase
 import com.yral.shared.features.uploadvideo.domain.GetFreeCreditsStatusUseCase
 import com.yral.shared.features.uploadvideo.domain.GetPropertyRateLimitConfigUseCase
 import com.yral.shared.features.uploadvideo.domain.GetProvidersUseCase
+import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoErrorType
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
+import com.yral.shared.features.uploadvideo.domain.models.ImageData
+import com.yral.shared.features.uploadvideo.domain.models.ImageInput
 import com.yral.shared.features.uploadvideo.domain.models.Provider
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.preferences.PrefKeys
@@ -40,10 +45,12 @@ import org.jetbrains.compose.resources.getString
 import yral_mobile.shared.features.uploadvideo.generated.resources.Res
 import yral_mobile.shared.features.uploadvideo.generated.resources.ai_video_subscription_nudge_description
 import yral_mobile.shared.features.uploadvideo.generated.resources.ai_video_subscription_nudge_title
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.time.Clock
 import kotlin.time.Instant
 
-@OptIn(kotlin.time.ExperimentalTime::class)
+@OptIn(kotlin.time.ExperimentalTime::class, ExperimentalEncodingApi::class)
 @Suppress("TooManyFunctions")
 class AiVideoGenViewModel internal constructor(
     private val requiredUseCases: RequiredUseCases,
@@ -51,6 +58,8 @@ class AiVideoGenViewModel internal constructor(
     private val preferences: Preferences,
     private val uploadVideoTelemetry: UploadVideoTelemetry,
     private val subscriptionTelemetry: SubscriptionTelemetry,
+    private val videoDraftPollingManager: VideoDraftPollingManager,
+    private val crashlyticsManager: CrashlyticsManager,
     logger: YralLogger,
     flagManager: FeatureFlagManager,
 ) : ViewModel() {
@@ -78,6 +87,7 @@ class AiVideoGenViewModel internal constructor(
         }
 
     init {
+        loadProviders()
         viewModelScope.launch {
             sessionManager
                 .observeSessionPropertyWithDefault(
@@ -122,7 +132,9 @@ class AiVideoGenViewModel internal constructor(
         when (_state.value.uiState) {
             is UiState.Initial -> {
                 _state.value.currentCanister?.let {
-                    loadProviders()
+                    if (_state.value.providers.isEmpty()) {
+                        loadProviders()
+                    }
                     getFreeCreditsStatus()
                 }
             }
@@ -289,6 +301,9 @@ class AiVideoGenViewModel internal constructor(
     fun generateAiVideo() {
         viewModelScope.launch {
             val currentState = _state.value
+            if (!currentState.hasRequiredGenerationInput()) {
+                return@launch
+            }
             currentState.selectedProvider?.let { selectedProvider ->
                 sessionManager.userPrincipal?.let { userId ->
                     _state.update { it.copy(uiState = UiState.InProgress(0f)) }
@@ -304,6 +319,7 @@ class AiVideoGenViewModel internal constructor(
                                             aspectRatio = selectedProvider.defaultAspectRatio,
                                             durationSeconds = selectedProvider.defaultDuration,
                                             generateAudio = if (selectedProvider.supportsAudio == true) true else null,
+                                            image = currentState.toImageData(),
                                             tokenType =
                                                 if (currentState.isCreditsAvailable()) {
                                                     if (currentState.proDetails.isProPurchased) {
@@ -322,13 +338,22 @@ class AiVideoGenViewModel internal constructor(
                             logger.d { "Video generated: $result" }
                             result.providerError?.let { error ->
                                 VideoGenerationTracker.stopGenerating()
+                                crashlyticsManager.recordException(Exception(error), ExceptionType.AI_VIDEO)
                                 pushTriggerFailed(
                                     model = selectedProvider.name,
                                     prompt = currentState.prompt.trim(),
                                     reason = error,
                                 )
                                 _state.update {
-                                    it.copy(bottomSheetType = BottomSheetType.Error(error, true))
+                                    it.copy(
+                                        uiState = UiState.Initial,
+                                        bottomSheetType =
+                                            BottomSheetType.Error(
+                                                title = result.errorType,
+                                                message = error,
+                                                endFlow = true,
+                                            ),
+                                    )
                                 }
                                 return@onSuccess
                             }
@@ -341,6 +366,7 @@ class AiVideoGenViewModel internal constructor(
                                 reason = null,
                                 reasonType = null,
                             )
+                            videoDraftPollingManager.onGenerationSubmitted(userId)
                             _state.update {
                                 it.copy(
                                     uiState = UiState.Initial,
@@ -367,7 +393,10 @@ class AiVideoGenViewModel internal constructor(
                                 reason = error.message ?: "",
                             )
                             _state.update {
-                                it.copy(bottomSheetType = BottomSheetType.Error("", true))
+                                it.copy(
+                                    uiState = UiState.Initial,
+                                    bottomSheetType = BottomSheetType.Error(message = "", endFlow = true),
+                                )
                             }
                         }
                 }
@@ -400,23 +429,33 @@ class AiVideoGenViewModel internal constructor(
         _state.update { it.copy(prompt = text) }
     }
 
-    fun selectProvider(provider: Provider) {
-        _state.update { it.copy(selectedProvider = provider) }
-        uploadVideoTelemetry.videoGenerationModelSelected(provider.name)
+    fun updateGenerationMode(mode: AiVideoGenerationMode) {
+        _state.update { it.copy(generationMode = mode) }
+    }
+
+    fun updateSelectedImage(bytes: ByteArray) {
+        _state.update {
+            it.copy(
+                selectedImageBytes = bytes,
+                selectedImageMimeType = resolveImageMimeType(bytes),
+            )
+        }
+    }
+
+    fun clearSelectedImage() {
+        _state.update {
+            it.copy(
+                selectedImageBytes = null,
+                selectedImageMimeType = null,
+            )
+        }
     }
 
     fun setBottomSheetType(type: BottomSheetType) {
         _state.update { it.copy(bottomSheetType = type) }
     }
 
-    fun shouldEnableButton(): Boolean =
-        with(_state.value) {
-            prompt
-                .trim()
-                .isNotEmpty() &&
-                usedCredits != null &&
-                (isCreditsAvailable() || !isBalanceLow())
-        }
+    fun shouldEnableButton(): Boolean = _state.value.shouldEnableButton()
 
     fun cleanup() {
         _state.update { current ->
@@ -483,6 +522,9 @@ class AiVideoGenViewModel internal constructor(
         val totalCredits: Int? = null,
         val freeCreditsWindow: Int? = null,
         val prompt: String = "",
+        val generationMode: AiVideoGenerationMode = AiVideoGenerationMode.IMAGE_TO_VIDEO,
+        val selectedImageBytes: ByteArray? = null,
+        val selectedImageMimeType: String? = null,
         val uiState: UiState<String> = UiState.Initial,
         val bottomSheetType: BottomSheetType = BottomSheetType.None,
         val currentCanister: String? = null,
@@ -494,17 +536,49 @@ class AiVideoGenViewModel internal constructor(
         fun isBalanceLow() = (selectedProvider?.cost?.sats ?: 0) > (currentBalance ?: -1)
 
         fun isCreditsAvailable() = usedCredits == null || totalCredits == null || usedCredits < totalCredits
+
+        fun shouldEnableButton(): Boolean =
+            hasRequiredGenerationInput() &&
+                (isCreditsAvailable() || !isBalanceLow())
+
+        fun hasRequiredGenerationInput(): Boolean =
+            prompt.trim().isNotEmpty() &&
+                selectedProvider != null &&
+                when (generationMode) {
+                    AiVideoGenerationMode.TEXT_TO_VIDEO -> {
+                        true
+                    }
+
+                    AiVideoGenerationMode.IMAGE_TO_VIDEO -> {
+                        selectedProvider.supportsImage == true &&
+                            selectedImageBytes != null &&
+                            selectedImageMimeType != null
+                    }
+                }
+
+        fun toImageData(): ImageData? {
+            val bytes = selectedImageBytes
+            val mimeType = selectedImageMimeType
+            return if (generationMode == AiVideoGenerationMode.IMAGE_TO_VIDEO && bytes != null && mimeType != null) {
+                ImageData.Base64(
+                    ImageInput(
+                        data = Base64.Default.encode(bytes),
+                        mimeType = mimeType,
+                    ),
+                )
+            } else {
+                null
+            }
+        }
     }
 
     sealed class BottomSheetType {
         data object None : BottomSheetType()
-        data object ModelSelection : BottomSheetType()
         data class Error(
+            val title: GenerateVideoErrorType? = null,
             val message: String,
             val endFlow: Boolean = false,
         ) : BottomSheetType()
-
-        data object BackConfirmation : BottomSheetType()
     }
 
     internal data class RequiredUseCases(
@@ -517,6 +591,39 @@ class AiVideoGenViewModel internal constructor(
     private companion object {
         const val TOTAL_SECONDS_IN_A_DAY = 60 * 60 * 24
         const val SERVER_DRAFT = "ServerDraft"
+        private val PNG_MAGIC =
+            byteArrayOf(
+                0x89.toByte(),
+                0x50,
+                0x4E,
+                0x47,
+                0x0D,
+                0x0A,
+                0x1A,
+                0x0A,
+            )
+        private val JPEG_MAGIC =
+            byteArrayOf(
+                0xFF.toByte(),
+                0xD8.toByte(),
+                0xFF.toByte(),
+            )
+        private const val MIME_TYPE_PNG = "image/png"
+        private const val MIME_TYPE_JPEG = "image/jpeg"
+
+        private fun resolveImageMimeType(bytes: ByteArray): String {
+            val isPng =
+                bytes.size >= PNG_MAGIC.size &&
+                    bytes.copyOfRange(0, PNG_MAGIC.size).contentEquals(PNG_MAGIC)
+            val isJpeg =
+                bytes.size >= JPEG_MAGIC.size &&
+                    bytes.copyOfRange(0, JPEG_MAGIC.size).contentEquals(JPEG_MAGIC)
+            return when {
+                isPng -> MIME_TYPE_PNG
+                isJpeg -> MIME_TYPE_JPEG
+                else -> MIME_TYPE_PNG
+            }
+        }
     }
 
     sealed class AiVideoGenEvent {
@@ -530,4 +637,9 @@ class AiVideoGenViewModel internal constructor(
         data object ShowGeneratedToast : AiVideoGenEvent()
         data object NavigateToHome : AiVideoGenEvent()
     }
+}
+
+enum class AiVideoGenerationMode {
+    TEXT_TO_VIDEO,
+    IMAGE_TO_VIDEO,
 }

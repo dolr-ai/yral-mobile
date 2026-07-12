@@ -1310,31 +1310,6 @@ data class PushNotificationsEnabledEventData(
 }
 
 @Serializable
-data class AirdropClaimedEventData(
-    @SerialName("event") override val event: String = FeatureEvents.AIRDROP_CLAIMED.getEventName(),
-    @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),
-    @SerialName("token_type") val tokenType: TokenType,
-    @SerialName("is_success") val isSuccess: Boolean,
-    @SerialName("claimed_amount") val claimedAmount: Int,
-    @SerialName("is_auto_credited") val isAutoCredited: Boolean,
-) : BaseEventData(),
-    EventData {
-    constructor(
-        tokenType: TokenType,
-        isSuccess: Boolean,
-        claimedAmount: Int,
-        isAutoCredited: Boolean,
-    ) : this(
-        FeatureEvents.AIRDROP_CLAIMED.getEventName(),
-        Features.FEED.getFeatureName(),
-        tokenType,
-        isSuccess,
-        claimedAmount,
-        isAutoCredited,
-    )
-}
-
-@Serializable
 data class UserFollowedEventData(
     @SerialName("event") override val event: String = FeatureEvents.USER_FOLLOWED.getEventName(),
     @SerialName("feature_name") override val featureName: String = Features.FEED.getFeatureName(),

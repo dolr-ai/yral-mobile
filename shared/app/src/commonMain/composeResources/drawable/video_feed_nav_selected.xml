@@ -1,0 +1,14 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="32dp"
+    android:height="32dp"
+    android:viewportWidth="32"
+    android:viewportHeight="32">
+    <!--
+      "Smart display" / Reels-style glyph: rounded rectangle frame + a
+      centered play triangle. Solid white fill (#FAFAFA) for the
+      selected state, matching the existing nav-icon weight.
+    -->
+    <path
+        android:fillColor="#FAFAFA"
+        android:pathData="M9,5 L23,5 A4,4 0 0 1 27,9 L27,23 A4,4 0 0 1 23,27 L9,27 A4,4 0 0 1 5,23 L5,9 A4,4 0 0 1 9,5 Z M14,11.2 L14,20.8 L21.6,16 Z" />
+</vector>

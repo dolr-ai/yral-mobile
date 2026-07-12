@@ -33,6 +33,8 @@ Key directories:
 
 **Show all terminal output — do NOT hide or truncate with `tail`, `head`, `grep`, pipes, or similar filtering tools.** Full output visibility allows you to see errors, warnings, and status messages while you work. Run commands directly and let the full output stream to the terminal so we can follow along together. This is especially important during builds, tests, and debugging.
 
+CI exception: checks may summarize very noisy tool output in the GitHub Actions console when the full raw logs are captured and uploaded as artifacts. This keeps PR logs readable while preserving complete diagnostics for failures.
+
 ## Dependency Version Policy
 
 When upgrading dependencies, always target the **latest stable release** — not alpha, beta, RC, or dev preview versions. The goal is to stay current enough to avoid known security vulnerabilities while avoiding unstable or breaking-change-prone releases. Never proactively upgrade to pre-release versions unless explicitly asked.

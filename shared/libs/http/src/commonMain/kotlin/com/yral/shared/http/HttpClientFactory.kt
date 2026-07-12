@@ -10,6 +10,7 @@ import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.logging.LoggingFormat
+import io.ktor.client.plugins.sse.SSE
 import io.ktor.http.ContentType
 import io.ktor.http.URLProtocol
 import io.ktor.http.content.OutgoingContent
@@ -53,6 +54,11 @@ fun createClient(
         install(HttpCookies) {
             storage = AcceptAllCookiesStorage()
         }
+        // SSE plugin for Phase 2.7 token streaming. Per-call timeout override is used
+        // by ChatStreamingDataSource since the global HttpTimeout(30s) would cut a
+        // stream off mid-reply. The plugin only activates on requests that opt in
+        // via client.sse { ... }, so this is a no-op for every existing endpoint.
+        install(SSE)
         expectSuccess = true
         defaultRequest {
             url {

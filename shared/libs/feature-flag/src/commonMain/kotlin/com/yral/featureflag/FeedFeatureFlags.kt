@@ -32,14 +32,4 @@ object FeedFeatureFlags {
                 defaultValue = "ai",
             )
     }
-    object CardLayout :
-        FlagGroup(keyPrefix = "feed_cardLayout", defaultAudience = FlagAudience.INTERNAL_QA) {
-        val Enabled: FeatureFlag<Boolean> =
-            boolean(
-                keySuffix = "enabled",
-                name = "Enable Card Layout",
-                description = "Use Tinder-style swipeable card stack instead of vertical scroll",
-                defaultValue = false,
-            )
-    }
 }

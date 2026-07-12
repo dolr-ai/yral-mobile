@@ -1,12 +1,14 @@
 package com.yral.shared.features.uploadvideo.data.remote.models
 
 import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
+import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoErrorType
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
 import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoResult
 import com.yral.shared.features.uploadvideo.domain.models.ImageData
 import com.yral.shared.rust.service.domain.models.VideoGenRequestKey
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.isSuccess
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
@@ -206,6 +208,7 @@ internal suspend fun HttpResponse.parseGenerateVideoResponse(json: Json): Genera
                     principal = dto.requestKey.principal,
                 ),
             providerError = null,
+            errorType = null,
         )
     } else {
         val errorElement = runCatching { json.parseToJsonElement(text) }.getOrNull()
@@ -217,6 +220,18 @@ internal suspend fun HttpResponse.parseGenerateVideoResponse(json: Json): Genera
             provider = null,
             requestKey = null,
             providerError = error?.errorMessage ?: text,
+            errorType = status.toGenerateVideoErrorType(),
         )
     }
 }
+
+private fun HttpStatusCode.toGenerateVideoErrorType(): GenerateVideoErrorType? =
+    when (this) {
+        HttpStatusCode.BadRequest -> GenerateVideoErrorType.INVALID_INPUT
+        HttpStatusCode.Unauthorized -> GenerateVideoErrorType.AUTHENTICATION_FAILED
+        HttpStatusCode.PaymentRequired -> GenerateVideoErrorType.INSUFFICIENT_BALANCE
+        HttpStatusCode.TooManyRequests -> GenerateVideoErrorType.RATE_LIMIT_EXCEEDED
+        HttpStatusCode.BadGateway -> GenerateVideoErrorType.PROVIDER_ERROR
+        HttpStatusCode.ServiceUnavailable -> GenerateVideoErrorType.SERVICE_UNAVAILABLE
+        else -> null
+    }

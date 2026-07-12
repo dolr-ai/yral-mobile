@@ -1,6 +1,7 @@
 package com.yral.shared.app.nav.factories
 
 import com.arkivanov.decompose.ComponentContext
+import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.app.nav.Config
 import com.yral.shared.app.nav.RootComponent
@@ -13,6 +14,8 @@ import com.yral.shared.features.auth.nav.mandatorylogin.MandatoryLoginComponent
 import com.yral.shared.features.auth.nav.otpverification.OtpVerificationComponent
 import com.yral.shared.features.auth.ui.LoginCoordinator
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
+import com.yral.shared.features.coach.nav.CoachComponent
+import com.yral.shared.features.coach.nav.SoulFileComponent
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.subscriptions.nav.SubscriptionsComponent
@@ -33,6 +36,7 @@ internal class ComponentFactory(
     private val loginCoordinator: LoginCoordinator,
     private val setHomeComponent: (HomeComponent) -> Unit,
     private val showAlertsOnDialog: (AlertsRequestType) -> Unit,
+    private val featureFlagManager: FeatureFlagManager,
 ) {
     fun createSplash(componentContext: ComponentContext): SplashComponent =
         SplashComponent(
@@ -49,12 +53,14 @@ internal class ComponentFactory(
                 openProfile = rootComponent::openProfile,
                 openCreateInfluencer = rootComponent::openCreateInfluencer,
                 openConversation = rootComponent::openConversation,
+                openCoach = rootComponent::openCoach,
                 openWallet = rootComponent::openWallet,
                 openAccountSheet = { rootComponent.rootViewModel.showAccountSwitcher() },
                 switchToMainProfile = { onComplete ->
                     rootComponent.rootViewModel.switchToMainAccount(onComplete)
                 },
                 showAlertsOnDialog = showAlertsOnDialog,
+                featureFlagManager = featureFlagManager,
             )
         setHomeComponent(component)
         return component
@@ -63,6 +69,27 @@ internal class ComponentFactory(
     fun createEditProfile(componentContext: ComponentContext): EditProfileComponent =
         EditProfileComponent.Companion(
             componentContext = componentContext,
+            onBack = rootComponent::onBackClicked,
+        )
+
+    fun createCoach(
+        componentContext: ComponentContext,
+        config: Config.Coach,
+    ): CoachComponent =
+        CoachComponent.Companion(
+            componentContext = componentContext,
+            params = config.params,
+            onBack = rootComponent::onBackClicked,
+            openSoulFile = rootComponent::openSoulFile,
+        )
+
+    fun createSoulFile(
+        componentContext: ComponentContext,
+        config: Config.SoulFile,
+    ): SoulFileComponent =
+        SoulFileComponent.Companion(
+            componentContext = componentContext,
+            params = config.params,
             onBack = rootComponent::onBackClicked,
         )
 
@@ -100,6 +127,7 @@ internal class ComponentFactory(
             openProfile = rootComponent::openProfile,
             openCreateInfluencer = rootComponent::openCreateInfluencer,
             openConversation = rootComponent::openConversation,
+            openCoach = rootComponent::openCoach,
             onBackClicked = rootComponent::onBackClicked,
             showAlertsOnDialog = showAlertsOnDialog,
             showBackButton = true,

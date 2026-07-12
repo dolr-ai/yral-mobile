@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -22,6 +23,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.yral.shared.libs.designsystem.component.YralContextMenu
 import com.yral.shared.libs.designsystem.component.YralContextMenuItem
+import com.yral.shared.libs.designsystem.component.limitTextLength
+import com.yral.shared.libs.designsystem.component.rememberTextFieldValueState
+import com.yral.shared.libs.designsystem.component.withNativeTextInput
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.painterResource
@@ -31,8 +35,10 @@ import yral_mobile.shared.features.chat.generated.resources.camera
 import yral_mobile.shared.features.chat.generated.resources.message_placeholder
 import yral_mobile.shared.features.chat.generated.resources.photo_library
 import yral_mobile.shared.features.chat.generated.resources.send
+import yral_mobile.shared.features.chat.generated.resources.voice_message
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_camera
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_gallery
+import yral_mobile.shared.libs.designsystem.generated.resources.ic_microphone
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_plus_circle
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_send
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_send_disabled
@@ -48,12 +54,15 @@ internal fun ChatInputArea(
     onSendClick: () -> Unit,
     onCameraClick: (() -> Unit)? = null,
     onGalleryClick: (() -> Unit)? = null,
+    onMicClick: (() -> Unit)? = null,
     showAttachmentMenu: Boolean = true,
     placeholder: String? = null,
     hasWaitingAssistant: Boolean = false,
 ) {
     val defaultPlaceholder = stringResource(Res.string.message_placeholder)
     val finalPlaceholder = placeholder ?: defaultPlaceholder
+    val textFieldValueState = rememberTextFieldValueState(input)
+    val inputText = textFieldValueState.value.text
     // Input field
     Row(
         modifier =
@@ -72,18 +81,19 @@ internal fun ChatInputArea(
     ) {
         BasicTextField(
             modifier = Modifier.weight(1f),
-            value = input,
-            onValueChange = { newValue: String ->
-                if (newValue.length <= MAX_CHARACTER_LIMIT) {
-                    onInputChange(newValue)
-                }
+            value = textFieldValueState.value,
+            onValueChange = { newValue ->
+                val limitedValue = newValue.limitTextLength(MAX_CHARACTER_LIMIT)
+                textFieldValueState.value = limitedValue
+                onInputChange(limitedValue.text)
             },
             textStyle = LocalAppTopography.current.baseRegular.copy(color = YralColors.NeutralTextPrimary),
+            keyboardOptions = KeyboardOptions.Default.withNativeTextInput(),
             cursorBrush = SolidColor(YralColors.Pink300),
             maxLines = MAX_LINES,
             decorationBox = { innerTextField ->
                 Box(modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)) {
-                    if (input.isEmpty()) {
+                    if (inputText.isEmpty()) {
                         Text(
                             text = finalPlaceholder,
                             color = YralColors.NeutralTextTertiary,
@@ -96,11 +106,12 @@ internal fun ChatInputArea(
         )
 
         InputActions(
-            input,
+            inputText,
             onSendClick,
             showAttachmentMenu,
             onCameraClick,
             onGalleryClick,
+            onMicClick,
             hasWaitingAssistant,
         )
     }
@@ -113,6 +124,7 @@ private fun InputActions(
     showAttachmentMenu: Boolean,
     onCameraClick: (() -> Unit)?,
     onGalleryClick: (() -> Unit)?,
+    onMicClick: (() -> Unit)?,
     hasWaitingAssistant: Boolean,
 ) {
     Row(
@@ -125,28 +137,33 @@ private fun InputActions(
                 enabled = input.isNotBlank() && !hasWaitingAssistant,
                 onSendClick = onSendClick,
             )
-        } else if (showAttachmentMenu && onCameraClick != null && onGalleryClick != null) {
-            // Show attachment menu only if enabled and callbacks are provided
-            YralContextMenu(
-                items =
-                    listOf(
-                        YralContextMenuItem(
-                            text = stringResource(Res.string.camera),
-                            icon = DesignRes.drawable.ic_camera,
-                            onClick = onCameraClick,
+        } else if (showAttachmentMenu) {
+            if (onCameraClick != null && onGalleryClick != null) {
+                // Show attachment menu (camera/gallery) when both callbacks provided
+                YralContextMenu(
+                    items =
+                        listOf(
+                            YralContextMenuItem(
+                                text = stringResource(Res.string.camera),
+                                icon = DesignRes.drawable.ic_camera,
+                                onClick = onCameraClick,
+                            ),
+                            YralContextMenuItem(
+                                text = stringResource(Res.string.photo_library),
+                                icon = DesignRes.drawable.ic_gallery,
+                                onClick = onGalleryClick,
+                            ),
                         ),
-                        YralContextMenuItem(
-                            text = stringResource(Res.string.photo_library),
-                            icon = DesignRes.drawable.ic_gallery,
-                            onClick = onGalleryClick,
-                        ),
-                    ),
-                triggerIcon = DesignRes.drawable.ic_plus_circle,
-                triggerSize = 24.dp,
-                menuIconSize = 20.dp,
-                menuPadding = PaddingValues(bottom = 16.dp),
-            )
-        } else if (!showAttachmentMenu) {
+                    triggerIcon = DesignRes.drawable.ic_plus_circle,
+                    triggerSize = 24.dp,
+                    menuIconSize = 20.dp,
+                    menuPadding = PaddingValues(bottom = 16.dp),
+                )
+            }
+            if (onMicClick != null) {
+                MicButton(onClick = onMicClick)
+            }
+        } else {
             // Always show send button when attachment menu is disabled (for image preview)
             SendButton(
                 enabled = !hasWaitingAssistant,
@@ -154,6 +171,19 @@ private fun InputActions(
             )
         }
     }
+}
+
+@Composable
+private fun MicButton(onClick: () -> Unit) {
+    Image(
+        painter = painterResource(DesignRes.drawable.ic_microphone),
+        contentDescription = stringResource(Res.string.voice_message),
+        modifier =
+            Modifier
+                .size(24.dp)
+                .clickable(onClick = onClick),
+        contentScale = ContentScale.None,
+    )
 }
 
 @Composable

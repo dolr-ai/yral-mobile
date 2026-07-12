@@ -2,7 +2,7 @@ package com.yral.shared.features.chat.domain.models
 
 private const val CHAT_TAB_UNREAD_BADGE_CAP = 99
 
-internal fun Conversation.countsTowardUnreadConversationBadge(): Boolean = unreadCount > 0 && conversationUser == null
+internal fun Conversation.countsTowardUnreadConversationBadge(): Boolean = unreadCount > 0 && !isHumanChat
 
 internal fun Iterable<Conversation>.totalUnreadConversationBadgeCount(): Int =
     sumOf { conversation ->

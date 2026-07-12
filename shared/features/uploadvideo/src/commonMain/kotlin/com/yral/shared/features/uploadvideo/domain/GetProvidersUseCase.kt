@@ -6,7 +6,7 @@ import com.yral.shared.libs.arch.domain.UnitSuspendUseCase
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 
-internal class GetProvidersUseCase(
+class GetProvidersUseCase(
     appDispatchers: AppDispatchers,
     failureListener: UseCaseFailureListener,
     private val repository: UploadRepository,

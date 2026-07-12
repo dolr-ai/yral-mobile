@@ -1,8 +1,11 @@
 package com.yral.shared.core.videostate
 
 import androidx.compose.animation.core.LinearOutSlowInEasing
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
@@ -19,6 +22,7 @@ object VideoGenerationTracker {
 
     data class State(
         val pendingGenerations: List<PendingGeneration> = emptyList(),
+        val isDraftRefreshPending: Boolean = false,
     ) {
         val isGenerating: Boolean
             get() = pendingGenerations.isNotEmpty()
@@ -34,6 +38,8 @@ object VideoGenerationTracker {
 
     private val _selectDraftsTab = MutableStateFlow<DraftsTabRequest?>(null)
     val selectDraftsTab: StateFlow<DraftsTabRequest?> = _selectDraftsTab.asStateFlow()
+    private val _refreshDrafts = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val refreshDrafts: SharedFlow<Unit> = _refreshDrafts.asSharedFlow()
     private var nextPendingGenerationId = 0L
 
     fun requestDraftsTab(targetPrincipal: String? = null) {
@@ -41,8 +47,21 @@ object VideoGenerationTracker {
     }
 
     fun onDraftCreatedAndRequestDraftsTab() {
+        markDraftRefreshPending()
         onDraftCreated()
         _selectDraftsTab.value = DraftsTabRequest(refreshDrafts = true)
+    }
+
+    fun requestDraftsRefresh() {
+        _refreshDrafts.tryEmit(Unit)
+    }
+
+    fun markDraftRefreshPending() {
+        _state.update { it.copy(isDraftRefreshPending = true) }
+    }
+
+    fun completeDraftRefresh() {
+        _state.update { it.copy(isDraftRefreshPending = false) }
     }
 
     fun consumeDraftsTabRequest() {
@@ -97,6 +116,33 @@ object VideoGenerationTracker {
             state.copy(
                 pendingGenerations = state.pendingGenerations.drop(1),
             )
+        }
+    }
+
+    fun setPendingGenerationCount(count: Int) {
+        val normalizedCount = count.coerceAtLeast(0)
+        _state.update { state ->
+            when {
+                normalizedCount == state.pendingGenerations.size -> {
+                    state
+                }
+
+                normalizedCount == 0 -> {
+                    state.copy(pendingGenerations = emptyList())
+                }
+
+                normalizedCount < state.pendingGenerations.size -> {
+                    state.copy(pendingGenerations = state.pendingGenerations.take(normalizedCount))
+                }
+
+                else -> {
+                    val additions =
+                        List(normalizedCount - state.pendingGenerations.size) {
+                            PendingGeneration(id = nextPendingGenerationId++)
+                        }
+                    state.copy(pendingGenerations = state.pendingGenerations + additions)
+                }
+            }
         }
     }
 

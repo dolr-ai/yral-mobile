@@ -31,13 +31,14 @@ import com.yral.shared.core.utils.getAccountInfo
 import com.yral.shared.core.videostate.VideoGenerationTracker
 import com.yral.shared.crashlytics.core.CrashlyticsManager
 import com.yral.shared.crashlytics.core.ExceptionType
-import com.yral.shared.data.domain.CommonApis
 import com.yral.shared.data.domain.models.ConversationInfluencerSource
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.data.domain.models.VideoViews
 import com.yral.shared.data.domain.useCases.GetVideoViewsUseCase
 import com.yral.shared.features.chat.analytics.ChatTelemetry
 import com.yral.shared.features.chat.domain.models.Influencer
+import com.yral.shared.features.chat.domain.usecases.CheckChatAccessUseCase
+import com.yral.shared.features.chat.domain.usecases.CreateHumanConversationUseCase
 import com.yral.shared.features.chat.domain.usecases.GetInfluencerUseCase
 import com.yral.shared.features.profile.analytics.ProfileTelemetry
 import com.yral.shared.features.profile.domain.DeleteVideoUseCase
@@ -46,7 +47,17 @@ import com.yral.shared.features.profile.domain.FollowNotificationUseCase
 import com.yral.shared.features.profile.domain.ProfileVideosPagingSource
 import com.yral.shared.features.profile.domain.models.DeleteVideoRequest
 import com.yral.shared.features.profile.domain.repository.ProfileRepository
+import com.yral.shared.features.profile.videoideas.domain.models.VideoIdea
+import com.yral.shared.features.profile.videoideas.domain.models.VideoIdeaStatus
+import com.yral.shared.features.profile.videoideas.domain.usecases.GetVideoIdeasUseCase
+import com.yral.shared.features.profile.videoideas.domain.usecases.MarkVideoIdeaUsedUseCase
+import com.yral.shared.features.uploadvideo.data.remote.models.TokenType
+import com.yral.shared.features.uploadvideo.domain.GenerateVideoUseCase
+import com.yral.shared.features.uploadvideo.domain.GetProvidersUseCase
 import com.yral.shared.features.uploadvideo.domain.PublishDraftVideoUseCase
+import com.yral.shared.features.uploadvideo.domain.models.GenerateVideoParams
+import com.yral.shared.features.uploadvideo.domain.models.Provider
+import com.yral.shared.features.uploadvideo.presentation.VideoDraftPollingManager
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastStatus
@@ -106,7 +117,6 @@ class ProfileViewModel(
     private val canisterData: CanisterData,
     private val sessionManager: SessionManager,
     private val profileRepository: ProfileRepository,
-    private val commonApis: CommonApis,
     private val deleteVideoUseCase: DeleteVideoUseCase,
     private val reportVideoUseCase: ReportVideoUseCase,
     private val followUserUseCase: FollowUserUseCase,
@@ -125,14 +135,26 @@ class ProfileViewModel(
     private val getInfluencerUseCase: GetInfluencerUseCase,
     private val fileDownloader: FileDownloader,
     private val followersMetadataDataSource: FollowersMetadataDataSource,
-    private val checkChatAccessUseCase: com.yral.shared.features.chat.domain.usecases.CheckChatAccessUseCase,
+    private val checkChatAccessUseCase: CheckChatAccessUseCase,
+    private val createHumanConversationUseCase: CreateHumanConversationUseCase,
     private val publishDraftVideoUseCase: PublishDraftVideoUseCase,
+    private val getVideoIdeasUseCase: GetVideoIdeasUseCase,
+    private val markVideoIdeaUsedUseCase: MarkVideoIdeaUsedUseCase,
+    private val getVideoProvidersUseCase: GetProvidersUseCase,
+    private val generateVideoUseCase: GenerateVideoUseCase,
+    private val videoDraftPollingManager: VideoDraftPollingManager,
 ) : ViewModel() {
     companion object {
         private const val POSTS_PER_PAGE = 20
         private const val POSTS_PREFETCH_DISTANCE = 5
         private val VIEWS_REFRESH_THRESHOLD = 15.seconds
         private val ANALYTICS_VIDEO_STARTED_RANGE = 0..1000
+
+        // Phase 22.3d — `ServerDraft` tells the video-gen API to write the
+        // result into the user's Drafts grid instead of attaching it as a
+        // post draft to a specific upload session. Matches the value
+        // AiVideoGenViewModel uses on the standard + flow.
+        private const val SERVER_DRAFT_UPLOAD_HANDLING = "ServerDraft"
     }
 
     private val _state =
@@ -140,8 +162,11 @@ class ProfileViewModel(
             ViewState(
                 isWalletEnabled = flagManager.isEnabled(WalletFeatureFlags.Wallet.Enabled),
                 isSubscriptionEnabled = flagManager.isEnabled(AppFeatureFlags.Common.EnableSubscription),
+                isSoulFileCoachEnabled = flagManager.isEnabled(ChatFeatureFlags.Chat.SoulFileCoachEnabled),
                 maxBotCountForCta = flagManager.get(ChatFeatureFlags.Chat.MaxBotCountForCta),
                 maxVisibleBotUsernames = flagManager.get(ChatFeatureFlags.Chat.MaxVisibleBotUsernames),
+                isH2hChatEnabled = flagManager.get(ChatFeatureFlags.Chat.H2hChatEnabled),
+                isVideoIdeasEnabled = flagManager.get(ChatFeatureFlags.Chat.VideoIdeasEnabled),
             ),
         )
     val state: StateFlow<ViewState> = _state.asStateFlow()
@@ -171,7 +196,6 @@ class ProfileViewModel(
                 pagingSourceFactory = {
                     ProfileVideosPagingSource(
                         profileRepository = profileRepository,
-                        commonApis = commonApis,
                         canisterId = canisterData.canisterId,
                         userPrincipal = canisterData.userPrincipalId,
                     )
@@ -307,6 +331,14 @@ class ProfileViewModel(
                     if (request.refreshDrafts) {
                         profileEventsChannel.trySend(ProfileEvents.RefreshDrafts)
                     }
+                }
+            }
+        }
+        viewModelScope.launch {
+            VideoGenerationTracker.refreshDrafts.collect {
+                val isCurrentOwnProfile = canisterData.userPrincipalId == sessionManager.userPrincipal
+                if (isCurrentOwnProfile) {
+                    profileEventsChannel.trySend(ProfileEvents.RefreshDrafts)
                 }
             }
         }
@@ -628,6 +660,54 @@ class ProfileViewModel(
                     }
             } finally {
                 _state.update { it.copy(isTalkToMeInProgress = false) }
+            }
+        }
+    }
+
+    /**
+     * H2H: tap-handler for the Send Message button on another user's
+     * profile. Creates (or fetches) the 1:1 H2H conversation with the
+     * profile owner and emits [ProfileEvents.HumanConversationCreated]
+     * so the screen can route into the chat screen.
+     *
+     * Guards: own-profile and blank-principal cases no-op. The button
+     * itself is hidden in both states so this is a defensive belt-and-
+     * suspenders check.
+     */
+    fun onSendMessageClicked() {
+        val participantPrincipalId = canisterData.userPrincipalId
+        if (participantPrincipalId.isBlank() || _state.value.isOwnProfile) return
+        val accountInfo = _state.value.accountInfo
+        viewModelScope.launch {
+            _state.update { it.copy(isCreatingHumanConversation = true) }
+            try {
+                createHumanConversationUseCase(
+                    com.yral.shared.features.chat.domain.usecases
+                        .CreateHumanConversationUseCase
+                        .Params(participantPrincipalId = participantPrincipalId),
+                ).onSuccess { conversation ->
+                    profileEventsChannel.trySend(
+                        ProfileEvents.HumanConversationCreated(
+                            conversationId = conversation.id,
+                            participantPrincipalId = participantPrincipalId,
+                            displayName =
+                                accountInfo?.displayName?.takeIf { it.isNotBlank() }
+                                    ?: conversation.conversationUser?.username.orEmpty(),
+                            username = accountInfo?.username ?: conversation.conversationUser?.username,
+                            avatarUrl =
+                                accountInfo?.profilePic?.takeIf { it.isNotBlank() }
+                                    ?: conversation.conversationUser?.profilePictureUrl,
+                        ),
+                    )
+                }.onFailure { error ->
+                    Logger.e("onSendMessageClicked") { "Failed to create H2H conversation: $error" }
+                    val message =
+                        error.message
+                            ?: getString(DesignRes.string.something_went_wrong)
+                    profileEventsChannel.trySend(ProfileEvents.Failed(message))
+                }
+            } finally {
+                _state.update { it.copy(isCreatingHumanConversation = false) }
             }
         }
     }
@@ -1120,29 +1200,23 @@ class ProfileViewModel(
         }
     }
 
-    @Suppress("LongMethod")
     @OptIn(ExperimentalTime::class)
     fun showVideoViews(video: FeedDetails) {
         if (!_state.value.isOwnProfile) return
         viewModelScope.launch {
             val shouldRefresh =
                 when (val currentViews = _state.value.viewsData[video.videoID]) {
-                    is UiState.InProgress -> {
-                        return@launch
-                    }
-
-                    is UiState.Success -> {
-                        val now = Clock.System.now()
-                        now - currentViews.data.lastFetched > VIEWS_REFRESH_THRESHOLD
-                    }
-
-                    else -> {
-                        true
-                    }
+                    is UiState.InProgress -> return@launch
+                    is UiState.Success -> Clock.System.now() - currentViews.data.lastFetched > VIEWS_REFRESH_THRESHOLD
+                    else -> true
                 }
             _state.update {
                 it.copy(
-                    bottomSheet = ProfileBottomSheet.VideoView(videoId = video.videoID),
+                    bottomSheet =
+                        ProfileBottomSheet.VideoView(
+                            videoId = video.videoID,
+                            totalViews = video.bulkViewCount ?: video.viewCount,
+                        ),
                     viewsData =
                         if (shouldRefresh) {
                             it.viewsData
@@ -1158,7 +1232,7 @@ class ProfileViewModel(
                 .invoke(parameter = GetVideoViewsUseCase.Params(videoId = listOf(video.videoID)))
                 .onSuccess { views ->
                     val viewData = views.firstOrNull { view -> view.videoId == video.videoID }
-                    Logger.d("VideoViews") { "Got video views $viewData" }
+                    Logger.d("VideoViews") { "Got engaged video views $viewData" }
                     viewData?.let {
                         _state.update {
                             it.copy(
@@ -1168,27 +1242,14 @@ class ProfileViewModel(
                                     },
                             )
                         }
-                        pagingState.update { current ->
-                            current.copy(
-                                updatedDetails =
-                                    current.updatedDetails +
-                                        (
-                                            video.videoID to
-                                                video.copy(
-                                                    viewCount = viewData.allViews,
-                                                    bulkViewCount = viewData.allViews,
-                                                )
-                                        ),
-                            )
-                        }
                     }
-                }.onFailure { e ->
-                    Logger.e("VideoViews") { "Failed to get video views $e" }
+                }.onFailure { error ->
+                    Logger.e("VideoViews", error) { "Failed to get engaged video views" }
                     _state.update {
                         it.copy(
                             viewsData =
                                 it.viewsData.toMutableMap().apply {
-                                    this[video.videoID] = UiState.Failure(e)
+                                    this[video.videoID] = UiState.Failure(error)
                                 },
                         )
                     }
@@ -1221,7 +1282,208 @@ class ProfileViewModel(
 
     fun selectTab(tab: ProfileTab) {
         _state.update { it.copy(selectedTab = tab) }
+        if (tab == ProfileTab.Ideas) {
+            loadVideoIdeasIfNeeded()
+        }
     }
+
+    /**
+     * Phase 22.3c — pull the bot's daily 5 video ideas the first time the
+     * Ideas tab is opened. Backend cold-starts a batch on demand for a
+     * bot that has none for today; subsequent taps within the session
+     * are cached locally so we don't refire on every tab switch.
+     */
+    private fun loadVideoIdeasIfNeeded() {
+        val current = _state.value
+        if (current.videoIdeas != null || current.isLoadingVideoIdeas) return
+        val botId = current.accountInfo?.userPrincipal ?: canisterData.userPrincipalId
+        if (botId.isBlank()) return
+        _state.update { it.copy(isLoadingVideoIdeas = true, videoIdeasError = null) }
+        viewModelScope.launch {
+            getVideoIdeasUseCase(botId)
+                .onSuccess { ideas ->
+                    _state.update {
+                        it.copy(
+                            videoIdeas = ideas,
+                            isLoadingVideoIdeas = false,
+                            videoIdeasError = null,
+                        )
+                    }
+                }.onFailure { error ->
+                    Logger.e(ProfileViewModel::class.simpleName!!, error) { "Failed to load video ideas" }
+                    _state.update {
+                        it.copy(
+                            isLoadingVideoIdeas = false,
+                            videoIdeasError = error.message ?: "Could not load ideas",
+                        )
+                    }
+                }
+        }
+    }
+
+    fun retryLoadVideoIdeas() {
+        _state.update { it.copy(videoIdeas = null, videoIdeasError = null) }
+        loadVideoIdeasIfNeeded()
+    }
+
+    /**
+     * Phase 22.3d — fire the existing AI video generation pipeline
+     * headlessly from a Video Idea row. Uses the first available
+     * provider (same default as AiVideoGenViewModel) so the creator
+     * doesn't see a prompt screen — the idea text IS the prompt.
+     *
+     * Flow:
+     *   1. Refuse if a generation is already in flight (one-at-a-time
+     *      global lock via VideoGenerationTracker)
+     *   2. Lazy-load providers on first invocation, cache for the session
+     *   3. Optimistically flip the row to USED so the creator sees the
+     *      ✓ chip immediately
+     *   4. VideoGenerationTracker.startGenerating() → existing Drafts
+     *      progress tile + global lock kick in
+     *   5. Fire GenerateVideoUseCase against the existing video-gen API
+     *   6. On success: videoDraftPollingManager.onGenerationSubmitted →
+     *      backend POST .../used to record the Create-tap metric →
+     *      success toast with tappable "View in Drafts" (Option C)
+     *   7. On failure: roll back tracker + idea state, surface a toast,
+     *      Create buttons re-enable for retry
+     */
+    fun createVideoFromIdea(idea: VideoIdea) {
+        if (VideoGenerationTracker.state.value.isGenerating) {
+            ToastManager.showToast(
+                type = ToastType.Small(message = "Already creating one video. Wait for it to land in Drafts."),
+                status = ToastStatus.Warning,
+            )
+            return
+        }
+        val userId = sessionManager.userPrincipal
+        if (userId.isNullOrBlank()) {
+            ToastManager.showToast(
+                type = ToastType.Small(message = "Couldn't determine your account."),
+                status = ToastStatus.Error,
+            )
+            return
+        }
+        VideoGenerationTracker.startGenerating()
+        viewModelScope.launch {
+            val provider =
+                resolveDefaultProvider() ?: run {
+                    VideoGenerationTracker.stopGenerating()
+                    ToastManager.showToast(
+                        type = ToastType.Small(message = "Couldn't load video providers."),
+                        status = ToastStatus.Error,
+                    )
+                    return@launch
+                }
+            updateIdeaStatus(idea.id, VideoIdeaStatus.USED)
+            val params =
+                GenerateVideoParams(
+                    providerId = provider.id,
+                    prompt = idea.ideaText,
+                    aspectRatio = provider.resolvedAspectRatio(),
+                    resolution = provider.defaultResolution,
+                    durationSeconds = provider.resolvedDuration(),
+                    generateAudio = if (provider.supportsAudio == true) true else null,
+                    tokenType = TokenType.FREE,
+                    userId = userId,
+                    uploadHandling = SERVER_DRAFT_UPLOAD_HANDLING,
+                )
+            generateVideoUseCase(
+                GenerateVideoUseCase.Param(params = params),
+            ).onSuccess { result ->
+                result.providerError?.let { error ->
+                    handleIdeaGenerationFailure(idea, IllegalStateException(error))
+                    return@onSuccess
+                }
+                handleIdeaGenerationSuccess(idea, userId)
+            }.onFailure { error ->
+                handleIdeaGenerationFailure(idea, error)
+            }
+        }
+    }
+
+    private fun handleIdeaGenerationSuccess(
+        idea: VideoIdea,
+        userId: String,
+    ) {
+        Logger.i(ProfileViewModel::class.simpleName!!) {
+            "createVideoFromIdea: generation submitted ideaId=${idea.id} userId=$userId"
+        }
+        videoDraftPollingManager.onGenerationSubmitted(userId)
+        viewModelScope.launch {
+            markVideoIdeaUsedUseCase(
+                MarkVideoIdeaUsedUseCase.Params(
+                    influencerId = idea.influencerId,
+                    ideaId = idea.id,
+                ),
+            ).onFailure { error ->
+                Logger.w(ProfileViewModel::class.simpleName!!, error) {
+                    "markVideoIdeaUsed backend call failed ideaId=${idea.id}"
+                }
+            }
+        }
+        ToastManager.showSuccess(
+            type = ToastType.Small(message = "Creating video — check Drafts"),
+            cta =
+                com.yral.shared.libs.designsystem.component.toast.ToastCTA(
+                    text = "View in Drafts",
+                ) { VideoGenerationTracker.requestDraftsTab(userId) },
+        )
+    }
+
+    private fun handleIdeaGenerationFailure(
+        idea: VideoIdea,
+        error: Throwable,
+    ) {
+        Logger.e(ProfileViewModel::class.simpleName!!, error) {
+            "createVideoFromIdea failed ideaId=${idea.id}"
+        }
+        VideoGenerationTracker.stopGenerating()
+        updateIdeaStatus(idea.id, VideoIdeaStatus.FRESH)
+        ToastManager.showToast(
+            type = ToastType.Small(message = error.message ?: "Couldn't create video. Try again."),
+            status = ToastStatus.Error,
+        )
+    }
+
+    private fun updateIdeaStatus(
+        ideaId: String,
+        status: VideoIdeaStatus,
+    ) {
+        _state.update { state ->
+            state.copy(
+                videoIdeas =
+                    state.videoIdeas?.map { idea ->
+                        if (idea.id == ideaId) idea.copy(status = status) else idea
+                    },
+            )
+        }
+    }
+
+    private suspend fun resolveDefaultProvider(): Provider? {
+        cachedVideoProviders?.firstUsableProvider()?.let { return it }
+        var resolved: List<Provider>? = null
+        getVideoProvidersUseCase(Unit)
+            .onSuccess { providers ->
+                cachedVideoProviders = providers
+                resolved = providers
+            }.onFailure { err ->
+                Logger.e(ProfileViewModel::class.simpleName!!, err) { "Failed to fetch video providers" }
+            }
+        return resolved?.firstUsableProvider()
+    }
+
+    private fun List<Provider>.firstUsableProvider(): Provider? =
+        firstOrNull { provider ->
+            provider.isAvailable != false &&
+                provider.resolvedAspectRatio() != null &&
+                provider.resolvedDuration() != null
+        }
+
+    private fun Provider.resolvedAspectRatio(): String? = defaultAspectRatio ?: allowedAspectRatios.firstOrNull()
+
+    private fun Provider.resolvedDuration(): Int? = defaultDuration ?: allowedDurations.firstOrNull()
+
+    private var cachedVideoProviders: List<Provider>? = null
 
     fun openDraftVideo(feedDetails: FeedDetails) {
         updateVideoViewIfDifferent(VideoViewState.ViewingDraft(feedDetails))
@@ -1235,7 +1497,7 @@ class ProfileViewModel(
         viewModelScope.launch {
             _state.update { it.copy(publishDraftUiState = UiState.InProgress()) }
             publishDraftVideoUseCase(
-                PublishDraftVideoUseCase.Param(postId = feedDetails.videoID),
+                PublishDraftVideoUseCase.Param(postId = feedDetails.postID),
             ).onSuccess {
                 profileTelemetry.onVideoPublished(
                     videoId = feedDetails.videoID,
@@ -1249,9 +1511,9 @@ class ProfileViewModel(
                                 (feedDetails.videoID to feedDetails.copy(isDraft = false)),
                     )
                 }
-                closeDraftVideo()
                 _state.update {
                     it.copy(
+                        videoView = VideoViewState.None,
                         publishDraftUiState = UiState.Initial,
                         selectedTab = ProfileTab.Published,
                     )
@@ -1301,8 +1563,11 @@ data class ViewState(
     val isSubscribedToInfluencer: Boolean = false,
     val isInfluencerSubscriptionStateLoading: Boolean = false,
     val isTalkToMeInProgress: Boolean = false,
+    val isH2hChatEnabled: Boolean = false,
+    val isCreatingHumanConversation: Boolean = false,
     val isProUser: Boolean = false,
     val isSubscriptionEnabled: Boolean = false,
+    val isSoulFileCoachEnabled: Boolean = false,
     val isYralProAvailable: Boolean = false,
     val maxBotCountForCta: Int = 3,
     val maxVisibleBotUsernames: Int = 2,
@@ -1312,17 +1577,30 @@ data class ViewState(
     val botUsernameToCanisterData: Map<String, String> = emptyMap(),
     val publishDraftUiState: UiState<Unit> = UiState.Initial,
     val selectedTab: ProfileTab = ProfileTab.Published,
+    // Phase 22.3c — Video Ideas tab. `videoIdeas == null` means "not yet
+    // fetched"; an empty list means the server returned no ideas (e.g.
+    // bot has no archetype/data and cold-start fell through).
+    val videoIdeas: List<VideoIdea>? = null,
+    val isLoadingVideoIdeas: Boolean = false,
+    val videoIdeasError: String? = null,
+    // Phase 22.3 — feature flag gate. The Video Ideas endpoints live on
+    // agent.rishi.yral.com only; production chat-ai doesn't have them.
+    // Hide the tab entirely when off so pre-cutover users never tap into
+    // a 404 path.
+    val isVideoIdeasEnabled: Boolean = false,
 )
 
 enum class ProfileTab {
     Published,
     Drafts,
+    Ideas,
 }
 
 sealed interface ProfileBottomSheet {
     data object None : ProfileBottomSheet
     data class VideoView(
         val videoId: String,
+        val totalViews: ULong,
     ) : ProfileBottomSheet
     data class FollowDetails(
         val tab: FollowersSheetTab,
@@ -1369,6 +1647,19 @@ sealed class ProfileEvents {
         val message: String,
     ) : ProfileEvents()
     data object RefreshDrafts : ProfileEvents()
+
+    /**
+     * H2H: a `Send Message` tap successfully created (or fetched the
+     * existing) human conversation. The screen observes this and routes
+     * to the chat screen with all the params it needs.
+     */
+    data class HumanConversationCreated(
+        val conversationId: String,
+        val participantPrincipalId: String,
+        val displayName: String,
+        val username: String?,
+        val avatarUrl: String?,
+    ) : ProfileEvents()
 }
 
 data class PagingState(

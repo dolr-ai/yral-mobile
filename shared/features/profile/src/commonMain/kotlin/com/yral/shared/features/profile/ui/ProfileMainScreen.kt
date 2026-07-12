@@ -24,11 +24,13 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -65,6 +67,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -87,8 +90,10 @@ import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.auth.ui.LoginMode
 import com.yral.shared.features.auth.ui.LoginScreenType
 import com.yral.shared.features.auth.ui.rememberLoginInfo
+import com.yral.shared.features.coach.nav.OpenCoachParams
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.profile.ui.followers.FollowersBottomSheet
+import com.yral.shared.features.profile.videoideas.domain.models.VideoIdea
 import com.yral.shared.features.profile.viewmodel.DeleteConfirmationState
 import com.yral.shared.features.profile.viewmodel.FollowersSheetTab
 import com.yral.shared.features.profile.viewmodel.ProfileBottomSheet
@@ -154,8 +159,18 @@ import yral_mobile.shared.features.profile.generated.resources.error_loading_vid
 import yral_mobile.shared.features.profile.generated.resources.failed_to_delete_video
 import yral_mobile.shared.features.profile.generated.resources.ic_drafts_selected
 import yral_mobile.shared.features.profile.generated.resources.ic_drafts_unselected
+import yral_mobile.shared.features.profile.generated.resources.ic_ideas_selected
+import yral_mobile.shared.features.profile.generated.resources.ic_ideas_unselected
 import yral_mobile.shared.features.profile.generated.resources.ic_published_selected
 import yral_mobile.shared.features.profile.generated.resources.ic_published_unselected
+import yral_mobile.shared.features.profile.generated.resources.ideas_create_cta
+import yral_mobile.shared.features.profile.generated.resources.ideas_created_chip
+import yral_mobile.shared.features.profile.generated.resources.ideas_empty
+import yral_mobile.shared.features.profile.generated.resources.ideas_error
+import yral_mobile.shared.features.profile.generated.resources.ideas_header
+import yral_mobile.shared.features.profile.generated.resources.ideas_loading
+import yral_mobile.shared.features.profile.generated.resources.ideas_lock_hint
+import yral_mobile.shared.features.profile.generated.resources.make_ai_influencer_better
 import yral_mobile.shared.features.profile.generated.resources.pink_heart
 import yral_mobile.shared.features.profile.generated.resources.pro_profile_background
 import yral_mobile.shared.features.profile.generated.resources.profile_empty_other_subtitle
@@ -177,7 +192,6 @@ import yral_mobile.shared.libs.designsystem.generated.resources.arrow
 import yral_mobile.shared.libs.designsystem.generated.resources.arrow_left
 import yral_mobile.shared.libs.designsystem.generated.resources.cancel
 import yral_mobile.shared.libs.designsystem.generated.resources.delete
-import yral_mobile.shared.libs.designsystem.generated.resources.error_data_not_loaded
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_dots_vertical
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_download
 import yral_mobile.shared.libs.designsystem.generated.resources.ic_share
@@ -189,12 +203,10 @@ import yral_mobile.shared.libs.designsystem.generated.resources.msg_feed_video_s
 import yral_mobile.shared.libs.designsystem.generated.resources.my_profile
 import yral_mobile.shared.libs.designsystem.generated.resources.my_profiles
 import yral_mobile.shared.libs.designsystem.generated.resources.oops
-import yral_mobile.shared.libs.designsystem.generated.resources.refresh
 import yral_mobile.shared.libs.designsystem.generated.resources.share_profile
 import yral_mobile.shared.libs.designsystem.generated.resources.something_went_wrong
 import yral_mobile.shared.libs.designsystem.generated.resources.started_following
 import yral_mobile.shared.libs.designsystem.generated.resources.try_again
-import yral_mobile.shared.libs.designsystem.generated.resources.video_insights
 import yral_mobile.shared.libs.designsystem.generated.resources.Res as DesignRes
 
 internal const val GRID_ITEM_ASPECT_RATIO = 0.75f
@@ -238,6 +250,8 @@ fun ProfileMainScreen(
     val followers = viewModel.followers.collectAsLazyPagingItems()
     val following = viewModel.following.collectAsLazyPagingItems()
     val draftVideos = viewModel.draftVideos.collectAsLazyPagingItems()
+    val generatingState by VideoGenerationTracker.state.collectAsState()
+    var hasObservedGeneratedDraftRefreshLoading by remember { mutableStateOf(false) }
 
     val loginState = rememberLoginInfo(requestLoginFactory = component.requestLoginFactory)
 
@@ -296,6 +310,32 @@ fun ProfileMainScreen(
                         OpenConversationParams(
                             influencerId = event.influencer.id,
                             influencerCategory = event.influencer.category,
+                            influencerSource = ConversationInfluencerSource.PROFILE,
+                        ),
+                    )
+                }
+
+                is ProfileEvents.HumanConversationCreated -> {
+                    // H2H: empty `influencerId` is the convention for human
+                    // conversations until OpenConversationParams gets a
+                    // proper conversationKind discriminator. Passing
+                    // `userId = event.participantPrincipalId` is what makes
+                    // ChatConversationScreen's LaunchedEffect take the
+                    // initializeFromInbox branch (which uses the existing
+                    // conversationId) instead of initializeForChatWall
+                    // (which would POST a new AI conversation with the
+                    // empty influencerId — the "Having a little trouble
+                    // loading" repro). The chat-screen VM further reads
+                    // viewState.isHumanChat to gate AI affordances.
+                    component.openConversation(
+                        OpenConversationParams(
+                            influencerId = "",
+                            conversationId = event.conversationId,
+                            userId = event.participantPrincipalId,
+                            participantPrincipalId = event.participantPrincipalId,
+                            displayName = event.displayName,
+                            username = event.username,
+                            avatarUrl = event.avatarUrl,
                             influencerSource = ConversationInfluencerSource.PROFILE,
                         ),
                     )
@@ -366,6 +406,36 @@ fun ProfileMainScreen(
                             profileVideos[index]?.videoID == pendingVideoId
                         }
                     viewModel.openVideoReel(videoIndex.coerceAtLeast(0))
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(
+        generatingState.isDraftRefreshPending,
+        draftVideos.loadState.refresh,
+        draftVideos.itemCount,
+    ) {
+        if (!generatingState.isDraftRefreshPending) {
+            hasObservedGeneratedDraftRefreshLoading = false
+            return@LaunchedEffect
+        }
+        when (draftVideos.loadState.refresh) {
+            is LoadState.Loading -> {
+                hasObservedGeneratedDraftRefreshLoading = true
+            }
+
+            is LoadState.NotLoading -> {
+                if (hasObservedGeneratedDraftRefreshLoading || draftVideos.itemCount > 0) {
+                    hasObservedGeneratedDraftRefreshLoading = false
+                    VideoGenerationTracker.completeDraftRefresh()
+                }
+            }
+
+            is LoadState.Error -> {
+                if (hasObservedGeneratedDraftRefreshLoading) {
+                    hasObservedGeneratedDraftRefreshLoading = false
+                    VideoGenerationTracker.completeDraftRefresh()
                 }
             }
         }
@@ -542,6 +612,17 @@ fun ProfileMainScreen(
                         viewModel.trackCreateInfluencerClicked()
                         component.openCreateInfluencer()
                     },
+                    onOpenCoach = {
+                        state.accountInfo?.let { accountInfo ->
+                            component.openCoach(
+                                OpenCoachParams(
+                                    botId = accountInfo.userPrincipal,
+                                    botName = accountInfo.displayName,
+                                    avatarUrl = accountInfo.profilePic,
+                                ),
+                            )
+                        }
+                    },
                     onUsernameClick = { username ->
                         val principal =
                             state.botUsernameToCanisterData[username]
@@ -602,39 +683,14 @@ fun ProfileMainScreen(
         is ProfileBottomSheet.VideoView -> {
             val videoId = bottomSheet.videoId
             val video = profileVideos.itemSnapshotList.firstOrNull { it?.videoID == videoId }
-            when (val views = state.viewsData[videoId]) {
-                is UiState.Failure -> {
-                    YralErrorMessage(
-                        title = stringResource(DesignRes.string.video_insights),
-                        error = stringResource(DesignRes.string.error_data_not_loaded),
-                        cta = stringResource(DesignRes.string.refresh),
-                        onDismiss = { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
-                        onClick = { video?.let { viewModel.showVideoViews(video) } },
-                        sheetState = bottomSheetState,
-                        showErrorIcon = true,
-                        showDragHandle = true,
-                    )
-                }
-
-                UiState.Initial,
-                is UiState.InProgress,
-                is UiState.Success,
-                -> {
-                    val totalViews = (views as? UiState.Success)?.data?.allViews
-                    val totalEngagedViews = (views as? UiState.Success)?.data?.loggedInViews
-                    VideoViewsSheet(
-                        sheetState = bottomSheetState,
-                        onDismissRequest = { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
-                        thumbnailUrl = video?.thumbnail ?: "",
-                        totalViews = totalViews,
-                        totalEngagedViews = totalEngagedViews,
-                    )
-                }
-
-                else -> {
-                    Unit
-                }
-            }
+            val engagedViews = (state.viewsData[videoId] as? UiState.Success)?.data?.loggedInViews
+            VideoViewsSheet(
+                sheetState = bottomSheetState,
+                onDismissRequest = { viewModel.setBottomSheetType(ProfileBottomSheet.None) },
+                thumbnailUrl = video?.thumbnail ?: "",
+                totalViews = bottomSheet.totalViews,
+                totalEngagedViews = engagedViews,
+            )
         }
 
         is ProfileBottomSheet.FollowDetails -> {
@@ -739,9 +795,27 @@ private fun MainContent(
     hasBotAccounts: Boolean,
     showCreateBotCta: Boolean,
     onCreateInfluencerClick: () -> Unit,
+    onOpenCoach: () -> Unit,
     onUsernameClick: (String) -> Unit,
 ) {
     val subscribeButtonUiState = state.profileSubscribeButtonUiState()
+    val canManageAiInfluencer = state.isOwnProfile && state.isLoggedIn && state.isAiInfluencer
+    // Phase 22.3d — when a Video Idea Create fires the "View in Drafts"
+    // toast CTA (or the Drafts-tab request comes from any other place),
+    // switch to the Drafts tab if the request targets the profile we're
+    // currently rendering. Scoping by accountInfo.userPrincipal avoids
+    // stacked-profile screens fighting over the same flow.
+    val draftsTabRequest by VideoGenerationTracker.selectDraftsTab.collectAsState()
+    LaunchedEffect(draftsTabRequest, state.accountInfo?.userPrincipal) {
+        val request = draftsTabRequest ?: return@LaunchedEffect
+        val currentPrincipal = state.accountInfo?.userPrincipal
+        val matchesThisProfile =
+            request.targetPrincipal == null || request.targetPrincipal == currentPrincipal
+        if (matchesThisProfile && state.isOwnProfile) {
+            viewModel.selectTab(ProfileTab.Drafts)
+            VideoGenerationTracker.consumeDraftsTabRequest()
+        }
+    }
     Column(modifier = modifier.fillMaxSize()) {
         ProfileHeader(
             isOwnProfile = state.isOwnProfile,
@@ -789,6 +863,16 @@ private fun MainContent(
                 onTalkToMeClicked = viewModel::fetchInfluencerDetails,
                 showSubscribe = false,
                 onSubscribeClicked = {},
+                // H2H: button shown only on another user's NON-AI profile
+                // when the H2hChatEnabled flag is on. Own-profile, AI
+                // influencer profiles, and logged-out users never see it.
+                showSendMessage =
+                    !state.isOwnProfile &&
+                        state.isLoggedIn &&
+                        state.isH2hChatEnabled &&
+                        !state.isAiInfluencer,
+                isSendMessageInProgress = state.isCreatingHumanConversation,
+                onSendMessageClicked = { viewModel.onSendMessageClicked() },
                 isProUser = state.isProUser,
                 showCreateInfluencerCta = state.isOwnProfile && state.isLoggedIn && showCreateBotCta,
                 onCreateInfluencerClick = onCreateInfluencerClick,
@@ -797,6 +881,14 @@ private fun MainContent(
                 maxVisibleBotUsernames = state.maxVisibleBotUsernames,
                 onUsernameClick = onUsernameClick,
             )
+        }
+        if (state.isSoulFileCoachEnabled && canManageAiInfluencer) {
+            YralGradientButton(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                text = stringResource(Res.string.make_ai_influencer_better),
+                onClick = onOpenCoach,
+            )
+            Spacer(modifier = Modifier.height(16.dp))
         }
         when (profileVideos.loadState.refresh) {
             is LoadState.Loading -> {
@@ -825,6 +917,13 @@ private fun MainContent(
                         draftVideos = draftVideos,
                         selectedTab = state.selectedTab,
                         isOwnProfile = state.isOwnProfile,
+                        isAiInfluencer = state.isAiInfluencer,
+                        isVideoIdeasEnabled = state.isVideoIdeasEnabled,
+                        videoIdeas = state.videoIdeas,
+                        isLoadingVideoIdeas = state.isLoadingVideoIdeas,
+                        videoIdeasError = state.videoIdeasError,
+                        onRetryVideoIdeas = { viewModel.retryLoadVideoIdeas() },
+                        onCreateIdeaClick = { viewModel.createVideoFromIdea(it) },
                         deletingVideoId = deletingVideoId,
                         uploadVideo = uploadVideo,
                         openVideoReel = { viewModel.openVideoReel(it) },
@@ -1019,7 +1118,7 @@ private fun ErrorContent(message: String) {
     }
 }
 
-@Suppress("LongMethod", "LongParameterList")
+@Suppress("CyclomaticComplexMethod", "LongMethod", "LongParameterList")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SuccessContent(
@@ -1028,6 +1127,13 @@ private fun SuccessContent(
     draftVideos: LazyPagingItems<FeedDetails>,
     selectedTab: ProfileTab,
     isOwnProfile: Boolean,
+    isAiInfluencer: Boolean,
+    isVideoIdeasEnabled: Boolean,
+    videoIdeas: List<VideoIdea>?,
+    isLoadingVideoIdeas: Boolean,
+    videoIdeasError: String?,
+    onRetryVideoIdeas: () -> Unit,
+    onCreateIdeaClick: (VideoIdea) -> Unit,
     deletingVideoId: String,
     uploadVideo: () -> Unit,
     openVideoReel: (Int) -> Unit,
@@ -1045,6 +1151,10 @@ private fun SuccessContent(
         } else {
             0
         }
+    val isGeneratedDraftRefreshPending =
+        isOwnProfile &&
+            selectedTab == ProfileTab.Drafts &&
+            generatingState.isDraftRefreshPending
     Column(
         modifier =
             Modifier
@@ -1056,6 +1166,7 @@ private fun SuccessContent(
                 selectedTab = selectedTab,
                 onTabSelected = onTabSelected,
                 hasDrafts = draftVideos.itemCount > 0,
+                showIdeasTab = isAiInfluencer && isVideoIdeasEnabled,
             )
         }
 
@@ -1067,10 +1178,20 @@ private fun SuccessContent(
 
         val activeVideos = if (selectedTab == ProfileTab.Drafts) draftVideos else profileVideos
         val isRefreshing = activeVideos.loadState.refresh is LoadState.Loading
+        val showDraftsLoadingState =
+            shouldShowDraftsLoadingState(
+                itemCount = draftVideos.itemCount,
+                pendingGenerationCount = pendingGenerationCount,
+                refreshLoadState = draftVideos.loadState.refresh,
+                isGeneratedDraftRefreshPending = isGeneratedDraftRefreshPending,
+            )
         val showDraftsEmptyState =
-            draftVideos.itemCount == 0 &&
-                draftVideos.loadState.refresh is LoadState.NotLoading &&
-                pendingGenerationCount == 0
+            shouldShowDraftsEmptyState(
+                itemCount = draftVideos.itemCount,
+                pendingGenerationCount = pendingGenerationCount,
+                refreshLoadState = draftVideos.loadState.refresh,
+                isGeneratedDraftRefreshPending = isGeneratedDraftRefreshPending,
+            )
 
         PullToRefreshBox(
             isRefreshing = isRefreshing,
@@ -1090,8 +1211,19 @@ private fun SuccessContent(
                 }
             },
         ) {
-            if (selectedTab == ProfileTab.Drafts) {
-                if (showDraftsEmptyState) {
+            if (selectedTab == ProfileTab.Ideas) {
+                IdeasListContent(
+                    ideas = videoIdeas,
+                    isLoading = isLoadingVideoIdeas,
+                    errorMessage = videoIdeasError,
+                    isGenerationInFlight = generatingState.isGenerating,
+                    onRetry = onRetryVideoIdeas,
+                    onCreateClick = onCreateIdeaClick,
+                )
+            } else if (selectedTab == ProfileTab.Drafts) {
+                if (showDraftsLoadingState) {
+                    LoadingContent()
+                } else if (showDraftsEmptyState) {
                     DraftsEmptyStateContent(
                         offset = offset,
                         uploadVideo = uploadVideo,
@@ -1128,6 +1260,27 @@ private fun SuccessContent(
         }
     }
 }
+
+private fun shouldShowDraftsLoadingState(
+    itemCount: Int,
+    pendingGenerationCount: Int,
+    refreshLoadState: LoadState,
+    isGeneratedDraftRefreshPending: Boolean,
+): Boolean =
+    itemCount == 0 &&
+        pendingGenerationCount == 0 &&
+        (refreshLoadState is LoadState.Loading || isGeneratedDraftRefreshPending)
+
+private fun shouldShowDraftsEmptyState(
+    itemCount: Int,
+    pendingGenerationCount: Int,
+    refreshLoadState: LoadState,
+    isGeneratedDraftRefreshPending: Boolean,
+): Boolean =
+    itemCount == 0 &&
+        refreshLoadState is LoadState.NotLoading &&
+        pendingGenerationCount == 0 &&
+        !isGeneratedDraftRefreshPending
 
 @Composable
 private fun EmptyStateContent(
@@ -1189,6 +1342,7 @@ private fun ProfileTabBar(
     selectedTab: ProfileTab,
     onTabSelected: (ProfileTab) -> Unit,
     hasDrafts: Boolean,
+    showIdeasTab: Boolean,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -1208,6 +1362,21 @@ private fun ProfileTabBar(
             onClick = { onTabSelected(ProfileTab.Published) },
             modifier = Modifier.weight(1f),
         )
+        if (showIdeasTab) {
+            ProfileTabItem(
+                icon =
+                    painterResource(
+                        if (selectedTab == ProfileTab.Ideas) {
+                            Res.drawable.ic_ideas_selected
+                        } else {
+                            Res.drawable.ic_ideas_unselected
+                        },
+                    ),
+                isSelected = selectedTab == ProfileTab.Ideas,
+                onClick = { onTabSelected(ProfileTab.Ideas) },
+                modifier = Modifier.weight(1f),
+            )
+        }
         Box(modifier = Modifier.weight(1f)) {
             ProfileTabItem(
                 icon =
@@ -1328,10 +1497,6 @@ private fun DraftVideoGridContent(
 ) {
     val generatingState by VideoGenerationTracker.state.collectAsState()
     val pendingGenerations = if (isOwnProfile) generatingState.pendingGenerations else emptyList()
-    RefreshDraftVideosOnPendingGenerationChange(
-        draftVideos = draftVideos,
-        pendingGenerations = pendingGenerations,
-    )
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -1381,23 +1546,6 @@ private fun DraftVideoGridContent(
                 onRetry = { draftVideos.retry() },
             )
         }
-    }
-}
-
-@Composable
-private fun RefreshDraftVideosOnPendingGenerationChange(
-    draftVideos: LazyPagingItems<FeedDetails>,
-    pendingGenerations: List<VideoGenerationTracker.PendingGeneration>,
-) {
-    val pendingGenerationIds = remember(pendingGenerations) { pendingGenerations.map { it.id } }
-    var previousPendingGenerationIds by remember { mutableStateOf<List<Long>?>(null) }
-
-    LaunchedEffect(pendingGenerationIds) {
-        val previousIds = previousPendingGenerationIds
-        if (previousIds != pendingGenerationIds && (previousIds != null || pendingGenerationIds.isNotEmpty())) {
-            draftVideos.refresh()
-        }
-        previousPendingGenerationIds = pendingGenerationIds
     }
 }
 
@@ -1991,17 +2139,21 @@ private fun DraftVideoDetailScreen(
             loop = true,
             modifier = Modifier.fillMaxSize(),
         )
-        Icon(
-            painter = painterResource(DesignRes.drawable.arrow_left),
-            contentDescription = "back",
-            tint = Color.White,
+        Box(
             modifier =
                 Modifier
-                    .padding(16.dp)
-                    .size(24.dp)
+                    .size(96.dp)
                     .align(Alignment.TopStart)
                     .clickable { onBack() },
-        )
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(DesignRes.drawable.arrow_left),
+                contentDescription = "back",
+                tint = Color.White,
+                modifier = Modifier.size(24.dp),
+            )
+        }
         YralGradientButton(
             text = stringResource(Res.string.publish_button),
             onClick = onPublish,
@@ -2076,6 +2228,190 @@ private fun BecomeProButtonPreview() {
                     .padding(24.dp),
         ) {
             BecomeProButton(onClick = {})
+        }
+    }
+}
+
+// ─── Phase 22.3c — Video Ideas tab ───────────────────────────────────────
+
+@Composable
+private fun IdeasListContent(
+    ideas: List<VideoIdea>?,
+    isLoading: Boolean,
+    errorMessage: String?,
+    isGenerationInFlight: Boolean,
+    onRetry: () -> Unit,
+    onCreateClick: (VideoIdea) -> Unit,
+) {
+    androidx.compose.foundation.lazy.LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        item(key = "ideas-header") {
+            Text(
+                text = stringResource(Res.string.ideas_header),
+                style = LocalAppTopography.current.baseSemiBold,
+                color = YralColors.NeutralTextPrimary,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            )
+        }
+        if (isGenerationInFlight) {
+            item(key = "ideas-lock-hint") {
+                Text(
+                    text = stringResource(Res.string.ideas_lock_hint),
+                    style = LocalAppTopography.current.smRegular,
+                    color = YralColors.NeutralTextSecondary,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .background(YralColors.Neutral900, RoundedCornerShape(12.dp))
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                )
+            }
+        }
+        ideasStateItems(
+            ideas = ideas,
+            isLoading = isLoading,
+            errorMessage = errorMessage,
+            isGenerationInFlight = isGenerationInFlight,
+            onRetry = onRetry,
+            onCreateClick = onCreateClick,
+        )
+    }
+}
+
+private fun LazyListScope.ideasStateItems(
+    ideas: List<VideoIdea>?,
+    isLoading: Boolean,
+    errorMessage: String?,
+    isGenerationInFlight: Boolean,
+    onRetry: () -> Unit,
+    onCreateClick: (VideoIdea) -> Unit,
+) {
+    when {
+        isLoading -> {
+            ideaMessageItem("ideas-loading", Res.string.ideas_loading)
+        }
+
+        errorMessage != null -> {
+            ideaMessageItem(
+                key = "ideas-error",
+                text = Res.string.ideas_error,
+                color = YralColors.Pink300,
+                onClick = onRetry,
+            )
+        }
+
+        ideas != null && ideas.isEmpty() -> {
+            ideaMessageItem("ideas-empty", Res.string.ideas_empty)
+        }
+
+        ideas != null -> {
+            items(items = ideas, key = { it.id }) { idea ->
+                IdeaRow(
+                    idea = idea,
+                    isCreateLocked = isGenerationInFlight,
+                    onCreateClick = { onCreateClick(idea) },
+                )
+            }
+        }
+    }
+}
+
+private fun LazyListScope.ideaMessageItem(
+    key: String,
+    text: org.jetbrains.compose.resources.StringResource,
+    color: Color = YralColors.NeutralTextSecondary,
+    onClick: (() -> Unit)? = null,
+) {
+    item(key = key) {
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+                    .padding(vertical = 32.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = stringResource(text),
+                style = LocalAppTopography.current.baseRegular,
+                color = color,
+            )
+        }
+    }
+}
+
+@Composable
+private fun IdeaRow(
+    idea: VideoIdea,
+    isCreateLocked: Boolean,
+    onCreateClick: () -> Unit,
+) {
+    val isUsed = !idea.isFresh
+    val createEnabled = idea.isFresh && !isCreateLocked
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(YralColors.Neutral900, RoundedCornerShape(12.dp))
+                .padding(12.dp),
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            text = "${idea.rank}",
+            style = LocalAppTopography.current.baseSemiBold,
+            color = YralColors.Pink300,
+            modifier = Modifier.padding(top = 2.dp).width(24.dp),
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = idea.hook,
+                style = LocalAppTopography.current.baseSemiBold,
+                color = YralColors.NeutralTextPrimary,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = idea.ideaText,
+                style = LocalAppTopography.current.regRegular,
+                color = YralColors.NeutralTextSecondary,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        if (isUsed) {
+            Box(
+                modifier =
+                    Modifier
+                        .background(YralColors.Neutral700, RoundedCornerShape(16.dp))
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+            ) {
+                Text(
+                    text = stringResource(Res.string.ideas_created_chip),
+                    style = LocalAppTopography.current.smSemiBold,
+                    color = YralColors.NeutralTextSecondary,
+                )
+            }
+        } else {
+            Box(
+                modifier =
+                    Modifier
+                        .background(
+                            color = if (createEnabled) YralColors.Pink300 else YralColors.Neutral700,
+                            shape = RoundedCornerShape(16.dp),
+                        ).clickable(enabled = createEnabled, onClick = onCreateClick)
+                        .padding(horizontal = 14.dp, vertical = 6.dp),
+            ) {
+                Text(
+                    text = stringResource(Res.string.ideas_create_cta),
+                    style = LocalAppTopography.current.smSemiBold,
+                    color = YralColors.Neutral0,
+                )
+            }
         }
     }
 }

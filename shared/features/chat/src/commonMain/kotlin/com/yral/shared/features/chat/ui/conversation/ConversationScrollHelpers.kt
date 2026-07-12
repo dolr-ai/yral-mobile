@@ -5,12 +5,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import com.yral.shared.features.chat.domain.models.ConversationMessageRole
 import com.yral.shared.features.chat.viewmodel.ConversationMessageItem
 import com.yral.shared.features.chat.viewmodel.LocalMessageStatus
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 internal fun ConversationMessageItem.isAssistant() =
     when (this) {
@@ -73,6 +78,7 @@ internal fun AutoScrollToAssistantMessage(
     screenWidth: Int,
     density: Density,
     overlayItems: List<ConversationMessageItem>,
+    historyPagingItems: LazyPagingItems<ConversationMessageItem>,
     scrollToLastLine: Boolean = false,
     visibleLines: Int = 0,
     lineHeightPx: Float = 0f,
@@ -118,9 +124,34 @@ internal fun AutoScrollToAssistantMessage(
         }
     }
 
+    // Auto-scroll must move forward in time, never backward. The scrollTarget
+    // derivedStateOf re-emits whenever the "latest assistant" reference changes,
+    // and during an active Chat-as-Human takeover the backend's POST /messages
+    // response omits the AI reply (chat.py early-exit). handleSendSuccess then
+    // removes the optimistic ASSISTANT placeholder without replacement, and
+    // findLatestAssistantIndex falls back to a STALE older assistant message.
+    // Without this guard the LaunchedEffect would animate-scroll backward to
+    // that older target, dragging the viewport away from the user's just-sent
+    // message and visually hiding it behind the input area.
+    var lastScrolledTimeMs by remember { mutableStateOf<Long?>(null) }
+
     LaunchedEffect(scrollTarget, readyForAutoScroll) {
         val target = scrollTarget ?: return@LaunchedEffect
         if (!readyForAutoScroll && !target.isWaiting) return@LaunchedEffect
+        val targetTimeMs = target.message.scrollTimestampMs() ?: return@LaunchedEffect
+        // Primary guard: if the rendered list has an item NEWER than this target,
+        // don't scroll. This catches the case where the user types after an active
+        // takeover (their last action was a send that got no AI reply, so the
+        // newest item is a USER message but findLatestAssistantIndex still returns
+        // an older ASSISTANT). Auto-scrolling to that ASSISTANT would push the
+        // newer USER message off-screen behind the input box.
+        val newestVisibleTimeMs = newestVisibleItemTimeMs(overlayItems, historyPagingItems)
+        if (newestVisibleTimeMs != null && targetTimeMs < newestVisibleTimeMs) return@LaunchedEffect
+        // Secondary guard: don't re-scroll to a target we've already animated to,
+        // and never scroll backward to an older target than the previous one.
+        val prev = lastScrolledTimeMs
+        if (prev != null && targetTimeMs <= prev) return@LaunchedEffect
+        lastScrolledTimeMs = targetTimeMs
         runCatching {
             listState.animateScrollToItem(
                 index = target.index,
@@ -129,6 +160,35 @@ internal fun AutoScrollToAssistantMessage(
         }
     }
 }
+
+private fun newestVisibleItemTimeMs(
+    overlayItems: List<ConversationMessageItem>,
+    historyPagingItems: LazyPagingItems<ConversationMessageItem>,
+): Long? {
+    overlayItems.firstOrNull()?.scrollTimestampMs()?.let { return it }
+    return historyPagingItems.itemSnapshotList.items
+        .firstOrNull()
+        ?.scrollTimestampMs()
+}
+
+@OptIn(ExperimentalTime::class)
+private fun ConversationMessageItem.scrollTimestampMs(): Long? =
+    when (this) {
+        is ConversationMessageItem.Local -> message.createdAtMs
+        is ConversationMessageItem.Remote -> parseIsoToEpochMs(message.createdAt)
+    }
+
+@OptIn(ExperimentalTime::class)
+private fun parseIsoToEpochMs(timestamp: String): Long? =
+    runCatching {
+        val normalized =
+            if (timestamp.endsWith('Z') || timestamp.matches(Regex(".*[+-]\\d{2}:\\d{2}$"))) {
+                timestamp
+            } else {
+                "${timestamp}Z"
+            }
+        Instant.parse(normalized).toEpochMilliseconds()
+    }.getOrNull()
 
 private fun calculatePendingUserMessagesHeight(
     overlayItems: List<ConversationMessageItem>,

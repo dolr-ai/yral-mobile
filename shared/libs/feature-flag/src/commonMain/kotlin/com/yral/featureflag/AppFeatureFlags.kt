@@ -30,6 +30,21 @@ object AppFeatureFlags {
                 description = "Require users to sign in before accessing the app",
                 defaultValue = false,
             )
+        val BottomNavSwapEnabled: FeatureFlag<Boolean> =
+            boolean(
+                keySuffix = "bottomNavSwapEnabled",
+                name = "Bottom-nav swap (Discover first, Video feed second)",
+                description = "When ON, swaps bottom-nav positions 1 and 2 so the chat " +
+                    "Discover / Inbox tab (the one carrying the search bar from PR #1197) " +
+                    "becomes the default landing — position 1 keeps the home-icon glyph but " +
+                    "now opens Discover. The video feed moves to position 2 with a Reels-" +
+                    "style play icon. Other nav slots (Upload, Wallet, Profile, Account) are " +
+                    "untouched. When OFF, the nav order and default landing are exactly as " +
+                    "today (Feed in position 1). Alpha-team-first rollout per 21γ.P16; instant " +
+                    "rollback is a server-side flag flip. PR keeps defaultValue = false until " +
+                    "alpha sign-off + ramp.",
+                defaultValue = false,
+            )
     }
 
     object Android :

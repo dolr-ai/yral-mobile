@@ -1,7 +1,6 @@
 package com.yral.shared.features.uploadvideo.nav
 
 import com.arkivanov.decompose.ComponentContext
-import com.arkivanov.decompose.DelicateDecomposeApi
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
@@ -13,7 +12,6 @@ import com.yral.shared.analytics.events.SignupPageName
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
 import com.yral.shared.features.uploadvideo.nav.aiVideoGen.AiVideoGenComponent
 import com.yral.shared.features.uploadvideo.nav.fileUpload.UploadVideoComponent
-import com.yral.shared.features.uploadvideo.nav.flowSelection.FlowSelectionComponent
 import com.yral.shared.libs.routing.routes.api.AppRoute
 import com.yral.shared.libs.routing.routes.api.GenerateAIVideo
 import kotlinx.serialization.Serializable
@@ -32,7 +30,7 @@ internal class DefaultUploadVideoRootComponent(
     private val navigation = StackNavigation<Config>()
     private val iGoToHome =
         {
-            navigation.replaceAll(Config.FlowSelection)
+            navigation.replaceAll(Config.AiVideoGen)
             goToHome.invoke()
         }
 
@@ -42,7 +40,7 @@ internal class DefaultUploadVideoRootComponent(
             serializer = Config.serializer(),
             initialStack = {
                 val saved = snapshot?.routes ?: emptyList()
-                if (saved.isEmpty()) listOf(Config.FlowSelection) else saved.map { it.toConfig() }
+                if (saved.isEmpty()) listOf(Config.AiVideoGen) else saved.map { it.toConfig() }
             },
             handleBackButton = true,
             childFactory = ::child,
@@ -63,17 +61,16 @@ internal class DefaultUploadVideoRootComponent(
             routes =
                 stack.value.items.map { item ->
                     when (item.configuration) {
-                        is Config.FlowSelection -> Snapshot.Route.FlowSelection
                         is Config.AiVideoGen -> Snapshot.Route.AiVideoGen
                         is Config.FileUpload -> Snapshot.Route.FileUpload
-                        else -> Snapshot.Route.FlowSelection
+                        else -> Snapshot.Route.AiVideoGen
                     }
                 },
         )
 
     private fun Snapshot.Route.toConfig(): Config =
         when (this) {
-            Snapshot.Route.FlowSelection -> Config.FlowSelection
+            Snapshot.Route.FlowSelection -> Config.AiVideoGen
             Snapshot.Route.AiVideoGen -> Config.AiVideoGen
             Snapshot.Route.FileUpload -> Config.FileUpload
         }
@@ -83,28 +80,25 @@ internal class DefaultUploadVideoRootComponent(
         componentContext: ComponentContext,
     ): Child =
         when (config) {
-            Config.FlowSelection -> Child.FlowSelection(flowSelectionComponent(componentContext))
             Config.AiVideoGen -> Child.AiVideoGen(aiVideoGenComponent(componentContext))
             Config.FileUpload -> Child.FileUpload(uploadVideoComponent(componentContext))
         }
 
-    @OptIn(DelicateDecomposeApi::class)
-    private fun flowSelectionComponent(componentContext: ComponentContext): FlowSelectionComponent =
-        FlowSelectionComponent.Companion(
-            componentContext = componentContext,
-            onUploadVideoClicked = { navigation.pushToFront(Config.FileUpload) },
-            onAiVideoGenClicked = { navigation.pushToFront(Config.AiVideoGen) },
-        )
-
     private fun aiVideoGenComponent(componentContext: ComponentContext): AiVideoGenComponent =
         AiVideoGenComponent.Companion(
             componentContext = componentContext,
-            onBack = { navigation.pop() },
+            onBack = {
+                if (stack.value.items.size > 1) {
+                    navigation.pop()
+                } else {
+                    iGoToHome()
+                }
+            },
             goToHome = iGoToHome,
             promptLogin = { promptLogin(SignupPageName.VIDEO_CREATION) },
             subscriptionCoordinator = subscriptionCoordinator,
             goToProfile = {
-                navigation.replaceAll(Config.FlowSelection)
+                navigation.replaceAll(Config.AiVideoGen)
                 goToProfile()
             },
         )
@@ -129,9 +123,6 @@ internal class DefaultUploadVideoRootComponent(
 
     @Serializable
     private sealed interface Config {
-        @Serializable
-        data object FlowSelection : Config
-
         @Serializable
         data object AiVideoGen : Config
 

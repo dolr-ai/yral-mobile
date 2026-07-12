@@ -44,6 +44,7 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
+import com.yral.featureflag.AppFeatureFlags
 import com.yral.featureflag.FeatureFlagManager
 import com.yral.shared.analytics.events.CategoryName
 import com.yral.shared.analytics.events.SignupPageName
@@ -97,6 +98,8 @@ import yral_mobile.shared.app.generated.resources.profile_nav_selected
 import yral_mobile.shared.app.generated.resources.profile_nav_unselected
 import yral_mobile.shared.app.generated.resources.upload_video_nav_selected
 import yral_mobile.shared.app.generated.resources.upload_video_nav_unselected
+import yral_mobile.shared.app.generated.resources.video_feed_nav_selected
+import yral_mobile.shared.app.generated.resources.video_feed_nav_unselected
 import yral_mobile.shared.app.generated.resources.wallet_nav
 import yral_mobile.shared.app.generated.resources.wallet_nav_unselected
 import yral_mobile.shared.libs.designsystem.generated.resources.account_nav
@@ -362,9 +365,21 @@ private fun getProfileVideos(
 private fun getVisibleTabs(): List<HomeTab> {
     val flagManager = koinInject<FeatureFlagManager>()
     val chatWalletConfig = flagManager.getWalletConfig()
+    val swapNav = flagManager.isEnabled(AppFeatureFlags.Common.BottomNavSwapEnabled)
     return buildList {
-        add(HomeTab.HOME)
-        if (chatWalletConfig.first) add(HomeTab.CHAT)
+        // 21γ.P16 — when the swap flag is ON AND Chat is in the visible
+        // set (i.e. wallet-vs-chat resolved Chat), put CHAT in position 1
+        // and HOME in position 2. Visually the slot 1 icon stays the
+        // home glyph (handled in NavBarIconWithBadge) and slot 2 gets a
+        // Reels-style play glyph. When the flag is OFF, or Chat is not
+        // visible at all, the order is exactly today's.
+        if (swapNav && chatWalletConfig.first) {
+            add(HomeTab.CHAT)
+            add(HomeTab.HOME)
+        } else {
+            add(HomeTab.HOME)
+            if (chatWalletConfig.first) add(HomeTab.CHAT)
+        }
         add(HomeTab.UPLOAD_VIDEO)
         add(HomeTab.WALLET)
         add(HomeTab.PROFILE)
@@ -378,6 +393,9 @@ private fun HomeNavigationBar(
     updateCurrentTab: (tab: HomeTab) -> Unit,
     bottomNavigationClicked: (categoryName: CategoryName) -> Unit,
 ) {
+    val flagManager = koinInject<FeatureFlagManager>()
+    val navSwapEnabled =
+        remember(flagManager) { flagManager.isEnabled(AppFeatureFlags.Common.BottomNavSwapEnabled) }
     var playSound by remember { mutableStateOf(false) }
     val tabs = getVisibleTabs()
     val insetHeightPx = NavigationBarDefaults.windowInsets.getBottom(LocalDensity.current)
@@ -402,6 +420,7 @@ private fun HomeNavigationBar(
                         isSelected = currentTab == tab,
                         tab = tab,
                         badgeCount = if (tab == HomeTab.CHAT) chatUnreadCount else 0,
+                        navSwapEnabled = navSwapEnabled,
                     )
                 },
                 colors =
@@ -426,6 +445,7 @@ private fun NavBarIcon(
     isSelected: Boolean,
     tab: HomeTab,
     badgeCount: Int,
+    navSwapEnabled: Boolean = false,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -451,6 +471,7 @@ private fun NavBarIcon(
             tab = tab,
             isSelected = isSelected,
             badgeCount = badgeCount,
+            navSwapEnabled = navSwapEnabled,
         )
     }
 }
@@ -460,6 +481,7 @@ private fun NewTaggedColumn(
     tab: HomeTab,
     isSelected: Boolean,
     badgeCount: Int,
+    navSwapEnabled: Boolean = false,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -489,14 +511,22 @@ private fun NewTaggedColumn(
             Spacer(modifier = Modifier.weight(1f))
         }
 
-        val icon =
-            if (isSelected) {
-                tab.icon
-            } else {
-                tab.unSelectedIcon
+        // 21γ.P16 — when the swap flag is ON the slot 1 icon (CHAT
+        // destination) shows the home glyph and the slot 2 icon (HOME
+        // destination, i.e. the video feed) shows the Reels-style play
+        // glyph. Tab destinations remain the canonical HomeTab values;
+        // only the glyph is swapped to match the new visual order.
+        val effectiveIcon =
+            when {
+                !navSwapEnabled -> if (isSelected) tab.icon else tab.unSelectedIcon
+                tab == HomeTab.CHAT && isSelected -> Res.drawable.home_nav_selected
+                tab == HomeTab.CHAT -> Res.drawable.home_nav_unselected
+                tab == HomeTab.HOME && isSelected -> Res.drawable.video_feed_nav_selected
+                tab == HomeTab.HOME -> Res.drawable.video_feed_nav_unselected
+                else -> if (isSelected) tab.icon else tab.unSelectedIcon
             }
         NavBarIconWithBadge(
-            icon = icon,
+            icon = effectiveIcon,
             title = tab.title,
             badgeText = chatUnreadBadgeText(badgeCount),
         )

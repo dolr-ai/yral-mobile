@@ -40,11 +40,16 @@ import com.yral.shared.features.auth.ui.LoginBottomSheetType
 import com.yral.shared.features.auth.ui.LoginMode
 import com.yral.shared.features.auth.ui.LoginScreenType
 import com.yral.shared.features.auth.ui.rememberLoginInfo
+import com.yral.shared.features.chat.attachments.FilePathChatAttachment
 import com.yral.shared.features.chat.domain.models.ChatMessageType
 import com.yral.shared.features.chat.domain.models.ConversationMessageRole
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.nav.conversation.ConversationComponent
 import com.yral.shared.features.chat.ui.components.ChatErrorBottomSheet
+import com.yral.shared.features.chat.ui.conversation.audio.AudioPreviewBar
+import com.yral.shared.features.chat.ui.conversation.audio.AudioRecordingBar
+import com.yral.shared.features.chat.ui.conversation.audio.AudioRecordingState
+import com.yral.shared.features.chat.ui.conversation.audio.rememberChatAudioRecorder
 import com.yral.shared.features.chat.viewmodel.ConversationMessageItem
 import com.yral.shared.features.chat.viewmodel.ConversationViewModel
 import com.yral.shared.iap.utils.getPurchaseContext
@@ -63,6 +68,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import yral_mobile.shared.features.chat.generated.resources.Res
 import yral_mobile.shared.features.chat.generated.resources.access_activated_overlay_message
+import yral_mobile.shared.features.chat.generated.resources.ai_influencer_read_only_chat
 import yral_mobile.shared.features.chat.generated.resources.chat_background_inverted
 import yral_mobile.shared.features.chat.generated.resources.subscription_card_overlay_message
 import yral_mobile.shared.features.chat.generated.resources.switch_profile
@@ -104,6 +110,7 @@ fun ChatConversationScreen(
         params.influencerId,
         params.conversationId,
         params.userId,
+        params.participantPrincipalId,
         viewState.isSocialSignedIn,
     ) {
         val conversationId = params.conversationId
@@ -117,6 +124,7 @@ fun ChatConversationScreen(
                 displayName = params.displayName,
                 userName = params.username,
                 avatarUrl = params.avatarUrl,
+                participantPrincipalId = params.participantPrincipalId,
             )
         } else {
             viewModel.initializeForChatWall(
@@ -137,7 +145,18 @@ fun ChatConversationScreen(
         }
     }
 
-    LaunchedEffect(Unit) { viewModel.refreshHistory() }
+    // The screen-side LaunchedEffect(Unit) { viewModel.refreshHistory() } used
+    // to live here. It was redundant — the VM-side pagedHistory rebuild on
+    // conversationId change (ConversationViewModel.kt: pagedHistory's combine
+    // on conversationId) is the canonical refresh trigger and fires once on
+    // setConversationId. Both triggers firing was producing the "entire chat
+    // flickered 2 times" repro on Soma re-entry, where the bigger history
+    // (~30 items) made the double swap visible.
+    LaunchedEffect(viewState.isBotAccount, viewState.conversationId) {
+        if (viewState.isBotAccount && viewState.conversationId != null) {
+            viewModel.refreshHumanCreatorTakeoverStatus()
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.influencerSubscriptionToastFlow.collect { event ->
@@ -175,13 +194,44 @@ fun ChatConversationScreen(
 
     val overlayItems by viewModel.overlay.collectAsState()
     val historyPagingItems = viewModel.history.collectAsLazyPagingItems()
+    val streamMarkdownLockedRemoteIds by viewModel.streamMarkdownLockedRemoteIds.collectAsState()
+    val assistantError by viewModel.assistantError.collectAsState()
+    val isReplyInProgress by viewModel.isReplyInProgress.collectAsState()
+
+    // Phase 5b: push the LazyPagingItems snapshot into the VM whenever it settles.
+    // The VM combines this with `_overlay.sent` and debounces 500ms before writing
+    // to ConversationContentCache. On re-entry the cache hydrates `_overlay.sent`
+    // instantly so the user never sees a blank chat window during paging refetch.
+    LaunchedEffect(historyPagingItems.itemSnapshotList) {
+        val snapshot =
+            historyPagingItems.itemSnapshotList.items
+                .mapNotNull { (it as? ConversationMessageItem.Remote)?.message }
+        viewModel.recordHistorySnapshot(snapshot)
+    }
 
     var input by remember { mutableStateOf("") }
     var activeImagePreview by remember { mutableStateOf<ChatImagePreviewSource?>(null) }
     var isSwitchingProfile by remember { mutableStateOf(false) }
+    // Audio-recording state for the in-chat voice-note flow.
+    //   pendingAudio = (file attachment + duration) is set when the recorder
+    //   finishes a take; the AudioPreviewBar replaces the input until the
+    //   user either taps Send (consumes pendingAudio into a draft) or Delete
+    //   (discards file + clears state, returning to the text input).
+    var pendingAudio by remember { mutableStateOf<Pair<FilePathChatAttachment, Int>?>(null) }
     val listState = rememberLazyListState()
     val screenWidth = LocalWindowInfo.current.containerSize.width
     val density = LocalDensity.current
+
+    // When the user re-enters a conversation, snap the list back to the
+    // newest message (index 0 in reverseLayout). Without this, Compose's
+    // rememberLazyListState() retains the position from the previous visit,
+    // which during an active takeover can land deep in old content and
+    // visually hide the newest messages behind the input box.
+    LaunchedEffect(viewState.conversationId) {
+        if (viewState.conversationId != null) {
+            runCatching { listState.scrollToItem(0) }
+        }
+    }
 
     val imagePickerLauncher =
         rememberChatImagePicker(
@@ -221,19 +271,34 @@ fun ChatConversationScreen(
         screenWidth = screenWidth,
         density = density,
         overlayItems = overlayItems,
+        historyPagingItems = historyPagingItems,
         scrollToLastLine = true,
         lineHeightPx = messageLineHeightPx,
     )
 
-    // Check if there's a waiting assistant message in overlay
-    val hasWaitingAssistant by derivedStateOf { overlayItems.any { it.isWaitingAssistant() } }
+    // Check if there's a waiting assistant message in overlay.
+    // Phase 7-final: also returns true while a streaming SSE reply or a legacy
+    // sendMessageUseCase is in flight. ChatInputArea uses this flag to disable
+    // the send + media buttons during AI replies (matches production chat-ai).
+    // Streaming Locals have streamingBuffer != null and `isWaitingAssistant()`
+    // returns false for them — they wouldn't trip this check on their own —
+    // so the VM-side isReplyInProgress flow covers the SSE path.
+    val hasWaitingAssistant by derivedStateOf {
+        overlayItems.any { it.isWaitingAssistant() } || isReplyInProgress
+    }
 
     val overlaySentCount by derivedStateOf { overlayItems.count { it is ConversationMessageItem.Remote } }
     val totalMessageCount by derivedStateOf { viewState.totalHistoryMessageCount + overlaySentCount }
 
     val proDetails by component.subscriptionCoordinator.proDetails.collectAsStateWithLifecycle(ProDetails())
     val shouldPromptForLogin by derivedStateOf {
-        !viewState.isSocialSignedIn && totalMessageCount >= viewState.loginPromptMessageThreshold
+        // Two gates collapse here:
+        //  - Legacy: anonymous user past the ~10-message threshold.
+        //  - RequireAuthBeforeFirstSend: anonymous user, gate on every send/chip
+        //    so login lands on the first interaction instead of mid-conversation.
+        val isAnonymous = !viewState.isSocialSignedIn
+        val pastLegacyThreshold = totalMessageCount >= viewState.loginPromptMessageThreshold
+        isAnonymous && (viewState.requireAuthBeforeFirstSend || pastLegacyThreshold)
     }
     val hasChatAccess by derivedStateOf {
         proDetails.isProPurchased || viewState.isInfluencerSubscriptionPurchasedAndVerified
@@ -248,7 +313,8 @@ fun ChatConversationScreen(
                 viewState.isSubscriptionEnabled &&
                 !hasChatAccess &&
                 atSubscriptionThreshold &&
-                viewState.isInfluencerSubscriptionAvailableToPurchase
+                viewState.isInfluencerSubscriptionAvailableToPurchase &&
+                !viewState.isHumanChat
         Logger.d("SubDebug") {
             "shouldShow=$result | waiting=$hasWaitingAssistant | signed=${viewState.isSocialSignedIn}" +
                 " | subEnabled=${viewState.isSubscriptionEnabled} | access=$hasChatAccess" +
@@ -264,7 +330,8 @@ fun ChatConversationScreen(
             viewState.isSubscriptionEnabled &&
             !hasChatAccess &&
             atSubscriptionThreshold &&
-            !viewState.isInfluencerSubscriptionAvailableToPurchase
+            !viewState.isInfluencerSubscriptionAvailableToPurchase &&
+            !viewState.isHumanChat
     }
 
     val subscriptionCardOverlayMessage =
@@ -296,9 +363,14 @@ fun ChatConversationScreen(
             requestLoginFactory = component.requestLoginFactory,
             key = viewState.influencer,
         )
-    val promptLogin: () -> Unit =
+    // Auto-resume on success: the optional [onSuccess] runs after the user
+    // completes a real login. Cancel just dismisses the sheet — the typed
+    // draft / chip intent is never consumed, so the input keeps what was
+    // there. Login-on-first-send (RequireAuthBeforeFirstSend) uses this to
+    // re-fire the captured send so login feels like a 1-tap unlock.
+    val promptLogin: (() -> Unit) -> Unit =
         remember(viewState.influencer) {
-            {
+            { onSuccess ->
                 val influencer = viewState.influencer
                 val influencerName = influencer?.displayName ?: ""
                 val influencerAvatarUrl = influencer?.avatarUrl ?: ""
@@ -311,18 +383,20 @@ fun ChatConversationScreen(
                         ),
                     ),
                     LoginMode.BOTH,
-                    null,
+                    { onSuccess() },
                     null,
                 ) {}
             }
         }
 
     val switchProfileMessage = stringResource(Res.string.switch_to_human_profile_to_chat)
+    val aiInfluencerReadOnlyMessage = stringResource(Res.string.ai_influencer_read_only_chat)
     val switchProfileButtonText = stringResource(Res.string.switch_profile)
     val switchProfileFailedMessage = stringResource(Res.string.switch_profile_failed)
     val bottomAreaState by derivedStateOf {
         resolveConversationBottomAreaState(
             isBotAccount = viewState.isBotAccount,
+            isHumanParticipantConversation = component.openConversationParams.userId != null,
             shouldShowInfluencerSubscriptionCard = shouldShowInfluencerSubscriptionCard,
             shouldBlockChatNoProduct = shouldBlockChatNoProduct,
         )
@@ -339,7 +413,15 @@ fun ChatConversationScreen(
                 }
 
                 shouldPromptForLogin -> {
-                    promptLogin()
+                    // Capture the intended send so successful login auto-resumes
+                    // it (chip-tap or typed draft both flow through this gate).
+                    // On cancel the callback never fires and the input stays as
+                    // typed because onBeforeSend (which clears the field) is
+                    // deferred until after the resumed send.
+                    promptLogin {
+                        onBeforeSend()
+                        viewModel.sendMessage(draft)
+                    }
                     true
                 }
 
@@ -402,12 +484,11 @@ fun ChatConversationScreen(
                 onBackClick = { component.onBack() },
                 onProfileClick = { influencer ->
                     val userPrincipal =
-                        if (viewState.isBotAccount) {
-                            component.openConversationParams.userId
-                        } else {
-                            influencer.id
-                        }
-                    if (userPrincipal == null) return@ChatHeader
+                        resolveConversationProfilePrincipal(
+                            isBotAccount = viewState.isBotAccount,
+                            humanParticipantUserId = component.openConversationParams.userId,
+                            influencerId = influencer.id,
+                        )
                     val canisterData =
                         CanisterData(
                             canisterId = getUserInfoServiceCanister(),
@@ -432,6 +513,7 @@ fun ChatConversationScreen(
                 onSubscribeClick = {
                     purchaseContext?.let { viewModel.launchInfluencerSubscriptionPurchase(it) }
                 },
+                isHumanChat = viewState.isHumanChat,
             )
 
             Column(
@@ -459,6 +541,12 @@ fun ChatConversationScreen(
                             overlayItems = overlayItems,
                             historyPagingItems = historyPagingItems,
                             isBotAccount = viewState.isBotAccount,
+                            isHumanChat = viewState.isHumanChat,
+                            currentUserPrincipalId = viewState.currentUserPrincipalId,
+                            renderSystemBanners = viewState.isChatAsHumanCreatorEnabled,
+                            streamMarkdownLockedRemoteIds = streamMarkdownLockedRemoteIds,
+                            assistantError = assistantError,
+                            onAssistantErrorRetry = { viewModel.retryFailedAssistantReply() },
                             onImageClick = { imageUrl ->
                                 activeImagePreview = ChatImagePreviewSource.Message(imageUrl)
                             },
@@ -503,24 +591,72 @@ fun ChatConversationScreen(
 
                         when (bottomAreaState) {
                             ConversationBottomAreaState.BotAccountPrompt -> {
-                                BotAccountConversationPrompt(
-                                    message = switchProfileMessage,
-                                    buttonText = switchProfileButtonText,
-                                    avatarUrl = viewState.influencer?.avatarUrl,
-                                    isSwitching = isSwitchingProfile,
-                                    onSwitchClick = {
-                                        if (isSwitchingProfile) return@BotAccountConversationPrompt
-                                        isSwitchingProfile = true
-                                        component.switchToMainProfile { switched ->
-                                            isSwitchingProfile = false
-                                            if (!switched) {
-                                                ToastManager.showError(
-                                                    type = ToastType.Small(message = switchProfileFailedMessage),
-                                                )
+                                if (viewState.isChatAsHumanCreatorEnabled) {
+                                    val creatorDisplayName =
+                                        viewState.influencer
+                                            ?.displayName
+                                            ?.takeIf { it.isNotBlank() }
+                                            ?: viewState.influencer?.name.orEmpty()
+                                    CreatorTakeoverBar(
+                                        isActive = viewState.isHumanCreatorTakeoverActive,
+                                        isStarting = viewState.isHumanCreatorTakeoverStarting,
+                                        isEnding = viewState.isHumanCreatorTakeoverEnding,
+                                        isMessageSending = viewState.isHumanCreatorMessageSending,
+                                        remainingSeconds = viewState.humanCreatorTakeoverRemainingSeconds,
+                                        creatorDisplayName = creatorDisplayName,
+                                        onToggleOn = { viewModel.startHumanCreatorTakeover() },
+                                        onToggleOff = { viewModel.releaseHumanCreatorTakeover() },
+                                        onSend = { text -> viewModel.sendAsHumanCreator(text) },
+                                    )
+                                } else {
+                                    BotAccountConversationPrompt(
+                                        message = switchProfileMessage,
+                                        buttonText = switchProfileButtonText,
+                                        avatarUrl = viewState.influencer?.avatarUrl,
+                                        isSwitching = isSwitchingProfile,
+                                        onSwitchClick = {
+                                            if (isSwitchingProfile) return@BotAccountConversationPrompt
+                                            isSwitchingProfile = true
+                                            component.switchToMainProfile { switched ->
+                                                isSwitchingProfile = false
+                                                if (!switched) {
+                                                    ToastManager.showError(
+                                                        type = ToastType.Small(message = switchProfileFailedMessage),
+                                                    )
+                                                }
                                             }
-                                        }
-                                    },
-                                )
+                                        },
+                                    )
+                                }
+                            }
+
+                            ConversationBottomAreaState.BotAccountReadOnly -> {
+                                if (viewState.isChatAsHumanCreatorEnabled) {
+                                    val creatorDisplayName =
+                                        viewState.influencer
+                                            ?.displayName
+                                            ?.takeIf { it.isNotBlank() }
+                                            ?: viewState.influencer?.name.orEmpty()
+                                    CreatorTakeoverBar(
+                                        isActive = viewState.isHumanCreatorTakeoverActive,
+                                        isStarting = viewState.isHumanCreatorTakeoverStarting,
+                                        isEnding = viewState.isHumanCreatorTakeoverEnding,
+                                        isMessageSending = viewState.isHumanCreatorMessageSending,
+                                        remainingSeconds = viewState.humanCreatorTakeoverRemainingSeconds,
+                                        creatorDisplayName = creatorDisplayName,
+                                        onToggleOn = { viewModel.startHumanCreatorTakeover() },
+                                        onToggleOff = { viewModel.releaseHumanCreatorTakeover() },
+                                        onSend = { text -> viewModel.sendAsHumanCreator(text) },
+                                    )
+                                } else {
+                                    BotAccountConversationPrompt(
+                                        message = aiInfluencerReadOnlyMessage,
+                                        buttonText = null,
+                                        avatarUrl = null,
+                                        isSwitching = false,
+                                        onSwitchClick = null,
+                                    )
+                                }
                             }
 
                             ConversationBottomAreaState.InfluencerSubscription -> {
@@ -545,24 +681,87 @@ fun ChatConversationScreen(
                             }
 
                             ConversationBottomAreaState.ChatInput -> {
-                                ChatInputArea(
-                                    input = input,
-                                    onInputChange = { input = it },
-                                    onSendClick = {
-                                        val text = input.trim()
-                                        sendMessageIfAllowed(
-                                            SendMessageDraft(
-                                                messageType = ChatMessageType.TEXT,
-                                                content = text,
-                                            ),
-                                        ) {
-                                            input = ""
-                                        }
-                                    },
-                                    onCameraClick = imageCaptureLauncher,
-                                    onGalleryClick = imagePickerLauncher,
-                                    hasWaitingAssistant = hasWaitingAssistant,
-                                )
+                                val audioRecorder =
+                                    rememberChatAudioRecorder(
+                                        onComplete = { attachment, durationSeconds ->
+                                            pendingAudio = attachment to durationSeconds
+                                        },
+                                        onPermissionDenied = {
+                                            Logger.w { "Mic permission denied — voice message not recorded" }
+                                        },
+                                    )
+                                val audioState by audioRecorder.state.collectAsState()
+                                when {
+                                    pendingAudio != null -> {
+                                        val (audioAttachment, durationSeconds) = pendingAudio!!
+                                        AudioPreviewBar(
+                                            attachment = audioAttachment,
+                                            durationSeconds = durationSeconds,
+                                            onDelete = {
+                                                audioAttachment.deleteCachedFile()
+                                                pendingAudio = null
+                                            },
+                                            onSend = {
+                                                sendMessageIfAllowed(
+                                                    SendMessageDraft(
+                                                        messageType = ChatMessageType.AUDIO,
+                                                        audioAttachment = audioAttachment,
+                                                        audioDurationSeconds = durationSeconds,
+                                                    ),
+                                                ) {
+                                                    pendingAudio = null
+                                                }
+                                            },
+                                            hasWaitingAssistant = hasWaitingAssistant,
+                                        )
+                                    }
+
+                                    audioState is AudioRecordingState.Recording ||
+                                        audioState is AudioRecordingState.Finalizing -> {
+                                        val elapsedMs =
+                                            (audioState as? AudioRecordingState.Recording)?.elapsedMs ?: 0L
+                                        AudioRecordingBar(
+                                            elapsedMs = elapsedMs,
+                                            isFinalizing = audioState is AudioRecordingState.Finalizing,
+                                            onStop = { audioRecorder.stop() },
+                                            onCancel = { audioRecorder.cancel() },
+                                        )
+                                    }
+
+                                    else -> {
+                                        ChatInputArea(
+                                            input = input,
+                                            onInputChange = { input = it },
+                                            onSendClick = {
+                                                val text = input.trim()
+                                                sendMessageIfAllowed(
+                                                    SendMessageDraft(
+                                                        messageType = ChatMessageType.TEXT,
+                                                        content = text,
+                                                    ),
+                                                ) {
+                                                    input = ""
+                                                }
+                                            },
+                                            onCameraClick = imageCaptureLauncher,
+                                            onGalleryClick = imagePickerLauncher,
+                                            // Mic button is gated on AudioRecordingEnabled (kill-switch +
+                                            // GA pacing) AND not-an-H2H-chat. Voice messages aren't
+                                            // supported on H2H peer chats — the H2H send route doesn't
+                                            // transcribe, so the recipient would see an empty bubble
+                                            // with playable audio and no context. G6 gate landed in
+                                            // this commit; passing null hides the icon entirely per
+                                            // ConversationInputArea's ActionsRow logic.
+                                            onMicClick =
+                                                if (viewState.isAudioRecordingEnabled && !viewState.isHumanChat) {
+                                                    { audioRecorder.start() }
+                                                } else {
+                                                    null
+                                                },
+                                            hasWaitingAssistant = hasWaitingAssistant,
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

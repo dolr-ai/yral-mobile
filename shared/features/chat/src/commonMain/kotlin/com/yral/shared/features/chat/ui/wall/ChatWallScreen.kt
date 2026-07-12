@@ -168,12 +168,14 @@ private fun InfluencerCard(
                     onClick = onClick,
                 ),
     ) {
-        // Using YralGridImage - optimized for scrolling performance
+        // Using YralGridImage - optimized for scrolling performance.
+        // backgroundColor + shimmerWhileLoading use the YralGridImage
+        // defaults (Neutral700 + design-system shimmer pulse) so the
+        // loading state reads as intentional, not blank.
         YralGridImage(
             imageUrl = influencer.avatarUrl,
             contentScale = ContentScale.Crop,
             shape = cardShape,
-            backgroundColor = Color.DarkGray,
             modifier = Modifier.fillMaxWidth().weight(1f).padding(6.dp),
         )
         InfluencerCardContent(

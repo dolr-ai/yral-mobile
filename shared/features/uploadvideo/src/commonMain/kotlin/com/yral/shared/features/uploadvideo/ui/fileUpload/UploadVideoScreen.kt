@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -49,6 +50,8 @@ import com.yral.shared.features.uploadvideo.ui.components.hashtagInput.keyboardH
 import com.yral.shared.libs.arch.presentation.UiState
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralGradientButton
+import com.yral.shared.libs.designsystem.component.rememberTextFieldValueState
+import com.yral.shared.libs.designsystem.component.withNativeTextInput
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.videoPlayer.ResizeMode
@@ -323,6 +326,7 @@ private fun CaptionInput(
     onValueChange: (String) -> Unit,
 ) {
     var isFocused by remember { mutableStateOf(false) }
+    val textFieldValueState = rememberTextFieldValueState(text)
     TextField(
         modifier =
             Modifier
@@ -335,8 +339,12 @@ private fun CaptionInput(
                     color = if (isFocused) YralColors.Neutral500 else Color.Transparent,
                     shape = RoundedCornerShape(8.dp),
                 ).clip(RoundedCornerShape(8.dp)),
-        value = text,
-        onValueChange = onValueChange,
+        value = textFieldValueState.value,
+        onValueChange = {
+            textFieldValueState.value = it
+            onValueChange(it.text)
+        },
+        keyboardOptions = KeyboardOptions.Default.withNativeTextInput(),
         colors =
             TextFieldDefaults.colors().copy(
                 focusedTextColor = YralColors.Neutral300,

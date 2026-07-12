@@ -86,6 +86,9 @@ fun AccountInfoView(
     onTalkToMeClicked: () -> Unit = {},
     showSubscribe: Boolean = false,
     onSubscribeClicked: () -> Unit = {},
+    showSendMessage: Boolean = false,
+    isSendMessageInProgress: Boolean = false,
+    onSendMessageClicked: () -> Unit = {},
     isProUser: Boolean = false,
     showCreateInfluencerCta: Boolean = false,
     onCreateInfluencerClick: () -> Unit = {},
@@ -296,6 +299,31 @@ fun AccountInfoView(
                         SubscribeButton(
                             modifier = Modifier.weight(1f),
                             onClick = onSubscribeClicked,
+                        )
+                    }
+                    if (showSendMessage) {
+                        val sendMessageButtonState =
+                            if (isSendMessageInProgress) {
+                                YralButtonState.Loading
+                            } else {
+                                YralButtonState.Enabled
+                            }
+                        YralButton(
+                            modifier = Modifier.weight(1f),
+                            text = if (isSendMessageInProgress) "" else "Send Message",
+                            borderColor = YralColors.Neutral700,
+                            borderWidth = 1.dp,
+                            backgroundColor = YralColors.Neutral800,
+                            textStyle =
+                                LocalAppTopography
+                                    .current
+                                    .baseSemiBold
+                                    .copy(
+                                        color = YralColors.Grey50,
+                                    ),
+                            onClick = onSendMessageClicked,
+                            buttonState = sendMessageButtonState,
+                            buttonHeight = 40.dp,
                         )
                     }
                     if (isAiInfluencer) {

@@ -1,6 +1,5 @@
 package com.yral.android
 
-import com.yral.shared.core.videostate.VideoGenerationTracker
 import com.yral.shared.libs.designsystem.component.toast.ToastCTA
 import com.yral.shared.libs.designsystem.component.toast.ToastDuration
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
@@ -38,6 +37,7 @@ internal fun notificationConfigByType(viewDraftsCtaText: String): Map<String, No
  */
 class NotificationHandler(
     private val notificationConfigByType: Map<String, NotificationConfig>,
+    private val onDraftCreatedNotification: () -> Unit = {},
 ) {
     fun handle(
         title: String?,
@@ -113,7 +113,7 @@ class NotificationHandler(
         config: NotificationConfig?,
         onNavigate: (String) -> Unit,
     ) {
-        VideoGenerationTracker.onDraftCreatedAndRequestDraftsTab()
+        onDraftCreatedNotification()
         val toastType = buildToastType(title, body) ?: return
         val ctaText = config?.ctaText ?: return
         ToastManager.showSuccess(

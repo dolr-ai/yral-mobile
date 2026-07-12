@@ -5,7 +5,7 @@
     <string name="create_with_ai">Create with AI</string>
     <string name="add_video_from_device">Add a video from your device.</string>
     <string name="upload_completed">Upload Completed</string>
-    <string name="upload_completed_message">We're processing your video. It'll be in 'Your Videos' under My Profile soon. Happy scrolling!</string>
+    <string name="upload_completed_message">We're processing your video. It'll be in 'My Videos' under My Profile soon. Happy scrolling!</string>
     <string name="upload_video_error">We couldn’t upload your video due to some reasons. Try uploading it again.</string>
     <string name="go_to_home">Go to Home</string>
     <string name="uploading_message">Uploading may take a moment. Feel free to explore more videos on the home page while you wait!</string>
@@ -32,21 +32,28 @@
     <string name="credits_used_use_token">%1$d of %2$d credits used. You can create videos with %3$s.</string>
     <string name="prompt">Prompt</string>
     <string name="enter_prompt_here">Enter the Prompt here…</string>
+    <string name="text_to_video">Text To Video</string>
+    <string name="image_to_video">Image To Video</string>
+    <string name="add_image">Add Image</string>
+    <string name="upload_an_image_to_guide_your_ai_video_style">Upload an image to guide your AI video style</string>
+    <string name="selected_model_does_not_support_image_input">Selected model does not support image input.</string>
     <string name="generating_video">Generating Video…</string>
     <string name="this_may_take_few_minutes">This may take few minutes</string>
     <string name="upload_successful">Upload Successful</string>
-    <string name="credits">Credits</string>
+    <string name="credits">Credits Used</string>
     <string name="credits_required">Credits Required</string>
     <string name="low_balance">Low Balance :</string>
-    <string name="you_will_loose_ai_credits">You will loose AI Credits</string>
-    <string name="you_will_loose_credits_desc">Leaving now will use up today’s AI credit. You can return tomorrow for a fresh credit.</string>
-    <string name="yes_take_me_back">Yes, Take me back</string>
-    <string name="stay_here">Stay Here</string>
     <string name="generate_video">Generate Video</string>
     <string name="play_games">Play Games</string>
     <string name="to_earn_token">to earn %1$s!</string>
 
     <string name="toast_ai_video_generating">Sit tight! Your AI video is being created.</string>
+    <string name="ai_video_invalid_input">Invalid input</string>
+    <string name="ai_video_authentication_failed">Authentication failed</string>
+    <string name="ai_video_insufficient_balance">Insufficient balance</string>
+    <string name="ai_video_rate_limit_exceeded">Rate limit exceeded</string>
+    <string name="ai_video_provider_error">Provider error</string>
+    <string name="ai_video_service_unavailable">Service unavailable</string>
 
     <string name="ai_video_subscription_nudge_title">You’ve used your free AI video!</string>
     <string name="ai_video_subscription_nudge_description">Why use tokens? Go Pro. Get %1$d YRAL Credits to create AI videos, unlimited chats &amp; free tournaments access.</string>

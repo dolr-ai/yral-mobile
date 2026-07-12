@@ -46,7 +46,6 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalFocusManager
@@ -64,9 +63,11 @@ import com.yral.shared.libs.designsystem.component.YralAsyncImage
 import com.yral.shared.libs.designsystem.component.YralButtonState
 import com.yral.shared.libs.designsystem.component.YralGradientButton
 import com.yral.shared.libs.designsystem.component.YralLoader
+import com.yral.shared.libs.designsystem.component.rememberTextFieldValueState
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastType
 import com.yral.shared.libs.designsystem.component.toast.showSuccess
+import com.yral.shared.libs.designsystem.component.withNativeTextInput
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import org.jetbrains.compose.resources.DrawableResource
@@ -163,24 +164,7 @@ fun EditProfileScreen(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .verticalScroll(scrollState)
-                    .pointerInput(Unit) {
-                        // This only clears focus when tap is NOT consumed
-                        // by a child (like BasicTextField)
-                        awaitPointerEventScope {
-                            while (true) {
-                                val event = awaitPointerEvent()
-                                val anyPressed = event.changes.any { it.pressed }
-                                if (!anyPressed) {
-                                    // Pointer is up -> clear focus if nothing consumed it
-                                    val allUnconsumed = event.changes.all { !it.isConsumed }
-                                    if (allUnconsumed) {
-                                        focusManager.clearFocus()
-                                    }
-                                }
-                            }
-                        }
-                    },
+                    .verticalScroll(scrollState),
         ) {
             EditProfileHeader(onBack = handleBack)
             Column(
@@ -548,18 +532,22 @@ private fun UsernameTextField(
     val shape = RoundedCornerShape(12.dp)
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
+    val textFieldValueState = rememberTextFieldValueState(state.usernameInput)
     LaunchedEffect(state.shouldFocusUsername) {
         if (state.shouldFocusUsername) {
             focusRequester.requestFocus()
         }
     }
     BasicTextField(
-        value = state.usernameInput,
-        onValueChange = onValueChange,
+        value = textFieldValueState.value,
+        onValueChange = {
+            textFieldValueState.value = it
+            onValueChange(it.text)
+        },
         singleLine = true,
         textStyle = LocalAppTopography.current.baseSemiBold.copy(color = YralColors.NeutralTextPrimary),
         cursorBrush = SolidColor(YralColors.NeutralTextPrimary),
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done).withNativeTextInput(),
         keyboardActions =
             KeyboardActions(
                 onDone = {
@@ -634,10 +622,16 @@ private fun BioSection(
         )
         Spacer(modifier = Modifier.height(8.dp))
         val shape = RoundedCornerShape(12.dp)
+        val textFieldValueState = rememberTextFieldValueState(bio)
+        val inputText = textFieldValueState.value.text
         BasicTextField(
-            value = bio,
-            onValueChange = onBioChange,
+            value = textFieldValueState.value,
+            onValueChange = {
+                textFieldValueState.value = it
+                onBioChange(it.text)
+            },
             textStyle = LocalAppTopography.current.baseRegular.copy(color = YralColors.NeutralTextPrimary),
+            keyboardOptions = KeyboardOptions.Default.withNativeTextInput(),
             cursorBrush = SolidColor(YralColors.NeutralTextPrimary),
             modifier =
                 Modifier
@@ -657,7 +651,7 @@ private fun BioSection(
                                 shape = shape,
                             ).padding(horizontal = 10.dp, vertical = 12.dp),
                 ) {
-                    if (bio.isEmpty()) {
+                    if (inputText.isEmpty()) {
                         Text(
                             text = stringResource(DesignRes.string.enter_bio),
                             style = LocalAppTopography.current.baseRegular,

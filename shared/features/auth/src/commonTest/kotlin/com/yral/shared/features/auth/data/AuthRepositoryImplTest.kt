@@ -33,10 +33,10 @@ class AuthRepositoryImplTest {
             val repository = createRepository(resolver)
 
             val initialUrl = repository.getOAuthUrl(SocialProvider.GOOGLE, byteArrayOf(1)).first
-            resolver.activateFallback("auth.dolr.ai")
+            resolver.activateFallback("auth.yral.com")
             val fallbackUrl = repository.getOAuthUrl(SocialProvider.GOOGLE, byteArrayOf(1)).first
 
-            assertEquals("auth.dolr.ai", initialUrl.host)
+            assertEquals("auth.yral.com", initialUrl.host)
             assertEquals("auth.yral.com", fallbackUrl.host)
         }
 

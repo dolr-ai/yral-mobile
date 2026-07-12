@@ -56,11 +56,13 @@ struct YralTests {
       from: [
         "type": "VideoUploadedToDraft",
         "post_id": "123"
-      ]
-    ) { url in
-      parsedURL = url
-      return VideoUploadSuccessful(videoID: nil)
-    }
+      ],
+      onDraftCreatedNotification: {},
+      parseUrl: { url in
+        parsedURL = url
+        return VideoUploadSuccessful(videoID: nil)
+      }
+    )
 
     #expect(route != nil)
     #expect(parsedURL == AppRouteKt.profilePath())

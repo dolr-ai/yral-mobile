@@ -21,14 +21,12 @@ import com.yral.shared.crashlytics.core.ExceptionType
 import com.yral.shared.data.domain.models.FeedDetails
 import com.yral.shared.data.domain.models.Post
 import com.yral.shared.data.domain.useCases.FetchDailyStreakUseCase
-import com.yral.shared.data.domain.useCases.GetVideoViewsUseCase
 import com.yral.shared.features.feed.analytics.FeedTelemetry
 import com.yral.shared.features.feed.domain.useCases.CheckVideoVoteUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchFeedDetailsWithCreatorInfoUseCase
 import com.yral.shared.features.feed.domain.useCases.FetchMoreFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetAIFeedUseCase
-import com.yral.shared.features.feed.domain.useCases.GetGlobalCacheFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.GetInitialFeedUseCase
 import com.yral.shared.features.feed.domain.useCases.LoadCachedFeedDetailsUseCase
 import com.yral.shared.features.feed.domain.useCases.SaveFeedDetailsCacheUseCase
@@ -101,12 +99,7 @@ class FeedViewModel(
         const val FOLLOW_NUDGE_PAGE = 5
     }
 
-    private val _state =
-        MutableStateFlow(
-            FeedState(
-                isCardLayoutEnabled = flagManager.isEnabled(FeedFeatureFlags.CardLayout.Enabled),
-            ),
-        )
+    private val _state = MutableStateFlow(FeedState())
     val state: StateFlow<FeedState> = _state.asStateFlow()
     private var videoData: VideoData = VideoData()
 
@@ -117,9 +110,6 @@ class FeedViewModel(
     private val trackedOnboardingSteps = mutableSetOf<OnboardingStep>()
 
     init {
-        // Set HON experiment super property for analytics
-        feedTelemetry.setHonExperimentStatus(_state.value.isCardLayoutEnabled)
-
         initAvailableFeeds()
         loadCachedFeedDetails()
         viewModelScope.launch {
@@ -247,40 +237,6 @@ class FeedViewModel(
         }
     }
 
-    private fun initialRemoteCachedFeedData() {
-        coroutineScope.launch {
-            sessionManager.userPrincipal?.let {
-                setLoadingMore(true)
-                requiredUseCases
-                    .getGlobalCacheFeedUseCase(Unit)
-                    .onSuccess { result ->
-                        val posts = result.posts
-                        Logger.d("FeedPagination") { "posts in initialFeed ${posts.size}" }
-                        if (posts.isEmpty()) {
-                            crashlyticsManager.recordException(
-                                YralException("Initial global cache feed empty"),
-                                ExceptionType.FEED,
-                            )
-                            setLoadingMore(false)
-                            loadMoreFeed()
-                        } else {
-                            val notVotedCount = filterVotedAndFetchDetails(posts)
-                            Logger.d("FeedPagination") { "notVotedCount in initialFeed $notVotedCount" }
-                            if (notVotedCount < SUFFICIENT_NEW_REQUIRED) {
-                                setLoadingMore(false)
-                                loadMoreFeed()
-                            } else {
-                                setLoadingMore(false)
-                            }
-                        }
-                    }.onFailure {
-                        setLoadingMore(false)
-                        loadMoreFeed()
-                    }
-            }
-        }
-    }
-
     private fun loadCachedFeedDetails() {
         coroutineScope.launch {
             sessionManager.userPrincipal?.let { userPrincipal ->
@@ -311,7 +267,7 @@ class FeedViewModel(
 
     private fun initializeFeed() {
         when (_state.value.feedType) {
-            FeedType.AI -> initialRemoteCachedFeedData()
+            FeedType.AI -> fetchAIFeed(currentBatchSize = FEEDS_PAGE_SIZE_AI_FEED, totalNotVotedCount = 0)
             else -> initialFeedData()
         }
     }
@@ -487,29 +443,13 @@ class FeedViewModel(
                 .onSuccess { detail ->
                     Logger.d("LinkSharing") { "Details Received $detail" }
                     detail?.let {
-                        Logger.d("LinkSharing") { "Fetching views for ${detail.videoID} current: ${detail.viewCount}" }
-                        requiredUseCases
-                            .videoViewsUseCase(
-                                parameter = GetVideoViewsUseCase.Params(listOf(detail.videoID)),
-                            ).onSuccess { views ->
-                                feedTelemetry.onDeeplink(detail.videoID)
-                                views.firstOrNull()?.allViews?.let { allViews ->
-                                    Logger.d("LinkSharing") { "View count : $allViews" }
-                                    _state.update { currentState ->
-                                        addDeeplinkData(
-                                            currentState = currentState,
-                                            details = detail.copy(viewCount = allViews, bulkViewCount = allViews),
-                                        )
-                                    }
-                                } ?: run {
-                                    Logger.d("LinkSharing") { "Failed to fetch view count" }
-                                    _state.update { currentState -> addDeeplinkData(currentState, detail) }
-                                }
-                            }.onFailure {
-                                Logger.d("LinkSharing") { "Failed to fetch view count" }
-                                feedTelemetry.onDeeplink(detail.videoID)
-                                _state.update { currentState -> addDeeplinkData(currentState, detail) }
-                            }
+                        feedTelemetry.onDeeplink(detail.videoID)
+                        _state.update { currentState ->
+                            addDeeplinkData(
+                                currentState = currentState,
+                                details = detail.copy(bulkViewCount = detail.viewCount),
+                            )
+                        }
                     } ?: run {
                         val exceptionMessage = "Detail is null for $postId in deeplink"
                         crashlyticsManager.recordException(
@@ -602,7 +542,9 @@ class FeedViewModel(
                                     "in feed details ${detail?.viewCount}"
                             }
                             val updatedDetail =
-                                post.numViewsAll?.let { views -> detail?.copy(viewCount = views) } ?: detail
+                                post.numViewsAll?.let { views ->
+                                    detail?.copy(viewCount = views, bulkViewCount = views)
+                                } ?: detail
                             updatedDetail to
                                 if (checkVotes) {
                                     detail?.let { isAlreadyVoted(it) }
@@ -748,41 +690,6 @@ class FeedViewModel(
             feedTelemetry.trackVideoImpression(
                 feedDetails = currentState.feedDetails[currentState.currentPageOfFeed],
             )
-            refreshVideoViewCount(currentState.feedDetails[currentState.currentPageOfFeed])
-        }
-    }
-
-    private fun refreshVideoViewCount(detail: FeedDetails) {
-        viewModelScope.launch {
-            requiredUseCases
-                .videoViewsUseCase(
-                    parameter = GetVideoViewsUseCase.Params(listOf(detail.videoID)),
-                ).onSuccess { views ->
-                    views.firstOrNull()?.allViews?.let { allViews ->
-                        Logger.d("ViewCount") { "View count : $allViews" }
-                        _state.update { currentState ->
-                            val list = currentState.feedDetails
-                            val index = list.indexOfFirst { it.videoID == detail.videoID }
-                            if (index == -1) {
-                                currentState
-                            } else {
-                                val existingDetail = list[index]
-                                if (existingDetail.bulkViewCount == allViews) {
-                                    currentState
-                                } else {
-                                    currentState.copy(
-                                        feedDetails =
-                                            list.update(index) {
-                                                it.copy(viewCount = allViews, bulkViewCount = allViews)
-                                            },
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }.onFailure {
-                    Logger.d("ViewCount") { "Failed to fetch view count" }
-                }
         }
     }
 
@@ -1146,10 +1053,8 @@ class FeedViewModel(
         val checkVideoVoteUseCase: CheckVideoVoteUseCase,
         val getAIFeedUseCase: GetAIFeedUseCase,
         val followUserUseCase: FollowUserUseCase,
-        val videoViewsUseCase: GetVideoViewsUseCase,
         val loadCachedFeedDetailsUseCase: LoadCachedFeedDetailsUseCase,
         val saveFeedDetailsCacheUseCase: SaveFeedDetailsCacheUseCase,
-        val getGlobalCacheFeedUseCase: GetGlobalCacheFeedUseCase,
         val fetchDailyStreakUseCase: FetchDailyStreakUseCase,
     )
 }
@@ -1173,7 +1078,6 @@ data class FeedState(
     val isFollowInProgress: Boolean = false,
     val currentOnboardingStep: OnboardingStep? = null,
     val isMandatoryLogin: Boolean = false,
-    val isCardLayoutEnabled: Boolean = true,
     val streakCount: Long? = null,
     val streakExpiresAtEpochMs: Long? = null,
 )

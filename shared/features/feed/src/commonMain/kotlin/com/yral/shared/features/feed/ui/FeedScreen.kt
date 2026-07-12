@@ -1,5 +1,6 @@
 package com.yral.shared.features.feed.ui
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -23,7 +25,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
 import com.yral.shared.analytics.events.SignupPageName
@@ -40,9 +45,6 @@ import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.FOLLOW_NU
 import com.yral.shared.features.feed.viewmodel.FeedViewModel.Companion.SIGN_UP_PAGE
 import com.yral.shared.features.feed.viewmodel.OnboardingStep
 import com.yral.shared.libs.designsystem.component.YralErrorMessage
-import com.yral.shared.libs.designsystem.component.YralLoader
-import com.yral.shared.libs.designsystem.component.lottie.LottieRes
-import com.yral.shared.libs.designsystem.component.lottie.YralLottieAnimation
 import com.yral.shared.libs.designsystem.component.toast.ToastManager
 import com.yral.shared.libs.designsystem.component.toast.ToastType
 import com.yral.shared.libs.designsystem.component.toast.showError
@@ -50,8 +52,6 @@ import com.yral.shared.libs.designsystem.component.toast.showSuccess
 import com.yral.shared.libs.designsystem.theme.LocalAppTopography
 import com.yral.shared.libs.designsystem.theme.YralColors
 import com.yral.shared.libs.videoPlayer.YRALReelPlayer
-import com.yral.shared.libs.videoPlayer.YRALReelPlayerCardStack
-import com.yral.shared.libs.videoPlayer.cardstack.SwipeDirection
 import com.yral.shared.libs.videoPlayer.model.Reels
 import com.yral.shared.libs.videoPlayer.util.ReelScrollDirection
 import com.yral.shared.reportVideo.domain.models.ReportSheetState
@@ -84,7 +84,6 @@ fun FeedScreen(
     bottomOverlay: @Composable (pageNo: Int, scrollToNext: () -> Unit) -> Unit,
     onPageChanged: (pageNo: Int, currentPage: Int) -> Unit,
     onEdgeScrollAttempt: (pageNo: Int) -> Unit,
-    onSwipeVote: ((direction: SwipeDirection, pageIndex: Int, isSwipe: Boolean) -> Unit)? = null,
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -161,7 +160,7 @@ fun FeedScreen(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
         ) {
-            YralLoader(size = 48.dp)
+            FeedLoadingIndicator(size = 48.dp)
         }
         return
     }
@@ -174,72 +173,35 @@ fun FeedScreen(
     Column(modifier = modifier) {
         if (state.feedDetails.isNotEmpty()) {
             KeepScreenOnEffect(true)
-            if (state.isCardLayoutEnabled) {
-                YRALReelPlayerCardStack(
-                    modifier = Modifier.weight(1f),
-                    reels = reels,
-                    maxReelsInPager = state.feedDetails.size,
-                    initialPage = state.currentPageOfFeed,
-                    onPageLoaded = { page ->
-                        // call onPageChanged before changing page in FeedViewModel
-                        onPageChanged(page, state.currentPageOfFeed)
-                        viewModel.onCurrentPageChange(page)
-                        viewModel.setPostDescriptionExpanded(false)
-                    },
-                    recordTime = { currentTime, totalTime ->
-                        viewModel.recordTime(currentTime, totalTime)
-                    },
-                    didVideoEnd = { viewModel.didCurrentVideoEnd() },
-                    onEdgeScrollAttempt = { page, atFirst, direction ->
-                        // For card stack, any edge swipe attempt should trigger load more
+            YRALReelPlayer(
+                modifier = Modifier.weight(1f),
+                reels = reels,
+                maxReelsInPager = state.feedDetails.size,
+                initialPage = state.currentPageOfFeed,
+                onPageLoaded = { page ->
+                    onPageChanged(page, state.currentPageOfFeed)
+                    viewModel.onCurrentPageChange(page)
+                    viewModel.setPostDescriptionExpanded(false)
+                },
+                recordTime = { currentTime, totalTime ->
+                    viewModel.recordTime(currentTime, totalTime)
+                },
+                didVideoEnd = { viewModel.didCurrentVideoEnd() },
+                onEdgeScrollAttempt = { page, atFirst, direction ->
+                    if (!atFirst && direction == ReelScrollDirection.Up) {
                         onEdgeScrollAttempt(page)
-                    },
-                    onSwipeVote = onSwipeVote,
-                    shouldSuppressSwipeFeedback = { pageIndex ->
-                        !isLoggedInState.value && pageIndex != 0 && (pageIndex % SIGN_UP_PAGE) == 0
-                    },
-                ) { pageNo, scrollToNext ->
-                    FeedOverlay(
-                        pageNo = pageNo,
-                        currentOnboardingStep = onboardingStepState.value,
-                        isLoggedIn = isLoggedInState.value,
-                        topOverlay = { topOverlay(pageNo) },
-                        bottomOverlay = { bottomOverlay(pageNo, scrollToNext) },
-                        actionsRight = { actionsRight(pageNo) },
-                        requestLoginFactory = component.requestLoginFactory,
-                    )
-                }
-            } else {
-                YRALReelPlayer(
-                    modifier = Modifier.weight(1f),
-                    reels = reels,
-                    maxReelsInPager = state.feedDetails.size,
-                    initialPage = state.currentPageOfFeed,
-                    onPageLoaded = { page ->
-                        onPageChanged(page, state.currentPageOfFeed)
-                        viewModel.onCurrentPageChange(page)
-                        viewModel.setPostDescriptionExpanded(false)
-                    },
-                    recordTime = { currentTime, totalTime ->
-                        viewModel.recordTime(currentTime, totalTime)
-                    },
-                    didVideoEnd = { viewModel.didCurrentVideoEnd() },
-                    onEdgeScrollAttempt = { page, atFirst, direction ->
-                        if (!atFirst && direction == ReelScrollDirection.Up) {
-                            onEdgeScrollAttempt(page)
-                        }
-                    },
-                ) { pageNo, scrollToNext ->
-                    FeedOverlay(
-                        pageNo = pageNo,
-                        currentOnboardingStep = onboardingStepState.value,
-                        isLoggedIn = isLoggedInState.value,
-                        topOverlay = { topOverlay(pageNo) },
-                        bottomOverlay = { bottomOverlay(pageNo, scrollToNext) },
-                        actionsRight = { actionsRight(pageNo) },
-                        requestLoginFactory = component.requestLoginFactory,
-                    )
-                }
+                    }
+                },
+            ) { pageNo, scrollToNext ->
+                FeedOverlay(
+                    pageNo = pageNo,
+                    currentOnboardingStep = onboardingStepState.value,
+                    isLoggedIn = isLoggedInState.value,
+                    topOverlay = { topOverlay(pageNo) },
+                    bottomOverlay = { bottomOverlay(pageNo, scrollToNext) },
+                    actionsRight = { actionsRight(pageNo) },
+                    requestLoginFactory = component.requestLoginFactory,
+                )
             }
             // Show loader at the bottom when loading more content AND no new items have been added yet
             if (showLoader) {
@@ -250,7 +212,7 @@ fun FeedScreen(
                             .padding(vertical = 8.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    YralLoader(size = 20.dp)
+                    FeedLoadingIndicator(size = 20.dp)
                 }
             }
         } else {
@@ -258,7 +220,7 @@ fun FeedScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center,
             ) {
-                YralLoader()
+                FeedLoadingIndicator()
             }
         }
     }
@@ -447,12 +409,68 @@ private fun LoginBottomContent() {
             style = LocalAppTopography.current.mdBold,
             color = YralColors.NeutralIconsActive,
         )
-        YralLottieAnimation(
-            modifier = Modifier.size(36.dp),
-            LottieRes.SIGNUP_SCROLL,
+        ScrollChevronIndicator(modifier = Modifier.size(36.dp))
+    }
+}
+
+@Composable
+private fun ScrollChevronIndicator(modifier: Modifier = Modifier) {
+    val color = YralColors.NeutralIconsActive
+
+    Canvas(modifier = modifier) {
+        val strokeWidth = size.minDimension * CHEVRON_STROKE_WIDTH_RATIO
+        val centerX = size.width / 2f
+        val leftX = size.width * CHEVRON_LEFT_X_RATIO
+        val rightX = size.width * CHEVRON_RIGHT_X_RATIO
+
+        fun drawChevron(
+            topY: Float,
+            bottomY: Float,
+        ) {
+            drawLine(
+                color = color,
+                start = Offset(leftX, topY),
+                end = Offset(centerX, bottomY),
+                strokeWidth = strokeWidth,
+                cap = StrokeCap.Round,
+            )
+            drawLine(
+                color = color,
+                start = Offset(rightX, topY),
+                end = Offset(centerX, bottomY),
+                strokeWidth = strokeWidth,
+                cap = StrokeCap.Round,
+            )
+        }
+
+        drawChevron(
+            topY = size.height * CHEVRON_FIRST_TOP_Y_RATIO,
+            bottomY = size.height * CHEVRON_FIRST_BOTTOM_Y_RATIO,
+        )
+        drawChevron(
+            topY = size.height * CHEVRON_SECOND_TOP_Y_RATIO,
+            bottomY = size.height * CHEVRON_SECOND_BOTTOM_Y_RATIO,
         )
     }
 }
 
 @Composable
+private fun FeedLoadingIndicator(size: Dp = 40.dp) {
+    CircularProgressIndicator(
+        modifier = Modifier.size(size),
+        color = YralColors.NeutralIconsActive,
+        strokeWidth = FEED_LOADING_STROKE_WIDTH,
+    )
+}
+
+@Composable
 internal expect fun KeepScreenOnEffect(keepScreenOn: Boolean)
+
+private const val CHEVRON_STROKE_WIDTH_RATIO = 0.08f
+private const val CHEVRON_LEFT_X_RATIO = 0.28f
+private const val CHEVRON_RIGHT_X_RATIO = 0.72f
+private const val CHEVRON_FIRST_TOP_Y_RATIO = 0.24f
+private const val CHEVRON_FIRST_BOTTOM_Y_RATIO = 0.44f
+private const val CHEVRON_SECOND_TOP_Y_RATIO = 0.50f
+private const val CHEVRON_SECOND_BOTTOM_Y_RATIO = 0.70f
+private val FEED_LOADING_STROKE_WIDTH = 2.dp

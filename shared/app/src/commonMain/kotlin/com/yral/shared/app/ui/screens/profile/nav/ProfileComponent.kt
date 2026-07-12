@@ -9,6 +9,7 @@ import com.yral.shared.data.AlertsRequestType
 import com.yral.shared.data.domain.models.OpenConversationParams
 import com.yral.shared.features.account.nav.AccountComponent
 import com.yral.shared.features.auth.ui.RequestLoginFactory
+import com.yral.shared.features.coach.nav.OpenCoachParams
 import com.yral.shared.features.profile.nav.EditProfileComponent
 import com.yral.shared.features.profile.nav.ProfileMainComponent
 import com.yral.shared.features.subscriptions.nav.SubscriptionCoordinator
@@ -33,6 +34,7 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
     abstract fun openProfile()
     abstract fun openCreateInfluencer(source: BotCreationSource)
     abstract fun openConversation(params: OpenConversationParams)
+    abstract fun openCoach(params: OpenCoachParams)
 
     sealed class Child {
         class Main(
@@ -65,6 +67,7 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
             openProfile: (CanisterData) -> Unit,
             openCreateInfluencer: (source: BotCreationSource) -> Unit,
             openConversation: (OpenConversationParams) -> Unit,
+            openCoach: (OpenCoachParams) -> Unit,
             openAccountSheet: () -> Unit,
             switchToMainProfile: (onComplete: (Boolean) -> Unit) -> Unit,
             showAlertsOnDialog: (type: AlertsRequestType) -> Unit,
@@ -80,6 +83,7 @@ abstract class ProfileComponent : HomeChildSnapshotProvider {
                 openProfile,
                 openCreateInfluencer,
                 openConversation,
+                openCoach,
                 openAccountSheet,
                 switchToMainProfile,
                 showAlertsOnDialog,

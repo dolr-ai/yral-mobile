@@ -491,7 +491,7 @@ class AiInfluencerViewModel(
     }
 
     companion object {
-        const val PROMPT_CHAR_LIMIT = 200
+        const val PROMPT_CHAR_LIMIT = 400
         private const val DEFAULT_ERROR_MESSAGE = "Something went wrong. Please try again."
         private const val BOT_CREATE_MESSAGE = "yral_auth_v2_create_ai_account"
         private const val TELEMETRY_FLUSH_DELAY_MS = 500L

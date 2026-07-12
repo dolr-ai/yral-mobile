@@ -2,7 +2,7 @@ package com.yral.shared.core
 
 object AppConfigurations {
     const val ANONYMOUS_IDENTITY_BASE_URL = "yral.com"
-    const val OAUTH_BASE_URL = "auth.dolr.ai"
+    const val OAUTH_BASE_URL = "auth.yral.com"
     const val OAUTH_FALLBACK_BASE_URL = "auth.yral.com"
     const val METADATA_BASE_URL = "metadata.yral.com"
     const val FEED_BASE_URL = "recommendation-service-82502260393.us-central1.run.app"
@@ -10,11 +10,14 @@ object AppConfigurations {
     const val TOURNAMENT_FEED_BASE_URL = "recsys-on-premise.fly.dev"
     const val INFLUENCER_FEED_BASE_URL = "recsys-influencer-feed.ansuman.yral.com"
     const val OFF_CHAIN_BASE_URL = "offchain.yral.com"
+    const val STORAGE_INTERFACE_BASE_URL = "storage-interface.prakash.yral.com"
+    const val VIDEOGEN_BASE_URL = "storage-interface.prakash.yral.com"
     const val PUMP_DUMP_BASE_URL = "yral-hot-or-not.go-bazzinga.workers.dev"
-    const val UPLOAD_BASE_URL = "upload.yral.com"
+    const val UPLOAD_BASE_URL = "storage-interface.prakash.yral.com"
     const val ANALYTICS_BASE_URL = "analytics.yral.com"
-    const val CHAT_BASE_URL = "chat-ai.rishi.yral.com"
-    const val BILLING_BASE_URL = "billing.yral.com"
+    const val CHAT_BASE_URL = "agent.rishi.yral.com"
+    const val COACH_BASE_URL = "agent.rishi.yral.com"
+    const val BILLING_BASE_URL = "billing.sarvesh.yral.com"
     const val DAILY_STREAK_BASE_URL = "daily-streaks.naitik.yral.com"
     const val SNOWPLOW_COLLECTOR_URL = "snowplow-collector.yral.com"
     const val FIREBASE_APP_NAME = "yral"
@@ -23,3 +26,4 @@ object AppConfigurations {
 
     fun isAuthHost(hostname: String): Boolean = hostname == OAUTH_BASE_URL || hostname == OAUTH_FALLBACK_BASE_URL
 }
+// Trigger action again

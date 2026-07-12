@@ -56,7 +56,6 @@ fun VideoViewsRewardsBottomSheet(
     YralBottomSheet(
         onDismissRequest = { component.onDismissClicked() },
         bottomSheetState = bottomSheetState,
-        dragHandle = null,
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(46.dp, Alignment.Top),

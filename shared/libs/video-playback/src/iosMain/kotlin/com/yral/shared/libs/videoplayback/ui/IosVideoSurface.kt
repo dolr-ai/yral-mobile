@@ -19,7 +19,6 @@ import platform.AVFoundation.AVLayerVideoGravityResizeAspect
 import platform.AVFoundation.AVLayerVideoGravityResizeAspectFill
 import platform.AVFoundation.AVPlayer
 import platform.AVFoundation.AVPlayerItem
-import platform.AVFoundation.AVPlayerItemStatusReadyToPlay
 import platform.AVFoundation.AVPlayerTimeControlStatusPlaying
 import platform.AVFoundation.addPeriodicTimeObserverForInterval
 import platform.AVFoundation.currentItem
@@ -106,13 +105,11 @@ actual fun VideoSurface(
                 }
             },
             onReset = { view ->
-                view.controller.player = null
-                playerState.value = null
+                clearPlayer(view, playerState)
                 handle = null
             },
             onRelease = { view ->
-                view.controller.player = null
-                playerState.value = null
+                clearPlayer(view, playerState)
                 handle = null
             },
         )
@@ -136,15 +133,13 @@ actual fun VideoSurface(
                     showShutter = true
                 }
                 if (currentPlayer.timeControlStatus == AVPlayerTimeControlStatusPlaying) {
-                    val itemReady =
-                        currentPlayer.currentItem?.status == AVPlayerItemStatusReadyToPlay
-                    if (itemReady) {
+                    // ReadyToPlay fires before the layer composites its first frame after a
+                    // fresh player attach, which used to drop the thumbnail onto a black view.
+                    // Advancing playback time is the only proof frames are rendering (same
+                    // heuristic as the coordinator's first-frame poll).
+                    val seconds = CMTimeGetSeconds(currentPlayer.currentTime())
+                    if (seconds > 0.01) {
                         showShutter = false
-                    } else {
-                        val seconds = CMTimeGetSeconds(currentPlayer.currentTime())
-                        if (seconds > 0.01) {
-                            showShutter = false
-                        }
                     }
                 }
             }
@@ -152,7 +147,7 @@ actual fun VideoSurface(
         updateShutter()
         val observer =
             player?.addPeriodicTimeObserverForInterval(
-                interval = CMTimeMakeWithSeconds(0.05, 600),
+                interval = CMTimeMakeWithSeconds(SHUTTER_OBSERVER_INTERVAL_SECONDS, PREFERRED_TIME_SCALE),
                 queue = null,
             ) {
                 updateShutter()
@@ -165,8 +160,23 @@ actual fun VideoSurface(
     }
 }
 
+private fun clearPlayer(
+    view: PlayerViewContainer,
+    playerState: MutableState<AVPlayer?>,
+) {
+    if (view.controller.player != null) {
+        view.controller.player = null
+    }
+    if (playerState.value != null) {
+        playerState.value = null
+    }
+}
+
 private fun videoGravityFor(contentScale: ContentScale): String? =
     when (contentScale) {
         ContentScale.Crop -> AVLayerVideoGravityResizeAspectFill
         else -> AVLayerVideoGravityResizeAspect
     }
+
+private const val SHUTTER_OBSERVER_INTERVAL_SECONDS = 0.1
+private const val PREFERRED_TIME_SCALE = 600

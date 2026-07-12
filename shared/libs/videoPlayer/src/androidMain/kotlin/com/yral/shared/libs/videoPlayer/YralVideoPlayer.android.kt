@@ -100,8 +100,10 @@ actual fun YralVideoPlayer(
             togglePlayPause = {
                 if (isPlaying) {
                     exoPlayer?.pause()
+                    isPlaying = false
                 } else {
                     exoPlayer?.play()
+                    isPlaying = true
                 }
             },
         )

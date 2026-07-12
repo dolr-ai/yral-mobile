@@ -33,4 +33,12 @@
     <string name="drafts_empty_title">Drafts Empty!</string>
     <string name="drafts_empty_subtitle">Create your first AI video and it will appear here,\nready to be shared with the world.</string>
     <string name="tab_new">New</string>
+    <string name="make_ai_influencer_better">Make your AI Influencer better</string>
+    <string name="ideas_header">✨ Today's ideas — fresh 5 every day</string>
+    <string name="ideas_empty">No ideas for today yet. Check back tomorrow.</string>
+    <string name="ideas_loading">Pulling today's ideas…</string>
+    <string name="ideas_error">Couldn't load today's ideas. Tap to retry.</string>
+    <string name="ideas_create_cta">Create</string>
+    <string name="ideas_created_chip">✓ Created</string>
+    <string name="ideas_lock_hint">A video is generating. Create unlocks when it lands in Drafts.</string>
 </resources>

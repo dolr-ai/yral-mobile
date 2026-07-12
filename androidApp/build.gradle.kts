@@ -74,15 +74,15 @@ android {
     productFlavors {
         create("staging") {
             dimension = "version"
-            versionCode = 1643 // ci:staging-version-code
-            versionName = "2.8.46" // ci:staging-version-name
+            versionCode = 1687 // ci:staging-version-code
+            versionName = "2.8.90" // ci:staging-version-name
             signingConfig = signingConfigs.getByName("staging")
         }
         create("prod") {
             applicationId = "com.yral.android.app"
             dimension = "version"
-            versionCode = 91 // ci:prod-version-code
-            versionName = "2.8.11" // ci:prod-version-name
+            versionCode = 101 // ci:prod-version-code
+            versionName = "3.4.3" // ci:prod-version-name
             signingConfig = signingConfigs.getByName("release")
         }
     }

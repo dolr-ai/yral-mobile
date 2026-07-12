@@ -1,6 +1,8 @@
 package com.yral.shared.libs.videoplayback.ios
 
 import com.yral.shared.libs.videoplayback.CoordinatorDeps
+import com.yral.shared.libs.videoplayback.FirstFrameStartupAction
+import com.yral.shared.libs.videoplayback.FirstFrameStartupWatchdog
 import com.yral.shared.libs.videoplayback.MediaDescriptor
 import com.yral.shared.libs.videoplayback.PlaybackCoordinator
 import com.yral.shared.libs.videoplayback.PlaybackProgress
@@ -34,9 +36,13 @@ import platform.AVFoundation.pause
 import platform.AVFoundation.playImmediatelyAtRate
 import platform.AVFoundation.preferredForwardBufferDuration
 import platform.AVFoundation.prerollAtRate
+import platform.AVFoundation.rate
+import platform.AVFoundation.reasonForWaitingToPlay
 import platform.AVFoundation.replaceCurrentItemWithPlayerItem
+import platform.AVFoundation.seekToTime
 import platform.AVFoundation.timeControlStatus
 import platform.CoreMedia.CMTimeGetSeconds
+import platform.CoreMedia.CMTimeMake
 import platform.Foundation.NSNotificationCenter
 import platform.Foundation.NSRunLoop
 import platform.Foundation.NSRunLoopCommonModes
@@ -49,7 +55,7 @@ import kotlin.time.ExperimentalTime
 @Suppress("MaxLineLength")
 fun createIosPlaybackCoordinator(deps: CoordinatorDeps = CoordinatorDeps()): PlaybackCoordinator = IosPlaybackCoordinator(deps)
 
-@Suppress("TooManyFunctions")
+@Suppress("TooManyFunctions", "LargeClass")
 private class IosPlaybackCoordinator(
     private val deps: CoordinatorDeps,
 ) : PlaybackCoordinator {
@@ -71,9 +77,15 @@ private class IosPlaybackCoordinator(
     private var feed: List<MediaDescriptor> = emptyList()
     private var activeIndex: Int = -1
     private var predictedIndex: Int = -1
+    private var userInteracting: Boolean = false
+    private var pendingDiskPrefetchCenterIndex: Int? = null
+    private var pendingActiveIndex: Int? = null
+    private var appInBackground: Boolean = false
 
     private val playStartMsById = mutableMapOf<String, Long>()
     private var firstFramePendingIndex: Int? = null
+    private val firstFrameStartupWatchdog = FirstFrameStartupWatchdog()
+    private var startupStallStartMs: Long? = null
 
     private var rebuffering = false
     private var rebufferStartMs: Long? = null
@@ -138,31 +150,77 @@ private class IosPlaybackCoordinator(
             rebuffering = false
             rebufferStartMs = null
             firstFramePendingIndex = null
+            firstFrameStartupWatchdog.clear()
+            startupStallStartMs = null
             activeSlot.player.pause()
             preparedSlot?.player?.pause()
             activeSlot.index = null
+            activeSlot.source = null
             preparedSlot?.index = null
+            preparedSlot?.source = null
+            pendingDiskPrefetchCenterIndex = null
+            pendingActiveIndex = null
             return
         }
 
+        // A pager-derived pending activation outlives a feed replacement: the pager will not
+        // re-emit the page it already rests on, so it must win over the alignment's target.
+        pendingActiveIndex = pendingActiveIndex?.takeIf { items.isNotEmpty() }?.coerceIn(0, items.lastIndex)
         alignment.nextActiveIndex?.let { targetIndex ->
             activeIndex = -1
-            setActiveIndex(targetIndex)
+            val target = pendingActiveIndex ?: targetIndex
+            pendingActiveIndex = null
+            setActiveIndex(target)
         }
     }
 
     override fun appendFeed(items: List<MediaDescriptor>) {
         if (items.isEmpty()) return
         feed = feed + items
-        if (activeIndex == -1 && feed.isNotEmpty()) {
+        if (activeIndex == -1 && pendingActiveIndex == null && feed.isNotEmpty()) {
             setActiveIndex(0)
         }
     }
 
+    @Suppress("ReturnCount")
     override fun setActiveIndex(index: Int) {
         if (index !in feed.indices) return
-        if (index == activeIndex && activeSlot.index == index) return
+        if (userInteracting) {
+            // currentPage flips at the 50% crossing, mid-drag/mid-fling. Replacing player
+            // items here blocks the main thread inside the scroll animation, so full
+            // activation defers to flushPendingActivation() on settle. Bare pause()/play()
+            // calls are cheap though: the outgoing video is silenced at the crossing, and
+            // when the target is the already-prepared next video it starts playing right
+            // away (its item is loaded and prerolled; attach happened at the previous
+            // settle via schedulePreparedSlot).
+            val prepared = preparedSlot
+            if (index != activeIndex) {
+                activeSlot.player.pause()
+                if (prepared?.index == index && !appInBackground) {
+                    attachIfBound(prepared)
+                    prepared.player.playImmediatelyAtRate(1.0F)
+                } else {
+                    prepared?.player?.pause()
+                }
+            } else {
+                // Rocked back across the 50% line: swap audio back.
+                prepared?.player?.pause()
+                if (!appInBackground) {
+                    activeSlot.player.playImmediatelyAtRate(1.0F)
+                }
+            }
+            pendingActiveIndex = index
+            return
+        }
+        if (index == activeIndex && activeSlot.index == index) {
+            // Re-activating the page we never left (settle after a bounce-back): undo the
+            // gesture-window pause. A no-op for already-playing re-emissions.
+            activeSlot.player.playImmediatelyAtRate(1.0F)
+            enforceSingleActivePlayback()
+            return
+        }
 
+        endStartupStall(activeIndex)
         activeIndex = index
         predictedIndex = index
         rebuffering = false
@@ -173,6 +231,7 @@ private class IosPlaybackCoordinator(
         reporter.playStartRequest(item.id, index, "activeIndex")
         playStartMsById[item.id] = nowMs()
         firstFramePendingIndex = index
+        firstFrameStartupWatchdog.start(index, nowMs())
 
         if (preparedSlot?.index == index) {
             swapSlots()
@@ -182,6 +241,7 @@ private class IosPlaybackCoordinator(
 
         attachIfBound(activeSlot)
         activeSlot.player.playImmediatelyAtRate(1.0F)
+        enforceSingleActivePlayback()
 
         schedulePreparedSlot(index)
         scheduleDiskPrefetch(index)
@@ -197,6 +257,31 @@ private class IosPlaybackCoordinator(
         scheduleDiskPrefetch(predictedIndex)
     }
 
+    override fun setUserInteracting(isInteracting: Boolean) {
+        if (userInteracting == isInteracting) return
+        userInteracting = isInteracting
+        // In-flight cache downloads survive touch-down on purpose: cancelling them per gesture
+        // meant the cache never filled during continuous scrolling. New starts stay deferred
+        // while interacting (scheduleDiskPrefetch).
+        if (!isInteracting) {
+            flushPendingActivation()
+            pendingDiskPrefetchCenterIndex?.let { centerIndex ->
+                pendingDiskPrefetchCenterIndex = null
+                scheduleDiskPrefetch(centerIndex)
+            }
+        }
+    }
+
+    private fun flushPendingActivation() {
+        if (appInBackground) return
+        val pending = pendingActiveIndex ?: return
+        pendingActiveIndex = null
+        // The activation schedules prefetch around the settled index; drop any stale predicted
+        // center from mid-gesture scroll hints so it can't shift the window afterwards.
+        pendingDiskPrefetchCenterIndex = null
+        setActiveIndex(pending)
+    }
+
     override fun bindSurface(
         index: Int,
         surface: VideoSurfaceHandle,
@@ -207,6 +292,7 @@ private class IosPlaybackCoordinator(
         } else if (preparedSlot?.index == index) {
             preparedSlot?.let { attachIfBound(it) }
         }
+        enforceSingleActivePlayback()
     }
 
     override fun unbindSurface(
@@ -233,15 +319,29 @@ private class IosPlaybackCoordinator(
     }
 
     override fun onAppForeground() {
+        appInBackground = false
+        if (!userInteracting) {
+            val pending = pendingActiveIndex
+            if (pending != null && pending != activeIndex) {
+                flushPendingActivation()
+                return
+            }
+            pendingActiveIndex = null
+        }
         if (activeSlot.index in feed.indices) {
             activeSlot.player.playImmediatelyAtRate(1.0F)
+            enforceSingleActivePlayback()
         }
     }
 
     override fun onAppBackground() {
+        // Keep pendingActiveIndex: a late isScrollInProgress=false emission must not start
+        // playback while backgrounded; onAppForeground flushes it instead.
+        appInBackground = true
         activeSlot.player.pause()
         preparedSlot?.player?.pause()
         cancelPrefetch(reason = "background")
+        pendingDiskPrefetchCenterIndex = null
     }
 
     override fun release() {
@@ -252,8 +352,12 @@ private class IosPlaybackCoordinator(
         activeSlot.player.pause()
         preparedSlot?.player?.pause()
         cancelPrefetch(reason = "release")
+        pendingDiskPrefetchCenterIndex = null
+        pendingActiveIndex = null
         cache.close()
         preparedScheduler.reset("release") { feed.getOrNull(it)?.id }
+        firstFrameStartupWatchdog.clear()
+        startupStallStartMs = null
         progressTicker.stop()
         scope.cancel()
     }
@@ -264,20 +368,37 @@ private class IosPlaybackCoordinator(
             if (prepared.index != nextIndex) {
                 prepareSlot(prepared, nextIndex, shouldPlay = false)
             }
+            prepared.player.pause()
+            // Attach now (settle time) so an early play at the next 50% crossing shows
+            // video immediately — bindSurface ran before this slot was prepared, so nothing
+            // else attaches the prepared player until the swap.
+            attachIfBound(prepared)
             preparedScheduler.setStartTime(nowMs())
+            enforceSingleActivePlayback()
         }
     }
 
     private fun swapSlots() {
         val prepared = preparedSlot ?: return
         val previousActive = activeSlot
+        val previousActiveIndex = previousActive.index
+        previousActive.player.pause()
+        if (previousActiveIndex != null) {
+            detachSurface(previousActiveIndex, previousActive.player)
+        }
         activeSlot = prepared
         preparedSlot = previousActive
+        previousActive.index = null
+        previousActive.source = null
         preparedScheduler.clearOnSwap()
     }
 
     @Suppress("LoopWithTooManyJumpStatements")
     private fun scheduleDiskPrefetch(centerIndex: Int) {
+        if (userInteracting) {
+            pendingDiskPrefetchCenterIndex = centerIndex
+            return
+        }
         val result = preloadScheduler.update(centerIndex, feed.size) { feed.getOrNull(it)?.id }
         for (index in result.toCancel) {
             feed.getOrNull(index)?.let { item ->
@@ -285,9 +406,12 @@ private class IosPlaybackCoordinator(
             }
         }
 
+        var startedPrefetchCount = 0
         for (index in result.toStart) {
             if (index !in result.window.disk) continue
+            if (startedPrefetchCount >= MAX_SCROLL_SETTLED_PREFETCH_STARTS) continue
             val item = feed.getOrNull(index) ?: continue
+            startedPrefetchCount++
             cache.prefetch(
                 descriptor = item,
                 onComplete = { bytes, fromCache ->
@@ -303,6 +427,7 @@ private class IosPlaybackCoordinator(
     private fun cancelPrefetch(reason: String) {
         preloadScheduler.reset(reason) { feed.getOrNull(it)?.id }
         cache.cancelAll()
+        pendingDiskPrefetchCenterIndex = null
     }
 
     private fun prepareSlot(
@@ -311,19 +436,22 @@ private class IosPlaybackCoordinator(
         shouldPlay: Boolean,
     ) {
         val descriptor = feed[index]
-        val item = buildPlayerItem(descriptor, index)
+        val itemBuild = buildPlayerItem(descriptor, index)
+        val item = itemBuild.item
         item.preferredForwardBufferDuration = 1.0
         val previousIndex = slot.index
         if (previousIndex != null && previousIndex != index) {
             detachSurface(previousIndex, slot.player)
         }
         slot.index = index
+        slot.source = itemBuild.source
         slot.player.replaceCurrentItemWithPlayerItem(item)
         if (shouldPlay) {
             slot.player.playImmediatelyAtRate(1.0F)
         } else {
             slot.player.pause()
         }
+        enforceSingleActivePlayback()
     }
 
     private fun attachIfBound(slot: PlayerSlot) {
@@ -348,17 +476,75 @@ private class IosPlaybackCoordinator(
         }
     }
 
+    private fun enforceSingleActivePlayback() {
+        if (activeSlot.index != activeIndex) {
+            activeSlot.player.pause()
+        }
+        val prepared = preparedSlot
+        if (prepared != null) {
+            val preparedIndex = prepared.index
+            // Mid-gesture this runs from bindSurface as new pages compose; it must not pause
+            // a prepared player that setActiveIndex early-started at the 50% crossing.
+            val earlyPlaying =
+                userInteracting && preparedIndex != null && preparedIndex == pendingActiveIndex
+            if (!earlyPlaying) {
+                prepared.player.pause()
+            }
+            if (preparedIndex != null && preparedIndex == activeIndex) {
+                detachSurface(preparedIndex, prepared.player)
+            }
+        }
+        detachStaleSurfacePlayers()
+    }
+
+    private fun detachStaleSurfacePlayers() {
+        surfaces.forEach { (index, surface) ->
+            val handle = surface as? IosVideoSurfaceHandle ?: return@forEach
+            val player = handle.controller.player ?: return@forEach
+            val isValidActiveSurface = index == activeIndex && activeSlot.index == index && player == activeSlot.player
+            val isValidPreparedSurface = preparedSlot?.let { it.index == index && player == it.player } == true
+            if (!isValidActiveSurface && !isValidPreparedSurface) {
+                handle.controller.player = null
+                handle.playerState.value = null
+            }
+        }
+    }
+
     private fun buildPlayerItem(
         descriptor: MediaDescriptor,
         index: Int,
-    ): AVPlayerItem {
+    ): PlayerItemBuildResult {
         val cachedUrl = cache.cachedFileUrl(descriptor)
         val url =
             cachedUrl ?: NSURL.URLWithString(descriptor.uri) ?: run {
                 val message = "Invalid media URL for id=${descriptor.id}, uri=${descriptor.uri}"
                 reporter.playbackError(descriptor.id, index, "invalid_url", "ios", message)
-                return AVPlayerItem()
+                return PlayerItemBuildResult(
+                    item = AVPlayerItem(),
+                    source =
+                        PlaybackSourceDiagnostics(
+                            mediaId = descriptor.id,
+                            index = index,
+                            uri = descriptor.uri,
+                            source = "invalid",
+                            urlScheme = "invalid",
+                            headersPresent = descriptor.headers.isNotEmpty(),
+                            headerNames = descriptor.headers.keys.sorted(),
+                            builtAtMs = nowMs(),
+                        ),
+                )
             }
+        val source =
+            PlaybackSourceDiagnostics(
+                mediaId = descriptor.id,
+                index = index,
+                uri = descriptor.uri,
+                source = if (cachedUrl != null) "cache" else "remote",
+                urlScheme = url.scheme ?: "unknown",
+                headersPresent = cachedUrl == null && descriptor.headers.isNotEmpty(),
+                headerNames = if (cachedUrl == null) descriptor.headers.keys.sorted() else emptyList(),
+                builtAtMs = nowMs(),
+            )
         val options: Map<Any?, *>? =
             if (cachedUrl == null && descriptor.headers.isNotEmpty()) {
                 mapOf("AVURLAssetHTTPHeaderFieldsKey" to descriptor.headers)
@@ -371,9 +557,13 @@ private class IosPlaybackCoordinator(
         } else {
             reporter.cacheMiss(descriptor.id, 0)
         }
-        return AVPlayerItem(asset = asset)
+        return PlayerItemBuildResult(
+            item = AVPlayerItem(asset = asset),
+            source = source,
+        )
     }
 
+    @OptIn(ExperimentalForeignApi::class)
     private fun registerObservers() {
         val center = NSNotificationCenter.defaultCenter
 
@@ -413,19 +603,42 @@ private class IosPlaybackCoordinator(
                 `object` = null,
                 queue = null,
             ) { notification ->
+                if (resumeEarlyPlayingPreparedAtEnd(notification?.`object`)) {
+                    return@addObserverForName
+                }
                 val current = activeSlot.player.currentItem
                 if (notification?.`object` == current) {
                     val index = activeSlot.index ?: return@addObserverForName
                     val item = feed.getOrNull(index) ?: return@addObserverForName
                     reporter.playbackEnded(item.id, index)
-                    val replacement = buildPlayerItem(item, index)
-                    replacement.preferredForwardBufferDuration = 1.0
-                    activeSlot.player.replaceCurrentItemWithPlayerItem(replacement)
-                    activeSlot.player.playImmediatelyAtRate(1.0F)
-                    firstFramePendingIndex = index
-                    playStartMsById[item.id] = nowMs()
+                    // Loop by seeking back: rebuilding the item re-streams the asset and
+                    // replaceCurrentItemWithPlayerItem can block the main thread tearing down
+                    // the old one. Same item => the notification filter above keeps matching.
+                    activeSlot.player.seekToTime(CMTimeMake(value = 0, timescale = 1))
+                    // An end notification can land just after the gesture-window pause that
+                    // silences a video the user is scrolling away from — don't resurrect it.
+                    val departing =
+                        userInteracting && pendingActiveIndex != null && pendingActiveIndex != index
+                    if (!departing) {
+                        activeSlot.player.playImmediatelyAtRate(1.0F)
+                    }
                 }
             }
+    }
+
+    // An early-played prepared video (started at the 50% crossing) that reaches its end
+    // before settle would otherwise park at its last frame with no recovery — the
+    // end-notification's active-player match ignores it.
+    @Suppress("ReturnCount")
+    @OptIn(ExperimentalForeignApi::class)
+    private fun resumeEarlyPlayingPreparedAtEnd(endedObject: Any?): Boolean {
+        if (!userInteracting) return false
+        val prepared = preparedSlot ?: return false
+        val earlyPlaying = prepared.index != null && prepared.index == pendingActiveIndex
+        if (!earlyPlaying || endedObject != prepared.player.currentItem) return false
+        prepared.player.seekToTime(CMTimeMake(value = 0, timescale = 1))
+        prepared.player.playImmediatelyAtRate(1.0F)
+        return true
     }
 
     private fun startPolling() {
@@ -442,9 +655,10 @@ private class IosPlaybackCoordinator(
         NSRunLoop.mainRunLoop.addTimer(pollTimer!!, NSRunLoopCommonModes)
     }
 
-    @Suppress("CyclomaticComplexMethod", "MagicNumber")
+    @Suppress("CyclomaticComplexMethod", "MagicNumber", "ReturnCount")
     @OptIn(ExperimentalForeignApi::class)
     private fun pollPlaybackState() {
+        if (userInteracting) return
         val index = activeSlot.index ?: return
         val item = feed.getOrNull(index) ?: return
 
@@ -469,11 +683,15 @@ private class IosPlaybackCoordinator(
             val seconds = CMTimeGetSeconds(activeSlot.player.currentTime())
             if (seconds > 0.01) {
                 firstFramePendingIndex = null
+                firstFrameStartupWatchdog.clear(index)
+                endStartupStall(index)
                 val start = playStartMsById[item.id] ?: nowMs()
                 reporter.firstFrameRendered(item.id, index)
                 reporter.timeToFirstFrame(item.id, index, nowMs() - start)
             }
         }
+
+        recoverFirstFrameStartupIfNeeded(index, item)
 
         val prepared = preparedSlot
         if (prepared != null) {
@@ -486,7 +704,13 @@ private class IosPlaybackCoordinator(
                     idAt = { feed.getOrNull(it)?.id },
                 ) {
                     prepared.player.prerollAtRate(1.0F) { _ ->
-                        if (prepared.index == preparedIndex) {
+                        // A late completion must not pause a player that has since started
+                        // for real: early play at the crossing (pendingActiveIndex) or a
+                        // slot swap that promoted it to active.
+                        if (prepared.index == preparedIndex &&
+                            preparedIndex != pendingActiveIndex &&
+                            preparedIndex != activeIndex
+                        ) {
                             prepared.player.pause()
                         }
                     }
@@ -498,9 +722,164 @@ private class IosPlaybackCoordinator(
         }
     }
 
+    private fun recoverFirstFrameStartupIfNeeded(
+        index: Int,
+        item: MediaDescriptor,
+    ) {
+        if (!canRecoverStartup(index)) return
+        val action =
+            firstFrameStartupWatchdog.evaluate(
+                index = index,
+                nowMs = nowMs(),
+                firstFramePending = firstFramePendingIndex == index,
+            )
+        when (action) {
+            FirstFrameStartupAction.None -> {
+                Unit
+            }
+
+            FirstFrameStartupAction.Resume -> {
+                startStartupStall(index, item, "first_frame_resume")
+                activeSlot.player.playImmediatelyAtRate(1.0F)
+                enforceSingleActivePlayback()
+            }
+
+            FirstFrameStartupAction.Rebuild -> {
+                startStartupStall(index, item, "first_frame_rebuild")
+                val replacementBuild = buildPlayerItem(item, index)
+                val replacement = replacementBuild.item
+                replacement.preferredForwardBufferDuration = 1.0
+                activeSlot.source = replacementBuild.source
+                activeSlot.player.replaceCurrentItemWithPlayerItem(replacement)
+                attachIfBound(activeSlot)
+                activeSlot.player.playImmediatelyAtRate(1.0F)
+                enforceSingleActivePlayback()
+                firstFramePendingIndex = index
+                playStartMsById[item.id] = nowMs()
+            }
+
+            FirstFrameStartupAction.GiveUp -> {
+                firstFramePendingIndex = null
+                firstFrameStartupWatchdog.clear(index)
+                endStartupStall(index)
+                reporter.playbackError(
+                    id = item.id,
+                    index = index,
+                    category = "startup_timeout",
+                    code = IOS_PLAYBACK_CODE,
+                    message = startupDiagnosticMessage(index, item, "startup_timeout"),
+                )
+            }
+        }
+    }
+
+    private fun canRecoverStartup(index: Int): Boolean =
+        !userInteracting &&
+            activeIndex == index &&
+            activeSlot.index == index &&
+            firstFramePendingIndex == index &&
+            surfaceHasActivePlayer(index)
+
+    private fun surfaceHasActivePlayer(index: Int): Boolean {
+        val surface = surfaces[index] as? IosVideoSurfaceHandle ?: return false
+        return surface.controller.player == activeSlot.player
+    }
+
+    @Suppress("CyclomaticComplexMethod")
+    @OptIn(ExperimentalForeignApi::class)
+    private fun startupDiagnosticMessage(
+        index: Int,
+        item: MediaDescriptor,
+        action: String,
+    ): String {
+        val player = activeSlot.player
+        val playerItem = player.currentItem
+        val source = activeSlot.source
+        val currentSeconds = CMTimeGetSeconds(player.currentTime()).finiteOrNull()
+        val durationSeconds =
+            playerItem
+                ?.duration
+                ?.let { CMTimeGetSeconds(it) }
+                ?.finiteOrNull()
+        val itemError = playerItem?.error
+        val surface = surfaces[index] as? IosVideoSurfaceHandle
+        val surfaceBound = surface != null
+        val surfaceHasActivePlayer = surface?.controller?.player == player
+        val playStartMs = playStartMsById[item.id]
+        val elapsedMs = playStartMs?.let { nowMs() - it }
+        val sourceAgeMs = source?.builtAtMs?.let { nowMs() - it }
+
+        return buildList {
+            add("action=$action")
+            add("platform=ios")
+            add("media_id=${item.id}")
+            add("index=$index")
+            add("active_index=$activeIndex")
+            add("slot_index=${activeSlot.index}")
+            elapsedMs?.let { add("elapsed_ms=$it") }
+            add("first_frame_pending=${firstFramePendingIndex == index}")
+            add("player_time_control_status=${player.timeControlStatus}")
+            add("player_rate=${player.rate}")
+            currentSeconds?.let { add("player_current_seconds=$it") }
+            add("player_reason_for_waiting=${player.reasonForWaitingToPlay ?: "none"}")
+            add("item_status=${playerItem?.status ?: "none"}")
+            durationSeconds?.let { add("item_duration_seconds=$it") }
+            itemError?.code?.let { add("item_error_code=$it") }
+            itemError?.localizedDescription?.let { add("item_error_message=${it.compactForDiagnostics()}") }
+            add("surface_bound=$surfaceBound")
+            add("surface_has_active_player=$surfaceHasActivePlayer")
+            add("source=${source?.source ?: "unknown"}")
+            add("source_url_scheme=${source?.urlScheme ?: "unknown"}")
+            add("source_headers_present=${source?.headersPresent ?: false}")
+            source?.headerNames?.takeIf { it.isNotEmpty() }?.let {
+                add("source_header_names=${it.joinToString(",").compactForDiagnostics()}")
+            }
+            sourceAgeMs?.let { add("source_age_ms=$it") }
+            add("uri=${item.uri.compactForDiagnostics()}")
+        }.joinToString(separator = " ")
+    }
+
+    private fun startStartupStall(
+        index: Int,
+        item: MediaDescriptor,
+        reason: String,
+    ) {
+        if (startupStallStartMs != null) return
+        startupStallStartMs = nowMs()
+        reporter.stallStart(item.id, index, reason)
+    }
+
+    private fun endStartupStall(index: Int) {
+        val start = startupStallStartMs ?: return
+        val item =
+            feed.getOrNull(index) ?: run {
+                startupStallStartMs = null
+                return
+            }
+        startupStallStartMs = null
+        reporter.stallEnd(item.id, index, nowMs() - start)
+    }
+
     private data class PlayerSlot(
         val player: AVPlayer,
         var index: Int? = null,
+        var source: PlaybackSourceDiagnostics? = null,
+    )
+
+    private data class PlayerItemBuildResult(
+        val item: AVPlayerItem,
+        val source: PlaybackSourceDiagnostics,
+    )
+
+    private data class PlaybackSourceDiagnostics(
+        val mediaId: String,
+        val index: Int,
+        val uri: String,
+        val source: String,
+        val urlScheme: String,
+        val headersPresent: Boolean,
+        val headerNames: List<String>,
+        val builtAtMs: Long,
     )
 
     @Suppress("ReturnCount", "MagicNumber")
@@ -527,5 +906,19 @@ private class IosPlaybackCoordinator(
             positionMs = positionMs,
             durationMs = durationMs,
         )
+    }
+
+    private fun Double.finiteOrNull(): Double? =
+        if (isFinite()) {
+            this
+        } else {
+            null
+        }
+
+    private fun String.compactForDiagnostics(): String = replace(Regex("\\s+"), "_")
+
+    private companion object {
+        private const val IOS_PLAYBACK_CODE = "ios"
+        private const val MAX_SCROLL_SETTLED_PREFETCH_STARTS = 3
     }
 }

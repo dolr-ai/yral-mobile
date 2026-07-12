@@ -15,6 +15,12 @@ data class ConversationDto(
     val influencer: ConversationInfluencerDto? = null,
     @SerialName("user")
     val user: ConversationUserDto? = null,
+    // H2H plumbing: backend exposes "human_chat" here for direct-message
+    // conversations and "ai_chat" (or null on pre-Day-8 rows) for the
+    // existing influencer-backed chats. Mappers branch on this to decide
+    // whether `influencer` may legally be null in the domain.
+    @SerialName("conversation_type")
+    val conversationType: String? = null,
     @SerialName("created_at")
     val createdAt: String,
     @SerialName("updated_at")

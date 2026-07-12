@@ -11,6 +11,7 @@ import com.yral.shared.app.config.NBRFailureListener
 import com.yral.shared.core.AppConfigurations
 import com.yral.shared.core.di.BILLING_SERVER_BASE_URL
 import com.yral.shared.core.di.CHAT_SERVER_BASE_URL
+import com.yral.shared.core.di.COACH_SERVER_BASE_URL
 import com.yral.shared.core.di.INFLUENCER_FEED_SERVER_BASE_URL
 import com.yral.shared.core.di.coreModule
 import com.yral.shared.core.logging.YralLogger
@@ -20,6 +21,7 @@ import com.yral.shared.features.account.di.accountsModule
 import com.yral.shared.features.aiinfluencer.di.aiInfluencerModule
 import com.yral.shared.features.auth.di.authModule
 import com.yral.shared.features.chat.di.chatModule
+import com.yral.shared.features.coach.di.coachModule
 import com.yral.shared.features.feed.di.feedModule
 import com.yral.shared.features.profile.di.profileModule
 import com.yral.shared.features.root.di.rootModule
@@ -34,8 +36,6 @@ import com.yral.shared.libs.arch.data.NetworkBoundResource
 import com.yral.shared.libs.arch.domain.UseCaseFailureListener
 import com.yral.shared.libs.coroutines.x.dispatchers.AppDispatchers
 import com.yral.shared.libs.filedownloader.di.fileDownloaderModule
-import com.yral.shared.libs.videoPlayer.pool.PlatformMediaSourceFactory
-import com.yral.shared.libs.videoPlayer.pool.PlatformPlayerFactory
 import com.yral.shared.preferences.di.preferencesModule
 import com.yral.shared.reportVideo.di.reportVideoModule
 import com.yral.shared.rust.service.di.rustModule
@@ -44,7 +44,6 @@ import org.koin.core.context.startKoin
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.qualifier.named
-import org.koin.core.scope.Scope
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.bind
 import org.koin.dsl.includes
@@ -76,7 +75,6 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             loggerModule,
             httpListenerModule,
             commonDataModule,
-            videoPlayerModule,
         )
 
         modules(
@@ -88,6 +86,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             profileModule,
             walletModule,
             chatModule,
+            coachModule,
             subscriptionsModule,
             aiInfluencerModule,
         )
@@ -116,6 +115,7 @@ internal val featureUrlsModule =
     module {
         single<String>(BILLING_SERVER_BASE_URL) { AppConfigurations.BILLING_BASE_URL }
         single<String>(CHAT_SERVER_BASE_URL) { AppConfigurations.CHAT_BASE_URL }
+        single<String>(COACH_SERVER_BASE_URL) { AppConfigurations.COACH_BASE_URL }
         single<String>(INFLUENCER_FEED_SERVER_BASE_URL) { AppConfigurations.INFLUENCER_FEED_BASE_URL }
     }
 
@@ -131,12 +131,3 @@ internal val httpListenerModule =
     module {
         factoryOf(::AppHTTPEventListener) bind HTTPEventListener::class
     }
-
-internal val videoPlayerModule =
-    module {
-        factory { createPlatformPlayerFactory() }
-        factory { createPlatformMediaSourceFactory() }
-    }
-
-expect fun Scope.createPlatformPlayerFactory(): PlatformPlayerFactory
-expect fun Scope.createPlatformMediaSourceFactory(): PlatformMediaSourceFactory

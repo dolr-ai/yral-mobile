@@ -3,6 +3,8 @@ package com.yral.shared.app.nav
 import com.yral.shared.analytics.events.BotCreationSource
 import com.yral.shared.analytics.events.SubscriptionEntryPoint
 import com.yral.shared.data.domain.models.OpenConversationParams
+import com.yral.shared.features.coach.nav.OpenCoachParams
+import com.yral.shared.features.coach.nav.OpenSoulFileParams
 import com.yral.shared.rust.service.utils.CanisterData
 import kotlinx.serialization.Serializable
 
@@ -48,5 +50,15 @@ internal sealed interface Config {
     data class Subscription(
         val purchaseTimeMs: Long?,
         val entryPoint: SubscriptionEntryPoint,
+    ) : Config
+
+    @Serializable
+    data class Coach(
+        val params: OpenCoachParams,
+    ) : Config
+
+    @Serializable
+    data class SoulFile(
+        val params: OpenSoulFileParams,
     ) : Config
 }

@@ -1,14 +1,22 @@
 package com.yral.shared.features.chat.domain
 
+import com.yral.shared.features.chat.domain.models.ChatMessage
 import com.yral.shared.features.chat.domain.models.Conversation
 import com.yral.shared.features.chat.domain.models.ConversationMessagesPageResult
 import com.yral.shared.features.chat.domain.models.ConversationsPageResult
 import com.yral.shared.features.chat.domain.models.DeleteConversationResult
+import com.yral.shared.features.chat.domain.models.HumanCreatorTakeoverStatus
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
+import com.yral.shared.features.chat.domain.models.DiscoverySearchResult
+import com.yral.shared.features.chat.domain.models.InboxSearchResult
+import com.yral.shared.features.chat.domain.models.SystemPromptPreview
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
 import com.yral.shared.features.chat.domain.models.SendMessageResult
+import com.yral.shared.features.chat.domain.models.StreamEvent
+import kotlinx.coroutines.flow.Flow
 
+@Suppress("TooManyFunctions")
 interface ChatRepository {
     suspend fun getUnreadConversationCount(principal: String): Int
 
@@ -24,7 +32,52 @@ interface ChatRepository {
 
     suspend fun getInfluencer(id: String): Influencer
 
+    /**
+     * Discovery search — fuzzy match across name/category/archetype/
+     * description. Returns at most [limit] influencers, ordered by
+     * trigram similarity + tie-break on message_count. Empty list on
+     * a blank/whitespace-only query.
+     */
+    suspend fun searchDiscovery(
+        query: String,
+        limit: Int,
+    ): List<DiscoverySearchResult>
+
+    /**
+     * Inbox conversation search — matches the calling user's existing
+     * conversations by bot fields (name/category/archetype/description).
+     * Empty list on a blank/whitespace-only query.
+     */
+    suspend fun searchInbox(
+        query: String,
+        limit: Int,
+    ): List<InboxSearchResult>
+
+    // ---------- Coach pivot Bucket 2 — View full prompt page ----------
+
+    suspend fun getSystemPromptPreview(botId: String): SystemPromptPreview
+
     suspend fun createConversation(influencerId: String): Conversation
+
+    /**
+     * H2H: idempotent create-or-fetch of a 1:1 conversation between the
+     * authenticated user and [participantId]. If a conversation between
+     * the pair already exists, the existing one is returned (backend
+     * checks both orderings of user_id / participant_b_id). Both 200
+     * and 201 responses are treated as success.
+     */
+    suspend fun createHumanConversation(participantId: String): Conversation
+
+    /**
+     * H2H: post a message to a human conversation. Same domain return
+     * type as [sendMessage] for the AI path so the call sites that
+     * compose the optimistic-Local → server-truth-Remote swap can share
+     * the result shape.
+     */
+    suspend fun sendHumanMessage(
+        conversationId: String,
+        draft: SendMessageDraft,
+    ): SendMessageResult
 
     suspend fun getConversationsPage(
         limit: Int,
@@ -46,5 +99,32 @@ interface ChatRepository {
         draft: SendMessageDraft,
     ): SendMessageResult
 
+    /**
+     * Phase 2.7 streaming send. Returns a cold Flow that emits Token/Done/Failed
+     * events. Cancelling the consumer cancels the underlying SSE connection.
+     * Only callable for text-only drafts; other media types must use [sendMessage].
+     */
+    fun streamMessage(
+        conversationId: String,
+        draft: SendMessageDraft,
+    ): Flow<StreamEvent>
+
     suspend fun markConversationAsRead(conversationId: String)
+
+    suspend fun startHumanCreatorTakeover(conversationId: String): HumanCreatorTakeoverStatus
+
+    suspend fun releaseHumanCreatorTakeover(conversationId: String)
+
+    suspend fun sendHumanCreatorMessage(
+        conversationId: String,
+        content: String,
+    ): ChatMessage
+
+    suspend fun getHumanCreatorTakeoverStatus(conversationId: String): HumanCreatorTakeoverStatus
+
+    suspend fun getCreatorConversationMessagesPage(
+        conversationId: String,
+        limit: Int,
+        offset: Int,
+    ): ConversationMessagesPageResult
 }

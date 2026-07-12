@@ -42,6 +42,8 @@ import com.yral.shared.preferences.stores.BotIdentityEntry
 import com.yral.shared.preferences.stores.UtmAttributionStore
 import com.yral.shared.preferences.stores.UtmParams
 import com.yral.shared.rust.service.domain.models.SubscriptionPlan
+import com.yral.shared.rust.service.domain.models.UserAccountType
+import com.yral.shared.rust.service.domain.models.UserProfileDetails
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7Params
 import com.yral.shared.rust.service.domain.usecases.GetUserProfileDetailsV7UseCase
 import com.yral.shared.rust.service.services.HelperService
@@ -415,10 +417,21 @@ class RootViewModel(
     }
 
     private suspend fun refreshAccountDirectory(allowRetry: Boolean) {
+        val source = resolveAccountDirectorySource()
+        if (source != null) {
+            refreshAccountDirectoryFromCanister(source)
+            return
+        }
+        refreshAccountDirectoryFromLocalData(allowRetry)
+    }
+
+    private suspend fun refreshAccountDirectoryFromLocalData(allowRetry: Boolean) {
         val activePrincipal = sessionManager.userPrincipal
         val mainPrincipal =
             accountSessionPreferences.getMainPrincipal()
-                ?: preferences.getString(PrefKeys.USER_PRINCIPAL.name)
+                ?: preferences
+                    .getString(PrefKeys.USER_PRINCIPAL.name)
+                    ?.takeIf { sessionManager.isBotAccount != true }
         val mainIdentity =
             accountSessionPreferences.getMainIdentity()
                 ?: preferences
@@ -452,13 +465,151 @@ class RootViewModel(
         }
     }
 
+    private suspend fun refreshAccountDirectoryFromCanister(source: AccountDirectorySource) {
+        val v7BotPrincipals = source.botPrincipals.toSet()
+        val mergedBeforeRefresh = mergeTokenBotIdentities()
+        val missingBeforeRefresh = v7BotPrincipals - mergedBeforeRefresh.map { it.principal }.toSet()
+        if (missingBeforeRefresh.isNotEmpty()) {
+            Logger.d(BOT_SOURCE_LOG_TAG) {
+                "refreshAccountDirectory source=v7 " +
+                    "missing_credentials=${missingBeforeRefresh.size} refreshing_token=true"
+            }
+            authClient.refreshTokens()
+        }
+
+        val mergedAfterRefresh = mergeTokenBotIdentities()
+        val reconciledBots =
+            mergedAfterRefresh
+                .filter { it.principal in v7BotPrincipals }
+                .distinctBy { it.principal }
+        botIdentitiesStore.put(reconciledBots)
+        sessionManager.updateBotCount(reconciledBots.size)
+
+        val activePrincipal = sessionManager.userPrincipal
+        val mainIdentity =
+            accountSessionPreferences.getMainIdentity()
+                ?: preferences
+                    .getBytes(PrefKeys.IDENTITY.name)
+                    ?.takeIf { activePrincipal == source.mainPrincipal }
+        val (mainAccount, botAccounts) =
+            resolveAllAccounts(
+                activePrincipal = activePrincipal,
+                mainPrincipal = source.mainPrincipal,
+                mainIdentity = mainIdentity,
+                botEntries = reconciledBots,
+            )
+        val directory =
+            buildAccountDirectory(
+                mainPrincipal = source.mainPrincipal,
+                mainAccount =
+                    mainAccount
+                        ?: source.mainProfile.toAccountUi(
+                            activePrincipal = activePrincipal,
+                            isBot = false,
+                        ),
+                botAccounts = botAccounts,
+            )
+        applyAccountDirectory(directory)
+        Logger.d(BOT_SOURCE_LOG_TAG) {
+            "refreshAccountDirectory source=v7 bots=${v7BotPrincipals.size} reconciled=${reconciledBots.size}"
+        }
+    }
+
+    private suspend fun resolveAccountDirectorySource(): AccountDirectorySource? {
+        val activePrincipal = sessionManager.userPrincipal
+        return activePrincipal?.let { principal ->
+            fetchUserProfileDetailsV7(
+                callerPrincipal = principal,
+                targetPrincipal = principal,
+            )?.let { activeProfile ->
+                val mainPrincipal =
+                    when (val accountType = activeProfile.accountType) {
+                        is UserAccountType.MainAccount -> principal
+                        is UserAccountType.BotAccount -> accountType.owner
+                    }
+                val mainProfile =
+                    if (mainPrincipal == principal) {
+                        activeProfile
+                    } else {
+                        fetchUserProfileDetailsV7(
+                            callerPrincipal = principal,
+                            targetPrincipal = mainPrincipal,
+                        )
+                    }
+                val mainAccountType = mainProfile?.accountType
+                if (mainAccountType is UserAccountType.MainAccount) {
+                    AccountDirectorySource(
+                        mainPrincipal = mainPrincipal,
+                        mainProfile = mainProfile,
+                        botPrincipals = mainAccountType.bots,
+                    )
+                } else {
+                    null
+                }
+            }
+        }
+    }
+
+    private suspend fun fetchUserProfileDetailsV7(
+        callerPrincipal: String,
+        targetPrincipal: String,
+    ): UserProfileDetails? {
+        var details: UserProfileDetails? = null
+        getUserProfileDetailsV7UseCase(
+            GetUserProfileDetailsV7Params(
+                principal = callerPrincipal,
+                targetPrincipal = targetPrincipal,
+            ),
+        ).onSuccess {
+            details = it
+        }.onFailure {
+            Logger.w("RootViewModel") {
+                "Failed to fetch v7 profile details caller=$callerPrincipal target=$targetPrincipal: ${it.message}"
+            }
+        }
+        return details
+    }
+
+    private suspend fun mergeTokenBotIdentities(): List<BotIdentityEntry> {
+        val tokenBots =
+            preferences
+                .getString(PrefKeys.ID_TOKEN.name)
+                ?.let(::parseBotsFromToken)
+                .orEmpty()
+        val existing = botIdentitiesStore.get()
+        if (tokenBots.isEmpty()) {
+            return existing
+        }
+        val merged = mergeBotIdentityEntries(existing, tokenBots)
+        if (merged != existing) {
+            botIdentitiesStore.put(merged)
+        }
+        return merged
+    }
+
+    private fun mergeBotIdentityEntries(
+        existing: List<BotIdentityEntry>,
+        incoming: List<BotIdentityEntry>,
+    ): List<BotIdentityEntry> =
+        (existing + incoming)
+            .groupBy { it.principal }
+            .map { (_, entries) ->
+                val latest = entries.last()
+                val username =
+                    entries
+                        .asReversed()
+                        .firstOrNull { !it.username.isNullOrBlank() }
+                        ?.username
+                latest.copy(username = username)
+            }
+
     private suspend fun resolveAllAccounts(
         activePrincipal: String?,
         mainPrincipal: String?,
         mainIdentity: ByteArray?,
         botEntries: List<BotIdentityEntry>,
     ): Pair<AccountUi?, List<AccountUi>> {
-        val mainFallbackUsername = sessionManager.username
+        val mainFallbackUsername: String? = null
         return coroutineScope {
             val mainDeferred =
                 async {
@@ -602,19 +753,16 @@ class RootViewModel(
         val activePrincipal = sessionManager.userPrincipal
         val mainPrincipal =
             accountSessionPreferences.getMainPrincipal()
-                ?: preferences.getString(PrefKeys.USER_PRINCIPAL.name)
+                ?: preferences
+                    .getString(PrefKeys.USER_PRINCIPAL.name)
+                    ?.takeIf { sessionManager.isBotAccount != true }
                 ?: return null
         val botEntries =
             botIdentitiesStore
                 .get()
                 .filter { it.principal != mainPrincipal }
 
-        val mainUsername =
-            if (activePrincipal == mainPrincipal) {
-                resolveUsername(sessionManager.username, mainPrincipal)
-            } else {
-                mainPrincipal
-            } ?: mainPrincipal
+        val mainUsername = mainPrincipal
         val mainAvatar =
             if (activePrincipal == mainPrincipal) {
                 sessionManager.profilePic ?: propicFromPrincipal(mainPrincipal)
@@ -711,6 +859,10 @@ class RootViewModel(
                 }
 
                 val canisterData = authenticateWithNetwork(identityBytes)
+                requireAuthenticatedPrincipalMatches(
+                    authenticatedPrincipal = canisterData.userPrincipalId,
+                    requestedPrincipal = principal,
+                )
                 val resolvedUsername =
                     resolveUsername(canisterData.username ?: botUsername, principal)
                 HelperService.initServiceFactories(identityBytes)
@@ -734,7 +886,7 @@ class RootViewModel(
                     sessionManager.updateFirebaseLoginState(false)
                     authClient.fetchBalance(session)
                 } else {
-                    authClient.initialize()
+                    authClient.refreshTokens()
                     authClient.authorizeFirebase()
                     authClient.fetchBalance(session)
                 }
@@ -742,7 +894,7 @@ class RootViewModel(
                     principal = principal,
                     isBot = isBot,
                     username = resolvedUsername ?: principal,
-                    avatarUrl = canisterData.profilePic ?: propicFromPrincipal(principal),
+                    avatarUrl = canisterData.profilePic,
                 )
                 switched = true
                 Logger.d("BotDeleteFlow") {
@@ -758,6 +910,17 @@ class RootViewModel(
                 _state.update { current -> current.copy(isAccountSwitchInProgress = false) }
                 coroutineScope.launch(appDispatchers.main) { onComplete(switched) }
             }
+        }
+    }
+
+    private fun requireAuthenticatedPrincipalMatches(
+        authenticatedPrincipal: String,
+        requestedPrincipal: String,
+    ) {
+        if (authenticatedPrincipal != requestedPrincipal) {
+            throw YralException(
+                "Authenticated principal $authenticatedPrincipal does not match requested $requestedPrincipal",
+            )
         }
     }
 
@@ -777,11 +940,13 @@ class RootViewModel(
 
     fun switchToMainAccount(onComplete: (Boolean) -> Unit = {}) {
         coroutineScope.launch {
-            val mainPrincipal =
-                accountSessionPreferences.getMainPrincipal()
-                    ?: preferences.getString(PrefKeys.USER_PRINCIPAL.name)
-            if (mainPrincipal == null) {
-                Logger.w("BotDeleteFlow") { "switchToMainAccount skipped: main principal missing" }
+            val mainPrincipal = accountSessionPreferences.getMainPrincipal()
+            val mainIdentity = accountSessionPreferences.getMainIdentity()
+            if (mainPrincipal == null || mainIdentity == null) {
+                Logger.w("BotDeleteFlow") {
+                    "switchToMainAccount skipped: main session missing principal=${mainPrincipal != null} " +
+                        "identity=${mainIdentity != null}"
+                }
                 onComplete(false)
                 return@launch
             }
@@ -871,8 +1036,16 @@ class RootViewModel(
             session.isCreatedFromServiceCanister,
         )
         if (!session.isBotAccount) {
-            accountSessionPreferences.setMainIdentity(identity)
-            accountSessionPreferences.setMainPrincipal(session.userPrincipal)
+            val storedMainPrincipal = accountSessionPreferences.getMainPrincipal()
+            if (session.userPrincipal != null && session.userPrincipal == storedMainPrincipal) {
+                accountSessionPreferences.setMainIdentity(identity)
+                accountSessionPreferences.setMainPrincipal(session.userPrincipal)
+            } else {
+                Logger.w("BotDeleteFlow") {
+                    "cacheSession skipped main identity write for principal=${session.userPrincipal} " +
+                        "storedMainPrincipal=$storedMainPrincipal"
+                }
+            }
         }
     }
 
@@ -886,9 +1059,7 @@ class RootViewModel(
                 currentPrincipal != null &&
                 targetPrincipal != currentPrincipal
             ) {
-                val mainPrincipal =
-                    accountSessionPreferences.getMainPrincipal()
-                        ?: preferences.getString(PrefKeys.USER_PRINCIPAL.name)
+                val mainPrincipal = accountSessionPreferences.getMainPrincipal()
 
                 val shouldSwitchToMain = targetPrincipal == mainPrincipal
                 val shouldSwitchToBot =
@@ -1123,6 +1294,12 @@ data class AccountUi(
     val isActive: Boolean,
 )
 
+private data class AccountDirectorySource(
+    val mainPrincipal: String,
+    val mainProfile: UserProfileDetails,
+    val botPrincipals: List<String>,
+)
+
 private fun AccountDirectoryProfile.toAccountUi(activePrincipal: String?): AccountUi =
     AccountUi(
         principal = principal,
@@ -1131,3 +1308,17 @@ private fun AccountDirectoryProfile.toAccountUi(activePrincipal: String?): Accou
         isBot = isBot,
         isActive = principal == activePrincipal,
     )
+
+private fun UserProfileDetails.toAccountUi(
+    activePrincipal: String?,
+    isBot: Boolean,
+): AccountUi {
+    val principal = principalId
+    return AccountUi(
+        principal = principal,
+        name = resolveUsername(preferred = null, principal = principal) ?: principal,
+        avatarUrl = profilePictureUrl ?: propicFromPrincipal(principal),
+        isBot = isBot,
+        isActive = principal == activePrincipal,
+    )
+}

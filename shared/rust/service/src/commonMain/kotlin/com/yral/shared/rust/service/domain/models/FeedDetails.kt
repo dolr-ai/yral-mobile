@@ -33,6 +33,7 @@ internal fun UpsPostDetailsForFrontend.toFeedDetails(
         hashtags = hashtags,
         thumbnail = thumbnailUrl(videoUid, createdByUserPrincipalId),
         viewCount = totalViewCount,
+        bulkViewCount = totalViewCount,
         displayName = "",
         postDescription = description,
         profileImageURL = profileImageUrl,
@@ -56,6 +57,7 @@ internal fun PostDetailsWithUserInfo.toFeedDetails(): FeedDetails =
         hashtags = hashtags,
         thumbnail = thumbnailUrl(uid, posterPrincipal),
         viewCount = views,
+        bulkViewCount = views,
         displayName = displayName ?: username ?: "",
         postDescription = description,
         profileImageURL = propicUrl,
@@ -77,7 +79,10 @@ fun FeedDetails.toCanisterData(): CanisterData =
         isFollowing = isFollowing,
     )
 
-fun Post.toPartialFeedDetails(): FeedDetails =
+fun Post.toPartialFeedDetails(
+    isFromServiceCanister: Boolean = canisterID == getUserInfoServiceCanister(),
+    profileImageUrlFallback: String = propicFromPrincipal(publisherUserId),
+): FeedDetails =
     FeedDetails(
         postID = postID,
         videoID = videoID,
@@ -91,13 +96,19 @@ fun Post.toPartialFeedDetails(): FeedDetails =
         hashtags = emptyList(),
         thumbnail = thumbnailUrl(videoID, publisherUserId),
         viewCount = numViewsAll ?: 0u,
-        displayName = "",
+        bulkViewCount = numViewsAll,
+        displayName = username ?: "",
         postDescription = "",
-        profileImageURL = propicFromPrincipal(publisherUserId),
+        profileImageURL =
+            profileImageUrl
+                ?.takeIf { it.isNotBlank() }
+                ?: profileImageUrlFallback,
         likeCount = 0u,
         isLiked = false,
         nsfwProbability = nsfwProbability,
-        isFollowing = false,
-        isFromServiceCanister = canisterID == getUserInfoServiceCanister(),
-        userName = null,
+        isFollowing = isFollowing ?: false,
+        isFromServiceCanister = isFromServiceCanister,
+        userName = username,
+        isProUser = isProUser ?: false,
+        isAiInfluencer = fromAiInfluencer,
     )

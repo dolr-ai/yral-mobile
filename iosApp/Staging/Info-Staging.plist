@@ -40,7 +40,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>12</string>
+	<string>21</string>
 	<key>FIREBASE_CLOUD_BASE_URL</key>
 	<string>https://us-central1-yral-staging.cloudfunctions.net/</string>
 	<key>FacebookAppID</key>
@@ -56,13 +56,11 @@
 	<key>NSCameraUsageDescription</key>
 	<string>Yral requires camera access to allow to record and upload videos. Your camera will only be used when you choose to create a new video.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Yral requires microphone access to capture audio while recording videos. Your microphone will only be used during video recording.</string>
+	<string>Yral requires microphone access to capture audio while recording videos and chat voice messages. Your microphone will only be used when you choose to record.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Yral needs access to your photo library so you can choose a profile picture.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Yral needs permission to save downloaded videos and photos to your photo library.</string>
-	<key>NSUserTrackingUsageDescription</key>
-	<string>This helps Yral personalise content that we show you.</string>
 	<key>ONESIGNAL_APP_ID</key>
 	<string>fe0ef73c-3eef-4c16-baa8-59dc8512895a</string>
 	<key>UIApplicationSceneManifest</key>

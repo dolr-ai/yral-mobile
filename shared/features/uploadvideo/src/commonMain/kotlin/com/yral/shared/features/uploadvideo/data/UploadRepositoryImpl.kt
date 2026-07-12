@@ -5,6 +5,7 @@ import com.yral.shared.core.rust.KotlinDelegatedIdentityWire
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.features.uploadvideo.data.remote.UploadVideoRemoteDataSource
 import com.yral.shared.features.uploadvideo.data.remote.models.GetUploadUrlRequestDto
+import com.yral.shared.features.uploadvideo.data.remote.models.InProgressDraftsRequestDto
 import com.yral.shared.features.uploadvideo.data.remote.models.MarkPostAsPublishedRequestDto
 import com.yral.shared.features.uploadvideo.data.remote.models.toDomain
 import com.yral.shared.features.uploadvideo.data.remote.models.toDto
@@ -76,6 +77,15 @@ internal class UploadRepositoryImpl(
         return remoteDataSource.generateVideo(dto)
     }
 
+    override suspend fun getInProgressDrafts(userId: String) =
+        remoteDataSource
+            .getInProgressDrafts(
+                InProgressDraftsRequestDto(
+                    delegatedIdentity = currentDelegatedIdentityWire("fetching in-progress video drafts"),
+                    userId = userId,
+                ),
+            ).toDomain()
+
     override suspend fun uploadAiVideoFromUrl(request: UploadAiVideoFromUrlRequest): String {
         val identity =
             sessionManager.identity
@@ -99,5 +109,13 @@ internal class UploadRepositoryImpl(
                 delegatedIdentityWire = delegatedIdentityWire,
             ),
         )
+    }
+
+    private fun currentDelegatedIdentityWire(action: String): KotlinDelegatedIdentityWire {
+        val identity =
+            sessionManager.identity
+                ?: throw YralException("Session not found while $action")
+        val identityWireJson = delegatedIdentityWireToJson(identity)
+        return json.decodeFromString<KotlinDelegatedIdentityWire>(identityWireJson)
     }
 }

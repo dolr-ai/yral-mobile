@@ -12,10 +12,23 @@ import com.yral.shared.features.chat.domain.models.ConversationMessagesPageResul
 import com.yral.shared.features.chat.domain.models.ConversationUser
 import com.yral.shared.features.chat.domain.models.ConversationsPageResult
 import com.yral.shared.features.chat.domain.models.DeleteConversationResult
+import com.yral.shared.features.chat.domain.models.HUMAN_CHAT_CONVERSATION_TYPE
+import com.yral.shared.features.chat.domain.models.HumanCreatorTakeoverStatus
 import com.yral.shared.features.chat.domain.models.Influencer
 import com.yral.shared.features.chat.domain.models.InfluencerStatus
 import com.yral.shared.features.chat.domain.models.InfluencersPageResult
 import com.yral.shared.features.chat.domain.models.SendMessageResult
+import com.yral.shared.features.chat.domain.models.DiscoverySearchResult
+import com.yral.shared.features.chat.domain.models.EnabledSkill
+import com.yral.shared.features.chat.domain.models.InboxSearchResult
+import com.yral.shared.features.chat.domain.models.SearchResultKind
+import com.yral.shared.features.chat.domain.models.EngagementSchedule
+import com.yral.shared.features.chat.domain.models.FirstTurnNudge
+import com.yral.shared.features.chat.domain.models.InactivityProactive
+import com.yral.shared.features.chat.domain.models.SkillCheckins
+import com.yral.shared.features.chat.domain.models.SystemPromptLayers
+import com.yral.shared.features.chat.domain.models.SystemPromptPreview
+import com.yral.shared.features.chat.domain.models.SystemPromptSection
 import com.yral.shared.rust.service.utils.propicFromPrincipal
 
 fun InfluencerDto.toDomain(): Influencer =
@@ -79,31 +92,39 @@ fun InfluencersResponseDto.toDomainActiveOnly(): InfluencersPageResult {
     )
 }
 
-fun ConversationDto.toDomain(): Conversation =
-    Conversation(
+fun ConversationDto.toDomain(): Conversation {
+    val resolvedInfluencer: ConversationInfluencer? =
+        influencer?.let {
+            ConversationInfluencer(
+                id = it.id,
+                name = it.name,
+                displayName = it.displayName,
+                avatarUrl =
+                    it.avatarUrl
+                        .takeIf { url -> url.isNotEmpty() }
+                        ?: propicFromPrincipal(it.id),
+                category = it.category.orEmpty(),
+                suggestedMessages = it.suggestedMessages.orEmpty(),
+            )
+        } ?: influencerId?.let { influencerId ->
+            ConversationInfluencer(
+                id = influencerId,
+                name = "",
+                displayName = "",
+                avatarUrl = "",
+            )
+        }
+    // H2H conversations legitimately carry no influencer. AI / takeover
+    // conversations must — keep the original invariant in place for them
+    // so a backend bug that drops the influencer doesn't silently
+    // degrade the AI chat experience.
+    if (resolvedInfluencer == null && conversationType != HUMAN_CHAT_CONVERSATION_TYPE) {
+        throw YralException("Conversation requires a valid influencer")
+    }
+    return Conversation(
         id = id,
         userId = userId,
-        influencer =
-            influencer?.let {
-                ConversationInfluencer(
-                    id = it.id,
-                    name = it.name,
-                    displayName = it.displayName,
-                    avatarUrl =
-                        it.avatarUrl
-                            .takeIf { url -> url.isNotEmpty() }
-                            ?: propicFromPrincipal(it.id),
-                    category = it.category.orEmpty(),
-                    suggestedMessages = it.suggestedMessages.orEmpty(),
-                )
-            } ?: influencerId?.let { influencerId ->
-                ConversationInfluencer(
-                    id = influencerId,
-                    name = "",
-                    displayName = "",
-                    avatarUrl = "",
-                )
-            } ?: throw YralException("Conversation requires a valid influencer"),
+        influencer = resolvedInfluencer,
         conversationUser =
             user?.let {
                 ConversationUser(
@@ -131,7 +152,9 @@ fun ConversationDto.toDomain(): Conversation =
             },
         recentMessages = recentMessages?.map { it.toDomain(conversationIdFallback = id) } ?: emptyList(),
         unreadCount = unreadCount,
+        conversationType = conversationType,
     )
+}
 
 fun ConversationsResponseDto.toDomain(): ConversationsPageResult {
     val rawCount = conversations.size
@@ -175,6 +198,7 @@ fun ChatMessageDto.toDomain(conversationIdFallback: String? = null): ChatMessage
         audioDurationSeconds = audioDurationSeconds,
         tokenCount = tokenCount,
         createdAt = createdAt,
+        senderId = senderId,
     )
 }
 
@@ -203,3 +227,129 @@ fun SendMessageResponseDto.toDomain(conversationIdFallback: String): SendMessage
         userMessage = userMessage.toDomain(conversationIdFallback),
         assistantMessage = assistantMessage?.toDomain(conversationIdFallback),
     )
+
+fun HumanCreatorTakeoverStatusDto.toDomain(): HumanCreatorTakeoverStatus =
+    HumanCreatorTakeoverStatus(
+        active = active,
+        startedAt = startedAt,
+        userLastMessageAt = userLastMessageAt,
+        remainingSeconds = remainingSeconds,
+    )
+
+fun StartHumanCreatorTakeoverResponseDto.toDomain(): HumanCreatorTakeoverStatus =
+    HumanCreatorTakeoverStatus(
+        active = status.equals("active", ignoreCase = true),
+        startedAt = startedAt,
+        userLastMessageAt = userLastMessageAt,
+        remainingSeconds = remainingSeconds,
+    )
+
+// ---------- Coach pivot Bucket 2 — System prompt preview (read-only) ----------
+
+fun SystemPromptPreviewResponseDto.toDomain(): SystemPromptPreview =
+    SystemPromptPreview(
+        botId = botId,
+        botName = botName,
+        archetype = archetype,
+        asOf = asOf,
+        layers =
+            SystemPromptLayers(
+                l1GlobalRules = layers.l1GlobalRules,
+                l2ArchetypeBlock = layers.l2ArchetypeBlock,
+                l3PersonalitySections =
+                    layers.l3PersonalitySections.map {
+                        SystemPromptSection(id = it.id, heading = it.heading, body = it.body)
+                    },
+                l3FlatFallback = layers.l3FlatFallback,
+                l4UserSegmentTemplate = layers.l4UserSegmentTemplate,
+            ),
+        skillsEnabled =
+            skillsEnabled.map {
+                EnabledSkill(
+                    id = it.id,
+                    name = it.name,
+                    description = it.description,
+                    promptBlock = it.promptBlock,
+                )
+            },
+        appliedOverrides = appliedOverrides,
+        composedPreviewText = composedPreviewText,
+        engagementSchedule =
+            engagementSchedule?.let { schedule ->
+                EngagementSchedule(
+                    inactivityProactive =
+                        schedule.inactivityProactive?.let { ip ->
+                            InactivityProactive(
+                                enabledByDefault = ip.enabledByDefault,
+                                thresholdHours = ip.thresholdHours,
+                                perConversationOverrides = ip.perConversationOverrides,
+                                source = ip.source,
+                                note = ip.note,
+                            )
+                        },
+                    skillCheckins =
+                        schedule.skillCheckins?.let { sc ->
+                            SkillCheckins(
+                                skillSlug = sc.skillSlug,
+                                displayName = sc.displayName,
+                                defaultCadenceHours = sc.defaultCadenceHours,
+                                perUserPreferredTimes = sc.perUserPreferredTimes,
+                                source = sc.source,
+                                note = sc.note,
+                            )
+                        },
+                    firstTurnNudge =
+                        schedule.firstTurnNudge?.let { ftn ->
+                            FirstTurnNudge(
+                                enabled = ftn.enabled,
+                                initialIdleMinutes = ftn.initialIdleMinutes,
+                                source = ftn.source,
+                                note = ftn.note,
+                            )
+                        },
+                )
+            },
+    )
+
+// ---------- Discovery search ----------
+
+fun DiscoverySearchResultDto.toDomain(): DiscoverySearchResult =
+    DiscoverySearchResult(
+        kind = SearchResultKind.fromString(kind),
+        id = id,
+        name = name,
+        displayName = displayName.ifBlank { name },
+        avatarUrl = avatarUrl,
+        category = category?.takeIf { it.isNotBlank() },
+        // Backend backfills archetype classifier asynchronously; until a
+        // bot is classified the subtitle ships as "unknown · <category>".
+        // Strip the leading "unknown · " so we render just the category
+        // (cleaner during the multi-hour backfill window). Same row will
+        // pick up the real archetype once the bot is classified.
+        subtitle =
+            subtitle
+                ?.takeIf { it.isNotBlank() }
+                ?.removePrefix("unknown · ")
+                ?.takeIf { it.isNotBlank() },
+    )
+
+fun InboxSearchResultDto.toDomain(): InboxSearchResult {
+    val safeDisplayName = displayName?.takeIf { it.isNotBlank() } ?: name.orEmpty()
+    return InboxSearchResult(
+        conversationId = conversationId,
+        influencerId = influencerId,
+        name = name.orEmpty(),
+        displayName = safeDisplayName,
+        avatarUrl = avatarUrl.orEmpty(),
+        category = category?.takeIf { it.isNotBlank() },
+        // Mirror the discovery-search subtitle scrub — backend backfills
+        // archetype asynchronously and "unknown · category" is noisier
+        // than just the category on its own.
+        subtitle =
+            subtitle
+                ?.takeIf { it.isNotBlank() }
+                ?.removePrefix("unknown · ")
+                ?.takeIf { it.isNotBlank() },
+        lastMessageAt = lastMessageAt?.takeIf { it.isNotBlank() },
+    )
+}
