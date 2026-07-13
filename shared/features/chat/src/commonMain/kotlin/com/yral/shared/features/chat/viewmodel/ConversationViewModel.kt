@@ -2018,6 +2018,7 @@ class ConversationViewModel(
         if (collageHasChatAccess == hasAccess) return
         collageHasChatAccess = hasAccess
         if (collageRefs.isEmpty()) return
+        Logger.d("CollageX") { "hasChatAccess -> $hasAccess, refetching ${collageRefs.size} collage(s)" }
         collageFetchJobs.values.forEach { it.cancel() }
         collageFetchJobs.clear()
         _collageStates.update { state -> state.mapValues { CollageUiState.Loading } }
@@ -2068,6 +2069,10 @@ class ConversationViewModel(
                 var terminal = false
                 while (!terminal) {
                     var retryAfterMs: Long? = null
+                    Logger.d("CollageX") {
+                        "fetch GET bot=${ref.botId} date=${ref.date} collageId=${ref.collageId} " +
+                            "isSubscribed=$isSubscribed attempt=$attempt"
+                    }
                     getInfluencerCollageUseCase(
                         GetInfluencerCollageUseCase.Params(
                             influencerId = ref.botId,
@@ -2077,6 +2082,10 @@ class ConversationViewModel(
                         ),
                     ).onSuccess { collage ->
                         terminal = true
+                        Logger.d("CollageX") {
+                            "fetch success key=$key collageId=${collage.id} date=${collage.date} " +
+                                "images=${collage.images.size} isBlurred=${collage.isBlurred}"
+                        }
                         collageCache.write(collage = collage, isSubscribed = isSubscribed)
                         _collageStates.update { it + (key to CollageUiState.Ready(collage)) }
                     }.onFailure { error ->
@@ -2090,6 +2099,11 @@ class ConversationViewModel(
                             error.httpStatusOrNull() == HttpStatusCode.NotFound &&
                                 ref.collageId == null &&
                                 ref.date == currentCollageDateString()
+                        Logger.e("CollageX", error) {
+                            "fetch failed key=$key status=${error.httpStatusOrNull()} " +
+                                "type=${error::class.simpleName} msg=${error.message} " +
+                                "stillGenerating=$stillGenerating attempt=$attempt"
+                        }
                         if (stillGenerating && attempt < COLLAGE_NOT_READY_RETRY_DELAYS_MS.size) {
                             retryAfterMs = COLLAGE_NOT_READY_RETRY_DELAYS_MS[attempt]
                         } else {
@@ -2119,6 +2133,7 @@ class ConversationViewModel(
         if (_viewState.value.isHumanChat) return
         if (isCollageRequestInFlight || _requestImageCooldownSeconds.value != null) return
         isCollageRequestInFlight = true
+        Logger.d("CollageX") { "requestImages start bot=${influencer.id} isSubscribed=$collageHasChatAccess" }
         val now = Clock.System.now().toEpochMilliseconds()
         val shimmer =
             LocalMessage(
@@ -2156,6 +2171,10 @@ class ConversationViewModel(
         shimmerLocalId: String,
         collage: Collage,
     ) {
+        Logger.d("CollageX") {
+            "requestImages success collageId=${collage.id} date=${collage.date} " +
+                "images=${collage.images.size} isBlurred=${collage.isBlurred} theme=${collage.theme}"
+        }
         collageCache.write(collage = collage, isSubscribed = collageHasChatAccess)
         // Pre-warm so the bubble renders instantly once the message lands.
         val ref = CollageRef(botId = collage.botId, date = collage.date, collageId = collage.id)
@@ -2200,6 +2219,9 @@ class ConversationViewModel(
         ).onSuccess { result ->
             handleCollageSendSuccess(result, userLocal.localId)
         }.onFailure { error ->
+            Logger.e("CollageX", error) {
+                "collage message send failed status=${error.httpStatusOrNull()} msg=${error.message}"
+            }
             handleSendFailure(error, userLocal.localId, assistantLocalId = "")
         }
     }
@@ -2221,6 +2243,10 @@ class ConversationViewModel(
         shimmerLocalId: String,
         error: Throwable,
     ) {
+        Logger.e("CollageX", error) {
+            "requestImages failed status=${error.httpStatusOrNull()} type=${error::class.simpleName} " +
+                "msg=${error.message} cause=${error.cause?.let { "${it::class.simpleName}: ${it.message}" }}"
+        }
         _overlay.update { state ->
             state.copy(pending = state.pending.filterNot { it.localId == shimmerLocalId })
         }
