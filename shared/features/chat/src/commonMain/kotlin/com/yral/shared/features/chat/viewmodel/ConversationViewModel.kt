@@ -2233,6 +2233,10 @@ class ConversationViewModel(
         // a collage share. Send failure marks the Local FAILED with
         // draftForRetry, so the existing tap-to-resend re-sends the reference
         // only (the collage itself is already generated; no second POST).
+        Logger.d("CollageX") {
+            "sending collage message convId=$convId collageId=${collage.id} " +
+                "botId=${collage.botId} date=${collage.date}"
+        }
         sendMessageUseCase(
             SendMessageUseCase.Params(conversationId = convId, draft = draft),
         ).onSuccess { result ->

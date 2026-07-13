@@ -1,5 +1,6 @@
 package com.yral.shared.features.chat.data.models
 
+import co.touchlab.kermit.Logger
 import com.yral.shared.core.exceptions.YralException
 import com.yral.shared.core.utils.resolveUsername
 import com.yral.shared.features.chat.domain.models.ChatMessage
@@ -188,6 +189,15 @@ fun ChatMessageDto.toDomain(conversationIdFallback: String? = null): ChatMessage
     val resolvedConversationId =
         conversationId ?: conversationIdFallback
             ?: error("ChatMessage requires a valid conversationId")
+    if (ChatMessageType.fromApi(messageType) == ChatMessageType.COLLAGE) {
+        // Diagnostic: proves whether the backend persists/returns the collage
+        // reference on messages (history + send echo). Collage rows are rare,
+        // so this stays quiet in normal operation.
+        Logger.d("CollageX") {
+            "message row id=$id type=$messageType collageId=$collageId " +
+                "botId=$collageBotId date=$collageDate hasContent=${!content.isNullOrBlank()}"
+        }
+    }
     return ChatMessage(
         id = id,
         conversationId = resolvedConversationId,
