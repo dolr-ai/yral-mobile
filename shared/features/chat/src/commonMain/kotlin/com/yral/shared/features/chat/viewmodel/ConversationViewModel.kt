@@ -2270,7 +2270,7 @@ class ConversationViewModel(
         }
     }
 
-    /** Idempotent: starts the disabled-until-next-04:00-UTC countdown once. */
+    /** Idempotent: starts the disabled-until-next-UTC-midnight countdown once. */
     @OptIn(ExperimentalTime::class)
     private fun startCollageCooldown() {
         if (collageCooldownJob?.isActive == true) return
@@ -2298,14 +2298,13 @@ class ConversationViewModel(
         isCollageRequestInFlight = false
     }
 
-    // Collage-day arithmetic. The day rolls at the 04:00 UTC nightly pre-gen,
-    // matching the quota window the countdown targets.
-    private fun currentCollageDayIndex(nowMs: Long): Long = (nowMs - COLLAGE_DAY_ROLLOVER_UTC_MS).floorDiv(MS_PER_DAY)
+    // Collage-day arithmetic. The server quota window is the UTC calendar
+    // day — its 429 says resets_at=T00:00:00+00:00 — and GET /collage
+    // defaults to "today's UTC calendar date". (The 04:00 UTC nightly
+    // pre-gen is only when generation runs, not the quota boundary.)
+    private fun currentCollageDayIndex(nowMs: Long): Long = nowMs.floorDiv(MS_PER_DAY)
 
-    private fun nextCollageResetMs(nowMs: Long): Long {
-        val nextDayIndex = currentCollageDayIndex(nowMs) + 1
-        return nextDayIndex * MS_PER_DAY + COLLAGE_DAY_ROLLOVER_UTC_MS
-    }
+    private fun nextCollageResetMs(nowMs: Long): Long = (currentCollageDayIndex(nowMs) + 1) * MS_PER_DAY
 
     /** Today's collage_date ("YYYY-MM-DD"), for comparing against message references. */
     @OptIn(ExperimentalTime::class)
@@ -2639,9 +2638,6 @@ class ConversationViewModel(
         private const val TAKEOVER_STATUS_POLL_EVERY_N = 2
         private const val TAKEOVER_POLL_PAGE_SIZE = 20
 
-        // Collage: the 04:00 UTC nightly pre-gen is the collage-day rollover
-        // the request cooldown counts down to.
-        private const val COLLAGE_DAY_ROLLOVER_UTC_MS = 4L * 60 * 60 * 1000
         private const val MS_PER_DAY = 24L * 60 * 60 * 1000
         private const val MS_PER_SECOND = 1000L
 
