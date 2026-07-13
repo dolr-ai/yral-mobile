@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import co.touchlab.kermit.Logger
 import coil3.compose.AsyncImage
 import com.yral.shared.features.chat.viewmodel.CollageUiState
 import com.yral.shared.libs.designsystem.component.YralLoadingDots
@@ -179,6 +180,10 @@ private fun CollageCell(
         model = rememberChatImageModel(imageUrl),
         contentDescription = "collage image",
         contentScale = ContentScale.Crop,
+        onSuccess = { Logger.d("CollageX") { "tile image loaded url=$imageUrl" } },
+        onError = { state ->
+            Logger.e("CollageX", state.result.throwable) { "tile image FAILED url=$imageUrl" }
+        },
         modifier =
             Modifier
                 .size(cellSize)

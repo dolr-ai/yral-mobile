@@ -2101,7 +2101,8 @@ class ConversationViewModel(
                         terminal = true
                         Logger.d("CollageX") {
                             "fetch success key=$key collageId=${collage.id} date=${collage.date} " +
-                                "images=${collage.images.size} isBlurred=${collage.isBlurred}"
+                                "images=${collage.images.size} isBlurred=${collage.isBlurred} " +
+                                "urls=${collage.images}"
                         }
                         collageCache.write(collage = collage, isSubscribed = isSubscribed)
                         _collageStates.update { it + (key to CollageUiState.Ready(collage)) }
@@ -2192,7 +2193,8 @@ class ConversationViewModel(
     ) {
         Logger.d("CollageX") {
             "requestImages success collageId=${collage.id} date=${collage.date} " +
-                "images=${collage.images.size} isBlurred=${collage.isBlurred} theme=${collage.theme}"
+                "images=${collage.images.size} isBlurred=${collage.isBlurred} theme=${collage.theme} " +
+                "urls=${collage.images}"
         }
         collageCache.write(collage = collage, isSubscribed = collageHasChatAccess)
         // Pre-warm so the bubble renders instantly once the message lands.
