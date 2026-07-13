@@ -41,6 +41,7 @@ import com.yral.shared.features.auth.ui.LoginMode
 import com.yral.shared.features.auth.ui.LoginScreenType
 import com.yral.shared.features.auth.ui.rememberLoginInfo
 import com.yral.shared.features.chat.attachments.FilePathChatAttachment
+import com.yral.shared.features.chat.domain.BotSubscriptionCatalog
 import com.yral.shared.features.chat.domain.models.ChatMessageType
 import com.yral.shared.features.chat.domain.models.ConversationMessageRole
 import com.yral.shared.features.chat.domain.models.SendMessageDraft
@@ -777,10 +778,14 @@ fun ChatConversationScreen(
                                             },
                                             onCameraClick = imageCaptureLauncher,
                                             onGalleryClick = imagePickerLauncher,
-                                            // Photo collages are an AI-influencer feature;
-                                            // H2H peers can't fulfil them, so hide the option there.
+                                            // Photo collages are exclusive to subscription bots
+                                            // (Tara) — hidden for every other bot and for H2H
+                                            // peers, who can't fulfil them.
                                             onRequestImageClick =
-                                                if (!viewState.isHumanChat) {
+                                                if (
+                                                    !viewState.isHumanChat &&
+                                                    BotSubscriptionCatalog.usesBotSubscription(viewState.influencer?.id)
+                                                ) {
                                                     { runIfSendAllowed { viewModel.requestCollageImages() } }
                                                 } else {
                                                     null
