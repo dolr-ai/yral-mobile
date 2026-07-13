@@ -23,6 +23,9 @@ import com.yral.shared.features.chat.domain.models.isFromCurrentUser
 import com.yral.shared.features.chat.viewmodel.CollageUiState
 import com.yral.shared.features.chat.viewmodel.ConversationMessageItem
 import com.yral.shared.features.chat.viewmodel.LocalMessageStatus
+import kotlinx.datetime.LocalDate
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 // The list's feature surface (paging + overlay + streaming locks + assistant
 // errors + blur/unlock + collage) is inherently wide; related inputs are
@@ -143,10 +146,10 @@ private fun MessageRow(
         return
     }
 
-    // Collage messages render their own bubble: the (botId, date) reference is
-    // resolved at render time (see CollageBubble). Always left-aligned — the
-    // photos are the influencer's, whatever role the send endpoint stored.
-    val collageInfo = item.collageDisplayInfoOrNull()
+    // Collage messages render their own bubble: the reference is resolved at
+    // render time (see CollageBubble). Always left-aligned — the photos are
+    // the influencer's, whatever role the send endpoint stored.
+    val collageInfo = item.collageDisplayInfoOrNull(fallbackBotId = collageConfig.botId)
     if (collageInfo != null) {
         CollageMessageRow(
             info = collageInfo,
@@ -208,6 +211,9 @@ private fun MessageRow(
 /** Collage inputs bundled so the list/row signatures stay within detekt's parameter budget. */
 internal data class CollageListConfig(
     val states: Map<String, CollageUiState> = emptyMap(),
+    // The conversation's influencer id — fallback bot for collage rows the
+    // backend stored without their reference fields.
+    val botId: String = "",
     val influencerDisplayName: String = "",
     val onLoad: (botId: String, date: String, collageId: String?) -> Unit = { _, _, _ -> },
     val onSubscribeClick: () -> Unit = {},
@@ -254,10 +260,14 @@ private data class CollageDisplayInfo(
 
 /**
  * Non-null for COLLAGE messages that should render the collage bubble.
- * A remote collage message missing its reference fields falls back to the
- * regular text bubble (its content is the "Requested an image" fallback).
+ *
+ * Remote rows the backend stored WITHOUT their reference fields (known gap)
+ * self-heal: the bot is the conversation's influencer ([fallbackBotId]) and
+ * the collage date is the message's own UTC send date — GET /collage?date=
+ * resolves both. Rows where even that fails fall back to the regular text
+ * bubble (their content is the "Requested an image" fallback).
  */
-private fun ConversationMessageItem.collageDisplayInfoOrNull(): CollageDisplayInfo? {
+private fun ConversationMessageItem.collageDisplayInfoOrNull(fallbackBotId: String?): CollageDisplayInfo? {
     val info =
         when (this) {
             is ConversationMessageItem.Remote ->
@@ -266,8 +276,8 @@ private fun ConversationMessageItem.collageDisplayInfoOrNull(): CollageDisplayIn
                     ?.let {
                         CollageDisplayInfo(
                             isGenerating = false,
-                            botId = it.collageBotId,
-                            date = it.collageDate,
+                            botId = it.collageBotId ?: fallbackBotId?.takeIf(String::isNotBlank),
+                            date = it.collageDate ?: utcDateStringOrNull(it.createdAt),
                             collageId = it.collageId,
                         )
                     }
@@ -287,6 +297,22 @@ private fun ConversationMessageItem.collageDisplayInfoOrNull(): CollageDisplayIn
     val missingReference = !info.isGenerating && (info.botId == null || info.date == null)
     return if (missingReference) null else info
 }
+
+/** UTC calendar date ("YYYY-MM-DD") of an ISO timestamp, null if unparseable. */
+@OptIn(ExperimentalTime::class)
+private fun utcDateStringOrNull(createdAt: String): String? =
+    runCatching {
+        val normalized =
+            if (createdAt.endsWith('Z') || createdAt.matches(Regex(".*[+-]\\d{2}:\\d{2}$"))) {
+                createdAt
+            } else {
+                "${createdAt}Z"
+            }
+        val epochDays = Instant.parse(normalized).toEpochMilliseconds().floorDiv(MS_PER_UTC_DAY)
+        LocalDate.fromEpochDays(epochDays.toInt()).toString()
+    }.getOrNull()
+
+private const val MS_PER_UTC_DAY = 86_400_000L
 
 private data class MessageRenderParams(
     val content: String?,

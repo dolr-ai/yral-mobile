@@ -564,6 +564,7 @@ fun ChatConversationScreen(
                             collageConfig =
                                 CollageListConfig(
                                     states = collageStates,
+                                    botId = viewState.influencer?.id.orEmpty(),
                                     influencerDisplayName =
                                         viewState.influencer
                                             ?.displayName
