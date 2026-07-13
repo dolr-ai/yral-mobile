@@ -2236,7 +2236,7 @@ class ConversationViewModel(
         sendMessageUseCase(
             SendMessageUseCase.Params(conversationId = convId, draft = draft),
         ).onSuccess { result ->
-            handleCollageSendSuccess(result, userLocal.localId)
+            handleCollageSendSuccess(result, userLocal.localId, collage)
         }.onFailure { error ->
             Logger.e("CollageX", error) {
                 "collage message send failed status=${error.httpStatusOrNull()} msg=${error.message}"
@@ -2245,11 +2245,51 @@ class ConversationViewModel(
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     private fun handleCollageSendSuccess(
         result: SendMessageResult,
         userLocalId: String,
+        collage: Collage,
     ) {
-        val sentMessages = buildSentMessages(result.userMessage, result.assistantMessage)
+        Logger.d("CollageX") {
+            val echo = result.userMessage
+            "send echo id=${echo.id} type=${echo.messageType} collageId=${echo.collageId} " +
+                "botId=${echo.collageBotId} date=${echo.collageDate} " +
+                "hasContent=${!echo.content.isNullOrBlank()} createdAt=${echo.createdAt}"
+        }
+        // Self-heal the echo: the optimistic Local we're about to remove
+        // rendered the grid from its collage refs. If the send endpoint
+        // doesn't echo those refs (or the type) back, the swapped-in Remote
+        // would render as an empty text bubble — re-attach what we just sent.
+        // History rendering after a relaunch still needs the backend to
+        // persist the refs; the log above is the evidence either way.
+        val userMessage =
+            result.userMessage.let { echo ->
+                if (echo.collageBotId == null || echo.collageDate == null) {
+                    echo.copy(
+                        messageType = ChatMessageType.COLLAGE,
+                        collageId = collage.id,
+                        collageBotId = collage.botId,
+                        collageDate = collage.date,
+                    )
+                } else {
+                    echo
+                }
+            }
+        // buildSentMessages drops entries whose created_at fails to parse —
+        // for the collage echo, fall back to "now" instead of vanishing.
+        val userInsertedAtMs =
+            parseTimestampToEpochMs(userMessage.createdAt)
+                ?: Clock.System.now().toEpochMilliseconds()
+        val sentMessages =
+            buildList {
+                add(SentMessage(insertedAtMs = userInsertedAtMs, message = userMessage))
+                result.assistantMessage?.let { assistant ->
+                    parseTimestampToEpochMs(assistant.createdAt)?.let {
+                        add(SentMessage(insertedAtMs = it, message = assistant))
+                    }
+                }
+            }
         _overlay.update { state ->
             state.copy(
                 pending = state.pending.filterNot { it.localId == userLocalId },
