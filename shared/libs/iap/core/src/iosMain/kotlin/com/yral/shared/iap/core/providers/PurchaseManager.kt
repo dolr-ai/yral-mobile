@@ -13,7 +13,7 @@ import platform.Foundation.NSLock
 import platform.Foundation.base64EncodedStringWithOptions
 import platform.Foundation.dataWithContentsOfURL
 import platform.Foundation.timeIntervalSince1970
-import platform.StoreKit.SKPayment
+import platform.StoreKit.SKMutablePayment
 import platform.StoreKit.SKPaymentQueue
 import platform.StoreKit.SKPaymentTransaction
 import kotlin.time.Duration.Companion.seconds
@@ -42,8 +42,12 @@ internal class PurchaseManager(
     fun initiatePurchase(
         skProduct: platform.StoreKit.SKProduct,
         productIdString: String,
+        appAccountToken: String?,
     ): CompletableDeferred<Result<IAPPurchase>> {
-        val payment = SKPayment.paymentWithProduct(skProduct)
+        val payment =
+            SKMutablePayment.paymentWithProduct(skProduct).apply {
+                setApplicationUsername(appAccountToken)
+            }
         val deferred = CompletableDeferred<Result<IAPPurchase>>()
         pendingPurchasesLock.withLock {
             pendingPurchases[productIdString]?.let { existing ->

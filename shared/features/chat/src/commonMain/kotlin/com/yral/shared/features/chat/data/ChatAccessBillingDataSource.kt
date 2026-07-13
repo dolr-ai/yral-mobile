@@ -1,10 +1,10 @@
 package com.yral.shared.features.chat.data
 
 import co.touchlab.kermit.Logger
-import com.yral.shared.core.AppConfigurations
 import com.yral.shared.features.chat.data.models.ChatAccessApiResponse
 import com.yral.shared.features.chat.data.models.GrantChatAccessRequestDto
 import com.yral.shared.features.chat.data.models.GrantResult
+import com.yral.shared.features.chat.data.models.toPlatformGrantRequestBody
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.get
@@ -14,6 +14,8 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.path
 import kotlinx.serialization.json.Json
+
+internal expect fun getGrantChatAccessEndpoint(): String
 
 interface ChatAccessBillingDataSource {
     val packageName: String
@@ -27,11 +29,11 @@ interface ChatAccessBillingDataSource {
 class ChatAccessBillingRemoteDataSource(
     private val httpClient: HttpClient,
     private val json: Json,
+    private val billingBaseUrl: String,
     override val packageName: String,
 ) : ChatAccessBillingDataSource {
     companion object {
         private const val TAG = "ChatAccessBilling"
-        private const val GRANT_ENDPOINT = "google/chat-access/grant"
         private const val CHECK_ENDPOINT = "google/chat-access/check"
     }
 
@@ -41,10 +43,10 @@ class ChatAccessBillingRemoteDataSource(
             httpClient.post {
                 expectSuccess = false
                 url {
-                    host = AppConfigurations.BILLING_BASE_URL
-                    path(GRANT_ENDPOINT)
+                    host = billingBaseUrl
+                    path(getGrantChatAccessEndpoint())
                 }
-                setBody(request)
+                setBody(request.toPlatformGrantRequestBody())
             }
         val body = response.bodyAsText()
         Logger.d(TAG) { "grantChatAccess status=${response.status}, response: $body" }
@@ -63,7 +65,7 @@ class ChatAccessBillingRemoteDataSource(
             httpClient.get {
                 expectSuccess = false
                 url {
-                    host = AppConfigurations.BILLING_BASE_URL
+                    host = billingBaseUrl
                     path(CHECK_ENDPOINT)
                 }
                 parameter("user_id", userId)

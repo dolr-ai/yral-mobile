@@ -3,6 +3,7 @@ package com.yral.shared.iap.providers
 import co.touchlab.kermit.Logger
 import com.yral.shared.core.session.SessionManager
 import com.yral.shared.iap.PurchaseResult
+import com.yral.shared.iap.account.PurchaseAccountResolver
 import com.yral.shared.iap.core.IAPError
 import com.yral.shared.iap.core.model.Product
 import com.yral.shared.iap.core.model.ProductId
@@ -18,6 +19,7 @@ internal class IAPProviderImpl(
     private val coreProvider: CoreIAPProvider,
     private val sessionManager: SessionManager,
     private val verificationService: PurchaseVerificationService,
+    private val purchaseAccountResolver: PurchaseAccountResolver,
 ) : IAPProvider {
     private var warningNotifier: (String) -> Unit = {}
 
@@ -37,11 +39,12 @@ internal class IAPProviderImpl(
     ): Result<CorePurchase> =
         handleIAPResultOperation {
             sessionManager.userPrincipal?.let { userId ->
+                val purchaseAccountId = purchaseAccountResolver.resolve(userId)
                 coreProvider
                     .purchaseProduct(
                         productId = productId,
                         context = context.toPlatformContext(),
-                        obfuscatedAccountId = userId,
+                        obfuscatedAccountId = purchaseAccountId,
                         acknowledgePurchase = acknowledgePurchase,
                     ).map { purchase ->
                         if (verifyPurchase) {
