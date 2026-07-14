@@ -483,9 +483,17 @@ fun ChatConversationScreen(
                 }
                 while (true) {
                     val remaining = remainingAccessMs(expiresAtMs)
-                    val text = if (remaining <= 0L) null else formatMillisToHHmmSS(remaining)
-                    val isExpiringSoon = remaining in 1..EXPIRING_SOON_THRESHOLD_MS
-                    value = AccessExpiryDisplay(text, isExpiringSoon)
+                    if (remaining <= 0L) {
+                        value = AccessExpiryDisplay(null, false)
+                        // Ask the backend rather than flipping locally: an
+                        // auto-renewing sub has usually just renewed (new
+                        // expiry restarts this ticker); a real lapse clears
+                        // the subscribed state in the VM.
+                        viewModel.recheckChatAccessOnExpiry()
+                        break
+                    }
+                    val isExpiringSoon = remaining <= EXPIRING_SOON_THRESHOLD_MS
+                    value = AccessExpiryDisplay(formatMillisToHHmmSS(remaining), isExpiringSoon)
                     delay(1.seconds)
                 }
             }

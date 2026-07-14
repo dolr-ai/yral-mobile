@@ -510,14 +510,43 @@ class ConversationViewModel(
                 Logger.d("SubscriptionX") { "Found ungranted ${product.productId}, retrying grant..." }
                 retryGrantAccess(botId, ungrantedPurchase, product.productId)
             } else {
-                _viewState.update { it.copy(isChatAccessLoading = false) }
+                clearChatAccessState()
                 fetchInfluencerSubscriptionProducts()
             }
         }.onFailure {
             Logger.e("SubscriptionX", it) { "Chat access restore failed" }
-            _viewState.update { it.copy(isChatAccessLoading = false) }
+            clearChatAccessState()
             fetchInfluencerSubscriptionProducts()
         }
+    }
+
+    /**
+     * Backend says no access and Play has no purchase to re-grant — the
+     * subscription/day-pass genuinely lapsed, so drop the subscribed state
+     * (header button back to Subscribe, collages re-blur via the
+     * hasChatAccess flip).
+     */
+    private fun clearChatAccessState() {
+        _viewState.update {
+            it.copy(
+                isChatAccessLoading = false,
+                isInfluencerSubscriptionPurchasedAndVerified = false,
+                chatAccessExpiresAtMs = null,
+            )
+        }
+    }
+
+    /**
+     * The on-screen access countdown hit zero. Deliberately a re-check, not a
+     * local flip: an auto-renewing subscription usually RENEWED at this moment
+     * (checkChatAccess returns the new expiry via the billing cross-over), and
+     * if the backend is briefly stale the restore→re-grant fallback inside the
+     * check refreshes it from Play.
+     */
+    fun recheckChatAccessOnExpiry() {
+        val influencerId = _viewState.value.influencer?.id ?: return
+        Logger.d("SubscriptionX") { "access countdown expired, rechecking chat access" }
+        updateInfluencerSubscriptionProductState(influencerId)
     }
 
     private suspend fun retryGrantAccess(
